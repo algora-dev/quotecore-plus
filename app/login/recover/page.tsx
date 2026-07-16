@@ -29,7 +29,7 @@ export default function RecoverPage() {
         </div>
         <p className="mt-6 text-center text-sm text-slate-600">
           <Link href="/login" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
-            ← Back to sign in
+            Back to sign in
           </Link>
         </p>
       </div>

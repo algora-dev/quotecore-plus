@@ -86,7 +86,7 @@ export function TroubleSigningInPanel() {
           className="text-xs text-slate-400 hover:text-slate-700 transition"
           aria-label="Close"
         >
-          ✕
+          Close
         </button>
       </div>
 
@@ -97,14 +97,14 @@ export function TroubleSigningInPanel() {
             onClick={() => setMode('forgot')}
             className="w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
           >
-            <p className="text-sm font-medium text-slate-900">🔑 Forgot password</p>
+            <p className="text-sm font-medium text-slate-900">Forgot password</p>
             <p className="text-xs text-slate-500 mt-0.5">I just need a new password - I still have my email.</p>
           </button>
           <Link
             href="/login/recover"
             className="block w-full text-left p-3 rounded-lg border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/40 transition"
           >
-            <p className="text-sm font-medium text-slate-900">📧 Lost access to my email</p>
+            <p className="text-sm font-medium text-slate-900">Lost access to my email</p>
             <p className="text-xs text-slate-500 mt-0.5">I can&apos;t get into the inbox on my account.</p>
           </Link>
         </div>
@@ -117,7 +117,7 @@ export function TroubleSigningInPanel() {
             onClick={() => reset()}
             className="text-xs text-slate-500 hover:text-slate-700 transition"
           >
-            ← Back
+            Back
           </button>
           <p className="text-xs text-slate-600">
             Enter the email on your account. If we recognise it, we&apos;ll send a reset link.
@@ -145,7 +145,7 @@ export function TroubleSigningInPanel() {
       {mode === 'forgot' && status === 'sent' && (
         <div className="space-y-2">
           <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-            ✓ If that email is on a QuoteCore+ account, a password reset link is on its way. Check your inbox (and spam folder).
+            If that email is on a QuoteCore+ account, a password reset link is on its way. Check your inbox (and spam folder).
           </p>
           <button
             type="button"

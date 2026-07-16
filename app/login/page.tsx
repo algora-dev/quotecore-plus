@@ -70,7 +70,7 @@ function LoginForm() {
               </p>
               {resendStatus === 'sent' ? (
                 <p className="text-xs font-medium text-emerald-700">
-                  ✓ Confirmation email re-sent. Check your inbox (and spam folder).
+                  Confirmation email re-sent. Check your inbox (and spam folder).
                 </p>
               ) : (
                 <button
@@ -244,7 +244,7 @@ function MagicLinkOption({ prominent = false }: { prominent?: boolean }) {
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-center">
         {status === 'sent' ? (
           <p className="text-sm text-blue-800 font-medium">
-            ✓ Check your inbox for a login link.
+            Check your inbox for a login link.
           </p>
         ) : (
           <>

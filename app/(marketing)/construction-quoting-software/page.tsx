@@ -214,7 +214,7 @@ export default function ConstructionQuotingSoftwarePage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
 
           <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
               Construction Quoting Software
             </p>
 
@@ -227,7 +227,7 @@ export default function ConstructionQuotingSoftwarePage() {
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#BD4A1A]">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35]">
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
@@ -238,7 +238,7 @@ export default function ConstructionQuotingSoftwarePage() {
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
                 href="/free-trial"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#BD4A1A] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#A03E15]"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
               >
                 Start free 14-day trial
               </a>
@@ -331,7 +331,7 @@ export default function ConstructionQuotingSoftwarePage() {
         {/* Smart Components™ */}
         <section id="smart-components" className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
               Smart Components™
             </p>
 
@@ -350,7 +350,7 @@ export default function ConstructionQuotingSoftwarePage() {
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {smartComponentItems.map((item) => (
                 <div key={item} className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white px-5 py-4 text-zinc-700 shadow-sm">
-                  <span className="mt-1 shrink-0 font-bold text-[#BD4A1A]">✓</span>
+                  <span className="mt-1 shrink-0 font-bold text-[#FF6B35]">✓</span>
                   {item}
                 </div>
               ))}
@@ -438,7 +438,7 @@ export default function ConstructionQuotingSoftwarePage() {
                   />
                   <div>
                     <p className="font-semibold text-zinc-950">Shaun</p>
-                    <p className="text-sm text-[#BD4A1A]">Founder, QuoteCore+</p>
+                    <p className="text-sm text-[#FF6B35]">Founder, QuoteCore+</p>
                   </div>
                 </div>
 
@@ -485,7 +485,7 @@ export default function ConstructionQuotingSoftwarePage() {
                     {f.a === "contact-link" ? (
                       <>
                         Email{" "}
-                        <a href="mailto:info@quote-core.com" className="text-[#BD4A1A] hover:underline">
+                        <a href="mailto:info@quote-core.com" className="text-[#FF6B35] hover:underline">
                           info@quote-core.com
                         </a>{" "}
                         or book a free{" "}
@@ -493,7 +493,7 @@ export default function ConstructionQuotingSoftwarePage() {
                           href="https://calendly.com/quote-core-info/15-minute-meeting"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[#BD4A1A] hover:underline"
+                          className="text-[#FF6B35] hover:underline"
                         >
                           15-minute call with Shaun
                         </a>
@@ -521,7 +521,7 @@ export default function ConstructionQuotingSoftwarePage() {
 
           <a
             href="/free-trial"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-[#BD4A1A] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#A03E15]"
+            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
           >
             Start your free 14-day trial
           </a>

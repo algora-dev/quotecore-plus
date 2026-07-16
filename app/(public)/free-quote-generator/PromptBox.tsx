@@ -74,7 +74,7 @@ export function PromptBox({ onParsed, onError, documentType }: PromptBoxProps) {
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition"
+            className="text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition"
           >
             Show
           </button>

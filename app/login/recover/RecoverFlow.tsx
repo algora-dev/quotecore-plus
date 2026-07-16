@@ -194,7 +194,7 @@ function NewEmailStep({ onSuccess }: { onSuccess: (newEmail: string) => void }) 
   return (
     <form onSubmit={submit} className="grid gap-4">
       <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-        ✓ Identity verified. Enter the email you&apos;d like to use from now on.
+        Identity verified. Enter the email you&apos;d like to use from now on.
       </p>
       <label className="block">
         <span className="block text-sm font-medium text-slate-700 mb-1">New email address</span>
@@ -285,7 +285,7 @@ function ContactSupportCard({ message }: { message: string }) {
         href="/login"
         className="block text-center text-xs text-slate-500 hover:text-slate-700 transition"
       >
-        ← Back to sign in
+        Back to sign in
       </Link>
     </div>
   );

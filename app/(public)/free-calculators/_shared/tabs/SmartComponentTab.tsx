@@ -491,7 +491,7 @@ export function SmartComponentTab() {
           <button
             disabled={saving}
             onClick={() => saveComponent()}
-            className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#FF6B35] hover:text-[#BD4A1A] disabled:opacity-50"
+            className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#FF6B35] hover:text-[#FF6B35] disabled:opacity-50"
           >
             {saving ? (user ? 'Saving to your workspace...' : 'Saving...') : 'Save as Smart Component'}
           </button>
@@ -572,7 +572,7 @@ export function SmartComponentTab() {
               </div>
 
               <details className="group">
-                <summary className="cursor-pointer text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition select-none">
+                <summary className="cursor-pointer text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition select-none">
                   Show calculation
                 </summary>
                 <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-4">
@@ -649,7 +649,7 @@ export function SmartComponentTab() {
             Your calculations are saved on this device. Create an account to sync across devices.
           </p>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <a href={signup} className="text-xs font-semibold text-[#BD4A1A] hover:text-[#ff5722]">
+            <a href={signup} className="text-xs font-semibold text-[#FF6B35] hover:text-[#ff5722]">
               Sync now
             </a>
             <button

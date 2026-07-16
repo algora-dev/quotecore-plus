@@ -25,7 +25,7 @@ export default function FreeTrialClient() {
         <button
           type="button"
           onClick={() => { trackEvent("create_account_click"); setShowEarlyAccess(true); }}
-          className="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#BD4A1A] px-5 py-4 text-base font-semibold text-white shadow-[0_18px_45px_rgba(255,107,53,0.24)] transition-colors hover:bg-[#A03E15]"
+          className="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-5 py-4 text-base font-semibold text-white shadow-[0_18px_45px_rgba(255,107,53,0.24)] transition-colors hover:bg-[#E55A28]"
         >
           Create my free account
         </button>

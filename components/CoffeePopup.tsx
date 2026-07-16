@@ -33,11 +33,11 @@ export default function CoffeePopup() {
           {/* Left - content */}
           <div className="flex flex-1 flex-col justify-between p-7 sm:p-8">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">Limited offer</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Limited offer</p>
               <h2 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-zinc-950 sm:text-3xl">
                 See how much time <span className="brand-wordmark">QuoteCore<span className="brand-plus">+</span></span> could save your business.
               </h2>
-              <div className="mt-2 h-0.5 w-16 rounded-full bg-[#BD4A1A]" />
+              <div className="mt-2 h-0.5 w-16 rounded-full bg-[#FF6B35]" />
 
               <div className="mt-5 space-y-3 text-sm leading-relaxed text-zinc-600">
                 <p className="font-semibold text-zinc-950">Book a free 15-minute call with Shaun.</p>
@@ -45,7 +45,7 @@ export default function CoffeePopup() {
                   He&apos;ll show you how QuoteCore+ could work for your specific business, or if you&apos;d rather leave the quoting to us, explain how our end-to-end estimating service can help you save time and get on with the work!
                 </p>
                 <p>
-                  If you&apos;re not happy with the result... <span className="font-semibold text-[#BD4A1A]">Get a free coffee on us! ☕️</span>
+                  If you&apos;re not happy with the result... <span className="font-semibold text-[#FF6B35]">Get a free coffee on us! ☕️</span>
                 </p>
               </div>
             </div>
@@ -56,14 +56,14 @@ export default function CoffeePopup() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={dismiss}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#BD4A1A] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#A03E15]"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-6 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                 Book my 15-minute call
               </a>
               <p className="mt-3 text-center text-xs leading-relaxed text-zinc-400">
                 ✓ No sales pressure • ✓ 15 minutes • ✓ One coffee voucher per business{" "}
-                <a href="https://quote-core.com/coffee-terms" target="_blank" rel="noopener noreferrer" className="text-[#BD4A1A] hover:underline">
+                <a href="https://quote-core.com/coffee-terms" target="_blank" rel="noopener noreferrer" className="text-[#FF6B35] hover:underline">
                   T&amp;Cs apply.
                 </a>
               </p>

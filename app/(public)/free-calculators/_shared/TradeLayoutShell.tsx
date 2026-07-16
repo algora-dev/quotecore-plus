@@ -72,7 +72,7 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
       {/* Breadcrumb */}
       <div className="border-b border-slate-100 bg-white">
         <div className="mx-auto w-full max-w-5xl px-4 py-2 lg:px-6">
-          <Link href="/free-tools" prefetch={false} className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition-colors">
+          <Link href="/free-tools" prefetch={false} className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition-colors">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -100,7 +100,7 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
               <Link href="/free-invoice-generator" prefetch={false} className="text-xs font-medium text-slate-600 hover:text-slate-900">
                 Free Invoice Generator
               </Link>
-              <Link href={signup} className="text-xs font-medium text-[#BD4A1A] hover:text-[#ff5722]">
+              <Link href={signup} className="text-xs font-medium text-[#FF6B35] hover:text-[#ff5722]">
                 Start free trial
               </Link>
             </div>

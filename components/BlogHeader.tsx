@@ -11,6 +11,7 @@ const navItems = [
   { label: "Free Tools", href: "/free-tools" },
   { label: "Blog", href: "/blog" },
   { label: "Documentation", href: "https://app.quote-core.com/docs", external: true },
+  { label: "App", href: "https://app.quote-core.com", external: true },
   { label: "Contact us", href: "/contact" },
   { label: "Free trial", href: "/free-trial" },
 ];
@@ -27,8 +28,11 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
   const freeToolsButton =
     `${headerButton} bg-black font-semibold text-white shadow-[0_14px_34px_rgba(0,0,0,0.18)] hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
 
+  const appButton =
+    `${headerButton} border border-zinc-300 bg-white font-medium text-zinc-900 hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
+
   const trialButton =
-    `${headerButton} bg-[#BD4A1A] font-semibold text-white shadow-[0_14px_34px_rgba(255,107,53,0.22)] hover:bg-[#A03E15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
+    `${headerButton} bg-[#FF6B35] font-semibold text-white shadow-[0_14px_34px_rgba(255,107,53,0.22)] hover:bg-[#E55A28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
 
   const menuButton =
     "pill-shimmer inline-flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-colors duration-200 hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2";
@@ -55,6 +59,13 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
               onClick={() => trackEvent("free_tools_click", { location: "nav" })}
             >
               Free Tools
+            </a>
+            <a
+              href="https://app.quote-core.com"
+              className={appButton}
+              onClick={() => trackEvent("app_click", { location: "nav" })}
+            >
+              App
             </a>
             <a
               href="/free-trial"
@@ -94,7 +105,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
                 <a
                   key={item.label}
                   href={item.href}
-                  className="flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium text-zinc-800 transition-colors hover:text-[#BD4A1A]"
+                  className="flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium text-zinc-800 transition-colors hover:text-[#FF6B35]"
                   onClick={() => setMenuOpen(false)}
                   {...("external" in item && item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 >
@@ -114,8 +125,15 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
           </div>
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 pb-6 pt-2 sm:flex-row lg:px-8">
             <a
+              href="https://app.quote-core.com"
+              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
+              onClick={() => { trackEvent("app_click", { location: "nav-menu" }); setMenuOpen(false); }}
+            >
+              App
+            </a>
+            <a
               href="/free-trial"
-              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#BD4A1A] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#A03E15]"
+              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#FF6B35] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
               onClick={() => { trackEvent("free_trial_click", { location: "nav-menu" }); setMenuOpen(false); }}
             >
               Start free trial

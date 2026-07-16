@@ -343,7 +343,7 @@ export function AngleTab() {
 
           {/* Expandable calculation */}
           <details className="group">
-            <summary className="cursor-pointer text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition select-none">
+            <summary className="cursor-pointer text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition select-none">
               Show calculation
             </summary>
             <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-4">

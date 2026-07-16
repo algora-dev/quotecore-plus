@@ -38,7 +38,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
-                <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -56,7 +56,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
-                <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
               </div>
@@ -74,7 +74,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
-                <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
@@ -91,7 +91,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
           >
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
-                <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
@@ -132,7 +132,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
             <ol className="space-y-2">
               {c.workedExample.steps.map((step, i) => (
                 <li key={i} className="flex gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-xs font-bold text-[#BD4A1A]">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-xs font-bold text-[#FF6B35]">
                     {i + 1}
                   </span>
                   <span className="text-sm text-slate-600 leading-relaxed pt-0.5">{step}</span>
@@ -193,7 +193,7 @@ export function TradePage({ config }: { config: TradeConfig }) {
 function Tip({ title, body }: { title: string; body: string }) {
   return (
     <details className="rounded-xl border border-slate-200 bg-white">
-      <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">
+      <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">
         {title}
       </summary>
       <div className="px-4 pb-4">
@@ -206,7 +206,7 @@ function Tip({ title, body }: { title: string; body: string }) {
 function Formula({ name, formula }: { name: string; formula: string }) {
   return (
     <details className="rounded-lg border border-slate-200 bg-white">
-      <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 hover:text-[#BD4A1A] transition select-none">
+      <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-slate-700 hover:text-[#FF6B35] transition select-none">
         {name}
       </summary>
       <div className="px-4 pb-3">

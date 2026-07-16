@@ -121,7 +121,7 @@ export default function EarlyAccessPopup({ forceOpen, onClose }: Props = {}) {
         <div className="px-6 py-8 sm:px-10 md:px-12 md:py-9">
           {status === "success" ? (
             <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6B35]/10 text-[#BD4A1A]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#FF6B35]/10 text-[#FF6B35]">
                 <svg className="h-7 w-7" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path fillRule="evenodd" d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.414 0L3.296 9.216a1.004 1.004 0 011.42-1.42l4.03 4.03 6.54-6.536a1 1 0 011.418 0z" clipRule="evenodd" />
                 </svg>
@@ -133,19 +133,19 @@ export default function EarlyAccessPopup({ forceOpen, onClose }: Props = {}) {
               <button
                 type="button"
                 onClick={dismiss}
-                className="mt-8 inline-flex items-center justify-center rounded-full bg-[#BD4A1A] px-10 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#A03E15]"
+                className="mt-8 inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
               >
                 Got it
               </button>
             </div>
           ) : (
             <>
-              <span className="inline-flex rounded-full bg-[#FF6B35]/10 px-5 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#BD4A1A]">
+              <span className="inline-flex rounded-full bg-[#FF6B35]/10 px-5 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#FF6B35]">
                 Coming soon
               </span>
 
               <h2 className="mt-5 text-4xl font-bold leading-[1.08] tracking-tight text-zinc-950 sm:text-5xl">
-                <span className="text-[#BD4A1A]">QuoteCore+</span>
+                <span className="text-[#FF6B35]">QuoteCore+</span>
                 <br />
                 launching in July.
               </h2>
@@ -177,7 +177,7 @@ export default function EarlyAccessPopup({ forceOpen, onClose }: Props = {}) {
                 <button
                   type="submit"
                   disabled={status === "loading"}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#BD4A1A] px-6 py-4 text-base font-semibold text-white shadow-[0_18px_40px_rgba(255,107,53,0.25)] transition-colors hover:bg-[#A03E15] disabled:opacity-60"
+                  className="mt-4 inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-6 py-4 text-base font-semibold text-white shadow-[0_18px_40px_rgba(255,107,53,0.25)] transition-colors hover:bg-[#E55A28] disabled:opacity-60"
                 >
                   {status === "loading" ? "Saving..." : "Get notified when we go live!"}
                 </button>

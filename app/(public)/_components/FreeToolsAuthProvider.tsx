@@ -329,7 +329,7 @@ function FreeToolsAuthModal({
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-full bg-[#BD4A1A] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#ff5722] transition-colors disabled:opacity-60"
+            className="w-full rounded-full bg-[#FF6B35] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#ff5722] transition-colors disabled:opacity-60"
           >
             {busy ? 'Working…' : mode === 'signup' ? 'Create account' : 'Log in'}
           </button>
@@ -342,7 +342,7 @@ function FreeToolsAuthModal({
               Already have an account?{' '}
               <button
                 onClick={() => { onModeChange('signin'); setError(''); setSuccess(''); }}
-                className="font-medium text-[#BD4A1A] hover:text-[#ff5722]"
+                className="font-medium text-[#FF6B35] hover:text-[#ff5722]"
               >
                 Log in
               </button>
@@ -352,7 +352,7 @@ function FreeToolsAuthModal({
               No account yet?{' '}
               <button
                 onClick={() => { onModeChange('signup'); setError(''); setSuccess(''); }}
-                className="font-medium text-[#BD4A1A] hover:text-[#ff5722]"
+                className="font-medium text-[#FF6B35] hover:text-[#ff5722]"
               >
                 Sign up free
               </button>

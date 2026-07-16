@@ -50,7 +50,7 @@ function SignupForm() {
   // Persist draft context in cookies IMMEDIATELY (not just on email-form
   // submit) so the Google OAuth path inherits it too — the OAuth redirect
   // leaves this page before any submit handler runs. Cross-subdomain
-  // cookies so the context survives the marketing ↔ app domain hops.
+  // cookies so the context survives the marketing - app domain hops.
   useEffect(() => {
     if (refSlug) setHandoffCookie('qcp_signup_ref', refSlug);
     if (draftId) setHandoffCookie('qcp_signup_draft', draftId);
@@ -79,7 +79,7 @@ function SignupForm() {
           {refLabel && draftId && (
             <div className="mb-6 rounded-xl bg-orange-50/60 border border-orange-100 p-4">
               <div className="flex items-start gap-3">
-                <svg className="w-5 h-5 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
                 <div>

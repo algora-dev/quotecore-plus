@@ -293,7 +293,7 @@ function POGeneratorForm() {
       {/* Breadcrumb */}
       <div className="border-b border-slate-100 bg-white">
         <div className="mx-auto max-w-4xl px-4 py-2">
-          <Link href="/free-tools" prefetch={false} className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition-colors">
+          <Link href="/free-tools" prefetch={false} className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition-colors">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -409,7 +409,7 @@ function POGeneratorForm() {
                       id="taxEnabled"
                       checked={taxEnabled}
                       onChange={(e) => setTaxEnabled(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 text-[#BD4A1A] focus:ring-[#FF6B35]"
+                      className="h-4 w-4 rounded border-slate-300 text-[#FF6B35] focus:ring-[#FF6B35]"
                     />
                     <label htmlFor="taxEnabled" className="text-xs font-medium text-slate-600">Include tax</label>
                   </div>
@@ -534,7 +534,7 @@ function POGeneratorForm() {
                         </button>
                       </div>
                     ) : (
-                      <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#BD4A1A] transition">
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] transition">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -600,7 +600,7 @@ function POGeneratorForm() {
                   </div>
                   <button
                     onClick={addLine}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#BD4A1A] transition"
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] transition"
                   >
                     + Add line
                   </button>
@@ -658,7 +658,7 @@ function POGeneratorForm() {
                         )}
                       </div>
                       <div className="col-span-1 flex justify-end gap-1">
-                        <button onClick={() => updateLine(line.id, 'lineHidden', !line.lineHidden)} className="p-2 text-slate-400 hover:text-[#BD4A1A] transition" title={line.lineHidden ? 'Show line in order' : 'Hide line in order (price still counts in total)'}>
+                        <button onClick={() => updateLine(line.id, 'lineHidden', !line.lineHidden)} className="p-2 text-slate-400 hover:text-[#FF6B35] transition" title={line.lineHidden ? 'Show line in order' : 'Hide line in order (price still counts in total)'}>
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             {line.lineHidden ? (
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -926,27 +926,27 @@ function POGeneratorForm() {
             <h2 className="text-lg font-semibold text-slate-900">Free purchase order generator FAQ</h2>
             <div className="mt-4 space-y-2">
               <details className="rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Is this PO generator free?</summary>
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Is this PO generator free?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes - completely free with no signup. Generate as many purchase orders as you need and download as PDF. You can also upload a photo of an existing PO and our AI will extract the details automatically, or paste your order text and let AI fill in the form.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I upload a photo of my purchase order and have AI fill it in?</summary>
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I upload a photo of my purchase order and have AI fill it in?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. Click the upload area to upload a photo or screenshot of an existing purchase order. Our AI will extract the supplier details, line items, quantities, and rates - then fill in the form for you to review and edit before generating. You get 5 free scans per day.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Why use a purchase order?</summary>
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Why use a purchase order?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">A purchase order (PO) is a formal document sent to a supplier requesting materials or services at agreed prices. It protects both parties - the supplier knows exactly what to deliver, and you have a written record of the order for your accounts.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I manage suppliers in QuoteCore+?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ gives you a complete document and business management platform in one place - track and store all your purchase orders, quotes, and invoices, send automatic follow-ups to suppliers, and auto-update order statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), supplier database, and online order management. <Link href="/signup" className="text-[#BD4A1A] font-medium">Start a free trial &rarr;</Link></p></div>
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I manage suppliers in QuoteCore+?</summary>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ gives you a complete document and business management platform in one place - track and store all your purchase orders, quotes, and invoices, send automatic follow-ups to suppliers, and auto-update order statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), supplier database, and online order management. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial &rarr;</Link></p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I use different currencies?</summary>
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">Can I use different currencies?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. The currency selector in the document settings bar supports GBP, USD, EUR, AUD, CAD, and NZD. All amounts in the form and the generated purchase order will use the selected currency symbol.</p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">How do I remove the watermark and create more free purchase orders?</summary>
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">How do I remove the watermark and create more free purchase orders?</summary>
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free purchase orders and remove the watermark, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p></div>
               </details>
             </div>

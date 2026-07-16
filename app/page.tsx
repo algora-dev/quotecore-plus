@@ -72,7 +72,7 @@ export default async function Home() {
         </div>
         <Link
           href="/docs"
-          className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition-all hover:text-[#BD4A1A] hover:[text-shadow:0_0_8px_rgba(255,107,53,0.6)]"
+          className="text-xs font-semibold uppercase tracking-wide text-slate-500 transition-all hover:text-[#FF6B35] hover:[text-shadow:0_0_8px_rgba(255,107,53,0.6)]"
         >
           Read the docs
         </Link>
