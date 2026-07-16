@@ -854,21 +854,21 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-6 space-y-4">
+      <div className="max-w-7xl mx-auto p-3 md:p-6 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
             <Link
               href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
               className="text-sm text-slate-500 hover:text-slate-700"
             >
               <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>Back
             </Link>
-            <h1 className="text-2xl font-semibold text-slate-900 mt-1">
+            <h1 className="text-lg md:text-2xl font-semibold text-slate-900 mt-1 truncate">
               {editorTitle} - Quote #{quote.quote_number || 'Draft'}
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4 flex-wrap">
             {/* Header template dropdown - always visible */}
             <select
                 onChange={(e) => {
@@ -878,7 +878,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   }
                 }}
                 data-copilot="cl-template-dropdown"
-                className="px-3 py-1.5 text-xs border border-slate-300 rounded-full focus:ring-2 focus:ring-orange-500 bg-white"
+                className="px-3 py-1.5 text-xs border border-slate-300 rounded-full focus:border-orange-500 focus:outline-none bg-white"
               >
                 <option value="">{templates.length > 0 ? 'Load Template...' : 'No templates saved'}</option>
                 {templates.map((template) => (
@@ -892,27 +892,29 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               type="button"
               onClick={() => setShowAiUpload(true)}
               title="Upload image or pdf to transfer into a quote"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all whitespace-nowrap"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Upload Image
+              <span className="hidden sm:inline">Upload Image</span>
+              <span className="sm:hidden">Upload</span>
             </button>
             <button
               type="button"
               onClick={() => setShowAiText(true)}
               title="Write or copy and paste quote details"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all whitespace-nowrap"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Text Prompt
+              <span className="hidden sm:inline">Text Prompt</span>
+              <span className="sm:hidden">Text</span>
             </button>
-            <div className="text-sm text-slate-500">
-              {saving ? 'Saving...' : lastSaved ? `Last saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
-              {isDirty && !saving && ' (unsaved changes)'}
+            <div className="text-xs md:text-sm text-slate-500 whitespace-nowrap">
+              {saving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
+              {isDirty && !saving && ' (unsaved)'}
             </div>
           </div>
         </div>
@@ -921,12 +923,12 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
             can collapse and the preview (flex-1) smoothly fills the freed
             space. Visually identical to the old 50/50 grid when expanded
             (left keeps a 1fr-equivalent basis). */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-start pb-20 md:pb-0">
           {/* Left Panel: Component Selection - collapsible to declutter. Fixed
               basis (not 1fr) so the PREVIEW is the dominant section, matching
               the order editors; on collapse the preview goes full width. */}
           <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[420px] lg:flex-shrink-0">
-          <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4" data-copilot="cl-left-panel">
+          <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-6 space-y-4" data-copilot="cl-left-panel">
             <div className="flex items-center gap-2">
               <CollapseButton
                 collapsed={panelCollapsed}

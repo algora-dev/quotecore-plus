@@ -128,21 +128,21 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           below it. Non-sticky (scrolls with the page like Quotes). app
           chrome only: data-exclude-pdf keeps it off the printed order. */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 data-exclude-pdf">
-      <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between shadow-sm">
-        <div className="flex items-center gap-4">
+      <div className="bg-white border border-slate-200 rounded-2xl px-3 md:px-6 py-3 md:py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between shadow-sm">
+        <div className="flex items-center gap-3 md:gap-4 min-w-0">
           <button
             onClick={handleBack}
             title={fromInbox ? 'Back to Message Center' : 'Back'}
-            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 transition-colors flex-shrink-0 min-h-[44px]"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back
           </button>
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">Order Preview</h1>
-            <p className="text-sm text-slate-500">{order.order_number}</p>
+          <div className="min-w-0">
+            <h1 className="text-base md:text-lg font-semibold text-slate-900">Order Preview</h1>
+            <p className="text-xs md:text-sm text-slate-500 truncate">{order.order_number}</p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -216,7 +216,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           Quotes content width (max-w-5xl). OrderBody handles its own A4
           print sizing via [data-print-root] @page rules, so widening this
           screen wrapper does not affect the generated PDF. */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-20 md:pb-6">
         <OrderBody order={order} lines={lines} flashings={flashings} currency={currency} />
       </div>
 

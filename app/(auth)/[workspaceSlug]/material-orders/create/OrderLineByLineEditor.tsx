@@ -243,7 +243,7 @@ export function OrderLineByLineEditor({
     // full-width header frame above. Fixed left basis + flexible preview
     // (min-w-0 so the preview table can shrink/grow without overflow). The
     // gap between the two columns is preserved.
-    <div className="flex flex-col lg:flex-row gap-6 items-start">
+    <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-start pb-20 md:pb-0">
       {/* LEFT: line controls + footer + taxes - collapsible to declutter; on
           collapse the preview (flex-1) auto-fills the freed space. */}
       <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[400px] lg:flex-shrink-0">
