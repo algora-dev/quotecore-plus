@@ -172,6 +172,7 @@ function T2Tab() {
   const [loading, startLoad] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<T2User | null>(null);
+  const [copied, setCopied] = useState(false);
 
   function load() {
     setError(null);
@@ -200,10 +201,25 @@ function T2Tab() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Free-tool account users" value={total} />
-        <StatCard label="Active in last 7 days" value={users.filter((u) => Date.now() - new Date(u.lastActiveAt).getTime() < 7 * 86400000).length} />
-        <StatCard label="Total tools used" value={new Set(users.flatMap((u) => u.toolsUsed.map((t) => t.toolCode))).size} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+          <StatCard label="Free-tool account users" value={total} />
+          <StatCard label="Active in last 7 days" value={users.filter((u) => Date.now() - new Date(u.lastActiveAt).getTime() < 7 * 86400000).length} />
+          <StatCard label="Total tools used" value={new Set(users.flatMap((u) => u.toolsUsed.map((t) => t.toolCode))).size} />
+        </div>
+        {users.length > 0 && (
+          <button
+            onClick={() => {
+              const emails = users.map((u) => u.email).join(', ');
+              navigator.clipboard.writeText(emails);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-[#FF6B35]/40 hover:bg-orange-50/40 transition"
+          >
+            {copied ? 'Copied!' : 'Copy all emails'}
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
