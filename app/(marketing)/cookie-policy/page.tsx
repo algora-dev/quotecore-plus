@@ -21,7 +21,7 @@ export default function CookiePolicyPage() {
 
       <div className="mx-auto max-w-3xl px-6 py-16 lg:px-8 lg:py-24">
         <h1 className="text-4xl font-semibold tracking-tight">Cookie Policy</h1>
-        <p className="mt-3 text-sm text-zinc-500">Last updated: 17 June 2026</p>
+        <p className="mt-3 text-sm text-zinc-500">Last updated: 17 July 2026</p>
 
         <div className="mt-6">
           <ManageCookiesButton />
@@ -34,7 +34,7 @@ export default function CookiePolicyPage() {
               This Cookie Policy explains how QuoteCore+ uses cookies and similar technologies on our website.
             </p>
             <p className="mt-4">
-              QuoteCore+ is operated by T3 Play Limited. In this policy, &ldquo;QuoteCore+&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo; and &ldquo;our&rdquo; refer to QuoteCore+.
+              QuoteCore<span className="text-orange-500">+</span> is operated by <strong>T3 Play Limited</strong> (NZ company 9148617, NZBN 9429051941314), 85 Tongariro Street, Halswell, Christchurch 8025, New Zealand. In this policy, &ldquo;QuoteCore+&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo; and &ldquo;our&rdquo; refer to T3 Play Limited.
             </p>
             <p className="mt-4">
               By using our website, you can choose whether to allow optional cookies. Some cookies are necessary for the website to work properly, while others help us understand how people use the site and improve our marketing.
