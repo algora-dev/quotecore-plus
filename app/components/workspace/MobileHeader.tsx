@@ -128,33 +128,7 @@ export function MobileHeader({ workspaceSlug, navItems, bell, inbox, help }: Mob
             className="absolute left-0 right-0 top-full bg-white border-b border-slate-200 shadow-lg z-40 md:hidden"
           >
             <nav className="px-4 py-3 space-y-1">
-              {/* Account */}
-              <Link
-                href={`/${workspaceSlug}/account`}
-                prefetch={false}
-                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 min-h-[44px]"
-              >
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                Account
-              </Link>
-
-              {/* Logout */}
-              <div className="flex items-center rounded-lg hover:bg-slate-50 min-h-[44px]">
-                <svg className="w-5 h-5 text-slate-400 ml-3 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                <LogoutButton className="text-sm font-medium text-slate-700 bg-transparent border-0 px-0 py-0 hover:bg-transparent" />
-              </div>
-
-              {/* Divider */}
-              <div className="border-t border-slate-100 my-2" />
-
-              {/* Nav links */}
+              {/* Nav links first */}
               {navItems.map((item) => {
                 const isActive = pathname?.startsWith(item.href);
                 return (
@@ -162,7 +136,7 @@ export function MobileHeader({ workspaceSlug, navItems, bell, inbox, help }: Mob
                     key={item.href}
                     href={item.href}
                     prefetch={false}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium min-h-[44px] transition-colors ${
+                    className={`flex items-center rounded-lg px-3 py-3 text-sm font-medium min-h-[44px] transition-colors ${
                       isActive
                         ? 'bg-slate-900 text-white'
                         : 'text-slate-700 hover:bg-slate-50'
@@ -172,6 +146,23 @@ export function MobileHeader({ workspaceSlug, navItems, bell, inbox, help }: Mob
                   </Link>
                 );
               })}
+
+              {/* Divider */}
+              <div className="border-t border-slate-100 my-2" />
+
+              {/* Account */}
+              <Link
+                href={`/${workspaceSlug}/account`}
+                prefetch={false}
+                className="flex items-center rounded-lg px-3 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 min-h-[44px]"
+              >
+                Account
+              </Link>
+
+              {/* Logout */}
+              <div className="flex items-center rounded-lg hover:bg-slate-50 min-h-[44px]">
+                <LogoutButton className="flex-1 text-sm font-medium text-slate-700 bg-transparent border-0 px-3 py-3 hover:bg-transparent text-left" />
+              </div>
             </nav>
           </div>
         </>

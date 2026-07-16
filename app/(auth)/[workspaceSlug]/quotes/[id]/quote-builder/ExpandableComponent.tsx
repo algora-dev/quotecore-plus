@@ -254,18 +254,18 @@ export function ExpandableComponent({
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 overflow-hidden" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <div
-        className="flex items-center gap-3 px-3 py-2 cursor-pointer"
+        className="flex flex-wrap items-center gap-2 md:gap-3 px-3 py-2 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <span className="text-xs text-slate-400">{expanded ? '▼' : '▶'}</span>
         <div className="flex-1 min-w-0">
           <span className="font-medium text-sm text-slate-900">{comp.name}</span>
-          <span className="text-xs text-slate-400 ml-2">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
+          <span className="text-xs text-slate-400 ml-2 whitespace-nowrap">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
         </div>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500 whitespace-nowrap">
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
         </span>
-        <span className="text-xs text-slate-500 w-20 text-right">
+        <span className="text-xs text-slate-500 w-16 md:w-20 text-right whitespace-nowrap">
           {comp.priced_quantity != null ? (() => {
             const priced = Number(comp.priced_quantity);
             const packSnap = comp.pack_size_snapshot != null ? Number(comp.pack_size_snapshot) : null;
@@ -274,7 +274,7 @@ export function ExpandableComponent({
             return <>{priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
           })() : displayValue(comp.final_quantity ?? 0)}
         </span>
-        <span className="text-xs font-medium w-20 text-right">{formatCurrency(totalCost, currency)}</span>
+        <span className="text-xs font-medium w-16 md:w-20 text-right whitespace-nowrap">{formatCurrency(totalCost, currency)}</span>
         <button
           onClick={e => {
             e.stopPropagation();

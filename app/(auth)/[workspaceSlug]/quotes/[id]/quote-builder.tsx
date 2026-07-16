@@ -546,8 +546,8 @@ export function QuoteBuilder({
   return (
     <>
     <section className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
           <Link href={`/${workspaceSlug}/quotes`} className="text-sm text-slate-500 hover:text-slate-700">
             ← Quotes
           </Link>
@@ -559,7 +559,7 @@ export function QuoteBuilder({
             />
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
           {quote.status === 'draft' && (
             <>
               <CurrencySelector 
@@ -608,12 +608,12 @@ export function QuoteBuilder({
         isOverStorage={isOverStorage}
       />
 
-      <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg">
+      <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg overflow-x-auto scrollbar-hide">
         {phases.map(p => (
           <button
             key={p.key}
             onClick={() => setPhase(p.key)}
-            className={`flex-1 py-2 px-3 text-sm font-medium rounded-full transition ${
+            className={`flex-1 md:flex-none py-2 px-3 text-sm font-medium rounded-full transition whitespace-nowrap ${
               phase === p.key
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
@@ -624,11 +624,11 @@ export function QuoteBuilder({
         ))}
       </nav>
 
-      <div className="flex gap-4 p-3 bg-slate-50 rounded-lg text-sm">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 p-3 bg-slate-50 rounded-lg text-sm">
         <span>{tradeLabels.areaSingularLabel}: <strong>{formatArea(totalRoofSqm, quote.measurement_system)}</strong></span>
         <span>Item Cost: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
         <span>Labour: <strong>{formatCurrency(totals.totalLabour, effectiveCurrency)}</strong></span>
-        <span className="ml-auto font-semibold">Total: {formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
+        <span className="w-full md:w-auto md:ml-auto font-semibold">Total: {formatCurrency(totals.grandTotal, effectiveCurrency)}</span>
       </div>
 
       {phase === 'areas' && (

@@ -74,8 +74,8 @@ export function SummaryTabs({
   return (
     <>
       {/* Tabs + Context Actions */}
-      <div className="flex items-center justify-between data-exclude-pdf" data-copilot="summary-tabs">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between data-exclude-pdf" data-copilot="summary-tabs">
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide max-w-full">
           {/*
             Tab buttons. Inactive tabs get a stronger hover: white background,
             orange-600 text, and the brand glow shadow so the affordance reads
@@ -90,7 +90,7 @@ export function SummaryTabs({
               activeTab === 'summary'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-            }`}
+            } whitespace-nowrap`}
           >
             Summary
           </button>
@@ -102,7 +102,7 @@ export function SummaryTabs({
               activeTab === 'customer'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-            }`}
+            } whitespace-nowrap`}
           >
             Customer Quote
           </button>
@@ -114,14 +114,14 @@ export function SummaryTabs({
               activeTab === 'labor'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-            }`}
+            } whitespace-nowrap`}
           >
             Labor Sheet
           </button>
         </div>
 
         {/* Contextual actions per tab */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {activeTab === 'summary' && summaryActions}
           {activeTab === 'customer' && hasCustomerQuote && (
             <>

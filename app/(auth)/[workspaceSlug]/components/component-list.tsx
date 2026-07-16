@@ -967,7 +967,7 @@ export function ComponentList({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div data-copilot="component-name">
                 <label className="block text-xs text-slate-500 mb-1">Name</label>
-                <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
               </div>
               <div data-copilot="component-type">
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
@@ -975,7 +975,7 @@ export function ComponentList({
                   name="component_type" 
                   required 
                   defaultValue={filter === 'extra' ? 'extra' : 'main'}
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg"
+                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                 >
                   <option value="main">Main Component</option>
                   <option value="extra">Extra</option>
@@ -988,7 +988,7 @@ export function ComponentList({
                   required
                   value={formMeasurementType}
                   onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                 >
                   {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
                     // Filter the dropdown down to roofing defaults when the
@@ -1004,7 +1004,7 @@ export function ComponentList({
               </div>
               <div data-copilot="component-labour">
                 <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                <input name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                <input name="default_labour_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredLabourRate} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
               </div>
 
               {/* Item Cost pricing: single source of truth.
@@ -1017,7 +1017,7 @@ export function ComponentList({
                   <select
                     value={formPricingStrategy}
                     onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                    className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                    className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                   >
                     {allowedStrategiesFor(formMeasurementType).map((s) => (
                       <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
@@ -1028,7 +1028,7 @@ export function ComponentList({
               {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                 <div data-copilot="component-rates">
                   <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                  <input name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                  <input name="default_material_rate" type="number" step="0.01" placeholder="0" defaultValue={restoredMaterialRate} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
               {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
@@ -1037,18 +1037,18 @@ export function ComponentList({
                   <input type="hidden" name="default_material_rate" value="0" />
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                    <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                    <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-xs text-slate-500 mb-1">
                       Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                     </label>
-                    <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                    <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                   </div>
                   {formPricingStrategy === 'per_pack_coverage' && (
                     <div className="col-span-2">
                       <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                      <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                      <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                     </div>
                   )}
                 </>
@@ -1060,7 +1060,7 @@ export function ComponentList({
                   name="default_waste_type"
                   value={formWasteType}
                   onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                 >
                   {Object.entries(WASTE_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
@@ -1070,7 +1070,7 @@ export function ComponentList({
               {formWasteType !== 'none' && (
                 <div data-copilot="component-waste-amount">
                   <label className="block text-xs text-slate-500 mb-1">Waste Amount {wasteAmountLabel}</label>
-                  <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
+                  <input name="waste_amount" type="number" step="0.01" placeholder={wasteAmountPlaceholderText} defaultValue={restoredWasteAmount} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                 </div>
               )}
 
@@ -1095,7 +1095,7 @@ export function ComponentList({
                 {formPitchEnabled && (
                   <div data-copilot="component-pitch-type">
                     <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                    <select name="default_pitch_type" className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg">
+                    <select name="default_pitch_type" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
                       <option value="rafter">{pitchRafterLabel}</option>
                       {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                     </select>
@@ -1221,14 +1221,14 @@ export function ComponentList({
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">Name</label>
-                     <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                     <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                    </div>
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">Measurement</label>
                      <select
                        value={formMeasurementType}
                        onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                       className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                       className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                      >
                        {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
                          .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
@@ -1240,7 +1240,7 @@ export function ComponentList({
                     </div>
                     <div>
                       <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
-                      <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                      <input name="default_labour_rate" type="number" step="0.01" defaultValue={comp.default_labour_rate ?? 0} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                     </div>
 
                     {/* Item Cost - unified: strategy dropdown drives per-unit vs pack. */}
@@ -1250,7 +1250,7 @@ export function ComponentList({
                         <select
                           value={formPricingStrategy}
                           onChange={(e) => setFormPricingStrategy(e.target.value as PricingStrategy)}
-                          className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                          className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                         >
                           {allowedStrategiesFor(formMeasurementType).map((s) => (
                             <option key={s} value={s}>{PRICING_STRATEGY_LABELS[s]}</option>
@@ -1261,7 +1261,7 @@ export function ComponentList({
                     {(!genericTradesEnabled || formPricingStrategy === 'per_unit') && (
                       <div>
                         <label className="block text-xs text-slate-500 mb-1">Item Cost ({unitForMeasurement(formMeasurementType)})</label>
-                        <input name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                        <input name="default_material_rate" type="number" step="0.01" defaultValue={comp.default_material_rate ?? 0} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                       </div>
                     )}
                     {genericTradesEnabled && formPricingStrategy !== 'per_unit' && (
@@ -1269,18 +1269,18 @@ export function ComponentList({
                         <input type="hidden" name="default_material_rate" value="0" />
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Quantity Price</label>
-                          <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                          <input type="number" step="0.01" placeholder="e.g. 500" value={formPackPrice} onChange={(e) => setFormPackPrice(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                         </div>
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">
                             Quantity Amount ({formPricingStrategy === 'per_pack_length' ? 'm' : formPricingStrategy === 'per_pack_area' ? 'm\u00b2' : formPricingStrategy === 'per_pack_volume' ? 'm\u00b3' : 'qty'})
                           </label>
-                          <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                          <input type="number" step="0.01" placeholder="e.g. 50" value={formPackSize} onChange={(e) => setFormPackSize(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                         </div>
                         {formPricingStrategy === 'per_pack_coverage' && (
                           <div className="col-span-2">
                             <label className="block text-xs text-slate-500 mb-1">Coverage per pack (m²)</label>
-                            <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                            <input type="number" step="0.01" placeholder="e.g. 50" value={formPackCoverageM2} onChange={(e) => setFormPackCoverageM2(e.target.value)} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                           </div>
                         )}
                       </>
@@ -1292,7 +1292,7 @@ export function ComponentList({
                         name="default_waste_type"
                         value={formWasteType}
                         onChange={(e) => setFormWasteType(e.target.value as WasteType)}
-                        className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                        className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                       >
                         {Object.entries(WASTE_LABELS).map(([k, v]) => (
                           <option key={k} value={k}>{v}</option>
@@ -1307,7 +1307,7 @@ export function ComponentList({
                           type="number"
                           step="0.01"
                           defaultValue={formWasteType === 'percent' ? comp.default_waste_percent : comp.default_waste_fixed}
-                          className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                          className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg"
                         />
                       </div>
                     )}
@@ -1333,7 +1333,7 @@ export function ComponentList({
                       {formPitchEnabled && (
                         <div>
                           <label className="block text-xs text-slate-500 mb-1">Pitch Type</label>
-                          <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1 text-sm border border-slate-300 rounded">
+                          <select name="default_pitch_type" defaultValue={comp.default_pitch_type} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg">
                             <option value="rafter">{pitchRafterLabel}</option>
                             {!pitchHidesValleyHip && <option value="valley_hip">Valley/Hip Pitch</option>}
                           </select>
