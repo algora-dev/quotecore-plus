@@ -125,7 +125,7 @@ export function MobileHeader({ workspaceSlug, navItems, bell, inbox, help }: Mob
           />
           <div
             id="mobile-nav-menu"
-            className="absolute left-0 right-0 top-full bg-white border-b border-slate-200 shadow-lg z-40 md:hidden"
+            className="fixed left-0 right-0 top-14 bg-white border-b border-slate-200 shadow-lg z-40 md:hidden safe-top"
           >
             <nav className="px-4 py-3 space-y-1">
               {/* Nav links first */}
