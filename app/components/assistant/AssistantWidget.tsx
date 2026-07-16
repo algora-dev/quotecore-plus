@@ -471,7 +471,7 @@ export function AssistantWidget(_props: Props) {
           data-assistant-id="assistant-launcher"
           aria-label={hasConversation ? 'Reopen assistant conversation' : 'Open assistant'}
           title="To fully hide chat, go to Account > Notifications"
-          className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-white text-slate-900 transition-colors duration-200 ease-in-out hover:bg-slate-50"
+          className="assistant-launcher group fixed bottom-5 right-5 z-[60] inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-slate-200 bg-white text-slate-900 transition-colors duration-200 ease-in-out hover:bg-slate-50 safe-bottom"
         >
           {/* Q's face. The orange glow/pulse + hover lift come from
               .assistant-launcher in globals.css. */}

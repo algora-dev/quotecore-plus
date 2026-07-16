@@ -565,3 +565,10 @@ a,
 :focus:not(:focus-visible) {
   outline: none;
 }
+
+/* Help drawer: full width on mobile, desktop width from inline style */
+@media (max-width: 767px) {
+  .help-drawer-panel {
+    width: 100vw !important;
+  }
+}

@@ -271,7 +271,7 @@ export function HelpDrawerPanel() {
 
   return (
     <div
-      className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-slate-200 bg-white shadow-xl"
+      className="fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-slate-200 bg-white shadow-xl help-drawer-panel"
       style={{ width: `${effectiveWidth}vw` }}
       role="dialog"
       aria-label="Help"
