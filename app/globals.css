@@ -544,25 +544,29 @@ a,
 
 /* Subtle visible scrollbar for horizontal scroll tables/panels */
 .scrollbar-thin {
+  overflow-x: scroll !important;
+  overflow-y: hidden !important;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 107, 53, 0.35) transparent;
+  scrollbar-color: rgba(255, 107, 53, 0.4) transparent;
   -webkit-overflow-scrolling: touch;
 }
 .scrollbar-thin::-webkit-scrollbar {
   height: 5px;
   width: 5px;
   -webkit-appearance: none;
+  appearance: none;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 107, 53, 0.35);
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 3px;
 }
-.scrollbar-thin::-webkit-scrollbar-thumb:hover,
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 107, 53, 0.4);
+  border-radius: 3px;
+}
+.scrollbar-thin:hover::-webkit-scrollbar-thumb,
 .scrollbar-thin:active::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 107, 53, 0.7);
+  background-color: rgba(255, 107, 53, 0.75);
 }
 
 /* Reduced motion — disable all animations and transitions */
