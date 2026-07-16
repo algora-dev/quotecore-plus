@@ -34,6 +34,7 @@ import { RoofAreaCard } from './quote-builder/RoofAreaCard';
 import { ExpandableComponent } from './quote-builder/ExpandableComponent';
 import { AddFromLibrary } from './quote-builder/AddFromLibrary';
 import { formatQuantity, formatPricedQuantity } from './quote-builder/helpers';
+import { ScrollIndicator } from '@/app/components/ui/ScrollIndicator';
 
 type Phase = 'areas' | 'components' | 'extras' | 'review';
 
@@ -834,7 +835,7 @@ export function QuoteBuilder({
                   {area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 </h3>
                {areaComps.length > 0 ? (
-                  <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
+                  <ScrollIndicator className="-mx-4 md:mx-0">
                   <table className="w-full text-sm min-w-[480px]">
                     <thead>
                       <tr className="text-left text-xs text-slate-500 border-b">
@@ -868,7 +869,7 @@ export function QuoteBuilder({
                       ))}
                     </tbody>
                   </table>
-                  </div>
+                  </ScrollIndicator>
                 ) : (
                   <p className="text-xs text-slate-400">No components</p>
                 )}
@@ -886,7 +887,7 @@ export function QuoteBuilder({
             return (
              <div className="rounded-xl border border-slate-200 bg-white p-4">
                <h3 className="font-semibold text-slate-900 mb-2">Quote items</h3>
-                <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
+                <ScrollIndicator className="-mx-4 md:mx-0">
                 <table className="w-full text-sm min-w-[480px]">
                  <thead>
                    <tr className="text-left text-xs text-slate-500 border-b">
@@ -911,7 +912,7 @@ export function QuoteBuilder({
                    ))}
                  </tbody>
                </table>
-                </div>
+                </ScrollIndicator>
              </div>
             );
           })()}
@@ -919,7 +920,7 @@ export function QuoteBuilder({
           {extraComps.length > 0 && (
            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
              <h3 className="font-semibold text-slate-900 mb-2">Extras</h3>
-              <div className="overflow-x-auto scrollbar-thin -mx-4 px-4 md:mx-0 md:px-0">
+              <ScrollIndicator className="-mx-4 md:mx-0">
               <table className="w-full text-sm min-w-[480px]">
                <thead>
                  <tr className="text-left text-xs text-slate-500 border-b">
@@ -946,7 +947,7 @@ export function QuoteBuilder({
                  ))}
                </tbody>
              </table>
-              </div>
+              </ScrollIndicator>
            </div>
           )}
 
