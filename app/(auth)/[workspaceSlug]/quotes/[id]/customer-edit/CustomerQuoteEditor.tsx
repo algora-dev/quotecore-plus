@@ -854,7 +854,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-3 md:p-6 space-y-4">
+      <div className="max-w-7xl mx-auto p-2 md:p-6 space-y-3 md:space-y-4">
         {/* Header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
@@ -928,7 +928,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               basis (not 1fr) so the PREVIEW is the dominant section, matching
               the order editors; on collapse the preview goes full width. */}
           <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[420px] lg:flex-shrink-0">
-          <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-6 space-y-4" data-copilot="cl-left-panel">
+          <div className="bg-white rounded-xl border border-slate-200 p-2 md:p-6 space-y-4" data-copilot="cl-left-panel">
             <div className="flex items-center gap-2">
               <CollapseButton
                 collapsed={panelCollapsed}

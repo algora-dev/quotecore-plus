@@ -17,7 +17,7 @@ export default async function InvoicesPage({
   if (!ent.features.invoices) {
     const requiredPlan = FEATURE_MIN_PLAN.invoices;
     return (
-      <section className="space-y-4 md:space-y-5 px-3 md:px-0">
+      <section className="space-y-4 md:space-y-5 px-0 md:px-0">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Invoices</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">Available on the {requiredPlan} plan and above.</p>
@@ -61,7 +61,7 @@ export default async function InvoicesPage({
     .order('created_at', { ascending: false });
 
   return (
-    <section className="space-y-4 md:space-y-5 px-3 md:px-0">
+    <section className="space-y-4 md:space-y-5 px-0 md:px-0">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Invoices</h1>

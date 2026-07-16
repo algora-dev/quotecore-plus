@@ -109,7 +109,7 @@ export default async function WorkspaceHome({
   ];
 
   return (
-    <section className="space-y-4 md:space-y-6 px-4 py-4 md:px-0 md:py-0">
+    <section className="space-y-4 md:space-y-6 px-2 py-3 md:px-0 md:py-0">
       {/* First-login Tutorials welcome - renders once per new user. */}
       {showWelcome ? <WelcomeModal base={`/${workspaceSlug}`} firstName={firstName} /> : null}
 

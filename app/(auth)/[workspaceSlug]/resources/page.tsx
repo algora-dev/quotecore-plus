@@ -153,7 +153,7 @@ export default async function ResourcesHubPage({
   ];
 
   return (
-    <section className="space-y-4 md:space-y-6 px-3 md:px-0">
+    <section className="space-y-4 md:space-y-6 px-0 md:px-0">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Resource Library</h1>

@@ -26,7 +26,7 @@ export default async function InboxPage({
   if (!ent.features.message_center) {
     const requiredPlan = FEATURE_MIN_PLAN.message_center;
     return (
-      <div className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-5">
+      <div className="max-w-5xl mx-auto px-0 md:px-4 py-3 md:py-6 space-y-3 md:space-y-5">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">Available on the Starter plan and above.</p>
@@ -79,7 +79,7 @@ export default async function InboxPage({
   const notificationPrefs = resolvePrefs(company?.notification_prefs);
 
   return (
-    <div className="max-w-5xl mx-auto px-3 md:px-4 py-4 md:py-6 pb-20 md:pb-6">
+    <div className="max-w-5xl mx-auto px-0 md:px-4 py-3 md:py-6 pb-20 md:pb-6">
       <div className="mb-4 md:mb-5">
         <h1 className="text-xl md:text-2xl font-bold text-slate-900">Message Center</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">

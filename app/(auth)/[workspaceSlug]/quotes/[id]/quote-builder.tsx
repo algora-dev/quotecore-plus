@@ -546,7 +546,7 @@ export function QuoteBuilder({
 
   return (
     <>
-    <section className="space-y-4 md:space-y-6 px-4 py-4 md:px-0 md:py-0 pb-20 md:pb-0">
+    <section className="space-y-4 md:space-y-6 px-2 py-3 md:px-0 md:py-0 pb-20 md:pb-0">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <Link href={`/${workspaceSlug}/quotes`} className="text-sm text-slate-500 hover:text-slate-700">
@@ -609,7 +609,7 @@ export function QuoteBuilder({
         isOverStorage={isOverStorage}
       />
 
-      <nav className="flex gap-1 p-1 bg-slate-100 rounded-full overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-1" aria-label="Quote builder steps">
+      <nav className="flex gap-1 p-1 bg-slate-100 rounded-full overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-1" aria-label="Quote builder steps">
         {phases.map(p => (
           <button
             key={p.key}

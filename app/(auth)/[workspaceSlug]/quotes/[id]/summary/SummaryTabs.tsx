@@ -75,7 +75,7 @@ export function SummaryTabs({
     <>
       {/* Tabs + Context Actions */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between data-exclude-pdf" data-copilot="summary-tabs">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide max-w-full -mx-4 px-4 md:mx-0 md:px-1">
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide max-w-full -mx-2 px-2 md:mx-0 md:px-1">
           {/*
             Tab buttons. Inactive tabs get a stronger hover: white background,
             orange-600 text, and the brand glow shadow so the affordance reads
@@ -121,7 +121,7 @@ export function SummaryTabs({
         </div>
 
         {/* Contextual actions per tab */}
-        <div className="flex items-center gap-2 flex-wrap -mx-4 px-4 md:mx-0 md:px-0 pb-2 md:pb-0">
+        <div className="flex items-center gap-2 flex-wrap -mx-2 px-2 md:mx-0 md:px-0 pb-2 md:pb-0">
           {activeTab === 'summary' && summaryActions}
           {activeTab === 'customer' && hasCustomerQuote && (
             <>

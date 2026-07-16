@@ -34,7 +34,7 @@ export default async function FlashingsPage(props: Props) {
   if (!ent.features.flashings) {
     const requiredPlan = FEATURE_MIN_PLAN.flashings;
     return (
-      <section className="space-y-4 md:space-y-5 px-3 md:px-0">
+      <section className="space-y-4 md:space-y-5 px-0 md:px-0">
         <BackButton />
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">{featureLabel}</h1>
@@ -70,7 +70,7 @@ export default async function FlashingsPage(props: Props) {
   const flashings = await loadFlashingLibrary();
 
   return (
-    <section className="space-y-4 md:space-y-5 px-3 md:px-0">
+    <section className="space-y-4 md:space-y-5 px-0 md:px-0">
       <BackButton />
       <div>
         <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Drawings/Images</h1>

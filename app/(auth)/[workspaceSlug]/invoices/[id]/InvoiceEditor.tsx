@@ -447,8 +447,8 @@ export function InvoiceEditor({
           the Quotes summary style. The band (bg-slate-100) also backs the
           activity card below so header + activity read as one grey section
           above the editor's two-pane body - no second-box look. Non-sticky. */}
-      <div className="bg-slate-50 px-4 pt-4">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-3 md:px-4 py-3 border border-slate-200 rounded-2xl bg-white shadow-sm">
+      <div className="bg-slate-50 px-2 pt-2 md:px-4 md:pt-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-2 md:px-4 py-2 md:py-3 border border-slate-200 rounded-2xl bg-white shadow-sm">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={backHref}
@@ -587,7 +587,7 @@ export function InvoiceEditor({
       {/* Editor body - panes float as rounded cards on the slate-50 app
           background, with a gap between them (matches the rounded card
           language of the header/activity section above). */}
-      <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden relative bg-slate-50 px-3 md:px-4 pb-4 md:pb-20 gap-4 pb-20 md:pb-4">
+      <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden relative bg-slate-50 px-2 md:px-4 pb-4 md:pb-20 gap-3 md:gap-4 pb-20 md:pb-4">
         {/* ── Left panel ── */}
         {!panelCollapsed && (
           <div className="w-full md:w-[480px] md:min-w-[400px] flex-shrink-0 border border-slate-200 rounded-2xl bg-white flex flex-col md:overflow-y-auto shadow-sm">
@@ -1047,7 +1047,7 @@ export function InvoiceEditor({
         )}
 
         {/* ── Right panel: preview ── */}
-        <div className="w-full md:flex-1 md:overflow-y-auto bg-slate-50 rounded-2xl p-2 md:p-4" data-copilot="invoice-preview">
+        <div className="w-full md:flex-1 md:overflow-y-auto bg-slate-50 rounded-2xl p-1 md:p-4" data-copilot="invoice-preview">
           <div data-pdf-content>
           <InvoicePreview
             invoice={initial}

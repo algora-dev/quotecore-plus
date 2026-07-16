@@ -437,7 +437,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
       <aside className="w-full md:w-44 flex-shrink-0">
         {/* The guide highlight targets this <nav> (only the 3 folder buttons),
             not the <aside> - the aside stretches to the full list height. */}
-        <nav className="flex md:flex-col gap-1 md:space-y-1 self-start overflow-x-auto md:overflow-visible -mx-3 md:mx-0 px-3 md:px-0 pb-2 md:pb-0" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
+        <nav className="flex md:flex-col gap-1 md:space-y-1 self-start overflow-x-auto md:overflow-visible -mx-2 md:mx-0 px-0 md:px-0 pb-2 md:pb-0" data-assistant-id="inbox-folders" data-copilot="inbox-folders">
           {FOLDERS.map((f) => (
             <button
               key={f.key}
@@ -483,7 +483,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
               className="w-full rounded-full border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-base md:text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0 md:flex-wrap">
           {TYPE_FILTERS.map((f) => (
             <button
               key={f.key}

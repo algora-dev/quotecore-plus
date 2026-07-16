@@ -404,7 +404,7 @@ export function BillingPanel(props: BillingPanelProps) {
       )}
 
       {/* Current plan card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Current plan</p>
@@ -499,7 +499,7 @@ export function BillingPanel(props: BillingPanelProps) {
       </div>
 
       {/* Plan grid */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
         <h3 className="text-base font-semibold text-slate-900">Plans</h3>
         <p className="text-sm text-slate-500 mt-1">
           Click a plan to learn more. Trial is non-paid and runs for 14 days.

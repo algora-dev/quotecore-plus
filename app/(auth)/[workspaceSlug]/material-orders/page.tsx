@@ -22,7 +22,7 @@ export default async function MaterialOrdersPage(props: Props) {
   if (!ent.features.material_orders) {
     const requiredPlan = FEATURE_MIN_PLAN.material_orders;
     return (
-      <section className="space-y-4 md:space-y-5 px-3 md:px-0">
+      <section className="space-y-4 md:space-y-5 px-0 md:px-0">
         <div>
           <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Material Orders</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">Available on the {requiredPlan} plan and above.</p>
@@ -60,7 +60,7 @@ export default async function MaterialOrdersPage(props: Props) {
   ]);
 
   return (
-    <section className="space-y-4 md:space-y-5 px-3 md:px-0">
+    <section className="space-y-4 md:space-y-5 px-0 md:px-0">
       <div>
         <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Material Orders</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">Create orders, manage suppliers, and track deliveries.</p>

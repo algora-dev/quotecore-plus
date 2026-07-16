@@ -168,7 +168,7 @@ export function AccountTabs({ panels }: AccountTabsProps) {
     <div className="flex flex-col md:flex-row md:items-start gap-6">
       <aside className="w-full md:w-56 lg:w-60 md:flex-shrink-0">
         <nav aria-label="Account sections" className="md:sticky md:top-6 md:self-start">
-          <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible -mx-3 md:mx-0 px-3 md:px-0 pb-2 md:pb-0">
+          <ul className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible -mx-2 md:mx-0 px-0 md:px-0 pb-2 md:pb-0">
             {TABS.map((tab) => {
               if (tab.disabled) {
                 return (

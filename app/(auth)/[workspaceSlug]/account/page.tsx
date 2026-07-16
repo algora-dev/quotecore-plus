@@ -112,14 +112,14 @@ export default async function AccountPage() {
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Profile</h2>
           <p className="text-sm text-slate-500 mt-1">Your personal account details.</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4">
           <UserProfileForm
             userId={profile.id}
             currentFullName={user?.full_name ?? ''}
             currentEmail={userEmail}
           />
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4">
           <div>
             <h3 className="text-base font-semibold text-slate-900">Sign-in email</h3>
             <p className="text-xs text-slate-500 mt-1">Change the email used to sign in. Both your old and new email must confirm the change.</p>
@@ -135,7 +135,7 @@ export default async function AccountPage() {
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Company</h2>
           <p className="text-sm text-slate-500 mt-1">Settings that apply to your whole workspace.</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6" data-copilot="account-company">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6" data-copilot="account-company">
           <CompanySettingsForm
             companyId={company.id}
             isOverStorage={entitlements.isOverStorage}
@@ -166,7 +166,7 @@ export default async function AccountPage() {
           <h2 className="text-lg md:text-xl font-semibold text-slate-900">Security</h2>
           <p className="text-sm text-slate-500 mt-1">Protect access to your account.</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6 space-y-4" data-copilot="account-security">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4" data-copilot="account-security">
           <PasswordSection authProvider={authProvider} userEmail={userEmail} />
           <MfaSection
             initialFactors={mfa.factors}
@@ -178,7 +178,7 @@ export default async function AccountPage() {
             hasVerifiedMfa={mfa.factors.some((f) => f.status === 'verified')}
           />
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6 space-y-4" data-copilot="account-recovery">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4" data-copilot="account-recovery">
           <div>
             <h3 className="text-base font-semibold text-slate-900">Account Recovery</h3>
             <p className="text-sm text-slate-500 mt-1">
@@ -200,7 +200,7 @@ export default async function AccountPage() {
             choose the Settings tab to manage those.)
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 md:p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4">
           <AssistantSection
             initialEnabled={(user as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true}
           />
@@ -328,7 +328,7 @@ export default async function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-3 md:p-6">
+    <div className="min-h-screen bg-slate-50 p-2 md:p-6">
       <div className="max-w-6xl mx-auto space-y-4">
         <BackButton />
         <header>
