@@ -92,7 +92,7 @@ export function TutorialModal({ tutorial, base, assistantEnabled, onClose }: Pro
           <button
             type="button"
             onClick={onClose}
-            className="-mr-1 -mt-1 flex-shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="-mr-1 -mt-1 flex-shrink-0 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 md:p-1.5"
             aria-label="Close"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

@@ -110,7 +110,7 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
   const isLoading = status === 'compressing' || status === 'parsing';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
       <div
         className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-lg mx-4 p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
