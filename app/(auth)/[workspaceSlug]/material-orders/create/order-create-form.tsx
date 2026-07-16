@@ -125,7 +125,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   const [headerExpanded, setHeaderExpanded] = useState(true);
   // Declutter: collapse the components control sidebar so the order-form
   // preview fills the space. Pure layout state - sidebar stays mounted.
-  const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);
+  // On mobile, default collapsed (sidebar takes full width otherwise).
+  const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);
   // Hover-to-highlight: when the user hovers a component in the left sidebar,
   // the matching card in the order review gets an orange border so they can
   // quickly see which component they need to edit.
@@ -768,7 +769,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             </div>
 
             {/* Minimize Button — sticky on mobile so always reachable */}
-            <div className="px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end sticky bottom-0 md:static md:bottom-auto">
+            <div className="px-2 md:px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end sticky bottom-0 md:static md:bottom-auto">
               <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors min-h-[44px]">
                 Minimize Header
               </button>
@@ -894,7 +895,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             transition. */}
         <div
           className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
-            componentsPanelCollapsed ? 'w-0 opacity-0 pointer-events-none border-r-0' : 'w-full lg:w-80 opacity-100'
+            componentsPanelCollapsed ? 'w-0 opacity-0 pointer-events-none border-r-0' : 'w-full lg:w-80 opacity-100 max-h-[50vh] lg:max-h-none overflow-y-auto lg:overflow-hidden'
           }`}
           data-copilot="mo-sidebar"
           aria-hidden={componentsPanelCollapsed}
