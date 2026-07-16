@@ -833,40 +833,42 @@ export function QuoteBuilder({
                 <h3 className="font-semibold text-slate-900 mb-2">
                   {area.label} - {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 </h3>
-                {areaComps.length > 0 ? (
-                  <table className="w-full text-sm">
+               {areaComps.length > 0 ? (
+                  <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                  <table className="w-full text-sm min-w-[480px]">
                     <thead>
                       <tr className="text-left text-xs text-slate-500 border-b">
-                        <th className="py-1">Component</th>
-                        <th className="py-1 text-right">Entries</th>
-                        <th className="py-1 text-right">Total Qty</th>
-                        <th className="py-1 text-right">Item Cost</th>
-                        <th className="py-1 text-right">Labour</th>
-                        <th className="py-1 text-right">Total</th>
+                        <th className="py-1 whitespace-nowrap">Component</th>
+                        <th className="py-1 text-right whitespace-nowrap">Entries</th>
+                        <th className="py-1 text-right whitespace-nowrap">Total Qty</th>
+                        <th className="py-1 text-right whitespace-nowrap">Item Cost</th>
+                        <th className="py-1 text-right whitespace-nowrap">Labour</th>
+                        <th className="py-1 text-right whitespace-nowrap">Total</th>
                       </tr>
                     </thead>
                     <tbody>
                       {areaComps.map(c => (
                         <tr key={c.id} className="border-b border-slate-100">
-                          <td className="py-1.5">
+                          <td className="py-1.5 whitespace-nowrap">
                             {c.name}
                             {(c.is_rate_overridden || c.is_waste_overridden) && (
                               <span className="ml-1 text-xs text-amber-600">●</span>
                             )}
                           </td>
-                          <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                          <td className="py-1.5 text-right">
+                          <td className="py-1.5 text-right whitespace-nowrap">{(entries[c.id] ?? []).length}</td>
+                          <td className="py-1.5 text-right whitespace-nowrap">
                             {formatPricedQuantity(c)}
                           </td>
-                          <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                          <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                          <td className="py-1.5 text-right font-medium">
+                          <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                          <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                          <td className="py-1.5 text-right font-medium whitespace-nowrap">
                             {formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 ) : (
                   <p className="text-xs text-slate-400">No components</p>
                 )}
@@ -882,66 +884,70 @@ export function QuoteBuilder({
             const noAreaComps = components.filter(c => !c.quote_roof_area_id);
             if (noAreaComps.length === 0) return null;
             return (
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <h3 className="font-semibold text-slate-900 mb-2">Quote items</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-slate-500 border-b">
-                      <th className="py-1">Component</th>
-                      <th className="py-1 text-right">Entries</th>
-                      <th className="py-1 text-right">Total Qty</th>
-                      <th className="py-1 text-right">Item Cost</th>
-                      <th className="py-1 text-right">Labour</th>
-                      <th className="py-1 text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {noAreaComps.map(c => (
-                      <tr key={c.id} className="border-b border-slate-100">
-                        <td className="py-1.5">{c.name}</td>
-                        <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                        <td className="py-1.5 text-right">{formatPricedQuantity(c)}</td>
-                        <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                        <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                        <td className="py-1.5 text-right font-medium">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+             <div className="rounded-xl border border-slate-200 bg-white p-4">
+               <h3 className="font-semibold text-slate-900 mb-2">Quote items</h3>
+                <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+                <table className="w-full text-sm min-w-[480px]">
+                 <thead>
+                   <tr className="text-left text-xs text-slate-500 border-b">
+                     <th className="py-1 whitespace-nowrap">Component</th>
+                     <th className="py-1 text-right whitespace-nowrap">Entries</th>
+                     <th className="py-1 text-right whitespace-nowrap">Total Qty</th>
+                     <th className="py-1 text-right whitespace-nowrap">Item Cost</th>
+                     <th className="py-1 text-right whitespace-nowrap">Labour</th>
+                     <th className="py-1 text-right whitespace-nowrap">Total</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {noAreaComps.map(c => (
+                     <tr key={c.id} className="border-b border-slate-100">
+                       <td className="py-1.5 whitespace-nowrap">{c.name}</td>
+                       <td className="py-1.5 text-right whitespace-nowrap">{(entries[c.id] ?? []).length}</td>
+                       <td className="py-1.5 text-right whitespace-nowrap">{formatPricedQuantity(c)}</td>
+                       <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                       <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                       <td className="py-1.5 text-right font-medium whitespace-nowrap">{formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}</td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+                </div>
+             </div>
             );
           })()}
 
           {extraComps.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <h3 className="font-semibold text-slate-900 mb-2">Extras</h3>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-slate-500 border-b">
-                    <th className="py-1">Extra</th>
-                    <th className="py-1 text-right">Entries</th>
-                    <th className="py-1 text-right">Total Qty</th>
-                    <th className="py-1 text-right">Item Cost</th>
-                    <th className="py-1 text-right">Labour</th>
-                    <th className="py-1 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {extraComps.map(c => (
-                    <tr key={c.id} className="border-b border-amber-100">
-                      <td className="py-1.5">{c.name}</td>
-                      <td className="py-1.5 text-right">{(entries[c.id] ?? []).length}</td>
-                      <td className="py-1.5 text-right">{formatPricedQuantity(c)}</td>
-                      <td className="py-1.5 text-right">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
-                      <td className="py-1.5 text-right">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
-                      <td className="py-1.5 text-right font-medium">
-                        {formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+             <h3 className="font-semibold text-slate-900 mb-2">Extras</h3>
+              <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+              <table className="w-full text-sm min-w-[480px]">
+               <thead>
+                 <tr className="text-left text-xs text-slate-500 border-b">
+                   <th className="py-1 whitespace-nowrap">Extra</th>
+                   <th className="py-1 text-right whitespace-nowrap">Entries</th>
+                   <th className="py-1 text-right whitespace-nowrap">Total Qty</th>
+                   <th className="py-1 text-right whitespace-nowrap">Item Cost</th>
+                   <th className="py-1 text-right whitespace-nowrap">Labour</th>
+                   <th className="py-1 text-right whitespace-nowrap">Total</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {extraComps.map(c => (
+                   <tr key={c.id} className="border-b border-amber-100">
+                     <td className="py-1.5 whitespace-nowrap">{c.name}</td>
+                     <td className="py-1.5 text-right whitespace-nowrap">{(entries[c.id] ?? []).length}</td>
+                     <td className="py-1.5 text-right whitespace-nowrap">{formatPricedQuantity(c)}</td>
+                     <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.material_cost ?? 0, effectiveCurrency)}</td>
+                     <td className="py-1.5 text-right whitespace-nowrap">{formatCurrency(c.labour_cost ?? 0, effectiveCurrency)}</td>
+                     <td className="py-1.5 text-right font-medium whitespace-nowrap">
+                       {formatCurrency((c.material_cost ?? 0) + (c.labour_cost ?? 0), effectiveCurrency)}
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+              </div>
+           </div>
           )}
 
           {/* Profit Margin Controls */}
