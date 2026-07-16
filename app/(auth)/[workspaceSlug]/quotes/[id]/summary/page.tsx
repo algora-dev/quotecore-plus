@@ -345,7 +345,7 @@ export default async function QuoteSummaryPage({
   const showOriginalView = view === 'original' && !!originalSnapshot;
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4 space-y-6">
+    <div className="max-w-5xl mx-auto py-4 md:py-8 px-4 space-y-4 md:space-y-6">
       {/* Header */}
       <div>
         <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-3">
@@ -353,9 +353,9 @@ export default async function QuoteSummaryPage({
           {backLabel}
         </Link>
 
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">{quote.customer_name}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-xl md:text-2xl font-semibold text-slate-900 truncate">{quote.customer_name}</h1>
             {quote.job_name && <p className="text-sm text-slate-500 mt-0.5">{quote.job_name}</p>}
             {(quote as any).acceptance_token_expires_at && (
               <div className="mt-2">
@@ -367,7 +367,7 @@ export default async function QuoteSummaryPage({
               </div>
             )}
           </div>
-          <span className="text-sm font-medium text-orange-600">Quote #{quote.quote_number}</span>
+          <span className="text-sm font-medium text-orange-600 flex-shrink-0">Quote #{quote.quote_number}</span>
         </div>
       </div>
 
@@ -406,7 +406,7 @@ export default async function QuoteSummaryPage({
         laborLines={(laborSheetLines || []).map(l => ({ id: l.id, custom_text: l.custom_text, custom_amount: l.custom_amount, show_price: l.show_price, is_visible: l.is_visible, include_in_total: l.include_in_total }))}
         summaryHeaderSlot={
           !!originalSnapshot ? (
-            <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+            <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-1">
               <Link
                 href={`/${workspaceSlug}/quotes/${id}/summary`}
                 title="Your current up to date quote summary"
@@ -704,7 +704,9 @@ export default async function QuoteSummaryPage({
       </SummaryTabs>
 
       {/* Notes panel -- always visible below the main summary content */}
+      <div className="pb-20 md:pb-0">
       <QuoteNotesPanel quoteId={id} initialNotes={quoteNotes} currentUserFullName={currentUserFullName} />
+      </div>
 
     </div>
   );
