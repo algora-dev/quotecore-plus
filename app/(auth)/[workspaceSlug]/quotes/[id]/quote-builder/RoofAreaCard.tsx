@@ -78,23 +78,23 @@ export function RoofAreaCard({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+    <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 space-y-3">
       {area.is_locked ? (
         <>
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900">{area.label}</h3>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-slate-900 text-sm md:text-base">{area.label}</h3>
+            <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''}
               </span>
               <button
                 onClick={() => onToggleLock(area.id, false)}
-                className="px-2 py-1 text-xs rounded border border-slate-300 hover:bg-slate-50"
+                className="px-2 py-1 text-xs rounded border border-slate-300 hover:bg-slate-50 min-h-[44px] flex items-center"
               >
                 Edit
               </button>
-              <button onClick={() => onRemove(area.id)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+              <button onClick={() => onRemove(area.id)} className="w-8 h-8 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
               </button>
             </div>
@@ -102,13 +102,13 @@ export function RoofAreaCard({
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900">{area.label}</h3>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-semibold text-slate-900 text-sm md:text-base">{area.label}</h3>
+            <div className="flex items-center gap-2 flex-shrink-0">
               <span className="text-sm font-medium text-orange-600">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
               </span>
-              <button onClick={() => onRemove(area.id)} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+              <button onClick={() => onRemove(area.id)} className="w-8 h-8 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
               </button>
             </div>
@@ -139,8 +139,8 @@ export function RoofAreaCard({
               </div>}
               {entries.map((entry, idx) => (
                 <div key={entry.id} className="flex items-center gap-2 text-xs mb-1">
-                  <span className="text-slate-400 w-6">#{idx + 1}</span>
-                  <span className="text-slate-700">
+                  <span className="text-slate-400 w-6 flex-shrink-0">#{idx + 1}</span>
+                  <span className="text-slate-700 min-w-0">
                     {formatLinear(entry.width_m, quote.measurement_system)} × {formatLinear(entry.length_m, quote.measurement_system)} = {formatArea(entry.sqm, quote.measurement_system)}
                     {entry.pitch_degrees != null && entry.pitch_degrees > 0 && (
                       <span className="text-slate-400 ml-1">@ {entry.pitch_degrees}°</span>
@@ -148,14 +148,14 @@ export function RoofAreaCard({
                   </span>
                   <button
                     onClick={() => onRemoveEntry(entry.id, area.id)}
-                    className="ml-auto w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                    className="ml-auto w-8 h-8 md:w-6 md:h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                   </button>
                 </div>
               ))}
               {adding ? (
-                <div className="flex items-center gap-2 mt-2" data-copilot="quote-measurement-inputs">
+                <div className="flex flex-wrap items-center gap-2 mt-2" data-copilot="quote-measurement-inputs">
                   <input
                     ref={widthRef}
                     type="number"
@@ -164,6 +164,7 @@ export function RoofAreaCard({
                     onChange={e => setWidthInput(e.target.value)}
                     onBlur={tryAutoSubmit}
                     placeholder={normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? "Width (m)" : "Width (ft)"}
+                    inputMode="decimal"
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();
                       if (e.key === 'Escape') {
@@ -172,7 +173,7 @@ export function RoofAreaCard({
                         setLengthInput('');
                       }
                     }}
-                    className="w-24 px-2 py-1 text-xs border border-slate-300 rounded"
+                    className="w-24 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                   />
                   <span className="text-xs text-slate-400">×</span>
                   <input
@@ -182,6 +183,7 @@ export function RoofAreaCard({
                     onChange={e => setLengthInput(e.target.value)}
                     onBlur={tryAutoSubmit}
                     placeholder={normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? "Length (m)" : "Length (ft)"}
+                    inputMode="decimal"
                     onKeyDown={e => {
                       if (e.key === 'Enter') handleSubmit();
                       if (e.key === 'Escape') {
@@ -190,11 +192,11 @@ export function RoofAreaCard({
                         setLengthInput('');
                       }
                     }}
-                    className="w-24 px-2 py-1 text-xs border border-slate-300 rounded"
+                    className="w-24 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                   />
                   <button
                     onClick={handleSubmit}
-                    className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
+                    className="px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)] min-h-[44px]"
                   >
                     Add
                   </button>
@@ -204,7 +206,7 @@ export function RoofAreaCard({
                       setWidthInput('');
                       setLengthInput('');
                     }}
-                    className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700"
+                    className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700 min-h-[44px] flex items-center"
                   >
                     Done
                   </button>
@@ -223,7 +225,7 @@ export function RoofAreaCard({
             <button
               onClick={() => onToggleLock(area.id, true)}
               data-copilot="quote-confirm-area"
-              className="px-3 py-1 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-emerald-600 text-white hover:bg-emerald-700 min-h-[44px]"
             >
               Confirm
             </button>

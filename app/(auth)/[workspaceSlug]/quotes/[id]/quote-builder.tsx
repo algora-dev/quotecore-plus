@@ -546,7 +546,7 @@ export function QuoteBuilder({
 
   return (
     <>
-    <section className="space-y-6">
+    <section className="space-y-4 md:space-y-6 px-4 py-4 md:px-0 md:py-0 pb-20 md:pb-0">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
           <Link href={`/${workspaceSlug}/quotes`} className="text-sm text-slate-500 hover:text-slate-700">
@@ -609,12 +609,12 @@ export function QuoteBuilder({
         isOverStorage={isOverStorage}
       />
 
-      <nav className="flex gap-1 p-1 bg-slate-100 rounded-lg overflow-x-auto scrollbar-hide">
+      <nav className="flex gap-1 p-1 bg-slate-100 rounded-full overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-1" aria-label="Quote builder steps">
         {phases.map(p => (
           <button
             key={p.key}
             onClick={() => setPhase(p.key)}
-            className={`flex-1 md:flex-none py-2 px-3 text-sm font-medium rounded-full transition whitespace-nowrap ${
+            className={`flex-shrink-0 py-2 px-3 text-xs md:text-sm font-medium rounded-full transition whitespace-nowrap min-h-[44px] ${
               phase === p.key
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
@@ -625,7 +625,7 @@ export function QuoteBuilder({
         ))}
       </nav>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 p-3 bg-slate-50 rounded-lg text-sm">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 p-2 md:p-3 bg-slate-50 rounded-lg text-xs md:text-sm">
         <span>{tradeLabels.areaSingularLabel}: <strong>{formatArea(totalRoofSqm, quote.measurement_system)}</strong></span>
         <span>Item Cost: <strong>{formatCurrency(totals.totalMaterials, effectiveCurrency)}</strong></span>
         <span>Labour: <strong>{formatCurrency(totals.totalLabour, effectiveCurrency)}</strong></span>
@@ -655,14 +655,15 @@ export function QuoteBuilder({
               onChange={e => setNewAreaLabel(e.target.value)}
               placeholder={tradeLabels.areaIsOptional ? tradeLabels.areaNamePlaceholder : 'e.g. Main Roof, Garage'}
               data-copilot="quote-area-name"
-              className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg"
+              className="flex-1 px-3 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+              inputMode="text"
               onKeyDown={e => e.key === 'Enter' && handleAddArea()}
             />
             <button
               onClick={handleAddArea}
               disabled={!newAreaLabel.trim()}
               data-copilot="quote-add-area"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 flex-shrink-0 min-h-[44px]"
             >
               {tradeLabels.addAreaCta}
             </button>
@@ -672,7 +673,7 @@ export function QuoteBuilder({
               onClick={() => setPhase('components')}
               disabled={!allAreasLocked}
               data-copilot="quote-next-components"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] min-h-[44px]"
             >
               {allAreasLocked ? 'Next: Components →' : 'Confirm all areas to continue'}
             </button>
@@ -756,17 +757,17 @@ export function QuoteBuilder({
               </div>
             );
           })}
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-2">
             <button
               onClick={() => setPhase('areas')}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50 min-h-[44px]"
             >
               ← {tradeLabels.areaPluralLabel}
             </button>
             <button
               onClick={() => setPhase('extras')}
               data-copilot="quote-next-extras"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] min-h-[44px]"
             >
               Next: Extras →
             </button>
@@ -807,17 +808,17 @@ export function QuoteBuilder({
               measurementSystem={quote.measurement_system}
             />
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-2">
             <button
               onClick={() => setPhase('components')}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50 min-h-[44px]"
             >
               ← Smart Components™
             </button>
             <button
               onClick={() => setPhase('review')}
               data-copilot="quote-next-review"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] min-h-[44px]"
             >
               Next: Review →
             </button>
@@ -958,9 +959,9 @@ export function QuoteBuilder({
               <p className="text-sm text-gray-600 mt-1">Adjust your profit margins - saved automatically when you confirm.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {/* Material Margin */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
                 <label className="flex items-center gap-2 mb-3">
                   <input
                     type="checkbox"
@@ -979,7 +980,8 @@ export function QuoteBuilder({
                     value={materialMarginPercent}
                     onChange={(e) => setMaterialMarginPercent(e.target.value)}
                     disabled={!materialMarginEnabled}
-                    className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500"
+                    className="w-full px-3 py-2 md:px-4 pr-10 text-base md:text-sm border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500 focus:border-orange-500 focus:outline-none"
+                    inputMode="decimal"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
                 </div>
@@ -991,7 +993,7 @@ export function QuoteBuilder({
               </div>
 
               {/* Labor Margin */}
-              <div className="bg-white rounded-lg p-4 border border-gray-200">
+              <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200">
                 <label className="flex items-center gap-2 mb-3">
                   <input
                     type="checkbox"
@@ -1010,7 +1012,8 @@ export function QuoteBuilder({
                     value={laborMarginPercent}
                     onChange={(e) => setLaborMarginPercent(e.target.value)}
                     disabled={!laborMarginEnabled}
-                    className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500"
+                    className="w-full px-3 py-2 md:px-4 pr-10 text-base md:text-sm border border-gray-300 rounded-lg disabled:bg-gray-100 disabled:text-gray-500 focus:border-orange-500 focus:outline-none"
+                    inputMode="decimal"
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">%</span>
                 </div>
@@ -1081,10 +1084,10 @@ export function QuoteBuilder({
             </div>
           </div>
           <p className="text-xs text-slate-400">● = value overridden from template default</p>
-          <div className="flex justify-between items-center pt-4 border-t">
+          <div className="flex justify-between items-center pt-4 border-t gap-2">
             <button
               onClick={() => setPhase('extras')}
-              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50"
+              className="px-4 py-2 text-sm rounded-lg border border-slate-300 hover:bg-slate-50 min-h-[44px]"
             >
               ← Back to Extras
             </button>

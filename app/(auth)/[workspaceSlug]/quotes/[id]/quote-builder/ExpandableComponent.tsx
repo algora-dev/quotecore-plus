@@ -254,18 +254,18 @@ export function ExpandableComponent({
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 overflow-hidden" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <div
-        className="flex flex-wrap items-center gap-2 md:gap-3 px-3 py-2 cursor-pointer"
+        className="flex flex-wrap items-center gap-2 md:gap-3 px-3 py-2.5 md:py-2 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        <span className="text-xs text-slate-400">{expanded ? '▼' : '▶'}</span>
+        <span className="text-xs text-slate-400 flex-shrink-0">{expanded ? '▼' : '▶'}</span>
         <div className="flex-1 min-w-0">
           <span className="font-medium text-sm text-slate-900">{comp.name}</span>
-          <span className="text-xs text-slate-400 ml-2 whitespace-nowrap">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
+          <span className="text-xs text-slate-400 ml-2 whitespace-nowrap hidden sm:inline">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
         </div>
         <span className="text-xs text-slate-500 whitespace-nowrap">
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
         </span>
-        <span className="text-xs text-slate-500 w-16 md:w-20 text-right whitespace-nowrap">
+        <span className="text-xs text-slate-500 w-14 md:w-20 text-right whitespace-nowrap">
           {comp.priced_quantity != null ? (() => {
             const priced = Number(comp.priced_quantity);
             const packSnap = comp.pack_size_snapshot != null ? Number(comp.pack_size_snapshot) : null;
@@ -274,13 +274,13 @@ export function ExpandableComponent({
             return <>{priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
           })() : displayValue(comp.final_quantity ?? 0)}
         </span>
-        <span className="text-xs font-medium w-16 md:w-20 text-right whitespace-nowrap">{formatCurrency(totalCost, currency)}</span>
+        <span className="text-xs font-medium w-14 md:w-20 text-right whitespace-nowrap">{formatCurrency(totalCost, currency)}</span>
         <button
           onClick={e => {
             e.stopPropagation();
             onRemove(comp.id);
           }}
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+          className="w-8 h-8 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
         </button>
@@ -288,7 +288,7 @@ export function ExpandableComponent({
 
       {expanded && (
         <div className="border-t border-slate-200 px-3 py-2 space-y-2">
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs flex-wrap">
             <span className="text-slate-500">Input:</span>
             {(['calculated', 'final'] as InputMode[]).map(mode => (
               <button
@@ -464,7 +464,7 @@ export function ExpandableComponent({
                         onChange={e => set(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') void handleSubmitLxhFreestyle(); }}
                         placeholder="0"
-                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                        className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                       />
                     </>
                   ))}
@@ -569,7 +569,7 @@ export function ExpandableComponent({
                               onChange={e => set(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') void handleSubmitVolume3d(); }}
                               placeholder="0"
-                              className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                              className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                             />
                           </Fragment>
                         ))}
@@ -605,7 +605,7 @@ export function ExpandableComponent({
                           onChange={e => setDimA(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') void handleSubmitDims(); }}
                           placeholder="0"
-                          className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                          className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                         />
                         <span className="text-xs text-slate-500 w-4">{isLxhPreset ? 'H' : 'L'}</span>
                         <input
@@ -615,7 +615,7 @@ export function ExpandableComponent({
                           onChange={e => setDimB(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') void handleSubmitDims(); }}
                           placeholder="0"
-                          className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                          className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                         />
                         <span className="text-xs text-slate-400">{getUnitLabel('lineal' as 'lineal', quote.measurement_system)}</span>
                       </div>
@@ -651,7 +651,7 @@ export function ExpandableComponent({
                         if (e.key === 'Escape') { setAdding(false); setInputValue(''); }
                       }}
                       placeholder="Enter volume"
-                      className="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                      className="w-32 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                     />
                     <span className="text-xs text-slate-400">{getUnitLabel('volume_3d' as 'volume_3d', quote.measurement_system)}</span>
                     <button
@@ -680,7 +680,7 @@ export function ExpandableComponent({
                         onChange={e => setAdArea(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') { if (adDepth) void handleSubmitAreaDepth(); else { (e.target as HTMLInputElement).blur(); } } }}
                         placeholder="0"
-                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                        className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                       />
                       <span className="text-xs text-slate-500">Depth</span>
                       <input
@@ -690,7 +690,7 @@ export function ExpandableComponent({
                         onChange={e => setAdDepth(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') void handleSubmitAreaDepth(); }}
                         placeholder="0"
-                        className="w-20 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                        className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                       />
                     </div>
                     {adArea && adDepth && Number(adArea) > 0 && Number(adDepth) > 0 && (
@@ -729,7 +729,7 @@ export function ExpandableComponent({
                         }
                       }}
                       placeholder={`Enter ${isVolume3d ? 'volume' : isAreaType || isVolumePreset ? 'area' : isLxhPreset ? 'length' : label}`}
-                      className="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                      className="w-32 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                     />
                     <span className="text-xs text-slate-400">{displayUnit}</span>
                     <button
@@ -766,7 +766,7 @@ export function ExpandableComponent({
                   }
                 }}
                 placeholder={`Enter ${label}`}
-                className="w-32 px-2 py-1 text-xs border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
+                className="w-32 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
               />
               <span className="text-xs text-slate-400">{unit}</span>
               <button
