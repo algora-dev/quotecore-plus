@@ -587,7 +587,7 @@ export function InvoiceEditor({
       {/* Editor body - panes float as rounded cards on the slate-50 app
           background, with a gap between them (matches the rounded card
           language of the header/activity section above). */}
-      <div className="flex flex-col md:flex-1 md:overflow-hidden relative bg-slate-50 px-4 pb-4 gap-4">
+      <div className="flex flex-col md:flex-row md:flex-1 md:overflow-hidden relative bg-slate-50 px-4 pb-4 gap-4">
         {/* ── Left panel ── */}
         {!panelCollapsed && (
           <div className="w-full md:w-[480px] md:min-w-[400px] flex-shrink-0 border border-slate-200 rounded-2xl bg-white flex flex-col md:overflow-y-auto shadow-sm">
