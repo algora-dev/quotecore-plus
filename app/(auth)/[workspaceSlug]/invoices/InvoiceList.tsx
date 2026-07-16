@@ -539,9 +539,9 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
 
   return (
     <>
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-sm">
+     {/* Toolbar */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="relative flex-1 md:max-w-sm">
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
@@ -550,7 +550,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
             placeholder="Search by customer or invoice number…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            className="w-full pl-9 pr-4 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
         </div>
         <button
@@ -567,7 +567,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
       </div>
 
       {/* Status filter tabs */}
-      <div className="flex gap-1 flex-wrap">
+      <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
         {STATUS_FILTER_TABS.map((tab) => {
           const count = tab.key === 'all' ? invoices.length : (countByStatus[tab.key] ?? 0);
           if (tab.key !== 'all' && count === 0) return null;
@@ -577,7 +577,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
               key={tab.key}
               type="button"
               onClick={() => setStatusFilter(tab.key)}
-              className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
+              className={`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
                 isActive
                   ? 'bg-slate-900 text-white border-slate-900'
                   : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'

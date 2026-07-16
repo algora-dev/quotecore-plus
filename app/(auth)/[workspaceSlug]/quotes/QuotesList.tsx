@@ -490,7 +490,7 @@ export function QuotesList({
   return (
     <>
       {/* Top actions row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
           <button
             onClick={() => { setActiveTab('confirmed'); setStatusFilter('all'); }}
@@ -556,16 +556,16 @@ export function QuotesList({
           )}
           <Link
             href={`/${workspaceSlug}/resources`}
-            className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="hidden md:inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Resource Library
           </Link>
         </div>
       </div>
 
-      {/* Status filter tabs (confirmed only) */}
-      {activeTab === 'confirmed' && (
-        <div className="flex gap-1 flex-wrap">
+     {/* Status filter tabs (confirmed only) */}
+     {activeTab === 'confirmed' && (
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
           {STATUS_FILTERS.map(f => {
             const count = statusCounts[f.key] || 0;
             if (f.key !== 'all' && count === 0) return null;
@@ -573,11 +573,11 @@ export function QuotesList({
               <button
                 key={f.key}
                 onClick={() => setStatusFilter(f.key)}
-                className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
-                  statusFilter === f.key
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                }`}
+          className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
+            statusFilter === f.key
+              ? 'bg-slate-900 text-white border-slate-900'
+              : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+          } whitespace-nowrap`}
               >
                 {f.label} {count > 0 && <span className="ml-1 opacity-70">{count}</span>}
               </button>
@@ -586,15 +586,15 @@ export function QuotesList({
         </div>
       )}
 
-      {/* Search + Sort row */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+     {/* Search + Sort row */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative flex-1 md:max-w-sm">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by quote #, client, or job..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            className="w-full pl-9 pr-4 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -648,7 +648,7 @@ export function QuotesList({
               key={q.id}
               onClick={() => handleRowClick(q)}
               title="Click to open this quote"
-              className={`grid sm:grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(q.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
+              className={`grid sm:grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-2 sm:gap-4 items-center rounded-xl border bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(q.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
             >
               {/* Selection checkbox */}
               <input
@@ -661,11 +661,11 @@ export function QuotesList({
               />
 
               {/* Quote info */}
-              <div className="min-w-0">
+              <div className="min-w-0 flex items-center gap-2 sm:block">
                 {q.quote_number && (
                   <span className="font-semibold text-orange-600 text-sm">#{q.quote_number}</span>
                 )}
-                <span className="text-xs text-slate-400 ml-2">
+                <span className="text-xs text-slate-400 sm:ml-2">
                   {new Date(q.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </span>
               </div>

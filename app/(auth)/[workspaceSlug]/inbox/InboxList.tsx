@@ -370,7 +370,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                     <p className="text-sm font-semibold text-slate-900">{channel.label}</p>
                     <p className="text-xs text-slate-500 mt-0.5">All {channel.label} alerts</p>
                   </div>
-                  <div className="flex items-end gap-6">
+                  <div className="flex items-end gap-4 md:gap-6">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-[11px] font-medium uppercase tracking-wide text-[#FF6B35]">In-app</span>
                       <Toggle
@@ -405,7 +405,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                         className="flex items-center justify-between gap-4 px-4 py-2.5 hover:bg-orange-50/40 transition"
                       >
                         <p className="text-sm text-slate-700">{event.label}</p>
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4 md:gap-6">
                           <Toggle
                             size="sm"
                             color="orange"
@@ -447,7 +447,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                 setSelected(new Set());
               }}
               data-assistant-id={`inbox-folder-${f.key}`}
-              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-sm font-medium transition ${
+              className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-sm font-medium transition whitespace-nowrap md:whitespace-normal ${
                 folder === f.key
                   ? 'border-slate-900 bg-slate-900 text-white'
                   : 'border-slate-200 bg-white text-slate-700 hover:border-orange-200 hover:bg-orange-50/40'
@@ -470,7 +470,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
       {/* RIGHT - search/filter bar + list */}
       <div className="flex-1 min-w-0 space-y-3">
         {/* Search + type filters (these are filters, not navigation) */}
-        <div className="flex items-center gap-2 flex-wrap" data-assistant-id="inbox-search" data-copilot="inbox-search">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:flex-wrap" data-assistant-id="inbox-search" data-copilot="inbox-search">
           <div className="relative flex-1 min-w-[180px]">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -480,9 +480,10 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search messages…"
-              className="w-full rounded-full border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              className="w-full rounded-full border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-base md:text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
           {TYPE_FILTERS.map((f) => (
             <button
               key={f.key}
@@ -497,6 +498,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
               {f.label}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Bulk action toolbar - appears when rows are selected */}
@@ -566,13 +568,13 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
                         toggleExpand(a.id);
                         if (!a.is_read) bulk('read', [a.id]);
                       }}
-                      className="flex flex-1 min-w-0 items-center gap-2 text-left"
+                      className="flex flex-1 min-w-0 flex-wrap items-center gap-2 text-left md:flex-nowrap"
                       aria-expanded={isOpen}
                     >
                       {!a.is_read && <span className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0" />}
                       <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium flex-shrink-0 ${badge.cls}`}>{badge.label}</span>
-                      <span className="text-sm font-medium text-slate-900 truncate min-w-0">{a.title}</span>
-                      <span className="ml-auto text-xs text-slate-400 flex-shrink-0">{fmt(a.created_at)}</span>
+                      <span className="text-sm font-medium text-slate-900 truncate min-w-0 flex-1">{a.title}</span>
+                      <span className="text-xs text-slate-400 flex-shrink-0 md:ml-auto">{fmt(a.created_at)}</span>
                       <svg
                         className={`w-4 h-4 text-slate-300 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                         fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}

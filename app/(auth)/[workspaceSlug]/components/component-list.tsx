@@ -804,13 +804,13 @@ export function ComponentList({
         </div>
       )}
       {/* Filter tabs + Action Buttons */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
           {(['all', 'main', 'extra'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 text-sm rounded-full font-medium transition ${
+              className={`px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap ${
                 filter === f
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
@@ -821,7 +821,7 @@ export function ComponentList({
           ))}
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 md:flex-row">
           <button
             onClick={() => {
               if (!subscriptionActive) {
@@ -835,7 +835,7 @@ export function ComponentList({
               setShowForm(true);
             }}
             data-copilot="add-component"
-            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             + Add Smart Component™
             {componentLimit !== null && (
@@ -847,7 +847,7 @@ export function ComponentList({
           {flashingsFeatureEnabled ? (
             <Link
               href={`/${workspaceSlug}/drawings`}
-              className="inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               {featureLabel}
             </Link>
@@ -856,7 +856,7 @@ export function ComponentList({
               type="button"
               onClick={() => setFlashingsUpgradeOpen(true)}
               title={`${featureLabel} requires a higher plan`}
-              className="inline-flex items-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 cursor-pointer hover:bg-slate-300"
+              className="inline-flex items-center justify-center rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500 cursor-pointer hover:bg-slate-300"
             >
               <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -868,7 +868,7 @@ export function ComponentList({
       </div>
 
       {/* Measurement type filters */}
-      <div className="flex gap-1 flex-wrap">
+      <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap">
         {[
           { key: 'all', label: 'All Types' },
           { key: 'area', label: 'Area' },
@@ -879,7 +879,7 @@ export function ComponentList({
           <button
             key={f.key}
             onClick={() => setMeasurementFilter(f.key as any)}
-            className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
+            className={`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
               measurementFilter === f.key
                 ? 'bg-slate-900 text-white border-slate-900'
                 : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
@@ -964,7 +964,7 @@ export function ComponentList({
         <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
           <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
           <form onSubmit={handleCreate} className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div data-copilot="component-name">
                 <label className="block text-xs text-slate-500 mb-1">Name</label>
                 <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg" />
@@ -1218,25 +1218,25 @@ export function ComponentList({
               <div className="p-4 border border-slate-200 rounded-xl bg-white">
                 <h3 className="font-semibold text-slate-900 mb-3">Edit {comp.name}</h3>
                 <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">Name</label>
-                      <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-slate-500 mb-1">Measurement</label>
-                      <select
-                        value={formMeasurementType}
-                        onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
-                        className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
-                      >
-                        {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
-                          .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
-                          .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
-                          .map(([k, v]) => (
-                            <option key={k} value={k}>{v}</option>
-                          ))}
-                      </select>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                   <div>
+                     <label className="block text-xs text-slate-500 mb-1">Name</label>
+                     <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1 text-sm border border-slate-300 rounded" />
+                   </div>
+                   <div>
+                     <label className="block text-xs text-slate-500 mb-1">Measurement</label>
+                     <select
+                       value={formMeasurementType}
+                       onChange={(e) => setFormMeasurementType(e.target.value as MeasurementType)}
+                       className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                     >
+                       {(Object.entries(MEASUREMENT_LABELS) as Array<[MeasurementType, string]>)
+                         .filter(([k]) => k !== 'linear' && k !== 'count' && k !== 'curved_line' && k !== 'irregular_area')
+                         .filter(([k]) => genericTradesEnabled || ROOFING_DEFAULT_TYPES.has(k))
+                         .map(([k, v]) => (
+                           <option key={k} value={k}>{v}</option>
+                         ))}
+                     </select>
                     </div>
                     <div>
                       <label className="block text-xs text-slate-500 mb-1">Labour Rate ({unitForMeasurement(formMeasurementType)})</label>
