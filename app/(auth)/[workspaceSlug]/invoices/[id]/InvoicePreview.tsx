@@ -64,9 +64,9 @@ export function InvoicePreview({
   const customer = invoice.customer_snapshot as Record<string, string>;
 
   return (
-    <div className="mx-auto max-w-3xl bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+    <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-slate-900 px-8 py-6 flex items-start justify-between">
+      <div className="bg-slate-900 px-4 md:px-8 py-4 md:py-6 flex items-start justify-between">
         <div>
           {companyLogoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -91,7 +91,7 @@ export function InvoicePreview({
           { label: 'Invoice No.', value: invoice.invoice_number },
           { label: 'Payment Ref.', value: invoice.payment_reference },
         ].map((item, i) => (
-          <div key={item.label} className={`px-5 py-3 ${i < 3 ? 'border-r border-slate-200' : ''}`}>
+          <div key={item.label} className={`px-3 md:px-5 py-2 md:py-3 ${i < 3 ? 'border-r border-slate-200' : ''}`}>
             <p className="text-xs text-slate-500 uppercase tracking-wide">{item.label}</p>
             <p className="text-sm font-medium text-slate-900 mt-0.5 font-mono">{item.value}</p>
           </div>
@@ -99,7 +99,7 @@ export function InvoicePreview({
       </div>
 
       {/* Bill to */}
-      <div className="px-8 py-5 border-b border-slate-100">
+      <div className="px-4 md:px-8 py-4 md:py-5 border-b border-slate-100">
         <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Bill To</p>
         <p className="font-semibold text-slate-900">{invoice.customer_name}</p>
         {customer.email && <p className="text-sm text-slate-600">{customer.email}</p>}
@@ -108,7 +108,7 @@ export function InvoicePreview({
       </div>
 
       {/* Line items */}
-      <div className="px-8 py-5">
+      <div className="px-4 md:px-8 py-4 md:py-5">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200">
@@ -169,7 +169,7 @@ export function InvoicePreview({
       </div>
 
       {/* Payment instructions */}
-      <div className="mx-8 mb-5 rounded-xl bg-orange-50 border border-orange-200 p-5">
+      <div className="mx-4 md:mx-8 mb-4 md:mb-5 rounded-xl bg-orange-50 border border-orange-200 p-3 md:p-5">
         <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-3">Payment Instructions</p>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">

@@ -254,15 +254,20 @@ export function ExpandableComponent({
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 overflow-hidden" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <div
-        className="flex flex-wrap items-center gap-2 md:gap-3 px-3 py-2.5 md:py-2 cursor-pointer"
+        className="flex items-center gap-2 md:gap-3 px-3 py-2.5 md:py-2 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <span className="text-xs text-slate-400 flex-shrink-0">{expanded ? '▼' : '▶'}</span>
         <div className="flex-1 min-w-0">
-          <span className="font-medium text-sm text-slate-900">{comp.name}</span>
-          <span className="text-xs text-slate-400 ml-2 whitespace-nowrap hidden sm:inline">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-sm text-slate-900 truncate">{comp.name}</span>
+            <span className="text-xs text-slate-400 whitespace-nowrap hidden sm:inline">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
+          </div>
+          <span className="text-xs text-slate-500 md:hidden">
+            {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
+          </span>
         </div>
-        <span className="text-xs text-slate-500 whitespace-nowrap">
+        <span className="text-xs text-slate-500 whitespace-nowrap hidden md:inline">
           {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
         </span>
         <span className="text-xs text-slate-500 w-14 md:w-20 text-right whitespace-nowrap">

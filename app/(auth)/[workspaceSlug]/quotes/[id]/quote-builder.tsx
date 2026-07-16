@@ -497,11 +497,11 @@ export function QuoteBuilder({
     return formatQuantity(actual, c.measurement_type);
   }
 
-  const phases: { key: Phase; label: string }[] = [
-    { key: 'areas', label: `1. ${tradeLabels.builderStepLabel}` },
-    { key: 'components', label: '2. Components' },
-    { key: 'extras', label: '3. Extras' },
-    { key: 'review', label: '4. Review' },
+  const phases: { key: Phase; label: string; shortLabel: string }[] = [
+    { key: 'areas', label: `1. ${tradeLabels.builderStepLabel}`, shortLabel: '1. Areas' },
+    { key: 'components', label: '2. Components', shortLabel: '2. Parts' },
+    { key: 'extras', label: '3. Extras', shortLabel: '3. Extras' },
+    { key: 'review', label: '4. Review', shortLabel: '4. Review' },
   ];
 
   // Save margin settings
@@ -620,7 +620,8 @@ export function QuoteBuilder({
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            {p.label}
+            <span className="md:hidden">{p.shortLabel}</span>
+            <span className="hidden md:inline">{p.label}</span>
           </button>
         ))}
       </nav>
