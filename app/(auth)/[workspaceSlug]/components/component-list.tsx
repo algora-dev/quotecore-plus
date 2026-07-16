@@ -1506,7 +1506,7 @@ export function ComponentList({
       {/* Delete Modal */}
       {deleteCompId && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete Smart Component™</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The Smart Component™ will be removed from your library.</p>
             <div className="flex gap-3 justify-end mt-6">
@@ -1520,7 +1520,7 @@ export function ComponentList({
       {/* Delete Library Confirm Modal */}
       {deletingLibraryId && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete Library</h3>
             <p className="text-sm text-slate-500 mt-2">
               Deleting this library will delete all components inside it. Move any components you want to keep to another library first, or delete them forever here.
@@ -1575,7 +1575,7 @@ export function ComponentList({
       {/* Component Edit Warning Modal */}
       {editWarningOpen && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Heads up before saving</h3>
             <p className="text-sm text-slate-500 mt-2">
               Beware: edited changes will only affect new component entries moving forward, not previously saved component entries.

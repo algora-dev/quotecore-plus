@@ -196,7 +196,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
           })}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm text-slate-500">
             {searchQuery ? 'No quotes match your search.' : 'No confirmed quotes found.'}
           </p>

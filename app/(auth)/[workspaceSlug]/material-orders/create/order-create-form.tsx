@@ -707,9 +707,14 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           >
             {/* Template Selector */}
             <div className="px-2 md:px-6 py-2 md:py-3 border-b border-slate-100 bg-slate-50" data-copilot="mo-template">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Use Template (Optional)
-              </label>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Use Template (Optional)
+                </label>
+                <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors min-h-[44px] flex-shrink-0">
+                  Minimize Header
+                </button>
+              </div>
               <select
                 value={selectedTemplateId}
                 onChange={(e) => handleTemplateChange(e.target.value)}
@@ -725,7 +730,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             </div>
 
             {/* Header Form - Two Column */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6" data-copilot="mo-header-form">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 p-2 md:p-6" data-copilot="mo-header-form">
               {/* LEFT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">To (Supplier)</h3>
@@ -768,12 +773,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               </div>
             </div>
 
-            {/* Minimize Button — sticky on mobile so always reachable */}
-            <div className="px-2 md:px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end sticky bottom-0 md:static md:bottom-auto">
-              <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors min-h-[44px]">
-                Minimize Header
-              </button>
-            </div>
+            {/* Minimize button removed from bottom — now at top next to template selector */}
           </div>
         ) : (
           <div

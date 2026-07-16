@@ -61,7 +61,7 @@ export function OrderLayoutPickerModal({ onSelect, onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="border-b px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
+        <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between sticky top-0 bg-white">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">Choose an order layout</h3>
             <p className="text-sm text-slate-500 mt-0.5">

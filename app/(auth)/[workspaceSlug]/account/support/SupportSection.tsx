@@ -113,7 +113,7 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
       </div>
 
       {/* Help & learning - self-serve before a ticket. */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-3">
         <h3 className="text-base font-semibold text-slate-900">Help &amp; learning</h3>
         <p className="text-sm text-slate-500">
           New to QuoteCore+ or stuck on a feature? These are the fastest ways to get going.
@@ -142,7 +142,7 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
       </div>
 
       {/* New ticket form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4">
         <h3 className="text-base font-semibold text-slate-900">New ticket</h3>
 
         <div>
@@ -233,7 +233,7 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
       </form>
 
       {/* Previous tickets */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6 space-y-4">
         <h3 className="text-base font-semibold text-slate-900">Your tickets</h3>
         {tickets.length === 0 ? (
           <p className="text-sm text-slate-500">You haven&apos;t submitted any tickets yet.</p>

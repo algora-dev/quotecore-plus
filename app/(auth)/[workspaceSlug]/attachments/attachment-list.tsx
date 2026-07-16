@@ -96,7 +96,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
     return (
       <div
         key={row.id}
-        className={`grid sm:grid-cols-[1fr_120px_110px] gap-4 items-center rounded-xl border bg-white px-4 py-3 transition group ${
+        className={`grid sm:grid-cols-[1fr_120px_110px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 transition group ${
           isArchived ? 'border-slate-200 opacity-75' : 'border-slate-200 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]'
         }`}
       >
@@ -184,7 +184,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
       )}
 
       {attachments.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm font-medium text-slate-700 mb-1">No attachments yet</p>
           <p className="text-xs text-slate-400 mb-4">Upload a file to reuse it across your quotes and templates.</p>
           <button
@@ -210,7 +210,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
       {renameTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="border-b px-6 py-4 flex items-center justify-between">
+            <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Rename attachment</h3>
               <button onClick={() => setRenameTarget(null)} className="text-slate-400 hover:text-slate-600" aria-label="Close">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,7 +218,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
                 </svg>
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-2 md:p-6">
               <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
               <input
                 type="text"
@@ -249,7 +249,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
       {/* Delete confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete attachment</h3>
             <p className="text-sm text-slate-500 mt-2">
               Permanently delete <strong className="text-slate-700">{deleteTarget.name}</strong>? This removes the file and frees {formatBytes(deleteTarget.file_size)} of storage, and clears it from any email template that uses it as a default. If this file was already sent on a quote or order, those existing download links will stop working. This cannot be undone.

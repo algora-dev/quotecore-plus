@@ -110,7 +110,7 @@ export default async function OnboardingPage() {
   // Case 1: No profile at all (Google OAuth new user) - show company setup form
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-2 md:p-6">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
             <div className="text-center space-y-2">
@@ -134,7 +134,7 @@ export default async function OnboardingPage() {
   // Case 2: Has profile but no company (shouldn't happen normally)
   if (!profile.company_id) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-2 md:p-6">
         <div className="max-w-md w-full">
           <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
             <div className="text-center space-y-2">
@@ -161,7 +161,7 @@ export default async function OnboardingPage() {
 
   // Case 4: Company exists but onboarding not complete - show preferences form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 flex items-center justify-center p-2 md:p-6">
       <div className="max-w-2xl w-full">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 space-y-6">
           <div className="text-center space-y-2">

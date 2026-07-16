@@ -223,7 +223,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
       {/* Mark as Ordered Modal */}
       {showMarkModal && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 data-exclude-pdf">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Mark as Ordered</h3>
             <p className="text-sm text-slate-500 mt-2">Confirm this order has been sent to the supplier.</p>
             <div className="flex gap-3 justify-end mt-6">

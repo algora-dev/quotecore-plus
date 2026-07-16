@@ -61,7 +61,7 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
 
   if (lines.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center">
+      <div className="rounded-xl border border-dashed border-slate-200 px-2 md:px-6 py-8 md:py-12 text-center">
         <p className="text-sm text-slate-500 font-medium">No customer quote lines saved yet</p>
         <p className="text-xs text-slate-400 mt-1">Build the customer quote first, then come back to create an invoice from it.</p>
       </div>

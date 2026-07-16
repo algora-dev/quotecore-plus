@@ -591,7 +591,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
 
       {/* Invoice rows */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm text-slate-500">
             {invoices.length === 0
               ? 'No invoices yet. Create your first invoice to get started.'
@@ -644,7 +644,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                 key={inv.id}
                 onClick={() => router.push(`/${workspaceSlug}/invoices/${inv.id}`)}
                 title="Click to open this invoice"
-                className={`grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
+                className={`grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
               >
                 {/* Selection checkbox - onChange + stopPropagation so it
                     selects (not navigates), matching the Quotes/Orders rows. */}
@@ -757,7 +757,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
       {/* Bulk download progress modal */}
       {bulkProgress && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Building Export</h3>
             <p className="text-sm text-slate-600 mt-2">{bulkProgress.message}</p>
             <div className="mt-4 h-2 w-full rounded-full bg-slate-100 overflow-hidden">

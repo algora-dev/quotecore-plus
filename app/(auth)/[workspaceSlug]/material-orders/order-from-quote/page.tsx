@@ -35,7 +35,7 @@ export default async function OrderFromQuotePage(props: Props) {
       </div>
 
       {!quotes || quotes.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm text-slate-500">No confirmed quotes found.</p>
         </div>
       ) : (

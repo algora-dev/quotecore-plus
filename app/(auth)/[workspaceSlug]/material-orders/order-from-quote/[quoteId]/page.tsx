@@ -58,7 +58,7 @@ export default async function OrderLineSelectPage({ params, searchParams }: Prop
       </div>
 
       {!components || components.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm text-slate-500">This quote has no components to order from.</p>
         </div>
       ) : (

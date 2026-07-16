@@ -21,7 +21,7 @@ export function AttachmentsTab({ workspaceSlug, attachments, entitlements }: Pro
 
   if (!attachmentsEnabled) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-12 text-center">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-2 md:px-6 py-8 md:py-12 text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-500">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path

@@ -336,7 +336,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
         className="bg-white rounded-xl shadow-2xl max-w-xl w-full mx-4 flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="border-b px-6 py-4 flex items-center justify-between">
+        <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
               {step === 0 && 'Upload CSV'}

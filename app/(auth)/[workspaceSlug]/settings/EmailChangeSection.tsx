@@ -135,7 +135,7 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
 
       {isOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full shadow-xl">
             <h3 className="text-base font-semibold text-slate-900">Change your email</h3>
             <p className="text-sm text-slate-500 mt-1 mb-4">
               We&apos;ll send a confirmation link to both your current and new email. You must click both to complete the change.

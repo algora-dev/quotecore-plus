@@ -171,7 +171,7 @@ export function TemplatesPageClient({
             </button>
           </div>
           {orderTemplates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
               <p className="text-sm text-slate-500">No order templates yet.</p>
             </div>
           ) : (
@@ -222,7 +222,7 @@ export function TemplatesPageClient({
             </button>
           </div>
           {emailTemplates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
               <p className="text-sm text-slate-500">No message templates yet.</p>
             </div>
           ) : (
@@ -274,7 +274,7 @@ export function TemplatesPageClient({
             </Link>
           </div>
           {quoteTemplates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
               <p className="text-sm text-slate-500">No quote templates yet.</p>
             </div>
           ) : (
@@ -326,7 +326,7 @@ export function TemplatesPageClient({
             </Link>
           </div>
           {customerQuoteTemplates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
               <p className="text-sm text-slate-500">No customer quote templates yet.</p>
             </div>
           ) : (
@@ -399,7 +399,7 @@ export function TemplatesPageClient({
       {/* Delete Confirmation Modal */}
       {pendingDeleteId && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete Template</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The template will be permanently deleted.</p>
             <div className="flex gap-3 justify-end mt-6">

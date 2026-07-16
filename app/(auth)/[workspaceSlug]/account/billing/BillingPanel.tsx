@@ -340,7 +340,7 @@ export function BillingPanel(props: BillingPanelProps) {
     <div className="space-y-6">
       {/* Stripe / trial redirect banners */}
       {changeFlag === 'upgraded' && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 flex items-start justify-between">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 md:p-4 flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-emerald-900">Plan upgraded.</p>
             <p className="text-xs text-emerald-700 mt-1">
@@ -353,7 +353,7 @@ export function BillingPanel(props: BillingPanelProps) {
         </div>
       )}
       {changeFlag === 'downgrade_scheduled' && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 flex items-start justify-between">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 md:p-4 flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-blue-900">Plan change scheduled.</p>
             <p className="text-xs text-blue-700 mt-1">
@@ -366,7 +366,7 @@ export function BillingPanel(props: BillingPanelProps) {
         </div>
       )}
       {checkoutFlag === 'success' && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 flex items-start justify-between">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 md:p-4 flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-emerald-900">Subscription started.</p>
             <p className="text-xs text-emerald-700 mt-1">
@@ -379,7 +379,7 @@ export function BillingPanel(props: BillingPanelProps) {
         </div>
       )}
       {checkoutFlag === 'canceled' && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 flex items-start justify-between">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 md:p-4 flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-slate-900">Checkout canceled.</p>
             <p className="text-xs text-slate-600 mt-1">No changes were made to your subscription.</p>
@@ -390,7 +390,7 @@ export function BillingPanel(props: BillingPanelProps) {
         </div>
       )}
       {trialFlag === 'activated' && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 flex items-start justify-between">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 md:p-4 flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-blue-900">Trial activated.</p>
             <p className="text-xs text-blue-700 mt-1">
@@ -642,7 +642,7 @@ export function BillingPanel(props: BillingPanelProps) {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-2 md:p-4 text-sm text-red-800">
           {error}
         </div>
       )}
@@ -658,7 +658,7 @@ export function BillingPanel(props: BillingPanelProps) {
             if (e.target === e.currentTarget && !pending) setChangeTarget(null);
           }}
         >
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
             <h3 id="change-modal-title" className="text-lg font-semibold text-slate-900">
               {isUpgradeTarget ? 'Upgrade' : 'Switch'} to {changeTarget.displayName}?
             </h3>
@@ -718,7 +718,7 @@ export function BillingPanel(props: BillingPanelProps) {
             if (e.target === e.currentTarget) setViewPlan(null);
           }}
         >
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <h3 id="plan-modal-title" className="text-lg font-semibold text-slate-900">

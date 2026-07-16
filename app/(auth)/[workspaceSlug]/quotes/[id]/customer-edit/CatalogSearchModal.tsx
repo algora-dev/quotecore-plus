@@ -209,7 +209,7 @@ export function CatalogSearchModal({ workspaceSlug, onAdd, onClose }: Props) {
         className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 flex flex-col max-h-[80vh]"
       >
         {/* Header */}
-        <div className="border-b px-6 py-4 flex items-center justify-between">
+        <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">Search Catalog</h3>
           <button
             onClick={onClose}

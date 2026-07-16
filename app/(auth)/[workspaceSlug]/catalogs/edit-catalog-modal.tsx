@@ -219,7 +219,7 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className={`bg-white rounded-xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${tab === 'maps' ? 'max-w-2xl' : 'max-w-md'}`}>
-        <div className="border-b px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
+        <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between sticky top-0 bg-white">
           <h3 className="text-lg font-semibold text-slate-900">Edit catalog</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +228,7 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-2 md:p-6">
           {/* Tab bar */}
           <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit mb-5">
             {(['rename', 'remap', 'maps'] as Tab[]).map((t) => (

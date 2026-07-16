@@ -103,7 +103,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
             <h2 className="text-lg font-semibold text-slate-900">Create Template</h2>
             <p className="text-sm text-slate-600 mt-0.5">Set default values for quick order creation</p>
           </div>
-          <div className="p-6">
+          <div className="p-2 md:p-6">
             <TemplateForm
               mode="create"
               onSubmit={handleCreateSubmit}
@@ -141,7 +141,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
             <h2 className="text-lg font-semibold text-slate-900">Edit Template</h2>
             <p className="text-sm text-slate-600 mt-0.5">Update template: {editingTemplate.name}</p>
           </div>
-          <div className="p-6">
+          <div className="p-2 md:p-6">
             <TemplateForm
               mode="edit"
               initialData={initialData}
@@ -223,7 +223,7 @@ export function TemplateManager({ initialTemplates, onClose, isOverStorage }: Pr
         {/* Delete Modal */}
         {deleteTemplateId && (
           <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
-            <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+            <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
               <h3 className="text-lg font-semibold text-slate-900">Delete Template</h3>
               <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The template will be permanently deleted.</p>
               <div className="flex gap-3 justify-end mt-6">

@@ -107,7 +107,7 @@ export function AddLineModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-        <div className="border-b px-6 py-4 flex items-center justify-between">
+        <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">Add New Line</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

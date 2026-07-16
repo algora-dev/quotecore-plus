@@ -164,7 +164,7 @@ export function CatalogList({
         key={catalog.id}
         onClick={() => setEditCatalog(catalog)}
         title="Click to edit this catalog"
-        className={`grid sm:grid-cols-[1fr_140px_120px_120px_80px] gap-4 items-center rounded-xl border bg-white px-4 py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${isArchived ? 'border-slate-200 opacity-75' : 'border-slate-200'}`}
+        className={`grid sm:grid-cols-[1fr_140px_120px_120px_80px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${isArchived ? 'border-slate-200 opacity-75' : 'border-slate-200'}`}
       >
         {/* Name */}
         <div className="min-w-0">
@@ -280,7 +280,7 @@ export function CatalogList({
 
       {/* Empty state */}
       {catalogs.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm font-medium text-slate-700 mb-1">No catalogs yet</p>
           <p className="text-xs text-slate-400 mb-4">Upload a CSV price list to get started.</p>
           <button
@@ -316,7 +316,7 @@ export function CatalogList({
 
       {/* No results from search */}
       {catalogs.length > 0 && filtered.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm text-slate-500">No catalogs match your search.</p>
         </div>
       )}
@@ -338,7 +338,7 @@ export function CatalogList({
       {/* Delete confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete catalog</h3>
             <p className="text-sm text-slate-500 mt-2">
               Permanently delete <strong className="text-slate-700">{deleteTarget.name}</strong>? This removes {deleteTarget.row_count.toLocaleString()} rows and frees {formatBytes(deleteTarget.data_bytes)} of storage. This cannot be undone.
@@ -356,7 +356,7 @@ export function CatalogList({
       {/* Archive confirmation */}
       {archiveTarget && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
+          <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Archive catalog</h3>
             <p className="text-sm text-slate-500 mt-2">
               Archive <strong className="text-slate-700">{archiveTarget.name}</strong>? It will be hidden from search and the active list, but kept and reinstatable. Storage still counts toward your plan limit.

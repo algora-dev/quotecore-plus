@@ -49,7 +49,7 @@ export function InvoiceTemplatesList({ workspaceSlug, initialTemplates }: Props)
 
       {/* List */}
       {templates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm text-slate-500">No invoice templates yet.</p>
           <Link
             href={`/${workspaceSlug}/resources/invoice-templates/new`}

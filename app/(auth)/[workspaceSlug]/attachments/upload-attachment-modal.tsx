@@ -109,7 +109,7 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
       <div
         className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4"
       >
-        <div className="border-b px-6 py-4 flex items-center justify-between">
+        <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">Upload file</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +118,7 @@ export function UploadAttachmentModal({ onClose, onSaved, isOverStorage }: Props
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-2 md:p-6 space-y-5">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">File</label>
             {file ? (
