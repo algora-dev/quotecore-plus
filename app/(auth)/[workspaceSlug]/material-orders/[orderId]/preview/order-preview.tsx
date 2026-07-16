@@ -128,7 +128,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
           below it. Non-sticky (scrolls with the page like Quotes). app
           chrome only: data-exclude-pdf keeps it off the printed order. */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 data-exclude-pdf">
-      <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 flex items-center justify-between shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}
@@ -145,7 +145,7 @@ export function OrderPreview({ order, lines, flashings, workspaceSlug, libraryFi
             <p className="text-sm text-slate-500">{order.order_number}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {!isOrdered && (
             <button
               onClick={() => setShowMarkModal(true)}

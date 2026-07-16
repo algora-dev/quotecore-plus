@@ -695,7 +695,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // components editor uses. Components editor calls this with no arg (false).
   function renderOrderHeader(rounded = false) {
     return (
-      <div className={rounded ? 'flex-shrink-0 px-6 pt-4' : 'flex-shrink-0'}>
+      <div className={rounded ? 'flex-shrink-0 px-4 md:px-6 pt-4' : 'flex-shrink-0'}>
         {headerExpanded ? (
           <div
             className={
@@ -728,13 +728,13 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               {/* LEFT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">To (Supplier)</h3>
-                <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <input type="text" value={orderType} onChange={(e) => setOrderType(e.target.value)} placeholder="Order Type (optional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <input type="text" value={colours} onChange={(e) => setColours(e.target.value)} placeholder="Colours" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} placeholder="Delivery Date" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <textarea value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Delivery Address" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order Notes" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <input type="text" value={orderType} onChange={(e) => setOrderType(e.target.value)} placeholder="Order Type (optional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <input type="text" value={colours} onChange={(e) => setColours(e.target.value)} placeholder="Colours" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} placeholder="Delivery Date" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <textarea value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Delivery Address" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order Notes" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
               </div>
 
               {/* RIGHT COLUMN */}
@@ -760,16 +760,16 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                     </span>
                   </label>
                 </div>
-                <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="Contact Person" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="Contact Person" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
                 <input type="text" value={contactDetails} onChange={(e) => setContactDetails(e.target.value)} placeholder="Contact Details" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
                 <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
               </div>
             </div>
 
-            {/* Minimize Button */}
-            <div className="px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end">
-              <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors">
+            {/* Minimize Button — sticky on mobile so always reachable */}
+            <div className="px-6 py-2 border-t border-slate-100 bg-slate-50 flex justify-end sticky bottom-0 md:static md:bottom-auto">
+              <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors min-h-[44px]">
                 Minimize Header
               </button>
             </div>
@@ -814,8 +814,8 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             header stays put; the editor area owns its OWN vertical scroll so the
             footer + taxes at the bottom are always reachable on any screen
             ratio (previously the page wrapper clipped them). */}
-        <div className="flex flex-col h-screen bg-slate-50">
-          <div className="px-6 pt-4 flex-shrink-0">
+        <div className="flex flex-col h-screen dvh-screen bg-slate-50">
+          <div className="px-4 md:px-6 pt-4 flex-shrink-0">
             <BackButton />
           </div>
           {/* Shared order header (template selector + To/From form + minimize),
@@ -823,7 +823,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           {renderOrderHeader(true)}
           {/* Scrollable editor region. Full-width (px-6) so the body frame lines
               up edge-to-edge with the full-width header above it. */}
-          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-6 pb-20 md:pb-6">
             {/* Save action sits directly above the editor/preview so it's
                 reachable at 100% zoom without scrolling to the page bottom. */}
             <div className="flex items-center justify-end gap-3">
