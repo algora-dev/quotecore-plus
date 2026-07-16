@@ -1,9 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "./components/CookieBanner";
 import { PillShimmerScript } from "./components/PillShimmerScript";
 import { SITE_URL } from "@/lib/seo/site-url";
+
+/**
+ * Explicit viewport config.
+ * - `width=device-width, initialScale=1` is Next.js 16's default, but we
+ *   set it explicitly so it's documented and adjustable.
+ * - `viewportFit=cover` enables safe-area-inset env vars on iOS (notch / home bar).
+ * - `maximumScale=5` allows zoom for accessibility without allowing
+ *   accidental layout-breaking pinch-zoom.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

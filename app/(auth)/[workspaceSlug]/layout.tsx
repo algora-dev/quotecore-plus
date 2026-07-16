@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { LogoutButton } from '@/app/components/auth/LogoutButton';
 import { WorkspaceNav } from '@/app/components/workspace/WorkspaceNav';
+import { MobileHeader } from '@/app/components/workspace/MobileHeader';
 import { AlertBell } from '@/app/components/alerts/AlertBell';
 import { InboxLink } from '@/app/components/alerts/InboxLink';
 import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDrawer';
@@ -101,32 +102,55 @@ export default async function WorkspaceLayout({
               <UserImpersonationBanner />
             )}
             <header className="border-b border-slate-200 bg-white shadow-sm">
-              <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <Link href={`/${slug}`} prefetch={false} className="flex items-center">
-                    <img src="/logo.png" alt="QuoteCore" className="h-9" />
-                  </Link>
-                  <div className="flex items-center gap-3">
-                    <AlertBell
-                      initialAlerts={alerts || []}
-                      initialUnreadCount={unreadCount}
-                      workspaceSlug={slug}
-                    />
-                    <InboxLink workspaceSlug={slug} />
-                    <HelpDrawerTrigger />
-                    <Link
-                      href={`/${slug}/account`}
-                      prefetch={false}
-                      data-assistant-id="nav-account"
-                      className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"
-                    >
-                      Account
-                    </Link>
-                    <LogoutButton />
-                  </div>
-                </div>
+              {/* Mobile header (below md): Logo | Bell | Inbox | Help | Hamburger */}
+              <MobileHeader
+                workspaceSlug={slug}
+                navItems={[
+                  { href: `/${slug}/quotes`, label: 'Quotes' },
+                  { href: `/${slug}/material-orders`, label: 'Orders' },
+                  { href: `/${slug}/invoices`, label: 'Invoices' },
+                  { href: `/${slug}/resources`, label: 'Resources' },
+                ]}
+                bell={
+                  <AlertBell
+                    initialAlerts={alerts || []}
+                    initialUnreadCount={unreadCount}
+                    workspaceSlug={slug}
+                  />
+                }
+                inbox={<InboxLink workspaceSlug={slug} />}
+                help={<HelpDrawerTrigger />}
+              />
 
-                <WorkspaceNav workspaceSlug={slug} entitlements={entitlements} />
+              {/* Desktop header (md+): full header with nav */}
+              <div className="hidden md:block">
+                <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
+                  <div className="flex items-center justify-between">
+                    <Link href={`/${slug}`} prefetch={false} className="flex items-center">
+                      <img src="/logo.png" alt="QuoteCore" className="h-9" />
+                    </Link>
+                    <div className="flex items-center gap-3">
+                      <AlertBell
+                        initialAlerts={alerts || []}
+                        initialUnreadCount={unreadCount}
+                        workspaceSlug={slug}
+                      />
+                      <InboxLink workspaceSlug={slug} />
+                      <HelpDrawerTrigger />
+                      <Link
+                        href={`/${slug}/account`}
+                        prefetch={false}
+                        data-assistant-id="nav-account"
+                        className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"
+                      >
+                        Account
+                      </Link>
+                      <LogoutButton />
+                    </div>
+                  </div>
+
+                  <WorkspaceNav workspaceSlug={slug} entitlements={entitlements} />
+                </div>
               </div>
             </header>
 
@@ -145,7 +169,7 @@ export default async function WorkspaceLayout({
               />
             ) : null}
 
-            <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
+            <main className="mx-auto w-full max-w-6xl px-4 py-4 pb-20 md:px-6 md:py-10 md:pb-10">{children}</main>
             {/*
               AI Assistant widget. Self-gates on NEXT_PUBLIC_AI_ASSISTANT_V1 -
               renders nothing when the flag is off. This is now the SOLE

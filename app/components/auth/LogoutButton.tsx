@@ -1,12 +1,12 @@
 import { logoutAction } from '@/app/actions';
 
-export function LogoutButton() {
+export function LogoutButton({ className }: { className?: string }) {
   return (
     <form action={logoutAction}>
       <button
         type="submit"
         data-assistant-id="nav-logout"
-        className="inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"
+        className={className ?? "inline-flex items-center rounded-full border-2 border-transparent bg-white px-3 py-1 text-sm font-semibold text-slate-600 pill-shimmer"}
       >
         Logout
       </button>

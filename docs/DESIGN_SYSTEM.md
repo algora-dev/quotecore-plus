@@ -271,6 +271,182 @@ className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hove
 
 ---
 
+## Mobile Patterns
+
+> **Mandatory for all mobile-responsive work.**
+> Mobile = below `md` (768px). Desktop = `md` and above.
+> All mobile rules use `md:` overrides — desktop is NEVER changed.
+
+### Breakpoints
+
+| Breakpoint | Width | Usage |
+|---|---|---|
+| `sm` | 640px | Minor adjustments (hide/show secondary elements) |
+| `md` | 768px | **Primary mobile/desktop split** — hamburger appears, layouts collapse |
+| `lg` | 1024px | Split-pane editors, two-column layouts |
+| `xl` | 1280px | Max content width container |
+
+### Mobile Header (below `md`)
+
+```
+[Q Logo]  [🔔]  [✉️]  [❓]  [☰]
+```
+
+- **Logo** (left): `Q` logo mark, 32×32px, tappable (links to dashboard)
+- **Quick actions** (center-right): Alert bell, Messages, Help — each 44×44px hit area
+- **Hamburger** (right): Opens slide-down panel containing:
+  - Account (link to /account)
+  - Logout (button)
+  - --- divider ---
+  - Quotes, Orders, Invoices, Resources (nav links)
+- Desktop (`md+`): current full header preserved unchanged
+- No `Account` or `Logout` text visible in the mobile header bar — they live in the hamburger
+
+### Touch Targets
+
+- **Minimum 44×44px interactive hit area** on mobile
+- The visible icon/label can be smaller — the clickable container must be 44×44px
+- Icon buttons: `p-2` minimum on mobile (was `p-1.5`)
+- Nav pills: ensure `min-h-[44px]` on mobile
+
+```tsx
+// Correct — 44px hit area with smaller visible icon
+<button className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
+  <svg className="w-5 h-5" ...>
+</button>
+```
+
+### Mobile Form Inputs
+
+- Use `text-base md:text-sm` on all inputs to prevent iOS auto-zoom (16px minimum)
+- Do NOT force `w-full` on every control — use it where the layout benefits from full width
+- Labels above inputs, not inline
+- Add `inputMode` attributes: `numeric`, `decimal`, `email`, `tel` where appropriate
+- `focus:border-orange-500 focus:outline-none` — no focus ring (same as desktop)
+
+```tsx
+<input
+  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:text-sm focus:border-orange-500 focus:outline-none"
+  inputMode="decimal"
+/>
+```
+
+### Mobile Gutters and Spacing
+
+- Mobile page padding: `px-4 py-4` (reduced from desktop `px-6 py-10`)
+- Add `pb-20 md:pb-10` on mobile to clear the assistant widget and any sticky actions
+- Section spacing: `space-y-4` on mobile (vs `space-y-5` on desktop)
+
+### Responsive Row → Card Transformation
+
+Desktop rows become stacked cards on mobile:
+
+```tsx
+{/* Desktop: horizontal row, Mobile: stacked card */}
+<div className="rounded-xl border border-slate-200 bg-white p-4 md:px-4 md:py-3">
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+    <div className="font-medium text-slate-900">{customerName}</div>
+    <div className="flex items-center gap-3">
+      <StatusBadge />
+      <span className="text-xs text-slate-400 md:hidden">{date}</span>
+    </div>
+  </div>
+</div>
+```
+
+### Filter Tabs on Mobile
+
+- Horizontal scroll: `overflow-x-auto flex-nowrap` with `-mx-4 px-4` to bleed to screen edge
+- Hide scrollbar: `scrollbar-hide` or `[&::-webkit-scrollbar]:hidden`
+- Each tab maintains `text-xs` and 44px height
+
+```tsx
+<div className="flex gap-2 overflow-x-auto flex-nowrap -mx-4 px-4 pb-2 md:pb-0">
+  {filters.map(f => <FilterTab key={f.key} {...f} />)}
+</div>
+```
+
+### Mobile Navigation (Hamburger Menu)
+
+- Appears below `md` (768px)
+- Slide-down panel from top, full width, `bg-white border-b border-slate-200 shadow-lg`
+- Contains: Account, Logout, then divider, then Quotes/Orders/Invoices/Resources
+- Close on route change, close on outside tap, close on Escape
+- Body scroll lock when open
+- Animate with `transition-all duration-200` (height/opacity)
+- Respect `prefers-reduced-motion`
+
+### Bottom Sheet / Mobile Dialog Selection
+
+| Content type | Mobile pattern |
+|---|---|
+| Short confirmation | Centred dialog (existing pattern) |
+| Short selection / action | Bottom sheet |
+| Long form / keyboard-heavy | Full-screen mobile dialog |
+| Catalogue / search-heavy | Full-screen mobile dialog |
+
+- Do NOT make every modal a bottom sheet
+- Bottom sheet: `rounded-t-2xl`, slide up from bottom, `max-h-[90vh] overflow-y-auto`
+- Full-screen: `fixed inset-0`, sticky header + scrollable body + sticky footer
+
+### Safe Areas (iOS)
+
+- Use `env(safe-area-inset-*)` utilities for notch/home bar
+- `pt-[env(safe-area-inset-top)]` on fixed headers
+- `pb-[env(safe-area-inset-bottom)]` on fixed footers/sticky actions
+- Test with iPhone safe areas enabled
+
+### Dynamic Viewport Height
+
+- Use `dvh` with fallback: `h-screen` then `h-[100dvh]`
+- Critical for modals, full-screen sheets, and sticky elements
+- Test with mobile keyboard open
+
+### Z-Index / Overlay Layer System
+
+| Layer | Z-Index | Element |
+|---|---|---|
+| 1. Page content | `z-0` / default | Normal page content |
+| 2. Sticky header | `z-10` | App header, mobile hamburger panel |
+| 3. Sticky actions | `z-20` | Sticky save bars, bulk action bars |
+| 4. Dropdowns / popovers | `z-30` | Menus, tooltips, date pickers |
+| 5. Assistant launcher | `z-40` | Floating assistant button |
+| 6. Modal backdrop | `z-50` | `fixed inset-0 backdrop-blur-sm bg-black/40` |
+| 7. Modal / sheet | `z-50` | Modal content (above backdrop) |
+| 8. Toast notifications | `z-[60]` | Toast messages |
+| 9. Critical confirmation | `z-[70]` | Destructive confirmation above other modals |
+
+**Never use `z-[9999]` or arbitrary high values.** Use the layer system.
+
+### Reduced Motion
+
+- Respect `prefers-reduced-motion` in all animations, transitions, and auto-advancing UI
+- Motion reduction must NOT remove progress or state feedback
+- Use `motion-safe:` and `motion-reduce:` Tailwind variants where possible
+
+```tsx
+<div className="transition-all duration-200 motion-reduce:transition-none">
+```
+
+### Desktop Preservation Rules
+
+- All mobile rules use `md:` overrides — desktop styles are the base
+- Never globally enlarge desktop inputs
+- Never reduce desktop information density
+- Never change desktop button sizes, spacing, or layout
+- Mobile-only changes are scoped with `md:` breakpoint overrides
+- When using responsive classes assembled dynamically, verify Tailwind class precedence manually (this repo has no `cn()` / tailwind-merge helper)
+
+### Assistant Widget on Mobile
+
+- Must NOT overlap any interactive element
+- Position: `fixed bottom-4 right-4` with safe-area offset
+- Size: 44×44px minimum hit area
+- Ensure it doesn't cover: filter pills, action buttons, dropdowns, step tabs, or card content
+- Consider adding bottom padding (`pb-20`) to pages to clear the widget
+
+---
+
 ## Do / Don't Quick Reference
 
 | ❌ Don't | ✅ Do |

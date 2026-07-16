@@ -502,3 +502,66 @@ a,
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
 }
+
+/* ============================================================
+ * Mobile foundation utilities (B1-T03)
+ * Safe areas, dynamic viewport height, reduced motion,
+ * mobile gutters, scrollbar hiding, focus-visible baseline.
+ * ============================================================ */
+
+/* iOS safe-area insets — use with pt-safe, pb-safe, etc. */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-left {
+  padding-left: env(safe-area-inset-left);
+}
+.safe-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Dynamic viewport height with fallback */
+.dvh-screen {
+  height: 100vh; /* fallback for older browsers */
+  height: 100dvh; /* dynamic viewport height — adjusts for mobile browser UI */
+}
+.min-dvh-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Hide scrollbar for horizontal scroll rows (filter tabs, etc.) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Reduced motion — disable all animations and transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus-visible baseline — clear orange ring for keyboard users */
+:focus-visible {
+  outline: 2px solid rgba(255, 107, 53, 0.55);
+  outline-offset: 2px;
+}
+
+/* Remove the default focus outline only when focus is visible (mouse users
+   don't see it, keyboard users do). Pairs with :focus-visible above. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
