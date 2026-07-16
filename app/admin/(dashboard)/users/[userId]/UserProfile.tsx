@@ -26,6 +26,7 @@ import {
 } from './actions';
 import { StorageTab } from './StorageTab';
 import { QuotesTab } from './quotes-tab/QuotesTab';
+import { FreeToolUsageSection } from './FreeToolUsageSection';
 
 const PLAN_OPTIONS = [
   { code: 'free', label: 'Free' },
@@ -137,6 +138,9 @@ export function UserProfile({ data }: { data: UserProfileData }) {
 
       {/* J. Storage & Files */}
       <StorageSection data={data} />
+
+      {/* K. Free Tool Usage (T3) */}
+      <FreeToolUsageSection userId={data.user.id} />
     </div>
   );
 }

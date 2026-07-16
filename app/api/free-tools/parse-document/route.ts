@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
+import type { Database } from '@/app/lib/supabase/database.types';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { resolveFreeToolsTier } from '@/app/lib/free-tools/resolveTier';
 import { parseRateLimitKey, RATE_LIMIT_WINDOW_MS } from '@/app/lib/free-tools/tiers';
@@ -8,6 +10,55 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'placeholder' });
+
+// Service-role client for usage tracking (bypasses RLS)
+let usageClient: ReturnType<typeof createServiceClient<Database>> | null = null;
+function getUsageClient() {
+  if (usageClient) return usageClient;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  usageClient = createServiceClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return usageClient;
+}
+
+/** Map document type to tool code + display name for usage tracking. */
+const TOOL_META: Record<string, { code: string; name: string }> = {
+  quote: { code: 'quote-gen', name: 'Quote Generator' },
+  order: { code: 'po-gen', name: 'Purchase Order Generator' },
+  invoice: { code: 'invoice-gen', name: 'Invoice Generator' },
+};
+
+/** Fire-and-forget usage log insert. Never blocks the response. */
+function logUsage(params: {
+  tier: number;
+  toolCode: string;
+  toolName: string;
+  parseMode: string;
+  documentType: string;
+  userId: string | null;
+  userEmail: string | null;
+  ip: string;
+  hasAppAccount: boolean;
+}) {
+  const client = getUsageClient();
+  if (!client) return;
+  client.from('free_tool_usage').insert({
+    tool_code: params.toolCode,
+    tool_name: params.toolName,
+    parse_mode: params.parseMode,
+    document_type: params.documentType,
+    tier: params.tier,
+    user_id: params.userId,
+    user_email: params.userEmail,
+    ip_address: params.tier === 1 ? params.ip : null,
+    has_app_account: params.hasAppAccount,
+  }).then(() => {}, (err) => {
+    console.warn('[parse-document] usage log failed:', err.message);
+  });
+}
 
 // ── Types ──────────────────────────────────────────────
 
@@ -221,7 +272,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 6. Build OpenAI messages
+  // 6. Log usage (fire-and-forget, never blocks)
+  const toolMeta = TOOL_META[type] ?? { code: 'unknown', name: type };
+  logUsage({
+    tier: resolved.tier,
+    toolCode: toolMeta.code,
+    toolName: toolMeta.name,
+    parseMode: mode,
+    documentType: type,
+    userId: resolved.userId,
+    userEmail: resolved.email,
+    ip,
+    hasAppAccount: resolved.hasAppAccount,
+  });
+
+  // 7. Build OpenAI messages
   const systemPrompt = buildSystemPrompt(type);
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -263,7 +328,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // 7. Call OpenAI
+  // 8. Call OpenAI
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',

@@ -1607,6 +1607,48 @@ export type Database = {
         }
         Relationships: []
       }
+      free_tool_usage: {
+        Row: {
+          created_at: string
+          document_type: string
+          has_app_account: boolean
+          id: string
+          ip_address: string | null
+          parse_mode: string
+          tier: number
+          tool_code: string
+          tool_name: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_type: string
+          has_app_account?: boolean
+          id?: string
+          ip_address?: string | null
+          parse_mode: string
+          tier: number
+          tool_code: string
+          tool_name: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          has_app_account?: boolean
+          id?: string
+          ip_address?: string | null
+          parse_mode?: string
+          tier?: number
+          tool_code?: string
+          tool_name?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       growth_briefs: {
         Row: {
           date: string
