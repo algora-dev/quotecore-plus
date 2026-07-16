@@ -72,20 +72,9 @@ function FeatureCheck({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToolCta({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
-  return (
-    <Link href={href} onClick={onClick} className="mt-7 inline-flex items-center gap-1.5 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30">
-      {label}
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-      </svg>
-    </Link>
-  );
-}
-
 function MockQuote() {
   return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="h-3 w-24 rounded-full bg-slate-200" />
@@ -113,10 +102,10 @@ function MockQuote() {
 
 function MockCalculators() {
   return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
       <div className="grid grid-cols-2 gap-3">
         {['Roofing', 'Concrete', 'Construction', 'Landscaping'].map((trade) => (
-          <div key={trade} className="rounded-xl border border-slate-100 p-4">
+          <div key={trade} className="rounded-xl border border-slate-100 p-3 md:p-4">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-full bg-orange-50">
                 <svg className="w-4 h-4 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -139,7 +128,7 @@ function MockCalculators() {
 
 function MockPO() {
   return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
       <div className="space-y-3">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="space-y-1.5">
@@ -169,7 +158,7 @@ function MockPO() {
 
 function MockInvoice() {
   return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="space-y-1.5">
@@ -196,6 +185,18 @@ function MockInvoice() {
   );
 }
 
+function ToolCtaCentered({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
+  return (
+    <div className="mt-6 flex justify-center">
+      <Link href={href} onClick={onClick} className="inline-flex items-center gap-1.5 rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 min-h-[44px]">
+        {label}
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </Link>
+    </div>
+  );
+}
 export default function FreeToolsPage() {
   const [view, setView] = useState<'core' | 'all'>('core');
   const [searchQuery, setSearchQuery] = useState('');
@@ -225,113 +226,111 @@ export default function FreeToolsPage() {
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
-          <div className="relative mx-auto max-w-5xl px-6 pt-16 pb-12 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-xs font-medium text-[#BD4A1A] mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35]" />
-              Free forever — no signup required
-            </div>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Tools for Trades</h1>
-            <p className="mt-4 text-lg text-slate-500 max-w-2xl mx-auto">
+          <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-10 md:pt-14 pb-6 md:pb-8 text-center">
+            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Tools for Trades</h1>
+            <p className="mt-3 md:mt-4 text-sm md:text-lg text-slate-500 max-w-2xl mx-auto px-2">
               Professional calculators and document generators so good, other apps charge you for them. Built by trades, for trades.
             </p>
           </div>
         </section>
 
         {/* Tool sections */}
-        <div className="mx-auto max-w-5xl px-6 pb-20 space-y-20">
+        <div className="mx-auto max-w-5xl px-2 md:px-6 pb-12 md:pb-20 space-y-12 md:space-y-20">
           {/* 1. Quote Generator */}
           <section id="quote-generator" className="scroll-mt-24">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-10 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2.5 p-3 rounded-2xl bg-black text-white">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                </div>
-                <h2 className="mt-5 text-2xl font-semibold text-slate-900">Free Quote Generator</h2>
-                <p className="mt-3 text-sm text-slate-500 leading-relaxed">Create professional quotes in minutes. No signup, no watermark, no catch. Download as PDF and send to your customer today.</p>
-                <ul className="mt-5 space-y-3">
+            <div className="flex items-center gap-2.5 mb-3">
+              <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Quote Generator</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6 md:gap-10 items-center">
+              <div className="order-2 lg:order-1">
+                <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Create professional quotes in minutes. Optional signup, no catch. Download as PDF and send to your customer today.</p>
+                <ul className="mt-4 md:mt-5 space-y-3">
                   <FeatureCheck>Build quotes line by line with full control over pricing, quantities and descriptions</FeatureCheck>
-                  <FeatureCheck>AI-assisted quoting — take a photo, upload an image, or copy-paste content and our system creates a professional quote automatically</FeatureCheck>
-                  <FeatureCheck>Add your logo, business details, tax rates and terms — looks like it came from your own software</FeatureCheck>
+                  <FeatureCheck>AI-assisted quoting - take a photo, upload an image, or copy-paste content and our system creates a professional quote automatically</FeatureCheck>
+                  <FeatureCheck>Add your logo, business details, tax rates and terms - looks like it came from your own software</FeatureCheck>
                   <FeatureCheck>Download as PDF instantly. No account needed, no email required</FeatureCheck>
                 </ul>
-                <ToolCta href="/free-quote-generator" label="Create a Free Quote" onClick={() => trackEvent('free_tools_hub_click', { tool: 'quote-generator' })} />
               </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/40 to-transparent rounded-3xl" />
-                <MockQuote />
+              <div className="order-1 lg:order-2">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/40 to-transparent rounded-3xl" />
+                  <MockQuote />
+                </div>
+                <ToolCtaCentered href="/free-quote-generator" label="Create a Free Quote" onClick={() => trackEvent('free_tools_hub_click', { tool: 'quote-generator' })} />
               </div>
             </div>
           </section>
 
           {/* 2. Calculators */}
           <section id="calculators" className="scroll-mt-24">
-            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-10 items-center">
+            <div className="flex items-center gap-2.5 mb-3">
+              <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+              <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Construction Calculators</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
               <div className="order-2 lg:order-1">
                 <MockCalculators />
+                <ToolCtaCentered href="/free-roofing-calculator" label="Open Roofing Calculator" onClick={() => trackEvent('free_tools_hub_click', { tool: 'roofing-calc' })} />
               </div>
               <div className="order-1 lg:order-2">
-                <div className="inline-flex items-center gap-2.5 p-3 rounded-2xl bg-black text-white">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                </div>
-                <h2 className="mt-5 text-2xl font-semibold text-slate-900">Free Construction Calculators</h2>
-                <p className="mt-3 text-sm text-slate-500 leading-relaxed">Calculate areas, volumes, complex roofing angles, material quantities and more. Built for the field — mobile-friendly and fast.</p>
-                <ul className="mt-5 space-y-3">
+                <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Calculate areas, volumes, complex roofing angles, material quantities and more. Built for the field - mobile-friendly and fast.</p>
+                <ul className="mt-4 md:mt-5 space-y-3">
                   <FeatureCheck>Roofing: pitch, rafter &amp; hip/valley lengths, surface area, batten quantities, bird&apos;s mouth cuts</FeatureCheck>
                   <FeatureCheck>Concrete: slab &amp; footing volumes, formwork, falls &amp; gradients, ready-mix pricing</FeatureCheck>
                   <FeatureCheck>Construction: wall &amp; floor areas, timber &amp; stud lengths, paint, tiles, flooring quantities</FeatureCheck>
                   <FeatureCheck>Save your results as a <strong>Smart Component™</strong> draft and import it directly into your QuoteCore+ workspace</FeatureCheck>
                 </ul>
-                <div className="mt-7 flex flex-wrap gap-3">
-                  <ToolCta href="/free-roofing-calculator" label="Open Roofing Calculator" onClick={() => trackEvent('free_tools_hub_click', { tool: 'roofing-calc' })} />
-                  <button onClick={() => document.getElementById('all-calculators')?.scrollIntoView({ behavior: 'smooth' })} className="inline-flex items-center rounded-full border border-slate-300 px-5 py-3 text-sm font-medium text-slate-700 transition-all hover:bg-slate-50">Browse all {CALCULATORS.length} calculators</button>
-                </div>
+                <button onClick={() => document.getElementById('all-calculators')?.scrollIntoView({ behavior: 'smooth' })} className="mt-4 inline-flex items-center text-xs md:text-sm font-medium text-[#BD4A1A] hover:text-[#FF6B35] transition-colors">Browse all {CALCULATORS.length} calculators →</button>
               </div>
             </div>
           </section>
 
           {/* 3. Purchase Order */}
           <section id="purchase-order" className="scroll-mt-24">
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-10 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2.5 p-3 rounded-2xl bg-black text-white">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
-                </div>
-                <h2 className="mt-5 text-2xl font-semibold text-slate-900">Free Purchase Order Generator</h2>
-                <p className="mt-3 text-sm text-slate-500 leading-relaxed">Generate professional purchase orders for your suppliers in minutes. No signup, download as PDF.</p>
-                <ul className="mt-5 space-y-3">
+            <div className="flex items-center gap-2.5 mb-3">
+              <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+              <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Purchase Order Generator</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6 md:gap-10 items-center">
+              <div className="order-2 lg:order-1">
+                <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Generate professional purchase orders for your suppliers in minutes. No signup, download as PDF.</p>
+                <ul className="mt-4 md:mt-5 space-y-3">
                   <FeatureCheck>Line-by-line purchase orders with quantities, unit prices and totals</FeatureCheck>
                   <FeatureCheck>Add your supplier details, delivery dates and job references</FeatureCheck>
-                  <FeatureCheck>Pre-fill from a URL parameter — great for re-ordering common materials</FeatureCheck>
-                  <FeatureCheck>Brand it with your logo and business details — looks like it came from your own system</FeatureCheck>
+                  <FeatureCheck>Pre-fill from a URL parameter - great for re-ordering common materials</FeatureCheck>
+                  <FeatureCheck>Brand it with your logo and business details - looks like it came from your own system</FeatureCheck>
                 </ul>
-                <ToolCta href="/free-purchase-order-generator" label="Create a Free Purchase Order" onClick={() => trackEvent('free_tools_hub_click', { tool: 'po-generator' })} />
               </div>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/40 to-transparent rounded-3xl" />
-                <MockPO />
+              <div className="order-1 lg:order-2">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/40 to-transparent rounded-3xl" />
+                  <MockPO />
+                </div>
+                <ToolCtaCentered href="/free-purchase-order-generator" label="Create a Free Purchase Order" onClick={() => trackEvent('free_tools_hub_click', { tool: 'po-generator' })} />
               </div>
             </div>
           </section>
 
           {/* 4. Invoice */}
           <section id="invoice-generator" className="scroll-mt-24">
-            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-10 items-center">
+            <div className="flex items-center gap-2.5 mb-3">
+              <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 2.25H6A2.25 2.25 0 003.75 4.5v15A2.25 2.25 0 006 21.75h12A2.25 2.25 0 0020.25 19.5V8.25L14.25 2.25z" /><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 2.25v6h6M9 13h6M9 17h3" /></svg>
+              <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Invoice Generator</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
               <div className="order-2 lg:order-1">
                 <MockInvoice />
+                <ToolCtaCentered href="/free-invoice-generator" label="Create a Free Invoice" onClick={() => trackEvent('free_tools_hub_click', { tool: 'invoice-generator' })} />
               </div>
               <div className="order-1 lg:order-2">
-                <div className="inline-flex items-center gap-2.5 p-3 rounded-2xl bg-black text-white">
-                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 2.25H6A2.25 2.25 0 003.75 4.5v15A2.25 2.25 0 006 21.75h12A2.25 2.25 0 0020.25 19.5V8.25L14.25 2.25z" /><path strokeLinecap="round" strokeLinejoin="round" d="M14.25 2.25v6h6M9 13h6M9 17h3" /></svg>
-                </div>
-                <h2 className="mt-5 text-2xl font-semibold text-slate-900">Free Invoice Generator</h2>
-                <p className="mt-3 text-sm text-slate-500 leading-relaxed">Create professional invoices with tax calculations. Pre-fill from a quote or start fresh — download as PDF, no signup.</p>
-                <ul className="mt-5 space-y-3">
+                <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Create professional invoices with tax calculations. Pre-fill from a quote or start fresh - download as PDF, no signup.</p>
+                <ul className="mt-4 md:mt-5 space-y-3">
                   <FeatureCheck>Itemised invoices with quantities, rates, subtotals and tax</FeatureCheck>
                   <FeatureCheck>Add your branding, payment terms and bank details</FeatureCheck>
-                  <FeatureCheck>Pre-fill from a URL parameter — generate an invoice from your free quote in one click</FeatureCheck>
+                  <FeatureCheck>Pre-fill from a URL parameter - generate an invoice from your free quote in one click</FeatureCheck>
                   <FeatureCheck>Clean, professional PDF output that matches your business identity</FeatureCheck>
                 </ul>
-                <ToolCta href="/free-invoice-generator" label="Create a Free Invoice" onClick={() => trackEvent('free_tools_hub_click', { tool: 'invoice-generator' })} />
               </div>
             </div>
           </section>
@@ -339,24 +338,22 @@ export default function FreeToolsPage() {
 
         {/* All calculators search + grid */}
         <section id="all-calculators" className="scroll-mt-24 bg-slate-50 border-t border-slate-100">
-          <div className="mx-auto max-w-5xl px-6 py-16">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-2xl font-semibold text-slate-900">All Calculators</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  {isSearching
-                    ? `${searchResults.length} calculator${searchResults.length !== 1 ? 's' : ''} found`
-                    : view === 'core'
-                    ? '5 core trade calculators. Switch to All to see every calculator, or search.'
-                    : `${CALCULATORS.length} free calculators across 4 industries. Search by name or keyword.`}
-                </p>
-              </div>
+          <div className="mx-auto max-w-5xl px-2 md:px-6 py-10 md:py-16">
+            <div className="mb-4 md:mb-6">
+              <h2 className="text-lg md:text-2xl font-semibold text-slate-900">All Calculators</h2>
+              <p className="mt-1 text-xs md:text-sm text-slate-500">
+                {isSearching
+                  ? `${searchResults.length} calculator${searchResults.length !== 1 ? 's' : ''} found`
+                  : view === 'core'
+                  ? '5 core trade calculators. Switch to All to see every calculator, or search.'
+                  : `${CALCULATORS.length} free calculators across 4 industries. Search by name or keyword.`}
+              </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
               <div className="flex-1">
                 <div className="relative">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                  <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search calculators by name or keyword..." className="w-full rounded-full border border-slate-300 pl-10 pr-10 py-2.5 text-sm focus:border-orange-500 focus:outline-none bg-white" />
+                  <input type="text" inputMode="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search calculators..." className="w-full rounded-lg md:rounded-full border border-slate-300 pl-10 pr-10 py-2.5 text-sm focus:border-orange-500 focus:outline-none bg-white" />
                   {isSearching && (
                     <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" aria-label="Clear search">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -364,7 +361,7 @@ export default function FreeToolsPage() {
                   )}
                 </div>
               </div>
-              <select value={view} onChange={(e) => setView(e.target.value as 'core' | 'all')} className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 focus:border-orange-500 focus:outline-none">
+              <select value={view} onChange={(e) => setView(e.target.value as 'core' | 'all')} className="rounded-lg md:rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 focus:border-orange-500 focus:outline-none">
                 <option value="core">Core Calculators (5)</option>
                 <option value="all">All Calculators ({CALCULATORS.length})</option>
               </select>
@@ -395,12 +392,12 @@ export default function FreeToolsPage() {
         </section>
 
         {/* Why free? */}
-        <section className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <h2 className="text-2xl font-semibold text-slate-900">Why are these free?</h2>
-          <p className="mt-3 text-sm text-slate-500 leading-relaxed">
-            We build tools for trades. These calculators and generators are the same ones powering QuoteCore+ — our full quoting and job management platform. We give them away because they should be free. If you want the full system — takeoffs, components, quotes, orders, invoices, scheduling — that's where QuoteCore+ comes in.
+        <section className="mx-auto max-w-3xl px-2 md:px-6 py-10 md:py-16 text-center">
+          <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Why are these free?</h2>
+          <p className="mt-3 text-xs md:text-sm text-slate-500 leading-relaxed">
+            We build tools for trades. These calculators and generators are the same ones powering QuoteCore+ - our full quoting and job management platform. We give them away because they should be free. If you want the full system - takeoffs, components, quotes, orders, invoices, scheduling - that is where QuoteCore+ comes in.
           </p>
-          <Link href="/signup" className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E55A2B] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)]">
+          <Link href="/signup" className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E55A2B] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
             Explore QuoteCore+
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
           </Link>
