@@ -64,7 +64,7 @@ export function InvoicePreview({
   const customer = invoice.customer_snapshot as Record<string, string>;
 
   return (
-    <div className="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+    <div className="w-full md:max-w-3xl md:mx-auto bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="bg-slate-900 px-4 md:px-8 py-4 md:py-6 flex items-start justify-between">
         <div>

@@ -1047,7 +1047,7 @@ export function InvoiceEditor({
         )}
 
         {/* ── Right panel: preview ── */}
-        <div className="w-full md:flex-1 md:overflow-y-auto bg-slate-50 rounded-2xl p-4" data-copilot="invoice-preview">
+        <div className="w-full md:flex-1 md:overflow-y-auto bg-slate-50 rounded-2xl p-2 md:p-4" data-copilot="invoice-preview">
           <div data-pdf-content>
           <InvoicePreview
             invoice={initial}
