@@ -9,6 +9,18 @@
 - [ ] T3 Play takeoff page loads — system components present in fetch but invisible in manual add-selector (Phase B)
 - [ ] Component count for T3 Play unchanged (system rows excluded from quota)
 
+**AI-TAKEOFF. Phase E — Workstation integration (feature/ai-takeoff `93fa883`, 2026-07-17)**
+- [ ] Post-calibration popup shows orange 'Use AI Assist' button (roofing companies only)
+- [ ] Clicking it opens scanning overlay (spinner)
+- [ ] Scan completes → AiResultsModal shows detection summary + per-type breakdown
+- [ ] Pitch override input works
+- [ ] Acknowledgment checkbox required before Apply
+- [ ] Apply creates Fabric objects on canvas (roof area polygons + component lines with locked colours)
+- [ ] Dashed spouting lines render correctly
+- [ ] Discard closes modal, nothing added to canvas
+- [ ] Error toast appears on failure (timeout/empty/unreadable)
+- [ ] Manual flow regression: calibration, manual draw, save all unchanged
+
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
 **AD. Signup emails + smart component server-side create + modal copy (dev `c57541c`, 2026-07-15)**
