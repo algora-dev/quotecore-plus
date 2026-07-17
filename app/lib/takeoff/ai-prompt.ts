@@ -85,7 +85,7 @@ const lineItemSchema = {
 export const AI_TAKEOFF_RESPONSE_SCHEMA = {
   type: 'object' as const,
   properties: {
-    error: { type: 'string' as const },
+    error: { type: ['string', 'null'] as const },
     scale: {
       type: 'object' as const,
       properties: {
@@ -148,7 +148,7 @@ export const AI_TAKEOFF_RESPONSE_SCHEMA = {
       items: { type: 'string' as const },
     },
   },
-  required: ['scale', 'pitch', 'roof_areas', 'components', 'notes'] as const,
+  required: ['error', 'scale', 'pitch', 'roof_areas', 'components', 'notes'] as const,
   additionalProperties: false,
 };
 
