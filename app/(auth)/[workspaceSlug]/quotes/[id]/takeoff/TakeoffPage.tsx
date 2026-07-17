@@ -19,6 +19,7 @@ interface Component {
   id: string;
   name: string;
   collection_id?: string | null;
+  is_system?: boolean;
 }
 
 interface ComponentCollection {
@@ -49,6 +50,8 @@ interface Props {
   isOverStorage?: boolean;
   /** All roof areas for this quote (server-loaded). */
   allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
+  /** AI Takeoff: when true, the post-calibration popup shows the "Use AI Assist" button. */
+  aiTakeoffAvailable?: boolean;
 }
 
 export function TakeoffPage({
@@ -65,6 +68,7 @@ export function TakeoffPage({
   initialRoofAreaId,
   isOverStorage,
   allRoofAreas,
+  aiTakeoffAvailable,
 }: Props) {
   return (
     <TakeoffWorkstation
@@ -81,6 +85,7 @@ export function TakeoffPage({
       initialRoofAreaId={initialRoofAreaId}
       isOverStorage={isOverStorage}
       allRoofAreas={allRoofAreas}
+      aiTakeoffAvailable={aiTakeoffAvailable}
     />
   );
 }

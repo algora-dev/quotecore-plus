@@ -43,6 +43,8 @@ interface Component {
   collection_id?: string | null;
   /** @deprecated alias kept for any callers that used the old name */
   default_measurement_type?: string;
+  /** System placeholder components (AI Takeoff) — hidden from manual add selector. */
+  is_system?: boolean;
 }
 
 interface ComponentCollection {
@@ -130,6 +132,8 @@ interface Props {
   isOverStorage?: boolean;
   /** All roof areas for this quote (loaded server-side). Used by the left-panel area switcher. */
   allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
+  /** AI Takeoff: when true, the post-calibration popup shows the "Use AI Assist" button. */
+  aiTakeoffAvailable?: boolean;
 }
 
 const CANVAS_WIDTH = 800;
@@ -201,6 +205,7 @@ export function TakeoffWorkstation({
   initialRoofAreaId,
   isOverStorage,
   allRoofAreas = [],
+  aiTakeoffAvailable = false,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -4654,6 +4659,7 @@ export function TakeoffWorkstation({
                     {(() => {
                       const available = displayComponents
                         .filter(comp => !activeComponentIds.includes(comp.id))
+                        .filter(comp => !comp.is_system)
                         .filter(comp =>
                           selectedLibraryId === ALL_LIBRARIES
                             ? true

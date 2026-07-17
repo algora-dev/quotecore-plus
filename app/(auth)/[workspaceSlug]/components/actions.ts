@@ -108,6 +108,7 @@ export async function loadComponentLibrary(collectionId?: string | null) {
     .from('component_library')
     .select('*')
     .eq('company_id', profile.company_id)
+    .eq('is_system', false)
     .order('name');
 
   // When a specific collection is requested, filter to only that collection's components.
