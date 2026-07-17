@@ -152,6 +152,64 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_scan_usage: {
+        Row: {
+          company_id: string
+          created_at: string
+          error: string | null
+          id: string
+          model: string | null
+          page_id: string | null
+          quote_id: string
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          page_id?: string | null
+          quote_id: string
+          success: boolean
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          page_id?: string | null
+          quote_id?: string
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_scan_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_scan_usage_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_scan_usage_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           alert_type: string
@@ -1029,6 +1087,7 @@ export type Database = {
           height_value_mm: number | null
           id: string
           is_active: boolean
+          is_system: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
           notes: string | null
@@ -1059,6 +1118,7 @@ export type Database = {
           height_value_mm?: number | null
           id?: string
           is_active?: boolean
+          is_system?: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
           notes?: string | null
@@ -1089,6 +1149,7 @@ export type Database = {
           height_value_mm?: number | null
           id?: string
           is_active?: boolean
+          is_system?: boolean
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
           name?: string
           notes?: string | null
@@ -4183,6 +4244,7 @@ export type Database = {
       }
       takeoff_pages: {
         Row: {
+          ai_scan_result: Json | null
           canvas_image_path: string | null
           created_at: string
           id: string
@@ -4197,6 +4259,7 @@ export type Database = {
           session_id: string
         }
         Insert: {
+          ai_scan_result?: Json | null
           canvas_image_path?: string | null
           created_at?: string
           id?: string
@@ -4211,6 +4274,7 @@ export type Database = {
           session_id: string
         }
         Update: {
+          ai_scan_result?: Json | null
           canvas_image_path?: string | null
           created_at?: string
           id?: string
@@ -4740,6 +4804,10 @@ export type Database = {
       }
       current_company_id: { Args: never; Returns: string }
       current_user_id: { Args: never; Returns: string }
+      ensure_ai_system_components: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       ensure_company_has_collection: {
         Args: { p_company_id: string }
         Returns: string
