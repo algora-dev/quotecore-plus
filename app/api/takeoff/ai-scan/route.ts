@@ -350,7 +350,7 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       console.error('[ai-scan] image preprocessing failed:', err);
       return NextResponse.json(
-        { success: false, error: 'Failed to process image.' },
+        { success: false, error: `Image processing failed: ${err instanceof Error ? err.message : 'Unknown error'}` },
         { status: 400 },
       );
     }
@@ -419,7 +419,7 @@ export async function POST(req: NextRequest) {
         error: errorMsg,
       });
       return NextResponse.json(
-        { success: false, error: 'AI scan failed. Please try again or proceed manually.' },
+        { success: false, error: `AI service error: ${errorMsg}` },
         { status: 502 },
       );
     }
@@ -480,8 +480,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error('[ai-scan] unhandled error:', err);
+    const errMsg = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json(
-      { success: false, error: 'An unexpected error occurred.' },
+      { success: false, error: `Server error: ${errMsg}` },
       { status: 500 },
     );
   }

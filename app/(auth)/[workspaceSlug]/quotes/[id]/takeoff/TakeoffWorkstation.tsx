@@ -5287,15 +5287,6 @@ export function TakeoffWorkstation({
                   Draw Area · Rectangle
                 </button>
               </div>
-              <button
-                onClick={() => {
-                  setShowRoofAreaInstructions(false);
-                  roofAreaInstructionsDismissedRef.current = true;
-                }}
-                className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
-              >
-                Skip
-              </button>
               {aiTakeoffAvailable && (
                 <button
                   onClick={() => {
