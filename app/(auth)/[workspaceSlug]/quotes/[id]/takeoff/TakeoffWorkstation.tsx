@@ -4013,15 +4013,25 @@ export function TakeoffWorkstation({
     setAiScanError(null);
 
     try {
-      // Capture the current canvas as a PNG (background image + any drawn objects)
-      const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 1 });
+      // Capture the canvas as JPEG at reduced quality to stay under Vercel's
+      // 4.5MB request body limit. A full 800x600 PNG can be 1-2MB+ in base64;
+      // JPEG quality 0.8 keeps it well under 500KB.
+      const dataUrl = canvas.toDataURL({ format: 'jpeg', quality: 0.8, multiplier: 1 });
+
+      // Safety check: if the payload is still too large, downscale further
+      let finalDataUrl = dataUrl;
+      const approxSizeBytes = Math.ceil((dataUrl.length * 3) / 4);
+      if (approxSizeBytes > 4_000_000) {
+        // Re-capture at lower multiplier
+        finalDataUrl = canvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+      }
 
       const response = await fetch('/api/takeoff/ai-scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          image: dataUrl,
-          imageMime: 'image/png',
+          image: finalDataUrl,
+          imageMime: 'image/jpeg',
           quoteId: quote.id,
           pageId,
         }),
@@ -4030,7 +4040,9 @@ export function TakeoffWorkstation({
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        setAiScanError(result.error || 'AI scan failed. Please try again.');
+        const errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
+        console.error('[AI Takeoff] scan error:', errMsg, result);
+        setAiScanError(errMsg);
         return;
       }
 
@@ -4043,7 +4055,8 @@ export function TakeoffWorkstation({
       });
     } catch (err) {
       console.error('[AI Takeoff] scan failed:', err);
-      setAiScanError('Network error. Please try again.');
+      const msg = err instanceof Error ? err.message : 'Network error.';
+      setAiScanError(`Scan failed: ${msg}`);
     } finally {
       setAiScanning(false);
     }
@@ -5296,6 +5309,15 @@ export function TakeoffWorkstation({
                   Use AI Assist
                 </button>
               )}
+              <button
+                onClick={() => {
+                  setShowRoofAreaInstructions(false);
+                  roofAreaInstructionsDismissedRef.current = true;
+                }}
+                className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Skip
+              </button>
             </div>
           </div>
         </div>
