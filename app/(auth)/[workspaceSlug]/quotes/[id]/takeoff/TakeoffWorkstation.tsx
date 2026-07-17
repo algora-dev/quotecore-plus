@@ -8,6 +8,8 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
+import { applyAiResults, computeBackgroundLayout, normalizedPointsToCanvas, computeLineValue, computeAreaValue, type AiScanData, type ApplyAiResult, type AiMeasurement, type AiRoofAreaResult, type PlaceholderType } from '@/app/lib/takeoff/applyAiResults';
+import { AiResultsModal, type AiResultsData } from './modals/AiResultsModal';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
@@ -100,6 +102,8 @@ interface ComponentMeasurement {
    *  reference — `value` is already the final product. Persisted via
    *  entry_inputs so re-entry doesn't wipe it. */
   entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
+  /** AI Takeoff: true if this measurement was created by the AI scan. */
+  aiOrigin?: boolean;
 }
 
 interface ComponentWithMeasurements {
@@ -223,6 +227,12 @@ export function TakeoffWorkstation({
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
+
+  // AI Takeoff state
+  const [aiScanning, setAiScanning] = useState(false);
+  const [aiResults, setAiResults] = useState<AiResultsData | null>(null);
+  const [aiScanError, setAiScanError] = useState<string | null>(null);
+  const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -3982,6 +3992,257 @@ export function TakeoffWorkstation({
     setZoom(scale);
   };
 
+  // ── AI Takeoff: scan handler ──────────────────────────────────────
+  const handleAiScan = async () => {
+    const canvas = fabricRef.current;
+    if (!canvas || !quote) return;
+
+    const bgImage = canvas.backgroundImage as unknown as { width?: number; height?: number; toCanvasElement?: () => HTMLCanvasElement } | null;
+    if (!bgImage || !bgImage.width || !bgImage.height) {
+      setAiScanError('No plan image loaded.');
+      return;
+    }
+
+    const pageId = pages[currentPageIndex]?.id ?? null;
+    if (!pageId) {
+      setAiScanError('No active page.');
+      return;
+    }
+
+    setAiScanning(true);
+    setAiScanError(null);
+
+    try {
+      // Capture the current canvas as a PNG (background image + any drawn objects)
+      const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 1 });
+
+      const response = await fetch('/api/takeoff/ai-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: dataUrl,
+          imageMime: 'image/png',
+          quoteId: quote.id,
+          pageId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setAiScanError(result.error || 'AI scan failed. Please try again.');
+        return;
+      }
+
+      // Store raw data for the apply step
+      setAiScanRaw(result.data);
+      setAiResults({
+        summary: result.summary,
+        scaleCheck: result.data?.scaleCheck ?? null,
+        droppedCount: 0, // Will be filled from applyAiResults
+      });
+    } catch (err) {
+      console.error('[AI Takeoff] scan failed:', err);
+      setAiScanError('Network error. Please try again.');
+    } finally {
+      setAiScanning(false);
+    }
+  };
+
+  // ── AI Takeoff: apply results to canvas ───────────────────────────
+  const handleApplyAiResults = (pitchOverrides: Record<string, number>) => {
+    const canvas = fabricRef.current;
+    if (!canvas || !aiScanRaw) return;
+
+    const bgImage = canvas.backgroundImage as unknown as { width?: number; height?: number } | null;
+    if (!bgImage || !bgImage.width || !bgImage.height) {
+      setAiScanError('Plan image not available.');
+      return;
+    }
+
+    // Build system component id map
+    const systemComponentIds: Record<PlaceholderType, string> = {} as Record<PlaceholderType, string>;
+    for (const comp of components) {
+      if (comp.is_system) {
+        const name = comp.name.toLowerCase();
+        if (name === 'ridge') systemComponentIds.ridges = comp.id;
+        else if (name === 'hip') systemComponentIds.hips = comp.id;
+        else if (name === 'valley') systemComponentIds.valleys = comp.id;
+        else if (name === 'barge') systemComponentIds.barges = comp.id;
+        else if (name === 'spouting') systemComponentIds.spouting = comp.id;
+      }
+    }
+
+    // Check all 5 placeholder types have system components
+    const missing = Object.keys(systemComponentIds).length;
+    if (missing < 5) {
+      setAiScanError('System components not fully seeded. Please reload the page.');
+      return;
+    }
+
+    const imgDims = { width: bgImage.width!, height: bgImage.height! };
+    const applied = applyAiResults({
+      aiData: aiScanRaw,
+      imgDims,
+      calibrations,
+      systemComponentIds,
+    });
+
+    // 1. Add roof areas to React state + canvas
+    const newRoofAreas: RoofArea[] = applied.roofAreas.map((ra: AiRoofAreaResult) => {
+      const pitch = pitchOverrides.default != null ? pitchOverrides.default : ra.pitch;
+
+      // Create Fabric polygon for the roof area
+      const polygon = new Polygon(
+        ra.canvasPoints.map(p => ({ x: p.x, y: p.y })),
+        {
+          fill: 'rgba(59, 130, 246, 0.2)',
+          stroke: '#3b82f6',
+          strokeWidth: 2,
+          selectable: false,
+          objectCaching: false,
+        },
+      );
+      (polygon as unknown as { measurementId: string }).measurementId = ra.id;
+      canvas.add(polygon);
+
+      // Vertex markers
+      const markers = ra.canvasPoints.map(p => {
+        const marker = new Circle({
+          left: p.x, top: p.y, radius: 3,
+          fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
+          originX: 'center', originY: 'center',
+          selectable: false, hasControls: false, hasBorders: false,
+        });
+        (marker as unknown as { measurementId: string }).measurementId = ra.id;
+        canvas.add(marker);
+        return marker;
+      });
+
+      return {
+        id: ra.id,
+        name: ra.name,
+        points: ra.canvasPoints,
+        area: ra.area,
+        pitch,
+        visible: true,
+        polygon,
+        markers,
+        fromPageId: pages[currentPageIndex]?.id ?? null,
+        quoteRoofAreaId: activeAreaId,
+      };
+    });
+
+    if (newRoofAreas.length > 0) {
+      setRoofAreas(prev => [...prev, ...newRoofAreas]);
+    }
+
+    // 2. Add component measurements to React state + canvas
+    // Group by placeholderType → componentId
+    const byComponent = new Map<string, typeof applied.measurements>();
+    for (const m of applied.measurements) {
+      const list = byComponent.get(m.componentId) ?? [];
+      list.push(m);
+      byComponent.set(m.componentId, list);
+    }
+
+    const colours: Record<PlaceholderType, string> = {
+      ridges: '#22C55E',
+      hips: '#EF4444',
+      valleys: '#EAB308',
+      barges: '#A855F7',
+      spouting: '#FFFFFF',
+    };
+
+    setComponentMeasurements(prev => {
+      const updated = [...prev];
+
+      for (const [componentId, measurements] of byComponent) {
+        const existingIdx = updated.findIndex(c => c.componentId === componentId);
+        const placeholderType = measurements[0].placeholderType;
+        const colour = colours[placeholderType];
+
+        // Create canvas objects for each measurement
+        const newMeasurements: ComponentMeasurement[] = measurements.map((m: AiMeasurement) => {
+          const [p1, p2] = m.canvasPoints;
+          const marker1 = new Circle({
+            left: p1.x, top: p1.y, radius: 3,
+            fill: colour, stroke: '#000', strokeWidth: 1,
+            originX: 'center', originY: 'center',
+            selectable: false, hasControls: false, hasBorders: false,
+          });
+          (marker1 as unknown as { measurementId: string }).measurementId = m.id;
+
+          const marker2 = new Circle({
+            left: p2.x, top: p2.y, radius: 3,
+            fill: colour, stroke: '#000', strokeWidth: 1,
+            originX: 'center', originY: 'center',
+            selectable: false, hasControls: false, hasBorders: false,
+          });
+          (marker2 as unknown as { measurementId: string }).measurementId = m.id;
+
+          const lineOpts: Record<string, unknown> = {
+            stroke: colour,
+            strokeWidth: 2,
+            selectable: false,
+            hasControls: false,
+            hasBorders: false,
+          };
+          if (placeholderType === 'spouting') {
+            lineOpts.strokeDashArray = [8, 4];
+          }
+
+          const line = new Line([p1.x, p1.y, p2.x, p2.y], lineOpts as ConstructorParameters<typeof Line>[1]);
+          (line as unknown as { measurementId: string }).measurementId = m.id;
+
+          canvas.add(marker1, marker2, line);
+
+          return {
+            id: m.id,
+            type: 'line' as const,
+            value: m.value,
+            points: m.canvasPoints,
+            visible: true,
+            canvasObjects: [marker1, marker2, line],
+            fromPageId: pages[currentPageIndex]?.id ?? null,
+            quoteRoofAreaId: m.quoteRoofAreaId,
+            aiOrigin: true,
+          } as ComponentMeasurement & { aiOrigin?: boolean };
+        });
+
+        if (existingIdx >= 0) {
+          updated[existingIdx] = {
+            ...updated[existingIdx],
+            measurements: [...updated[existingIdx].measurements, ...newMeasurements],
+            expanded: true,
+          };
+        } else {
+          updated.push({
+            componentId,
+            measurements: newMeasurements,
+            expanded: true,
+          });
+        }
+      }
+
+      return updated;
+    });
+
+    // Update the results modal with dropped count
+    if (applied.droppedCount > 0 && aiResults) {
+      setAiResults({ ...aiResults, droppedCount: applied.droppedCount });
+    }
+
+    canvas.renderAll();
+    setIsDirty(true);
+
+    // Close modal
+    setAiResults(null);
+    setAiScanRaw(null);
+    setShowRoofAreaInstructions(false);
+    roofAreaInstructionsDismissedRef.current = true;
+  };
+
   const handleStartCalibration = () => {
     cleanupBoxDrag();
     // If recalibrating, clear confirmation
@@ -5022,6 +5283,19 @@ export function TakeoffWorkstation({
               >
                 Skip
               </button>
+              {aiTakeoffAvailable && (
+                <button
+                  onClick={() => {
+                    setShowRoofAreaInstructions(false);
+                    roofAreaInstructionsDismissedRef.current = true;
+                    handleAiScan();
+                  }}
+                  className="py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 10l-.75-.07C9.4 9.58 8 7.95 8 6a4 4 0 0 1 4-4z"/><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/><path d="M12 13v3"/></svg>
+                  Use AI Assist
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -5543,6 +5817,42 @@ export function TakeoffWorkstation({
         variant={alertState.variant}
         onClose={closeAlert}
       />
+
+      {/* AI Takeoff: scanning overlay */}
+      {aiScanning && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl text-center">
+            <div className="inline-block w-8 h-8 border-3 border-slate-200 border-t-[#FF6B35] rounded-full animate-spin mb-3" />
+            <h3 className="text-sm font-semibold text-slate-900">Scanning roof plan…</h3>
+            <p className="text-xs text-slate-500 mt-1">This usually takes 5-15 seconds.</p>
+          </div>
+        </div>
+      )}
+
+      {/* AI Takeoff: error toast */}
+      {aiScanError && !aiScanning && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-red-600 text-white text-xs px-4 py-2 rounded-full shadow-lg animate-fade-in">
+          {aiScanError}
+          <button
+            onClick={() => setAiScanError(null)}
+            className="ml-2 underline opacity-80 hover:opacity-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* AI Takeoff: results modal */}
+      {aiResults && aiScanRaw && (
+        <AiResultsModal
+          data={{ ...aiResults, droppedCount: aiResults.droppedCount }}
+          onApply={(pitchOverrides) => handleApplyAiResults(pitchOverrides)}
+          onDiscard={() => {
+            setAiResults(null);
+            setAiScanRaw(null);
+          }}
+        />
+      )}
     </div>
     </div>
     </>
