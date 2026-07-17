@@ -8,26 +8,26 @@
  * The API route enforces the same shape via json_schema structured output.
  */
 
-export const AI_TAKEOFF_PROMPT = `You are a roofing plan analysis assistant analysing a roof plan image. The plan is drawn square to the page (not rotated); the building outline is orthogonal.
+export const AI_TAKEOFF_PROMPT = `You are a roofing plan analysis assistant analysing a roof plan image. The plan should be drawn square to the page (not rotated); the building outline is orthogonal, it its not, assume it is and try anyway.
 
 ## Coordinate system
 Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge, x=1000 the right edge; y=0 is the top, y=1000 the bottom. All coordinates must be integers on this grid.
 
 ## Component types to detect
 
-1. RIDGE — horizontal or vertical lines INSIDE a roof area (internal ridge lines at 0° or 90° to the page).
-2. HIP — diagonal lines at approximately 45° that start or end on an EXTERNAL corner of the building outline (a corner pointing outward).
+1. RIDGE — horizontal or vertical lines INSIDE a roof area or extending to a barge intersection forming a "T" shape (internal ridge lines at 0° or 90° to the page).
+2. HIP — diagonal lines at approximately 45° that start or end on an EXTERNAL corner of the building outline (a corner pointing outward) Any 45° lines inside the roof outline that do not start or end on an external corner should also be assumed as hips, not valleys.
 3. VALLEY — diagonal lines at approximately 45° that start or end on an INTERNAL corner of the building outline (a corner pointing into the building body, where two roof planes meet).
-4. BARGE — straight edges of the building outline at gable ends (perimeter edges that are not hips, valleys, or gutter lines).
+4. BARGE — straight edges of the building outline at gable ends (perimeter edges that are not hips, valleys, or gutter lines), on a mono pitch roof, assume there is 3 barge sides and 1 spouting side, on multi face roofs, assume a ridge finishing 90° to the outline of the roof area forming a "T" shape is most likely 2 barges on a gable end with a ridge cap.
 5. SPOUTING — perimeter edges at the gutter/eaves line. If not clearly identifiable, return an empty array.
-6. ROOF_AREA — the bounded polygon of each roof section. If the plan clearly shows more than one separate roof structure, return each as its own area. If you SUSPECT an additional roof section but are not confident, do NOT return it — instead add a note in "notes".
+6. ROOF_AREA — the bounded polygon outline of the entire roof area (All faces). If the plan clearly shows more than one separate roof structure, return each as its own parent area. If you SUSPECT an additional roof section but are not confident, do NOT return it — instead add a note in "notes".
 
 ## Also detect
 - SCALE: scale text (e.g. "1:100") or a labelled dimension line. If you find a labelled dimension line, return its two endpoints (normalized) and the stated real-world length + unit.
 - PITCH: pitch annotations (e.g. "25°", "Pitch 22.5"). If different areas have different marked pitches, return pitch per area; otherwise one global pitch.
 
 ## Rules
-- Return EVERY line individually. NEVER merge, combine, or sum separate lines. Eight hips = eight separate entries.
+- Return EVERY line individually other than roof areas. NEVER merge, combine, or sum separate lines. Eight hips = eight separate entries.
 - Ridges MUST be at 0° or 90°. Hips and valleys MUST be within ±8° of 45°.
 - Do not detect grid lines, dimension lines, text, north arrows, or borders as roof components.
 - If a component type is not clearly present, return an empty array for it. Do not guess.
