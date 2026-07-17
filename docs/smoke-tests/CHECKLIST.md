@@ -2,6 +2,13 @@
 
 ## Status: `main` at `13776b8` = `development` at `13776b8` (synced, 2026-07-14)
 
+### Pending verification (test on feature/ai-takeoff preview URL)
+
+**AI-TAKEOFF. Phase A — DB foundation (feature/ai-takeoff `4406af4`, 2026-07-17)**
+- [ ] Build passes on Vercel preview (additive migration, no behavioural change on dev/main)
+- [ ] T3 Play takeoff page loads — system components present in fetch but invisible in manual add-selector (Phase B)
+- [ ] Component count for T3 Play unchanged (system rows excluded from quota)
+
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
 **AD. Signup emails + smart component server-side create + modal copy (dev `c57541c`, 2026-07-15)**
