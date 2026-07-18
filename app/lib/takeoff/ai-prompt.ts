@@ -41,7 +41,15 @@ For each roof outline:
 ## Also detect (but do NOT guess)
 - SCALE: Look for a labelled dimension line (a line with text like "5000mm", "5.0m", "16'4\"") or a ratio (e.g. "1:100"). If you find a dimension line, return its two endpoints and the stated real-world length.
 - PITCH: Look for pitch annotations (e.g. "25°", "Pitch 22.5°", "1/4 pitch"). Return per-area if marked differently, or one global value.
-- ROOF FACES: Count how many distinct roof planes/faces exist. A simple rectangle with one ridge = 2 faces. A rectangle with a hip on each end = 4 faces. A rectangle with one gable dormer = 4 faces (2 main + 2 dormer). Include this count in notes as "roof_face_count: N" — it helps Phase 2 classify barges vs spouting correctly.
+- ROOF FACES: Count how many distinct roof planes/faces exist. A roof face is a single sloping surface — do NOT double-count. Count carefully:
+  - Simple rectangle with one ridge = 2 faces (one each side of the ridge)
+  - Rectangle with hip on each end (no gable) = 4 faces (2 main + 2 hip-end)
+  - L-shaped roof with ridge on each arm = 4 faces (2 per arm)
+  - Rectangle with one gable dormer = 4 faces (2 main + 2 dormer)
+  - Rectangle with two gable dormers = 6 faces (2 main + 2×2 dormer)
+  - Fully hipped rectangle = 4 faces
+  - Mono-pitch rectangle = 1 face
+  Include this count in notes as "roof_face_count: N" — it helps Phase 2 classify barges vs spouting correctly.
 
 ## Critical rules
 - If the image is not a roof plan, return {"error":"unreadable"}.
@@ -98,10 +106,16 @@ Every component endpoint must sit on the centre of an actual thick black roof st
 - A diagonal that starts at a re-entrant/inward perimeter corner and runs toward an internal apex is a VALLEY, not a hip.
 - Printed labels may confirm a line's semantic type, but label text and leader lines must never determine its coordinates.
 
-### 4. BARGES (perimeter edges at gable ends)
+### 4. BARGES (perimeter edges at gable ends — RARE)
 - Barges are straight edges of the roof outline itself — they ARE part of the perimeter.
-- A barge is a perimeter edge where the roof slope ends at a gable (triangular wall).
+- A barge is a perimeter edge where the roof slope ends at a GABLE END (a triangular wall).
 - Barges are ALWAYS horizontal (0°) or vertical (90°) — they follow the building outline.
+- IMPORTANT: Barges are RARE on most roofs. A barge ONLY exists where there is a gable end.
+- On a simple gable roof: only the 2 short ends (parallel to the ridge) are barges. The 2 long sides are spouting.
+- On a HIPPED roof: there are NO barges at all — all perimeter edges are spouting/eaves.
+- On a roof with dormers: only the dormer SIDE edges (parallel to the dormer ridge) are barges.
+- DO NOT classify every vertical or short perimeter edge as a barge. Most perimeter edges are SPOUTING.
+- When in doubt: it's SPOUTING, not barge. A barge requires a ridge running PERPENDICULAR to that edge (the gable end is the triangle above the wall, perpendicular to the ridge).
 
 ### GABLE DORMER DETECTION (critical)
 - A gable dormer appears as a small rectangular projection on the roof outline, typically with a ridge line running perpendicular to the main ridge and ending at the dormer.

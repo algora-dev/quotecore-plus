@@ -1233,6 +1233,7 @@ export async function batchCreateAiRoofAreas(
   try {
     const { requireCompanyContext } = await import('@/app/lib/supabase/server');
     const profile = await requireCompanyContext();
+
     const admin = createAdminClient();
 
     // Verify quote belongs to caller's company
@@ -1244,37 +1245,33 @@ export async function batchCreateAiRoofAreas(
       .single();
     if (!quote) return { ok: false, error: 'Quote not found.' };
 
-    // Get current area count for sort_order
-    const { count: areaCount } = await admin
-      .from('quote_roof_areas')
-      .select('id', { count: 'exact', head: true })
-      .eq('quote_id', quoteId);
+    // Insert one at a time using the Supabase client (avoids bulk insert issues)
+    const areaIds: string[] = [];
+    for (const area of areas) {
+      const { data: newArea, error: insertError } = await admin
+        .from('quote_roof_areas')
+        .insert({
+          quote_id: quoteId,
+          label: area.name,
+          input_mode: 'calculated',
+          final_value_sqm: 0,
+          computed_sqm: 0,
+          calc_pitch_degrees: area.pitch,
+          is_locked: false,
+        })
+        .select('id')
+        .single();
 
-    let sortOrder = (areaCount ?? 0) + 1;
-    const insertRows = areas.map(a => ({
-      quote_id: quoteId,
-      label: a.name,
-      input_mode: 'calculated' as const,
-      final_value_sqm: 0,
-      computed_sqm: 0,
-      calc_pitch_degrees: a.pitch,
-      is_locked: false,
-      sort_order: sortOrder++,
-    }));
-
-    const { data: newAreas, error: insertError } = await admin
-      .from('quote_roof_areas')
-      .insert(insertRows)
-      .select('id')
-      .order('sort_order', { ascending: true });
-
-    if (insertError || !newAreas) {
-      return { ok: false, error: insertError?.message ?? 'Failed to create areas' };
+      if (insertError || !newArea) {
+        console.error('[batchCreateAiRoofAreas] Insert error:', insertError);
+        return { ok: false, error: insertError?.message ?? 'Failed to create area' };
+      }
+      areaIds.push(newArea.id);
     }
 
     return {
       ok: true,
-      areaIds: newAreas.map(a => a.id),
+      areaIds,
     };
   } catch (err) {
     console.error('[batchCreateAiRoofAreas] Error:', err);
