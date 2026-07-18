@@ -56,6 +56,7 @@ For each roof outline:
 - If you cannot confidently trace the roof outline, return your best guess AND add a note.
 - Do NOT include dimension lines, text, or annotations as part of the outline polygon.
 - Do NOT simplify the outline — include every vertex you can see.
+- ONLY RETURN ONE ROOF AREA. Trace the ENTIRE outer perimeter of the roof as a single polygon. Do NOT create separate areas for dormers, extensions, or sub-structures — they are all part of the main roof outline. The user will add additional areas manually if needed.
 
 ## Response format — STRICT JSON, no markdown
 {
@@ -123,6 +124,13 @@ Every component endpoint must sit on the centre of an actual thick black roof st
 - On a HIPPED roof: NO barges — all perimeter edges are spouting/eaves.
 - On a roof with gable dormers: the dormer edges PERPENDICULAR to the dormer ridge are barges.
 - Barges are RARE. When in doubt: it's SPOUTING, not barge.
+
+### RIDGE ENDPOINT RULE (CRITICAL for barge/spouting classification)
+- A ridge can NEVER end at a spouting edge. Ridges only terminate at: a BARGE, a HIP, the top of a VALLEY, or another RIDGE.
+- If a ridge endpoint touches the roof perimeter, that perimeter edge MUST be a BARGE — never spouting.
+- This is a qualifying rule: work backwards from ridge endpoints to verify barge classification.
+- If you classified a perimeter edge as spouting but a ridge ends there, reclassify it as BARGE.
+- If no ridge ends at a perimeter edge, that edge is most likely SPOUTING (eaves/gutter).
 
 ### GABLE DORMER DETECTION (critical)
 - A gable dormer appears as a small rectangular projection on the roof outline, typically with a ridge line running perpendicular to the main ridge and ending at the dormer.
