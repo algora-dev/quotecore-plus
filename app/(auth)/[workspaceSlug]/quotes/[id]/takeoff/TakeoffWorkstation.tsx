@@ -4127,23 +4127,10 @@ export function TakeoffWorkstation({
     const targetComp = components.find(c => c.id === targetComponentId);
     if (!targetComp) return;
 
-    // Get the target component's colour (from palette or existing assignment)
-    const targetAssignment = componentColors.find(c => c.componentId === targetComponentId);
-    const targetColour = targetAssignment?.color || COLOR_PALETTE[activeComponentIds.length % COLOR_PALETTE.length];
-
-    // Recolour all canvas objects from the placeholder to the target's colour
-    for (const m of placeholderGroup.measurements) {
-      if (m.canvasObjects) {
-        for (const obj of m.canvasObjects) {
-          if (obj.type === 'line') {
-            obj.set({ stroke: targetColour });
-          } else if (obj.type === 'circle') {
-            obj.set({ fill: targetColour });
-          }
-        }
-      }
-    }
-    canvas.renderAll();
+    // Keep the original placeholder colour for these measurements.
+    // Each replaced placeholder retains its own distinct colour on the canvas
+    // so the user can visually distinguish which measurements came from which placeholder.
+    const placeholderColour = getSemanticColour(semanticKey);
 
     // Move measurements from placeholder group to target component group
     setComponentMeasurements(prev => {
@@ -4178,7 +4165,7 @@ export function TakeoffWorkstation({
       return updated;
     });
 
-    // Update active component IDs: remove placeholder, add target
+    // Update active component IDs: remove placeholder, add target (if not already active)
     setActiveComponentIds(prev => {
       const set = new Set(prev);
       set.delete(placeholderComponentId);
@@ -4186,14 +4173,26 @@ export function TakeoffWorkstation({
       return Array.from(set);
     });
 
-    // Update component colours: remove placeholder colour, ensure target has colour
+    // Update component colours: remove placeholder colour.
+    // If target doesn't have a colour yet, assign from palette (NOT the placeholder colour —
+    // the target component gets its own distinct colour).
+    // But if the target already has a colour, keep it.
     setComponentColors(prev => {
       const updated = prev.filter(c => c.componentId !== placeholderComponentId);
       if (!updated.find(c => c.componentId === targetComponentId)) {
-        updated.push({ componentId: targetComponentId, color: targetColour });
+        // Assign a palette colour for the target (not the placeholder's semantic colour)
+        const idx = activeComponentIds.filter(id => id !== placeholderComponentId).length;
+        updated.push({ componentId: targetComponentId, color: COLOR_PALETTE[idx % COLOR_PALETTE.length] });
       }
       return updated;
     });
+
+    // NOTE: Canvas objects keep their original stroke/fill colours.
+    // The sidebar bar colour comes from componentColors state.
+    // This means the canvas may show the old placeholder colour while the sidebar
+    // shows the new component colour — that's OK, the canvas is per-measurement.
+    // When the user saves and reloads, the reconstructCanvas will use the component's
+    // assigned colour for all its measurements.
 
     setIsDirty(true);
   };
@@ -4300,8 +4299,16 @@ export function TakeoffWorkstation({
 
     if (newRoofAreas.length > 0) {
       setRoofAreas(prev => [...prev, ...newRoofAreas]);
-      // Update allRoofAreas for the left-panel switcher
-      // (the parent component will re-render with the new areas)
+      // Update areaList for the left-panel area switcher
+      setAreaList(prev => [
+        ...prev,
+        ...newRoofAreas.map(ra => ({
+          id: ra.id,
+          label: ra.name,
+          pitch: ra.pitch,
+          area: ra.area,
+        })),
+      ]);
     }
 
     // 2. Add component measurements to React state + canvas
@@ -5039,10 +5046,10 @@ export function TakeoffWorkstation({
                                   {comp.is_system && compData && compData.measurements.length > 0 && (() => {
                                     const semanticKey = resolveSemanticKey(comp.name);
                                     if (!semanticKey) return null;
-                                    // Filter to compatible lineal components (non-system, line type)
+                                    // Show ALL lineal components (including already-active ones)
+                                    // so the user can merge multiple placeholders into the same component
                                     const compatibleComps = displayComponents
                                       .filter(c => !c.is_system)
-                                      .filter(c => !activeComponentIds.includes(c.id))
                                       .filter(c => {
                                         const mt = (c.measurement_type ?? c.default_measurement_type ?? '').toLowerCase();
                                         return mt === 'line' || mt === 'lineal';
@@ -5065,7 +5072,9 @@ export function TakeoffWorkstation({
                                         >
                                           <option value="">Attach component…</option>
                                           {compatibleComps.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                            <option key={c.id} value={c.id}>
+                                              {c.name}{activeComponentIds.includes(c.id) ? ' (already active — merge)' : ''}
+                                            </option>
                                           ))}
                                         </select>
                                       </div>
