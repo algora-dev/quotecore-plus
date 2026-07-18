@@ -4013,33 +4013,38 @@ export function TakeoffWorkstation({
     setAiScanError(null);
 
     try {
-      // CRITICAL: Send the EXACT image that's on the canvas — not a re-fetched
-      // copy, not a canvas render. We extract the background image element
-      // directly and draw it to a temp canvas at its natural resolution.
-      // This guarantees the AI sees the same pixels the canvas displays.
-      const bgImgElement = (canvas.backgroundImage as unknown as { getElement?: () => HTMLImageElement }).getElement?.();
-      if (!bgImgElement) {
-        setAiScanError('Could not extract the plan image.');
-        return;
-      }
+      // SHAUN'S APPROACH (2026-07-18): Capture the canvas itself as the user
+      // sees it — background image on the dark canvas, with all drawn objects
+      // temporarily hidden. This guarantees the AI sees EXACTLY what the user
+      // sees, and normalized 0-1000 coordinates map directly to canvas pixels.
+      // No coordinate mapping mismatch is possible.
+      const bgImg = canvas.backgroundImage;
+      const drawnObjects = canvas.getObjects();
 
-      const natW = bgImgElement.naturalWidth || bgImgElement.width;
-      const natH = bgImgElement.naturalHeight || bgImgElement.height;
+      // Temporarily hide all drawn objects (measurements, areas, markers)
+      const visStates = drawnObjects.map((obj: unknown) => {
+        const o = obj as { visible?: boolean };
+        const v = o.visible !== false;
+        o.visible = false;
+        return v;
+      });
+      canvas.renderAll();
 
-      // Draw the original image to a temp canvas at natural resolution
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = natW;
-      tempCanvas.height = natH;
-      const tempCtx = tempCanvas.getContext('2d');
-      if (!tempCtx) {
-        setAiScanError('Could not process the plan image.');
-        return;
-      }
-      tempCtx.drawImage(bgImgElement, 0, 0, natW, natH);
+      // Capture canvas as PNG (lossless — preserves line quality in the plan)
+      const finalDataUrl = canvas.toDataURL({
+        format: 'png',
+        quality: 1,
+        multiplier: 1,
+      });
 
-      // Export as JPEG (smaller payload than PNG)
-      const finalDataUrl = tempCanvas.toDataURL('image/jpeg', 0.95);
-      const detectedMime = 'image/jpeg';
+      // Restore visibility of all drawn objects
+      drawnObjects.forEach((obj: unknown, i: number) => {
+        (obj as { visible: boolean }).visible = visStates[i];
+      });
+      if (bgImg) (bgImg as { visible: boolean }).visible = true;
+      canvas.renderAll();
+
+      const detectedMime = 'image/png';
 
       const response = await fetch('/api/takeoff/ai-scan', {
         method: 'POST',
@@ -4108,20 +4113,12 @@ export function TakeoffWorkstation({
       return;
     }
 
-    // Use the ORIGINAL image dimensions (natural width/height), not the
-    // Fabric-scaled dimensions. The AI returns normalized 0-1000 coordinates
-    // relative to the source image, so we must map back using the source size.
-    // FabricImage.width/height hold the natural image dimensions (before scaling).
-    const imgDims = { width: bgImage.width!, height: bgImage.height! };
-
-    // Debug: log coordinate mapping values to diagnose accuracy issues
-    const layout = computeBackgroundLayout(imgDims);
-    console.log('[AI Takeoff] Coordinate mapping debug:', {
-      imgDims,
-      layout,
-      firstAreaPoints: aiScanRaw.roof_areas[0]?.points?.slice(0, 3),
-      canvasDims: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
-    });
+    // Since we sent the AI a screenshot of the CANVAS ITSELF (800x600),
+    // normalized 0-1000 coordinates map directly to canvas pixels.
+    // computeBackgroundLayout(800x600) returns scale=1, offset=0,0 — so
+    // normalizedToCanvas just does (np/1000)*800 and (np/1000)*600.
+    // This is the key fix: AI sees the same pixels the canvas shows.
+    const imgDims = { width: CANVAS_WIDTH, height: CANVAS_HEIGHT };
 
     const applied = applyAiResults({
       aiData: aiScanRaw,

@@ -191,7 +191,7 @@ const VERTEX_SNAP_TOLERANCE = 15; // out of 1000
 /** Tolerance for endpoint clustering (same). */
 const CLUSTER_TOLERANCE = 15;
 /** Maximum allowed deviation from target angle (degrees). */
-const ANGLE_TOLERANCE = 8;
+const ANGLE_TOLERANCE = 12;
 
 export interface SnapResult {
   accepted: AiLineEntry[];

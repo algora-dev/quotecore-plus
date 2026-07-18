@@ -10,7 +10,7 @@
 
 // ── Phase 1: Outline detection prompt ──────────────────────────────────────
 
-export const AI_TAKEOFF_PROMPT_PHASE1 = `You are an expert roofing plan analyst. You are analysing a roof plan image — a top-down architectural drawing of a roof.
+export const AI_TAKEOFF_PROMPT_PHASE1 = `You are an expert roofing plan analyst. You are analysing a screenshot of a canvas displaying a roof plan image — a top-down architectural drawing of a roof. The plan image is centred on a dark background (dark grey/slate canvas margin). The roof plan is the bright area in the centre. Ignore the dark margins completely.
 
 ## YOUR PRIMARY TASK
 Identify the ROOF OUTLINE — the thick black perimeter line that defines the actual roof shape. This is the most important thing you do. Everything else depends on getting this right.
@@ -25,7 +25,7 @@ Identify the ROOF OUTLINE — the thick black perimeter line that defines the ac
 - Multiple separate roof structures = multiple outlines.
 
 ## Coordinate system
-Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
+Use NORMALIZED coordinates on a 0–1000 grid covering the ENTIRE image (including the dark margins): x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
 
 ## What to return
 Return ONLY the roof outline polygon(s). Do NOT detect hips, valleys, ridges, barges, or spouting yet.
@@ -62,10 +62,10 @@ For each roof outline:
 
 // ── Phase 2: Component detection prompt ────────────────────────────────────
 
-export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. You are analysing a roof plan image. The roof outline has already been identified — your job is to detect the INTERNAL and PERIMETER components of the roof.
+export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. You are analysing a screenshot of a canvas displaying a roof plan image. The plan image is centred on a dark background (dark grey/slate canvas margin). The roof plan is the bright area in the centre. Ignore the dark margins completely.
 
 ## Coordinate system
-Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
+Use NORMALIZED coordinates on a 0–1000 grid covering the ENTIRE image (including the dark margins): x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
 
 ## The roof outline (already identified)
 {OUTLINE_CONTEXT}
