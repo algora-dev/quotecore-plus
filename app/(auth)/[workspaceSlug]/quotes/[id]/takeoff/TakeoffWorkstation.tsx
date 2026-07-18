@@ -4260,6 +4260,16 @@ export function TakeoffWorkstation({
       return updated;
     });
 
+    // Activate all component IDs that now have measurements so they appear in the sidebar
+    const newComponentIds = Array.from(byComponent.keys());
+    if (newComponentIds.length > 0) {
+      setActiveComponentIds(prev => {
+        const set = new Set(prev);
+        for (const id of newComponentIds) set.add(id);
+        return Array.from(set);
+      });
+    }
+
     // Update the results modal with dropped count
     if (applied.droppedCount > 0 && aiResults) {
       setAiResults({ ...aiResults, droppedCount: applied.droppedCount });

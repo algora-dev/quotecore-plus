@@ -41,6 +41,7 @@ For each roof outline:
 ## Also detect (but do NOT guess)
 - SCALE: Look for a labelled dimension line (a line with text like "5000mm", "5.0m", "16'4\"") or a ratio (e.g. "1:100"). If you find a dimension line, return its two endpoints and the stated real-world length.
 - PITCH: Look for pitch annotations (e.g. "25°", "Pitch 22.5°", "1/4 pitch"). Return per-area if marked differently, or one global value.
+- ROOF FACES: Count how many distinct roof planes/faces exist. A simple rectangle with one ridge = 2 faces. A rectangle with a hip on each end = 4 faces. A rectangle with one gable dormer = 4 faces (2 main + 2 dormer). Include this count in notes as "roof_face_count: N" — it helps Phase 2 classify barges vs spouting correctly.
 
 ## Critical rules
 - If the image is not a roof plan, return {"error":"unreadable"}.
@@ -100,18 +101,32 @@ Every component endpoint must sit on the centre of an actual thick black roof st
 ### 4. BARGES (perimeter edges at gable ends)
 - Barges are straight edges of the roof outline itself — they ARE part of the perimeter.
 - A barge is a perimeter edge where the roof slope ends at a gable (triangular wall).
-- On a mono-pitch roof: 3 barge sides + 1 spouting side.
-- On a multi-face roof: a ridge that finishes 90° to the outline forming a "T" usually means 2 barges on that gable end.
 - Barges are ALWAYS horizontal (0°) or vertical (90°) — they follow the building outline.
+
+### GABLE DORMER DETECTION (critical)
+- A gable dormer appears as a small rectangular projection on the roof outline, typically with a ridge line running perpendicular to the main ridge and ending at the dormer.
+- The T-shape rule: where a ridge meets the outline at 90°, it forms a T. The top bar of the T (the two perimeter edges either side of the ridge endpoint) are BOTH barges. Only the perpendicular ridge-to-outline edge is the ridge.
+- On a gable dormer: the two edges either side of where the dormer ridge meets the perimeter are BARGES (the sloping gable faces). The front edge of the dormer (parallel to the main ridge, perpendicular to the dormer ridge) is a SPOUTING edge (it's the eaves/gutter of the dormer).
+- On a mono-pitch roof: 3 barge sides + 1 spouting side.
+- Do NOT classify the front of a gable dormer as a barge — it is spouting.
 
 ### 5. SPOUTING (perimeter edges at the gutter/eaves line)
 - Spouting runs along the bottom edge of a roof slope where water drains off.
 - It is a PERIMETER edge (part of the roof outline).
 - Spouting is NEVER on a barge line (barges are the gable ends, spouting is the gutter line).
-- On a simple gable roof: 2 spouting edges (the two long sides), 2 barge edges (the two gable ends).
-- On a mono-pitch: 1 spouting edge, 3 barge edges.
+- Water flows DOWN the slope, away from the ridge, and exits at the EAVES (spouting). Barges are on the GABLE end (parallel to the slope direction), spouting is PERPENDICULAR to the slope direction.
+- On a simple gable roof: 2 spouting edges (the two long sides perpendicular to the ridge), 2 barge edges (the two gable ends parallel to the ridge).
+- On a mono-pitch: 1 spouting edge (the low side), 3 barge edges.
+- On a gable dormer: the front edge (perpendicular to the dormer ridge) is spouting; the two side edges (parallel to the dormer ridge) are barges.
 - If you cannot clearly identify which perimeter edges are spouting vs barge, return empty arrays for both — do NOT guess.
 - On a fully hipped roof, the outer perimeter is eaves/spouting; do not invent a barge unless a gable end is actually present.
+
+### WATER FLOW RULE (use this to disambiguate barge vs spouting)
+- Identify the ridge direction for each roof face. Water flows perpendicular to the ridge, down the slope.
+- The perimeter edge WHERE WATER EXITS (perpendicular to ridge) = SPOUTING.
+- The perimeter edge PARALLEL to the ridge (water runs along it, not off it) = BARGE.
+- For a main roof with a horizontal ridge: the left and right edges (vertical, parallel to ridge) are BARGES; the top and bottom edges (horizontal, perpendicular to ridge) are SPOUTING.
+- For a gable dormer with a vertical ridge: the top and bottom edges of the dormer (horizontal, parallel to dormer ridge) are BARGES; the front edge (vertical, perpendicular to dormer ridge) is SPOUTING.
 
 ## Rules
 - Return EVERY line individually. NEVER merge, combine, or sum separate lines.
