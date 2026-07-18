@@ -111,14 +111,17 @@ Every component endpoint must sit on the centre of an actual thick black roof st
 - A barge is a perimeter edge at a GABLE END (a triangular wall).
 - Barges are ALWAYS horizontal (0°) or vertical (90°) — they follow the building outline.
 - CRITICAL RULE: A barge runs PARALLEL to the ridge. Spouting runs PERPENDICULAR to the ridge.
-  - If the ridge is horizontal, the barges are the VERTICAL perimeter edges (left and right sides).
-  - If the ridge is vertical, the barges are the HORIZONTAL perimeter edges (top and bottom sides).
-  - The edges at the OTHER orientation (perpendicular to ridge) are SPOUTING — that's where water runs off.
+  - Barges have the SAME orientation as the ridge (both horizontal or both vertical).
+  - Spouting has the OPPOSITE orientation to the ridge.
+  - If the ridge is HORIZONTAL, barges are the HORIZONTAL perimeter edges (top and bottom). Spouting is the VERTICAL edges (left and right) where water exits.
+  - If the ridge is VERTICAL, barges are the VERTICAL perimeter edges (left and right). Spouting is the HORIZONTAL edges (top and bottom) where water exits.
+  - Remember: on a standard plan, ridges and barges are always horizontal or vertical. Only hips and valleys run at 45°.
 - Water flows DOWN the slope, PERPENDICULAR to the ridge. The edge where water EXITS = SPOUTING.
-  The edge PARALLEL to the ridge (water runs ALONG it, not off it) = BARGE.
-- On a simple gable roof with horizontal ridge: 2 barges (vertical sides) + 2 spouting (horizontal top/bottom).
+  The edge PARALLEL to the ridge (same orientation, water runs ALONG it, not off it) = BARGE.
+- On a simple gable roof with horizontal ridge: 2 barges (horizontal, top and bottom) + 2 spouting (vertical, left and right).
+- On a simple gable roof with vertical ridge: 2 barges (vertical, left and right) + 2 spouting (horizontal, top and bottom).
 - On a HIPPED roof: NO barges — all perimeter edges are spouting/eaves.
-- On a roof with gable dormers: only the dormer SIDE edges (parallel to dormer ridge) are barges.
+- On a roof with gable dormers: only the dormer edges PARALLEL to the dormer ridge are barges.
 - Barges are RARE. When in doubt: it's SPOUTING, not barge.
 
 ### GABLE DORMER DETECTION (critical)
@@ -133,7 +136,7 @@ Every component endpoint must sit on the centre of an actual thick black roof st
 - It is a PERIMETER edge (part of the roof outline).
 - Spouting is NEVER on a barge line (barges are the gable ends, spouting is the gutter line).
 - Water flows DOWN the slope, away from the ridge, and exits at the EAVES (spouting). Barges are on the GABLE end (parallel to the slope direction), spouting is PERPENDICULAR to the slope direction.
-- On a simple gable roof: 2 spouting edges (the two long sides perpendicular to the ridge), 2 barge edges (the two gable ends parallel to the ridge).
+- On a simple gable roof with horizontal ridge: 2 spouting edges (vertical, left and right) + 2 barge edges (horizontal, top and bottom).
 - On a mono-pitch: 1 spouting edge (the low side), 3 barge edges.
 - On a gable dormer: the front edge (perpendicular to the dormer ridge) is spouting; the two side edges (parallel to the dormer ridge) are barges.
 - DEFAULT RULE: If you cannot clearly determine whether a perimeter edge is barge or spouting, classify it as SPOUTING. It is better to over-classify as spouting than to miss an eaves edge.
@@ -153,16 +156,19 @@ Every component endpoint must sit on the centre of an actual thick black roof st
 - Step 1: Find the ridge direction for each roof face.
 - Step 2: Water flows PERPENDICULAR to the ridge, down the slope.
 - Step 3: The perimeter edge WHERE WATER EXITS (perpendicular to ridge) = SPOUTING.
-- Step 4: The perimeter edge PARALLEL to the ridge (water runs along it, not off it) = BARGE.
+- Step 4: The perimeter edge PARALLEL to the ridge (same orientation) = BARGE.
 - CONCRETE EXAMPLE: Main roof with a HORIZONTAL ridge running left-right.
-  - Water flows down the slope toward the top and bottom edges.
-  - The TOP and BOTTOM edges (horizontal, perpendicular to water flow) = SPOUTING (eaves/gutter).
-  - The LEFT and RIGHT edges (vertical, parallel to the ridge) = BARGES (gable ends).
-  - So: horizontal edges = SPOUTING, vertical edges = BARGE (when ridge is horizontal).
+  - Water flows down the slope toward the LEFT and RIGHT edges (perpendicular to ridge).
+  - The LEFT and RIGHT edges (vertical, perpendicular to ridge) = SPOUTING (eaves/gutter).
+  - The TOP and BOTTOM edges (horizontal, parallel to ridge) = BARGES (gable ends).
+  - So: horizontal edges = BARGE, vertical edges = SPOUTING (when ridge is horizontal).
 - ANOTHER EXAMPLE: Main roof with a VERTICAL ridge running top-bottom.
-  - Water flows down the slope toward the left and right edges.
-  - The LEFT and RIGHT edges (vertical, perpendicular to water flow) = SPOUTING.
-  - The TOP and BOTTOM edges (horizontal, parallel to the ridge) = BARGES.
+  - Water flows down the slope toward the TOP and BOTTOM edges (perpendicular to ridge).
+  - The TOP and BOTTOM edges (horizontal, perpendicular to ridge) = SPOUTING.
+  - The LEFT and RIGHT edges (vertical, parallel to ridge) = BARGES.
+  - So: vertical edges = BARGE, horizontal edges = SPOUTING (when ridge is vertical).
+- SUMMARY: Barge = SAME orientation as ridge. Spouting = OPPOSITE orientation to ridge.
+- On a standard plan: ridges and barges are always horizontal or vertical. Only hips and valleys run at 45°.
 - If you cannot determine the ridge direction, default the edge to SPOUTING.
 
 ## Rules
