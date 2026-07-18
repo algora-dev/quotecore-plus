@@ -66,7 +66,7 @@ For each roof outline:
 
 // ── Phase 2: Component detection prompt ────────────────────────────────────
 
-export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. Analyse the bright roof plan in the centre of the image and ignore the dark canvas margins.
+export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. You are analysing a screenshot of a canvas displaying a roof plan image — a top-down architectural drawing of a roof. The plan image is centred on a dark background (dark grey/slate canvas margin). The roof plan is the bright area in the centre. Ignore the dark margins completely.
 
 ## Coordinate contract
 The image is exactly 800 pixels wide by 600 pixels high. Return integer image-pixel coordinates: x=0..799 and y=0..599.
@@ -77,34 +77,37 @@ Place every endpoint on the centre of an actual roof stroke or stroke intersecti
 
 Use this outline as fixed geometry. Return the same roof_areas polygon unchanged. Do not redraw, simplify, split, or expand it.
 
-## Required classification process - perform these steps in order
+## Required classification process — perform these steps IN ORDER
 
-### STEP 1 - Confirm the roof area
+### STEP 1 — Confirm the roof area
 - Use only the supplied Phase 1 outline as the roof perimeter.
 - Ignore skylights, chimneys, vents, labels, dimensions, and other non-roof objects.
 - Do not use a guessed roof-face count to create or classify any component.
 
-### STEP 2 - Detect every ridge
-- A ridge is a solid internal line where roof planes meet at their highest point.
-- Detect all clearly visible ridge runs before considering barges or spouting.
-- Standard-plan ridges must be horizontal (0 degrees) or vertical (90 degrees).
+### STEP 2 — Detect every RIDGE
+- A ridge is a solid internal line where two roof planes meet at their highest point.
+- Ridges run at exactly 0° (horizontal) or 90° (vertical) on standard plans.
+- A ridge may extend from one barge line to another, or from a barge to a hip junction.
+- On the plan, ridges appear as solid lines INSIDE the roof outline, typically running along the centre/long axis.
+- Detect ALL clearly visible ridge runs before considering barges or spouting.
 - A ridge endpoint may meet another ridge, a hip, a valley, or the roof perimeter. Record its actual visible endpoints exactly.
 - A mono-pitch roof may have no ridge. Do not invent one.
 
-### STEP 3 - Detect every hip and valley
-- Hips and valleys are diagonal internal roof lines, normally near 45 or 135 degrees.
-- HIP: an external high junction, normally joining an outward roof corner to a ridge or another internal junction.
-- VALLEY: an internal low junction where water collects, normally beginning at a re-entrant/inward roof corner.
+### STEP 3 — Detect every HIP and VALLEY
+- Hips and valleys are diagonal internal roof lines, normally near 45° or 135°.
+- HIP: an external high junction. A hip ALWAYS starts or ends on an EXTERNAL corner of the roof outline (a corner that points OUTWARD, away from the building body). A hip connects an external corner to either: a ridge endpoint, another hip, or the roof edge. If a 45° line inside the roof does NOT start/end on an external corner, it is still likely a hip (not a valley) — assume hip by default for internal 45° lines.
+- VALLEY: an internal low junction where water collects. A valley ALWAYS starts or ends on an INTERNAL corner of the roof outline (a corner that points INWARD, where two roof planes meet at a re-entrant angle). A diagonal that starts at a re-entrant/inward perimeter corner and runs toward an internal apex is a VALLEY, not a hip.
 - Classify from the corner type and visible junctions, not from labels or roof-style assumptions.
+- Printed labels may confirm a line's semantic type, but label text and leader lines must never determine its coordinates.
 - Complete this step before classifying any perimeter run.
 
-### STEP 4 - Detect barges only from ridge endpoints
+### STEP 4 — Detect BARGES only from ridge endpoints
 A barge is a gable-edge run on the roof perimeter. Barges do not collect water. They are the exception, not the default.
 
 For EACH ridge endpoint, apply this exact test:
 1. Does the ridge endpoint land directly on the supplied roof perimeter?
-2. If NO - create no barge from that endpoint. An endpoint that meets a hip, valley, ridge, or other internal junction does not create a barge.
-3. If YES - inspect the two perimeter directions leaving that exact endpoint.
+2. If NO — create no barge from that endpoint. An endpoint that meets a hip, valley, ridge, or other internal junction does not create a barge.
+3. If YES — inspect the two perimeter directions leaving that exact endpoint.
 4. If both perimeter runs leave approximately perpendicular to the ridge, classify those two runs as barges.
 5. Trace each barge away from the ridge endpoint only until the first roof corner, obvious join, or change of perimeter direction. Return each run separately.
 
@@ -115,7 +118,7 @@ Mandatory barge constraints:
 - Example: if a vertical dormer ridge reaches a horizontal front perimeter, the two horizontal runs branching left and right from that endpoint are barges. The dormer's vertical side runs are spouting, not barges.
 - If the endpoint/perimeter connection is unclear, create no barge there. Leave those perimeter runs for Step 5.
 
-### STEP 5 - Assign spouting by perimeter elimination
+### STEP 5 — Assign SPOUTING by perimeter elimination
 - Start with the complete supplied roof perimeter.
 - Subtract only the barge runs positively identified in Step 4.
 - Every remaining perimeter run is spouting.
@@ -123,16 +126,17 @@ Mandatory barge constraints:
 - Split spouting at every roof corner, join, or barge endpoint and return each run separately.
 - A fully hipped roof therefore has zero barges and spouting around its entire outer perimeter.
 
-### STEP 6 - Final consistency check
+### STEP 6 — Final consistency check
 - Every perimeter run must appear exactly once: either barges or spouting, never both.
 - Barges plus spouting must reconstruct the complete supplied perimeter with no gaps.
 - No ridge, hip, or valley may be copied into barges or spouting.
 - If any barge fails the ridge-endpoint test, remove it and classify that perimeter run as spouting.
 
 ## Geometry rules
-- Return every visible run individually. Never merge or sum separate lines.
-- Ridges must be at 0 or 90 degrees. Hips and valleys must be within 8 degrees of 45 or 135 degrees.
-- Barges and spouting must follow the supplied roof perimeter.
+- Return EVERY visible run individually. NEVER merge, combine, or sum separate lines.
+- Ridges MUST be at 0° or 90°. Hips and valleys MUST be within ±8° of 45° or 135°.
+- Barges and spouting MUST follow the supplied roof perimeter (0° or 90° on standard plans).
+- Do NOT detect grid lines, dimension lines, text, north arrows, or borders as roof components.
 - If a ridge, hip, or valley is not clearly visible, return an empty array for that type.
 - If the image is too unclear to analyse, return {"error":"unreadable"}.
 
