@@ -462,15 +462,14 @@ export function computeScaleCheck(
 /**
  * Defensive perimeter-accounting pass.
  *
- * Every outline segment must be classified exactly once — either Barge or
- * Spouting — never both, never silently omitted.
+ * Barges are accepted only when they branch from a ridge endpoint and follow
+ * the outline. Spouting is then rebuilt as the exact perimeter remainder.
  *
  * Rules:
- * 1. For each roof area polygon, iterate each edge (segment).
- * 2. Check if the segment already appears in the AI's barges or spouting arrays.
- * 3. If it appears in BOTH — remove from spouting (barge wins).
- * 4. If it appears in NEITHER — default to Spouting (unless clear gable evidence).
- * 5. Mono-pitch rectangle rule: 3 barges + 1 spouting.
+ * 1. Reject any barge that is not on the perimeter, does not start at a ridge
+ *    endpoint, or is not perpendicular to that ridge.
+ * 2. Project valid barges onto each polygon edge and merge their coverage.
+ * 3. Rebuild spouting from every uncovered perimeter interval.
  *
  * Returns the corrected components object.
  */
@@ -478,130 +477,168 @@ export function perimeterAccountingPass(
   aiData: AiScanData,
 ): AiScanData['components'] {
   const corrected = structuredClone(aiData.components);
+  const PERIMETER_TOLERANCE = 5;
+  const RIDGE_ENDPOINT_TOLERANCE = 12;
+  const PERPENDICULAR_DOT_TOLERANCE = Math.sin(8 * Math.PI / 180);
+  const MIN_RUN_LENGTH = 2;
 
-  // Build edge sets for barges and spouting (both directions)
-  const edgeKey = (p1: CanvasPoint, p2: CanvasPoint) =>
-    `${Math.round(p1.x)},${Math.round(p1.y)}|${Math.round(p2.x)},${Math.round(p2.y)}`;
-
-  const bargeEdges = new Set<string>();
-  const spoutingEdges = new Set<string>();
-
-  for (const entry of corrected.barges) {
-    if (entry.points.length < 2) continue;
-    const p1 = entry.points[0], p2 = entry.points[entry.points.length - 1];
-    bargeEdges.add(edgeKey(p1, p2));
-    bargeEdges.add(edgeKey(p2, p1)); // reverse
-  }
-  for (const entry of corrected.spouting) {
-    if (entry.points.length < 2) continue;
-    const p1 = entry.points[0], p2 = entry.points[entry.points.length - 1];
-    spoutingEdges.add(edgeKey(p1, p2));
-    spoutingEdges.add(edgeKey(p2, p1)); // reverse
+  interface EdgeProjection {
+    start: number;
+    end: number;
   }
 
-  // 1. Remove spouting entries that duplicate barge entries (barge wins)
-  corrected.spouting = corrected.spouting.filter(entry => {
+  function projectPointToEdge(
+    point: CanvasPoint,
+    edgeStart: CanvasPoint,
+    edgeEnd: CanvasPoint,
+  ): { parameter: number; offset: number } | null {
+    const edgeX = edgeEnd.x - edgeStart.x;
+    const edgeY = edgeEnd.y - edgeStart.y;
+    const lengthSquared = edgeX * edgeX + edgeY * edgeY;
+    if (lengthSquared === 0) return null;
+
+    const parameter = ((point.x - edgeStart.x) * edgeX + (point.y - edgeStart.y) * edgeY) / lengthSquared;
+    const projectedX = edgeStart.x + parameter * edgeX;
+    const projectedY = edgeStart.y + parameter * edgeY;
+    return {
+      parameter,
+      offset: Math.hypot(point.x - projectedX, point.y - projectedY),
+    };
+  }
+
+  function projectRunToEdge(
+    runStart: CanvasPoint,
+    runEnd: CanvasPoint,
+    edgeStart: CanvasPoint,
+    edgeEnd: CanvasPoint,
+  ): EdgeProjection | null {
+    const edgeLength = distance(edgeStart, edgeEnd);
+    if (edgeLength === 0) return null;
+
+    const startProjection = projectPointToEdge(runStart, edgeStart, edgeEnd);
+    const endProjection = projectPointToEdge(runEnd, edgeStart, edgeEnd);
+    if (!startProjection || !endProjection) return null;
+
+    const parameterTolerance = PERIMETER_TOLERANCE / edgeLength;
+    if (
+      startProjection.offset > PERIMETER_TOLERANCE
+      || endProjection.offset > PERIMETER_TOLERANCE
+      || startProjection.parameter < -parameterTolerance
+      || startProjection.parameter > 1 + parameterTolerance
+      || endProjection.parameter < -parameterTolerance
+      || endProjection.parameter > 1 + parameterTolerance
+    ) {
+      return null;
+    }
+
+    return {
+      start: Math.max(0, Math.min(startProjection.parameter, endProjection.parameter)),
+      end: Math.min(1, Math.max(startProjection.parameter, endProjection.parameter)),
+    };
+  }
+
+  function pointOnEdge(edgeStart: CanvasPoint, edgeEnd: CanvasPoint, parameter: number): CanvasPoint {
+    return {
+      x: edgeStart.x + (edgeEnd.x - edgeStart.x) * parameter,
+      y: edgeStart.y + (edgeEnd.y - edgeStart.y) * parameter,
+    };
+  }
+
+  function isPerpendicularToRidge(
+    bargeStart: CanvasPoint,
+    bargeEnd: CanvasPoint,
+    ridgeStart: CanvasPoint,
+    ridgeEnd: CanvasPoint,
+  ): boolean {
+    const bargeLength = distance(bargeStart, bargeEnd);
+    const ridgeLength = distance(ridgeStart, ridgeEnd);
+    if (bargeLength === 0 || ridgeLength === 0) return false;
+
+    const dot = (
+      (bargeEnd.x - bargeStart.x) * (ridgeEnd.x - ridgeStart.x)
+      + (bargeEnd.y - bargeStart.y) * (ridgeEnd.y - ridgeStart.y)
+    ) / (bargeLength * ridgeLength);
+    return Math.abs(dot) <= PERPENDICULAR_DOT_TOLERANCE;
+  }
+
+  function branchesFromRidgeEndpoint(bargeStart: CanvasPoint, bargeEnd: CanvasPoint): boolean {
+    return corrected.ridges.some(ridge => {
+      if (ridge.points.length < 2) return false;
+      const ridgeStart = ridge.points[0];
+      const ridgeEnd = ridge.points[ridge.points.length - 1];
+      if (!isPerpendicularToRidge(bargeStart, bargeEnd, ridgeStart, ridgeEnd)) return false;
+
+      return [ridgeStart, ridgeEnd].some(ridgeEndpoint =>
+        distance(bargeStart, ridgeEndpoint) <= RIDGE_ENDPOINT_TOLERANCE
+        || distance(bargeEnd, ridgeEndpoint) <= RIDGE_ENDPOINT_TOLERANCE,
+      );
+    });
+  }
+
+  const perimeterEdges = aiData.roof_areas.flatMap(area =>
+    area.points.map((point, index) => ({
+      start: point,
+      end: area.points[(index + 1) % area.points.length],
+    })),
+  );
+
+  corrected.barges = corrected.barges.filter(entry => {
     if (entry.points.length < 2) return false;
-    const p1 = entry.points[0], p2 = entry.points[entry.points.length - 1];
-    return !bargeEdges.has(edgeKey(p1, p2));
+    const runStart = entry.points[0];
+    const runEnd = entry.points[entry.points.length - 1];
+    if (!branchesFromRidgeEndpoint(runStart, runEnd)) return false;
+
+    return perimeterEdges.some(edge =>
+      projectRunToEdge(runStart, runEnd, edge.start, edge.end) !== null,
+    );
   });
 
-  // 2. For each roof area polygon edge, check if it's classified.
-  //    If unclassified, add it as Spouting (default).
-  const TOLERANCE = 5; // pixels
+  corrected.spouting = [];
 
-  function edgesMatch(a1: CanvasPoint, a2: CanvasPoint, b1: CanvasPoint, b2: CanvasPoint): boolean {
-    const d1 = Math.hypot(a1.x - b1.x, a1.y - b1.y);
-    const d2 = Math.hypot(a2.x - b2.x, a2.y - b2.y);
-    const d3 = Math.hypot(a1.x - b2.x, a1.y - b2.y);
-    const d4 = Math.hypot(a2.x - b1.x, a2.y - b1.y);
-    return (d1 < TOLERANCE && d2 < TOLERANCE) || (d3 < TOLERANCE && d4 < TOLERANCE);
-  }
+  for (const edge of perimeterEdges) {
+    const edgeLength = distance(edge.start, edge.end);
+    if (edgeLength < MIN_RUN_LENGTH) continue;
 
-  for (const area of aiData.roof_areas) {
-    const pts = area.points;
-    for (let i = 0; i < pts.length; i++) {
-      const p1 = pts[i];
-      const p2 = pts[(i + 1) % pts.length];
+    const coverage = corrected.barges
+      .map(entry => projectRunToEdge(
+        entry.points[0],
+        entry.points[entry.points.length - 1],
+        edge.start,
+        edge.end,
+      ))
+      .filter((projection): projection is EdgeProjection => projection !== null)
+      .sort((left, right) => left.start - right.start);
 
-      // Check if this edge is already in barges or spouting
-      let foundInBarge = false;
-      let foundInSpouting = false;
-
-      for (const entry of corrected.barges) {
-        if (entry.points.length < 2) continue;
-        const e1 = entry.points[0], e2 = entry.points[entry.points.length - 1];
-        if (edgesMatch(p1, p2, e1, e2)) { foundInBarge = true; break; }
+    const mergedCoverage: EdgeProjection[] = [];
+    for (const interval of coverage) {
+      const previous = mergedCoverage[mergedCoverage.length - 1];
+      if (previous && interval.start <= previous.end + PERIMETER_TOLERANCE / edgeLength) {
+        previous.end = Math.max(previous.end, interval.end);
+      } else {
+        mergedCoverage.push({ ...interval });
       }
-      if (foundInBarge) continue; // already classified as barge
-
-      for (const entry of corrected.spouting) {
-        if (entry.points.length < 2) continue;
-        const e1 = entry.points[0], e2 = entry.points[entry.points.length - 1];
-        if (edgesMatch(p1, p2, e1, e2)) { foundInSpouting = true; break; }
-      }
-      if (foundInSpouting) continue; // already classified as spouting
-
-      // Unclassified perimeter segment — default to Spouting
-      corrected.spouting.push({ points: [{ ...p1 }, { ...p2 }] });
     }
-  }
 
-  // 3. Mono-pitch rectangle rule: if a roof area has exactly 4 edges
-  //    and no ridge was detected, validate 3 barges + 1 spouting.
-  //    If the counts are wrong, log a note but don't force-correct
-  //    (the AI may have valid reasons for a non-standard classification).
-  for (const area of aiData.roof_areas) {
-    if (area.points.length === 4) {
-      const hasRidge = corrected.ridges.length > 0;
-      if (!hasRidge) {
-        // Mono-pitch: expect 3 barges + 1 spouting for this area
-        // Count edges that belong to this area
-        let bargeCount = 0;
-        let spoutingCount = 0;
-        const pts = area.points;
-        for (let i = 0; i < 4; i++) {
-          const p1 = pts[i];
-          const p2 = pts[(i + 1) % 4];
-          for (const entry of corrected.barges) {
-            if (entry.points.length < 2) continue;
-            const e1 = entry.points[0], e2 = entry.points[entry.points.length - 1];
-            if (edgesMatch(p1, p2, e1, e2)) { bargeCount++; break; }
-          }
-          for (const entry of corrected.spouting) {
-            if (entry.points.length < 2) continue;
-            const e1 = entry.points[0], e2 = entry.points[entry.points.length - 1];
-            if (edgesMatch(p1, p2, e1, e2)) { spoutingCount++; break; }
-          }
-        }
-        // If we have 0 barges and 4 spouting on a mono-pitch, flip 3 to barge
-        if (bargeCount === 0 && spoutingCount === 4) {
-          // Find the longest edge — that's likely the spouting (eaves/gutter)
-          // The other 3 are barges
-          let longestIdx = 0;
-          let longestLen = 0;
-          for (let i = 0; i < 4; i++) {
-            const p1 = pts[i];
-            const p2 = pts[(i + 1) % 4];
-            const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-            if (len > longestLen) { longestLen = len; longestIdx = i; }
-          }
-          // Remove all 4 spouting entries for this area, re-add 1 spouting (longest) + 3 barges
-          const areaEdges = pts.map((p, i) => ({ p1: p, p2: pts[(i + 1) % 4] }));
-          corrected.spouting = corrected.spouting.filter(entry => {
-            if (entry.points.length < 2) return true;
-            const e1 = entry.points[0], e2 = entry.points[entry.points.length - 1];
-            return !areaEdges.some(ae => edgesMatch(ae.p1, ae.p2, e1, e2));
-          });
-          // Add the longest as spouting
-          corrected.spouting.push({ points: [{ ...areaEdges[longestIdx].p1 }, { ...areaEdges[longestIdx].p2 }] });
-          // Add the other 3 as barges
-          for (let i = 0; i < 4; i++) {
-            if (i === longestIdx) continue;
-            corrected.barges.push({ points: [{ ...areaEdges[i].p1 }, { ...areaEdges[i].p2 }] });
-          }
-        }
+    let remainderStart = 0;
+    for (const interval of mergedCoverage) {
+      if ((interval.start - remainderStart) * edgeLength >= MIN_RUN_LENGTH) {
+        corrected.spouting.push({
+          points: [
+            pointOnEdge(edge.start, edge.end, remainderStart),
+            pointOnEdge(edge.start, edge.end, interval.start),
+          ],
+        });
       }
+      remainderStart = Math.max(remainderStart, interval.end);
+    }
+
+    if ((1 - remainderStart) * edgeLength >= MIN_RUN_LENGTH) {
+      corrected.spouting.push({
+        points: [
+          pointOnEdge(edge.start, edge.end, remainderStart),
+          { ...edge.end },
+        ],
+      });
     }
   }
 
@@ -633,8 +670,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
   const { aiData, calibrations, systemComponentIds } = params;
 
   // ── Step 3: Perimeter-accounting pass ──────────────────────────────
-  // Every outline segment classified exactly once. Unclassified → Spouting.
-  // Mono-pitch rectangle rule: 3 barges + 1 spouting.
+  // Accept only ridge-endpoint barges, then rebuild spouting as the remainder.
   const correctedComponents = perimeterAccountingPass(aiData);
   const correctedAiData = { ...aiData, components: correctedComponents };
 

@@ -41,15 +41,7 @@ For each roof outline:
 ## Also detect (but do NOT guess)
 - SCALE: Look for a labelled dimension line (a line with text like "5000mm", "5.0m", "16'4\"") or a ratio (e.g. "1:100"). If you find a dimension line, return its two endpoints and the stated real-world length.
 - PITCH: Look for pitch annotations (e.g. "25°", "Pitch 22.5°", "1/4 pitch"). Return per-area if marked differently, or one global value.
-- ROOF FACES: Count how many distinct roof planes/faces exist. A roof face is a single sloping surface — do NOT double-count. Count carefully:
-  - Simple rectangle with one ridge = 2 faces (one each side of the ridge)
-  - Rectangle with hip on each end (no gable) = 4 faces (2 main + 2 hip-end)
-  - L-shaped roof with ridge on each arm = 4 faces (2 per arm)
-  - Rectangle with one gable dormer = 4 faces (2 main + 2 dormer)
-  - Rectangle with two gable dormers = 6 faces (2 main + 2×2 dormer)
-  - Fully hipped rectangle = 4 faces
-  - Mono-pitch rectangle = 1 face
-  Include this count in notes as "roof_face_count: N" — it helps Phase 2 classify barges vs spouting correctly.
+- ROOF FACES: Only if you are fully confident, count the distinct physical roof planes and add exactly one note in the form "roof_face_count: N". If any face boundary is unclear, do not include a roof-face count. Never infer the count from the number of visible line compartments, and never use a guessed face count to classify perimeter components.
 
 ## Critical rules
 - If the image is not a roof plan, return {"error":"unreadable"}.
@@ -74,118 +66,74 @@ For each roof outline:
 
 // ── Phase 2: Component detection prompt ────────────────────────────────────
 
-export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. You are analysing a screenshot of a canvas displaying a roof plan image. The plan image is centred on a dark background (dark grey/slate canvas margin). The roof plan is the bright area in the centre. Ignore the dark margins completely.
+export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. Analyse the bright roof plan in the centre of the image and ignore the dark canvas margins.
 
-## Coordinate system - exact pixels
-The supplied image is exactly 800 pixels wide by 600 pixels high.
-Return exact IMAGE PIXEL coordinates: x=0 is the left edge, x=799 the right edge; y=0 is the top, y=599 the bottom. All coordinates must be integers.
-Every component endpoint must sit on the centre of an actual thick black roof stroke or stroke intersection. Never use annotation leader lines, dimension lines, text baselines, or inferred extensions.
+## Coordinate contract
+The image is exactly 800 pixels wide by 600 pixels high. Return integer image-pixel coordinates: x=0..799 and y=0..599.
+Place every endpoint on the centre of an actual roof stroke or stroke intersection. Never use dimension lines, annotation leaders, text, borders, or an imagined extension as component geometry.
 
-## The roof outline (already identified)
+## Authoritative roof outline from Phase 1
 {OUTLINE_CONTEXT}
 
-## Component types to detect — IN THIS ORDER OF PRIORITY
+Use this outline as fixed geometry. Return the same roof_areas polygon unchanged. Do not redraw, simplify, split, or expand it.
 
-### 1. RIDGES (horizontal or vertical lines INSIDE the roof area)
-- Ridges run at exactly 0° (horizontal) or 90° (vertical) to the page.
-- A ridge is where two roof slopes meet at the highest point.
-- On the plan, ridges appear as solid lines INSIDE the roof outline, typically running along the centre/long axis.
-- A ridge may extend from one barge line to another, forming a "T" at each end.
-- On a mono-pitch roof, there may be NO ridge.
+## Required classification process - perform these steps in order
 
-### 2. HIPS (diagonal lines at 45° starting/ending on EXTERNAL corners)
-- Hips are diagonal lines at approximately 45° (or 135°).
-- A hip ALWAYS starts or ends on an EXTERNAL corner of the roof outline (a corner that points OUTWARD, away from the building body).
-- A hip connects an external corner to either: a ridge endpoint, another hip, or the roof edge.
-- If a 45° line inside the roof does NOT start/end on an external corner, it is still likely a hip (not a valley) — assume hip by default for internal 45° lines.
+### STEP 1 - Confirm the roof area
+- Use only the supplied Phase 1 outline as the roof perimeter.
+- Ignore skylights, chimneys, vents, labels, dimensions, and other non-roof objects.
+- Do not use a guessed roof-face count to create or classify any component.
 
-### 3. VALLEYS (diagonal lines at 45° starting/ending on INTERNAL corners)
-- Valleys are diagonal lines at approximately 45° (or 135°).
-- A valley ALWAYS starts or ends on an INTERNAL corner of the roof outline (a corner that points INWARD, into the building body — where two roof planes meet at a re-entrant angle).
-- Valleys are where two roof slopes meet at a low point (water collects here).
-- If a 45° line does NOT start/end on an internal corner, it is NOT a valley — it's a hip.
-- A diagonal that starts at a re-entrant/inward perimeter corner and runs toward an internal apex is a VALLEY, not a hip.
-- Printed labels may confirm a line's semantic type, but label text and leader lines must never determine its coordinates.
+### STEP 2 - Detect every ridge
+- A ridge is a solid internal line where roof planes meet at their highest point.
+- Detect all clearly visible ridge runs before considering barges or spouting.
+- Standard-plan ridges must be horizontal (0 degrees) or vertical (90 degrees).
+- A ridge endpoint may meet another ridge, a hip, a valley, or the roof perimeter. Record its actual visible endpoints exactly.
+- A mono-pitch roof may have no ridge. Do not invent one.
 
-### 4. BARGES (perimeter edges PARALLEL to the ridge — gable ends)
-- Barges are straight edges of the roof outline itself — they ARE part of the perimeter.
-- A barge is a perimeter edge at a GABLE END (a triangular wall).
-- Barges are ALWAYS horizontal (0°) or vertical (90°) — they follow the building outline.
-- CRITICAL RULE: A barge runs PERPENDICULAR to the ridge (at right angles to it). Spouting runs PARALLEL to the ridge.
-  - A ridge endpoint touches the perimeter. At that point, TWO barges branch off at right angles to the ridge, running along the roof outline.
-  - If the ridge is HORIZONTAL, barges are the VERTICAL perimeter edges (left and right, where the ridge ends). Spouting is the HORIZONTAL edges (top and bottom).
-  - If the ridge is VERTICAL, barges are the HORIZONTAL perimeter edges (top and bottom, where the ridge ends). Spouting is the VERTICAL edges (left and right).
-  - The only exception: a mono-pitch roof has no ridge, so it has 3 barges + 1 spouting.
-  - Remember: on a standard plan, ridges and barges are always horizontal or vertical. Only hips and valleys run at 45°.
-- Water flows DOWN the slope, PARALLEL to the barge (perpendicular to the ridge). The edge where water EXITS = SPOUTING (parallel to ridge).
-  The edge PERPENDICULAR to the ridge (where the ridge ends, the gable end) = BARGE.
-- On a simple gable roof with horizontal ridge: 2 barges (vertical, left and right where ridge ends) + 2 spouting (horizontal, top and bottom).
-- On a simple gable roof with vertical ridge: 2 barges (horizontal, top and bottom where ridge ends) + 2 spouting (vertical, left and right).
-- On a HIPPED roof: NO barges — all perimeter edges are spouting/eaves.
-- On a roof with gable dormers: the dormer edges PERPENDICULAR to the dormer ridge are barges.
-- Barges are RARE. When in doubt: it's SPOUTING, not barge.
+### STEP 3 - Detect every hip and valley
+- Hips and valleys are diagonal internal roof lines, normally near 45 or 135 degrees.
+- HIP: an external high junction, normally joining an outward roof corner to a ridge or another internal junction.
+- VALLEY: an internal low junction where water collects, normally beginning at a re-entrant/inward roof corner.
+- Classify from the corner type and visible junctions, not from labels or roof-style assumptions.
+- Complete this step before classifying any perimeter run.
 
-### RIDGE ENDPOINT RULE (CRITICAL for barge/spouting classification)
-- A ridge can NEVER end at a spouting edge. Ridges only terminate at: a BARGE, a HIP, the top of a VALLEY, or another RIDGE.
-- If a ridge endpoint touches the roof perimeter, that perimeter edge MUST be a BARGE — never spouting.
-- This is a qualifying rule: work backwards from ridge endpoints to verify barge classification.
-- If you classified a perimeter edge as spouting but a ridge ends there, reclassify it as BARGE.
-- If no ridge ends at a perimeter edge, that edge is most likely SPOUTING (eaves/gutter).
+### STEP 4 - Detect barges only from ridge endpoints
+A barge is a gable-edge run on the roof perimeter. Barges do not collect water. They are the exception, not the default.
 
-### GABLE DORMER DETECTION (critical)
-- A gable dormer appears as a small rectangular projection on the roof outline, typically with a ridge line running perpendicular to the main ridge and ending at the dormer.
-- The T-shape rule: where a ridge meets the outline at 90°, it forms a T. The top bar of the T (the two perimeter edges either side of the ridge endpoint) are BOTH barges. Only the perpendicular ridge-to-outline edge is the ridge.
-- On a gable dormer: the two edges either side of where the dormer ridge meets the perimeter are BARGES (the sloping gable faces). The front edge of the dormer (parallel to the main ridge, perpendicular to the dormer ridge) is a SPOUTING edge (it's the eaves/gutter of the dormer).
-- On a mono-pitch roof: 3 barge sides + 1 spouting side.
-- Do NOT classify the front of a gable dormer as a barge — it is spouting.
+For EACH ridge endpoint, apply this exact test:
+1. Does the ridge endpoint land directly on the supplied roof perimeter?
+2. If NO - create no barge from that endpoint. An endpoint that meets a hip, valley, ridge, or other internal junction does not create a barge.
+3. If YES - inspect the two perimeter directions leaving that exact endpoint.
+4. If both perimeter runs leave approximately perpendicular to the ridge, classify those two runs as barges.
+5. Trace each barge away from the ridge endpoint only until the first roof corner, obvious join, or change of perimeter direction. Return each run separately.
 
-### 5. SPOUTING (perimeter edges at the gutter/eaves line)
-- Spouting runs along the bottom edge of a roof slope where water drains off.
-- It is a PERIMETER edge (part of the roof outline).
-- Spouting is NEVER on a barge line (barges are the gable ends, spouting is the gutter line).
-- Water flows DOWN the slope, away from the ridge, and exits at the EAVES (spouting). Barges are on the GABLE end (parallel to the slope direction), spouting is PERPENDICULAR to the slope direction.
-- On a simple gable roof with horizontal ridge: 2 spouting edges (horizontal, top and bottom) + 2 barge edges (vertical, left and right where ridge ends).
-- On a mono-pitch: 1 spouting edge (the low side), 3 barge edges.
-- On a gable dormer: the front edge (perpendicular to the dormer ridge) is spouting; the two side edges (parallel to the dormer ridge) are barges.
-- DEFAULT RULE: If you cannot clearly determine whether a perimeter edge is barge or spouting, classify it as SPOUTING. It is better to over-classify as spouting than to miss an eaves edge.
-- On a fully hipped roof, the outer perimeter is eaves/spouting; do not invent a barge unless a gable end is actually present.
+Mandatory barge constraints:
+- Never classify a perimeter run as barge merely because it is perpendicular to a ridge somewhere else. It must be one of the two runs branching directly from a ridge endpoint on the perimeter.
+- A hipped roof has no barge at an end where the ridge terminates into hips. Its outer perimeter is spouting.
+- Apply the same endpoint test independently to dormer ridges. Do not use a separate dormer rule.
+- Example: if a vertical dormer ridge reaches a horizontal front perimeter, the two horizontal runs branching left and right from that endpoint are barges. The dormer's vertical side runs are spouting, not barges.
+- If the endpoint/perimeter connection is unclear, create no barge there. Leave those perimeter runs for Step 5.
 
-### PERIMETER ACCOUNTING (CRITICAL)
-- EVERY perimeter segment of EVERY roof area MUST be classified as exactly one of: Barge or Spouting.
-- No perimeter segment may be classified as BOTH.
-- No perimeter segment may be left unclassified.
-- If a segment is ambiguous, default to Spouting.
-- After classification, count the perimeter segments: the total (barges + spouting) must equal the total number of perimeter edges across all roof areas.
-- Mono-pitch rectangle rule: exactly 3 barges + 1 spouting (4 total perimeter edges).
-- Simple gable rectangle rule: exactly 2 barges + 2 spouting (4 total perimeter edges).
-- Fully hipped rectangle rule: 0 barges + 4 spouting (4 total perimeter edges).
+### STEP 5 - Assign spouting by perimeter elimination
+- Start with the complete supplied roof perimeter.
+- Subtract only the barge runs positively identified in Step 4.
+- Every remaining perimeter run is spouting.
+- Spouting is the eaves/gutter edge where water exits the roof. Water runs into spouting; it does not run into a barge.
+- Split spouting at every roof corner, join, or barge endpoint and return each run separately.
+- A fully hipped roof therefore has zero barges and spouting around its entire outer perimeter.
 
-### WATER FLOW RULE (THE DEFINITIVE BARGE vs SPOUTING TEST)
-- Step 1: Find the ridge direction for each roof face.
-- Step 2: Water flows PERPENDICULAR to the ridge, down the slope.
-- Step 3: The perimeter edge WHERE WATER EXITS (parallel to ridge) = SPOUTING.
-- Step 4: The perimeter edge PERPENDICULAR to the ridge (where the ridge ends, the gable end) = BARGE.
-- CONCRETE EXAMPLE: Main roof with a HORIZONTAL ridge running left-right.
-  - The ridge ends at the LEFT and RIGHT perimeter edges.
-  - At each ridge endpoint, TWO barges branch off at right angles — so the LEFT and RIGHT edges (vertical) = BARGES (gable ends).
-  - The TOP and BOTTOM edges (horizontal, parallel to ridge) = SPOUTING (eaves/gutter where water exits).
-  - So: vertical edges = BARGE, horizontal edges = SPOUTING (when ridge is horizontal).
-- ANOTHER EXAMPLE: Main roof with a VERTICAL ridge running top-bottom.
-  - The ridge ends at the TOP and BOTTOM perimeter edges.
-  - At each ridge endpoint, TWO barges branch off at right angles — so the TOP and BOTTOM edges (horizontal) = BARGES.
-  - The LEFT and RIGHT edges (vertical, parallel to ridge) = SPOUTING.
-- SUMMARY: Barge = PERPENDICULAR to ridge (right angle). Spouting = PARALLEL to ridge.
-- The only exception: mono-pitch roof has no ridge → 3 barges + 1 spouting.
-- On a standard plan: ridges and barges are always horizontal or vertical. Only hips and valleys run at 45°.
-- If you cannot determine the ridge direction, default the edge to SPOUTING.
+### STEP 6 - Final consistency check
+- Every perimeter run must appear exactly once: either barges or spouting, never both.
+- Barges plus spouting must reconstruct the complete supplied perimeter with no gaps.
+- No ridge, hip, or valley may be copied into barges or spouting.
+- If any barge fails the ridge-endpoint test, remove it and classify that perimeter run as spouting.
 
-## Rules
-- Return EVERY line individually. NEVER merge, combine, or sum separate lines.
-- Ridges MUST be at 0° or 90°. Hips and valleys MUST be within ±8° of 45° or 135°.
-- Barges and spouting MUST be at 0° or 90° (they follow the building outline).
-- Do NOT detect grid lines, dimension lines, text, north arrows, or borders as roof components.
-- Do NOT re-detect the roof outline — that's already been done.
-- If a component type is not clearly present, return an empty array for it.
+## Geometry rules
+- Return every visible run individually. Never merge or sum separate lines.
+- Ridges must be at 0 or 90 degrees. Hips and valleys must be within 8 degrees of 45 or 135 degrees.
+- Barges and spouting must follow the supplied roof perimeter.
+- If a ridge, hip, or valley is not clearly visible, return an empty array for that type.
 - If the image is too unclear to analyse, return {"error":"unreadable"}.
 
 ## Response format — STRICT JSON, no markdown
