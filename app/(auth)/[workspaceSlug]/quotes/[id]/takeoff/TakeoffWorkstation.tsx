@@ -11,6 +11,7 @@ import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, computeLineValue, computeAreaValue, type AiScanData, type ApplyAiResult, type AiMeasurement, type AiRoofAreaResult, type PlaceholderType, validateMeasurementConsistency } from '@/app/lib/takeoff/applyAiResults';
 import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS, type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
+import { AiAreaReviewModal } from './modals/AiAreaReviewModal';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
@@ -234,6 +235,10 @@ export function TakeoffWorkstation({
   const [aiResults, setAiResults] = useState<AiResultsData | null>(null);
   const [aiScanError, setAiScanError] = useState<string | null>(null);
   const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
+  const [aiOutlineData, setAiOutlineData] = useState<AiScanData | null>(null);
+  const [aiOutlineAreas, setAiOutlineAreas] = useState<AiResultsArea[] | null>(null);
+  const [aiAnalysisImage, setAiAnalysisImage] = useState<{ dataUrl: string; width: number; height: number } | null>(null);
+  const [aiScanStage, setAiScanStage] = useState<'outline' | 'components'>('outline');
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -4027,16 +4032,18 @@ export function TakeoffWorkstation({
     }
 
     setAiScanning(true);
+    setAiScanStage('outline');
     setAiScanError(null);
 
     try {
-      // SHAUN'S APPROACH (2026-07-18): Capture the canvas itself as the user
-      // sees it — background image on the dark canvas, with all drawn objects
-      // temporarily hidden. This guarantees the AI sees EXACTLY what the user
-      // sees, so the AI can return the same 800x600 pixel coordinates directly.
-      // No coordinate mapping mismatch is possible.
+      // Render the canonical Fabric scene at 3x resolution. This preserves the
+      // exact canvas layout while giving the vision model the source detail it
+      // was losing in the old 800x600 capture.
       const bgImg = canvas.backgroundImage;
       const drawnObjects = canvas.getObjects();
+      const previousViewport = canvas.viewportTransform
+        ? [...canvas.viewportTransform] as [number, number, number, number, number, number]
+        : null;
 
       // Temporarily hide all drawn objects (measurements, areas, markers)
       const visStates = drawnObjects.map((obj: unknown) => {
@@ -4045,19 +4052,21 @@ export function TakeoffWorkstation({
         o.visible = false;
         return v;
       });
+      canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
       canvas.renderAll();
 
       // Capture canvas as PNG (lossless — preserves line quality in the plan)
       const finalDataUrl = canvas.toDataURL({
         format: 'png',
         quality: 1,
-        multiplier: 1,
+        multiplier: 3,
       });
 
       // Restore visibility of all drawn objects
       drawnObjects.forEach((obj: unknown, i: number) => {
         (obj as { visible: boolean }).visible = visStates[i];
       });
+      if (previousViewport) canvas.viewportTransform = previousViewport;
       if (bgImg) (bgImg as { visible: boolean }).visible = true;
       canvas.renderAll();
 
@@ -4067,11 +4076,12 @@ export function TakeoffWorkstation({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          stage: 'outline',
           image: finalDataUrl,
           imageMime: detectedMime,
           quoteId: quote.id,
           pageId,
-          imageDimensions: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+          imageDimensions: { width: CANVAS_WIDTH * 3, height: CANVAS_HEIGHT * 3 },
         }),
       });
 
@@ -4084,25 +4094,83 @@ export function TakeoffWorkstation({
         return;
       }
 
-      // Store raw data for the apply step
-      setAiScanRaw(result.data);
-      // Build per-area info for the modal's editable Parent Areas section
+      if (result.summary?.unreadable || !result.data?.roof_areas?.length) {
+        setAiScanError(result.summary?.notes?.[0] || 'No usable roof outline was detected.');
+        return;
+      }
+      setAiOutlineData(result.data);
+      setAiAnalysisImage({ dataUrl: finalDataUrl, width: CANVAS_WIDTH * 3, height: CANVAS_HEIGHT * 3 });
       const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
         index: idx,
         name: area.name || `Area ${idx + 1}`,
         pitch: area.pitch_degrees ?? result.data?.pitch?.global_degrees ?? null,
         vertexCount: area.points?.length ?? 0,
       }));
-      setAiResults({
-        summary: result.summary,
-        scaleCheck: result.data?.scaleCheck ?? null,
-        droppedCount: 0, // Will be filled from applyAiResults
-        areas: areaInfos,
-      });
+      setAiOutlineAreas(areaInfos);
     } catch (err) {
       console.error('[AI Takeoff] scan failed:', err);
       const msg = err instanceof Error ? err.message : 'Network error.';
       setAiScanError(`Scan failed: ${msg}`);
+    } finally {
+      setAiScanning(false);
+    }
+  };
+
+  const handleConfirmAiAreas = async (areaOverrides: Record<number, { name: string; pitch: number }>) => {
+    if (!quote || !aiOutlineData || !aiAnalysisImage) return;
+    const pageId = pages[currentPageIndex]?.id ?? null;
+    if (!pageId) {
+      setAiScanError('No active page.');
+      return;
+    }
+
+    const confirmedAreas = aiOutlineData.roof_areas.map((area, index) => ({
+      ...area,
+      name: areaOverrides[index]?.name || area.name || `Area ${index + 1}`,
+      pitch_degrees: areaOverrides[index]?.pitch ?? area.pitch_degrees ?? 0,
+    }));
+
+    setAiScanning(true);
+    setAiScanStage('components');
+    setAiScanError(null);
+    try {
+      const response = await fetch('/api/takeoff/ai-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stage: 'components',
+          image: aiAnalysisImage.dataUrl,
+          imageMime: 'image/png',
+          imageDimensions: { width: aiAnalysisImage.width, height: aiAnalysisImage.height },
+          quoteId: quote.id,
+          pageId,
+          confirmedAreas,
+          outlineData: { ...aiOutlineData, roof_areas: confirmedAreas },
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        const violations = Array.isArray(result.topologyViolations)
+          ? ` ${result.topologyViolations.join(' ')}` : '';
+        setAiScanError(`${result.error || `AI scan failed (HTTP ${response.status}).`}${violations}`);
+        return;
+      }
+
+      setAiScanRaw(result.data);
+      setAiResults({
+        summary: result.summary,
+        scaleCheck: result.data?.scaleCheck ?? null,
+        droppedCount: 0,
+        areas: confirmedAreas.map((area, index) => ({
+          index,
+          name: area.name,
+          pitch: area.pitch_degrees,
+          vertexCount: area.points.length,
+        })),
+      });
+      setAiOutlineAreas(null);
+    } catch (error) {
+      setAiScanError(`Component scan failed: ${error instanceof Error ? error.message : 'Network error.'}`);
     } finally {
       setAiScanning(false);
     }
@@ -4456,6 +4524,8 @@ export function TakeoffWorkstation({
     // Close modal
     setAiResults(null);
     setAiScanRaw(null);
+    setAiOutlineData(null);
+    setAiAnalysisImage(null);
     setShowRoofAreaInstructions(false);
     roofAreaInstructionsDismissedRef.current = true;
   };
@@ -6074,8 +6144,10 @@ export function TakeoffWorkstation({
         <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl text-center">
             <div className="inline-block w-8 h-8 border-3 border-slate-200 border-t-[#FF6B35] rounded-full animate-spin mb-3" />
-            <h3 className="text-sm font-semibold text-slate-900">Scanning roof plan…</h3>
-            <p className="text-xs text-slate-500 mt-1">This usually takes 5-15 seconds.</p>
+            <h3 className="text-sm font-semibold text-slate-900">
+              {aiScanStage === 'outline' ? 'Finding roof areas…' : 'Finding connected roof components…'}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">This may take up to a minute.</p>
           </div>
         </div>
       )}
@@ -6093,6 +6165,21 @@ export function TakeoffWorkstation({
         </div>
       )}
 
+      {aiOutlineAreas && aiOutlineData && aiAnalysisImage && !aiResults && (
+        <AiAreaReviewModal
+          areas={aiOutlineAreas}
+          notes={aiOutlineData.notes}
+          previewImage={aiAnalysisImage.dataUrl}
+          outlines={aiOutlineData.roof_areas}
+          onConfirm={handleConfirmAiAreas}
+          onDiscard={() => {
+            setAiOutlineAreas(null);
+            setAiOutlineData(null);
+            setAiAnalysisImage(null);
+          }}
+        />
+      )}
+
       {/* AI Takeoff: results modal */}
       {aiResults && aiScanRaw && (
         <AiResultsModal
@@ -6101,6 +6188,8 @@ export function TakeoffWorkstation({
           onDiscard={() => {
             setAiResults(null);
             setAiScanRaw(null);
+            setAiOutlineData(null);
+            setAiAnalysisImage(null);
           }}
         />
       )}

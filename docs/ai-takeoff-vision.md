@@ -7,6 +7,15 @@ User uploads a plan → it loads into the canvas (pixel-based) → AI analyses t
 
 ## Pipeline
 
+### Two-Stage Scan (2026-07-18)
+- Stage 1 scans only parent roof outlines, scale and pitch annotations.
+- The user confirms every parent area name and pitch before component detection.
+- Stage 2 receives the confirmed polygons and returns a connected node/edge roof graph.
+- Every ridge, hip and valley endpoint must connect to the perimeter or a shared junction.
+- Invalid/dangling graphs receive one targeted repair attempt and are rejected if still invalid.
+- AI receives a 3x render of the canonical Fabric canvas, preserving exact overlay registration while exposing more source detail.
+- The scan model remains configurable through `AI_TAKEOFF_MODEL` and defaults to `gpt-5.4`.
+
 ### 1. Plan Upload & Canvas Loading
 - User uploads a plan image/PDF
 - Loaded into the Fabric.js canvas as pixel-based background

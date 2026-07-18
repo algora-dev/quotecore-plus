@@ -146,8 +146,6 @@ export interface ApplyAiResult {
 const VERTEX_SNAP_TOLERANCE = 12;
 /** Tolerance for endpoint clustering (same). */
 const CLUSTER_TOLERANCE = 12;
-/** Maximum allowed deviation from target angle (degrees). */
-const ANGLE_TOLERANCE = 8;
 
 export interface SnapResult {
   accepted: AiLineEntry[];
@@ -156,8 +154,7 @@ export interface SnapResult {
 
 /**
  * Snap and validate AI-detected lines against locked geometric rules.
- * - Ridges → exactly 0° or 90°
- * - Hips/valleys → exactly 45° or 135°
+ * - Preserve the actual detected stroke angle
  * - Vertex snap: endpoints near roof-area polygon vertices get snapped
  * - Endpoint clustering: nearby endpoints merge to centroid
  * - Reject: out-of-range, zero-length, duplicate lines
@@ -185,16 +182,7 @@ export function snapAndValidate(
     // 2. Zero-length check
     if (distance(p1, p2) < 2) { rejected++; continue; }
 
-    // 3. Angle snap
-    const angle = angleDegrees(p1, p2);
-    if (!snapAngle(angle, type)) { rejected++; continue; }
-
-    // Apply angle snap (rotate about midpoint)
-    const snapped = snapToAngle(p1, p2, type);
-    p1 = snapped.p1;
-    p2 = snapped.p2;
-
-    // 4. Vertex snap — snap endpoints to nearby polygon vertices
+    // 3. Vertex snap — snap endpoints to nearby polygon vertices
     p1 = snapToVertex(p1, roofAreaVertices);
     p2 = snapToVertex(p2, roofAreaVertices);
 
@@ -216,55 +204,6 @@ function inRange(p: CanvasPoint): boolean {
 
 function distance(a: CanvasPoint, b: CanvasPoint): number {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
-}
-
-function angleDegrees(a: CanvasPoint, b: CanvasPoint): number {
-  return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-}
-
-function snapAngle(angle: number, type: PlaceholderType): boolean {
-  // Normalize to 0–180
-  let a = angle % 180;
-  if (a < 0) a += 180;
-
-  if (type === 'ridges' || type === 'barges' || type === 'spouting') {
-    // Ridges, barges, and spouting are ALL horizontal (0°) or vertical (90°).
-    // Barges and spouting follow the building outline, which is orthogonal.
-    return a <= ANGLE_TOLERANCE || Math.abs(a - 90) <= ANGLE_TOLERANCE || Math.abs(a - 180) <= ANGLE_TOLERANCE;
-  }
-  // hips + valleys: 45° or 135°
-  return Math.abs(a - 45) <= ANGLE_TOLERANCE || Math.abs(a - 135) <= ANGLE_TOLERANCE;
-}
-
-function snapToAngle(
-  p1: CanvasPoint,
-  p2: CanvasPoint,
-  type: PlaceholderType,
-): { p1: CanvasPoint; p2: CanvasPoint } {
-  const midX = (p1.x + p2.x) / 2;
-  const midY = (p1.y + p2.y) / 2;
-  const len = distance(p1, p2);
-
-  const angle = angleDegrees(p1, p2);
-  let a = angle % 180;
-  if (a < 0) a += 180;
-
-  let targetAngle: number;
-  if (type === 'ridges' || type === 'barges' || type === 'spouting') {
-    // Horizontal or vertical — snap to nearest
-    targetAngle = (a <= 45 || a >= 135) ? 0 : 90;
-  } else {
-    // hips/valleys — snap to 45° or 135°
-    targetAngle = (Math.abs(a - 45) <= Math.abs(a - 135)) ? 45 : 135;
-  }
-
-  // Convert to radians and rotate about midpoint
-  const rad = targetAngle * Math.PI / 180;
-  const halfLen = len / 2;
-  return {
-    p1: { x: Math.round(midX - halfLen * Math.cos(rad)), y: Math.round(midY - halfLen * Math.sin(rad)) },
-    p2: { x: Math.round(midX + halfLen * Math.cos(rad)), y: Math.round(midY + halfLen * Math.sin(rad)) },
-  };
 }
 
 function snapToVertex(

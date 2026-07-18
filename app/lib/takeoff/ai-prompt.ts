@@ -1,335 +1,245 @@
 /**
- * AI Takeoff — Vision model prompt for roof plan analysis.
+ * AI Takeoff prompts and strict structured-output schemas.
  *
- * Two-phase approach:
- * Phase 1: Identify the roof outline (the thick black perimeter line).
- * Phase 2: Identify internal components (hips, valleys, ridges, barges, spouting).
- *
- * The model returns exact pixel coordinates for the 800x600 canvas image.
+ * Stage 1 detects parent roof outlines only. The user confirms the parent
+ * names and pitches before Stage 2 detects a connected component graph.
  */
 
-// ── Phase 1: Outline detection prompt ──────────────────────────────────────
+export interface PromptRoofArea {
+  name: string;
+  pitch_degrees: number | null;
+  points: Array<{ x: number; y: number }>;
+}
 
-export const AI_TAKEOFF_PROMPT_PHASE1 = `You are an expert roofing plan analyst. You are analysing a screenshot of a canvas displaying a roof plan image — a top-down architectural drawing of a roof. The plan image is centred on a dark background (dark grey/slate canvas margin). The roof plan is the bright area in the centre. Ignore the dark margins completely.
+export interface PromptCornerCandidate {
+  area_index: number;
+  point_index: number;
+  corner_type: 'internal' | 'external';
+  likely_component: 'valley' | 'hip';
+}
 
-## YOUR PRIMARY TASK
-Identify the ROOF OUTLINE — the thick black perimeter line that defines the actual roof shape. This is the most important thing you do. Everything else depends on getting this right.
+export function buildAiTakeoffOutlinePrompt(width: number, height: number): string {
+  return `You are an expert roofing plan analyst. Analyse this top-down architectural roof plan.
 
-## How to identify the roof outline
-- The roof outline is the THICKEST continuous black line forming a closed shape.
-- It is NOT dimension lines (thin lines with arrows or tick marks).
-- It is NOT text, annotations, leaders, or callouts.
-- It is NOT the drawing border/frame.
-- It is NOT grid lines or construction lines.
-- The outline may be a simple rectangle, an L-shape, T-shape, U-shape, or have stepped/complex geometry.
-- Multiple separate roof structures = multiple outlines.
+The supplied image is a high-resolution render of the exact takeoff canvas. It is ${width} pixels wide and ${height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. Ignore dark canvas margins, dimensions, labels, leaders, grids, borders, hatching, arrows, vents, skylights and other annotations.
 
-## Coordinate system - exact pixels
-The supplied image is exactly 800 pixels wide by 600 pixels high.
-Return exact IMAGE PIXEL coordinates: x=0 is the left edge, x=799 the right edge; y=0 is the top, y=599 the bottom. All coordinates must be integers.
-Read every vertex from the centre of the actual thick black stroke or stroke intersection. Never estimate from labels, dimension leaders, text, or whitespace.
+## ONE TASK: FIND PARENT ROOF OUTLINES
+Trace the complete visible perimeter of each physically separate roof structure.
 
-## What to return
-Return ONLY the roof outline polygon(s). Do NOT detect hips, valleys, ridges, barges, or spouting yet.
+Rules:
+- Follow the centre of the actual perimeter stroke.
+- Include every visible step, notch and re-entrant corner. Never simplify the polygon.
+- Return connected dormers and extensions as part of the same parent outline.
+- Return a separate parent area only when the roof structure is physically disconnected.
+- Do not divide one roof into individual sloping faces.
+- Do not detect ridges, hips, valleys, barges or spouting in this stage.
+- Suggest a pitch only when a pitch annotation is visible. Otherwise use null.
+- Detect a labelled dimension line only when its endpoints and real length are readable.
+- If part of an outline is genuinely ambiguous, still return the best continuous polygon and describe the ambiguity in notes.
+- If this is not a usable roof plan, set error to unreadable.
 
-For each roof outline:
-- List every vertex of the perimeter polygon in order (clockwise or counter-clockwise).
-- Include EVERY corner — even small steps or notches in the outline.
-- The polygon must be CLOSED (first vertex = last vertex conceptually).
-- Name each area (e.g. "Main Roof", "Garage Roof").
+## CORNER AUDIT
+After tracing each polygon, inspect every polygon vertex:
+- internal: a re-entrant/concave corner pointing into the roof footprint; this is a likely valley origin.
+- external: a convex corner pointing away from the roof footprint; this may be a hip origin.
+Return one corner candidate for every polygon vertex. Use the polygon point index exactly.
 
-## Also detect (but do NOT guess)
-- SCALE: Look for a labelled dimension line (a line with text like "5000mm", "5.0m", "16'4\"") or a ratio (e.g. "1:100"). If you find a dimension line, return its two endpoints and the stated real-world length.
-- PITCH: Look for pitch annotations (e.g. "25°", "Pitch 22.5°", "1/4 pitch"). Return per-area if marked differently, or one global value.
-- ROOF FACES: Only if you are fully confident, count the distinct physical roof planes and add exactly one note in the form "roof_face_count: N". If any face boundary is unclear, do not include a roof-face count. Never infer the count from the number of visible line compartments, and never use a guessed face count to classify perimeter components. A roof face is a single sloping surface bounded by ridges, hips, valleys, and/or the roof perimeter. Every face MUST touch at least one spouting/eaves edge. Count carefully:
-  - Simple rectangle with one ridge = 2 faces (one each side of the ridge)
-  - Rectangle with hip on each end (no gable) = 4 faces (2 main + 2 hip-end)
-  - L-shaped roof with ridge on each arm = 4 faces (2 per arm)
-  - Rectangle with one gable dormer = 4 faces (2 main + 2 dormer)
-  - Rectangle with two gable dormers = 6 faces (2 main + 2×2 dormer)
-  - Fully hipped rectangle = 4 faces
-  - Mono-pitch rectangle = 1 face
-  If the count is uncertain, omit it entirely.
+Return only the structured JSON requested by the schema.`;
+}
 
-## Critical rules
-- If the image is not a roof plan, return {"error":"unreadable"}.
-- If you cannot confidently trace the roof outline, return your best guess AND add a note.
-- Do NOT include dimension lines, text, or annotations as part of the outline polygon.
-- Do NOT simplify the outline — include every vertex you can see.
-- ONLY RETURN ONE ROOF AREA. Trace the ENTIRE outer perimeter of the roof as a single polygon. Do NOT create separate areas for dormers, extensions, or sub-structures — they are all part of the main roof outline. The user will add additional areas manually if needed.
+export function buildAiTakeoffComponentsPrompt(params: {
+  width: number;
+  height: number;
+  areas: PromptRoofArea[];
+  corners: PromptCornerCandidate[];
+  repairContext?: string;
+}): string {
+  const areaContext = params.areas.map((area, areaIndex) => {
+    const points = area.points.map((point, pointIndex) => (
+      `a${areaIndex}v${pointIndex}=(${point.x},${point.y})`
+    )).join(', ');
+    return `Area ${areaIndex}: ${area.name}, pitch ${area.pitch_degrees ?? 'unknown'}°, perimeter vertices: ${points}`;
+  }).join('\n');
+  const cornerContext = params.corners.map(corner => (
+    `a${corner.area_index}v${corner.point_index}: ${corner.corner_type}, likely ${corner.likely_component}`
+  )).join('\n');
+  const repair = params.repairContext
+    ? `\n## REQUIRED REPAIR\nA previous graph failed validation. Correct every listed violation while preserving valid detections:\n${params.repairContext}\n`
+    : '';
 
-## Response format — STRICT JSON, no markdown
-{
-  "scale": {"detected": true, "ratio": "1:100" | null,
-            "dimension_line": {"p1":{"x":0,"y":0},"p2":{"x":0,"y":0},
-                               "real_length": 5000, "unit":"mm"} | null},
-  "pitch": {"detected": true, "global_degrees": 25 | null},
-  "roof_areas": [
-    {"name": "Main Roof",
-     "points": [{"x":100,"y":200},{"x":500,"y":200},{"x":500,"y":600}],
-     "pitch_degrees": 25 | null}
-  ],
-  "notes": []
-}`;
+  return `You are an expert roofing plan analyst. Detect every roof component inside the confirmed parent roof area(s).
 
-// ── Phase 2: Component detection prompt ────────────────────────────────────
+The supplied image is ${params.width} pixels wide and ${params.height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. The confirmed polygons below are authoritative and must be returned unchanged.
 
-export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. You are analysing a screenshot of a canvas displaying a roof plan image — a top-down architectural drawing of a roof. The plan image is centred on a dark background (dark grey/slate canvas margin). The roof plan is the bright area in the centre. Ignore the dark margins completely.
+## CONFIRMED PARENT AREAS
+${areaContext}
 
-## Coordinate contract
-The image is exactly 800 pixels wide by 600 pixels high. Return integer image-pixel coordinates: x=0..799 and y=0..599.
-Place every endpoint on the centre of an actual roof stroke or stroke intersection. Never use dimension lines, annotation leaders, text, borders, or an imagined extension as component geometry.
+## EXPECTED CORNER ORIGINS
+${cornerContext || 'No corner candidates supplied.'}
 
-## Authoritative roof outline from Phase 1
-{OUTLINE_CONTEXT}
+## BUILD ONE CONNECTED ROOF GRAPH
+Work in this exact order:
+1. Create all confirmed perimeter vertex nodes using their required IDs (for example a0v0).
+2. Identify internal junction nodes before drawing component edges.
+3. Detect every visible ridge run.
+4. Resolve every internal/re-entrant corner with a valley unless clear roof geometry proves otherwise.
+5. Resolve relevant external corners with hips. A gable/eaves-only corner does not require a hip.
+6. Connect ridges, hips and valleys into one coherent internal skeleton.
+7. Classify perimeter runs as barges or spouting only after the internal skeleton is complete.
+8. Audit every node, edge and expected corner before returning.
 
-Use this outline as fixed geometry. Return the same roof_areas polygon unchanged. Do not redraw, simplify, split, or expand it.
+## COMPONENT MEANINGS
+- ridge: highest internal junction between roof planes.
+- hip: external high junction, normally connecting an external perimeter corner to a ridge or shared internal junction.
+- valley: internal low junction, normally connecting an internal/re-entrant perimeter corner to a ridge or shared internal junction.
+- barge: gable-edge perimeter run that does not collect water.
+- spouting: eaves/gutter perimeter run where water leaves the roof.
 
-## Required classification process — perform these steps IN ORDER
+## NON-NEGOTIABLE TOPOLOGY RULES
+- Every edge endpoint must reference a node ID. Never return free-floating line endpoints.
+- Every ridge, hip and valley must end at a confirmed perimeter node or a shared internal junction.
+- Never stop a component short in empty roof space. If a printed annotation obscures the stroke, extend it to the geometrically valid junction and set inferred=true.
+- A junction node inside the roof must connect at least two component edges.
+- Use separate edges for visibly broken runs, joined through the same junction node.
+- Every expected internal corner must resolve to a valley edge or an explicit unresolved record explaining contrary visible geometry.
+- Follow actual visible strokes. Do not reject a line merely because it is not exactly horizontal, vertical or 45 degrees.
+- Return high-recall candidates with confidence. Do not silently omit uncertain components.
+- Barges and spouting must together reconstruct each complete perimeter exactly once, with no overlaps or gaps.
+- Do not copy dimension lines, text, hatching, pitch arrows, leaders or borders into the roof graph.
+- All component geometry must belong to its area_index.
 
-### STEP 1 — Confirm the roof area
-- Use only the supplied Phase 1 outline as the roof perimeter.
-- Ignore skylights, chimneys, vents, labels, dimensions, and other non-roof objects.
-- Do not use a guessed roof-face count to create or classify any component.
-
-### STEP 2 — Detect every RIDGE
-- A ridge is a solid internal line where two roof planes meet at their highest point.
-- Ridges run at exactly 0° (horizontal) or 90° (vertical) on standard plans.
-- A ridge may extend from one barge line to another, or from a barge to a hip junction.
-- On the plan, ridges appear as solid lines INSIDE the roof outline, typically running along the centre/long axis.
-- Detect ALL clearly visible ridge runs before considering barges or spouting.
-- A ridge endpoint may meet another ridge, a hip, a valley, or the roof perimeter. Record its actual visible endpoints exactly.
-- A mono-pitch roof may have no ridge. Do not invent one.
-
-### STEP 3 — Detect every HIP and VALLEY
-- Hips and valleys are diagonal internal roof lines, normally near 45° or 135°.
-- HIP: an external high junction. A hip ALWAYS starts or ends on an EXTERNAL corner of the roof outline (a corner that points OUTWARD, away from the building body). A hip connects an external corner to either: a ridge endpoint, another hip, or the roof edge. If a 45° line inside the roof does NOT start/end on an external corner, it is still likely a hip (not a valley) — assume hip by default for internal 45° lines.
-- VALLEY: an internal low junction where water collects. A valley ALWAYS starts or ends on an INTERNAL corner of the roof outline (a corner that points INWARD, where two roof planes meet at a re-entrant angle). A diagonal that starts at a re-entrant/inward perimeter corner and runs toward an internal apex is a VALLEY, not a hip.
-- Classify from the corner type and visible junctions, not from labels or roof-style assumptions.
-- Printed labels may confirm a line's semantic type, but label text and leader lines must never determine its coordinates.
-- Complete this step before classifying any perimeter run.
-
-### STEP 4 — Detect BARGES only from ridge endpoints
-A barge is a gable-edge run on the roof perimeter. Barges do not collect water. They are the exception, not the default.
-
-For EACH ridge endpoint, apply this exact test:
-1. Does the ridge endpoint land directly on the supplied roof perimeter?
-2. If NO — create no barge from that endpoint. An endpoint that meets a hip, valley, ridge, or other internal junction does not create a barge.
-3. If YES — inspect the two perimeter directions leaving that exact endpoint.
-4. If both perimeter runs leave approximately perpendicular to the ridge, classify those two runs as barges.
-5. Trace each barge away from the ridge endpoint only until the first roof corner, obvious join, or change of perimeter direction. Return each run separately.
-
-Mandatory barge constraints:
-- Never classify a perimeter run as barge merely because it is perpendicular to a ridge somewhere else. It must be one of the two runs branching directly from a ridge endpoint on the perimeter.
-- A hipped roof has no barge at an end where the ridge terminates into hips. Its outer perimeter is spouting.
-- Apply the same endpoint test independently to dormer ridges. Do not use a separate dormer rule.
-- Example: if a vertical dormer ridge reaches a horizontal front perimeter, the two horizontal runs branching left and right from that endpoint are barges. The dormer's vertical side runs are spouting, not barges.
-- If the endpoint/perimeter connection is unclear, create no barge there. Leave those perimeter runs for Step 5.
-
-### STEP 5 — Assign SPOUTING by perimeter elimination
-- Start with the complete supplied roof perimeter.
-- Subtract only the barge runs positively identified in Step 4.
-- Every remaining perimeter run is spouting.
-- Spouting is the eaves/gutter edge where water exits the roof. Water runs into spouting; it does not run into a barge.
-- Split spouting at every roof corner, join, or barge endpoint and return each run separately.
-- A fully hipped roof therefore has zero barges and spouting around its entire outer perimeter.
-
-### STEP 6 — Final consistency check
-- Every perimeter run must appear exactly once: either barges or spouting, never both.
-- Barges plus spouting must reconstruct the complete supplied perimeter with no gaps.
-- No ridge, hip, or valley may be copied into barges or spouting.
-- If any barge fails the ridge-endpoint test, remove it and classify that perimeter run as spouting.
-
-## Geometry rules
-- Return EVERY visible run individually. NEVER merge, combine, or sum separate lines.
-- Ridges MUST be at 0° or 90°. Hips and valleys MUST be within ±8° of 45° or 135°.
-- Barges and spouting MUST follow the supplied roof perimeter (0° or 90° on standard plans).
-- Do NOT detect grid lines, dimension lines, text, north arrows, or borders as roof components.
-- If a ridge, hip, or valley is not clearly visible, return an empty array for that type.
-- If the image is too unclear to analyse, return {"error":"unreadable"}.
-
-## Response format — STRICT JSON, no markdown
-{
-  "scale": {"detected": true, "ratio": "1:100" | null,
-            "dimension_line": {"p1":{"x":0,"y":0},"p2":{"x":0,"y":0},
-                               "real_length": 5000, "unit":"mm"} | null},
-  "pitch": {"detected": true, "global_degrees": 25 | null},
-  "roof_areas": [
-    {"name": "Area 1",
-     "points": [{"x":100,"y":200},{"x":500,"y":200},{"x":500,"y":600}],
-     "pitch_degrees": 25 | null}
-  ],
-  "components": {
-    "ridges":   [{"points":[{"x":150,"y":300},{"x":450,"y":300}]}],
-    "hips":     [{"points":[{"x":100,"y":200},{"x":250,"y":350}]}],
-    "valleys":  [{"points":[{"x":300,"y":400},{"x":450,"y":550}]}],
-    "barges":   [{"points":[{"x":100,"y":200},{"x":100,"y":500}]}],
-    "spouting": [{"points":[{"x":100,"y":200},{"x":500,"y":200}]}]
-  },
-  "notes": ["Possible separate garage roof at bottom-left — not included."]
-}`;
-
-// ── Legacy single-phase prompt (kept for fallback) ─────────────────────────
-
-export const AI_TAKEOFF_PROMPT = AI_TAKEOFF_PROMPT_PHASE2;
-
-// ── Response schema (for OpenAI structured output) ──────────────────────────
+## CORNER RESOLUTIONS
+Return one resolution for every expected corner. List the connected edge IDs. Use status=resolved when the graph accounts for it. Use status=unresolved only when visible roof geometry genuinely contradicts the expected hip/valley and explain why.
+${repair}
+Return only the structured JSON requested by the schema.`;
+}
 
 const pointSchema = {
   type: 'object' as const,
-  properties: {
-    x: { type: 'integer' as const, minimum: 0, maximum: 799 },
-    y: { type: 'integer' as const, minimum: 0, maximum: 599 },
-  },
+  properties: { x: { type: 'integer' as const }, y: { type: 'integer' as const } },
   required: ['x', 'y'] as const,
   additionalProperties: false,
 };
 
-const lineItemSchema = {
+const scaleSchema = {
   type: 'object' as const,
   properties: {
-    points: {
-      type: 'array' as const,
-      items: pointSchema,
+    detected: { type: 'boolean' as const },
+    ratio: { type: ['string', 'null'] as const },
+    dimension_line: {
+      type: ['object', 'null'] as const,
+      properties: {
+        p1: pointSchema, p2: pointSchema,
+        real_length: { type: 'number' as const }, unit: { type: 'string' as const },
+      },
+      required: ['p1', 'p2', 'real_length', 'unit'] as const,
+      additionalProperties: false,
     },
   },
-  required: ['points'] as const,
+  required: ['detected', 'ratio', 'dimension_line'] as const,
   additionalProperties: false,
 };
 
-/**
- * JSON schema for OpenAI structured output (response_format: json_schema).
- * Mirrors the prompt's response format exactly.
- */
-export const AI_TAKEOFF_RESPONSE_SCHEMA = {
+const pitchSchema = {
+  type: 'object' as const,
+  properties: {
+    detected: { type: 'boolean' as const },
+    global_degrees: { type: ['number', 'null'] as const },
+  },
+  required: ['detected', 'global_degrees'] as const,
+  additionalProperties: false,
+};
+
+const roofAreaSchema = {
+  type: 'object' as const,
+  properties: {
+    name: { type: 'string' as const },
+    points: { type: 'array' as const, items: pointSchema },
+    pitch_degrees: { type: ['number', 'null'] as const },
+  },
+  required: ['name', 'points', 'pitch_degrees'] as const,
+  additionalProperties: false,
+};
+
+export const AI_TAKEOFF_OUTLINE_SCHEMA = {
   type: 'object' as const,
   properties: {
     error: { type: ['string', 'null'] as const },
-    scale: {
-      type: 'object' as const,
-      properties: {
-        detected: { type: 'boolean' as const },
-        ratio: { type: ['string', 'null'] as const },
-        dimension_line: {
-          type: ['object', 'null'] as const,
-          properties: {
-            p1: pointSchema,
-            p2: pointSchema,
-            real_length: { type: 'number' as const },
-            unit: { type: 'string' as const },
-          },
-          required: ['p1', 'p2', 'real_length', 'unit'] as const,
-          additionalProperties: false,
-        },
-      },
-      required: ['detected', 'ratio', 'dimension_line'] as const,
-      additionalProperties: false,
-    },
-    pitch: {
-      type: 'object' as const,
-      properties: {
-        detected: { type: 'boolean' as const },
-        global_degrees: { type: ['number', 'null'] as const },
-      },
-      required: ['detected', 'global_degrees'] as const,
-      additionalProperties: false,
-    },
-    roof_areas: {
+    scale: scaleSchema,
+    pitch: pitchSchema,
+    roof_areas: { type: 'array' as const, items: roofAreaSchema },
+    corner_candidates: {
       type: 'array' as const,
       items: {
         type: 'object' as const,
         properties: {
-          name: { type: 'string' as const },
-          points: {
-            type: 'array' as const,
-            items: pointSchema,
-          },
-          pitch_degrees: { type: ['number', 'null'] as const },
+          area_index: { type: 'integer' as const },
+          point_index: { type: 'integer' as const },
+          corner_type: { type: 'string' as const, enum: ['internal', 'external'] as const },
+          likely_component: { type: 'string' as const, enum: ['valley', 'hip'] as const },
+          confidence: { type: 'number' as const },
+          note: { type: ['string', 'null'] as const },
         },
-        required: ['name', 'points', 'pitch_degrees'] as const,
+        required: ['area_index', 'point_index', 'corner_type', 'likely_component', 'confidence', 'note'] as const,
         additionalProperties: false,
       },
     },
-    components: {
-      type: 'object' as const,
-      properties: {
-        ridges: { type: 'array' as const, items: lineItemSchema },
-        hips: { type: 'array' as const, items: lineItemSchema },
-        valleys: { type: 'array' as const, items: lineItemSchema },
-        barges: { type: 'array' as const, items: lineItemSchema },
-        spouting: { type: 'array' as const, items: lineItemSchema },
-      },
-      required: ['ridges', 'hips', 'valleys', 'barges', 'spouting'] as const,
-      additionalProperties: false,
-    },
-    notes: {
-      type: 'array' as const,
-      items: { type: 'string' as const },
-    },
+    notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
-  required: ['error', 'scale', 'pitch', 'roof_areas', 'components', 'notes'] as const,
+  required: ['error', 'scale', 'pitch', 'roof_areas', 'corner_candidates', 'notes'] as const,
   additionalProperties: false,
 };
 
-// ── Phase 1 schema (no components, outline only) ───────────────────────────
-
-export const AI_TAKEOFF_PHASE1_SCHEMA = {
+export const AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA = {
   type: 'object' as const,
   properties: {
     error: { type: ['string', 'null'] as const },
-    scale: {
-      type: 'object' as const,
-      properties: {
-        detected: { type: 'boolean' as const },
-        ratio: { type: ['string', 'null'] as const },
-        dimension_line: {
-          type: ['object', 'null'] as const,
-          properties: {
-            p1: pointSchema,
-            p2: pointSchema,
-            real_length: { type: 'number' as const },
-            unit: { type: 'string' as const },
-          },
-          required: ['p1', 'p2', 'real_length', 'unit'] as const,
-          additionalProperties: false,
-        },
-      },
-      required: ['detected', 'ratio', 'dimension_line'] as const,
-      additionalProperties: false,
-    },
-    pitch: {
-      type: 'object' as const,
-      properties: {
-        detected: { type: 'boolean' as const },
-        global_degrees: { type: ['number', 'null'] as const },
-      },
-      required: ['detected', 'global_degrees'] as const,
-      additionalProperties: false,
-    },
-    roof_areas: {
+    nodes: {
       type: 'array' as const,
       items: {
         type: 'object' as const,
         properties: {
-          name: { type: 'string' as const },
-          points: {
-            type: 'array' as const,
-            items: pointSchema,
-          },
-          pitch_degrees: { type: ['number', 'null'] as const },
+          id: { type: 'string' as const }, area_index: { type: 'integer' as const },
+          kind: { type: 'string' as const, enum: ['perimeter_vertex', 'perimeter_point', 'junction'] as const },
+          x: { type: 'integer' as const }, y: { type: 'integer' as const },
         },
-        required: ['name', 'points', 'pitch_degrees'] as const,
+        required: ['id', 'area_index', 'kind', 'x', 'y'] as const,
         additionalProperties: false,
       },
     },
-    notes: {
+    edges: {
       type: 'array' as const,
-      items: { type: 'string' as const },
+      items: {
+        type: 'object' as const,
+        properties: {
+          id: { type: 'string' as const }, area_index: { type: 'integer' as const },
+          type: { type: 'string' as const, enum: ['ridge', 'hip', 'valley', 'barge', 'spouting'] as const },
+          start_node_id: { type: 'string' as const }, end_node_id: { type: 'string' as const },
+          confidence: { type: 'number' as const }, inferred: { type: 'boolean' as const },
+        },
+        required: ['id', 'area_index', 'type', 'start_node_id', 'end_node_id', 'confidence', 'inferred'] as const,
+        additionalProperties: false,
+      },
     },
+    corner_resolutions: {
+      type: 'array' as const,
+      items: {
+        type: 'object' as const,
+        properties: {
+          area_index: { type: 'integer' as const }, point_index: { type: 'integer' as const },
+          status: { type: 'string' as const, enum: ['resolved', 'unresolved'] as const },
+          edge_ids: { type: 'array' as const, items: { type: 'string' as const } },
+          note: { type: ['string', 'null'] as const },
+        },
+        required: ['area_index', 'point_index', 'status', 'edge_ids', 'note'] as const,
+        additionalProperties: false,
+      },
+    },
+    unresolved: { type: 'array' as const, items: { type: 'string' as const } },
+    notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
-  required: ['error', 'scale', 'pitch', 'roof_areas', 'notes'] as const,
+  required: ['error', 'nodes', 'edges', 'corner_resolutions', 'unresolved', 'notes'] as const,
   additionalProperties: false,
 };
 
-/** Tested with the 800x600 pixel-coordinate contract for reliable spatial output. */
 export const AI_TAKEOFF_MODEL = process.env.AI_TAKEOFF_MODEL || 'gpt-5.4';

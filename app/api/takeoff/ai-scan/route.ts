@@ -5,16 +5,18 @@ import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/sup
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/lib/supabase/database.types';
 import {
-  AI_TAKEOFF_PROMPT_PHASE1,
-  AI_TAKEOFF_PROMPT_PHASE2,
-  AI_TAKEOFF_RESPONSE_SCHEMA,
-  AI_TAKEOFF_PHASE1_SCHEMA,
+  AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA,
+  AI_TAKEOFF_OUTLINE_SCHEMA,
   AI_TAKEOFF_MODEL,
+  buildAiTakeoffComponentsPrompt,
+  buildAiTakeoffOutlinePrompt,
+  type PromptRoofArea,
 } from '@/app/lib/takeoff/ai-prompt';
 import { snapAiGeometryToImage } from '@/app/lib/takeoff/snapAiGeometryToImage';
+import { classifyPolygonCorners, graphToComponents, validateComponentGraph } from '@/app/lib/takeoff/aiTopology';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'placeholder' });
 
@@ -31,7 +33,7 @@ function getUsageClient() {
   return usageClient;
 }
 
-// ── Magic byte validation (reused from parse-document) ──────────────────────
+// Magic byte validation
 
 const MAGIC_BYTES: { mime: string; bytes: number[] }[] = [
   { mime: 'image/png', bytes: [0x89, 0x50, 0x4E, 0x47] },
@@ -57,15 +59,15 @@ function detectImageMime(base64Data: string): string | null {
   }
 }
 
-// ── Image preprocessing ─────────────────────────────────────────────────────
+// Image preprocessing
 
-const MAX_INPUT_BYTES = 8 * 1024 * 1024; // 8MB input cap
-const MAX_OUTPUT_PX = 1536; // downscale longest side to ≤1536px (OpenAI high detail)
+const MAX_INPUT_BYTES = 20 * 1024 * 1024;
+const MAX_OUTPUT_PX = 2400;
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
 
 /**
- * EXIF-normalize + downscale the image to ≤1536px longest side.
- * Returns a Buffer of JPEG data (always JPEG for consistency — the model
- * doesn't care about format, and JPEG keeps the base64 payload small).
+ * Preserve the lossless canvas render and only cap extreme dimensions.
  */
 async function preprocessImage(rawBuffer: Buffer): Promise<Buffer> {
   let pipeline = sharp(rawBuffer).rotate(); // EXIF auto-orient
@@ -82,10 +84,10 @@ async function preprocessImage(rawBuffer: Buffer): Promise<Buffer> {
     });
   }
 
-  return pipeline.jpeg({ quality: 95 }).toBuffer();
+  return pipeline.png({ compressionLevel: 8 }).toBuffer();
 }
 
-// ── Server-side validation ──────────────────────────────────────────────────
+// Server-side validation
 
 interface ImagePoint { x: number; y: number }
 interface LineEntry { points: ImagePoint[] }
@@ -112,22 +114,27 @@ interface AiScanResult {
   error?: string;
 }
 
-function validatePoint(obj: unknown): ImagePoint | null {
+function validatePoint(
+  obj: unknown,
+  width = CANVAS_WIDTH,
+  height = CANVAS_HEIGHT,
+): ImagePoint | null {
   if (typeof obj !== 'object' || obj === null) return null;
   const p = obj as Record<string, unknown>;
   if (
-    typeof p.x !== 'number' || !Number.isFinite(p.x) || p.x < 0 || p.x > 799
-    || typeof p.y !== 'number' || !Number.isFinite(p.y) || p.y < 0 || p.y > 599
+    typeof p.x !== 'number' || !Number.isFinite(p.x) || p.x < 0 || p.x >= width
+    || typeof p.y !== 'number' || !Number.isFinite(p.y) || p.y < 0 || p.y >= height
   ) return null;
   return { x: Math.round(p.x), y: Math.round(p.y) };
 }
 
-function validateLineEntry(obj: unknown): LineEntry | null {
+function validateLineEntry(obj: unknown, width: number, height: number): LineEntry | null {
   if (typeof obj !== 'object' || obj === null) return null;
   const entry = obj as Record<string, unknown>;
   const points = entry.points;
   if (!Array.isArray(points) || points.length < 2) return null;
-  const validated = points.map(validatePoint).filter((p): p is ImagePoint => p !== null);
+  const validated = points.map(point => validatePoint(point, width, height))
+    .filter((point): point is ImagePoint => point !== null);
   if (validated.length < 2) return null;
 
   // Reject zero-length lines (both endpoints within 2 pixels)
@@ -137,12 +144,17 @@ function validateLineEntry(obj: unknown): LineEntry | null {
   return { points: validated };
 }
 
-function validateRoofArea(obj: unknown): RoofAreaEntry | null {
+function validateRoofArea(
+  obj: unknown,
+  width = CANVAS_WIDTH,
+  height = CANVAS_HEIGHT,
+): RoofAreaEntry | null {
   if (typeof obj !== 'object' || obj === null) return null;
   const area = obj as Record<string, unknown>;
   const name = typeof area.name === 'string' ? area.name : 'Area';
   const points = Array.isArray(area.points) ? area.points : [];
-  const validated = points.map(validatePoint).filter((p): p is ImagePoint => p !== null);
+  const validated = points.map(point => validatePoint(point, width, height))
+    .filter((point): point is ImagePoint => point !== null);
   if (validated.length < 3) return null; // need at least a triangle
 
   const pitch = area.pitch_degrees;
@@ -153,7 +165,11 @@ function validateRoofArea(obj: unknown): RoofAreaEntry | null {
   return { name, points: validated, pitch_degrees: pitchDegrees };
 }
 
-function validateAiResult(raw: unknown): AiScanResult | null {
+function validateAiResult(
+  raw: unknown,
+  width = CANVAS_WIDTH,
+  height = CANVAS_HEIGHT,
+): AiScanResult | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const obj = raw as Record<string, unknown>;
 
@@ -178,8 +194,8 @@ function validateAiResult(raw: unknown): AiScanResult | null {
   };
   if (rawScale?.dimension_line && typeof rawScale.dimension_line === 'object') {
     const dl = rawScale.dimension_line as Record<string, unknown>;
-    const p1 = validatePoint(dl.p1);
-    const p2 = validatePoint(dl.p2);
+    const p1 = validatePoint(dl.p1, width, height);
+    const p2 = validatePoint(dl.p2, width, height);
     if (p1 && p2 && typeof dl.real_length === 'number' && typeof dl.unit === 'string') {
       scale.dimension_line = { p1, p2, real_length: dl.real_length, unit: dl.unit };
     }
@@ -196,7 +212,8 @@ function validateAiResult(raw: unknown): AiScanResult | null {
 
   // Roof areas
   const rawAreas = Array.isArray(obj.roof_areas) ? obj.roof_areas : [];
-  const roofAreas = rawAreas.map(validateRoofArea).filter((a): a is RoofAreaEntry => a !== null);
+  const roofAreas = rawAreas.map(area => validateRoofArea(area, width, height))
+    .filter((area): area is RoofAreaEntry => area !== null);
 
   // Components (may be absent in Phase 1 response)
   const rawComponents = (typeof obj.components === 'object' && obj.components !== null)
@@ -207,7 +224,7 @@ function validateAiResult(raw: unknown): AiScanResult | null {
   for (const key of componentKeys) {
     const rawList = Array.isArray(rawComponents[key]) ? rawComponents[key] : [];
     components[key] = rawList
-      .map(validateLineEntry)
+      .map(entry => validateLineEntry(entry, width, height))
       .filter((e): e is LineEntry => e !== null);
   }
 
@@ -230,7 +247,7 @@ function validateAiResult(raw: unknown): AiScanResult | null {
   return { scale, pitch, roof_areas: roofAreas, components, notes };
 }
 
-// ── Usage logging ───────────────────────────────────────────────────────────
+// Usage logging
 
 function logScanUsage(params: {
   companyId: string;
@@ -256,12 +273,12 @@ function logScanUsage(params: {
   });
 }
 
-// ── OpenAI vision call helper ───────────────────────────────────────────────
+// OpenAI vision call helper
 
 async function callVisionModel(
   prompt: string,
   dataUrl: string,
-  schema: typeof AI_TAKEOFF_RESPONSE_SCHEMA | typeof AI_TAKEOFF_PHASE1_SCHEMA,
+  schema: typeof AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA | typeof AI_TAKEOFF_OUTLINE_SCHEMA,
   model: string,
 ): Promise<unknown> {
   const response = await openai.chat.completions.create({
@@ -296,364 +313,245 @@ async function callVisionModel(
 
   return JSON.parse(content);
 }
+// ── Route handler ────────────────────────────────────────────────────────
 
-// ── Route handler ───────────────────────────────────────────────────────────
+const emptyComponents = (): AiScanResult['components'] => ({
+  ridges: [], hips: [], valleys: [], barges: [], spouting: [],
+});
+
+function scalePoint(point: ImagePoint, scaleX: number, scaleY: number): ImagePoint {
+  return { x: Math.round(point.x * scaleX), y: Math.round(point.y * scaleY) };
+}
+
+function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiScanResult {
+  const scaleLine = (entry: LineEntry): LineEntry => ({
+    points: entry.points.map(point => scalePoint(point, scaleX, scaleY)),
+  });
+  return {
+    ...result,
+    scale: {
+      ...result.scale,
+      dimension_line: result.scale.dimension_line ? {
+        ...result.scale.dimension_line,
+        p1: scalePoint(result.scale.dimension_line.p1, scaleX, scaleY),
+        p2: scalePoint(result.scale.dimension_line.p2, scaleX, scaleY),
+      } : null,
+    },
+    roof_areas: result.roof_areas.map(area => ({
+      ...area,
+      points: area.points.map(point => scalePoint(point, scaleX, scaleY)),
+    })),
+    components: {
+      ridges: result.components.ridges.map(scaleLine),
+      hips: result.components.hips.map(scaleLine),
+      valleys: result.components.valleys.map(scaleLine),
+      barges: result.components.barges.map(scaleLine),
+      spouting: result.components.spouting.map(scaleLine),
+    },
+  };
+}
+
+function buildSummary(result: AiScanResult) {
+  const components = result.components.ridges.length + result.components.hips.length
+    + result.components.valleys.length + result.components.barges.length
+    + result.components.spouting.length;
+  return {
+    areas: result.roof_areas.length,
+    components,
+    ridges: result.components.ridges.length,
+    hips: result.components.hips.length,
+    valleys: result.components.valleys.length,
+    barges: result.components.barges.length,
+    spouting: result.components.spouting.length,
+    notes: result.notes,
+    unreadable: result.error === 'unreadable',
+  };
+}
+
+function validateConfirmedAreas(value: unknown): RoofAreaEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(area => validateRoofArea(area))
+    .filter((area): area is RoofAreaEntry => area !== null);
+}
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Auth — session-based, same as all takeoff operations
     const profile = await requireCompanyContext();
     const supabase = await createSupabaseServerClient();
-
-    // 2. Kill switch
     if (process.env.AI_TAKEOFF_ENABLED !== 'true') {
       return NextResponse.json({ success: false, error: 'AI Takeoff is not enabled.' }, { status: 403 });
     }
 
-    // 3. Parse request
-    const body = await req.json();
-    const { image: base64Image, imageMime: providedMime, quoteId, pageId, imageDimensions } = body as {
-      image?: string;
-      imageMime?: string;
-      quoteId?: string;
-      pageId?: string;
-      imageDimensions?: { width: number; height: number };
-    };
-
+    const body = await req.json() as Record<string, unknown>;
+    const base64Image = typeof body.image === 'string' ? body.image : null;
+    const quoteId = typeof body.quoteId === 'string' ? body.quoteId : null;
+    const pageId = typeof body.pageId === 'string' ? body.pageId : null;
+    const providedMime = typeof body.imageMime === 'string' ? body.imageMime : null;
+    const stage = body.stage === 'components' ? 'components' : 'outline';
     if (!base64Image || !quoteId) {
-      return NextResponse.json(
-        { success: false, error: 'Missing required fields: image, quoteId.' },
-        { status: 400 },
-      );
+      return NextResponse.json({ success: false, error: 'Missing required fields: image, quoteId.' }, { status: 400 });
     }
 
-    if (imageDimensions?.width !== 800 || imageDimensions?.height !== 600) {
-      return NextResponse.json(
-        { success: false, error: 'AI scan requires an 800 by 600 canvas image.' },
-        { status: 400 },
-      );
-    }
-
-    // 4. Verify quote belongs to caller's company
-    const { data: quote, error: quoteError } = await supabase
-      .from('quotes')
-      .select('id, company_id')
-      .eq('id', quoteId)
-      .eq('company_id', profile.company_id)
-      .single();
-
+    const { data: quote, error: quoteError } = await supabase.from('quotes')
+      .select('id, company_id').eq('id', quoteId).eq('company_id', profile.company_id).single();
     if (quoteError || !quote) {
       return NextResponse.json({ success: false, error: 'Quote not found.' }, { status: 404 });
     }
-
-    // 5. Trade gate — roofing companies only in V1
-    const { data: company } = await supabase
-      .from('companies')
-      .select('default_trade')
-      .eq('id', profile.company_id)
-      .single();
-
+    const { data: company } = await supabase.from('companies')
+      .select('default_trade').eq('id', profile.company_id).single();
     if (company?.default_trade !== 'roofing') {
-      return NextResponse.json(
-        { success: false, error: 'AI Takeoff is available for roofing companies only.' },
-        { status: 403 },
-      );
+      return NextResponse.json({ success: false, error: 'AI Takeoff is available for roofing companies only.' }, { status: 403 });
     }
 
     const persistScanResult = async (scanResult: AiScanResult) => {
       if (!pageId) return;
-      const { error } = await supabase
-        .from('takeoff_pages')
+      const { error } = await supabase.from('takeoff_pages')
         .update({ ai_scan_result: JSON.parse(JSON.stringify(scanResult)) })
-        .eq('id', pageId)
-        .eq('quote_id', quoteId);
+        .eq('id', pageId).eq('quote_id', quoteId);
       if (error) console.warn('[ai-scan] result persistence failed:', error.message);
     };
 
-    // 7. Validate + preprocess image
-    const detectedMime = detectImageMime(base64Image);
-    const mime = detectedMime || providedMime;
-    if (!mime) {
-      return NextResponse.json(
-        { success: false, error: 'Unrecognized image format.' },
-        { status: 400 },
-      );
-    }
-
-    const cleanBase64 = base64Image.replace(/^data:[^;]+;base64,/, '');
-    const rawBuffer = Buffer.from(cleanBase64, 'base64');
-
+    const mime = detectImageMime(base64Image) || providedMime;
+    if (!mime) return NextResponse.json({ success: false, error: 'Unrecognized image format.' }, { status: 400 });
+    const rawBuffer = Buffer.from(base64Image.replace(/^data:[^;]+;base64,/, ''), 'base64');
     if (rawBuffer.length > MAX_INPUT_BYTES) {
-      return NextResponse.json(
-        { success: false, error: 'Image too large. Maximum 8MB.' },
-        { status: 413 },
-      );
+      return NextResponse.json({ success: false, error: 'Image too large. Maximum 20MB.' }, { status: 413 });
     }
 
     let processedBuffer: Buffer;
-    let processedMime: string;
     try {
       processedBuffer = await preprocessImage(rawBuffer);
-      processedMime = 'image/jpeg';
-    } catch (err) {
-      console.error('[ai-scan] image preprocessing failed:', err);
-      return NextResponse.json(
-        { success: false, error: `Image processing failed: ${err instanceof Error ? err.message : 'Unknown error'}` },
-        { status: 400 },
-      );
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        error: `Image processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      }, { status: 400 });
     }
-
-    const base64ForOpenAI = processedBuffer.toString('base64');
-    const dataUrl = `data:${processedMime};base64,${base64ForOpenAI}`;
-    const { data: grayscalePixels, info: grayscaleInfo } = await sharp(processedBuffer)
-      .greyscale()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
-
-    if (grayscaleInfo.width !== 800 || grayscaleInfo.height !== 600) {
-      return NextResponse.json(
-        { success: false, error: 'Processed AI canvas must remain 800 by 600 pixels.' },
-        { status: 400 },
-      );
+    const dataUrl = `data:image/png;base64,${processedBuffer.toString('base64')}`;
+    const { data: grayscalePixels, info } = await sharp(processedBuffer)
+      .greyscale().raw().toBuffer({ resolveWithObject: true });
+    const width = info.width;
+    const height = info.height;
+    if (width < CANVAS_WIDTH || height < CANVAS_HEIGHT) {
+      return NextResponse.json({ success: false, error: 'Analysis image is too small.' }, { status: 400 });
     }
 
     const model = AI_TAKEOFF_MODEL;
-
-    // ── Phase 1: Outline detection ──────────────────────────────────────
-    let phase1Result: unknown;
-    try {
-      phase1Result = await callVisionModel(
-        AI_TAKEOFF_PROMPT_PHASE1,
-        dataUrl,
-        AI_TAKEOFF_PHASE1_SCHEMA,
-        model,
-      );
-    } catch (err) {
-      console.error('[ai-scan] Phase 1 failed:', err);
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-      logScanUsage({
-        companyId: profile.company_id,
-        quoteId,
-        userId: profile.id,
-        pageId: pageId ?? null,
-        success: false,
-        model,
-        error: `Phase 1: ${errorMsg}`,
-      });
-      return NextResponse.json(
-        { success: false, error: `AI service error (outline detection): ${errorMsg}` },
-        { status: 502 },
-      );
-    }
-
-    // Validate Phase 1 result
-    const phase1Validated = validateAiResult(phase1Result);
-    if (!phase1Validated) {
-      logScanUsage({
-        companyId: profile.company_id,
-        quoteId,
-        userId: profile.id,
-        pageId: pageId ?? null,
-        success: false,
-        model,
-        error: 'Phase 1 validation failed',
-      });
-      return NextResponse.json(
-        { success: false, error: 'AI returned unparseable outline results. Please try again.' },
-        { status: 502 },
-      );
-    }
-
-    // Check for unreadable
-    if (phase1Validated.error === 'unreadable') {
-      await persistScanResult(phase1Validated);
-      logScanUsage({
-        companyId: profile.company_id,
-        quoteId,
-        userId: profile.id,
-        pageId: pageId ?? null,
-        success: false,
-        model,
-        error: 'Image unreadable',
-      });
-      return NextResponse.json({
-        success: true,
-        data: phase1Validated,
-        summary: {
-          areas: 0,
-          components: 0,
-          ridges: 0,
-          hips: 0,
-          valleys: 0,
-          barges: 0,
-          spouting: 0,
-          notes: phase1Validated.notes,
-          unreadable: true,
-        },
-      });
-    }
-
-    // If no roof areas detected, return early
-    if (phase1Validated.roof_areas.length === 0) {
-      await persistScanResult(phase1Validated);
-      logScanUsage({
-        companyId: profile.company_id,
-        quoteId,
-        userId: profile.id,
-        pageId: pageId ?? null,
-        success: true,
-        model,
-      });
-      return NextResponse.json({
-        success: true,
-        data: phase1Validated,
-        summary: {
-          areas: 0,
-          components: 0,
-          ridges: 0,
-          hips: 0,
-          valleys: 0,
-          barges: 0,
-          spouting: 0,
-          notes: phase1Validated.notes.length > 0 ? phase1Validated.notes : ['No roof outline detected. Try scanning manually.'],
-          unreadable: false,
-        },
-      });
-    }
-
-    // ── Phase 2: Component detection (with outline context) ────────────
-    // Build the outline context string for the Phase 2 prompt
-    const outlineContext = phase1Validated.roof_areas.map((area, idx) => {
-      const pointsStr = area.points.map(p => `(${p.x},${p.y})`).join(' → ');
-      return `Area ${idx + 1} "${area.name}": ${pointsStr}${area.pitch_degrees ? ` (pitch: ${area.pitch_degrees}°)` : ''}`;
-    }).join('\n');
-
-    const phase2Prompt = AI_TAKEOFF_PROMPT_PHASE2.replace('{OUTLINE_CONTEXT}', outlineContext);
-
-    let phase2Result: unknown;
-    try {
-      phase2Result = await callVisionModel(
-        phase2Prompt,
-        dataUrl,
-        AI_TAKEOFF_RESPONSE_SCHEMA,
-        model,
-      );
-    } catch (err) {
-      console.error('[ai-scan] Phase 2 failed:', err);
-      // Return Phase 1 results without components — user can still use the outline
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-      logScanUsage({
-        companyId: profile.company_id,
-        quoteId,
-        userId: profile.id,
-        pageId: pageId ?? null,
-        success: true, // Partial success — outline worked
-        model,
-        error: `Phase 2: ${errorMsg}`,
-      });
-
-      // Merge Phase 1 data (outline + scale + pitch) with empty components
-      const partialResult: AiScanResult = {
-        ...phase1Validated,
-        components: { ridges: [], hips: [], valleys: [], barges: [], spouting: [] },
-        notes: [...phase1Validated.notes, 'Component detection failed — outline only. You can draw components manually.'],
-      };
-
-      await persistScanResult(partialResult);
-
-      return NextResponse.json({
-        success: true,
-        data: partialResult,
-        summary: {
-          areas: partialResult.roof_areas.length,
-          components: 0,
-          ridges: 0,
-          hips: 0,
-          valleys: 0,
-          barges: 0,
-          spouting: 0,
-          notes: partialResult.notes,
-          unreadable: false,
-        },
-      });
-    }
-
-    // Validate Phase 2 result
-    const phase2Validated = validateAiResult(phase2Result);
-    if (!phase2Validated) {
-      logScanUsage({
-        companyId: profile.company_id,
-        quoteId,
-        userId: profile.id,
-        pageId: pageId ?? null,
-        success: false,
-        model,
-        error: 'Phase 2 validation failed',
-      });
-      return NextResponse.json(
-        { success: false, error: 'AI returned unparseable component results. Please try again.' },
-        { status: 502 },
-      );
-    }
-
-    // ── Merge: Phase 1 outline + Phase 2 components ─────────────────────
-    // Phase 1 outline is authoritative (it was detected first, with a
-    // dedicated outline-only prompt). Use Phase 2 only for components.
-    const mergedResult = snapAiGeometryToImage({
-      // Scale/pitch: prefer Phase 2 (it has a second look), but fall back to Phase 1
-      scale: phase2Validated.scale.detected ? phase2Validated.scale : phase1Validated.scale,
-      pitch: phase2Validated.pitch.detected ? phase2Validated.pitch : phase1Validated.pitch,
-      // Roof areas: Phase 1 is authoritative
-      roof_areas: phase1Validated.roof_areas,
-      // Components: Phase 2
-      components: phase2Validated.components,
-      // Notes: merge both
-      notes: [...phase1Validated.notes, ...phase2Validated.notes],
-    }, grayscalePixels, grayscaleInfo.width, grayscaleInfo.height) as AiScanResult;
-
-    await persistScanResult(mergedResult);
-
-    // 10. Count results for the response summary
-    const totalAreas = mergedResult.roof_areas.length;
-    const totalComponents =
-      mergedResult.components.ridges.length +
-      mergedResult.components.hips.length +
-      mergedResult.components.valleys.length +
-      mergedResult.components.barges.length +
-      mergedResult.components.spouting.length;
-
-    // 11. Log success
-    logScanUsage({
-      companyId: profile.company_id,
-      quoteId,
-      userId: profile.id,
-      pageId: pageId ?? null,
-      success: true,
-      model,
+    const usage = (success: boolean, error?: string) => logScanUsage({
+      companyId: profile.company_id, quoteId, userId: profile.id,
+      pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
     });
 
-    // 12. Return validated result
+    if (stage === 'outline') {
+      let rawOutline: unknown;
+      try {
+        rawOutline = await callVisionModel(
+          buildAiTakeoffOutlinePrompt(width, height), dataUrl, AI_TAKEOFF_OUTLINE_SCHEMA, model,
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        usage(false, message);
+        return NextResponse.json({ success: false, error: `AI outline detection failed: ${message}` }, { status: 502 });
+      }
+      const outline = validateAiResult(rawOutline, width, height);
+      if (!outline) {
+        usage(false, 'Outline validation failed');
+        return NextResponse.json({ success: false, error: 'AI returned an invalid roof outline.' }, { status: 502 });
+      }
+      const cornerCandidates = classifyPolygonCorners(outline.roof_areas as PromptRoofArea[]);
+      const canvasResult = scaleResult(outline, CANVAS_WIDTH / width, CANVAS_HEIGHT / height);
+      usage(outline.error !== 'unreadable', outline.error === 'unreadable' ? 'Image unreadable' : undefined);
+      return NextResponse.json({
+        success: true,
+        stage: 'outline',
+        data: canvasResult,
+        cornerCandidates,
+        analysisDimensions: { width, height },
+        summary: buildSummary(canvasResult),
+      });
+    }
+
+    const confirmedCanvasAreas = validateConfirmedAreas(body.confirmedAreas);
+    if (confirmedCanvasAreas.length === 0) {
+      return NextResponse.json({ success: false, error: 'Confirm at least one roof area before finding components.' }, { status: 400 });
+    }
+    const analysisAreas: PromptRoofArea[] = confirmedCanvasAreas.map(area => ({
+      ...area,
+      points: area.points.map(point => scalePoint(point, width / CANVAS_WIDTH, height / CANVAS_HEIGHT)),
+    }));
+    const expectedCorners = classifyPolygonCorners(analysisAreas);
+    const promptParams = { width, height, areas: analysisAreas, corners: expectedCorners };
+
+    let rawGraph: unknown;
+    try {
+      rawGraph = await callVisionModel(
+        buildAiTakeoffComponentsPrompt(promptParams), dataUrl, AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA, model,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      usage(false, message);
+      return NextResponse.json({ success: false, error: `AI component detection failed: ${message}` }, { status: 502 });
+    }
+
+    let validation = validateComponentGraph(rawGraph, analysisAreas, expectedCorners, width, height);
+    if (!validation.graph || validation.violations.length > 0) {
+      const repairContext = `${validation.violations.join('\n')}\nPrevious graph:\n${JSON.stringify(rawGraph)}`;
+      try {
+        const repaired = await callVisionModel(
+          buildAiTakeoffComponentsPrompt({ ...promptParams, repairContext }),
+          dataUrl,
+          AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA,
+          model,
+        );
+        validation = validateComponentGraph(repaired, analysisAreas, expectedCorners, width, height);
+      } catch (error) {
+        validation.violations.push(error instanceof Error ? error.message : 'Repair request failed.');
+      }
+    }
+    if (!validation.graph || validation.violations.length > 0) {
+      const violations = Array.from(new Set(validation.violations)).slice(0, 8);
+      usage(false, `Invalid topology: ${violations.join(' | ')}`);
+      return NextResponse.json({
+        success: false,
+        error: 'The AI could not produce a fully connected roof graph. Review the roof areas and try again.',
+        topologyViolations: violations,
+      }, { status: 422 });
+    }
+
+    const outlineData = validateAiResult(body.outlineData) ?? {
+      scale: { detected: false, ratio: null, dimension_line: null },
+      pitch: { detected: false, global_degrees: null },
+      roof_areas: confirmedCanvasAreas,
+      components: emptyComponents(), notes: [],
+    };
+    const analysisResult = snapAiGeometryToImage({
+      scale: { detected: false, ratio: null, dimension_line: null },
+      pitch: outlineData.pitch,
+      roof_areas: analysisAreas,
+      components: graphToComponents(validation.graph),
+      notes: [...outlineData.notes, ...validation.graph.notes, ...validation.graph.unresolved],
+    }, grayscalePixels, width, height) as AiScanResult;
+    const canvasResult = scaleResult(analysisResult, CANVAS_WIDTH / width, CANVAS_HEIGHT / height);
+    canvasResult.roof_areas = confirmedCanvasAreas;
+    canvasResult.scale = outlineData.scale;
+
+    await persistScanResult(canvasResult);
+    usage(true);
     return NextResponse.json({
       success: true,
-      data: mergedResult,
-      summary: {
-        areas: totalAreas,
-        components: totalComponents,
-        ridges: mergedResult.components.ridges.length,
-        hips: mergedResult.components.hips.length,
-        valleys: mergedResult.components.valleys.length,
-        barges: mergedResult.components.barges.length,
-        spouting: mergedResult.components.spouting.length,
-        notes: mergedResult.notes,
-        unreadable: mergedResult.error === 'unreadable',
+      stage: 'components',
+      data: canvasResult,
+      topology: {
+        unresolved: validation.graph.unresolved,
+        inferredEdges: validation.graph.edges.filter(edge => edge.inferred).length,
       },
+      summary: buildSummary(canvasResult),
     });
-  } catch (err) {
-    console.error('[ai-scan] unhandled error:', err);
-    const errMsg = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json(
-      { success: false, error: `Server error: ${errMsg}` },
-      { status: 500 },
-    );
+  } catch (error) {
+    console.error('[ai-scan] unhandled error:', error);
+    return NextResponse.json({
+      success: false,
+      error: `Server error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    }, { status: 500 });
   }
 }
