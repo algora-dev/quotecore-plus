@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
-import { applyAiResults, computeLineValue, computeAreaValue, type AiScanData, type ApplyAiResult, type AiMeasurement, type AiRoofAreaResult, type PlaceholderType } from '@/app/lib/takeoff/applyAiResults';
-import { AiResultsModal, type AiResultsData } from './modals/AiResultsModal';
+import { applyAiResults, computeLineValue, computeAreaValue, type AiScanData, type ApplyAiResult, type AiMeasurement, type AiRoofAreaResult, type PlaceholderType, validateMeasurementConsistency } from '@/app/lib/takeoff/applyAiResults';
+import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS, type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
+import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
@@ -453,15 +454,31 @@ export function TakeoffWorkstation({
     setDisplayComponents(components);
   }, [components, calibrationConfirmed]);
   
-  // Assign colors ONLY to active components (when activeComponentIds changes)
+  // Assign colors to active components (when activeComponentIds changes)
+  // NOTE: AI system placeholder components keep their registry colour,
+  // they do NOT receive palette-by-order colours.
   useEffect(() => {
-    const colors = activeComponentIds.map((id, idx) => ({
-      componentId: id,
-      color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
-    }));
-    setComponentColors(colors);
-    console.log('[Components] Colors assigned to', activeComponentIds.length, 'active components');
-  }, [activeComponentIds]);
+    setComponentColors(prevColors => {
+      const colorMap = new Map(prevColors.map(c => [c.componentId, c.color]));
+      const colors = activeComponentIds.map((id) => {
+        // Check if this is a system component — if so, use registry colour
+        const comp = components.find(c => c.id === id);
+        if (comp?.is_system) {
+          const key = resolveSemanticKey(comp.name);
+          if (key) {
+            return { componentId: id, color: getSemanticColour(key) };
+          }
+        }
+        // Preserve existing colour if already assigned (not a system component)
+        const existing = colorMap.get(id);
+        if (existing) return { componentId: id, color: existing };
+        // Otherwise assign from palette
+        const idx = activeComponentIds.indexOf(id);
+        return { componentId: id, color: COLOR_PALETTE[idx % COLOR_PALETTE.length] };
+      });
+      return colors;
+    });
+  }, [activeComponentIds, components]);
   
   // H-03: mark dirty whenever measurements or areas change.
   useEffect(() => {
@@ -4069,10 +4086,18 @@ export function TakeoffWorkstation({
 
       // Store raw data for the apply step
       setAiScanRaw(result.data);
+      // Build per-area info for the modal's editable Parent Areas section
+      const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
+        index: idx,
+        name: area.name || `Area ${idx + 1}`,
+        pitch: area.pitch_degrees ?? result.data?.pitch?.global_degrees ?? null,
+        vertexCount: area.points?.length ?? 0,
+      }));
       setAiResults({
         summary: result.summary,
         scaleCheck: result.data?.scaleCheck ?? null,
         droppedCount: 0, // Will be filled from applyAiResults
+        areas: areaInfos,
       });
     } catch (err) {
       console.error('[AI Takeoff] scan failed:', err);
@@ -4083,8 +4108,98 @@ export function TakeoffWorkstation({
     }
   };
 
+  // ── AI Takeoff: Replace placeholder with real component ────────────
+  const handleReplacePlaceholder = (placeholderComponentId: string, targetComponentId: string) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    // Find the placeholder's measurements
+    const placeholderGroup = componentMeasurements.find(c => c.componentId === placeholderComponentId);
+    if (!placeholderGroup || placeholderGroup.measurements.length === 0) return;
+
+    // Find the placeholder component to get its semantic key
+    const placeholderComp = components.find(c => c.id === placeholderComponentId);
+    if (!placeholderComp?.is_system) return;
+    const semanticKey = resolveSemanticKey(placeholderComp.name);
+    if (!semanticKey) return;
+
+    // Find the target component
+    const targetComp = components.find(c => c.id === targetComponentId);
+    if (!targetComp) return;
+
+    // Get the target component's colour (from palette or existing assignment)
+    const targetAssignment = componentColors.find(c => c.componentId === targetComponentId);
+    const targetColour = targetAssignment?.color || COLOR_PALETTE[activeComponentIds.length % COLOR_PALETTE.length];
+
+    // Recolour all canvas objects from the placeholder to the target's colour
+    for (const m of placeholderGroup.measurements) {
+      if (m.canvasObjects) {
+        for (const obj of m.canvasObjects) {
+          if (obj.type === 'line') {
+            obj.set({ stroke: targetColour });
+          } else if (obj.type === 'circle') {
+            obj.set({ fill: targetColour });
+          }
+        }
+      }
+    }
+    canvas.renderAll();
+
+    // Move measurements from placeholder group to target component group
+    setComponentMeasurements(prev => {
+      const updated = [...prev];
+
+      // Find target group (may or may not exist yet)
+      const targetIdx = updated.findIndex(c => c.componentId === targetComponentId);
+      const placeholderIdx = updated.findIndex(c => c.componentId === placeholderComponentId);
+
+      if (placeholderIdx < 0) return prev;
+
+      const measurementsToMove = updated[placeholderIdx].measurements;
+
+      if (targetIdx >= 0) {
+        // Merge into existing target group
+        updated[targetIdx] = {
+          ...updated[targetIdx],
+          measurements: [...updated[targetIdx].measurements, ...measurementsToMove],
+          expanded: true,
+        };
+      } else {
+        // Create new target group
+        updated.push({
+          componentId: targetComponentId,
+          measurements: measurementsToMove,
+          expanded: true,
+        });
+      }
+
+      // Remove the empty placeholder group
+      updated.splice(placeholderIdx, 1);
+      return updated;
+    });
+
+    // Update active component IDs: remove placeholder, add target
+    setActiveComponentIds(prev => {
+      const set = new Set(prev);
+      set.delete(placeholderComponentId);
+      set.add(targetComponentId);
+      return Array.from(set);
+    });
+
+    // Update component colours: remove placeholder colour, ensure target has colour
+    setComponentColors(prev => {
+      const updated = prev.filter(c => c.componentId !== placeholderComponentId);
+      if (!updated.find(c => c.componentId === targetComponentId)) {
+        updated.push({ componentId: targetComponentId, color: targetColour });
+      }
+      return updated;
+    });
+
+    setIsDirty(true);
+  };
+
   // ── AI Takeoff: apply results to canvas ───────────────────────────
-  const handleApplyAiResults = (pitchOverrides: Record<string, number>) => {
+  const handleApplyAiResults = async (areaOverrides: Record<number, { name: string; pitch: number }>) => {
     const canvas = fabricRef.current;
     if (!canvas || !aiScanRaw) return;
 
@@ -4094,22 +4209,11 @@ export function TakeoffWorkstation({
       return;
     }
 
-    // Build system component id map
-    const systemComponentIds: Record<PlaceholderType, string> = {} as Record<PlaceholderType, string>;
-    for (const comp of components) {
-      if (comp.is_system) {
-        const name = comp.name.toLowerCase();
-        if (name === 'ridge') systemComponentIds.ridges = comp.id;
-        else if (name === 'hip') systemComponentIds.hips = comp.id;
-        else if (name === 'valley') systemComponentIds.valleys = comp.id;
-        else if (name === 'barge') systemComponentIds.barges = comp.id;
-        else if (name === 'spouting') systemComponentIds.spouting = comp.id;
-      }
-    }
+    // Build system component id map from registry
+    const systemComponentIds = buildSystemComponentIds(components);
 
     // Check all 5 placeholder types have system components
-    const missing = Object.keys(systemComponentIds).length;
-    if (missing < 5) {
+    if (Object.keys(systemComponentIds).length < 5) {
       setAiScanError('System components not fully seeded. Please reload the page.');
       return;
     }
@@ -4120,9 +4224,38 @@ export function TakeoffWorkstation({
       systemComponentIds,
     });
 
-    // 1. Add roof areas to React state + canvas
-    const newRoofAreas: RoofArea[] = applied.roofAreas.map((ra: AiRoofAreaResult) => {
-      const pitch = pitchOverrides.default != null ? pitchOverrides.default : ra.pitch;
+    // ── Step 5: Create real DB parent areas ────────────────────────────
+    // Build the area list with confirmed names and pitches from the modal
+    const areaInputs = applied.roofAreas.map((ra, idx) => {
+      const override = areaOverrides[idx];
+      return {
+        name: override?.name || ra.name || `Area ${idx + 1}`,
+        pitch: override?.pitch ?? ra.pitch ?? 0,
+      };
+    });
+
+    let realAreaIds: string[];
+    if (areaInputs.length > 0) {
+      const createResult = await batchCreateAiRoofAreas(quote.id, areaInputs);
+      if (!createResult.ok || !createResult.areaIds) {
+        setAiScanError(createResult.error || 'Failed to create roof areas.');
+        return;
+      }
+      realAreaIds = createResult.areaIds;
+    } else {
+      realAreaIds = [];
+    }
+
+    // Build a mapping: AI area index → real DB area ID
+    const areaIdMap = new Map<number, string>();
+    realAreaIds.forEach((id, idx) => areaIdMap.set(idx, id));
+
+    // 1. Add roof areas to React state + canvas, using REAL DB IDs
+    const newRoofAreas: RoofArea[] = applied.roofAreas.map((ra: AiRoofAreaResult, idx: number) => {
+      const realId = areaIdMap.get(idx) ?? ra.id;
+      const override = areaOverrides[idx];
+      const pitch = override?.pitch ?? ra.pitch;
+      const name = override?.name || ra.name;
 
       // Create Fabric polygon for the roof area
       const polygon = new Polygon(
@@ -4135,7 +4268,7 @@ export function TakeoffWorkstation({
           objectCaching: false,
         },
       );
-      (polygon as unknown as { measurementId: string }).measurementId = ra.id;
+      (polygon as unknown as { measurementId: string }).measurementId = realId;
       canvas.add(polygon);
 
       // Vertex markers
@@ -4146,14 +4279,14 @@ export function TakeoffWorkstation({
           originX: 'center', originY: 'center',
           selectable: false, hasControls: false, hasBorders: false,
         });
-        (marker as unknown as { measurementId: string }).measurementId = ra.id;
+        (marker as unknown as { measurementId: string }).measurementId = realId;
         canvas.add(marker);
         return marker;
       });
 
       return {
-        id: ra.id,
-        name: ra.name,
+        id: realId,
+        name,
         points: ra.canvasPoints,
         area: ra.area,
         pitch,
@@ -4161,38 +4294,35 @@ export function TakeoffWorkstation({
         polygon,
         markers,
         fromPageId: pages[currentPageIndex]?.id ?? null,
-        quoteRoofAreaId: activeAreaId,
+        quoteRoofAreaId: realId, // Real DB ID
       };
     });
 
     if (newRoofAreas.length > 0) {
       setRoofAreas(prev => [...prev, ...newRoofAreas]);
+      // Update allRoofAreas for the left-panel switcher
+      // (the parent component will re-render with the new areas)
     }
 
     // 2. Add component measurements to React state + canvas
-    // Group by placeholderType → componentId
-    const byComponent = new Map<string, typeof applied.measurements>();
+    // Group by semanticKey → componentId
+    const byComponent = new Map<string, { measurements: typeof applied.measurements; semanticKey: SemanticKey }>();
     for (const m of applied.measurements) {
-      const list = byComponent.get(m.componentId) ?? [];
-      list.push(m);
-      byComponent.set(m.componentId, list);
+      const existing = byComponent.get(m.componentId);
+      if (existing) {
+        existing.measurements.push(m);
+      } else {
+        byComponent.set(m.componentId, { measurements: [m], semanticKey: m.semanticKey });
+      }
     }
-
-    const colours: Record<PlaceholderType, string> = {
-      ridges: '#22C55E',
-      hips: '#EF4444',
-      valleys: '#EAB308',
-      barges: '#A855F7',
-      spouting: '#FFFFFF',
-    };
 
     setComponentMeasurements(prev => {
       const updated = [...prev];
 
-      for (const [componentId, measurements] of byComponent) {
+      for (const [componentId, { measurements, semanticKey }] of byComponent) {
         const existingIdx = updated.findIndex(c => c.componentId === componentId);
-        const placeholderType = measurements[0].placeholderType;
-        const colour = colours[placeholderType];
+        const colour = getSemanticColour(semanticKey);
+        const lineOpts = getLineOptions(semanticKey);
 
         // Create canvas objects for each measurement
         const newMeasurements: ComponentMeasurement[] = measurements.map((m: AiMeasurement) => {
@@ -4213,21 +4343,32 @@ export function TakeoffWorkstation({
           });
           (marker2 as unknown as { measurementId: string }).measurementId = m.id;
 
-          const lineOpts: Record<string, unknown> = {
-            stroke: colour,
-            strokeWidth: 2,
-            selectable: false,
-            hasControls: false,
-            hasBorders: false,
-          };
-          if (placeholderType === 'spouting') {
-            lineOpts.strokeDashArray = [8, 4];
-          }
-
-          const line = new Line([p1.x, p1.y, p2.x, p2.y], lineOpts as ConstructorParameters<typeof Line>[1]);
+          const line = new Line(
+            [p1.x, p1.y, p2.x, p2.y],
+            {
+              stroke: lineOpts.stroke,
+              strokeWidth: lineOpts.strokeWidth,
+              ...(lineOpts.strokeDashArray ? { strokeDashArray: lineOpts.strokeDashArray } : {}),
+              selectable: false,
+              hasControls: false,
+              hasBorders: false,
+            },
+          );
           (line as unknown as { measurementId: string }).measurementId = m.id;
 
           canvas.add(marker1, marker2, line);
+
+          // Map the measurement's quoteRoofAreaId from AI client ID to real DB ID
+          // The AI measurement's quoteRoofAreaId was set to the roofAreaResults[idx].id
+          // We need to find which AI area index it belongs to and map to the real ID
+          let resolvedAreaId = m.quoteRoofAreaId;
+          if (resolvedAreaId) {
+            // Find the AI area index whose client UUID matches
+            const aiAreaIdx = applied.roofAreas.findIndex(ra => ra.id === resolvedAreaId);
+            if (aiAreaIdx >= 0) {
+              resolvedAreaId = areaIdMap.get(aiAreaIdx) ?? resolvedAreaId;
+            }
+          }
 
           return {
             id: m.id,
@@ -4237,7 +4378,7 @@ export function TakeoffWorkstation({
             visible: true,
             canvasObjects: [marker1, marker2, line],
             fromPageId: pages[currentPageIndex]?.id ?? null,
-            quoteRoofAreaId: m.quoteRoofAreaId,
+            quoteRoofAreaId: resolvedAreaId,
             aiOrigin: true,
           } as ComponentMeasurement & { aiOrigin?: boolean };
         });
@@ -4261,12 +4402,29 @@ export function TakeoffWorkstation({
     });
 
     // Activate all component IDs that now have measurements so they appear in the sidebar
+    // Also assign colours from the registry (NOT from the palette)
     const newComponentIds = Array.from(byComponent.keys());
     if (newComponentIds.length > 0) {
       setActiveComponentIds(prev => {
         const set = new Set(prev);
         for (const id of newComponentIds) set.add(id);
         return Array.from(set);
+      });
+
+      // Assign registry colours to AI placeholder components
+      // (overrides the palette-by-order colour assignment)
+      setComponentColors(prev => {
+        const updated = [...prev];
+        for (const [componentId, { semanticKey }] of byComponent) {
+          const colour = getSemanticColour(semanticKey);
+          const existingIdx = updated.findIndex(c => c.componentId === componentId);
+          if (existingIdx >= 0) {
+            updated[existingIdx] = { componentId, color: colour };
+          } else {
+            updated.push({ componentId, color: colour });
+          }
+        }
+        return updated;
       });
     }
 
@@ -4876,6 +5034,43 @@ export function TakeoffWorkstation({
                                       </button>
                                     </div>
                                   </div>
+
+                                  {/* AI Placeholder: Attach real component */}
+                                  {comp.is_system && compData && compData.measurements.length > 0 && (() => {
+                                    const semanticKey = resolveSemanticKey(comp.name);
+                                    if (!semanticKey) return null;
+                                    // Filter to compatible lineal components (non-system, line type)
+                                    const compatibleComps = displayComponents
+                                      .filter(c => !c.is_system)
+                                      .filter(c => !activeComponentIds.includes(c.id))
+                                      .filter(c => {
+                                        const mt = (c.measurement_type ?? c.default_measurement_type ?? '').toLowerCase();
+                                        return mt === 'line' || mt === 'lineal';
+                                      });
+                                    if (compatibleComps.length === 0) return null;
+                                    return (
+                                      <div className="mt-2 mb-1">
+                                        <div className="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1">
+                                          ⚡ AI Placeholder — attach a real component
+                                        </div>
+                                        <select
+                                          onChange={(e) => {
+                                            if (e.target.value) {
+                                              handleReplacePlaceholder(comp.id, e.target.value);
+                                              e.target.value = '';
+                                            }
+                                          }}
+                                          defaultValue=""
+                                          className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
+                                        >
+                                          <option value="">Attach component…</option>
+                                          {compatibleComps.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    );
+                                  })()}
 
                                   {/* Measurements list (expanded) */}
                                   {compData && compData.expanded && compData.measurements.length > 0 && (
@@ -5888,7 +6083,7 @@ export function TakeoffWorkstation({
       {aiResults && aiScanRaw && (
         <AiResultsModal
           data={{ ...aiResults, droppedCount: aiResults.droppedCount }}
-          onApply={(pitchOverrides) => handleApplyAiResults(pitchOverrides)}
+          onApply={(areaOverrides) => handleApplyAiResults(areaOverrides)}
           onDiscard={() => {
             setAiResults(null);
             setAiScanRaw(null);

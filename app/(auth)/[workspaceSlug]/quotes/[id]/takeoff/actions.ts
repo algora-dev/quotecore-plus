@@ -492,6 +492,8 @@ export interface TakeoffHydrationPage {
   imagePath: string | null;
   imageUrl: string | null; // signed URL, minted server-side
   scaleCalibration: unknown | null; // persisted calibration data for canvas reconstruction
+  /** AI Takeoff: stored scan result for "Reset AI Entries". */
+  aiScanResult: unknown | null;
 }
 
 export interface TakeoffHydrationMeasurement {
@@ -544,7 +546,7 @@ export async function loadTakeoffHydrationData(
   // 2. Pages (ordered)
   const { data: pages } = await supabase
     .from('takeoff_pages')
-    .select('id, page_order, page_name, image_storage_path, scale_calibration')
+    .select('id, page_order, page_name, image_storage_path, scale_calibration, ai_scan_result')
     .eq('quote_id', quoteId)
     .order('page_order', { ascending: true });
 
@@ -565,6 +567,7 @@ export async function loadTakeoffHydrationData(
         imagePath: p.image_storage_path,
         imageUrl,
         scaleCalibration: (p as { scale_calibration?: unknown }).scale_calibration ?? null,
+        aiScanResult: (p as { ai_scan_result?: unknown }).ai_scan_result ?? null,
       };
     }),
   );
@@ -1212,6 +1215,69 @@ export async function deleteTakeoffArea(
     return { ok: true };
   } catch (err) {
     console.error('[deleteTakeoffArea] Error:', err);
+    return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * AI Takeoff: Batch-create quote_roof_areas records for AI-detected areas.
+ *
+ * Called during the AI Apply flow to create real DB parent area records
+ * with confirmed names and pitches. Returns the created IDs so the client
+ * can map AI polygons and component measurements to real parent IDs.
+ */
+export async function batchCreateAiRoofAreas(
+  quoteId: string,
+  areas: { name: string; pitch: number }[],
+): Promise<{ ok: boolean; areaIds?: string[]; error?: string }> {
+  try {
+    const { requireCompanyContext } = await import('@/app/lib/supabase/server');
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient();
+
+    // Verify quote belongs to caller's company
+    const { data: quote } = await admin
+      .from('quotes')
+      .select('id')
+      .eq('id', quoteId)
+      .eq('company_id', profile.company_id)
+      .single();
+    if (!quote) return { ok: false, error: 'Quote not found.' };
+
+    // Get current area count for sort_order
+    const { count: areaCount } = await admin
+      .from('quote_roof_areas')
+      .select('id', { count: 'exact', head: true })
+      .eq('quote_id', quoteId);
+
+    let sortOrder = (areaCount ?? 0) + 1;
+    const insertRows = areas.map(a => ({
+      quote_id: quoteId,
+      label: a.name,
+      input_mode: 'calculated' as const,
+      final_value_sqm: 0,
+      computed_sqm: 0,
+      calc_pitch_degrees: a.pitch,
+      is_locked: false,
+      sort_order: sortOrder++,
+    }));
+
+    const { data: newAreas, error: insertError } = await admin
+      .from('quote_roof_areas')
+      .insert(insertRows)
+      .select('id')
+      .order('sort_order', { ascending: true });
+
+    if (insertError || !newAreas) {
+      return { ok: false, error: insertError?.message ?? 'Failed to create areas' };
+    }
+
+    return {
+      ok: true,
+      areaIds: newAreas.map(a => a.id),
+    };
+  } catch (err) {
+    console.error('[batchCreateAiRoofAreas] Error:', err);
     return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
 }

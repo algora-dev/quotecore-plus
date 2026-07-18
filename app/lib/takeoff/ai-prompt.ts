@@ -118,8 +118,18 @@ Every component endpoint must sit on the centre of an actual thick black roof st
 - On a simple gable roof: 2 spouting edges (the two long sides perpendicular to the ridge), 2 barge edges (the two gable ends parallel to the ridge).
 - On a mono-pitch: 1 spouting edge (the low side), 3 barge edges.
 - On a gable dormer: the front edge (perpendicular to the dormer ridge) is spouting; the two side edges (parallel to the dormer ridge) are barges.
-- If you cannot clearly identify which perimeter edges are spouting vs barge, return empty arrays for both — do NOT guess.
+- DEFAULT RULE: If you cannot clearly determine whether a perimeter edge is barge or spouting, classify it as SPOUTING. It is better to over-classify as spouting than to miss an eaves edge.
 - On a fully hipped roof, the outer perimeter is eaves/spouting; do not invent a barge unless a gable end is actually present.
+
+### PERIMETER ACCOUNTING (CRITICAL)
+- EVERY perimeter segment of EVERY roof area MUST be classified as exactly one of: Barge or Spouting.
+- No perimeter segment may be classified as BOTH.
+- No perimeter segment may be left unclassified.
+- If a segment is ambiguous, default to Spouting.
+- After classification, count the perimeter segments: the total (barges + spouting) must equal the total number of perimeter edges across all roof areas.
+- Mono-pitch rectangle rule: exactly 3 barges + 1 spouting (4 total perimeter edges).
+- Simple gable rectangle rule: exactly 2 barges + 2 spouting (4 total perimeter edges).
+- Fully hipped rectangle rule: 0 barges + 4 spouting (4 total perimeter edges).
 
 ### WATER FLOW RULE (use this to disambiguate barge vs spouting)
 - Identify the ridge direction for each roof face. Water flows perpendicular to the ridge, down the slope.
