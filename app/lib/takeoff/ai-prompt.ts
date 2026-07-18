@@ -41,7 +41,15 @@ For each roof outline:
 ## Also detect (but do NOT guess)
 - SCALE: Look for a labelled dimension line (a line with text like "5000mm", "5.0m", "16'4\"") or a ratio (e.g. "1:100"). If you find a dimension line, return its two endpoints and the stated real-world length.
 - PITCH: Look for pitch annotations (e.g. "25°", "Pitch 22.5°", "1/4 pitch"). Return per-area if marked differently, or one global value.
-- ROOF FACES: Only if you are fully confident, count the distinct physical roof planes and add exactly one note in the form "roof_face_count: N". If any face boundary is unclear, do not include a roof-face count. Never infer the count from the number of visible line compartments, and never use a guessed face count to classify perimeter components.
+- ROOF FACES: Only if you are fully confident, count the distinct physical roof planes and add exactly one note in the form "roof_face_count: N". If any face boundary is unclear, do not include a roof-face count. Never infer the count from the number of visible line compartments, and never use a guessed face count to classify perimeter components. A roof face is a single sloping surface bounded by ridges, hips, valleys, and/or the roof perimeter. Every face MUST touch at least one spouting/eaves edge. Count carefully:
+  - Simple rectangle with one ridge = 2 faces (one each side of the ridge)
+  - Rectangle with hip on each end (no gable) = 4 faces (2 main + 2 hip-end)
+  - L-shaped roof with ridge on each arm = 4 faces (2 per arm)
+  - Rectangle with one gable dormer = 4 faces (2 main + 2 dormer)
+  - Rectangle with two gable dormers = 6 faces (2 main + 2×2 dormer)
+  - Fully hipped rectangle = 4 faces
+  - Mono-pitch rectangle = 1 face
+  If the count is uncertain, omit it entirely.
 
 ## Critical rules
 - If the image is not a roof plan, return {"error":"unreadable"}.

@@ -1,7 +1,7 @@
 import type { AiLineEntry, AiScanData, CanvasPoint, PlaceholderType } from './applyAiResults';
 
 const DARK_THRESHOLD = 110;
-const SEARCH_RADIUS = 40;
+const SEARCH_RADIUS = 20; // reduced from 40 — was pulling perimeter lines toward internal dark pixels
 const PIXEL_RADIUS = 1;
 const MAX_RUN_GAP = 3;
 const ANCHOR_SNAP_DISTANCE = 48;
@@ -129,7 +129,7 @@ function snapAxisAlignedLine(
     let bestY = originalY;
     let bestScore = -1;
     for (let y = Math.max(0, originalY - SEARCH_RADIUS); y <= Math.min(height - 1, originalY + SEARCH_RADIUS); y++) {
-      const score = scoreHorizontal(pixels, width, height, y, startX, endX);
+      const score = scoreHorizontal(pixels, width, height, y, startX, endX) - Math.abs(y - originalY) * 0.1;
       if (score > bestScore || (score === bestScore && Math.abs(y - originalY) < Math.abs(bestY - originalY))) {
         bestScore = score;
         bestY = y;
@@ -157,7 +157,7 @@ function snapAxisAlignedLine(
   let bestX = originalX;
   let bestScore = -1;
   for (let x = Math.max(0, originalX - SEARCH_RADIUS); x <= Math.min(width - 1, originalX + SEARCH_RADIUS); x++) {
-    const score = scoreVertical(pixels, width, height, x, startY, endY);
+    const score = scoreVertical(pixels, width, height, x, startY, endY) - Math.abs(x - originalX) * 0.1;
     if (score > bestScore || (score === bestScore && Math.abs(x - originalX) < Math.abs(bestX - originalX))) {
       bestScore = score;
       bestX = x;
@@ -207,15 +207,23 @@ export function snapAiGeometryToImage(
     ));
   }
 
-  const anchors = [
-    ...snapped.roof_areas.flatMap(area => area.points),
-    ...AXIS_ALIGNED_TYPES.flatMap(type => snapped.components[type].flatMap(entry => entry.points)),
-  ];
+  // Prioritise roof area corners as anchors for diagonal lines (hips/valleys)
+  // so they connect to the actual outline, not to potentially-shifted component endpoints.
+  const outlineAnchors = snapped.roof_areas.flatMap(area => area.points);
+  const componentAnchors = AXIS_ALIGNED_TYPES.flatMap(type => snapped.components[type].flatMap(entry => entry.points));
 
   const diagonalTypes: PlaceholderType[] = ['hips', 'valleys'];
   for (const type of diagonalTypes) {
     snapped.components[type] = snapped.components[type].map(entry => ({
-      points: entry.points.map(point => snapPointToAnchor(point, anchors)),
+      points: entry.points.map(point => {
+        // First try to snap to an outline corner (higher priority)
+        const outlineSnap = snapPointToAnchor(point, outlineAnchors);
+        if (outlineSnap.x !== point.x || outlineSnap.y !== point.y) {
+          return outlineSnap;
+        }
+        // Fall back to component anchors
+        return snapPointToAnchor(point, componentAnchors);
+      }),
     }));
   }
 
