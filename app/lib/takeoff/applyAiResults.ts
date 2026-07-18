@@ -253,8 +253,9 @@ function snapAngle(angle: number, type: PlaceholderType): boolean {
   let a = angle % 180;
   if (a < 0) a += 180;
 
-  if (type === 'ridges') {
-    // 0° or 90°
+  if (type === 'ridges' || type === 'barges' || type === 'spouting') {
+    // Ridges, barges, and spouting are ALL horizontal (0°) or vertical (90°).
+    // Barges and spouting follow the building outline, which is orthogonal.
     return a <= ANGLE_TOLERANCE || Math.abs(a - 90) <= ANGLE_TOLERANCE || Math.abs(a - 180) <= ANGLE_TOLERANCE;
   }
   // hips + valleys: 45° or 135°
@@ -275,10 +276,11 @@ function snapToAngle(
   if (a < 0) a += 180;
 
   let targetAngle: number;
-  if (type === 'ridges') {
+  if (type === 'ridges' || type === 'barges' || type === 'spouting') {
+    // Horizontal or vertical — snap to nearest
     targetAngle = (a <= 45 || a >= 135) ? 0 : 90;
   } else {
-    // hips/valleys
+    // hips/valleys — snap to 45° or 135°
     targetAngle = (Math.abs(a - 45) <= Math.abs(a - 135)) ? 45 : 135;
   }
 

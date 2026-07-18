@@ -4013,27 +4013,47 @@ export function TakeoffWorkstation({
     setAiScanError(null);
 
     try {
-      // Capture the canvas as JPEG at reduced quality to stay under Vercel's
-      // 4.5MB request body limit. A full 800x600 PNG can be 1-2MB+ in base64;
-      // JPEG quality 0.8 keeps it well under 500KB.
-      const dataUrl = canvas.toDataURL({ format: 'jpeg', quality: 0.8, multiplier: 1 });
-
-      // Safety check: if the payload is still too large, downscale further
-      let finalDataUrl = dataUrl;
-      const approxSizeBytes = Math.ceil((dataUrl.length * 3) / 4);
-      if (approxSizeBytes > 4_000_000) {
-        // Re-capture at lower multiplier
-        finalDataUrl = canvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+      // CRITICAL: Send the ORIGINAL source image, not a canvas render.
+      // The canvas render includes viewport transforms, zoom, calibration
+      // overlays, dark background (#1e293b), and JPEG compression artifacts.
+      // The AI must see the same pristine image the user uploaded.
+      // The server handles EXIF normalization + downscaling via sharp.
+      const pageUrl = pages[currentPageIndex]?.url;
+      if (!pageUrl) {
+        setAiScanError('Could not find the plan image URL.');
+        return;
       }
+
+      // Fetch the original image as a blob, then convert to base64.
+      // This preserves the exact source pixels the user uploaded.
+      const imgResponse = await fetch(pageUrl);
+      if (!imgResponse.ok) {
+        setAiScanError('Could not load the plan image for scanning.');
+        return;
+      }
+      const imgBlob = await imgResponse.blob();
+      if (imgBlob.size > 8 * 1024 * 1024) {
+        setAiScanError('Plan image is too large for AI scan (max 8MB).');
+        return;
+      }
+      const imgArrayBuffer = await imgBlob.arrayBuffer();
+      const imgBase64 = btoa(
+        new Uint8Array(imgArrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      const detectedMime = imgBlob.type || 'image/png';
+      const finalDataUrl = `data:${detectedMime};base64,${imgBase64}`;
 
       const response = await fetch('/api/takeoff/ai-scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           image: finalDataUrl,
-          imageMime: 'image/jpeg',
+          imageMime: detectedMime,
           quoteId: quote.id,
           pageId,
+          // Pass the natural image dimensions so the server knows the
+          // real image size for coordinate mapping validation.
+          imageDimensions: { width: bgImage.width, height: bgImage.height },
         }),
       });
 
@@ -4093,6 +4113,10 @@ export function TakeoffWorkstation({
       return;
     }
 
+    // Use the ORIGINAL image dimensions (natural width/height), not the
+    // Fabric-scaled dimensions. The AI returns normalized 0-1000 coordinates
+    // relative to the source image, so we must map back using the source size.
+    // FabricImage.width/height hold the natural image dimensions (before scaling).
     const imgDims = { width: bgImage.width!, height: bgImage.height! };
     const applied = applyAiResults({
       aiData: aiScanRaw,

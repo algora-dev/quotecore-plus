@@ -1,36 +1,118 @@
 /**
  * AI Takeoff — Vision model prompt for roof plan analysis.
  *
- * This prompt is sent to gpt-4o (or configured model) alongside the plan image.
- * The model returns NORMALIZED coordinates on a 0–1000 grid.
+ * Two-phase approach:
+ * Phase 1: Identify the roof outline (the thick black perimeter line).
+ * Phase 2: Identify internal components (hips, valleys, ridges, barges, spouting).
  *
- * Editable: adjust detection rules, component types, or response format here.
- * The API route enforces the same shape via json_schema structured output.
+ * The model returns NORMALIZED coordinates on a 0–1000 grid.
  */
 
-export const AI_TAKEOFF_PROMPT = `You are a roofing plan analysis assistant analysing a roof plan image. The plan should be drawn square to the page (not rotated); the building outline is orthogonal, it its not, assume it is and try anyway.
+// ── Phase 1: Outline detection prompt ──────────────────────────────────────
+
+export const AI_TAKEOFF_PROMPT_PHASE1 = `You are an expert roofing plan analyst. You are analysing a roof plan image — a top-down architectural drawing of a roof.
+
+## YOUR PRIMARY TASK
+Identify the ROOF OUTLINE — the thick black perimeter line that defines the actual roof shape. This is the most important thing you do. Everything else depends on getting this right.
+
+## How to identify the roof outline
+- The roof outline is the THICKEST continuous black line forming a closed shape.
+- It is NOT dimension lines (thin lines with arrows or tick marks).
+- It is NOT text, annotations, leaders, or callouts.
+- It is NOT the drawing border/frame.
+- It is NOT grid lines or construction lines.
+- The outline may be a simple rectangle, an L-shape, T-shape, U-shape, or have stepped/complex geometry.
+- Multiple separate roof structures = multiple outlines.
 
 ## Coordinate system
-Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge, x=1000 the right edge; y=0 is the top, y=1000 the bottom. All coordinates must be integers on this grid.
+Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
 
-## Component types to detect
+## What to return
+Return ONLY the roof outline polygon(s). Do NOT detect hips, valleys, ridges, barges, or spouting yet.
 
-1. RIDGE — horizontal or vertical lines INSIDE a roof area or extending to a barge intersection forming a "T" shape (internal ridge lines at 0° or 90° to the page).
-2. HIP — diagonal lines at approximately 45° that start or end on an EXTERNAL corner of the building outline (a corner pointing outward) Any 45° lines inside the roof outline that do not start or end on an external corner should also be assumed as hips, not valleys.
-3. VALLEY — diagonal lines at approximately 45° that start or end on an INTERNAL corner of the building outline (a corner pointing into the building body, where two roof planes meet).
-4. BARGE — straight edges of the building outline at gable ends (perimeter edges that are not hips, valleys, or gutter lines), on a mono pitch roof, assume there is 3 barge sides and 1 spouting side, on multi face roofs, assume a ridge finishing 90° to the outline of the roof area forming a "T" shape is most likely 2 barges on a gable end with a ridge cap.
-5. SPOUTING — perimeter edges at the gutter/eaves line. If not clearly identifiable, return an empty array.
-6. ROOF_AREA — the bounded polygon outline of the entire roof area (All faces). If the plan clearly shows more than one separate roof structure, return each as its own parent area. If you SUSPECT an additional roof section but are not confident, do NOT return it — instead add a note in "notes".
+For each roof outline:
+- List every vertex of the perimeter polygon in order (clockwise or counter-clockwise).
+- Include EVERY corner — even small steps or notches in the outline.
+- The polygon must be CLOSED (first vertex = last vertex conceptually).
+- Name each area (e.g. "Main Roof", "Garage Roof").
 
-## Also detect
-- SCALE: scale text (e.g. "1:100") or a labelled dimension line. If you find a labelled dimension line, return its two endpoints (normalized) and the stated real-world length + unit.
-- PITCH: pitch annotations (e.g. "25°", "Pitch 22.5"). If different areas have different marked pitches, return pitch per area; otherwise one global pitch.
+## Also detect (but do NOT guess)
+- SCALE: Look for a labelled dimension line (a line with text like "5000mm", "5.0m", "16'4\"") or a ratio (e.g. "1:100"). If you find a dimension line, return its two endpoints and the stated real-world length.
+- PITCH: Look for pitch annotations (e.g. "25°", "Pitch 22.5°", "1/4 pitch"). Return per-area if marked differently, or one global value.
+
+## Critical rules
+- If the image is not a roof plan, return {"error":"unreadable"}.
+- If you cannot confidently trace the roof outline, return your best guess AND add a note.
+- Do NOT include dimension lines, text, or annotations as part of the outline polygon.
+- Do NOT simplify the outline — include every vertex you can see.
+
+## Response format — STRICT JSON, no markdown
+{
+  "scale": {"detected": true, "ratio": "1:100" | null,
+            "dimension_line": {"p1":{"x":0,"y":0},"p2":{"x":0,"y":0},
+                               "real_length": 5000, "unit":"mm"} | null},
+  "pitch": {"detected": true, "global_degrees": 25 | null},
+  "roof_areas": [
+    {"name": "Main Roof",
+     "points": [{"x":100,"y":200},{"x":500,"y":200},{"x":500,"y":600}],
+     "pitch_degrees": 25 | null}
+  ],
+  "notes": []
+}`;
+
+// ── Phase 2: Component detection prompt ────────────────────────────────────
+
+export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. You are analysing a roof plan image. The roof outline has already been identified — your job is to detect the INTERNAL and PERIMETER components of the roof.
+
+## Coordinate system
+Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
+
+## The roof outline (already identified)
+{OUTLINE_CONTEXT}
+
+## Component types to detect — IN THIS ORDER OF PRIORITY
+
+### 1. RIDGES (horizontal or vertical lines INSIDE the roof area)
+- Ridges run at exactly 0° (horizontal) or 90° (vertical) to the page.
+- A ridge is where two roof slopes meet at the highest point.
+- On the plan, ridges appear as solid lines INSIDE the roof outline, typically running along the centre/long axis.
+- A ridge may extend from one barge line to another, forming a "T" at each end.
+- On a mono-pitch roof, there may be NO ridge.
+
+### 2. HIPS (diagonal lines at 45° starting/ending on EXTERNAL corners)
+- Hips are diagonal lines at approximately 45° (or 135°).
+- A hip ALWAYS starts or ends on an EXTERNAL corner of the roof outline (a corner that points OUTWARD, away from the building body).
+- A hip connects an external corner to either: a ridge endpoint, another hip, or the roof edge.
+- If a 45° line inside the roof does NOT start/end on an external corner, it is still likely a hip (not a valley) — assume hip by default for internal 45° lines.
+
+### 3. VALLEYS (diagonal lines at 45° starting/ending on INTERNAL corners)
+- Valleys are diagonal lines at approximately 45° (or 135°).
+- A valley ALWAYS starts or ends on an INTERNAL corner of the roof outline (a corner that points INWARD, into the building body — where two roof planes meet at a re-entrant angle).
+- Valleys are where two roof slopes meet at a low point (water collects here).
+- If a 45° line does NOT start/end on an internal corner, it is NOT a valley — it's a hip.
+
+### 4. BARGES (perimeter edges at gable ends)
+- Barges are straight edges of the roof outline itself — they ARE part of the perimeter.
+- A barge is a perimeter edge where the roof slope ends at a gable (triangular wall).
+- On a mono-pitch roof: 3 barge sides + 1 spouting side.
+- On a multi-face roof: a ridge that finishes 90° to the outline forming a "T" usually means 2 barges on that gable end.
+- Barges are ALWAYS horizontal (0°) or vertical (90°) — they follow the building outline.
+
+### 5. SPOUTING (perimeter edges at the gutter/eaves line)
+- Spouting runs along the bottom edge of a roof slope where water drains off.
+- It is a PERIMETER edge (part of the roof outline).
+- Spouting is NEVER on a barge line (barges are the gable ends, spouting is the gutter line).
+- On a simple gable roof: 2 spouting edges (the two long sides), 2 barge edges (the two gable ends).
+- On a mono-pitch: 1 spouting edge, 3 barge edges.
+- If you cannot clearly identify which perimeter edges are spouting vs barge, return empty arrays for both — do NOT guess.
 
 ## Rules
-- Return EVERY line individually other than roof areas. NEVER merge, combine, or sum separate lines. Eight hips = eight separate entries.
-- Ridges MUST be at 0° or 90°. Hips and valleys MUST be within ±8° of 45°.
-- Do not detect grid lines, dimension lines, text, north arrows, or borders as roof components.
-- If a component type is not clearly present, return an empty array for it. Do not guess.
+- Return EVERY line individually. NEVER merge, combine, or sum separate lines.
+- Ridges MUST be at 0° or 90°. Hips and valleys MUST be within ±8° of 45° or 135°.
+- Barges and spouting MUST be at 0° or 90° (they follow the building outline).
+- Do NOT detect grid lines, dimension lines, text, north arrows, or borders as roof components.
+- Do NOT re-detect the roof outline — that's already been done.
+- If a component type is not clearly present, return an empty array for it.
 - If the image is too unclear to analyse, return {"error":"unreadable"}.
 
 ## Response format — STRICT JSON, no markdown
@@ -53,6 +135,10 @@ Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge, x=1
   },
   "notes": ["Possible separate garage roof at bottom-left — not included."]
 }`;
+
+// ── Legacy single-phase prompt (kept for fallback) ─────────────────────────
+
+export const AI_TAKEOFF_PROMPT = AI_TAKEOFF_PROMPT_PHASE2;
 
 // ── Response schema (for OpenAI structured output) ──────────────────────────
 
@@ -152,5 +238,65 @@ export const AI_TAKEOFF_RESPONSE_SCHEMA = {
   additionalProperties: false,
 };
 
-/** Model config — V1 tested configuration. Revisit at Phase C go/no-go. */
-export const AI_TAKEOFF_MODEL = process.env.AI_TAKEOFF_MODEL || 'gpt-4o';
+// ── Phase 1 schema (no components, outline only) ───────────────────────────
+
+export const AI_TAKEOFF_PHASE1_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    error: { type: ['string', 'null'] as const },
+    scale: {
+      type: 'object' as const,
+      properties: {
+        detected: { type: 'boolean' as const },
+        ratio: { type: ['string', 'null'] as const },
+        dimension_line: {
+          type: ['object', 'null'] as const,
+          properties: {
+            p1: pointSchema,
+            p2: pointSchema,
+            real_length: { type: 'number' as const },
+            unit: { type: 'string' as const },
+          },
+          required: ['p1', 'p2', 'real_length', 'unit'] as const,
+          additionalProperties: false,
+        },
+      },
+      required: ['detected', 'ratio', 'dimension_line'] as const,
+      additionalProperties: false,
+    },
+    pitch: {
+      type: 'object' as const,
+      properties: {
+        detected: { type: 'boolean' as const },
+        global_degrees: { type: ['number', 'null'] as const },
+      },
+      required: ['detected', 'global_degrees'] as const,
+      additionalProperties: false,
+    },
+    roof_areas: {
+      type: 'array' as const,
+      items: {
+        type: 'object' as const,
+        properties: {
+          name: { type: 'string' as const },
+          points: {
+            type: 'array' as const,
+            items: pointSchema,
+          },
+          pitch_degrees: { type: ['number', 'null'] as const },
+        },
+        required: ['name', 'points', 'pitch_degrees'] as const,
+        additionalProperties: false,
+      },
+    },
+    notes: {
+      type: 'array' as const,
+      items: { type: 'string' as const },
+    },
+  },
+  required: ['error', 'scale', 'pitch', 'roof_areas', 'notes'] as const,
+  additionalProperties: false,
+};
+
+/** Model config — using gpt-4.1 for significantly better vision/spatial reasoning than gpt-4o. */
+export const AI_TAKEOFF_MODEL = process.env.AI_TAKEOFF_MODEL || 'gpt-4.1';

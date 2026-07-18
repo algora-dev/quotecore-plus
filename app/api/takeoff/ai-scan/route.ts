@@ -4,7 +4,13 @@ import sharp from 'sharp';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/lib/supabase/database.types';
-import { AI_TAKEOFF_PROMPT, AI_TAKEOFF_RESPONSE_SCHEMA, AI_TAKEOFF_MODEL } from '@/app/lib/takeoff/ai-prompt';
+import {
+  AI_TAKEOFF_PROMPT_PHASE1,
+  AI_TAKEOFF_PROMPT_PHASE2,
+  AI_TAKEOFF_RESPONSE_SCHEMA,
+  AI_TAKEOFF_PHASE1_SCHEMA,
+  AI_TAKEOFF_MODEL,
+} from '@/app/lib/takeoff/ai-prompt';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -53,7 +59,7 @@ function detectImageMime(base64Data: string): string | null {
 // ── Image preprocessing ─────────────────────────────────────────────────────
 
 const MAX_INPUT_BYTES = 8 * 1024 * 1024; // 8MB input cap
-const MAX_OUTPUT_PX = 1536; // downscale longest side to ≤1536px
+const MAX_OUTPUT_PX = 1536; // downscale longest side to ≤1536px (OpenAI high detail)
 
 /**
  * EXIF-normalize + downscale the image to ≤1536px longest side.
@@ -75,7 +81,7 @@ async function preprocessImage(rawBuffer: Buffer): Promise<Buffer> {
     });
   }
 
-  return pipeline.jpeg({ quality: 90 }).toBuffer();
+  return pipeline.jpeg({ quality: 95 }).toBuffer();
 }
 
 // ── Server-side validation ──────────────────────────────────────────────────
@@ -192,7 +198,7 @@ function validateAiResult(raw: unknown): AiScanResult | null {
   const rawAreas = Array.isArray(obj.roof_areas) ? obj.roof_areas : [];
   const roofAreas = rawAreas.map(validateRoofArea).filter((a): a is RoofAreaEntry => a !== null);
 
-  // Components
+  // Components (may be absent in Phase 1 response)
   const rawComponents = (typeof obj.components === 'object' && obj.components !== null)
     ? obj.components as Record<string, unknown>
     : {};
@@ -250,6 +256,47 @@ function logScanUsage(params: {
   });
 }
 
+// ── OpenAI vision call helper ───────────────────────────────────────────────
+
+async function callVisionModel(
+  prompt: string,
+  dataUrl: string,
+  schema: typeof AI_TAKEOFF_RESPONSE_SCHEMA | typeof AI_TAKEOFF_PHASE1_SCHEMA,
+  model: string,
+): Promise<unknown> {
+  const response = await openai.chat.completions.create({
+    model,
+    max_tokens: 4096,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          {
+            type: 'image_url',
+            image_url: { url: dataUrl, detail: 'high' },
+          },
+        ],
+      },
+    ],
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'roof_plan_analysis',
+        strict: true,
+        schema,
+      },
+    },
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error('AI returned an empty response.');
+  }
+
+  return JSON.parse(content);
+}
+
 // ── Route handler ───────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -270,6 +317,7 @@ export async function POST(req: NextRequest) {
       imageMime?: string;
       quoteId?: string;
       pageId?: string;
+      imageDimensions?: { width: number; height: number };
     };
 
     if (!base64Image || !quoteId) {
@@ -358,56 +406,19 @@ export async function POST(req: NextRequest) {
     const base64ForOpenAI = processedBuffer.toString('base64');
     const dataUrl = `data:${processedMime};base64,${base64ForOpenAI}`;
 
-    // 8. Call vision model with structured output
     const model = AI_TAKEOFF_MODEL;
-    let rawResult: unknown;
 
+    // ── Phase 1: Outline detection ──────────────────────────────────────
+    let phase1Result: unknown;
     try {
-      const response = await openai.chat.completions.create({
+      phase1Result = await callVisionModel(
+        AI_TAKEOFF_PROMPT_PHASE1,
+        dataUrl,
+        AI_TAKEOFF_PHASE1_SCHEMA,
         model,
-        max_tokens: 4096,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: AI_TAKEOFF_PROMPT },
-              {
-                type: 'image_url',
-                image_url: { url: dataUrl, detail: 'high' },
-              },
-            ],
-          },
-        ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'roof_plan_analysis',
-            strict: true,
-            schema: AI_TAKEOFF_RESPONSE_SCHEMA,
-          },
-        },
-      });
-
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        logScanUsage({
-          companyId: profile.company_id,
-          quoteId,
-          userId: profile.id,
-          pageId: pageId ?? null,
-          success: false,
-          model,
-          error: 'Empty response from model',
-        });
-        return NextResponse.json(
-          { success: false, error: 'AI returned an empty response. Please try again.' },
-          { status: 502 },
-        );
-      }
-
-      rawResult = JSON.parse(content);
+      );
     } catch (err) {
-      console.error('[ai-scan] OpenAI call failed:', err);
+      console.error('[ai-scan] Phase 1 failed:', err);
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
       logScanUsage({
         companyId: profile.company_id,
@@ -416,18 +427,17 @@ export async function POST(req: NextRequest) {
         pageId: pageId ?? null,
         success: false,
         model,
-        error: errorMsg,
+        error: `Phase 1: ${errorMsg}`,
       });
       return NextResponse.json(
-        { success: false, error: `AI service error: ${errorMsg}` },
+        { success: false, error: `AI service error (outline detection): ${errorMsg}` },
         { status: 502 },
       );
     }
 
-    // 9. Server-side validation + sanitization
-    const validated = validateAiResult(rawResult);
-
-    if (!validated) {
+    // Validate Phase 1 result
+    const phase1Validated = validateAiResult(phase1Result);
+    if (!phase1Validated) {
       logScanUsage({
         companyId: profile.company_id,
         quoteId,
@@ -435,22 +445,165 @@ export async function POST(req: NextRequest) {
         pageId: pageId ?? null,
         success: false,
         model,
-        error: 'Failed validation',
+        error: 'Phase 1 validation failed',
       });
       return NextResponse.json(
-        { success: false, error: 'AI returned unparseable results. Please try again.' },
+        { success: false, error: 'AI returned unparseable outline results. Please try again.' },
         { status: 502 },
       );
     }
 
+    // Check for unreadable
+    if (phase1Validated.error === 'unreadable') {
+      logScanUsage({
+        companyId: profile.company_id,
+        quoteId,
+        userId: profile.id,
+        pageId: pageId ?? null,
+        success: false,
+        model,
+        error: 'Image unreadable',
+      });
+      return NextResponse.json({
+        success: true,
+        data: phase1Validated,
+        summary: {
+          areas: 0,
+          components: 0,
+          ridges: 0,
+          hips: 0,
+          valleys: 0,
+          barges: 0,
+          spouting: 0,
+          notes: phase1Validated.notes,
+          unreadable: true,
+        },
+      });
+    }
+
+    // If no roof areas detected, return early
+    if (phase1Validated.roof_areas.length === 0) {
+      logScanUsage({
+        companyId: profile.company_id,
+        quoteId,
+        userId: profile.id,
+        pageId: pageId ?? null,
+        success: true,
+        model,
+      });
+      return NextResponse.json({
+        success: true,
+        data: phase1Validated,
+        summary: {
+          areas: 0,
+          components: 0,
+          ridges: 0,
+          hips: 0,
+          valleys: 0,
+          barges: 0,
+          spouting: 0,
+          notes: phase1Validated.notes.length > 0 ? phase1Validated.notes : ['No roof outline detected. Try scanning manually.'],
+          unreadable: false,
+        },
+      });
+    }
+
+    // ── Phase 2: Component detection (with outline context) ────────────
+    // Build the outline context string for the Phase 2 prompt
+    const outlineContext = phase1Validated.roof_areas.map((area, idx) => {
+      const pointsStr = area.points.map(p => `(${p.x},${p.y})`).join(' → ');
+      return `Area ${idx + 1} "${area.name}": ${pointsStr}${area.pitch_degrees ? ` (pitch: ${area.pitch_degrees}°)` : ''}`;
+    }).join('\n');
+
+    const phase2Prompt = AI_TAKEOFF_PROMPT_PHASE2.replace('{OUTLINE_CONTEXT}', outlineContext);
+
+    let phase2Result: unknown;
+    try {
+      phase2Result = await callVisionModel(
+        phase2Prompt,
+        dataUrl,
+        AI_TAKEOFF_RESPONSE_SCHEMA,
+        model,
+      );
+    } catch (err) {
+      console.error('[ai-scan] Phase 2 failed:', err);
+      // Return Phase 1 results without components — user can still use the outline
+      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+      logScanUsage({
+        companyId: profile.company_id,
+        quoteId,
+        userId: profile.id,
+        pageId: pageId ?? null,
+        success: true, // Partial success — outline worked
+        model,
+        error: `Phase 2: ${errorMsg}`,
+      });
+
+      // Merge Phase 1 data (outline + scale + pitch) with empty components
+      const partialResult: AiScanResult = {
+        ...phase1Validated,
+        components: { ridges: [], hips: [], valleys: [], barges: [], spouting: [] },
+        notes: [...phase1Validated.notes, 'Component detection failed — outline only. You can draw components manually.'],
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: partialResult,
+        summary: {
+          areas: partialResult.roof_areas.length,
+          components: 0,
+          ridges: 0,
+          hips: 0,
+          valleys: 0,
+          barges: 0,
+          spouting: 0,
+          notes: partialResult.notes,
+          unreadable: false,
+        },
+      });
+    }
+
+    // Validate Phase 2 result
+    const phase2Validated = validateAiResult(phase2Result);
+    if (!phase2Validated) {
+      logScanUsage({
+        companyId: profile.company_id,
+        quoteId,
+        userId: profile.id,
+        pageId: pageId ?? null,
+        success: false,
+        model,
+        error: 'Phase 2 validation failed',
+      });
+      return NextResponse.json(
+        { success: false, error: 'AI returned unparseable component results. Please try again.' },
+        { status: 502 },
+      );
+    }
+
+    // ── Merge: Phase 1 outline + Phase 2 components ─────────────────────
+    // Phase 1 outline is authoritative (it was detected first, with a
+    // dedicated outline-only prompt). Use Phase 2 only for components.
+    const mergedResult: AiScanResult = {
+      // Scale/pitch: prefer Phase 2 (it has a second look), but fall back to Phase 1
+      scale: phase2Validated.scale.detected ? phase2Validated.scale : phase1Validated.scale,
+      pitch: phase2Validated.pitch.detected ? phase2Validated.pitch : phase1Validated.pitch,
+      // Roof areas: Phase 1 is authoritative
+      roof_areas: phase1Validated.roof_areas,
+      // Components: Phase 2
+      components: phase2Validated.components,
+      // Notes: merge both
+      notes: [...phase1Validated.notes, ...phase2Validated.notes],
+    };
+
     // 10. Count results for the response summary
-    const totalAreas = validated.roof_areas.length;
+    const totalAreas = mergedResult.roof_areas.length;
     const totalComponents =
-      validated.components.ridges.length +
-      validated.components.hips.length +
-      validated.components.valleys.length +
-      validated.components.barges.length +
-      validated.components.spouting.length;
+      mergedResult.components.ridges.length +
+      mergedResult.components.hips.length +
+      mergedResult.components.valleys.length +
+      mergedResult.components.barges.length +
+      mergedResult.components.spouting.length;
 
     // 11. Log success
     logScanUsage({
@@ -465,17 +618,17 @@ export async function POST(req: NextRequest) {
     // 12. Return validated result
     return NextResponse.json({
       success: true,
-      data: validated,
+      data: mergedResult,
       summary: {
         areas: totalAreas,
         components: totalComponents,
-        ridges: validated.components.ridges.length,
-        hips: validated.components.hips.length,
-        valleys: validated.components.valleys.length,
-        barges: validated.components.barges.length,
-        spouting: validated.components.spouting.length,
-        notes: validated.notes,
-        unreadable: validated.error === 'unreadable',
+        ridges: mergedResult.components.ridges.length,
+        hips: mergedResult.components.hips.length,
+        valleys: mergedResult.components.valleys.length,
+        barges: mergedResult.components.barges.length,
+        spouting: mergedResult.components.spouting.length,
+        notes: mergedResult.notes,
+        unreadable: mergedResult.error === 'unreadable',
       },
     });
   } catch (err) {
