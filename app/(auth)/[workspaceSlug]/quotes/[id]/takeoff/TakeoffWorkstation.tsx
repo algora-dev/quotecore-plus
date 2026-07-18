@@ -4013,35 +4013,33 @@ export function TakeoffWorkstation({
     setAiScanError(null);
 
     try {
-      // CRITICAL: Send the ORIGINAL source image, not a canvas render.
-      // The canvas render includes viewport transforms, zoom, calibration
-      // overlays, dark background (#1e293b), and JPEG compression artifacts.
-      // The AI must see the same pristine image the user uploaded.
-      // The server handles EXIF normalization + downscaling via sharp.
-      const pageUrl = pages[currentPageIndex]?.url;
-      if (!pageUrl) {
-        setAiScanError('Could not find the plan image URL.');
+      // CRITICAL: Send the EXACT image that's on the canvas — not a re-fetched
+      // copy, not a canvas render. We extract the background image element
+      // directly and draw it to a temp canvas at its natural resolution.
+      // This guarantees the AI sees the same pixels the canvas displays.
+      const bgImgElement = (canvas.backgroundImage as unknown as { getElement?: () => HTMLImageElement }).getElement?.();
+      if (!bgImgElement) {
+        setAiScanError('Could not extract the plan image.');
         return;
       }
 
-      // Fetch the original image as a blob, then convert to base64.
-      // This preserves the exact source pixels the user uploaded.
-      const imgResponse = await fetch(pageUrl);
-      if (!imgResponse.ok) {
-        setAiScanError('Could not load the plan image for scanning.');
+      const natW = bgImgElement.naturalWidth || bgImgElement.width;
+      const natH = bgImgElement.naturalHeight || bgImgElement.height;
+
+      // Draw the original image to a temp canvas at natural resolution
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = natW;
+      tempCanvas.height = natH;
+      const tempCtx = tempCanvas.getContext('2d');
+      if (!tempCtx) {
+        setAiScanError('Could not process the plan image.');
         return;
       }
-      const imgBlob = await imgResponse.blob();
-      if (imgBlob.size > 8 * 1024 * 1024) {
-        setAiScanError('Plan image is too large for AI scan (max 8MB).');
-        return;
-      }
-      const imgArrayBuffer = await imgBlob.arrayBuffer();
-      const imgBase64 = btoa(
-        new Uint8Array(imgArrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-      const detectedMime = imgBlob.type || 'image/png';
-      const finalDataUrl = `data:${detectedMime};base64,${imgBase64}`;
+      tempCtx.drawImage(bgImgElement, 0, 0, natW, natH);
+
+      // Export as JPEG (smaller payload than PNG)
+      const finalDataUrl = tempCanvas.toDataURL('image/jpeg', 0.95);
+      const detectedMime = 'image/jpeg';
 
       const response = await fetch('/api/takeoff/ai-scan', {
         method: 'POST',
@@ -4051,9 +4049,6 @@ export function TakeoffWorkstation({
           imageMime: detectedMime,
           quoteId: quote.id,
           pageId,
-          // Pass the natural image dimensions so the server knows the
-          // real image size for coordinate mapping validation.
-          imageDimensions: { width: bgImage.width, height: bgImage.height },
         }),
       });
 
@@ -4118,6 +4113,16 @@ export function TakeoffWorkstation({
     // relative to the source image, so we must map back using the source size.
     // FabricImage.width/height hold the natural image dimensions (before scaling).
     const imgDims = { width: bgImage.width!, height: bgImage.height! };
+
+    // Debug: log coordinate mapping values to diagnose accuracy issues
+    const layout = computeBackgroundLayout(imgDims);
+    console.log('[AI Takeoff] Coordinate mapping debug:', {
+      imgDims,
+      layout,
+      firstAreaPoints: aiScanRaw.roof_areas[0]?.points?.slice(0, 3),
+      canvasDims: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+    });
+
     const applied = applyAiResults({
       aiData: aiScanRaw,
       imgDims,

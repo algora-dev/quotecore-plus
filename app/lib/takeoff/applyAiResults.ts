@@ -143,6 +143,24 @@ export function computeBackgroundLayout(
   return { scale, offsetX, offsetY };
 }
 
+/**
+ * Get the canvas-space bounds of where the image is actually drawn.
+ * Points outside this rectangle are in the dark canvas margin.
+ */
+export function getImageBounds(
+  imgDims: ImageDimensions,
+  canvasWidth = CANVAS_WIDTH,
+  canvasHeight = CANVAS_HEIGHT,
+): { left: number; top: number; right: number; bottom: number } {
+  const layout = computeBackgroundLayout(imgDims, canvasWidth, canvasHeight);
+  return {
+    left: layout.offsetX,
+    top: layout.offsetY,
+    right: layout.offsetX + imgDims.width * layout.scale,
+    bottom: layout.offsetY + imgDims.height * layout.scale,
+  };
+}
+
 /** Map a normalized (0–1000) coordinate to canvas-space pixel. */
 export function normalizedToCanvas(
   np: NormalizedPoint,
