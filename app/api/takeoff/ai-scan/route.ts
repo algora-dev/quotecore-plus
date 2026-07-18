@@ -11,6 +11,7 @@ import {
   AI_TAKEOFF_PHASE1_SCHEMA,
   AI_TAKEOFF_MODEL,
 } from '@/app/lib/takeoff/ai-prompt';
+import { snapAiGeometryToImage } from '@/app/lib/takeoff/snapAiGeometryToImage';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -86,15 +87,15 @@ async function preprocessImage(rawBuffer: Buffer): Promise<Buffer> {
 
 // ── Server-side validation ──────────────────────────────────────────────────
 
-interface NormalizedPoint { x: number; y: number }
-interface LineEntry { points: NormalizedPoint[] }
-interface RoofAreaEntry { name: string; points: NormalizedPoint[]; pitch_degrees: number | null }
+interface ImagePoint { x: number; y: number }
+interface LineEntry { points: ImagePoint[] }
+interface RoofAreaEntry { name: string; points: ImagePoint[]; pitch_degrees: number | null }
 interface AiScanResult {
   scale: {
     detected: boolean;
     ratio: string | null;
     dimension_line: {
-      p1: NormalizedPoint; p2: NormalizedPoint;
+      p1: ImagePoint; p2: ImagePoint;
       real_length: number; unit: string;
     } | null;
   };
@@ -111,14 +112,13 @@ interface AiScanResult {
   error?: string;
 }
 
-function validateCoordinate(n: unknown): n is number {
-  return typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 1000;
-}
-
-function validatePoint(obj: unknown): NormalizedPoint | null {
+function validatePoint(obj: unknown): ImagePoint | null {
   if (typeof obj !== 'object' || obj === null) return null;
   const p = obj as Record<string, unknown>;
-  if (!validateCoordinate(p.x) || !validateCoordinate(p.y)) return null;
+  if (
+    typeof p.x !== 'number' || !Number.isFinite(p.x) || p.x < 0 || p.x > 799
+    || typeof p.y !== 'number' || !Number.isFinite(p.y) || p.y < 0 || p.y > 599
+  ) return null;
   return { x: Math.round(p.x), y: Math.round(p.y) };
 }
 
@@ -127,10 +127,10 @@ function validateLineEntry(obj: unknown): LineEntry | null {
   const entry = obj as Record<string, unknown>;
   const points = entry.points;
   if (!Array.isArray(points) || points.length < 2) return null;
-  const validated = points.map(validatePoint).filter((p): p is NormalizedPoint => p !== null);
+  const validated = points.map(validatePoint).filter((p): p is ImagePoint => p !== null);
   if (validated.length < 2) return null;
 
-  // Reject zero-length lines (both endpoints within 2 normalized units)
+  // Reject zero-length lines (both endpoints within 2 pixels)
   const [a, b] = validated;
   if (Math.abs(a.x - b.x) < 2 && Math.abs(a.y - b.y) < 2) return null;
 
@@ -142,7 +142,7 @@ function validateRoofArea(obj: unknown): RoofAreaEntry | null {
   const area = obj as Record<string, unknown>;
   const name = typeof area.name === 'string' ? area.name : 'Area';
   const points = Array.isArray(area.points) ? area.points : [];
-  const validated = points.map(validatePoint).filter((p): p is NormalizedPoint => p !== null);
+  const validated = points.map(validatePoint).filter((p): p is ImagePoint => p !== null);
   if (validated.length < 3) return null; // need at least a triangle
 
   const pitch = area.pitch_degrees;
@@ -266,7 +266,7 @@ async function callVisionModel(
 ): Promise<unknown> {
   const response = await openai.chat.completions.create({
     model,
-    max_tokens: 4096,
+    max_completion_tokens: 8192,
     messages: [
       {
         role: 'user',
@@ -312,7 +312,7 @@ export async function POST(req: NextRequest) {
 
     // 3. Parse request
     const body = await req.json();
-    const { image: base64Image, imageMime: providedMime, quoteId, pageId } = body as {
+    const { image: base64Image, imageMime: providedMime, quoteId, pageId, imageDimensions } = body as {
       image?: string;
       imageMime?: string;
       quoteId?: string;
@@ -323,6 +323,13 @@ export async function POST(req: NextRequest) {
     if (!base64Image || !quoteId) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields: image, quoteId.' },
+        { status: 400 },
+      );
+    }
+
+    if (imageDimensions?.width !== 800 || imageDimensions?.height !== 600) {
+      return NextResponse.json(
+        { success: false, error: 'AI scan requires an 800 by 600 canvas image.' },
         { status: 400 },
       );
     }
@@ -353,22 +360,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Per-page consumption guard — reject if already scanned+applied
-    if (pageId) {
-      const { data: page } = await supabase
+    const persistScanResult = async (scanResult: AiScanResult) => {
+      if (!pageId) return;
+      const { error } = await supabase
         .from('takeoff_pages')
-        .select('ai_scan_result')
+        .update({ ai_scan_result: JSON.parse(JSON.stringify(scanResult)) })
         .eq('id', pageId)
-        .eq('quote_id', quoteId)
-        .single();
-
-      if (page?.ai_scan_result) {
-        return NextResponse.json(
-          { success: false, error: 'AI scan already applied to this page. Use "Reset AI Entries" to re-scan.' },
-          { status: 409 },
-        );
-      }
-    }
+        .eq('quote_id', quoteId);
+      if (error) console.warn('[ai-scan] result persistence failed:', error.message);
+    };
 
     // 7. Validate + preprocess image
     const detectedMime = detectImageMime(base64Image);
@@ -405,6 +405,17 @@ export async function POST(req: NextRequest) {
 
     const base64ForOpenAI = processedBuffer.toString('base64');
     const dataUrl = `data:${processedMime};base64,${base64ForOpenAI}`;
+    const { data: grayscalePixels, info: grayscaleInfo } = await sharp(processedBuffer)
+      .greyscale()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    if (grayscaleInfo.width !== 800 || grayscaleInfo.height !== 600) {
+      return NextResponse.json(
+        { success: false, error: 'Processed AI canvas must remain 800 by 600 pixels.' },
+        { status: 400 },
+      );
+    }
 
     const model = AI_TAKEOFF_MODEL;
 
@@ -455,6 +466,7 @@ export async function POST(req: NextRequest) {
 
     // Check for unreadable
     if (phase1Validated.error === 'unreadable') {
+      await persistScanResult(phase1Validated);
       logScanUsage({
         companyId: profile.company_id,
         quoteId,
@@ -483,6 +495,7 @@ export async function POST(req: NextRequest) {
 
     // If no roof areas detected, return early
     if (phase1Validated.roof_areas.length === 0) {
+      await persistScanResult(phase1Validated);
       logScanUsage({
         companyId: profile.company_id,
         quoteId,
@@ -546,6 +559,8 @@ export async function POST(req: NextRequest) {
         notes: [...phase1Validated.notes, 'Component detection failed — outline only. You can draw components manually.'],
       };
 
+      await persistScanResult(partialResult);
+
       return NextResponse.json({
         success: true,
         data: partialResult,
@@ -584,7 +599,7 @@ export async function POST(req: NextRequest) {
     // ── Merge: Phase 1 outline + Phase 2 components ─────────────────────
     // Phase 1 outline is authoritative (it was detected first, with a
     // dedicated outline-only prompt). Use Phase 2 only for components.
-    const mergedResult: AiScanResult = {
+    const mergedResult = snapAiGeometryToImage({
       // Scale/pitch: prefer Phase 2 (it has a second look), but fall back to Phase 1
       scale: phase2Validated.scale.detected ? phase2Validated.scale : phase1Validated.scale,
       pitch: phase2Validated.pitch.detected ? phase2Validated.pitch : phase1Validated.pitch,
@@ -594,7 +609,9 @@ export async function POST(req: NextRequest) {
       components: phase2Validated.components,
       // Notes: merge both
       notes: [...phase1Validated.notes, ...phase2Validated.notes],
-    };
+    }, grayscalePixels, grayscaleInfo.width, grayscaleInfo.height) as AiScanResult;
+
+    await persistScanResult(mergedResult);
 
     // 10. Count results for the response summary
     const totalAreas = mergedResult.roof_areas.length;

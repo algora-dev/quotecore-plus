@@ -152,20 +152,18 @@ canvasY = offsetY + imgY × scale
 ```
 (The old `canvasX = imgX × canvasW/imgW` formula ignored the offsets and used per-axis scale — every AI line would have landed off the plan.)
 
-### Ask the model for NORMALIZED coordinates (0–1000), not pixels
-Vision models internally rescale images; raw-pixel answers are unreliable. The prompt requests all coordinates normalized to a 0–1000 grid over the image (x: 0=left edge, 1000=right edge; y: 0=top, 1000=bottom). Mapping back is deterministic:
-```
-imgX = nx / 1000 × imgW      imgY = ny / 1000 × imgH
-```
-We also downscale the upload to ≤1536px longest side before sending (cost/latency); normalization makes that resize transparent. **EXIF orientation:** the server must EXIF-normalize before downscaling (`sharp().rotate()`) so the model sees the same orientation the browser renders (browsers apply EXIF by default) — mostly a photo concern, but cheap insurance for exported plan images.
+### Ask the model for exact 800x600 canvas pixels
+The client sends the exact 800x600 Fabric canvas render with user-drawn objects hidden. GPT-5.4 is prompted for integer image-pixel coordinates (x: 0-799, y: 0-599), so the returned geometry already shares the live canvas coordinate space. This avoids both model ambiguity and the anisotropic angle distortion caused by treating a rectangular image as a square normalized grid.
+
+The server keeps the image at 800x600, EXIF-normalizes it, and validates every coordinate against those bounds before returning it.
 
 ### Deterministic post-processing (`snapAndValidate`) — the accuracy multiplier ⭐
 Vision LLMs are approximate at geometry. Because V1 locks the geometric rules, we can **snap** the model's output before drawing:
 1. **Angle snap:** ridges → exactly 0°/90° (rotate about midpoint); hips/valleys → exactly 45°/135°; reject lines >8° from any allowed angle for their type.
-2. **Vertex snap:** collect roof-area polygon vertices; snap any line endpoint within a tolerance radius (~1.5% of image width) to the nearest vertex. Hips/barges terminate on outline corners, valleys on internal corners — endpoints become pixel-consistent with the outline.
-3. **Endpoint clustering:** endpoints of different lines within tolerance of each other merge to their centroid (hip apex meets ridge end exactly).
+2. **Image-stroke snap:** use the grayscale canvas pixels to move axis-aligned detections onto the nearest continuous dark roof stroke and trim endpoints to the real stroke run.
+3. **Vertex snap:** snap hips and valleys to roof vertices or corrected ridge endpoints so every junction shares one pixel coordinate.
 4. **Containment / area membership:** each line's midpoint is point-in-polygon tested against the detected roof areas → stamps the entry's `quoteRoofAreaId`. Lines outside every area attach to the nearest/first area (flagged in the results summary).
-5. **Sanity rejects:** out-of-range coordinates (outside 0–1000), zero/near-zero-length lines, duplicate lines (both endpoints within tolerance), polygons with <3 points.
+5. **Sanity rejects:** out-of-range coordinates (outside 800x600), zero/near-zero-length lines, duplicate lines (both endpoints within tolerance), polygons with <3 points.
 
 **Snap-vs-reject policy:** small deviations get snapped (deliberate repair inside tight tolerances); anything beyond tolerance is **dropped, not repaired**, and counted — the results modal reports "N detections ignored as unrecognisable". No silent large corrections.
 
@@ -193,9 +191,8 @@ You are a roofing plan analysis assistant analysing a roof plan image. The plan
 is drawn square to the page (not rotated); the building outline is orthogonal.
 
 ## Coordinate system
-Use NORMALIZED coordinates on a 0–1000 grid: x=0 is the image's left edge,
-x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be
-integers on this grid.
+The image is exactly 800 pixels wide by 600 pixels high. Return exact image-pixel
+coordinates: x=0 to 799 and y=0 to 599. Read endpoints from the actual roof strokes.
 
 ## Component types to detect
 
@@ -217,7 +214,7 @@ integers on this grid.
 
 ## Also detect
 - SCALE: scale text (e.g. "1:100") or a labelled dimension line. If you find a
-  labelled dimension line, return its two endpoints (normalized) and the
+  labelled dimension line, return its two endpoints in image pixels and the
   stated real-world length + unit.
 - PITCH: pitch annotations (e.g. "25°", "Pitch 22.5"). If different areas have
   different marked pitches, return pitch per area; otherwise one global pitch.
@@ -258,17 +255,17 @@ integers on this grid.
 
 ## API Endpoint — `POST /api/takeoff/ai-scan`
 
-**Request:** `{ image: base64, imageMime, quoteId }`
+**Request:** `{ image: base64, imageMime, quoteId, pageId, imageDimensions: { width: 800, height: 600 } }`
 **Response:** `{ success: true, data: <parsed+validated AI JSON> } | { success: false, error }`
 
 Implementation (mirrors `parse-document` patterns where sensible):
 - **Auth:** session-based; verify quote belongs to the caller's company (same as takeoff actions).
-- **Gating (V1 testing):** server-side checks = company trade is roofing + kill switch `AI_TAKEOFF_ENABLED=true` (env; flipping it off hides the button AND rejects the route — instant post-merge rollback without a deploy revert). No scan quotas during testing; every call still logged to `ai_scan_usage` for cost visibility. Per-page guard: reject when `takeoff_pages.ai_scan_result` is already set for the target page (consumption rule — applied+saved scans only). Tier/plan gates get added later when Shaun sets the numbers.
-- **Model:** `gpt-4o` (NOT mini — spatial reasoning gap is real). Configurable via `AI_TAKEOFF_MODEL` env/constant. Cost ~$0.01–0.05/scan. Treat the chosen model + measured cost as the **tested V1 configuration**, not a permanent assumption — revisit at the Phase C go/no-go and before GA.
+- **Gating (V1 testing):** server-side checks = company trade is roofing + kill switch `AI_TAKEOFF_ENABLED=true` (env; flipping it off hides the button AND rejects the route — instant post-merge rollback without a deploy revert). No scan quotas during testing; every call is logged to `ai_scan_usage`, and the latest validated response overwrites `takeoff_pages.ai_scan_result` for audit/debugging. Tier/plan gates get added later when Shaun sets the numbers.
+- **Model and geometry:** `gpt-5.4` with exact 800x600 pixel coordinates, followed by deterministic snapping to dark roof strokes. Configurable via `AI_TAKEOFF_MODEL` env/constant. Treat the chosen model + measured cost as the **tested V1 configuration**, not a permanent assumption — revisit at the Phase C go/no-go and before GA.
 - **Structured output:** use OpenAI `response_format: { type: "json_schema" }` with a strict schema — eliminates JSON-parse fallback hacks entirely.
 - **Image:** validate magic bytes (reuse `detectImageMime`), cap 8MB input, downscale to ≤1536px longest side server-side (`sharp`) before sending; `detail: 'high'`.
 - **`export const maxDuration = 60`** — vision + large structured output can exceed the 30s used by parse-document.
-- Server re-validates the AI JSON shape + coordinate ranges (0–1000) before returning; snapping runs client-side in `applyAiResults` (needs canvas/calibration context).
+- Server re-validates the AI JSON shape + 800x600 coordinate bounds, snaps detections to dark image strokes, and stores the latest validated result in `takeoff_pages.ai_scan_result` before returning.
 
 ---
 
@@ -387,7 +384,7 @@ Built phase-by-phase on `feature/ai-takeoff`. **Each phase is a self-contained w
 
 ### Phase D — `applyAiResults` library (pure functions, zero TakeoffWorkstation edits) · ~2 days
 - **Inputs:** plan §"Coordinate Pipeline" + §"Architecture §1"; `app/lib/takeoff/reconstructCanvas.ts` (259 lines — read fully, it defines object-creation conventions); `tool-for-measurement-type.ts`.
-- **Work:** `applyAiResults.ts`: normalized→image→canvas mapping (uniform scale + centering offsets), `snapAndValidate` (angle/vertex/cluster/bounds/dedupe, reject-and-count), point-in-polygon area membership, calibration value computation, Fabric object factories (locked colours, dashed spouting), `ai_origin` flagging, reset-restore helper. Pure functions: `(aiJson, imgDims, canvasDims, calibration, areas) → typed results`.
+- **Work:** `applyAiResults.ts`: direct canvas-pixel geometry, `snapAndValidate` (angle/vertex/cluster/bounds/dedupe, reject-and-count), point-in-polygon area membership, calibration value computation, Fabric object factories (locked colours, dashed spouting), `ai_origin` flagging, reset-restore helper. Pure functions: `(aiJson, calibration, areas) → typed results`.
 - **Done:** module compiles + builds; logic reviewable in isolation. No UI yet.
 
 ### Phase E — Workstation integration 1: entry → scan → results → apply · ~3–4 days

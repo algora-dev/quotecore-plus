@@ -5,7 +5,7 @@
  * Phase 1: Identify the roof outline (the thick black perimeter line).
  * Phase 2: Identify internal components (hips, valleys, ridges, barges, spouting).
  *
- * The model returns NORMALIZED coordinates on a 0–1000 grid.
+ * The model returns exact pixel coordinates for the 800x600 canvas image.
  */
 
 // ── Phase 1: Outline detection prompt ──────────────────────────────────────
@@ -24,8 +24,10 @@ Identify the ROOF OUTLINE — the thick black perimeter line that defines the ac
 - The outline may be a simple rectangle, an L-shape, T-shape, U-shape, or have stepped/complex geometry.
 - Multiple separate roof structures = multiple outlines.
 
-## Coordinate system
-Use NORMALIZED coordinates on a 0–1000 grid covering the ENTIRE image (including the dark margins): x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
+## Coordinate system - exact pixels
+The supplied image is exactly 800 pixels wide by 600 pixels high.
+Return exact IMAGE PIXEL coordinates: x=0 is the left edge, x=799 the right edge; y=0 is the top, y=599 the bottom. All coordinates must be integers.
+Read every vertex from the centre of the actual thick black stroke or stroke intersection. Never estimate from labels, dimension leaders, text, or whitespace.
 
 ## What to return
 Return ONLY the roof outline polygon(s). Do NOT detect hips, valleys, ridges, barges, or spouting yet.
@@ -64,8 +66,10 @@ For each roof outline:
 
 export const AI_TAKEOFF_PROMPT_PHASE2 = `You are an expert roofing plan analyst. You are analysing a screenshot of a canvas displaying a roof plan image. The plan image is centred on a dark background (dark grey/slate canvas margin). The roof plan is the bright area in the centre. Ignore the dark margins completely.
 
-## Coordinate system
-Use NORMALIZED coordinates on a 0–1000 grid covering the ENTIRE image (including the dark margins): x=0 is the image's left edge, x=1000 the right edge; y=0 the top, y=1000 the bottom. All coordinates must be integers.
+## Coordinate system - exact pixels
+The supplied image is exactly 800 pixels wide by 600 pixels high.
+Return exact IMAGE PIXEL coordinates: x=0 is the left edge, x=799 the right edge; y=0 is the top, y=599 the bottom. All coordinates must be integers.
+Every component endpoint must sit on the centre of an actual thick black roof stroke or stroke intersection. Never use annotation leader lines, dimension lines, text baselines, or inferred extensions.
 
 ## The roof outline (already identified)
 {OUTLINE_CONTEXT}
@@ -90,6 +94,8 @@ Use NORMALIZED coordinates on a 0–1000 grid covering the ENTIRE image (includi
 - A valley ALWAYS starts or ends on an INTERNAL corner of the roof outline (a corner that points INWARD, into the building body — where two roof planes meet at a re-entrant angle).
 - Valleys are where two roof slopes meet at a low point (water collects here).
 - If a 45° line does NOT start/end on an internal corner, it is NOT a valley — it's a hip.
+- A diagonal that starts at a re-entrant/inward perimeter corner and runs toward an internal apex is a VALLEY, not a hip.
+- Printed labels may confirm a line's semantic type, but label text and leader lines must never determine its coordinates.
 
 ### 4. BARGES (perimeter edges at gable ends)
 - Barges are straight edges of the roof outline itself — they ARE part of the perimeter.
@@ -105,6 +111,7 @@ Use NORMALIZED coordinates on a 0–1000 grid covering the ENTIRE image (includi
 - On a simple gable roof: 2 spouting edges (the two long sides), 2 barge edges (the two gable ends).
 - On a mono-pitch: 1 spouting edge, 3 barge edges.
 - If you cannot clearly identify which perimeter edges are spouting vs barge, return empty arrays for both — do NOT guess.
+- On a fully hipped roof, the outer perimeter is eaves/spouting; do not invent a barge unless a gable end is actually present.
 
 ## Rules
 - Return EVERY line individually. NEVER merge, combine, or sum separate lines.
@@ -145,8 +152,8 @@ export const AI_TAKEOFF_PROMPT = AI_TAKEOFF_PROMPT_PHASE2;
 const pointSchema = {
   type: 'object' as const,
   properties: {
-    x: { type: 'integer' as const },
-    y: { type: 'integer' as const },
+    x: { type: 'integer' as const, minimum: 0, maximum: 799 },
+    y: { type: 'integer' as const, minimum: 0, maximum: 599 },
   },
   required: ['x', 'y'] as const,
   additionalProperties: false,
@@ -298,5 +305,5 @@ export const AI_TAKEOFF_PHASE1_SCHEMA = {
   additionalProperties: false,
 };
 
-/** Model config — using gpt-4.1 for significantly better vision/spatial reasoning than gpt-4o. */
-export const AI_TAKEOFF_MODEL = process.env.AI_TAKEOFF_MODEL || 'gpt-4.1';
+/** Tested with the 800x600 pixel-coordinate contract for reliable spatial output. */
+export const AI_TAKEOFF_MODEL = process.env.AI_TAKEOFF_MODEL || 'gpt-5.4';

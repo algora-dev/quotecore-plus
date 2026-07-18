@@ -8,7 +8,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
-import { applyAiResults, computeBackgroundLayout, normalizedPointsToCanvas, computeLineValue, computeAreaValue, type AiScanData, type ApplyAiResult, type AiMeasurement, type AiRoofAreaResult, type PlaceholderType } from '@/app/lib/takeoff/applyAiResults';
+import { applyAiResults, computeLineValue, computeAreaValue, type AiScanData, type ApplyAiResult, type AiMeasurement, type AiRoofAreaResult, type PlaceholderType } from '@/app/lib/takeoff/applyAiResults';
 import { AiResultsModal, type AiResultsData } from './modals/AiResultsModal';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
@@ -4016,7 +4016,7 @@ export function TakeoffWorkstation({
       // SHAUN'S APPROACH (2026-07-18): Capture the canvas itself as the user
       // sees it — background image on the dark canvas, with all drawn objects
       // temporarily hidden. This guarantees the AI sees EXACTLY what the user
-      // sees, and normalized 0-1000 coordinates map directly to canvas pixels.
+      // sees, so the AI can return the same 800x600 pixel coordinates directly.
       // No coordinate mapping mismatch is possible.
       const bgImg = canvas.backgroundImage;
       const drawnObjects = canvas.getObjects();
@@ -4054,6 +4054,7 @@ export function TakeoffWorkstation({
           imageMime: detectedMime,
           quoteId: quote.id,
           pageId,
+          imageDimensions: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
         }),
       });
 
@@ -4113,16 +4114,8 @@ export function TakeoffWorkstation({
       return;
     }
 
-    // Since we sent the AI a screenshot of the CANVAS ITSELF (800x600),
-    // normalized 0-1000 coordinates map directly to canvas pixels.
-    // computeBackgroundLayout(800x600) returns scale=1, offset=0,0 — so
-    // normalizedToCanvas just does (np/1000)*800 and (np/1000)*600.
-    // This is the key fix: AI sees the same pixels the canvas shows.
-    const imgDims = { width: CANVAS_WIDTH, height: CANVAS_HEIGHT };
-
     const applied = applyAiResults({
       aiData: aiScanRaw,
-      imgDims,
       calibrations,
       systemComponentIds,
     });

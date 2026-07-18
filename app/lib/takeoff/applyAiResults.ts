@@ -2,7 +2,7 @@
  * AI Takeoff — applyAiResults library.
  *
  * Pure functions that transform validated AI scan JSON into canvas-ready
- * data: normalized→canvas coordinate mapping, geometric snapping/validation,
+ * data: canvas-pixel geometry, geometric snapping/validation,
  * area membership testing, calibration-based value computation, and typed
  * result objects that TakeoffWorkstation can consume to create Fabric objects.
  *
@@ -19,13 +19,12 @@ export const CANVAS_HEIGHT = 600;
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
-export interface NormalizedPoint { x: number; y: number }
 export interface CanvasPoint { x: number; y: number }
 
-export interface AiLineEntry { points: NormalizedPoint[] }
+export interface AiLineEntry { points: CanvasPoint[] }
 export interface AiRoofArea {
   name: string;
-  points: NormalizedPoint[];
+  points: CanvasPoint[];
   pitch_degrees: number | null;
 }
 
@@ -35,7 +34,7 @@ export interface AiScanData {
     detected: boolean;
     ratio: string | null;
     dimension_line: {
-      p1: NormalizedPoint; p2: NormalizedPoint;
+      p1: CanvasPoint; p2: CanvasPoint;
       real_length: number; unit: string;
     } | null;
   };
@@ -121,77 +120,14 @@ export interface ApplyAiResult {
   } | null;
 }
 
-// ── Coordinate mapping ──────────────────────────────────────────────────────
-
-export interface ImageDimensions { width: number; height: number }
-
-/**
- * Compute the uniform scale + centering offsets used when drawing the image
- * as the canvas background. Must match setPageBackgroundImage in TakeoffWorkstation.
- */
-export function computeBackgroundLayout(
-  imgDims: ImageDimensions,
-  canvasWidth = CANVAS_WIDTH,
-  canvasHeight = CANVAS_HEIGHT,
-): { scale: number; offsetX: number; offsetY: number } {
-  const scale = Math.min(
-    canvasWidth / imgDims.width,
-    canvasHeight / imgDims.height,
-  );
-  const offsetX = (canvasWidth - imgDims.width * scale) / 2;
-  const offsetY = (canvasHeight - imgDims.height * scale) / 2;
-  return { scale, offsetX, offsetY };
-}
-
-/**
- * Get the canvas-space bounds of where the image is actually drawn.
- * Points outside this rectangle are in the dark canvas margin.
- */
-export function getImageBounds(
-  imgDims: ImageDimensions,
-  canvasWidth = CANVAS_WIDTH,
-  canvasHeight = CANVAS_HEIGHT,
-): { left: number; top: number; right: number; bottom: number } {
-  const layout = computeBackgroundLayout(imgDims, canvasWidth, canvasHeight);
-  return {
-    left: layout.offsetX,
-    top: layout.offsetY,
-    right: layout.offsetX + imgDims.width * layout.scale,
-    bottom: layout.offsetY + imgDims.height * layout.scale,
-  };
-}
-
-/** Map a normalized (0–1000) coordinate to canvas-space pixel. */
-export function normalizedToCanvas(
-  np: NormalizedPoint,
-  imgDims: ImageDimensions,
-  layout: { scale: number; offsetX: number; offsetY: number },
-): CanvasPoint {
-  const imgX = (np.x / 1000) * imgDims.width;
-  const imgY = (np.y / 1000) * imgDims.height;
-  return {
-    x: layout.offsetX + imgX * layout.scale,
-    y: layout.offsetY + imgY * layout.scale,
-  };
-}
-
-/** Map an array of normalized points to canvas-space. */
-export function normalizedPointsToCanvas(
-  points: NormalizedPoint[],
-  imgDims: ImageDimensions,
-  layout: { scale: number; offsetX: number; offsetY: number },
-): CanvasPoint[] {
-  return points.map(p => normalizedToCanvas(p, imgDims, layout));
-}
-
 // ── snapAndValidate ─────────────────────────────────────────────────────────
 
-/** Tolerance for vertex snapping (1.5% of image width, in normalized units). */
-const VERTEX_SNAP_TOLERANCE = 15; // out of 1000
+/** Tolerance for vertex snapping, in canvas pixels. */
+const VERTEX_SNAP_TOLERANCE = 12;
 /** Tolerance for endpoint clustering (same). */
-const CLUSTER_TOLERANCE = 15;
+const CLUSTER_TOLERANCE = 12;
 /** Maximum allowed deviation from target angle (degrees). */
-const ANGLE_TOLERANCE = 12;
+const ANGLE_TOLERANCE = 8;
 
 export interface SnapResult {
   accepted: AiLineEntry[];
@@ -209,7 +145,7 @@ export interface SnapResult {
 export function snapAndValidate(
   entries: AiLineEntry[],
   type: PlaceholderType,
-  roofAreaVertices: NormalizedPoint[],
+  roofAreaVertices: CanvasPoint[],
 ): SnapResult {
   const accepted: AiLineEntry[] = [];
   let rejected = 0;
@@ -254,15 +190,15 @@ export function snapAndValidate(
   return { accepted, rejected };
 }
 
-function inRange(p: NormalizedPoint): boolean {
-  return p.x >= 0 && p.x <= 1000 && p.y >= 0 && p.y <= 1000;
+function inRange(p: CanvasPoint): boolean {
+  return p.x >= 0 && p.x < CANVAS_WIDTH && p.y >= 0 && p.y < CANVAS_HEIGHT;
 }
 
-function distance(a: NormalizedPoint, b: NormalizedPoint): number {
+function distance(a: CanvasPoint, b: CanvasPoint): number {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
-function angleDegrees(a: NormalizedPoint, b: NormalizedPoint): number {
+function angleDegrees(a: CanvasPoint, b: CanvasPoint): number {
   return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
 }
 
@@ -281,10 +217,10 @@ function snapAngle(angle: number, type: PlaceholderType): boolean {
 }
 
 function snapToAngle(
-  p1: NormalizedPoint,
-  p2: NormalizedPoint,
+  p1: CanvasPoint,
+  p2: CanvasPoint,
   type: PlaceholderType,
-): { p1: NormalizedPoint; p2: NormalizedPoint } {
+): { p1: CanvasPoint; p2: CanvasPoint } {
   const midX = (p1.x + p2.x) / 2;
   const midY = (p1.y + p2.y) / 2;
   const len = distance(p1, p2);
@@ -312,10 +248,10 @@ function snapToAngle(
 }
 
 function snapToVertex(
-  p: NormalizedPoint,
-  vertices: NormalizedPoint[],
+  p: CanvasPoint,
+  vertices: CanvasPoint[],
   tolerance = VERTEX_SNAP_TOLERANCE,
-): NormalizedPoint {
+): CanvasPoint {
   let best = p;
   let bestDist = tolerance;
   for (const v of vertices) {
@@ -336,14 +272,14 @@ export function clusterEndpoints(entries: AiLineEntry[]): AiLineEntry[] {
   if (entries.length === 0) return entries;
 
   // Collect all endpoints
-  const endpoints: NormalizedPoint[] = [];
+  const endpoints: CanvasPoint[] = [];
   for (const e of entries) {
     endpoints.push(e.points[0]);
     endpoints.push(e.points[e.points.length - 1]);
   }
 
   // Build clusters
-  const clusters: NormalizedPoint[][] = [];
+  const clusters: CanvasPoint[][] = [];
   const assigned: boolean[] = new Array(endpoints.length).fill(false);
 
   for (let i = 0; i < endpoints.length; i++) {
@@ -361,7 +297,7 @@ export function clusterEndpoints(entries: AiLineEntry[]): AiLineEntry[] {
   }
 
   // Compute centroids
-  const centroidMap = new Map<string, NormalizedPoint>();
+  const centroidMap = new Map<string, CanvasPoint>();
   for (const cluster of clusters) {
     const cx = Math.round(cluster.reduce((s, p) => s + p.x, 0) / cluster.length);
     const cy = Math.round(cluster.reduce((s, p) => s + p.y, 0) / cluster.length);
@@ -392,8 +328,8 @@ export function clusterEndpoints(entries: AiLineEntry[]): AiLineEntry[] {
  * or -1 if outside all areas.
  */
 export function findContainingArea(
-  point: NormalizedPoint,
-  areas: NormalizedPoint[][],
+  point: CanvasPoint,
+  areas: CanvasPoint[][],
 ): number {
   for (let i = 0; i < areas.length; i++) {
     if (pointInPolygon(point, areas[i])) return i;
@@ -401,7 +337,7 @@ export function findContainingArea(
   return -1;
 }
 
-function pointInPolygon(point: NormalizedPoint, polygon: NormalizedPoint[]): boolean {
+function pointInPolygon(point: CanvasPoint, polygon: CanvasPoint[]): boolean {
   if (polygon.length < 3) return false;
   let inside = false;
   for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -462,7 +398,6 @@ function shoelaceArea(points: CanvasPoint[]): number {
  */
 export function computeScaleCheck(
   aiData: AiScanData,
-  imgDims: ImageDimensions,
   calibrations: Calibration[],
 ): ApplyAiResult['scaleCheck'] {
   const dl = aiData.scale.dimension_line;
@@ -486,10 +421,7 @@ export function computeScaleCheck(
     };
   }
 
-  // AI dimension line length in normalized units
-  const normalizedLength = distance(dl.p1, dl.p2);
-  // Convert to image pixels
-  const pixelLength = (normalizedLength / 1000) * Math.max(imgDims.width, imgDims.height);
+  const pixelLength = distance(dl.p1, dl.p2);
   // AI says this pixel length = real_length (in unit)
   const aiScale = dl.real_length / pixelLength; // units per pixel
 
@@ -509,7 +441,6 @@ export function computeScaleCheck(
 
 export interface ApplyAiParams {
   aiData: AiScanData;
-  imgDims: ImageDimensions;
   calibrations: Calibration[];
   /** Map of placeholder type → system component id (from the component fetch). */
   systemComponentIds: Record<PlaceholderType, string>;
@@ -520,16 +451,15 @@ export interface ApplyAiParams {
  *
  * Steps:
  * 1. Compute background layout (scale + offsets)
- * 2. Collect roof area polygon vertices (normalized) for vertex snapping
- * 3. For each placeholder type: snapAndValidate → clusterEndpoints → convert to canvas coords
+ * 2. Collect roof area polygon vertices for vertex snapping
+ * 3. For each placeholder type: snapAndValidate then clusterEndpoints
  * 4. Point-in-polygon test: stamp each line with its parent roof area
  * 5. Compute real-world values using calibration
  * 6. Build roof area results with area + pitch
  * 7. Scale cross-check
  */
 export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
-  const { aiData, imgDims, calibrations, systemComponentIds } = params;
-  const layout = computeBackgroundLayout(imgDims);
+  const { aiData, calibrations, systemComponentIds } = params;
 
   // Collect roof area vertices for vertex snapping
   const areaPolygons = aiData.roof_areas.map(a => a.points);
@@ -537,7 +467,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
 
   // Process roof areas first (need their ids for line membership)
   const roofAreaResults: AiRoofAreaResult[] = aiData.roof_areas.map((area, idx) => {
-    const canvasPoints = normalizedPointsToCanvas(area.points, imgDims, layout);
+    const canvasPoints = area.points.map(point => ({ ...point }));
     const areaValue = computeAreaValue(canvasPoints, calibrations);
     const pitch = area.pitch_degrees ?? aiData.pitch.global_degrees ?? 0;
     return {
@@ -549,8 +479,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
     };
   });
 
-  // Normalized area polygons for point-in-polygon test
-  const areaPolygonsNormalized = aiData.roof_areas.map(a => a.points);
+  const areaPolygonsForHitTest = aiData.roof_areas.map(a => a.points);
 
   // Process each placeholder type
   const measurements: AiMeasurement[] = [];
@@ -570,15 +499,15 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
 
     // Convert to measurements
     for (const entry of clustered) {
-      const canvasPoints = normalizedPointsToCanvas(entry.points, imgDims, layout);
+      const canvasPoints = entry.points.map(point => ({ ...point }));
       const value = computeLineValue(canvasPoints[0], canvasPoints[1], calibrations);
 
       // Point-in-polygon: use midpoint of the line
-      const midNormalized: NormalizedPoint = {
+      const midpoint: CanvasPoint = {
         x: (entry.points[0].x + entry.points[1].x) / 2,
         y: (entry.points[0].y + entry.points[1].y) / 2,
       };
-      const areaIdx = findContainingArea(midNormalized, areaPolygonsNormalized);
+      const areaIdx = findContainingArea(midpoint, areaPolygonsForHitTest);
       const quoteRoofAreaId = areaIdx >= 0 ? roofAreaResults[areaIdx].id : (roofAreaResults[0]?.id ?? null);
 
       measurements.push({
@@ -595,7 +524,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
   }
 
   // Scale cross-check
-  const scaleCheck = computeScaleCheck(aiData, imgDims, calibrations);
+  const scaleCheck = computeScaleCheck(aiData, calibrations);
 
   return {
     roofAreas: roofAreaResults,
@@ -620,14 +549,12 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
  */
 export function resetFromStoredScan(
   storedResult: AiScanData,
-  imgDims: ImageDimensions,
   calibrations: Calibration[],
   systemComponentIds: Record<PlaceholderType, string>,
 ): ApplyAiResult {
   // Identical to applyAiResults — the stored result is the same shape.
   return applyAiResults({
     aiData: storedResult,
-    imgDims,
     calibrations,
     systemComponentIds,
   });
