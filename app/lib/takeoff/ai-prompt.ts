@@ -251,4 +251,4 @@ export const AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA = {
   additionalProperties: false,
 };
 
-export const AI_TAKEOFF_MODEL = process.env.AI_TAKEOFF_MODEL || 'gpt-4.1';
+export const AI_TAKEOFF_MODEL = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
