@@ -6205,6 +6205,8 @@ export function TakeoffWorkstation({
           notes={aiOutlineData.notes}
           previewImage={aiAnalysisImage.dataUrl}
           outlines={aiOutlineData.roof_areas}
+          canvasWidth={canvasDims.width}
+          canvasHeight={canvasDims.height}
           onConfirm={handleConfirmAiAreas}
           onDiscard={() => {
             setAiOutlineAreas(null);

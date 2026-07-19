@@ -8,11 +8,14 @@ interface Props {
   notes: string[];
   previewImage: string;
   outlines: Array<{ points: Array<{ x: number; y: number }> }>;
+  /** Canvas dimensions — SVG viewBox matches these so overlay coords align perfectly. */
+  canvasWidth: number;
+  canvasHeight: number;
   onConfirm: (overrides: Record<number, { name: string; pitch: number }>) => void;
   onDiscard: () => void;
 }
 
-export function AiAreaReviewModal({ areas, notes, previewImage, outlines, onConfirm, onDiscard }: Props) {
+export function AiAreaReviewModal({ areas, notes, previewImage, outlines, canvasWidth, canvasHeight, onConfirm, onDiscard }: Props) {
   const [edits, setEdits] = useState<Record<number, { name: string; pitch: string }>>(() => (
     Object.fromEntries(areas.map(area => [area.index, {
       name: area.name,
@@ -35,6 +38,9 @@ export function AiAreaReviewModal({ areas, notes, previewImage, outlines, onConf
     }])));
   };
 
+  // Compute aspect ratio from canvas dimensions for the preview container
+  const aspectRatio = `${canvasWidth} / ${canvasHeight}`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
       <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
@@ -43,10 +49,19 @@ export function AiAreaReviewModal({ areas, notes, previewImage, outlines, onConf
           Check each parent area name and pitch before AI finds the roof components.
         </p>
         <div
-          className="relative mt-4 aspect-[4/3] overflow-hidden rounded-xl border border-slate-200 bg-slate-800 bg-cover bg-center"
-          style={{ backgroundImage: `url(${previewImage})` }}
+          className="relative mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-800 bg-contain bg-left-top bg-no-repeat"
+          style={{
+            backgroundImage: `url(${previewImage})`,
+            aspectRatio,
+            maxHeight: '40vh',
+          }}
         >
-          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 800 600" aria-label="Detected roof area preview">
+          <svg
+            className="absolute inset-0 h-full w-full"
+            viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
+            preserveAspectRatio="none"
+            aria-label="Detected roof area preview"
+          >
             {outlines.map((outline, index) => (
               <polygon
                 key={index}
