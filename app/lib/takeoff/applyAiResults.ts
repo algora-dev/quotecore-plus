@@ -44,6 +44,7 @@ export interface AiScanData {
     ridges: AiLineEntry[];
     hips: AiLineEntry[];
     valleys: AiLineEntry[];
+    broken_hips: AiLineEntry[];
     barges: AiLineEntry[];
     spouting: AiLineEntry[];
   };

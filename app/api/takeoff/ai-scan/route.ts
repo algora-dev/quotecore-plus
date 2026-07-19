@@ -105,6 +105,7 @@ interface AiScanResult {
     ridges: LineEntry[];
     hips: LineEntry[];
     valleys: LineEntry[];
+    broken_hips: LineEntry[];
     barges: LineEntry[];
     spouting: LineEntry[];
   };
@@ -177,7 +178,7 @@ function validateAiResult(
       scale: { detected: false, ratio: null, dimension_line: null },
       pitch: { detected: false, global_degrees: null },
       roof_areas: [],
-      components: { ridges: [], hips: [], valleys: [], barges: [], spouting: [] },
+      components: { ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [] },
       notes: typeof obj.notes === 'string' ? [obj.notes] : ['Image was unreadable.'],
       error: 'unreadable',
     };
@@ -217,7 +218,7 @@ function validateAiResult(
   const rawComponents = (typeof obj.components === 'object' && obj.components !== null)
     ? obj.components as Record<string, unknown>
     : {};
-  const componentKeys = ['ridges', 'hips', 'valleys', 'barges', 'spouting'] as const;
+  const componentKeys = ['ridges', 'hips', 'valleys', 'broken_hips', 'barges', 'spouting'] as const;
   const components = {} as AiScanResult['components'];
   for (const key of componentKeys) {
     const rawList = Array.isArray(rawComponents[key]) ? rawComponents[key] : [];
@@ -315,7 +316,7 @@ async function callVisionModel(
 // ── Route handler ────────────────────────────────────────────────────────
 
 const emptyComponents = (): AiScanResult['components'] => ({
-  ridges: [], hips: [], valleys: [], barges: [], spouting: [],
+  ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [],
 });
 
 function scalePoint(point: ImagePoint, scaleX: number, scaleY: number): ImagePoint {
@@ -344,6 +345,7 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
       ridges: result.components.ridges.map(scaleLine),
       hips: result.components.hips.map(scaleLine),
       valleys: result.components.valleys.map(scaleLine),
+      broken_hips: result.components.broken_hips.map(scaleLine),
       barges: result.components.barges.map(scaleLine),
       spouting: result.components.spouting.map(scaleLine),
     },
@@ -352,14 +354,15 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
 
 function buildSummary(result: AiScanResult) {
   const components = result.components.ridges.length + result.components.hips.length
-    + result.components.valleys.length + result.components.barges.length
-    + result.components.spouting.length;
+    + result.components.valleys.length + result.components.broken_hips.length
+    + result.components.barges.length + result.components.spouting.length;
   return {
     areas: result.roof_areas.length,
     components,
     ridges: result.components.ridges.length,
     hips: result.components.hips.length,
     valleys: result.components.valleys.length,
+    broken_hips: result.components.broken_hips.length,
     barges: result.components.barges.length,
     spouting: result.components.spouting.length,
     notes: result.notes,

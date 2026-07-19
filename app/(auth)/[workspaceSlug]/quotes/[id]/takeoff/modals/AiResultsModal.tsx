@@ -21,6 +21,7 @@ export interface AiResultsData {
     ridges: number;
     hips: number;
     valleys: number;
+    broken_hips: number;
     barges: number;
     spouting: number;
     notes: string[];
@@ -135,7 +136,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
           <SummaryCard label="Dropped" value={droppedCount} colour={droppedCount > 0 ? 'text-amber-600' : 'text-slate-400'} />
         </div>
 
-        <div className="grid grid-cols-5 gap-2 mb-4">
+        <div className="grid grid-cols-6 gap-2 mb-4">
           {ALL_SEMANTIC_KEYS.map(key => {
             const def = AI_COMPONENT_REGISTRY[key];
             const count = summary[def.key];

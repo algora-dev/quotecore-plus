@@ -29,20 +29,12 @@ Trace the complete visible perimeter of each physically separate roof structure.
 Rules:
 - Follow the centre of the actual perimeter stroke.
 - Include every visible step, notch and re-entrant corner. Never simplify the polygon.
-- Return connected dormers and extensions as part of the same parent outline.
 - Return a separate parent area only when the roof structure is physically disconnected.
 - Do not divide one roof into individual sloping faces.
-- Do not detect ridges, hips, valleys, barges or spouting in this stage.
 - Suggest a pitch only when a pitch annotation is visible. Otherwise use null.
 - Detect a labelled dimension line only when its endpoints and real length are readable.
 - If part of an outline is genuinely ambiguous, still return the best continuous polygon and describe the ambiguity in notes.
 - If this is not a usable roof plan, set error to unreadable.
-
-## CORNER AUDIT
-After tracing each polygon, inspect every polygon vertex:
-- internal: a re-entrant/concave corner pointing into the roof footprint; this is a likely valley origin.
-- external: a convex corner pointing away from the roof footprint; this may be a hip origin.
-Return one corner candidate for every polygon vertex. Use the polygon point index exactly.
 
 Return only the structured JSON requested by the schema.`;
 }
@@ -67,42 +59,34 @@ export function buildAiTakeoffComponentsPrompt(params: {
     ? `\n## REQUIRED REPAIR\nA previous graph failed validation. Correct every listed violation while preserving valid detections:\n${params.repairContext}\n`
     : '';
 
-  return `You are an expert roofing plan analyst. Detect every roof component inside the confirmed parent roof area(s).
+  return `You are an expert roofing plan analyst. Detect every roof component inside the confirmed parent roof area(s) - Ignore anything outside the roof outline.
 
 The supplied image is the original plan image at ${params.width} pixels wide and ${params.height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. The confirmed polygons below are authoritative and must be returned unchanged.
 
 ## CONFIRMED PARENT AREAS
 ${areaContext}
 
-## EXPECTED CORNER ORIGINS
-${cornerContext || 'No corner candidates supplied.'}
-
 ## BUILD ONE CONNECTED ROOF GRAPH
 Work in this exact order:
-1. Create all confirmed perimeter vertex nodes using their required IDs (for example a0v0).
-2. Identify internal junction nodes before drawing component edges.
+1. Identify every junction node inside, and on the roof outline.
+2. Each roof area internal corner will be the bottom of a valley, external corners will be bottom of a hip run.
 3. Detect every visible ridge run.
-4. Resolve every internal/re-entrant corner with a valley unless clear roof geometry proves otherwise.
-5. Resolve relevant external corners with hips. A gable/eaves-only corner does not require a hip.
-6. Connect ridges, hips and valleys into one coherent internal skeleton.
-7. Classify perimeter runs as barges or spouting only after the internal skeleton is complete.
+6. Connect ridges, hips and valleys into one coherent internal skeleton. By now, all internal roof points should be connected.
+7. Classify perimeter runs as barges or spouting only after the internal skeleton is complete. Barges always form off ridge runs that end on the roof outline and run either side of that point on the roof outline perpendicular to the ridge.
 8. Audit every node, edge and expected corner before returning.
 
 ## COMPONENT MEANINGS
 - ridge: highest internal junction between roof planes. Usually drawn as a short horizontal or angled line at the peak.
 - hip: external high junction, normally connecting an external perimeter corner to a ridge endpoint or shared internal junction.
 - valley: internal low junction, normally connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction.
+- broken_hip: an angle run connecting from the internal point of a valley or another hip, inside the roof area, not connected to the perimeter of the roof outline.
 - barge: gable-edge perimeter run that does not collect water. A barge is ALWAYS perpendicular to the ridge, branching off from a ridge endpoint to the perimeter. Where a ridge endpoint meets the perimeter, TWO barges branch off at right angles to the ridge, running along the perimeter in opposite directions.
 - spouting: eaves/gutter perimeter run where water leaves the roof. Spouting is everything on the perimeter that is NOT a barge.
 
 ## CRITICAL BARGE RULES
 - Every ridge endpoint that touches or nearly touches the perimeter MUST have barges branching from it.
 - Barges run PERPENDICULAR to the ridge direction, along the perimeter.
-- If a ridge runs horizontally, barges run vertically along the perimeter at the ridge's endpoints.
-- If a ridge runs vertically, barges run horizontally along the perimeter at the ridge's endpoints.
-- A mono-pitch roof (single slope, no ridge) gets 3 barges + 1 spouting.
-- Barges and spouting together must cover the ENTIRE perimeter with no gaps or overlaps.
-- Ridges NEVER end at spouting — only at barge, hip, valley, or another ridge.
+- Mono pitch or single face roofs are assumed to have 3 barge runs (sides and top of roof) with 1 spouting run at the bottom.
 
 ## NON-NEGOTIABLE TOPOLOGY RULES
 - Every edge endpoint must reference a node ID. Never return free-floating line endpoints.
@@ -195,7 +179,7 @@ export const AI_TAKEOFF_OUTLINE_SCHEMA = {
     },
     notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
-  required: ['error', 'scale', 'pitch', 'roof_areas', 'corner_candidates', 'notes'] as const,
+  required: ['error', 'scale', 'pitch', 'roof_areas', 'notes'] as const,
   additionalProperties: false,
 };
 
@@ -222,7 +206,7 @@ export const AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA = {
         type: 'object' as const,
         properties: {
           id: { type: 'string' as const }, area_index: { type: 'integer' as const },
-          type: { type: 'string' as const, enum: ['ridge', 'hip', 'valley', 'barge', 'spouting'] as const },
+          type: { type: 'string' as const, enum: ['ridge', 'hip', 'valley', 'broken_hip', 'barge', 'spouting'] as const },
           start_node_id: { type: 'string' as const }, end_node_id: { type: 'string' as const },
           confidence: { type: 'number' as const }, inferred: { type: 'boolean' as const },
         },
