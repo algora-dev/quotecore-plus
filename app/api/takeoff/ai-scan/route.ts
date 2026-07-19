@@ -304,7 +304,7 @@ async function callVisionModel(
         schema,
       },
     },
-  } as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming);
+  });
 
   const content = response.choices[0]?.message?.content;
   if (!content) {
