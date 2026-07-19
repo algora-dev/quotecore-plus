@@ -4117,7 +4117,7 @@ export function TakeoffWorkstation({
         }),
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
 
       if (!response.ok || !result.success) {
         const errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
@@ -4180,7 +4180,7 @@ export function TakeoffWorkstation({
           outlineData: { ...aiOutlineData, roof_areas: confirmedAreas },
         }),
       });
-      const result = await response.json();
+      const result = await response.json().catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
       if (!response.ok || !result.success) {
         const violations = Array.isArray(result.topologyViolations)
           ? ` ${result.topologyViolations.join(' ')}` : '';

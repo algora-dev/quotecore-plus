@@ -16,7 +16,7 @@ import { snapAiGeometryToImage } from '@/app/lib/takeoff/snapAiGeometryToImage';
 import { classifyPolygonCorners, graphToComponents, validateComponentGraph } from '@/app/lib/takeoff/aiTopology';
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || 'placeholder' });
 
