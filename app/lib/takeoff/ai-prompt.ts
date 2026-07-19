@@ -161,22 +161,6 @@ export const AI_TAKEOFF_OUTLINE_SCHEMA = {
     scale: scaleSchema,
     pitch: pitchSchema,
     roof_areas: { type: 'array' as const, items: roofAreaSchema },
-    corner_candidates: {
-      type: 'array' as const,
-      items: {
-        type: 'object' as const,
-        properties: {
-          area_index: { type: 'integer' as const },
-          point_index: { type: 'integer' as const },
-          corner_type: { type: 'string' as const, enum: ['internal', 'external'] as const },
-          likely_component: { type: 'string' as const, enum: ['valley', 'hip'] as const },
-          confidence: { type: 'number' as const },
-          note: { type: ['string', 'null'] as const },
-        },
-        required: ['area_index', 'point_index', 'corner_type', 'likely_component', 'confidence', 'note'] as const,
-        additionalProperties: false,
-      },
-    },
     notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
   required: ['error', 'scale', 'pitch', 'roof_areas', 'notes'] as const,
