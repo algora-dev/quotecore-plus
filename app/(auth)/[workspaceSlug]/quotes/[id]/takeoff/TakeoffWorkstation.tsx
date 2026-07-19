@@ -6213,7 +6213,7 @@ export function TakeoffWorkstation({
             <h3 className="text-sm font-semibold text-slate-900">
               {aiScanStage === 'outline' ? 'Finding roof areas…' : 'Finding connected roof components…'}
             </h3>
-            <p className="text-xs text-slate-500 mt-1">This may take up to a minute.</p>
+            <p className="text-xs text-slate-500 mt-1">This may take a few moments.</p>
           </div>
         </div>
       )}

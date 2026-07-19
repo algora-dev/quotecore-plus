@@ -202,13 +202,17 @@ export function validateComponentGraph(
     const nodeId = `a${corner.area_index}v${corner.point_index}`;
     const hasValley = edges.some(edge => edge.type === 'valley'
       && (edge.start_node_id === nodeId || edge.end_node_id === nodeId));
+    const hasAnyEdge = edges.some(edge =>
+      edge.start_node_id === nodeId || edge.end_node_id === nodeId);
     const explicitlyUnresolved = rawResolutions.some(resolution => {
       if (!resolution || typeof resolution !== 'object') return false;
       const item = resolution as Record<string, unknown>;
       return item.area_index === corner.area_index && item.point_index === corner.point_index
         && item.status === 'unresolved' && typeof item.note === 'string' && item.note.trim().length > 0;
     });
-    if (!hasValley && !explicitlyUnresolved) {
+    // With valley disambiguation: gable steps have no valley but may have
+    // barge/broken_barge edges connected. Accept any connected edge as resolved.
+    if (!hasValley && !hasAnyEdge && !explicitlyUnresolved) {
       violations.push(`Internal corner ${nodeId} has no valley and no explicit resolution.`);
     }
   }
