@@ -282,7 +282,6 @@ async function callVisionModel(
   const response = await openai.chat.completions.create({
     model,
     max_completion_tokens: 8192,
-    temperature: 0, // Deterministic — roof outlines should be consistent across runs
     reasoning_effort: 'low',
     messages: [
       {
