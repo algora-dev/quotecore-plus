@@ -23,26 +23,28 @@ export function buildAiTakeoffOutlinePrompt(width: number, height: number): stri
 
 The supplied image is the original plan image at ${width} pixels wide and ${height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. Ignore dimensions, labels, leaders, grids, borders, hatching, arrows, vents, skylights and other annotations.
 
+## VISUAL EVIDENCE PRIORITY
+Apply this hierarchy before tracing anything:
+1. First use clear continuous black/dark narrow linework. Where present, it is the authoritative roof outline.
+2. If a section has no clear dark stroke, use the next strongest continuous narrow line, including grey, coloured or faded linework.
+3. Only when the plan has no usable perimeter linework, use the boundary of one coherent roof shading/fill region as the outline fallback.
+Never follow a shading boundary where usable narrow linework exists. Once an evidence style is selected for a connected run, follow it consistently instead of jumping between nearby linework and fill edges.
+
 ## ONLY TASK: TRACE THE VISIBLE PARENT ROOF OUTLINE
 Trace the complete visible outer perimeter of each physically separate roof structure. Do not detect or classify ridges, hips, valleys, barges, spouting or any other internal component in this stage.
 
-## BLACK-STROKE PRIORITY
-- The roof outline is the thin black or darkest continuous perimeter stroke. Follow that stroke, not the boundary of a shaded, coloured or filled region.
-- Ignore all roof shading, grey/blue fill, transparency, colour changes and tonal boundaries. A change in shading is not an outline unless a narrow dark ink stroke is visibly present on the same path.
-- Where the black perimeter stroke and the shaded roof mass disagree, the black perimeter stroke is authoritative.
-- Check projections, steps and notches especially carefully because shaded fill often hides or simplifies their true black outline.
-
 ## OUTLINE RULES
-- Follow the centre of the thin black/dark outer perimeter stroke.
+- Follow the centre of the selected perimeter evidence.
 - Include every visible step, notch and re-entrant corner. Never simplify or regularise the polygon.
+- Check projections, steps and notches especially carefully because shaded fill can hide or simplify their true linework.
 - Return a separate parent area only when a visible gap physically disconnects one roof structure from another.
 - Do not divide one connected roof into individual sloping faces.
 - Ignore internal roof lines and all non-roof marks, including dimensions, text, leaders, grids, borders, hatching, arrows, vents, skylights, walls and openings.
 - Suggest a pitch only when a pitch annotation is clearly visible and readable. Otherwise use null.
 - Detect a dimension line only when both endpoints and its real length are clearly visible and readable.
-- If the thin dark perimeter cannot be followed reliably, set error to unreadable rather than closing the polygon from the shaded roof mass.
+- If no reliable perimeter evidence can be followed, set error to unreadable rather than inventing an outline.
 
-Before returning, verify that every polygon segment lies over the thin black/dark perimeter stroke and not merely along an edge of the shaded fill.
+Before returning, verify that every polygon segment follows the highest-priority evidence available in that section.
 
 Return only the structured JSON requested by the schema.`;
 }
@@ -69,6 +71,13 @@ export function buildAiTakeoffComponentsPrompt(params: {
 
   return `You are an expert roofing plan analyst. Detect and classify every visible INTERNAL roof-component stroke within the confirmed parent roof area(s). Ignore everything outside the confirmed outlines. Do not classify the outer perimeter; the application calculates perimeter barges and spouting separately.
 
+## VISUAL EVIDENCE PRIORITY
+Apply this hierarchy before detecting any component:
+1. First use clear continuous black/dark narrow linework. Where present, it is authoritative.
+2. If no clear dark stroke exists for a run, use the next strongest continuous narrow line, including grey, coloured or faded linework.
+3. Never use a broad shading/fill boundary by itself as an internal component. Every ridge, hip, valley, broken hip or broken barge requires narrow line-shaped evidence.
+When linework and shading disagree, follow the highest-priority narrow line. Follow one evidence style consistently for the complete connected run.
+
 The supplied image is the original plan image at ${params.width} pixels wide and ${params.height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. The confirmed polygons below are authoritative and must be returned unchanged.
 
 ## CONFIRMED PARENT AREAS
@@ -80,10 +89,8 @@ ${cornerContext || 'None'}
 
 ## ABSOLUTE VISIBLE-LINE RULE
 This rule overrides every definition, topology expectation and geometric assumption below.
-- Use only thin black or darkest continuous linework as component evidence. Ignore shaded/filled areas, colour boundaries and tonal changes.
-- A change in roof shading is not a component. A narrow dark ink stroke must be visibly present along the complete returned path.
-- Return a component edge only when a continuous dark roof-component stroke lies directly underneath the complete returned path.
-- If there is no continuous dark stroke underneath any part of a proposed internal path, do not return that component.
+- Return a component edge only when continuous narrow line-shaped evidence lies directly underneath the complete returned path.
+- If there is no continuous narrow line underneath any part of a proposed internal path, do not return that component.
 - Never invent, extend, complete or connect a component from roof geometry alone.
 - Never add a component merely because a roof of this shape would normally contain one.
 - Never add an edge to make the graph connected, symmetrical or structurally plausible.
@@ -92,7 +99,7 @@ This rule overrides every definition, topology expectation and geometric assumpt
 - Return no edges with type=barge or type=spouting. Perimeter classification is performed deterministically by the application after this scan.
 
 ## DETECTION ORDER
-1. Inspect the image systematically from top to bottom and left to right. Find every thin, continuous black/dark stroke inside each confirmed outline before considering roof topology.
+1. Inspect the image systematically from top to bottom and left to right. Find every continuous narrow stroke inside each confirmed outline before considering roof topology.
 2. Reject non-component marks: shaded-region boundaries, colour transitions, dimensions, text, leaders, pitch arrows, hatching, grids, dashed wall/building footprints, borders, vents, skylights, openings and closed rectangular symbols.
 3. Create nodes only at visible stroke endpoints, visible stroke intersections and the supplied perimeter vertices. Add a junction only where visible component strokes actually meet.
 4. Classify each retained visible internal stroke using the component meanings below. Geometry helps classification but can never replace visible-line evidence.
