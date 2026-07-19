@@ -10,8 +10,8 @@
  * mean of its local window — if significantly darker than the local mean,
  * it's a line pixel; otherwise it's background.
  *
- * For the component phase, a polygon mask can be applied so only strokes
- * inside the confirmed roof outline are retained.
+ * For the component phase, polygon masks can be applied so only strokes
+ * inside the union of the confirmed roof outlines are retained.
  */
 
 import sharp from 'sharp';
@@ -19,10 +19,10 @@ import sharp from 'sharp';
 export interface LineworkOptions {
   /** Window size for local adaptive thresholding (odd, default 25). */
   windowSize?: number;
-  /** Sensitivity: pixels darker than (localMean - sensitivity) are strokes (default 15). */
+  /** Sensitivity: pixels darker than (localMean - sensitivity) are strokes (default 10). */
   sensitivity?: number;
-  /** Optional polygon mask (in image pixel coords). Everything outside is white. */
-  maskPolygon?: Array<{ x: number; y: number }>;
+  /** Optional polygon masks (in image pixel coords). Everything outside their union is white. */
+  maskPolygons?: Array<Array<{ x: number; y: number }>>;
   /** Image width (for mask coordinate validation). */
   width?: number;
   /** Image height (for mask coordinate validation). */
@@ -37,7 +37,7 @@ export interface LineworkOptions {
  * 2. Blur slightly to reduce noise
  * 3. Compute local mean via box blur at windowSize
  * 4. Compare: pixel < (localMean - sensitivity) → black stroke, else white
- * 5. Optionally apply polygon mask
+ * 5. Optionally apply the union of polygon masks
  * 6. Return as PNG buffer (same dimensions as input)
  */
 export async function generateAdaptiveLinework(
@@ -46,8 +46,8 @@ export async function generateAdaptiveLinework(
 ): Promise<Buffer> {
   const {
     windowSize = 25,
-    sensitivity = 15,
-    maskPolygon,
+    sensitivity = 10,
+    maskPolygons,
     width: maskWidth,
     height: maskHeight,
   } = options;
@@ -127,19 +127,21 @@ export async function generateAdaptiveLinework(
     }
   }
 
-  // Step 5: Apply polygon mask if provided
-  if (maskPolygon && maskPolygon.length >= 3 && maskWidth && maskHeight) {
-    // Scale mask from provided coordinate space to actual image dimensions
+  // Step 5: Apply the union of all valid polygon masks if provided
+  const validMaskPolygons = maskPolygons?.filter(polygon => polygon.length >= 3) ?? [];
+  if (validMaskPolygons.length > 0 && maskWidth && maskHeight) {
     const scaleX = w / maskWidth;
     const scaleY = h / maskHeight;
-    const scaledMask = maskPolygon.map(p => ({
-      x: p.x * scaleX,
-      y: p.y * scaleY,
-    }));
+    const scaledMasks = validMaskPolygons.map(polygon => (
+      polygon.map(point => ({
+        x: point.x * scaleX,
+        y: point.y * scaleY,
+      }))
+    ));
 
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
-        if (!pointInPolygon(x, y, scaledMask)) {
+        if (!scaledMasks.some(polygon => pointInPolygon(x, y, polygon))) {
           const idx = (y * w + x) * 3;
           outputPixels[idx] = 255;
           outputPixels[idx + 1] = 255;

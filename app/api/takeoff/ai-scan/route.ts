@@ -297,7 +297,7 @@ async function callVisionModel(
 
   const response = await openai.chat.completions.create({
     model,
-    max_completion_tokens: 8192,
+    max_completion_tokens: 16384,
     reasoning_effort: 'high',
     messages: [
       {
@@ -469,7 +469,7 @@ export async function POST(req: NextRequest) {
     // Generate adaptive linework image for dual-image vision input
     let lineworkBuffer: Buffer;
     try {
-      lineworkBuffer = await generateAdaptiveLinework(processedBuffer, { windowSize: 25, sensitivity: 15 });
+      lineworkBuffer = await generateAdaptiveLinework(processedBuffer, { windowSize: 25, sensitivity: 10 });
     } catch (err) {
       console.warn('[ai-scan] adaptive linework generation failed, falling back to original only:', err instanceof Error ? err.message : err);
       lineworkBuffer = processedBuffer; // fallback to original
@@ -525,14 +525,13 @@ export async function POST(req: NextRequest) {
     const expectedCorners = classifyPolygonCorners(analysisAreas);
     const promptParams = { width, height, areas: analysisAreas, corners: expectedCorners };
 
-    // Generate masked linework (only inside confirmed roof polygon)
-    const firstAreaPoints = analysisAreas[0].points;
+    // Generate masked linework inside the union of all confirmed roof polygons
     let maskedLineworkBuffer: Buffer;
     try {
       maskedLineworkBuffer = await generateAdaptiveLinework(processedBuffer, {
         windowSize: 25,
-        sensitivity: 15,
-        maskPolygon: firstAreaPoints,
+        sensitivity: 10,
+        maskPolygons: analysisAreas.map(area => area.points),
         width,
         height,
       });
