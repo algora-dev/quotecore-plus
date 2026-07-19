@@ -69,21 +69,20 @@ ${areaContext}
 ## BUILD ONE CONNECTED ROOF GRAPH
 Work in this exact order:
 1. Identify every junction node inside, and on the roof outline.
-2. For each internal/re-entrant corner: check if a visible line (roughly 45° or diagonal) emanates from that corner into the roof. If yes, it is a valley. If no visible diagonal line is present, it is a gable step — do NOT create a valley. Instead, treat the perimeter runs at that step as barges (perpendicular to the nearest ridge).
-3. Detect every visible ridge run.
-4. External corners form the bottom of a hip run.
-5. Detect broken hips (angle runs connecting from a valley or hip internal point, inside the roof, not on the perimeter).
-6. Detect broken barges (barge runs inside the roof outline, perpendicular to a ridge, connecting from a ridge endpoint inward — same as barges but internal).
-7. Connect ridges, hips and valleys into one coherent internal skeleton. By now, all internal roof points should be connected.
-8. Classify perimeter runs as barges or spouting only after the internal skeleton is complete. Barges always form off ridge runs that end on the roof outline and run either side of that point on the roof outline perpendicular to the ridge.
-9. Audit every node, edge and expected corner before returning.
+2. For each internal/re-entrant corner: only create a valley if a visible line (roughly 45° or diagonal) emanates from that corner into the roof. If no visible diagonal line is present, it is a gable step — do NOT create a valley. Treat the perimeter runs at that step as barges (perpendicular to the nearest ridge) or spouting (parallel to a ridge).
+3. For each external corner: only create a hip if a visible line (roughly 45° or diagonal) runs from that corner into the roof. If no visible diagonal line is present, it is a gable end — do NOT create a hip. The perimeter runs at a gable end are: spouting on the face parallel to the nearest ridge, and barges on the faces perpendicular to the nearest ridge.
+4. Detect every visible ridge run. Only draw ridges where a visible ridge line exists on the plan — never infer a ridge from geometry alone.
+5. Detect broken hips and broken barges: for each, confirm a visible line on the plan forms the same path. If no visible line exists for a broken hip or broken barge, do NOT create it. Never infer internal component lines from junction geometry alone.
+6. Connect ridges, hips and valleys into one coherent internal skeleton. By now, all internal roof points should be connected.
+7. Classify perimeter runs as barges or spouting only after the internal skeleton is complete. Barges always form off ridge runs that end on the roof outline and run either side of that point on the roof outline perpendicular to the ridge.
+8. Audit every node, edge and expected corner before returning.
 
 ## COMPONENT MEANINGS
-- ridge: highest internal junction between roof planes. Usually drawn as a short horizontal or angled line at the peak.
-- hip: external high junction, normally connecting an external perimeter corner to a ridge endpoint or shared internal junction.
-- valley: internal low junction, normally connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction. ONLY create a valley when a visible diagonal line (roughly 45°) runs from the internal corner into the roof. If no such line is visible, it is a gable step, not a valley.
-- broken_hip: an angle run connecting from the internal point of a valley or another hip, inside the roof area, not connected to the perimeter of the roof outline.
-- broken_barge: a barge run inside the roof outline, perpendicular to a ridge, not on the perimeter. Same appearance and rules as barge but internal.
+- ridge: highest internal junction between roof planes. Usually drawn as a short horizontal or angled line at the peak. Only draw where a visible ridge line exists on the plan.
+- hip: external high junction connecting an external perimeter corner to a ridge endpoint or shared internal junction. ONLY create a hip when a visible diagonal line (roughly 45°) runs from the external corner into the roof. If no such line is visible, it is a gable end, not a hip.
+- valley: internal low junction connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction. ONLY create a valley when a visible diagonal line (roughly 45°) runs from the internal corner into the roof. If no such line is visible, it is a gable step, not a valley.
+- broken_hip: an angle run connecting from the internal point of a valley or another hip, inside the roof area, not connected to the perimeter. ONLY create when a visible line on the plan forms the same path — never infer from junction geometry alone.
+- broken_barge: a barge run inside the roof outline, perpendicular to a ridge, not on the perimeter. ONLY create when a visible line on the plan forms the same path.
 - barge: gable-edge perimeter run that does not collect water. A barge is ALWAYS perpendicular to the ridge, branching off from a ridge endpoint to the perimeter. Where a ridge endpoint meets the perimeter, TWO barges branch off at right angles to the ridge, running along the perimeter in opposite directions.
 - spouting: eaves/gutter perimeter run where water leaves the roof. Spouting is everything on the perimeter that is NOT a barge.
 
