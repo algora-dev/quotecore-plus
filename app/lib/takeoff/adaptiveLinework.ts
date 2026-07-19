@@ -5,13 +5,13 @@
  * valleys, barges) are preserved as black lines on white, while uniform
  * shading/fill regions disappear.
  *
- * Method: local adaptive thresholding via sharp's `threshold` with a
- * statistical neighbourhood approach. Each pixel is compared against the
- * mean of its local window — if significantly darker than the local mean,
- * it's a line pixel; otherwise it's background.
+ * Method: local adaptive thresholding using sharp's native blur (libvips,
+ * C-optimized) for the local mean, then compare each pixel against
+ * (localMean - sensitivity). Uses sharp pipeline operations for speed
+ * instead of per-pixel JS loops.
  *
- * For the component phase, polygon masks can be applied so only strokes
- * inside the union of the confirmed roof outlines are retained.
+ * For the component phase, a polygon mask can be applied so only strokes
+ * inside the confirmed roof outline are retained.
  */
 
 import sharp from 'sharp';
@@ -21,7 +21,9 @@ export interface LineworkOptions {
   windowSize?: number;
   /** Sensitivity: pixels darker than (localMean - sensitivity) are strokes (default 10). */
   sensitivity?: number;
-  /** Optional polygon masks (in image pixel coords). Everything outside their union is white. */
+  /** Optional polygon mask (in image pixel coords). Everything outside is white. */
+  maskPolygon?: Array<{ x: number; y: number }>;
+  /** Optional multiple polygon mask (union — pixel inside ANY polygon is kept). */
   maskPolygons?: Array<Array<{ x: number; y: number }>>;
   /** Image width (for mask coordinate validation). */
   width?: number;
@@ -32,13 +34,12 @@ export interface LineworkOptions {
 /**
  * Generate an adaptive linework image from a source buffer.
  *
- * The pipeline:
+ * Pipeline:
  * 1. Convert to grayscale
- * 2. Blur slightly to reduce noise
- * 3. Compute local mean via box blur at windowSize
- * 4. Compare: pixel < (localMean - sensitivity) → black stroke, else white
- * 5. Optionally apply the union of polygon masks
- * 6. Return as PNG buffer (same dimensions as input)
+ * 2. Compute local mean via sharp blur (box filter at windowSize radius)
+ * 3. Compute difference: localMean - pixel → if > sensitivity, it's a stroke
+ * 4. Optionally apply polygon mask
+ * 5. Return as PNG buffer (same dimensions as input)
  */
 export async function generateAdaptiveLinework(
   sourceBuffer: Buffer,
@@ -47,74 +48,47 @@ export async function generateAdaptiveLinework(
   const {
     windowSize = 25,
     sensitivity = 10,
+    maskPolygon,
     maskPolygons,
     width: maskWidth,
     height: maskHeight,
   } = options;
 
-  // Step 1: Load and get metadata
+  const radius = Math.floor(windowSize / 2);
+
+  // Load image and get dimensions
   const image = sharp(sourceBuffer).rotate();
   const metadata = await image.metadata();
-  const _width = metadata.width!;
-  const _height = metadata.height!;
+  const _w = metadata.width!;
+  const _h = metadata.height!;
 
-  // Step 2: Grayscale + raw pixels
-  const { data: grayPixels, info } = await image
+  // Grayscale raw pixels (original)
+  const { data: grayPixels, info } = await sharp(sourceBuffer)
+    .rotate()
     .greyscale()
     .raw()
     .toBuffer({ resolveWithObject: true });
+  const gw = info.width;
+  const gh = info.height;
 
-  const w = info.width;
-  const h = info.height;
+  // Compute local mean using sharp's box blur (fast, C-level)
+  // sharp's blur(radius) does a gaussian approximation, but for our purposes
+  // a box filter via resize trick is more accurate. We'll use composite:
+  // shrink to small, enlarge back — gives us a fast box average.
+  // Actually, sharp.blur() with a radius is the fastest approach.
+  const { data: blurPixels } = await sharp(sourceBuffer)
+    .rotate()
+    .greyscale()
+    .blur(radius)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 
-  // Step 3: Compute local mean via box blur
-  // We use a separable box filter for efficiency
-  const localMean = new Float32Array(w * h);
-  const halfWindow = Math.floor(windowSize / 2);
-
-  // Horizontal pass
-  const tempBuffer = new Float32Array(w * h);
-  for (let y = 0; y < h; y++) {
-    let sum = 0;
-    // Initialize window
-    for (let x = -halfWindow; x <= halfWindow; x++) {
-      const clampedX = Math.max(0, Math.min(w - 1, x));
-      sum += grayPixels[y * w + clampedX];
-    }
-    const windowWidth = halfWindow * 2 + 1;
-    for (let x = 0; x < w; x++) {
-      tempBuffer[y * w + x] = sum / windowWidth;
-      // Slide window
-      const removeX = Math.max(0, Math.min(w - 1, x - halfWindow));
-      const addX = Math.max(0, Math.min(w - 1, x + halfWindow + 1));
-      sum -= grayPixels[y * w + removeX];
-      sum += grayPixels[y * w + addX];
-    }
-  }
-
-  // Vertical pass
-  for (let x = 0; x < w; x++) {
-    let sum = 0;
-    for (let y = -halfWindow; y <= halfWindow; y++) {
-      const clampedY = Math.max(0, Math.min(h - 1, y));
-      sum += tempBuffer[clampedY * w + x];
-    }
-    const windowHeight = halfWindow * 2 + 1;
-    for (let y = 0; y < h; y++) {
-      localMean[y * w + x] = sum / windowHeight;
-      const removeY = Math.max(0, Math.min(h - 1, y - halfWindow));
-      const addY = Math.max(0, Math.min(h - 1, y + halfWindow + 1));
-      sum -= tempBuffer[removeY * w + x];
-      sum += tempBuffer[addY * w + x];
-    }
-  }
-
-  // Step 4: Adaptive threshold — pixel is stroke if darker than local mean - sensitivity
-  const outputPixels = Buffer.alloc(w * h * 3); // RGB output
-  for (let i = 0; i < w * h; i++) {
+  // Adaptive threshold: pixel is stroke if (localMean - pixel) > sensitivity
+  const outputPixels = Buffer.alloc(gw * gh * 3); // RGB output
+  for (let i = 0; i < gw * gh; i++) {
     const pixelValue = grayPixels[i];
-    const threshold = localMean[i] - sensitivity;
-    const isStroke = pixelValue < threshold;
+    const localMean = blurPixels[i];
+    const isStroke = (localMean - pixelValue) > sensitivity;
 
     if (isStroke) {
       outputPixels[i * 3] = 0;     // R
@@ -127,22 +101,24 @@ export async function generateAdaptiveLinework(
     }
   }
 
-  // Step 5: Apply the union of all valid polygon masks if provided
-  const validMaskPolygons = maskPolygons?.filter(polygon => polygon.length >= 3) ?? [];
-  if (validMaskPolygons.length > 0 && maskWidth && maskHeight) {
-    const scaleX = w / maskWidth;
-    const scaleY = h / maskHeight;
-    const scaledMasks = validMaskPolygons.map(polygon => (
-      polygon.map(point => ({
-        x: point.x * scaleX,
-        y: point.y * scaleY,
-      }))
-    ));
+  // Apply polygon mask if provided (supports single or multiple polygons)
+  const allMasks = [
+    ...(maskPolygon ? [maskPolygon] : []),
+    ...(maskPolygons ?? []),
+  ];
+  if (allMasks.length > 0 && maskWidth && maskHeight) {
+    const scaleX = gw / maskWidth;
+    const scaleY = gh / maskHeight;
+    const scaledMasks = allMasks.map(poly => poly.map(p => ({
+      x: p.x * scaleX,
+      y: p.y * scaleY,
+    })));
 
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (!scaledMasks.some(polygon => pointInPolygon(x, y, polygon))) {
-          const idx = (y * w + x) * 3;
+    for (let y = 0; y < gh; y++) {
+      for (let x = 0; x < gw; x++) {
+        const insideAny = scaledMasks.some(mask => pointInPolygon(x, y, mask));
+        if (!insideAny) {
+          const idx = (y * gw + x) * 3;
           outputPixels[idx] = 255;
           outputPixels[idx + 1] = 255;
           outputPixels[idx + 2] = 255;
@@ -151,9 +127,8 @@ export async function generateAdaptiveLinework(
     }
   }
 
-  // Step 6: Return as PNG
   return sharp(outputPixels, {
-    raw: { width: w, height: h, channels: 3 },
+    raw: { width: gw, height: gh, channels: 3 },
   })
     .png({ compressionLevel: 8 })
     .toBuffer();
@@ -206,7 +181,6 @@ export function scoreLineSupport(
     const y = Math.round(p1.y + (p2.y - p1.y) * t);
 
     if (x >= 0 && x < width && y >= 0 && y < height) {
-      // Check 3x3 neighbourhood for dark pixels
       let found = false;
       for (let dy = -1; dy <= 1 && !found; dy++) {
         for (let dx = -1; dx <= 1 && !found; dx++) {

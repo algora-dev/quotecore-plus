@@ -278,7 +278,7 @@ function logScanUsage(params: {
 
 async function callVisionModel(
   prompt: string,
-  images: Array<{ dataUrl: string; label?: string }>,
+  images: Array<{ dataUrl: string; label?: string; detail?: 'high' | 'low' }>,
   schema: typeof AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA | typeof AI_TAKEOFF_OUTLINE_SCHEMA,
   model: string,
 ): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null }> {
@@ -291,7 +291,7 @@ async function callVisionModel(
     }
     contentParts.push({
       type: 'image_url',
-      image_url: { url: img.dataUrl, detail: 'high' },
+      image_url: { url: img.dataUrl, detail: img.detail ?? 'high' },
     });
   }
 
@@ -546,7 +546,7 @@ export async function POST(req: NextRequest) {
       componentResult = await callVisionModel(
         buildAiTakeoffComponentsPrompt(promptParams),
         [
-          { dataUrl: maskedLineworkDataUrl, label: 'IMAGE 1: ADAPTIVE LINEWORK INSIDE ROOF OUTLINE (primary geometry evidence — black pixels ARE roof component lines)' },
+          { dataUrl: maskedLineworkDataUrl, label: 'IMAGE 1: ADAPTIVE LINEWORK INSIDE ROOF OUTLINE (primary geometry evidence — black pixels ARE roof component lines)', detail: 'low' },
           { dataUrl: dataUrl, label: 'IMAGE 2: ORIGINAL PLAN (context for classification)' },
         ],
         AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA,
