@@ -62,9 +62,7 @@ function detectImageMime(base64Data: string): string | null {
 // Image preprocessing
 
 const MAX_INPUT_BYTES = 20 * 1024 * 1024;
-const MAX_OUTPUT_PX = 2400;
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+const MAX_OUTPUT_PX = 2000; // Max longest edge — matches client-side MAX_CANVAS_DIM
 
 /**
  * Preserve the lossless canvas render and only cap extreme dimensions.
@@ -116,8 +114,8 @@ interface AiScanResult {
 
 function validatePoint(
   obj: unknown,
-  width = CANVAS_WIDTH,
-  height = CANVAS_HEIGHT,
+  width: number,
+  height: number,
 ): ImagePoint | null {
   if (typeof obj !== 'object' || obj === null) return null;
   const p = obj as Record<string, unknown>;
@@ -146,8 +144,8 @@ function validateLineEntry(obj: unknown, width: number, height: number): LineEnt
 
 function validateRoofArea(
   obj: unknown,
-  width = CANVAS_WIDTH,
-  height = CANVAS_HEIGHT,
+  width: number,
+  height: number,
 ): RoofAreaEntry | null {
   if (typeof obj !== 'object' || obj === null) return null;
   const area = obj as Record<string, unknown>;
@@ -167,8 +165,8 @@ function validateRoofArea(
 
 function validateAiResult(
   raw: unknown,
-  width = CANVAS_WIDTH,
-  height = CANVAS_HEIGHT,
+  width: number,
+  height: number,
 ): AiScanResult | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const obj = raw as Record<string, unknown>;
@@ -368,9 +366,9 @@ function buildSummary(result: AiScanResult) {
   };
 }
 
-function validateConfirmedAreas(value: unknown): RoofAreaEntry[] {
+function validateConfirmedAreas(value: unknown, width: number, height: number): RoofAreaEntry[] {
   if (!Array.isArray(value)) return [];
-  return value.map(area => validateRoofArea(area))
+  return value.map(area => validateRoofArea(area, width, height))
     .filter((area): area is RoofAreaEntry => area !== null);
 }
 
@@ -388,6 +386,10 @@ export async function POST(req: NextRequest) {
     const pageId = typeof body.pageId === 'string' ? body.pageId : null;
     const providedMime = typeof body.imageMime === 'string' ? body.imageMime : null;
     const stage = body.stage === 'components' ? 'components' : 'outline';
+    // Canvas dimensions from client (dynamic sizing — canvas = processed image dimensions)
+    const canvasDims = body.canvasDimensions as { width?: number; height?: number } | undefined;
+    const canvasW = typeof canvasDims?.width === 'number' ? canvasDims.width : 800;
+    const canvasH = typeof canvasDims?.height === 'number' ? canvasDims.height : 600;
     if (!base64Image || !quoteId) {
       return NextResponse.json({ success: false, error: 'Missing required fields: image, quoteId.' }, { status: 400 });
     }
@@ -432,7 +434,7 @@ export async function POST(req: NextRequest) {
       .greyscale().raw().toBuffer({ resolveWithObject: true });
     const width = info.width;
     const height = info.height;
-    if (width < CANVAS_WIDTH || height < CANVAS_HEIGHT) {
+    if (width < 200 || height < 200) {
       return NextResponse.json({ success: false, error: 'Analysis image is too small.' }, { status: 400 });
     }
 
@@ -459,7 +461,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'AI returned an invalid roof outline.' }, { status: 502 });
       }
       const cornerCandidates = classifyPolygonCorners(outline.roof_areas as PromptRoofArea[]);
-      const canvasResult = scaleResult(outline, CANVAS_WIDTH / width, CANVAS_HEIGHT / height);
+      const canvasResult = scaleResult(outline, canvasW / width, canvasH / height);
       usage(outline.error !== 'unreadable', outline.error === 'unreadable' ? 'Image unreadable' : undefined);
       return NextResponse.json({
         success: true,
@@ -467,17 +469,18 @@ export async function POST(req: NextRequest) {
         data: canvasResult,
         cornerCandidates,
         analysisDimensions: { width, height },
+        canvasDimensions: { width: canvasW, height: canvasH },
         summary: buildSummary(canvasResult),
       });
     }
 
-    const confirmedCanvasAreas = validateConfirmedAreas(body.confirmedAreas);
+    const confirmedCanvasAreas = validateConfirmedAreas(body.confirmedAreas, canvasW, canvasH);
     if (confirmedCanvasAreas.length === 0) {
       return NextResponse.json({ success: false, error: 'Confirm at least one roof area before finding components.' }, { status: 400 });
     }
     const analysisAreas: PromptRoofArea[] = confirmedCanvasAreas.map(area => ({
       ...area,
-      points: area.points.map(point => scalePoint(point, width / CANVAS_WIDTH, height / CANVAS_HEIGHT)),
+      points: area.points.map(point => scalePoint(point, width / canvasW, height / canvasH)),
     }));
     const expectedCorners = classifyPolygonCorners(analysisAreas);
     const promptParams = { width, height, areas: analysisAreas, corners: expectedCorners };
@@ -518,7 +521,7 @@ export async function POST(req: NextRequest) {
       }, { status: 422 });
     }
 
-    const outlineData = validateAiResult(body.outlineData) ?? {
+    const outlineData = validateAiResult(body.outlineData, width, height) ?? {
       scale: { detected: false, ratio: null, dimension_line: null },
       pitch: { detected: false, global_degrees: null },
       roof_areas: confirmedCanvasAreas,
@@ -531,7 +534,7 @@ export async function POST(req: NextRequest) {
       components: graphToComponents(validation.graph),
       notes: [...outlineData.notes, ...validation.graph.notes, ...validation.graph.unresolved],
     }, grayscalePixels, width, height) as AiScanResult;
-    const canvasResult = scaleResult(analysisResult, CANVAS_WIDTH / width, CANVAS_HEIGHT / height);
+    const canvasResult = scaleResult(analysisResult, canvasW / width, canvasH / height);
     canvasResult.roof_areas = confirmedCanvasAreas;
     canvasResult.scale = outlineData.scale;
 

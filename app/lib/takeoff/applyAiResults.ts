@@ -13,10 +13,9 @@
 import type { Calibration } from './reconstructTypes';
 import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS, type SemanticKey, SPOUTING_DASH_ARRAY, getSemanticColour, getLineOptions } from './aiComponentRegistry';
 
-// ── Constants (must match TakeoffWorkstation) ───────────────────────────────
+// ── Constants (canvas dimensions are now dynamic — passed as params) ───────
 
-export const CANVAS_WIDTH = 800;
-export const CANVAS_HEIGHT = 600;
+export const MAX_CANVAS_DIM = 2000;
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -163,6 +162,8 @@ export function snapAndValidate(
   entries: AiLineEntry[],
   type: PlaceholderType,
   roofAreaVertices: CanvasPoint[],
+  canvasWidth: number = MAX_CANVAS_DIM,
+  canvasHeight: number = MAX_CANVAS_DIM,
 ): SnapResult {
   const accepted: AiLineEntry[] = [];
   let rejected = 0;
@@ -177,7 +178,7 @@ export function snapAndValidate(
     let p2 = { ...entry.points[entry.points.length - 1] };
 
     // 1. Range check
-    if (!inRange(p1) || !inRange(p2)) { rejected++; continue; }
+    if (!inRange(p1, canvasWidth, canvasHeight) || !inRange(p2, canvasWidth, canvasHeight)) { rejected++; continue; }
 
     // 2. Zero-length check
     if (distance(p1, p2) < 2) { rejected++; continue; }
@@ -198,8 +199,8 @@ export function snapAndValidate(
   return { accepted, rejected };
 }
 
-function inRange(p: CanvasPoint): boolean {
-  return p.x >= 0 && p.x < CANVAS_WIDTH && p.y >= 0 && p.y < CANVAS_HEIGHT;
+function inRange(p: CanvasPoint, width: number, height: number): boolean {
+  return p.x >= 0 && p.x < width && p.y >= 0 && p.y < height;
 }
 
 function distance(a: CanvasPoint, b: CanvasPoint): number {
@@ -591,6 +592,9 @@ export interface ApplyAiParams {
   calibrations: Calibration[];
   /** Map of placeholder type → system component id (from the component fetch). */
   systemComponentIds: Record<PlaceholderType, string>;
+  /** Canvas dimensions (dynamic — canvas = processed image dimensions). */
+  canvasWidth?: number;
+  canvasHeight?: number;
 }
 
 /**
@@ -607,6 +611,8 @@ export interface ApplyAiParams {
  */
 export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
   const { aiData, calibrations, systemComponentIds } = params;
+  const canvasWidth = params.canvasWidth ?? MAX_CANVAS_DIM;
+  const canvasHeight = params.canvasHeight ?? MAX_CANVAS_DIM;
 
   // ── Step 3: Perimeter-accounting pass ──────────────────────────────
   // Accept only ridge-endpoint barges, then rebuild spouting as the remainder.
@@ -643,7 +649,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
     const rawEntries = correctedAiData.components[ptype];
 
     // snapAndValidate
-    const snapResult = snapAndValidate(rawEntries, ptype, allVertices);
+    const snapResult = snapAndValidate(rawEntries, ptype, allVertices, canvasWidth, canvasHeight);
     totalDropped += snapResult.rejected;
 
     // clusterEndpoints
@@ -710,11 +716,15 @@ export function resetFromStoredScan(
   storedResult: AiScanData,
   calibrations: Calibration[],
   systemComponentIds: Record<PlaceholderType, string>,
+  canvasWidth?: number,
+  canvasHeight?: number,
 ): ApplyAiResult {
   // Identical to applyAiResults — the stored result is the same shape.
   return applyAiResults({
     aiData: storedResult,
     calibrations,
     systemComponentIds,
+    canvasWidth,
+    canvasHeight,
   });
 }

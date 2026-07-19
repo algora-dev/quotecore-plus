@@ -142,8 +142,21 @@ interface Props {
   aiTakeoffAvailable?: boolean;
 }
 
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+const MAX_CANVAS_DIM = 2000; // Max longest edge for dynamic canvas sizing
+
+/** Process image dimensions: cap longest edge at MAX_CANVAS_DIM, preserve aspect ratio. */
+function computeCanvasDimensions(naturalWidth: number, naturalHeight: number): { width: number; height: number; scale: number } {
+  const longest = Math.max(naturalWidth, naturalHeight);
+  if (longest <= MAX_CANVAS_DIM) {
+    return { width: naturalWidth, height: naturalHeight, scale: 1 };
+  }
+  const scale = MAX_CANVAS_DIM / longest;
+  return {
+    width: Math.round(naturalWidth * scale),
+    height: Math.round(naturalHeight * scale),
+    scale,
+  };
+}
 
 // Color palette for components (10 highly distinct colors)
 const COLOR_PALETTE = [
@@ -229,6 +242,10 @@ export function TakeoffWorkstation({
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
+
+  // Dynamic canvas dimensions — canvas matches the processed image dimensions.
+  // No more fixed 800×600 with letterboxing. AI coordinates = canvas coordinates.
+  const [canvasDims, setCanvasDims] = useState({ width: 800, height: 600 });
 
   // AI Takeoff state
   const [aiScanning, setAiScanning] = useState(false);
@@ -2151,14 +2168,15 @@ export function TakeoffWorkstation({
     const imgElement = new Image();
     imgElement.crossOrigin = 'anonymous';
     imgElement.onload = () => {
+      // Dynamic canvas sizing: canvas = processed image dimensions, flush top-left.
+      const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
+      canvas.setDimensions({ width: dims.width, height: dims.height });
+      setCanvasDims({ width: dims.width, height: dims.height });
+
       const fabricImg = new FabricImage(imgElement);
-      const scaleX = CANVAS_WIDTH / imgElement.width;
-      const scaleY = CANVAS_HEIGHT / imgElement.height;
-      const scale = Math.min(scaleX, scaleY);
       fabricImg.set({
-        scaleX: scale, scaleY: scale,
-        left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
-        top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
+        scaleX: dims.scale, scaleY: dims.scale,
+        left: 0, top: 0,
         originX: 'left', originY: 'top',
         selectable: false, evented: false,
       });
@@ -3100,9 +3118,11 @@ export function TakeoffWorkstation({
     if (!canvasRef.current) return;
     canvasInitedRef.current = true;
 
+    // Start with default dimensions — will be resized once the image loads
+    // to match the image's natural dimensions (dynamic canvas sizing).
     const canvas = new Canvas(canvasRef.current, {
-      width: CANVAS_WIDTH,
-      height: CANVAS_HEIGHT,
+      width: 800,
+      height: 600,
       backgroundColor: '#1e293b', // slate-800
     });
 
@@ -3112,22 +3132,17 @@ export function TakeoffWorkstation({
     const imgElement = new Image();
     imgElement.crossOrigin = 'anonymous';
     imgElement.onload = () => {
+      // Dynamic canvas sizing: canvas = processed image dimensions, flush top-left.
+      const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
+      canvas.setDimensions({ width: dims.width, height: dims.height });
+      setCanvasDims({ width: dims.width, height: dims.height });
+
       const fabricImg = new FabricImage(imgElement);
-
-      // Scale to fit canvas
-      const scaleX = CANVAS_WIDTH / imgElement.width;
-      const scaleY = CANVAS_HEIGHT / imgElement.height;
-      const scale = Math.min(scaleX, scaleY);
-
       fabricImg.set({
-        scaleX: scale,
-        scaleY: scale,
-        left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
-        top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
-        // Fabric 7 changed default origin to center/center. The left/top
-        // math above is designed to place the image's top-left at the
-        // centring offset, so we lock the origin back to v6 semantics to
-        // preserve the layout.
+        scaleX: dims.scale,
+        scaleY: dims.scale,
+        left: 0,
+        top: 0,
         originX: 'left',
         originY: 'top',
         selectable: false,
@@ -3805,14 +3820,13 @@ export function TakeoffWorkstation({
         const imgElement = new Image();
         imgElement.crossOrigin = 'anonymous';
         imgElement.onload = () => {
+          const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
+          canvas.setDimensions({ width: dims.width, height: dims.height });
+          setCanvasDims({ width: dims.width, height: dims.height });
           const fabricImg = new FabricImage(imgElement);
-          const scaleX = CANVAS_WIDTH / imgElement.width;
-          const scaleY = CANVAS_HEIGHT / imgElement.height;
-          const scale = Math.min(scaleX, scaleY);
           fabricImg.set({
-            scaleX: scale, scaleY: scale,
-            left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
-            top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
+            scaleX: dims.scale, scaleY: dims.scale,
+            left: 0, top: 0,
             originX: 'left', originY: 'top',
             selectable: false, evented: false,
           });
@@ -3858,14 +3872,13 @@ export function TakeoffWorkstation({
         const imgElement = new Image();
         imgElement.crossOrigin = 'anonymous';
         imgElement.onload = () => {
+          const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
+          canvas.setDimensions({ width: dims.width, height: dims.height });
+          setCanvasDims({ width: dims.width, height: dims.height });
           const fabricImg = new FabricImage(imgElement);
-          const scaleX = CANVAS_WIDTH / imgElement.width;
-          const scaleY = CANVAS_HEIGHT / imgElement.height;
-          const scale = Math.min(scaleX, scaleY);
           fabricImg.set({
-            scaleX: scale, scaleY: scale,
-            left: (CANVAS_WIDTH - imgElement.width * scale) / 2,
-            top: (CANVAS_HEIGHT - imgElement.height * scale) / 2,
+            scaleX: dims.scale, scaleY: dims.scale,
+            left: 0, top: 0,
             originX: 'left', originY: 'top',
             selectable: false, evented: false,
           });
@@ -4004,9 +4017,14 @@ export function TakeoffWorkstation({
     const img = fabricRef.current.backgroundImage;
     if (!img) return;
 
-    const scaleX = CANVAS_WIDTH / (img.width! * img.scaleX!);
-    const scaleY = CANVAS_HEIGHT / (img.height! * img.scaleY!);
-    const scale = Math.min(scaleX, scaleY);
+    // Fit the canvas (which equals image dimensions) into the viewport
+    const container = canvasRef.current?.parentElement;
+    if (!container) return;
+    const containerWidth = container.clientWidth - 32; // padding
+    const containerHeight = container.clientHeight - 32;
+    const scaleX = containerWidth / canvasDims.width;
+    const scaleY = containerHeight / canvasDims.height;
+    const scale = Math.min(scaleX, scaleY, 1); // never zoom in beyond 100%
 
     fabricRef.current.setZoom(scale);
     fabricRef.current.viewportTransform = [scale, 0, 0, scale, 0, 0];
@@ -4019,8 +4037,8 @@ export function TakeoffWorkstation({
     const canvas = fabricRef.current;
     if (!canvas || !quote) return;
 
-    const bgImage = canvas.backgroundImage as unknown as { width?: number; height?: number; toCanvasElement?: () => HTMLCanvasElement } | null;
-    if (!bgImage || !bgImage.width || !bgImage.height) {
+    const bgImage = canvas.backgroundImage;
+    if (!bgImage) {
       setAiScanError('No plan image loaded.');
       return;
     }
@@ -4036,52 +4054,40 @@ export function TakeoffWorkstation({
     setAiScanError(null);
 
     try {
-      // Render the canonical Fabric scene at 3x resolution. This preserves the
-      // exact canvas layout while giving the vision model the source detail it
-      // was losing in the old 800x600 capture.
-      const bgImg = canvas.backgroundImage;
-      const drawnObjects = canvas.getObjects();
-      const previousViewport = canvas.viewportTransform
-        ? [...canvas.viewportTransform] as [number, number, number, number, number, number]
-        : null;
+      // Send the ORIGINAL plan image to the AI — not a canvas screenshot.
+      // The canvas now matches the image dimensions (dynamic sizing), so
+      // AI coordinates = canvas coordinates. No letterboxing, no mapping.
+      const currentPage = pages[currentPageIndex];
+      const imageUrl = currentPage?.url ?? planUrlRef.current;
+      if (!imageUrl) {
+        setAiScanError('No plan image URL available.');
+        return;
+      }
 
-      // Temporarily hide all drawn objects (measurements, areas, markers)
-      const visStates = drawnObjects.map((obj: unknown) => {
-        const o = obj as { visible?: boolean };
-        const v = o.visible !== false;
-        o.visible = false;
-        return v;
+      // Fetch the image and convert to base64 data URL
+      const imgResponse = await fetch(imageUrl);
+      if (!imgResponse.ok) {
+        setAiScanError('Failed to load plan image for AI scan.');
+        return;
+      }
+      const imgBlob = await imgResponse.blob();
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(imgBlob);
       });
-      canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
-      canvas.renderAll();
-
-      // Capture canvas as PNG (lossless — preserves line quality in the plan)
-      const finalDataUrl = canvas.toDataURL({
-        format: 'png',
-        quality: 1,
-        multiplier: 3,
-      });
-
-      // Restore visibility of all drawn objects
-      drawnObjects.forEach((obj: unknown, i: number) => {
-        (obj as { visible: boolean }).visible = visStates[i];
-      });
-      if (previousViewport) canvas.viewportTransform = previousViewport;
-      if (bgImg) (bgImg as { visible: boolean }).visible = true;
-      canvas.renderAll();
-
-      const detectedMime = 'image/png';
 
       const response = await fetch('/api/takeoff/ai-scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stage: 'outline',
-          image: finalDataUrl,
-          imageMime: detectedMime,
+          image: dataUrl,
+          imageMime: imgBlob.type || 'image/png',
           quoteId: quote.id,
           pageId,
-          imageDimensions: { width: CANVAS_WIDTH * 3, height: CANVAS_HEIGHT * 3 },
+          canvasDimensions: canvasDims,
         }),
       });
 
@@ -4099,7 +4105,7 @@ export function TakeoffWorkstation({
         return;
       }
       setAiOutlineData(result.data);
-      setAiAnalysisImage({ dataUrl: finalDataUrl, width: CANVAS_WIDTH * 3, height: CANVAS_HEIGHT * 3 });
+      setAiAnalysisImage({ dataUrl, width: canvasDims.width, height: canvasDims.height });
       const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
         index: idx,
         name: area.name || `Area ${idx + 1}`,
@@ -4141,7 +4147,7 @@ export function TakeoffWorkstation({
           stage: 'components',
           image: aiAnalysisImage.dataUrl,
           imageMime: 'image/png',
-          imageDimensions: { width: aiAnalysisImage.width, height: aiAnalysisImage.height },
+          canvasDimensions: canvasDims,
           quoteId: quote.id,
           pageId,
           confirmedAreas,
@@ -4299,6 +4305,8 @@ export function TakeoffWorkstation({
       aiData: aiScanRaw,
       calibrations,
       systemComponentIds,
+      canvasWidth: canvasDims.width,
+      canvasHeight: canvasDims.height,
     });
 
     // ── Step 5: Create real DB parent areas ────────────────────────────

@@ -21,7 +21,7 @@ export interface PromptCornerCandidate {
 export function buildAiTakeoffOutlinePrompt(width: number, height: number): string {
   return `You are an expert roofing plan analyst. Analyse this top-down architectural roof plan.
 
-The supplied image is a high-resolution render of the exact takeoff canvas. It is ${width} pixels wide and ${height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. Ignore dark canvas margins, dimensions, labels, leaders, grids, borders, hatching, arrows, vents, skylights and other annotations.
+The supplied image is the original plan image at ${width} pixels wide and ${height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. Ignore dimensions, labels, leaders, grids, borders, hatching, arrows, vents, skylights and other annotations.
 
 ## ONE TASK: FIND PARENT ROOF OUTLINES
 Trace the complete visible perimeter of each physically separate roof structure.
@@ -69,7 +69,7 @@ export function buildAiTakeoffComponentsPrompt(params: {
 
   return `You are an expert roofing plan analyst. Detect every roof component inside the confirmed parent roof area(s).
 
-The supplied image is ${params.width} pixels wide and ${params.height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. The confirmed polygons below are authoritative and must be returned unchanged.
+The supplied image is the original plan image at ${params.width} pixels wide and ${params.height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. The confirmed polygons below are authoritative and must be returned unchanged.
 
 ## CONFIRMED PARENT AREAS
 ${areaContext}
