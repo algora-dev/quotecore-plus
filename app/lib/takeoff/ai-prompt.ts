@@ -19,32 +19,30 @@ export interface PromptCornerCandidate {
 }
 
 export function buildAiTakeoffOutlinePrompt(width: number, height: number): string {
-  return `You are an expert roofing plan analyst. Analyse this top-down architectural roof plan.
+  return `You are an expert roofing plan analyst. Two images are provided:
 
-The supplied image is the original plan image at ${width} pixels wide and ${height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. Ignore dimensions, labels, leaders, grids, borders, hatching, arrows, vents, skylights and other annotations.
+1. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels. Use this for context, reading labels, and understanding the overall structure.
+2. ADAPTIVE LINEWORK IMAGE — a high-contrast extraction of the same plan where narrow strokes appear as black lines on white, and uniform shading has been removed. Use this as your primary geometry evidence.
 
-## VISUAL EVIDENCE PRIORITY
-Apply this hierarchy before tracing anything:
-1. First use clear continuous black/dark narrow linework. Where present, it is the authoritative roof outline.
-2. If a section has no clear dark stroke, use the next strongest continuous narrow line, including grey, coloured or faded linework.
-3. Only when the plan has no usable perimeter linework, use the boundary of one coherent roof shading/fill region as the outline fallback.
-Never follow a shading boundary where usable narrow linework exists. Once an evidence style is selected for a connected run, follow it consistently instead of jumping between nearby linework and fill edges.
+Return integer coordinates in the original image-pixel coordinate system (0,0 = top-left). Both images share the same dimensions.
 
-## ONLY TASK: TRACE THE VISIBLE PARENT ROOF OUTLINE
-Trace the complete visible outer perimeter of each physically separate roof structure. Do not detect or classify ridges, hips, valleys, barges, spouting or any other internal component in this stage.
+## LINEWORK PRIORITY
+1. Use the adaptive linework image as the primary source for tracing geometry. Black pixels in that image ARE the roof lines.
+2. Cross-reference the original plan to distinguish roof structure lines from annotations (dimensions, text, arrows, borders).
+3. If the linework image shows no clear perimeter in a section, fall back to the original plan and use the next strongest visible boundary.
+
+## TASK: TRACE THE VISIBLE PARENT ROOF OUTLINE
+Trace the complete outer perimeter of each physically separate roof structure using the linework image. Do not detect internal components (ridges, hips, valleys) in this stage.
 
 ## OUTLINE RULES
-- Follow the centre of the selected perimeter evidence.
-- Include every visible step, notch and re-entrant corner. Never simplify or regularise the polygon.
-- Check projections, steps and notches especially carefully because shaded fill can hide or simplify their true linework.
+- Follow the black pixels in the linework image. They are the authoritative perimeter evidence.
+- Include every visible step, notch and re-entrant corner — the linework image makes these obvious.
 - Return a separate parent area only when a visible gap physically disconnects one roof structure from another.
 - Do not divide one connected roof into individual sloping faces.
-- Ignore internal roof lines and all non-roof marks, including dimensions, text, leaders, grids, borders, hatching, arrows, vents, skylights, walls and openings.
-- Suggest a pitch only when a pitch annotation is clearly visible and readable. Otherwise use null.
-- Detect a dimension line only when both endpoints and its real length are clearly visible and readable.
-- If no reliable perimeter evidence can be followed, set error to unreadable rather than inventing an outline.
-
-Before returning, verify that every polygon segment follows the highest-priority evidence available in that section.
+- Ignore non-roof marks visible in the original: dimensions, text, leaders, grids, borders, hatching, arrows, vents, skylights, walls.
+- Suggest a pitch only when a pitch annotation is clearly visible in the original plan. Otherwise use null.
+- Detect a dimension line only when both endpoints and its real length are clearly visible and readable in the original.
+- If no reliable perimeter evidence can be found, set error to "unreadable".
 
 Return only the structured JSON requested by the schema.`;
 }
@@ -54,7 +52,6 @@ export function buildAiTakeoffComponentsPrompt(params: {
   height: number;
   areas: PromptRoofArea[];
   corners: PromptCornerCandidate[];
-  repairContext?: string;
 }): string {
   const areaContext = params.areas.map((area, areaIndex) => {
     const points = area.points.map((point, pointIndex) => (
@@ -65,20 +62,17 @@ export function buildAiTakeoffComponentsPrompt(params: {
   const cornerContext = params.corners.map(corner => (
     `a${corner.area_index}v${corner.point_index}: ${corner.corner_type}, likely ${corner.likely_component}`
   )).join('\n');
-  const repair = params.repairContext
-    ? `\n## MINIMAL REPAIR ONLY\nKeep every image-supported node and edge from the previous graph unchanged. Apply only the listed validation corrections. Reclassify a visible edge when its endpoints prove the old classification impossible, remove unsupported edges, and fix missing references or corner-resolution records. Do not redraw the graph, move valid geometry, or add replacement edges.\n${params.repairContext}\n`
-    : '';
+  return `You are an expert roofing plan analyst. Two images are provided:
 
-  return `You are an expert roofing plan analyst. Detect and classify every visible INTERNAL roof-component stroke within the confirmed parent roof area(s). Ignore everything outside the confirmed outlines. Do not classify the outer perimeter; the application calculates perimeter barges and spouting separately.
+1. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${params.width}×${params.height} pixels. Use this for context and to distinguish roof lines from annotations.
+2. ADAPTIVE LINEWORK IMAGE — a high-contrast extraction where narrow strokes appear as black lines on white, and uniform shading has been removed. This image is CROPPED to the confirmed roof outline — everything outside is white. Use this as your primary geometry evidence.
 
-## VISUAL EVIDENCE PRIORITY
-Apply this hierarchy before detecting any component:
-1. First use clear continuous black/dark narrow linework. Where present, it is authoritative.
-2. If no clear dark stroke exists for a run, use the next strongest continuous narrow line, including grey, coloured or faded linework.
-3. Never use a broad shading/fill boundary by itself as an internal component. Every ridge, hip, valley, broken hip or broken barge requires narrow line-shaped evidence.
-When linework and shading disagree, follow the highest-priority narrow line. Follow one evidence style consistently for the complete connected run.
+Return integer coordinates in the original image-pixel coordinate system (0,0 = top-left). Both images share the same dimensions.
 
-The supplied image is the original plan image at ${params.width} pixels wide and ${params.height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. The confirmed polygons below are authoritative and must be returned unchanged.
+## LINEWORK PRIORITY
+1. Use the adaptive linework image as the primary source. Black pixels ARE roof component lines.
+2. Cross-reference the original plan to classify what each black line IS (ridge vs hip vs valley vs annotation to reject).
+3. If a line appears in the original but not the linework image, it is likely shading or a fill boundary — do not treat it as a component.
 
 ## CONFIRMED PARENT AREAS
 ${areaContext}
@@ -87,49 +81,35 @@ ${areaContext}
 These are geometric candidates only, not evidence that a component exists:
 ${cornerContext || 'None'}
 
-## ABSOLUTE VISIBLE-LINE RULE
-This rule overrides every definition, topology expectation and geometric assumption below.
-- Return a component edge only when continuous narrow line-shaped evidence lies directly underneath the complete returned path.
-- If there is no continuous narrow line underneath any part of a proposed internal path, do not return that component.
-- Never invent, extend, complete or connect a component from roof geometry alone.
-- Never add a component merely because a roof of this shape would normally contain one.
-- Never add an edge to make the graph connected, symmetrical or structurally plausible.
-- Set inferred=false for every returned edge. This task does not permit inferred component geometry.
-- Completeness means finding every eligible visible stroke. It does not mean filling expected gaps with guessed components.
-- Return no edges with type=barge or type=spouting. Perimeter classification is performed deterministically by the application after this scan.
+## TASK: DETECT EVERY VISIBLE INTERNAL STROKE
+Find every continuous black line in the linework image that lies INSIDE the confirmed roof outline. Each such line is a roof component. Classify it using the rules below.
 
-## DETECTION ORDER
-1. Inspect the image systematically from top to bottom and left to right. Find every continuous narrow stroke inside each confirmed outline before considering roof topology.
-2. Reject non-component marks: shaded-region boundaries, colour transitions, dimensions, text, leaders, pitch arrows, hatching, grids, dashed wall/building footprints, borders, vents, skylights, openings and closed rectangular symbols.
-3. Create nodes only at visible stroke endpoints, visible stroke intersections and the supplied perimeter vertices. Add a junction only where visible component strokes actually meet.
-4. Classify each retained visible internal stroke using the component meanings below. Geometry helps classification but can never replace visible-line evidence.
-5. Audit the entire roof again for missed continuous dark component strokes, then remove any edge whose complete path is not visibly supported.
+## COMPONENT TYPES (internal only — no perimeter types)
+- ridge: A visible internal line connecting two roof planes. May be horizontal, vertical, or angled. Follows the black stroke exactly.
+- hip: A diagonal line from an EXTERNAL perimeter corner (convex vertex) into the roof interior. Must have one endpoint at an external perimeter vertex.
+- valley: A diagonal line from an INTERNAL perimeter corner (concave/re-entrant vertex) into the roof interior. Must have one endpoint at an internal perimeter vertex.
+- broken_hip: A diagonal line inside the roof that branches from a valley or hip, not touching the perimeter.
+- broken_barge: A line inside the roof, perpendicular to a ridge, not on the perimeter.
 
-## COMPONENT MEANINGS
-- ridge: a visible internal high junction between roof planes. It may be horizontal, vertical or angled. Return it only along the visible stroke, from one visible endpoint or intersection to the other.
-- hip: external high junction connecting an external perimeter corner to a ridge endpoint or shared internal junction. A hip MUST have one endpoint at an external perimeter vertex. ONLY create a hip when a visible diagonal line runs from that external corner into the roof. A line ending on a straight perimeter face is never a hip.
-- valley: internal low junction connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction. A valley MUST have one endpoint at an internal/re-entrant perimeter vertex. ONLY create a valley when a visible diagonal line runs from that internal corner into the roof. A line ending on a straight perimeter face is never a valley.
-- broken_hip: an angle run connecting from the internal point of a valley or another hip, inside the roof area, not connected to the perimeter. ONLY create when a visible line on the plan forms the same path — never infer from junction geometry alone.
-- broken_barge: a barge run inside the roof outline, perpendicular to a ridge, not on the perimeter. ONLY create when a visible line on the plan forms the same path.
+Do NOT return barge or spouting edges. The application calculates perimeter barges and spouting deterministically.
 
-## RIDGE-TO-PERIMETER CLASSIFICATION
-- A visible horizontal or vertical dark stroke with one endpoint at an internal roof junction and the other endpoint on a straight section of the roof perimeter is a ridge, provided it is not an excluded annotation.
-- Do not classify a line ending on a straight perimeter face as a hip or valley. Hips and valleys must begin at their required external or internal perimeter corner.
-- Detect only the visible ridge stroke. Do not return the two perimeter barges; the application generates them from the ridge endpoint.
+## CLASSIFICATION RULES
+- A line ending on a STRAIGHT perimeter face (not at a corner) is a RIDGE.
+- A line starting at an EXTERNAL corner (convex vertex) is a HIP.
+- A line starting at an INTERNAL corner (concave vertex) is a VALLEY.
+- A line branching from another hip/valley without touching the perimeter is a BROKEN_HIP.
+- A line perpendicular to a ridge, inside the roof, not on the perimeter, is a BROKEN_BARGE.
 
-## GRAPH FORMAT RULES
-- Every edge endpoint must reference a node ID. Never return free-floating line endpoints.
-- Every internal edge must stop at the visible end of its stroke, a confirmed perimeter node or a visible shared junction.
-- A junction node inside the roof must connect at least two visibly meeting component edges.
-- Use separate edges for visibly broken runs, joined through the same junction node.
-- For every expected corner, use status=resolved only when visible component edges account for it. Otherwise use status=unresolved with a note that no supporting component stroke is visible.
-- Follow actual visible strokes. Do not reject a line merely because it is not exactly horizontal, vertical or 45 degrees.
-- Do not copy dimension lines, text, hatching, pitch arrows, leaders or borders into the roof graph.
-- All component geometry must belong to its area_index.
+## GRAPH FORMAT
+- Create nodes at: perimeter vertices (a{area}v{index}), stroke endpoints, and stroke intersections.
+- Every edge must reference start_node_id and end_node_id.
+- Junction nodes must connect ≥2 edges.
+- Set inferred=false for all edges — no guessing.
+- For each expected corner, return status=resolved only if a visible edge connects to it, else status=unresolved.
 
-## CORNER RESOLUTIONS
-Return one resolution for every expected corner listed above. List only visibly connected edge IDs. A geometric candidate with no visible component stroke is unresolved and must not cause an edge to be created.
-${repair}
+## COMPLETENESS CHECK
+After detecting, scan the linework image top-to-bottom, left-to-right. Every continuous black line inside the roof outline should be in your response. If you missed any, add them now.
+
 Return only the structured JSON requested by the schema.`;
 }
 
@@ -216,7 +196,7 @@ export const AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA = {
         type: 'object' as const,
         properties: {
           id: { type: 'string' as const }, area_index: { type: 'integer' as const },
-          type: { type: 'string' as const, enum: ['ridge', 'hip', 'valley', 'broken_hip', 'broken_barge', 'barge', 'spouting'] as const },
+          type: { type: 'string' as const, enum: ['ridge', 'hip', 'valley', 'broken_hip', 'broken_barge'] as const },
           start_node_id: { type: 'string' as const }, end_node_id: { type: 'string' as const },
           confidence: { type: 'number' as const }, inferred: { type: 'boolean' as const },
         },

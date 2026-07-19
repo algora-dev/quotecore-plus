@@ -14,6 +14,8 @@ import {
 } from '@/app/lib/takeoff/ai-prompt';
 import { snapAiGeometryToImage } from '@/app/lib/takeoff/snapAiGeometryToImage';
 import { classifyPolygonCorners, graphToComponents, validateComponentGraph } from '@/app/lib/takeoff/aiTopology';
+import { generateAdaptiveLinework, scoreLineSupport } from '@/app/lib/takeoff/adaptiveLinework';
+import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -276,24 +278,31 @@ function logScanUsage(params: {
 
 async function callVisionModel(
   prompt: string,
-  dataUrl: string,
+  images: Array<{ dataUrl: string; label?: string }>,
   schema: typeof AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA | typeof AI_TAKEOFF_OUTLINE_SCHEMA,
   model: string,
-): Promise<unknown> {
+): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null }> {
+  const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
+    { type: 'text', text: prompt },
+  ];
+  for (const img of images) {
+    if (img.label) {
+      contentParts.push({ type: 'text', text: img.label });
+    }
+    contentParts.push({
+      type: 'image_url',
+      image_url: { url: img.dataUrl, detail: 'high' },
+    });
+  }
+
   const response = await openai.chat.completions.create({
     model,
     max_completion_tokens: 8192,
-    reasoning_effort: 'low',
+    reasoning_effort: 'high',
     messages: [
       {
         role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          {
-            type: 'image_url',
-            image_url: { url: dataUrl, detail: 'high' },
-          },
-        ],
+        content: contentParts,
       },
     ],
     response_format: {
@@ -311,7 +320,16 @@ async function callVisionModel(
     throw new Error('AI returned an empty response.');
   }
 
-  return JSON.parse(content);
+  const responseId = response.id ?? null;
+  const usage = response.usage
+    ? {
+        promptTokens: response.usage.prompt_tokens,
+        completionTokens: response.usage.completion_tokens,
+        totalTokens: response.usage.total_tokens,
+      }
+    : null;
+
+  return { parsed: JSON.parse(content), responseId, usage };
 }
 // ── Route handler ────────────────────────────────────────────────────────
 
@@ -448,18 +466,34 @@ export async function POST(req: NextRequest) {
       pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
     });
 
+    // Generate adaptive linework image for dual-image vision input
+    let lineworkBuffer: Buffer;
+    try {
+      lineworkBuffer = await generateAdaptiveLinework(processedBuffer, { windowSize: 25, sensitivity: 15 });
+    } catch (err) {
+      console.warn('[ai-scan] adaptive linework generation failed, falling back to original only:', err instanceof Error ? err.message : err);
+      lineworkBuffer = processedBuffer; // fallback to original
+    }
+    const lineworkDataUrl = `data:image/png;base64,${lineworkBuffer.toString('base64')}`;
+
     if (stage === 'outline') {
-      let rawOutline: unknown;
+      let outlineResult: { parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null };
       try {
-        rawOutline = await callVisionModel(
-          buildAiTakeoffOutlinePrompt(width, height), dataUrl, AI_TAKEOFF_OUTLINE_SCHEMA, model,
+        outlineResult = await callVisionModel(
+          buildAiTakeoffOutlinePrompt(width, height),
+          [
+            { dataUrl: lineworkDataUrl, label: 'IMAGE 1: ADAPTIVE LINEWORK (primary geometry evidence)' },
+            { dataUrl: dataUrl, label: 'IMAGE 2: ORIGINAL PLAN (context only)' },
+          ],
+          AI_TAKEOFF_OUTLINE_SCHEMA,
+          model,
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
         usage(false, message);
         return NextResponse.json({ success: false, error: `AI outline detection failed: ${message}` }, { status: 502 });
       }
-      const outline = validateAiResult(rawOutline, width, height);
+      const outline = validateAiResult(outlineResult.parsed, width, height);
       if (!outline) {
         usage(false, 'Outline validation failed');
         return NextResponse.json({ success: false, error: 'AI returned an invalid roof outline.' }, { status: 502 });
@@ -467,6 +501,7 @@ export async function POST(req: NextRequest) {
       const cornerCandidates = classifyPolygonCorners(outline.roof_areas as PromptRoofArea[]);
       const canvasResult = scaleResult(outline, canvasW / width, canvasH / height);
       usage(outline.error !== 'unreadable', outline.error === 'unreadable' ? 'Image unreadable' : undefined);
+      console.log('[ai-scan] outline trace:', { responseId: outlineResult.responseId, usage: outlineResult.usage, areas: outline.roof_areas.length });
       return NextResponse.json({
         success: true,
         stage: 'outline',
@@ -478,6 +513,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Component stage: generate masked linework + dual-image call
     const confirmedCanvasAreas = validateConfirmedAreas(body.confirmedAreas, canvasW, canvasH);
     if (confirmedCanvasAreas.length === 0) {
       return NextResponse.json({ success: false, error: 'Confirm at least one roof area before finding components.' }, { status: 400 });
@@ -489,10 +525,33 @@ export async function POST(req: NextRequest) {
     const expectedCorners = classifyPolygonCorners(analysisAreas);
     const promptParams = { width, height, areas: analysisAreas, corners: expectedCorners };
 
-    let rawGraph: unknown;
+    // Generate masked linework (only inside confirmed roof polygon)
+    const firstAreaPoints = analysisAreas[0].points;
+    let maskedLineworkBuffer: Buffer;
     try {
-      rawGraph = await callVisionModel(
-        buildAiTakeoffComponentsPrompt(promptParams), dataUrl, AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA, model,
+      maskedLineworkBuffer = await generateAdaptiveLinework(processedBuffer, {
+        windowSize: 25,
+        sensitivity: 15,
+        maskPolygon: firstAreaPoints,
+        width,
+        height,
+      });
+    } catch (err) {
+      console.warn('[ai-scan] masked linework generation failed:', err instanceof Error ? err.message : err);
+      maskedLineworkBuffer = lineworkBuffer; // fallback to unmasked
+    }
+    const maskedLineworkDataUrl = `data:image/png;base64,${maskedLineworkBuffer.toString('base64')}`;
+
+    let componentResult: { parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null };
+    try {
+      componentResult = await callVisionModel(
+        buildAiTakeoffComponentsPrompt(promptParams),
+        [
+          { dataUrl: maskedLineworkDataUrl, label: 'IMAGE 1: ADAPTIVE LINEWORK INSIDE ROOF OUTLINE (primary geometry evidence — black pixels ARE roof component lines)' },
+          { dataUrl: dataUrl, label: 'IMAGE 2: ORIGINAL PLAN (context for classification)' },
+        ],
+        AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA,
+        model,
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -500,29 +559,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: `AI component detection failed: ${message}` }, { status: 502 });
     }
 
-    let validation = validateComponentGraph(rawGraph, analysisAreas, expectedCorners, width, height);
-    if (!validation.graph || validation.violations.length > 0) {
-      const repairContext = `${validation.violations.join('\n')}\nPrevious graph:\n${JSON.stringify(rawGraph)}`;
-      try {
-        const repaired = await callVisionModel(
-          buildAiTakeoffComponentsPrompt({ ...promptParams, repairContext }),
-          dataUrl,
-          AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA,
-          model,
-        );
-        validation = validateComponentGraph(repaired, analysisAreas, expectedCorners, width, height);
-      } catch (error) {
-        validation.violations.push(error instanceof Error ? error.message : 'Repair request failed.');
-      }
-    }
+    // Validate topology (no repair call — if it fails, return violations)
+    const validation = validateComponentGraph(componentResult.parsed, analysisAreas, expectedCorners, width, height);
     if (!validation.graph || validation.violations.length > 0) {
       const violations = Array.from(new Set(validation.violations)).slice(0, 8);
       usage(false, `Invalid topology: ${violations.join(' | ')}`);
+      console.log('[ai-scan] component trace (failed):', { responseId: componentResult.responseId, usage: componentResult.usage, violations });
       return NextResponse.json({
         success: false,
         error: 'The AI could not produce a fully connected roof graph. Review the roof areas and try again.',
         topologyViolations: violations,
       }, { status: 422 });
+    }
+
+    // Pixel-support scoring: score each detected edge against grayscale pixels
+    const pixelScores: Array<{ edgeId: string; type: string; score: number; darkCount: number; totalSamples: number }> = [];
+    const PIXEL_SUPPORT_THRESHOLD = 0.25; // reject edges with <25% dark pixel support
+    const nodeMap = new Map(validation.graph.nodes.map(n => [n.id, n]));
+    const rejectedEdges = new Set<string>();
+    for (const edge of validation.graph.edges) {
+      const start = nodeMap.get(edge.start_node_id);
+      const end = nodeMap.get(edge.end_node_id);
+      if (!start || !end) continue;
+      const support = scoreLineSupport(grayscalePixels, width, height, { x: start.x, y: start.y }, { x: end.x, y: end.y });
+      pixelScores.push({ edgeId: edge.id, type: edge.type, score: support.score, darkCount: support.darkCount, totalSamples: support.totalSamples });
+      if (support.score < PIXEL_SUPPORT_THRESHOLD) {
+        rejectedEdges.add(edge.id);
+        console.warn(`[ai-scan] rejecting edge ${edge.id} (${edge.type}) — pixel support score ${support.score.toFixed(2)} < ${PIXEL_SUPPORT_THRESHOLD}`);
+      }
+    }
+    // Filter out rejected edges
+    if (rejectedEdges.size > 0) {
+      validation.graph = {
+        ...validation.graph,
+        edges: validation.graph.edges.filter(e => !rejectedEdges.has(e.id)),
+      };
     }
 
     const outlineData = validateAiResult(body.outlineData, width, height) ?? {
@@ -531,19 +602,41 @@ export async function POST(req: NextRequest) {
       roof_areas: confirmedCanvasAreas,
       components: emptyComponents(), notes: [],
     };
-    const analysisResult = snapAiGeometryToImage({
+
+    // Build AI data from graph, then snap to image
+    const snappedData = snapAiGeometryToImage({
       scale: { detected: false, ratio: null, dimension_line: null },
       pitch: outlineData.pitch,
       roof_areas: analysisAreas,
       components: graphToComponents(validation.graph),
       notes: [...outlineData.notes, ...validation.graph.notes, ...validation.graph.unresolved],
     }, grayscalePixels, width, height) as AiScanResult;
+
+    // Run deterministic perimeter accounting BEFORE returning to client
+    // so barge/spouting counts are correct in the preview modal
+    const perimeterCorrectedComponents = perimeterAccountingPass(snappedData);
+    const analysisResult: AiScanResult = {
+      ...snappedData,
+      components: perimeterCorrectedComponents,
+    };
+
     const canvasResult = scaleResult(analysisResult, canvasW / width, canvasH / height);
     canvasResult.roof_areas = confirmedCanvasAreas;
     canvasResult.scale = outlineData.scale;
 
     await persistScanResult(canvasResult);
     usage(true);
+
+    console.log('[ai-scan] component trace:', {
+      responseId: componentResult.responseId,
+      usage: componentResult.usage,
+      edgesReturned: validation.graph.edges.length + rejectedEdges.size,
+      edgesKept: validation.graph.edges.length,
+      edgesRejected: rejectedEdges.size,
+      pixelScores: pixelScores.map(p => `${p.edgeId}(${p.type}):${p.score.toFixed(2)}`),
+      finalComponents: buildSummary(canvasResult),
+    });
+
     return NextResponse.json({
       success: true,
       stage: 'components',
