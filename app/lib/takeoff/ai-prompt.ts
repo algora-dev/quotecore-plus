@@ -26,18 +26,23 @@ The supplied image is the original plan image at ${width} pixels wide and ${heig
 ## ONLY TASK: TRACE THE VISIBLE PARENT ROOF OUTLINE
 Trace the complete visible outer perimeter of each physically separate roof structure. Do not detect or classify ridges, hips, valleys, barges, spouting or any other internal component in this stage.
 
-## OUTLINE EVIDENCE RULES
-- Follow the centre of the visible outer perimeter stroke.
+## BLACK-STROKE PRIORITY
+- The roof outline is the thin black or darkest continuous perimeter stroke. Follow that stroke, not the boundary of a shaded, coloured or filled region.
+- Ignore all roof shading, grey/blue fill, transparency, colour changes and tonal boundaries. A change in shading is not an outline unless a narrow dark ink stroke is visibly present on the same path.
+- Where the black perimeter stroke and the shaded roof mass disagree, the black perimeter stroke is authoritative.
+- Check projections, steps and notches especially carefully because shaded fill often hides or simplifies their true black outline.
+
+## OUTLINE RULES
+- Follow the centre of the thin black/dark outer perimeter stroke.
 - Include every visible step, notch and re-entrant corner. Never simplify or regularise the polygon.
 - Return a separate parent area only when a visible gap physically disconnects one roof structure from another.
 - Do not divide one connected roof into individual sloping faces.
 - Ignore internal roof lines and all non-roof marks, including dimensions, text, leaders, grids, borders, hatching, arrows, vents, skylights, walls and openings.
 - Suggest a pitch only when a pitch annotation is clearly visible and readable. Otherwise use null.
 - Detect a dimension line only when both endpoints and its real length are clearly visible and readable.
-- If a short section of the outer perimeter is obscured, connect only the two visible ends needed to keep the same outer boundary and describe that section in notes. Do not invent steps or corners.
-- If the outer roof perimeter cannot be identified reliably, set error to unreadable rather than inventing an outline.
+- If the thin dark perimeter cannot be followed reliably, set error to unreadable rather than closing the polygon from the shaded roof mass.
 
-Before returning, verify that every polygon point follows the visible outer roof boundary and that no internal component or annotation has been used as part of the outline.
+Before returning, verify that every polygon segment lies over the thin black/dark perimeter stroke and not merely along an edge of the shaded fill.
 
 Return only the structured JSON requested by the schema.`;
 }
@@ -59,10 +64,10 @@ export function buildAiTakeoffComponentsPrompt(params: {
     `a${corner.area_index}v${corner.point_index}: ${corner.corner_type}, likely ${corner.likely_component}`
   )).join('\n');
   const repair = params.repairContext
-    ? `\n## STRUCTURAL AND CLASSIFICATION REPAIR\nThe previous graph below failed validation. Treat it as untrusted. Fix node references, required perimeter nodes, component classifications and explicit corner resolutions without inventing component edges. Preserve an edge only when the image visibly supports its complete path. Reclassify a visible edge when its endpoint types prove the previous classification impossible. Remove any unsupported edge. If a corner has no visible component stroke, return an unresolved corner resolution explaining that no component line is visible; never add an internal edge merely to satisfy validation.\n${params.repairContext}\n`
+    ? `\n## MINIMAL REPAIR ONLY\nKeep every image-supported node and edge from the previous graph unchanged. Apply only the listed validation corrections. Reclassify a visible edge when its endpoints prove the old classification impossible, remove unsupported edges, and fix missing references or corner-resolution records. Do not redraw the graph, move valid geometry, or add replacement edges.\n${params.repairContext}\n`
     : '';
 
-  return `You are an expert roofing plan analyst. Detect and classify every visible roof-component stroke within the confirmed parent roof area(s). Ignore everything outside the confirmed outlines.
+  return `You are an expert roofing plan analyst. Detect and classify every visible INTERNAL roof-component stroke within the confirmed parent roof area(s). Ignore everything outside the confirmed outlines. Do not classify the outer perimeter; the application calculates perimeter barges and spouting separately.
 
 The supplied image is the original plan image at ${params.width} pixels wide and ${params.height} pixels high. Return integer coordinates in this exact image-pixel coordinate system. The confirmed polygons below are authoritative and must be returned unchanged.
 
@@ -75,21 +80,23 @@ ${cornerContext || 'None'}
 
 ## ABSOLUTE VISIBLE-LINE RULE
 This rule overrides every definition, topology expectation and geometric assumption below.
-- Return a component edge only when a visible roof-component stroke lies directly underneath the complete returned path.
-- If there is no visible component stroke underneath any part of a proposed internal path, do not return that component.
+- Use only thin black or darkest continuous linework as component evidence. Ignore shaded/filled areas, colour boundaries and tonal changes.
+- A change in roof shading is not a component. A narrow dark ink stroke must be visibly present along the complete returned path.
+- Return a component edge only when a continuous dark roof-component stroke lies directly underneath the complete returned path.
+- If there is no continuous dark stroke underneath any part of a proposed internal path, do not return that component.
 - Never invent, extend, complete or connect a component from roof geometry alone.
 - Never add a component merely because a roof of this shape would normally contain one.
 - Never add an edge to make the graph connected, symmetrical or structurally plausible.
 - Set inferred=false for every returned edge. This task does not permit inferred component geometry.
 - Completeness means finding every eligible visible stroke. It does not mean filling expected gaps with guessed components.
+- Return no edges with type=barge or type=spouting. Perimeter classification is performed deterministically by the application after this scan.
 
 ## DETECTION ORDER
-1. Inspect the image systematically from top to bottom and left to right. Record every continuous visible roof-component stroke inside each confirmed outline before considering roof topology.
-2. Reject non-component marks: dimensions, text, leaders, pitch arrows, hatching, grids, dashed wall/building footprints, borders, vents, skylights, openings and closed rectangular symbols.
+1. Inspect the image systematically from top to bottom and left to right. Find every thin, continuous black/dark stroke inside each confirmed outline before considering roof topology.
+2. Reject non-component marks: shaded-region boundaries, colour transitions, dimensions, text, leaders, pitch arrows, hatching, grids, dashed wall/building footprints, borders, vents, skylights, openings and closed rectangular symbols.
 3. Create nodes only at visible stroke endpoints, visible stroke intersections and the supplied perimeter vertices. Add a junction only where visible component strokes actually meet.
 4. Classify each retained visible internal stroke using the component meanings below. Geometry helps classification but can never replace visible-line evidence.
-5. Classify the visible outer perimeter into barges and spouting only after the internal visible strokes are classified.
-6. Audit the entire roof again for missed visible component strokes, then remove any edge whose complete path is not visibly supported.
+5. Audit the entire roof again for missed continuous dark component strokes, then remove any edge whose complete path is not visibly supported.
 
 ## COMPONENT MEANINGS
 - ridge: a visible internal high junction between roof planes. It may be horizontal, vertical or angled. Return it only along the visible stroke, from one visible endpoint or intersection to the other.
@@ -97,18 +104,11 @@ This rule overrides every definition, topology expectation and geometric assumpt
 - valley: internal low junction connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction. A valley MUST have one endpoint at an internal/re-entrant perimeter vertex. ONLY create a valley when a visible diagonal line runs from that internal corner into the roof. A line ending on a straight perimeter face is never a valley.
 - broken_hip: an angle run connecting from the internal point of a valley or another hip, inside the roof area, not connected to the perimeter. ONLY create when a visible line on the plan forms the same path — never infer from junction geometry alone.
 - broken_barge: a barge run inside the roof outline, perpendicular to a ridge, not on the perimeter. ONLY create when a visible line on the plan forms the same path.
-- barge: a visible outer-perimeter run at a gable edge that does not collect water. Classify a perimeter run as barge only when visible ridge/component evidence identifies that edge as a gable edge; do not assume a barge from outline shape alone.
-- spouting: a visible outer-perimeter eaves/gutter run where water leaves the roof. After evidence-supported barges are identified, classify the remaining visible perimeter runs as spouting.
 
-## PERIMETER CLASSIFICATION RULES
-- The confirmed outline stroke is the visible evidence for each perimeter edge; classification must still follow visible internal ridge/component evidence.
-- A visible horizontal or vertical line with one endpoint at an internal roof junction and the other endpoint on a straight section of the roof perimeter is a ridge-to-gable run, provided it is not a dimension, leader or other excluded annotation.
-- When a visible ridge terminates on a straight perimeter section, its endpoint is the centre of a gable and forms a T junction.
-- That T junction ALWAYS has exactly two barge runs along the same perimeter section: one running in each direction from the ridge endpoint, both perpendicular to the ridge.
-- Each of the two barges continues from the ridge endpoint to the nearest perimeter corner or change of direction. Neither side of this gable face is spouting.
-- This rule classifies the already-visible perimeter stroke; it does not permit inventing an internal component line.
-- Do not classify a ridge-to-perimeter line as a hip or valley unless its perimeter endpoint is respectively an external or internal perimeter vertex.
-- Every visible perimeter interval must be returned exactly once as either barge or spouting, with no overlaps or gaps.
+## RIDGE-TO-PERIMETER CLASSIFICATION
+- A visible horizontal or vertical dark stroke with one endpoint at an internal roof junction and the other endpoint on a straight section of the roof perimeter is a ridge, provided it is not an excluded annotation.
+- Do not classify a line ending on a straight perimeter face as a hip or valley. Hips and valleys must begin at their required external or internal perimeter corner.
+- Detect only the visible ridge stroke. Do not return the two perimeter barges; the application generates them from the ridge endpoint.
 
 ## GRAPH FORMAT RULES
 - Every edge endpoint must reference a node ID. Never return free-floating line endpoints.
@@ -117,7 +117,6 @@ This rule overrides every definition, topology expectation and geometric assumpt
 - Use separate edges for visibly broken runs, joined through the same junction node.
 - For every expected corner, use status=resolved only when visible component edges account for it. Otherwise use status=unresolved with a note that no supporting component stroke is visible.
 - Follow actual visible strokes. Do not reject a line merely because it is not exactly horizontal, vertical or 45 degrees.
-- Barges and spouting must together reconstruct each complete perimeter exactly once, with no overlaps or gaps.
 - Do not copy dimension lines, text, hatching, pitch arrows, leaders or borders into the roof graph.
 - All component geometry must belong to its area_index.
 
