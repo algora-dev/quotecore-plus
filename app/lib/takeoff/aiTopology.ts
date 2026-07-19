@@ -41,7 +41,7 @@ export interface GraphValidationResult {
 }
 
 const EDGE_KEY: Record<GraphEdgeType, keyof AiScanData['components']> = {
-  ridge: 'ridges', hip: 'hips', valley: 'valleys', broken_hip: 'broken_hips', barge: 'barges', spouting: 'spouting',
+  ridge: 'ridges', hip: 'hips', valley: 'valleys', broken_hip: 'hips', barge: 'barges', spouting: 'spouting',
 };
 
 function isPoint(value: Record<string, unknown>): boolean {

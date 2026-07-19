@@ -354,7 +354,7 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
 
 function buildSummary(result: AiScanResult) {
   const components = result.components.ridges.length + result.components.hips.length
-    + result.components.valleys.length + result.components.broken_hips.length
+    + result.components.valleys.length
     + result.components.barges.length + result.components.spouting.length;
   return {
     areas: result.roof_areas.length,
