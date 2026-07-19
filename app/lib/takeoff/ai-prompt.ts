@@ -59,7 +59,7 @@ export function buildAiTakeoffComponentsPrompt(params: {
     `a${corner.area_index}v${corner.point_index}: ${corner.corner_type}, likely ${corner.likely_component}`
   )).join('\n');
   const repair = params.repairContext
-    ? `\n## STRUCTURAL REPAIR\nThe previous graph below failed structural validation. Treat it as untrusted. Fix node references, required perimeter nodes and explicit corner resolutions without inventing component edges. Preserve an edge only when the image visibly supports its complete path. Remove any unsupported edge. If a corner has no visible component stroke, return an unresolved corner resolution explaining that no component line is visible; never add an edge merely to satisfy validation.\n${params.repairContext}\n`
+    ? `\n## STRUCTURAL AND CLASSIFICATION REPAIR\nThe previous graph below failed validation. Treat it as untrusted. Fix node references, required perimeter nodes, component classifications and explicit corner resolutions without inventing component edges. Preserve an edge only when the image visibly supports its complete path. Reclassify a visible edge when its endpoint types prove the previous classification impossible. Remove any unsupported edge. If a corner has no visible component stroke, return an unresolved corner resolution explaining that no component line is visible; never add an internal edge merely to satisfy validation.\n${params.repairContext}\n`
     : '';
 
   return `You are an expert roofing plan analyst. Detect and classify every visible roof-component stroke within the confirmed parent roof area(s). Ignore everything outside the confirmed outlines.
@@ -93,8 +93,8 @@ This rule overrides every definition, topology expectation and geometric assumpt
 
 ## COMPONENT MEANINGS
 - ridge: a visible internal high junction between roof planes. It may be horizontal, vertical or angled. Return it only along the visible stroke, from one visible endpoint or intersection to the other.
-- hip: external high junction connecting an external perimeter corner to a ridge endpoint or shared internal junction. ONLY create a hip when a visible diagonal line (roughly 45°) runs from the external corner into the roof. If no such line is visible, it is a gable end, not a hip.
-- valley: internal low junction connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction. ONLY create a valley when a visible diagonal line (roughly 45°) runs from the internal corner into the roof. If no such line is visible, it is a gable step, not a valley.
+- hip: external high junction connecting an external perimeter corner to a ridge endpoint or shared internal junction. A hip MUST have one endpoint at an external perimeter vertex. ONLY create a hip when a visible diagonal line runs from that external corner into the roof. A line ending on a straight perimeter face is never a hip.
+- valley: internal low junction connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction. A valley MUST have one endpoint at an internal/re-entrant perimeter vertex. ONLY create a valley when a visible diagonal line runs from that internal corner into the roof. A line ending on a straight perimeter face is never a valley.
 - broken_hip: an angle run connecting from the internal point of a valley or another hip, inside the roof area, not connected to the perimeter. ONLY create when a visible line on the plan forms the same path — never infer from junction geometry alone.
 - broken_barge: a barge run inside the roof outline, perpendicular to a ridge, not on the perimeter. ONLY create when a visible line on the plan forms the same path.
 - barge: a visible outer-perimeter run at a gable edge that does not collect water. Classify a perimeter run as barge only when visible ridge/component evidence identifies that edge as a gable edge; do not assume a barge from outline shape alone.
@@ -102,8 +102,12 @@ This rule overrides every definition, topology expectation and geometric assumpt
 
 ## PERIMETER CLASSIFICATION RULES
 - The confirmed outline stroke is the visible evidence for each perimeter edge; classification must still follow visible internal ridge/component evidence.
-- A barge normally runs along the perimeter perpendicular to a visible ridge that reaches that gable end.
-- Do not create barges from a nearby ridge unless the visible ridge direction and endpoint clearly establish the gable edge.
+- A visible horizontal or vertical line with one endpoint at an internal roof junction and the other endpoint on a straight section of the roof perimeter is a ridge-to-gable run, provided it is not a dimension, leader or other excluded annotation.
+- When a visible ridge terminates on a straight perimeter section, its endpoint is the centre of a gable and forms a T junction.
+- That T junction ALWAYS has exactly two barge runs along the same perimeter section: one running in each direction from the ridge endpoint, both perpendicular to the ridge.
+- Each of the two barges continues from the ridge endpoint to the nearest perimeter corner or change of direction. Neither side of this gable face is spouting.
+- This rule classifies the already-visible perimeter stroke; it does not permit inventing an internal component line.
+- Do not classify a ridge-to-perimeter line as a hip or valley unless its perimeter endpoint is respectively an external or internal perimeter vertex.
 - Every visible perimeter interval must be returned exactly once as either barge or spouting, with no overlaps or gaps.
 
 ## GRAPH FORMAT RULES

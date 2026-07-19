@@ -146,6 +146,12 @@ export function validateComponentGraph(
   const edges: AiGraphEdge[] = [];
   const edgeIds = new Set<string>();
   const degree = new Map<string, number>();
+  const internalCornerNodeIds = new Set(expectedCorners
+    .filter(corner => corner.corner_type === 'internal')
+    .map(corner => `a${corner.area_index}v${corner.point_index}`));
+  const externalCornerNodeIds = new Set(expectedCorners
+    .filter(corner => corner.corner_type === 'external')
+    .map(corner => `a${corner.area_index}v${corner.point_index}`));
   for (const rawEdge of raw.edges) {
     if (!rawEdge || typeof rawEdge !== 'object') continue;
     const edge = rawEdge as Record<string, unknown>;
@@ -165,6 +171,16 @@ export function validateComponentGraph(
     if (start.id === end.id || Math.hypot(start.x - end.x, start.y - end.y) < 2) {
       violations.push(`Edge ${edge.id} has zero length.`);
       continue;
+    }
+    if (edge.type === 'hip'
+      && !externalCornerNodeIds.has(start.id)
+      && !externalCornerNodeIds.has(end.id)) {
+      violations.push(`Edge ${edge.id} cannot be a hip because neither endpoint is an external perimeter corner.`);
+    }
+    if (edge.type === 'valley'
+      && !internalCornerNodeIds.has(start.id)
+      && !internalCornerNodeIds.has(end.id)) {
+      violations.push(`Edge ${edge.id} cannot be a valley because neither endpoint is an internal perimeter corner.`);
     }
     const area = areas[edge.area_index];
     if (!area) {

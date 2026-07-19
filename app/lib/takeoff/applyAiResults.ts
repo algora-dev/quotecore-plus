@@ -403,13 +403,13 @@ export function computeScaleCheck(
 /**
  * Defensive perimeter-accounting pass.
  *
- * Barges are accepted only when they branch from a ridge endpoint and follow
- * the outline. Spouting is then rebuilt as the exact perimeter remainder.
+ * Perimeter barges are generated deterministically as pairs wherever a ridge
+ * terminates on a straight outline section. Spouting is then rebuilt as the
+ * exact perimeter remainder.
  *
  * Rules:
- * 1. Reject any barge that is not on the perimeter, does not start at a ridge
- *    endpoint, or is not perpendicular to that ridge.
- * 2. Project valid barges onto each polygon edge and merge their coverage.
+ * 1. Preserve valid internal broken barges.
+ * 2. Generate both sides of every ridge-to-gable T junction from the outline.
  * 3. Rebuild spouting from every uncovered perimeter interval.
  *
  * Returns the corrected components object.
@@ -516,8 +516,9 @@ export function perimeterAccountingPass(
     });
   }
 
-  const perimeterEdges = aiData.roof_areas.flatMap(area =>
+  const perimeterEdges = aiData.roof_areas.flatMap((area, areaIndex) =>
     area.points.map((point, index) => ({
+      areaIndex,
       start: point,
       end: area.points[(index + 1) % area.points.length],
     })),
@@ -537,19 +538,94 @@ export function perimeterAccountingPass(
     );
   });
 
-  corrected.barges = corrected.barges.filter(entry => {
-    if (entry.points.length < 2) return false;
-    const runStart = entry.points[0];
-    const runEnd = entry.points[entry.points.length - 1];
-    if (!branchesFromRidgeEndpoint(runStart, runEnd)) return false;
+  interface GablePairCandidate {
+    offset: number;
+    barges: [AiLineEntry, AiLineEntry];
+  }
 
-    return perimeterEdges.some(edge =>
-      projectRunToEdge(runStart, runEnd, edge.start, edge.end) !== null,
-    );
+  function findGableBargePair(
+    ridgeEndpoint: CanvasPoint,
+    ridgeStart: CanvasPoint,
+    ridgeEnd: CanvasPoint,
+  ): GablePairCandidate | null {
+    const candidates: GablePairCandidate[] = [];
+
+    for (const edge of perimeterEdges) {
+      const edgeLength = distance(edge.start, edge.end);
+      if (edgeLength < MIN_RUN_LENGTH * 2
+        || !isPerpendicularToRidge(edge.start, edge.end, ridgeStart, ridgeEnd)) continue;
+
+      const projection = projectPointToEdge(ridgeEndpoint, edge.start, edge.end);
+      if (!projection || projection.offset > RIDGE_ENDPOINT_TOLERANCE) continue;
+
+      const minimumParameter = MIN_RUN_LENGTH / edgeLength;
+      if (projection.parameter <= minimumParameter || projection.parameter >= 1 - minimumParameter) continue;
+
+      const gableCentre = pointOnEdge(edge.start, edge.end, projection.parameter);
+      candidates.push({
+        offset: projection.offset,
+        barges: [
+          { points: [gableCentre, { ...edge.start }] },
+          { points: [gableCentre, { ...edge.end }] },
+        ],
+      });
+    }
+
+    for (const area of aiData.roof_areas) {
+      area.points.forEach((vertex, vertexIndex) => {
+        const offset = distance(ridgeEndpoint, vertex);
+        if (offset > RIDGE_ENDPOINT_TOLERANCE) return;
+
+        const previous = area.points[(vertexIndex - 1 + area.points.length) % area.points.length];
+        const next = area.points[(vertexIndex + 1) % area.points.length];
+        if (!isPerpendicularToRidge(previous, vertex, ridgeStart, ridgeEnd)
+          || !isPerpendicularToRidge(vertex, next, ridgeStart, ridgeEnd)) return;
+
+        const previousLength = distance(vertex, previous);
+        const nextLength = distance(vertex, next);
+        if (previousLength < MIN_RUN_LENGTH || nextLength < MIN_RUN_LENGTH) return;
+
+        const directionDot = (
+          (previous.x - vertex.x) * (next.x - vertex.x)
+          + (previous.y - vertex.y) * (next.y - vertex.y)
+        ) / (previousLength * nextLength);
+        if (directionDot > -Math.cos(15 * Math.PI / 180)) return;
+
+        candidates.push({
+          offset,
+          barges: [
+            { points: [{ ...vertex }, { ...previous }] },
+            { points: [{ ...vertex }, { ...next }] },
+          ],
+        });
+      });
+    }
+
+    return candidates.sort((left, right) => left.offset - right.offset)[0] ?? null;
+  }
+
+  const generatedPerimeterBarges: AiLineEntry[] = [];
+  for (const ridge of corrected.ridges) {
+    if (ridge.points.length < 2) continue;
+    const ridgeStart = ridge.points[0];
+    const ridgeEnd = ridge.points[ridge.points.length - 1];
+    for (const ridgeEndpoint of [ridgeStart, ridgeEnd]) {
+      const pair = findGableBargePair(ridgeEndpoint, ridgeStart, ridgeEnd);
+      if (pair) generatedPerimeterBarges.push(...pair.barges);
+    }
+  }
+
+  const seenBarges = new Set<string>();
+  corrected.barges = [...generatedPerimeterBarges, ...internalBarges].filter(entry => {
+    const start = entry.points[0];
+    const end = entry.points[entry.points.length - 1];
+    if (!start || !end) return false;
+    const forward = `${Math.round(start.x)},${Math.round(start.y)}|${Math.round(end.x)},${Math.round(end.y)}`;
+    const reverse = `${Math.round(end.x)},${Math.round(end.y)}|${Math.round(start.x)},${Math.round(start.y)}`;
+    if (seenBarges.has(forward) || seenBarges.has(reverse)) return false;
+    seenBarges.add(forward);
+    return true;
   });
-
-  // Re-add internal barges after perimeter filtering
-  corrected.barges.push(...internalBarges);
 
   corrected.spouting = [];
 
