@@ -283,6 +283,7 @@ async function callVisionModel(
     model,
     max_completion_tokens: 8192,
     temperature: 0, // Deterministic — roof outlines should be consistent across runs
+    reasoning_effort: 'low',
     messages: [
       {
         role: 'user',
@@ -303,7 +304,7 @@ async function callVisionModel(
         schema,
       },
     },
-  });
+  } as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming);
 
   const content = response.choices[0]?.message?.content;
   if (!content) {
