@@ -69,17 +69,21 @@ ${areaContext}
 ## BUILD ONE CONNECTED ROOF GRAPH
 Work in this exact order:
 1. Identify every junction node inside, and on the roof outline.
-2. Each roof area internal corner will be the bottom of a valley, external corners will be bottom of a hip run.
+2. For each internal/re-entrant corner: check if a visible line (roughly 45° or diagonal) emanates from that corner into the roof. If yes, it is a valley. If no visible diagonal line is present, it is a gable step — do NOT create a valley. Instead, treat the perimeter runs at that step as barges (perpendicular to the nearest ridge).
 3. Detect every visible ridge run.
-6. Connect ridges, hips and valleys into one coherent internal skeleton. By now, all internal roof points should be connected.
-7. Classify perimeter runs as barges or spouting only after the internal skeleton is complete. Barges always form off ridge runs that end on the roof outline and run either side of that point on the roof outline perpendicular to the ridge.
-8. Audit every node, edge and expected corner before returning.
+4. External corners form the bottom of a hip run.
+5. Detect broken hips (angle runs connecting from a valley or hip internal point, inside the roof, not on the perimeter).
+6. Detect broken barges (barge runs inside the roof outline, perpendicular to a ridge, connecting from a ridge endpoint inward — same as barges but internal).
+7. Connect ridges, hips and valleys into one coherent internal skeleton. By now, all internal roof points should be connected.
+8. Classify perimeter runs as barges or spouting only after the internal skeleton is complete. Barges always form off ridge runs that end on the roof outline and run either side of that point on the roof outline perpendicular to the ridge.
+9. Audit every node, edge and expected corner before returning.
 
 ## COMPONENT MEANINGS
 - ridge: highest internal junction between roof planes. Usually drawn as a short horizontal or angled line at the peak.
 - hip: external high junction, normally connecting an external perimeter corner to a ridge endpoint or shared internal junction.
-- valley: internal low junction, normally connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction.
+- valley: internal low junction, normally connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction. ONLY create a valley when a visible diagonal line (roughly 45°) runs from the internal corner into the roof. If no such line is visible, it is a gable step, not a valley.
 - broken_hip: an angle run connecting from the internal point of a valley or another hip, inside the roof area, not connected to the perimeter of the roof outline.
+- broken_barge: a barge run inside the roof outline, perpendicular to a ridge, not on the perimeter. Same appearance and rules as barge but internal.
 - barge: gable-edge perimeter run that does not collect water. A barge is ALWAYS perpendicular to the ridge, branching off from a ridge endpoint to the perimeter. Where a ridge endpoint meets the perimeter, TWO barges branch off at right angles to the ridge, running along the perimeter in opposite directions.
 - spouting: eaves/gutter perimeter run where water leaves the roof. Spouting is everything on the perimeter that is NOT a barge.
 
@@ -190,7 +194,7 @@ export const AI_TAKEOFF_COMPONENT_GRAPH_SCHEMA = {
         type: 'object' as const,
         properties: {
           id: { type: 'string' as const }, area_index: { type: 'integer' as const },
-          type: { type: 'string' as const, enum: ['ridge', 'hip', 'valley', 'broken_hip', 'barge', 'spouting'] as const },
+          type: { type: 'string' as const, enum: ['ridge', 'hip', 'valley', 'broken_hip', 'broken_barge', 'barge', 'spouting'] as const },
           start_node_id: { type: 'string' as const }, end_node_id: { type: 'string' as const },
           confidence: { type: 'number' as const }, inferred: { type: 'boolean' as const },
         },

@@ -2,7 +2,7 @@ import type { AiScanData, CanvasPoint } from './applyAiResults';
 import type { PromptCornerCandidate, PromptRoofArea } from './ai-prompt';
 
 export type GraphNodeKind = 'perimeter_vertex' | 'perimeter_point' | 'junction';
-export type GraphEdgeType = 'ridge' | 'hip' | 'valley' | 'broken_hip' | 'barge' | 'spouting';
+export type GraphEdgeType = 'ridge' | 'hip' | 'valley' | 'broken_hip' | 'broken_barge' | 'barge' | 'spouting';
 
 export interface AiGraphNode extends CanvasPoint {
   id: string;
@@ -41,7 +41,7 @@ export interface GraphValidationResult {
 }
 
 const EDGE_KEY: Record<GraphEdgeType, keyof AiScanData['components']> = {
-  ridge: 'ridges', hip: 'hips', valley: 'valleys', broken_hip: 'hips', barge: 'barges', spouting: 'spouting',
+  ridge: 'ridges', hip: 'hips', valley: 'valleys', broken_hip: 'hips', broken_barge: 'barges', barge: 'barges', spouting: 'spouting',
 };
 
 function isPoint(value: Record<string, unknown>): boolean {
@@ -152,7 +152,7 @@ export function validateComponentGraph(
     if (typeof edge.id !== 'string' || edgeIds.has(edge.id)
       || typeof edge.start_node_id !== 'string' || typeof edge.end_node_id !== 'string'
       || typeof edge.area_index !== 'number'
-      || !['ridge', 'hip', 'valley', 'broken_hip', 'barge', 'spouting'].includes(String(edge.type))) {
+      || !['ridge', 'hip', 'valley', 'broken_hip', 'broken_barge', 'barge', 'spouting'].includes(String(edge.type))) {
       violations.push('Graph contains an invalid or duplicate edge.');
       continue;
     }

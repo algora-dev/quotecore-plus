@@ -523,6 +523,20 @@ export function perimeterAccountingPass(
     })),
   );
 
+  // Separate internal barges (broken barges) from perimeter barges.
+  // Broken barges branch from a ridge but are NOT on the perimeter —
+  // they should survive the perimeter accounting pass.
+  const internalBarges = corrected.barges.filter(entry => {
+    if (entry.points.length < 2) return false;
+    const runStart = entry.points[0];
+    const runEnd = entry.points[entry.points.length - 1];
+    if (!branchesFromRidgeEndpoint(runStart, runEnd)) return false;
+    // If it IS on the perimeter, it's a regular barge — leave it for filtering below.
+    return !perimeterEdges.some(edge =>
+      projectRunToEdge(runStart, runEnd, edge.start, edge.end) !== null,
+    );
+  });
+
   corrected.barges = corrected.barges.filter(entry => {
     if (entry.points.length < 2) return false;
     const runStart = entry.points[0];
@@ -533,6 +547,9 @@ export function perimeterAccountingPass(
       projectRunToEdge(runStart, runEnd, edge.start, edge.end) !== null,
     );
   });
+
+  // Re-add internal barges after perimeter filtering
+  corrected.barges.push(...internalBarges);
 
   corrected.spouting = [];
 
