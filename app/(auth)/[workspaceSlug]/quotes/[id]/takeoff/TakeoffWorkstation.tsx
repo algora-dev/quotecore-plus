@@ -2182,6 +2182,17 @@ export function TakeoffWorkstation({
       });
       canvas.backgroundImage = fabricImg;
       canvas.renderAll();
+
+      // Auto-fit on page switch
+      const container = canvasRef.current?.parentElement?.parentElement;
+      if (container) {
+        const cw = container.clientWidth - 32;
+        const ch = container.clientHeight - 32;
+        const fitScale = Math.min(cw / dims.width, ch / dims.height, 1);
+        canvas.setZoom(fitScale);
+        canvas.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
+        setZoom(fitScale);
+      }
     };
     imgElement.src = imageUrl;
   };
@@ -3153,6 +3164,21 @@ export function TakeoffWorkstation({
       // never in undo snapshots. Pan/zoom via viewportTransform still works.
       canvas.backgroundImage = fabricImg;
       canvas.renderAll();
+
+      // Auto-fit: scale the canvas to fit the container on initial load.
+      // The canvas dimensions = image dimensions (dynamic sizing), so we
+      // need to zoom out if the image is larger than the viewport.
+      const container = canvasRef.current?.parentElement?.parentElement;
+      if (container) {
+        const containerWidth = container.clientWidth - 32;
+        const containerHeight = container.clientHeight - 32;
+        const fitScale = Math.min(containerWidth / dims.width, containerHeight / dims.height, 1);
+        if (fitScale < 1) {
+          canvas.setZoom(fitScale);
+          canvas.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
+          setZoom(fitScale);
+        }
+      }
 
       // Canvas-rework: canvas is now ready for reconstruction.
       setCanvasReady(true);
@@ -5525,7 +5551,7 @@ export function TakeoffWorkstation({
           })()}
 
           {/* Canvas */}
-          <div className="flex-1 flex flex-col items-center justify-start p-2 md:p-6 md:pt-4 overflow-auto min-h-0">
+          <div className="flex-1 flex flex-col items-start justify-start p-2 md:p-6 md:pt-4 overflow-auto min-h-0">
             <div className="border-2 border-gray-200 rounded-lg">
               <canvas ref={canvasRef} />
             </div>
