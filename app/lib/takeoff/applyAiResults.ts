@@ -417,9 +417,9 @@ export function perimeterAccountingPass(
   aiData: AiScanData,
 ): AiScanData['components'] {
   const corrected = structuredClone(aiData.components);
-  const PERIMETER_TOLERANCE = 5;
-  const RIDGE_ENDPOINT_TOLERANCE = 12;
-  const PERPENDICULAR_DOT_TOLERANCE = Math.sin(8 * Math.PI / 180);
+  const PERIMETER_TOLERANCE = 8;
+  const RIDGE_ENDPOINT_TOLERANCE = 25;
+  const PERPENDICULAR_DOT_TOLERANCE = Math.sin(15 * Math.PI / 180);
   const MIN_RUN_LENGTH = 2;
 
   interface EdgeProjection {

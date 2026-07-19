@@ -89,11 +89,20 @@ Work in this exact order:
 8. Audit every node, edge and expected corner before returning.
 
 ## COMPONENT MEANINGS
-- ridge: highest internal junction between roof planes.
-- hip: external high junction, normally connecting an external perimeter corner to a ridge or shared internal junction.
-- valley: internal low junction, normally connecting an internal/re-entrant perimeter corner to a ridge or shared internal junction.
-- barge: gable-edge perimeter run that does not collect water.
-- spouting: eaves/gutter perimeter run where water leaves the roof.
+- ridge: highest internal junction between roof planes. Usually drawn as a short horizontal or angled line at the peak.
+- hip: external high junction, normally connecting an external perimeter corner to a ridge endpoint or shared internal junction.
+- valley: internal low junction, normally connecting an internal/re-entrant perimeter corner to a ridge endpoint or shared internal junction.
+- barge: gable-edge perimeter run that does not collect water. A barge is ALWAYS perpendicular to the ridge, branching off from a ridge endpoint to the perimeter. Where a ridge endpoint meets the perimeter, TWO barges branch off at right angles to the ridge, running along the perimeter in opposite directions.
+- spouting: eaves/gutter perimeter run where water leaves the roof. Spouting is everything on the perimeter that is NOT a barge.
+
+## CRITICAL BARGE RULES
+- Every ridge endpoint that touches or nearly touches the perimeter MUST have barges branching from it.
+- Barges run PERPENDICULAR to the ridge direction, along the perimeter.
+- If a ridge runs horizontally, barges run vertically along the perimeter at the ridge's endpoints.
+- If a ridge runs vertically, barges run horizontally along the perimeter at the ridge's endpoints.
+- A mono-pitch roof (single slope, no ridge) gets 3 barges + 1 spouting.
+- Barges and spouting together must cover the ENTIRE perimeter with no gaps or overlaps.
+- Ridges NEVER end at spouting — only at barge, hip, valley, or another ridge.
 
 ## NON-NEGOTIABLE TOPOLOGY RULES
 - Every edge endpoint must reference a node ID. Never return free-floating line endpoints.
