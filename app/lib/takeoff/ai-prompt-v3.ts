@@ -96,54 +96,43 @@ Do not return the complete roof outline polygon.
 
 ## YOUR ONLY TASK
 
-Trace every visible CONTINUOUS SOLID line that exists inside the confirmed roof outline or follows part of the confirmed roof perimeter.
+Trace every visible continuous solid line segment that lies inside the confirmed roof outline or follows part of the confirmed roof perimeter.
 
-Do NOT classify the lines.
-Do NOT interpret the roof.
-Do NOT decide whether one line is more important than another.
-
-Your only task is to trace every visible solid line.
+Do not classify or interpret the roof.
 
 Classification happens later.
 
-## COMPLETENESS IS MORE IMPORTANT THAN SELECTIVITY
+## COMPLETENESS IS THE PRIORITY
 
-Missing a genuine roof line is worse than returning an extra plausible line.
+Missing a genuine roof line segment is worse than returning an extra plausible one.
 
-Treat every visible solid line as equally important.
-
-A visible line should be returned because it exists, not because it appears important.
+Every visible solid line segment is equally important and should be returned because it exists, not because it appears significant.
 
 ## INSPECTION METHOD
 
 Before producing your answer:
 
-1. Visually inspect the entire roof.
+1. Inspect the entire roof.
 2. Mentally divide the roof into many small overlapping regions.
 3. Inspect every region independently.
-4. In each region, first find all short, faint, secondary and connecting solid lines.
-5. Then find the remaining longer and more obvious solid lines.
-6. After inspecting every region, inspect the entire roof one final time and add any visible solid line that has not already been returned.
-
-Do not stop after finding only the major roof lines.
-
-## SHORT INTERNAL DIAGONAL LINES
-
-Many roofs have short diagonal lines that connect two internal junctions without touching the roof perimeter. These are easy to miss because they are short and internal. Look for them specifically at every junction where two or more lines meet — there is often a short diagonal line branching from that junction to another internal point.
+4. In each region, first find all short, faint, secondary and connecting line segments.
+5. Then find the remaining longer and more obvious line segments.
+6. Finally, inspect the entire roof once more and add any visible line segment not already returned.
 
 ## LINE TRACING RULES
 
-- Every visible solid line is an independent object.
-- Do not omit a visible line because another nearby line already describes the roof shape.
-- Do not omit a visible line because it is short.
-- Do not omit a visible line because it joins two larger lines.
-- Do not omit a visible line because it runs close to another visible line.
-- If two separate solid lines run close together, return both.
-- Do not combine nearby or parallel lines into one line.
-- Include solid lines that terminate on the roof perimeter.
-- Include solid lines that follow part of the roof perimeter.
-- Trace every line from its visible start point to its visible end point or visible junction.
-- If you are unsure whether a visible solid line belongs to the roof, INCLUDE IT.
+- Treat every visible solid line segment as an independent object.
+- Never merge two visible line segments into a single line segment.
+- If a visible line changes direction, it is multiple line segments joined at a junction.
+- Return each line segment independently.
+- A junction is an endpoint where one line segment ends and another begins.
+- A junction may occur where two or more line segments meet, or where one line segment terminates anywhere along another line segment (a T-junction).
+- Trace every line segment from one visible endpoint or junction to the next visible endpoint or junction.
+- Whenever a line reaches a junction, end the current line segment and begin a new one if another segment continues.
+- Include line segments that terminate on or follow part of the confirmed roof perimeter.
+- If two separate line segments run close together or parallel, return both.
+- Do not extend, shorten, combine or omit visible line segments.
+- If you are unsure whether a visible solid line segment belongs to the roof drawing, INCLUDE IT.
 
 ## IGNORE ONLY
 
@@ -159,13 +148,13 @@ Do not return:
 - Hatching
 - Page borders
 
-If a solid line and a dotted or dashed line are close together, always trace the solid line.
+If a solid line segment and a dotted or dashed line are close together, always trace the solid line segment.
 
 ## WHAT TO RETURN
 
-Return an array of detected line objects.
+Return an array of detected line segments.
 
-For each detected line return only:
+For each line segment return only:
 
 - \`start\`: {x, y}
 - \`end\`: {x, y}
