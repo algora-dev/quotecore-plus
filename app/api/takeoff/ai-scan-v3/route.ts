@@ -39,7 +39,6 @@ import {
   renderCleanOverlay,
   outlineToEdgeLines,
 } from '@/app/lib/takeoff/scanOverlay';
-import { generateAdaptiveLinework } from '@/app/lib/takeoff/adaptiveLinework';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
 
 export const runtime = 'nodejs';
@@ -199,7 +198,7 @@ async function preprocessImage(rawBuffer: Buffer): Promise<Buffer> {
 
 // ── Angle snapping (deterministic post-Scan 2) ──────────────────────────
 
-const ANGLE_TOLERANCE = 8; // degrees — lines within this of 0/45/90/135 are snapped
+const ANGLE_TOLERANCE = 5; // degrees — lines within this of 0/45/90/135 are snapped (matches prompt ±5°)
 const ALLOWED_ANGLES = [0, 45, 90, 135];
 
 function lineAngle(start: V3Point, end: V3Point): number {
@@ -435,25 +434,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Image is too small for analysis.' }, { status: 400 });
       }
 
-      let lineworkBuffer: Buffer;
-      try {
-        lineworkBuffer = await generateAdaptiveLinework(processedBuffer, { windowSize: 25, sensitivity: 10 });
-      } catch {
-        lineworkBuffer = processedBuffer;
-      }
-      timer.mark('linework_done');
-
       timer.mark('scan1_call_start');
       const originalDataUrl = `data:image/png;base64,${processedBuffer.toString('base64')}`;
-      const lineworkDataUrl = `data:image/png;base64,${lineworkBuffer.toString('base64')}`;
 
       let result;
       try {
         result = await callVisionModel(
           buildV3OutlinePrompt(imgW, imgH),
           [
-            { dataUrl: lineworkDataUrl, label: 'IMAGE 1: ADAPTIVE LINEWORK (primary geometry evidence)' },
-            { dataUrl: originalDataUrl, label: 'IMAGE 2: ORIGINAL PLAN (context)' },
+            { dataUrl: originalDataUrl, label: 'IMAGE 1: ORIGINAL PLAN (the raw architectural roof plan)' },
           ],
           V3_SCAN1_SCHEMA,
           model,
@@ -556,23 +545,11 @@ export async function POST(req: NextRequest) {
         y: Math.round(p.y * scaleY),
       }));
 
-      let lineworkBuffer: Buffer;
-      try {
-        lineworkBuffer = await generateAdaptiveLinework(processedBuffer, {
-          windowSize: 25, sensitivity: 10,
-          maskPolygon: outlinePoints, width: imgW, height: imgH,
-        });
-      } catch {
-        lineworkBuffer = processedBuffer;
-      }
-      timer.mark('linework_done');
-
       const outlineOverlayBuffer = await renderOutlineOverlay(processedBuffer, outlinePoints, imgW, imgH);
       timer.mark('overlay_done');
 
       timer.mark('scan2_call_start');
       const originalDataUrl = `data:image/png;base64,${processedBuffer.toString('base64')}`;
-      const lineworkDataUrl = `data:image/png;base64,${lineworkBuffer.toString('base64')}`;
       const overlayDataUrl = `data:image/png;base64,${outlineOverlayBuffer.toString('base64')}`;
 
       let result;
@@ -581,8 +558,7 @@ export async function POST(req: NextRequest) {
           buildV3LineDetectionPrompt({ width: imgW, height: imgH, outlinePoints }),
           [
             { dataUrl: overlayDataUrl, label: 'IMAGE 1: OUTLINE OVERLAY (original plan with confirmed roof outline in blue dashed)' },
-            { dataUrl: lineworkDataUrl, label: 'IMAGE 2: ADAPTIVE LINEWORK (high-contrast line extraction, masked to outline)' },
-            { dataUrl: originalDataUrl, label: 'IMAGE 3: ORIGINAL PLAN (for context)' },
+            { dataUrl: originalDataUrl, label: 'IMAGE 2: ORIGINAL PLAN (for context)' },
           ],
           V3_SCAN2_SCHEMA,
           model,

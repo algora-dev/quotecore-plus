@@ -6,6 +6,7 @@
  * Scan 3 = Classification only (GPT names each labeled line, no coordinate changes)
  *
  * Core principle: each scan does ONE thing. Simpler prompts = better accuracy.
+ * No adaptive linework — original plan images are clear enough for GPT-5.6 vision.
  */
 
 // ─── Shared Types ────────────────────────────────────────────────────────
@@ -32,26 +33,28 @@ export interface V3Classification {
 // ─── Scan 1: Outline Only ────────────────────────────────────────────────
 
 export function buildV3OutlinePrompt(width: number, height: number): string {
-  return `You are an expert roofing plan analyst. Two images are provided:
+  return `You are an expert roofing plan analyst. An image is provided:
 
-1. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
-2. ADAPTIVE LINEWORK IMAGE — a high-contrast extraction where narrow strokes appear as black lines on white.
+ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
 Return integer coordinates in the original image-pixel coordinate system (0,0 = top-left).
 
 ## YOUR ONLY TASK
+
 Trace the centre of the visible outer roof-perimeter stroke. Preserve every genuine direction change. Small gaps caused by labels, dimensions or image quality may be bridged only when the continuation is clear from the original image. Return the outline as a polygon — an ordered list of {x, y} points.
 
 ## OUTLINE RULES
+
 - Follow the clear visible perimeter evidence.
-- Include every visible step, notch, and re-entrant corner.
-- Ignore dotted lines.
+- Include every visible step, notch, and re-entrant corner. Do not simplify the roof outline. Every connected roof projection, recess and offset visible on the perimeter must be included, even if it is small.
+- Only trace continuous solid roof lines. Never trace dotted, dashed or hidden lines, even if they are parallel to the expected roof geometry.
 - Ensure lines do not terminate at artifacts, text, or odd shapes, only at real outline junctions.
 - Ignore shading or fill colours; follow external black or dark lines.
 - Ignore any lines inside the outline of the roof.
 - Ignore non-roof marks: dimensions, text, leaders, grids, borders, hatching, arrows.
 
 ## OUTLINE QUALITY
+
 - Each point should be at any direction change in the perimeter.
 - Each point should be anywhere a vertical, horizontal, or 45 degree angle ends on the perimeter.
 - Minimum 4 points (rectangle). Maximum of 50 points.
@@ -73,26 +76,31 @@ export function buildV3LineDetectionPrompt(params: {
 
   return `You are an expert roofing plan geometry tracer. You are given:
 
-1. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
-2. ADAPTIVE LINEWORK IMAGE — high-contrast extraction where structural lines are black on white.
-3. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a blue dashed polygon.
+1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a blue dashed polygon.
+2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
 Assume this is a standard residential roof plan drawn using horizontal, vertical and 45° roof geometry. Do not attempt to interpret unusual or complex roof designs. If the visible geometry does not match these assumptions, return only the lines that clearly do.
 
 ## CONFIRMED ROOF OUTLINE
+
 The roof outline has already been traced and confirmed. Its vertices (in image pixel coordinates) are:
 ${outlineStr}
 
 This outline is AUTHORITATIVE. Do not modify it. Do not return the roof outline polygon itself, but do return any visible structural roof line that lies on or follows part of the roof perimeter (for example, a potential barge).
 
 ## YOUR ONLY TASK
-Find ALL visible structural roof lines inside the confirmed roof outline, including structural lines that lie on or terminate at the roof perimeter. For each line:
+
+Detect every visible solid roof line segment inside or along the confirmed roof outline. At this stage, do not decide whether a line is a ridge, valley, hip, barge or broken component. If a solid roof line is visible, return it. Classification happens later.
+
+For each line:
 - Return its start point {x, y} and end point {x, y} in image pixel coordinates.
 - Assign it a label: "L1", "L2", "L3", etc. (sequential, starting at L1).
 - Return a confidence score (0.0 to 1.0) for how clearly visible the line is.
 
 ## ANGLE CONSTRAINT — CRITICAL
+
 Lines on roof plans are ALWAYS one of these orientations:
+
 - **Horizontal** (0°): runs left-right
 - **Vertical** (90°): runs up-down
 - **Diagonal at 45°**: runs bottom-left to top-right
@@ -104,14 +112,17 @@ A line is considered to match an allowed angle if its actual angle is within ±5
 If a visible line falls outside ALL of the ±5 degree ranges, do NOT include it.
 
 ## LINE DETECTION RULES (1 line is always 1 point to point distance, never more than 2 points per line)
+
 1. Only trace what you can SEE. If there is no visible line on the plan, never invent one.
 2. Trace the full extent of each visible line from where it starts to where it ends or meets another line.
 3. Every detected line should normally connect at one or both ends to the confirmed roof outline or another detected roof line. Ignore isolated lines that clearly do not form part of the roof geometry.
 4. Include lines that touch the outline boundary — if a visible internal line extends to the roof perimeter, include the full extent.
 4a. Do not ignore visible structural line segments that run along the confirmed roof perimeter. These are valid detected roof lines and must be returned like any other line.
 5. Merge collinear fragments only when the gap is small compared with the line length and the original image clearly supports continuity.
+6. Visible solid line segments running along part of the roof perimeter are structural roof lines and must be detected. They will be classified later.
 
 ## WHAT TO RETURN
+
 For each detected line, return:
 - \`id\`: "L1", "L2", "L3", ... (sequential)
 - \`start\`: {x, y} in pixel coordinates
@@ -154,8 +165,8 @@ export function buildV3ClassificationPrompt(params: {
   return `You are an expert roofing plan component classifier. Geometry has already been detected. Your ONLY task is to classify each labeled line.
 
 Three images are provided:
-1. ANNOTATED ORIGINAL - the original plan with the confirmed outline (blue dashed) and all detected lines drawn in orange with their labels (L1, L2, etc.) visible.
-2. CLEAN OVERLAY - just the outline and labeled lines on white background, no plan image.
+1. ANNOTATED ORIGINAL — the original plan with the confirmed outline (blue dashed) and all detected lines drawn in orange with their labels (L1, L2, etc.) visible.
+2. CLEAN OVERLAY — just the outline and labeled lines on white background, no plan image.
 3. The original plan image for reference.
 
 ## CONFIRMED ROOF OUTLINE
@@ -165,15 +176,30 @@ ${outlineStr}
 ${lineTable}
 
 ## CLASSIFICATION OPTIONS
+
 Classify each line using its visible position, orientation and connections. Do not invent missing lines or reclassify the geometry.
 
 For each line ID, choose exactly one:
+
 - **ridge** — Normally a vertical or horizontal line inside the roof outline. A ridge can connect to an internal end point of a valley, hip, and also end on the outline of the roof, perpendicular to it.
 - **hip** — a 45 degree diagonal line always starting from an EXTERNAL (convex) corner of the outline, running inward connecting to another line.
 - **valley** — a diagonal line normally starting from an INTERNAL (concave/re-entrant) corner of the outline, running inward connecting to another line.
-- **barge** — a perimeter-parallel line at a gable end, normally perpendicular ridge lines that land on the roof outline. Normally horizontal or vertical.
+- **barge** — a perimeter-parallel line at a gable end, normally perpendicular to ridge lines that land on the roof outline. Normally horizontal or vertical.
+- **spouting** — a perimeter edge line that is NOT a barge. These are the edges where spouting/guttering would go. Use this for outline perimeter edges that are not perpendicular to a ridge (i.e. not barges).
 - **broken_hip** — a diagonal internal line that doesn't touch the perimeter, branching from a hip/valley junction and joining to another hip or ridge line.
 - **broken_barge** — an internal gable-edge segment not on the perimeter, normally vertical or horizontal.
+- **uncertain** — use ONLY when you genuinely cannot determine the type. Better to say uncertain than guess wrong, but use sparingly.
+
+## OUTLINE EDGES
+The outline polygon edges (between consecutive outline vertices) are also candidates for barge or spouting classification. Outline edge 0→1 is the first edge, 1→2 is the second, etc. (wrapping around). Include these in your classification — each outline edge gets a line ID starting with "E0", "E1", etc.
+
+## GLOBAL CONSISTENCY
+After classifying each line individually, check:
+1. Every hip starts at a convex corner. If not, reclassify.
+2. Every valley starts at a concave corner. If not, reclassify.
+3. Ridges connect meaningfully at both ends.
+4. Barges are perpendicular to ridges.
+5. Spouting + Barges = all perimeter edges.
 
 Return only the structured JSON required by the schema.`;
 }
