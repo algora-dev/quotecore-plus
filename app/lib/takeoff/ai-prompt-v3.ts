@@ -74,135 +74,44 @@ export function buildV3LineDetectionPrompt(params: {
     .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
     .join('\n');
 
-  return `You are an expert CAD line tracer.
-
-Two images are provided:
-
-1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a blue dashed polygon.
-2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
-
-Assume this is a standard residential roof plan drawn using horizontal, vertical and 45° roof geometry.
-
-## CONFIRMED ROOF OUTLINE
+  return `You are digitising a CAD drawing.
 
 The roof outline has already been confirmed.
 
-Outline vertices:
-${outlineStr}
-
-This outline is AUTHORITATIVE.
-
 Do not modify it.
 
-Do not return the roof outline polygon itself.
+Inside the confirmed roof outline, return every visible SOLID line.
 
-## YOUR ONLY TASK
+Pretend you are tracing every solid line with a pen.
 
-Trace every visible SOLID roof line segment that exists inside the confirmed roof outline or runs along part of the confirmed roof perimeter.
+Every visible solid line is an independent object.
 
-Do NOT identify ridges, hips, valleys, barges or any other roof component.
+Never omit a visible line because another nearby line appears more important.
 
-Do NOT interpret the roof.
+Never replace multiple nearby lines with one line.
 
-Simply trace every visible solid roof line.
+Ignore ONLY:
 
-Classification happens later.
+- dotted lines
+- dashed lines
+- text
+- dimensions
+- arrows
+- symbols
+- leaders
+- hatching
 
-COMPLETENESS IS MORE IMPORTANT THAN SELECTIVITY.
+Return every other visible solid line exactly once.
 
-It is better to return an extra visible roof line than to omit a genuine one.
+Return each line using its visible start point and visible end point.
 
-## INSPECTION METHOD
+Return only:
 
-Before producing your answer:
+start {x,y}
 
-1. Visually inspect the entire roof.
-2. Mentally divide the roof into small regions.
-3. Inspect every region independently.
-4. Trace every visible solid roof line in each region.
-5. Perform one final inspection of the entire roof and check that no visible solid roof line has been missed.
-6. Return the complete combined list.
+end {x,y}
 
-Do not stop after finding only the major roof lines.
-
-## EVERY LINE IS IMPORTANT
-
-Every visible solid roof line is an independent line.
-
-Do not omit a line because another line already describes the roof shape.
-Do not omit a line because it is short.
-Do not omit a line because it joins two larger lines.
-
-## PARALLEL LINES
-
-If two separate solid lines run close together, they are two different line segments.
-
-Return both.
-
-Never merge nearby parallel lines into one.
-
-## RETURN THESE LINES
-
-Return:
-
-- Long roof lines
-- Short roof lines
-- Horizontal roof lines
-- Vertical roof lines
-- Diagonal roof lines
-- Roof lines running along the roof perimeter
-- Roof lines ending on the roof perimeter
-- Small connecting roof lines
-- Every other visible solid roof line
-
-## IGNORE
-
-Never return:
-
-- Dotted or dashed lines
-- Hidden lines
-- Spouting
-- Text
-- Dimensions
-- Leaders
-- Arrows
-- Symbols
-- Hatching
-- Borders
-
-If a solid line and a dotted or dashed line are close together, ALWAYS choose the solid line.
-
-## ANGLE CONSTRAINT
-
-Every returned line must be approximately:
-
-- Horizontal (0° ±5°)
-- Vertical (90° ±5°)
-- 45° diagonal (45° ±5°)
-- 135° diagonal (135° ±5°)
-
-Trace each line from one visible endpoint until it reaches another visible endpoint or intersects another visible roof line.
-
-Return one object for each visible line segment.
-
-Do not combine separate visible lines into one.
-
-If you are unsure whether a visible solid line belongs to the roof, INCLUDE IT.
-
-## WHAT TO RETURN
-
-Return an array of detected lines.
-
-For each line return only:
-
-- \`start\`: {x, y}
-- \`end\`: {x, y}
-
-Do not generate IDs.
-
-The system will assign IDs after detection.
-
-Return only the required JSON.`;
+Return only JSON.`;
 }
 
 // ─── Scan 3: Classification Only ─────────────────────────────────────────
