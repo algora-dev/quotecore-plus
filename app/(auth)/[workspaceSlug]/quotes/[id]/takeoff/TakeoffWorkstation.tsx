@@ -4109,11 +4109,11 @@ export function TakeoffWorkstation({
         reader.readAsDataURL(imgBlob);
       });
 
-      const response = await fetch('/api/takeoff/ai-scan', {
+      const response = await fetch('/api/takeoff/ai-scan-v2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stage: 'outline',
+          stage: 'outline_skeleton',
           image: dataUrl,
           imageMime: imgBlob.type || 'image/png',
           quoteId: quote.id,
@@ -4126,7 +4126,7 @@ export function TakeoffWorkstation({
 
       if (!response.ok || !result.success) {
         const errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
-        console.error('[AI Takeoff] scan error:', errMsg, result);
+        console.error('[AI Takeoff V2] scan error:', errMsg, result);
         setAiScanError(errMsg);
         return;
       }
@@ -4137,6 +4137,13 @@ export function TakeoffWorkstation({
       }
       setAiOutlineData(result.data);
       setAiAnalysisImage({ dataUrl, width: canvasDims.width, height: canvasDims.height });
+      // Store V2 skeleton data for Scan 2
+      if (result.data?.internal_nodes && result.data?.segments) {
+        setAiV2Skeleton({
+          nodes: result.data.internal_nodes,
+          segments: result.data.segments,
+        });
+      }
       const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
         index: idx,
         name: area.name || `Area ${idx + 1}`,
@@ -4168,21 +4175,29 @@ export function TakeoffWorkstation({
     }));
 
     setAiScanning(true);
-    setAiScanStage('components');
+    setAiScanStage('classify');
     setAiScanError(null);
     try {
-      const response = await fetch('/api/takeoff/ai-scan', {
+      const response = await fetch('/api/takeoff/ai-scan-v2', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stage: 'components',
+          stage: 'classify',
           image: aiAnalysisImage.dataUrl,
           imageMime: 'image/png',
           canvasDimensions: canvasDims,
           quoteId: quote.id,
           pageId,
           confirmedAreas,
-          outlineData: { ...aiOutlineData, roof_areas: confirmedAreas },
+          skeletonData: aiV2Skeleton ? {
+            nodes: aiV2Skeleton.nodes,
+            segments: aiV2Skeleton.segments,
+            roof_areas: confirmedAreas,
+            unresolved_geometry: [],
+            notes: [],
+            rejected_segments: [],
+          } : null,
+          originalImage: aiAnalysisImage.dataUrl,
         }),
       });
       const result = await response.json().catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
