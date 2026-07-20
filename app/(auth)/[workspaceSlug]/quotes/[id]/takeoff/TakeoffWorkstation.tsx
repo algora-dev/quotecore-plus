@@ -4322,6 +4322,15 @@ export function TakeoffWorkstation({
           id: ra.id, label: ra.name, pitch: ra.pitch, area: ra.area,
         })),
       ]);
+
+      // Set the first created area as active so manually-drawn components
+      // are stamped with the correct quoteRoofAreaId. Without this, components
+      // get stamped with null/old area ID, and clicking the AI area in the
+      // sidebar wipes them from the canvas (cache restore loads empty state).
+      const firstArea = newRoofAreas[0];
+      setActiveAreaId(firstArea.id);
+      activeAreaIdRef.current = firstArea.id;
+      setActiveSaveRoofAreaId(firstArea.id);
     }
 
     canvas.renderAll();
@@ -4678,6 +4687,15 @@ export function TakeoffWorkstation({
     // Update the results modal with dropped count
     if (applied.droppedCount > 0 && aiResults) {
       setAiResults({ ...aiResults, droppedCount: applied.droppedCount });
+    }
+
+    // Set the first created area as active so manually-drawn components
+    // are stamped with the correct quoteRoofAreaId.
+    if (newRoofAreas.length > 0) {
+      const firstArea = newRoofAreas[0];
+      setActiveAreaId(firstArea.id);
+      activeAreaIdRef.current = firstArea.id;
+      setActiveSaveRoofAreaId(firstArea.id);
     }
 
     canvas.renderAll();
