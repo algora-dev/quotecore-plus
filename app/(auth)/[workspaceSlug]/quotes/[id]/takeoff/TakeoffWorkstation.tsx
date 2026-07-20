@@ -255,15 +255,13 @@ export function TakeoffWorkstation({
   const [aiOutlineData, setAiOutlineData] = useState<AiScanData | null>(null);
   const [aiOutlineAreas, setAiOutlineAreas] = useState<AiResultsArea[] | null>(null);
   const [aiAnalysisImage, setAiAnalysisImage] = useState<{ dataUrl: string; width: number; height: number } | null>(null);
-  const [aiScanStage, setAiScanStage] = useState<'outline' | 'components' | 'skeleton' | 'classify'>('outline');
-  // V2 feature flag — routes between V1 (combined scan) and V2 (recovery plan)
-  const aiTakeoffMode = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_AI_TAKEOFF_MODE as 'v1' | 'v2' | undefined)) || 'v2';
-  const aiScanEndpoint = aiTakeoffMode === 'v1' ? '/api/takeoff/ai-scan' : '/api/takeoff/ai-scan-v2';
-  // V2 skeleton state
-  const [aiV2Skeleton, setAiV2Skeleton] = useState<{
-    nodes: Array<{ id: string; area_index: number; kind: 'junction' | 'perimeter_point'; x: number; y: number; confidence: number }>;
-    segments: Array<{ id: string; area_index: number; start_node_id: string; end_node_id: string; confidence: number; inferred: boolean }>;
-  } | null>(null);
+  const [aiScanStage, setAiScanStage] = useState<'outline' | 'lines' | 'classify'>('outline');
+  // V3: 3-scan pipeline (outline → line detection → classification)
+  const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
+  // V3: intermediate state between scan 2 and scan 3
+  const [aiV3Lines, setAiV3Lines] = useState<Array<{ id: string; start: { x: number; y: number }; end: { x: number; y: number }; confidence: number }> | null>(null);
+  const [aiV3OutlinePoints, setAiV3OutlinePoints] = useState<Array<{ x: number; y: number }> | null>(null);
+  const [aiV3AnalysisDims, setAiV3AnalysisDims] = useState<{ width: number; height: number } | null>(null);
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -4116,7 +4114,7 @@ export function TakeoffWorkstation({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stage: 'outline_skeleton',
+          stage: 'scan1',
           image: dataUrl,
           imageMime: imgBlob.type || 'image/png',
           quoteId: quote.id,
@@ -4129,23 +4127,20 @@ export function TakeoffWorkstation({
 
       if (!response.ok || !result.success) {
         const errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
-        console.error('[AI Takeoff V2] scan error:', errMsg, result);
+        console.error('[AI Takeoff V3] scan1 error:', errMsg, result);
         setAiScanError(errMsg);
         return;
       }
 
-      if (result.summary?.unreadable || !result.data?.roof_areas?.length) {
+      if (!result.data?.roof_areas?.length) {
         setAiScanError(result.summary?.notes?.[0] || 'No usable roof outline was detected.');
         return;
       }
       setAiOutlineData(result.data);
       setAiAnalysisImage({ dataUrl, width: canvasDims.width, height: canvasDims.height });
-      // Store V2 skeleton data for Scan 2
-      if (result.data?.internal_nodes && result.data?.segments) {
-        setAiV2Skeleton({
-          nodes: result.data.internal_nodes,
-          segments: result.data.segments,
-        });
+      // Store V3 analysis dimensions for scan 2
+      if (result.analysisDimensions) {
+        setAiV3AnalysisDims(result.analysisDimensions);
       }
       const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
         index: idx,
@@ -4178,36 +4173,59 @@ export function TakeoffWorkstation({
     }));
 
     setAiScanning(true);
-    setAiScanStage('classify');
+    setAiScanStage('lines');
     setAiScanError(null);
     try {
-      const response = await fetch(aiScanEndpoint, {
+      // ── Scan 2: Internal line detection ──
+      const scan2Response = await fetch(aiScanEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stage: 'classify',
+          stage: 'scan2',
           image: aiAnalysisImage.dataUrl,
           imageMime: 'image/png',
           canvasDimensions: canvasDims,
           quoteId: quote.id,
           pageId,
-          confirmedAreas,
-          skeletonData: aiV2Skeleton ? {
-            nodes: aiV2Skeleton.nodes,
-            segments: aiV2Skeleton.segments,
-            roof_areas: confirmedAreas,
-            unresolved_geometry: [],
-            notes: [],
-            rejected_segments: [],
-          } : null,
-          originalImage: aiAnalysisImage.dataUrl,
+          outlinePoints: confirmedAreas[0]?.points ?? [],
+          analysisDimensions: aiV3AnalysisDims ?? { width: canvasDims.width, height: canvasDims.height },
         }),
       });
-      const result = await response.json().catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
-      if (!response.ok || !result.success) {
+      const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
+      if (!scan2Response.ok || !scan2Result.success) {
+        setAiScanError(scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).`);
+        return;
+      }
+
+      const detectedLines = scan2Result.data?.lines ?? [];
+      const outlinePoints = scan2Result.data?.outlinePoints ?? confirmedAreas[0]?.points ?? [];
+      setAiV3Lines(detectedLines);
+      setAiV3OutlinePoints(outlinePoints);
+
+      console.log(`[AI Takeoff V3] scan2 complete: ${detectedLines.length} lines detected (raw=${scan2Result.summary?.rawLines}, rejected=${scan2Result.summary?.angleRejected}, floating=${scan2Result.summary?.floating})`);
+
+      // ── Scan 3: Classification ──
+      setAiScanStage('classify');
+      const scan3Response = await fetch(aiScanEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stage: 'scan3',
+          image: aiAnalysisImage.dataUrl,
+          imageMime: 'image/png',
+          canvasDimensions: canvasDims,
+          quoteId: quote.id,
+          pageId,
+          outlinePoints: outlinePoints,
+          lines: detectedLines,
+          analysisDimensions: aiV3AnalysisDims ?? { width: canvasDims.width, height: canvasDims.height },
+        }),
+      });
+      const result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
+      if (!scan3Response.ok || !result.success) {
         const violations = Array.isArray(result.topologyViolations)
           ? ` ${result.topologyViolations.join(' ')}` : '';
-        setAiScanError(`${result.error || `AI scan failed (HTTP ${response.status}).`}${violations}`);
+        setAiScanError(`${result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}`);
         return;
       }
 
@@ -4225,7 +4243,7 @@ export function TakeoffWorkstation({
       });
       setAiOutlineAreas(null);
     } catch (error) {
-      setAiScanError(`Component scan failed: ${error instanceof Error ? error.message : 'Network error.'}`);
+      setAiScanError(`Classification failed: ${error instanceof Error ? error.message : 'Network error.'}`);
     } finally {
       setAiScanning(false);
     }
@@ -4343,7 +4361,9 @@ export function TakeoffWorkstation({
     setAiOutlineAreas(null);
     setAiOutlineData(null);
     setAiAnalysisImage(null);
-    setAiV2Skeleton(null);
+    setAiV3Lines(null);
+    setAiV3OutlinePoints(null);
+    setAiV3AnalysisDims(null);
     setShowRoofAreaInstructions(false);
     roofAreaInstructionsDismissedRef.current = true;
   };
@@ -6360,7 +6380,7 @@ export function TakeoffWorkstation({
           <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl text-center">
             <div className="inline-block w-8 h-8 border-3 border-slate-200 border-t-[#FF6B35] rounded-full animate-spin mb-3" />
             <h3 className="text-sm font-semibold text-slate-900">
-              {aiScanStage === 'outline' ? 'Finding roof areas…' : 'Finding connected roof components…'}
+              {aiScanStage === 'outline' ? 'Tracing roof outline…' : aiScanStage === 'lines' ? 'Detecting roof lines…' : 'Classifying components…'}
             </h3>
             <p className="text-xs text-slate-500 mt-1">This may take a few moments.</p>
           </div>
@@ -6388,14 +6408,14 @@ export function TakeoffWorkstation({
           outlines={aiOutlineData.roof_areas}
           canvasWidth={canvasDims.width}
           canvasHeight={canvasDims.height}
-          skeletonNodes={aiV2Skeleton?.nodes}
-          skeletonSegments={aiV2Skeleton?.segments}
           onConfirm={handleConfirmAiAreas}
           onDiscard={() => {
             setAiOutlineAreas(null);
             setAiOutlineData(null);
             setAiAnalysisImage(null);
-            setAiV2Skeleton(null);
+            setAiV3Lines(null);
+            setAiV3OutlinePoints(null);
+            setAiV3AnalysisDims(null);
           }}
           onManualComponents={handleManualComponents}
         />
@@ -6411,6 +6431,9 @@ export function TakeoffWorkstation({
             setAiScanRaw(null);
             setAiOutlineData(null);
             setAiAnalysisImage(null);
+            setAiV3Lines(null);
+            setAiV3OutlinePoints(null);
+            setAiV3AnalysisDims(null);
           }}
         />
       )}
