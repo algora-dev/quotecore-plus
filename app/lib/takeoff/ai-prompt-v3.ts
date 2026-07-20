@@ -104,7 +104,7 @@ Do NOT identify ridges, hips, valleys, barges or any other roof component.
 
 Do NOT interpret the roof.
 
-Simply copy every visible solid roof line.
+Simply trace every visible solid roof line.
 
 Classification happens later.
 
@@ -119,10 +119,27 @@ Before producing your answer:
 1. Visually inspect the entire roof.
 2. Mentally divide the roof into small regions.
 3. Inspect every region independently.
-4. In every region trace every visible solid roof line.
-5. Combine every detected line into one final list.
+4. Trace every visible solid roof line in each region.
+5. Perform one final inspection of the entire roof and check that no visible solid roof line has been missed.
+6. Return the complete combined list.
 
 Do not stop after finding only the major roof lines.
+
+## EVERY LINE IS IMPORTANT
+
+Every visible solid roof line is an independent line.
+
+Do not omit a line because another line already describes the roof shape.
+Do not omit a line because it is short.
+Do not omit a line because it joins two larger lines.
+
+## PARALLEL LINES
+
+If two separate solid lines run close together, they are two different line segments.
+
+Return both.
+
+Never merge nearby parallel lines into one.
 
 ## RETURN THESE LINES
 
@@ -130,10 +147,13 @@ Return:
 
 - Long roof lines
 - Short roof lines
+- Horizontal roof lines
+- Vertical roof lines
+- Diagonal roof lines
 - Roof lines running along the roof perimeter
 - Roof lines ending on the roof perimeter
 - Small connecting roof lines
-- Any other visible solid roof line
+- Every other visible solid roof line
 
 ## IGNORE
 
@@ -150,7 +170,7 @@ Never return:
 - Hatching
 - Borders
 
-If a solid line and a dotted line are close together, ALWAYS choose the solid line.
+If a solid line and a dotted or dashed line are close together, ALWAYS choose the solid line.
 
 ## ANGLE CONSTRAINT
 
@@ -163,11 +183,9 @@ Every returned line must be approximately:
 
 Trace each line from one visible endpoint until it reaches another visible endpoint or intersects another visible roof line.
 
-Return one object for each continuous visible line.
+Return one object for each visible line segment.
 
-Do not split one continuous line.
-
-Merge only obvious tiny gaps caused by scan quality.
+Do not combine separate visible lines into one.
 
 If you are unsure whether a visible solid line belongs to the roof, INCLUDE IT.
 
