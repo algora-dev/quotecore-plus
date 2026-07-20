@@ -256,9 +256,12 @@ export function TakeoffWorkstation({
   const [aiOutlineAreas, setAiOutlineAreas] = useState<AiResultsArea[] | null>(null);
   const [aiAnalysisImage, setAiAnalysisImage] = useState<{ dataUrl: string; width: number; height: number } | null>(null);
   const [aiScanStage, setAiScanStage] = useState<'outline' | 'components' | 'skeleton' | 'classify'>('outline');
-  // V2 skeleton state (AI_TAKEOFF_SKELETON_V2)
+  // V2 feature flag — routes between V1 (combined scan) and V2 (recovery plan)
+  const aiTakeoffMode = (typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_AI_TAKEOFF_MODE as 'v1' | 'v2' | undefined)) || 'v2';
+  const aiScanEndpoint = aiTakeoffMode === 'v1' ? '/api/takeoff/ai-scan' : '/api/takeoff/ai-scan-v2';
+  // V2 skeleton state
   const [aiV2Skeleton, setAiV2Skeleton] = useState<{
-    nodes: Array<{ id: string; area_index: number; kind: string; x: number; y: number; confidence: number }>;
+    nodes: Array<{ id: string; area_index: number; kind: 'junction' | 'perimeter_point'; x: number; y: number; confidence: number }>;
     segments: Array<{ id: string; area_index: number; start_node_id: string; end_node_id: string; confidence: number; inferred: boolean }>;
   } | null>(null);
   // Once the user dismisses the "Calibration complete" popup, never show it again
@@ -4109,7 +4112,7 @@ export function TakeoffWorkstation({
         reader.readAsDataURL(imgBlob);
       });
 
-      const response = await fetch('/api/takeoff/ai-scan-v2', {
+      const response = await fetch(aiScanEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -4178,7 +4181,7 @@ export function TakeoffWorkstation({
     setAiScanStage('classify');
     setAiScanError(null);
     try {
-      const response = await fetch('/api/takeoff/ai-scan-v2', {
+      const response = await fetch(aiScanEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -6385,6 +6388,8 @@ export function TakeoffWorkstation({
           outlines={aiOutlineData.roof_areas}
           canvasWidth={canvasDims.width}
           canvasHeight={canvasDims.height}
+          skeletonNodes={aiV2Skeleton?.nodes}
+          skeletonSegments={aiV2Skeleton?.segments}
           onConfirm={handleConfirmAiAreas}
           onDiscard={() => {
             setAiOutlineAreas(null);

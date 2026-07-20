@@ -1,67 +1,66 @@
 /**
- * AI Takeoff V2 prompts — skeleton-first approach.
+ * AI Takeoff V2 prompts — skeleton-only approach (Recovery Plan).
  *
- * Scan 1 = Geometry: detect roof outline + unclassified internal skeleton
- *           (nodes + segments, no component types).
- * Scan 2 = Classification: classify each existing segment only;
- *           never create, move, extend, or reconnect geometry.
+ * Scan 1 = Geometry:
+ *   1. Deterministic outline extraction (v2Outline.ts) — no GPT
+ *   2. Skeleton-only GPT call inside validated outline — nodes + segments only
  *
- * Behind AI_TAKEOFF_SKELETON_V2 feature flag.
+ * Scan 2 = Classification:
+ *   Classify each existing segment only; never create/move/extend geometry.
  */
 
-// ── Scan 1: Outline + Unclassified Skeleton ─────────────────────────────
+// ── Scan 1 Step 2: Skeleton-Only GPT Call ───────────────────────────────
 
-export function buildV2Scan1Prompt(width: number, height: number): string {
-  return `You are an expert roofing-plan geometry analyst. Two aligned images are provided:
+export function buildV2SkeletonPrompt(params: {
+  width: number;
+  height: number;
+  outlineVertices: Array<{ x: number; y: number }>;
+  outlineVertexIds: string[];
+}): string {
+  const { width, height, outlineVertices, outlineVertexIds } = params;
 
-1. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels. Use it to understand context and reject annotations, fixtures and non-roof marks.
-2. CONSERVATIVE LINEWORK IMAGE — a high-contrast extraction of the same plan. Use it to locate candidate strokes, but confirm every candidate against the original image.
+  // Build outline vertex reference text
+  const vertexList = outlineVertices.map((v, i) => `${outlineVertexIds[i]}: (${v.x}, ${v.y})`).join(', ');
 
-Both images use the original image-pixel coordinate system where (0,0) is top-left. Return integer coordinates.
+  return `You are an expert roofing-plan geometry analyst. You are given:
 
-You have exactly two ordered tasks:
-A. Trace each complete parent roof outline.
-B. Inside each traced outline, build an UNCLASSIFIED geometry skeleton from clearly visible connected roof strokes.
+1. MASKED ORIGINAL PLAN — the original roof plan cropped to the outline bounding box, with everything outside the validated roof outline masked to white. Dimensions: ${width}×${height} pixels.
+2. MASKED LINEWORK — a high-contrast extraction of the same cropped region.
 
-Do not classify any skeleton segment as ridge, hip, valley, broken hip, barge or spouting. This scan detects geometry only.
+The roof outline is AUTHORITATIVE and COMPLETE. It has already been deterministically extracted. Do NOT redraw, trace, simplify, or modify the outline. Do NOT return outline edges as skeleton segments.
 
-## TASK A — TRACE PARENT ROOF OUTLINES
-- Trace the complete outer perimeter of each physically separate roof structure.
-- Include every visible step, notch and re-entrant corner.
-- Return a separate parent area only when a visible gap physically disconnects it.
-- Do not divide one connected roof into individual sloping faces.
-- Ignore non-roof marks: dimensions, text, leaders, grids, borders, hatching, arrows, vents, skylights, walls.
-- Suggest a pitch only when a pitch annotation is clearly visible. Otherwise use null.
-- Detect a dimension line only when both endpoints and its real length are clearly visible and readable.
+## AUTHORITATIVE OUTLINE VERTICES
+${vertexList}
 
-## TASK B — BUILD UNCLASSIFIED SKELETON
-Inside each confirmed outline, find every clearly visible internal stroke that represents roof structure.
+These vertices are implicit perimeter nodes. Use their IDs when a skeleton segment terminates at the outline. You may also create 'perimeter_point' nodes where an internal stroke meets the MIDDLE of a straight outline edge (not at a vertex).
+
+## YOUR ONLY TASK
+Detect the unclassified internal roof skeleton inside the validated outline. Trace every clearly visible internal stroke that represents roof structure.
 
 ### REQUIRED EVIDENCE TESTS
 Include a segment only when ALL THREE tests pass:
-1. VISIBLE STROKE SUPPORT — A continuous solid line is visible along the proposed path in the original plan and is supported by the conservative linework image. Do not create a segment from empty space, shading, a fill boundary or geometric expectation alone.
-2. VALID CONNECTIVITY — Both ends terminate at one of: a confirmed perimeter vertex, a clearly supported point on a straight perimeter edge, or a shared internal junction where another accepted segment visibly meets. A segment may not stop freely in empty roof space.
-3. VALID V1 DIRECTION — The segment is horizontal, vertical or approximately 45 degrees. Slight drafting variation is acceptable, but do not force an unrelated stroke onto one of these directions.
+1. VISIBLE STROKE SUPPORT — A continuous solid line is visible along the proposed path in the masked original plan and is supported by the masked linework image.
+2. VALID CONNECTIVITY — Both ends terminate at: an outline vertex from the list above, a 'perimeter_point' on a straight outline edge, or a shared internal junction where another accepted segment visibly meets.
+3. VALID V1 DIRECTION — The segment is horizontal, vertical, or approximately 45°/135° diagonal.
 
 ### SKELETON CONSTRUCTION RULES
-- Create one node for each true shared junction and reuse its exact ID and coordinates for every connected segment.
+- Create one node for each true shared internal junction. Reuse its exact ID and coordinates for every connected segment.
 - Split a visible stroke at each real junction or intersection.
-- Every explicit internal junction must connect at least two returned segments.
-- Do not return isolated points. A point exists only because accepted visible segments connect there.
-- Do not duplicate the perimeter vertices as internal nodes.
+- Every internal junction must connect at least two returned segments.
+- Do not return isolated points.
 - Do not return perimeter outline edges as skeleton segments.
-- Do not return component names or types.
+- Do not classify segments (no ridge/hip/valley/barge/spouting labels).
 - Do not infer a missing connection merely because two nodes align.
-- Do not bridge a gap caused by text or an obstruction unless the same stroke visibly resumes on the same axis and the continuation is unmistakable. If not unmistakable, omit it and add a concise unresolved_geometry entry.
-- Set inferred=false for every directly visible segment.
+- Short diagonal connectors are valid and important when both ends join other roof lines. Do not omit them because they are shorter than surrounding hips or valleys.
+- Re-check congested central junctions for short missing diagonals.
 
 ### NOISE REJECTION
-Reject strokes belonging to: text, labels or leader lines; dimensions, extension lines or arrows; dashed wall lines, grids, hatching or borders; skylights, chimneys, vents or other fixtures; decorative marks, logos or page furniture.
+Reject strokes belonging to: text, labels, leader lines, dimensions, extension lines, arrows, dashed wall lines, grids, hatching, borders, skylights, chimneys, vents, fixtures, decorative marks, logos, page furniture.
 
 ### SELF-CHECK
 Before returning, verify:
 1. Every segment has two distinct node endpoints.
-2. Every node ID referenced by a segment exists in the nodes array.
+2. Every node ID referenced by a segment exists in the nodes array or in the outline vertex list above.
 3. No segment is duplicated or overlaps another returned segment.
 4. Every internal junction has degree at least 2.
 5. No unsupported geometry was introduced.
@@ -99,7 +98,7 @@ ${params.segmentTable}
 - Do not classify perimeter outline edges — they are not in the segment table.
 
 ## CLASSIFICATION FACTORS (use all three)
-1. ENDPOINT TOPOLOGY — What kind of node does each end connect to? (perimeter vertex, perimeter point, internal junction)
+1. ENDPOINT TOPOLOGY — What kind of node does each end connect to? (external_corner/convex, internal_corner/concave, straight_perimeter_point, internal_junction)
 2. DIRECTION CONNECTIVITY — Is the segment horizontal, vertical, or 45° diagonal? What does it connect to?
 3. VISIBLE PLAN CONTEXT — What does the original plan show at this location?
 
@@ -140,6 +139,9 @@ Use reject for a supplied candidate that the original plan shows is text, a lead
 ### UNRESOLVED
 Use unresolved only when the supplied geometry is genuine but the component type cannot be selected reliably from the three factors. Do not guess to make the graph look complete.
 
+## CANONICAL GABLE/BARGE RULE
+When a horizontal or vertical ridge terminates at, or clearly projects to, a straight roof-outline face, that endpoint forms a gable T-junction. Classify the internal line as a ridge. The two roof-outline runs leaving the projected ridge endpoint in opposite directions, both perpendicular to the ridge, are gable barges that run until the next corner or obvious junction. They are not spouting. Do not require the ridge coordinate to touch the outline exactly when its axis clearly terminates at that face.
+
 ## GLOBAL CONSISTENCY CHECK
 After classifying individually, inspect the complete network:
 - Hips must originate at convex perimeter corners.
@@ -160,48 +162,6 @@ const pointSchema = {
     y: { type: 'integer' as const },
   },
   required: ['x', 'y'] as const,
-  additionalProperties: false,
-};
-
-const scaleSchema = {
-  type: 'object' as const,
-  properties: {
-    detected: { type: 'boolean' as const },
-    ratio: { type: ['string', 'null'] as const },
-    dimension_line: {
-      type: ['object', 'null'] as const,
-      properties: {
-        p1: pointSchema,
-        p2: pointSchema,
-        real_length: { type: 'number' as const },
-        unit: { type: 'string' as const },
-      },
-      required: ['p1', 'p2', 'real_length', 'unit'] as const,
-      additionalProperties: false,
-    },
-  },
-  required: ['detected', 'ratio', 'dimension_line'] as const,
-  additionalProperties: false,
-};
-
-const pitchSchema = {
-  type: 'object' as const,
-  properties: {
-    detected: { type: 'boolean' as const },
-    global_degrees: { type: ['number', 'null'] as const },
-  },
-  required: ['detected', 'global_degrees'] as const,
-  additionalProperties: false,
-};
-
-const roofAreaSchema = {
-  type: 'object' as const,
-  properties: {
-    name: { type: 'string' as const },
-    points: { type: 'array' as const, items: pointSchema },
-    pitch_degrees: { type: ['number', 'null'] as const },
-  },
-  required: ['name', 'points', 'pitch_degrees'] as const,
   additionalProperties: false,
 };
 
@@ -237,24 +197,18 @@ const skeletonSegmentSchema = {
 };
 
 /**
- * Scan 1 response: outline + unclassified skeleton.
- * Perimeter vertices are implicit (a{area}v{index}), not duplicated as nodes.
- * internal_nodes only contains junctions and perimeter_points (where internal
- * strokes meet the middle of a straight edge).
+ * Scan 1 skeleton-only response.
+ * Outline is already deterministic — GPT only returns internal nodes + segments.
  */
 export const V2_SCAN1_SCHEMA = {
   type: 'object' as const,
   properties: {
-    error: { type: ['string', 'null'] as const },
-    scale: scaleSchema,
-    pitch: pitchSchema,
-    roof_areas: { type: 'array' as const, items: roofAreaSchema },
     internal_nodes: { type: 'array' as const, items: skeletonNodeSchema },
     segments: { type: 'array' as const, items: skeletonSegmentSchema },
     unresolved_geometry: { type: 'array' as const, items: { type: 'string' as const } },
     notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
-  required: ['error', 'scale', 'pitch', 'roof_areas', 'internal_nodes', 'segments', 'unresolved_geometry', 'notes'] as const,
+  required: ['internal_nodes', 'segments', 'unresolved_geometry', 'notes'] as const,
   additionalProperties: false,
 };
 
@@ -282,10 +236,9 @@ const classificationSchema = {
 export const V2_SCAN2_SCHEMA = {
   type: 'object' as const,
   properties: {
-    error: { type: ['string', 'null'] as const },
     classifications: { type: 'array' as const, items: classificationSchema },
     notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
-  required: ['error', 'classifications', 'notes'] as const,
+  required: ['classifications', 'notes'] as const,
   additionalProperties: false,
 };
