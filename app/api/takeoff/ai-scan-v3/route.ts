@@ -446,7 +446,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN1_SCHEMA,
           model,
-          { reasoningEffort: 'medium', maxCompletionTokens: 5000 },
+          { reasoningEffort: 'low', maxCompletionTokens: 5000 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
