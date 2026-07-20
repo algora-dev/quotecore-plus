@@ -48,8 +48,13 @@ const MAX_MASK_AREA_FRAC = 0.95; // mask must cover ≤95% of image
 
 /**
  * Build a binary roof-fill mask from image pixels.
- * Roof fill is typically grey (mid-luminance, low saturation).
- * Background is white (high luminance). Structure lines are dark.
+ * Roof plans typically have:
+ * - White or near-white background (luminance > 248)
+ * - Grey fill for roof areas (luminance 100-245)
+ * - Dark lines for structure (luminance < 80)
+ *
+ * Strategy: classify pixels as "not white background" → roof fill candidate.
+ * Then morphological operations clean up noise.
  */
 function buildRoofFillMask(
   pixels: Buffer,
@@ -60,38 +65,46 @@ function buildRoofFillMask(
   const mask = new Uint8Array(width * height);
   let maskArea = 0;
 
-  // First pass: compute mean luminance to adapt threshold
-  let sumLum = 0;
+  // Compute histogram to find the white-background peak
+  const histogram = new Int32Array(256);
   const totalPixels = width * height;
   for (let i = 0; i < totalPixels; i++) {
-    const r = pixels[i * channels];
-    const g = pixels[i * channels + 1];
-    const b = pixels[i * channels + 2];
-    sumLum += 0.299 * r + 0.587 * g + 0.114 * b;
+    const val = pixels[i * channels]; // greyscale = single channel
+    histogram[val]++;
   }
-  const meanLum = sumLum / totalPixels;
 
-  // Roof fill: luminance between 80 and 230 (grey, not white, not black)
-  // This catches light grey fills, medium grey fills, and hatched areas
-  const lowThreshold = 60;
-  const highThreshold = Math.min(240, meanLum + 20);
+  // Find the dominant luminance value (usually white = 255 or near-white)
+  let dominantVal = 255;
+  let dominantCount = 0;
+  for (let v = 0; v < 256; v++) {
+    if (histogram[v] > dominantCount) {
+      dominantCount = histogram[v];
+      dominantVal = v;
+    }
+  }
+
+  // Background = pixels within ±8 of dominant value
+  // Everything else that isn't pure black (structure lines) is a roof fill candidate
+  const bgLow = Math.max(0, dominantVal - 8);
+  const bgHigh = Math.min(255, dominantVal + 8);
+  const blackThreshold = 50; // below this = structure lines, not fill
+
+  console.log(`[v2Outline] histogram: dominant=${dominantVal} (count=${dominantCount}, ${(dominantCount/totalPixels*100).toFixed(1)}%) bgRange=[${bgLow},${bgHigh}] totalPixels=${totalPixels}`);
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * channels;
-      const r = pixels[idx];
-      const g = pixels[idx + 1];
-      const b = pixels[idx + 2];
-      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      const val = pixels[idx]; // greyscale single channel
 
-      // Roof fill = not white background, not pure black lines
-      // Grey fill: lum between low and high thresholds
-      if (lum >= lowThreshold && lum <= highThreshold) {
+      // Not background and not black structure lines → roof fill candidate
+      if (val < bgLow && val >= blackThreshold) {
         mask[y * width + x] = 1;
         maskArea++;
       }
     }
   }
+
+  console.log(`[v2Outline] mask: area=${maskArea} frac=${(maskArea/totalPixels).toFixed(4)}`);
 
   return { mask, maskArea };
 }
