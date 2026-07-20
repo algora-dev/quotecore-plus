@@ -557,7 +557,7 @@ export async function POST(req: NextRequest) {
         result = await callVisionModel(
           buildV3LineDetectionPrompt({ width: imgW, height: imgH, outlinePoints }),
           [
-            { dataUrl: overlayDataUrl, label: 'IMAGE 1: OUTLINE OVERLAY (original plan with confirmed roof outline in blue dashed)' },
+            { dataUrl: overlayDataUrl, label: 'IMAGE 1: OUTLINE OVERLAY (original plan with confirmed roof outline drawn as a thick blue line)' },
             { dataUrl: originalDataUrl, label: 'IMAGE 2: ORIGINAL PLAN (for context)' },
           ],
           V3_SCAN2_SCHEMA,

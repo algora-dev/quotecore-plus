@@ -12,7 +12,7 @@ import type { V3Point, V3Line } from './ai-prompt-v3';
 
 /**
  * Draw the confirmed outline polygon on top of the original image.
- * Blue dashed outline, semi-transparent blue fill.
+ * Thick solid blue outline, NO fill — keeps the roof interior fully visible.
  */
 export async function renderOutlineOverlay(
   originalBuffer: Buffer,
@@ -22,7 +22,7 @@ export async function renderOutlineOverlay(
 ): Promise<Buffer> {
   const pts = outlinePoints.map(p => `${p.x},${p.y}`).join(' ');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <polygon points="${pts}" fill="rgba(59,130,246,0.12)" stroke="#2563eb" stroke-width="3" stroke-dasharray="8 5"/>
+    <polygon points="${pts}" fill="none" stroke="#2563eb" stroke-width="5" stroke-linejoin="round"/>
   </svg>`;
   const svgBuffer = Buffer.from(svg);
   return sharp(originalBuffer).composite([{ input: svgBuffer, blend: 'over' }]).png().toBuffer();
