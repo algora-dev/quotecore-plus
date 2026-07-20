@@ -54,7 +54,7 @@ const MAX_MASK_AREA_FRAC = 0.95; // mask must cover ≤95% of image
  * - Dark lines for structure (luminance < 80)
  *
  * Strategy: classify pixels as "not white background" → roof fill candidate.
- * Then morphological operations clean up noise.
+ * Uses RGB channels with adaptive histogram + multi-fallback detection.
  */
 function buildRoofFillMask(
   pixels: Buffer,
@@ -64,13 +64,16 @@ function buildRoofFillMask(
 ): { mask: Uint8Array; maskArea: number } {
   const mask = new Uint8Array(width * height);
   let maskArea = 0;
-
-  // Compute histogram to find the white-background peak
-  const histogram = new Int32Array(256);
   const totalPixels = width * height;
+
+  // ── Pass 1: Compute luminance histogram to find white background peak ──
+  const histogram = new Int32Array(256);
   for (let i = 0; i < totalPixels; i++) {
-    const val = pixels[i * channels]; // greyscale = single channel
-    histogram[val]++;
+    const r = pixels[i * channels];
+    const g = pixels[i * channels + 1];
+    const b = pixels[i * channels + 2];
+    const lum = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+    histogram[lum]++;
   }
 
   // Find the dominant luminance value (usually white = 255 or near-white)
@@ -83,28 +86,80 @@ function buildRoofFillMask(
     }
   }
 
-  // Background = pixels within ±8 of dominant value
-  // Everything else that isn't pure black (structure lines) is a roof fill candidate
-  const bgLow = Math.max(0, dominantVal - 8);
-  const bgHigh = Math.min(255, dominantVal + 8);
-  const blackThreshold = 50; // below this = structure lines, not fill
+  // Adaptive background band — wider for near-white dominants
+  const bgBand = dominantVal >= 250 ? 15 : 25;
+  const bgLow = Math.max(0, dominantVal - bgBand);
+  const blackThreshold = 60; // below this = dark structure lines, not fill
 
-  console.log(`[v2Outline] histogram: dominant=${dominantVal} (count=${dominantCount}, ${(dominantCount/totalPixels*100).toFixed(1)}%) bgRange=[${bgLow},${bgHigh}] totalPixels=${totalPixels}`);
+  console.log(`[v2Outline] histogram: dominant=${dominantVal} (${(dominantCount / totalPixels * 100).toFixed(1)}%) bgBand=${bgBand} bgLow=${bgLow} blackThreshold=${blackThreshold}`);
 
+  // ── Pass 2: Classify pixels using RGB ──
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * channels;
-      const val = pixels[idx]; // greyscale single channel
+      const r = pixels[idx];
+      const g = pixels[idx + 1];
+      const b = pixels[idx + 2];
+      const lum = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
 
-      // Not background and not black structure lines → roof fill candidate
-      if (val < bgLow && val >= blackThreshold) {
-        mask[y * width + x] = 1;
-        maskArea++;
-      }
+      // Skip dark structure lines
+      if (lum < blackThreshold) continue;
+      // Skip background white (within band of dominant)
+      if (lum >= bgLow) continue;
+
+      // Not background, not dark → roof fill candidate
+      mask[y * width + x] = 1;
+      maskArea++;
     }
   }
 
-  console.log(`[v2Outline] mask: area=${maskArea} frac=${(maskArea/totalPixels).toFixed(4)}`);
+  console.log(`[v2Outline] luminance mask: area=${maskArea} frac=${(maskArea / totalPixels).toFixed(4)}`);
+
+  // ── Fallback 1: saturation-based detection ──
+  if (maskArea < totalPixels * 0.01) {
+    console.log(`[v2Outline] luminance mask too small, trying saturation-based detection`);
+    mask.fill(0);
+    maskArea = 0;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * channels;
+        const r = pixels[idx];
+        const g = pixels[idx + 1];
+        const b = pixels[idx + 2];
+        const maxC = Math.max(r, g, b);
+        const minC = Math.min(r, g, b);
+        const sat = maxC === 0 ? 0 : (maxC - minC) / maxC;
+        if (sat > 0.05 && maxC > blackThreshold && maxC < 250) {
+          mask[y * width + x] = 1;
+          maskArea++;
+        }
+      }
+    }
+    console.log(`[v2Outline] saturation mask: area=${maskArea} frac=${(maskArea / totalPixels).toFixed(4)}`);
+  }
+
+  // ── Fallback 2: strict non-white (any channel notably below 255) ──
+  if (maskArea < totalPixels * 0.01) {
+    console.log(`[v2Outline] saturation mask too small, trying strict non-white detection`);
+    mask.fill(0);
+    maskArea = 0;
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * channels;
+        const r = pixels[idx];
+        const g = pixels[idx + 1];
+        const b = pixels[idx + 2];
+        if (r < 245 || g < 245 || b < 245) {
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          if (lum >= blackThreshold) {
+            mask[y * width + x] = 1;
+            maskArea++;
+          }
+        }
+      }
+    }
+    console.log(`[v2Outline] strict non-white mask: area=${maskArea} frac=${(maskArea / totalPixels).toFixed(4)}`);
+  }
 
   return { mask, maskArea };
 }
@@ -579,26 +634,22 @@ export async function extractRoofOutline(
     };
   }
 
-  // Get raw RGB pixels
+  // Get raw RGB pixels — NOT greyscale, we need colour channels for mask detection
   const { data: pixels, info } = await pipeline
     .resize(Math.min(width, 2000), Math.min(height, 2000), {
       fit: 'inside',
       withoutEnlargement: true,
     })
-    .greyscale()
+    .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
 
   const w = info.width;
   const h = info.height;
-  const channels = info.channels;
-
-  // For greyscale, channels = 1
-  const pixelData = channels === 1 ? pixels : pixels;
-  const ch = channels;
+  const channels = info.channels; // 4 (RGBA)
 
   // 1. Build roof-fill mask
-  const { mask: rawMask, maskArea: rawMaskArea } = buildRoofFillMask(pixelData, w, h, ch);
+  const { mask: rawMask, maskArea: rawMaskArea } = buildRoofFillMask(pixels, w, h, channels);
 
   const totalPixels = w * h;
   const maskFrac = rawMaskArea / totalPixels;
