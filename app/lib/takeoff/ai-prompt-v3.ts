@@ -169,7 +169,6 @@ For every detected line return:
 - \`id\`: "L1", "L2", "L3", ... (sequential)
 - \`start\`: {x, y} in pixel coordinates
 - \`end\`: {x, y} in pixel coordinates
-- \`confidence\`: 0.0 to 1.0 (1.0 = very clearly visible, 0.5 = faint but present)
 
 Do not classify any line.
 Do not modify the outline.
