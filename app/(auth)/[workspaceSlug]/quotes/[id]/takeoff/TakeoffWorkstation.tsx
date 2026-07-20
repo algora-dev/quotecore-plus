@@ -255,7 +255,12 @@ export function TakeoffWorkstation({
   const [aiOutlineData, setAiOutlineData] = useState<AiScanData | null>(null);
   const [aiOutlineAreas, setAiOutlineAreas] = useState<AiResultsArea[] | null>(null);
   const [aiAnalysisImage, setAiAnalysisImage] = useState<{ dataUrl: string; width: number; height: number } | null>(null);
-  const [aiScanStage, setAiScanStage] = useState<'outline' | 'components'>('outline');
+  const [aiScanStage, setAiScanStage] = useState<'outline' | 'components' | 'skeleton' | 'classify'>('outline');
+  // V2 skeleton state (AI_TAKEOFF_SKELETON_V2)
+  const [aiV2Skeleton, setAiV2Skeleton] = useState<{
+    nodes: Array<{ id: string; area_index: number; kind: string; x: number; y: number; confidence: number }>;
+    segments: Array<{ id: string; area_index: number; start_node_id: string; end_node_id: string; confidence: number; inferred: boolean }>;
+  } | null>(null);
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -4208,6 +4213,114 @@ export function TakeoffWorkstation({
     }
   };
 
+  // V2: Manual components — apply confirmed areas to canvas without AI components
+  const handleManualComponents = async (areaOverrides: Record<number, { name: string; pitch: number }>) => {
+    const canvas = fabricRef.current;
+    if (!canvas || !aiOutlineData || !quote) return;
+
+    const bgImage = canvas.backgroundImage as unknown as { width?: number; height?: number } | null;
+    if (!bgImage || !bgImage.width || !bgImage.height) {
+      setAiScanError('Plan image not available.');
+      return;
+    }
+
+    // Build the confirmed areas with overrides
+    const confirmedAreas = aiOutlineData.roof_areas.map((area, idx) => ({
+      ...area,
+      name: areaOverrides[idx]?.name || area.name || `Area ${idx + 1}`,
+      pitch_degrees: areaOverrides[idx]?.pitch ?? area.pitch_degrees ?? 0,
+    }));
+
+    // Create real DB roof areas
+    const areaInputs = confirmedAreas.map(area => ({
+      name: area.name,
+      pitch: area.pitch_degrees ?? 0,
+    }));
+
+    let realAreaIds: string[];
+    if (areaInputs.length > 0) {
+      const createResult = await batchCreateAiRoofAreas(quote.id, areaInputs);
+      if (!createResult.ok || !createResult.areaIds) {
+        setAiScanError(createResult.error || 'Failed to create roof areas.');
+        return;
+      }
+      realAreaIds = createResult.areaIds;
+    } else {
+      realAreaIds = [];
+    }
+
+    const areaIdMap = new Map<number, string>();
+    realAreaIds.forEach((id, idx) => areaIdMap.set(idx, id));
+
+    // Add roof areas to React state + canvas (same logic as handleApplyAiResults but no components)
+    const newRoofAreas: RoofArea[] = confirmedAreas.map((ra, idx: number) => {
+      const realId = areaIdMap.get(idx) ?? `ai-area-${idx}`;
+      const canvasPoints = ra.points.map(p => ({ x: p.x, y: p.y }));
+
+      const polygon = new Polygon(
+        canvasPoints.map(p => ({ x: p.x, y: p.y })),
+        {
+          fill: 'rgba(59, 130, 246, 0.2)',
+          stroke: '#3b82f6',
+          strokeWidth: 2,
+          selectable: false,
+          objectCaching: false,
+        },
+      );
+      (polygon as unknown as { measurementId: string }).measurementId = realId;
+      canvas.add(polygon);
+
+      const markers = canvasPoints.map(p => {
+        const marker = new Circle({
+          left: p.x, top: p.y, radius: 3,
+          fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
+          originX: 'center', originY: 'center',
+          selectable: false, hasControls: false, hasBorders: false,
+        });
+        (marker as unknown as { measurementId: string }).measurementId = realId;
+        canvas.add(marker);
+        return marker;
+      });
+
+      // Compute area
+      const area = computeAreaValue(canvasPoints, calibrations);
+
+      return {
+        id: realId,
+        name: ra.name,
+        points: canvasPoints,
+        area,
+        pitch: ra.pitch_degrees ?? 0,
+        visible: true,
+        polygon,
+        markers,
+        fromPageId: pages[currentPageIndex]?.id ?? null,
+        quoteRoofAreaId: realId,
+      } as RoofArea;
+    });
+
+    if (newRoofAreas.length > 0) {
+      setRoofAreas(prev => [...prev, ...newRoofAreas]);
+      setAreaList(prev => [
+        ...prev,
+        ...newRoofAreas.map(ra => ({
+          id: ra.id, label: ra.name, pitch: ra.pitch, area: ra.area,
+        })),
+      ]);
+    }
+
+    canvas.renderAll();
+    setIsDirty(true);
+
+    // Close modal and clean up
+    setAiOutlineAreas(null);
+    setAiOutlineData(null);
+    setAiAnalysisImage(null);
+    setAiV2Skeleton(null);
+    setShowRoofAreaInstructions(false);
+    roofAreaInstructionsDismissedRef.current = true;
+  };
+
   // ── AI Takeoff: Replace placeholder with real component ────────────
   const handleReplacePlaceholder = (placeholderComponentId: string, targetComponentId: string) => {
     const canvas = fabricRef.current;
@@ -6244,7 +6357,9 @@ export function TakeoffWorkstation({
             setAiOutlineAreas(null);
             setAiOutlineData(null);
             setAiAnalysisImage(null);
+            setAiV2Skeleton(null);
           }}
+          onManualComponents={handleManualComponents}
         />
       )}
 

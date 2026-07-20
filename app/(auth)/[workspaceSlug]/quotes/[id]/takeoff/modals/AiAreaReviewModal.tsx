@@ -8,14 +8,15 @@ interface Props {
   notes: string[];
   previewImage: string;
   outlines: Array<{ points: Array<{ x: number; y: number }> }>;
-  /** Canvas dimensions — SVG viewBox matches these so overlay coords align perfectly. */
+  /** Canvas dimensions - SVG viewBox matches these so overlay coords align perfectly. */
   canvasWidth: number;
   canvasHeight: number;
   onConfirm: (overrides: Record<number, { name: string; pitch: number }>) => void;
   onDiscard: () => void;
+  onManualComponents: (overrides: Record<number, { name: string; pitch: number }>) => void;
 }
 
-export function AiAreaReviewModal({ areas, notes, previewImage, outlines, canvasWidth, canvasHeight, onConfirm, onDiscard }: Props) {
+export function AiAreaReviewModal({ areas, notes, previewImage, outlines, canvasWidth, canvasHeight, onConfirm, onDiscard, onManualComponents }: Props) {
   const [edits, setEdits] = useState<Record<number, { name: string; pitch: string }>>(() => (
     Object.fromEntries(areas.map(area => [area.index, {
       name: area.name,
@@ -36,6 +37,13 @@ export function AiAreaReviewModal({ areas, notes, previewImage, outlines, canvas
       name: edits[area.index].name.trim(),
       pitch: Number(edits[area.index].pitch),
     }])));
+  };
+
+  const buildOverrides = (): Record<number, { name: string; pitch: number }> => {
+    return Object.fromEntries(areas.map(area => [area.index, {
+      name: edits[area.index]?.name?.trim() || area.name || `Area ${area.index + 1}`,
+      pitch: Number(edits[area.index]?.pitch) || area.pitch || 0,
+    }]));
   };
 
   // Compute aspect ratio from canvas dimensions for the preview container
@@ -100,9 +108,12 @@ export function AiAreaReviewModal({ areas, notes, previewImage, outlines, canvas
             {notes.map((note, index) => <p key={`${note}-${index}`}>• {note}</p>)}
           </div>
         )}
-        <div className="mt-5 flex gap-2">
-          <button type="button" onClick={onDiscard} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Discard</button>
-          <button type="button" onClick={confirm} disabled={!valid} className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:cursor-not-allowed disabled:opacity-40">Confirm & Find Components</button>
+        <div className="mt-5 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button type="button" onClick={onDiscard} className="flex-1 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">Discard</button>
+            <button type="button" onClick={confirm} disabled={!valid} className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:cursor-not-allowed disabled:opacity-40">Scan for Components (AI Assist)</button>
+          </div>
+          <button type="button" onClick={() => valid && onManualComponents(buildOverrides())} disabled={!valid} className="w-full rounded-full border border-[#FF6B35] px-4 py-2 text-sm font-medium text-[#FF6B35] transition hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-40">Add Components (Manual)</button>
         </div>
       </div>
     </div>
