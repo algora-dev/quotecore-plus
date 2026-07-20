@@ -74,104 +74,115 @@ export function buildV3LineDetectionPrompt(params: {
     .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
     .join('\n');
 
-  return `SCAN 2 — Internal Roof Line Detection
-
-You are an expert CAD line tracer.
+  return `You are an expert CAD line tracer.
 
 Two images are provided:
+
 1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a blue dashed polygon.
 2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
 Assume this is a standard residential roof plan drawn using horizontal, vertical and 45° roof geometry.
 
-The roof outline has already been confirmed.
-
 ## CONFIRMED ROOF OUTLINE
 
-The roof outline vertices are:
+The roof outline has already been confirmed.
+
+Outline vertices:
 ${outlineStr}
 
-The outline is AUTHORITATIVE.
+This outline is AUTHORITATIVE.
+
 Do not modify it.
-Do not return the outline polygon itself.
+
+Do not return the roof outline polygon itself.
 
 ## YOUR ONLY TASK
 
-Copy every visible **solid roof line segment** that exists inside the confirmed roof outline or runs along part of the confirmed roof perimeter.
+Trace every visible SOLID roof line segment that exists inside the confirmed roof outline or runs along part of the confirmed roof perimeter.
 
-At this stage you are **NOT** identifying ridges, hips, valleys, barges or any other roof component.
-You are only copying visible line segments.
-If a solid roof line is clearly visible, return it.
+Do NOT identify ridges, hips, valleys, barges or any other roof component.
+
+Do NOT interpret the roof.
+
+Simply copy every visible solid roof line.
+
 Classification happens later.
 
-**Completeness is more important than selectivity.**
+COMPLETENESS IS MORE IMPORTANT THAN SELECTIVITY.
+
 It is better to return an extra visible roof line than to omit a genuine one.
 
-## WHAT IS A ROOF LINE
+## INSPECTION METHOD
 
-Return any visible **solid** line that forms part of the roof geometry, including:
-- long lines
-- short lines
-- ridges
-- hips
-- valleys
-- broken hips
-- broken barges
-- barge candidates running along the roof perimeter
-- small connecting roof segments
+Before producing your answer:
 
-Do not attempt to determine which type they are.
+1. Visually inspect the entire roof.
+2. Mentally divide the roof into small regions.
+3. Inspect every region independently.
+4. In every region trace every visible solid roof line.
+5. Combine every detected line into one final list.
+
+Do not stop after finding only the major roof lines.
+
+## RETURN THESE LINES
+
+Return:
+
+- Long roof lines
+- Short roof lines
+- Roof lines running along the roof perimeter
+- Roof lines ending on the roof perimeter
+- Small connecting roof lines
+- Any other visible solid roof line
 
 ## IGNORE
 
 Never return:
-- dotted lines
-- dashed lines
-- hidden lines
-- spouting
-- dimensions
-- text
-- arrows
-- leaders
-- grids
-- symbols
-- hatching
-- borders
 
-If two nearby lines exist, always prefer the visible solid line.
-Never replace a solid roof line with a nearby dotted line.
+- Dotted or dashed lines
+- Hidden lines
+- Spouting
+- Text
+- Dimensions
+- Leaders
+- Arrows
+- Symbols
+- Hatching
+- Borders
+
+If a solid line and a dotted line are close together, ALWAYS choose the solid line.
 
 ## ANGLE CONSTRAINT
 
-Every returned line must be approximately one of these orientations:
+Every returned line must be approximately:
+
 - Horizontal (0° ±5°)
 - Vertical (90° ±5°)
 - 45° diagonal (45° ±5°)
 - 135° diagonal (135° ±5°)
 
-If a visible line falls outside these orientations, do not return it.
+Trace each line from one visible endpoint until it reaches another visible endpoint or intersects another visible roof line.
 
-## LINE TRACING RULES
+Return one object for each continuous visible line.
 
-1. Trace only visible solid lines.
-2. Trace each line from one visible end until it reaches another visible end or intersects another roof line.
-3. Return one object for each individual line segment.
-4. Do not split one continuous line into multiple lines.
-5. Merge small gaps only when the continuation is visually obvious.
-6. Include roof lines that terminate on the roof perimeter.
-7. Include roof lines that run along part of the roof perimeter.
-8. Ignore isolated marks that clearly do not belong to the roof geometry.
-9. If you are unsure whether a visible solid line is a genuine roof line or not, **include it**. It is better to return a questionable line than to omit a genuine roof line.
+Do not split one continuous line.
 
-## RETURN
+Merge only obvious tiny gaps caused by scan quality.
 
-For every detected line return:
-- \`id\`: "L1", "L2", "L3", ... (sequential)
-- \`start\`: {x, y} in pixel coordinates
-- \`end\`: {x, y} in pixel coordinates
+If you are unsure whether a visible solid line belongs to the roof, INCLUDE IT.
 
-Do not classify any line.
-Do not modify the outline.
+## WHAT TO RETURN
+
+Return an array of detected lines.
+
+For each line return only:
+
+- \`start\`: {x, y}
+- \`end\`: {x, y}
+
+Do not generate IDs.
+
+The system will assign IDs after detection.
 
 Return only the required JSON.`;
 }
@@ -286,12 +297,10 @@ export const V3_SCAN2_SCHEMA = {
       items: {
         type: 'object' as const,
         properties: {
-          id: { type: 'string' as const },
           start: pointSchema,
           end: pointSchema,
-          confidence: { type: 'number' as const },
         },
-        required: ['id', 'start', 'end', 'confidence'] as const,
+        required: ['start', 'end'] as const,
         additionalProperties: false,
       },
     },

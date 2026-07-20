@@ -580,10 +580,10 @@ export async function POST(req: NextRequest) {
           const start = l.start as Record<string, unknown> | undefined;
           const end = l.end as Record<string, unknown> | undefined;
           return {
-            id: typeof l.id === 'string' ? l.id : `L${idx + 1}`,
+            id: `L${idx + 1}`,
             start: { x: typeof start?.x === 'number' ? Math.round(start.x) : 0, y: typeof start?.y === 'number' ? Math.round(start.y) : 0 },
             end: { x: typeof end?.x === 'number' ? Math.round(end.x) : 0, y: typeof end?.y === 'number' ? Math.round(end.y) : 0 },
-            confidence: typeof l.confidence === 'number' ? l.confidence : 0.5,
+            confidence: 0.5,
           } as V3Line;
         })
         .filter(l => {
