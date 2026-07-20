@@ -74,68 +74,107 @@ export function buildV3LineDetectionPrompt(params: {
     .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
     .join('\n');
 
-  return `You are an expert roofing plan geometry tracer. You are given:
+  return `SCAN 2 — Internal Roof Line Detection
 
+You are an expert CAD line tracer.
+
+Two images are provided:
 1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a blue dashed polygon.
 2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
-Assume this is a standard residential roof plan drawn using horizontal, vertical and 45° roof geometry. Do not attempt to interpret unusual or complex roof designs. If the visible geometry does not match these assumptions, return only the lines that clearly do.
+Assume this is a standard residential roof plan drawn using horizontal, vertical and 45° roof geometry.
+
+The roof outline has already been confirmed.
 
 ## CONFIRMED ROOF OUTLINE
 
-The roof outline has already been traced and confirmed. Its vertices (in image pixel coordinates) are:
+The roof outline vertices are:
 ${outlineStr}
 
-This outline is AUTHORITATIVE. Do not modify it. Do not return the roof outline polygon itself, but do return any visible structural roof line that lies on or follows part of the roof perimeter (for example, a potential barge).
+The outline is AUTHORITATIVE.
+Do not modify it.
+Do not return the outline polygon itself.
 
 ## YOUR ONLY TASK
 
-Detect every visible solid roof line segment inside or along the confirmed roof outline. At this stage, do not decide whether a line is a ridge, valley, hip, barge or broken component. If a solid roof line is visible, return it. Classification happens later.
+Copy every visible **solid roof line segment** that exists inside the confirmed roof outline or runs along part of the confirmed roof perimeter.
 
-For each line:
-- Return its start point {x, y} and end point {x, y} in image pixel coordinates.
-- Assign it a label: "L1", "L2", "L3", etc. (sequential, starting at L1).
-- Return a confidence score (0.0 to 1.0) for how clearly visible the line is.
+At this stage you are **NOT** identifying ridges, hips, valleys, barges or any other roof component.
+You are only copying visible line segments.
+If a solid roof line is clearly visible, return it.
+Classification happens later.
 
-## ANGLE CONSTRAINT — CRITICAL
+**Completeness is more important than selectivity.**
+It is better to return an extra visible roof line than to omit a genuine one.
 
-Lines on roof plans are ALWAYS one of these orientations:
+## WHAT IS A ROOF LINE
 
-- **Horizontal** (0°): runs left-right
-- **Vertical** (90°): runs up-down
-- **Diagonal at 45°**: runs bottom-left to top-right
-- **Diagonal at 135°**: runs top-left to bottom-right
+Return any visible **solid** line that forms part of the roof geometry, including:
+- long lines
+- short lines
+- ridges
+- hips
+- valleys
+- broken hips
+- broken barges
+- barge candidates running along the roof perimeter
+- small connecting roof segments
 
-A line is considered to match an allowed angle if its actual angle is within ±5 degrees of one of these four directions. For example:
-- 85° to 95° → vertical
+Do not attempt to determine which type they are.
 
-If a visible line falls outside ALL of the ±5 degree ranges, do NOT include it.
+## IGNORE
 
-## LINE DETECTION RULES (1 line is always 1 point to point distance, never more than 2 points per line)
+Never return:
+- dotted lines
+- dashed lines
+- hidden lines
+- spouting
+- dimensions
+- text
+- arrows
+- leaders
+- grids
+- symbols
+- hatching
+- borders
 
-1. Only trace what you can SEE. If there is no visible line on the plan, never invent one.
-2. Trace the full extent of each visible line from where it starts to where it ends or meets another line.
-3. Every detected line should normally connect at one or both ends to the confirmed roof outline or another detected roof line. Ignore isolated lines that clearly do not form part of the roof geometry.
-4. Include lines that touch the outline boundary — if a visible internal line extends to the roof perimeter, include the full extent.
-4a. Do not ignore visible structural line segments that run along the confirmed roof perimeter. These are valid detected roof lines and must be returned like any other line.
-5. Merge collinear fragments only when the gap is small compared with the line length and the original image clearly supports continuity.
-6. Visible solid line segments running along part of the roof perimeter are structural roof lines and must be detected. They will be classified later.
+If two nearby lines exist, always prefer the visible solid line.
+Never replace a solid roof line with a nearby dotted line.
 
-## WHAT TO RETURN
+## ANGLE CONSTRAINT
 
-For each detected line, return:
+Every returned line must be approximately one of these orientations:
+- Horizontal (0° ±5°)
+- Vertical (90° ±5°)
+- 45° diagonal (45° ±5°)
+- 135° diagonal (135° ±5°)
+
+If a visible line falls outside these orientations, do not return it.
+
+## LINE TRACING RULES
+
+1. Trace only visible solid lines.
+2. Trace each line from one visible end until it reaches another visible end or intersects another roof line.
+3. Return one object for each individual line segment.
+4. Do not split one continuous line into multiple lines.
+5. Merge small gaps only when the continuation is visually obvious.
+6. Include roof lines that terminate on the roof perimeter.
+7. Include roof lines that run along part of the roof perimeter.
+8. Ignore isolated marks that clearly do not belong to the roof geometry.
+9. If you are unsure whether a visible solid line is a genuine roof line or not, **include it**. It is better to return a questionable line than to omit a genuine roof line.
+
+## RETURN
+
+For every detected line return:
 - \`id\`: "L1", "L2", "L3", ... (sequential)
 - \`start\`: {x, y} in pixel coordinates
 - \`end\`: {x, y} in pixel coordinates
 - \`confidence\`: 0.0 to 1.0 (1.0 = very clearly visible, 0.5 = faint but present)
 
-Do NOT classify lines (no ridge/hip/valley/barge/spouting labels).
-Do NOT create nodes or junctions — just start/end points per line.
-Do NOT modify the outline.
+Do not classify any line.
+Do not modify the outline.
 
-If no internal lines are visible, return an empty array.
-
-Return only the structured JSON required by the schema.`;
+Return only the required JSON.`;
 }
 
 // ─── Scan 3: Classification Only ─────────────────────────────────────────
