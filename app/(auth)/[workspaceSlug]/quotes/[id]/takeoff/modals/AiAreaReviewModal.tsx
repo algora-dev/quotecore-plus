@@ -252,9 +252,9 @@ export function AiAreaReviewModal({
             <button
               type="button"
               onClick={confirm}
-              disabled={!valid || !hasSkeleton}
+              disabled={!valid}
               className="flex-1 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:cursor-not-allowed disabled:opacity-40"
-              title={hasSkeleton ? 'Run AI component classification on the skeleton' : 'Skeleton not yet rendered'}
+              title="Run AI component classification on the outline"
             >
               Scan for Components (AI Assist)
             </button>
