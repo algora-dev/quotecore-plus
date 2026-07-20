@@ -127,6 +127,10 @@ Before producing your answer:
 
 Do not stop after finding only the major roof lines.
 
+## SHORT INTERNAL DIAGONAL LINES
+
+Many roofs have short diagonal lines that connect two internal junctions without touching the roof perimeter. These are easy to miss because they are short and internal. Look for them specifically at every junction where two or more lines meet — there is often a short diagonal line branching from that junction to another internal point.
+
 ## LINE TRACING RULES
 
 - Every visible solid line is an independent object.
