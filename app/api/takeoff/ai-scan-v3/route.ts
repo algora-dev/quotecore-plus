@@ -518,6 +518,13 @@ export async function POST(req: NextRequest) {
         extra: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, modelUsage: result.usage },
       });
 
+      // Debug: render outline overlay for inspection
+      const scan1OutlineOverlay = await renderOutlineOverlay(processedBuffer, roofAreasRaw[0].points, imgW, imgH);
+      const scan1DebugImages = {
+        original: originalDataUrl,
+        outlineOverlay: `data:image/png;base64,${scan1OutlineOverlay.toString('base64')}`,
+      };
+
       return NextResponse.json({
         success: true,
         stage: 'scan1',
@@ -525,6 +532,7 @@ export async function POST(req: NextRequest) {
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
         summary: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, notes },
+        debugImages: scan1DebugImages,
       });
     }
 
@@ -632,7 +640,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN2B_SCHEMA,
           model,
-          { reasoningEffort: 'low', maxCompletionTokens: 4000 },
+          { reasoningEffort: 'low', maxCompletionTokens: 6000 },
         );
         timer.mark('scan2b_call_done');
 
@@ -719,6 +727,19 @@ export async function POST(req: NextRequest) {
         },
       });
 
+      // Debug: render final combined overlay for inspection
+      let scan2DebugImages: Record<string, string> = {};
+      try {
+        const auditOverlayBuf = await renderScan2AuditOverlay(processedBuffer, outlinePoints, scan2aLines, imgW, imgH);
+        const finalOverlayBuf = await renderScan2AuditOverlay(processedBuffer, outlinePoints, finalLines, imgW, imgH);
+        scan2DebugImages = {
+          scan2aAuditOverlay: `data:image/png;base64,${auditOverlayBuf.toString('base64')}`,
+          finalCombinedOverlay: `data:image/png;base64,${finalOverlayBuf.toString('base64')}`,
+        };
+      } catch (debugErr) {
+        console.warn(`[ai-scan-v3:${requestId}] debug image render failed:`, debugErr);
+      }
+
       return NextResponse.json({
         success: true,
         stage: 'scan2',
@@ -736,6 +757,7 @@ export async function POST(req: NextRequest) {
           floating: floatingLines.length,
           notes,
         },
+        debugImages: scan2DebugImages,
       });
     }
 
@@ -796,7 +818,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN3_SCHEMA,
           model,
-          { reasoningEffort: 'medium', maxCompletionTokens: 6000 },
+          { reasoningEffort: 'medium', maxCompletionTokens: 8000 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
