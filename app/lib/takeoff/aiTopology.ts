@@ -260,7 +260,7 @@ export function validateComponentGraph(
 
 export function graphToComponents(graph: AiComponentGraph): AiScanData['components'] {
   const components: AiScanData['components'] = {
-    ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [],
+    ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [], uncertain: [],
   };
   const nodes = new Map(graph.nodes.map(node => [node.id, node]));
   for (const edge of graph.edges) {

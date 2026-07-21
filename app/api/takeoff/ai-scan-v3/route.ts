@@ -2,8 +2,7 @@
  * AI Takeoff V3 — 3-scan pipeline.
  *
  * Scan 1: Outline only (GPT traces roof perimeter)
- * Scan 2A: Internal line detection (GPT traces visible lines, angle-constrained)
- * Scan 2B: Missing-line audit (GPT finds uncovered lines, best-effort)
+ * Scan 2: Internal line detection (GPT traces visible lines, angle-snapped)
  * Scan 3: Classification only (GPT names each labeled line)
  *
  * Each scan does ONE thing → simpler prompts → better accuracy.
@@ -26,11 +25,9 @@ import type { Database } from '@/app/lib/supabase/database.types';
 import {
   V3_SCAN1_SCHEMA,
   V3_SCAN2_SCHEMA,
-  V3_SCAN2B_SCHEMA,
   V3_SCAN3_SCHEMA,
   buildV3OutlinePrompt,
   buildV3LineDetectionPrompt,
-  buildV3MissingLineAuditPrompt,
   buildV3ClassificationPrompt,
   type V3Point,
   type V3Line,
@@ -44,12 +41,6 @@ import {
   outlineToEdgeLines,
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
-import {
-  mergeScan2BCandidates,
-  mergeWithExisting,
-  DEFAULT_AUDIT_CONFIG,
-  type Scan2BDebug,
-} from '@/app/lib/takeoff/scan2AuditGeometry';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -67,6 +58,7 @@ interface AiScanResult {
   components: {
     ridges: LineEntry[]; hips: LineEntry[]; valleys: LineEntry[];
     broken_hips: LineEntry[]; barges: LineEntry[]; spouting: LineEntry[];
+    uncertain: LineEntry[];
   };
   notes: string[];
   error?: string;
@@ -108,7 +100,7 @@ function logRequest(params: {
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 function emptyComponents(): AiScanResult['components'] {
-  return { ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [] };
+  return { ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [], uncertain: [] };
 }
 
 function scalePoint(point: { x: number; y: number }, scaleX: number, scaleY: number) {
@@ -132,6 +124,7 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
       broken_hips: result.components.broken_hips.map(scaleLine),
       barges: result.components.barges.map(scaleLine),
       spouting: result.components.spouting.map(scaleLine),
+      uncertain: result.components.uncertain.map(scaleLine),
     },
   };
 }
@@ -292,6 +285,8 @@ function snapLineToAngle(line: V3Line): V3Line {
 }
 
 function filterAngleValid(lines: V3Line[]): { valid: V3Line[]; rejected: V3Line[] } {
+  // Keep snap for near-canonical lines, but accept ALL angles (no hard reject).
+  // Previously rejected lines >5° from 0/45/90/135, which silently dropped broken hips.
   const valid: V3Line[] = [];
   const rejected: V3Line[] = [];
   for (const line of lines) {
@@ -300,7 +295,8 @@ function filterAngleValid(lines: V3Line[]): { valid: V3Line[]; rejected: V3Line[
     if (target !== null) {
       valid.push(snapLineToAngle(line));
     } else {
-      rejected.push(line);
+      // Non-canonical angle — keep the line as-is, don't reject it
+      valid.push(line);
     }
   }
   return { valid, rejected };
@@ -392,7 +388,7 @@ function classificationsToComponents(
       case 'broken_barge': components.barges.push(lineEntry); break;
       case 'barge': components.barges.push(lineEntry); break;
       case 'spouting': components.spouting.push(lineEntry); break;
-      case 'uncertain': break;
+      case 'uncertain': components.uncertain.push(lineEntry); break;
     }
   }
 
@@ -652,67 +648,10 @@ export async function POST(req: NextRequest) {
       const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(rawLines);
       const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints);
       const scan2aLines: V3Line[] = connectedLines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+      const finalLines: V3Line[] = scan2aLines;
       timer.mark('postprocess_done');
 
-      console.log(`[ai-scan-v3:${requestId}] scan2a postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
-
-      // ── Scan 2B: Missing-line audit ────────────────────────────────
-      let finalLines: V3Line[] = scan2aLines;
-      let scan2bDebug: Scan2BDebug = { status: 'no_candidates', rawCandidateCount: 0, acceptedCount: 0, rejected: [] };
-
-      try {
-        timer.mark('scan2b_audit_overlay_start');
-        const auditOverlayBuffer = await renderScan2AuditOverlay(processedBuffer, outlinePoints, scan2aLines, imgW, imgH);
-        timer.mark('scan2b_audit_overlay_done');
-
-        const auditDataUrl = `data:image/png;base64,${auditOverlayBuffer.toString('base64')}`;
-
-        timer.mark('scan2b_call_start');
-        const scan2bResult = await callVisionModel(
-          buildV3MissingLineAuditPrompt({ width: imgW, height: imgH, outlinePoints, currentSegments: scan2aLines }),
-          [
-            { dataUrl: originalDataUrl, label: 'IMAGE 1: ORIGINAL PLAN (the raw architectural roof plan)' },
-            { dataUrl: auditDataUrl, label: 'IMAGE 2: SCAN 2A AUDIT OVERLAY (original plan with confirmed outline in blue and detected segments in cyan)' },
-          ],
-          V3_SCAN2B_SCHEMA,
-          model,
-          { reasoningEffort: 'low', maxCompletionTokens: 6000 },
-        );
-        timer.mark('scan2b_call_done');
-
-        console.log(`[ai-scan-v3:${requestId}] scan2b: responseId=${scan2bResult.responseId} usage=`, scan2bResult.usage);
-
-        const scan2bRaw = scan2bResult.parsed as Record<string, unknown>;
-        const scan2bCandidates = (Array.isArray(scan2bRaw.missing_segments) ? scan2bRaw.missing_segments : [])
-          .filter((s): s is Record<string, unknown> => typeof s === 'object' && s !== null)
-          .map(s => {
-            const start = s.start as Record<string, unknown> | undefined;
-            const end = s.end as Record<string, unknown> | undefined;
-            return {
-              start: { x: typeof start?.x === 'number' ? start.x : 0, y: typeof start?.y === 'number' ? start.y : 0 },
-              end: { x: typeof end?.x === 'number' ? end.x : 0, y: typeof end?.y === 'number' ? end.y : 0 },
-            };
-          });
-
-        const mergeResult = mergeScan2BCandidates(scan2bCandidates, scan2aLines, outlinePoints, imgW, imgH, DEFAULT_AUDIT_CONFIG);
-
-        scan2bDebug = {
-          status: mergeResult.accepted.length > 0 ? 'ok' : (scan2bCandidates.length > 0 ? 'no_candidates' : 'no_candidates'),
-          rawCandidateCount: scan2bCandidates.length,
-          acceptedCount: mergeResult.accepted.length,
-          rejected: mergeResult.rejected,
-        };
-
-        console.log(`[ai-scan-v3:${requestId}] scan2b: raw=${scan2bCandidates.length} accepted=${mergeResult.accepted.length} rejected=${mergeResult.rejected.length}`, mergeResult.rejected.map(r => r.reason));
-
-        finalLines = mergeWithExisting(scan2aLines, mergeResult.accepted);
-      } catch (scan2bError) {
-        const msg = scan2bError instanceof Error ? scan2bError.message : 'Unknown error';
-        console.warn(`[ai-scan-v3:${requestId}] scan2b failed: ${msg}`);
-        scan2bDebug = { status: 'failed', rawCandidateCount: 0, acceptedCount: 0, rejected: [], error: msg };
-        // Fall back to Scan 2A only — do not fail the request
-        finalLines = scan2aLines;
-      }
+      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
 
       const canvasScaleX = canvasW / imgW;
       const canvasScaleY = canvasH / imgH;
@@ -730,16 +669,7 @@ export async function POST(req: NextRequest) {
           analysisDimensions: { width: imgW, height: imgH },
           canvasDimensions: { width: canvasW, height: canvasH },
           notes,
-          stats: {
-            rawLines: rawLines.length,
-            angleValid: angleValidLines.length,
-            connected: connectedLines.length,
-            angleRejected: angleRejectedLines.length,
-            floating: floatingLines.length,
-            scan2aAccepted: scan2aLines.length,
-            scan2b: scan2bDebug as unknown as Record<string, unknown>,
-            finalMerged: finalLines.length,
-          },
+          stats: { rawLines: rawLines.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length },
         };
         await supabase.from('takeoff_pages')
           .update({ ai_scan_result: JSON.parse(JSON.stringify(scan2Data)) })
@@ -749,29 +679,15 @@ export async function POST(req: NextRequest) {
       usage(true);
       logRequest({
         requestId, stage: 'scan2_complete', timer,
-        extra: {
-          rawLines: rawLines.length,
-          scan2aAccepted: scan2aLines.length,
-          scan2bStatus: scan2bDebug.status,
-          scan2bRaw: scan2bDebug.rawCandidateCount,
-          scan2bAccepted: scan2bDebug.acceptedCount,
-          scan2bRejected: scan2bDebug.rejected.length,
-          finalLines: finalLines.length,
-          angleRejected: angleRejectedLines.length,
-          floating: floatingLines.length,
-          modelUsage: result.usage,
-        },
+        extra: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, modelUsage: result.usage },
       });
 
       // Debug: save scan images to storage for inspection
       const scan2DebugUrls: Record<string, string> = {};
       try {
-        const auditOverlayBuf = await renderScan2AuditOverlay(processedBuffer, outlinePoints, scan2aLines, imgW, imgH);
-        const finalOverlayBuf = await renderScan2AuditOverlay(processedBuffer, outlinePoints, finalLines, imgW, imgH);
-        const s2aAudit = await saveDebugImage(auditOverlayBuf, quoteId, 'scan2a-audit-overlay');
-        const s2bFinal = await saveDebugImage(finalOverlayBuf, quoteId, 'scan2b-final-combined');
-        if (s2aAudit) scan2DebugUrls.scan2aAuditOverlay = s2aAudit;
-        if (s2bFinal) scan2DebugUrls.finalCombinedOverlay = s2bFinal;
+        const auditOverlayBuf = await renderScan2AuditOverlay(processedBuffer, outlinePoints, finalLines, imgW, imgH);
+        const s2Audit = await saveDebugImage(auditOverlayBuf, quoteId, 'scan2-audit-overlay');
+        if (s2Audit) scan2DebugUrls.scan2AuditOverlay = s2Audit;
       } catch (debugErr) {
         console.warn(`[ai-scan-v3:${requestId}] debug image render failed:`, debugErr);
       }
@@ -782,17 +698,7 @@ export async function POST(req: NextRequest) {
         data: { lines: linesCanvas, outlinePoints: outlineCanvas, notes },
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
-        summary: {
-          rawLines: rawLines.length,
-          scan2aAccepted: scan2aLines.length,
-          scan2bStatus: scan2bDebug.status,
-          scan2bRaw: scan2bDebug.rawCandidateCount,
-          scan2bAccepted: scan2bDebug.acceptedCount,
-          finalLines: finalLines.length,
-          angleRejected: angleRejectedLines.length,
-          floating: floatingLines.length,
-          notes,
-        },
+        summary: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
         debugImages: scan2DebugUrls,
       });
     }
@@ -916,7 +822,7 @@ export async function POST(req: NextRequest) {
           broken_hips: canvasResult.components.broken_hips.length,
           barges: canvasResult.components.barges.length,
           spouting: canvasResult.components.spouting.length,
-          uncertain: classifications.filter(c => c.type === 'uncertain').length,
+          uncertain: canvasResult.components.uncertain.length,
           modelUsage: result.usage,
         },
       });
@@ -927,14 +833,14 @@ export async function POST(req: NextRequest) {
         data: canvasResult,
         summary: {
           areas: canvasResult.roof_areas.length,
-          components: canvasResult.components.ridges.length + canvasResult.components.hips.length + canvasResult.components.valleys.length + canvasResult.components.broken_hips.length + canvasResult.components.barges.length + canvasResult.components.spouting.length,
+          components: canvasResult.components.ridges.length + canvasResult.components.hips.length + canvasResult.components.valleys.length + canvasResult.components.broken_hips.length + canvasResult.components.barges.length + canvasResult.components.spouting.length + canvasResult.components.uncertain.length,
           ridges: canvasResult.components.ridges.length,
           hips: canvasResult.components.hips.length,
           valleys: canvasResult.components.valleys.length,
           broken_hips: canvasResult.components.broken_hips.length,
           barges: canvasResult.components.barges.length,
           spouting: canvasResult.components.spouting.length,
-          uncertain: classifications.filter(c => c.type === 'uncertain').length,
+          uncertain: canvasResult.components.uncertain.length,
           notes: canvasResult.notes,
         },
         classificationDetails: classifications,

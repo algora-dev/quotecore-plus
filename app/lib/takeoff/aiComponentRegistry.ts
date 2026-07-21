@@ -14,7 +14,7 @@
 // ── Types ───────────────────────────────────────────────────────────────────
 
 /** Semantic key matching the AI response component array names. */
-export type SemanticKey = 'ridges' | 'hips' | 'valleys' | 'broken_hips' | 'barges' | 'spouting';
+export type SemanticKey = 'ridges' | 'hips' | 'valleys' | 'broken_hips' | 'barges' | 'spouting' | 'uncertain';
 
 /** Registry entry for one placeholder type. */
 export interface AiComponentDefinition {
@@ -83,10 +83,18 @@ export const AI_COMPONENT_REGISTRY: Record<SemanticKey, AiComponentDefinition> =
     dashed: true,
     badgeClasses: 'bg-slate-100 text-slate-700',
   },
+  uncertain: {
+    key: 'uncertain',
+    displayName: 'Uncertain',
+    systemName: 'uncertain',
+    colour: '#94A3B8', // slate-400
+    dashed: true,
+    badgeClasses: 'bg-slate-100 text-slate-500',
+  },
 };
 
 /** Ordered list of all semantic keys. */
-export const ALL_SEMANTIC_KEYS: SemanticKey[] = ['ridges', 'hips', 'valleys', 'barges', 'spouting'];
+export const ALL_SEMANTIC_KEYS: SemanticKey[] = ['ridges', 'hips', 'valleys', 'broken_hips', 'barges', 'spouting', 'uncertain'];
 
 /** Dash array for spouting (the only dashed type). */
 export const SPOUTING_DASH_ARRAY = [8, 4];

@@ -40,6 +40,7 @@ interface AiScanResult {
   components: {
     ridges: LineEntry[]; hips: LineEntry[]; valleys: LineEntry[];
     broken_hips: LineEntry[]; barges: LineEntry[]; spouting: LineEntry[];
+    uncertain: LineEntry[];
   };
   notes: string[];
   error?: string;
@@ -81,7 +82,7 @@ function logRequest(params: {
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 function emptyComponents(): AiScanResult['components'] {
-  return { ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [] };
+  return { ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [], uncertain: [] };
 }
 
 function scalePoint(point: ImagePoint, scaleX: number, scaleY: number): ImagePoint {
@@ -113,6 +114,7 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
       broken_hips: result.components.broken_hips.map(scaleLine),
       barges: result.components.barges.map(scaleLine),
       spouting: result.components.spouting.map(scaleLine),
+      uncertain: result.components.uncertain.map(scaleLine),
     },
   };
 }

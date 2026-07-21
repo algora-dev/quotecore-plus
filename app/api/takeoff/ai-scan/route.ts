@@ -110,6 +110,7 @@ interface AiScanResult {
     broken_hips: LineEntry[];
     barges: LineEntry[];
     spouting: LineEntry[];
+    uncertain: LineEntry[];
   };
   notes: string[];
   error?: string;
@@ -180,7 +181,7 @@ function validateAiResult(
       scale: { detected: false, ratio: null, dimension_line: null },
       pitch: { detected: false, global_degrees: null },
       roof_areas: [],
-      components: { ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [] },
+      components: { ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [], uncertain: [] },
       notes: typeof obj.notes === 'string' ? [obj.notes] : ['Image was unreadable.'],
       error: 'unreadable',
     };
@@ -334,7 +335,7 @@ async function callVisionModel(
 // ── Route handler ────────────────────────────────────────────────────────
 
 const emptyComponents = (): AiScanResult['components'] => ({
-  ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [],
+  ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [], uncertain: [],
 });
 
 function scalePoint(point: ImagePoint, scaleX: number, scaleY: number): ImagePoint {
@@ -366,6 +367,7 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
       broken_hips: result.components.broken_hips.map(scaleLine),
       barges: result.components.barges.map(scaleLine),
       spouting: result.components.spouting.map(scaleLine),
+      uncertain: result.components.uncertain.map(scaleLine),
     },
   };
 }

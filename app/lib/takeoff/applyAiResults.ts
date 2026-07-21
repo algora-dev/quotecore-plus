@@ -47,6 +47,7 @@ export interface AiScanData {
     broken_hips: AiLineEntry[];
     barges: AiLineEntry[];
     spouting: AiLineEntry[];
+    uncertain: AiLineEntry[];
   };
   notes: string[];
   error?: string;
@@ -100,9 +101,11 @@ export interface AiMeasurement {
  */
 export function validateMeasurementConsistency(
   semanticKey: SemanticKey,
-  componentId: string,
+  componentId: string | undefined,
   systemComponentIds: Record<SemanticKey, string>,
 ): boolean {
+  // Uncertain lines have no system component — allow them through without validation
+  if (semanticKey === 'uncertain') return true;
   const expected = systemComponentIds[semanticKey];
   if (!expected || expected !== componentId) {
     console.error(

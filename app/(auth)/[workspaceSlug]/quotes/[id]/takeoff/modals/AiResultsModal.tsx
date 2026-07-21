@@ -24,6 +24,7 @@ export interface AiResultsData {
     broken_hips: number;
     barges: number;
     spouting: number;
+    uncertain: number;
     notes: string[];
     unreadable: boolean;
   };
