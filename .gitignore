@@ -49,3 +49,5 @@ supabase/.branches/
 # AI Assistant: never commit the raw OpenAI key file
 docs/ChatAssistant/OpenAI/
 **/OpenAiKey.txt
+
+debug-images/
