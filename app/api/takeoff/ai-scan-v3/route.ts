@@ -136,6 +136,40 @@ function scaleResult(result: AiScanResult, scaleX: number, scaleY: number): AiSc
   };
 }
 
+// ── Debug image storage ────────────────────────────────────────────────
+
+async function saveDebugImage(
+  buffer: Buffer,
+  quoteId: string,
+  label: string,
+): Promise<string | null> {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return null;
+    const client = createServiceClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+    const path = `scan-debug/${quoteId}/${label}-${Date.now()}.png`;
+    const { error } = await client.storage
+      .from('QUOTE-DOCUMENTS')
+      .upload(path, buffer, { contentType: 'image/png', upsert: false });
+    if (error) {
+      console.warn(`[ai-scan-v3] debug image upload failed: ${error.message}`);
+      return null;
+    }
+    const { data: signedData, error: signedErr } = await client.storage
+      .from('QUOTE-DOCUMENTS')
+      .createSignedUrl(path, 86400); // 24-hour signed URL
+    if (signedErr || !signedData?.signedUrl) {
+      console.warn(`[ai-scan-v3] debug signed URL failed: ${signedErr?.message}`);
+      return null;
+    }
+    return signedData.signedUrl;
+  } catch (err) {
+    console.warn('[ai-scan-v3] debug image save error:', err);
+    return null;
+  }
+}
+
 // ── Vision call helper ──────────────────────────────────────────────────
 
 async function callVisionModel(
@@ -518,12 +552,13 @@ export async function POST(req: NextRequest) {
         extra: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, modelUsage: result.usage },
       });
 
-      // Debug: render outline overlay for inspection
-      const scan1OutlineOverlay = await renderOutlineOverlay(processedBuffer, roofAreasRaw[0].points, imgW, imgH);
-      const scan1DebugImages = {
-        original: originalDataUrl,
-        outlineOverlay: `data:image/png;base64,${scan1OutlineOverlay.toString('base64')}`,
-      };
+      // Debug: save scan images to storage for inspection
+      const scan1OutlineOverlayBuf = await renderOutlineOverlay(processedBuffer, roofAreasRaw[0].points, imgW, imgH);
+      const scan1DebugUrls: Record<string, string> = {};
+      const s1Original = await saveDebugImage(processedBuffer, quoteId, 'scan1-original');
+      const s1Outline = await saveDebugImage(scan1OutlineOverlayBuf, quoteId, 'scan1-outline-overlay');
+      if (s1Original) scan1DebugUrls.original = s1Original;
+      if (s1Outline) scan1DebugUrls.outlineOverlay = s1Outline;
 
       return NextResponse.json({
         success: true,
@@ -532,7 +567,7 @@ export async function POST(req: NextRequest) {
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
         summary: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, notes },
-        debugImages: scan1DebugImages,
+        debugImages: scan1DebugUrls,
       });
     }
 
@@ -727,15 +762,15 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Debug: render final combined overlay for inspection
-      let scan2DebugImages: Record<string, string> = {};
+      // Debug: save scan images to storage for inspection
+      const scan2DebugUrls: Record<string, string> = {};
       try {
         const auditOverlayBuf = await renderScan2AuditOverlay(processedBuffer, outlinePoints, scan2aLines, imgW, imgH);
         const finalOverlayBuf = await renderScan2AuditOverlay(processedBuffer, outlinePoints, finalLines, imgW, imgH);
-        scan2DebugImages = {
-          scan2aAuditOverlay: `data:image/png;base64,${auditOverlayBuf.toString('base64')}`,
-          finalCombinedOverlay: `data:image/png;base64,${finalOverlayBuf.toString('base64')}`,
-        };
+        const s2aAudit = await saveDebugImage(auditOverlayBuf, quoteId, 'scan2a-audit-overlay');
+        const s2bFinal = await saveDebugImage(finalOverlayBuf, quoteId, 'scan2b-final-combined');
+        if (s2aAudit) scan2DebugUrls.scan2aAuditOverlay = s2aAudit;
+        if (s2bFinal) scan2DebugUrls.finalCombinedOverlay = s2bFinal;
       } catch (debugErr) {
         console.warn(`[ai-scan-v3:${requestId}] debug image render failed:`, debugErr);
       }
@@ -757,7 +792,7 @@ export async function POST(req: NextRequest) {
           floating: floatingLines.length,
           notes,
         },
-        debugImages: scan2DebugImages,
+        debugImages: scan2DebugUrls,
       });
     }
 
