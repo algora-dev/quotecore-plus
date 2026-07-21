@@ -44,6 +44,32 @@ export async function renderScan2AuditOverlay(
 }
 
 /**
+ * Draw the Scan 1A audit overlay: original plan + thin high-contrast polygon
+ * with small vertex markers at every point. Used as the visual input to Scan 1B.
+ * Thinner stroke than renderOutlineOverlay so small steps/notches stay visible.
+ */
+export async function renderScan1AuditOverlay(
+  originalBuffer: Buffer,
+  polygonPoints: V3Point[],
+  width: number,
+  height: number,
+): Promise<Buffer> {
+  const pts = polygonPoints.map(p => `${p.x},${p.y}`).join(' ');
+  const svgParts: string[] = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+    // Thin high-contrast outline — no fill so interior details stay visible
+    `<polygon points="${pts}" fill="none" stroke="#ff00ff" stroke-width="2" stroke-linejoin="round"/>`,
+  ];
+  // Small visible vertex markers at every polygon point
+  for (const p of polygonPoints) {
+    svgParts.push(`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#ff00ff" stroke="white" stroke-width="1.5"/>`);
+  }
+  svgParts.push('</svg>');
+  const svgBuffer = Buffer.from(svgParts.join('\n'));
+  return sharp(originalBuffer).composite([{ input: svgBuffer, blend: 'over' }]).png().toBuffer();
+}
+
+/**
  * Draw the confirmed outline polygon on top of the original image.
  * Thick solid blue outline, NO fill — keeps the roof interior fully visible.
  */

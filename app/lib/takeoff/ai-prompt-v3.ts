@@ -129,6 +129,92 @@ Before returning the polygon:
 Return only the structured JSON required by the schema.`;
 }
 
+// ─── Scan 1B: Outline Visual Audit ───────────────────────────────────────
+
+export function buildV3Scan1BPrompt(params: {
+  width: number;
+  height: number;
+  polygonPoints: V3Point[];
+}): string {
+  const { width, height, polygonPoints } = params;
+  const polyStr = polygonPoints
+    .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
+    .join('\n');
+
+  return `You are a CAD outline auditor.
+
+Two images are provided:
+
+1. OUTLINE AUDIT IMAGE — the original roof plan with a thin high-contrast polygon drawn over it, including small vertex markers at every polygon point.
+2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
+
+Use integer coordinates in the original image coordinate system:
+
+• (0,0) is top-left.
+• x increases right.
+• y increases down.
+
+## CURRENT POLYGON
+
+The current polygon vertices are:
+${polyStr}
+
+## YOUR ONLY TASK
+
+Verify whether the rendered polygon follows the complete true external roof silhouette.
+
+If the polygon is already correct, return the same full polygon unchanged.
+
+If the polygon is wrong, return one corrected full polygon.
+
+Do not return patch instructions. Return the complete corrected polygon.
+
+## WHAT TO CHECK
+
+Inspect the rendered polygon against the original plan for:
+
+• omitted external steps or projections;
+• omitted recesses or notches;
+• skipped direction changes;
+• polygon edges that cut through the roof interior;
+• polygon edges that follow an internal roof line instead of the external boundary;
+• inaccurate corner placement;
+• incorrect point ordering;
+• self-intersections;
+• failure to close.
+
+## RULES
+
+• Preserve the original image-pixel coordinate system.
+• Return one ordered polygon.
+• Follow the external roof silhouette only.
+• Include every genuine perimeter direction change, however small.
+• Never add internal roof lines.
+• Never simplify multiple perimeter segments into one.
+• Never omit a visible external corner.
+• The polygon is implicitly closed — do not repeat the first point at the end unless the schema requires it.
+
+## EXTERNAL-BOUNDARY RULE
+
+A true perimeter segment separates the roof footprint on one side from the exterior on the other.
+
+An internal roof line has roof geometry on both sides and must not be followed.
+
+When an internal line meets the perimeter, continue along the external boundary.
+
+## FINAL CHECK
+
+Before returning the polygon:
+
+1. Compare every polygon edge against the original plan.
+2. Confirm that every edge follows the external perimeter, not an internal line.
+3. Confirm that every visible perimeter direction change has a vertex.
+4. Confirm that no visible corner lies between consecutive vertices.
+5. Confirm that the polygon is closed and does not cross itself.
+
+Return only the structured JSON required by the schema.`;
+}
+
 // ─── Scan 2: Internal Line Detection ─────────────────────────────────────
 
 export function buildV3LineDetectionPrompt(params: {
@@ -575,6 +661,17 @@ export const V3_SCAN1_SCHEMA = {
     notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
   required: ['roof_areas', 'notes'] as const,
+  additionalProperties: false,
+};
+
+// Scan 1B: Outline audit response
+export const V3_SCAN1B_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    points: { type: 'array' as const, items: pointSchema },
+    notes: { type: 'array' as const, items: { type: 'string' as const } },
+  },
+  required: ['points', 'notes'] as const,
   additionalProperties: false,
 };
 
