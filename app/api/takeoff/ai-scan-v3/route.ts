@@ -1,7 +1,7 @@
 /**
  * AI Takeoff V3 — 3-scan pipeline.
  *
- * Scan 1: Outline extraction (two-phase: 1A extract + 1B visual audit)
+ * Scan 1: Outline only (GPT traces roof perimeter)
  * Scan 2: Internal line detection (GPT traces visible lines, angle-snapped)
  * Scan 3: Classification only (GPT names each labeled line)
  *
@@ -24,11 +24,9 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import type { Database } from '@/app/lib/supabase/database.types';
 import {
   V3_SCAN1_SCHEMA,
-  V3_SCAN1B_SCHEMA,
   V3_SCAN2_SCHEMA,
   V3_SCAN3_SCHEMA,
   buildV3OutlinePrompt,
-  buildV3Scan1BPrompt,
   buildV3LineDetectionPrompt,
   buildV3ClassificationPrompt,
   type V3Point,
@@ -37,7 +35,6 @@ import {
 } from '@/app/lib/takeoff/ai-prompt-v3';
 import {
   renderOutlineOverlay,
-  renderScan1AuditOverlay,
   renderLineOverlay,
   renderCleanOverlay,
   renderScan2AuditOverlay,
@@ -338,28 +335,6 @@ function validatePolygon(rawPoints: unknown[], imgW: number, imgH: number): Poly
   return { valid, cleanedPoints: cleaned, errors: errors.length ? errors : [] };
 }
 
-/**
- * Compare two polygons to determine if they are geometrically identical
- * (allowing for cyclic rotation of the start vertex).
- */
-function polygonsMatch(a: V3Point[], b: V3Point[], tolerance = 2): boolean {
-  if (a.length !== b.length) return false;
-  if (a.length === 0) return true;
-  // Try each cyclic rotation of b
-  for (let offset = 0; offset < b.length; offset++) {
-    let match = true;
-    for (let i = 0; i < a.length; i++) {
-      const bp = b[(i + offset) % b.length];
-      if (Math.abs(a[i].x - bp.x) > tolerance || Math.abs(a[i].y - bp.y) > tolerance) {
-        match = false;
-        break;
-      }
-    }
-    if (match) return true;
-  }
-  return false;
-}
-
 // ── Angle snapping (deterministic post-Scan 2) ──────────────────────────
 
 const ANGLE_TOLERANCE = 5; // degrees — lines within this of 0/45/90/135 are snapped (matches prompt ±5°)
@@ -574,14 +549,14 @@ export async function POST(req: NextRequest) {
 
     timer.mark('auth_done');
 
-    const model = process.env.AI_TAKEOFF_MODEL || 'gpt-4.1';
+    const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
     const usage = (success: boolean, error?: string) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
       pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
     });
 
     // ══════════════════════════════════════════════════════════════════
-    // SCAN 1: OUTLINE (two-phase: 1A extraction + 1B visual audit)
+    // SCAN 1: OUTLINE ONLY
     // ══════════════════════════════════════════════════════════════════
     if (stage === 'scan1') {
       const base64Image = typeof body.image === 'string' ? body.image : null;
@@ -601,13 +576,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, error: 'Image is too small for analysis.' }, { status: 400 });
       }
 
+      timer.mark('scan1_call_start');
       const originalDataUrl = `data:image/png;base64,${processedBuffer.toString('base64')}`;
 
-      // ── Phase 1A: Initial outline extraction ──
-      timer.mark('scan1a_call_start');
-      let result1A;
+      let result;
       try {
-        result1A = await callVisionModel(
+        result = await callVisionModel(
           buildV3OutlinePrompt(imgW, imgH),
           [
             { dataUrl: originalDataUrl, label: 'IMAGE 1: ORIGINAL PLAN (the raw architectural roof plan)' },
@@ -621,12 +595,12 @@ export async function POST(req: NextRequest) {
         usage(false, message);
         return NextResponse.json({ success: false, error: `Outline detection failed: ${message}` }, { status: 502 });
       }
-      timer.mark('scan1a_call_done');
+      timer.mark('scan1_call_done');
 
-      console.log(`[ai-scan-v3:${requestId}] scan1A: responseId=${result1A.responseId} usage=`, result1A.usage);
+      console.log(`[ai-scan-v3:${requestId}] scan1: responseId=${result.responseId} usage=`, result.usage);
 
-      const raw1A = result1A.parsed as Record<string, unknown>;
-      const roofAreasRaw1A = (Array.isArray(raw1A.roof_areas) ? raw1A.roof_areas : [])
+      const raw = result.parsed as Record<string, unknown>;
+      const roofAreasRaw = (Array.isArray(raw.roof_areas) ? raw.roof_areas : [])
         .filter((a): a is Record<string, unknown> => typeof a === 'object' && a !== null)
         .map((a, idx) => {
           const points = (Array.isArray(a.points) ? a.points : [])
@@ -642,120 +616,36 @@ export async function POST(req: NextRequest) {
           };
         });
 
-      // Validate Scan 1A polygon
-      const polygon1ARaw = roofAreasRaw1A[0]?.points ?? [];
-      const validation1A = validatePolygon(polygon1ARaw, imgW, imgH);
+      // Validate polygon
+      const polygonRaw = roofAreasRaw[0]?.points ?? [];
+      const validation = validatePolygon(polygonRaw, imgW, imgH);
 
-      if (!validation1A.valid || validation1A.cleanedPoints.length < 4) {
-        usage(false, `Scan 1A polygon invalid: ${validation1A.errors.join('; ')}`);
+      if (!validation.valid || validation.cleanedPoints.length < 4) {
+        usage(false, `Scan 1 polygon invalid: ${validation.errors.join('; ')}`);
         return NextResponse.json({ success: false, error: 'AI could not detect a valid roof outline.' }, { status: 422 });
       }
 
-      const polygon1A = validation1A.cleanedPoints;
-      const notes1A = Array.isArray(raw1A.notes) ? raw1A.notes.filter((n): n is string => typeof n === 'string') : [];
-      console.log(`[ai-scan-v3:${requestId}] scan1A: ${polygon1A.length} vertices after validation`);
+      const finalPolygon = validation.cleanedPoints;
+      const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
+      console.log(`[ai-scan-v3:${requestId}] scan1: ${finalPolygon.length} vertices after validation`);
 
-      // ── Render audit overlay from Scan 1A polygon ──
-      timer.mark('scan1a_overlay_render');
-      const auditOverlayBuffer = await renderScan1AuditOverlay(processedBuffer, polygon1A, imgW, imgH);
-      timer.mark('scan1a_overlay_done');
+      const roofAreaName = roofAreasRaw[0]?.name ?? 'Area 1';
+      const pitchDegrees = roofAreasRaw[0]?.pitch_degrees ?? null;
 
-      // ── Phase 1B: Visual audit of the rendered polygon ──
-      timer.mark('scan1b_call_start');
-      const auditDataUrl = `data:image/png;base64,${auditOverlayBuffer.toString('base64')}`;
-
-      let polygon1B: V3Point[] | null = null;
-      let scan1BRaw: unknown = null;
-      let scan1BError: string | null = null;
-      let scan1BUsage: { promptTokens: number; completionTokens: number; totalTokens: number } | null = null;
-      let scan1BResponseId: string | null = null;
-
-      try {
-        const result1B = await callVisionModel(
-          buildV3Scan1BPrompt({ width: imgW, height: imgH, polygonPoints: polygon1A }),
-          [
-            { dataUrl: auditDataUrl, label: 'IMAGE 1: OUTLINE AUDIT IMAGE (original plan with current polygon drawn over it, including vertex markers)' },
-            { dataUrl: originalDataUrl, label: 'IMAGE 2: ORIGINAL PLAN (the raw architectural roof plan)' },
-          ],
-          V3_SCAN1B_SCHEMA,
-          model,
-          { reasoningEffort: 'low', maxCompletionTokens: 5000 },
-        );
-        timer.mark('scan1b_call_done');
-        scan1BRaw = result1B.parsed;
-        scan1BUsage = result1B.usage;
-        scan1BResponseId = result1B.responseId;
-
-        console.log(`[ai-scan-v3:${requestId}] scan1B: responseId=${result1B.responseId} usage=`, result1B.usage);
-
-        // Parse and validate Scan 1B polygon
-        const raw1B = result1B.parsed as Record<string, unknown>;
-        const points1BRaw = Array.isArray(raw1B.points) ? raw1B.points : [];
-        const validation1B = validatePolygon(points1BRaw, imgW, imgH);
-
-        if (validation1B.valid && validation1B.cleanedPoints.length >= 4) {
-          polygon1B = validation1B.cleanedPoints;
-          console.log(`[ai-scan-v3:${requestId}] scan1B: ${polygon1B.length} vertices after validation`);
-        } else {
-          scan1BError = `Scan 1B polygon invalid: ${validation1B.errors.join('; ')}`;
-          console.warn(`[ai-scan-v3:${requestId}] scan1B: ${scan1BError}`);
-        }
-      } catch (error) {
-        timer.mark('scan1b_call_done');
-        scan1BError = error instanceof Error ? error.message : 'Unknown error';
-        console.warn(`[ai-scan-v3:${requestId}] scan1B failed: ${scan1BError}`);
-      }
-
-      // ── Choose final polygon ──
-      // Use Scan 1B if valid, otherwise fall back to Scan 1A.
-      const polygonChanged = polygon1B !== null && !polygonsMatch(polygon1A, polygon1B);
-      const finalPolygon = polygon1B ?? polygon1A;
-      const finalSource = polygon1B ? (polygonChanged ? 'scan1b_corrected' : 'scan1b_unchanged') : 'scan1a_fallback';
-
-      console.log(`[ai-scan-v3:${requestId}] scan1 final: source=${finalSource} vertices=${finalPolygon.length} changed=${polygonChanged}`);
-
-      // Combine notes
-      const raw1BObj = (scan1BRaw && typeof scan1BRaw === 'object') ? scan1BRaw as Record<string, unknown> : null;
-      const notes1B = raw1BObj && Array.isArray(raw1BObj.notes) ? raw1BObj.notes.filter((n): n is string => typeof n === 'string') : [];
-      const notes = [...notes1A, ...notes1B];
-
-      // Build the roof area object (keep existing structure for client compatibility)
-      const roofAreaName = roofAreasRaw1A[0]?.name ?? 'Area 1';
-      const pitchDegrees = roofAreasRaw1A[0]?.pitch_degrees ?? null;
-      const finalRoofArea = {
-        name: roofAreaName,
-        points: finalPolygon,
-        pitch_degrees: pitchDegrees,
-      };
-
-      // Scale to canvas dimensions
       const scaleX = canvasW / imgW;
       const scaleY = canvasH / imgH;
       const roofAreasCanvas = [{
-        ...finalRoofArea,
+        name: roofAreaName,
         points: finalPolygon.map(p => scalePoint(p, scaleX, scaleY)),
+        pitch_degrees: pitchDegrees,
       }];
 
-      // Persist to DB (include scan1Audit metadata)
       if (pageId) {
         const scan1Data = {
           roof_areas: roofAreasCanvas,
           analysisDimensions: { width: imgW, height: imgH },
           canvasDimensions: { width: canvasW, height: canvasH },
           notes,
-          scan1Audit: {
-            scan1aRaw: { responseId: result1A.responseId, vertexCount: polygon1A.length, usage: result1A.usage },
-            scan1aPolygon: polygon1A,
-            scan1bRaw: scan1BRaw ? { responseId: scan1BResponseId, vertexCount: polygon1B?.length ?? 0, usage: scan1BUsage } : null,
-            scan1bPolygon: polygon1B,
-            scan1bError: scan1BError,
-            finalPolygon,
-            finalSource,
-            polygonChanged,
-            finalVertexCount: finalPolygon.length,
-            validation1A: validation1A.errors,
-            validation1B: scan1BError,
-          },
         };
         await supabase.from('takeoff_pages')
           .update({ ai_scan_result: JSON.parse(JSON.stringify(scan1Data)) })
@@ -765,32 +655,16 @@ export async function POST(req: NextRequest) {
       usage(true);
       logRequest({
         requestId, stage: 'scan1_complete', timer,
-        extra: {
-          scan1aVertices: polygon1A.length,
-          scan1bVertices: polygon1B?.length ?? 0,
-          polygonChanged,
-          finalSource,
-          finalVertices: finalPolygon.length,
-          scan1aUsage: result1A.usage,
-          scan1bUsage: scan1BUsage,
-        },
+        extra: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, modelUsage: result.usage },
       });
 
       // Debug: save scan images to storage for inspection
+      const scan1OutlineOverlayBuf = await renderOutlineOverlay(processedBuffer, finalPolygon, imgW, imgH);
       const scan1DebugUrls: Record<string, string> = {};
       const s1Original = await saveDebugImage(processedBuffer, quoteId, 'scan1-original');
-      const s1aOverlay = await saveDebugImage(auditOverlayBuffer, quoteId, 'scan1a-audit-overlay');
+      const s1Outline = await saveDebugImage(scan1OutlineOverlayBuf, quoteId, 'scan1-outline-overlay');
       if (s1Original) scan1DebugUrls.original = s1Original;
-      if (s1aOverlay) scan1DebugUrls.scan1aAuditOverlay = s1aOverlay;
-
-      // Render and save final overlay for debugging
-      try {
-        const finalOverlayBuf = await renderOutlineOverlay(processedBuffer, finalPolygon, imgW, imgH);
-        const s1Final = await saveDebugImage(finalOverlayBuf, quoteId, 'scan1-final-outline');
-        if (s1Final) scan1DebugUrls.scan1FinalOutline = s1Final;
-      } catch (debugErr) {
-        console.warn(`[ai-scan-v3:${requestId}] final overlay debug save failed:`, debugErr);
-      }
+      if (s1Outline) scan1DebugUrls.outlineOverlay = s1Outline;
 
       return NextResponse.json({
         success: true,
@@ -798,18 +672,7 @@ export async function POST(req: NextRequest) {
         data: { roof_areas: roofAreasCanvas, notes },
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
-        summary: {
-          areas: roofAreasCanvas.length,
-          vertices: roofAreasCanvas[0]?.points.length ?? 0,
-          notes,
-          scan1Audit: {
-            scan1aVertices: polygon1A.length,
-            scan1bVertices: polygon1B?.length ?? 0,
-            polygonChanged,
-            finalSource,
-            scan1bError: scan1BError,
-          },
-        },
+        summary: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, notes },
         debugImages: scan1DebugUrls,
       });
     }
