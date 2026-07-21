@@ -33,31 +33,64 @@ export interface V3Classification {
 // ─── Scan 1: Outline Only ────────────────────────────────────────────────
 
 export function buildV3OutlinePrompt(width: number, height: number): string {
-  return `You are an expert roofing plan analyst. An image is provided:
+  return `You are a CAD roof-perimeter tracer.
+
+One image is provided:
 
 ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
-Return integer coordinates in the original image-pixel coordinate system (0,0 = top-left).
+Use integer coordinates in the original image coordinate system:
+
+• (0,0) is top-left.
+• x increases right.
+• y increases down.
 
 ## YOUR ONLY TASK
 
-Trace the centre of the visible outer roof-perimeter stroke. Preserve every genuine direction change. Small gaps caused by labels, dimensions or image quality may be bridged only when the continuation is clear from the original image. Return the outline as a polygon — an ordered list of {x, y} points.
+Trace the centre of the visible outer roof-perimeter stroke as one ordered, closed polygon.
 
-## OUTLINE RULES
+Return one {x, y} vertex at every genuine change in perimeter direction.
 
-- Follow the clear visible perimeter evidence.
-- Include every visible step, notch, and re-entrant corner. Do not simplify the roof outline. Every connected roof projection, recess and offset visible on the perimeter must be included, even if it is small.
-- Only trace continuous solid roof lines. Never trace dotted, dashed or hidden lines, even if they are parallel to the expected roof geometry.
-- Ensure lines do not terminate at artifacts, text, or odd shapes, only at real outline junctions.
-- Ignore shading or fill colours; follow external black or dark lines.
-- Ignore any lines inside the outline of the roof.
-- Ignore non-roof marks: dimensions, text, leaders, grids, borders, hatching, arrows.
+## PERIMETER RULES
 
-## OUTLINE QUALITY
+• Follow the outer roof boundary continuously in one direction until it returns to the starting point.
+• Every pair of consecutive vertices must correspond to one directly visible perimeter segment.
+• Include every visible step, notch, recess, projection, offset and re-entrant corner, however small.
+• Never skip a visible corner or replace several visible perimeter segments with one simplified segment.
+• Do not add redundant vertices along a straight, uninterrupted perimeter segment.
+• Perimeter segments may have any angle. Do not assume horizontal, vertical or 45-degree geometry.
+• Trace the centre of the perimeter stroke, not either side of its thickness.
+• The final vertex connects back to the first vertex. Do not repeat the first vertex at the end unless the schema requires it.
 
-- Each point should be at any direction change in the perimeter.
-- Each point should be anywhere a vertical, horizontal, or 45 degree angle ends on the perimeter.
-- Minimum 4 points (rectangle). Maximum of 50 points.
+When an internal roof line meets the perimeter:
+
+• remain on the perimeter;
+• do not turn inward onto the internal line;
+• add a vertex only if the perimeter itself changes direction there.
+
+## GAPS
+
+Bridge a small obstruction caused by text, dimensions or image quality only when the same perimeter stroke is clearly visible on both sides and there is only one plausible continuation.
+
+If a corner is partly obscured, infer it only when the visible incoming and outgoing perimeter segments uniquely determine its location.
+
+## IGNORE
+
+• Internal roof lines
+• Dotted, dashed or hidden lines
+• Text, dimensions, leaders and arrows
+• Grids, borders, hatching, shading, fill colours and unrelated symbols
+
+## FINAL CHECK
+
+Before returning the polygon, verify that:
+
+1. every visible direction change has a vertex;
+2. no visible corner lies between consecutive vertices;
+3. every consecutive edge, including the final-to-first edge, follows the visible perimeter;
+4. no edge follows an internal line;
+5. the polygon is closed and does not cross itself;
+6. every perimeter segment is represented exactly once.
 
 Return only the structured JSON required by the schema.`;
 }
@@ -74,92 +107,106 @@ export function buildV3LineDetectionPrompt(params: {
     .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
     .join('\n');
 
-  return `You are an expert CAD line segment tracer.
+  return `You are a CAD line-segment tracer.
 
 Two images are provided:
 
 1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a thin solid blue polygon.
 2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
-## CONFIRMED ROOF OUTLINE
+Use integer coordinates in the original image coordinate system:
 
-The roof outline has already been confirmed.
+• (0,0) is top-left.
+• x increases right.
+• y increases down.
+
+## CONFIRMED ROOF OUTLINE
 
 Outline vertices:
 ${outlineStr}
 
-The outline is AUTHORITATIVE.
+The confirmed outline is AUTHORITATIVE. Do not modify or return its perimeter edges. The blue polygon is a boundary reference, not roof linework to detect.
 
-Do not modify it.
+## YOUR ONLY TASK
 
-Do not return the complete roof outline polygon.
-
-## YOUR TASK
-
-Reconstruct the complete connected skeleton of every visible continuous solid line segment inside the confirmed roof outline or connected to its perimeter.
-
-If a visible solid line segment exists, it must appear exactly once in the output.
+Return every visible solid atomic roof line segment inside the confirmed outline, including segments that terminate on the perimeter.
 
 Do not classify or interpret the roof.
 
-Classification happens later.
+## ATOMIC SEGMENT DEFINITION
 
-## LINE & JUNCTION RULES
+A stop point is any location where a visible solid line:
 
-- Every line segment has exactly one start point and one end point.
-- A line segment begins at one visible endpoint or junction and ends at the next visible endpoint or junction.
-- If a visible line changes direction, it becomes a new line segment.
-- Never merge multiple visible line segments into one.
-- A junction is any location where line segments begin, end, meet, change direction, terminate on another line segment (T-junction), or terminate on the confirmed roof outline.
-- Every line segment connected to a junction must be returned as its own independent line object.
-- Multiple line segments may legitimately share identical endpoint coordinates.
-- Shared endpoint coordinates DO NOT mean the connected line segments are already recorded.
-- Never assume a line segment exists simply because both of its endpoint coordinates already appear on other line objects.
-- Never continue one line segment through a junction into another.
-- Include short, faint, connecting and perimeter-following line segments.
-- Include line segments that terminate on or follow part of the confirmed roof perimeter.
-- If two visible line segments run close together or parallel, return both.
-- If you are unsure whether a visible solid line segment belongs to the roof drawing, INCLUDE IT.
+• ends;
+• changes direction;
+• meets or intersects another solid roof line;
+• terminates at the endpoint of another line;
+• terminates partway along another line;
+• reaches the confirmed roof perimeter.
 
-## SELF VERIFICATION
+An atomic segment is the visible stroke between two consecutive stop points.
 
-Before producing the JSON:
+## HARD RULE
 
-1. Inspect every visible junction.
-2. Count every visible line segment connected to that junction.
-3. Verify that every connected line segment has been returned as its own line object.
-4. Verify that no line segment has been skipped because its endpoint coordinates already exist on other line objects.
-5. Inspect the complete roof one final time and add any visible line segment not already returned.
+No returned segment may contain another stop point anywhere between its start and end.
+
+Therefore:
+
+• every intersection splits every participating line;
+• a line that visually continues straight through a junction must be returned as separate segments on each side;
+• a line terminating partway along another line creates three segments: the terminating branch and the two sides of the supporting line;
+• two crossing lines create four segments meeting at the crossing;
+• no returned segment may pass through another line or junction.
+
+## SHARED ENDPOINTS
+
+• Every visible segment must have its own explicit start and end coordinates.
+• Any number of segments may share exactly the same endpoint coordinates.
+• A shared coordinate does not mean all connected segments have been recorded.
+• A coordinate is not a line segment.
+• A segment is recorded only when its start and end appear together in its own output object.
+• Never omit a visible segment merely because both endpoint coordinates already occur on other segments.
+
+## TRACING RULES
+
+• Return each visible atomic segment exactly once.
+• Trace every branch from one stop point to the next stop point.
+• When a segment reaches the perimeter, end it at the visible intersection with the centre of the confirmed outline stroke.
+• Include short, faint, secondary and connecting solid segments.
+• Include distinct solid lines that are close together or parallel.
+• Do not return any segment that merely retraces a confirmed perimeter edge.
+• Do not bridge a gap unless the continuation is visually unambiguous.
+• If a visible solid line may be roof linework, include it rather than omit it.
+
+## JUNCTION-FIRST CHECK
+
+Before returning the JSON:
+
+1. locate every visible endpoint, direction change and junction;
+2. at each junction, count every visible branch leaving it;
+3. verify that one returned segment uses that junction as an endpoint for every branch;
+4. verify that every visible stroke between adjacent stop points has its own segment;
+5. verify that no returned segment passes through a stop point;
+6. remove exact duplicates, including reversed duplicates;
+7. sweep the full roof once more and add any uncovered solid segment.
 
 ## IGNORE ONLY
 
-Do not return:
+• Dotted or dashed lines
+• Text
 
-- Dotted or dashed lines
-- Text
+If a solid line is close to a dotted or dashed line, trace the solid line.
 
-If a solid line segment and a dotted or dashed line are close together, always trace the solid line segment.
+## OUTPUT
 
-## WHAT TO RETURN
-
-Return an array of detected line segment objects.
-
-Each object must contain only:
+Return an array of line-segment objects. Each object must contain only:
 
 {
-  "start": {
-    "x": number,
-    "y": number
-  },
-  "end": {
-    "x": number,
-    "y": number
-  }
+  "start": {"x": number, "y": number},
+  "end": {"x": number, "y": number}
 }
 
-Do not generate IDs.
-
-The system will assign IDs after detection.
+Do not generate IDs. The system will assign them.
 
 Return only the required JSON.`;
 }
@@ -188,44 +235,92 @@ export function buildV3ClassificationPrompt(params: {
     })
     .join('\n');
 
-  return `You are an expert roofing plan component classifier. Geometry has already been detected. Your ONLY task is to classify each labeled line.
+  return `You are a roofing-plan component classifier.
+
+Geometry has already been detected. Your ONLY task is to classify every supplied line ID.
 
 Three images are provided:
-1. ANNOTATED ORIGINAL — the original plan with the confirmed outline (blue) and all detected lines drawn in orange with their labels (L1, L2, etc.) visible.
-2. CLEAN OVERLAY — just the outline and labeled lines on white background, no plan image.
-3. The original plan image for reference.
+
+1. ANNOTATED ORIGINAL — the original plan with the confirmed outline in blue and detected internal segments in orange, each labeled L1, L2, etc.
+2. CLEAN OVERLAY — the confirmed outline and labeled segments on a white background.
+3. ORIGINAL PLAN IMAGE — the raw plan for reference.
 
 ## CONFIRMED ROOF OUTLINE
 ${outlineStr}
 
-## DETECTED LINES TO CLASSIFY
+## DETECTED INTERNAL SEGMENTS
 ${lineTable}
 
-## CLASSIFICATION OPTIONS
-
-Classify each line using its visible position, orientation and connections. Do not invent missing lines or reclassify the geometry.
-
-For each line ID, choose exactly one:
-
-- **ridge** — Normally a vertical or horizontal line inside the roof outline. A ridge can connect to an internal end point of a valley, hip, and also end on the outline of the roof, perpendicular to it.
-- **hip** — a 45 degree diagonal line always starting from an EXTERNAL (convex) corner of the outline, running inward connecting to another line.
-- **valley** — a diagonal line normally starting from an INTERNAL (concave/re-entrant) corner of the outline, running inward connecting to another line.
-- **barge** — a perimeter-parallel line at a gable end, normally perpendicular to ridge lines that land on the roof outline. Normally horizontal or vertical.
-- **spouting** — a perimeter edge line that is NOT a barge. These are the edges where spouting/guttering would go. Use this for outline perimeter edges that are not perpendicular to a ridge (i.e. not barges).
-- **broken_hip** — a diagonal internal line that doesn't touch the perimeter, branching from a hip/valley junction and joining to another hip or ridge line.
-- **broken_barge** — an internal gable-edge segment not on the perimeter, normally vertical or horizontal.
-- **uncertain** — use ONLY when you genuinely cannot determine the type. Better to say uncertain than guess wrong, but use sparingly.
-
 ## OUTLINE EDGES
-The outline polygon edges (between consecutive outline vertices) are also candidates for barge or spouting classification. Outline edge 0→1 is the first edge, 1→2 is the second, etc. (wrapping around). Include these in your classification — each outline edge gets a line ID starting with "E0", "E1", etc.
 
-## GLOBAL CONSISTENCY
-After classifying each line individually, check:
-1. Every hip starts at a convex corner. If not, reclassify.
-2. Every valley starts at a concave corner. If not, reclassify.
-3. Ridges connect meaningfully at both ends.
-4. Barges are perpendicular to ridges.
-5. Spouting + Barges = all perimeter edges.
+Each consecutive pair of outline vertices is an outline edge:
+
+• E0 = vertex 0 → vertex 1
+• E1 = vertex 1 → vertex 2
+• continue in order
+• the final E edge connects the final vertex back to vertex 0
+
+## GEOMETRY IS FIXED
+
+Do not add, remove, merge, split, extend, shorten or move any line.
+
+Classify each supplied ID exactly once. Do not invent IDs or missing geometry.
+
+## CLASSIFICATION PRINCIPLES
+
+• Use endpoint locations and network connections first; use angle and length only as supporting evidence.
+• The start/end order of an L segment is arbitrary.
+• Treat an endpoint as touching an outline corner, edge or another line when the overlay visibly coincides within normal pixel tolerance; exact coordinate equality is not required.
+• Judge orientation relative to the local roof geometry. The plan may be rotated, skewed or imperfectly scanned.
+• Scan 2 splits lines at every junction. Adjacent segments may still be parts of the same roofing component and may receive the same classification.
+• A junction or segmentation boundary does not by itself change the component type.
+
+## ALLOWED CLASSIFICATIONS
+
+ridge
+An internal high-line segment. It commonly connects hips, valleys, broken hips or other ridge segments, and may terminate at an internal junction or at a gable-end perimeter edge. A ridge may have any image orientation.
+
+hip
+An internal segment with one endpoint at an external convex outline corner and the other running inward to a ridge or internal junction.
+
+valley
+An internal segment with one endpoint at an internal concave or re-entrant outline corner and the other running inward to a ridge or internal junction.
+
+barge
+An outline edge forming a gable or rake end. A ridge commonly terminates on it or points toward it, usually approximately perpendicular in the local roof geometry.
+
+spouting
+An outline edge where guttering or spouting would normally run. Use for every outline edge that is not a barge.
+
+broken_hip
+An internal segment that does not touch the outer perimeter and acts as a diagonal connector or continuation within the hip, valley and ridge junction network.
+
+broken_barge
+An internal gable-edge segment that is not itself an outline edge, commonly associated with stepped or internal gable geometry.
+
+uncertain
+Use only when the type remains genuinely ambiguous after checking both endpoints, connected segments, nearby outline-corner type and the original plan.
+
+## ID RULES
+
+• E IDs may be classified only as barge or spouting.
+• L IDs may be classified only as ridge, hip, valley, broken_hip, broken_barge or uncertain.
+• Do not classify an L ID as barge or spouting.
+• Do not classify an E ID as an internal component.
+
+## TOPOLOGY CHECKS
+
+Before returning the JSON, verify that:
+
+1. every hip touches a convex outline corner;
+2. every valley touches a concave outline corner;
+3. every broken_hip is internal and does not touch the perimeter;
+4. ridge segments form a coherent high-line network and remain ridge across a split junction when their role continues;
+5. adjacent or collinear Scan 2 segments receive consistent types unless their roof role visibly changes;
+6. every E edge is classified exactly once as barge or spouting;
+7. barge and spouting together account for all E edges;
+8. every supplied L and E ID appears exactly once;
+9. uncertain is used sparingly, but no classification is guessed when evidence is insufficient.
 
 Return only the structured JSON required by the schema.`;
 }
