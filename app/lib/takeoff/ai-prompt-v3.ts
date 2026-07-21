@@ -322,17 +322,6 @@ Return an array of line-segment objects. Each object must contain only:
 
 Do not generate IDs. The system will assign them.
 
-## DOWNSTREAM VISUAL-AUDIT CONTRACT
-
-Render Scan 2A detected segments as thin, high-contrast coloured lines.
-
-The coloured overlay must not fully obscure the original black source stroke. Scan 2B must be able to distinguish:
-
-- black source line already traced by a coloured overlay;
-- black source line still uncovered and therefore potentially missing.
-
-Use a stroke width that remains visually thinner than the source line where possible.
-
 Return only the required JSON.`;
 }
 
