@@ -43,9 +43,9 @@ export async function renderLineOverlay(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
   ];
 
-  // Outline (blue dashed)
+  // Outline (blue solid)
   const outlinePts = outlinePoints.map(p => `${p.x},${p.y}`).join(' ');
-  svgParts.push(`<polygon points="${outlinePts}" fill="rgba(59,130,246,0.08)" stroke="#2563eb" stroke-width="2" stroke-dasharray="8 5"/>`);
+  svgParts.push(`<polygon points="${outlinePts}" fill="rgba(59,130,246,0.08)" stroke="#2563eb" stroke-width="2"/>`);
 
   // Lines (orange)
   for (const line of lines) {
@@ -92,9 +92,9 @@ export async function renderCleanOverlay(
     `<rect width="${width}" height="${height}" fill="white"/>`,
   ];
 
-  // Outline (blue dashed)
+  // Outline (blue solid)
   const outlinePts = outlinePoints.map(p => `${p.x},${p.y}`).join(' ');
-  svgParts.push(`<polygon points="${outlinePts}" fill="rgba(59,130,246,0.05)" stroke="#2563eb" stroke-width="2" stroke-dasharray="8 5"/>`);
+  svgParts.push(`<polygon points="${outlinePts}" fill="rgba(59,130,246,0.05)" stroke="#2563eb" stroke-width="2"/>`);
 
   // Lines (orange)
   for (const line of lines) {

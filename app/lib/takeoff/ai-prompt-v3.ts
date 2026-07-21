@@ -78,12 +78,12 @@ export function buildV3LineDetectionPrompt(params: {
 
 Two images are provided:
 
-1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a thick blue line.
+1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a blue polygon.
 2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
 ## CONFIRMED ROOF OUTLINE
 
-The roof outline has already been confirmed.
+You must identify each connected line inside the roof outline. Each line is 1 point to 1 point, lines can join to the outline, lines can join to other lines on different angles inside the roof outline. The end goal is every line inside the roof outline gets added, no matter how small, no matter the angle.
 
 Outline vertices:
 ${outlineStr}
@@ -92,46 +92,18 @@ The outline is AUTHORITATIVE.
 
 Do not modify it.
 
-Do not return the complete roof outline polygon.
-
-## YOUR ONLY TASK
-
-Trace every visible continuous solid line segment that lies inside the confirmed roof outline or follows part of the confirmed roof perimeter.
-
-Do not classify or interpret the roof.
-
-Classification happens later.
-
-## COMPLETENESS IS THE PRIORITY
-
-Missing a genuine roof line segment is worse than returning an extra plausible one.
-
-Every visible solid line segment is equally important and should be returned because it exists, not because it appears significant.
-
-## INSPECTION METHOD
-
-Before producing your answer:
-
-1. Inspect the entire roof.
-2. Mentally divide the roof into many small overlapping regions.
-3. Inspect every region independently.
-4. In each region, first find all short, faint, secondary and connecting line segments.
-5. Then find the remaining longer and more obvious line segments.
-6. Finally, inspect the entire roof once more and add any visible line segment not already returned.
-
 ## LINE TRACING RULES
 
+- #1 Rule, 1 line is 1 visible point that ends where it changes direction, meets the roof outline, or another line inside the roof outline.
 - Treat every visible solid line segment as an independent object.
-- Never merge two visible line segments into a single line segment.
-- If a visible line changes direction, it is multiple line segments joined at a junction.
+- Every line must have a start point and end point.
+- Many lines will have start points and end points in the same location.
 - Return each line segment independently.
 - A junction is an endpoint where one line segment ends and another begins.
-- A junction may occur where two or more line segments meet, or where one line segment terminates anywhere along another line segment (a T-junction).
+- A junction may occur where two or more line segments meet, or where one line segment terminates anywhere along another line segment at a right angle, or cross angle.
 - Trace every line segment from one visible endpoint or junction to the next visible endpoint or junction.
-- Whenever a line reaches a junction, end the current line segment and begin a new one if another segment continues.
 - Include line segments that terminate on or follow part of the confirmed roof perimeter.
 - If two separate line segments run close together or parallel, return both.
-- Do not extend, shorten, combine or omit visible line segments.
 - If you are unsure whether a visible solid line segment belongs to the roof drawing, INCLUDE IT.
 
 ## IGNORE ONLY
@@ -139,14 +111,7 @@ Before producing your answer:
 Do not return:
 
 - Dotted or dashed lines
-- Spouting shown as dotted or dashed lines
 - Text
-- Dimensions
-- Leaders
-- Arrows
-- Symbols
-- Hatching
-- Page borders
 
 If a solid line segment and a dotted or dashed line are close together, always trace the solid line segment.
 
@@ -193,7 +158,7 @@ export function buildV3ClassificationPrompt(params: {
   return `You are an expert roofing plan component classifier. Geometry has already been detected. Your ONLY task is to classify each labeled line.
 
 Three images are provided:
-1. ANNOTATED ORIGINAL — the original plan with the confirmed outline (blue dashed) and all detected lines drawn in orange with their labels (L1, L2, etc.) visible.
+1. ANNOTATED ORIGINAL — the original plan with the confirmed outline (blue) and all detected lines drawn in orange with their labels (L1, L2, etc.) visible.
 2. CLEAN OVERLAY — just the outline and labeled lines on white background, no plan image.
 3. The original plan image for reference.
 
