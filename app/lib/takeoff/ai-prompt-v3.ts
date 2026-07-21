@@ -33,98 +33,110 @@ export interface V3Classification {
 // ─── Scan 1: Outline Only ────────────────────────────────────────────────
 
 export function buildV3OutlinePrompt(width: number, height: number): string {
-  return `You are a CAD roof-perimeter tracer.
+  return `You are an expert CAD roof outline tracer.
 
-One image is provided:
+An image is provided:
 
-ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
+ORIGINAL PLAN IMAGE — the architectural roof plan at ${width}×${height} pixels.
 
-Use integer coordinates in the original image coordinate system:
+Return all coordinates in the original image pixel coordinate system (0,0 = top-left, x increases right, y increases down).
 
-• (0,0) is top-left.
-• x increases right.
-• y increases down.
+## YOUR TASK
 
-## YOUR ONLY TASK
+Trace the visible outer roof edge exactly as if using a CAD polyline tool.
 
-Trace the centre of the true external roof perimeter as one ordered, closed polygon.
+Do not estimate the roof shape.
 
-Return one {x, y} vertex at every genuine change in perimeter direction.
+Do not simplify the outline.
 
-## EXTERNAL-BOUNDARY RULE
+Do not think about polygons first.
 
-Remain on the external boundary for the complete trace.
+Simply follow the roof edge visually, one edge at a time.
 
-A true perimeter segment separates:
+## HOW TO TRACE
 
-• the roof footprint on one side; and
-• the exterior of the roof footprint on the other side.
+1. Start at any external roof corner.
+2. Follow the visible outer roof edge clockwise.
+3. Stay directly on the roof edge at all times.
+4. Whenever the roof edge changes direction, create a new vertex.
+5. Continue until you return to the starting corner.
 
-An internal roof line normally has roof geometry on both sides and must not be followed.
+Imagine you are manually tracing the roof with a CAD polyline tool.
 
-When an internal line meets the perimeter:
+## VERTEX RULES
 
-• continue along the external boundary;
-• never turn inward onto the internal line;
-• change direction only when the external perimeter itself changes direction;
-• keep the roof interior consistently on the same side as you trace around the polygon.
+Create a new vertex whenever:
 
-Never use an internal line as a shortcut between two perimeter points.
+- the roof edge changes direction
+- a corner is reached
+- a step begins
+- a step ends
+- an external projection begins
+- an external projection ends
 
-## PERIMETER RULES
+Do not add unnecessary vertices along straight edges.
 
-• Start at any clear external corner and follow the perimeter continuously in one direction until it returns to the start.
-• Every pair of consecutive vertices must represent one external perimeter segment.
-• Include every visible step, notch, recess, projection, offset and re-entrant corner, however small.
-• Never skip a visible corner.
-• Never replace several perimeter segments with one simplified segment.
-• Never draw a polygon edge across the interior of the roof.
-• Do not add redundant vertices along one straight uninterrupted perimeter segment.
-• Perimeter segments may have any angle.
-• Trace the centre of the visible perimeter stroke.
+Do not skip any genuine change of direction.
 
-## VERTEX PLACEMENT
+Each straight roof edge should exist between exactly two consecutive vertices.
 
-At each perimeter corner:
+## OUTLINE RULES
 
-• locate the centreline of the incoming perimeter stroke;
-• locate the centreline of the outgoing perimeter stroke;
-• place the vertex at their intersection.
+Follow only the outermost continuous roof edge.
 
-Do not place a vertex on the outside or inside edge of a thick stroke.
+Never cut across an indentation.
 
-The final vertex connects back to the first vertex. Do not repeat the first vertex at the end unless required by the schema.
+Never shortcut between corners.
 
-## OBSTRUCTIONS
+Never smooth multiple corners into one.
 
-Dotted lines, dashed lines, text and dimensions do not create perimeter endpoints or direction changes.
+Never invent corners.
 
-When they cross or obscure the perimeter, continue the same perimeter stroke through the obstruction when its continuation is clear.
+Never remove visible corners.
 
-Bridge a small obscured section only when:
+Ignore everything inside the roof outline.
 
-• the same perimeter stroke is visible on both sides;
-• its direction or corner location is unambiguous;
-• there is only one plausible continuation.
+Ignore:
 
-## IGNORE
+- ridges
+- hips
+- valleys
+- internal roof lines
+- dashed lines
+- dotted lines
+- text
+- dimensions
+- leaders
+- arrows
+- symbols
+- hatching
+- shading
 
-• Internal roof lines
-• Dotted, dashed or hidden lines
-• Text, dimensions, leaders and arrows
-• Grids, borders, hatching, shading, fill colours and unrelated symbols
+Trace only the external roof perimeter.
 
-## FINAL CHECK
+## SELF CHECK
 
-Before returning the polygon:
+Before returning the result, walk the outline clockwise one complete time.
 
-1. Follow the complete polygon again in order.
-2. Confirm that every edge separates the roof footprint from the exterior.
-3. Confirm that no edge follows an internal roof line or crosses through the roof interior.
-4. Confirm that every visible perimeter direction change has one vertex.
-5. Confirm that no visible corner lies between consecutive vertices.
-6. Confirm that every consecutive edge, including the final-to-first edge, follows the external perimeter.
-7. Confirm that the polygon is closed and does not cross itself.
+For every edge verify:
+
+- it follows the visible roof edge
+- it ends exactly where the roof changes direction
+- every visible external corner has a corresponding vertex
+- the outline forms one continuous closed loop
+
+## OUTPUT
+
+Return one ordered clockwise polygon of {x, y} points.
+
+Each polygon point must contain:
+
+{
+  "x": number,
+  "y": number
+}
+
+Do not repeat the first point as the final point — the polygon is implicitly closed.
 
 Return only the structured JSON required by the schema.`;
 }
