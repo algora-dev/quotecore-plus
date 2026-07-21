@@ -2,7 +2,8 @@
  * AI Takeoff V3 — 3-scan pipeline.
  *
  * Scan 1: Outline only (GPT traces roof perimeter)
- * Scan 2: Internal line detection (GPT traces visible lines, angle-constrained)
+ * Scan 2A: Internal line detection (GPT traces visible lines, angle-constrained)
+ * Scan 2B: Missing-line audit (GPT finds uncovered lines, best-effort)
  * Scan 3: Classification only (GPT names each labeled line)
  *
  * Each scan does ONE thing → simpler prompts → better accuracy.
@@ -25,9 +26,11 @@ import type { Database } from '@/app/lib/supabase/database.types';
 import {
   V3_SCAN1_SCHEMA,
   V3_SCAN2_SCHEMA,
+  V3_SCAN2B_SCHEMA,
   V3_SCAN3_SCHEMA,
   buildV3OutlinePrompt,
   buildV3LineDetectionPrompt,
+  buildV3MissingLineAuditPrompt,
   buildV3ClassificationPrompt,
   type V3Point,
   type V3Line,
@@ -37,9 +40,16 @@ import {
   renderOutlineOverlay,
   renderLineOverlay,
   renderCleanOverlay,
+  renderScan2AuditOverlay,
   outlineToEdgeLines,
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
+import {
+  mergeScan2BCandidates,
+  mergeWithExisting,
+  DEFAULT_AUDIT_CONFIG,
+  type Scan2BDebug,
+} from '@/app/lib/takeoff/scan2AuditGeometry';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -597,10 +607,68 @@ export async function POST(req: NextRequest) {
       timer.mark('postprocess_start');
       const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(rawLines);
       const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints);
-      const finalLines: V3Line[] = connectedLines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+      const scan2aLines: V3Line[] = connectedLines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
       timer.mark('postprocess_done');
 
-      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
+      console.log(`[ai-scan-v3:${requestId}] scan2a postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
+
+      // ── Scan 2B: Missing-line audit ────────────────────────────────
+      let finalLines: V3Line[] = scan2aLines;
+      let scan2bDebug: Scan2BDebug = { status: 'no_candidates', rawCandidateCount: 0, acceptedCount: 0, rejected: [] };
+
+      try {
+        timer.mark('scan2b_audit_overlay_start');
+        const auditOverlayBuffer = await renderScan2AuditOverlay(processedBuffer, outlinePoints, scan2aLines, imgW, imgH);
+        timer.mark('scan2b_audit_overlay_done');
+
+        const auditDataUrl = `data:image/png;base64,${auditOverlayBuffer.toString('base64')}`;
+
+        timer.mark('scan2b_call_start');
+        const scan2bResult = await callVisionModel(
+          buildV3MissingLineAuditPrompt({ width: imgW, height: imgH, outlinePoints, currentSegments: scan2aLines }),
+          [
+            { dataUrl: originalDataUrl, label: 'IMAGE 1: ORIGINAL PLAN (the raw architectural roof plan)' },
+            { dataUrl: auditDataUrl, label: 'IMAGE 2: SCAN 2A AUDIT OVERLAY (original plan with confirmed outline in blue and detected segments in cyan)' },
+          ],
+          V3_SCAN2B_SCHEMA,
+          model,
+          { reasoningEffort: 'low', maxCompletionTokens: 4000 },
+        );
+        timer.mark('scan2b_call_done');
+
+        console.log(`[ai-scan-v3:${requestId}] scan2b: responseId=${scan2bResult.responseId} usage=`, scan2bResult.usage);
+
+        const scan2bRaw = scan2bResult.parsed as Record<string, unknown>;
+        const scan2bCandidates = (Array.isArray(scan2bRaw.missing_segments) ? scan2bRaw.missing_segments : [])
+          .filter((s): s is Record<string, unknown> => typeof s === 'object' && s !== null)
+          .map(s => {
+            const start = s.start as Record<string, unknown> | undefined;
+            const end = s.end as Record<string, unknown> | undefined;
+            return {
+              start: { x: typeof start?.x === 'number' ? start.x : 0, y: typeof start?.y === 'number' ? start.y : 0 },
+              end: { x: typeof end?.x === 'number' ? end.x : 0, y: typeof end?.y === 'number' ? end.y : 0 },
+            };
+          });
+
+        const mergeResult = mergeScan2BCandidates(scan2bCandidates, scan2aLines, outlinePoints, imgW, imgH, DEFAULT_AUDIT_CONFIG);
+
+        scan2bDebug = {
+          status: mergeResult.accepted.length > 0 ? 'ok' : (scan2bCandidates.length > 0 ? 'no_candidates' : 'no_candidates'),
+          rawCandidateCount: scan2bCandidates.length,
+          acceptedCount: mergeResult.accepted.length,
+          rejected: mergeResult.rejected,
+        };
+
+        console.log(`[ai-scan-v3:${requestId}] scan2b: raw=${scan2bCandidates.length} accepted=${mergeResult.accepted.length} rejected=${mergeResult.rejected.length}`, mergeResult.rejected.map(r => r.reason));
+
+        finalLines = mergeWithExisting(scan2aLines, mergeResult.accepted);
+      } catch (scan2bError) {
+        const msg = scan2bError instanceof Error ? scan2bError.message : 'Unknown error';
+        console.warn(`[ai-scan-v3:${requestId}] scan2b failed: ${msg}`);
+        scan2bDebug = { status: 'failed', rawCandidateCount: 0, acceptedCount: 0, rejected: [], error: msg };
+        // Fall back to Scan 2A only — do not fail the request
+        finalLines = scan2aLines;
+      }
 
       const canvasScaleX = canvasW / imgW;
       const canvasScaleY = canvasH / imgH;
@@ -618,17 +686,37 @@ export async function POST(req: NextRequest) {
           analysisDimensions: { width: imgW, height: imgH },
           canvasDimensions: { width: canvasW, height: canvasH },
           notes,
-          stats: { rawLines: rawLines.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length },
+          stats: {
+            rawLines: rawLines.length,
+            angleValid: angleValidLines.length,
+            connected: connectedLines.length,
+            angleRejected: angleRejectedLines.length,
+            floating: floatingLines.length,
+            scan2aAccepted: scan2aLines.length,
+            scan2b: scan2bDebug as unknown as Record<string, unknown>,
+            finalMerged: finalLines.length,
+          },
         };
         await supabase.from('takeoff_pages')
-          .update({ ai_scan_result: scan2Data })
+          .update({ ai_scan_result: JSON.parse(JSON.stringify(scan2Data)) })
           .eq('id', pageId).eq('quote_id', quoteId);
       }
 
       usage(true);
       logRequest({
         requestId, stage: 'scan2_complete', timer,
-        extra: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, modelUsage: result.usage },
+        extra: {
+          rawLines: rawLines.length,
+          scan2aAccepted: scan2aLines.length,
+          scan2bStatus: scan2bDebug.status,
+          scan2bRaw: scan2bDebug.rawCandidateCount,
+          scan2bAccepted: scan2bDebug.acceptedCount,
+          scan2bRejected: scan2bDebug.rejected.length,
+          finalLines: finalLines.length,
+          angleRejected: angleRejectedLines.length,
+          floating: floatingLines.length,
+          modelUsage: result.usage,
+        },
       });
 
       return NextResponse.json({
@@ -637,7 +725,17 @@ export async function POST(req: NextRequest) {
         data: { lines: linesCanvas, outlinePoints: outlineCanvas, notes },
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
-        summary: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
+        summary: {
+          rawLines: rawLines.length,
+          scan2aAccepted: scan2aLines.length,
+          scan2bStatus: scan2bDebug.status,
+          scan2bRaw: scan2bDebug.rawCandidateCount,
+          scan2bAccepted: scan2bDebug.acceptedCount,
+          finalLines: finalLines.length,
+          angleRejected: angleRejectedLines.length,
+          floating: floatingLines.length,
+          notes,
+        },
       });
     }
 
@@ -690,7 +788,7 @@ export async function POST(req: NextRequest) {
       let result;
       try {
         result = await callVisionModel(
-          buildV3ClassificationPrompt({ width: imgW, height: imgH, outlinePoints, lines: allLines }),
+          buildV3ClassificationPrompt({ outlinePoints, lines: allLines }),
           [
             { dataUrl: annotatedDataUrl, label: 'IMAGE 1: ANNOTATED ORIGINAL (original plan with outline and labeled lines)' },
             { dataUrl: cleanDataUrl, label: 'IMAGE 2: CLEAN OVERLAY (outline + labeled lines only, no plan)' },

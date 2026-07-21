@@ -6380,7 +6380,7 @@ export function TakeoffWorkstation({
           <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl text-center">
             <div className="inline-block w-8 h-8 border-3 border-slate-200 border-t-[#FF6B35] rounded-full animate-spin mb-3" />
             <h3 className="text-sm font-semibold text-slate-900">
-              {aiScanStage === 'outline' ? 'Tracing roof outline…' : aiScanStage === 'lines' ? 'Detecting roof lines…' : 'Classifying components…'}
+              {aiScanStage === 'outline' ? 'Tracing roof outline…' : aiScanStage === 'lines' ? 'Detecting and auditing roof lines…' : 'Classifying components…'}
             </h3>
             <p className="text-xs text-slate-500 mt-1">This may take a few moments.</p>
           </div>

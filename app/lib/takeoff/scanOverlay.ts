@@ -11,6 +11,39 @@ import sharp from 'sharp';
 import type { V3Point, V3Line } from './ai-prompt-v3';
 
 /**
+ * Draw the Scan 2A audit overlay: original plan + blue outline + thin cyan lines.
+ * No labels, no endpoint markers, no fill.
+ * The coloured stroke is thinner than the black source stroke so Scan 2B can
+ * distinguish traced vs untraced black lines.
+ */
+export async function renderScan2AuditOverlay(
+  originalBuffer: Buffer,
+  outlinePoints: V3Point[],
+  lines: V3Line[],
+  width: number,
+  height: number,
+): Promise<Buffer> {
+  const svgParts: string[] = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+  ];
+
+  // Outline (blue, no fill)
+  const outlinePts = outlinePoints.map(p => `${p.x},${p.y}`).join(' ');
+  svgParts.push(`<polygon points="${outlinePts}" fill="none" stroke="#2563eb" stroke-width="5" stroke-linejoin="round"/>`);
+
+  // Detected lines — thin cyan, round caps, no markers
+  for (const line of lines) {
+    svgParts.push(
+      `<line x1="${line.start.x}" y1="${line.start.y}" x2="${line.end.x}" y2="${line.end.y}" stroke="#00ffff" stroke-width="2" stroke-linecap="round" opacity="0.9"/>`
+    );
+  }
+
+  svgParts.push('</svg>');
+  const svgBuffer = Buffer.from(svgParts.join('\n'));
+  return sharp(originalBuffer).composite([{ input: svgBuffer, blend: 'over' }]).png().toBuffer();
+}
+
+/**
  * Draw the confirmed outline polygon on top of the original image.
  * Thick solid blue outline, NO fill — keeps the roof interior fully visible.
  */
