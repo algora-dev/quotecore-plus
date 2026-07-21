@@ -261,7 +261,9 @@ Each consecutive pair of outline vertices is an outline edge:
 
 Do not add, remove, merge, split, extend, shorten or move any line.
 
-Classify each supplied ID exactly once. Do not invent IDs or missing geometry.
+Classify each supplied ID exactly once.
+
+Do not invent IDs or missing geometry.
 
 ## CLASSIFICATION PRINCIPLES
 
@@ -271,6 +273,23 @@ Classify each supplied ID exactly once. Do not invent IDs or missing geometry.
 • Judge orientation relative to the local roof geometry. The plan may be rotated, skewed or imperfectly scanned.
 • Scan 2 splits lines at every junction. Adjacent segments may still be parts of the same roofing component and may receive the same classification.
 • A junction or segmentation boundary does not by itself change the component type.
+
+## PERIMETER CORNER CHECK
+
+For every internal segment that touches the roof perimeter:
+
+Look only at the two outline edges meeting at that perimeter endpoint.
+
+• If the outline turns around the outside of the roof at that point, it is an external (convex) corner.
+• If the outline turns into a notch or recess of the roof at that point, it is an internal (concave) corner.
+
+A hip always terminates at an external corner.
+
+A valley always terminates at an internal corner.
+
+Never classify a line terminating at an internal corner as a hip.
+
+Never classify a line terminating at an external corner as a valley.
 
 ## ALLOWED CLASSIFICATIONS
 
@@ -309,8 +328,8 @@ Use only when the type remains genuinely ambiguous after checking both endpoints
 
 Before returning the JSON, verify that:
 
-1. every hip touches a convex outline corner;
-2. every valley touches a concave outline corner;
+1. every hip terminates at an external (convex) outline corner;
+2. every valley terminates at an internal (concave) outline corner;
 3. every broken_hip is internal and does not touch the perimeter;
 4. ridge segments form a coherent high-line network and remain ridge across a split junction when their role continues;
 5. adjacent or collinear Scan 2 segments receive consistent types unless their roof role visibly changes;
