@@ -174,7 +174,7 @@ async function callVisionModel(
   images: Array<{ dataUrl: string; label?: string; detail?: 'high' | 'low' }>,
   schema: Record<string, unknown>,
   model: string,
-  options: { reasoningEffort: 'low' | 'medium' | 'high'; maxCompletionTokens: number },
+  options: { reasoningEffort?: 'low' | 'medium' | 'high'; maxCompletionTokens: number },
 ): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null }> {
   const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
     { type: 'text', text: prompt },
@@ -189,10 +189,12 @@ async function callVisionModel(
     });
   }
 
-  const response = await openai.chat.completions.create({
+  // reasoning_effort is only supported by o-series and GPT-5.x models.
+  // GPT-4.1 / 4o don't accept this parameter.
+  const supportsReasoningEffort = /^o\d|^gpt-5/i.test(model);
+  const createParams: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
     model,
     max_completion_tokens: options.maxCompletionTokens,
-    reasoning_effort: options.reasoningEffort,
     messages: [{ role: 'user', content: contentParts }],
     response_format: {
       type: 'json_schema',
@@ -202,7 +204,12 @@ async function callVisionModel(
         schema,
       },
     },
-  });
+  };
+  if (supportsReasoningEffort && options.reasoningEffort) {
+    createParams.reasoning_effort = options.reasoningEffort;
+  }
+
+  const response = await openai.chat.completions.create(createParams);
 
   const content = response.choices[0]?.message?.content;
   if (!content) throw new Error('AI returned an empty response.');
@@ -567,7 +574,7 @@ export async function POST(req: NextRequest) {
 
     timer.mark('auth_done');
 
-    const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
+    const model = process.env.AI_TAKEOFF_MODEL || 'gpt-4.1';
     const usage = (success: boolean, error?: string) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
       pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
