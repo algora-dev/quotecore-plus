@@ -33,110 +33,30 @@ export interface V3Classification {
 // ─── Scan 1: Outline Only ────────────────────────────────────────────────
 
 export function buildV3OutlinePrompt(width: number, height: number): string {
-  return `You are an expert CAD roof outline tracer.
+  return `You are tracing the visible outer boundary of the roof.
 
-An image is provided:
+Place the tip of a pen on any point of the visible outer roof edge.
 
-ORIGINAL PLAN IMAGE — the architectural roof plan at ${width}×${height} pixels.
+Without lifting the pen, trace the outer boundary clockwise while keeping the pen exactly on the visible edge.
 
-Return all coordinates in the original image pixel coordinate system (0,0 = top-left, x increases right, y increases down).
+Whenever the pen must change direction to remain on the boundary, record a new vertex.
 
-## YOUR TASK
+Do not add vertices along straight edges.
 
-Trace the visible outer roof edge exactly as if using a CAD polyline tool.
+Continue until the pen returns to the starting point, forming one closed loop.
 
-Do not estimate the roof shape.
+Ignore everything except the visible outer boundary. Ignore all internal roof lines, ridges, hips, valleys, dashed lines, text, dimensions, symbols and shading.
 
-Do not simplify the outline.
-
-Do not think about polygons first.
-
-Simply follow the roof edge visually, one edge at a time.
-
-## HOW TO TRACE
-
-1. Start at any external roof corner.
-2. Follow the visible outer roof edge clockwise.
-3. Stay directly on the roof edge at all times.
-4. Whenever the roof edge changes direction, create a new vertex.
-5. Continue until you return to the starting corner.
-
-Imagine you are manually tracing the roof with a CAD polyline tool.
-
-## VERTEX RULES
-
-Create a new vertex whenever:
-
-- the roof edge changes direction
-- a corner is reached
-- a step begins
-- a step ends
-- an external projection begins
-- an external projection ends
-
-Do not add unnecessary vertices along straight edges.
-
-Do not skip any genuine change of direction.
-
-Each straight roof edge should exist between exactly two consecutive vertices.
-
-## OUTLINE RULES
-
-Follow only the outermost continuous roof edge.
-
-Never cut across an indentation.
-
-Never shortcut between corners.
-
-Never smooth multiple corners into one.
-
-Never invent corners.
-
-Never remove visible corners.
-
-Ignore everything inside the roof outline.
-
-Ignore:
-
-- ridges
-- hips
-- valleys
-- internal roof lines
-- dashed lines
-- dotted lines
-- text
-- dimensions
-- leaders
-- arrows
-- symbols
-- hatching
-- shading
-
-Trace only the external roof perimeter.
-
-## SELF CHECK
-
-Before returning the result, walk the outline clockwise one complete time.
-
-For every edge verify:
-
-- it follows the visible roof edge
-- it ends exactly where the roof changes direction
-- every visible external corner has a corresponding vertex
-- the outline forms one continuous closed loop
-
-## OUTPUT
-
-Return one ordered clockwise polygon of {x, y} points.
-
-Each polygon point must contain:
-
-{
-  "x": number,
-  "y": number
-}
-
-Do not repeat the first point as the final point — the polygon is implicitly closed.
+Return:
+- An ordered clockwise list of vertices.
+- Each vertex as:
+  {
+    "x": number,
+    "y": number
+  }
+- One vertex for every change in direction.
+- Do not repeat the first vertex as the final vertex — the polygon is implicitly closed.
+- Coordinates are in the original image pixel system: (0,0) = top-left, x increases right, y increases down. Image is ${width}×${height} pixels.
 
 Return only the structured JSON required by the schema.`;
 }
