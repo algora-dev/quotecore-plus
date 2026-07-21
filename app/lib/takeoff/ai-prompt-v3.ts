@@ -74,16 +74,16 @@ export function buildV3LineDetectionPrompt(params: {
     .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
     .join('\n');
 
-  return `You are an expert CAD roof line tracer.
+  return `You are an expert CAD line segment tracer.
 
 Two images are provided:
 
-1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a blue polygon.
+1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline drawn as a thin solid blue polygon.
 2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
 
 ## CONFIRMED ROOF OUTLINE
 
-You must identify each connected line inside the roof outline. Each line is 1 point to 1 point, lines can join to the outline, lines can join to other lines on different angles inside the roof outline. The end goal is every line inside the roof outline gets added, no matter how small, no matter the angle.
+The roof outline has already been confirmed.
 
 Outline vertices:
 ${outlineStr}
@@ -92,19 +92,44 @@ The outline is AUTHORITATIVE.
 
 Do not modify it.
 
-## LINE TRACING RULES
+Do not return the complete roof outline polygon.
 
-- #1 Rule, 1 line is 1 visible point that ends where it changes direction, meets the roof outline, or another line inside the roof outline.
-- Treat every visible solid line segment as an independent object.
-- Every line must have a start point and end point.
-- Many lines will have start points and end points in the same location.
-- Return each line segment independently.
-- A junction is an endpoint where one line segment ends and another begins.
-- A junction may occur where two or more line segments meet, or where one line segment terminates anywhere along another line segment at a right angle, or cross angle.
-- Trace every line segment from one visible endpoint or junction to the next visible endpoint or junction.
+## YOUR TASK
+
+Reconstruct the complete connected skeleton of every visible continuous solid line segment inside the confirmed roof outline or connected to its perimeter.
+
+If a visible solid line segment exists, it must appear exactly once in the output.
+
+Do not classify or interpret the roof.
+
+Classification happens later.
+
+## LINE & JUNCTION RULES
+
+- Every line segment has exactly one start point and one end point.
+- A line segment begins at one visible endpoint or junction and ends at the next visible endpoint or junction.
+- If a visible line changes direction, it becomes a new line segment.
+- Never merge multiple visible line segments into one.
+- A junction is any location where line segments begin, end, meet, change direction, terminate on another line segment (T-junction), or terminate on the confirmed roof outline.
+- Every line segment connected to a junction must be returned as its own independent line object.
+- Multiple line segments may legitimately share identical endpoint coordinates.
+- Shared endpoint coordinates DO NOT mean the connected line segments are already recorded.
+- Never assume a line segment exists simply because both of its endpoint coordinates already appear on other line objects.
+- Never continue one line segment through a junction into another.
+- Include short, faint, connecting and perimeter-following line segments.
 - Include line segments that terminate on or follow part of the confirmed roof perimeter.
-- If two separate line segments run close together or parallel, return both.
+- If two visible line segments run close together or parallel, return both.
 - If you are unsure whether a visible solid line segment belongs to the roof drawing, INCLUDE IT.
+
+## SELF VERIFICATION
+
+Before producing the JSON:
+
+1. Inspect every visible junction.
+2. Count every visible line segment connected to that junction.
+3. Verify that every connected line segment has been returned as its own line object.
+4. Verify that no line segment has been skipped because its endpoint coordinates already exist on other line objects.
+5. Inspect the complete roof one final time and add any visible line segment not already returned.
 
 ## IGNORE ONLY
 
@@ -117,12 +142,20 @@ If a solid line segment and a dotted or dashed line are close together, always t
 
 ## WHAT TO RETURN
 
-Return an array of detected line segments.
+Return an array of detected line segment objects.
 
-For each line segment return only:
+Each object must contain only:
 
-- \`start\`: {x, y}
-- \`end\`: {x, y}
+{
+  "start": {
+    "x": number,
+    "y": number
+  },
+  "end": {
+    "x": number,
+    "y": number
+  }
+}
 
 Do not generate IDs.
 
