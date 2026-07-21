@@ -47,32 +47,65 @@ Use integer coordinates in the original image coordinate system:
 
 ## YOUR ONLY TASK
 
-Trace the centre of the visible outer roof-perimeter stroke as one ordered, closed polygon.
+Trace the centre of the true external roof perimeter as one ordered, closed polygon.
 
 Return one {x, y} vertex at every genuine change in perimeter direction.
 
+## EXTERNAL-BOUNDARY RULE
+
+Remain on the external boundary for the complete trace.
+
+A true perimeter segment separates:
+
+• the roof footprint on one side; and
+• the exterior of the roof footprint on the other side.
+
+An internal roof line normally has roof geometry on both sides and must not be followed.
+
+When an internal line meets the perimeter:
+
+• continue along the external boundary;
+• never turn inward onto the internal line;
+• change direction only when the external perimeter itself changes direction;
+• keep the roof interior consistently on the same side as you trace around the polygon.
+
+Never use an internal line as a shortcut between two perimeter points.
+
 ## PERIMETER RULES
 
-• Follow the outer roof boundary continuously in one direction until it returns to the starting point.
-• Every pair of consecutive vertices must correspond to one directly visible perimeter segment.
+• Start at any clear external corner and follow the perimeter continuously in one direction until it returns to the start.
+• Every pair of consecutive vertices must represent one external perimeter segment.
 • Include every visible step, notch, recess, projection, offset and re-entrant corner, however small.
-• Never skip a visible corner or replace several visible perimeter segments with one simplified segment.
-• Do not add redundant vertices along a straight, uninterrupted perimeter segment.
-• Perimeter segments may have any angle. Do not assume horizontal, vertical or 45-degree geometry.
-• Trace the centre of the perimeter stroke, not either side of its thickness.
-• The final vertex connects back to the first vertex. Do not repeat the first vertex at the end unless the schema requires it.
+• Never skip a visible corner.
+• Never replace several perimeter segments with one simplified segment.
+• Never draw a polygon edge across the interior of the roof.
+• Do not add redundant vertices along one straight uninterrupted perimeter segment.
+• Perimeter segments may have any angle.
+• Trace the centre of the visible perimeter stroke.
 
-When an internal roof line meets the perimeter:
+## VERTEX PLACEMENT
 
-• remain on the perimeter;
-• do not turn inward onto the internal line;
-• add a vertex only if the perimeter itself changes direction there.
+At each perimeter corner:
 
-## GAPS
+• locate the centreline of the incoming perimeter stroke;
+• locate the centreline of the outgoing perimeter stroke;
+• place the vertex at their intersection.
 
-Bridge a small obstruction caused by text, dimensions or image quality only when the same perimeter stroke is clearly visible on both sides and there is only one plausible continuation.
+Do not place a vertex on the outside or inside edge of a thick stroke.
 
-If a corner is partly obscured, infer it only when the visible incoming and outgoing perimeter segments uniquely determine its location.
+The final vertex connects back to the first vertex. Do not repeat the first vertex at the end unless required by the schema.
+
+## OBSTRUCTIONS
+
+Dotted lines, dashed lines, text and dimensions do not create perimeter endpoints or direction changes.
+
+When they cross or obscure the perimeter, continue the same perimeter stroke through the obstruction when its continuation is clear.
+
+Bridge a small obscured section only when:
+
+• the same perimeter stroke is visible on both sides;
+• its direction or corner location is unambiguous;
+• there is only one plausible continuation.
 
 ## IGNORE
 
@@ -83,14 +116,15 @@ If a corner is partly obscured, infer it only when the visible incoming and outg
 
 ## FINAL CHECK
 
-Before returning the polygon, verify that:
+Before returning the polygon:
 
-1. every visible direction change has a vertex;
-2. no visible corner lies between consecutive vertices;
-3. every consecutive edge, including the final-to-first edge, follows the visible perimeter;
-4. no edge follows an internal line;
-5. the polygon is closed and does not cross itself;
-6. every perimeter segment is represented exactly once.
+1. Follow the complete polygon again in order.
+2. Confirm that every edge separates the roof footprint from the exterior.
+3. Confirm that no edge follows an internal roof line or crosses through the roof interior.
+4. Confirm that every visible perimeter direction change has one vertex.
+5. Confirm that no visible corner lies between consecutive vertices.
+6. Confirm that every consecutive edge, including the final-to-first edge, follows the external perimeter.
+7. Confirm that the polygon is closed and does not cross itself.
 
 Return only the structured JSON required by the schema.`;
 }
@@ -120,12 +154,22 @@ Use integer coordinates in the original image coordinate system:
 • x increases right.
 • y increases down.
 
+## SOURCE PRIORITY
+
+Use the ORIGINAL PLAN IMAGE as the source of all internal line evidence.
+
+Use the OUTLINE OVERLAY IMAGE only to locate the confirmed roof boundary.
+
+The blue polygon is not roof linework to detect.
+
 ## CONFIRMED ROOF OUTLINE
 
 Outline vertices:
 ${outlineStr}
 
-The confirmed outline is AUTHORITATIVE. Do not modify or return its perimeter edges. The blue polygon is a boundary reference, not roof linework to detect.
+The confirmed outline is AUTHORITATIVE.
+
+Do not modify it or return its perimeter edges.
 
 ## YOUR ONLY TASK
 
@@ -135,67 +179,119 @@ Do not classify or interpret the roof.
 
 ## ATOMIC SEGMENT DEFINITION
 
-A stop point is any location where a visible solid line:
+A stop point is a location where a visible solid roof line:
 
 • ends;
 • changes direction;
-• meets or intersects another solid roof line;
-• terminates at the endpoint of another line;
-• terminates partway along another line;
+• meets another visible solid roof line;
+• terminates at the endpoint of another visible solid roof line;
+• terminates partway along another visible solid roof line;
 • reaches the confirmed roof perimeter.
 
-An atomic segment is the visible stroke between two consecutive stop points.
+An atomic segment is the visible solid stroke between two consecutive stop points.
 
-## HARD RULE
+No returned segment may contain a solid roof-line stop point between its start and end.
 
-No returned segment may contain another stop point anywhere between its start and end.
+## SOLID INTERSECTION RULE
 
-Therefore:
+Every intersection with another visible solid roof line splits every participating line.
 
-• every intersection splits every participating line;
-• a line that visually continues straight through a junction must be returned as separate segments on each side;
-• a line terminating partway along another line creates three segments: the terminating branch and the two sides of the supporting line;
-• two crossing lines create four segments meeting at the crossing;
-• no returned segment may pass through another line or junction.
+A line must terminate at the intersection and, when it continues beyond that intersection, restart as a new line object from the same coordinate.
 
-## SHARED ENDPOINTS
+No returned segment may pass through another solid roof line or solid roof-line junction.
 
-• Every visible segment must have its own explicit start and end coordinates.
-• Any number of segments may share exactly the same endpoint coordinates.
-• A shared coordinate does not mean all connected segments have been recorded.
-• A coordinate is not a line segment.
-• A segment is recorded only when its start and end appear together in its own output object.
-• Never omit a visible segment merely because both endpoint coordinates already occur on other segments.
+## ANNOTATIONS ARE TRANSPARENT
 
-## TRACING RULES
+Dotted lines, dashed lines and text are not roof-line junctions.
 
-• Return each visible atomic segment exactly once.
-• Trace every branch from one stop point to the next stop point.
-• When a segment reaches the perimeter, end it at the visible intersection with the centre of the confirmed outline stroke.
-• Include short, faint, secondary and connecting solid segments.
+They never:
+
+• terminate a solid roof line;
+• split a solid roof line;
+• create a segment endpoint.
+
+When a solid roof line passes through or underneath a dotted line, dashed line or text:
+
+• follow the solid line through the obstruction;
+• continue it to the next genuine solid roof-line stop point;
+• do not end it at the annotation.
+
+If the solid stroke is briefly hidden but resumes on the same clear path beyond the annotation, treat it as continuous.
+
+## ENDPOINT-COUNT RULE
+
+At every solid roof-line junction, count the visible solid branches leaving that coordinate.
+
+The number of returned segment endpoints at that coordinate must equal the number of visible branches.
+
+Examples:
+
+• isolated line end: 1 branch and 1 returned endpoint;
+• direction change: 2 branches and 2 returned endpoints;
+• T-junction: 3 branches and 3 returned endpoints;
+• crossing of two solid roof lines: 4 branches and 4 returned endpoints;
+• five-way junction: 5 branches and 5 returned endpoints.
+
+Every branch must have its own line object.
+
+A straight line continuing through a junction creates one segment on each side of the junction.
+
+## SHARED-ENDPOINT RULE
+
+Multiple line objects may use exactly the same endpoint coordinate.
+
+A coordinate is not a detected line.
+
+A visible segment is detected only when its start and end coordinates appear together in its own output object.
+
+Never omit a visible connecting segment because:
+
+• both endpoint coordinates already appear on other segments;
+• both junctions have already been detected;
+• neighbouring segments already use those points.
+
+A visible connector between two existing junctions must be returned as an additional independent line object. It adds one endpoint occurrence to each junction.
+
+## COORDINATE PLACEMENT
+
+At a solid roof-line junction:
+
+• locate the centreline of every participating stroke;
+• use one shared coordinate at their centreline intersection;
+• do not create several nearby endpoint coordinates for lines that visibly meet at one point.
+
+When a line terminates on the confirmed perimeter, place its endpoint at the intersection of the line centreline and the confirmed perimeter centreline.
+
+## COVERAGE RULES
+
+• Return every visible solid atomic segment exactly once.
+• Trace every visible branch from one stop point to the next.
+• Include short, faint, secondary and linking segments.
+• Include segments whose two endpoints are already used by other segments.
 • Include distinct solid lines that are close together or parallel.
-• Do not return any segment that merely retraces a confirmed perimeter edge.
-• Do not bridge a gap unless the continuation is visually unambiguous.
+• Do not return a segment that merely retraces a confirmed perimeter edge.
+• Do not bridge a genuine break unless the continuation is visually unambiguous.
 • If a visible solid line may be roof linework, include it rather than omit it.
 
-## JUNCTION-FIRST CHECK
+## FINAL COVERAGE CHECK
 
 Before returning the JSON:
 
-1. locate every visible endpoint, direction change and junction;
-2. at each junction, count every visible branch leaving it;
-3. verify that one returned segment uses that junction as an endpoint for every branch;
-4. verify that every visible stroke between adjacent stop points has its own segment;
-5. verify that no returned segment passes through a stop point;
-6. remove exact duplicates, including reversed duplicates;
-7. sweep the full roof once more and add any uncovered solid segment.
+1. Inspect every visible solid endpoint and junction.
+2. Compare the visible branch count with the number of returned endpoints at that coordinate.
+3. For every pair of adjacent stop points joined by a visible solid stroke, confirm that one segment object exists between them.
+4. Specifically search for visible linking segments whose two endpoint coordinates already occur on other line objects.
+5. Confirm that dotted lines, dashed lines and text have not caused any solid line to terminate early.
+6. Confirm that no returned segment passes through a solid roof-line junction.
+7. Remove exact duplicates, including reversed duplicates.
+8. Sweep the complete roof once more and add every uncovered visible solid segment.
 
-## IGNORE ONLY
+## IGNORE
 
-• Dotted or dashed lines
-• Text
+Do not return:
 
-If a solid line is close to a dotted or dashed line, trace the solid line.
+• dotted or dashed lines;
+• text.
 
 ## OUTPUT
 
