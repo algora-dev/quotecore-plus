@@ -56,92 +56,6 @@ Do not repeat the first vertex as the final vertex — the polygon is implicitly
 Return only the structured JSON required by the schema.`;
 }
 
-// ─── Scan 1B: Outline Visual Audit ───────────────────────────────────────
-
-export function buildV3Scan1BPrompt(params: {
-  width: number;
-  height: number;
-  polygonPoints: V3Point[];
-}): string {
-  const { width, height, polygonPoints } = params;
-  const polyStr = polygonPoints
-    .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
-    .join('\n');
-
-  return `You are a CAD outline auditor.
-
-Two images are provided:
-
-1. OUTLINE AUDIT IMAGE — the original roof plan with a thin high-contrast polygon drawn over it, including small vertex markers at every polygon point.
-2. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
-
-Use integer coordinates in the original image coordinate system:
-
-• (0,0) is top-left.
-• x increases right.
-• y increases down.
-
-## CURRENT POLYGON
-
-The current polygon vertices are:
-${polyStr}
-
-## YOUR ONLY TASK
-
-Verify whether the rendered polygon follows the complete true external roof silhouette.
-
-If the polygon is already correct, return the same full polygon unchanged.
-
-If the polygon is wrong, return one corrected full polygon.
-
-Do not return patch instructions. Return the complete corrected polygon.
-
-## WHAT TO CHECK
-
-Inspect the rendered polygon against the original plan for:
-
-• omitted external steps or projections;
-• omitted recesses or notches;
-• skipped direction changes;
-• polygon edges that cut through the roof interior;
-• polygon edges that follow an internal roof line instead of the external boundary;
-• inaccurate corner placement;
-• incorrect point ordering;
-• self-intersections;
-• failure to close.
-
-## RULES
-
-• Preserve the original image-pixel coordinate system.
-• Return one ordered polygon.
-• Follow the external roof silhouette only.
-• Include every genuine perimeter direction change, however small.
-• Never add internal roof lines.
-• Never simplify multiple perimeter segments into one.
-• Never omit a visible external corner.
-• The polygon is implicitly closed — do not repeat the first point at the end unless the schema requires it.
-
-## EXTERNAL-BOUNDARY RULE
-
-A true perimeter segment separates the roof footprint on one side from the exterior on the other.
-
-An internal roof line has roof geometry on both sides and must not be followed.
-
-When an internal line meets the perimeter, continue along the external boundary.
-
-## FINAL CHECK
-
-Before returning the polygon:
-
-1. Compare every polygon edge against the original plan.
-2. Confirm that every edge follows the external perimeter, not an internal line.
-3. Confirm that every visible perimeter direction change has a vertex.
-4. Confirm that no visible corner lies between consecutive vertices.
-5. Confirm that the polygon is closed and does not cross itself.
-
-Return only the structured JSON required by the schema.`;
-}
-
 // ─── Scan 2: Internal Line Detection ─────────────────────────────────────
 
 export function buildV3LineDetectionPrompt(params: {
@@ -341,119 +255,6 @@ Before returning the JSON, verify that:
 Return only the structured JSON required by the schema.`;
 }
 
-// ─── Scan 2B: Missing-Line Audit ────────────────────────────────────────
-
-export function buildV3MissingLineAuditPrompt(params: {
-  width: number;
-  height: number;
-  outlinePoints: V3Point[];
-  currentSegments: V3Line[];
-}): string {
-  const { width, height, outlinePoints, currentSegments } = params;
-  const outlineStr = outlinePoints
-    .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
-    .join('\n');
-  const segmentTable = currentSegments
-    .map(l => `  ${l.id}: (${l.start.x},${l.start.y}) → (${l.end.x},${l.end.y})`)
-    .join('\n');
-
-  return `You are a CAD missing-line auditor.
-
-Four inputs are provided:
-
-1. ORIGINAL PLAN IMAGE — the raw architectural roof plan at ${width}×${height} pixels.
-2. SCAN 2A AUDIT OVERLAY IMAGE — the same plan with the confirmed roof outline and every line segment already detected by Scan 2A drawn in a bright colour.
-3. CONFIRMED ROOF OUTLINE:
-${outlineStr}
-4. CURRENT DETECTED SEGMENTS:
-${segmentTable}
-
-Use coordinates in the original image-pixel coordinate system:
-
-• (0,0) is top-left.
-• x increases right.
-• y increases down.
-
-## YOUR ONLY TASK
-
-Find visible solid dark line segments in the ORIGINAL PLAN IMAGE that are not already covered by a coloured detected segment in the SCAN 2A AUDIT OVERLAY IMAGE.
-
-Return only missing segments.
-
-Do not return the complete existing line set.
-
-## AUDIT METHOD
-
-Compare the original image with the audit overlay.
-
-A solid dark source segment is missing when:
-
-• it is visible in the original plan;
-• no coloured detected line covers the same start-to-end path in the audit overlay.
-
-Pay special attention to:
-
-• short connectors between two already detected junctions;
-• segments whose start and end coordinates are already used by other segments;
-• continuations that pass behind or through dotted or dashed lines;
-• small diagonal segments between larger detected lines;
-• solid branches leaving a junction that have no coloured overlay.
-
-## SEGMENT RULES
-
-• Return each missing segment from one visible endpoint or solid-line junction to the next.
-• End a segment where it meets another solid dark line, including partway along that line.
-• End a segment where it reaches the endpoint of another solid dark line.
-• Never pass a returned segment through a solid-line junction.
-• If a solid line continues beyond a junction, the continuation is a separate segment.
-• Multiple missing segments may share identical endpoint coordinates.
-• A segment may connect two junctions that already exist in the current detected geometry.
-• Existing endpoint coordinates do not mean the line between them has already been detected.
-• Do not return a segment already substantially covered by a coloured Scan 2A line.
-• Do not return the confirmed roof-perimeter edges.
-
-## ANNOTATION RULE
-
-Ignore:
-
-• dotted lines;
-• dashed lines;
-• text.
-
-Dotted or dashed lines are transparent annotations.
-
-If a solid dark line passes through or behind a dotted or dashed line, continue following the solid line to its true endpoint or next solid-line junction. Do not terminate it at the dotted or dashed crossing.
-
-## FINAL CHECK
-
-Before returning the JSON:
-
-1. Inspect every area where black solid linework remains visible without a coloured overlay.
-2. Inspect every pair of nearby existing junctions for an uncovered solid connector.
-3. Inspect every junction for an uncovered solid branch.
-4. Confirm that every returned segment is absent from the current detected set.
-5. Confirm that no returned segment is dotted, dashed, text, or part of the confirmed perimeter.
-
-## OUTPUT
-
-Return an object containing a missing_segments array.
-
-Each entry must contain only:
-
-{
-  "start": { "x": number, "y": number },
-  "end": { "x": number, "y": number }
-}
-
-Return an empty missing_segments array if no missing segments are found.
-
-Do not generate IDs.
-
-Do not classify the segments.
-
-Return only the structured JSON required by the schema.`;
-}
-
 // ─── V3 Schemas ──────────────────────────────────────────────────────────
 
 const pointSchema = {
@@ -489,17 +290,6 @@ export const V3_SCAN1_SCHEMA = {
   additionalProperties: false,
 };
 
-// Scan 1B: Outline audit response
-export const V3_SCAN1B_SCHEMA = {
-  type: 'object' as const,
-  properties: {
-    points: { type: 'array' as const, items: pointSchema },
-    notes: { type: 'array' as const, items: { type: 'string' as const } },
-  },
-  required: ['points', 'notes'] as const,
-  additionalProperties: false,
-};
-
 // Scan 2: Line detection response
 export const V3_SCAN2_SCHEMA = {
   type: 'object' as const,
@@ -519,27 +309,6 @@ export const V3_SCAN2_SCHEMA = {
     notes: { type: 'array' as const, items: { type: 'string' as const } },
   },
   required: ['lines', 'notes'] as const,
-  additionalProperties: false,
-};
-
-// Scan 2B: Missing-line audit response
-export const V3_SCAN2B_SCHEMA = {
-  type: 'object' as const,
-  properties: {
-    missing_segments: {
-      type: 'array' as const,
-      items: {
-        type: 'object' as const,
-        properties: {
-          start: pointSchema,
-          end: pointSchema,
-        },
-        required: ['start', 'end'] as const,
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ['missing_segments'] as const,
   additionalProperties: false,
 };
 
