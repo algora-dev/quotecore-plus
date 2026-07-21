@@ -588,7 +588,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN1_SCHEMA,
           model,
-          { reasoningEffort: 'low', maxCompletionTokens: 5000 },
+          { reasoningEffort: 'medium', maxCompletionTokens: 5000 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -721,7 +721,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN2_SCHEMA,
           model,
-          { reasoningEffort: 'low', maxCompletionTokens: 8000 },
+          { reasoningEffort: 'medium', maxCompletionTokens: 8000 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -869,7 +869,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN3_SCHEMA,
           model,
-          { reasoningEffort: 'high', maxCompletionTokens: 8000 },
+          { reasoningEffort: 'medium', maxCompletionTokens: 8000 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
