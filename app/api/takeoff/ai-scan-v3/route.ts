@@ -149,9 +149,10 @@ async function saveDebugImage(
     if (!url || !key) return null;
     const client = createServiceClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
     const path = `scan-debug/${quoteId}/${label}-${Date.now()}.png`;
+    const uint8 = new Uint8Array(buffer);
     const { error } = await client.storage
       .from('QUOTE-DOCUMENTS')
-      .upload(path, buffer, { contentType: 'image/png', upsert: false });
+      .upload(path, uint8, { contentType: 'image/png', upsert: false });
     if (error) {
       console.warn(`[ai-scan-v3] debug image upload failed: ${error.message}`);
       return null;
