@@ -550,6 +550,15 @@ export async function POST(req: NextRequest) {
     timer.mark('auth_done');
 
     const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
+
+    // Quality level from client (low / medium / high). Default: medium.
+    const qualityLevel = typeof body.qualityLevel === 'string' ? body.qualityLevel : 'medium';
+    const effortMap = { low: 'low', medium: 'medium', high: 'high' } as const;
+    const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
+    // Token limits: low/medium stay as-is, high gets bumped to avoid reasoning-eats-output bug.
+    const tokenLimits = userReasoningEffort === 'high'
+      ? { scan1: 8000, scan2: 12000, scan3: 12000 }
+      : { scan1: 5000, scan2: 8000, scan3: 8000 };
     const usage = (success: boolean, error?: string) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
       pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
@@ -588,7 +597,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN1_SCHEMA,
           model,
-          { reasoningEffort: 'medium', maxCompletionTokens: 5000 },
+          { reasoningEffort: userReasoningEffort, maxCompletionTokens: tokenLimits.scan1 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -721,7 +730,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN2_SCHEMA,
           model,
-          { reasoningEffort: 'medium', maxCompletionTokens: 8000 },
+          { reasoningEffort: userReasoningEffort, maxCompletionTokens: tokenLimits.scan2 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -869,7 +878,7 @@ export async function POST(req: NextRequest) {
           ],
           V3_SCAN3_SCHEMA,
           model,
-          { reasoningEffort: 'medium', maxCompletionTokens: 8000 },
+          { reasoningEffort: userReasoningEffort, maxCompletionTokens: tokenLimits.scan3 },
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';

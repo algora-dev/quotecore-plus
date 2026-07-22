@@ -252,6 +252,7 @@ export function TakeoffWorkstation({
   const [aiScanError, setAiScanError] = useState<string | null>(null);
   const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
   const [aiScanStage, setAiScanStage] = useState<'outline' | 'lines' | 'classify'>('outline');
+  const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // V3: 3-scan pipeline (outline → line detection → classification)
   const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
   // Once the user dismisses the "Calibration complete" popup, never show it again
@@ -4115,6 +4116,7 @@ export function TakeoffWorkstation({
           quoteId: quote.id,
           pageId,
           canvasDimensions: canvasDims,
+          qualityLevel: aiQualityLevel,
         }),
       });
 
@@ -4143,6 +4145,7 @@ export function TakeoffWorkstation({
         imageDataUrl: dataUrl,
         analysisDimensions: result.analysisDimensions ?? { width: canvasDims.width, height: canvasDims.height },
         pageId,
+        qualityLevel: aiQualityLevel,
       });
     } catch (err) {
       console.error('[AI Takeoff] scan failed:', err);
@@ -4163,12 +4166,14 @@ export function TakeoffWorkstation({
     imageDataUrl,
     analysisDimensions,
     pageId,
+    qualityLevel,
   }: {
     outlineData: Pick<AiScanData, 'roof_areas'>;
     areas: AiResultsArea[];
     imageDataUrl: string;
     analysisDimensions: { width: number; height: number };
     pageId: string;
+    qualityLevel: 'low' | 'medium' | 'high';
   }): Promise<boolean> => {
     if (!quote) return false;
 
@@ -4188,6 +4193,7 @@ export function TakeoffWorkstation({
           pageId,
           outlinePoints: confirmedAreas[0]?.points ?? [],
           analysisDimensions,
+          qualityLevel,
         }),
       });
       const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
@@ -4215,6 +4221,7 @@ export function TakeoffWorkstation({
           outlinePoints: outlinePoints,
           lines: detectedLines,
           analysisDimensions,
+          qualityLevel,
         }),
       });
       const result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
@@ -5701,18 +5708,40 @@ export function TakeoffWorkstation({
                 </button>
               </div>
               {aiTakeoffAvailable && (
-                <button
-                  onClick={() => {
-                    setShowRoofAreaInstructions(false);
-                    roofAreaInstructionsDismissedRef.current = true;
-                    handleAiScan();
-                  }}
-                  className="py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
-                  title="AI Assist is still being developed, always check the result properly, don't assume its correct, this tool is improving constantly"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 10l-.75-.07C9.4 9.58 8 7.95 8 6a4 4 0 0 1 4-4z"/><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/><path d="M12 13v3"/></svg>
-                  AI Assist (BETA)
-                </button>
+                <div className="space-y-2">
+                  <div className="flex gap-1.5">
+                    {([
+                      { value: 'low', label: 'Low', hint: 'Small, simple roofs' },
+                      { value: 'medium', label: 'Medium', hint: 'Medium size & complexity' },
+                      { value: 'high', label: 'High', hint: 'Larger, complex roofs' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => setAiQualityLevel(opt.value)}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                          aiQualityLevel === opt.value
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'text-slate-600 border-slate-300 hover:bg-slate-50'
+                        }`}
+                        title={opt.hint}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowRoofAreaInstructions(false);
+                      roofAreaInstructionsDismissedRef.current = true;
+                      handleAiScan();
+                    }}
+                    className="w-full py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
+                    title="AI Assist is still being developed, always check the result properly, don't assume its correct, this tool is improving constantly"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 10l-.75-.07C9.4 9.58 8 7.95 8 6a4 4 0 0 1 4-4z"/><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/><path d="M12 13v3"/></svg>
+                    AI Assist (BETA)
+                  </button>
+                </div>
               )}
               <button
                 onClick={() => {
