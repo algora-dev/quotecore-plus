@@ -54,9 +54,7 @@ export function ConfirmModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-modal-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !pending) onCancel();
-      }}
+
     >
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
         <h3 id="confirm-modal-title" className="text-lg font-semibold text-slate-900">

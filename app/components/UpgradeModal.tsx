@@ -85,9 +85,7 @@ export function UpgradeModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="upgrade-modal-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+
     >
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl">
         <div className="flex items-start gap-3">
