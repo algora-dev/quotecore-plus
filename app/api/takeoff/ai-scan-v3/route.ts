@@ -41,6 +41,12 @@ import {
   outlineToEdgeLines,
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
+import {
+  classifyOutlineVertices,
+  matchEndpointsToVertices,
+  enforceHipValleyVertexRule,
+  type AugmentedLine,
+} from '@/app/lib/takeoff/outlineGeometry';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -859,6 +865,24 @@ export async function POST(req: NextRequest) {
       const edgeLines = outlineToEdgeLines(outlinePoints);
       const allLines = [...lines, ...edgeLines];
 
+      // ── Backend vertex classification + endpoint matching ──
+      // Classify outline vertices as convex/concave/collinear deterministically.
+      // Match internal line endpoints to outline vertices within tolerance.
+      // This data is passed to Scan 3 as authoritative metadata.
+      let vertexMetadata: Array<{ id: string; index: number; x: number; y: number; cornerType: string }> = [];
+      let augmentedLines: AugmentedLine[] = [];
+      try {
+        const classifiedVertices = classifyOutlineVertices(outlinePoints);
+        vertexMetadata = classifiedVertices.map(v => ({
+          id: v.id, index: v.index, x: v.x, y: v.y, cornerType: v.cornerType,
+        }));
+        // Only match internal lines (not edge lines) — edges ARE the outline
+        augmentedLines = matchEndpointsToVertices(allLines, classifiedVertices, 15);
+        console.log(`[ai-scan-v3:${requestId}] scan3: vertex classification: ${classifiedVertices.length} vertices (${classifiedVertices.filter(v => v.cornerType === 'convex').length} convex, ${classifiedVertices.filter(v => v.cornerType === 'concave').length} concave, ${classifiedVertices.filter(v => v.cornerType === 'collinear').length} collinear)`);
+      } catch (vertexError) {
+        console.warn(`[ai-scan-v3:${requestId}] scan3: vertex classification failed:`, vertexError instanceof Error ? vertexError.message : vertexError);
+      }
+
       timer.mark('overlay_start');
       const annotatedBuffer = await renderLineOverlay(processedBuffer, outlinePoints, lines, imgW, imgH);
       const cleanBuffer = await renderCleanOverlay(outlinePoints, lines, imgW, imgH);
@@ -872,7 +896,7 @@ export async function POST(req: NextRequest) {
       let result;
       try {
         result = await callVisionModel(
-          buildV3ClassificationPrompt({ outlinePoints, lines: allLines }),
+          buildV3ClassificationPrompt({ outlinePoints, lines: allLines, vertexMetadata, augmentedLines }),
           [
             { dataUrl: annotatedDataUrl, label: 'IMAGE 1: ANNOTATED ORIGINAL (original plan with outline and labeled lines)' },
             { dataUrl: cleanDataUrl, label: 'IMAGE 2: CLEAN OVERLAY (outline + labeled lines only, no plan)' },
@@ -902,10 +926,27 @@ export async function POST(req: NextRequest) {
         }))
         .filter(c => c.line_id);
 
+      // ── Backend hip/valley enforcement ──
+      // Using authoritative vertex data, correct any hip ↔ valley misclassifications.
+      // Conservative: only touches hip/valley. All other types left untouched.
+      let enforcementCorrections: Array<{ line_id: string; from: string; to: string; reason: string }> = [];
+      let finalClassifications = classifications;
+      if (augmentedLines.length > 0 && vertexMetadata.length > 0) {
+        const enforcement = enforceHipValleyVertexRule(classifications, augmentedLines);
+        finalClassifications = enforcement.classifications as typeof classifications;
+        enforcementCorrections = enforcement.corrections;
+        if (enforcementCorrections.length > 0) {
+          console.log(`[ai-scan-v3:${requestId}] scan3: enforcement corrections: ${enforcementCorrections.length}`);
+          for (const cor of enforcementCorrections) {
+            console.log(`[ai-scan-v3:${requestId}]   ${cor.line_id}: ${cor.from} → ${cor.to} (${cor.reason})`);
+          }
+        }
+      }
+
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
 
       // Build AiScanResult
-      const components = classificationsToComponents(lines, outlinePoints, classifications);
+      const components = classificationsToComponents(lines, outlinePoints, finalClassifications);
 
       const aiResult: AiScanResult = {
         scale: { detected: false, ratio: null, dimension_line: null },
@@ -935,7 +976,7 @@ export async function POST(req: NextRequest) {
         requestId, stage: 'scan3_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: {
           totalLines: allLines.length,
-          classified: classifications.length,
+          classified: finalClassifications.length,
           ridges: canvasResult.components.ridges.length,
           hips: canvasResult.components.hips.length,
           valleys: canvasResult.components.valleys.length,
@@ -963,7 +1004,8 @@ export async function POST(req: NextRequest) {
           uncertain: canvasResult.components.uncertain.length,
           notes: canvasResult.notes,
         },
-        classificationDetails: classifications,
+        classificationDetails: finalClassifications,
+        enforcementCorrections: enforcementCorrections.length > 0 ? enforcementCorrections : undefined,
       });
     }
 

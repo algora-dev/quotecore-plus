@@ -129,20 +129,49 @@ Return only the structured JSON required by the schema.`;
 export function buildV3ClassificationPrompt(params: {
   outlinePoints: V3Point[];
   lines: V3Line[];
+  vertexMetadata?: Array<{ id: string; index: number; x: number; y: number; cornerType: string }>;
+  augmentedLines?: Array<V3Line & {
+    startOutlineVertexId: string | null;
+    startOutlineCornerType: string | null;
+    endOutlineVertexId: string | null;
+    endOutlineCornerType: string | null;
+  }>;
 }): string {
-  const { outlinePoints, lines } = params;
+  const { outlinePoints, lines, vertexMetadata, augmentedLines } = params;
   const outlineStr = outlinePoints
     .map((p, i) => `  ${i}: (${p.x}, ${p.y})`)
     .join('\n');
 
-  const lineTable = lines
+  // Build vertex type table if metadata is provided
+  const vertexTypeTable = vertexMetadata && vertexMetadata.length > 0
+    ? vertexMetadata.map(v => `${v.id} | x=${v.x} | y=${v.y} | ${v.cornerType}`).join('\n')
+    : '';
+
+  // Build line table — use augmented data if available, otherwise plain lines
+  const linesForTable = augmentedLines ?? lines;
+  const lineTable = linesForTable
     .map(l => {
       const dx = l.end.x - l.start.x;
       const dy = l.end.y - l.start.y;
       const angle = Math.round(Math.atan2(-dy, dx) * 180 / Math.PI);
       const normalizedAngle = ((angle % 360) + 360) % 360;
       const length = Math.round(Math.sqrt(dx * dx + dy * dy));
-      return `  ${l.id}: (${l.start.x},${l.start.y}) → (${l.end.x},${l.end.y}) | angle=${normalizedAngle}° | length=${length}px`;
+
+      // Add vertex match info if available
+      const augmented = l as V3Line & {
+        startOutlineVertexId: string | null;
+        startOutlineCornerType: string | null;
+        endOutlineVertexId: string | null;
+        endOutlineCornerType: string | null;
+      };
+      const startVertex = augmented.startOutlineVertexId
+        ? `${augmented.startOutlineVertexId}(${augmented.startOutlineCornerType})`
+        : 'none';
+      const endVertex = augmented.endOutlineVertexId
+        ? `${augmented.endOutlineVertexId}(${augmented.endOutlineCornerType})`
+        : 'none';
+
+      return `  ${l.id}: (${l.start.x},${l.start.y}) → (${l.end.x},${l.end.y}) | angle=${normalizedAngle}° | length=${length}px | startVertex=${startVertex} | endVertex=${endVertex}`;
     })
     .join('\n');
 
@@ -188,22 +217,29 @@ Do not invent IDs or missing geometry.
 • Scan 2 splits lines at every junction. Adjacent segments may still be parts of the same roofing component and may receive the same classification.
 • A junction or segmentation boundary does not by itself change the component type.
 
-## PERIMETER CORNER CHECK
+## AUTHORITATIVE OUTLINE VERTEX TYPES
 
-For every internal segment that touches the roof perimeter:
+The following corner types were calculated deterministically from the ordered roof outline.
+These values are authoritative. Do not visually reinterpret or override them.
 
-Look only at the two outline edges meeting at that perimeter endpoint.
+${vertexTypeTable}
 
-• If the outline turns around the outside of the roof at that point, it is an external (convex) corner.
-• If the outline turns into a notch or recess of the roof at that point, it is an internal (concave) corner.
+## PERIMETER VERTEX RULE
 
-A hip always terminates at an external corner.
+For every internal segment that terminates at an outline vertex, use the supplied vertex ID and corner type:
 
-A valley always terminates at an internal corner.
+• supplied convex vertex → hip
+• supplied concave vertex → valley
+• supplied collinear vertex → do not classify automatically as hip or valley
 
-Never classify a line terminating at an internal corner as a hip.
+A segment terminating partway along an outline edge (not at a vertex) is NOT a hip or valley.
 
-Never classify a line terminating at an external corner as a valley.
+Never classify a segment terminating at a supplied concave vertex as a hip.
+Never classify a segment terminating at a supplied convex vertex as a valley.
+
+Do not use this rule for a segment terminating partway along an outline edge — such segments may be ridge, broken_barge, uncertain, or another valid internal classification.
+
+Do not determine convexity or concavity visually. The supplied vertex data is authoritative.
 
 ## ALLOWED CLASSIFICATIONS
 
@@ -211,10 +247,10 @@ ridge
 An internal high-line segment. It commonly connects hips, valleys, broken hips or other ridge segments, and may terminate at an internal junction or at a gable-end perimeter edge. A ridge may have any image orientation.
 
 hip
-An internal segment with one endpoint at an external convex outline corner and the other running inward to a ridge or internal junction.
+An internal segment that terminates at a supplied convex outline vertex and runs inward toward a ridge or internal junction. The supplied convex vertex type is authoritative.
 
 valley
-An internal segment with one endpoint at an internal concave or re-entrant outline corner and the other running inward to a ridge or internal junction.
+An internal segment that terminates at a supplied concave outline vertex and runs inward toward a ridge or internal junction. The supplied concave vertex type is authoritative.
 
 barge
 An outline edge forming a gable or rake end. A ridge commonly terminates on it or points toward it, usually approximately perpendicular in the local roof geometry.
@@ -242,15 +278,17 @@ Use only when the type remains genuinely ambiguous after checking both endpoints
 
 Before returning the JSON, verify that:
 
-1. every hip terminates at an external (convex) outline corner;
-2. every valley terminates at an internal (concave) outline corner;
-3. every broken_hip is internal and does not touch the perimeter;
-4. ridge segments form a coherent high-line network and remain ridge across a split junction when their role continues;
-5. adjacent or collinear Scan 2 segments receive consistent types unless their roof role visibly changes;
-6. every E edge is classified exactly once as barge or spouting;
-7. barge and spouting together account for all E edges;
-8. every supplied L and E ID appears exactly once;
-9. uncertain is used sparingly, but no classification is guessed when evidence is insufficient.
+1. every hip terminates at a supplied convex outline vertex;
+2. every valley terminates at a supplied concave outline vertex;
+3. no segment without an outline-vertex endpoint is classified as hip or valley;
+4. no segment terminating partway along an outline edge is classified as hip or valley solely because it touches the perimeter;
+5. every broken_hip is internal and does not touch the perimeter;
+6. ridge segments form a coherent high-line network and remain ridge across a split junction when their role continues;
+7. adjacent or collinear Scan 2 segments receive consistent types unless their roof role visibly changes;
+8. every E edge is classified exactly once as barge or spouting;
+9. barge and spouting together account for all E edges;
+10. every supplied L and E ID appears exactly once;
+11. uncertain is used sparingly, but no classification is guessed when evidence is insufficient.
 
 Return only the structured JSON required by the schema.`;
 }
