@@ -878,17 +878,17 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col h-screen dvh-screen bg-slate-50">
       {/* Back Button */}
-      <div className="px-2 md:px-6 pt-3 md:pt-4">
+      <div className="px-2 md:px-6 pt-3 md:pt-4 flex-shrink-0">
         <BackButton />
       </div>
       
       {/* Header Section (shared with the line-by-line layout) */}
-      {renderOrderHeader()}
+      <div className="flex-shrink-0">{renderOrderHeader()}</div>
 
       {/* Main Content Area - Sidebar + Order Form */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-visible lg:overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
         {/* LEFT SIDEBAR - Order Components Control Panel (collapsible). Width
             animates to 0 on collapse; the flex-1 order-form pane auto-fills.
             Sidebar stays mounted (no state loss) - only its width/opacity
@@ -1073,7 +1073,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         {/* Expand tab - only visible when the sidebar is collapsed. Lives
             between the sidebar and the form pane so it is never clipped.
             items-start keeps it pinned to the TOP of the column. */}
-        <div className="flex items-start px-1 py-2">
+        <div className="flex-shrink-0 flex items-start px-1 py-2">
           <ExpandTab
             collapsed={componentsPanelCollapsed}
             onToggle={() => setComponentsPanelCollapsed(false)}
@@ -1082,7 +1082,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         </div>
 
         {/* RIGHT - Order Form Display */}
-        <div className="flex-1 flex flex-col overflow-visible lg:overflow-hidden bg-slate-50">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0 bg-slate-50">
           {/* Toolbar */}
           <div className="px-2 md:px-6 py-2 md:py-3 bg-white border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-baseline gap-3 flex-wrap">
@@ -1303,7 +1303,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           </div>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-white border-t border-slate-200 flex gap-3 justify-end">
+          <div className="flex-shrink-0 px-2 md:px-6 py-3 md:py-4 bg-white border-t border-slate-200 flex gap-3 justify-end">
             <button
               type="button"
               onClick={() => router.push('../material-orders')}
