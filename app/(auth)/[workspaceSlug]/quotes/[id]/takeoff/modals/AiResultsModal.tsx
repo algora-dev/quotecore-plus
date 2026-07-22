@@ -112,7 +112,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
       <div className="bg-white rounded-2xl p-4 md:p-6 max-w-lg border border-gray-200 shadow-xl max-h-[85vh] overflow-y-auto">
         <h2 className="text-lg font-semibold mb-1">AI Assist Results</h2>
         <p className="text-xs text-slate-500 mb-4">
-          Here&apos;s what our AI Scan identified from its scans, please check the area(s) and components, then ensure you apply a pitch value to any identified roof area(s). You can also change the roof area name(s).
+          Here&apos;s what AI Assist identified from its scans, please check the area(s) and components, then ensure you apply a pitch value to any identified roof area(s). You can also change the roof area name(s).
         </p>
 
         {/* Detection summary */}
