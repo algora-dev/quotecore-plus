@@ -50,7 +50,7 @@ interface Props {
   isOverStorage?: boolean;
   /** All roof areas for this quote (server-loaded). */
   allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
-  /** AI Takeoff: when true, the post-calibration popup shows the "Use AI Assist" button. */
+  /** AI Takeoff: when true, the post-calibration popup shows the AI Assist button. */
   aiTakeoffAvailable?: boolean;
 }
 

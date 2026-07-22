@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS } from '@/app/lib/takeoff/aiComponentRegistry';
 
 export interface AiResultsArea {
@@ -47,20 +47,13 @@ interface Props {
 export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   const { summary, scaleCheck, droppedCount, areas } = data;
   const [acknowledged, setAcknowlednowledged] = useState(false);
-  const [areaEdits, setAreaEdits] = useState<Record<number, { name: string; pitch: string }>>({});
+  const [areaEdits, setAreaEdits] = useState<Record<number, { name: string; pitch: string }>>(() => (
+    Object.fromEntries(areas.map(area => [area.index, {
+      name: area.name,
+      pitch: area.pitch != null ? String(area.pitch) : '',
+    }]))
+  ));
   const [applyPitchToAll, setApplyPitchToAll] = useState<string>('');
-
-  // Initialize area edits from AI suggestions
-  useEffect(() => {
-    const edits: Record<number, { name: string; pitch: string }> = {};
-    for (const area of areas) {
-      edits[area.index] = {
-        name: area.name,
-        pitch: area.pitch != null ? String(area.pitch) : '',
-      };
-    }
-    setAreaEdits(edits);
-  }, [areas]);
 
   if (summary.unreadable) {
     return (
@@ -107,18 +100,16 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   };
 
   // Validate all areas have valid values before enabling Apply
-  const allValid = areas.every(area => {
+  const allValid = areas.length > 0 && areas.every(area => {
     const edit = areaEdits[area.index];
     if (!edit?.name?.trim()) return false;
     if (applyPitchToAll) {
       const p = parseFloat(applyPitchToAll);
       return !isNaN(p) && p >= 0 && p <= 89;
     }
-    if (edit?.pitch) {
-      const p = parseFloat(edit.pitch);
-      return !isNaN(p) && p >= 0 && p <= 89;
-    }
-    return true; // Allow empty pitch (defaults to AI suggestion)
+    if (edit?.pitch === undefined || edit.pitch.trim() === '') return false;
+    const pitch = parseFloat(edit.pitch);
+    return !isNaN(pitch) && pitch >= 0 && pitch <= 89;
   });
 
   return (
@@ -154,15 +145,19 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
           </div>
         )}
 
-        {/* Parent Areas — editable rows */}
+        {/* Roof areas — editable rows */}
         {areas.length > 0 && (
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-medium text-slate-700">
-                Detected Parent Areas
+                Name Roof Areas and Apply Pitch
               </label>
               <span className="text-[10px] text-slate-400">{areas.length} area{areas.length !== 1 ? 's' : ''}</span>
             </div>
+
+            <p className="mb-2 text-xs text-slate-500">
+              Check each detected outline, then enter its name and pitch before applying the results.
+            </p>
 
             {/* Apply pitch to all */}
             <div className="flex gap-2 items-center mb-2 p-2 bg-orange-50/50 border border-orange-100 rounded-lg">

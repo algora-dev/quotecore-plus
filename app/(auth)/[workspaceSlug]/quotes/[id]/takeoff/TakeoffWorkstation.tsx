@@ -8,10 +8,9 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
-import { applyAiResults, computeLineValue, computeAreaValue, type AiScanData, type ApplyAiResult, type AiMeasurement, type AiRoofAreaResult, type PlaceholderType, validateMeasurementConsistency } from '@/app/lib/takeoff/applyAiResults';
-import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS, type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
+import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
+import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
-import { AiAreaReviewModal } from './modals/AiAreaReviewModal';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
@@ -138,7 +137,7 @@ interface Props {
   isOverStorage?: boolean;
   /** All roof areas for this quote (loaded server-side). Used by the left-panel area switcher. */
   allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
-  /** AI Takeoff: when true, the post-calibration popup shows the "Use AI Assist" button. */
+  /** AI Takeoff: when true, the post-calibration popup shows the AI Assist button. */
   aiTakeoffAvailable?: boolean;
 }
 
@@ -252,16 +251,9 @@ export function TakeoffWorkstation({
   const [aiResults, setAiResults] = useState<AiResultsData | null>(null);
   const [aiScanError, setAiScanError] = useState<string | null>(null);
   const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
-  const [aiOutlineData, setAiOutlineData] = useState<AiScanData | null>(null);
-  const [aiOutlineAreas, setAiOutlineAreas] = useState<AiResultsArea[] | null>(null);
-  const [aiAnalysisImage, setAiAnalysisImage] = useState<{ dataUrl: string; width: number; height: number } | null>(null);
   const [aiScanStage, setAiScanStage] = useState<'outline' | 'lines' | 'classify'>('outline');
   // V3: 3-scan pipeline (outline → line detection → classification)
   const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
-  // V3: intermediate state between scan 2 and scan 3
-  const [aiV3Lines, setAiV3Lines] = useState<Array<{ id: string; start: { x: number; y: number }; end: { x: number; y: number }; confidence: number }> | null>(null);
-  const [aiV3OutlinePoints, setAiV3OutlinePoints] = useState<Array<{ x: number; y: number }> | null>(null);
-  const [aiV3AnalysisDims, setAiV3AnalysisDims] = useState<{ width: number; height: number } | null>(null);
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -4084,6 +4076,9 @@ export function TakeoffWorkstation({
     setAiScanning(true);
     setAiScanStage('outline');
     setAiScanError(null);
+    setAiResults(null);
+    setAiScanRaw(null);
+    let scanCompleted = false;
 
     try {
       // Send the ORIGINAL plan image to the AI — not a canvas screenshot.
@@ -4136,45 +4131,49 @@ export function TakeoffWorkstation({
         setAiScanError(result.summary?.notes?.[0] || 'No usable roof outline was detected.');
         return;
       }
-      setAiOutlineData(result.data);
-      setAiAnalysisImage({ dataUrl, width: canvasDims.width, height: canvasDims.height });
-      // Store V3 analysis dimensions for scan 2
-      if (result.analysisDimensions) {
-        setAiV3AnalysisDims(result.analysisDimensions);
-      }
       const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
         index: idx,
         name: area.name || `Area ${idx + 1}`,
         pitch: area.pitch_degrees ?? result.data?.pitch?.global_degrees ?? null,
         vertexCount: area.points?.length ?? 0,
       }));
-      setAiOutlineAreas(areaInfos);
+      scanCompleted = await runRemainingAiScans({
+        outlineData: result.data,
+        areas: areaInfos,
+        imageDataUrl: dataUrl,
+        analysisDimensions: result.analysisDimensions ?? { width: canvasDims.width, height: canvasDims.height },
+        pageId,
+      });
     } catch (err) {
       console.error('[AI Takeoff] scan failed:', err);
       const msg = err instanceof Error ? err.message : 'Network error.';
       setAiScanError(`Scan failed: ${msg}`);
     } finally {
       setAiScanning(false);
+      if (!scanCompleted) {
+        roofAreaInstructionsDismissedRef.current = false;
+        setShowRoofAreaInstructions(true);
+      }
     }
   };
 
-  const handleConfirmAiAreas = async (areaOverrides: Record<number, { name: string; pitch: number }>) => {
-    if (!quote || !aiOutlineData || !aiAnalysisImage) return;
-    const pageId = pages[currentPageIndex]?.id ?? null;
-    if (!pageId) {
-      setAiScanError('No active page.');
-      return;
-    }
+  const runRemainingAiScans = async ({
+    outlineData,
+    areas,
+    imageDataUrl,
+    analysisDimensions,
+    pageId,
+  }: {
+    outlineData: Pick<AiScanData, 'roof_areas'>;
+    areas: AiResultsArea[];
+    imageDataUrl: string;
+    analysisDimensions: { width: number; height: number };
+    pageId: string;
+  }): Promise<boolean> => {
+    if (!quote) return false;
 
-    const confirmedAreas = aiOutlineData.roof_areas.map((area, index) => ({
-      ...area,
-      name: areaOverrides[index]?.name || area.name || `Area ${index + 1}`,
-      pitch_degrees: areaOverrides[index]?.pitch ?? area.pitch_degrees ?? 0,
-    }));
-
-    setAiScanning(true);
+    const confirmedAreas = outlineData.roof_areas;
     setAiScanStage('lines');
-    setAiScanError(null);
     try {
       // ── Scan 2: Internal line detection ──
       const scan2Response = await fetch(aiScanEndpoint, {
@@ -4182,26 +4181,23 @@ export function TakeoffWorkstation({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stage: 'scan2',
-          image: aiAnalysisImage.dataUrl,
+          image: imageDataUrl,
           imageMime: 'image/png',
           canvasDimensions: canvasDims,
           quoteId: quote.id,
           pageId,
           outlinePoints: confirmedAreas[0]?.points ?? [],
-          analysisDimensions: aiV3AnalysisDims ?? { width: canvasDims.width, height: canvasDims.height },
+          analysisDimensions,
         }),
       });
       const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
       if (!scan2Response.ok || !scan2Result.success) {
         setAiScanError(scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).`);
-        return;
+        return false;
       }
 
       const detectedLines = scan2Result.data?.lines ?? [];
       const outlinePoints = scan2Result.data?.outlinePoints ?? confirmedAreas[0]?.points ?? [];
-      setAiV3Lines(detectedLines);
-      setAiV3OutlinePoints(outlinePoints);
-
       console.log(`[AI Takeoff V3] scan2 complete: ${detectedLines.length} lines detected (raw=${scan2Result.summary?.rawLines}, rejected=${scan2Result.summary?.angleRejected}, floating=${scan2Result.summary?.floating})`);
 
       // ── Scan 3: Classification ──
@@ -4211,14 +4207,14 @@ export function TakeoffWorkstation({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stage: 'scan3',
-          image: aiAnalysisImage.dataUrl,
+          image: imageDataUrl,
           imageMime: 'image/png',
           canvasDimensions: canvasDims,
           quoteId: quote.id,
           pageId,
           outlinePoints: outlinePoints,
           lines: detectedLines,
-          analysisDimensions: aiV3AnalysisDims ?? { width: canvasDims.width, height: canvasDims.height },
+          analysisDimensions,
         }),
       });
       const result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
@@ -4226,7 +4222,7 @@ export function TakeoffWorkstation({
         const violations = Array.isArray(result.topologyViolations)
           ? ` ${result.topologyViolations.join(' ')}` : '';
         setAiScanError(`${result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}`);
-        return;
+        return false;
       }
 
       setAiScanRaw(result.data);
@@ -4234,139 +4230,15 @@ export function TakeoffWorkstation({
         summary: result.summary,
         scaleCheck: result.data?.scaleCheck ?? null,
         droppedCount: 0,
-        areas: confirmedAreas.map((area, index) => ({
-          index,
-          name: area.name,
-          pitch: area.pitch_degrees,
-          vertexCount: area.points.length,
-        })),
+        areas,
       });
-      setAiOutlineAreas(null);
+      return true;
     } catch (error) {
       setAiScanError(`Classification failed: ${error instanceof Error ? error.message : 'Network error.'}`);
-    } finally {
-      setAiScanning(false);
+      return false;
     }
   };
 
-  // V2: Manual components — apply confirmed areas to canvas without AI components
-  const handleManualComponents = async (areaOverrides: Record<number, { name: string; pitch: number }>) => {
-    const canvas = fabricRef.current;
-    if (!canvas || !aiOutlineData || !quote) return;
-
-    const bgImage = canvas.backgroundImage as unknown as { width?: number; height?: number } | null;
-    if (!bgImage || !bgImage.width || !bgImage.height) {
-      setAiScanError('Plan image not available.');
-      return;
-    }
-
-    // Build the confirmed areas with overrides
-    const confirmedAreas = aiOutlineData.roof_areas.map((area, idx) => ({
-      ...area,
-      name: areaOverrides[idx]?.name || area.name || `Area ${idx + 1}`,
-      pitch_degrees: areaOverrides[idx]?.pitch ?? area.pitch_degrees ?? 0,
-    }));
-
-    // Create real DB roof areas
-    const areaInputs = confirmedAreas.map(area => ({
-      name: area.name,
-      pitch: area.pitch_degrees ?? 0,
-    }));
-
-    let realAreaIds: string[];
-    if (areaInputs.length > 0) {
-      const createResult = await batchCreateAiRoofAreas(quote.id, areaInputs);
-      if (!createResult.ok || !createResult.areaIds) {
-        setAiScanError(createResult.error || 'Failed to create roof areas.');
-        return;
-      }
-      realAreaIds = createResult.areaIds;
-    } else {
-      realAreaIds = [];
-    }
-
-    const areaIdMap = new Map<number, string>();
-    realAreaIds.forEach((id, idx) => areaIdMap.set(idx, id));
-
-    // Add roof areas to React state + canvas (same logic as handleApplyAiResults but no components)
-    const newRoofAreas: RoofArea[] = confirmedAreas.map((ra, idx: number) => {
-      const realId = areaIdMap.get(idx) ?? `ai-area-${idx}`;
-      const canvasPoints = ra.points.map(p => ({ x: p.x, y: p.y }));
-
-      const polygon = new Polygon(
-        canvasPoints.map(p => ({ x: p.x, y: p.y })),
-        {
-          fill: 'rgba(59, 130, 246, 0.2)',
-          stroke: '#3b82f6',
-          strokeWidth: 2,
-          selectable: false,
-          objectCaching: false,
-        },
-      );
-      (polygon as unknown as { measurementId: string }).measurementId = realId;
-      canvas.add(polygon);
-
-      const markers = canvasPoints.map(p => {
-        const marker = new Circle({
-          left: p.x, top: p.y, radius: 3,
-          fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
-          originX: 'center', originY: 'center',
-          selectable: false, hasControls: false, hasBorders: false,
-        });
-        (marker as unknown as { measurementId: string }).measurementId = realId;
-        canvas.add(marker);
-        return marker;
-      });
-
-      // Compute area
-      const area = computeAreaValue(canvasPoints, calibrations);
-
-      return {
-        id: realId,
-        name: ra.name,
-        points: canvasPoints,
-        area,
-        pitch: ra.pitch_degrees ?? 0,
-        visible: true,
-        polygon,
-        markers,
-        fromPageId: pages[currentPageIndex]?.id ?? null,
-        quoteRoofAreaId: realId,
-      } as RoofArea;
-    });
-
-    if (newRoofAreas.length > 0) {
-      setRoofAreas(prev => [...prev, ...newRoofAreas]);
-      setAreaList(prev => [
-        ...prev,
-        ...newRoofAreas.map(ra => ({
-          id: ra.id, label: ra.name, pitch: ra.pitch, area: ra.area,
-        })),
-      ]);
-
-      // Set the first created area as active so manually-drawn components
-      // are stamped with the correct quoteRoofAreaId. Without this, components
-      // get stamped with null/old area ID, and clicking the AI area in the
-      // sidebar wipes them from the canvas (cache restore loads empty state).
-      const firstArea = newRoofAreas[0];
-      setActiveAreaId(firstArea.id);
-      activeAreaIdRef.current = firstArea.id;
-      setActiveSaveRoofAreaId(firstArea.id);
-    }
-
-    canvas.renderAll();
-    setIsDirty(true);
-
-    // Close modal and clean up
-    setAiOutlineAreas(null);
-    setAiOutlineData(null);
-    setAiAnalysisImage(null);
-    setAiV3Lines(null);
-    setAiV3OutlinePoints(null);
-    setAiV3AnalysisDims(null);
-    setShowRoofAreaInstructions(false);
-    roofAreaInstructionsDismissedRef.current = true;
-  };
 
   // ── AI Takeoff: Replace placeholder with real component ────────────
   const handleReplacePlaceholder = (placeholderComponentId: string, targetComponentId: string) => {
@@ -4727,8 +4599,6 @@ export function TakeoffWorkstation({
     // Close modal
     setAiResults(null);
     setAiScanRaw(null);
-    setAiOutlineData(null);
-    setAiAnalysisImage(null);
     setShowRoofAreaInstructions(false);
     roofAreaInstructionsDismissedRef.current = true;
   };
@@ -5777,7 +5647,7 @@ export function TakeoffWorkstation({
 
       {/* Area Instructions (after first calibration) - always optional, all trades, all modes */}
       {showRoofAreaInstructions && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">Calibration complete</h2>
             {takeoffMode === 'new-page' && initialPageName ? (
@@ -5838,9 +5708,10 @@ export function TakeoffWorkstation({
                     handleAiScan();
                   }}
                   className="py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
+                  title="AI Assist is still being developed, always check the result properly, don't assume its correct, this tool is improving constantly"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 10l-.75-.07C9.4 9.58 8 7.95 8 6a4 4 0 0 1 4-4z"/><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/><path d="M12 13v3"/></svg>
-                  Use AI Assist
+                  AI Assist (BETA)
                 </button>
               )}
               <button
@@ -6400,27 +6271,6 @@ export function TakeoffWorkstation({
         </div>
       )}
 
-      {aiOutlineAreas && aiOutlineData && aiAnalysisImage && !aiResults && (
-        <AiAreaReviewModal
-          areas={aiOutlineAreas}
-          notes={aiOutlineData.notes}
-          previewImage={aiAnalysisImage.dataUrl}
-          outlines={aiOutlineData.roof_areas}
-          canvasWidth={canvasDims.width}
-          canvasHeight={canvasDims.height}
-          onConfirm={handleConfirmAiAreas}
-          onDiscard={() => {
-            setAiOutlineAreas(null);
-            setAiOutlineData(null);
-            setAiAnalysisImage(null);
-            setAiV3Lines(null);
-            setAiV3OutlinePoints(null);
-            setAiV3AnalysisDims(null);
-          }}
-          onManualComponents={handleManualComponents}
-        />
-      )}
-
       {/* AI Takeoff: results modal */}
       {aiResults && aiScanRaw && (
         <AiResultsModal
@@ -6429,11 +6279,6 @@ export function TakeoffWorkstation({
           onDiscard={() => {
             setAiResults(null);
             setAiScanRaw(null);
-            setAiOutlineData(null);
-            setAiAnalysisImage(null);
-            setAiV3Lines(null);
-            setAiV3OutlinePoints(null);
-            setAiV3AnalysisDims(null);
           }}
         />
       )}
