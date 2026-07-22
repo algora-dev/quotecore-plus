@@ -6,6 +6,7 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { trackEvent } from '@/lib/analytics';
+import { ImageCarousel } from './ImageCarousel';
 
 interface CalcEntry {
   slug: string;
@@ -72,118 +73,13 @@ function FeatureCheck({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MockQuote() {
-  return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="h-3 w-24 rounded-full bg-slate-200" />
-          <div className="h-6 w-16 rounded-full bg-[#FF6B35]/20" />
-        </div>
-        <div className="space-y-2 pt-2">
-          {[100, 85, 92, 70, 95].map((w, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="h-2.5 w-2.5 rounded-full bg-slate-200" />
-              <div className="h-3 rounded-full bg-slate-100" style={{ width: `${w}%` }} />
-              <div className="h-3 w-12 rounded-full bg-orange-100" />
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-          <div className="h-4 w-20 rounded-full bg-slate-200" />
-          <div className="h-6 px-3 rounded-full bg-black flex items-center">
-            <div className="h-2 w-12 rounded-full bg-white/80" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function MockCalculators() {
-  return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-      <div className="grid grid-cols-2 gap-3">
-        {['Roofing', 'Concrete', 'Construction', 'Landscaping'].map((trade) => (
-          <div key={trade} className="rounded-xl border border-slate-100 p-3 md:p-4">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-full bg-orange-50">
-                <svg className="w-4 h-4 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div className="h-3 w-20 rounded-full bg-slate-200" />
-            </div>
-            <div className="mt-3 space-y-1.5">
-              <div className="h-2 rounded-full bg-slate-100" style={{ width: '90%' }} />
-              <div className="h-2 rounded-full bg-slate-100" style={{ width: '70%' }} />
-              <div className="h-2 rounded-full bg-orange-100" style={{ width: '50%' }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
-function MockPO() {
-  return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="space-y-1.5">
-            <div className="h-3 w-28 rounded-full bg-slate-200" />
-            <div className="h-2 w-20 rounded-full bg-slate-100" />
-          </div>
-          <div className="h-8 w-8 rounded-lg bg-[#FF6B35]/15" />
-        </div>
-        {[100, 80, 90, 65].map((w, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-slate-200" />
-            <div className="h-3 rounded-full bg-slate-100" style={{ width: `${w}%` }} />
-            <div className="h-3 w-10 rounded-full bg-slate-100" />
-            <div className="h-3 w-12 rounded-full bg-orange-100" />
-          </div>
-        ))}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-          <div className="h-4 w-16 rounded-full bg-slate-200" />
-          <div className="h-6 px-3 rounded-full bg-black flex items-center">
-            <div className="h-2 w-10 rounded-full bg-white/80" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-function MockInvoice() {
-  return (
-    <div className="relative rounded-2xl border border-slate-200 bg-white p-4 md:p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1.5">
-            <div className="h-4 w-20 rounded-full bg-slate-200" />
-            <div className="h-2 w-24 rounded-full bg-slate-100" />
-          </div>
-          <div className="h-10 w-10 rounded-full bg-[#FF6B35]/15" />
-        </div>
-        {[95, 78, 88].map((w, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-slate-200" />
-            <div className="h-3 rounded-full bg-slate-100" style={{ width: `${w}%` }} />
-            <div className="h-3 w-14 rounded-full bg-orange-100" />
-          </div>
-        ))}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-          <div className="h-4 w-18 rounded-full bg-slate-200" />
-          <div className="h-6 px-3 rounded-full bg-[#FF6B35] flex items-center">
-            <div className="h-2 w-10 rounded-full bg-white/80" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+
+
+
+
 
 function ToolCtaCentered({ href, label, onClick }: { href: string; label: string; onClick?: () => void }) {
   return (
@@ -253,10 +149,15 @@ export default function FreeToolsPage() {
                 </ul>
               </div>
               <div className="order-1 lg:order-2">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/40 to-transparent rounded-3xl" />
-                  <MockQuote />
-                </div>
+                <ImageCarousel
+                  images={[
+                    '/free-tools/quote1.png',
+                    '/free-tools/quote2.png',
+                    '/free-tools/quote3.png',
+                    '/free-tools/quote4.png',
+                  ]}
+                  alt="Free Quote Generator"
+                />
                 <ToolCtaCentered href="/free-quote-generator" label="Create a Free Quote" onClick={() => trackEvent('free_tools_hub_click', { tool: 'quote-generator' })} />
               </div>
             </div>
@@ -270,7 +171,14 @@ export default function FreeToolsPage() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
               <div className="order-2 lg:order-1">
-                <MockCalculators />
+                <ImageCarousel
+                  images={[
+                    '/free-tools/calculator1.png',
+                    '/free-tools/calculator2.png',
+                    '/free-tools/calculator3.png',
+                  ]}
+                  alt="Free Construction Calculators"
+                />
                 <ToolCtaCentered href="/free-roofing-calculator" label="Open Roofing Calculator" onClick={() => trackEvent('free_tools_hub_click', { tool: 'roofing-calc' })} />
               </div>
               <div className="order-1 lg:order-2">
@@ -303,10 +211,10 @@ export default function FreeToolsPage() {
                 </ul>
               </div>
               <div className="order-1 lg:order-2">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-orange-100/40 to-transparent rounded-3xl" />
-                  <MockPO />
-                </div>
+                <ImageCarousel
+                  images={['/free-tools/order1.png']}
+                  alt="Free Purchase Order Generator"
+                />
                 <ToolCtaCentered href="/free-purchase-order-generator" label="Create a Free Purchase Order" onClick={() => trackEvent('free_tools_hub_click', { tool: 'po-generator' })} />
               </div>
             </div>
@@ -320,7 +228,10 @@ export default function FreeToolsPage() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
               <div className="order-2 lg:order-1">
-                <MockInvoice />
+                <ImageCarousel
+                  images={['/free-tools/invoice1.png']}
+                  alt="Free Invoice Generator"
+                />
                 <ToolCtaCentered href="/free-invoice-generator" label="Create a Free Invoice" onClick={() => trackEvent('free_tools_hub_click', { tool: 'invoice-generator' })} />
               </div>
               <div className="order-1 lg:order-2">
