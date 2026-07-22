@@ -72,11 +72,9 @@ export function CalcResultPopup({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 backdrop-blur-sm bg-black/40"
-      onClick={dismiss}
     >
       <div
         className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-[fadeInUp_0.3s_ease-out]"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Result - the headline */}
         <div className="text-center mb-5">

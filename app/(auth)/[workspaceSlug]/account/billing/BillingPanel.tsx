@@ -654,9 +654,7 @@ export function BillingPanel(props: BillingPanelProps) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="change-modal-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && !pending) setChangeTarget(null);
-          }}
+
         >
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
             <h3 id="change-modal-title" className="text-lg font-semibold text-slate-900">
@@ -714,9 +712,7 @@ export function BillingPanel(props: BillingPanelProps) {
           role="dialog"
           aria-modal="true"
           aria-labelledby="plan-modal-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setViewPlan(null);
-          }}
+
         >
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
             <div className="flex items-start justify-between gap-4">

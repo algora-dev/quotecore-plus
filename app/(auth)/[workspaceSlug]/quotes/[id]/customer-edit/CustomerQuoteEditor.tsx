@@ -1494,11 +1494,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       {showPreviewModal && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6"
-          onClick={() => setShowPreviewModal(false)}
         >
           <div
             className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-white border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900">Full Size Preview</h2>

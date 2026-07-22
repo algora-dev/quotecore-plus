@@ -222,11 +222,9 @@ function FreeToolsAuthModal({
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={onClose}
     >
       <div
         className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-semibold text-slate-900">
