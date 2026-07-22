@@ -1066,6 +1066,7 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
     attachmentCountRes,
     invoiceCountRes,
     orderCountRes,
+    aiPointsRes,
   ] = await Promise.all([
     admin.from('company_quote_usage')
       .select('quotes_created')
@@ -1083,6 +1084,8 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
     (admin as any).rpc('company_invoice_count', { p_company_id: companyId }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any).rpc('company_order_count', { p_company_id: companyId }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any).rpc('get_ai_assist_points_status', { p_company_id: companyId }),
   ]);
 
   const planCode = (effPlanRes.data as string | null) ?? 'starter';
@@ -1094,6 +1097,9 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
     .maybeSingle();
 
   const p = planRow ?? {};
+
+  const aiPointsRows = aiPointsRes.data as { used: number; point_limit: number | null; remaining: number; is_blocked: boolean }[] | null;
+  const aiPoints = aiPointsRows?.[0] ?? null;
 
   return [
     {
@@ -1152,6 +1158,14 @@ export async function getCompanyQuotas(companyId: string): Promise<QuotaInfo[]> 
       resettable: false,
       key: 'attachments',
     },
+    {
+      label: 'AI Assist Points',
+      used: aiPoints?.used ?? 0,
+      limit: aiPoints?.point_limit ?? null,
+      unit: 'points',
+      resettable: true,
+      key: 'ai_assist',
+    },
   ];
 }
 
@@ -1197,6 +1211,12 @@ export async function resetMonthlyQuota(companyId: string, quotaKey: string): Pr
 
     if (offsetErr) {
       return { ok: false, error: `Failed to reset ${quotaKey} quota: ${offsetErr.message}` };
+    }
+  } else if (quotaKey === 'ai_assist') {
+    const { error: pointsErr } = await (admin as any)
+      .rpc('reset_ai_assist_points', { p_company_id: companyId });
+    if (pointsErr) {
+      return { ok: false, error: `Failed to reset AI Assist points: ${pointsErr.message}` };
     }
   } else {
     return { ok: false, error: `Quota "${quotaKey}" is not resettable.` };

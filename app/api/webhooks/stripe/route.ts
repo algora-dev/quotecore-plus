@@ -567,6 +567,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice): Promise<string> {
     });
     if (auditErr) throw retryable(`subscription_events insert: ${auditErr.message}`);
   }
+
+  // Reset AI Assist points on successful billing cycle renewal.
+  // Only reset for paid plans that include AI Assist (growth/pro/pro_plus).
+  if (['growth', 'pro', 'pro_plus'].includes(company.plan_code)) {
+    const { error: pointsErr } = await admin.rpc('reset_ai_assist_points', { p_company_id: company.id });
+    if (pointsErr) console.warn('[webhook/stripe] AI points reset failed:', pointsErr.message);
+  }
+
   return 'ok';
 }
 

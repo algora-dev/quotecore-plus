@@ -139,6 +139,17 @@ export interface CompanyEntitlements {
    * costGuard per effective plan.
    */
   monthlyAiTokens: number | null;
+  /**
+   * AI Assist points: per-plan limit for the AI Takeoff feature.
+   * NULL = blocked (plan doesn't include AI Assist).
+   */
+  aiAssistPointsLimit: number | null;
+  /** AI Assist points used so far in the current billing period. */
+  aiAssistPointsUsed: number;
+  /** AI Assist points remaining (limit - used). 0 if blocked or exhausted. */
+  aiAssistPointsRemaining: number;
+  /** True when the plan doesn't include AI Assist at all (NULL limit). */
+  aiAssistBlocked: boolean;
   storageLimitBytes: number;
   storageUsedBytes: number;
   storageTopupBytes: number;
@@ -219,6 +230,7 @@ interface PlanRowRaw {
   monthly_invoice_limit: number | null;
   monthly_material_order_limit: number | null;
   monthly_ai_tokens: number | null;
+  ai_assist_points_limit: number | null;
   feat_digital_takeoff: boolean;
   feat_flashings: boolean;
   feat_material_orders: boolean;
@@ -267,6 +279,7 @@ export const loadCompanyEntitlements = cache(
       invoiceCountResult,
       orderCountResult,
       usageResult,
+      aiPointsResult,
     ] = await Promise.all([
       admin
         .from('companies')
@@ -294,6 +307,8 @@ export const loadCompanyEntitlements = cache(
         .eq('company_id', companyId)
         .eq('period_start', periodStart)
         .maybeSingle(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (admin as any).rpc('get_ai_assist_points_status', { p_company_id: companyId }),
     ]);
 
     if (companyResult.error) {
@@ -313,7 +328,7 @@ export const loadCompanyEntitlements = cache(
     const { data: planRowData, error: planErr } = await (admin as any)
       .from('subscription_plans')
       .select(
-        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, catalog_limit, attachment_limit, monthly_invoice_limit, monthly_material_order_limit, monthly_ai_tokens, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_catalogs, feat_attachment_library, feat_invoices, feat_message_center',
+        'code, monthly_quote_limit, storage_limit_bytes, included_seats, component_limit, flashing_limit, catalog_limit, attachment_limit, monthly_invoice_limit, monthly_material_order_limit, monthly_ai_tokens, ai_assist_points_limit, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_catalogs, feat_attachment_library, feat_invoices, feat_message_center',
       )
       .eq('code', effectivePlanCode)
       .limit(1)
@@ -351,6 +366,10 @@ export const loadCompanyEntitlements = cache(
       orderLimit: plan.monthly_material_order_limit,
       orderCount: (orderCountResult.data as number | null) ?? 0,
       monthlyAiTokens: plan.monthly_ai_tokens,
+      aiAssistPointsLimit: plan.ai_assist_points_limit,
+      aiAssistPointsUsed: ((aiPointsResult?.data as { used?: number }[] | null)?.[0]?.used) ?? 0,
+      aiAssistPointsRemaining: ((aiPointsResult?.data as { remaining?: number }[] | null)?.[0]?.remaining) ?? 0,
+      aiAssistBlocked: ((aiPointsResult?.data as { is_blocked?: boolean }[] | null)?.[0]?.is_blocked) ?? true,
       storageLimitBytes: plan.storage_limit_bytes + company.storage_topup_bytes,
       storageUsedBytes: company.storage_used_bytes,
       storageTopupBytes: company.storage_topup_bytes,
@@ -510,6 +529,10 @@ export async function entitlementsForClient(
   orderLimit: number | null;
   orderCount: number;
   monthlyAiTokens: number | null;
+  aiAssistPointsLimit: number | null;
+  aiAssistPointsUsed: number;
+  aiAssistPointsRemaining: number;
+  aiAssistBlocked: boolean;
   storageUsedBytes: number;
   storageLimitBytes: number;
   isOverStorage: boolean;
@@ -540,6 +563,10 @@ export async function entitlementsForClient(
     orderLimit: ent.orderLimit,
     orderCount: ent.orderCount,
     monthlyAiTokens: ent.monthlyAiTokens,
+    aiAssistPointsLimit: ent.aiAssistPointsLimit,
+    aiAssistPointsUsed: ent.aiAssistPointsUsed,
+    aiAssistPointsRemaining: ent.aiAssistPointsRemaining,
+    aiAssistBlocked: ent.aiAssistBlocked,
     storageUsedBytes: ent.storageUsedBytes,
     storageLimitBytes: ent.storageLimitBytes,
     isOverStorage: ent.isOverStorage,

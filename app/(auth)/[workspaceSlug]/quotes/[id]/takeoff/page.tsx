@@ -40,6 +40,25 @@ export default async function Page({
   const isRoofingCompany = companyRow?.default_trade === 'roofing';
   const aiTakeoffAvailable = aiTakeoffEnabled && isRoofingCompany;
 
+  // AI Assist points: fetch current usage for UI display.
+  let aiAssistPoints: { used: number; limit: number; remaining: number; isBlocked: boolean } | null = null;
+  if (aiTakeoffAvailable) {
+    const { data: pointsData } = await supabase
+      .rpc('get_ai_assist_points_status', { p_company_id: profile.company_id });
+    if (pointsData) {
+      const rows = pointsData as { used: number; point_limit: number | null; remaining: number; is_blocked: boolean }[];
+      const p = rows[0];
+      if (p) {
+        aiAssistPoints = {
+          used: p.used,
+          limit: p.point_limit ?? 0,
+          remaining: p.remaining,
+          isBlocked: p.is_blocked,
+        };
+      }
+    }
+  }
+
   // AI Takeoff: lazily seed the 6 system placeholder components (Hip, Valley,
   // Ridge, Barge, Spouting, Roof Area) before the component fetch. Idempotent —
   // early-returns if already seeded. Awaited so the rows are guaranteed present.
@@ -115,6 +134,7 @@ export default async function Page({
       isOverStorage={isOverStorage}
       allRoofAreas={allRoofAreas}
       aiTakeoffAvailable={aiTakeoffAvailable}
+      aiAssistPoints={aiAssistPoints}
     />
   );
 }

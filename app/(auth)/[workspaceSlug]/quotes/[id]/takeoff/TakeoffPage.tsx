@@ -52,6 +52,8 @@ interface Props {
   allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
   /** AI Takeoff: when true, the post-calibration popup shows the AI Assist button. */
   aiTakeoffAvailable?: boolean;
+  /** AI Assist points: current usage for UI display. */
+  aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
 }
 
 export function TakeoffPage({
@@ -69,6 +71,7 @@ export function TakeoffPage({
   isOverStorage,
   allRoofAreas,
   aiTakeoffAvailable,
+  aiAssistPoints,
 }: Props) {
   return (
     <TakeoffWorkstation
@@ -86,6 +89,7 @@ export function TakeoffPage({
       isOverStorage={isOverStorage}
       allRoofAreas={allRoofAreas}
       aiTakeoffAvailable={aiTakeoffAvailable}
+      aiAssistPoints={aiAssistPoints}
     />
   );
 }

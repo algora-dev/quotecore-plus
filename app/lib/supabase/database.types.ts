@@ -725,6 +725,8 @@ export type Database = {
           admin_paused: boolean
           admin_paused_at: string | null
           admin_paused_by: string | null
+          ai_assist_points_reset_at: string | null
+          ai_assist_points_used: number
           cancel_at: string | null
           cancel_at_period_end: boolean
           cancellation_confirmation_required_at: string | null
@@ -772,6 +774,8 @@ export type Database = {
           admin_paused?: boolean
           admin_paused_at?: string | null
           admin_paused_by?: string | null
+          ai_assist_points_reset_at?: string | null
+          ai_assist_points_used?: number
           cancel_at?: string | null
           cancel_at_period_end?: boolean
           cancellation_confirmation_required_at?: string | null
@@ -819,6 +823,8 @@ export type Database = {
           admin_paused?: boolean
           admin_paused_at?: string | null
           admin_paused_by?: string | null
+          ai_assist_points_reset_at?: string | null
+          ai_assist_points_used?: number
           cancel_at?: string | null
           cancel_at_period_end?: boolean
           cancellation_confirmation_required_at?: string | null
@@ -4051,6 +4057,7 @@ export type Database = {
       subscription_plans: {
         Row: {
           active: boolean
+          ai_assist_points_limit: number | null
           attachment_limit: number | null
           catalog_limit: number | null
           code: string
@@ -4087,6 +4094,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          ai_assist_points_limit?: number | null
           attachment_limit?: number | null
           catalog_limit?: number | null
           code: string
@@ -4123,6 +4131,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          ai_assist_points_limit?: number | null
           attachment_limit?: number | null
           catalog_limit?: number | null
           code?: string
@@ -4723,6 +4732,15 @@ export type Database = {
         Returns: undefined
       }
       auth_user_has_password: { Args: { uid: string }; Returns: boolean }
+      check_and_deduct_ai_points: {
+        Args: { p_company_id: string; p_points_to_spend: number }
+        Returns: {
+          allowed: boolean
+          error: string
+          point_limit: number
+          remaining: number
+        }[]
+      }
       check_storage_quota: {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean
@@ -4816,6 +4834,15 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: string
       }
+      get_ai_assist_points_status: {
+        Args: { p_company_id: string }
+        Returns: {
+          is_blocked: boolean
+          point_limit: number
+          remaining: number
+          used: number
+        }[]
+      }
       get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
       import_catalog_rows_atomic: {
         Args: {
@@ -4890,6 +4917,10 @@ export type Database = {
         Returns: undefined
       }
       require_order_slot: { Args: { p_company_id: string }; Returns: undefined }
+      reset_ai_assist_points: {
+        Args: { p_company_id: string }
+        Returns: undefined
+      }
       save_takeoff_atomic: {
         Args: { p_payload: Json; p_quote_id: string }
         Returns: undefined
