@@ -5663,10 +5663,13 @@ export function TakeoffWorkstation({
                 and go straight to adding components. You can always add dimensions manually
                 in the area step of the quote builder.
               </p>
+            ) : aiTakeoffAvailable ? (
+              <p className="text-sm text-slate-500 mb-4">
+                You can draw and measure an area manually via Polygon, or Rectangle, use our AI Assist system (Finds roof area and components for you), or skip straight to adding components without an area
+              </p>
             ) : (
               <p className="text-sm text-slate-500 mb-4">
-                You can draw and measure an area now, or skip and go straight to adding
-                components. You can always add area dimensions manually in the quote builder.
+                You can draw and measure an area manually via Polygon, or Rectangle, or skip straight to adding components without an area
               </p>
             )}
             {tradeConfig.toolGuidanceNote && (
@@ -5708,7 +5711,7 @@ export function TakeoffWorkstation({
                 </button>
               </div>
               {aiTakeoffAvailable && (
-                <div className="space-y-2">
+                <div className="space-y-2 rounded-xl border-2 border-[#FF6B35]/30 p-3 bg-[#FF6B35]/5">
                   <div className="flex gap-1.5">
                     {([
                       { value: 'low', label: 'Low', hint: 'Small, simple roofs' },

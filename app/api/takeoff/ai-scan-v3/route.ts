@@ -87,11 +87,13 @@ function logRequest(params: {
   requestId: string;
   stage: string;
   timer: ReturnType<typeof makeTimer>;
+  quality?: string;
+  tokens?: { scan1: number; scan2: number; scan3: number };
   extra?: Record<string, unknown>;
 }) {
-  const { requestId, stage, timer, extra } = params;
+  const { requestId, stage, timer, quality, tokens, extra } = params;
   const { total, marks } = timer.summary();
-  console.log(`[ai-scan-v3:${requestId}] stage=${stage} total=${total}ms`, {
+  console.log(`[ai-scan-v3:${requestId}] stage=${stage}${quality ? ` quality=${quality}` : ''}${tokens ? ` tokens=${JSON.stringify(tokens)}` : ''} total=${total}ms`, {
     marks: marks.map(m => `${m.label}=${m.ms}ms`).join(', '),
     ...extra,
   });
@@ -663,7 +665,7 @@ export async function POST(req: NextRequest) {
 
       usage(true);
       logRequest({
-        requestId, stage: 'scan1_complete', timer,
+        requestId, stage: 'scan1_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, modelUsage: result.usage },
       });
 
@@ -796,7 +798,7 @@ export async function POST(req: NextRequest) {
 
       usage(true);
       logRequest({
-        requestId, stage: 'scan2_complete', timer,
+        requestId, stage: 'scan2_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, modelUsage: result.usage },
       });
 
@@ -930,7 +932,7 @@ export async function POST(req: NextRequest) {
 
       usage(true);
       logRequest({
-        requestId, stage: 'scan3_complete', timer,
+        requestId, stage: 'scan3_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: {
           totalLines: allLines.length,
           classified: classifications.length,
