@@ -49,8 +49,8 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   const [acknowledged, setAcknowlednowledged] = useState(false);
   const [areaEdits, setAreaEdits] = useState<Record<number, { name: string; pitch: string }>>(() => (
     Object.fromEntries(areas.map(area => [area.index, {
-      name: area.name,
-      pitch: area.pitch != null ? String(area.pitch) : '',
+      name: '',
+      pitch: '',
     }]))
   ));
   const [applyPitchToAll, setApplyPitchToAll] = useState<string>('');
@@ -64,11 +64,6 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
             The AI couldn&apos;t analyse this plan image. This usually means the image is too low quality,
             rotated at an unusual angle, or doesn&apos;t contain a recognisable roof plan.
           </p>
-          {summary.notes.length > 0 && (
-            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-              {summary.notes.map((n, i) => <p key={i}>• {n}</p>)}
-            </div>
-          )}
           <button
             onClick={onDiscard}
             className="w-full py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
@@ -85,14 +80,14 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
     const overrides: Record<number, { name: string; pitch: number }> = {};
     for (const area of areas) {
       const edit = areaEdits[area.index];
-      const name = edit?.name?.trim() || area.name || `Area ${area.index + 1}`;
+      const name = edit?.name?.trim() || `Area ${area.index + 1}`;
       let pitch: number;
       if (applyPitchToAll) {
         pitch = parseFloat(applyPitchToAll);
-        if (isNaN(pitch) || pitch < 0 || pitch > 89) pitch = area.pitch ?? 0;
+        if (isNaN(pitch) || pitch < 0 || pitch > 89) pitch = 0;
       } else {
         pitch = parseFloat(edit?.pitch || '');
-        if (isNaN(pitch) || pitch < 0 || pitch > 89) pitch = area.pitch ?? 0;
+        if (isNaN(pitch) || pitch < 0 || pitch > 89) pitch = 0;
       }
       overrides[area.index] = { name, pitch };
     }
@@ -115,10 +110,9 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
       <div className="bg-white rounded-2xl p-4 md:p-6 max-w-lg border border-gray-200 shadow-xl max-h-[85vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-1">AI Scan Results</h2>
+        <h2 className="text-lg font-semibold mb-1">AI Assist Results</h2>
         <p className="text-xs text-slate-500 mb-4">
-          Review the detected areas and components below. You can adjust names and pitches before applying.
-          After applying, you can attach real components and edit measurements manually.
+          Here&apos;s what our AI Scan identified from its scans, please check the area(s) and components, then ensure you apply a pitch value to any identified roof area(s). You can also change the roof area name(s).
         </p>
 
         {/* Detection summary */}
@@ -145,81 +139,70 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
           </div>
         )}
 
-        {/* Roof areas — editable rows */}
-        {areas.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-medium text-slate-700">
-                Name Roof Areas and Apply Pitch
-              </label>
-              <span className="text-[10px] text-slate-400">{areas.length} area{areas.length !== 1 ? 's' : ''}</span>
-            </div>
-
-            <p className="mb-2 text-xs text-slate-500">
-              Check each detected outline, then enter its name and pitch before applying the results.
-            </p>
-
-            {/* Highlighted instruction for missing pitch */}
-            {!allValid && (
-              <p className="mb-2 text-xs text-orange-600 font-medium">
-                Please add a pitch value from 0–89 degrees before you can move to the next step.
-              </p>
+        {/* Apply pitch to all */}
+        {areas.length > 1 && (
+          <div className="flex gap-2 items-center mb-3 p-2 bg-orange-50/50 border border-orange-100 rounded-lg">
+            <input
+              type="number"
+              min={0}
+              max={89}
+              step={0.5}
+              placeholder="25"
+              value={applyPitchToAll}
+              onChange={(e) => setApplyPitchToAll(e.target.value)}
+              className="w-16 px-2 py-1 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none"
+              inputMode="decimal"
+            />
+            <span className="text-xs text-slate-600">
+              Apply this pitch to all areas
+            </span>
+            {applyPitchToAll && (
+              <button
+                onClick={() => setApplyPitchToAll('')}
+                className="text-xs text-slate-400 hover:text-slate-600 ml-auto"
+              >
+                Clear
+              </button>
             )}
+          </div>
+        )}
 
-            {/* Apply pitch to all */}
-            <div className="flex gap-2 items-center mb-2 p-2 bg-orange-50/50 border border-orange-100 rounded-lg">
-              <input
-                type="number"
-                min={0}
-                max={89}
-                step={0.5}
-                placeholder="25"
-                value={applyPitchToAll}
-                onChange={(e) => setApplyPitchToAll(e.target.value)}
-                className="w-16 px-2 py-1 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none"
-                inputMode="decimal"
-              />
-              <span className="text-xs text-slate-600">
-                Apply this pitch to all areas (overrides per-area values)
-              </span>
-              {applyPitchToAll && (
-                <button
-                  onClick={() => setApplyPitchToAll('')}
-                  className="text-xs text-slate-400 hover:text-slate-600 ml-auto"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {/* Per-area editable rows */}
-            <div className="space-y-2">
-              {areas.map((area) => {
-                const edit = areaEdits[area.index];
-                return (
-                  <div key={area.index} className="flex gap-2 items-center p-2 rounded-lg border border-slate-200">
-                    <span className="text-[10px] font-bold text-slate-400 w-5">{area.index + 1}</span>
-                    <input
-                      type="text"
-                      value={edit?.name ?? ''}
-                      placeholder={area.name || `Area ${area.index + 1}`}
-                      onChange={(e) => {
-                        setAreaEdits(prev => ({
-                          ...prev,
-                          [area.index]: { ...prev[area.index], name: e.target.value },
-                        }));
-                      }}
-                      className={`flex-1 px-2 py-1 text-xs rounded-lg border focus:border-orange-500 focus:outline-none ${
-                        !edit?.name?.trim() ? 'border-orange-400 ring-1 ring-orange-300' : 'border-slate-300'
-                      }`}
-                    />
-                    <div className="flex items-center gap-1">
+        {/* Per-area editable cards */}
+        {areas.length > 0 && (
+          <div className="mb-4 space-y-3">
+            {areas.map((area) => {
+              const edit = areaEdits[area.index];
+              const nameEmpty = !edit?.name?.trim();
+              const pitchEmpty = !applyPitchToAll && (!edit?.pitch || edit.pitch.trim() === '');
+              return (
+                <div key={area.index} className="rounded-xl border-2 border-[#FF6B35]/30 p-3 space-y-2">
+                  <div className="text-xs font-semibold text-slate-700">Roof Area {area.index + 1}</div>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-slate-500 w-12 shrink-0">Name:</label>
+                      <input
+                        type="text"
+                        value={edit?.name ?? ''}
+                        placeholder="Enter area name"
+                        onChange={(e) => {
+                          setAreaEdits(prev => ({
+                            ...prev,
+                            [area.index]: { ...prev[area.index], name: e.target.value },
+                          }));
+                        }}
+                        className={`flex-1 px-2 py-1.5 text-xs rounded-lg border focus:border-orange-500 focus:outline-none ${
+                          nameEmpty ? 'border-orange-400 ring-1 ring-orange-300' : 'border-slate-300'
+                        }`}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-slate-500 w-12 shrink-0">Pitch:</label>
                       <input
                         type="number"
                         min={0}
                         max={89}
                         step={0.5}
-                        placeholder={area.pitch != null ? String(area.pitch) : '0'}
+                        placeholder="0"
                         value={applyPitchToAll ? '' : (edit?.pitch ?? '')}
                         disabled={!!applyPitchToAll}
                         onChange={(e) => {
@@ -228,27 +211,17 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
                             [area.index]: { ...prev[area.index], pitch: e.target.value },
                           }));
                         }}
-                        className={`w-14 px-2 py-1 text-xs rounded-lg border focus:border-orange-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 ${
-                          !applyPitchToAll && (!edit?.pitch || edit.pitch.trim() === '')
-                            ? 'border-orange-400 ring-1 ring-orange-300'
-                            : 'border-slate-300'
+                        className={`w-20 px-2 py-1.5 text-xs rounded-lg border focus:border-orange-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 ${
+                          pitchEmpty ? 'border-orange-400 ring-1 ring-orange-300' : 'border-slate-300'
                         }`}
                         inputMode="decimal"
                       />
-                      <span className="text-[10px] text-slate-400">°</span>
+                      <span className="text-xs text-slate-400">degrees</span>
                     </div>
-                    <span className="text-[10px] text-slate-400">{area.vertexCount}pts</span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Notes */}
-        {summary.notes.length > 0 && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-            {summary.notes.map((n, i) => <p key={i}>• {n}</p>)}
+                </div>
+              );
+            })}
           </div>
         )}
 
