@@ -139,6 +139,8 @@ interface Props {
   allRoofAreas?: { id: string; label: string; pitch?: number; area?: number }[];
   /** AI Takeoff: when true, the post-calibration popup shows the AI Assist button. */
   aiTakeoffAvailable?: boolean;
+  /** AI Assist points: current usage for UI display. */
+  aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
 }
 
 const MAX_CANVAS_DIM = 2000; // Max longest edge for dynamic canvas sizing
@@ -224,6 +226,7 @@ export function TakeoffWorkstation({
   isOverStorage,
   allRoofAreas = [],
   aiTakeoffAvailable = false,
+  aiAssistPoints = null,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -253,6 +256,8 @@ export function TakeoffWorkstation({
   const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
   const [aiScanStage, setAiScanStage] = useState<'outline' | 'lines' | 'classify'>('outline');
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
+  // AI Assist points: track locally so we can update after a scan without a page reload.
+  const [aiPoints, setAiPoints] = useState(aiAssistPoints);
   // V3: 3-scan pipeline (outline → line detection → classification)
   const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
   // Once the user dismisses the "Calibration complete" popup, never show it again
@@ -4125,6 +4130,10 @@ export function TakeoffWorkstation({
       if (!response.ok || !result.success) {
         const errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
         console.error('[AI Takeoff V3] scan1 error:', errMsg, result);
+        // Handle points-exhausted response: update local points + show upgrade message.
+        if (response.status === 402 && result.pointsExhausted) {
+          setAiPoints(prev => prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null);
+        }
         setAiScanError(errMsg);
         return;
       }
@@ -4139,6 +4148,9 @@ export function TakeoffWorkstation({
         pitch: area.pitch_degrees ?? result.data?.pitch?.global_degrees ?? null,
         vertexCount: area.points?.length ?? 0,
       }));
+      // Points were deducted server-side on scan1; update local state to reflect the new remaining count.
+      const cost = aiQualityLevel === 'low' ? 2 : aiQualityLevel === 'medium' ? 4 : 8;
+      setAiPoints(prev => prev ? { ...prev, used: prev.used + cost, remaining: Math.max(prev.remaining - cost, 0) } : null);
       scanCompleted = await runRemainingAiScans({
         outlineData: result.data,
         areas: areaInfos,
@@ -5712,38 +5724,65 @@ export function TakeoffWorkstation({
               </div>
               {aiTakeoffAvailable && (
                 <div className="space-y-2 rounded-xl border-2 border-[#FF6B35]/30 p-3 bg-[#FF6B35]/5">
-                  <div className="flex gap-1.5">
-                    {([
-                      { value: 'low', label: 'Low', hint: 'Small, simple roofs' },
-                      { value: 'medium', label: 'Medium', hint: 'Medium size & complexity' },
-                      { value: 'high', label: 'High', hint: 'Larger, complex roofs' },
-                    ] as const).map(opt => (
+                  {/* Points display */}
+                  {aiPoints && !aiPoints.isBlocked && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-600">AI Assist points</span>
+                      <span className={`font-semibold ${aiPoints.remaining <= 4 ? 'text-orange-600' : 'text-slate-900'}`}>
+                        {aiPoints.remaining} / {aiPoints.limit} remaining
+                      </span>
+                    </div>
+                  )}
+                  {/* Blocked state: plan doesn't include AI Assist */}
+                  {aiPoints?.isBlocked && (
+                    <div className="rounded-lg bg-slate-100 border border-slate-200 px-3 py-2 text-xs text-slate-600 text-center">
+                      AI Assist is not available on your current plan. Upgrade to Growth or Pro to unlock AI roof scanning.
+                    </div>
+                  )}
+                  {/* Quality selector + scan button: hidden when blocked */}
+                  {!aiPoints?.isBlocked && (
+                    <>
+                      <div className="flex gap-1.5">
+                        {([
+                          { value: 'low', label: 'Low', hint: 'Small, simple roofs · 2 points' },
+                          { value: 'medium', label: 'Medium', hint: 'Medium size & complexity · 4 points' },
+                          { value: 'high', label: 'High', hint: 'Larger, complex roofs · 8 points' },
+                        ] as const).map(opt => {
+                          const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
+                          const canAfford = !aiPoints || aiPoints.remaining >= cost;
+                          return (
+                            <button
+                              key={opt.value}
+                              onClick={() => setAiQualityLevel(opt.value)}
+                              disabled={!canAfford}
+                              className={`flex-1 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                                aiQualityLevel === opt.value
+                                  ? 'bg-slate-900 text-white border-slate-900'
+                                  : canAfford
+                                    ? 'text-slate-600 border-slate-300 hover:bg-slate-50'
+                                    : 'text-slate-300 border-slate-200 cursor-not-allowed'
+                              }`}
+                              title={opt.hint}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
                       <button
-                        key={opt.value}
-                        onClick={() => setAiQualityLevel(opt.value)}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                          aiQualityLevel === opt.value
-                            ? 'bg-slate-900 text-white border-slate-900'
-                            : 'text-slate-600 border-slate-300 hover:bg-slate-50'
-                        }`}
-                        title={opt.hint}
+                        onClick={() => {
+                          setShowRoofAreaInstructions(false);
+                          roofAreaInstructionsDismissedRef.current = true;
+                          handleAiScan();
+                        }}
+                        className="w-full py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
+                        title="AI Assist is still being developed, always check the result properly, don't assume its correct, this tool is improving constantly"
                       >
-                        {opt.label}
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 10l-.75-.07C9.4 9.58 8 7.95 8 6a4 4 0 0 1 4-4z"/><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/><path d="M12 13v3"/></svg>
+                        AI Assist (BETA)
                       </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowRoofAreaInstructions(false);
-                      roofAreaInstructionsDismissedRef.current = true;
-                      handleAiScan();
-                    }}
-                    className="w-full py-2.5 text-sm font-medium text-white bg-[#FF6B35] rounded-full hover:bg-[#E55A2B] transition-colors flex items-center justify-center gap-1.5"
-                    title="AI Assist is still being developed, always check the result properly, don't assume its correct, this tool is improving constantly"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 10l-.75-.07C9.4 9.58 8 7.95 8 6a4 4 0 0 1 4-4z"/><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/><path d="M12 13v3"/></svg>
-                    AI Assist (BETA)
-                  </button>
+                    </>
+                  )}
                 </div>
               )}
               <button

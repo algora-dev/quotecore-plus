@@ -567,6 +567,49 @@ export async function POST(req: NextRequest) {
     const tokenLimits = userReasoningEffort === 'high'
       ? { scan1: 8000, scan2: 12000, scan3: 12000 }
       : { scan1: 5000, scan2: 8000, scan3: 8000 };
+
+    // ── AI Assist points quota ──────────────────────────────────────
+    // Point cost per quality level: low=2, medium=4, high=8.
+    // Points are deducted once on scan1 (the full cost). Scans 2+3 are
+    // continuations of the same scan session — no additional deduction.
+    const POINT_COST: Record<string, number> = { low: 2, medium: 4, high: 8 };
+    const pointsToSpend = POINT_COST[qualityLevel] ?? 4;
+
+    if (stage === 'scan1') {
+      const admin = createServiceClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { persistSession: false, autoRefreshToken: false } }
+      );
+      const { data: pointsResult, error: pointsError } = await admin
+        .rpc('check_and_deduct_ai_points', {
+          p_company_id: profile.company_id,
+          p_points_to_spend: pointsToSpend,
+        });
+
+      if (pointsError) {
+        console.error('[ai-scan-v3] points check error:', pointsError);
+        return NextResponse.json(
+          { success: false, error: 'Failed to verify AI Assist quota. Please try again.' },
+          { status: 500 }
+        );
+      }
+
+      const resultRows = pointsResult as { allowed: boolean; remaining: number; point_limit: number | null; error: string | null }[] | null;
+      const result = resultRows?.[0] ?? null;
+      if (!result?.allowed) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: result?.error || 'AI Assist points limit reached.',
+            pointsExhausted: true,
+            pointsRemaining: result?.remaining ?? 0,
+            pointsLimit: result?.point_limit ?? null,
+          },
+          { status: 402 }
+        );
+      }
+    }
     const usage = (success: boolean, error?: string) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
       pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
