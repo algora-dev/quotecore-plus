@@ -102,7 +102,7 @@ function isStaticAsset(pathname: string): boolean {
     // breaks crawlers + sitemap generators.
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
-    /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|vtt)$/.test(pathname)
+    /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|vtt|mp4|webm|ogg|mp3|wav|pdf)$/.test(pathname)
   );
 }
 
