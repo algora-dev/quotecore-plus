@@ -159,6 +159,13 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
               Check each detected outline, then enter its name and pitch before applying the results.
             </p>
 
+            {/* Highlighted instruction for missing pitch */}
+            {!allValid && (
+              <p className="mb-2 text-xs text-orange-600 font-medium">
+                Please add a pitch value from 0–89 degrees before you can move to the next step.
+              </p>
+            )}
+
             {/* Apply pitch to all */}
             <div className="flex gap-2 items-center mb-2 p-2 bg-orange-50/50 border border-orange-100 rounded-lg">
               <input
@@ -202,7 +209,9 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
                           [area.index]: { ...prev[area.index], name: e.target.value },
                         }));
                       }}
-                      className="flex-1 px-2 py-1 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none"
+                      className={`flex-1 px-2 py-1 text-xs rounded-lg border focus:border-orange-500 focus:outline-none ${
+                        !edit?.name?.trim() ? 'border-orange-400 ring-1 ring-orange-300' : 'border-slate-300'
+                      }`}
                     />
                     <div className="flex items-center gap-1">
                       <input
@@ -219,7 +228,11 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
                             [area.index]: { ...prev[area.index], pitch: e.target.value },
                           }));
                         }}
-                        className="w-14 px-2 py-1 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400"
+                        className={`w-14 px-2 py-1 text-xs rounded-lg border focus:border-orange-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-400 ${
+                          !applyPitchToAll && (!edit?.pitch || edit.pitch.trim() === '')
+                            ? 'border-orange-400 ring-1 ring-orange-300'
+                            : 'border-slate-300'
+                        }`}
                         inputMode="decimal"
                       />
                       <span className="text-[10px] text-slate-400">°</span>
