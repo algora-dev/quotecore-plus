@@ -28,6 +28,7 @@ export function PromptBox({ onParsed, onError, documentType }: PromptBoxProps) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   async function handleParse() {
     if (!text.trim()) return;
@@ -68,56 +69,79 @@ export function PromptBox({ onParsed, onError, documentType }: PromptBoxProps) {
   };
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-900">Or paste your text</h2>
-        {collapsed && (
-          <button
-            onClick={() => setCollapsed(false)}
-            className="text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition"
-          >
-            Show
-          </button>
-        )}
-      </div>
+    <div className="rounded-xl border border-slate-200 bg-white">
+      {/* Collapsible header */}
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left"
+      >
+        <h2 className="text-sm font-semibold text-slate-900">AI Assist Text Prompt</h2>
+        <svg
+          className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-      {!collapsed && (
-        <>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={4}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            placeholder={examples[documentType]}
-          />
-          <div className="mt-2 flex items-center justify-between">
-            <p className="text-xs text-slate-400">
-              Paste your {documentType} details - AI will structure it into line items. Your text is sent to our server for processing and is not stored.
-            </p>
-            <button
-              onClick={handleParse}
-              disabled={loading || !text.trim()}
-              className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800"
-            >
-              {loading ? (
-                <>
-                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                    <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Parsing...
-                </>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                  Parse text
-                </>
-              )}
-            </button>
+      {/* Expandable content */}
+      {expanded && (
+        <div className="px-5 pb-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-medium text-slate-500">Or paste your text</h3>
+            {collapsed && (
+              <button
+                onClick={() => setCollapsed(false)}
+                className="text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition"
+              >
+                Show
+              </button>
+            )}
           </div>
-        </>
+
+          {!collapsed && (
+            <>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                placeholder={examples[documentType]}
+              />
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-xs text-slate-400">
+                  Paste your {documentType} details - AI will structure it into line items. Your text is sent to our server for processing and is not stored.
+                </p>
+                <button
+                  onClick={handleParse}
+                  disabled={loading || !text.trim()}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                        <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Parsing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      Parse text
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
