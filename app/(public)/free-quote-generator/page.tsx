@@ -110,8 +110,10 @@ function QuoteGeneratorForm() {
   const [uploadError, setUploadError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
 
+  const [docLimitError, setDocLimitError] = useState('');
+
   // Unified email/auth state
-  const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine } = useFreeToolsEmail();
+  const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine, accessToken } = useFreeToolsEmail();
 
   // Country-to-currency mapping for IP-based default
   const COUNTRY_CURRENCY: Record<string, string> = {
@@ -272,7 +274,23 @@ function QuoteGeneratorForm() {
     setUploadError('');
   }
 
-  function generateQuote() {
+  async function generateQuote() {
+    setDocLimitError('');
+    try {
+      const res = await fetch('/api/free-tools/check-doc-limit', {
+        method: 'POST',
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        body: JSON.stringify({ tool: 'quote' }),
+      });
+      if (res.status === 429) {
+        const data = await res.json();
+        setDocLimitError(data.message || 'Daily limit reached. Sign up free for more.');
+        return;
+      }
+      if (!res.ok) return;
+    } catch {
+      // Network error — don't block the user from generating
+    }
     setGenerated(true);
     setPopupTrigger(false);
     setTimeout(() => setPopupTrigger(true), 1500);
@@ -762,18 +780,24 @@ function QuoteGeneratorForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+              {docLimitError && (
+                <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
+                  <p className="text-sm text-slate-700">{docLimitError}</p>
+                  <button
+                    onClick={() => openAuthModal('signup')}
+                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#ff5722] transition-colors"
+                  >
+                    Sign up free
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (
           <>
             {/* Generated quote - printable */}
             <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0" id="quote-print" style={{ position: 'relative', overflow: 'hidden' }}>
-              {!isAuthed && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
-                  <img src="/logo.png" alt="" className="w-[400px] opacity-[0.07]" style={{ transform: 'rotate(-45deg)' }} />
-                </div>
-              )}
-              <div style={{ position: 'relative', zIndex: 1 }}>
+              <div>
               <div className="flex items-start justify-between mb-8">
                 {/* Left: Spacer matching logo height, then Quote number + Quote to: below */}
                 <div>
@@ -855,9 +879,11 @@ function QuoteGeneratorForm() {
               )}
 
               {!isAuthed && (
-                <div className="mt-8 pt-4 border-t border-slate-100">
-                  <p className="text-xs text-slate-400">
-                    Generated with QuoteCore+ Free Quote Generator - {new Date().toLocaleDateString('en-GB')}
+                <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 opacity-60">
+                  <img src="/logo.png" alt="QuoteCore+" className="h-4 w-auto" />
+                  <p className="text-[10px] text-slate-400">
+                    This quote was generated using QuoteCore+ Free Tools —{" "}
+                    <span className="text-slate-500 font-medium">quotecoreplus.com</span>
                   </p>
                 </div>
               )}
@@ -916,7 +942,7 @@ function QuoteGeneratorForm() {
               resultDetails={`${lines.length} line item${lines.length !== 1 ? 's' : ''} for ${clientName || 'client'}`}
               ctaText="Turn into an invoice"
               ctaHref={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
-              secondaryText={!isAuthed ? "Enter your email on the form to remove the watermark. Create a professional invoice and get paid faster - no signup needed" : "Create a professional invoice and get paid faster - no signup needed"}
+              secondaryText={!isAuthed ? "Enter your email on the form to remove QuoteCore+ branding. Create a professional invoice and get paid faster - no signup needed" : "Create a professional invoice and get paid faster - no signup needed"}
             />
           </>
         )}
@@ -960,10 +986,10 @@ function QuoteGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">
-                  How do I remove the watermark and create more free quotes?
+                  How do I remove the QuoteCore+ branding and create more free quotes?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">Sign up at the top of the page to gain more free quotes and remove the watermark, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p>
+                  <p className="text-sm text-slate-600">Sign up at the top of the page to gain more free quotes and remove the QuoteCore+ branding, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p>
                 </div>
               </details>
             </div>

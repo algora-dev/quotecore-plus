@@ -7,7 +7,7 @@ import { createFreeToolsClient } from '@/app/lib/supabase/free-client';
 export interface FreeToolsTierInfo {
   tier: 1 | 2 | 3;
   hasAppAccount: boolean;
-  limits: { imagePerDay: number; textPerDay: number; label: string };
+  limits: { aiPerDay: number; docPerDay: number | null; imagePerDay: number; textPerDay: number; label: string };
 }
 
 interface FreeToolsAuthState {
@@ -238,7 +238,7 @@ function FreeToolsAuthModal({
         </div>
         <p className="text-xs text-slate-500">
           {mode === 'signup'
-            ? 'Get full access to all tools, remove watermarks, and save your work.'
+            ? 'Get full access to all tools, remove QuoteCore+ branding, and save your work.'
             : 'Welcome back. Log in to access your saved tools.'}
         </p>
 

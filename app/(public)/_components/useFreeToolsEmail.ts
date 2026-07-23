@@ -11,7 +11,7 @@ import { useFreeToolsAuth } from './FreeToolsAuthProvider';
  * Also exposes openAuthModal so in-page cards can trigger the shared auth modal.
  */
 export function useFreeToolsEmail() {
-  const { user, loading, signOut, openAuthModal, tierInfo } = useFreeToolsAuth();
+  const { user, loading, signOut, openAuthModal, tierInfo, accessToken } = useFreeToolsAuth();
   const [localEmail, setLocalEmail] = useState<string>('');
   const [localEmailLoaded, setLocalEmailLoaded] = useState(false);
 
@@ -43,11 +43,11 @@ export function useFreeToolsEmail() {
   }
 
   // Human-readable daily limits line for the auth status cards.
-  // Anonymous (incl. locally-saved email) = tier 1; authed = tier 2 until
-  // the account-status fetch resolves, then whatever the server says.
+  const docLimit = tierInfo?.limits.docPerDay ?? 3;
+  const aiLimit = tierInfo?.limits.aiPerDay ?? 1;
   const limitsLine = isAuthed
-    ? `${tierInfo?.hasAppAccount ? 'App account' : 'Logged in'} · Image upload: ${tierInfo?.limits.imagePerDay ?? 10}/day · Text parse: ${tierInfo?.limits.textPerDay ?? 20}/day · Manual: Unlimited`
-    : 'Image upload: 3/day · Text parse: 5/day · Manual: Unlimited';
+    ? `${tierInfo?.hasAppAccount ? 'App account' : 'Logged in'} · Documents: ${tierInfo?.limits.docPerDay === null ? 'Unlimited' : docLimit + '/day'} · AI: ${aiLimit}/day`
+    : `Documents: 3/day · AI: 1/day`;
 
   return {
     email,
@@ -55,6 +55,7 @@ export function useFreeToolsEmail() {
     emailSaved,
     loadingEmail,
     authUser: user,
+    accessToken,
     tierInfo,
     limitsLine,
     setEmailInLocalStorage,
