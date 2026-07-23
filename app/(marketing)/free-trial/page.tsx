@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     question: "What happens when the trial ends?",
-    answer: "You'll be prompted to choose a plan. If you don't upgrade, your account pauses and your data stays safe.",
+    answer: "You'll be automatically put on the Lite (Free) plan and be able to upgrade from there if you wish. All your saved data remains stored.",
   },
   {
     question: "Can I send real quotes to real customers during the trial?",
@@ -36,15 +36,15 @@ const faqs = [
   },
   {
     question: "What if I need help?",
-    answer: "Email us at info@quote-core.com and we'll get back to you within one business day.",
+    answer: "You can chat to \"Q\" our smart assistant in the bottom right corner, check the <a href=\"https://app.quote-core.com/docs\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">docs</a>, or <a href=\"https://quote-core.com/contact\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">contact us here</a>.",
   },
   {
     question: "What is included in the free trial?",
-    answer: "Your 14-day free trial gives you full access to every QuoteCore+ feature. That includes the digital takeoff tool, quote builder with your own pricing logic, automated materials ordering from accepted quotes, and the job management dashboard. You can send real quotes to real customers from day one - nothing is locked.",
+    answer: "Your 14-day free trial gives you full access to every QuoteCore+ feature. That includes the digital takeoff tool, quote builder, Smart Components, order, invoices, and all the AI Assist features. You can send real quotes/orders/invoices to real customers from day one and save everything to your account - nothing is locked.",
   },
   {
     question: "How do I get started?",
-    answer: "Getting started takes less than ten minutes. Create your account, set up your pricing rates and components once, and you are ready to quote. Upload a site plan, measure the job directly from it, and QuoteCore+ builds the quote automatically using your pricing logic.",
+    answer: "Sign up takes less than 2 minutes. Once you're signed up, \"Q\" can walk you through everything by chatting to you, or by showing you. You can create components, upload pricing catalogs, images, convert previous quotes to our format, create new quotes, orders, invoices. Just go to the \"Resources\" page in the main navigation, then to the tutorials page to learn how everything works.",
   },
   {
     question: "Who is QuoteCore+ for?",

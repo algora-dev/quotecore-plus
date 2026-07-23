@@ -46,6 +46,11 @@ export interface BillingPlanInfo {
   monthlyInvoiceLimit: number | null;
   monthlyAiTokens: number | null;
   /**
+   * AI document parsing limit per billing period (quote/order/invoice
+   * upload + text prompt). NULL = unlimited. 0 = not included.
+   */
+  monthlyAiParseLimit: number | null;
+  /**
    * AI Assist scan points per billing period (roofing takeoff feature).
    * NULL = not included in this plan.
    */
@@ -629,6 +634,9 @@ export function BillingPanel(props: BillingPanelProps) {
                     {!plan.comingSoon && plan.aiAssistPointsLimit !== null && plan.aiAssistPointsLimit > 0 && (
                       <li>{plan.aiAssistPointsLimit} AI Assist scan points</li>
                     )}
+                    {!plan.comingSoon && (plan.monthlyAiParseLimit === null || plan.monthlyAiParseLimit > 0) && (
+                      <li>{plan.monthlyAiParseLimit === null ? 'Unlimited' : plan.monthlyAiParseLimit} AI doc parses</li>
+                    )}
                   </ul>
                 </div>
                 <div className="mt-3 flex gap-2">
@@ -847,6 +855,16 @@ export function BillingPanel(props: BillingPanelProps) {
                     : 'Not included'}
                 </dd>
               </div>
+              <div>
+                <dt className="text-xs text-slate-500">AI doc parses / mo</dt>
+                <dd className={`font-semibold ${viewPlan.monthlyAiParseLimit === null || viewPlan.monthlyAiParseLimit > 0 ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                  {viewPlan.monthlyAiParseLimit === null
+                    ? 'Unlimited'
+                    : viewPlan.monthlyAiParseLimit === 0
+                      ? 'Not included'
+                      : `${viewPlan.monthlyAiParseLimit} parses`}
+                </dd>
+              </div>
             </dl>
 
             {/* Feature flags */}
@@ -860,6 +878,7 @@ export function BillingPanel(props: BillingPanelProps) {
               <FeatureRow label="Send quotes by email" included={viewPlan.features.email_send} />
               <FeatureRow label="Activity card" included={viewPlan.features.activity_card} />
               <FeatureRow label="AI Assist scan points (Roofing only)" included={viewPlan.aiAssistPointsLimit !== null && viewPlan.aiAssistPointsLimit > 0} extra={viewPlan.aiAssistPointsLimit !== null && viewPlan.aiAssistPointsLimit > 0 ? `${viewPlan.aiAssistPointsLimit} points` : undefined} />
+              <FeatureRow label="AI document parsing (quotes, orders, invoices)" included={viewPlan.monthlyAiParseLimit === null || viewPlan.monthlyAiParseLimit > 0} extra={viewPlan.monthlyAiParseLimit !== null && viewPlan.monthlyAiParseLimit > 0 ? `${viewPlan.monthlyAiParseLimit} / mo` : viewPlan.monthlyAiParseLimit === null ? 'Unlimited' : undefined} />
             </ul>
 
             {/* Marketing blurbs */}

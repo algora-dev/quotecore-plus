@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ParsedDocumentResult } from './types';
 
 interface AiTextPromptModalProps {
@@ -9,11 +9,27 @@ interface AiTextPromptModalProps {
   onClose: () => void;
 }
 
+interface QuotaInfo {
+  limit: number | null;
+  used: number;
+  remaining: number;
+  unlimited: boolean;
+}
+
 export function AiTextPromptModal({ documentType, onParsed, onClose }: AiTextPromptModalProps) {
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [quota, setQuota] = useState<QuotaInfo | null>(null);
+
+  // Fetch quota on mount
+  useEffect(() => {
+    fetch('/api/app/ai-quota')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setQuota(d); })
+      .catch(() => {});
+  }, []);
 
   async function handleParse() {
     if (!text.trim()) return;
@@ -92,6 +108,26 @@ export function AiTextPromptModal({ documentType, onParsed, onClose }: AiTextPro
             into professional line items with quantities, units, and rates — ready for your {documentType}.
           </p>
         </div>
+
+        {/* Quota indicator */}
+        {quota && !quota.unlimited && (
+          <div className={`rounded-lg border px-3 py-2 text-xs ${
+            quota.remaining === 0
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : quota.remaining <= 5
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-slate-50 border-slate-200 text-slate-600'
+          }`}>
+            {quota.remaining === 0
+              ? `AI parse limit reached (${quota.limit}/mo). Resets next billing period.`
+              : `${quota.remaining} of ${quota.limit} AI parses remaining this month.`}
+          </div>
+        )}
+        {quota && quota.unlimited && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            Unlimited AI parses included in your plan.
+          </div>
+        )}
 
         {/* Success state */}
         {success ? (

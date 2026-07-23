@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ParsedDocumentResult } from './types';
 
 interface AiUploadModalProps {
@@ -15,12 +15,28 @@ const MAX_FILE_MB = 10;
 const MAX_DIMENSION = 2000;
 const JPEG_QUALITY = 0.8;
 
+interface QuotaInfo {
+  limit: number | null;
+  used: number;
+  remaining: number;
+  unlimited: boolean;
+}
+
 export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModalProps) {
   const [status, setStatus] = useState<Status>('idle');
   const [preview, setPreview] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
+  const [quota, setQuota] = useState<QuotaInfo | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch quota on mount
+  useEffect(() => {
+    fetch('/api/app/ai-quota')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setQuota(d); })
+      .catch(() => {});
+  }, []);
 
   const compressImage = useCallback(async (file: File): Promise<string> => {
     const bitmap = await createImageBitmap(file);
@@ -137,6 +153,26 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
             Images can contain printed text, handwriting, tables, or calculations.
           </p>
         </div>
+
+        {/* Quota indicator */}
+        {quota && !quota.unlimited && (
+          <div className={`rounded-lg border px-3 py-2 text-xs ${
+            quota.remaining === 0
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : quota.remaining <= 5
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-slate-50 border-slate-200 text-slate-600'
+          }`}>
+            {quota.remaining === 0
+              ? `AI parse limit reached (${quota.limit}/mo). Resets next billing period.`
+              : `${quota.remaining} of ${quota.limit} AI parses remaining this month.`}
+          </div>
+        )}
+        {quota && quota.unlimited && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+            Unlimited AI parses included in your plan.
+          </div>
+        )}
 
         {/* Upload zone */}
         {status !== 'done' && (
