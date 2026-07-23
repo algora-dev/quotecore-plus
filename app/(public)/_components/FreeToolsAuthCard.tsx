@@ -35,7 +35,7 @@ export function FreeToolsAuthCard() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-slate-700">
-            Sign up free to remove watermarks &amp; get more daily generations
+            Sign up free to remove QuoteCore+ branding &amp; get more daily generations
           </p>
           <p className="mt-1 text-xs text-slate-400">
             Image upload: 3/day · Text parse: 5/day · Manual: Unlimited

@@ -768,12 +768,7 @@ function InvoiceGeneratorForm() {
           <>
             {/* Generated invoice - printable */}
             <div className="rounded-xl border border-slate-200 bg-white p-8 print:border-0 print:p-0 relative overflow-hidden" id="invoice-print">
-              {!isAuthed && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ zIndex: 0 }}>
-                  <img src="/logo.png" alt="" className="w-[400px] opacity-[0.07]" style={{ transform: 'rotate(-45deg)' }} />
-                </div>
-              )}
-              <div style={{ position: 'relative', zIndex: 1 }}>
+              <div>
               <div className="flex items-start justify-between mb-8">
                 {/* Left: Spacer matching logo height, then Invoice number + Bill to: below */}
                 <div>
@@ -855,11 +850,13 @@ function InvoiceGeneratorForm() {
               )}
 
               {!isAuthed && (
-              <div className="mt-8 pt-4 border-t border-slate-100">
-                <p className="text-xs text-slate-400">
-                  Generated with QuoteCore+ Free Invoice Generator - {new Date().toLocaleDateString('en-GB')}
-                </p>
-              </div>
+                <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 opacity-60">
+                  <img src="/logo.png" alt="QuoteCore+" className="h-4 w-auto" />
+                  <p className="text-[10px] text-slate-400">
+                    This invoice was generated using QuoteCore+ Free Tools —{" "}
+                    <span className="text-slate-500 font-medium">quotecoreplus.com</span>
+                  </p>
+                </div>
               )}
               </div>
             </div>
@@ -914,7 +911,7 @@ function InvoiceGeneratorForm() {
               resultDetails={`${invoiceNumber} for ${clientName || 'client'}`}
               ctaText="Create a purchase order"
               ctaHref={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-invoice-generator`}
-              secondaryText={!isAuthed ? "Enter your email on the form to remove the watermark" : "Need to order materials? Generate a PO for your supplier - no signup needed"}
+              secondaryText={!isAuthed ? "Enter your email on the form to remove QuoteCore+ branding" : "Need to order materials? Generate a PO for your supplier - no signup needed"}
             />
           </>
         )}
@@ -949,8 +946,8 @@ function InvoiceGeneratorForm() {
                 <div className="px-4 pb-4"><p className="text-sm text-slate-600">This free tool generates a one-off invoice. QuoteCore+ gives you a complete quoting and business management platform in one place - track and store all your documents, send follow-ups to clients, and auto-update statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), client database, order and invoice management, and online quote acceptance. <Link href="/signup" className="text-[#FF6B35] font-medium">Start a free trial &rarr;</Link></p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
-                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">How do I remove the watermark and create more free invoices?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free invoices and remove the watermark, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p></div>
+                <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#FF6B35] transition select-none">How do I remove the QuoteCore+ branding and create more free invoices?</summary>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free invoices and remove the QuoteCore+ branding, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p></div>
               </details>
             </div>
           </div>
