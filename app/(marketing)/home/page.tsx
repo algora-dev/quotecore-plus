@@ -1255,7 +1255,7 @@ export default function HomePage() {
                         <span className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-600 text-sm text-zinc-600">
                           Coming soon
                         </span>
-                      ) : (
+                      ) : plan.isFree ? (
                         <a
                           href="/free-trial"
                           className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
@@ -1266,6 +1266,18 @@ export default function HomePage() {
                           onClick={() => trackEvent("free_trial_click", { location: "pricing" })}
                         >
                           Start free trial
+                        </a>
+                      ) : (
+                        <a
+                          href="https://app.quote-core.com/signup"
+                          className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
+                            plan.featured
+                              ? "bg-[#FF6B35] text-white hover:bg-[#E55A28]"
+                              : "border border-white/20 text-white hover:bg-white/10"
+                          }`}
+                          onClick={() => trackEvent("choose_plan_click", { location: "pricing", plan: plan.name })}
+                        >
+                          Choose Plan
                         </a>
                       )}
                     </div>
