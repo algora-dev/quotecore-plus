@@ -276,9 +276,9 @@ export default function FreeToolsPage() {
               <div className="order-1 lg:order-2">
                 <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Calculate areas, volumes, complex roofing angles, material quantities and more. Built for the field - mobile-friendly and fast.</p>
                 <ul className="mt-4 md:mt-5 space-y-3">
-                  <FeatureCheck>Roofing: pitch, rafter &amp; hip/valley lengths, surface area, batten quantities, bird&apos;s mouth cuts</FeatureCheck>
+                  <FeatureCheck>Roofing: pitch, rafter &amp; hip/valley lengths, surface area, batten quantities</FeatureCheck>
                   <FeatureCheck>Concrete: slab &amp; footing volumes, formwork, falls &amp; gradients, ready-mix pricing</FeatureCheck>
-                  <FeatureCheck>Construction: wall &amp; floor areas, timber &amp; stud lengths, paint, tiles, flooring quantities</FeatureCheck>
+                  <FeatureCheck>Construction: wall &amp; floor areas, timber &amp; stud lengths, bird&apos;s mouth cuts, paint, tiles, flooring quantities</FeatureCheck>
                   <FeatureCheck>Save your results as a <strong>Smart Component™</strong> draft and import it directly into your QuoteCore+ workspace</FeatureCheck>
                 </ul>
                 <button onClick={() => document.getElementById('all-calculators')?.scrollIntoView({ behavior: 'smooth' })} className="mt-4 inline-flex items-center text-xs md:text-sm font-medium text-[#BD4A1A] hover:text-[#FF6B35] transition-colors">Browse all {CALCULATORS.length} calculators →</button>
@@ -297,6 +297,7 @@ export default function FreeToolsPage() {
                 <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Generate professional purchase orders for your suppliers in minutes. No signup, download as PDF.</p>
                 <ul className="mt-4 md:mt-5 space-y-3">
                   <FeatureCheck>Line-by-line purchase orders with quantities, unit prices and totals</FeatureCheck>
+                  <FeatureCheck>AI-assisted purchase orders - take a photo, upload an image, or copy-paste content and our system creates a professional PO automatically</FeatureCheck>
                   <FeatureCheck>Add your supplier details, delivery dates and job references</FeatureCheck>
                   <FeatureCheck>Pre-fill from a URL parameter - great for re-ordering common materials</FeatureCheck>
                   <FeatureCheck>Brand it with your logo and business details - looks like it came from your own system</FeatureCheck>
@@ -327,6 +328,7 @@ export default function FreeToolsPage() {
                 <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Create professional invoices with tax calculations. Pre-fill from a quote or start fresh - download as PDF, no signup.</p>
                 <ul className="mt-4 md:mt-5 space-y-3">
                   <FeatureCheck>Itemised invoices with quantities, rates, subtotals and tax</FeatureCheck>
+                  <FeatureCheck>AI-assisted invoicing - take a photo, upload an image, or copy-paste content and our system creates a professional invoice automatically</FeatureCheck>
                   <FeatureCheck>Add your branding, payment terms and bank details</FeatureCheck>
                   <FeatureCheck>Pre-fill from a URL parameter - generate an invoice from your free quote in one click</FeatureCheck>
                   <FeatureCheck>Clean, professional PDF output that matches your business identity</FeatureCheck>
