@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -126,6 +127,108 @@ Your job: extract the structured data and return it as JSON.
 
 // ── Route handler ──────────────────────────────────────
 
+/**
+ * Get the current billing period start date (1st of the month, UTC).
+ */
+function getCurrentPeriodStart(): string {
+  return new Date(Date.UTC(
+    new Date().getUTCFullYear(),
+    new Date().getUTCMonth(),
+    1,
+  )).toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+/**
+ * Check and increment the AI document parse quota for a company.
+ * Returns { allowed, remaining, limit } or throws on error.
+ */
+async function checkAndIncrementParseQuota(
+  admin: ReturnType<typeof createAdminClient>,
+  companyId: string,
+): Promise<{ allowed: boolean; remaining: number; limit: number | null }> {
+  const periodStart = getCurrentPeriodStart();
+
+  // Get effective plan code
+  const { data: effCode } = await admin
+    .rpc('company_effective_plan_code', { p_company_id: companyId });
+  const planCode = (effCode as string | null) ?? 'free';
+
+  // Get plan's parse limit
+  const { data: planRow } = await admin
+    .from('subscription_plans')
+    .select('monthly_ai_parse_limit')
+    .eq('code', planCode)
+    .maybeSingle();
+
+  const limit = planRow?.monthly_ai_parse_limit ?? null;
+
+  // null = unlimited, always allowed
+  if (limit === null) {
+    return { allowed: true, remaining: -1, limit: null };
+  }
+
+  // 0 = not included
+  if (limit === 0) {
+    return { allowed: false, remaining: 0, limit: 0 };
+  }
+
+  // Get current usage
+  const { data: usageRow } = await admin
+    .from('company_ai_usage')
+    .select('parse_count')
+    .eq('company_id', companyId)
+    .eq('period_start', periodStart)
+    .maybeSingle();
+
+  const used = usageRow?.parse_count ?? 0;
+  const remaining = Math.max(0, limit - used);
+
+  if (used >= limit) {
+    return { allowed: false, remaining: 0, limit };
+  }
+
+  return { allowed: true, remaining: remaining, limit };
+}
+
+/**
+ * Increment the parse counter after a successful AI parse.
+ */
+async function incrementParseUsage(
+  admin: ReturnType<typeof createAdminClient>,
+  companyId: string,
+): Promise<void> {
+  const periodStart = getCurrentPeriodStart();
+
+  // Read current count
+  const { data: existing } = await admin
+    .from('company_ai_usage')
+    .select('parse_count')
+    .eq('company_id', companyId)
+    .eq('period_start', periodStart)
+    .maybeSingle();
+
+  if (existing) {
+    // Row exists — increment
+    await admin
+      .from('company_ai_usage')
+      .update({
+        parse_count: (existing.parse_count ?? 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('company_id', companyId)
+      .eq('period_start', periodStart);
+  } else {
+    // Row doesn't exist yet — insert
+    await admin
+      .from('company_ai_usage')
+      .insert({
+        company_id: companyId,
+        period_start: periodStart,
+        parse_count: 1,
+      });
+  }
+}
+
 export async function POST(req: NextRequest) {
   // 1. Authentication — require a valid Supabase session
   const supabase = await createSupabaseServerClient();
@@ -134,6 +237,33 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getSession();
   if (!session) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // 1b. Get company_id for quota check
+  const { data: profile } = await supabase
+    .from('users')
+    .select('company_id')
+    .eq('id', session.user.id)
+    .maybeSingle();
+
+  if (!profile?.company_id) {
+    return NextResponse.json({ error: 'No company context found' }, { status: 403 });
+  }
+
+  // 1c. Quota check
+  const admin = createAdminClient();
+  const quota = await checkAndIncrementParseQuota(admin, profile.company_id);
+  if (!quota.allowed) {
+    return NextResponse.json(
+      {
+        error: quota.limit === 0
+          ? 'AI document parsing is not included in your plan. Upgrade to use this feature.'
+          : `You have reached your monthly AI document parsing limit (${quota.limit}). Your quota resets at the start of next month.`,
+        quotaExceeded: true,
+        quotaLimit: quota.limit,
+      },
+      { status: 429 },
+    );
   }
 
   // 2. Early size guard
@@ -253,6 +383,9 @@ export async function POST(req: NextRequest) {
       unit: l.unit || '',
       rate: typeof l.rate === 'number' && !isNaN(l.rate) ? l.rate : 0,
     }));
+
+    // Increment usage counter after successful parse
+    await incrementParseUsage(admin, profile.company_id);
 
     return NextResponse.json(parsed);
   } catch (err: unknown) {

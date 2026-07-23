@@ -83,7 +83,7 @@ export default async function AccountPage() {
     loadCompanyEntitlements(profile.company_id),
     createAdminClient()
       .from('subscription_plans')
-      .select('code, display_name, price_cents_monthly, price_cents_monthly_original, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, monthly_invoice_limit, monthly_ai_tokens, ai_assist_points_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_invoices, feat_message_center, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
+      .select('code, display_name, price_cents_monthly, price_cents_monthly_original, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, monthly_invoice_limit, monthly_ai_tokens, ai_assist_points_limit, monthly_ai_parse_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_invoices, feat_message_center, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
       .eq('active', true)
       .order('sort_order', { ascending: true }),
   ]);
@@ -224,6 +224,7 @@ export default async function AccountPage() {
         monthly_invoice_limit: number | null;
         monthly_ai_tokens: number | null;
         ai_assist_points_limit: number | null;
+        monthly_ai_parse_limit: number | null;
         included_seats: number;
         feat_digital_takeoff: boolean;
         feat_flashings: boolean;
@@ -263,6 +264,7 @@ export default async function AccountPage() {
           monthlyInvoiceLimit: p.monthly_invoice_limit,
           monthlyAiTokens: p.monthly_ai_tokens,
           aiAssistPointsLimit: p.ai_assist_points_limit,
+          monthlyAiParseLimit: p.monthly_ai_parse_limit,
           includedSeats: p.included_seats,
           features: {
             digital_takeoff: p.feat_digital_takeoff,

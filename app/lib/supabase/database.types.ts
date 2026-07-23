@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -885,6 +885,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "subscription_plans"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      company_ai_usage: {
+        Row: {
+          ai_assist_points_used: number
+          company_id: string
+          created_at: string
+          id: string
+          parse_count: number
+          period_start: string
+          updated_at: string
+        }
+        Insert: {
+          ai_assist_points_used?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          parse_count?: number
+          period_start: string
+          updated_at?: string
+        }
+        Update: {
+          ai_assist_points_used?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          parse_count?: number
+          period_start?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_ai_usage_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4078,6 +4116,7 @@ export type Database = {
           feature_blurbs: string[]
           flashing_limit: number | null
           included_seats: number
+          monthly_ai_parse_limit: number | null
           monthly_ai_tokens: number | null
           monthly_invoice_limit: number | null
           monthly_material_order_limit: number | null
@@ -4115,6 +4154,7 @@ export type Database = {
           feature_blurbs?: string[]
           flashing_limit?: number | null
           included_seats?: number
+          monthly_ai_parse_limit?: number | null
           monthly_ai_tokens?: number | null
           monthly_invoice_limit?: number | null
           monthly_material_order_limit?: number | null
@@ -4152,6 +4192,7 @@ export type Database = {
           feature_blurbs?: string[]
           flashing_limit?: number | null
           included_seats?: number
+          monthly_ai_parse_limit?: number | null
           monthly_ai_tokens?: number | null
           monthly_invoice_limit?: number | null
           monthly_material_order_limit?: number | null
