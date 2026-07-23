@@ -1218,13 +1218,13 @@ export default function HomePage() {
                       <div className="mt-4 space-y-1">
                         <p className="text-4xl font-semibold">
                           {currency === "GBP" ? plan.gbp : plan.usd}
-                          {!plan.isFree && !plan.comingSoon && (
+                          {!plan.isFree && !plan.comingSoon && !plan.contactUs && (
                             <span className={`ml-1 align-baseline text-sm font-medium ${
                               plan.featured ? "text-zinc-200" : "text-zinc-500"
                             }`}>/mo</span>
                           )}
                         </p>
-                        {!plan.isFree && !plan.comingSoon && plan.originalUsd && (
+                        {!plan.isFree && !plan.comingSoon && !plan.contactUs && plan.originalUsd && (
                           <p className={`text-sm ${plan.featured ? "text-zinc-300" : "text-zinc-500"}`}>
                             Regular price <s>{currency === "GBP" ? plan.originalGbp : plan.originalUsd}/mo</s>
                           </p>
@@ -1243,7 +1243,15 @@ export default function HomePage() {
                           </li>
                         ))}
                       </ul>
-                      {plan.comingSoon ? (
+                      {plan.contactUs ? (
+                        <a
+                          href="/contact"
+                          className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-white/20 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                          onClick={() => trackEvent("contact_us_click", { location: "pricing" })}
+                        >
+                          Contact Us
+                        </a>
+                      ) : plan.comingSoon ? (
                         <span className="mt-8 inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-600 text-sm text-zinc-600">
                           Coming soon
                         </span>
