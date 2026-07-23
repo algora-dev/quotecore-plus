@@ -45,6 +45,11 @@ export interface BillingPlanInfo {
   monthlyMaterialOrderLimit: number | null;
   monthlyInvoiceLimit: number | null;
   monthlyAiTokens: number | null;
+  /**
+   * AI Assist scan points per billing period (roofing takeoff feature).
+   * NULL = not included in this plan.
+   */
+  aiAssistPointsLimit: number | null;
   includedSeats: number;
   features: {
     digital_takeoff: boolean;
@@ -541,8 +546,13 @@ export function BillingPanel(props: BillingPanelProps) {
             // refuses a fresh Checkout call as defence-in-depth.
             const blockedByActiveSub = !plan.isTrial && props.hasActiveSubscription;
 
+            // Premium-style plan: no Stripe price, not coming soon, not trial.
+            // Shows "Contact Us" button that links to the support page.
+            const isContactUsPlan = !plan.comingSoon && !plan.isTrial && !plan.hasStripePrice;
+
             const canChoose = !plan.comingSoon
               && !isCurrent
+              && !isContactUsPlan
               && (plan.isTrial
                 ? !props.hasActiveSubscription && !props.hasStripeCustomer
                 : plan.hasStripePrice);
@@ -554,6 +564,8 @@ export function BillingPanel(props: BillingPanelProps) {
               ? 'Coming soon'
               : isCurrent
               ? 'Your current plan'
+              : isContactUsPlan
+              ? 'Contact Us'
               : plan.isTrial
               ? props.hasStripeCustomer
                 ? 'Trial unavailable'
@@ -614,6 +626,9 @@ export function BillingPanel(props: BillingPanelProps) {
                     <li>
                       {plan.comingSoon ? 'More storage' : `${formatBytes(plan.storageLimitBytes)} storage`}
                     </li>
+                    {!plan.comingSoon && plan.aiAssistPointsLimit !== null && plan.aiAssistPointsLimit > 0 && (
+                      <li>{plan.aiAssistPointsLimit} AI Assist scan points</li>
+                    )}
                   </ul>
                 </div>
                 <div className="mt-3 flex gap-2">
@@ -636,7 +651,7 @@ export function BillingPanel(props: BillingPanelProps) {
                       }
                       onChoose(plan);
                     }}
-                    disabled={(!canChoose && !blockedByActiveSub) || pending}
+                    disabled={(!canChoose && !blockedByActiveSub && !isContactUsPlan) || pending}
                     title={
                       plan.isTrial && props.hasStripeCustomer
                         ? 'The free trial is only available to new accounts.'
@@ -646,12 +661,16 @@ export function BillingPanel(props: BillingPanelProps) {
                         ? 'This tier is not available yet.'
                         : isCurrent
                         ? 'You are already on this plan.'
+                        : isContactUsPlan
+                        ? 'Contact us to learn more about this plan.'
                         : !plan.hasStripePrice && !plan.isTrial
                         ? 'This plan is not yet configured in Stripe for this environment.'
                         : undefined
                     }
                     className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
-                      plan.isTrial
+                      isContactUsPlan
+                        ? 'bg-black text-white hover:bg-slate-800'
+                        : plan.isTrial
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-orange-600 text-white hover:bg-orange-700'
                     }`}
@@ -820,6 +839,14 @@ export function BillingPanel(props: BillingPanelProps) {
                 <dt className="text-xs text-slate-500">Included seats</dt>
                 <dd className="font-semibold text-slate-900">{viewPlan.includedSeats}</dd>
               </div>
+              <div>
+                <dt className="text-xs text-slate-500">AI Assist scans</dt>
+                <dd className={`font-semibold ${viewPlan.aiAssistPointsLimit !== null && viewPlan.aiAssistPointsLimit > 0 ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                  {viewPlan.aiAssistPointsLimit !== null && viewPlan.aiAssistPointsLimit > 0
+                    ? `${viewPlan.aiAssistPointsLimit} points`
+                    : 'Not included'}
+                </dd>
+              </div>
             </dl>
 
             {/* Feature flags */}
@@ -832,6 +859,7 @@ export function BillingPanel(props: BillingPanelProps) {
               <FeatureRow label="Automated follow-ups" included={viewPlan.features.followups} />
               <FeatureRow label="Send quotes by email" included={viewPlan.features.email_send} />
               <FeatureRow label="Activity card" included={viewPlan.features.activity_card} />
+              <FeatureRow label="AI Assist scan points (Roofing only)" included={viewPlan.aiAssistPointsLimit !== null && viewPlan.aiAssistPointsLimit > 0} extra={viewPlan.aiAssistPointsLimit !== null && viewPlan.aiAssistPointsLimit > 0 ? `${viewPlan.aiAssistPointsLimit} points` : undefined} />
             </ul>
 
             {/* Marketing blurbs */}
@@ -863,9 +891,11 @@ export function BillingPanel(props: BillingPanelProps) {
                 // modal); fresh subscribers go through Checkout (onChoose).
                 const vBlockedByActiveSub = !viewPlan.isTrial && props.hasActiveSubscription;
                 const vIsCurrent = viewPlan.code === props.effectivePlanCode;
+                const vIsContactUsPlan = !viewPlan.comingSoon && !viewPlan.isTrial && !viewPlan.hasStripePrice;
                 const vCanAct =
                   !viewPlan.comingSoon
                   && !vIsCurrent
+                  && !vIsContactUsPlan
                   && !pending
                   && (viewPlan.isTrial
                     ? !props.hasStripeCustomer
@@ -876,6 +906,11 @@ export function BillingPanel(props: BillingPanelProps) {
                   <button
                     type="button"
                     onClick={() => {
+                      if (vIsContactUsPlan) {
+                        const slug = typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : '';
+                        window.location.href = `/${slug}/account?tab=support`;
+                        return;
+                      }
                       if (vBlockedByActiveSub) {
                         // In-app tier change: hand off to the confirm modal.
                         setViewPlan(null);
@@ -884,7 +919,7 @@ export function BillingPanel(props: BillingPanelProps) {
                       }
                       onChoose(viewPlan);
                     }}
-                    disabled={!vCanAct && !vBlockedByActiveSub}
+                    disabled={!vCanAct && !vBlockedByActiveSub && !vIsContactUsPlan}
                     title={
                       viewPlan.isTrial && props.hasStripeCustomer
                         ? 'The free trial is only available to new accounts.'
@@ -892,18 +927,24 @@ export function BillingPanel(props: BillingPanelProps) {
                         ? 'This tier is not available yet.'
                         : vIsCurrent
                         ? 'You are already on this plan.'
+                        : vIsContactUsPlan
+                        ? 'Contact us to learn more about this plan.'
                         : !viewPlan.hasStripePrice && !viewPlan.isTrial
                         ? 'This plan is not yet configured in Stripe for this environment.'
                         : undefined
                     }
                     className={`px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-white ${
-                      viewPlan.isTrial ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
+                      vIsContactUsPlan
+                        ? 'bg-black hover:bg-slate-800'
+                        : viewPlan.isTrial ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
                     }`}
                   >
                     {viewPlan.comingSoon
                       ? 'Coming soon'
                       : vIsCurrent
                       ? 'Current plan'
+                      : vIsContactUsPlan
+                      ? 'Contact Us'
                       : viewPlan.isTrial
                       ? props.hasStripeCustomer ? 'Trial unavailable' : 'Start trial'
                       : vBlockedByActiveSub
@@ -922,9 +963,10 @@ export function BillingPanel(props: BillingPanelProps) {
 
 /**
  * Single row in the feature-flag list inside the View modal. Renders a
- * checkmark or cross depending on `included`.
+ * checkmark or cross depending on `included`. Optional `extra` text shown
+ * after the label (e.g. "50 points").
  */
-function FeatureRow({ label, included }: { label: string; included: boolean }) {
+function FeatureRow({ label, included, extra }: { label: string; included: boolean; extra?: string }) {
   return (
     <li className="flex items-center gap-2">
       {included ? (
@@ -936,7 +978,7 @@ function FeatureRow({ label, included }: { label: string; included: boolean }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       )}
-      <span className={`${included ? 'text-slate-900' : 'text-slate-400'}`}>{label}</span>
+      <span className={`${included ? 'text-slate-900' : 'text-slate-400'}`}>{label}{extra && included ? <span className="text-slate-500 font-medium ml-1">- {extra}</span> : null}</span>
     </li>
   );
 }
