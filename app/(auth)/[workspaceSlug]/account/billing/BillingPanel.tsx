@@ -317,9 +317,29 @@ export function BillingPanel(props: BillingPanelProps) {
   const [changeTarget, setChangeTarget] = useState<BillingPlanInfo | null>(null);
 
   // sort_order of the plan the user is CURRENTLY on, to label the switch as an
-  // upgrade or a downgrade in the confirm modal.
+  // upgrade or a downgrade in the confirm modal. Uses PURCHASED plan for Stripe
+  // switch direction (you switch FROM what you pay for).
   const currentSortOrder =
     props.plans.find((p) => p.code === props.purchasedPlanCode)?.sortOrder ?? null;
+
+  // ---- Upgrade/downgrade label for current plan card ----
+  // When effectivePlanCode differs from purchasedPlanCode (admin override,
+  // dunning downgrade, etc.) show whether the user was upgraded or downgraded.
+  // Green for upgrade, amber for downgrade.
+  const effectiveSortOrder =
+    props.plans.find((p) => p.code === props.effectivePlanCode)?.sortOrder ?? null;
+  const purchasedSortOrder =
+    props.plans.find((p) => p.code === props.purchasedPlanCode)?.sortOrder ?? null;
+  const showPlanDelta =
+    !trialExpiredNoSub
+    && props.effectivePlanCode !== props.purchasedPlanCode
+    && props.subscriptionStatus !== 'trialing'
+    && effectiveSortOrder != null
+    && purchasedSortOrder != null;
+  const isEffectiveUpgrade =
+    effectiveSortOrder != null && purchasedSortOrder != null
+      ? effectiveSortOrder > purchasedSortOrder
+      : false;
   const isUpgradeTarget =
     changeTarget && currentSortOrder != null
       ? changeTarget.sortOrder > currentSortOrder
@@ -412,14 +432,16 @@ export function BillingPanel(props: BillingPanelProps) {
               {trialExpiredNoSub
                 ? 'Trial expired'
                 : props.effectivePlanCode.replace(/_/g, ' ')}
-              {!trialExpiredNoSub
-                && props.effectivePlanCode !== props.purchasedPlanCode
-                && props.subscriptionStatus !== 'trialing'
-                && (
-                  <span className="ml-2 text-sm font-normal text-amber-700">
-                    (downgraded from {props.purchasedPlanCode.replace(/_/g, ' ')})
-                  </span>
-                )}
+              {showPlanDelta && (
+                <span
+                  className={`ml-2 text-sm font-normal ${
+                    isEffectiveUpgrade ? 'text-emerald-600' : 'text-amber-700'
+                  }`}
+                >
+                  ({isEffectiveUpgrade ? 'upgraded' : 'downgraded'} from{' '}
+                  {props.purchasedPlanCode.replace(/_/g, ' ')})
+                </span>
+              )}
             </h3>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span
@@ -506,7 +528,9 @@ export function BillingPanel(props: BillingPanelProps) {
         </p>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {props.plans.map((plan) => {
-            const isCurrent = plan.code === props.purchasedPlanCode;
+            // Use EFFECTIVE plan for the "Current" badge so admin overrides
+            // and dunning downgrades show the right card as current.
+            const isCurrent = plan.code === props.effectivePlanCode;
             const isActive = pending && activePlan === plan.code;
             // Plan-switch via Stripe Portal: when the user has an active
             // paid sub, a fresh Checkout would create a SECOND
@@ -838,7 +862,7 @@ export function BillingPanel(props: BillingPanelProps) {
                 // in-app change flow (subscriptions.update via the confirm
                 // modal); fresh subscribers go through Checkout (onChoose).
                 const vBlockedByActiveSub = !viewPlan.isTrial && props.hasActiveSubscription;
-                const vIsCurrent = viewPlan.code === props.purchasedPlanCode;
+                const vIsCurrent = viewPlan.code === props.effectivePlanCode;
                 const vCanAct =
                   !viewPlan.comingSoon
                   && !vIsCurrent
