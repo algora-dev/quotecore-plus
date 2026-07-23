@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
     tier: resolved.tier,
     hasAppAccount: resolved.hasAppAccount,
     limits: {
+      aiPerDay: resolved.limits.aiPerDay,
+      docPerDay: resolved.limits.docPerDay,
       imagePerDay: resolved.limits.imagePerDay,
       textPerDay: resolved.limits.textPerDay,
       label: resolved.limits.label,

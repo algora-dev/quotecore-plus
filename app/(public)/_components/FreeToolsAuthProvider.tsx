@@ -7,7 +7,7 @@ import { createFreeToolsClient } from '@/app/lib/supabase/free-client';
 export interface FreeToolsTierInfo {
   tier: 1 | 2 | 3;
   hasAppAccount: boolean;
-  limits: { imagePerDay: number; textPerDay: number; label: string };
+  limits: { aiPerDay: number; docPerDay: number | null; imagePerDay: number; textPerDay: number; label: string };
 }
 
 interface FreeToolsAuthState {

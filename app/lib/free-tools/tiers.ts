@@ -12,27 +12,36 @@
 export type FreeToolsTier = 1 | 2 | 3;
 
 export interface TierLimits {
-  /** AI image scans per day */
+  /** AI parses per day (combined image + text) */
+  aiPerDay: number;
+  /** Manual document generations per day (combined quote + invoice + PO) */
+  docPerDay: number | null; // null = unlimited
+  /** Legacy fields kept for backwards compat with account-status route */
   imagePerDay: number;
-  /** AI text parses per day */
   textPerDay: number;
   label: string;
 }
 
 export const TIER_LIMITS: Record<FreeToolsTier, TierLimits> = {
-  1: { imagePerDay: 3, textPerDay: 5, label: 'Free' },
-  2: { imagePerDay: 10, textPerDay: 20, label: 'Free account' },
-  3: { imagePerDay: 25, textPerDay: 50, label: 'App account' },
+  1: { aiPerDay: 1, docPerDay: 3, imagePerDay: 1, textPerDay: 1, label: 'Free' },
+  2: { aiPerDay: 3, docPerDay: 10, imagePerDay: 3, textPerDay: 3, label: 'Free account' },
+  3: { aiPerDay: 10, docPerDay: null, imagePerDay: 10, textPerDay: 10, label: 'App account' },
 };
 
 export const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-/** Bucket key for the daily parse rate limit. */
+/** Bucket key for the daily AI parse rate limit (combined image + text). */
 export function parseRateLimitKey(
-  mode: 'image' | 'text',
   subject: { userId: string } | { ip: string }
 ): string {
-  const modeKey = mode === 'image' ? 'img' : 'txt';
-  if ('userId' in subject) return `free-tools-parse:${modeKey}:user:${subject.userId}`;
-  return `free-tools-parse:${modeKey}:ip:${subject.ip}`;
+  if ('userId' in subject) return `free-tools-parse:user:${subject.userId}`;
+  return `free-tools-parse:ip:${subject.ip}`;
+}
+
+/** Bucket key for the daily document generation rate limit (combined quote + invoice + PO). */
+export function docRateLimitKey(
+  subject: { userId: string } | { ip: string }
+): string {
+  if ('userId' in subject) return `free-tools-doc:user:${subject.userId}`;
+  return `free-tools-doc:ip:${subject.ip}`;
 }

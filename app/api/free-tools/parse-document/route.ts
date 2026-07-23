@@ -5,6 +5,8 @@ import type { Database } from '@/app/lib/supabase/database.types';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { resolveFreeToolsTier } from '@/app/lib/free-tools/resolveTier';
 import { parseRateLimitKey, RATE_LIMIT_WINDOW_MS } from '@/app/lib/free-tools/tiers';
+// Note: parseRateLimitKey is now a single combined key (no mode param).
+// AI limit is shared across image + text + all document types.
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -215,12 +217,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid or missing "mode"' }, { status: 400 });
   }
 
-  // 5. Rate limit — per-mode, per-tier (durable, Supabase-backed).
+  // 5. Rate limit — combined AI limit per tier (durable, Supabase-backed).
   //    Authed users are keyed by user id so limits follow the account,
   //    not the network. Anonymous users are keyed by IP.
-  const maxPerDay = mode === 'image' ? resolved.limits.imagePerDay : resolved.limits.textPerDay;
+  //    AI limit is shared across image + text + all document types.
+  const maxPerDay = resolved.limits.aiPerDay;
   const rateLimitKey = parseRateLimitKey(
-    mode,
     resolved.userId ? { userId: resolved.userId } : { ip }
   );
   const allowed = await checkRateLimit(rateLimitKey, maxPerDay, RATE_LIMIT_WINDOW_MS, {
@@ -235,7 +237,7 @@ export async function POST(req: NextRequest) {
           : ' Try again tomorrow.';
     return NextResponse.json(
       {
-        error: `Daily limit reached (${maxPerDay} ${mode} ${mode === 'image' ? 'scans' : 'parses'}/day).${upgradeHint}`,
+        error: `Daily AI limit reached (${maxPerDay}/day).${upgradeHint}`,
         tier: resolved.tier,
       },
       { status: 429 }

@@ -88,8 +88,10 @@ function POGeneratorForm() {
   const [hideAllPrices, setHideAllPrices] = useState(false);
   const [hideTotals, setHideTotals] = useState(false);
 
+  const [docLimitError, setDocLimitError] = useState('');
+
   // Unified email/auth state
-  const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine } = useFreeToolsEmail();
+  const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine, accessToken } = useFreeToolsEmail();
 
   const [lines, setLines] = useState<POLine[]>(() => {
     if (amountParam) {
@@ -265,7 +267,23 @@ function POGeneratorForm() {
     setUploadError('');
   }
 
-  function generatePO() {
+  async function generatePO() {
+    setDocLimitError('');
+    try {
+      const res = await fetch('/api/free-tools/check-doc-limit', {
+        method: 'POST',
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        body: JSON.stringify({ tool: 'order' }),
+      });
+      if (res.status === 429) {
+        const data = await res.json();
+        setDocLimitError(data.message || 'Daily limit reached. Sign up free for more.');
+        return;
+      }
+      if (!res.ok) return;
+    } catch {
+      // Network error — don't block the user from generating
+    }
     setGenerated(true);
     setPopupTrigger(false);
     setTimeout(() => setPopupTrigger(true), 1500);
@@ -758,6 +776,17 @@ function POGeneratorForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+              {docLimitError && (
+                <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
+                  <p className="text-sm text-slate-700">{docLimitError}</p>
+                  <button
+                    onClick={() => openAuthModal('signup')}
+                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#ff5722] transition-colors"
+                  >
+                    Sign up free
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (
