@@ -54,7 +54,7 @@ function FaqItem({ question, answer, index }: Faq & { index: number }) {
         </span>
         <span className="shrink-0 text-2xl leading-none text-zinc-600">{open ? "-" : "+"}</span>
       </button>
-      <p
+      <div
         className="pl-[3.75rem] text-sm leading-7 text-zinc-600"
         style={
           open
@@ -71,9 +71,8 @@ function FaqItem({ question, answer, index }: Faq & { index: number }) {
                 border: 0,
               }
         }
-      >
-        {answer}
-      </p>
+        dangerouslySetInnerHTML={{ __html: answer }}
+      />
     </div>
   );
 }
