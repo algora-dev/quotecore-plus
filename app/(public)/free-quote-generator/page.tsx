@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PostGenerationModal } from '../shared/PostGenerationModal';
+import { buildConvertUrl } from '../shared/convertLines';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
 import { PromptBox } from './PromptBox';
@@ -937,7 +938,7 @@ function QuoteGeneratorForm() {
               />
               </span>
               <a
-                href={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-quote-generator`}
+                href={buildConvertUrl({ targetPath: '/free-purchase-order-generator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
                 title="One click — populates your quote details into an order form"
               >
@@ -947,7 +948,7 @@ function QuoteGeneratorForm() {
                 Convert to Order
               </a>
               <a
-                href={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
+                href={buildConvertUrl({ targetPath: '/free-invoice-generator', amount: total, clientName, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
                 title="One click — populates your quote details into an invoice form"
               >
@@ -970,8 +971,8 @@ function QuoteGeneratorForm() {
               trigger={popupTrigger}
               resultLabel={`${formatMoney(total, sym)} quote`}
               resultDetails={`${lines.length} line item${lines.length !== 1 ? 's' : ''} for ${clientName || 'client'}`}
-              convertToOrderUrl={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-quote-generator`}
-              convertToInvoiceUrl={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
+              convertToOrderUrl={buildConvertUrl({ targetPath: '/free-purchase-order-generator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
+              convertToInvoiceUrl={buildConvertUrl({ targetPath: '/free-invoice-generator', amount: total, clientName, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
               onSaveToApp={() => setSaveToAppTrigger(c => c + 1)}
             />
           </>
