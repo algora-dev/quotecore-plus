@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -151,6 +151,115 @@ export type Database = {
           target_user_id?: string
         }
         Relationships: []
+      }
+      ai_scan_jobs: {
+        Row: {
+          attempt_count: number
+          available_at: string
+          canvas_height: number | null
+          canvas_width: number | null
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          current_stage: string | null
+          expires_at: string | null
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          idempotency_key: string
+          image_data: string | null
+          intermediate_result: Json | null
+          page_id: string | null
+          plan_priority: number
+          points_cost: number
+          points_state: string
+          quality: string
+          quote_id: string
+          result: Json | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          available_at?: string
+          canvas_height?: number | null
+          canvas_width?: number | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_stage?: string | null
+          expires_at?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          idempotency_key: string
+          image_data?: string | null
+          intermediate_result?: Json | null
+          page_id?: string | null
+          plan_priority?: number
+          points_cost: number
+          points_state?: string
+          quality?: string
+          quote_id: string
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          available_at?: string
+          canvas_height?: number | null
+          canvas_width?: number | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_stage?: string | null
+          expires_at?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          idempotency_key?: string
+          image_data?: string | null
+          intermediate_result?: Json | null
+          page_id?: string | null
+          plan_priority?: number
+          points_cost?: number
+          points_state?: string
+          quality?: string
+          quote_id?: string
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_scan_jobs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_scan_jobs_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "takeoff_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_scan_jobs_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_scan_usage: {
         Row: {
@@ -4786,6 +4895,24 @@ export type Database = {
         Args: { p_company_id: string; p_file_size: number }
         Returns: boolean
       }
+      claim_ai_scan_job: {
+        Args: { p_max_active_jobs?: number; p_max_per_company?: number }
+        Returns: {
+          attempt_count: number
+          canvas_height: number
+          canvas_width: number
+          company_id: string
+          current_stage: string
+          id: string
+          image_data: string
+          intermediate_result: Json
+          page_id: string
+          points_cost: number
+          quality: string
+          quote_id: string
+          user_id: string
+        }[]
+      }
       claim_due_scheduled_messages: {
         Args: { p_limit?: number; p_stale_minutes?: number }
         Returns: {
@@ -4849,6 +4976,10 @@ export type Database = {
       }
       company_invoice_count: { Args: { p_company_id: string }; Returns: number }
       company_order_count: { Args: { p_company_id: string }; Returns: number }
+      complete_ai_scan_job: {
+        Args: { p_job_id: string; p_result: Json }
+        Returns: boolean
+      }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_ms: number }
         Returns: boolean
@@ -4870,6 +5001,15 @@ export type Database = {
       ensure_company_has_collection: {
         Args: { p_company_id: string }
         Returns: string
+      }
+      fail_ai_scan_job: {
+        Args: {
+          p_failure_code: string
+          p_failure_message: string
+          p_job_id: string
+          p_should_refund?: boolean
+        }
+        Returns: boolean
       }
       generate_invoice_number: {
         Args: { p_company_id: string }
@@ -4933,9 +5073,17 @@ export type Database = {
         Args: { p_stale_minutes?: number }
         Returns: number
       }
+      refund_ai_scan_points: { Args: { p_job_id: string }; Returns: boolean }
       replace_customer_quote_lines: {
         Args: { p_company_id: string; p_lines: Json; p_quote_id: string }
         Returns: undefined
+      }
+      requeue_stale_scan_jobs: {
+        Args: { p_timeout_seconds?: number }
+        Returns: {
+          failed_count: number
+          requeued_count: number
+        }[]
       }
       require_attachment_slot: {
         Args: { p_company_id: string }
@@ -4988,6 +5136,36 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      submit_ai_scan_job: {
+        Args: {
+          p_canvas_height?: number
+          p_canvas_width?: number
+          p_company_id: string
+          p_idempotency_key: string
+          p_image_data: string
+          p_page_id: string
+          p_quality: string
+          p_quote_id: string
+          p_user_id: string
+        }
+        Returns: {
+          error: string
+          is_existing: boolean
+          job_id: string
+          point_limit: number
+          points_cost: number
+          points_remaining: number
+          status: string
+        }[]
+      }
+      update_scan_stage: {
+        Args: {
+          p_intermediate_result?: Json
+          p_job_id: string
+          p_stage: string
+        }
+        Returns: boolean
+      }
       user_belongs_to_company: {
         Args: { target_company_id: string }
         Returns: boolean
