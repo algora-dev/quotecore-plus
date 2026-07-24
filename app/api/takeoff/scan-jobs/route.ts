@@ -151,6 +151,49 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ── DELETE: Cancel a queued job ────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    const { searchParams } = new URL(req.url);
+    const jobId = searchParams.get('jobId');
+
+    if (!jobId) {
+      return NextResponse.json({ success: false, error: 'Missing jobId.' }, { status: 400 });
+    }
+
+    const { data: cancelResult, error: cancelError } = await supabase.rpc('cancel_ai_scan_job', {
+      p_job_id: jobId,
+      p_company_id: profile.company_id,
+    });
+
+    if (cancelError) {
+      console.error('[scan-jobs] cancel error:', cancelError.message);
+      return NextResponse.json({ success: false, error: 'Failed to cancel job.' }, { status: 500 });
+    }
+
+    const result = (cancelResult as { success: boolean; status: string; points_refunded: boolean; points_remaining: number }[] | null)?.[0];
+
+    if (!result?.success) {
+      return NextResponse.json({ success: false, error: `Cannot cancel: job is ${result?.status ?? 'unknown'}.` }, { status: 409 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      status: 'cancelled',
+      pointsRefunded: result.points_refunded,
+      pointsRemaining: result.points_remaining,
+    });
+
+  } catch (error) {
+    console.error('[scan-jobs] DELETE error:', error);
+    return NextResponse.json({ success: false, error: 'Server error.' }, { status: 500 });
+  }
+}
+
 // ── GET: Poll job status ────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {

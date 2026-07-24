@@ -174,6 +174,7 @@ export type Database = {
           points_cost: number
           points_state: string
           quality: string
+          queue_wait_ms: number | null
           quote_id: string
           result: Json | null
           started_at: string | null
@@ -202,6 +203,7 @@ export type Database = {
           points_cost: number
           points_state?: string
           quality?: string
+          queue_wait_ms?: number | null
           quote_id: string
           result?: Json | null
           started_at?: string | null
@@ -230,6 +232,7 @@ export type Database = {
           points_cost?: number
           points_state?: string
           quality?: string
+          queue_wait_ms?: number | null
           quote_id?: string
           result?: Json | null
           started_at?: string | null
@@ -4882,6 +4885,15 @@ export type Database = {
         Returns: undefined
       }
       auth_user_has_password: { Args: { uid: string }; Returns: boolean }
+      cancel_ai_scan_job: {
+        Args: { p_company_id: string; p_job_id: string }
+        Returns: {
+          points_refunded: boolean
+          points_remaining: number
+          status: string
+          success: boolean
+        }[]
+      }
       check_and_deduct_ai_points: {
         Args: { p_company_id: string; p_points_to_spend: number }
         Returns: {
@@ -4902,6 +4914,7 @@ export type Database = {
           canvas_height: number
           canvas_width: number
           company_id: string
+          created_at: string
           current_stage: string
           id: string
           image_data: string

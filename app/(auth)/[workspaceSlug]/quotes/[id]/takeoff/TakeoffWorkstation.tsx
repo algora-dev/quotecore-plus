@@ -4231,6 +4231,26 @@ export function TakeoffWorkstation({
     }
   };
 
+  // ── AI Takeoff: cancel queued scan ─────────────────────────────────
+  const handleCancelAiScan = async () => {
+    if (!aiJobId) return;
+    stopJobPolling();
+    setAiScanning(false);
+    setAiScanStage('queued');
+    setAiJobId(null);
+
+    // Tell server to cancel + refund points
+    try {
+      await fetch(`${aiScanEndpoint}?jobId=${aiJobId}`, { method: 'DELETE' });
+    } catch {
+      // Best-effort — server will eventually clean up stale queued jobs
+    }
+
+    // Reopen the calibration-complete popup so user can choose AI Assist / Draw / Skip
+    roofAreaInstructionsDismissedRef.current = false;
+    setShowRoofAreaInstructions(true);
+  };
+
 
   // ── AI Takeoff: Replace placeholder with real component ────────────
   const handleReplacePlaceholder = (placeholderComponentId: string, targetComponentId: string) => {
@@ -6295,9 +6315,17 @@ export function TakeoffWorkstation({
           <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl text-center">
             <div className="inline-block w-8 h-8 border-3 border-slate-200 border-t-[#FF6B35] rounded-full animate-spin mb-3" />
             <h3 className="text-sm font-semibold text-slate-900">
-              {aiScanStage === 'queued' ? 'Your scan is queued…' : aiScanStage === 'scan1' ? 'Tracing roof outline…' : aiScanStage === 'scan2' ? 'Detecting and auditing roof lines…' : aiScanStage === 'scan3' ? 'Classifying components…' : 'Processing…'}
+              {aiScanStage === 'queued' ? 'Queued — starting soon' : aiScanStage === 'scan1' ? 'Tracing roof outline…' : aiScanStage === 'scan2' ? 'Detecting and auditing roof lines…' : aiScanStage === 'scan3' ? 'Classifying components…' : 'Processing…'}
             </h3>
-            <p className="text-xs text-slate-500 mt-1">{aiScanStage === 'queued' ? 'You can keep working — we’ll notify you when it’s ready.' : 'This may take a few moments.'}</p>
+            <p className="text-xs text-slate-500 mt-1">{aiScanStage === 'queued' ? 'Lots of users are trying AI Assist right now. Your scan will start automatically soon — no action needed. Simply cancel to measure manually.' : 'This may take a few moments.'}</p>
+            {aiScanStage === 'queued' && (
+              <button
+                onClick={handleCancelAiScan}
+                className="mt-4 text-xs font-medium text-slate-500 hover:text-slate-900 underline"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -38,6 +38,7 @@ interface ClaimedJob {
   canvas_height: number;
   current_stage: string | null;
   intermediate_result: unknown;
+  created_at: string;
 }
 
 /**
@@ -75,6 +76,11 @@ export async function processScanQueue(maxJobsPerRun = 3): Promise<{
 
     processed++;
     console.log(`[scan-worker] claimed job ${claimed.id} (company=${claimed.company_id}, attempt=${claimed.attempt_count}, quality=${claimed.quality})`);
+
+    // Stamp queue_wait_ms for tracking
+    await supabase.from('ai_scan_jobs')
+      .update({ queue_wait_ms: Math.round((Date.now() - new Date(claimed.created_at).getTime())) })
+      .eq('id', claimed.id);
 
     try {
       const success = await runPipelineForJob(claimed, supabase);
