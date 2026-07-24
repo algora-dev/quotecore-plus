@@ -5,6 +5,7 @@ import { useState, useTransition, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { setHandoffCookie } from '@/app/(public)/shared/appOrigin';
+import { FreeToolsWelcomeModal } from '@/app/(public)/shared/FreeToolsWelcomeModal';
 import { signupWithCompany } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { PublicFooter } from '@/app/components/PublicFooter';
@@ -62,10 +63,15 @@ function SignupForm() {
     : refSlug === 'free-construction-calculator' ? 'Construction Calculator'
     : refSlug === 'free-concrete-calculator' ? 'Concrete Calculator'
     : refSlug === 'free-landscaping-calculator' ? 'Landscaping Calculator'
-    : refSlug ? 'Free Calculator' : null;
+    : refSlug === 'free-quote-generator' ? 'Quote Generator'
+    : refSlug === 'free-invoice-generator' ? 'Invoice Generator'
+    : refSlug === 'free-purchase-order-generator' ? 'Purchase Order Generator'
+    : refSlug === 'free-order-generator' ? 'Purchase Order Generator'
+    : refSlug ? 'Free Tool' : null;
 
   return (
     <main className="min-h-screen flex flex-col bg-slate-50 px-4">
+      <FreeToolsWelcomeModal refSlug={refSlug || ''} hasDraft={!!draftId} />
       <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block" />
@@ -83,10 +89,10 @@ function SignupForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                 </svg>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">Your calculator work is saved</p>
+                  <p className="text-sm font-medium text-slate-900">Your {refLabel} draft is saved</p>
                   <p className="text-xs text-slate-600 mt-1">
-                    We saved your {refLabel} draft on this device. After you create your account,
-                    we&apos;ll restore it as a reusable Smart Component in your workspace.
+                    We saved your {refLabel} draft. After you create your account,
+                    we&apos;ll restore it into your workspace ready to edit, send, and manage.
                   </p>
                 </div>
               </div>

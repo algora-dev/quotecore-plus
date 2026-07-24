@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
+import { PostGenerationModal } from '../shared/PostGenerationModal';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
 import { PromptBox } from './PromptBox';
@@ -107,6 +107,8 @@ function QuoteGeneratorForm() {
   const [hideTotals, setHideTotals] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [popupTrigger, setPopupTrigger] = useState(false);
+  const [saveToAppTrigger, setSaveToAppTrigger] = useState(0);
+  const saveToAppBtnRef = useRef<HTMLButtonElement>(null);
   const [uploadError, setUploadError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
 
@@ -201,6 +203,13 @@ function QuoteGeneratorForm() {
   const subtotal = lines.reduce((sum, l) => sum + (l.qty * l.rate), 0);
   const vat = taxEnabled ? subtotal * (taxRate / 100) : 0;
   const total = subtotal + vat;
+
+  useEffect(() => {
+    if (saveToAppTrigger > 0 && saveToAppBtnRef.current) {
+      const btn = saveToAppBtnRef.current.querySelector('button');
+      btn?.click();
+    }
+  }, [saveToAppTrigger]);
   const sym = currency.symbol;
 
   function addLine() {
@@ -901,6 +910,7 @@ function QuoteGeneratorForm() {
                 </svg>
                 Download PDF
               </button>
+              <span ref={saveToAppBtnRef} className="inline-flex">
               <SaveToAppButton
                 documentType="quote"
                 documentData={{
@@ -925,6 +935,27 @@ function QuoteGeneratorForm() {
                 } as FreeDocumentData}
                 userEmail={userEmail}
               />
+              </span>
+              <a
+                href={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-quote-generator`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+                title="One click — populates your quote details into an order form"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Convert to Order
+              </a>
+              <a
+                href={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+                title="One click — populates your quote details into an invoice form"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Convert to Invoice
+              </a>
               <button
                 onClick={resetQuote}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
@@ -933,16 +964,15 @@ function QuoteGeneratorForm() {
               </button>
             </div>
 
-            {/* Conversion popup */}
-            <CalcResultPopup
+            {/* Post-generation modal */}
+            <PostGenerationModal
+              toolType="quote"
               trigger={popupTrigger}
-              stage="calc-to-quote"
-              slug="free-quote-generator"
               resultLabel={`${formatMoney(total, sym)} quote`}
               resultDetails={`${lines.length} line item${lines.length !== 1 ? 's' : ''} for ${clientName || 'client'}`}
-              ctaText="Turn into an invoice"
-              ctaHref={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
-              secondaryText={!isAuthed ? "Enter your email on the form to remove QuoteCore+ branding. Create a professional invoice and get paid faster - no signup needed" : "Create a professional invoice and get paid faster - no signup needed"}
+              convertToOrderUrl={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-quote-generator`}
+              convertToInvoiceUrl={`/free-invoice-generator?amount=${total.toFixed(2)}&client=${encodeURIComponent(clientName)}&ref=free-quote-generator`}
+              onSaveToApp={() => setSaveToAppTrigger(c => c + 1)}
             />
           </>
         )}

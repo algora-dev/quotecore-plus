@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
+import { PostGenerationModal } from '../shared/PostGenerationModal';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
 import { PromptBox } from '../free-quote-generator/PromptBox';
@@ -188,6 +188,8 @@ function POGeneratorForm() {
 
   const [generated, setGenerated] = useState(false);
   const [popupTrigger, setPopupTrigger] = useState(false);
+  const [saveToAppTrigger, setSaveToAppTrigger] = useState(0);
+  const saveToAppBtnRef = useRef<HTMLSpanElement>(null);
   const [uploadError, setUploadError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
 
@@ -195,6 +197,13 @@ function POGeneratorForm() {
   const vat = taxEnabled ? subtotal * (taxRate / 100) : 0;
   const total = subtotal + vat;
   const sym = currency.symbol;
+
+  useEffect(() => {
+    if (saveToAppTrigger > 0 && saveToAppBtnRef.current) {
+      const btn = saveToAppBtnRef.current.querySelector('button');
+      btn?.click();
+    }
+  }, [saveToAppTrigger]);
 
   function addLine() {
     setLines([...lines, { id: String(Date.now()), description: '', qty: 0, unit: defaultUnit, rate: 0, lineHidden: false }]);
@@ -904,6 +913,7 @@ function POGeneratorForm() {
                 </svg>
                 Download PDF
               </button>
+              <span ref={saveToAppBtnRef} className="inline-flex">
               <SaveToAppButton
                 documentType="order"
                 documentData={{
@@ -924,6 +934,17 @@ function POGeneratorForm() {
                 } as FreeDocumentData}
                 userEmail={userEmail}
               />
+              </span>
+              <a
+                href={`/free-invoice-generator?amount=${total.toFixed(2)}&ref=free-purchase-order-generator`}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+                title="One click — populates your order details into an invoice form"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Convert to Invoice
+              </a>
               <button
                 onClick={resetPO}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
@@ -932,16 +953,14 @@ function POGeneratorForm() {
               </button>
             </div>
 
-            {/* Conversion popup */}
-            <CalcResultPopup
+            {/* Post-generation modal */}
+            <PostGenerationModal
+              toolType="order"
               trigger={popupTrigger}
-              stage="calc-to-quote"
-              slug="free-purchase-order-generator"
               resultLabel={`${formatMoney(total, sym)} purchase order`}
               resultDetails={`${poNumber} to ${supplierName || 'supplier'}`}
-              ctaText="Create an invoice"
-              ctaHref={`/free-invoice-generator?amount=${total.toFixed(2)}&ref=free-purchase-order-generator`}
-              secondaryText={!isAuthed ? "Enter your email on the form to remove QuoteCore+ branding" : "Need to invoice your client? Generate an invoice from this order - no signup needed"}
+              convertToInvoiceUrl={`/free-invoice-generator?amount=${total.toFixed(2)}&ref=free-purchase-order-generator`}
+              onSaveToApp={() => setSaveToAppTrigger(c => c + 1)}
             />
           </>
         )}
