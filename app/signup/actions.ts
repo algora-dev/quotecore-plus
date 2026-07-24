@@ -1,9 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
-import type { Database } from '@/app/lib/supabase/database.types';
 
 type SignupInput = {
   companyName: string;
@@ -12,34 +10,24 @@ type SignupInput = {
   password: string;
 };
 
-function getAdminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceRole) {
-    throw new Error('Missing Supabase admin environment variables.');
-  }
-
-  return createClient<Database>(url, serviceRole, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
-
 /**
  * Email/password signup — TWO-STAGE FLOW (Gerald M-01).
  *
- * Stage 1 (here): create ONLY the Supabase auth user (email_confirm: false).
- *   Company name + full name are stored in user_metadata so they survive
- *   until the confirmation callback. NO company, NO profile, NO workspace
- *   state is created until the email is confirmed.
+ * Stage 1 (here): create the Supabase auth user via `signUp()`, which
+ *   automatically sends the confirmation email instantly. Company name
+ *   and full name are stored in user_metadata so they survive until the
+ *   confirmation callback. NO company, NO profile, NO workspace state
+ *   is created until the email is confirmed.
  *
  * Stage 2 (in /auth/callback): after the user clicks the confirmation link,
- *   the callback creates the company + profile from the stored metadata,
- *   sends the welcome email, and redirects to onboarding.
+ *   the callback creates the company + profile from the stored metadata
+ *   and redirects to onboarding.
  *
- * This prevents abandoned/unverified workspaces and matches Shaun's
- * requirement: "sign up should not allow the user to log in at all until
- * they confirm their email."
+ * IMPORTANT: We use `supabase.auth.signUp()` (not admin.createUser + resend)
+ * because signUp sends the confirmation email automatically and instantly
+ * as part of the signup. The previous admin.createUser + resend approach
+ * was unreliable — the resend endpoint could delay or fail silently,
+ * leaving users waiting 5-15 minutes for a confirmation email.
  */
 export async function signupWithCompany(input: SignupInput) {
   const companyName = input.companyName.trim();
@@ -55,66 +43,35 @@ export async function signupWithCompany(input: SignupInput) {
     return { ok: false, error: 'Password must be at least 8 characters.' };
   }
 
-  const supabaseAdmin = getAdminClient();
+  const supabase = await createSupabaseServerClient();
 
-  // Pre-check: if the email is already registered, fail fast with a friendly
-  // message. createUser will also catch this, but checking first avoids
-  // any partial state and gives a cleaner error.
-  try {
-    const { data: existingUsers } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .limit(1)
-      .maybeSingle();
-    if (existingUsers) {
-      return { ok: false, error: 'An account with this email already exists. Try logging in instead.' };
-    }
-  } catch {
-    // If the pre-check fails (e.g. RLS issue), fall through to createUser
-    // which will catch the duplicate anyway.
-  }
-
-  // Create auth user ONLY. No company, no profile. Company name and full
-  // name are stored in user_metadata so the confirmation callback can
-  // create the workspace state after the email is verified.
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+  // Use signUp() — this automatically sends the confirmation email
+  // instantly. No need for a separate resend call.
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    email_confirm: false,
-    user_metadata: {
-      full_name: fullName,
-      company_name: companyName,
-      role: 'owner',
+    options: {
+      data: {
+        full_name: fullName,
+        company_name: companyName,
+        role: 'owner',
+      },
     },
   });
 
-  if (authError || !authData.user) {
-    const msg = authError?.message ?? 'Failed to create auth user.';
-    if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already been registered')) {
+  if (error) {
+    const msg = error.message.toLowerCase();
+    if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already registered')) {
       return { ok: false, error: 'An account with this email already exists. Try logging in instead.' };
     }
-    return { ok: false, error: msg };
+    return { ok: false, error: error.message };
   }
 
-  // Send the confirmation email explicitly. `auth.admin.createUser` NEVER
-  // sends emails (by design — it's the admin API), so we fire the same
-  // resend endpoint the "Resend confirmation" button uses. The user must
-  // click the link before they can sign in; company/profile are created in
-  // /auth/callback after confirmation.
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { error: sendError } = await supabase.auth.resend({
-      type: 'signup',
-      email,
-    });
-    if (sendError) {
-      // Non-fatal: the account exists; the login page's "Resend
-      // confirmation" button is the recovery path.
-      console.error('[signupWithCompany] confirmation email send failed:', sendError.message);
-    }
-  } catch (err) {
-    console.error('[signupWithCompany] confirmation email send threw:', err);
+  // If the user somehow already has a session (e.g. email was already
+  // confirmed), data.session will be non-null. In that case they're
+  // already logged in — redirect to their workspace or onboarding.
+  if (data.session) {
+    redirect('/onboarding');
   }
 
   redirect('/login?signup=pending');
