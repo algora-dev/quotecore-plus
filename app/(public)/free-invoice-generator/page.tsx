@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CalcResultPopup } from '../free-calculators/_shared/CalcResultPopup';
+import { PostGenerationModal } from '../shared/PostGenerationModal';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
 import { PromptBox } from '../free-quote-generator/PromptBox';
@@ -112,6 +112,8 @@ function InvoiceGeneratorForm() {
 
   const [generated, setGenerated] = useState(false);
   const [popupTrigger, setPopupTrigger] = useState(false);
+  const [saveToAppTrigger, setSaveToAppTrigger] = useState(0);
+  const saveToAppBtnRef = useRef<HTMLSpanElement>(null);
   const [uploadError, setUploadError] = useState('');
   const [aiNotice, setAiNotice] = useState('');
 
@@ -204,6 +206,13 @@ function InvoiceGeneratorForm() {
   const vat = taxEnabled ? subtotal * (taxRate / 100) : 0;
   const total = subtotal + vat;
   const sym = currency.symbol;
+
+  useEffect(() => {
+    if (saveToAppTrigger > 0 && saveToAppBtnRef.current) {
+      const btn = saveToAppBtnRef.current.querySelector('button');
+      btn?.click();
+    }
+  }, [saveToAppTrigger]);
 
   function addLine() {
     setLines([...lines, { id: String(Date.now()), description: '', qty: 1, unit: defaultUnit, rate: 0, lineHidden: false }]);
@@ -901,6 +910,7 @@ function InvoiceGeneratorForm() {
                 </svg>
                 Download PDF
               </button>
+              <span ref={saveToAppBtnRef} className="inline-flex">
               <SaveToAppButton
                 documentType="invoice"
                 documentData={{
@@ -923,6 +933,7 @@ function InvoiceGeneratorForm() {
                 } as FreeDocumentData}
                 userEmail={userEmail}
               />
+              </span>
               <button
                 onClick={resetInvoice}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
@@ -931,16 +942,13 @@ function InvoiceGeneratorForm() {
               </button>
             </div>
 
-            {/* Conversion popup */}
-            <CalcResultPopup
+            {/* Post-generation modal */}
+            <PostGenerationModal
+              toolType="invoice"
               trigger={popupTrigger}
-              stage="calc-to-quote"
-              slug="free-invoice-generator"
               resultLabel={`${formatMoney(total, sym)} invoice`}
               resultDetails={`${invoiceNumber} for ${clientName || 'client'}`}
-              ctaText="Create a purchase order"
-              ctaHref={`/free-purchase-order-generator?amount=${total.toFixed(2)}&ref=free-invoice-generator`}
-              secondaryText={!isAuthed ? "Enter your email on the form to remove QuoteCore+ branding" : "Need to order materials? Generate a PO for your supplier - no signup needed"}
+              onSaveToApp={() => setSaveToAppTrigger(c => c + 1)}
             />
           </>
         )}
