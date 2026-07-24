@@ -1,48 +1,79 @@
 /**
- * Auth Fixture — Login and Session Management
+ * Auth Fixture — Login, Session Persistence, Storage State
  *
- * Safety Rule 3: Only named ordinary E2E accounts.
- * Safety Rule 4: No admin, service-role, or provider credentials.
- *
- * Phase 2 will add storage state persistence.
- * For now, login is performed via the UI on each test.
+ * Phase 2: Adds storage state caching so login happens once per account
+ * per test run, not on every test.
  */
-
-import { test as base, expect, type Page } from '@playwright/test';
-import { getAccount, getKnownAccountEmails } from '../config/accounts';
-import { assertE2EAccount } from '../config/guard';
+import { test as base, expect, type Page, type APIRequestContext } from '@playwright/test';
+import { getAccount } from '../config/accounts';
+import { getKnownAccountEmails, assertE2EAccount } from '../config/guard';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const AUTH_DIR = path.join(process.cwd(), '.auth');
+
+// Ensure .auth directory exists
+try { fs.mkdirSync(AUTH_DIR, { recursive: true }); } catch {}
+
+function storageStatePath(fixture: string): string {
+  return path.join(AUTH_DIR, `${fixture}.json`);
+}
 
 export interface AuthFixtures {
-  /** Login as a specific fixture account and return the authenticated page */
-  loginAs: (fixture: string) => Promise<{ page: Page; email: string }>;
+  /** Login as a specific fixture account, using cached storage state when available */
+  loginAs: (fixture: string) => Promise<{ page: Page; email: string; slug: string }>;
+  /** Create a fresh page (no cached auth) for a fixture */
+  freshPage: (fixture: string) => Promise<{ page: Page; email: string }>;
 }
 
 export const test = base.extend<AuthFixtures>({
-  loginAs: async ({ page }, use) => {
+  loginAs: async ({ browser }, use) => {
     await use(async (fixture: string) => {
       const account = getAccount(fixture);
       const knownEmails = getKnownAccountEmails();
-
-      // Guard: verify this is a known E2E account
       assertE2EAccount(account.email, knownEmails);
 
-      // Navigate to login
-      await page.goto(`${BASE_URL}/login`);
+      const statePath = storageStatePath(fixture);
 
-      // Fill login form
-      await page.getByLabel(/email/i).fill(account.email);
-      await page.getByLabel(/password/i).fill(account.password);
+      // Try cached storage state first
+      let context;
+      if (fs.existsSync(statePath)) {
+        context = await browser.newContext({ storageState: statePath });
+      } else {
+        context = await browser.newContext();
+      }
 
-      // Submit
-      await page.getByRole('button', { name: /sign in|log in|login/i }).click();
+      const page = await context.newPage();
 
-      // Wait for navigation away from login page
-      await page.waitForURL((url) => !url.pathname.includes('/login'), {
-        timeout: 30_000,
-      });
+      // Verify we're authenticated by hitting the workspace
+      await page.goto(`${BASE_URL}/${account.workspaceSlug}`);
 
+      // If redirected to login, perform fresh login
+      if (page.url().includes('/login')) {
+        await page.goto(`${BASE_URL}/login`);
+        await page.locator('input[name="email"]').fill(account.email);
+        await page.locator('input[name="password"]').fill(account.password);
+        await page.getByRole('button', { name: /log in/i }).click();
+        await page.waitForURL((url) => !url.pathname.includes('/login'), {
+          timeout: 30_000,
+        });
+
+        // Save storage state for reuse
+        await context.storageState({ path: statePath });
+      }
+
+      return { page, email: account.email, slug: account.workspaceSlug };
+    });
+  },
+
+  freshPage: async ({ browser }, use) => {
+    await use(async (fixture: string) => {
+      const account = getAccount(fixture);
+      assertE2EAccount(account.email, getKnownAccountEmails());
+
+      const context = await browser.newContext();
+      const page = await context.newPage();
       return { page, email: account.email };
     });
   },

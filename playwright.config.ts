@@ -1,5 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 import { guardOrigin } from './e2e/config/guard';
+import { config as loadEnv } from 'dotenv';
+import { existsSync } from 'fs';
+
+// Load .env.e2e if it exists
+if (existsSync('.env.e2e')) {
+  loadEnv({ path: '.env.e2e' });
+}
 
 /**
  * QuoteCore+ Phase 1 E2E Test Harness
