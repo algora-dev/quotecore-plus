@@ -7,7 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seo:check": "node scripts/seo-check.mjs"
+    "seo:check": "node scripts/seo-check.mjs",
+    "e2e": "playwright test",
+    "e2e:smoke": "playwright test --grep @smoke",
+    "e2e:email": "E2E_ALLOW_EMAIL_SEND=true playwright test --grep @email-opt-in",
+    "e2e:report": "playwright show-report playwright-report/html",
+    "e2e:cleanup:dry-run": "node --eval \"console.log('Dry-run: no deletion performed. Manifest review only.')\"",
+    "e2e:check-imports": "npx tsx e2e/scripts/check-imports.ts"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
@@ -44,6 +50,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/fabric": "^5.3.10",
     "@types/node": "^20",

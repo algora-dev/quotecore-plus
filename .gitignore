@@ -51,3 +51,14 @@ docs/ChatAssistant/OpenAI/
 **/OpenAiKey.txt
 
 debug-images/
+
+# E2E test harness artifacts
+/playwright-report/
+/test-results/
+/blob-report/
+/e2e-artifacts/
+/.auth/
+.env.e2e
+
+# Allow the example template to be committed
+!.env.e2e.example
