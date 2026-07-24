@@ -61,18 +61,27 @@ export default defineConfig({
     actionTimeout: 15_000,
   },
 
-  // Projects: mutation (default) + read-only (retries allowed for diagnostics)
+  // Projects: mutation (default) + read-only (retries for diagnostics) + mobile
   projects: [
     {
       name: 'mutation',
       testMatch: /.*\.spec\.ts/,
-      grepInvert: /@read-only/,
+      grepInvert: /@read-only|@mobile/,
     },
     {
       name: 'read-only',
       testMatch: /.*\.spec\.ts/,
       grep: /@read-only/,
       retries: 1,
+    },
+    {
+      name: 'mobile',
+      testMatch: /.*\.spec\.ts/,
+      grep: /@mobile/,
+      use: {
+        ...devices['iPhone 14 Pro'],
+      },
+      retries: 0,
     },
   ],
 
