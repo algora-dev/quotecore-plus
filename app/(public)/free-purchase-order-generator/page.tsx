@@ -4,6 +4,7 @@ import { useState, Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PostGenerationModal } from '../shared/PostGenerationModal';
+import { buildConvertUrl, parseConvertLines } from '../shared/convertLines';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
 import { PromptBox } from '../free-quote-generator/PromptBox';
@@ -94,6 +95,10 @@ function POGeneratorForm() {
   const { email: userEmail, isAuthed, emailSaved, clearLocalEmail, loadingEmail, openAuthModal, limitsLine, accessToken } = useFreeToolsEmail();
 
   const [lines, setLines] = useState<POLine[]>(() => {
+    const convertedLines = parseConvertLines(searchParams.get('lines'));
+    if (convertedLines && convertedLines.length > 0) {
+      return convertedLines.map((l, i) => ({ id: String(i + 1), description: l.description, qty: l.qty, unit: l.unit, rate: l.rate, lineHidden: false }));
+    }
     if (amountParam) {
       return [{ id: '1', description: 'Materials', qty: 1, unit: 'lot', rate: parseFloat(amountParam) || 0, lineHidden: false }];
     }
@@ -936,7 +941,7 @@ function POGeneratorForm() {
               />
               </span>
               <a
-                href={`/free-invoice-generator?amount=${total.toFixed(2)}&ref=free-purchase-order-generator`}
+                href={buildConvertUrl({ targetPath: '/free-invoice-generator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-purchase-order-generator' })}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
                 title="One click — populates your order details into an invoice form"
               >
@@ -959,7 +964,7 @@ function POGeneratorForm() {
               trigger={popupTrigger}
               resultLabel={`${formatMoney(total, sym)} purchase order`}
               resultDetails={`${poNumber} to ${supplierName || 'supplier'}`}
-              convertToInvoiceUrl={`/free-invoice-generator?amount=${total.toFixed(2)}&ref=free-purchase-order-generator`}
+              convertToInvoiceUrl={buildConvertUrl({ targetPath: '/free-invoice-generator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-purchase-order-generator' })}
               onSaveToApp={() => setSaveToAppTrigger(c => c + 1)}
             />
           </>

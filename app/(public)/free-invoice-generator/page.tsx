@@ -4,6 +4,7 @@ import { useState, Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PostGenerationModal } from '../shared/PostGenerationModal';
+import { parseConvertLines } from '../shared/convertLines';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
 import { PromptBox } from '../free-quote-generator/PromptBox';
@@ -97,6 +98,10 @@ function InvoiceGeneratorForm() {
   const [taxName, setTaxName] = useState('Tax');
 
   const [lines, setLines] = useState<InvoiceLine[]>(() => {
+    const convertedLines = parseConvertLines(searchParams.get('lines'));
+    if (convertedLines && convertedLines.length > 0) {
+      return convertedLines.map((l, i) => ({ id: String(i + 1), description: l.description, qty: l.qty, unit: l.unit, rate: l.rate, lineHidden: false }));
+    }
     if (amountParam) {
       return [{
         id: '1',
