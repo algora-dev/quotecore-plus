@@ -254,12 +254,14 @@ export function TakeoffWorkstation({
   const [aiResults, setAiResults] = useState<AiResultsData | null>(null);
   const [aiScanError, setAiScanError] = useState<string | null>(null);
   const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
-  const [aiScanStage, setAiScanStage] = useState<'outline' | 'lines' | 'classify'>('outline');
+  const [aiScanStage, setAiScanStage] = useState<'queued' | 'scan1' | 'scan2' | 'scan3' | 'done' | 'failed'>('queued');
+  const [aiJobId, setAiJobId] = useState<string | null>(null);
+  const aiPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // AI Assist points: track locally so we can update after a scan without a page reload.
   const [aiPoints, setAiPoints] = useState(aiAssistPoints);
   // V3: 3-scan pipeline (outline → line detection → classification)
-  const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
+  const aiScanEndpoint = '/api/takeoff/scan-jobs';
   // Once the user dismisses the "Calibration complete" popup, never show it again
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
@@ -3751,6 +3753,8 @@ export function TakeoffWorkstation({
       // (e.g. a Next route remount) gets a fresh canvas. We don't reset on
       // re-renders - those are exactly what we're guarding against.
       canvasInitedRef.current = false;
+      // Clean up AI scan polling on unmount
+      if (aiPollRef.current) clearInterval(aiPollRef.current);
     };
      
   }, []); // intentionally empty: see comment above the effect
@@ -4062,47 +4066,31 @@ export function TakeoffWorkstation({
     setZoom(scale);
   };
 
-  // ── AI Takeoff: scan handler ──────────────────────────────────────
+  // ── AI Takeoff: scan handler (queue-based) ───────────────────────
   const handleAiScan = async () => {
     const canvas = fabricRef.current;
     if (!canvas || !quote) return;
 
     const bgImage = canvas.backgroundImage;
-    if (!bgImage) {
-      setAiScanError('No plan image loaded.');
-      return;
-    }
+    if (!bgImage) { setAiScanError('No plan image loaded.'); return; }
 
     const pageId = pages[currentPageIndex]?.id ?? null;
-    if (!pageId) {
-      setAiScanError('No active page.');
-      return;
-    }
+    if (!pageId) { setAiScanError('No active page.'); return; }
 
     setAiScanning(true);
-    setAiScanStage('outline');
+    setAiScanStage('queued');
     setAiScanError(null);
     setAiResults(null);
     setAiScanRaw(null);
-    let scanCompleted = false;
+    setAiJobId(null);
 
     try {
-      // Send the ORIGINAL plan image to the AI — not a canvas screenshot.
-      // The canvas now matches the image dimensions (dynamic sizing), so
-      // AI coordinates = canvas coordinates. No letterboxing, no mapping.
       const currentPage = pages[currentPageIndex];
       const imageUrl = currentPage?.url ?? planUrlRef.current;
-      if (!imageUrl) {
-        setAiScanError('No plan image URL available.');
-        return;
-      }
+      if (!imageUrl) { setAiScanError('No plan image URL available.'); return; }
 
-      // Fetch the image and convert to base64 data URL
       const imgResponse = await fetch(imageUrl);
-      if (!imgResponse.ok) {
-        setAiScanError('Failed to load plan image for AI scan.');
-        return;
-      }
+      if (!imgResponse.ok) { setAiScanError('Failed to load plan image for AI scan.'); return; }
       const imgBlob = await imgResponse.blob();
       const reader = new FileReader();
       const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -4111,13 +4099,12 @@ export function TakeoffWorkstation({
         reader.readAsDataURL(imgBlob);
       });
 
+      // Submit job to queue
       const response = await fetch(aiScanEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stage: 'scan1',
           image: dataUrl,
-          imageMime: imgBlob.type || 'image/png',
           quoteId: quote.id,
           pageId,
           canvasDimensions: canvasDims,
@@ -4129,8 +4116,7 @@ export function TakeoffWorkstation({
 
       if (!response.ok || !result.success) {
         const errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
-        console.error('[AI Takeoff V3] scan1 error:', errMsg, result);
-        // Handle points-exhausted response: update local points + show upgrade message.
+        console.error('[AI Takeoff] submit error:', errMsg, result);
         if (response.status === 402 && result.pointsExhausted) {
           setAiPoints(prev => prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null);
         }
@@ -4138,123 +4124,110 @@ export function TakeoffWorkstation({
         return;
       }
 
-      if (!result.data?.roof_areas?.length) {
-        setAiScanError(result.summary?.notes?.[0] || 'No usable roof outline was detected.');
-        return;
-      }
-      const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
-        index: idx,
-        name: area.name || `Area ${idx + 1}`,
-        pitch: area.pitch_degrees ?? result.data?.pitch?.global_degrees ?? null,
-        vertexCount: area.points?.length ?? 0,
-      }));
-      // Points were deducted server-side on scan1; update local state to reflect the new remaining count.
-      const cost = aiQualityLevel === 'low' ? 2 : aiQualityLevel === 'medium' ? 4 : 8;
-      setAiPoints(prev => prev ? { ...prev, used: prev.used + cost, remaining: Math.max(prev.remaining - cost, 0) } : null);
-      scanCompleted = await runRemainingAiScans({
-        outlineData: result.data,
-        areas: areaInfos,
-        imageDataUrl: dataUrl,
-        analysisDimensions: result.analysisDimensions ?? { width: canvasDims.width, height: canvasDims.height },
-        pageId,
-        qualityLevel: aiQualityLevel,
-      });
+      // Update points from server response
+      setAiPoints(prev => prev ? {
+        ...prev,
+        used: prev.used + (result.pointsCost ?? 0),
+        remaining: result.pointsRemaining ?? prev.remaining,
+      } : null);
+      setAiJobId(result.jobId);
+
+      // Start polling for status
+      startJobPolling(result.jobId, quote.id, pageId);
     } catch (err) {
-      console.error('[AI Takeoff] scan failed:', err);
+      console.error('[AI Takeoff] submit failed:', err);
       const msg = err instanceof Error ? err.message : 'Network error.';
       setAiScanError(`Scan failed: ${msg}`);
-    } finally {
       setAiScanning(false);
-      if (!scanCompleted) {
-        roofAreaInstructionsDismissedRef.current = false;
-        setShowRoofAreaInstructions(true);
-      }
     }
   };
 
-  const runRemainingAiScans = async ({
-    outlineData,
-    areas,
-    imageDataUrl,
-    analysisDimensions,
-    pageId,
-    qualityLevel,
-  }: {
-    outlineData: Pick<AiScanData, 'roof_areas'>;
-    areas: AiResultsArea[];
-    imageDataUrl: string;
-    analysisDimensions: { width: number; height: number };
-    pageId: string;
-    qualityLevel: 'low' | 'medium' | 'high';
-  }): Promise<boolean> => {
-    if (!quote) return false;
+  // ── AI Takeoff: poll job status ──────────────────────────────────
+  const startJobPolling = (jobId: string, quoteId: string, pageId: string) => {
+    // Map server stage names to client display
+    const stageMap: Record<string, 'queued' | 'scan1' | 'scan2' | 'scan3' | 'done' | 'failed'> = {
+      queued: 'queued', scan1: 'scan1', scan1_done: 'scan1',
+      scan2: 'scan2', scan2_done: 'scan2',
+      scan3: 'scan3', succeeded: 'done', failed: 'failed',
+      applying: 'scan3',
+    };
 
-    const confirmedAreas = outlineData.roof_areas;
-    setAiScanStage('lines');
-    try {
-      // ── Scan 2: Internal line detection ──
-      const scan2Response = await fetch(aiScanEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stage: 'scan2',
-          image: imageDataUrl,
-          imageMime: 'image/png',
-          canvasDimensions: canvasDims,
-          quoteId: quote.id,
-          pageId,
-          outlinePoints: confirmedAreas[0]?.points ?? [],
-          analysisDimensions,
-          qualityLevel,
-        }),
-      });
-      const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
-      if (!scan2Response.ok || !scan2Result.success) {
-        setAiScanError(scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).`);
-        return false;
+    let consecutiveErrors = 0;
+
+    const poll = async () => {
+      try {
+        const pollResponse = await fetch(`${aiScanEndpoint}?jobId=${jobId}`);
+        const pollResult = await pollResponse.json().catch(() => ({ success: false }));
+
+        if (!pollResponse.ok || !pollResult.success) {
+          consecutiveErrors++;
+          if (consecutiveErrors >= 5) {
+            stopJobPolling();
+            setAiScanError('Lost connection to scan server. Your points are safe — check back in a moment.');
+            setAiScanning(false);
+          }
+          return;
+        }
+        consecutiveErrors = 0;
+
+        const status = pollResult.status as string;
+        const stage = stageMap[pollResult.currentStage ?? status] ?? 'queued';
+        setAiScanStage(stage);
+
+        if (status === 'succeeded' && pollResult.result) {
+          stopJobPolling();
+          const data = pollResult.result as AiScanData;
+          const areaInfos: AiResultsArea[] = (data.roof_areas ?? []).map((area, idx: number) => ({
+            index: idx,
+            name: area.name || `Area ${idx + 1}`,
+            pitch: area.pitch_degrees ?? data.pitch?.global_degrees ?? null,
+            vertexCount: area.points?.length ?? 0,
+          }));
+          setAiScanRaw(data);
+          setAiResults({
+            summary: pollResult.summary ?? {
+              areas: data.roof_areas.length,
+              components: Object.values(data.components).reduce((s: number, c) => s + (c as unknown[]).length, 0),
+              ridges: data.components.ridges.length,
+              hips: data.components.hips.length,
+              valleys: data.components.valleys.length,
+              broken_hips: data.components.broken_hips.length,
+              barges: data.components.barges.length,
+              spouting: data.components.spouting.length,
+              uncertain: data.components.uncertain.length,
+              notes: data.notes,
+            },
+            scaleCheck: null,
+            droppedCount: 0,
+            areas: areaInfos,
+          });
+          setAiScanning(false);
+        } else if (status === 'failed') {
+          stopJobPolling();
+          const errMsg = pollResult.error || 'Scan failed.';
+          const refundNote = pollResult.pointsRefunded ? ' Your points have been refunded.' : '';
+          setAiScanError(`${errMsg}${refundNote}`);
+          setAiScanning(false);
+        }
+      } catch (err) {
+        consecutiveErrors++;
+        if (consecutiveErrors >= 5) {
+          stopJobPolling();
+          setAiScanError('Lost connection to scan server.');
+          setAiScanning(false);
+        }
       }
+    };
 
-      const detectedLines = scan2Result.data?.lines ?? [];
-      const outlinePoints = scan2Result.data?.outlinePoints ?? confirmedAreas[0]?.points ?? [];
-      console.log(`[AI Takeoff V3] scan2 complete: ${detectedLines.length} lines detected (raw=${scan2Result.summary?.rawLines}, rejected=${scan2Result.summary?.angleRejected}, floating=${scan2Result.summary?.floating})`);
+    // Poll immediately, then every 3 seconds
+    poll();
+    aiPollRef.current = setInterval(poll, 3000);
+  };
 
-      // ── Scan 3: Classification ──
-      setAiScanStage('classify');
-      const scan3Response = await fetch(aiScanEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          stage: 'scan3',
-          image: imageDataUrl,
-          imageMime: 'image/png',
-          canvasDimensions: canvasDims,
-          quoteId: quote.id,
-          pageId,
-          outlinePoints: outlinePoints,
-          lines: detectedLines,
-          analysisDimensions,
-          qualityLevel,
-        }),
-      });
-      const result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
-      if (!scan3Response.ok || !result.success) {
-        const violations = Array.isArray(result.topologyViolations)
-          ? ` ${result.topologyViolations.join(' ')}` : '';
-        setAiScanError(`${result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}`);
-        return false;
-      }
-
-      setAiScanRaw(result.data);
-      setAiResults({
-        summary: result.summary,
-        scaleCheck: result.data?.scaleCheck ?? null,
-        droppedCount: 0,
-        areas,
-      });
-      return true;
-    } catch (error) {
-      setAiScanError(`Classification failed: ${error instanceof Error ? error.message : 'Network error.'}`);
-      return false;
+  const stopJobPolling = () => {
+    if (aiPollRef.current) {
+      clearInterval(aiPollRef.current);
+      aiPollRef.current = null;
     }
   };
 
@@ -6322,9 +6295,9 @@ export function TakeoffWorkstation({
           <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl text-center">
             <div className="inline-block w-8 h-8 border-3 border-slate-200 border-t-[#FF6B35] rounded-full animate-spin mb-3" />
             <h3 className="text-sm font-semibold text-slate-900">
-              {aiScanStage === 'outline' ? 'Tracing roof outline…' : aiScanStage === 'lines' ? 'Detecting and auditing roof lines…' : 'Classifying components…'}
+              {aiScanStage === 'queued' ? 'Your scan is queued…' : aiScanStage === 'scan1' ? 'Tracing roof outline…' : aiScanStage === 'scan2' ? 'Detecting and auditing roof lines…' : aiScanStage === 'scan3' ? 'Classifying components…' : 'Processing…'}
             </h3>
-            <p className="text-xs text-slate-500 mt-1">This may take a few moments.</p>
+            <p className="text-xs text-slate-500 mt-1">{aiScanStage === 'queued' ? 'You can keep working — we’ll notify you when it’s ready.' : 'This may take a few moments.'}</p>
           </div>
         </div>
       )}
