@@ -23,6 +23,21 @@
 
 ### Pending verification (test on dev.quotecore-plus-dev.vercel.app)
 
+**AI-QUEUE. AI Scan Queue System — durable jobs, atomic points, refunds (development `5428e58`, 2026-07-24)**
+- [ ] AI Assist button still appears after calibration (roofing companies only)
+- [ ] Clicking AI Assist shows "Your scan is queued…" overlay (not the old "Tracing roof outline…")
+- [ ] Scan progresses through stages: queued → scan1 → scan2 → scan3 → done
+- [ ] Scan completes and AiResultsModal shows with detected areas + components
+- [ ] Apply results to canvas works (roof area polygons + component lines)
+- [ ] Points deducted correctly: low=2, medium=4, high=8
+- [ ] Points display updates after scan submission
+- [ ] Insufficient points → 402 error + upgrade message (no OpenAI call made)
+- [ ] Scan failure → error toast with "points refunded" message
+- [ ] Page refresh mid-scan → no duplicate job, no double charge (idempotency)
+- [ ] Two scans on same page → second one rejected with "already running" (409)
+- [ ] Manual takeoff flow unchanged (calibration, draw, save all work without AI)
+- [ ] Vercel cron endpoint /api/cron/process-ai-scan-queue returns 200
+
 **AD. Signup emails + smart component server-side create + modal copy (dev `c57541c`, 2026-07-15)**
 - [ ] Email signup (new address): confirmation email arrives IMMEDIATELY (no Resend click needed)
 - [ ] Email signup: welcome email arrives only AFTER onboarding completes (not at confirm-link click)
