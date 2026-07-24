@@ -190,13 +190,14 @@ export function PostGenerationModal({
             icon={saveIcon}
           />
 
-          {/* No Thanks */}
+          {/* Maybe Later */}
           <button
             type="button"
             onClick={dismiss}
             className="w-full text-center px-5 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
+            title="You can also do this in the next step — convert or save your document anytime from the buttons below."
           >
-            No thanks
+            Maybe later
           </button>
         </div>
       </div>
