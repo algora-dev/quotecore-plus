@@ -1,17 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import type { ComponentKind, Entry, RoofComponentDef } from './types';
+import type { ComponentKind, Entry, RoofComponentDef, CustomComponentDef, PitchType } from './types';
 import { COMPONENT_DEFS, computeEntry, makeId } from './calc';
 
 type MeasureMode = 'actual' | 'plan';
 
-// ─── Entry List Item (compact row) ───────────────────────────
+function getPitchType(kind: string, customDef?: CustomComponentDef): PitchType {
+  if (kind === 'custom' && customDef) return customDef.pitchType;
+  const def = COMPONENT_DEFS[kind];
+  return def ? def.pitchType : 'none';
+}
+
+function isAreaKind(kind: string, customDef?: CustomComponentDef): boolean {
+  if (kind === 'roof_area') return true;
+  if (kind === 'custom' && customDef) return customDef.measurementType === 'area';
+  return false;
+}
+
+// ─── Entry List Item ─────────────────────────────────
 
 interface EntryListItemProps {
   entry: Entry;
   index: number;
-  kind: ComponentKind;
+  kind: string;
+  customDef?: CustomComponentDef;
   measureMode: MeasureMode;
   lenLabel: string;
   areaLabel: string;
@@ -20,10 +33,10 @@ interface EntryListItemProps {
   onRemove: () => void;
 }
 
-export function EntryListItem({ entry, index, kind, measureMode, lenLabel, areaLabel, wastePercent, getComponentById, onRemove }: EntryListItemProps) {
-  const def = COMPONENT_DEFS[kind];
-  const isRoofArea = kind === 'roof_area';
-  const usePitch = measureMode === 'plan' && def.pitchType !== 'none';
+export function EntryListItem({ entry, index, kind, customDef, measureMode, lenLabel, areaLabel, wastePercent, getComponentById, onRemove }: EntryListItemProps) {
+  const pitchType = getPitchType(kind, customDef);
+  const isRoofArea = isAreaKind(kind, customDef);
+  const usePitch = measureMode === 'plan' && pitchType !== 'none';
   const unit = isRoofArea ? areaLabel : lenLabel;
   const selectedComp = getComponentById(entry.selectedComponentId);
   const withWasteVal = entry.computedValue * (1 + wastePercent / 100);
@@ -76,10 +89,11 @@ export function EntryListItem({ entry, index, kind, measureMode, lenLabel, areaL
   );
 }
 
-// ─── Add Entry Form ──────────────────────────────────────────
+// ─── Add Entry Form ──────────────────────────────────
 
 interface AddEntryFormProps {
-  kind: ComponentKind;
+  kind: string;
+  customDef?: CustomComponentDef;
   measureMode: MeasureMode;
   lenLabel: string;
   areaLabel: string;
@@ -89,14 +103,13 @@ interface AddEntryFormProps {
   onAdd: (entry: Entry) => void;
 }
 
-export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, onAdd }: AddEntryFormProps) {
-  const def = COMPONENT_DEFS[kind];
-  const isRoofArea = kind === 'roof_area';
-  const usePitch = measureMode === 'plan' && def.pitchType !== 'none';
+export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, onAdd }: AddEntryFormProps) {
+  const pitchType = getPitchType(kind, customDef);
+  const isRoofArea = isAreaKind(kind, customDef);
+  const usePitch = measureMode === 'plan' && pitchType !== 'none';
   const planPrefix = measureMode === 'plan' ? 'Plan ' : '';
 
-  // Roof area: dimensions vs total. Linear: always just length + quantity.
-  const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>('dimensions');
+  const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>(isRoofArea ? 'dimensions' : 'total');
   const [val1, setVal1] = useState('');
   const [val2, setVal2] = useState('');
   const [totalVal, setTotalVal] = useState('');
@@ -104,13 +117,7 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
   const [label, setLabel] = useState('');
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(availableComponents[0]?.id ?? null);
 
-  const resetForm = () => {
-    setVal1('');
-    setVal2('');
-    setTotalVal('');
-    setQuantity('1');
-    setLabel('');
-  };
+  const resetForm = () => { setVal1(''); setVal2(''); setTotalVal(''); setQuantity('1'); setLabel(''); };
 
   const handleAdd = () => {
     let entry: Entry;
@@ -123,7 +130,7 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
         if (!w || w <= 0 || !l || l <= 0) return;
         entry = {
           id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
-          planWidth: w, planLengthVal: l, pitchDegrees, actualValue: 0, computedValue: 0,
+          planWidth: w, planLengthVal: l, pitchDegrees, actualValue: usePitch ? 0 : w * l, computedValue: 0,
           selectedComponentId, quantity: qty, isTotalInput: false,
         };
       } else {
@@ -146,7 +153,7 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
       };
     }
 
-    entry.computedValue = computeEntry(entry, kind);
+    entry.computedValue = computeEntry(entry, kind, pitchType);
     onAdd(entry);
     resetForm();
   };
@@ -163,7 +170,6 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
         <span className="text-xs font-semibold text-slate-600">Add New Entry</span>
       </div>
 
-      {/* Mode toggle - only for roof area */}
       {isRoofArea && (
         <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
           <button onClick={() => setAreaMode('dimensions')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Width x Length</button>
@@ -171,7 +177,6 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
         </div>
       )}
 
-      {/* Input fields */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {isRoofArea && areaMode === 'dimensions' ? (
           <>
@@ -190,33 +195,24 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
             <input type="number" value={totalVal} onChange={(e) => setTotalVal(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
           </div>
         ) : (
-          // Linear: single length input
-          <>
-            <div className="col-span-2">
-              <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
-              <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
-            </div>
-          </>
+          <div className="col-span-2">
+            <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
+            <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+          </div>
         )}
 
-        {/* Quantity */}
         <div>
           <label className="text-xs font-medium text-slate-600">Quantity</label>
           <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" className={inputCls} />
         </div>
 
-        {/* Add button */}
-        <button
-          onClick={handleAdd}
-          disabled={!canAdd}
-          className={`rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAdd ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
-        >
+        <button onClick={handleAdd} disabled={!canAdd}
+          className={`rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAdd ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
           <svg className="w-4 h-4 inline -mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           {' '}Add
         </button>
       </div>
 
-      {/* Component selector */}
       {availableComponents.length > 0 && (
         <div>
           <label className="text-xs font-medium text-slate-600">Component</label>
@@ -230,9 +226,94 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
         </div>
       )}
 
-      {/* Label */}
       <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
         className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />
+    </div>
+  );
+}
+
+// ─── Custom Component Creator Form ───────────────────
+
+interface CustomComponentCreatorProps {
+  onCreate: (def: CustomComponentDef) => void;
+}
+
+export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [measurementType, setMeasurementType] = useState<'linear' | 'area'>('linear');
+  const [pitchType, setPitchType] = useState<PitchType>('none');
+  const [wastePercent, setWastePercent] = useState('5');
+
+  const handleCreate = () => {
+    if (!name.trim()) return;
+    onCreate({
+      id: `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: name.trim(),
+      measurementType,
+      pitchType,
+      wastePercent: parseFloat(wastePercent) || 0,
+    });
+    setName('');
+    setMeasurementType('linear');
+    setPitchType('none');
+    setWastePercent('5');
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)}
+        className="w-full rounded-xl border-2 border-dashed border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 hover:border-[#FF6B35] hover:text-[#FF6B35] transition flex items-center justify-center gap-2">
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+        Add Custom Component
+      </button>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border-2 border-[#FF6B35] bg-orange-50/30 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-700">New Custom Component</span>
+        <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 p-1">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-slate-600">Name</label>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Apron Flashing, Step Flashing"
+          className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div>
+          <label className="text-xs font-medium text-slate-600">Measurement</label>
+          <div className="mt-0.5 flex rounded-lg border border-slate-300 overflow-hidden">
+            <button onClick={() => setMeasurementType('linear')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'linear' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Linear</button>
+            <button onClick={() => setMeasurementType('area')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'area' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Area</button>
+          </div>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-slate-600">Pitch calc</label>
+          <select value={pitchType} onChange={(e) => setPitchType(e.target.value as PitchType)}
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
+            <option value="none">None</option>
+            <option value="rafter">Rafter pitch</option>
+            <option value="hip_valley">Hip/Valley pitch</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-medium text-slate-600">Waste %</label>
+          <input type="number" value={wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1}
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-center focus:border-orange-500 focus:outline-none" />
+        </div>
+      </div>
+
+      <button onClick={handleCreate} disabled={!name.trim()}
+        className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${name.trim() ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
+        Create Component
+      </button>
     </div>
   );
 }

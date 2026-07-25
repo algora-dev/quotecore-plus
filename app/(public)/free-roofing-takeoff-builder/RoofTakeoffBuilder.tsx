@@ -5,22 +5,26 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { trackEvent } from '@/lib/analytics';
-import type { ComponentKind, Entry, ComponentSection, RoofComponentDef } from './types';
+import type { ComponentKind, Entry, ComponentSection, RoofComponentDef, CustomComponentDef, PitchType } from './types';
 import {
   COMPONENT_DEFS,
-  COMPONENT_ORDER,
+  BUILT_IN_ORDER,
   computeEntry,
   computeMaterialCost,
   computeLabourCost,
   makeId,
+  makeCustomId,
   makeInitialSections,
+  makeCustomSection,
+  registerCustomKind,
 } from './calc';
 import { ResultsModal } from './ResultsModal';
-import { EntryListItem, AddEntryForm } from './EntryComponents';
+import { EntryListItem, AddEntryForm, CustomComponentCreator } from './EntryComponents';
 import {
   InfoIcon,
   ComponentSymbol,
   componentLabel,
+  componentDescription,
   unitLabel,
   areaUnitLabel,
   ratioToDegrees,
@@ -29,18 +33,67 @@ import {
 
 type MeasureMode = 'actual' | 'plan';
 type UnitSystem = 'metric' | 'imperial' | 'squares';
+type ExperienceLevel = 'guided' | 'fast';
+
+const SESSION_KEY = 'qcp:frtb:session';
 
 export function RoofTakeoffBuilder() {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
+  const [experience, setExperience] = useState<ExperienceLevel>('fast');
   const [pitchMode, setPitchMode] = useState<'degrees' | 'ratio'>('degrees');
-  const [sections, setSections] = useState<Record<ComponentKind, ComponentSection>>(makeInitialSections);
+  const [sections, setSections] = useState<Record<string, ComponentSection>>(makeInitialSections);
+  const [customSections, setCustomSections] = useState<Record<string, ComponentSection>>({});
   const [masterPitch, setMasterPitch] = useState('25');
   const [masterRatio, setMasterRatio] = useState('5:12');
-  const [expandedSection, setExpandedSection] = useState<ComponentKind | null>('roof_area');
+  const [expandedSection, setExpandedSection] = useState<string | null>('roof_area');
   const [showResults, setShowResults] = useState(false);
   const [components, setComponents] = useState<RoofComponentDef[]>([]);
   const [componentsLoading, setComponentsLoading] = useState(true);
+  const [showCustomCreator, setShowCustomCreator] = useState(false);
+
+  // Restore from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data.measureMode) setMeasureMode(data.measureMode);
+        if (data.unitSystem) setUnitSystem(data.unitSystem);
+        if (data.experience) setExperience(data.experience);
+        if (data.masterPitch) setMasterPitch(data.masterPitch);
+        if (data.masterRatio) setMasterRatio(data.masterRatio);
+        if (data.sections) {
+          // Re-register custom kinds
+          for (const [key, section] of Object.entries(data.sections)) {
+            if (key.startsWith('custom-') && (section as any).customDef) {
+              registerCustomKind((section as any).customDef.id, (section as any).customDef.measurementType === 'area');
+            }
+          }
+          setSections(data.sections);
+        }
+        if (data.customSections) {
+          for (const [key, section] of Object.entries(data.customSections)) {
+            if ((section as any).customDef) {
+              registerCustomKind((section as any).customDef.id, (section as any).customDef.measurementType === 'area');
+            }
+          }
+          setCustomSections(data.customSections);
+        }
+      } catch {}
+    }
+  }, []);
+
+  // Save to sessionStorage on change
+  useEffect(() => {
+    if (measureMode && unitSystem) {
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          measureMode, unitSystem, experience, masterPitch, masterRatio, sections, customSections,
+        }));
+      } catch {}
+    }
+  }, [measureMode, unitSystem, experience, masterPitch, masterRatio, sections, customSections]);
 
   useEffect(() => {
     fetch('/api/free-tools/roof-components')
@@ -51,8 +104,8 @@ export function RoofTakeoffBuilder() {
   }, []);
 
   const componentsByKind = useMemo(() => {
-    const map: Record<ComponentKind, RoofComponentDef[]> = {} as any;
-    for (const kind of COMPONENT_ORDER) map[kind] = components.filter(c => c.component_kind === kind);
+    const map: Record<string, RoofComponentDef[]> = {};
+    for (const kind of BUILT_IN_ORDER) map[kind] = components.filter(c => c.component_kind === kind);
     return map;
   }, [components]);
 
@@ -73,41 +126,48 @@ export function RoofTakeoffBuilder() {
   };
 
   const effectivePitch = parseFloat(masterPitch) || 0;
+  const isGuided = experience === 'guided';
 
-  const addEntry = (kind: ComponentKind, entry: Entry) => {
-    setSections(prev => ({
-      ...prev,
-      [kind]: { ...prev[kind], entries: [...prev[kind].entries, entry] },
-    }));
+  const allSections = { ...sections, ...customSections };
+  const allKeys = [...BUILT_IN_ORDER, ...Object.keys(customSections)];
+
+  const addEntry = (key: string, entry: Entry) => {
+    const setter = key.startsWith('custom-') ? setCustomSections : setSections;
+    setter(prev => ({ ...prev, [key]: { ...prev[key], entries: [...prev[key].entries, entry] } }));
   };
 
-  const removeEntry = (kind: ComponentKind, entryId: string) => {
-    setSections(prev => ({ ...prev, [kind]: { ...prev[kind], entries: prev[kind].entries.filter(e => e.id !== entryId) } }));
+  const removeEntry = (key: string, entryId: string) => {
+    const setter = key.startsWith('custom-') ? setCustomSections : setSections;
+    setter(prev => ({ ...prev, [key]: { ...prev[key], entries: prev[key].entries.filter(e => e.id !== entryId) } }));
   };
 
-  const updateEntry = (kind: ComponentKind, entryId: string, updates: Partial<Entry>) => {
-    setSections(prev => ({
-      ...prev,
-      [kind]: {
-        ...prev[kind],
-        entries: prev[kind].entries.map(e => {
-          if (e.id !== entryId) return e;
-          const updated = { ...e, ...updates };
-          updated.computedValue = computeEntry(updated, kind);
-          return updated;
-        }),
-      },
-    }));
+  const updateWaste = (key: string, waste: number) => {
+    const setter = key.startsWith('custom-') ? setCustomSections : setSections;
+    setter(prev => ({ ...prev, [key]: { ...prev[key], wastePercent: waste } }));
   };
 
-  const updateWaste = (kind: ComponentKind, waste: number) => {
-    setSections(prev => ({ ...prev, [kind]: { ...prev[kind], wastePercent: waste } }));
+  const addCustomComponent = (def: CustomComponentDef) => {
+    const key = `custom-${def.id}`;
+    const section = makeCustomSection(def);
+    setCustomSections(prev => ({ ...prev, [key]: section }));
+    setExpandedSection(key);
+    setShowCustomCreator(false);
+  };
+
+  const removeCustomComponent = (key: string) => {
+    setCustomSections(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   const totals = useMemo(() => {
-    const result: Record<ComponentKind, { rawTotal: number; withWaste: number; count: number; materialCost: number; labourCost: number; totalCost: number }> = {} as any;
-    for (const kind of COMPONENT_ORDER) {
-      const section = sections[kind];
+    const result: Record<string, { rawTotal: number; withWaste: number; count: number; materialCost: number; labourCost: number; totalCost: number }> = {};
+    for (const key of allKeys) {
+      const section = allSections[key];
+      if (!section) { result[key] = { rawTotal: 0, withWaste: 0, count: 0, materialCost: 0, labourCost: 0, totalCost: 0 }; continue; }
+      const pitchType = key === 'roof_area' ? 'rafter' : key.startsWith('custom-') ? (section.customDef?.pitchType ?? 'none') : (COMPONENT_DEFS[key]?.pitchType ?? 'none');
       const rawTotal = section.entries.reduce((sum, e) => sum + e.computedValue, 0);
       const withWaste = rawTotal * (1 + section.wastePercent / 100);
       let materialCost = 0, labourCost = 0;
@@ -116,25 +176,90 @@ export function RoofTakeoffBuilder() {
         materialCost += computeMaterialCost(entry.computedValue, comp).cost;
         labourCost += computeLabourCost(entry.computedValue, comp);
       }
-      result[kind] = { rawTotal, withWaste, count: section.entries.length, materialCost, labourCost, totalCost: materialCost + labourCost };
+      result[key] = { rawTotal, withWaste, count: section.entries.length, materialCost, labourCost, totalCost: materialCost + labourCost };
     }
     return result;
-  }, [sections, getComponentById]);
+  }, [allSections, getComponentById, allKeys]);
 
-  const totalEntries = COMPONENT_ORDER.reduce((sum, k) => sum + sections[k].entries.length, 0);
+  const totalEntries = allKeys.reduce((sum, k) => sum + (totals[k]?.count ?? 0), 0);
   const hasData = totalEntries > 0;
-  const grandTotal = COMPONENT_ORDER.reduce((sum, k) => sum + totals[k].totalCost, 0);
+  const grandTotal = allKeys.reduce((sum, k) => sum + (totals[k]?.totalCost ?? 0), 0);
   const cur = '\u00A3';
-
-  const generateResults = () => {
-    if (!hasData) return;
-    setShowResults(true);
-    trackEvent('free_roof_builder_generate', { entries: totalEntries });
-  };
 
   const u = unitSystem || 'metric';
   const lenLbl = unitLabel(u);
   const areaLbl = areaUnitLabel(u);
+
+  const renderSection = (key: string) => {
+    const section = allSections[key];
+    if (!section) return null;
+    const isCustom = key.startsWith('custom-');
+    const def = COMPONENT_DEFS[key];
+    const label = componentLabel(key, section.customDef);
+    const desc = componentDescription(key, section.customDef);
+    const isRoofArea = key === 'roof_area';
+    const isExpanded = expandedSection === key;
+    const total = totals[key] ?? { rawTotal: 0, withWaste: 0, count: 0, totalCost: 0 };
+    const hasEntries = section.entries.length > 0;
+    const displayUnit = isRoofArea || (isCustom && section.customDef?.measurementType === 'area') ? areaLbl : lenLbl;
+    const availableComponents = isCustom ? [] : (componentsByKind[key] || []);
+
+    return (
+      <div key={key} className={`rounded-xl border bg-white transition ${isExpanded ? 'border-slate-300 shadow-sm' : 'border-slate-200'}`}>
+        <div className="flex items-center justify-between px-4 py-3">
+          <button onClick={() => setExpandedSection(isExpanded ? null : key)} className="flex items-center gap-2.5 cursor-pointer hover:text-[#FF6B35] transition flex-1 min-w-0">
+            <ComponentSymbol kind={key} customDef={section.customDef} className="w-4 h-4 text-slate-500 flex-shrink-0" />
+            <span className="text-sm font-semibold text-slate-900 truncate">{label}</span>
+            {hasEntries && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 flex-shrink-0">{section.entries.length} {section.entries.length === 1 ? 'entry' : 'entries'}</span>}
+            {isGuided && !hasEntries && <span className="text-xs text-slate-400 truncate hidden md:inline">{desc}</span>}
+            <InfoIcon text={desc} />
+          </button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {hasEntries && (
+              <div className="text-right">
+                <span className="text-sm font-semibold text-slate-900">{total.rawTotal.toFixed(2)} {displayUnit}</span>
+                {total.totalCost > 0 && <span className="ml-2 text-xs text-[#FF6B35] font-medium">{cur}{total.totalCost.toFixed(2)}</span>}
+                {section.wastePercent > 0 && <span className="ml-2 text-xs text-slate-400">+{section.wastePercent}%</span>}
+              </div>
+            )}
+            {isCustom && (
+              <button onClick={() => removeCustomComponent(key)} className="text-slate-300 hover:text-red-500 transition p-1" aria-label="Remove custom component">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
+            <button onClick={() => setExpandedSection(isExpanded ? null : key)}>
+              <svg className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        {isExpanded && (
+          <div className="border-t border-slate-100 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-slate-600 flex items-center gap-1">Waste<InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps." /></label>
+              <div className="relative">
+                <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm text-center focus:border-orange-500 focus:outline-none" />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+              </div>
+            </div>
+
+            <AddEntryForm kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={availableComponents} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} onAdd={(entry) => addEntry(key, entry)} />
+
+            {hasEntries && (
+              <div className="space-y-1.5">
+                {section.entries.map((entry, idx) => (
+                  <EntryListItem key={entry.id} entry={entry} index={idx} kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} getComponentById={getComponentById} onRemove={() => removeEntry(key, entry.id)} />
+                ))}
+              </div>
+            )}
+
+            {!hasEntries && <p className="text-xs text-slate-400 text-center py-2">No {label.toLowerCase()} entries yet. Add your first one above.</p>}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <FreeToolsAuthProvider>
@@ -152,6 +277,7 @@ export function RoofTakeoffBuilder() {
         </section>
 
         <div className="mx-auto max-w-5xl px-2 md:px-6 py-6 md:py-10 pb-20 md:pb-10">
+          {/* Step 1: Measurement Mode */}
           {!measureMode && (
             <div className="space-y-4">
               <div className="text-center">
@@ -167,10 +293,10 @@ export function RoofTakeoffBuilder() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <InfoIcon text="Use this if you've already measured the roof (e.g. with a tape, laser, or from software) and have the real final lengths and areas. The system just records what you enter and adds waste." />
+                    <InfoIcon text="Use this if you've already measured the roof and have the real final lengths and areas. No pitch calculation needed." />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900">I have actual measurements</h3>
-                  <p className="mt-1 text-sm text-slate-500 flex-1">You already have final roof dimensions (real lengths, real areas). Just type them in - no pitch calculation needed.</p>
+                  <p className="mt-1 text-sm text-slate-500 flex-1">You already have final roof dimensions. Just type them in - no pitch calculation needed.</p>
                 </button>
                 <button onClick={() => setMeasureMode('plan')}
                   className="group rounded-2xl border-2 border-slate-200 bg-white p-6 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] min-h-[180px] flex flex-col">
@@ -180,26 +306,25 @@ export function RoofTakeoffBuilder() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <InfoIcon text="Use this if you're measuring off a plan view (top-down drawing or PDF). You enter the plan lengths and the roof pitch, and the system calculates the real sloped lengths and areas for you." />
+                    <InfoIcon text="Use this if you're measuring off a plan view. Enter plan lengths and the roof pitch - we'll calculate the real sloped lengths automatically." />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900">I'm measuring from a plan</h3>
-                  <p className="mt-1 text-sm text-slate-500 flex-1">You have a top-down roof plan. Enter plan dimensions and the roof pitch - we'll calculate the real sloped lengths and areas automatically.</p>
+                  <p className="mt-1 text-sm text-slate-500 flex-1">You have a top-down roof plan. Enter plan dimensions and the roof pitch - we'll calculate the real sloped lengths and areas.</p>
                 </button>
               </div>
             </div>
           )}
 
+          {/* Step 2: Units */}
           {measureMode && !unitSystem && (
             <div className="space-y-4">
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
-                </div>
+                <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
                 <button onClick={() => setMeasureMode(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change mode</button>
               </div>
               <div className="text-center">
                 <h2 className="text-lg font-semibold text-slate-900">What measurement units do you use?</h2>
-                <p className="mt-1 text-sm text-slate-500">Pick your preferred units. You'll use these for the entire takeoff.</p>
+                <p className="mt-1 text-sm text-slate-500">Pick your preferred units for the entire takeoff.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <button onClick={() => { setUnitSystem('metric'); setExpandedSection('roof_area'); }}
@@ -224,22 +349,28 @@ export function RoofTakeoffBuilder() {
             </div>
           )}
 
+          {/* Step 3: Builder */}
           {measureMode && unitSystem && (
             <>
+              {/* Setup bar */}
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
-                  </div>
+                  <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   <div className="w-px h-4 bg-slate-200" />
                   <span className="text-sm font-medium text-slate-500">{u === 'metric' ? 'Metric (m / m&sup2;)' : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Experience toggle */}
+                  <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5">
+                    <button onClick={() => setExperience('guided')} className={`rounded-full px-3 py-1 text-xs font-medium transition ${isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Guided</button>
+                    <button onClick={() => setExperience('fast')} className={`rounded-full px-3 py-1 text-xs font-medium transition ${!isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Fast</button>
+                  </div>
                   <button onClick={() => setUnitSystem(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change units</button>
                   <button onClick={() => { setMeasureMode(null); setUnitSystem(null); }} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Start over</button>
                 </div>
               </div>
 
+              {/* Pitch input (plan mode only) */}
               {measureMode === 'plan' && (
                 <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5 mb-6">
                   <div className="flex flex-col md:flex-row md:items-center gap-3">
@@ -272,78 +403,46 @@ export function RoofTakeoffBuilder() {
                 </div>
               )}
 
-              <div className="space-y-3">
-                {COMPONENT_ORDER.map(kind => {
-                  const section = sections[kind];
-                  const isExpanded = expandedSection === kind;
-                  const total = totals[kind];
-                  const hasEntries = section.entries.length > 0;
-                  const displayUnit = kind === 'roof_area' ? areaLbl : lenLbl;
-                  return (
-                    <div key={kind} className={`rounded-xl border bg-white transition ${isExpanded ? 'border-slate-300 shadow-sm' : 'border-slate-200'}`}>
-                      <button onClick={() => setExpandedSection(isExpanded ? null : kind)} className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-orange-50/40 transition rounded-xl">
-                        <div className="flex items-center gap-2.5">
-                          <ComponentSymbol kind={kind} className="w-4 h-4 text-slate-500" />
-                          <span className="text-sm font-semibold text-slate-900">{componentLabel(kind)}</span>
-                          {hasEntries && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{section.entries.length} {section.entries.length === 1 ? 'entry' : 'entries'}</span>}
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {hasEntries && (
-                            <div className="text-right">
-                              <span className="text-sm font-semibold text-slate-900">{total.rawTotal.toFixed(2)} {displayUnit}</span>
-                              {total.totalCost > 0 && <span className="ml-2 text-xs text-[#FF6B35] font-medium">{cur}{total.totalCost.toFixed(2)}</span>}
-                              {section.wastePercent > 0 && <span className="ml-2 text-xs text-slate-400">+{section.wastePercent}%</span>}
-                            </div>
-                          )}
-                          <svg className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                      </button>
-                      {isExpanded && (
-                        <div className="border-t border-slate-100 p-4 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <label className="text-xs font-medium text-slate-600 flex items-center gap-1">Waste<InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps. E.g. 10% waste on 100m means you'll order 110m." /></label>
-                            <div className="relative">
-                              <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(kind, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm text-center focus:border-orange-500 focus:outline-none" />
-                              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
-                            </div>
-                         </div>
+              {/* Roof Area section (primary) */}
+              {isGuided && <h2 className="text-sm font-semibold text-slate-900 mb-2">Step 1: Roof Area</h2>}
+              {renderSection('roof_area')}
 
-                         <AddEntryForm kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={componentsByKind[kind] || []} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} onAdd={(entry) => addEntry(kind, entry)} />
-
-                         {hasEntries && (
-                           <div className="space-y-1.5">
-                             {section.entries.map((entry, idx) => (
-                               <EntryListItem key={entry.id} entry={entry} index={idx} kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} getComponentById={getComponentById} onRemove={() => removeEntry(kind, entry.id)} />
-                             ))}
-                           </div>
-                         )}
-
-                         {!hasEntries && <p className="text-xs text-slate-400 text-center py-2">No {componentLabel(kind).toLowerCase()} entries yet. Add your first one above.</p>}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              {/* Divider */}
+              <div className="my-5 flex items-center gap-3">
+                <div className="flex-1 h-px bg-slate-200" />
+                <span className="text-xs font-medium text-slate-400">Additional Components</span>
+                <div className="flex-1 h-px bg-slate-200" />
               </div>
 
-              {hasData && (
+              {/* Additional components */}
+              <div className="space-y-3">
+                {BUILT_IN_ORDER.filter(k => k !== 'roof_area').map(k => renderSection(k))}
+                {Object.keys(customSections).map(k => renderSection(k))}
+                <CustomComponentCreator onCreate={addCustomComponent} />
+              </div>
+
+              {/* Summary */}
+              {hasData ? (
                 <div className="mt-6 rounded-xl bg-slate-900 text-white p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold">Summary</h3>
                     <span className="text-xs text-slate-400">{totalEntries} {totalEntries === 1 ? 'entry' : 'entries'} total</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {COMPONENT_ORDER.map(kind => {
-                      const t = totals[kind];
-                      if (t.count === 0) return null;
-                      const du = kind === 'roof_area' ? areaLbl : lenLbl;
+                    {allKeys.map(key => {
+                      const t = totals[key];
+                      if (!t || t.count === 0) return null;
+                      const section = allSections[key];
+                      const isArea = key === 'roof_area' || (key.startsWith('custom-') && section.customDef?.measurementType === 'area');
+                      const du = isArea ? areaLbl : lenLbl;
                       return (
-                        <div key={kind} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2">
-                          <div className="flex items-center gap-1.5"><ComponentSymbol kind={kind} className="w-3 h-3 text-slate-400" /><span className="text-xs text-slate-300">{componentLabel(kind)}</span></div>
+                        <div key={key} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2">
+                          <div className="flex items-center gap-1.5">
+                            <ComponentSymbol kind={key} customDef={section.customDef} className="w-3 h-3 text-slate-400" />
+                            <span className="text-xs text-slate-300 truncate">{componentLabel(key, section.customDef)}</span>
+                          </div>
                           <div className="mt-1 text-sm font-semibold">{t.rawTotal.toFixed(2)} {du}</div>
-                          {sections[kind].wastePercent > 0 && <div className="text-xs text-slate-400">w/ waste: {t.withWaste.toFixed(2)} {du}</div>}
+                          {section.wastePercent > 0 && <div className="text-xs text-slate-400">w/ waste: {t.withWaste.toFixed(2)} {du}</div>}
                           {t.totalCost > 0 && <div className="text-xs text-[#FF6B35] font-medium mt-0.5">{cur}{t.totalCost.toFixed(2)}</div>}
                         </div>
                       );
@@ -355,24 +454,24 @@ export function RoofTakeoffBuilder() {
                       <span className="text-xl font-bold">{cur}{grandTotal.toFixed(2)}</span>
                     </div>
                   )}
-                  <button onClick={generateResults} className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
+                  <button onClick={() => { setShowResults(true); trackEvent('free_roof_builder_generate', { entries: totalEntries }); }}
+                    className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
                     Generate Takeoff Report
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                   </button>
                 </div>
-              )}
-              {!hasData && (
+              ) : (
                 <div className="mt-6 rounded-xl border-dashed border border-slate-200 px-6 py-12 text-center">
                   <svg className="mx-auto w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
-                  <p className="mt-3 text-sm text-slate-500">Start by adding measurements for any roof component above.</p>
-                  <p className="mt-1 text-xs text-slate-400">Expand a section and use the add form to begin.</p>
+                  <p className="mt-3 text-sm text-slate-500">Start by adding your roof area measurements above.</p>
+                  <p className="mt-1 text-xs text-slate-400">Then add ridge, hip, valley, barge, spouting, or custom components below.</p>
                 </div>
               )}
             </>
           )}
         </div>
 
-        {showResults && <ResultsModal sections={sections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} onClose={() => setShowResults(false)} />}
+        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} />}
         <SiteFooter />
       </main>
     </FreeToolsAuthProvider>

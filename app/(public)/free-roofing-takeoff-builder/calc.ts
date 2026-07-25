@@ -1,19 +1,19 @@
 // Shared calculation functions for the Roof Takeoff Builder
 
-import type { ComponentKind, Entry, RoofComponentDef } from './types';
+import type { ComponentKind, Entry, RoofComponentDef, CustomComponentDef, PitchType, ComponentSection } from './types';
 
 // ─── Component definitions (static fallback) ─────────
 
-export const COMPONENT_DEFS: Record<ComponentKind, { label: string; unit: string; pitchType: 'rafter' | 'hip_valley' | 'none'; colour: string }> = {
-  roof_area: { label: 'Roof Area', unit: 'm²', pitchType: 'rafter', colour: '#3B82F6' },
-  ridge: { label: 'Ridge', unit: 'm', pitchType: 'none', colour: '#22C55E' },
-  hip: { label: 'Hip', unit: 'm', pitchType: 'hip_valley', colour: '#EF4444' },
-  valley: { label: 'Valley', unit: 'm', pitchType: 'hip_valley', colour: '#EAB308' },
-  barge: { label: 'Barge', unit: 'm', pitchType: 'rafter', colour: '#A855F7' },
-  spouting: { label: 'Spouting', unit: 'm', pitchType: 'none', colour: '#64748B' },
+export const COMPONENT_DEFS: Record<string, { label: string; unit: string; pitchType: PitchType; colour: string; description: string }> = {
+  roof_area: { label: 'Roof Area', unit: 'm\u00B2', pitchType: 'rafter', colour: '#3B82F6', description: 'The total surface area of all roof planes. Calculated from your plan dimensions and roof pitch.' },
+  ridge: { label: 'Ridge', unit: 'm', pitchType: 'none', colour: '#22C55E', description: 'The horizontal line at the top of a roof where two roof slopes meet - the peak of the roof.' },
+  hip: { label: 'Hip', unit: 'm', pitchType: 'hip_valley', colour: '#EF4444', description: 'The angled line where two roof slopes meet on an external corner. Runs from the ridge down to the eaves.' },
+  valley: { label: 'Valley', unit: 'm', pitchType: 'hip_valley', colour: '#EAB308', description: 'The angled line where two roof slopes meet on an internal corner. Water flows into valleys. Runs from ridge down to the eaves.' },
+  barge: { label: 'Barge', unit: 'm', pitchType: 'rafter', colour: '#A855F7', description: 'The sloped edge of the roof at a gable end. Also called a rafter edge or verge. Runs from the ridge down to the eaves at the side of the roof.' },
+  spouting: { label: 'Spouting', unit: 'm', pitchType: 'none', colour: '#64748B', description: 'The gutter system along the bottom edge of the roof. Measured along the eaves where water runs off.' },
 };
 
-export const COMPONENT_ORDER: ComponentKind[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting'];
+export const BUILT_IN_ORDER: string[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting'];
 
 // ─── Pitch calculation ───────────────────────────────
 
@@ -30,7 +30,7 @@ export function hipValleyPitchFactor(degrees: number): number {
   return Math.sqrt(rf * rf + 1);
 }
 
-export function pitchFactor(degrees: number, pitchType: 'rafter' | 'hip_valley' | 'none'): number {
+export function pitchFactor(degrees: number, pitchType: PitchType): number {
   if (pitchType === 'none') return 1;
   if (pitchType === 'hip_valley') return hipValleyPitchFactor(degrees);
   return rafterPitchFactor(degrees);
@@ -38,23 +38,32 @@ export function pitchFactor(degrees: number, pitchType: 'rafter' | 'hip_valley' 
 
 // ─── Entry computation ───────────────────────────────
 
-export function computeEntry(entry: Entry, kind: ComponentKind): number {
-  const def = COMPONENT_DEFS[kind];
+export function computeEntry(entry: Entry, kind: string, pitchType: PitchType): number {
   const qty = entry.quantity ?? 1;
   if (entry.inputMode === 'actual') {
     return (entry.actualValue ?? 0) * qty;
   }
-  // pitch_calculated mode
   if (entry.isTotalInput) {
-    // User entered the total plan value directly (not width x length)
-    return (entry.actualValue ?? 0) * pitchFactor(entry.pitchDegrees, def.pitchType) * qty;
+    return (entry.actualValue ?? 0) * pitchFactor(entry.pitchDegrees, pitchType) * qty;
   }
-  if (kind === 'roof_area') {
+  const isArea = kind === 'roof_area' || (kind === 'custom' && isCustomArea(kind));
+  if (isArea) {
     const planArea = (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0);
-    return planArea * pitchFactor(entry.pitchDegrees, def.pitchType) * qty;
+    return planArea * pitchFactor(entry.pitchDegrees, pitchType) * qty;
   }
   const planLength = entry.planLength ?? 0;
-  return planLength * pitchFactor(entry.pitchDegrees, def.pitchType) * qty;
+  return planLength * pitchFactor(entry.pitchDegrees, pitchType) * qty;
+}
+
+// Track which custom components are area-based
+const customAreaMap = new Map<string, boolean>();
+
+export function registerCustomKind(id: string, isArea: boolean) {
+  customAreaMap.set(id, isArea);
+}
+
+function isCustomArea(kind: string): boolean {
+  return customAreaMap.get(kind) ?? false;
 }
 
 // ─── Pricing calculation ─────────────────────────────
@@ -85,6 +94,10 @@ export function makeId(): string {
   return `e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+export function makeCustomId(): string {
+  return `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function makeEntry(pitchDegrees: number = 25): Entry {
   return {
     id: makeId(),
@@ -96,10 +109,20 @@ export function makeEntry(pitchDegrees: number = 25): Entry {
   };
 }
 
-export function makeInitialSections(): Record<ComponentKind, { kind: ComponentKind; entries: Entry[]; wastePercent: number }> {
-  const sections = {} as Record<ComponentKind, { kind: ComponentKind; entries: Entry[]; wastePercent: number }>;
-  for (const kind of COMPONENT_ORDER) {
-    sections[kind] = { kind, entries: [], wastePercent: kind === 'roof_area' ? 10 : 5 };
+export function makeInitialSections(): Record<string, ComponentSection> {
+  const sections: Record<string, ComponentSection> = {};
+  for (const kind of BUILT_IN_ORDER) {
+    sections[kind] = { kind: kind as ComponentKind, entries: [], wastePercent: kind === 'roof_area' ? 10 : 5 };
   }
   return sections;
+}
+
+export function makeCustomSection(def: CustomComponentDef): ComponentSection {
+  registerCustomKind(def.id, def.measurementType === 'area');
+  return {
+    kind: 'custom',
+    entries: [],
+    wastePercent: def.wastePercent,
+    customDef: def,
+  };
 }

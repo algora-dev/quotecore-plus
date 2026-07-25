@@ -1,8 +1,16 @@
 // Shared types for the Roof Takeoff Builder free tool
 
-export type ComponentKind = 'roof_area' | 'ridge' | 'hip' | 'valley' | 'barge' | 'spouting';
+export type ComponentKind = 'roof_area' | 'ridge' | 'hip' | 'valley' | 'barge' | 'spouting' | 'custom';
 export type InputMode = 'pitch_calculated' | 'actual';
-export type PitchScope = 'master' | 'per_component' | 'per_entry';
+export type PitchType = 'rafter' | 'hip_valley' | 'none';
+
+export interface CustomComponentDef {
+  id: string;
+  name: string;
+  measurementType: 'linear' | 'area';
+  pitchType: PitchType;
+  wastePercent: number;
+}
 
 export interface RoofComponentDef {
   id: string;
@@ -39,4 +47,5 @@ export interface ComponentSection {
   kind: ComponentKind;
   entries: Entry[];
   wastePercent: number;
+  customDef?: CustomComponentDef;
 }

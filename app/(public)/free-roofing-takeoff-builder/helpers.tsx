@@ -1,16 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { ComponentKind } from './types';
+import type { ComponentKind, CustomComponentDef } from './types';
+import { COMPONENT_DEFS } from './calc';
 
 // ─── Unit conversion helpers ─────────────────────────
 
-const M_TO_FT = 3.28084;
-const M2_TO_SQFT = 10.7639;
-
 export function unitLabel(unit: 'metric' | 'imperial' | 'squares'): string {
   if (unit === 'metric') return 'm';
-  // Both imperial and squares use linear feet for non-area components
   return 'ft';
 }
 
@@ -40,7 +37,7 @@ export function degreesToRatio(deg: number, unit: 'metric' | 'imperial' | 'squar
 
 // ─── Component symbols (SVG) ─────────────────────────
 
-export function ComponentSymbol({ kind, className = 'w-4 h-4' }: { kind: ComponentKind; className?: string }) {
+export function ComponentSymbol({ kind, customDef, className = 'w-4 h-4' }: { kind: string; customDef?: CustomComponentDef; className?: string }) {
   const stroke = 'currentColor';
   const sw = 1.8;
   switch (kind) {
@@ -80,10 +77,17 @@ export function ComponentSymbol({ kind, className = 'w-4 h-4' }: { kind: Compone
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 8h18M5 8v4a2 2 0 002 2h10a2 2 0 002-2V8" />
         </svg>
       );
+    default:
+      // Custom component - use a generic tool icon
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.5 19.5h3m-3 0v-3" />
+        </svg>
+      );
   }
 }
 
-// ─── Info Icon (hover/click tooltip) ─────────────────
+// ─── Info Icon (hover + click tooltip) ───────────────
 
 export function InfoIcon({ text }: { text: string }) {
   const [open, setOpen] = useState(false);
@@ -101,7 +105,7 @@ export function InfoIcon({ text }: { text: string }) {
         </svg>
       </button>
       {open && (
-        <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-1 w-64 rounded-lg bg-slate-900 text-white text-xs p-3 shadow-lg pointer-events-none">
+        <div className="absolute z-50 top-full left-1/2 -translate-x-1/2 mt-1 w-64 rounded-lg bg-slate-900 text-white text-xs p-3 shadow-lg">
           {text}
           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45" />
         </div>
@@ -112,30 +116,18 @@ export function InfoIcon({ text }: { text: string }) {
 
 // ─── Component display labels ────────────────────────
 
-export function componentLabel(kind: ComponentKind): string {
-  const labels: Record<ComponentKind, string> = {
-    roof_area: 'Roof Area',
-    ridge: 'Ridge',
-    hip: 'Hip',
-    valley: 'Valley',
-    barge: 'Barge (Rake)',
-    spouting: 'Spouting',
-  };
-  return labels[kind];
+export function componentLabel(kind: string, customDef?: CustomComponentDef): string {
+  if (kind === 'custom' && customDef) return customDef.name;
+  const def = COMPONENT_DEFS[kind];
+  return def ? def.label : 'Custom';
 }
 
-// ─── NumField helper ─────────────────────────────────
-
-export function NumField({ label, value, onChange, step = 0.1, min = 0, max, suffix }: { label: string; value: number | undefined; onChange: (v: number) => void; step?: number; min?: number; max?: number; suffix?: string }) {
-  return (
-    <div>
-      <label className="text-xs font-medium text-slate-600">{label}</label>
-      <div className="relative">
-        <input type="number" value={value ?? ''} onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          min={min} max={max} step={step} inputMode="decimal"
-          className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-        {suffix && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">{suffix}</span>}
-      </div>
-    </div>
-  );
+export function componentDescription(kind: string, customDef?: CustomComponentDef): string {
+  if (kind === 'custom' && customDef) {
+    const mt = customDef.measurementType === 'area' ? 'Area-based' : 'Linear';
+    const pt = customDef.pitchType === 'rafter' ? 'rafter pitch' : customDef.pitchType === 'hip_valley' ? 'hip/valley pitch' : 'no pitch';
+    return `${mt} component, ${pt}.`;
+  }
+  const def = COMPONENT_DEFS[kind];
+  return def ? def.description : '';
 }
