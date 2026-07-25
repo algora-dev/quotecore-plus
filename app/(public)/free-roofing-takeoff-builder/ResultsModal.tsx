@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { ComponentKind, Entry, ComponentSection, RoofComponentDef, CustomComponentDef } from './types';
 import { COMPONENT_DEFS, BUILT_IN_ORDER, computeMaterialCost, computeLabourCost } from './calc';
 import { ComponentSymbol, componentLabel } from './helpers';
@@ -19,6 +20,60 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
   const areaUnit = unitSystem === 'metric' ? 'm\u00B2' : unitSystem === 'imperial' ? 'sq ft' : 'squares';
+
+  // Move print container to body root for clean printing
+  useEffect(() => {
+    function handleBeforePrint() {
+      const el = document.getElementById('takeoff-print');
+      if (el) {
+        el.dataset.originalParent = 'true';
+        document.body.appendChild(el);
+        el.style.position = 'static';
+        el.style.width = '100%';
+        el.style.maxWidth = 'none';
+        el.style.maxHeight = 'none';
+        el.style.height = 'auto';
+        el.style.overflow = 'visible';
+        el.style.borderRadius = '0';
+        el.style.boxShadow = 'none';
+        el.style.margin = '0';
+        el.style.padding = '0';
+      }
+      // Hide everything else
+      document.body.querySelectorAll(':scope > *:not(#takeoff-print)').forEach(node => {
+        (node as HTMLElement).style.display = 'none';
+      });
+    }
+    function handleAfterPrint() {
+      const el = document.getElementById('takeoff-print');
+      if (el && el.dataset.originalParent) {
+        const root = document.getElementById('print-root');
+        if (root) root.appendChild(el);
+        delete el.dataset.originalParent;
+        el.style.position = '';
+        el.style.width = '';
+        el.style.maxWidth = '';
+        el.style.maxHeight = '';
+        el.style.height = '';
+        el.style.overflow = '';
+        el.style.borderRadius = '';
+        el.style.boxShadow = '';
+        el.style.margin = '';
+        el.style.padding = '';
+      }
+      // Restore everything
+      document.body.querySelectorAll(':scope > *').forEach(node => {
+        (node as HTMLElement).style.display = '';
+      });
+    }
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
+
   const unitFor = (key: string) => {
     const section = sections[key];
     if (key === 'roof_area') return areaUnit;
@@ -56,7 +111,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4 print:block print:static print:p-0 print:bg-white">
+    <div id="print-root" className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4 print:block print:static print:p-0 print:bg-white">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col print:shadow-none print:rounded-none print:max-h-none print:w-full print:max-w-none print:overflow-visible" id="takeoff-print">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 print:border-slate-300">
           <div>
@@ -169,31 +224,8 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
       <style jsx global>{`
         @media print {
           @page { margin: 1cm; }
-          html, body { background: white !important; height: auto !important; }
-          /* Hide everything when printing */
-          body > * { visibility: hidden; }
-          /* Reset the overlay container so it doesn't center/push content down */
-          body > div { position: static !important; display: block !important; height: auto !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; }
-          /* Show only the modal and its children */
-          #takeoff-print, #takeoff-print * { visibility: visible; }
-          /* Position modal at top of page 1 */
-          #takeoff-print {
-            position: static !important;
-            left: 0 !important;
-            top: 0 !important;
-            right: 0 !important;
-            width: 100% !important;
-            max-width: none !important;
-            max-height: none !important;
-            height: auto !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            overflow: visible !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            transform: none !important;
-            display: block !important;
-          }
+          html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
+          #takeoff-print { display: block !important; }
           header, footer, button { display: none !important; }
         }
       `}</style>
