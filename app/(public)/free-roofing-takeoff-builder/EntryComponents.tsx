@@ -141,7 +141,7 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
       if (!l || l <= 0) return;
       entry = {
         id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
-        planLength: l, pitchDegrees, actualValue: 0, computedValue: 0,
+        planLength: l, pitchDegrees, actualValue: usePitch ? 0 : l, computedValue: 0,
         selectedComponentId, quantity: qty, isTotalInput: false,
       };
     }
