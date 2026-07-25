@@ -9,7 +9,7 @@ export const COMPONENT_DEFS: Record<ComponentKind, { label: string; unit: string
   ridge: { label: 'Ridge', unit: 'm', pitchType: 'none', colour: '#22C55E' },
   hip: { label: 'Hip', unit: 'm', pitchType: 'hip_valley', colour: '#EF4444' },
   valley: { label: 'Valley', unit: 'm', pitchType: 'hip_valley', colour: '#EAB308' },
-  barge: { label: 'Barge', unit: 'm', pitchType: 'none', colour: '#A855F7' },
+  barge: { label: 'Barge', unit: 'm', pitchType: 'rafter', colour: '#A855F7' },
   spouting: { label: 'Spouting', unit: 'm', pitchType: 'none', colour: '#64748B' },
 };
 

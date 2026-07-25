@@ -2,6 +2,7 @@
 
 import type { ComponentKind, Entry, ComponentSection, RoofComponentDef } from './types';
 import { COMPONENT_DEFS, COMPONENT_ORDER, computeMaterialCost, computeLabourCost } from './calc';
+import { ComponentSymbol, componentLabel } from './helpers';
 
 interface ResultsModalProps {
   sections: Record<ComponentKind, ComponentSection>;
@@ -45,8 +46,8 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, o
             return (
               <div key={kind}>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: def.colour }} />
-                  <h3 className="text-sm font-semibold text-slate-900">{def.label}</h3>
+                  <ComponentSymbol kind={kind} className="w-3.5 h-3.5 text-slate-500" />
+                  <h3 className="text-sm font-semibold text-slate-900">{componentLabel(kind)}</h3>
                   <span className="text-xs text-slate-400">({t.count} {t.count === 1 ? 'entry' : 'entries'})</span>
                 </div>
 
