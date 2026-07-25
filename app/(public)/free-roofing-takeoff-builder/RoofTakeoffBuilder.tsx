@@ -12,10 +12,11 @@ import {
   computeEntry,
   computeMaterialCost,
   computeLabourCost,
-  makeEntry,
+  makeId,
   makeInitialSections,
 } from './calc';
 import { ResultsModal } from './ResultsModal';
+import { EntryListItem, AddEntryForm } from './EntryComponents';
 import {
   InfoIcon,
   ComponentSymbol,
@@ -24,7 +25,6 @@ import {
   areaUnitLabel,
   ratioToDegrees,
   degreesToRatio,
-  NumField,
 } from './helpers';
 
 type MeasureMode = 'actual' | 'plan';
@@ -74,11 +74,10 @@ export function RoofTakeoffBuilder() {
 
   const effectivePitch = parseFloat(masterPitch) || 0;
 
-  const addEntry = (kind: ComponentKind) => {
-    const firstComp = componentsByKind[kind]?.[0];
+  const addEntry = (kind: ComponentKind, entry: Entry) => {
     setSections(prev => ({
       ...prev,
-      [kind]: { ...prev[kind], entries: [...prev[kind].entries, { ...makeEntry(effectivePitch), selectedComponentId: firstComp?.id ?? null }] },
+      [kind]: { ...prev[kind], entries: [...prev[kind].entries, entry] },
     }));
   };
 
@@ -153,7 +152,6 @@ export function RoofTakeoffBuilder() {
         </section>
 
         <div className="mx-auto max-w-5xl px-2 md:px-6 py-6 md:py-10 pb-20 md:pb-10">
-          {/* Step 1: Measurement Mode Selection */}
           {!measureMode && (
             <div className="space-y-4">
               <div className="text-center">
@@ -172,9 +170,7 @@ export function RoofTakeoffBuilder() {
                     <InfoIcon text="Use this if you've already measured the roof (e.g. with a tape, laser, or from software) and have the real final lengths and areas. The system just records what you enter and adds waste." />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900">I have actual measurements</h3>
-                  <p className="mt-1 text-sm text-slate-500 flex-1">
-                    You already have final roof dimensions (real lengths, real areas). Just type them in - no pitch calculation needed.
-                  </p>
+                  <p className="mt-1 text-sm text-slate-500 flex-1">You already have final roof dimensions (real lengths, real areas). Just type them in - no pitch calculation needed.</p>
                 </button>
                 <button onClick={() => setMeasureMode('plan')}
                   className="group rounded-2xl border-2 border-slate-200 bg-white p-6 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] min-h-[180px] flex flex-col">
@@ -187,20 +183,16 @@ export function RoofTakeoffBuilder() {
                     <InfoIcon text="Use this if you're measuring off a plan view (top-down drawing or PDF). You enter the plan lengths and the roof pitch, and the system calculates the real sloped lengths and areas for you." />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900">I'm measuring from a plan</h3>
-                  <p className="mt-1 text-sm text-slate-500 flex-1">
-                    You have a top-down roof plan. Enter plan dimensions and the roof pitch - we'll calculate the real sloped lengths and areas automatically.
-                  </p>
+                  <p className="mt-1 text-sm text-slate-500 flex-1">You have a top-down roof plan. Enter plan dimensions and the roof pitch - we'll calculate the real sloped lengths and areas automatically.</p>
                 </button>
               </div>
             </div>
           )}
 
-          {/* Step 2: Unit System Selection */}
           {measureMode && !unitSystem && (
             <div className="space-y-4">
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  
                   <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
                 </div>
                 <button onClick={() => setMeasureMode(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change mode</button>
@@ -232,13 +224,11 @@ export function RoofTakeoffBuilder() {
             </div>
           )}
 
-          {/* Step 3: Component sections */}
           {measureMode && unitSystem && (
             <>
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex items-center gap-2">
-                    
                     <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   </div>
                   <div className="w-px h-4 bg-slate-200" />
@@ -319,16 +309,18 @@ export function RoofTakeoffBuilder() {
                               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
                             </div>
                           </div>
-                          {section.entries.map((entry, idx) => (
-                            <EntryRow key={entry.id} entry={entry} index={idx} kind={kind} measureMode={measureMode} unitSystem={u} lenLabel={lenLbl} areaLabel={areaLbl}
-                              availableComponents={componentsByKind[kind] || []} componentsLoading={componentsLoading}
-                              onUpdate={(updates) => updateEntry(kind, entry.id, updates)} onRemove={() => removeEntry(kind, entry.id)} getComponentById={getComponentById} />
-                          ))}
-                          <button onClick={() => addEntry(kind)} className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-300 px-4 py-2 text-xs font-medium text-slate-500 hover:border-[#FF6B35] hover:text-[#FF6B35] transition">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                            Add {componentLabel(kind)} Entry
-                          </button>
-                          {!hasEntries && <p className="text-xs text-slate-400 text-center py-2">No {componentLabel(kind).toLowerCase()} entries yet. Click above to add one.</p>}
+
+                          {hasEntries && (
+                            <div className="space-y-1.5">
+                              {section.entries.map((entry, idx) => (
+                                <EntryListItem key={entry.id} entry={entry} index={idx} kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} getComponentById={getComponentById} onRemove={() => removeEntry(kind, entry.id)} />
+                              ))}
+                            </div>
+                          )}
+
+                          <AddEntryForm kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={componentsByKind[kind] || []} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} onAdd={(entry) => addEntry(kind, entry)} />
+
+                          {!hasEntries && <p className="text-xs text-slate-400 text-center py-2">No {componentLabel(kind).toLowerCase()} entries yet. Add your first one above.</p>}
                         </div>
                       )}
                     </div>
@@ -373,7 +365,7 @@ export function RoofTakeoffBuilder() {
                 <div className="mt-6 rounded-xl border-dashed border border-slate-200 px-6 py-12 text-center">
                   <svg className="mx-auto w-10 h-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
                   <p className="mt-3 text-sm text-slate-500">Start by adding measurements for any roof component above.</p>
-                  <p className="mt-1 text-xs text-slate-400">Expand a section and click &quot;Add Entry&quot; to begin.</p>
+                  <p className="mt-1 text-xs text-slate-400">Expand a section and use the add form to begin.</p>
                 </div>
               )}
             </>
@@ -384,147 +376,5 @@ export function RoofTakeoffBuilder() {
         <SiteFooter />
       </main>
     </FreeToolsAuthProvider>
-  );
-}
-
-// ─── Entry Row Component ─────────────────────────────
-
-interface EntryRowProps {
-  entry: Entry;
-  index: number;
-  kind: ComponentKind;
-  measureMode: 'actual' | 'plan';
-  unitSystem: UnitSystem;
-  lenLabel: string;
-  areaLabel: string;
-  availableComponents: RoofComponentDef[];
-  componentsLoading: boolean;
-  onUpdate: (updates: Partial<Entry>) => void;
-  onRemove: () => void;
-  getComponentById: (id: string | null) => RoofComponentDef | null;
-}
-
-function EntryRow({ entry, index, kind, measureMode, unitSystem, lenLabel, areaLabel, availableComponents, onUpdate, onRemove, getComponentById }: EntryRowProps) {
-  const def = COMPONENT_DEFS[kind];
-  const isRoofArea = kind === 'roof_area';
-  const usePitch = measureMode === 'plan' && def.pitchType !== 'none';
-  const [lengthMode, setLengthMode] = useState<'individual' | 'total'>('individual');
-  const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>('dimensions');
-  const selectedComp = getComponentById(entry.selectedComponentId);
-  const compCost = selectedComp ? computeMaterialCost(entry.computedValue, selectedComp) : { cost: 0, packs: 0 };
-  const labourCost = selectedComp ? computeLabourCost(entry.computedValue, selectedComp) : 0;
-
-  // Determine field labels based on mode
-  const planPrefix = measureMode === 'plan' ? 'Plan ' : '';
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-slate-500">Entry {index + 1}</span>
-        <button onClick={onRemove} className="text-slate-300 hover:text-red-500 transition p-1" aria-label="Remove entry">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-      </div>
-
-      {/* Input mode toggle for non-area components */}
-      {!isRoofArea && (
-        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 w-fit">
-          <button onClick={() => setLengthMode('individual')}
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${lengthMode === 'individual' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
-            Individual Lengths
-          </button>
-          <button onClick={() => setLengthMode('total')}
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${lengthMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
-            Total Length
-          </button>
-        </div>
-      )}
-
-      {/* Area input mode toggle */}
-      {isRoofArea && (
-        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 w-fit">
-          <button onClick={() => setAreaMode('dimensions')}
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
-            Width x Length
-          </button>
-          <button onClick={() => setAreaMode('total')}
-            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
-            Total Area
-          </button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {isRoofArea ? (
-          usePitch ? (
-            areaMode === 'dimensions' ? (
-              <>
-                <NumField label={`${planPrefix}Width (${lenLabel})`} value={entry.planWidth} onChange={(v) => onUpdate({ planWidth: v, inputMode: 'pitch_calculated' })} />
-                <NumField label={`${planPrefix}Length (${lenLabel})`} value={entry.planLengthVal} onChange={(v) => onUpdate({ planLengthVal: v, inputMode: 'pitch_calculated' })} />
-              </>
-            ) : (
-              <div className="col-span-2">
-                <NumField label={`${planPrefix}Area (${areaLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'pitch_calculated', isTotalInput: true })} />
-              </div>
-            )
-          ) : areaMode === 'dimensions' ? (
-            <>
-              <NumField label={`Width (${lenLabel})`} value={entry.planWidth} onChange={(v) => onUpdate({ planWidth: v, inputMode: 'actual' })} />
-              <NumField label={`Length (${lenLabel})`} value={entry.planLengthVal} onChange={(v) => onUpdate({ planLengthVal: v, inputMode: 'actual' })} />
-            </>
-          ) : (
-            <div className="col-span-2">
-              <NumField label={`Actual Area (${areaLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'actual' })} />
-            </div>
-          )
-        ) : (
-          usePitch ? (
-            lengthMode === 'individual' ? (
-              <div className="col-span-2">
-                <NumField label={`${planPrefix}Length (${lenLabel})`} value={entry.planLength} onChange={(v) => onUpdate({ planLength: v, inputMode: 'pitch_calculated' })} />
-              </div>
-            ) : (
-              <div className="col-span-2">
-                <NumField label={`Total ${planPrefix}Length (${lenLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'pitch_calculated', isTotalInput: true })} />
-              </div>
-            )
-          ) : lengthMode === 'individual' ? (
-            <div className="col-span-2">
-              <NumField label={`Actual Length (${lenLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'actual' })} />
-            </div>
-          ) : (
-            <div className="col-span-2">
-              <NumField label={`Total Length (${lenLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'actual' })} />
-            </div>
-          )
-        )}
-        {/* Quantity field - only show in individual mode */}
-        {((isRoofArea && areaMode === 'dimensions') || (!isRoofArea && lengthMode === 'individual')) && (
-          <NumField label="Quantity" value={entry.quantity ?? 1} onChange={(v) => onUpdate({ quantity: Math.max(1, Math.round(v)) })} step={1} min={1} />
-        )}
-        {/* Computed result */}
-        <div className="rounded-lg bg-orange-50/50 border border-orange-100 px-3 py-1.5">
-          <div className="text-xs text-slate-500">Computed</div>
-          <div className="text-sm font-semibold text-slate-900">{entry.computedValue.toFixed(2)} {isRoofArea ? areaLabel : lenLabel}</div>
-          {selectedComp && compCost.cost > 0 && <div className="text-xs text-[#FF6B35] font-medium">{'\u00A3'}{(compCost.cost + labourCost).toFixed(2)}</div>}
-        </div>
-      </div>
-
-      {availableComponents.length > 0 && (
-        <div>
-          <label className="text-xs font-medium text-slate-600">Component</label>
-          <select value={entry.selectedComponentId || ''} onChange={(e) => onUpdate({ selectedComponentId: e.target.value || null })}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
-            <option value="">- No component (lengths only) -</option>
-            {availableComponents.map(comp => (
-              <option key={comp.id} value={comp.id}>{comp.name} ({'\u00A3'}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <input type="text" value={entry.label} onChange={(e) => onUpdate({ label: e.target.value })} placeholder="Optional label (e.g. Front gable, Main roof)"
-        className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />
-    </div>
   );
 }
