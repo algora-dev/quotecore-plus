@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import type { ComponentKind, Entry, RoofComponentDef } from './types';
-import { COMPONENT_DEFS, computeEntry, computeMaterialCost, computeLabourCost, makeId } from './calc';
-import { ComponentSymbol, componentLabel } from './helpers';
+import { COMPONENT_DEFS, computeEntry, makeId } from './calc';
 
 type MeasureMode = 'actual' | 'plan';
 
@@ -77,7 +76,7 @@ export function EntryListItem({ entry, index, kind, measureMode, lenLabel, areaL
   );
 }
 
-// ─── Add Entry Form (single input form per section) ──────────
+// ─── Add Entry Form ──────────────────────────────────────────
 
 interface AddEntryFormProps {
   kind: ComponentKind;
@@ -96,7 +95,8 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
   const usePitch = measureMode === 'plan' && def.pitchType !== 'none';
   const planPrefix = measureMode === 'plan' ? 'Plan ' : '';
 
-  const [inputMode, setInputMode] = useState<'dimensions' | 'total' | 'individual'>(isRoofArea ? 'dimensions' : 'individual');
+  // Roof area: dimensions vs total. Linear: always just length + quantity.
+  const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>('dimensions');
   const [val1, setVal1] = useState('');
   const [val2, setVal2] = useState('');
   const [totalVal, setTotalVal] = useState('');
@@ -117,18 +117,18 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
     const qty = parseInt(quantity) || 1;
 
     if (isRoofArea) {
-      if (inputMode === 'dimensions') {
-        const w = parseFloat(val1) || 0;
-        const l = parseFloat(val2) || 0;
-        if (w <= 0 || l <= 0) return;
+      if (areaMode === 'dimensions') {
+        const w = parseFloat(val1);
+        const l = parseFloat(val2);
+        if (!w || w <= 0 || !l || l <= 0) return;
         entry = {
           id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
           planWidth: w, planLengthVal: l, pitchDegrees, actualValue: 0, computedValue: 0,
           selectedComponentId, quantity: qty, isTotalInput: false,
         };
       } else {
-        const t = parseFloat(totalVal) || 0;
-        if (t <= 0) return;
+        const t = parseFloat(totalVal);
+        if (!t || t <= 0) return;
         entry = {
           id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
           pitchDegrees, actualValue: t, computedValue: 0,
@@ -136,23 +136,14 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
         };
       }
     } else {
-      if (inputMode === 'individual') {
-        const l = parseFloat(val1) || 0;
-        if (l <= 0) return;
-        entry = {
-          id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
-          planLength: l, pitchDegrees, actualValue: 0, computedValue: 0,
-          selectedComponentId, quantity: qty, isTotalInput: false,
-        };
-      } else {
-        const t = parseFloat(totalVal) || 0;
-        if (t <= 0) return;
-        entry = {
-          id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
-          pitchDegrees, actualValue: t, computedValue: 0,
-          selectedComponentId, quantity: qty, isTotalInput: true,
-        };
-      }
+      // Linear: single length input
+      const l = parseFloat(val1);
+      if (!l || l <= 0) return;
+      entry = {
+        id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
+        planLength: l, pitchDegrees, actualValue: 0, computedValue: 0,
+        selectedComponentId, quantity: qty, isTotalInput: false,
+      };
     }
 
     entry.computedValue = computeEntry(entry, kind);
@@ -161,12 +152,10 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
   };
 
   const canAdd = isRoofArea
-    ? (inputMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(totalVal) > 0)
-    : (inputMode === 'individual' ? parseFloat(val1) > 0 : parseFloat(totalVal) > 0);
+    ? (areaMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(totalVal) > 0)
+    : parseFloat(val1) > 0;
 
-  const fieldLabel = isRoofArea
-    ? (inputMode === 'dimensions' ? `${planPrefix}Width (${lenLabel})` : `${planPrefix}Area (${areaLabel})`)
-    : (inputMode === 'individual' ? `${planPrefix}Length (${lenLabel})` : `Total ${planPrefix}Length (${lenLabel})`);
+  const inputCls = "mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none";
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
@@ -174,53 +163,47 @@ export function AddEntryForm({ kind, measureMode, lenLabel, areaLabel, available
         <span className="text-xs font-semibold text-slate-600">Add New Entry</span>
       </div>
 
-      {/* Mode toggle */}
-      <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
-        {isRoofArea ? (
-          <>
-            <button onClick={() => setInputMode('dimensions')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${inputMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Width x Length</button>
-            <button onClick={() => setInputMode('total')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${inputMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Total Area</button>
-          </>
-        ) : (
-          <>
-            <button onClick={() => setInputMode('individual')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${inputMode === 'individual' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Individual Length</button>
-            <button onClick={() => setInputMode('total')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${inputMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Total Length</button>
-          </>
-        )}
-      </div>
+      {/* Mode toggle - only for roof area */}
+      {isRoofArea && (
+        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+          <button onClick={() => setAreaMode('dimensions')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Width x Length</button>
+          <button onClick={() => setAreaMode('total')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Total Area</button>
+        </div>
+      )}
 
       {/* Input fields */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {isRoofArea && inputMode === 'dimensions' ? (
+        {isRoofArea && areaMode === 'dimensions' ? (
           <>
             <div>
               <label className="text-xs font-medium text-slate-600">{planPrefix}Width ({lenLabel})</label>
-              <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step={0.1} inputMode="decimal" placeholder="0" className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+              <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
             </div>
             <div>
               <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
-              <input type="number" value={val2} onChange={(e) => setVal2(e.target.value)} min={0} step={0.1} inputMode="decimal" placeholder="0" className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+              <input type="number" value={val2} onChange={(e) => setVal2(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
             </div>
           </>
-        ) : !isRoofArea && inputMode === 'individual' ? (
+        ) : isRoofArea && areaMode === 'total' ? (
           <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
-            <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step={0.1} inputMode="decimal" placeholder="0" className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
+            <label className="text-xs font-medium text-slate-600">{planPrefix}Area ({areaLabel})</label>
+            <input type="number" value={totalVal} onChange={(e) => setTotalVal(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
           </div>
         ) : (
-          <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">{fieldLabel}</label>
-            <input type="number" value={totalVal} onChange={(e) => setTotalVal(e.target.value)} min={0} step={0.1} inputMode="decimal" placeholder="0" className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-          </div>
+          // Linear: single length input
+          <>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
+              <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+            </div>
+          </>
         )}
 
-        {/* Quantity - only in non-total mode */}
-        {inputMode !== 'total' && (
-          <div>
-            <label className="text-xs font-medium text-slate-600">Quantity</label>
-            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-          </div>
-        )}
+        {/* Quantity */}
+        <div>
+          <label className="text-xs font-medium text-slate-600">Quantity</label>
+          <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" className={inputCls} />
+        </div>
 
         {/* Add button */}
         <button

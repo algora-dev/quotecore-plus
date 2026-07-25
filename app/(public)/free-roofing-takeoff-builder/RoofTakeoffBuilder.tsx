@@ -308,19 +308,19 @@ export function RoofTakeoffBuilder() {
                               <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(kind, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm text-center focus:border-orange-500 focus:outline-none" />
                               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
                             </div>
-                          </div>
+                         </div>
 
-                          {hasEntries && (
-                            <div className="space-y-1.5">
-                              {section.entries.map((entry, idx) => (
-                                <EntryListItem key={entry.id} entry={entry} index={idx} kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} getComponentById={getComponentById} onRemove={() => removeEntry(kind, entry.id)} />
-                              ))}
-                            </div>
-                          )}
+                         <AddEntryForm kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={componentsByKind[kind] || []} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} onAdd={(entry) => addEntry(kind, entry)} />
 
-                          <AddEntryForm kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={componentsByKind[kind] || []} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} onAdd={(entry) => addEntry(kind, entry)} />
+                         {hasEntries && (
+                           <div className="space-y-1.5">
+                             {section.entries.map((entry, idx) => (
+                               <EntryListItem key={entry.id} entry={entry} index={idx} kind={kind} measureMode={measureMode} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} getComponentById={getComponentById} onRemove={() => removeEntry(kind, entry.id)} />
+                             ))}
+                           </div>
+                         )}
 
-                          {!hasEntries && <p className="text-xs text-slate-400 text-center py-2">No {componentLabel(kind).toLowerCase()} entries yet. Add your first one above.</p>}
+                         {!hasEntries && <p className="text-xs text-slate-400 text-center py-2">No {componentLabel(kind).toLowerCase()} entries yet. Add your first one above.</p>}
                         </div>
                       )}
                     </div>
