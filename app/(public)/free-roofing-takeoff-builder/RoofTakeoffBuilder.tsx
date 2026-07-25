@@ -20,6 +20,7 @@ import {
 } from './calc';
 import { ResultsModal } from './ResultsModal';
 import { EntryListItem, AddEntryForm, CustomComponentCreator } from './EntryComponents';
+import { ComponentGuideBox } from './ComponentGuideBox';
 import {
   InfoIcon,
   ComponentSymbol,
@@ -236,6 +237,7 @@ export function RoofTakeoffBuilder() {
         </div>
         {isExpanded && (
           <div className="border-t border-slate-100 p-4 space-y-3">
+            {isGuided && <ComponentGuideBox componentKey={key} />}
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-slate-600 flex items-center gap-1">Waste<InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps." /></label>
               <div className="relative">

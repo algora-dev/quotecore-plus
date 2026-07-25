@@ -170,6 +170,21 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
         @media print {
           @page { margin: 1cm; }
           body { background: white; }
+          /* Hide everything when printing */
+          body > * { visibility: hidden; }
+          /* Show only the modal and its children */
+          #takeoff-print, #takeoff-print * { visibility: visible; }
+          /* Position modal at top of page */
+          #takeoff-print {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            max-width: none;
+            max-height: none;
+            border-radius: 0;
+            box-shadow: none;
+          }
           header, footer, button { display: none !important; }
         }
       `}</style>
