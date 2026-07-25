@@ -86,3 +86,11 @@ export interface PersistedGuide {
 export const loadGuide = () => read<PersistedGuide>(GUIDE_KEY());
 export const saveGuide = (g: PersistedGuide) => write(GUIDE_KEY(), g);
 export const clearGuide = () => clear(GUIDE_KEY());
+
+// --- Widget hidden state --------------------------------------------------
+// When a user explicitly hides Q, we persist that so navigation/remount
+// doesn't pop it back open. Cleared when the user explicitly opens Q again.
+const HIDDEN_KEY = () => `qc-assistant-hidden-v1:${workspaceScope()}`;
+export const loadHidden = (): boolean => read<boolean>(HIDDEN_KEY()) ?? false;
+export const saveHidden = (hidden: boolean) => write(HIDDEN_KEY(), hidden);
+export const clearHidden = () => clear(HIDDEN_KEY());

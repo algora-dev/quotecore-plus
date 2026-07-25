@@ -26,7 +26,7 @@ import { useAssistantHighlight } from './useAssistantHighlight';
 import { useBrowserFacts } from './useBrowserFacts';
 import { useGuideEngine, type GuideStep } from './useGuideEngine';
 import { START_GUIDE_EVENT, type StartGuideDetail } from './startGuide';
-import { loadGuide } from './assistantPersistence';
+import { loadGuide, loadHidden, saveHidden } from './assistantPersistence';
 
 /**
  * Render inline markdown emphasis (**bold**, _italic_ / *italic*) to React
@@ -185,8 +185,9 @@ export function AssistantWidget(_props: Props) {
   // Stay open on mount if a guide is mid-flow (e.g. we just navigated to the
   // highlighted page) so the restored conversation + next step are visible
   // rather than collapsing behind the emblem.
+  // BUT: if the user explicitly hid Q, keep it hidden across navigation.
   const [open, setOpen] = useState(
-    () => typeof window !== 'undefined' && !!loadGuide()
+    () => typeof window !== 'undefined' && !!loadGuide() && !loadHidden()
   );
   const [mode, setMode] = useState<AssistantMode>('respond_only');
   const [input, setInput] = useState('');
@@ -336,6 +337,7 @@ export function AssistantWidget(_props: Props) {
       const workflowId = (e as CustomEvent<StartGuideDetail>).detail?.workflowId;
       if (!workflowId) return;
       setOpen(true);
+      saveHidden(false);
       void engine.startWorkflow(
         workflowId,
         typeof window !== 'undefined' ? window.location.pathname : null
@@ -467,7 +469,7 @@ export function AssistantWidget(_props: Props) {
       {!open && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => { saveHidden(false); setOpen(true); }}
           data-assistant-id="assistant-launcher"
           aria-label={hasConversation ? 'Reopen assistant conversation' : 'Open assistant'}
           title="To fully hide chat, go to Account > Notifications"
@@ -518,7 +520,7 @@ export function AssistantWidget(_props: Props) {
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() => { saveHidden(true); setOpen(false); }}
                 title="Hide chat"
                 aria-label="Hide assistant"
                 className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-slate-500 transition-all duration-200 hover:bg-slate-900 hover:text-white hover:shadow-[0_0_12px_rgba(255,107,53,0.5)]"

@@ -31,7 +31,7 @@ interface QuoteLine {
 }
 
 type MeasurementSystem = 'metric' | 'imperial';
-type MeasurementType = 'unit' | 'length' | 'small_length' | 'area' | 'volume';
+type MeasurementType = 'unit' | 'length' | 'small_length' | 'area' | 'volume' | 'squares';
 
 const MEASUREMENT_OPTIONS: { value: MeasurementType; label: string; metric: string; imperial: string }[] = [
   { value: 'unit', label: 'Unit (pieces)', metric: 'pcs', imperial: 'pcs' },
@@ -39,6 +39,7 @@ const MEASUREMENT_OPTIONS: { value: MeasurementType; label: string; metric: stri
   { value: 'small_length', label: 'mm / in', metric: 'mm', imperial: 'in' },
   { value: 'area', label: 'm² / ft²', metric: 'm²', imperial: 'ft²' },
   { value: 'volume', label: 'm³ / ft³', metric: 'm³', imperial: 'ft³' },
+  { value: 'squares', label: 'Roofing Squares', metric: 'squares', imperial: 'squares' },
 ];
 
 const CURRENCIES = [
