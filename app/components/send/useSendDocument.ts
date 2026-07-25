@@ -227,7 +227,10 @@ export function useSendDocument(props: SendDocumentProps) {
 
   function defaultTemplateId(): string {
     const def = props.emailTemplates.find((t) => t.is_default);
-    return def?.id ?? '__default__';
+    if (def) return def.id;
+    // No default template - use the first available template so the
+    // dropdown always has a valid selection.
+    return props.emailTemplates[0]?.id ?? '';
   }
 
   // ─── Follow-up rule management ───
