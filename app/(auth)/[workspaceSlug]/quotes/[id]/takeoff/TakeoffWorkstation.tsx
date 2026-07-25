@@ -4092,13 +4092,16 @@ export function TakeoffWorkstation({
       const imageUrl = currentPage?.url ?? planUrlRef.current;
       if (!imageUrl) { setAiScanError('No plan image URL available.'); return; }
 
-      const imgResponse = await fetch(imageUrl);
+      const imgResponse = await fetch(imageUrl, { signal: abortController.signal });
       if (!imgResponse.ok) { setAiScanError('Failed to load plan image for AI scan.'); return; }
       const imgBlob = await imgResponse.blob();
       const reader = new FileReader();
       const dataUrl = await new Promise<string>((resolve, reject) => {
+        const handleAbort = () => reader.abort();
+        abortController.signal.addEventListener('abort', handleAbort, { once: true });
         reader.onloadend = () => resolve(reader.result as string);
         reader.onerror = reject;
+        reader.onabort = () => reject(new DOMException('Scan cancelled.', 'AbortError'));
         reader.readAsDataURL(imgBlob);
       });
 
@@ -4164,11 +4167,13 @@ export function TakeoffWorkstation({
       const msg = err instanceof Error ? err.message : 'Network error.';
       setAiScanError(`Scan failed: ${msg}`);
     } finally {
-      setAiScanning(false);
-      aiAbortRef.current = null;
-      if (!scanCompleted) {
-        roofAreaInstructionsDismissedRef.current = false;
-        setShowRoofAreaInstructions(true);
+      if (aiAbortRef.current === abortController) {
+        setAiScanning(false);
+        aiAbortRef.current = null;
+        if (!scanCompleted) {
+          roofAreaInstructionsDismissedRef.current = false;
+          setShowRoofAreaInstructions(true);
+        }
       }
     }
   };

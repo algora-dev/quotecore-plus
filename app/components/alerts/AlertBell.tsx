@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
+const ALERT_BELL_ACKNOWLEDGED_EVENT = 'quotecore:alert-bell-acknowledged';
+
 /**
  * Matches the DB `alerts` row shape (subset). `is_read` and `created_at`
  * are nullable in the schema; treat null the same as the falsy/unknown
@@ -23,14 +25,37 @@ interface Props {
   initialAlerts: Alert[];
   initialUnreadCount: number;
   workspaceSlug: string;
+  userId: string;
 }
 
-export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: Props) {
+export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug, userId }: Props) {
   const [open, setOpen] = useState(false);
   const [alerts, setAlerts] = useState(initialAlerts);
-  const [unreadCount, setUnreadCount] = useState(initialUnreadCount);
+  const [newAlertCount, setNewAlertCount] = useState(initialUnreadCount);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const acknowledgedAlertKey = `quotecore:alert-bell-acknowledged:${workspaceSlug}:${userId}`;
+
+  function countAlertsAfterAcknowledgement(currentAlerts: Alert[], acknowledgedAlertId: string | null): number {
+    if (!acknowledgedAlertId) return currentAlerts.length;
+    const acknowledgedIndex = currentAlerts.findIndex((alert) => alert.id === acknowledgedAlertId);
+    return acknowledgedIndex === -1 ? currentAlerts.length : acknowledgedIndex;
+  }
+
+  function acknowledgeCurrentAlerts() {
+    const latestAlertId = alerts[0]?.id ?? null;
+    if (latestAlertId) localStorage.setItem(acknowledgedAlertKey, latestAlertId);
+    setNewAlertCount(0);
+    window.dispatchEvent(new CustomEvent(ALERT_BELL_ACKNOWLEDGED_EVENT, {
+      detail: { key: acknowledgedAlertKey, alertId: latestAlertId },
+    }));
+  }
+
+  function toggleBell() {
+    const nextOpen = !open;
+    if (nextOpen) acknowledgeCurrentAlerts();
+    setOpen(nextOpen);
+  }
 
   // Resolve an alert to its source item. Mirrors the inbox's openHref so
   // order/invoice alerts route correctly instead of dead-clicking. Any
@@ -71,9 +96,21 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAlerts(initialAlerts);
-     
-    setUnreadCount(initialUnreadCount);
-  }, [initialAlerts, initialUnreadCount]);
+    const acknowledgedAlertId = localStorage.getItem(acknowledgedAlertKey);
+    setNewAlertCount(countAlertsAfterAcknowledgement(initialAlerts, acknowledgedAlertId));
+  }, [acknowledgedAlertKey, initialAlerts]);
+
+  useEffect(() => {
+    function handleAcknowledged(event: Event) {
+      const detail = (event as CustomEvent<{ key: string; alertId: string | null }>).detail;
+      if (detail?.key === acknowledgedAlertKey) {
+        setNewAlertCount(countAlertsAfterAcknowledgement(initialAlerts, detail.alertId));
+      }
+    }
+
+    window.addEventListener(ALERT_BELL_ACKNOWLEDGED_EVENT, handleAcknowledged);
+    return () => window.removeEventListener(ALERT_BELL_ACKNOWLEDGED_EVENT, handleAcknowledged);
+  }, [acknowledgedAlertKey, initialAlerts]);
 
   // "Clear alerts" is the ONLY bell action. The bell is a PREVIEW surface
   // only - the real home for alerts is the Message Center. Clearing removes
@@ -87,7 +124,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
       if (res.ok) {
         // Cleared alerts leave the bell entirely (they reappear nowhere here).
         setAlerts([]);
-        setUnreadCount(0);
+        setNewAlertCount(0);
       }
     } catch {}
   }
@@ -95,13 +132,13 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
   return (
     <div className="relative" ref={ref}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={toggleBell}
         data-assistant-id="nav-alerts"
         className="relative p-2 rounded-full hover:bg-slate-100 transition"
       >
         {/* Bell icon */}
         <svg
-          className={`w-5 h-5 ${unreadCount > 0 ? 'text-orange-500' : 'text-slate-500'}`}
+          className={`w-5 h-5 ${newAlertCount > 0 ? 'text-orange-500' : 'text-slate-500'}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -114,13 +151,12 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
           />
         </svg>
 
-        {/* Pulsing badge - counts bell items (not-yet-cleared), independent
-            of Message Center read state. */}
-        {unreadCount > 0 && (
+        {/* Pulsing badge only counts alerts newer than the last bell open. */}
+        {newAlertCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-4 w-4 bg-orange-500 items-center justify-center text-[10px] font-bold text-white">
-              {unreadCount > 9 ? '9+' : unreadCount}
+              {newAlertCount > 9 ? '9+' : newAlertCount}
             </span>
           </span>
         )}
@@ -132,7 +168,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug }: 
           <div className="flex items-center justify-between p-3 border-b border-slate-100">
             <h4 className="text-sm font-semibold text-slate-900">Notifications</h4>
             <div className="flex items-center gap-3">
-              {unreadCount > 0 && (
+              {alerts.length > 0 && (
                 <button onClick={clearAll} title="Clears these from the bell only - they stay in your Message Center" className="text-xs text-orange-600 hover:text-orange-800">Clear alerts</button>
               )}
             </div>

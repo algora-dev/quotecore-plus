@@ -116,6 +116,7 @@ export default async function WorkspaceLayout({
                     initialAlerts={alerts || []}
                     initialUnreadCount={unreadCount}
                     workspaceSlug={slug}
+                    userId={profile.id}
                   />
                 }
                 inbox={<InboxLink workspaceSlug={slug} />}
@@ -134,6 +135,7 @@ export default async function WorkspaceLayout({
                         initialAlerts={alerts || []}
                         initialUnreadCount={unreadCount}
                         workspaceSlug={slug}
+                        userId={profile.id}
                       />
                       <InboxLink workspaceSlug={slug} />
                       <HelpDrawerTrigger />
