@@ -122,15 +122,15 @@ export function UserProfile({ data }: { data: UserProfileData }) {
       {/* F. Delete Account */}
       <DeleteAccountSection data={data} onAction={runAction} pending={pending} router={router} />
 
-      {/* G. Add/Remove Users — Coming Soon */}
+      {/* G. Add/Remove Users - Coming Soon */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
         <h2 className="text-lg font-semibold text-slate-900">User Management</h2>
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center mt-4">
-          <p className="text-sm text-slate-500">Coming soon — add/remove additional users on a company account.</p>
+          <p className="text-sm text-slate-500">Coming soon - add/remove additional users on a company account.</p>
         </div>
       </div>
 
-      {/* H. Quotes — Storyline Viewer */}
+      {/* H. Quotes - Storyline Viewer */}
       <QuotesTab companyId={data.company.id} />
 
       {/* I. Quota Usage & Reset */}
@@ -236,11 +236,11 @@ function CompanyInfoSection({
         </div>
         <div>
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Slug</dt>
-          <dd className="mt-1 text-slate-600">{c.slug ?? '—'}</dd>
+          <dd className="mt-1 text-slate-600">{c.slug ?? '-'}</dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Plan Code</dt>
-          <dd className="mt-1 text-slate-900">{c.planCode ?? '—'}</dd>
+          <dd className="mt-1 text-slate-900">{c.planCode ?? '-'}</dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Subscription Status</dt>
@@ -265,7 +265,7 @@ function CompanyInfoSection({
               >
                 {c.stripeCustomerId} ↗
               </a>
-            ) : '—'}
+            ) : '-'}
           </dd>
         </div>
         <div>
@@ -280,12 +280,12 @@ function CompanyInfoSection({
               >
                 {c.stripeSubscriptionId} ↗
               </a>
-            ) : '—'}
+            ) : '-'}
           </dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Current Period End</dt>
-          <dd className="mt-1 text-slate-600">{c.currentPeriodEnd ? new Date(c.currentPeriodEnd).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</dd>
+          <dd className="mt-1 text-slate-600">{c.currentPeriodEnd ? new Date(c.currentPeriodEnd).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}</dd>
         </div>
         <div>
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Storage Used</dt>
@@ -296,7 +296,7 @@ function CompanyInfoSection({
         </div>
         <div>
           <dt className="text-xs font-medium text-slate-400 uppercase tracking-wide">Created</dt>
-          <dd className="mt-1 text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</dd>
+          <dd className="mt-1 text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}</dd>
         </div>
       </dl>
     </div>
@@ -479,7 +479,7 @@ function CouponSection({
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
         <h2 className="text-lg font-semibold text-slate-900">Discount / Coupon</h2>
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center mt-4">
-          <p className="text-sm text-slate-500">No Stripe subscription — coupons not available.</p>
+          <p className="text-sm text-slate-500">No Stripe subscription - coupons not available.</p>
         </div>
       </div>
     );
@@ -492,8 +492,8 @@ function CouponSection({
       {currentCoupon && (
         <div className="rounded-lg bg-sky-50 border border-sky-200 p-3 text-sm text-sky-800">
           <strong>Current coupon:</strong> {currentCoupon.name ?? currentCoupon.id}
-          {currentCoupon.percentOff != null && ` — ${currentCoupon.percentOff}% off`}
-          {currentCoupon.amountOff != null && ` — $${(currentCoupon.amountOff / 100).toFixed(2)} off`}
+          {currentCoupon.percentOff != null && ` - ${currentCoupon.percentOff}% off`}
+          {currentCoupon.amountOff != null && ` - $${(currentCoupon.amountOff / 100).toFixed(2)} off`}
           {` (${currentCoupon.duration})`}
         </div>
       )}
@@ -514,7 +514,7 @@ function CouponSection({
               <option key={co.id} value={co.id}>
                 {co.name ?? co.id}
                 {co.percentOff != null ? ` (${co.percentOff}% off)` : co.amountOff != null ? ` ($${(co.amountOff / 100).toFixed(2)} off)` : ''}
-                {` — ${co.duration}`}
+                {` - ${co.duration}`}
               </option>
             ))}
           </select>
@@ -746,7 +746,7 @@ function DeleteAccountSection({
 }
 
 // ---------------------------------------------------------------------------
-// Impersonate Button (Feature 6 — Gerald H-01: server-side overlay)
+// Impersonate Button (Feature 6 - Gerald H-01: server-side overlay)
 // ---------------------------------------------------------------------------
 
 function ImpersonateButton({
@@ -943,7 +943,7 @@ function QuotaSection({
 }
 
 // ---------------------------------------------------------------------------
-// Storage Section (Feature 4 — Gerald H-03: trigger-based accounting)
+// Storage Section (Feature 4 - Gerald H-03: trigger-based accounting)
 // ---------------------------------------------------------------------------
 
 function StorageSection({ data }: { data: UserProfileData }) {

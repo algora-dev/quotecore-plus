@@ -483,7 +483,7 @@ export function QuoteBuilder({
   // so falls back to formatQuantity, rendering exactly as before.
   function formatPricedQuantity(c: { final_quantity: number | null; priced_quantity?: number | string | null; pack_size_snapshot?: number | string | null; measurement_type: string }): ReactNode {
     const actual = Number(c.final_quantity ?? 0);
-    // Supabase returns numeric columns as strings at runtime — use Number().
+    // Supabase returns numeric columns as strings at runtime - use Number().
     const priced = c.priced_quantity != null ? Number(c.priced_quantity) : null;
     const packSnap = c.pack_size_snapshot != null ? Number(c.pack_size_snapshot) : null;
     if (priced != null && !isNaN(priced)) {
@@ -579,7 +579,7 @@ export function QuoteBuilder({
         </div>
       </div>
 
-      {/* Edit Digital Take-off — always visible above Plans & Files (2026-07-06) */}
+      {/* Edit Digital Take-off - always visible above Plans & Files (2026-07-06) */}
       {((hasExistingTakeoff || planUrl) && (
         <div className="mb-3">
           <Link

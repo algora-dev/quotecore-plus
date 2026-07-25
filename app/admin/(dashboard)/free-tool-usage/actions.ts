@@ -4,9 +4,9 @@
  * Admin free-tool usage analytics.
  *
  * Three views:
- *   T1 — Aggregate anonymous usage (tool, total uses, popularity over time)
- *   T2 — Free-tools account users (auth users with no company/onboarding)
- *   T3 — App users' free-tool usage (added to existing user profile)
+ *   T1 - Aggregate anonymous usage (tool, total uses, popularity over time)
+ *   T2 - Free-tools account users (auth users with no company/onboarding)
+ *   T3 - App users' free-tool usage (added to existing user profile)
  *
  * All queries use the service-role admin client (bypasses RLS) since
  * requireAdmin() already gated the caller.

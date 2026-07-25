@@ -42,7 +42,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
 
-  // From quote — only quote picker; line selector is a dedicated full page
+  // From quote - only quote picker; line selector is a dedicated full page
   const [quotes, setQuotes] = useState<QuoteSummary[]>([]);
   const [quotesLoading, setQuotesLoading] = useState(false);
   const [quoteSearch, setQuoteSearch] = useState('');
@@ -158,7 +158,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900 text-sm">Blank Invoice</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Start from scratch — choose a template then build line items manually.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Start from scratch - choose a template then build line items manually.</p>
                   </div>
                 </div>
               </button>
@@ -188,14 +188,14 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-700 text-sm">From a Job</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Coming soon — available once Jobs are live.</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Coming soon - available once Jobs are live.</p>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── From quote picker — quote selection only, then navigates away ── */}
+          {/* ── From quote picker - quote selection only, then navigates away ── */}
           {showFromQuote && (
             <div className="space-y-4">
               <p className="text-xs text-slate-500">Select the quote, then choose which lines to include on the next screen.</p>
@@ -300,7 +300,7 @@ export function CreateInvoiceModal({ workspaceSlug, onClose }: Props) {
                   <button type="button" onClick={() => setSelectedTemplateId(null)}
                     className={`block w-full text-left p-3.5 rounded-xl border-2 transition-all ${selectedTemplateId === null ? 'border-[#FF6B35] bg-orange-50/40' : 'border-slate-200 hover:border-slate-300'}`}>
                     <p className="font-medium text-slate-900 text-sm">No template</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Skip — I&apos;ll fill in the details manually.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Skip - I&apos;ll fill in the details manually.</p>
                   </button>
                   {templates.map((t) => (
                     <button key={t.id} type="button" onClick={() => setSelectedTemplateId(t.id)}

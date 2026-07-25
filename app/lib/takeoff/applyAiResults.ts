@@ -1,19 +1,19 @@
 /**
- * AI Takeoff — applyAiResults library.
+ * AI Takeoff - applyAiResults library.
  *
  * Pure functions that transform validated AI scan JSON into canvas-ready
  * data: canvas-pixel geometry, geometric snapping/validation,
  * area membership testing, calibration-based value computation, and typed
  * result objects that TakeoffWorkstation can consume to create Fabric objects.
  *
- * ZERO imports from TakeoffWorkstation — this module is UI-agnostic.
- * ZERO Fabric imports — callers create Fabric objects from the typed results.
+ * ZERO imports from TakeoffWorkstation - this module is UI-agnostic.
+ * ZERO Fabric imports - callers create Fabric objects from the typed results.
  */
 
 import type { Calibration } from './reconstructTypes';
 import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS, type SemanticKey, SPOUTING_DASH_ARRAY, getSemanticColour, getLineOptions } from './aiComponentRegistry';
 
-// ── Constants (canvas dimensions are now dynamic — passed as params) ───────
+// ── Constants (canvas dimensions are now dynamic - passed as params) ───────
 
 export const MAX_CANVAS_DIM = 2000;
 
@@ -80,7 +80,7 @@ export interface AiMeasurement {
   value: number;
   /** The placeholder type this measurement belongs to. */
   placeholderType: PlaceholderType;
-  /** Semantic key — mirrors placeholderType but is the authoritative field
+  /** Semantic key - mirrors placeholderType but is the authoritative field
    *  for defensive validation (prevents Barge→Spouting ID mix). */
   semanticKey: SemanticKey;
   /** The system component id for this placeholder type. */
@@ -104,7 +104,7 @@ export function validateMeasurementConsistency(
   componentId: string | undefined,
   systemComponentIds: Record<SemanticKey, string>,
 ): boolean {
-  // Uncertain lines have no system component — allow them through without validation
+  // Uncertain lines have no system component - allow them through without validation
   if (semanticKey === 'uncertain') return true;
   const expected = systemComponentIds[semanticKey];
   if (!expected || expected !== componentId) {
@@ -187,7 +187,7 @@ export function snapAndValidate(
     // 2. Zero-length check
     if (distance(p1, p2) < 2) { rejected++; continue; }
 
-    // 3. Vertex snap — snap endpoints to nearby polygon vertices
+    // 3. Vertex snap - snap endpoints to nearby polygon vertices
     p1 = snapToVertex(p1, roofAreaVertices);
     p2 = snapToVertex(p2, roofAreaVertices);
 
@@ -395,7 +395,7 @@ export function computeScaleCheck(
   const discrepancyPct = Math.abs(aiScale - userScale) / userScale * 100;
 
   const warning = discrepancyPct > 15
-    ? `The plan's dimension markings suggest your calibration may be off by ${discrepancyPct.toFixed(0)}% — double-check before saving.`
+    ? `The plan's dimension markings suggest your calibration may be off by ${discrepancyPct.toFixed(0)}% - double-check before saving.`
     : null;
 
   return { hasDimensionLine: true, aiScale, userScale, discrepancyPct, warning };
@@ -528,14 +528,14 @@ export function perimeterAccountingPass(
   );
 
   // Separate internal barges (broken barges) from perimeter barges.
-  // Broken barges branch from a ridge but are NOT on the perimeter —
+  // Broken barges branch from a ridge but are NOT on the perimeter -
   // they should survive the perimeter accounting pass.
   const internalBarges = corrected.barges.filter(entry => {
     if (entry.points.length < 2) return false;
     const runStart = entry.points[0];
     const runEnd = entry.points[entry.points.length - 1];
     if (!branchesFromRidgeEndpoint(runStart, runEnd)) return false;
-    // If it IS on the perimeter, it's a regular barge — leave it for filtering below.
+    // If it IS on the perimeter, it's a regular barge - leave it for filtering below.
     return !perimeterEdges.some(edge =>
       projectRunToEdge(runStart, runEnd, edge.start, edge.end) !== null,
     );
@@ -689,7 +689,7 @@ export interface ApplyAiParams {
   calibrations: Calibration[];
   /** Map of placeholder type → system component id (from the component fetch). */
   systemComponentIds: Record<PlaceholderType, string>;
-  /** Canvas dimensions (dynamic — canvas = processed image dimensions). */
+  /** Canvas dimensions (dynamic - canvas = processed image dimensions). */
   canvasWidth?: number;
   canvasHeight?: number;
 }
@@ -807,7 +807,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
  * stored snapshot instead of a fresh API response. The results are
  * deterministic given the same input, so the restored measurements
  * match the original apply (any user edits since then are discarded
- * for ai_origin entries only — manual entries are untouched).
+ * for ai_origin entries only - manual entries are untouched).
  */
 export function resetFromStoredScan(
   storedResult: AiScanData,
@@ -816,7 +816,7 @@ export function resetFromStoredScan(
   canvasWidth?: number,
   canvasHeight?: number,
 ): ApplyAiResult {
-  // Identical to applyAiResults — the stored result is the same shape.
+  // Identical to applyAiResults - the stored result is the same shape.
   return applyAiResults({
     aiData: storedResult,
     calibrations,

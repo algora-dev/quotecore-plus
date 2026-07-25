@@ -1,8 +1,8 @@
 /**
- * Scan Jobs API — submit new scans and poll status.
+ * Scan Jobs API - submit new scans and poll status.
  *
- * POST /api/takeoff/scan-jobs     — submit a new scan (replaces client-directed scan1)
- * GET  /api/takeoff/scan-jobs     — poll job status (by jobId, or quoteId+pageId)
+ * POST /api/takeoff/scan-jobs     - submit a new scan (replaces client-directed scan1)
+ * GET  /api/takeoff/scan-jobs     - poll job status (by jobId, or quoteId+pageId)
  *
  * The server-side worker (cron-triggered) processes the actual 3-scan pipeline.
  * The client polls GET until status = succeeded | failed.
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Job submitted successfully — try to process immediately (don't wait for cron)
+    // Job submitted successfully - try to process immediately (don't wait for cron)
     // Fire and forget; the cron will pick it up if this doesn't finish
     processScanQueue(1).catch(err => {
       console.warn('[scan-jobs] immediate processing failed (cron will pick up):', err);

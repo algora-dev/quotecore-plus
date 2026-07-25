@@ -242,7 +242,7 @@ export function signupHref(config: Pick<TradeConfig, 'slug'>, draftId?: string):
 /**
  * Save a calculator draft and return the draft ID.
  *
- * The draft is persisted SERVER-SIDE (source of truth — survives the
+ * The draft is persisted SERVER-SIDE (source of truth - survives the
  * quote-core.com → app.quote-core.com origin change where localStorage
  * does not) with localStorage kept as a same-origin fast path. Falls back
  * to a local-only ID if the API call fails.
@@ -266,7 +266,7 @@ export async function saveCalcDraft(config: Pick<TradeConfig, 'slug'>, data: unk
       if (json?.id) draftId = json.id;
     }
   } catch {
-    // Server persist failed — same-origin localStorage fallback still works.
+    // Server persist failed - same-origin localStorage fallback still works.
   }
   try {
     localStorage.setItem(`qcp:calc-draft:${draftId}`, JSON.stringify(payload));
@@ -292,7 +292,7 @@ export function loadCalcDraft(draftId: string): { slug: string; data: unknown; s
 }
 
 /**
- * Load a calculator draft with server fallback. Use this in the app —
+ * Load a calculator draft with server fallback. Use this in the app -
  * drafts created on the marketing domain are NOT in the app origin's
  * localStorage; the server copy is fetched by ID instead.
  */

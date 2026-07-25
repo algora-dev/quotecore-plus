@@ -13,7 +13,7 @@ export interface FreeToolsTierInfo {
 interface FreeToolsAuthState {
   user: User | null;
   loading: boolean;
-  /** Free-tools Supabase access token — sent to parse APIs for tiered limits */
+  /** Free-tools Supabase access token - sent to parse APIs for tiered limits */
   accessToken: string | null;
   /** Resolved tier info (null until fetched) */
   tierInfo: FreeToolsTierInfo | null;
@@ -22,7 +22,7 @@ interface FreeToolsAuthState {
   signUpWithEmail: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation: boolean }>;
   signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
-  // Modal control — any component can open the auth modal
+  // Modal control - any component can open the auth modal
   isAuthModalOpen: boolean;
   openAuthModal: (mode?: 'signup' | 'signin') => void;
   closeAuthModal: () => void;
@@ -195,7 +195,7 @@ export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** The modal is rendered at the provider level — no parent transform/blur can break fixed positioning. */
+/** The modal is rendered at the provider level - no parent transform/blur can break fixed positioning. */
 function FreeToolsAuthModal({
   mode,
   onClose,
@@ -262,7 +262,7 @@ function FreeToolsAuthModal({
           <div className="h-px flex-1 bg-slate-200" />
         </div>
 
-        {/* Email form — password optional. Blank password = magic link
+        {/* Email form - password optional. Blank password = magic link
             (passwordless): we email a login link that both creates the
             account (if new) and signs them in. With a password we use the
             classic signup/login flow. */}
@@ -280,8 +280,8 @@ function FreeToolsAuthModal({
                 else {
                   setSuccess(
                     mode === 'signup'
-                      ? 'Check your email — click the link to activate your account and log in. No password needed.'
-                      : 'Check your email — click the link to log in.'
+                      ? 'Check your email - click the link to activate your account and log in. No password needed.'
+                      : 'Check your email - click the link to log in.'
                   );
                   setEmail('');
                 }
@@ -315,7 +315,7 @@ function FreeToolsAuthModal({
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password (optional — leave blank for an email link)"
+            placeholder="Password (optional - leave blank for an email link)"
             minLength={6}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#FF6B35] focus:outline-none"
           />

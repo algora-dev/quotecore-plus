@@ -4,9 +4,9 @@
  * Pitch is always STORED as degrees in the database. This module provides
  * conversion helpers so the UI can offer three input modes:
  *
- *  - degrees  (°)           — angle from horizontal
- *  - ratio    (1:X)         — rise : run, e.g. 1:12 (roofing), 1:50 (drainage)
- *  - gradient (%)           — rise / run × 100, e.g. 2 % (landscaping, concrete)
+ *  - degrees  (°)           - angle from horizontal
+ *  - ratio    (1:X)         - rise : run, e.g. 1:12 (roofing), 1:50 (drainage)
+ *  - gradient (%)           - rise / run × 100, e.g. 2 % (landscaping, concrete)
  *
  * All three convert to the same underlying `pitch_degrees` for storage and
  * calculation. No DB migration needed.

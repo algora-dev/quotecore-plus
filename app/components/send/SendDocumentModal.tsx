@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * SendDocumentModal — the unified modal shell.
+ * SendDocumentModal - the unified modal shell.
  *
  * Renders the mode chooser, copy-URL, generate-email, and compose-send
  * views. All entity-specific behaviour is driven by ENTITY_CONFIG and

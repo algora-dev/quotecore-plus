@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * GET /api/free-tools/roof-components
  * Returns all active roof components for the free takeoff builder.
- * Public endpoint (no auth) — RLS allows reading active rows.
+ * Public endpoint (no auth) - RLS allows reading active rows.
  */
 export async function GET() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

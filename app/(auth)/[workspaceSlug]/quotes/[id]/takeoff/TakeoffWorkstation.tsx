@@ -46,7 +46,7 @@ interface Component {
   collection_id?: string | null;
   /** @deprecated alias kept for any callers that used the old name */
   default_measurement_type?: string;
-  /** System placeholder components (AI Takeoff) — hidden from manual add selector. */
+  /** System placeholder components (AI Takeoff) - hidden from manual add selector. */
   is_system?: boolean;
 }
 
@@ -100,7 +100,7 @@ interface ComponentMeasurement {
   quoteRoofAreaId?: string | null;
   /** v8 (2026-07-08): user-entered height/depth (metric) captured at draw
    *  time (freestyle L×H height, volume_3d custom depth). READ-ONLY display
-   *  reference — `value` is already the final product. Persisted via
+   *  reference - `value` is already the final product. Persisted via
    *  entry_inputs so re-entry doesn't wipe it. */
   entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
   /** AI Takeoff: true if this measurement was created by the AI scan. */
@@ -188,7 +188,7 @@ interface Calibration {
   scale: number;
 }
 
-/** Serializable undo/redo snapshot. Contains only plain data — no Fabric refs.
+/** Serializable undo/redo snapshot. Contains only plain data - no Fabric refs.
  *  The canvas is rebuilt from this via redrawCanvasFromState(). */
 interface TakeoffSnapshot {
   componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null; entryInputs?: { height_m?: number | null; depth_m?: number | null } | null }[] }[];
@@ -245,7 +245,7 @@ export function TakeoffWorkstation({
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
-  // Dynamic canvas dimensions — canvas matches the processed image dimensions.
+  // Dynamic canvas dimensions - canvas matches the processed image dimensions.
   // No more fixed 800×600 with letterboxing. AI coordinates = canvas coordinates.
   const [canvasDims, setCanvasDims] = useState({ width: 800, height: 600 });
 
@@ -321,7 +321,7 @@ export function TakeoffWorkstation({
   // When the user closes a new area polygon while editing an existing plan,
   // this modal lets them pick which existing area to add the measurement to,
   // or create a new area.
-  // (2026-07-05) Assign-Area-Measurement modal REMOVED — all roof-area draws
+  // (2026-07-05) Assign-Area-Measurement modal REMOVED - all roof-area draws
   // now route to the pitch-only modal or AreaNameModal. See RC-1/RC-5 fix.
 
   // P1-3 (multi-page Save & Upload another plan): modal state.
@@ -488,7 +488,7 @@ export function TakeoffWorkstation({
     setComponentColors(prevColors => {
       const colorMap = new Map(prevColors.map(c => [c.componentId, c.color]));
       const colors = activeComponentIds.map((id) => {
-        // Check if this is a system component — if so, use registry colour
+        // Check if this is a system component - if so, use registry colour
         const comp = components.find(c => c.id === id);
         if (comp?.is_system) {
           const key = resolveSemanticKey(comp.name);
@@ -531,7 +531,7 @@ export function TakeoffWorkstation({
           });
           // Duplicate-areas fix (2026-07-05): anything drawn BEFORE this id
           // resolved has fromPageId=null (currentPageIdRef was null). Those
-          // rows were drawn on page-1 by definition — retro-stamp them now so
+          // rows were drawn on page-1 by definition - retro-stamp them now so
           // later saves can never re-home them onto a different plan (the
           // "duplicate areas in first parent" bug).
           const resolvedPageId = result.pageId;
@@ -552,7 +552,7 @@ export function TakeoffWorkstation({
   }, [quote.id, initialPageId]);
 
   // ─── State-only Undo/Redo system ───────────────────────────────────────
-  // Stores plain serializable data snapshots — no Fabric.js canvas JSON.
+  // Stores plain serializable data snapshots - no Fabric.js canvas JSON.
   // The canvas is redrawn from React state after every undo/redo via
   // redrawCanvasFromState(). This fixes:
   // - Stale closures in once-bound canvas listeners (undo jumped to start)
@@ -566,7 +566,7 @@ export function TakeoffWorkstation({
 
   // Capture all relevant React state for an undo snapshot.
   // Strips non-serializable Fabric refs (canvasObjects, polygon, markers)
-  // before storing — they are rebuilt by redrawCanvasFromState().
+  // before storing - they are rebuilt by redrawCanvasFromState().
   const captureSnapshot = useCallback((): TakeoffSnapshot => {
     return {
       componentMeasurements: componentMeasurements.map(c => ({
@@ -580,7 +580,7 @@ export function TakeoffWorkstation({
           visible: m.visible,
           fromPageId: m.fromPageId,
           entryInputs: m.entryInputs,
-          // canvasObjects stripped — rebuilt on redraw
+          // canvasObjects stripped - rebuilt on redraw
         })),
       })),
       roofAreas: roofAreas.map(ra => ({
@@ -590,7 +590,7 @@ export function TakeoffWorkstation({
         area: ra.area,
         pitch: ra.pitch,
         visible: ra.visible,
-        // polygon + markers stripped — rebuilt on redraw
+        // polygon + markers stripped - rebuilt on redraw
       })),
       calibrations: calibrations.map(c => ({ ...c })),
       calibrationPoints: calibrationPoints.map(p => ({ ...p })),
@@ -605,7 +605,7 @@ export function TakeoffWorkstation({
       pointMode,
       multiLinealMode,
       multiLinealPoints: multiLinealPoints.map(p => ({ ...p })),
-      // multiLinealSegmentObjects are Fabric objects — stripped, rebuilt on redraw
+      // multiLinealSegmentObjects are Fabric objects - stripped, rebuilt on redraw
       activeComponentIds: [...activeComponentIds],
       selectedComponentId,
       activeSaveRoofAreaId,
@@ -659,11 +659,11 @@ export function TakeoffWorkstation({
           points: m.points,
           visible: m.visible,
           fromPageId: m.fromPageId,
-          // Preserve the draw-time area stamp through redraws — dropping it
+          // Preserve the draw-time area stamp through redraws - dropping it
           // reverted measurements to the save-time fallback area.
           quoteRoofAreaId: m.quoteRoofAreaId,
           // v8 fix (2026-07-08): redraw REPLACES state with reconstructCanvas
-          // output — omitting entryInputs here stripped user H/D from state on
+          // output - omitting entryInputs here stripped user H/D from state on
           // every redraw (area create/switch), so saves sent null.
           entryInputs: m.entryInputs,
         })),
@@ -889,7 +889,7 @@ export function TakeoffWorkstation({
     // Display active area's data.
     // Fix (2026-07-04): if the initially-selected area has no saved data
     // (e.g. it was an empty/ghost area), fall back to the first area that
-    // actually has measurements — otherwise re-entry showed a blank panel
+    // actually has measurements - otherwise re-entry showed a blank panel
     // and "Save & Continue" failed with "no measurements to save".
     let dispId = activeAreaId ?? firstAreaId;
     let disp = byArea.get(dispId ?? '__no_area__');
@@ -931,7 +931,7 @@ export function TakeoffWorkstation({
 
     // Canvas-rework: restore calibrations from DB so the scale is available
     // for new measurements on re-entry. Calibrations are stored per-page in
-    // takeoff_pages.scale_calibration — restore the ACTIVE page's scale, not
+    // takeoff_pages.scale_calibration - restore the ACTIVE page's scale, not
     // blindly page 1's (parent/child plans fix, 2026-07-05).
     if (activePageForCalibration?.scaleCalibration) {
       try {
@@ -1020,7 +1020,7 @@ export function TakeoffWorkstation({
     // to component area drawing, which broke the polygon-close routing (deselection gotcha).
     if (isExistingAreaMode) return;
     // Fix (2026-07-04): never show on re-entry to a saved takeoff. The user
-    // already has saved areas — they can use "+ New Area" or upload a plan.
+    // already has saved areas - they can use "+ New Area" or upload a plan.
     if (hydrationData && hydrationData.measurements.length > 0) return;
     // RC-3 fix (2026-07-05): if the user already started drawing, never pop
     // this modal on top of their drawing (or on top of the AreaNameModal).
@@ -1092,7 +1092,7 @@ export function TakeoffWorkstation({
       });
 
       // Best-effort auto-save: persist outgoing area's measurements to DB.
-      // Non-blocking on failure — we still switch areas, but alert the user.
+      // Non-blocking on failure - we still switch areas, but alert the user.
       try {
         const currentPageDbId = pages[currentPageIndex]?.id ?? null;
         const allMeasurements: Array<{
@@ -1137,7 +1137,7 @@ export function TakeoffWorkstation({
             undefined, undefined, // no canvas snapshot on auto-save
             currentPageDbId, sessionVersionRef.current,
             activeAreaId, // target the outgoing area
-            // Fix (2026-07-05): persist the outgoing page's calibration —
+            // Fix (2026-07-05): persist the outgoing page's calibration -
             // dropping it here left pages with scale_calibration=NULL, which
             // forced a pointless recalibration on every re-entry/page switch.
             calibrations.length > 0 ? calibrations : null,
@@ -1157,7 +1157,7 @@ export function TakeoffWorkstation({
 
     // Load target area state from cache.
     // Fix (2026-07-04): hydration-built cache entries only contain
-    // componentMeasurements/roofAreas/pageIds — calibration fields are
+    // componentMeasurements/roofAreas/pageIds - calibration fields are
     // page-level and may be absent. Restoring `undefined` into calibrations
     // crashed the render (`calibrations.length` on undefined → error page).
     // Restore defensively: only overwrite fields the cache actually has.
@@ -1178,7 +1178,7 @@ export function TakeoffWorkstation({
       );
       setSelectedComponentId(cached.selectedComponentId ?? null);
     } else {
-      // Fresh area — clear components/areas but KEEP calibrations (same plan = same scale)
+      // Fresh area - clear components/areas but KEEP calibrations (same plan = same scale)
       setComponentMeasurements([]);
       setRoofAreas([]);
       setActiveComponentIds([]);
@@ -1189,10 +1189,10 @@ export function TakeoffWorkstation({
     activeAreaIdRef.current = targetAreaId; // sync ref for canvas handlers
     setActiveSaveRoofAreaId(targetAreaId);
 
-    // Parent/child plans (2026-07-05): resolve the target page — explicit
+    // Parent/child plans (2026-07-05): resolve the target page - explicit
     // child slot when supplied, else the area's first plan (areaPages index,
     // falling back to cached pageIds). Swap ONLY the background image. NEVER
-    // call loadPageImage here — it wiped the state restored above, which is
+    // call loadPageImage here - it wiped the state restored above, which is
     // exactly the "every area shows the newest plan, panel empty" bug.
     if (outgoingPageId && calibrations.length > 0) {
       pageCalibrationsRef.current.set(outgoingPageId, calibrations.map(c => ({ ...c })));
@@ -1234,7 +1234,7 @@ export function TakeoffWorkstation({
       selectedComponentId, pages, currentPageIndex, sessionVersion, quote.id, areaPages]);
 
   // Parent/child plans (2026-07-05): switch between the ACTIVE area's plans
-  // (child slots 1, 2, 3…). All measurements stay in state — the redraw
+  // (child slots 1, 2, 3…). All measurements stay in state - the redraw
   // filter draws only the target page's shapes. Each plan has its own scale.
   const handleSwitchPage = useCallback(async (targetPageId: string) => {
     const targetIndex = pages.findIndex(p => p.id === targetPageId);
@@ -1257,7 +1257,7 @@ export function TakeoffWorkstation({
       }
 
       // Fix (2026-07-06): auto-save the current page's measurements to DB
-      // before switching — same pattern as handleSwitchArea. Without this,
+      // before switching - same pattern as handleSwitchArea. Without this,
       // measurements drawn on the current page are silently lost when the
       // user switches pages and then saves from a different page (the main
       // save filters by fromPageId, and the flush skips the active area).
@@ -1325,7 +1325,7 @@ export function TakeoffWorkstation({
     } else if (calibrations.length > 0) {
       // Fix (2026-07-05): no stored scale for this page (legacy data whose
       // calibration was never persisted). Inherit the current plan's scale
-      // instead of forcing a recalibration — the user can still hit
+      // instead of forcing a recalibration - the user can still hit
       // "Recalibrate" if the plans genuinely differ.
       pageCalibrationsRef.current.set(targetPageId, calibrations.map(c => ({ ...c })));
       setCalibrationPoints([]);
@@ -1358,17 +1358,17 @@ export function TakeoffWorkstation({
   const handleCreateNewArea = useCallback(() => {
     // RULE: "+ New Area" always deselects any active component so the
     // drawn polygon is routed as a roof area, not a component measurement.
-    // RC-2 fix (2026-07-05): do NOT clear activeComponentIds here — that wiped
+    // RC-2 fix (2026-07-05): do NOT clear activeComponentIds here - that wiped
     // the entire left-panel component list. Deselecting is enough.
     setSelectedComponentId(null);
     activeAreaComponentIdRef.current = null;
     setPendingComponentId(null);
 
     if (areaList.length === 0) {
-      // No areas — go straight to drawing mode for a new area
+      // No areas - go straight to drawing mode for a new area
       setPendingNewAreaIsExisting(false);
       setPendingNewAreaTargetId(null);
-      // RC-1/RC-5: sync refs synchronously — canvas handlers read refs, not state.
+      // RC-1/RC-5: sync refs synchronously - canvas handlers read refs, not state.
       pendingNewAreaIsExistingRef.current = false;
       pendingNewAreaTargetIdRef.current = null;
       viaNewAreaFlowRef.current = true;
@@ -1389,7 +1389,7 @@ export function TakeoffWorkstation({
   // Phase 6: confirm the choice modal → arm drawing mode
   const handleConfirmNewAreaChoice = () => {
     // Defensive: clear component selection again (in case state didn't flush yet)
-    // RC-2 fix (2026-07-05): do NOT clear activeComponentIds — keep the panel intact.
+    // RC-2 fix (2026-07-05): do NOT clear activeComponentIds - keep the panel intact.
     setSelectedComponentId(null);
     activeAreaComponentIdRef.current = null;
     setPendingComponentId(null);
@@ -1401,7 +1401,7 @@ export function TakeoffWorkstation({
       const targetArea = areaList.find(a => a.id === newAreaExistingId);
       setPendingNewAreaIsExisting(true);
       setPendingNewAreaTargetId(newAreaExistingId);
-      // RC-1: sync refs SYNCHRONOUSLY — the canvas handler reads refs, not state.
+      // RC-1: sync refs SYNCHRONOUSLY - the canvas handler reads refs, not state.
       pendingNewAreaIsExistingRef.current = true;
       pendingNewAreaTargetIdRef.current = newAreaExistingId;
       setExistingAreaLabel(targetArea?.label ?? '');
@@ -1435,7 +1435,7 @@ export function TakeoffWorkstation({
   // Option A (2026-07-05): after "Save & Upload another plan" → new area,
   // the user calibrates the fresh plan first. The moment calibration is
   // confirmed, arm the new-area drawing flow automatically so they draw the
-  // boundary right away — no second "+ New Area" click (the double-work
+  // boundary right away - no second "+ New Area" click (the double-work
   // complaint).
   useEffect(() => {
     if (!armNewAreaAfterCalibrationRef.current) return;
@@ -1463,7 +1463,7 @@ export function TakeoffWorkstation({
   // or drew anything. Areas are now created only when the user draws their
   // first area (named via AreaNameModal) or via the "+ New Area" flow.
 
-  // Phase 5: Area delete — opens ConfirmModal, then calls deleteTakeoffArea server action.
+  // Phase 5: Area delete - opens ConfirmModal, then calls deleteTakeoffArea server action.
   const handleDeleteArea = (areaId: string) => {
     const area = areaList.find(a => a.id === areaId);
     if (!area) return;
@@ -1503,7 +1503,7 @@ export function TakeoffWorkstation({
           setActiveSaveRoofAreaId(remaining[0].id);
           setRedrawNonce(n => n + 1);
         } else {
-          // No areas left — clear state
+          // No areas left - clear state
           setActiveAreaId(null);
           setActiveSaveRoofAreaId(null);
           setComponentMeasurements([]);
@@ -1519,7 +1519,7 @@ export function TakeoffWorkstation({
     }
   };
   // Remove all canvas objects that don't have a measurementId (i.e. in-progress
-  // vertex markers, preview shapes, calibration lines) — committed objects
+  // vertex markers, preview shapes, calibration lines) - committed objects
   // are tagged with measurementId by reconstructCanvas or handleSaveArea.
   const cleanupInProgressObjects = useCallback(() => {
     const canvas = fabricRef.current;
@@ -1583,7 +1583,7 @@ export function TakeoffWorkstation({
         // the save filter can exclude this area when the user uploads a
         // second plan for the same parent. Without this, un-stamped areas
         // pass through the filter and get duplicated onto the new page.
-        fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+        fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
       };
       
       setRoofAreas([...roofAreas, newArea]);
@@ -1697,7 +1697,7 @@ export function TakeoffWorkstation({
               }
 
               // 3. Start the NEW area's view. If there was a previous area, its
-              // state is cached above — show only the new polygon. If this is
+              // state is cached above - show only the new polygon. If this is
               // the FIRST area (no outgoing), keep whatever is on screen and
               // just stamp the polygon (its measurements belong here anyway).
               const stampedNewArea = { ...newArea, name: finalLabel, quoteRoofAreaId: newDbAreaId };
@@ -1779,7 +1779,7 @@ export function TakeoffWorkstation({
         activeAreaIdRef.current = targetId; // sync ref for canvas handlers
         setActiveSaveRoofAreaId(targetId);
         // Parent/child plans (2026-07-05): the target area now has content on
-        // the current page — register the child slot.
+        // the current page - register the child slot.
         {
           const targetPagePid = pages[currentPageIndex]?.id ?? null;
           if (targetPagePid) {
@@ -1788,13 +1788,13 @@ export function TakeoffWorkstation({
               : { ...prev, [targetId]: [...(prev[targetId] ?? []), targetPagePid] });
           }
         }
-        // Reset Phase 6 state — but keep isExistingAreaMode=true so the save
+        // Reset Phase 6 state - but keep isExistingAreaMode=true so the save
         // only includes NEWLY drawn areas (client-side IDs), not hydrated ones.
         // This prevents duplicating hydrated areas on re-entry saves.
         setPendingNewAreaIsExisting(false);
         setPendingNewAreaTargetId(null);
         viaNewAreaFlowRef.current = false; // RC-5: consume the flow flag
-        // Do NOT reset isExistingAreaMode here — it stays true so the save
+        // Do NOT reset isExistingAreaMode here - it stays true so the save
         // filter at `!isExistingAreaMode` includes only new polygon areas.
       }
 
@@ -1833,7 +1833,7 @@ export function TakeoffWorkstation({
         visible: true,
         canvasObjects: [polygon],
         quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-        fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+        fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
       };
       
       const compData = componentMeasurements.find(c => c.componentId === componentId);
@@ -2116,7 +2116,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: multiLinealSegmentObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
     };
 
     // Add measurement to state. Mirrors the create-or-update pattern used by
@@ -2164,7 +2164,7 @@ export function TakeoffWorkstation({
   // new image as the canvas background.
   // Parent/child plans (2026-07-05): background-image-only loader. Swaps the
   // plan image WITHOUT touching measurements/areas/components state. Used when
-  // switching between areas/child plans — the caller is responsible for
+  // switching between areas/child plans - the caller is responsible for
   // clearing drawn objects (redrawCanvasFromState does that) and restoring the
   // page's calibration.
   const setPageBackgroundImage = (imageUrl: string) => {
@@ -2230,14 +2230,14 @@ export function TakeoffWorkstation({
     setMultiLinealSegmentObjects([]);
     // Parent/child plans (2026-07-05): preserveMeasurements keeps the parent
     // area's measurements/components in state when attaching a new plan to an
-    // EXISTING area — the wipe below destroyed every area's panel data (the
+    // EXISTING area - the wipe below destroyed every area's panel data (the
     // "Garage and Main Roof went blank" bug). Canvas objects are already
     // cleared above; the redraw filter keeps other pages' shapes off-canvas.
     if (!opts?.preserveMeasurements) {
       setComponentMeasurements([]);
       setRoofAreas([]);
       setSelectedComponentId(null);
-      // Fix (2026-07-05): also clear the ACTIVE component panel — leaving it
+      // Fix (2026-07-05): also clear the ACTIVE component panel - leaving it
       // populated made a brand-new area show the previous area's components.
       setActiveComponentIds([]);
       // P1-3: reset existing-area mode so a fresh plan doesn't inherit the constraint.
@@ -2274,7 +2274,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: pendingVolumePolygon ? [pendingVolumePolygon] : [],
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
       entryInputs: { depth_m: depthM }, // v8: user-entered depth (display only)
     };
     // Solid polygon (remove dash preview)
@@ -2325,7 +2325,7 @@ export function TakeoffWorkstation({
       visible: true,
       canvasObjects: pendingFreestyleCanvasObjects,
       quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+      fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
       entryInputs: { height_m: heightM }, // v8: user-entered height (display only)
     };
     setComponentMeasurements(prev => {
@@ -2411,7 +2411,7 @@ export function TakeoffWorkstation({
       // Add area measurements.
       // RC-6 fix (2026-07-05): the RPC now scopes its delete by page_id, so we
       // must re-send ALL current-page roof areas (hydrated + newly drawn).
-      // Hydrated areas from OTHER pages are filtered out by fromPageId — they
+      // Hydrated areas from OTHER pages are filtered out by fromPageId - they
       // are already in the DB under their own page and the page-scoped delete
       // won't touch them.
       const currentPageDbIdForAreas = pages[currentPageIndex]?.id ?? null;
@@ -2430,7 +2430,7 @@ export function TakeoffWorkstation({
           visible: area.visible,
           // Area-ownership fix (2026-07-05): draw-time stamp first; fallback
           // to active area. NEVER use area.id (that's a measurement id for
-          // hydrated areas, not a quote_roof_areas.id — using it fails RPC
+          // hydrated areas, not a quote_roof_areas.id - using it fails RPC
           // validation: "quote_roof_area_id does not belong to quote").
           quoteRoofAreaId: area.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
         });
@@ -2738,7 +2738,7 @@ export function TakeoffWorkstation({
         }
       }
       // Authoritative version sync (2026-07-05): read the REAL version from
-      // the DB instead of trusting a local cursor — cursor drift caused the
+      // the DB instead of trusting a local cursor - cursor drift caused the
       // false "Takeoff edited in another tab" (STALE_TAKEOFF_VERSION) errors.
       try {
         const authoritativeVersion = await getTakeoffSessionVersion(quote.id);
@@ -2747,7 +2747,7 @@ export function TakeoffWorkstation({
         updateSessionVersion(() => versionCursor);
       }
       // Parent/child plans (2026-07-05): DO NOT clear the cache. It mirrors
-      // DB state and drives every non-active area's panel/canvas — clearing
+      // DB state and drives every non-active area's panel/canvas - clearing
       // it here blanked all other areas after any save (the "Garage and Main
       // Roof went blank" bug).
       
@@ -2826,7 +2826,7 @@ export function TakeoffWorkstation({
     if (uploadAnotherTarget === 'existing' && !uploadAnotherAreaId) {
       setUploadAnotherError('Please select an area to add measurements to.'); return;
     }
-    // Phase 7: no name validation for 'new' — name collected after drawing
+    // Phase 7: no name validation for 'new' - name collected after drawing
     setIsUploadingPage(true);
     try {
       // 1. Persist current measurements without navigating away.
@@ -2865,7 +2865,7 @@ export function TakeoffWorkstation({
       let newPageName: string;
       let resolvedFirstArea: { id: string; label: string } | null = null;
       if (uploadAnotherTarget === 'new') {
-        // Phase 7: create page only (no area row yet — area created after drawing)
+        // Phase 7: create page only (no area row yet - area created after drawing)
         const pageName = `Plan ${pages.length + 1}`;
         const pageResult = await createTakeoffPage(quote.id, pageName);
         if (!pageResult.ok || !pageResult.pageId) { setUploadAnotherError(pageResult.error || 'Failed to create page.'); return; }
@@ -2899,7 +2899,7 @@ export function TakeoffWorkstation({
       }
 
       // Cross-page leak fix (2026-07-08): stamp any un-paged shapes with the
-      // page they were drawn on BEFORE switching — same pattern as
+      // page they were drawn on BEFORE switching - same pattern as
       // handleSwitchPage. reconstructCanvas treats fromPageId=null as
       // "draw on every page", so unstamped plan-1 shapes were reappearing on
       // the freshly uploaded plan's canvas.
@@ -3006,7 +3006,7 @@ export function TakeoffWorkstation({
     // used calibrationsRef) worked fine.
     const currentCalibrations = calibrationsRef.current;
     if (currentCalibrations.length === 0) {
-      console.warn('[calculatePolygonArea] No calibrations available — returning 0');
+      console.warn('[calculatePolygonArea] No calibrations available - returning 0');
       return 0;
     }
 
@@ -3016,7 +3016,7 @@ export function TakeoffWorkstation({
     
     // Guard against NaN/Infinity (shouldn't happen with the empty check above, but belt-and-braces)
     if (!isFinite(realArea) || isNaN(realArea)) {
-      console.warn('[calculatePolygonArea] Calculated area is NaN/Infinity — returning 0');
+      console.warn('[calculatePolygonArea] Calculated area is NaN/Infinity - returning 0');
       return 0;
     }
     
@@ -3047,8 +3047,8 @@ export function TakeoffWorkstation({
   const isExistingAreaModeRef = useRef(isExistingAreaMode);
   // RC-1 fix (2026-07-05): the canvas mouse handlers are bound ONCE (one-shot
   // init effect) and never re-bound, so any state they read must go through
-  // refs. These two were read as raw state — permanently false/null inside the
-  // handler — which broke every "+ New Area" route.
+  // refs. These two were read as raw state - permanently false/null inside the
+  // handler - which broke every "+ New Area" route.
   const pendingNewAreaIsExistingRef = useRef(pendingNewAreaIsExisting);
   const pendingNewAreaTargetIdRef = useRef(pendingNewAreaTargetId);
   // RC-5 fix (2026-07-05): true only while an area-draw armed via the
@@ -3134,7 +3134,7 @@ export function TakeoffWorkstation({
     if (!canvasRef.current) return;
     canvasInitedRef.current = true;
 
-    // Start with default dimensions — will be resized once the image loads
+    // Start with default dimensions - will be resized once the image loads
     // to match the image's natural dimensions (dynamic canvas sizing).
     const canvas = new Canvas(canvasRef.current, {
       width: 800,
@@ -3165,7 +3165,7 @@ export function TakeoffWorkstation({
         evented: false,
       });
 
-      // Image is the canvas background — never selectable, never draggable,
+      // Image is the canvas background - never selectable, never draggable,
       // never in undo snapshots. Pan/zoom via viewportTransform still works.
       canvas.backgroundImage = fabricImg;
       canvas.renderAll();
@@ -3196,7 +3196,7 @@ export function TakeoffWorkstation({
     canvas.on('mouse:down', (opt) => {
       const evt = opt.e;
       
-      // No snapshot here — snapshots are pushed at commit points in React
+      // No snapshot here - snapshots are pushed at commit points in React
       // handlers (handleSaveArea, handleConfirmCalibration, etc.) where
       // closures are fresh. The old per-click snapshot caused stale-closure
       // bugs (undo jumped to start) and wrong granularity (per-click, not
@@ -3434,7 +3434,7 @@ export function TakeoffWorkstation({
             // user clicked "+ New Area".
             setPendingComponentId(null);
             // ── Routing rewrite (2026-07-05, RC-1/RC-5): all flow flags are read
-            // via refs — this handler is a stale one-shot closure. Priority:
+            // via refs - this handler is a stale one-shot closure. Priority:
             //   1. component selected          → component-area flow (else-branch below)
             //   2. +New Area → add-to-existing → pitch-only modal
             //   3. +New Area → create new      → AreaNameModal (name + pitch)
@@ -3444,11 +3444,11 @@ export function TakeoffWorkstation({
             //   7. otherwise                   → "Select a component first" alert
             //      ("+ New Area" is the ONLY way to add a roof area without a component)
             if (!currentSelectedId && viaNewAreaFlowRef.current && pendingNewAreaIsExistingRef.current && pendingNewAreaTargetIdRef.current) {
-              // "+ New Area" → add to existing — pitch-only modal (shows measured area)
+              // "+ New Area" → add to existing - pitch-only modal (shows measured area)
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else if (!currentSelectedId && viaNewAreaFlowRef.current) {
-              // "+ New Area" → create new — AreaNameModal (name + pitch + measured area)
+              // "+ New Area" → create new - AreaNameModal (name + pitch + measured area)
               setShowAreaNamePrompt(true);
             } else if (!currentSelectedId && takeoffMode === 'new-page' && currentRoofAreas.length === 0) {
               // Boundary drawing for a new page - show pitch-only prompt.
@@ -3456,14 +3456,14 @@ export function TakeoffWorkstation({
               setShowPitchOnlyPrompt(true);
             } else if (!currentSelectedId && isExistingAreaModeRef.current) {
               // Upload-to-existing plan: the target area was chosen in the upload
-              // modal — pitch-only modal adds this measurement to it.
+              // modal - pitch-only modal adds this measurement to it.
               setPitchOnlyInput('');
               setShowPitchOnlyPrompt(true);
             } else if (!currentSelectedId && currentRoofAreas.length === 0) {
-              // First area on a fresh takeoff — AreaNameModal.
+              // First area on a fresh takeoff - AreaNameModal.
               setShowAreaNamePrompt(true);
             } else if (!currentSelectedId) {
-              // Area tool used directly with no component — not allowed.
+              // Area tool used directly with no component - not allowed.
               setPendingAreaPoints([]);
               setAreaPoints([]);
               showAlert(
@@ -3657,7 +3657,7 @@ export function TakeoffWorkstation({
           canvas.renderAll();
         }
 
-        // Ignore tiny drags (accidental clicks) — under 5px in either dimension.
+        // Ignore tiny drags (accidental clicks) - under 5px in either dimension.
         if (dragWidth < 5 || dragHeight < 5) {
           return;
         }
@@ -3680,30 +3680,30 @@ export function TakeoffWorkstation({
 
         // ── Routing (2026-07-05, RC-1/RC-5): identical chain to polygon close. ──
         if (!currentSelectedId && viaNewAreaFlowRef.current && pendingNewAreaIsExistingRef.current && pendingNewAreaTargetIdRef.current) {
-          // "+ New Area" → add to existing — pitch-only modal (shows measured area)
+          // "+ New Area" → add to existing - pitch-only modal (shows measured area)
           setPendingComponentId(null);
           setPitchOnlyInput('');
           setShowPitchOnlyPrompt(true);
         } else if (!currentSelectedId && viaNewAreaFlowRef.current) {
-          // "+ New Area" → create new — AreaNameModal (name + pitch + measured area)
+          // "+ New Area" → create new - AreaNameModal (name + pitch + measured area)
           setPendingComponentId(null);
           setShowAreaNamePrompt(true);
         } else if (!currentSelectedId && takeoffMode === 'new-page' && currentRoofAreas.length === 0) {
-          // Boundary drawing for a new page — pitch-only prompt.
+          // Boundary drawing for a new page - pitch-only prompt.
           setPendingComponentId(null);
           setPitchOnlyInput('');
           setShowPitchOnlyPrompt(true);
         } else if (!currentSelectedId && isExistingAreaModeRef.current) {
-          // Upload-to-existing plan: target pre-chosen — pitch-only modal.
+          // Upload-to-existing plan: target pre-chosen - pitch-only modal.
           setPendingComponentId(null);
           setPitchOnlyInput('');
           setShowPitchOnlyPrompt(true);
         } else if (!currentSelectedId && currentRoofAreas.length === 0) {
-          // First area on a fresh takeoff — AreaNameModal.
+          // First area on a fresh takeoff - AreaNameModal.
           setPendingComponentId(null);
           setShowAreaNamePrompt(true);
         } else if (!currentSelectedId) {
-          // Area tool used directly with no component — not allowed.
+          // Area tool used directly with no component - not allowed.
           setPendingAreaPoints([]);
           setPendingComponentId(null);
           showAlert(
@@ -3970,7 +3970,7 @@ export function TakeoffWorkstation({
                 const match = existingRoofAreas[i];
                 if (match) {
                   // Per-entry pitch fix (2026-07-06): only fall back to the
-                  // parent area pitch when the entry had none — never clobber
+                  // parent area pitch when the entry had none - never clobber
                   // a real per-entry pitch with the parent's.
                   if (!ra.pitch) ra.pitch = match.pitch || 0;
                   ra.name = match.label;
@@ -4037,7 +4037,7 @@ export function TakeoffWorkstation({
         };
         imgElement.src = currentPage.url;
       } else {
-        // No page URL — just reset zoom
+        // No page URL - just reset zoom
         canvas.setZoom(1);
         canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
         setZoom(1);
@@ -4770,7 +4770,7 @@ export function TakeoffWorkstation({
             onClick={openSaveAndUploadAnotherPlan}
             disabled={isSaving || isUploadingPage}
             className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
-            title={isSaving || isUploadingPage ? 'Please wait — saving in progress' : 'Save current measurements, then upload a new plan to keep measuring'}
+            title={isSaving || isUploadingPage ? 'Please wait - saving in progress' : 'Save current measurements, then upload a new plan to keep measuring'}
           >
             {isSaving || isUploadingPage ? 'Saving…' : 'Upload another plan or image'}
           </button>
@@ -4878,7 +4878,7 @@ export function TakeoffWorkstation({
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-900">Add to existing area</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      This plan becomes a numbered slot under the selected area. Just calibrate and measure — everything rolls into that area.
+                      This plan becomes a numbered slot under the selected area. Just calibrate and measure - everything rolls into that area.
                     </p>
                     {uploadAnotherTarget === 'existing' && (
                       <select
@@ -4896,7 +4896,7 @@ export function TakeoffWorkstation({
                 </div>
               </label>
 
-              {/* Option 2: new area (no name upfront — collected after drawing) */}
+              {/* Option 2: new area (no name upfront - collected after drawing) */}
               <label
                 className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
                   uploadAnotherTarget === 'new'
@@ -4915,7 +4915,7 @@ export function TakeoffWorkstation({
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Create new area for this upload</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Calibrate the new plan, then draw the area boundary — you'll name it when you close the shape. No extra clicks needed.
+                      Calibrate the new plan, then draw the area boundary - you'll name it when you close the shape. No extra clicks needed.
                     </p>
                   </div>
                 </div>
@@ -5041,7 +5041,7 @@ export function TakeoffWorkstation({
             </div>
           )}
 
-          {/* Batch 3: Area Switcher — left panel shows all areas for the quote.
+          {/* Batch 3: Area Switcher - left panel shows all areas for the quote.
               Click an area to switch the canvas + component list. */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -5253,7 +5253,7 @@ export function TakeoffWorkstation({
                                     return (
                                       <div className="mt-2 mb-1">
                                         <div className="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1">
-                                          ⚡ AI Placeholder — attach a real component
+                                          ⚡ AI Placeholder - attach a real component
                                         </div>
                                         <select
                                           onChange={(e) => {
@@ -5268,7 +5268,7 @@ export function TakeoffWorkstation({
                                           <option value="">Attach component…</option>
                                           {compatibleComps.map(c => (
                                             <option key={c.id} value={c.id}>
-                                              {c.name}{activeComponentIds.includes(c.id) ? ' (already active — merge)' : ''}
+                                              {c.name}{activeComponentIds.includes(c.id) ? ' (already active - merge)' : ''}
                                             </option>
                                           ))}
                                         </select>
@@ -6113,7 +6113,7 @@ export function TakeoffWorkstation({
               visible: true,
               canvasObjects: marker ? [marker] : [],
               quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-              fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+              fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
             };
             
             const compData = componentMeasurements.find(c => c.componentId === selectedComponentId);
@@ -6197,7 +6197,7 @@ export function TakeoffWorkstation({
               visible: true,
               canvasObjects,
               quoteRoofAreaId: activeAreaIdRef.current, // stamp ownership at draw time
-              fromPageId: currentPageIdRef.current, // stamp page at draw time (ref — stale-closure fix)
+              fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
             };
             
             // Add to component measurements

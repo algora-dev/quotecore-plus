@@ -18,7 +18,7 @@ interface Props {
 }
 
 function formatAmount(amount: number | null): string {
-  if (amount == null) return '—';
+  if (amount == null) return '-';
   return new Intl.NumberFormat('en-NZ', { style: 'currency', currency: 'NZD' }).format(amount);
 }
 

@@ -36,7 +36,7 @@ export async function createSupabaseServerClient() {
     host = headerStore.get('host');
   } catch {
     // headers() unavailable in some contexts (e.g. during static
-    // generation) — fall back to host-only cookies.
+    // generation) - fall back to host-only cookies.
   }
 
   return createServerClient<Database>(
@@ -136,12 +136,12 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
       }
     }
   } catch {
-    // ignore — if cookie check fails, just return normal profile
+    // ignore - if cookie check fails, just return normal profile
   }
 
   // Check if this user's account is currently being impersonated by an admin
   // (user-facing banner). Only check for non-admin users, and only when the
-  // impersonation cookie is present — the cookie is set on the admin's session
+  // impersonation cookie is present - the cookie is set on the admin's session
   // when they start impersonating, so it's a cheap signal that this *might* be
   // an impersonation session. This avoids a service-role query on every
   // authenticated request for normal users.
@@ -172,7 +172,7 @@ export const getCurrentProfile = cache(async (existingClient?: SupabaseClient<Da
         }
       }
     } catch {
-      // ignore — if check fails, just return normal profile
+      // ignore - if check fails, just return normal profile
     }
   }
 

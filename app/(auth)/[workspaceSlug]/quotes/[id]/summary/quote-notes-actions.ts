@@ -18,7 +18,7 @@ export async function addQuoteNote(
   const profile = await requireCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  // Verify the quote belongs to this user's company before inserting — prevents
+  // Verify the quote belongs to this user's company before inserting - prevents
   // cross-tenant note linkage via guessed/known foreign quote UUIDs (H-02).
   await verifyQuoteOwnership(supabase, quoteId, profile.company_id);
 

@@ -49,7 +49,7 @@ function SignupForm() {
   const draftId = searchParams.get('draft');
 
   // Persist draft context in cookies IMMEDIATELY (not just on email-form
-  // submit) so the Google OAuth path inherits it too — the OAuth redirect
+  // submit) so the Google OAuth path inherits it too - the OAuth redirect
   // leaves this page before any submit handler runs. Cross-subdomain
   // cookies so the context survives the marketing - app domain hops.
   useEffect(() => {

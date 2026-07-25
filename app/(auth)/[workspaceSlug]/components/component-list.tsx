@@ -71,9 +71,9 @@ export function ComponentList({
   subscriptionActive: boolean;
   /** Per-user: true when the user has ticked "Don't show me this warning anymore". */
   editWarningDismissed?: boolean;
-  /** Draft ID from ?restore= query param — loads a saved calculator draft. */
+  /** Draft ID from ?restore= query param - loads a saved calculator draft. */
   restoreDraftId?: string;
-  /** Component ID from ?created= — scrolls to + highlights a component just
+  /** Component ID from ?created= - scrolls to + highlights a component just
    *  created from a free-calculator draft (restore-calc-draft route). */
   highlightComponentId?: string;
 }) {
@@ -241,7 +241,7 @@ export function ComponentList({
   }, []);
 
   // Calculator draft restore (H-04): load draft (localStorage fast path,
-  // then the server copy — drafts created on the marketing domain are not
+  // then the server copy - drafts created on the marketing domain are not
   // in this origin's localStorage) and pre-fill the form.
   useEffect(() => {
     if (!restoreDraftId || draftConsumed) return;
@@ -609,7 +609,7 @@ export function ComponentList({
       return;
     }
 
-    // Already dismissed — proceed directly.
+    // Already dismissed - proceed directly.
     await confirmUpdate(id, inputWithGenericTrades);
   }
 

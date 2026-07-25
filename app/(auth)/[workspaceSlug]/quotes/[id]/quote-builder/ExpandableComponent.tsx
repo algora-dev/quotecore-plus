@@ -173,7 +173,7 @@ export function ExpandableComponent({
     // Product is already metric area (m²); skip auto-conversion.
     // For length_x_height: user provided L×H = area directly, bypass preset height.
     const opts = isLxhPreset
-      // v8: dimB is the user's height for L×H — pass for read-only display.
+      // v8: dimB is the user's height for L×H - pass for read-only display.
       ? { bypassHeightMultiplier: true, convertAs: 'none' as const, entryHeightM: Bm }
       : { convertAs: 'none' as const };
     await onAddEntry(comp.id, Am * Bm, opts);
@@ -197,7 +197,7 @@ export function ExpandableComponent({
     const W = Number(vol3dW);
     const D = Number(vol3dD);
     if (!L || L <= 0 || !W || W <= 0 || !D || D <= 0) return;
-    // Convert each dimension to metric then multiply — product is already metric m³.
+    // Convert each dimension to metric then multiply - product is already metric m³.
     const Lm = linearInputToMetric(L, quote.measurement_system);
     const Wm = linearInputToMetric(W, quote.measurement_system);
     const Dm = linearInputToMetric(D, quote.measurement_system);
@@ -210,7 +210,7 @@ export function ExpandableComponent({
     vol3dRef.current?.focus();
   }
 
-  // Volume (Preset Depth) — direct volume mode: user enters m³ directly,
+  // Volume (Preset Depth) - direct volume mode: user enters m³ directly,
   // bypassing the preset depth multiplier. Waste is applied server-side.
   async function handleSubmitDirectVolume() {
     const val = Number(inputValue);
@@ -221,7 +221,7 @@ export function ExpandableComponent({
     inputRef.current?.focus();
   }
 
-  // Volume (m³) — area + custom depth mode: user enters area² and a depth,
+  // Volume (m³) - area + custom depth mode: user enters area² and a depth,
   // system calculates area² × depth = m³. Bypasses preset depth (none exists
   // for volume_3d). Waste is applied server-side.
   async function handleSubmitAreaDepth() {
@@ -389,7 +389,7 @@ export function ExpandableComponent({
                 )}
                 {!isCombined && (() => {
                   // v8 (2026-07-08): read-only input reference display. Shows
-                  // the values used to produce this entry's final value —
+                  // the values used to produce this entry's final value -
                   // height/depth (user-entered or preset snapshot) and pitch.
                   // Purely informational; never feeds any calculation.
                   const ei = (entry as unknown as { entry_inputs?: { height_m?: number | null; depth_m?: number | null } | null }).entry_inputs;
@@ -643,7 +643,7 @@ export function ExpandableComponent({
                     </>
                   )
                 ) : entryMode === 'volume' && isVolumePreset ? (
-                  // Volume (Preset Depth) — direct volume mode: enter m³, bypass preset depth.
+                  // Volume (Preset Depth) - direct volume mode: enter m³, bypass preset depth.
                   <div className="flex items-center gap-2">
                     <input
                       ref={inputRef}
@@ -673,7 +673,7 @@ export function ExpandableComponent({
                     </button>
                   </div>
                 ) : entryMode === 'area_depth' && isVolume3d ? (
-                  // Volume (m³) — area + custom depth mode: area² × depth = m³.
+                  // Volume (m³) - area + custom depth mode: area² × depth = m³.
                   <>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500">Area</span>

@@ -1,12 +1,12 @@
 /**
  * Free tools tier system.
  *
- * Tier 1 — anonymous (no login): IP-based limits
- * Tier 2 — free tools account (Google OAuth or confirmed email): user-based limits
- * Tier 3 — free tools account whose email also has a QuoteCore+ app account: highest limits
+ * Tier 1 - anonymous (no login): IP-based limits
+ * Tier 2 - free tools account (Google OAuth or confirmed email): user-based limits
+ * Tier 3 - free tools account whose email also has a QuoteCore+ app account: highest limits
  *
  * Server-side source of truth for daily parse quotas. The client only ever
- * displays these numbers — enforcement happens in the parse-document route.
+ * displays these numbers - enforcement happens in the parse-document route.
  */
 
 export type FreeToolsTier = 1 | 2 | 3;

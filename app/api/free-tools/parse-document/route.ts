@@ -103,7 +103,7 @@ const MAX_CONTENT_LENGTH_BYTES = 6 * 1024 * 1024; // reject oversized POST bodie
 const MAGIC_BYTES: { mime: string; bytes: number[] }[] = [
   { mime: 'image/png', bytes: [0x89, 0x50, 0x4E, 0x47] },
   { mime: 'image/jpeg', bytes: [0xFF, 0xD8, 0xFF] },
-  { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF — verify WEBP tag below
+  { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF - verify WEBP tag below
 ];
 
 function detectImageMime(base64Data: string): string | null {
@@ -114,7 +114,7 @@ function detectImageMime(base64Data: string): string | null {
     for (const { mime, bytes } of MAGIC_BYTES) {
       if (bytes.every((byte, i) => buffer[i] === byte)) {
         if (mime === 'image/webp') {
-          // RIFF container — check bytes 8-11 are "WEBP"
+          // RIFF container - check bytes 8-11 are "WEBP"
           if (buffer.slice(8, 12).toString('ascii') !== 'WEBP') continue;
         }
         return mime;
@@ -139,7 +139,7 @@ function buildSystemPrompt(type: string): string {
 
 You will receive either:
 - A TEXT description of the document content, OR
-- An IMAGE (photo or screenshot) of a document — possibly handwritten.
+- An IMAGE (photo or screenshot) of a document - possibly handwritten.
 
 Your job: extract the structured data and return it as JSON.
 
@@ -183,7 +183,7 @@ Your job: extract the structured data and return it as JSON.
 // ── Route handler ──────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // 1. Early size guard — reject before parsing body
+  // 1. Early size guard - reject before parsing body
   const contentLength = parseInt(req.headers.get('content-length') || '0', 10);
   if (contentLength > MAX_CONTENT_LENGTH_BYTES) {
     return NextResponse.json(
@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid or missing "mode"' }, { status: 400 });
   }
 
-  // 5. Rate limit — combined AI limit per tier (durable, Supabase-backed).
+  // 5. Rate limit - combined AI limit per tier (durable, Supabase-backed).
   //    Authed users are keyed by user id so limits follow the account,
   //    not the network. Anonymous users are keyed by IP.
   //    AI limit is shared across image + text + all document types.
@@ -233,7 +233,7 @@ export async function POST(req: NextRequest) {
       resolved.tier === 1
         ? ' Sign up free at the top of the page for higher daily limits.'
         : resolved.tier === 2
-          ? ' QuoteCore+ app accounts get higher daily limits — start a free trial.'
+          ? ' QuoteCore+ app accounts get higher daily limits - start a free trial.'
           : ' Try again tomorrow.';
     return NextResponse.json(
       {
@@ -264,7 +264,7 @@ export async function POST(req: NextRequest) {
         { status: 413 }
       );
     }
-    // Server-side magic byte validation — don't trust client-sent MIME
+    // Server-side magic byte validation - don't trust client-sent MIME
     const detectedMime = detectImageMime(image);
     if (!detectedMime) {
       return NextResponse.json(
@@ -301,7 +301,7 @@ export async function POST(req: NextRequest) {
       content: `Please parse this ${type} information:\n\n${content}`,
     });
   } else {
-    // Image mode — build a vision message
+    // Image mode - build a vision message
     let imageUrl: string = image!;
     if (!imageUrl.startsWith('data:')) {
       // Use detected MIME, not client-provided

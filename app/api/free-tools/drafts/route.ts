@@ -6,7 +6,7 @@ import type { Json } from '@/app/lib/supabase/database.types';
 export const runtime = 'nodejs';
 
 /**
- * POST /api/free-tools/drafts — persist a free-tools draft server-side.
+ * POST /api/free-tools/drafts - persist a free-tools draft server-side.
  *
  * WHY: free tools (quote-core.com) and the app (app.quote-core.com) are
  * different origins; localStorage does not cross them. Drafts created on

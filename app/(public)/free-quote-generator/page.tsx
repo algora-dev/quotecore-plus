@@ -313,7 +313,7 @@ function QuoteGeneratorForm() {
       }
       if (!res.ok) return;
     } catch {
-      // Network error — don't block the user from generating
+      // Network error - don't block the user from generating
     }
     setGenerated(true);
     setPopupTrigger(false);
@@ -361,7 +361,7 @@ function QuoteGeneratorForm() {
           </p>
         </section>
 
-        {/* Signup notification banner — always shows content, never blank */}
+        {/* Signup notification banner - always shows content, never blank */}
         <FreeToolsSignupBanner />
 
         {!generated ? (
@@ -906,7 +906,7 @@ function QuoteGeneratorForm() {
                 <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 opacity-60">
                   <img src="/logo.png" alt="QuoteCore+" className="h-4 w-auto" />
                   <p className="text-[10px] text-slate-400">
-                    This quote was generated using QuoteCore+ Free Tools —{" "}
+                    This quote was generated using QuoteCore+ Free Tools -{" "}
                     <span className="text-slate-500 font-medium">quotecoreplus.com</span>
                   </p>
                 </div>
@@ -954,7 +954,7 @@ function QuoteGeneratorForm() {
               <a
                 href={buildConvertUrl({ targetPath: '/free-purchase-order-generator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
-                title="One click — populates your quote details into an order form"
+                title="One click - populates your quote details into an order form"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -964,7 +964,7 @@ function QuoteGeneratorForm() {
               <a
                 href={buildConvertUrl({ targetPath: '/free-invoice-generator', amount: total, clientName, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
-                title="One click — populates your quote details into an invoice form"
+                title="One click - populates your quote details into an invoice form"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />

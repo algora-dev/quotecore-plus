@@ -13,7 +13,7 @@ import {
 
 const KIND_LABELS: Record<string, string> = {
   roof_area: 'Roof Area',
-  ridge: 'Ridge',
+  ridge: 'Ridges',
   hip: 'Hip',
   valley: 'Valley',
   barge: 'Barge',

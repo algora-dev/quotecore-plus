@@ -114,7 +114,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   const [hideTotals, setHideTotals] = useState(
     !!(quote as { hide_totals?: boolean }).hide_totals
   );
-  // Global margin (material) — blank quotes use global_margin_percent; normal
+  // Global margin (material) - blank quotes use global_margin_percent; normal
   // quotes use material_margin_percent from the Review stage. Both are editable
   // in the customer quote editor and sync back on Save.
   const isBlankQuote = (quote as { entry_mode?: string }).entry_mode === 'blank';
@@ -125,7 +125,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           ? Number(quote.material_margin_percent)
           : 0)
   );
-  // Labor margin — editable for all quote types when labor margin is configured.
+  // Labor margin - editable for all quote types when labor margin is configured.
   // Initialise directly from the DB value regardless of labor_margin_enabled
   // so the pencil editor pre-populates correctly even when the flag was not
   // explicitly set to true (e.g. quotes created before the labor-margin feature).
@@ -157,7 +157,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   // Unified "Add new line" modal (Custom line / Add a component / Search catalog).
   const [showAddLine, setShowAddLine] = useState(false);
-  // AI import modals — image upload and text prompt
+  // AI import modals - image upload and text prompt
   const [showAiUpload, setShowAiUpload] = useState(false);
   const [showAiText, setShowAiText] = useState(false);
   const [showEditHeader, setShowEditHeader] = useState(false);
@@ -472,7 +472,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   }
 
   /**
-   * AI Import handler — converts parsed document lines into QuoteLine[] and
+   * AI Import handler - converts parsed document lines into QuoteLine[] and
    * appends them to the editor. Also updates branding fields if the AI
    * extracted company/client info.
    */
@@ -640,13 +640,13 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   /**
    * Apply & Save: resets ALL line-level margin overrides to global, recalculates
    * every component line amount, then saves immediately. This sets a clean
-   * global baseline — per-line edits can happen after.
+   * global baseline - per-line edits can happen after.
    */
   async function handleApplyGlobalMargins() {
     // C-01 fix: clear all per-line margin overrides AND recompute amounts from
     // base costs so the saved custom_amount matches the current global margin.
     // Lines with per-line overrides were NOT updated by the live slider, so their
-    // stored amounts still reflect the old override — recompute them now.
+    // stored amounts still reflect the old override - recompute them now.
     const resetLines = lines.map(line => {
       const base = {
         ...line,
@@ -814,7 +814,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
 
   // Margin display amounts for the preview breakdown rows.
   // Uses per-line override when set (lineMarginPercent / lineLaborMarginPercent),
-  // falling back to the global slider value — so pencil-edited lines contribute
+  // falling back to the global slider value - so pencil-edited lines contribute
   // their actual margin rather than the global rate.
   // Margin display amounts for the preview breakdown rows.
   // Includes BOTH component lines (with explicit baseMaterialCost) AND
@@ -887,7 +887,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   </option>
                 ))}
               </select>
-            {/* AI import buttons — image upload + text prompt */}
+            {/* AI import buttons - image upload + text prompt */}
             <button
               type="button"
               onClick={() => setShowAiUpload(true)}
@@ -1174,7 +1174,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               + Add New Line
             </button>
 
-            {/* Missing components banner — shown when components were added after initial CQL save */}
+            {/* Missing components banner - shown when components were added after initial CQL save */}
             {missingComponents.length > 0 && (
               <div className="rounded-xl border border-orange-200 bg-orange-50/60 px-4 py-3 flex items-start gap-3">
                 <svg className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
@@ -1196,7 +1196,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               </div>
             )}
 
-            {/* Profit Margin — all quote types. Blank quotes: single global %. Normal
+            {/* Profit Margin - all quote types. Blank quotes: single global %. Normal
               quotes: separate material + labor %. Saves back to the quote
               record on Save so the Review stage stays in sync. */}
             <div className="pt-4 border-t space-y-3">
@@ -1231,7 +1231,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 </div>
               </div>
 
-              {/* Labor margin — always visible for normal quotes; disabled when no labour lines exist */}
+              {/* Labor margin - always visible for normal quotes; disabled when no labour lines exist */}
               {!isBlankQuote && (
                 <div className="flex items-center gap-3">
                   <label className="text-xs text-slate-600 whitespace-nowrap w-24">
@@ -1260,7 +1260,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 </div>
               )}
 
-              {/* Show on customer quote toggle — available for all quote types */}
+              {/* Show on customer quote toggle - available for all quote types */}
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -1271,7 +1271,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 <span className="text-xs text-slate-500">Show margin breakdown on customer quote</span>
               </label>
 
-              {/* Apply Global Margins & Save — resets ALL per-line overrides to global baseline */}
+              {/* Apply Global Margins & Save - resets ALL per-line overrides to global baseline */}
               <button
                 type="button"
                 onClick={handleApplyGlobalMargins}
@@ -1609,7 +1609,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
         }}
       />
 
-      {/* Margin visibility warning — shown before Save & Return when breakdown is customer-visible */}
+      {/* Margin visibility warning - shown before Save & Return when breakdown is customer-visible */}
       <ConfirmModal
         open={showMarginSaveWarning}
         title="Margin breakdown is visible to the customer"

@@ -696,7 +696,7 @@ export default async function QuoteSummaryPage({
       </div>
       </div>
 
-      {/* Calculation audit trace — admin only */}
+      {/* Calculation audit trace - admin only */}
       {_profile.is_admin && (
         <CalcAuditPanel quoteId={id} currency={effectiveCurrency} />
       )}

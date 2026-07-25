@@ -6,7 +6,7 @@ interface ComponentGuideBoxProps {
 
 const GUIDE_LABELS: Record<string, string> = {
   roof_area: 'Roof Area',
-  ridge: 'Ridge',
+  ridge: 'Ridges',
   hip: 'Hips',
   valley: 'Valleys',
   barge: 'Barges',

@@ -13,13 +13,13 @@ export const dynamic = 'force-dynamic';
  *   - acceptance_token_expires_at IS NOT NULL and < now()
  *   - accepted_at IS NULL  (not already accepted)
  *   - declined_at IS NULL  (not already declined)
- *   - withdrawn_at IS NULL (withdrawn quotes are already dead — skip)
+ *   - withdrawn_at IS NULL (withdrawn quotes are already dead - skip)
  *   - job_status != 'expired' (idempotent guard)
  *
  * For each matching quote:
  *   1. Sets job_status = 'expired'
- *   2. Creates an in-app alert (gated by Message Center notify_quote_expired pref — defaults ON)
- *   3. Sends an email notification   (gated separately — defaults ON)
+ *   2. Creates an in-app alert (gated by Message Center notify_quote_expired pref - defaults ON)
+ *   3. Sends an email notification   (gated separately - defaults ON)
  *
  * Runs hourly. Capped at 200 quotes per run to bound execution time.
  */
@@ -90,18 +90,18 @@ export async function GET(request: Request) {
     const customerName = quote.customer_name || 'the customer';
     const quoteRef = quote.quote_number ? `#${quote.quote_number}` : 'a quote';
 
-    // In-app alert (gated by Message Center preference — defaults ON).
+    // In-app alert (gated by Message Center preference - defaults ON).
     if (await alertEnabled(admin, quote.company_id, 'quote_expired')) {
       await admin.from('alerts').insert({
         company_id: quote.company_id,
         quote_id: quote.id,
         alert_type: 'quote_expired',
-        title: `Quote Expired — ${quoteRef}`,
+        title: `Quote Expired - ${quoteRef}`,
         message: `Your quote for ${customerName} has expired with no response from the customer.`,
       });
     }
 
-    // Email notification (gated separately — defaults ON for quote_expired).
+    // Email notification (gated separately - defaults ON for quote_expired).
     if (await emailAlertEnabled(admin, quote.company_id, 'quote_expired')) {
       await notifyQuoteExpired({
         companyId: quote.company_id,

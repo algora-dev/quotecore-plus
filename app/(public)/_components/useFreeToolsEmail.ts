@@ -5,8 +5,8 @@ import { useFreeToolsAuth } from './FreeToolsAuthProvider';
 
 /**
  * Unified hook that resolves the user's email from either:
- * 1. FreeToolsAuth (Google OAuth / email login) — takes priority
- * 2. localStorage 'free-tools-email' — fallback for non-logged-in users
+ * 1. FreeToolsAuth (Google OAuth / email login) - takes priority
+ * 2. localStorage 'free-tools-email' - fallback for non-logged-in users
  *
  * Also exposes openAuthModal so in-page cards can trigger the shared auth modal.
  */

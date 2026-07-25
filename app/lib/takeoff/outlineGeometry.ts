@@ -2,7 +2,7 @@
  * Deterministic outline vertex classification and endpoint matching.
  *
  * After Scan 1 returns the roof outline polygon, these utilities calculate
- * whether each vertex is convex or concave — removing the need for Scan 3
+ * whether each vertex is convex or concave - removing the need for Scan 3
  * to make that determination visually.
  *
  * The vertex corner types are then matched to internal line segment
@@ -40,7 +40,7 @@ export interface AugmentedLine extends V3Line {
  * against the polygon's overall winding sign.
  *
  * Image coordinates: y increases downward, but the relative-sign approach
- * is invariant to that — it only cares whether the local turn matches the
+ * is invariant to that - it only cares whether the local turn matches the
  * overall winding.
  */
 export function classifyOutlineVertices(vertices: V3Point[]): ClassifiedVertex[] {
@@ -50,7 +50,7 @@ export function classifyOutlineVertices(vertices: V3Point[]): ClassifiedVertex[]
 
   const count = vertices.length;
 
-  // Signed area (twice) — sign tells us the winding direction.
+  // Signed area (twice) - sign tells us the winding direction.
   const signedAreaTwice = vertices.reduce((sum, point, index) => {
     const next = vertices[(index + 1) % count];
     return sum + point.x * next.y - next.x * point.y;
@@ -170,7 +170,7 @@ function findNearestVertex(
  * Post-Scan 3 enforcement: correct hip ↔ valley misclassifications using
  * the authoritative vertex data.
  *
- * Rules (conservative — only touches hip/valley):
+ * Rules (conservative - only touches hip/valley):
  * - convex vertex + type === 'hip'     → keep (correct)
  * - concave vertex + type === 'valley' → keep (correct)
  * - convex vertex + type === 'valley'  → correct to 'hip'
@@ -212,7 +212,7 @@ export function enforceHipValleyVertexRule(
     if (line.startOutlineCornerType) vertexCorners.push(line.startOutlineCornerType);
     if (line.endOutlineCornerType) vertexCorners.push(line.endOutlineCornerType);
 
-    // No vertex match at all — can't be hip or valley
+    // No vertex match at all - can't be hip or valley
     if (vertexCorners.length === 0) {
       corrections.push({
         line_id: c.line_id,
@@ -220,7 +220,7 @@ export function enforceHipValleyVertexRule(
         to: 'uncertain',
         reason: `No outline vertex match for either endpoint`,
       });
-      return { ...c, type: 'uncertain', reason: `Backend: no outline vertex endpoint — cannot be ${c.type}` };
+      return { ...c, type: 'uncertain', reason: `Backend: no outline vertex endpoint - cannot be ${c.type}` };
     }
 
     // Find the first non-collinear vertex (collinear doesn't determine hip/valley)
@@ -232,9 +232,9 @@ export function enforceHipValleyVertexRule(
         line_id: c.line_id,
         from: c.type as 'hip' | 'valley',
         to: 'uncertain',
-        reason: `Matched vertex is collinear — cannot determine hip/valley`,
+        reason: `Matched vertex is collinear - cannot determine hip/valley`,
       });
-      return { ...c, type: 'uncertain', reason: 'Backend: matched vertex is collinear — cannot determine hip/valley' };
+      return { ...c, type: 'uncertain', reason: 'Backend: matched vertex is collinear - cannot determine hip/valley' };
     }
 
     // Apply the authoritative rule
@@ -244,7 +244,7 @@ export function enforceHipValleyVertexRule(
       return c; // Correct as-is
     }
 
-    // Misclassification — correct it
+    // Misclassification - correct it
     corrections.push({
       line_id: c.line_id,
       from: c.type as 'hip' | 'valley',

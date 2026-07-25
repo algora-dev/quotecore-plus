@@ -8,7 +8,7 @@ import { authCookieOptions } from './cookie-config';
  *
  * IMPORTANT: all browser-side Supabase clients MUST be created through
  * this function (or `createFreeToolsClient`). createBrowserClient caches
- * a singleton — the first creation's options win — so a raw
+ * a singleton - the first creation's options win - so a raw
  * createBrowserClient call without our shared cookieOptions would break
  * the cross-subdomain session (see cookie-config.ts).
  */

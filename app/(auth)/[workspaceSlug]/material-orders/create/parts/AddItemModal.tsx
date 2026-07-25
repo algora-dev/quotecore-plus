@@ -75,7 +75,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
   
   // Fixed Quantity display overrides: editable text values that show in the
   // order preview (e.g. "5" and "231.71m²"). Pre-fill from existingLine when
-  // editing; empty for new items. These are order-line-only — they never
+  // editing; empty for new items. These are order-line-only - they never
   // write back to the quote or component library.
   const [pricedQuantity, setPricedQuantity] = useState(
     existingLine?.pricedQuantity != null ? String(existingLine.pricedQuantity) : ''
@@ -83,7 +83,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
   // Split measurementDisplay into numeric value + unit selector so the user
   // doesn't have to type the unit manually. Parse from existingLine if present.
   // All common units available in the dropdown so the user can pick
-  // whatever fits — includes RS (Roofing Squares) for imperial_rs users.
+  // whatever fits - includes RS (Roofing Squares) for imperial_rs users.
   const FIXED_QTY_UNITS = isMetric
     ? [UNITS.area, UNITS.linear, UNITS.volume]
     : isImperialRs
@@ -368,7 +368,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
           {/* Fixed Quantity Display: editable text overrides that show in the
               order preview as "Quantity: N (measurement)". Pre-fills from the
               existing line when editing. For new items, a toggle reveals the
-              fields. These are order-line-only display values — they never
+              fields. These are order-line-only display values - they never
               write back to the quote or component library. */}
           {(existingLine?.pricedQuantity != null || showFixedQty) && (
             <div className="border border-orange-200 rounded-lg p-3 bg-orange-50/30 space-y-3">
@@ -387,7 +387,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
                 )}
               </div>
               <p className="text-xs text-slate-500">
-                These values appear in the order as "Quantity: N (measurement)". Edit them to adjust what shows on this order — the quote stays unchanged.
+                These values appear in the order as "Quantity: N (measurement)". Edit them to adjust what shows on this order - the quote stays unchanged.
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -756,7 +756,7 @@ export function AddItemModal({ flashings, components = [], collections = [], wor
         />
       )}
 
-      {/* Angle Calculator — floating draggable widget so the user can
+      {/* Angle Calculator - floating draggable widget so the user can
           calculate an angle, copy it, and paste into any input without
           closing the calculator. */}
       <AngleCalculatorWidget

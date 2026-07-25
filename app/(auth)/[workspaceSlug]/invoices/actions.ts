@@ -228,7 +228,7 @@ export async function createInvoiceFromQuote(quoteId: string, templateId?: strin
   //
   // Fallback source: quote_components where is_customer_visible = true. This
   // covers build-mode quotes that were confirmed without ever opening the
-  // Customer Quote Editor — in that case customer_quote_lines is empty and
+  // Customer Quote Editor - in that case customer_quote_lines is empty and
   // the invoice would otherwise be blank.
   const visibleCqLines = (cqLines ?? []).filter((l) => l.is_visible !== false);
 

@@ -32,7 +32,7 @@ interface MobileHeaderProps {
  * - Divider
  * - Quotes, Orders, Invoices, Resources
  *
- * Desktop (md+) renders nothing — the full header in the layout handles it.
+ * Desktop (md+) renders nothing - the full header in the layout handles it.
  */
 export function MobileHeader({ workspaceSlug, navItems, bell, inbox, help }: MobileHeaderProps) {
   const pathname = usePathname();
@@ -80,7 +80,7 @@ export function MobileHeader({ workspaceSlug, navItems, bell, inbox, help }: Mob
         </Link>
 
         <div className="flex items-center gap-1">
-          {/* Bell — ensures 44px hit area */}
+          {/* Bell - ensures 44px hit area */}
           <div className="inline-flex items-center justify-center min-w-[44px] min-h-[44px]">
             {bell}
           </div>

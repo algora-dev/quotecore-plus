@@ -12,7 +12,7 @@ const DRAFT_ID_RE = /^[A-Za-z0-9-]{8,64}$/;
 /**
  * Expire the signup handoff cookies on both scopes they may live in:
  * host-only (previews/localhost) and domain-wide .quote-core.com
- * (production — setHandoffCookie writes them with that domain).
+ * (production - setHandoffCookie writes them with that domain).
  */
 function clearSignupCookies(res: NextResponse, req: NextRequest) {
   const host = req.nextUrl.hostname.toLowerCase();
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
     .maybeSingle();
 
   if (!profile?.company_id) {
-    // Authenticated but not onboarded — stash the draft pointer in the
+    // Authenticated but not onboarded - stash the draft pointer in the
     // same cookie the signup flow uses, so the existing dashboard-side
     // restore (workspaceSlug/page.tsx) fires once onboarding completes.
     const res = NextResponse.redirect(new URL('/onboarding', req.url));
@@ -102,13 +102,13 @@ export async function GET(req: NextRequest) {
           req.url,
         ),
       );
-      // The draft is consumed — clear the signup cookies so the dashboard
+      // The draft is consumed - clear the signup cookies so the dashboard
       // banner stops offering it.
       clearSignupCookies(res, req);
       return res;
     }
     if (created.code === 'not_found') {
-      // Already consumed or expired — nothing to import; just go to the
+      // Already consumed or expired - nothing to import; just go to the
       // components page and clear the stale cookies.
       const res = NextResponse.redirect(
         new URL(`/${encodeURIComponent(slug)}/components`, req.url),

@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const resolved = await resolveFreeToolsTier(req.headers.get('authorization'));
   const ip = getClientIP(req.headers);
 
-  // Tier 3 (app account) — unlimited, no rate limit check needed
+  // Tier 3 (app account) - unlimited, no rate limit check needed
   if (resolved.tier === 3 || resolved.limits.docPerDay === null) {
     return NextResponse.json({
       allowed: true,

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { updatePlan, type PlanData } from './actions';
 
 function formatBytes(bytes: number | null): string {
-  if (!bytes) return '—';
+  if (!bytes) return '-';
   if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(0)} GB`;
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
   return `${bytes} B`;
@@ -115,7 +115,7 @@ export function PlanManagementTab({ plans }: { plans: PlanData[] }) {
 
       {/* Stripe fields notice */}
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-        <strong>Read-only:</strong> Stripe Price IDs (<code>stripe_price_id_test/live</code>) and <code>code</code> cannot be edited here. Price changes require a new Stripe Price — see MEMORY.md PRICING section.
+        <strong>Read-only:</strong> Stripe Price IDs (<code>stripe_price_id_test/live</code>) and <code>code</code> cannot be edited here. Price changes require a new Stripe Price - see MEMORY.md PRICING section.
       </div>
 
       {plans.map((plan) => (
@@ -249,10 +249,10 @@ export function PlanManagementTab({ plans }: { plans: PlanData[] }) {
               {/* Stripe IDs (read-only) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Stripe Price ID (test)">
-                  <input type="text" value={plan.stripe_price_id_test ?? '—'} readOnly className={`${inputCls} bg-slate-50 text-slate-400 cursor-not-allowed`} />
+                  <input type="text" value={plan.stripe_price_id_test ?? '-'} readOnly className={`${inputCls} bg-slate-50 text-slate-400 cursor-not-allowed`} />
                 </Field>
                 <Field label="Stripe Price ID (live)">
-                  <input type="text" value={plan.stripe_price_id_live ?? '—'} readOnly className={`${inputCls} bg-slate-50 text-slate-400 cursor-not-allowed`} />
+                  <input type="text" value={plan.stripe_price_id_live ?? '-'} readOnly className={`${inputCls} bg-slate-50 text-slate-400 cursor-not-allowed`} />
                 </Field>
               </div>
 

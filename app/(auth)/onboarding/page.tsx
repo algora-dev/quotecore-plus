@@ -25,10 +25,10 @@ export default async function OnboardingPage() {
   // email) have an 'email' identity but no password. When they first
   // enter the app we ask them to create one during onboarding so the
   // normal email+password login works for them afterwards. OAuth-only
-  // users (Google) are skipped — they log in with Google, no password
+  // users (Google) are skipped - they log in with Google, no password
   // needed.
-  // (2026-07-15) Offered to ANY user without a password — Google
-  // OAuth-only signups AND magic-link email signups — as an OPTIONAL
+  // (2026-07-15) Offered to ANY user without a password - Google
+  // OAuth-only signups AND magic-link email signups - as an OPTIONAL
   // field on onboarding step 1. Never required; hidden when a password
   // already exists.
   let needsPassword = false;
@@ -39,7 +39,7 @@ export default async function OnboardingPage() {
     });
     needsPassword = hasPw === false;
   } catch {
-    // Non-fatal: if the check fails, don't block onboarding — they can
+    // Non-fatal: if the check fails, don't block onboarding - they can
     // set a password later via the reset-password flow.
     needsPassword = false;
   }
@@ -56,7 +56,7 @@ export default async function OnboardingPage() {
   // If the auth user has no profile row but has quotes belonging to
   // them, restore the link instead of showing the Google signup form
   // (which would create a new company and orphan their data).
-  // Match by `created_by_email` (durable — survives profile deletion)
+  // Match by `created_by_email` (durable - survives profile deletion)
   // with a `created_by_user_id` fallback. Mirrors /auth/callback.
   if (!profile) {
     const userEmail = authUser.email?.toLowerCase() || '';

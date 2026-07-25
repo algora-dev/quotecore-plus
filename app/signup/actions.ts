@@ -11,7 +11,7 @@ type SignupInput = {
 };
 
 /**
- * Email/password signup — TWO-STAGE FLOW (Gerald M-01).
+ * Email/password signup - TWO-STAGE FLOW (Gerald M-01).
  *
  * Stage 1 (here): create the Supabase auth user via `signUp()`, which
  *   automatically sends the confirmation email instantly. Company name
@@ -26,7 +26,7 @@ type SignupInput = {
  * IMPORTANT: We use `supabase.auth.signUp()` (not admin.createUser + resend)
  * because signUp sends the confirmation email automatically and instantly
  * as part of the signup. The previous admin.createUser + resend approach
- * was unreliable — the resend endpoint could delay or fail silently,
+ * was unreliable - the resend endpoint could delay or fail silently,
  * leaving users waiting 5-15 minutes for a confirmation email.
  */
 export async function signupWithCompany(input: SignupInput) {
@@ -45,7 +45,7 @@ export async function signupWithCompany(input: SignupInput) {
 
   const supabase = await createSupabaseServerClient();
 
-  // Use signUp() — this automatically sends the confirmation email
+  // Use signUp() - this automatically sends the confirmation email
   // instantly. No need for a separate resend call.
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -69,7 +69,7 @@ export async function signupWithCompany(input: SignupInput) {
 
   // If the user somehow already has a session (e.g. email was already
   // confirmed), data.session will be non-null. In that case they're
-  // already logged in — redirect to their workspace or onboarding.
+  // already logged in - redirect to their workspace or onboarding.
   if (data.session) {
     redirect('/onboarding');
   }

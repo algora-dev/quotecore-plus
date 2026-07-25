@@ -39,7 +39,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
       setError('Company name and your name are required');
       return;
     }
-    // Password is OPTIONAL — users can keep signing in with Google or an
+    // Password is OPTIONAL - users can keep signing in with Google or an
     // email link. Only validate when they chose to type one.
     if (needsPassword && newPassword) {
       if (newPassword.length < 8) {
@@ -97,7 +97,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
     // during onboarding (especially for Google OAuth users whose session
     // was established on a free-tools page 30+ minutes ago). The
     // middleware's server client has autoRefreshToken: false, so it
-    // can't refresh — we need a client-side refresh to mint fresh cookies.
+    // can't refresh - we need a client-side refresh to mint fresh cookies.
     try {
       const { createClient } = await import('@/app/lib/supabase/client');
       const browserClient = createClient();

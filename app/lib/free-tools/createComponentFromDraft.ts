@@ -79,7 +79,7 @@ export async function createComponentFromCalcDraft(
     return { ok: false, code: 'not_found' };
   }
 
-  // 2. Tier gate — same errors createComponent surfaces.
+  // 2. Tier gate - same errors createComponent surfaces.
   try {
     await requireComponentSlot(companyId);
   } catch (err) {
@@ -160,7 +160,7 @@ export async function createComponentFromCalcDraft(
   }
 
   // 5. Mark the draft consumed (idempotence: a second click can't create a
-  // duplicate). Best-effort — the component already exists.
+  // duplicate). Best-effort - the component already exists.
   await admin
     .from('free_document_drafts')
     .update({ consumed_at: new Date().toISOString() })

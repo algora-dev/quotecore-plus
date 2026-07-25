@@ -16,7 +16,7 @@ import { SITE_URL } from '@/lib/seo/site-url';
  * Doc pages are pulled from the same tree used to render `/docs`, so a new
  * doc lands in the sitemap automatically the next time the site builds.
  * Blog posts come from the shared `BLOG_POSTS` array in `app/lib/blog-posts.ts`
- * which is also used by the blog page itself — single source of truth.
+ * which is also used by the blog page itself - single source of truth.
  */
 
 export default function sitemap(): MetadataRoute.Sitemap {

@@ -50,7 +50,7 @@ export function AnnouncementTab({ initialConfig }: { initialConfig: Announcement
             className="rounded"
           />
           <span className="font-medium">Active</span>
-          <span className="text-slate-400 text-xs">— show banner to all users</span>
+          <span className="text-slate-400 text-xs">- show banner to all users</span>
         </label>
 
         {/* Message */}
@@ -119,7 +119,7 @@ export function AnnouncementTab({ initialConfig }: { initialConfig: Announcement
             className="rounded"
           />
           <span className="font-medium">Dismissible</span>
-          <span className="text-slate-400 text-xs">— users can hide it (per-browser via localStorage)</span>
+          <span className="text-slate-400 text-xs">- users can hide it (per-browser via localStorage)</span>
         </label>
 
         {/* Preview */}

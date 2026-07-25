@@ -4,13 +4,13 @@
  * UNIFIED AUTH (2026-07-14): free tools authenticate against the MAIN app
  * Supabase project. Tiers are derived from the app's own tables:
  *
- *   Tier 1 — no/invalid token (anonymous)
- *   Tier 2 — valid auth user, but no app profile OR company onboarding
+ *   Tier 1 - no/invalid token (anonymous)
+ *   Tier 2 - valid auth user, but no app profile OR company onboarding
  *            not completed yet
- *   Tier 3 — valid auth user with a company whose onboarding_completed_at
+ *   Tier 3 - valid auth user with a company whose onboarding_completed_at
  *            is set (fully onboarded app account)
  *
- * Never trusts client-declared tier — the JWT is the only input.
+ * Never trusts client-declared tier - the JWT is the only input.
  */
 
 import { createClient } from '@supabase/supabase-js';

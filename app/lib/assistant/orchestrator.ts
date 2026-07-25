@@ -158,11 +158,11 @@ function buildSystemPrompt(
       'Rules for respond mode:',
       '- DON’T RE-ASK: never ask the user something they already told you. If their message states a clear goal or already answered your previous question, ANSWER/act on it - do not bounce it back as another clarifying question. Scan recent turns first.',
       '- WANTS TO BE SHOWN / WALKED THROUGH? If the user asks to be shown how to do something ("how do I upload a catalog?", "show me how to add a component", "walk me through creating an order"), do NOT try to guide them yourself in Respond mode. Instead tell them: "Switch on Guide Me mode (the toggle at the top of this chat) and I’ll walk you through it step by step." Keep it to one sentence. Do NOT call begin_guide, do NOT list steps, do NOT say "follow the steps below". If they just want a quick answer ("how do quotes work?"), answer concisely without offering a guide.',
-      '- NEVER ASK "ready to begin?" / "want me to start?" — in Respond mode, just tell them to switch on Guide Me.',
+      '- NEVER ASK "ready to begin?" / "want me to start?" - in Respond mode, just tell them to switch on Guide Me.',
       '- For a pure factual / conceptual question ("what is waste?", "does pricing include VAT?"), just answer it concisely - use get_ui_element_details / search_help_docs. Don’t start a guide for these.',
       '- Do NOT pre-emptively dump an entire step-by-step walkthrough in prose. If it’s a real task, guide them (above); if you must summarise, keep it to 2-4 bullets.',
       '- Be direct and practical. If you don’t know, say so and point to where to look.',
-      '- NO HIGHLIGHTING IN RESPOND MODE: you CANNOT highlight, point at, or glow anything on the user screen. Do NOT call request_ui_highlight. Do NOT say "the highlighted control" or imply anything is visually marked. If the user needs to find something on screen, tell them where it is by name and location (e.g. "the Resources link in the top nav"). If the user needs to be SHOWN where to go or walked through a task, tell them to switch on Guide Me mode — that is the only mode where highlighting works.'
+      '- NO HIGHLIGHTING IN RESPOND MODE: you CANNOT highlight, point at, or glow anything on the user screen. Do NOT call request_ui_highlight. Do NOT say "the highlighted control" or imply anything is visually marked. If the user needs to find something on screen, tell them where it is by name and location (e.g. "the Resources link in the top nav"). If the user needs to be SHOWN where to go or walked through a task, tell them to switch on Guide Me mode - that is the only mode where highlighting works.'
     );
   }
   return base.join('\n');
@@ -492,7 +492,7 @@ async function dispatchTool(
 const SHOW_ME_RE =
   /\b(show me how|walk me through|guide me|step[\s-]?by[\s-]?step|how (do|can) i|how to|teach me|talk me through)\b/i;
 
-// Pure navigation requests — "how do I find X", "where is X", "take me to X".
+// Pure navigation requests - "how do I find X", "where is X", "take me to X".
 // These should NOT trigger the deterministic guide launcher; the LLM handles
 // them via the NAVIGATION REQUESTS section (highlight the nav item, one sentence).
 const NAVIGATION_RE =
@@ -560,7 +560,7 @@ export async function runAssistantTurn(
   // Deterministic fast-path: if the user clearly wants to be shown how to do
   // something (or just said "yes" to our guide offer), start the guide directly
   // - no model discretion, no "ready to begin?" loop, no step-dump.
-  // ONLY in guide_me mode — in respond_only the user has not opted into a guide.
+  // ONLY in guide_me mode - in respond_only the user has not opted into a guide.
   const direct = input.mode === 'guide_me' ? tryDeterministicGuideLaunch(input) : null;
   if (direct) {
     input.onGuideStart?.(direct.command);

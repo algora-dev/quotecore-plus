@@ -174,7 +174,7 @@ export function CronStatusTab({ cronStatus }: { cronStatus: CronStatusData }) {
                 <tr key={msg.id} className="hover:bg-orange-50/40 transition">
                   <td className="px-4 py-3 text-slate-900 text-xs">{msg.recipient_email}</td>
                   <td className="px-4 py-3 text-slate-600 text-xs font-mono">{msg.trigger_event}</td>
-                  <td className="px-4 py-3 text-red-600 text-xs font-mono max-w-xs truncate" title={msg.failed_error ?? ''}>{msg.failed_error ?? '—'}</td>
+                  <td className="px-4 py-3 text-red-600 text-xs font-mono max-w-xs truncate" title={msg.failed_error ?? ''}>{msg.failed_error ?? '-'}</td>
                   <td className="px-4 py-3 text-slate-500 text-xs">{formatTime(msg.fire_at)}</td>
                   <td className="px-4 py-3 text-right">
                     <button

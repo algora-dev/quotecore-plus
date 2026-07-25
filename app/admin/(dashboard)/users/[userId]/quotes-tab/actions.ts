@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * Admin Quote Storyline Viewer — server actions.
+ * Admin Quote Storyline Viewer - server actions.
  * =================================================
  * Search a user's quotes and load full calc audit storyline data.
  * Gated behind requireAdmin(). Uses service-role client.
@@ -106,7 +106,7 @@ export async function searchUserQuotes(
     .in('quote_id', quoteIds);
 
   if (compErr) {
-    // Non-fatal — return quotes with zeroed totals
+    // Non-fatal - return quotes with zeroed totals
     console.error('[admin/searchUserQuotes] component stats error:', compErr.message);
   }
 

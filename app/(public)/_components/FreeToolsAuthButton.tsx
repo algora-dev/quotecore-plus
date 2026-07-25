@@ -6,7 +6,7 @@ export function FreeToolsAuthButton({ compact = false }: { compact?: boolean }) 
   const { user, loading, signOut, openAuthModal, tierInfo } = useFreeToolsAuth();
 
   if (loading) {
-    // Skeleton placeholder — never render an empty header slot
+    // Skeleton placeholder - never render an empty header slot
     return (
       <div className="flex items-center gap-2" aria-hidden="true">
         <div className="h-7 w-14 rounded-full bg-slate-100 animate-pulse" />

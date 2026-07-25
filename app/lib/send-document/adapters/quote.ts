@@ -90,7 +90,7 @@ export const quoteAdapter: DocumentSendAdapter = {
     return data as QuoteEntity;
   },
 
-  // No validateSendable — quotes can be sent from any non-draft status.
+  // No validateSendable - quotes can be sent from any non-draft status.
   // The token logic handles edge cases (accepted/declined/withdrawn).
 
   async resolveToken(entity, companyId) {
@@ -161,7 +161,7 @@ export const quoteAdapter: DocumentSendAdapter = {
   },
 
   // Quotes support both library + entity (quote) files.
-  // No filterAttachments — pass through as-is.
+  // No filterAttachments - pass through as-is.
 };
 
 /**

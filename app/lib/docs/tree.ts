@@ -202,7 +202,7 @@ export function getAllSlugs(): string[] {
   return out;
 }
 
-/** Like getAllSlugs but excludes coming-soon pages — for sitemaps. */
+/** Like getAllSlugs but excludes coming-soon pages - for sitemaps. */
 export function getPublishedSlugs(): string[] {
   const tree = getDocTree();
   const out: string[] = [];

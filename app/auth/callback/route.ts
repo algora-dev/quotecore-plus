@@ -43,9 +43,9 @@ export async function GET(request: Request) {
         // If the auth user has no profile row (e.g. it was manually
         // deleted but the auth.users row survived), check if they have
         // quotes belonging to them. We match by `created_by_email`
-        // (durable — survives profile deletion because it's not an FK)
+        // (durable - survives profile deletion because it's not an FK)
         // instead of `created_by_user_id` (which is `ON DELETE SET NULL`
-        // and gets nulled when the profile is deleted — Gerald H-01).
+        // and gets nulled when the profile is deleted - Gerald H-01).
         if (!profile) {
           const userEmail = user.email?.toLowerCase() || '';
           let orphanedQuote: { company_id: string } | null = null;
@@ -108,7 +108,7 @@ export async function GET(request: Request) {
         // ── FIRST-CONFIRMATION WORKSPACE CREATION (Gerald M-01) ────
         // Email/password signup creates ONLY the auth user (with company_name
         // + full_name in user_metadata). When they confirm their email, this
-        // is where the company + profile get created — not before.
+        // is where the company + profile get created - not before.
         if (!profile && isRecentConfirmation && user.user_metadata?.company_name) {
           const companyName = String(user.user_metadata.company_name);
           const fullName = String(user.user_metadata.full_name || user.user_metadata.name || '');
@@ -151,13 +151,13 @@ export async function GET(request: Request) {
               // NOTE: the welcome email is NOT sent here. Sending it at
               // confirmation time meant it arrived before the user had even
               // completed onboarding. It now goes out when onboarding
-              // completes (completeOnboarding in onboarding/actions.ts) —
+              // completes (completeOnboarding in onboarding/actions.ts) -
               // the same timing the Google path already uses.
 
               // Redirect to onboarding so the user sets trade/preferences.
               return NextResponse.redirect(`${origin}/onboarding`);
             } else {
-              // Profile insert failed — clean up the company to avoid orphans.
+              // Profile insert failed - clean up the company to avoid orphans.
               await admin.from('companies').delete().eq('id', company.id);
               console.error('[auth/callback] Profile creation failed, cleaned up company:', profileError);
             }
@@ -175,7 +175,7 @@ export async function GET(request: Request) {
             .maybeSingle();
 
           // Note: welcome email is sent during first-confirmation workspace
-          // creation above. We do NOT send it again here — this path is for
+          // creation above. We do NOT send it again here - this path is for
           // users who already have a profile (e.g. logins after the initial
           // setup was completed). Sending here would cause duplicate emails.
 
@@ -197,7 +197,7 @@ export async function GET(request: Request) {
         // CRITICAL: this must stay OUTSIDE the profile?.company_id block.
         // A bad refactor (bc6f9af) left it unreachable inside the block,
         // which sent every brand-new Google user to /login?error=auth_failed
-        // instead of onboarding — the "forced to log in again" bug.
+        // instead of onboarding - the "forced to log in again" bug.
         return NextResponse.redirect(`${origin}/onboarding`);
       }
     }

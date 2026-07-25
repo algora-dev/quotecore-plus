@@ -8,7 +8,7 @@ export function GoogleSignInButton() {
   async function handleGoogleSignIn() {
     setLoading(true);
     try {
-      // Shared factory — applies the cross-subdomain cookieOptions
+      // Shared factory - applies the cross-subdomain cookieOptions
       // (see cookie-config.ts). Never use raw createBrowserClient here.
       const supabase = createClient();
 

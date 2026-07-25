@@ -45,7 +45,7 @@ export function formatPricedQuantity(
   system: MeasurementSystem,
 ): ReactNode {
   const actual = Number(c.final_quantity ?? 0);
-  // Supabase returns numeric columns as strings at runtime — use Number().
+  // Supabase returns numeric columns as strings at runtime - use Number().
   const priced = c.priced_quantity != null ? Number(c.priced_quantity) : null;
   const packSnap = c.pack_size_snapshot != null ? Number(c.pack_size_snapshot) : null;
   if (priced != null && !isNaN(priced)) {

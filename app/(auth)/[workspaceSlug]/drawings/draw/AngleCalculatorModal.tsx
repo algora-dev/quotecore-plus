@@ -97,16 +97,16 @@ export function AngleCalculatorModal({
   const [sameAsPitch1, setSameAsPitch1] = useState<boolean>(true);
   const [cornerAngle, setCornerAngle] = useState<string>('90');
 
-  // Rafter Pitch — Ridge
+  // Rafter Pitch - Ridge
   const [ridgePitch1, setRidgePitch1] = useState<string>('25');
   const [ridgePitch2, setRidgePitch2] = useState<string>('25');
   const [ridgeSameAsPitch1, setRidgeSameAsPitch1] = useState<boolean>(true);
 
-  // Rafter Pitch — Change of Pitch
+  // Rafter Pitch - Change of Pitch
   const [upperPitch, setUpperPitch] = useState<string>('25');
   const [lowerPitch, setLowerPitch] = useState<string>('10');
 
-  // Rafter Pitch — Upstand / Roof into Upstand
+  // Rafter Pitch - Upstand / Roof into Upstand
   const [singlePitch, setSinglePitch] = useState<string>('25');
 
   const [result, setResult] = useState<AngleResult | null>(null);

@@ -174,7 +174,7 @@ export async function notifyGenericAlert(input: {
 }
 
 /**
- * Quote expiry notification — sent by the expire-quotes cron when a quote
+ * Quote expiry notification - sent by the expire-quotes cron when a quote
  * passes its valid_until deadline with no customer response.
  * GATING IS THE CALLER'S JOB: check emailAlertEnabled before calling.
  */
@@ -282,7 +282,7 @@ export async function notifyCustomerExpiryExtended(input: {
       day: 'numeric', month: 'long', year: 'numeric',
     });
 
-    const subject = `${quoteRef}${fromCompany} — acceptance window extended`;
+    const subject = `${quoteRef}${fromCompany} - acceptance window extended`;
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"/><title>${subject}</title></head>
@@ -292,7 +292,7 @@ export async function notifyCustomerExpiryExtended(input: {
 <tr><td>
   <p style="margin:0 0 8px;font-size:14px;color:#6B7280;">${companyName ?? 'QuoteCore+'}</p>
   <h1 style="margin:0 0 20px;font-size:20px;font-weight:600;color:#111827;">${greeting}</h1>
-  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">${quoteRef}${fromCompany} has been updated — the acceptance deadline has been extended to <strong>${newExpiryFormatted}</strong>.</p>
+  <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">${quoteRef}${fromCompany} has been updated - the acceptance deadline has been extended to <strong>${newExpiryFormatted}</strong>.</p>
   <p style="margin:0 0 24px;font-size:15px;line-height:1.6;">Your original link is still valid and ready to use:</p>
   <table cellpadding="0" cellspacing="0"><tr><td style="background:#111827;border-radius:20px;padding:10px 24px;">
     <a href="${acceptUrl}" style="color:#fff;font-size:14px;font-weight:600;text-decoration:none;">View &amp; Accept Quote</a>
@@ -303,7 +303,7 @@ export async function notifyCustomerExpiryExtended(input: {
 </td></tr></table>
 </body></html>`;
 
-    const text = `${greeting}\n\n${quoteRef}${fromCompany} has been updated — the acceptance deadline has been extended to ${newExpiryFormatted}.\n\nView and accept your quote here:\n${acceptUrl}`;
+    const text = `${greeting}\n\n${quoteRef}${fromCompany} has been updated - the acceptance deadline has been extended to ${newExpiryFormatted}.\n\nView and accept your quote here:\n${acceptUrl}`;
 
     await sendEmail({
       to: customerEmail,

@@ -71,7 +71,7 @@ export function FilesManager({
   // --- Takeoff re-entry modal state ---
   const [showTakeoffModal, setShowTakeoffModal] = useState(false);
   const [takeoffOption, setTakeoffOption] = useState<TakeoffOption>('edit');
-  // planMode removed — canvas is always fully reconstructed on edit.
+  // planMode removed - canvas is always fully reconstructed on edit.
   const [areaName, setAreaName] = useState('');
   const [newPlanFile, setNewPlanFile] = useState<File | null>(null);
   const [isStartingTakeoff, setIsStartingTakeoff] = useState(false);
@@ -195,7 +195,7 @@ export function FilesManager({
   // --- Takeoff entry logic ---
 
   function handleTakeoffClick() {
-    // Batch 4: unified entry — always go straight to the takeoff canvas.
+    // Batch 4: unified entry - always go straight to the takeoff canvas.
     // All area/plan management is now inside the editor (left panel).
     router.push(`/${workspaceSlug}/quotes/${quoteId}/takeoff`);
   }

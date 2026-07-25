@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback } from 'react';
 
 /**
- * State-only undo/redo hook. Stores plain serializable data snapshots —
+ * State-only undo/redo hook. Stores plain serializable data snapshots -
  * no Fabric.js canvas JSON. The canvas is redrawn from React state after
  * every undo/redo via `redrawCanvasFromState()`.
  *

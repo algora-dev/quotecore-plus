@@ -65,7 +65,7 @@ type ModalState =
 /**
  * Persist the draft SERVER-SIDE and return its id. localStorage + cookie
  * are written as same-origin fast paths, but the server copy is the source
- * of truth — it survives the marketing → app domain hop (different origin,
+ * of truth - it survives the marketing → app domain hop (different origin,
  * different localStorage). Falls back to a local-only id if the API fails.
  */
 async function persistDraft(draftData: Record<string, unknown>): Promise<string> {
@@ -85,7 +85,7 @@ async function persistDraft(draftData: Record<string, unknown>): Promise<string>
       if (json?.id) draftId = json.id;
     }
   } catch {
-    // Server persist failed — same-origin localStorage fallback still works.
+    // Server persist failed - same-origin localStorage fallback still works.
   }
   try {
     localStorage.setItem(`qcp:doc-draft:${draftId}`, JSON.stringify(draftData));
@@ -331,7 +331,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
                 onClick={async () => {
                   // Persist the draft SERVER-SIDE before redirecting so it
                   // survives the marketing → app domain hop (localStorage
-                  // does not cross origins — this was the draft-loss bug).
+                  // does not cross origins - this was the draft-loss bug).
                   const draftPayload = {
                     documentType,
                     documentData,
@@ -342,13 +342,13 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
                   if (authUser) {
                     // T2: User is authenticated (shared .quote-core.com
                     // session) but has no company. Send them to the app's
-                    // import endpoint — it detects the missing company and
+                    // import endpoint - it detects the missing company and
                     // redirects to /onboarding. After onboarding they land
                     // on the dashboard where DocDraftRestorer restores the
                     // draft via URL param / cookie / server fetch.
                     window.location.href = `${getAppOrigin()}/api/app/import-free-document?draft=${draftId}`;
                   } else {
-                    // T1: Anonymous user — send to the app-domain signup
+                    // T1: Anonymous user - send to the app-domain signup
                     // (step 1 of the core signup flow).
                     window.location.href = `${getAppOrigin()}/signup?ref=free-${documentType}-generator&draft=${draftId}`;
                   }

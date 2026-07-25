@@ -53,12 +53,12 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
   if (!visible) return null;
 
   const features = [
-    'No card needed — sign up in 1 minute',
+    'No card needed - sign up in 1 minute',
     'Free 14-day trial with full features',
     'Save, edit, and send your documents',
     'Use all AI features inside the app',
     'Create unlimited quotes, orders, and invoices',
-    'No strings attached — cancel anytime',
+    'No strings attached - cancel anytime',
   ];
 
   return (
@@ -85,7 +85,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
               <div>
                 <p className="text-sm font-medium text-slate-900">We&apos;ve saved your {docLabel}</p>
                 <p className="text-xs text-slate-600 mt-1">
-                  After you create your account, your {docLabel} will be loaded right into your workspace — ready to edit, send, or convert.
+                  After you create your account, your {docLabel} will be loaded right into your workspace - ready to edit, send, or convert.
                 </p>
               </div>
             </div>

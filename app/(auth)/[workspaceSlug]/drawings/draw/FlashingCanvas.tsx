@@ -405,7 +405,7 @@ export function FlashingCanvas({
             canvas.add(arc);
             canvas.add(angleText);
 
-            // Arc is hidden by default — user can show via sidebar toggle
+            // Arc is hidden by default - user can show via sidebar toggle
             arc.set('visible', false);
 
             newMeasurements.push({
@@ -2230,7 +2230,7 @@ export function FlashingCanvas({
         </ul>
       </div>
 
-      {/* Angle Calculator Widget — same draggable floating widget used in
+      {/* Angle Calculator Widget - same draggable floating widget used in
           the order editor. Stays open so the user can apply multiple angles
           without re-opening the calculator. */}
       <AngleCalculatorWidget

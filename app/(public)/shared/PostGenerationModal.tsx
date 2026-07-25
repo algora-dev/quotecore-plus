@@ -16,16 +16,16 @@ export type DocToolType = 'quote' | 'order' | 'invoice';
 interface PostGenerationModalProps {
   /** Which free tool this modal is on */
   toolType: DocToolType;
-  /** Trigger — when true, starts the delay timer to show the popup */
+  /** Trigger - when true, starts the delay timer to show the popup */
   trigger: boolean;
   /** Result headline, e.g. "£425.00 quote" */
   resultLabel: string;
   /** Optional breakdown line, e.g. "3 line items for John Smith" */
   resultDetails?: string;
-  /** Convert URL params — pre-built by parent */
+  /** Convert URL params - pre-built by parent */
   convertToOrderUrl?: string;
   convertToInvoiceUrl?: string;
-  /** Save to app handler — invoked when user clicks Save to App */
+  /** Save to app handler - invoked when user clicks Save to App */
   onSaveToApp: () => void;
 }
 
@@ -163,7 +163,7 @@ export function PostGenerationModal({
           {toolType === 'quote' && convertToOrderUrl && (
             <TooltipButton
               label="Convert to Order"
-              tooltip="One click — populates your quote details into an order form"
+              tooltip="One click - populates your quote details into an order form"
               href={convertToOrderUrl}
               variant="primary"
               icon={convertIcon}
@@ -174,7 +174,7 @@ export function PostGenerationModal({
           {(toolType === 'quote' || toolType === 'order') && convertToInvoiceUrl && (
             <TooltipButton
               label="Convert to Invoice"
-              tooltip="One click — populates your details into an invoice form"
+              tooltip="One click - populates your details into an invoice form"
               href={convertToInvoiceUrl}
               variant="primary"
               icon={convertIcon}
@@ -195,7 +195,7 @@ export function PostGenerationModal({
             type="button"
             onClick={dismiss}
             className="w-full text-center px-5 py-2 text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
-            title="You can also do this in the next step — convert or save your document anytime from the buttons below."
+            title="You can also do this in the next step - convert or save your document anytime from the buttons below."
           >
             Maybe later
           </button>

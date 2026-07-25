@@ -12,24 +12,24 @@
  * Fix: on production quote-core.com hosts, scope the auth cookies to
  * `.quote-core.com` so one session is valid on ALL subdomains. On any
  * other host (vercel.app previews, localhost) we leave the default
- * host-only behaviour — you cannot set cross-subdomain cookies there.
+ * host-only behaviour - you cannot set cross-subdomain cookies there.
  *
  * We also use a NEW cookie name (storage key). The legacy default name
  * (`sb-<project-ref>-auth-token`) exists as host-only cookies in current
  * users' browsers; writing a domain-scoped cookie under the SAME name
  * would create ambiguous duplicate cookies and nondeterministic session
  * reads. A new name side-steps that entirely (existing sessions get
- * logged out once — accepted trade-off). Middleware expires the legacy
+ * logged out once - accepted trade-off). Middleware expires the legacy
  * cookies when it sees them.
  *
  * EVERY Supabase client in this codebase (browser + server + middleware)
- * MUST use these options. createBrowserClient is a singleton — the first
- * creation wins — so a single call site without these options can poison
+ * MUST use these options. createBrowserClient is a singleton - the first
+ * creation wins - so a single call site without these options can poison
  * the session for the whole page. Always create browser clients through
  * `createClient()` (app) or `createFreeToolsClient()` (free tools).
  */
 
-/** New auth cookie name / storage key. Keep the `sb-` prefix — parts of
+/** New auth cookie name / storage key. Keep the `sb-` prefix - parts of
  *  the codebase (middleware refresh fallback) detect auth cookies by it. */
 export const AUTH_COOKIE_NAME = 'sb-qcp-auth';
 
@@ -37,7 +37,7 @@ export const AUTH_COOKIE_NAME = 'sb-qcp-auth';
  * Cookie Domain attribute for the given hostname.
  * Returns `.quote-core.com` on production quote-core.com hosts so the
  * session crosses subdomains; undefined (host-only) everywhere else.
- * Note: .co.nz hosts intentionally return undefined — a `.quote-core.com`
+ * Note: .co.nz hosts intentionally return undefined - a `.quote-core.com`
  * domain attribute is invalid there. Free tools redirect off .co.nz.
  */
 export function authCookieDomain(hostname: string | null | undefined): string | undefined {

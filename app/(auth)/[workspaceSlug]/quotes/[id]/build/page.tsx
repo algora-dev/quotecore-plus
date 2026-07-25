@@ -36,7 +36,7 @@ export default async function QuoteBuilderV2Page({
     loadComponentCollections(),
   ]);
 
-  // Load files (same as v1) — most recent plan for the FilesManager header.
+  // Load files (same as v1) - most recent plan for the FilesManager header.
   const { data: planFile } = await supabase
     .from('quote_files')
     .select('storage_path, file_name')
@@ -46,7 +46,7 @@ export default async function QuoteBuilderV2Page({
     .limit(1)
     .maybeSingle();
 
-  // Also fetch the FIRST (oldest) plan file — this is the original plan
+  // Also fetch the FIRST (oldest) plan file - this is the original plan
   // uploaded for Page 1, used as the thumbnail fallback when takeoff_pages
   // has no image_storage_path for page 1 (2026-07-06).
   const { data: firstPlanFile } = await supabase

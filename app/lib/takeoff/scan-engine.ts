@@ -1,5 +1,5 @@
 /**
- * Scan Engine — extracted from ai-scan-v3/route.ts
+ * Scan Engine - extracted from ai-scan-v3/route.ts
  * Reusable 3-scan pipeline logic with no Next.js dependencies.
  * Used by the scan-worker and (optionally) the legacy ai-scan-v3 route.
  */
@@ -308,7 +308,7 @@ export function logScanUsage(params: { companyId: string; quoteId: string; userI
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// SCAN ENGINE — 3 stages
+// SCAN ENGINE - 3 stages
 // ═══════════════════════════════════════════════════════════════════════
 
 /** Scan 1: Outline detection. Returns roof area polygon(s) in canvas coords. */

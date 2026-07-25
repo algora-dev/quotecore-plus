@@ -7,12 +7,12 @@ import { CustomerQuoteEditor } from '../customer-edit/CustomerQuoteEditor';
 import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 
 /**
- * /quotes/[id]/blank-build — dedicated builder screen for quotes whose
+ * /quotes/[id]/blank-build - dedicated builder screen for quotes whose
  * `entry_mode` is `'blank'`.
  *
  * We now render the standard CustomerQuoteEditor with empty roofAreas +
  * components arrays. This gives blank quotes the same look, feel, and
- * line-editing experience as the customer quote editor — no separate
+ * line-editing experience as the customer quote editor - no separate
  * BlankQuoteBuilder component needed. The underlying data (customer_quote_lines,
  * saveCustomerQuoteLines) is identical.
  */
@@ -82,7 +82,7 @@ export default async function BlankBuildPage({
   return (
     <CustomerQuoteEditor
       quote={quote}
-      // Blank quotes have no roof areas or components — the editor initialises
+      // Blank quotes have no roof areas or components - the editor initialises
       // to the savedLines (or empty if none yet), matching the user's expectation.
       roofAreas={[]}
       components={[]}

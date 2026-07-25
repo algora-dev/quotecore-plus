@@ -23,7 +23,7 @@ interface CalcResultPopupProps {
   ctaText: string;
   /** Primary CTA URL (used when no onCta action is provided) */
   ctaHref: string;
-  /** Optional CTA action — when set, the CTA runs this instead of
+  /** Optional CTA action - when set, the CTA runs this instead of
    *  navigating to ctaHref (e.g. tier-aware smart-component save). */
   onCta?: () => void | Promise<void>;
   /** Secondary description text */

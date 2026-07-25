@@ -1,19 +1,19 @@
 'use client';
 
 /**
- * AddLineItemModal — shared "Add Line Item" modal used by:
+ * AddLineItemModal - shared "Add Line Item" modal used by:
  *   - Customer Quote Editor (quotes/[id]/customer-edit)
  *   - Blank Quote Builder   (quotes/[id]/blank-build)
  *   - Order Line-by-Line Editor (material-orders/create)
  *
  * This is the invoice-modal UX pattern applied universally. Three tabs:
- *   Custom   — Title + Description + Qty + Unit + Unit Price
- *   Catalog  — Select catalog → browse/search rows → set Qty + Unit Cost
- *   Component — Pick from component library → set Qty + Unit Cost
+ *   Custom   - Title + Description + Qty + Unit + Unit Price
+ *   Catalog  - Select catalog → browse/search rows → set Qty + Unit Cost
+ *   Component - Pick from component library → set Qty + Unit Cost
  *
  * The modal emits a normalised LineItemPayload[] via onAdd. Each consuming
  * editor maps this payload to its own line shape (QuoteLine, LineByLineItem,
- * etc.) in its onAdd handler — the modal itself stays format-agnostic.
+ * etc.) in its onAdd handler - the modal itself stays format-agnostic.
  */
 
 import { useState, useEffect } from 'react';
@@ -28,7 +28,7 @@ export interface LineItemPayload {
   sourceId: string | null;
   /** Primary text / item name (column 1). */
   title: string;
-  /** Optional secondary detail text (column 2 — Description). */
+  /** Optional secondary detail text (column 2 - Description). */
   description: string | null;
   /** Numeric quantity. */
   quantity: number;
@@ -488,7 +488,7 @@ export function AddLineItemModal({
                 <div className="space-y-2">
                   <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
                     <p className="text-xs text-amber-800">
-                      <strong>Note:</strong> Only the component name and price are added here. Labor rates, material rates, and measurement breakdowns are not included — use the quote builder's Components phase for full pricing.
+                      <strong>Note:</strong> Only the component name and price are added here. Labor rates, material rates, and measurement breakdowns are not included - use the quote builder's Components phase for full pricing.
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3">

@@ -7,9 +7,9 @@ export type AngleType = 'internal' | 'external' | 'straight';
 export type BendDirection = 'internal' | 'external' | 'none';
 
 export interface AngleResult {
-  /** Legacy field — kept for backward compat. Same as finishedAngle. */
+  /** Legacy field - kept for backward compat. Same as finishedAngle. */
   interior: number;
-  /** Legacy field — kept for backward compat. */
+  /** Legacy field - kept for backward compat. */
   exterior: number;
   /** The included angle of the finished flashing. */
   finishedAngle: number;

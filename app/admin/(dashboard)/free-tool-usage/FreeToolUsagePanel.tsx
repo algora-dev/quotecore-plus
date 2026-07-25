@@ -122,7 +122,7 @@ function T1Tab() {
                     <td className="px-4 py-3 text-slate-500">{t.imageUses}</td>
                     <td className="px-4 py-3 text-slate-500">{t.textUses}</td>
                     <td className="px-4 py-3 text-slate-500">
-                      {t.lastUsed ? new Date(t.lastUsed).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                      {t.lastUsed ? new Date(t.lastUsed).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">

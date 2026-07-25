@@ -31,7 +31,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
           <img
             key={src}
             src={src}
-            alt={`${alt} — view ${i + 1}`}
+            alt={`${alt} - view ${i + 1}`}
             className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${
               i === index ? 'opacity-100' : 'opacity-0'
             }`}

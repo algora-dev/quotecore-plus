@@ -6,7 +6,7 @@ import { useFreeToolsEmail } from './useFreeToolsEmail';
  * Auth status card for free tool pages.
  * - Not authed: shows "Sign up free" + "Log in" buttons (opens shared auth modal)
  * - Authed: shows email + logout
- * - No loading state — always shows content immediately.
+ * - No loading state - always shows content immediately.
  */
 export function FreeToolsAuthCard() {
   const { email, isAuthed, signOut, openAuthModal, limitsLine } = useFreeToolsEmail();

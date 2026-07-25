@@ -1120,7 +1120,7 @@ export default function HomePage() {
               <button type="button" onClick={() => setActiveTestimonial((p) => (p + 1) % testimonials.length)} className="absolute -right-5 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-full border border-zinc-200 bg-white shadow-sm transition-colors hover:bg-zinc-50" aria-label="Next">
                 <svg className="h-4 w-4 text-zinc-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
               </button>
-              {/* Dot indicators — larger hit area, small visual dot */}
+              {/* Dot indicators - larger hit area, small visual dot */}
               <div className="mt-6 flex justify-center gap-1">
                 {testimonials.map((_, idx) => (
                   <button key={idx} type="button" onClick={() => setActiveTestimonial(idx)} className="inline-flex h-11 w-11 items-center justify-center rounded-full" aria-label={`Go to testimonial ${idx + 1}`}>

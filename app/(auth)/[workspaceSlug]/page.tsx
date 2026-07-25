@@ -40,7 +40,7 @@ export default async function WorkspaceHome({
   const cookieStore = await cookies();
   const signupDraft = cookieStore.get('qcp_signup_draft')?.value;
   const signupRef = cookieStore.get('qcp_signup_ref')?.value;
-  // Ref cookie is optional — the T2 path (restore-calc-draft → onboarding)
+  // Ref cookie is optional - the T2 path (restore-calc-draft → onboarding)
   // only sets the draft cookie. The draft id alone is enough to import.
   const hasCalcDraft = Boolean(signupDraft);
 

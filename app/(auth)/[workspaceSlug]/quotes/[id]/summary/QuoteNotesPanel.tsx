@@ -17,7 +17,7 @@ export interface QuoteNote {
 interface Props {
   quoteId: string;
   initialNotes: QuoteNote[];
-  /** Full name of the logged-in user — used to seed author on optimistic add. */
+  /** Full name of the logged-in user - used to seed author on optimistic add. */
   currentUserFullName?: string | null;
 }
 
@@ -82,7 +82,7 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
   return (
     <>
       <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-        {/* Title row — click to expand/collapse body */}
+        {/* Title row - click to expand/collapse body */}
         <button
           type="button"
           onClick={() => { if (!editing) setExpanded((p) => !p); }}
@@ -186,7 +186,7 @@ function NoteRow({ note, onUpdated, onDeleted }: NoteRowProps) {
         )}
       </div>
 
-      {/* Styled delete confirmation — matches app-wide ConfirmModal pattern */}
+      {/* Styled delete confirmation - matches app-wide ConfirmModal pattern */}
       <ConfirmModal
         open={confirmDelete}
         title="Delete this note?"

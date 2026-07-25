@@ -1,5 +1,5 @@
 /**
- * AI Takeoff V3 — 3-scan pipeline.
+ * AI Takeoff V3 - 3-scan pipeline.
  *
  * Scan 1: Outline only (GPT traces roof perimeter)
  * Scan 2: Internal line detection (GPT traces visible lines, angle-snapped)
@@ -345,7 +345,7 @@ function validatePolygon(rawPoints: unknown[], imgW: number, imgH: number): Poly
 
 // ── Angle snapping (deterministic post-Scan 2) ──────────────────────────
 
-const ANGLE_TOLERANCE = 5; // degrees — lines within this of 0/45/90/135 are snapped (matches prompt ±5°)
+const ANGLE_TOLERANCE = 5; // degrees - lines within this of 0/45/90/135 are snapped (matches prompt ±5°)
 const ALLOWED_ANGLES = [0, 45, 90, 135];
 
 function lineAngle(start: V3Point, end: V3Point): number {
@@ -404,7 +404,7 @@ function filterAngleValid(lines: V3Line[]): { valid: V3Line[]; rejected: V3Line[
     if (target !== null) {
       valid.push(snapLineToAngle(line));
     } else {
-      // Non-canonical angle — keep the line as-is, don't reject it
+      // Non-canonical angle - keep the line as-is, don't reject it
       valid.push(line);
     }
   }
@@ -571,7 +571,7 @@ export async function POST(req: NextRequest) {
     // ── AI Assist points quota ──────────────────────────────────────
     // Point cost per quality level: low=2, medium=4, high=8.
     // Points are deducted once on scan1 (the full cost). Scans 2+3 are
-    // continuations of the same scan session — no additional deduction.
+    // continuations of the same scan session - no additional deduction.
     const POINT_COST: Record<string, number> = { low: 2, medium: 4, high: 8 };
     const pointsToSpend = POINT_COST[qualityLevel] ?? 4;
 
@@ -919,7 +919,7 @@ export async function POST(req: NextRequest) {
         vertexMetadata = classifiedVertices.map(v => ({
           id: v.id, index: v.index, x: v.x, y: v.y, cornerType: v.cornerType,
         }));
-        // Only match internal lines (not edge lines) — edges ARE the outline
+        // Only match internal lines (not edge lines) - edges ARE the outline
         augmentedLines = matchEndpointsToVertices(allLines, classifiedVertices, 15);
         console.log(`[ai-scan-v3:${requestId}] scan3: vertex classification: ${classifiedVertices.length} vertices (${classifiedVertices.filter(v => v.cornerType === 'convex').length} convex, ${classifiedVertices.filter(v => v.cornerType === 'concave').length} concave, ${classifiedVertices.filter(v => v.cornerType === 'collinear').length} collinear)`);
       } catch (vertexError) {

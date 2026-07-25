@@ -84,7 +84,7 @@ function buildSystemPrompt(type: string): string {
 
 You will receive either:
 - A TEXT description of the document content, OR
-- An IMAGE (photo or screenshot) of a document — possibly handwritten.
+- An IMAGE (photo or screenshot) of a document - possibly handwritten.
 
 Your job: extract the structured data and return it as JSON.
 
@@ -208,7 +208,7 @@ async function incrementParseUsage(
     .maybeSingle();
 
   if (existing) {
-    // Row exists — increment
+    // Row exists - increment
     await admin
       .from('company_ai_usage')
       .update({
@@ -218,7 +218,7 @@ async function incrementParseUsage(
       .eq('company_id', companyId)
       .eq('period_start', periodStart);
   } else {
-    // Row doesn't exist yet — insert
+    // Row doesn't exist yet - insert
     await admin
       .from('company_ai_usage')
       .insert({
@@ -230,7 +230,7 @@ async function incrementParseUsage(
 }
 
 export async function POST(req: NextRequest) {
-  // 1. Authentication — require a valid Supabase session
+  // 1. Authentication - require a valid Supabase session
   const supabase = await createSupabaseServerClient();
   const {
     data: { session },

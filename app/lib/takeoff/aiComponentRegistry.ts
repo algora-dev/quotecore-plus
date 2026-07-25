@@ -1,11 +1,11 @@
 /**
- * AI Takeoff — Component Registry.
+ * AI Takeoff - Component Registry.
  *
  * Single source of truth for the 5 lineal placeholder types
  * (Ridge, Hip, Valley, Barge, Spouting).
  *
  * Canvas drawing, sidebar bars, hydration, and placeholder replacement
- * ALL consume this registry — no hard-coded colour maps elsewhere.
+ * ALL consume this registry - no hard-coded colour maps elsewhere.
  *
  * System placeholder components NEVER receive palette-by-order colours.
  * Their colour is always their semantic colour from this registry.
@@ -37,7 +37,7 @@ export interface AiComponentDefinition {
 export const AI_COMPONENT_REGISTRY: Record<SemanticKey, AiComponentDefinition> = {
   ridges: {
     key: 'ridges',
-    displayName: 'Ridge',
+    displayName: 'Ridges',
     systemName: 'ridge',
     colour: '#22C55E', // green
     dashed: false,

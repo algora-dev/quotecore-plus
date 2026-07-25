@@ -1,5 +1,5 @@
 /**
- * Calculation Tracer — instruments the existing pricing logic so every
+ * Calculation Tracer - instruments the existing pricing logic so every
  * intermediate step is captured as a structured audit object.
  *
  * Pure functions: no side effects, no DB calls. The caller is responsible
@@ -269,7 +269,7 @@ export function traceComponentCalc(params: TraceComponentParams): CalcAudit {
 
 /**
  * Append a manual override to an existing audit's overrides[] array.
- * Returns a new audit object (immutable — does not mutate the original).
+ * Returns a new audit object (immutable - does not mutate the original).
  */
 export function appendOverride(
   audit: CalcAudit | null,
@@ -281,7 +281,7 @@ export function appendOverride(
   };
 
   if (!audit) {
-    // No prior audit — create a minimal stub.
+    // No prior audit - create a minimal stub.
     return {
       version: 1,
       generatedAt: new Date().toISOString(),
@@ -397,7 +397,7 @@ export function formatAuditAsText(audit: CalcAudit): string {
     }
     lines.push(`  Pack count:   ${audit.packCount ?? 'N/A'}`);
     if (audit.packDataMissing) {
-      lines.push(`  ⚠ WARNING: Pack data missing — material cost set to £0`);
+      lines.push(`  ⚠ WARNING: Pack data missing - material cost set to £0`);
     }
     lines.push('');
   }

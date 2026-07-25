@@ -66,9 +66,10 @@ export function ComponentSymbol({ kind, customDef, className = 'w-4 h-4' }: { ki
         </svg>
       );
     case 'barge':
+      // L-shape rotated 90 deg right: horizontal across the roof, then drops down (flashing over roof + down barge face)
       return (
         <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 4v16h14" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 5h14v14" />
         </svg>
       );
     case 'spouting':

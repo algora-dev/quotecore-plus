@@ -80,13 +80,13 @@ export const orderAdapter: DocumentSendAdapter = {
     return data as OrderEntity;
   },
 
-  // No validateSendable — orders don't have terminal states that block sending.
+  // No validateSendable - orders don't have terminal states that block sending.
 
   async resolveToken(entity, companyId) {
     const order = entity as OrderEntity;
     // Reuse existing token or mint a new one (idempotent).
     if (order.acceptance_token) return order.acceptance_token;
-    // We need a supabase client — but resolveToken doesn't get one in the
+    // We need a supabase client - but resolveToken doesn't get one in the
     // current interface. The token minting happens in the orchestrator
     // before calling resolveToken for orders. So just return null here
     // and the orchestrator handles it.
@@ -99,7 +99,7 @@ export const orderAdapter: DocumentSendAdapter = {
 
   async buildMergeContext(entity, shared) {
     const order = entity as OrderEntity;
-    // Item count for {{order_total_items}} — needs a DB query, but we
+    // Item count for {{order_total_items}} - needs a DB query, but we
     // can't do it here without supabase. The orchestrator passes it
     // via shared context. Actually, let's compute it in the orchestrator
     // after loading the entity and pass it as an extra merge var.

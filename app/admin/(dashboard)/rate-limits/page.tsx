@@ -14,7 +14,7 @@ export default async function RateLimitsPage() {
       <div>
         <h1 className="text-xl font-semibold text-slate-900">Rate Limits</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          View and reset rate-limit buckets. Buckets are sorted by urgency — red (≥80% of limit) at the top.
+          View and reset rate-limit buckets. Buckets are sorted by urgency - red (≥80% of limit) at the top.
           Resets zero the count and restart the window.
         </p>
       </div>

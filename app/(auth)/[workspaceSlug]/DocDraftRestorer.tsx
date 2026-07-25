@@ -10,7 +10,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
  *
  * Draft sources, in order:
  *   1. localStorage (same-origin fast path)
- *   2. GET /api/free-tools/drafts/<id> — the server-side copy. This is
+ *   2. GET /api/free-tools/drafts/<id> - the server-side copy. This is
  *      what makes the free-tools → app journey survive the
  *      quote-core.com → app.quote-core.com origin change (localStorage
  *      does not cross origins).
@@ -36,7 +36,7 @@ export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
     // (set by SaveToAppButton when redirecting to signup). This ensures
     // the draft is restored even if the URL param was lost during
     // signup → email confirmation → onboarding → dashboard navigation.
-    // NOTE: the cookie is only cleared AFTER a successful import — an
+    // NOTE: the cookie is only cleared AFTER a successful import - an
     // earlier version cleared it on read, so a failed first attempt
     // destroyed the pointer and the draft was unrecoverable.
     let draftId = urlDraftId;
@@ -86,7 +86,7 @@ export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
         }
         const result = await res.json();
 
-        // Success — clean up all draft pointers
+        // Success - clean up all draft pointers
         try { localStorage.removeItem(key); } catch {}
         clearDraftCookie();
         fetch(`/api/free-tools/drafts/${id}`, { method: 'DELETE' }).catch(() => {});

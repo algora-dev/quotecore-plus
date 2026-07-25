@@ -44,7 +44,7 @@ export default function FreeToolsHeader() {
         </a>
 
         <div className="flex items-center gap-3">
-          {/* Free tools auth button — primary CTA */}
+          {/* Free tools auth button - primary CTA */}
           <FreeToolsAuthButton />
 
           <div className="hidden items-center gap-3 md:flex">

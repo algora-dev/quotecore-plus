@@ -266,7 +266,7 @@ export async function deleteAccounts(
 
     const { error: delErr } = await admin.from('companies').delete().eq('id', companyId);
     if (delErr) {
-      failures.push(`${company.name}: company row failed — ${delErr.message}`);
+      failures.push(`${company.name}: company row failed - ${delErr.message}`);
       continue;
     }
 
@@ -389,7 +389,7 @@ async function listCompanyStoragePaths(
  * Safety:
  *   - requireAdmin().
  *   - `confirmEmail` must exactly match one of the company's user emails
- *     (case-insensitive) — the typed-confirmation guard.
+ *     (case-insensitive) - the typed-confirmation guard.
  *   - Refuses to delete the calling admin's own company (self-protection).
  */
 export async function deleteAccount(
@@ -436,7 +436,7 @@ export async function deleteAccount(
 
   const errors: string[] = [];
 
-  // 1. STORAGE — remove all objects under `${companyId}/` in each bucket.
+  // 1. STORAGE - remove all objects under `${companyId}/` in each bucket.
   let storageRemoved = 0;
   for (const bucket of STORAGE_BUCKETS) {
     try {
@@ -455,12 +455,12 @@ export async function deleteAccount(
     }
   }
 
-  // 2. AUTH USERS — delete each auth.users row (no FK from public.users, so
+  // 2. AUTH USERS - delete each auth.users row (no FK from public.users, so
   //    the company cascade below would otherwise leave the login alive).
   let authDeleted = 0;
   for (const u of userList) {
     const { error } = await admin.auth.admin.deleteUser(u.id);
-    // "User not found" is fine (already gone) — only flag real failures.
+    // "User not found" is fine (already gone) - only flag real failures.
     if (error && !/not found/i.test(error.message)) {
       errors.push(`auth(${u.email}): ${error.message}`);
     } else {
@@ -468,12 +468,12 @@ export async function deleteAccount(
     }
   }
 
-  // 3. COMPANY ROW — cascades public.users + all company-scoped child tables
+  // 3. COMPANY ROW - cascades public.users + all company-scoped child tables
   //    (incl. the RESTRICT-guarded scheduled_messages, which die in the same
   //    cascade as their creating users).
   const { error: delErr } = await admin.from('companies').delete().eq('id', companyId);
   if (delErr) {
-    // Company delete failed AFTER auth/storage removal — surface loudly.
+    // Company delete failed AFTER auth/storage removal - surface loudly.
     errors.push(`company: ${delErr.message}`);
     console.error(
       `[admin/delete-account] PARTIAL: company ${companyId} (${company.name}) row delete FAILED after auth/storage removal. admin=${adminProfile.id}. err=${delErr.message}`,
@@ -492,7 +492,7 @@ export async function deleteAccount(
   );
 
   const summary =
-    `Deleted "${company.name}" — ${authDeleted} login(s), ${storageRemoved} file(s), ` +
+    `Deleted "${company.name}" - ${authDeleted} login(s), ${storageRemoved} file(s), ` +
     `and all company data.` +
     (errors.length ? ` Note: ${errors.length} non-fatal cleanup warning(s) logged.` : '');
 

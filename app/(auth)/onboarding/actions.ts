@@ -89,7 +89,7 @@ export async function completeOnboarding(companyId: string, data: OnboardingData
     console.error('[completeOnboarding] seeding threw (non-fatal):', err);
   }
 
-  // Welcome email — email-signup flow. Sent HERE (onboarding complete,
+  // Welcome email - email-signup flow. Sent HERE (onboarding complete,
   // user about to land on the dashboard), not at email confirmation.
   // Matches the Google path's timing (completeGoogleOnboarding sends its
   // own). First completion only; best-effort, never blocks onboarding.
@@ -172,7 +172,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
   // user whose profile was missing (but auth user still existed) would get
   // a brand-new company, orphaning their old company's data forever.
   // Instead, redirect them to their existing company. If the company row
-  // itself is gone (hard-deleted), we fall through to company creation —
+  // itself is gone (hard-deleted), we fall through to company creation -
   // but only as a last resort, and we log it loudly.
   const { data: existingProfile } = await supabaseAdmin
     .from('users')
@@ -204,7 +204,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
       return { slug: existingCompany.slug };
     }
 
-    // Company row is gone but profile still points at it — this is a
+    // Company row is gone but profile still points at it - this is a
     // data-integrity issue. Log it, clear the stale reference, and proceed
     // to create a new company as a fallback.
     console.error(
@@ -212,7 +212,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
     );
     // Clear the stale company_id reference. Cast to any because the generated
     // type for company_id is `string` (not nullable) even though the DB column
-    // allows NULL — the type was generated when the column was NOT NULL.
+    // allows NULL - the type was generated when the column was NOT NULL.
     await supabaseAdmin
       .from('users')
       .update({ company_id: null as any })
@@ -221,7 +221,7 @@ export async function completeGoogleOnboarding(formData: FormData) {
 
   // ── ORPHANED-DATA GUARD ─────────────────────────────────────────
   // Even if no profile row exists, check if the auth user has quotes
-  // belonging to them. Match by `created_by_email` (durable — survives
+  // belonging to them. Match by `created_by_email` (durable - survives
   // profile deletion) with a `created_by_user_id` fallback. This is the
   // third line of defense (after /auth/callback and /onboarding page
   // checks) to prevent data orphaning. (Gerald H-01)

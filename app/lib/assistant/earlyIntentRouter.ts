@@ -16,7 +16,7 @@
  * streamed back with zero orchestrator token cost. If no match, the
  * normal Q conversation flow runs.
  *
- * GATING: Only activates for "new" users — defined as account created
+ * GATING: Only activates for "new" users - defined as account created
  * within the last 14 days AND fewer than 3 quotes created. This prevents
  * the router from intercepting questions from experienced users who
  * might ask "what is a Smart Component?" in a deeper context.
@@ -65,7 +65,7 @@ const INTENTS: IntentDef[] = [
       "What's this app for?",
     ],
     response:
-      "Great question — the best place to start is the Tutorials section on the Resources page. Begin with **Smart Components**, then **Creating Your First Component**, followed by **Creating Your First Quote**. Those three will give you a solid foundation for how QuoteCore+ works. If you'd like, I can help you navigate there or answer any questions as you go.",
+      "Great question - the best place to start is the Tutorials section on the Resources page. Begin with **Smart Components**, then **Creating Your First Component**, followed by **Creating Your First Quote**. Those three will give you a solid foundation for how QuoteCore+ works. If you'd like, I can help you navigate there or answer any questions as you go.",
   },
   {
     id: 'learning_components',
@@ -85,7 +85,7 @@ const INTENTS: IntentDef[] = [
       'Teach me components.',
     ],
     response:
-      "Smart Components are the building blocks of QuoteCore+ — they're reusable items (like materials or labour) that you create once and then drop into any quote. Start with the **Smart Components** tutorial on the Resources page. It explains the concept, why components are the foundation of everything here, and walks you through creating your first one. Once you've got that, the rest of the app becomes much easier to understand.",
+      "Smart Components are the building blocks of QuoteCore+ - they're reusable items (like materials or labour) that you create once and then drop into any quote. Start with the **Smart Components** tutorial on the Resources page. It explains the concept, why components are the foundation of everything here, and walks you through creating your first one. Once you've got that, the rest of the app becomes much easier to understand.",
   },
   {
     id: 'creating_quotes',
@@ -103,13 +103,13 @@ const INTENTS: IntentDef[] = [
       'Teach me quoting.',
     ],
     response:
-      "Once you've got a few Smart Components set up, creating a quote is straightforward. Head to the **Quotes** page and click **New Quote**. You can build it line-by-line or pull in your existing components. There's a full walkthrough in the **Creating Your First Quote** tutorial on the Resources page — I'd recommend running through that first so you see the full flow. Want me to take you to the Quotes page to get started?",
+      "Once you've got a few Smart Components set up, creating a quote is straightforward. Head to the **Quotes** page and click **New Quote**. You can build it line-by-line or pull in your existing components. There's a full walkthrough in the **Creating Your First Quote** tutorial on the Resources page - I'd recommend running through that first so you see the full flow. Want me to take you to the Quotes page to get started?",
   },
   {
     id: 'navigation',
     label: 'Navigation',
     description:
-      'User is looking for where something is — Resources, tutorials, help section, guides.',
+      'User is looking for where something is - Resources, tutorials, help section, guides.',
     examples: [
       'Where is Resources?',
       'Where are the tutorials?',
@@ -120,7 +120,7 @@ const INTENTS: IntentDef[] = [
       'Show me the tutorials.',
     ],
     response:
-      "No problem — switch on **Guide Me** here in the chat (the toggle at the bottom) and I can show you exactly where to go by highlighting the next step on your screen. Or if you prefer, the Resources link is in the top navigation bar — click that and you'll see the Tutorials section right there.",
+      "No problem - switch on **Guide Me** here in the chat (the toggle at the bottom) and I can show you exactly where to go by highlighting the next step on your screen. Or if you prefer, the Resources link is in the top navigation bar - click that and you'll see the Tutorials section right there.",
   },
 ];
 

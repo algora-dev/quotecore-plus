@@ -70,7 +70,7 @@ export interface LineByLineData {
   hideLinePrices: boolean;
   /**
    * Hides the subtotal + taxes + grand total footer section.
-   * Independent of hideLinePrices — you can show line prices but hide the total,
+   * Independent of hideLinePrices - you can show line prices but hide the total,
    * or hide line prices but still show the grand total.
    * Default false.
    */

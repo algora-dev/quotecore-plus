@@ -6,7 +6,7 @@
  * Scan 3 = Classification only (GPT names each labeled line, no coordinate changes)
  *
  * Core principle: each scan does ONE thing. Simpler prompts = better accuracy.
- * No adaptive linework — original plan images are clear enough for GPT-5.6 vision.
+ * No adaptive linework - original plan images are clear enough for GPT-5.6 vision.
  */
 
 // ─── Shared Types ────────────────────────────────────────────────────────
@@ -51,7 +51,7 @@ Ignore all internal roof lines, dashed lines, text, dimensions and symbols.
 
 Return one closed clockwise vertex list in original-image pixel coordinates (0,0 = top-left, x increases right, y increases down). Image is ${width}×${height} pixels.
 
-Do not repeat the first vertex as the final vertex — the polygon is implicitly closed.
+Do not repeat the first vertex as the final vertex - the polygon is implicitly closed.
 
 Return only the structured JSON required by the schema.`;
 }
@@ -72,8 +72,8 @@ export function buildV3LineDetectionPrompt(params: {
 
 Two images are provided:
 
-1. OUTLINE OVERLAY IMAGE — the original plan with the confirmed roof outline shown in blue.
-2. ORIGINAL PLAN IMAGE — the raw roof plan at ${width}×${height} pixels.
+1. OUTLINE OVERLAY IMAGE - the original plan with the confirmed roof outline shown in blue.
+2. ORIGINAL PLAN IMAGE - the raw roof plan at ${width}×${height} pixels.
 
 Use the ORIGINAL PLAN IMAGE to detect linework.
 
@@ -147,7 +147,7 @@ export function buildV3ClassificationPrompt(params: {
     ? vertexMetadata.map(v => `${v.id} | x=${v.x} | y=${v.y} | ${v.cornerType}`).join('\n')
     : '';
 
-  // Build line table — use augmented data if available, otherwise plain lines
+  // Build line table - use augmented data if available, otherwise plain lines
   const linesForTable = augmentedLines ?? lines;
   const lineTable = linesForTable
     .map(l => {
@@ -181,9 +181,9 @@ Geometry has already been detected. Your ONLY task is to classify every supplied
 
 Three images are provided:
 
-1. ANNOTATED ORIGINAL — the original plan with the confirmed outline in blue and detected internal segments in orange, each labeled L1, L2, etc.
-2. CLEAN OVERLAY — the confirmed outline and labeled segments on a white background.
-3. ORIGINAL PLAN IMAGE — the raw plan for reference.
+1. ANNOTATED ORIGINAL - the original plan with the confirmed outline in blue and detected internal segments in orange, each labeled L1, L2, etc.
+2. CLEAN OVERLAY - the confirmed outline and labeled segments on a white background.
+3. ORIGINAL PLAN IMAGE - the raw plan for reference.
 
 ## CONFIRMED ROOF OUTLINE
 ${outlineStr}
@@ -237,7 +237,7 @@ A segment terminating partway along an outline edge (not at a vertex) is NOT a h
 Never classify a segment terminating at a supplied concave vertex as a hip.
 Never classify a segment terminating at a supplied convex vertex as a valley.
 
-Do not use this rule for a segment terminating partway along an outline edge — such segments may be ridge, broken_barge, uncertain, or another valid internal classification.
+Do not use this rule for a segment terminating partway along an outline edge - such segments may be ridge, broken_barge, uncertain, or another valid internal classification.
 
 Do not determine convexity or concavity visually. The supplied vertex data is authoritative.
 

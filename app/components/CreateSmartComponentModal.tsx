@@ -5,7 +5,7 @@
  *
  * Allows the user to create a new Smart Component™ mid-quote without leaving
  * the quote builder. The form is intentionally identical to the create form in
- * the component library page — same fields, same logic, same trade-aware
+ * the component library page - same fields, same logic, same trade-aware
  * behaviour. On save the component is persisted to the library and the
  * onCreated callback receives the new row so the caller can add it to the
  * current quote immediately.

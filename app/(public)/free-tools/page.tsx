@@ -174,8 +174,8 @@ export default function FreeToolsPage() {
               <div className="order-2 lg:order-1">
                 <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Build a complete roof takeoff manually. Input all your lengths and areas, apply pitch calculations, and get a full material report.</p>
                 <ul className="mt-4 md:mt-5 space-y-3">
-                  <FeatureCheck>Input roof areas, ridges, hips, valleys, barges and spouting — all in one place</FeatureCheck>
-                  <FeatureCheck>Master pitch, per-component pitch, or per-entry pitch — full flexibility</FeatureCheck>
+                  <FeatureCheck>Input roof areas, ridges, hips, valleys, barges and spouting - all in one place</FeatureCheck>
+                  <FeatureCheck>Master pitch, per-component pitch, or per-entry pitch - full flexibility</FeatureCheck>
                   <FeatureCheck>Switch between pitch-calculated and actual measurements on every entry</FeatureCheck>
                   <FeatureCheck>Get a complete takeoff report with totals, waste allowances, and printable PDF output</FeatureCheck>
                 </ul>

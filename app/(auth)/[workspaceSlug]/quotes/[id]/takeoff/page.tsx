@@ -60,14 +60,14 @@ export default async function Page({
   }
 
   // AI Takeoff: lazily seed the 6 system placeholder components (Hip, Valley,
-  // Ridge, Barge, Spouting, Roof Area) before the component fetch. Idempotent —
+  // Ridge, Barge, Spouting, Roof Area) before the component fetch. Idempotent -
   // early-returns if already seeded. Awaited so the rows are guaranteed present.
   if (aiTakeoffAvailable) {
     await supabase.rpc('ensure_ai_system_components', { p_company_id: profile.company_id });
   }
 
   // Load roof plan file (FIRST uploaded plan). planUrl is only the fallback
-  // for takeoff_pages rows without image_storage_path — those are always the
+  // for takeoff_pages rows without image_storage_path - those are always the
   // FIRST plan upload (its image lives in quote_files), so ordering by most
   // recent showed the newest plan's image on Page 1 (multi-plan bug 2026-07-05).
   const { data: planFile } = await supabase
@@ -100,7 +100,7 @@ export default async function Page({
     .order('name');
   const collections = collectionsRaw ?? [];
 
-  // Batch 4: unified entry — always load everything, no mode branching.
+  // Batch 4: unified entry - always load everything, no mode branching.
   const planUrl = await getSignedUrl(BUCKETS.QUOTE_DOCUMENTS, planFile.storage_path);
   const hydrationData = await loadTakeoffHydrationData(quoteId);
 

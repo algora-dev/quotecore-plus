@@ -31,7 +31,7 @@ export type ScheduleResult =
   | { ok: true; fireAt: string }
   | { ok: false; error: string };
 
-// Per-kind trigger allowlists (defence-in-depth — client also constrains).
+// Per-kind trigger allowlists (defence-in-depth - client also constrains).
 const TRIGGER_ALLOWLIST: Record<EntityKind, Set<string>> = {
   quote: new Set(['quote_accepted', 'quote_declined', 'quote_revision_requested', 'quote_viewed', 'quote_sent']),
   order: new Set(['order_accepted', 'order_declined', 'order_viewed', 'order_sent']),

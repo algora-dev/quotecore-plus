@@ -137,7 +137,7 @@ export function UsersPanel() {
                   className="hover:bg-orange-50/40 hover:border-orange-200 transition cursor-pointer"
                 >
                   <td className="px-4 py-3 font-medium text-slate-900">{u.email}</td>
-                  <td className="px-4 py-3 text-slate-600">{u.fullName ?? <span className="text-slate-400">—</span>}</td>
+                  <td className="px-4 py-3 text-slate-600">{u.fullName ?? <span className="text-slate-400">-</span>}</td>
                   <td className="px-4 py-3 text-slate-700">{u.companyName}</td>
                   <td className="px-4 py-3"><PlanBadge code={u.planCode} /></td>
                   <td className="px-4 py-3">

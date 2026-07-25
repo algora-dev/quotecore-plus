@@ -200,8 +200,8 @@ export function AdminManagerPanel() {
               {admins.map((a) => (
                 <tr key={a.id} className="hover:bg-orange-50/40 hover:border-orange-200 transition">
                   <td className="px-5 py-3 font-medium text-slate-900">{a.email}</td>
-                  <td className="px-5 py-3 text-slate-600">{a.fullName ?? <span className="text-slate-400">—</span>}</td>
-                  <td className="px-5 py-3 text-slate-600">{a.companyName ?? <span className="text-slate-400">—</span>}</td>
+                  <td className="px-5 py-3 text-slate-600">{a.fullName ?? <span className="text-slate-400">-</span>}</td>
+                  <td className="px-5 py-3 text-slate-600">{a.companyName ?? <span className="text-slate-400">-</span>}</td>
                   <td className="px-5 py-3 text-xs text-slate-400">
                     {new Date(a.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </td>

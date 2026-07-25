@@ -56,7 +56,7 @@ export function QuoteExpiryEditor({ quoteId, expiresAt, isFinalised }: Props) {
       ) : (
         <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs bg-orange-50 text-orange-700 border border-orange-200">
           <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-          Valid for {remaining} more day{remaining !== 1 ? 's' : ''} — expires {expiryLabel}
+          Valid for {remaining} more day{remaining !== 1 ? 's' : ''} - expires {expiryLabel}
         </span>
       )}
 

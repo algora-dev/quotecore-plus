@@ -12,7 +12,7 @@ export default async function InvoicesPage({
   const { workspaceSlug } = await params;
   const profile = await requireCompanyContext();
 
-  // Hard server-side feature gate — same pattern as orders/page.tsx.
+  // Hard server-side feature gate - same pattern as orders/page.tsx.
   const ent = await loadCompanyEntitlements(profile.company_id);
   if (!ent.features.invoices) {
     const requiredPlan = FEATURE_MIN_PLAN.invoices;

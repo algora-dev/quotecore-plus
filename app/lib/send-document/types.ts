@@ -3,7 +3,7 @@
  *
  * The orchestrator (`orchestrator.ts`) + per-entity adapters use these
  * types. The server pipeline (`sendOutboundMessage` in `app/lib/messages/send.ts`)
- * is NOT modified — adapters produce the inputs it expects.
+ * is NOT modified - adapters produce the inputs it expects.
  */
 
 import type { OutboundMessageKind } from '@/app/lib/messages/send';

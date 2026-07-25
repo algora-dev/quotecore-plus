@@ -68,7 +68,7 @@ export interface CouponInfo {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: write audit row — imported from @/app/lib/admin/audit (shared module)
+// Helper: write audit row - imported from @/app/lib/admin/audit (shared module)
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ export async function updateCompanyName(
 }
 
 // ---------------------------------------------------------------------------
-// adminOverridePlan — free comp to any plan (no Stripe charge)
+// adminOverridePlan - free comp to any plan (no Stripe charge)
 // ---------------------------------------------------------------------------
 
 export async function adminOverridePlan(
@@ -217,7 +217,7 @@ export async function adminOverridePlan(
 }
 
 // ---------------------------------------------------------------------------
-// changePaidPlan — swap Stripe subscription price
+// changePaidPlan - swap Stripe subscription price
 // ---------------------------------------------------------------------------
 
 export async function changePaidPlan(
@@ -479,7 +479,7 @@ export async function pauseAccess(companyId: string, reason: string): Promise<Ac
 }
 
 // ---------------------------------------------------------------------------
-// resumeAccess — mandatory Stripe sync before clearing pause
+// resumeAccess - mandatory Stripe sync before clearing pause
 // ---------------------------------------------------------------------------
 
 export async function resumeAccess(companyId: string, reason: string): Promise<ActionResult> {
@@ -533,12 +533,12 @@ export async function resumeAccess(companyId: string, reason: string): Promise<A
 
       return { ok: true, message: 'Access resumed. Stripe data synced.' };
     } catch (err) {
-      // Stripe unreachable — stay paused for safety
+      // Stripe unreachable - stay paused for safety
       return { ok: false, error: `Cannot reach Stripe to sync. Staying paused for safety: ${err instanceof Error ? err.message : String(err)}` };
     }
   }
 
-  // No Stripe subscription — just clear pause
+  // No Stripe subscription - just clear pause
   const { error } = await admin
     .from('companies')
     .update({
@@ -556,7 +556,7 @@ export async function resumeAccess(companyId: string, reason: string): Promise<A
 }
 
 // ---------------------------------------------------------------------------
-// sendPasswordReset — send email via Supabase mailer, never return URL
+// sendPasswordReset - send email via Supabase mailer, never return URL
 // ---------------------------------------------------------------------------
 
 export async function sendPasswordReset(userId: string): Promise<ActionResult> {
@@ -596,7 +596,7 @@ export async function sendPasswordReset(userId: string): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
-// deleteAccount — moved from users/actions.ts, with audit pre-write
+// deleteAccount - moved from users/actions.ts, with audit pre-write
 // ---------------------------------------------------------------------------
 
 const STORAGE_BUCKETS = ['company-logos', 'QUOTE-DOCUMENTS'] as const;
@@ -692,11 +692,11 @@ export async function deleteAccount(companyId: string, confirmEmail: string): Pr
       `by admin=${adminProfile.id} (${adminProfile.email})`,
   );
 
-  return { ok: true, message: `Deleted "${company.name}" — ${authDeleted} login(s), ${storageRemoved} file(s), and all company data.` };
+  return { ok: true, message: `Deleted "${company.name}" - ${authDeleted} login(s), ${storageRemoved} file(s), and all company data.` };
 }
 
 // ---------------------------------------------------------------------------
-// Feature 4: Storage Browser — list, delete, archive attachments
+// Feature 4: Storage Browser - list, delete, archive attachments
 // Gerald H-03: follow existing deleteAttachment() pattern from attachments/actions.ts:269
 // ---------------------------------------------------------------------------
 
@@ -934,7 +934,7 @@ export async function startImpersonation(
     { sessionId, notifyUser: opts?.notifyUser ?? false },
   );
 
-  // Redirect through the verify route — this swaps the auth session
+  // Redirect through the verify route - this swaps the auth session
   const verifyUrl = `/auth/verify?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink&next=/`;
   return { ok: true, message: `Impersonating ${targetUser.email}`, redirect: verifyUrl };
 }
@@ -1006,11 +1006,11 @@ export async function endImpersonation(): Promise<ActionResult & { redirect?: st
     });
 
     if (!restoreErr && restored.session) {
-      // Session restored — redirect to admin
+      // Session restored - redirect to admin
       return { ok: true, message: 'Impersonation ended', redirect: `/admin/users/${s.target_user_id}` };
     }
 
-    // Refresh token expired — fall through to magic link
+    // Refresh token expired - fall through to magic link
     console.warn('[impersonation] Admin refresh token expired, falling back to magic link');
   }
 
@@ -1029,7 +1029,7 @@ export async function endImpersonation(): Promise<ActionResult & { redirect?: st
   }
 
   // Last resort: redirect to admin login
-  return { ok: true, message: 'Impersonation ended — please log back in', redirect: '/admin/login' };
+  return { ok: true, message: 'Impersonation ended - please log back in', redirect: '/admin/login' };
 }
 
 // ---------------------------------------------------------------------------

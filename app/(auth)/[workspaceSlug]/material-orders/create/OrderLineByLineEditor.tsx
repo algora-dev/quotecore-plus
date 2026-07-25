@@ -712,7 +712,7 @@ export function OrderLineByLineEditor({
         </div>
       </div>
 
-      {/* Unified Add Line Item modal — invoice-style shared modal */}
+      {/* Unified Add Line Item modal - invoice-style shared modal */}
       {showAddLine && (
         <AddLineItemModal
           workspaceSlug={workspaceSlug}

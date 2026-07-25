@@ -113,12 +113,12 @@ export function SmartComponentTab() {
   const [saving, setSaving] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Tier-aware save handler — used by the main "Save as Smart Component"
+  // Tier-aware save handler - used by the main "Save as Smart Component"
   // button AND the conversion popup CTA (via popupTrigger.onCta):
   //   T1 (anon):        persist draft → signup funnel with the draft id.
   //   T2/T3 (signed in): persist draft → /api/app/restore-calc-draft, which
   //     CREATES the component server-side (T3) or routes through onboarding
-  //     first (T2). No pre-filled form — the component lands in the library.
+  //     first (T2). No pre-filled form - the component lands in the library.
   const saveComponent = async (opts?: { viaPopup?: boolean }) => {
     setSaving(true);
     try {
@@ -253,7 +253,7 @@ export function SmartComponentTab() {
 
     setResult({ rawValue, wasteAmount, totalValue, materialCost, labourCost, totalCost, unit });
 
-    // Trigger the conversion popup for every tier — copy and action are
+    // Trigger the conversion popup for every tier - copy and action are
     // tier-aware (TradeCalculator computes the copy; onCta runs the same
     // save path as the main button).
     setShared({

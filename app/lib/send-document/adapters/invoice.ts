@@ -53,7 +53,7 @@ export const invoiceAdapter: DocumentSendAdapter = {
   },
 
   async resolveToken(entity) {
-    // Invoices use a static public_token — no generation needed.
+    // Invoices use a static public_token - no generation needed.
     return (entity as InvoiceEntity).public_token;
   },
 
@@ -141,7 +141,7 @@ export const invoiceAdapter: DocumentSendAdapter = {
   },
 
   filterAttachments(sel) {
-    // Invoice attachments: library only (new feature — Shaun approved 2026-07-02).
+    // Invoice attachments: library only (new feature - Shaun approved 2026-07-02).
     // Quote files are not applicable to invoices.
     return {
       libraryAttachmentIds: sel.libraryAttachmentIds ?? [],

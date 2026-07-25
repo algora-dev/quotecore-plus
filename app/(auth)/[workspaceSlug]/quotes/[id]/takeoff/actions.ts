@@ -21,7 +21,7 @@ interface TakeoffMeasurement {
   measurementUnit?: string;
   /** Entry-input reference (v8, 2026-07-08): USER-entered height/depth in
    *  metric, captured at draw time (freestyle L×H height, volume_3d custom
-   *  depth). Display-only — never feeds calculation (m.value is already the
+   *  depth). Display-only - never feeds calculation (m.value is already the
    *  final product). Persisted to quote_takeoff_measurements.entry_inputs so
    *  re-entry hydration + re-save doesn't wipe it. */
   entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
@@ -104,7 +104,7 @@ export async function saveTakeoffMeasurements(
   const firstRoofAreaPitch = roofAreaMeasurements[0]?.pitch || 0;
 
   // Per-area pitch fix (2026-07-08): components must be pitched at the pitch
-  // of the roof area they belong to — NOT the first area measured on the page.
+  // of the roof area they belong to - NOT the first area measured on the page.
   // Seed from THIS save's area measurements (first measurement per area wins
   // for this page); missing areas are resolved from the DB further down.
   const areaPitchByAreaId = new Map<string, number>();
@@ -136,7 +136,7 @@ export async function saveTakeoffMeasurements(
   const componentIds = [...new Set(allMeasurementsForComponents.filter(m => m.componentId).map(m => m.componentId!))];
   // Area-ownership fix (2026-07-05): group component entries by
   // (component, roof area) so the same library component drawn on two areas
-  // produces TWO quote_components rows — one per area — matching how manual
+  // produces TWO quote_components rows - one per area - matching how manual
   // quote-builder areas behave. Group key: componentId::quoteRoofAreaId.
   const componentGroupKeys = [...new Set(
     allMeasurementsForComponents
@@ -154,14 +154,14 @@ export async function saveTakeoffMeasurements(
     // Per-area pitch fix (2026-07-08, Shaun-confirmed spec): resolve the pitch
     // for every component group's roof area. Resolution order:
     //   1. Area measurement drawn in THIS save for that area (areaPitchByAreaId)
-    //      — i.e. the pitch given to this area on the CURRENT plan.
+    //      - i.e. the pitch given to this area on the CURRENT plan.
     //   2. Stored quote_roof_area_entries.pitch_degrees for (area, current page)
-    //      — pitch previously given on this plan.
+    //      - pitch previously given on this plan.
     //   3. No pitch on this plan → the FIRST plan's pitch for this area
     //      (earliest entry with a pitch; per spec: "if there is no new pitch
     //      value added to the new plan, use the first plan's pitch value").
     //   4. Parent quote_roof_areas.calc_pitch_degrees (first-area-wins, same
-    //      semantics as 3 — covers legacy areas with no stored entries).
+    //      semantics as 3 - covers legacy areas with no stored entries).
     // Falls back to firstRoofAreaPitch only for legacy area-less groups.
     const groupAreaIds = [...new Set(
       componentGroupKeys
@@ -241,7 +241,7 @@ export async function saveTakeoffMeasurements(
 
         const entries = componentMeasurements.map((m, index) => {
           // v8 (2026-07-08): snapshot the input reference values used for this
-          // entry so the quote builder can display them (READ-ONLY — nothing
+          // entry so the quote builder can display them (READ-ONLY - nothing
           // reads entry_inputs for calculation).
           //  - preset height/depth: from component_library at save time
           //  - user height/depth: carried on the measurement (freestyle/volume_3d)
@@ -580,14 +580,14 @@ export async function loadTakeoffHydrationData(
     .order('created_at', { ascending: true });
 
   // 3b. Per-entry pitch (2026-07-06): quote_takeoff_measurements has no pitch
-  // column — the true pitch each polygon was saved with lives on
+  // column - the true pitch each polygon was saved with lives on
   // quote_roof_area_entries.pitch_degrees. Without this, re-entry hydration
   // falls back to the PARENT area's calc_pitch_degrees, and the next save
   // silently overwrites per-entry pitches (35° → 25° bug, 2026-07-06).
   //
   // Matching: the RPC inserts area entries in the same order as the payload's
   // roof_areas array, which the client builds from area measurements in draw
-  // order — so within a (quote_roof_area_id, page_id) group, entries zip 1:1
+  // order - so within a (quote_roof_area_id, page_id) group, entries zip 1:1
   // to area-type measurements by insertion order.
   const { data: areaIdRows } = await supabase
     .from('quote_roof_areas')
@@ -713,7 +713,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 /**
  * Fetch the authoritative takeoff session version from the DB.
  * Used after save chains (main save + cached-area flushes) so the client's
- * optimistic version cursor never drifts from the DB — drift caused the
+ * optimistic version cursor never drifts from the DB - drift caused the
  * false "Takeoff edited in another tab" (STALE_TAKEOFF_VERSION) errors.
  * Returns null when no session row exists yet.
  */

@@ -41,7 +41,7 @@ interface Props {
    * Shows as the default in the Labor Margin % input for non-blank quotes.
    */
   defaultLaborMarginPercent?: number | null;
-  /** Quote entry mode — used to decide which margin defaults to show. */
+  /** Quote entry mode - used to decide which margin defaults to show. */
   quoteEntryMode?: string | null;
   // ────────────────────────────────────────────────────────────────────────────
 
@@ -81,7 +81,7 @@ export function LineEditForm({
   onCancel,
 }: Props) {
   // H-04: for custom lines with a stored base cost, the amount field shows the
-  // BASE unit cost (before margin) — not the margin-included customer price.
+  // BASE unit cost (before margin) - not the margin-included customer price.
   const isCustomWithBaseCost = !isComponentLine && baseMaterialCost !== undefined;
 
   const [text, setText] = useState(initialText);
@@ -139,18 +139,18 @@ export function LineEditForm({
 
   /**
    * Recompute the price when the margin % changes.
-   * - Custom lines with stored base cost: no recalc — the field shows a base cost;
+   * - Custom lines with stored base cost: no recalc - the field shows a base cost;
    *   margin is applied at save time, not on every keystroke.
    * - Component lines with real base costs: recompute from base costs.
    * - Everything else: proportional formula.
    */
   function recalcForMarginChange(newMaterialMargin: number, newLaborMargin: number) {
     // H-04: custom lines with a stored base cost show the base cost in the amount
-    // field. Changing the margin % doesn't change the base cost — skip recalc.
+    // field. Changing the margin % doesn't change the base cost - skip recalc.
     if (isCustomWithBaseCost) return;
     // Use base-cost formula ONLY when the component has real cost figures.
     // If both costs are 0 (e.g. price set manually in Review stage), the formula
-    // would produce $0 — fall back to the proportional formula in that case.
+    // would produce $0 - fall back to the proportional formula in that case.
     const hasRealBaseCosts =
       isComponentLine &&
       baseMaterialCost !== undefined &&
@@ -212,7 +212,7 @@ export function LineEditForm({
         ? labMarginVal
         : null;
 
-    // H-04: custom lines with stored base cost — apply margin at save time.
+    // H-04: custom lines with stored base cost - apply margin at save time.
     // The amount field holds the base unit cost; the customer sees the margin-included price.
     if (isCustomWithBaseCost) {
       const effectiveMargin = matMarginVal;
@@ -264,7 +264,7 @@ export function LineEditForm({
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
-          placeholder="e.g. 12 lm — leave blank for none"
+          placeholder="e.g. 12 lm - leave blank for none"
         />
       </div>
 
@@ -367,7 +367,7 @@ export function LineEditForm({
             />
             <span className="text-xs text-slate-400">%</span>
           </div>
-          {/* Labor Margin — only for component lines with labour_cost > 0 */}
+          {/* Labor Margin - only for component lines with labour_cost > 0 */}
           {showLaborMarginField && (
             <div className="flex items-center gap-1.5">
               <label className="text-xs text-slate-500 whitespace-nowrap">Labor</label>

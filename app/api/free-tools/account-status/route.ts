@@ -12,7 +12,7 @@ export const runtime = 'nodejs';
  * Anonymous callers get tier 1.
  */
 export async function GET(req: NextRequest) {
-  // Light rate limit — this endpoint does a DB lookup per call
+  // Light rate limit - this endpoint does a DB lookup per call
   const ip = getClientIP(req.headers);
   const allowed = await checkRateLimit(`free-tools-status:${ip}`, 60, 60 * 60 * 1000);
   if (!allowed) {

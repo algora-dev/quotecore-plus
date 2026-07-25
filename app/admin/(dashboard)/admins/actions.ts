@@ -91,7 +91,7 @@ export async function listAdmins(): Promise<ListAdminsResult> {
  *   1. Check if a `users` row already exists for this email (existing app user).
  *      - If yes: just flip is_admin = true. Set a password on the auth user.
  *      - If no: create a new auth user with the password, then create a
- *        `users` row. The new user needs a company — we create a dedicated
+ *        `users` row. The new user needs a company - we create a dedicated
  *        "QuoteCore+ Admin" company for admin-only accounts so they don't
  *        pollute real tenant data.
  *   2. Set is_admin = true.
@@ -123,7 +123,7 @@ export async function createAdmin(
     .maybeSingle();
 
   if (existingUser) {
-    // Existing app user — set password on their auth account + flip is_admin.
+    // Existing app user - set password on their auth account + flip is_admin.
     const { error: pwError } = await admin.auth.admin.updateUserById(existingUser.id, { password });
     if (pwError) {
       return { ok: false, error: `Could not set password: ${pwError.message}` };
@@ -141,7 +141,7 @@ export async function createAdmin(
     return { ok: true, summary: `Granted admin access to ${cleanEmail} and set their password.` };
   }
 
-  // No existing user — create a fresh auth user + company + users row.
+  // No existing user - create a fresh auth user + company + users row.
   // First check if the auth user already exists (e.g. deleted company but auth row remains).
   const { data: existingAuthList, error: listErr } = await admin.auth.admin.listUsers();
   const existingAuth = (listErr ? [] : (existingAuthList?.users ?? []) as { id: string; email?: string }[])
@@ -150,7 +150,7 @@ export async function createAdmin(
   let authUserId: string;
 
   if (existingAuth) {
-    // Auth user exists but no `users` row — set password and reuse.
+    // Auth user exists but no `users` row - set password and reuse.
     authUserId = existingAuth.id;
     const { error: pwError } = await admin.auth.admin.updateUserById(authUserId, { password });
     if (pwError) {

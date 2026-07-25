@@ -122,7 +122,7 @@ export default function TermsOfServicePage() {
       <p>Paid Plan features, limits, billing intervals and prices are shown on the pricing or checkout page when you subscribe.</p>
       <p>Your Order and these Terms form the agreement for your subscription. If an Order expressly conflicts with these Terms, the Order takes priority only for that specific commercial detail.</p>
       <h3>5.2 Monthly and annual billing</h3>
-      <p>Subscriptions are currently offered on a monthly billing cycle. Annual billing may be offered in the future — where available, the billing interval and any discount will be displayed at checkout.</p>
+      <p>Subscriptions are currently offered on a monthly billing cycle. Annual billing may be offered in the future - where available, the billing interval and any discount will be displayed at checkout.</p>
       <p>You authorise us and our payment processor to charge the payment method you provide:</p>
       <ul>
         <li>when your paid subscription starts; and</li>

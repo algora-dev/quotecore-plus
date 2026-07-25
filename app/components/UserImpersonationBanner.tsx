@@ -2,7 +2,7 @@
 
 /**
  * Banner shown to the REAL user when an admin is actively impersonating them.
- * Unlike the admin's ImpersonationBanner, this is informational only —
+ * Unlike the admin's ImpersonationBanner, this is informational only -
  * the user cannot exit it. It disappears once the admin ends the session
  * (ended_at is set) or the 30-minute TTL expires.
  */

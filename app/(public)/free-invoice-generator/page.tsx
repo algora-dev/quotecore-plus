@@ -304,7 +304,7 @@ function InvoiceGeneratorForm() {
       }
       if (!res.ok) return;
     } catch {
-      // Network error — don't block the user from generating
+      // Network error - don't block the user from generating
     }
     setGenerated(true);
     setPopupTrigger(false);
@@ -352,7 +352,7 @@ function InvoiceGeneratorForm() {
           </p>
         </section>
 
-          {/* Signup notification banner — always shows content, never blank */}
+          {/* Signup notification banner - always shows content, never blank */}
           <FreeToolsSignupBanner />
 
         {!generated ? (
@@ -896,7 +896,7 @@ function InvoiceGeneratorForm() {
                 <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-center gap-2 opacity-60">
                   <img src="/logo.png" alt="QuoteCore+" className="h-4 w-auto" />
                   <p className="text-[10px] text-slate-400">
-                    This invoice was generated using QuoteCore+ Free Tools —{" "}
+                    This invoice was generated using QuoteCore+ Free Tools -{" "}
                     <span className="text-slate-500 font-medium">quotecoreplus.com</span>
                   </p>
                 </div>

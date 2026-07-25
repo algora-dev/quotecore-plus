@@ -87,7 +87,7 @@ export function QuotesTab({ companyId }: { companyId: string }) {
         </div>
       </div>
 
-      {/* Results — scrollable to avoid pushing page when user has many quotes */}
+      {/* Results - scrollable to avoid pushing page when user has many quotes */}
       {loading && rows === null ? (
         <p className="text-sm text-slate-500">Loading quotes…</p>
       ) : rows !== null && rows.length === 0 ? (
@@ -113,7 +113,7 @@ export function QuotesTab({ companyId }: { companyId: string }) {
                     )}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
-                    <span>#{q.quote_number ?? '—'}</span>
+                    <span>#{q.quote_number ?? '-'}</span>
                     <span>{q.component_count} component{q.component_count !== 1 ? 's' : ''}</span>
                     <span>Updated {new Date(q.updated_at).toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   </div>
@@ -189,7 +189,7 @@ function StorylineModal({ quoteId, onClose }: { quoteId: string; onClose: () => 
   const downloadFullAudit = () => {
     if (!data) return;
     const parts: string[] = [];
-    parts.push('QUOTE CALCULATION STORYLINE — FULL EXPORT');
+    parts.push('QUOTE CALCULATION STORYLINE - FULL EXPORT');
     parts.push('═'.repeat(60));
     parts.push(`Quote: #${data.quote.quoteNumber ?? data.quote.id}`);
     parts.push(`Customer: ${data.quote.customerName}`);
@@ -372,7 +372,7 @@ function StorylineModal({ quoteId, onClose }: { quoteId: string; onClose: () => 
                                       <td className="py-1.5 pr-3">{i + 1}</td>
                                       <td className="py-1.5 pr-3">{Number(e.rawValue ?? 0).toFixed(4)}</td>
                                       <td className="py-1.5 pr-3">{Number(e.valueAfterWaste ?? 0).toFixed(4)}</td>
-                                      <td className="py-1.5 pr-3">{e.pitchDegrees != null ? `${e.pitchDegrees}°` : '—'}</td>
+                                      <td className="py-1.5 pr-3">{e.pitchDegrees != null ? `${e.pitchDegrees}°` : '-'}</td>
                                       <td className="py-1.5">{e.sortOrder}</td>
                                     </tr>
                                   ))}

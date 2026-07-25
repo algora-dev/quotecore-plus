@@ -1,7 +1,7 @@
 /**
  * Rate-limit bucket registry and severity helpers.
  *
- * This module is NOT a server action file — it's plain utility code
+ * This module is NOT a server action file - it's plain utility code
  * safe to import from both server and client components.
  */
 

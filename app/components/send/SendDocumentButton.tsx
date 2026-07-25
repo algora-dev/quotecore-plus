@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * SendDocumentButton — the unified trigger button + modal mount.
+ * SendDocumentButton - the unified trigger button + modal mount.
  *
  * Replaces SendQuoteButton / SendOrderButton / SendInvoiceButton with
  * a single component parameterised by entityKind.

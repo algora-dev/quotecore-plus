@@ -239,7 +239,7 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
       // do NOT touch the expiry or job_status yet.
       return quote.acceptance_token;
     }
-    // applyExpiry=true: user has explicitly sent/copied — commit the expiry.
+    // applyExpiry=true: user has explicitly sent/copied - commit the expiry.
     await supabase
       .from('quotes')
       .update({ acceptance_token_expires_at: expiresAt.toISOString(), job_status: 'sent' })
@@ -249,12 +249,12 @@ export async function generateAcceptanceToken(quoteId: string, expiryDays: numbe
     return quote.acceptance_token;
   }
 
-  // Generate a fresh token (expired / withdrawn quotes — old URL stays dead)
+  // Generate a fresh token (expired / withdrawn quotes - old URL stays dead)
   const token = crypto.randomUUID();
   // days / expiresAt already computed above
 
   // H-03 fix: when applyExpiry=false the caller is only opening the send panel to
-  // display/compose the URL — the quote must NOT be marked sent or get an expiry
+  // display/compose the URL - the quote must NOT be marked sent or get an expiry
   // until the user actually sends or copies the link. Store the token so the URL
   // is stable, but leave acceptance_token_expires_at and job_status untouched.
   const updateFields: Record<string, unknown> = {
@@ -333,7 +333,7 @@ export async function updateQuoteExpiry(
   revalidatePath('/');
 
   // M-02: Notify the customer that their acceptance window has been extended.
-  // Must await — Vercel serverless terminates on handler return; fire-and-forget
+  // Must await - Vercel serverless terminates on handler return; fire-and-forget
   // Promises are silently dropped. notifyCustomerExpiryExtended is best-effort
   // and swallows its own errors, so this never throws.
   const customerEmail = (quote as any).customer_email as string | null;
@@ -959,7 +959,7 @@ export async function addComponentEntry(quoteComponentId: string, rawValue: numb
   const isPlan = comp.input_mode === 'calculated';
   const pitchDegrees = comp.use_custom_pitch ? (comp.custom_pitch_degrees ?? 0) : (areaPitch ?? 0);
   const { afterWaste } = applyPitchAndWaste(adjustedValue, isPlan, comp.pitch_type, pitchDegrees, comp.waste_type, comp.waste_percent, comp.waste_fixed);
-  // v8: store the pitch actually applied (display + audit only — pricing
+  // v8: store the pitch actually applied (display + audit only - pricing
   // already baked it into value_after_waste above). applyPitchAndWaste only
   // applies pitch for calculated-mode components with a pitch type.
   const pitchApplied = isPlan && comp.pitch_type !== 'none' && pitchDegrees > 0;
@@ -1354,7 +1354,7 @@ async function recalcComponentFromEntries(quoteComponentId: string): Promise<{ f
   });
   const materialCost = costResult.cost;
   if (costResult.packDataMissing) {
-    console.warn(`[recalc] quote_component ${quoteComponentId}: pack strategy ${strategy} has missing pack data — material cost set to £0`);
+    console.warn(`[recalc] quote_component ${quoteComponentId}: pack strategy ${strategy} has missing pack data - material cost set to £0`);
   }
   const labourCost = totalQty * (comp?.labour_rate ?? 0);
   const packCount = computePackCount({ strategy, totalQuantity: totalQty, packSize, packCoverageM2 });

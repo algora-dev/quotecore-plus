@@ -1,5 +1,5 @@
 /**
- * useSendDocument — the state machine hook for the unified send modal.
+ * useSendDocument - the state machine hook for the unified send modal.
  *
  * Owns all state that was previously strewn across the three send buttons:
  * mode, sendStage, compose fields, token, follow-up draft rules, send state.

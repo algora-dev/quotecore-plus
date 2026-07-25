@@ -105,7 +105,7 @@ export function AiTextPromptModal({ documentType, onParsed, onClose }: AiTextPro
         <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
           <p className="text-xs text-blue-700 leading-relaxed">
             Write or copy and paste your {documentType} details here. AI will structure the text
-            into professional line items with quantities, units, and rates — ready for your {documentType}.
+            into professional line items with quantities, units, and rates - ready for your {documentType}.
           </p>
         </div>
 

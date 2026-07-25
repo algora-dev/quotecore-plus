@@ -7,7 +7,7 @@ import { useRef, useState, useCallback } from 'react';
  *
  * Snapshots BOTH the canvas JSON AND arbitrary React state together.
  * This is the key fix for the old FlashingCanvas history system that was
- * removed "because it caused issues with canvas state sync" — that system
+ * removed "because it caused issues with canvas state sync" - that system
  * only restored canvas JSON without同步-ing the React state, causing the
  * sidebar to show measurements that no longer existed on the canvas.
  *

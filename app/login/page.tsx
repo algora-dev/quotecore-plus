@@ -128,7 +128,7 @@ function LoginForm() {
                     setError(result.message);
                     return;
                   }
-                  // result.ok === true — the action should have redirected,
+                  // result.ok === true - the action should have redirected,
                   // but if it didn't, the client won't navigate. This
                   // shouldn't happen in normal flow. If it does, reload.
                   window.location.reload();
@@ -181,7 +181,7 @@ function LoginForm() {
 
               {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
-              {/* Passwordless login — for accounts created via free tools
+              {/* Passwordless login - for accounts created via free tools
                   email-link (no password yet) or anyone who prefers a link.
                   More prominent when user is coming from a redirect (free tools
                   Save to App flow) since they may not have a password. */}
@@ -203,7 +203,7 @@ function LoginForm() {
 }
 
 /**
- * "Email me a login link" — inline passwordless option under the login
+ * "Email me a login link" - inline passwordless option under the login
  * form. Reads the email from the form above (same page) via the DOM to
  * avoid duplicating state; falls back to prompting if empty.
  */

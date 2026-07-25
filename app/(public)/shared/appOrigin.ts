@@ -4,7 +4,7 @@
  * Free tools are served on the canonical marketing host (quote-core.com);
  * the app lives on app.quote-core.com. Any redirect that moves a user from
  * a free tool into the app (signup, save-to-app import) must be an
- * ABSOLUTE app-domain URL — a relative URL would bounce through the
+ * ABSOLUTE app-domain URL - a relative URL would bounce through the
  * middleware's public-domain 308 and previously dropped state on the way.
  *
  * On non-production hosts (vercel.app previews, localhost) marketing and

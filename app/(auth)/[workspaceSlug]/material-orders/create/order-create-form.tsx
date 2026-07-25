@@ -773,7 +773,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               </div>
             </div>
 
-            {/* Minimize button removed from bottom — now at top next to template selector */}
+            {/* Minimize button removed from bottom - now at top next to template selector */}
           </div>
         ) : (
           <div

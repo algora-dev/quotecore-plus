@@ -73,7 +73,7 @@ export function ScrollIndicator({ children, className = '' }: ScrollIndicatorPro
       >
         {children}
       </div>
-      {/* Custom indicator bar — always visible when content overflows */}
+      {/* Custom indicator bar - always visible when content overflows */}
       {showBar && (
         <div className="relative h-1.5 mt-0.5 mx-4 md:mx-0 rounded-full bg-slate-100/60">
           <div

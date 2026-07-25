@@ -7,7 +7,7 @@
  * a single server action that dispatches to a per-entity adapter.
  *
  * The shared pipeline (sendOutboundMessage in app/lib/messages/send.ts)
- * is NOT modified — adapters produce the inputs it expects.
+ * is NOT modified - adapters produce the inputs it expects.
  */
 
 import { revalidatePath } from 'next/cache';

@@ -1,5 +1,5 @@
 /**
- * Scan overlay rendering — draws outline polygons and labeled line segments
+ * Scan overlay rendering - draws outline polygons and labeled line segments
  * on top of images using sharp SVG compositing.
  *
  * Used between scans to give the next GPT call a visual reference:
@@ -29,7 +29,7 @@ export async function renderScan2AuditOverlay(
   const outlinePts = outlinePoints.map(p => `${p.x},${p.y}`).join(' ');
   svgParts.push(`<polygon points="${outlinePts}" fill="none" stroke="#2563eb" stroke-width="5" stroke-linejoin="round"/>`);
 
-  // Detected lines — thin cyan, round caps, no markers
+  // Detected lines - thin cyan, round caps, no markers
   for (const line of lines) {
     svgParts.push(
       `<line x1="${line.start.x}" y1="${line.start.y}" x2="${line.end.x}" y2="${line.end.y}" stroke="#00ffff" stroke-width="2" stroke-linecap="round" opacity="0.9"/>`
@@ -43,7 +43,7 @@ export async function renderScan2AuditOverlay(
 
 /**
  * Draw the confirmed outline polygon on top of the original image.
- * Thick solid blue outline, NO fill — keeps the roof interior fully visible.
+ * Thick solid blue outline, NO fill - keeps the roof interior fully visible.
  */
 export async function renderOutlineOverlay(
   originalBuffer: Buffer,

@@ -12,7 +12,7 @@ function getCurrentPeriodStart(): string {
   )).toISOString().slice(0, 10);
 }
 
-/** GET /api/app/ai-quota — returns the company's AI document parse quota status */
+/** GET /api/app/ai-quota - returns the company's AI document parse quota status */
 export async function GET(_req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { session } } = await supabase.auth.getSession();

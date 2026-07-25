@@ -25,7 +25,7 @@ export default async function OrderLineSelectPage({ params, searchParams }: Prop
 
   if (!quote) notFound();
 
-  // Load its components — the user will pick which ones to include in the order
+  // Load its components - the user will pick which ones to include in the order
   const { data: components } = await supabase
     .from('quote_components')
     .select('id, name, measurement_type, final_quantity, priced_quantity, material_cost, labour_cost')
@@ -48,7 +48,7 @@ export default async function OrderLineSelectPage({ params, searchParams }: Prop
       {/* Quote summary pill */}
       <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm">
         <span className="font-semibold text-orange-600">#{quote.quote_number}</span>
-        <span className="text-slate-700">{quote.customer_name || '—'}</span>
+        <span className="text-slate-700">{quote.customer_name || '-'}</span>
         {quote.job_name && (
           <>
             <span className="text-slate-300">·</span>

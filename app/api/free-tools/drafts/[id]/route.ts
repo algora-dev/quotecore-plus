@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * GET /api/free-tools/drafts/[id] — fetch a persisted free-tools draft.
+ * GET /api/free-tools/drafts/[id] - fetch a persisted free-tools draft.
  *
  * Requires an authenticated app session (the dashboard / components page
  * calls this after signup). The unguessable UUID is the capability; the
@@ -55,7 +55,7 @@ export async function GET(
 }
 
 /**
- * DELETE /api/free-tools/drafts/[id] — mark a draft consumed after it has
+ * DELETE /api/free-tools/drafts/[id] - mark a draft consumed after it has
  * been successfully imported/restored. Idempotent.
  */
 export async function DELETE(

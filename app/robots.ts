@@ -59,7 +59,7 @@ export default function robots(): MetadataRoute.Robots {
           '/admin',
           '/login',
           '/signup',
-          // Workspace-scoped authed routes — gated by middleware
+          // Workspace-scoped authed routes - gated by middleware
           '/*/quotes',
           '/*/customers',
           '/*/settings',

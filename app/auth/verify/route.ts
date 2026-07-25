@@ -14,7 +14,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
  *
  * Security: the hashed_token is single-use and expires quickly. It's
  * generated server-side via the service-role client and never exposed
- * to the browser — the admin is redirected directly through this route.
+ * to the browser - the admin is redirected directly through this route.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);

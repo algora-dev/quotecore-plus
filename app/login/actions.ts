@@ -108,7 +108,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
 
 /**
  * Send a magic login link (passwordless). Used by users who created their
- * account via free tools without a password — and anyone who prefers a
+ * account via free tools without a password - and anyone who prefers a
  * link. shouldCreateUser=false: login page never creates accounts.
  */
 export async function sendLoginLinkAction(email: string) {
@@ -140,7 +140,7 @@ export async function sendLoginLinkAction(email: string) {
   });
 
   if (error) {
-    // Don't leak whether the email exists — generic success message either way
+    // Don't leak whether the email exists - generic success message either way
     // for "Signups not allowed for otp" (= unknown email with shouldCreateUser false).
     const msg = error.message.toLowerCase();
     if (msg.includes('signups not allowed')) {

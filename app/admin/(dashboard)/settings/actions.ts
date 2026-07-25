@@ -387,7 +387,7 @@ export async function updateAnnouncement(config: AnnouncementConfig): Promise<Ac
 }
 
 // ---------------------------------------------------------------------------
-// getAnnouncement (for app layout — no admin check)
+// getAnnouncement (for app layout - no admin check)
 // ---------------------------------------------------------------------------
 
 export async function getAnnouncement(): Promise<AnnouncementConfig | null> {

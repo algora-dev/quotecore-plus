@@ -10,7 +10,7 @@ import {
 } from '@/app/lib/seo';
 import { BLOG_POST_MAP } from '@/app/lib/blog-posts';
 
-// Content imports — keep inline (page-specific dynamic imports)
+// Content imports - keep inline (page-specific dynamic imports)
 const contentLoaders: Record<string, () => Promise<{ default: React.ComponentType }>> = {
   'quotecore-plus-reviews': () => import('./content/quotecore-plus-reviews'),
   'quotecore-plus-vs-quotesmith': () => import('./content/quotecore-plus-vs-quotesmith'),

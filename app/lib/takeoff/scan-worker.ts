@@ -1,5 +1,5 @@
 /**
- * Scan Worker — claims queued ai_scan_jobs and runs the 3-scan pipeline.
+ * Scan Worker - claims queued ai_scan_jobs and runs the 3-scan pipeline.
  *
  * Called by the cron endpoint /api/cron/process-ai-scan-queue.
  * Also handles: stale job cleanup, retry with backoff, point refunds on failure.
@@ -95,7 +95,7 @@ export async function processScanQueue(maxJobsPerRun = 3): Promise<{
           retried++;
           console.log(`[scan-worker] job ${claimed.id} requeued for retry (attempt ${claimed.attempt_count + 1})`);
         } else {
-          // Terminal failure — refund points
+          // Terminal failure - refund points
           await supabase.rpc('fail_ai_scan_job', {
             p_job_id: claimed.id,
             p_failure_code: 'MAX_RETRIES_EXCEEDED',

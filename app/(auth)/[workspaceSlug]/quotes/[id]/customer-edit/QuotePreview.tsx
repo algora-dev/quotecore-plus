@@ -52,7 +52,7 @@ interface Props {
   currency: string;
   /** Global margin % for this quote (blank quotes). Null = no global margin. */
   globalMarginPercent?: number | null;
-  /** Live labor margin % from the editor slider — pre-populates the pencil
+  /** Live labor margin % from the editor slider - pre-populates the pencil
    *  editor's labor margin field so it reflects the current editor value. */
   globalLaborMarginPercent?: number | null;
   /** Whether to show the margin breakdown row in the preview. */
@@ -154,7 +154,7 @@ export function QuotePreview({
         )}
       </div>
 
-      {/* Line items — table layout for clean column alignment (matches order editor) */}
+      {/* Line items - table layout for clean column alignment (matches order editor) */}
       <div className="border-t pt-4">
         {lines.length === 0 ? (
           <p className="text-sm text-slate-400 italic">No items selected</p>
@@ -210,7 +210,7 @@ export function QuotePreview({
                         }
                         defaultLaborMarginPercent={
                           // Prefer the live editor value (globalLaborMarginPercent prop)
-                          // when passed — it updates in real-time as the user tweaks the
+                          // when passed - it updates in real-time as the user tweaks the
                           // slider. Fall back to the quote DB field.
                           typeof globalLaborMarginPercent === 'number'
                             ? globalLaborMarginPercent
