@@ -40,15 +40,16 @@ export function pitchFactor(degrees: number, pitchType: 'rafter' | 'hip_valley' 
 
 export function computeEntry(entry: Entry, kind: ComponentKind): number {
   const def = COMPONENT_DEFS[kind];
+  const qty = entry.quantity ?? 1;
   if (entry.inputMode === 'actual') {
-    return entry.actualValue ?? 0;
+    return (entry.actualValue ?? 0) * qty;
   }
   if (kind === 'roof_area') {
     const planArea = (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0);
-    return planArea * pitchFactor(entry.pitchDegrees, def.pitchType);
+    return planArea * pitchFactor(entry.pitchDegrees, def.pitchType) * qty;
   }
   const planLength = entry.planLength ?? 0;
-  return planLength * pitchFactor(entry.pitchDegrees, def.pitchType);
+  return planLength * pitchFactor(entry.pitchDegrees, def.pitchType) * qty;
 }
 
 // ─── Pricing calculation ─────────────────────────────

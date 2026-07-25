@@ -31,6 +31,7 @@ export interface Entry {
   actualValue?: number;
   computedValue: number;
   selectedComponentId: string | null;
+  quantity?: number;
 }
 
 export interface ComponentSection {
