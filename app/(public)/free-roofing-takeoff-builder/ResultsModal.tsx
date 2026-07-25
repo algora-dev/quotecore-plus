@@ -9,12 +9,16 @@ interface ResultsModalProps {
   totals: Record<ComponentKind, { rawTotal: number; withWaste: number; count: number; materialCost: number; labourCost: number; totalCost: number }>;
   getComponentById: (id: string | null) => RoofComponentDef | null;
   grandTotal: number;
+  unitSystem: 'metric' | 'imperial' | 'squares';
   onClose: () => void;
 }
 
-export function ResultsModal({ sections, totals, getComponentById, grandTotal, onClose }: ResultsModalProps) {
+export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, onClose }: ResultsModalProps) {
   const cur = '£';
   const hasPricing = grandTotal > 0;
+  const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
+  const areaUnit = unitSystem === 'metric' ? 'm\u00B2' : unitSystem === 'imperial' ? 'sq ft' : 'squares';
+  const unitFor = (kind: ComponentKind) => kind === 'roof_area' ? areaUnit : lenUnit;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
@@ -58,12 +62,21 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, o
                     const matCost = comp ? computeMaterialCost(entry.computedValue, comp) : { cost: 0, packs: 0 };
                     const labCost = comp ? computeLabourCost(entry.computedValue, comp) : 0;
                     const entryTotal = matCost.cost + labCost;
+                    const isPitchCalc = entry.inputMode === 'pitch_calculated' && def.pitchType !== 'none';
+                    const originalValue = isPitchCalc
+                      ? (entry.isTotalInput
+                          ? (entry.actualValue ?? 0) * (entry.quantity ?? 1)
+                          : kind === 'roof_area'
+                            ? (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0) * (entry.quantity ?? 1)
+                            : (entry.planLength ?? 0) * (entry.quantity ?? 1))
+                      : null;
+                    const withWasteVal = entry.computedValue * (1 + section.wastePercent / 100);
                     return (
                       <div key={entry.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-xs">
                         <div className="min-w-0 flex-1">
                           <span className="text-slate-500">
                             {entry.label || `Entry ${idx + 1}`}
-                            {entry.inputMode === 'pitch_calculated' && def.pitchType !== 'none' && (
+                            {isPitchCalc && (
                               <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}°</span>
                             )}
                           </span>
@@ -72,9 +85,20 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, o
                           )}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
+                          {isPitchCalc && originalValue !== null && originalValue > 0 && (
+                            <span className="text-slate-400">
+                              {originalValue.toFixed(2)} {unitFor(kind)}
+                              <span className="ml-1 text-slate-300">→</span>
+                            </span>
+                          )}
                           <span className="font-medium text-slate-700">
-                            {entry.computedValue.toFixed(2)} {def.unit}
+                            {entry.computedValue.toFixed(2)} {unitFor(kind)}
                           </span>
+                          {section.wastePercent > 0 && (
+                            <span className="text-slate-400 text-[10px]">
+                              +{section.wastePercent}% = {withWasteVal.toFixed(2)}
+                            </span>
+                          )}
                           {entryTotal > 0 && (
                             <span className="text-[#FF6B35] font-medium">
                               {cur}{entryTotal.toFixed(2)}
@@ -96,7 +120,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, o
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-semibold text-slate-900">
-                      {t.withWaste.toFixed(2)} {def.unit}
+                      {t.withWaste.toFixed(2)} {unitFor(kind)}
                     </span>
                     {section.wastePercent > 0 && (
                       <span className="ml-2 text-xs text-slate-400">
@@ -144,7 +168,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, o
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">Total Roof Area (with waste)</span>
                 <span className="text-xl font-bold">
-                  {totals.roof_area.withWaste.toFixed(2)} m²
+                  {totals.roof_area.withWaste.toFixed(2)} {areaUnit}
                 </span>
               </div>
             </div>

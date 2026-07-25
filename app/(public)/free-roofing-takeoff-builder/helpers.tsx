@@ -10,8 +10,8 @@ const M2_TO_SQFT = 10.7639;
 
 export function unitLabel(unit: 'metric' | 'imperial' | 'squares'): string {
   if (unit === 'metric') return 'm';
-  if (unit === 'imperial') return 'ft';
-  return 'sq';
+  // Both imperial and squares use linear feet for non-area components
+  return 'ft';
 }
 
 export function areaUnitLabel(unit: 'metric' | 'imperial' | 'squares'): string {

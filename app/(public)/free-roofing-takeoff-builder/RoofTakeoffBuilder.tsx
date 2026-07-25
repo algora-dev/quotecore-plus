@@ -380,7 +380,7 @@ export function RoofTakeoffBuilder() {
           )}
         </div>
 
-        {showResults && <ResultsModal sections={sections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} onClose={() => setShowResults(false)} />}
+        {showResults && <ResultsModal sections={sections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} onClose={() => setShowResults(false)} />}
         <SiteFooter />
       </main>
     </FreeToolsAuthProvider>
