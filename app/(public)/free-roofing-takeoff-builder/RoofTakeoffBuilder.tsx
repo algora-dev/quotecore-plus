@@ -203,7 +203,7 @@ export function RoofTakeoffBuilder() {
     const total = totals[key] ?? { rawTotal: 0, withWaste: 0, count: 0, totalCost: 0 };
     const hasEntries = section.entries.length > 0;
     const displayUnit = isRoofArea || (isCustom && section.customDef?.measurementType === 'area') ? areaLbl : lenLbl;
-    const availableComponents = isCustom ? [] : (componentsByKind[key] || []);
+    const availableComponents = componentsByKind[key] || [];
 
     return (
       <div key={key} className={`rounded-xl border bg-white transition ${isExpanded ? 'border-slate-300 shadow-sm' : 'border-slate-200'}`}>
