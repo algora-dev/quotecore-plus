@@ -56,8 +56,8 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4 print:static print:p-0 print:bg-white print:block">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col print:shadow-none print:rounded-none print:max-h-none print:w-full print:max-w-none" id="takeoff-print">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4 print:block print:static print:p-0 print:bg-white">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col print:shadow-none print:rounded-none print:max-h-none print:w-full print:max-w-none print:overflow-visible" id="takeoff-print">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 print:border-slate-300">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Roof Takeoff Report</h2>
@@ -68,7 +68,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
           </button>
         </div>
 
-        <div className="overflow-y-auto px-6 py-5 space-y-5 print:overflow-visible">
+        <div className="overflow-y-auto px-6 py-5 space-y-5 print:overflow-visible print:px-6 print:py-2">
           {allKeys.map(key => {
             const section = sections[key];
             if (!section) return null;
@@ -169,21 +169,30 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
       <style jsx global>{`
         @media print {
           @page { margin: 1cm; }
-          body { background: white; }
+          html, body { background: white !important; height: auto !important; }
           /* Hide everything when printing */
           body > * { visibility: hidden; }
+          /* Reset the overlay container so it doesn't center/push content down */
+          body > div { position: static !important; display: block !important; height: auto !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; }
           /* Show only the modal and its children */
           #takeoff-print, #takeoff-print * { visibility: visible; }
-          /* Position modal at top of page */
+          /* Position modal at top of page 1 */
           #takeoff-print {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            max-width: none;
-            max-height: none;
-            border-radius: 0;
-            box-shadow: none;
+            position: static !important;
+            left: 0 !important;
+            top: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            max-width: none !important;
+            max-height: none !important;
+            height: auto !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            transform: none !important;
+            display: block !important;
           }
           header, footer, button { display: none !important; }
         }

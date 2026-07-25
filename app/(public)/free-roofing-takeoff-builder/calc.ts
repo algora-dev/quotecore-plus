@@ -9,7 +9,7 @@ export const COMPONENT_DEFS: Record<string, { label: string; unit: string; pitch
   ridge: { label: 'Ridges', unit: 'm', pitchType: 'none', colour: '#22C55E', description: 'The horizontal line at the top of a roof where two roof slopes meet - the peak of the roof.' },
   hip: { label: 'Hip', unit: 'm', pitchType: 'hip_valley', colour: '#EF4444', description: 'The angled line where two roof slopes meet on an external corner. Runs from the ridge down to the eaves.' },
   valley: { label: 'Valley', unit: 'm', pitchType: 'hip_valley', colour: '#EAB308', description: 'The angled line where two roof slopes meet on an internal corner. Water flows into valleys. Runs from ridge down to the eaves.' },
-  barge: { label: 'Barge', unit: 'm', pitchType: 'rafter', colour: '#A855F7', description: 'The sloped edge of the roof at a gable end. Also called a rafter edge or verge. Runs from the ridge down to the eaves at the side of the roof.' },
+  barge: { label: 'Barge', unit: 'm', pitchType: 'rafter', colour: '#A855F7', description: 'The sloped edge of the roof at a gable end. Also called a rafter edge, rake or verge. Runs from the ridge down to the eaves at the side of the roof.' },
   spouting: { label: 'Spouting', unit: 'm', pitchType: 'none', colour: '#64748B', description: 'The gutter system along the bottom edge of the roof. Measured along the eaves where water runs off.' },
 };
 
