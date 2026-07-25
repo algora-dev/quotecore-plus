@@ -18,6 +18,7 @@ interface CalcEntry {
 }
 
 const CALCULATORS: CalcEntry[] = [
+  { slug: 'free-roofing-takeoff-builder', name: 'Roof Takeoff Builder', industry: 'Roofing', description: 'Build a complete roof takeoff with pitch calculations for all components.', keywords: ['takeoff', 'roof', 'area', 'pitch', 'hip', 'valley', 'ridge', 'barge', 'spouting', 'material'], isCore: true },
   { slug: 'free-roofing-calculator', name: 'Roofing Calculator', industry: 'Roofing', description: 'Roof pitch, rafter and hip/valley lengths, surface area, and roofing material quantities.', keywords: ['pitch', 'rafter', 'hip', 'valley', 'area', 'battens', 'angle'], isCore: true },
   { slug: 'free-construction-calculator', name: 'Construction Calculator', industry: 'Construction', description: 'Floor and wall areas, timber and stud lengths, material quantities, and cutting angles.', keywords: ['area', 'timber', 'stud', 'materials', 'angle', 'wall', 'floor'], isCore: true },
   { slug: 'free-concrete-calculator', name: 'Concrete Calculator', industry: 'Concrete', description: 'Slab and footing volumes with depth presets, formwork areas, falls, and ready-mix pricing.', keywords: ['slab', 'footing', 'volume', 'formwork', 'falls', 'gradient', 'ready-mix'], isCore: true },
@@ -159,6 +160,28 @@ export default function FreeToolsPage() {
                   alt="Free Quote Generator"
                 />
                 <ToolCtaCentered href="/free-quote-generator" label="Create a Free Quote" onClick={() => trackEvent('free_tools_hub_click', { tool: 'quote-generator' })} />
+              </div>
+            </div>
+          </section>
+
+          {/* 1b. Roof Takeoff Builder */}
+          <section id="roof-takeoff-builder" className="scroll-mt-24">
+            <div className="flex items-center gap-2.5 mb-3">
+              <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
+              <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Roof Takeoff Builder</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
+              <div className="order-2 lg:order-1">
+                <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Build a complete roof takeoff manually. Input all your lengths and areas, apply pitch calculations, and get a full material report.</p>
+                <ul className="mt-4 md:mt-5 space-y-3">
+                  <FeatureCheck>Input roof areas, ridges, hips, valleys, barges and spouting — all in one place</FeatureCheck>
+                  <FeatureCheck>Master pitch, per-component pitch, or per-entry pitch — full flexibility</FeatureCheck>
+                  <FeatureCheck>Switch between pitch-calculated and actual measurements on every entry</FeatureCheck>
+                  <FeatureCheck>Get a complete takeoff report with totals, waste allowances, and printable PDF output</FeatureCheck>
+                </ul>
+              </div>
+              <div className="order-1 lg:order-2">
+                <ToolCtaCentered href="/free-roofing-takeoff-builder" label="Open Takeoff Builder" onClick={() => trackEvent('free_tools_hub_click', { tool: 'roof-takeoff-builder' })} />
               </div>
             </div>
           </section>

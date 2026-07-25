@@ -1824,6 +1824,72 @@ export type Database = {
         }
         Relationships: []
       }
+      free_tool_roof_components: {
+        Row: {
+          component_kind: string
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean
+          labour_rate: number
+          labour_unit: string
+          name: string
+          pack_price: number | null
+          pack_size: number | null
+          pitch_type: string
+          price_per_unit: number
+          pricing_strategy: string
+          sort_order: number
+          suggested_waste_percent: number
+          tenant_id: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          component_kind: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          labour_rate?: number
+          labour_unit?: string
+          name: string
+          pack_price?: number | null
+          pack_size?: number | null
+          pitch_type?: string
+          price_per_unit?: number
+          pricing_strategy?: string
+          sort_order?: number
+          suggested_waste_percent?: number
+          tenant_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          component_kind?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          labour_rate?: number
+          labour_unit?: string
+          name?: string
+          pack_price?: number | null
+          pack_size?: number | null
+          pitch_type?: string
+          price_per_unit?: number
+          pricing_strategy?: string
+          sort_order?: number
+          suggested_waste_percent?: number
+          tenant_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       free_tool_usage: {
         Row: {
           created_at: string
