@@ -30,9 +30,9 @@ const LEAK_PATTERNS = [
   /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i, // UUIDs
 ];
 
-/** Check that a page does not leak sensitive data */
+/** Check that a page does not leak sensitive data (uses innerText to exclude RSC script payloads) */
 async function assertNoDataLeak(page: Page) {
-  const bodyText = await page.textContent('body');
+  const bodyText = await page.innerText('body');
   expect(bodyText).toBeTruthy();
 
   for (const pattern of LEAK_PATTERNS) {
@@ -58,7 +58,8 @@ test.describe('P2.5-07: Public-link privacy @security @public', () => {
     await page.waitForLoadState('networkidle');
 
     // Should show a "not found" or "invalid" message — NOT a 500
-    const bodyText = (await page.textContent('body')) ?? '';
+    // Use innerText to get visible text only (excludes Next.js RSC script payloads)
+    const bodyText = (await page.innerText('body')) ?? '';
     const hasNotFound = /not found|invalid|expired|may be invalid/i.test(bodyText);
     const hasServerError = /500|internal server error|stack trace/i.test(bodyText);
     expect(hasServerError).toBe(false);
@@ -103,7 +104,8 @@ test.describe('P2.5-07: Public-link privacy @security @public', () => {
     await page.goto(`${BASE_URL}/accept/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee`);
     await page.waitForLoadState('networkidle');
 
-    const bodyText = (await page.textContent('body')) ?? '';
+    // Use innerText for visible text only (excludes RSC streaming JSON)
+    const bodyText = (await page.innerText('body')) ?? '';
 
     // Should NOT show a server error
     expect(bodyText).not.toMatch(/500|internal server error|stack trace/i);

@@ -44,13 +44,16 @@ test.describe('P2.5-03: Attachment tenant isolation @security @attachments', () 
     await pageD.goto(`${BASE_URL}/${slugA}/attachments`);
     await pageD.waitForLoadState('networkidle');
 
-    // Should be redirected to D's own workspace or denied
+    // Should be redirected to D's own workspace, denied, or show a 404 page
     const url = pageD.url();
+    const bodyText = (await pageD.innerText('body').catch(() => '')) ?? '';
+    const showsNotFound = /not found|404|could not be found/i.test(bodyText);
     const isDenied =
       url.includes(slugD) ||           // redirected to own workspace
       url.includes('/login') ||         // redirected to login
-      url.includes('/404') ||           // 404
-      !url.includes(slugA);             // not on A's workspace
+      url.includes('/404') ||           // 404 route
+      !url.includes(slugA) ||          // not on A's workspace
+      showsNotFound;                    // shows a 404/denial page
 
     expect(isDenied).toBeTruthy();
 

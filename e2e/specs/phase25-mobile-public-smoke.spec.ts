@@ -41,7 +41,8 @@ test.describe('P2.5-08: Mobile public customer-flow smoke @mobile @public', () =
     await page.waitForLoadState('networkidle');
 
     // Should show denial content, not a crash
-    const bodyText = (await page.textContent('body')) ?? '';
+    // Use innerText for visible text only (excludes RSC streaming JSON)
+    const bodyText = (await page.innerText('body')) ?? '';
     const hasServerError = /500|internal server error/i.test(bodyText);
     expect(hasServerError).toBe(false);
 

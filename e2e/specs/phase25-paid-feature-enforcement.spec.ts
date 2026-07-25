@@ -44,7 +44,8 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
 
       // Must NOT produce a 5xx
       // Must NOT show raw error or stack trace
-      const bodyText = (await page.textContent('body')) ?? '';
+      // Use innerText to get visible text only (excludes Next.js RSC script payloads)
+      const bodyText = (await page.innerText('body')) ?? '';
       expect(bodyText).not.toMatch(/500|internal server error|stack trace/i);
 
       // Should either:
@@ -80,7 +81,8 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
     await page.waitForLoadState('networkidle');
 
     // Should NOT show a 500 or expose data
-    const bodyText = (await page.textContent('body')) ?? '';
+    // Use innerText for visible text only (excludes RSC streaming JSON)
+    const bodyText = (await page.innerText('body')) ?? '';
     expect(bodyText).not.toMatch(/500|internal server error/i);
 
     assertNoServerErrors();
