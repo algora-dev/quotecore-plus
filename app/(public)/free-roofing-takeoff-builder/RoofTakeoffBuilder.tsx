@@ -200,7 +200,7 @@ export function RoofTakeoffBuilder() {
             <div className="space-y-4">
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${measureMode === 'actual' ? 'bg-blue-500' : 'bg-[#FF6B35]'}`} />
+                  
                   <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
                 </div>
                 <button onClick={() => setMeasureMode(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change mode</button>
@@ -238,7 +238,7 @@ export function RoofTakeoffBuilder() {
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${measureMode === 'actual' ? 'bg-blue-500' : 'bg-[#FF6B35]'}`} />
+                    
                     <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   </div>
                   <div className="w-px h-4 bg-slate-200" />
@@ -408,13 +408,14 @@ function EntryRow({ entry, index, kind, measureMode, unitSystem, lenLabel, areaL
   const def = COMPONENT_DEFS[kind];
   const isRoofArea = kind === 'roof_area';
   const usePitch = measureMode === 'plan' && def.pitchType !== 'none';
+  const [lengthMode, setLengthMode] = useState<'individual' | 'total'>('individual');
+  const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>('dimensions');
   const selectedComp = getComponentById(entry.selectedComponentId);
   const compCost = selectedComp ? computeMaterialCost(entry.computedValue, selectedComp) : { cost: 0, packs: 0 };
   const labourCost = selectedComp ? computeLabourCost(entry.computedValue, selectedComp) : 0;
 
   // Determine field labels based on mode
   const planPrefix = measureMode === 'plan' ? 'Plan ' : '';
-  const actualPrefix = measureMode === 'actual' ? 'Actual ' : '';
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-2">
@@ -425,12 +426,51 @@ function EntryRow({ entry, index, kind, measureMode, unitSystem, lenLabel, areaL
         </button>
       </div>
 
+      {/* Input mode toggle for non-area components */}
+      {!isRoofArea && (
+        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 w-fit">
+          <button onClick={() => setLengthMode('individual')}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${lengthMode === 'individual' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
+            Individual Lengths
+          </button>
+          <button onClick={() => setLengthMode('total')}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${lengthMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
+            Total Length
+          </button>
+        </div>
+      )}
+
+      {/* Area input mode toggle */}
+      {isRoofArea && (
+        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-0.5 w-fit">
+          <button onClick={() => setAreaMode('dimensions')}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
+            Width x Length
+          </button>
+          <button onClick={() => setAreaMode('total')}
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>
+            Total Area
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {isRoofArea ? (
           usePitch ? (
+            areaMode === 'dimensions' ? (
+              <>
+                <NumField label={`${planPrefix}Width (${lenLabel})`} value={entry.planWidth} onChange={(v) => onUpdate({ planWidth: v, inputMode: 'pitch_calculated' })} />
+                <NumField label={`${planPrefix}Length (${lenLabel})`} value={entry.planLengthVal} onChange={(v) => onUpdate({ planLengthVal: v, inputMode: 'pitch_calculated' })} />
+              </>
+            ) : (
+              <div className="col-span-2">
+                <NumField label={`${planPrefix}Area (${areaLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'pitch_calculated', isTotalInput: true })} />
+              </div>
+            )
+          ) : areaMode === 'dimensions' ? (
             <>
-              <NumField label={`${planPrefix}Width (${lenLabel})`} value={entry.planWidth} onChange={(v) => onUpdate({ planWidth: v, inputMode: 'pitch_calculated' })} />
-              <NumField label={`${planPrefix}Length (${lenLabel})`} value={entry.planLengthVal} onChange={(v) => onUpdate({ planLengthVal: v, inputMode: 'pitch_calculated' })} />
+              <NumField label={`Width (${lenLabel})`} value={entry.planWidth} onChange={(v) => onUpdate({ planWidth: v, inputMode: 'actual' })} />
+              <NumField label={`Length (${lenLabel})`} value={entry.planLengthVal} onChange={(v) => onUpdate({ planLengthVal: v, inputMode: 'actual' })} />
             </>
           ) : (
             <div className="col-span-2">
@@ -439,17 +479,29 @@ function EntryRow({ entry, index, kind, measureMode, unitSystem, lenLabel, areaL
           )
         ) : (
           usePitch ? (
-            <div className="col-span-2">
-              <NumField label={`${planPrefix}Length (${lenLabel})`} value={entry.planLength} onChange={(v) => onUpdate({ planLength: v, inputMode: 'pitch_calculated' })} />
-            </div>
-          ) : (
+            lengthMode === 'individual' ? (
+              <div className="col-span-2">
+                <NumField label={`${planPrefix}Length (${lenLabel})`} value={entry.planLength} onChange={(v) => onUpdate({ planLength: v, inputMode: 'pitch_calculated' })} />
+              </div>
+            ) : (
+              <div className="col-span-2">
+                <NumField label={`Total ${planPrefix}Length (${lenLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'pitch_calculated', isTotalInput: true })} />
+              </div>
+            )
+          ) : lengthMode === 'individual' ? (
             <div className="col-span-2">
               <NumField label={`Actual Length (${lenLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'actual' })} />
             </div>
+          ) : (
+            <div className="col-span-2">
+              <NumField label={`Total Length (${lenLabel})`} value={entry.actualValue} onChange={(v) => onUpdate({ actualValue: v, inputMode: 'actual' })} />
+            </div>
           )
         )}
-        {/* Quantity field */}
-        <NumField label="Quantity" value={entry.quantity ?? 1} onChange={(v) => onUpdate({ quantity: Math.max(1, Math.round(v)) })} step={1} min={1} />
+        {/* Quantity field - only show in individual mode */}
+        {((isRoofArea && areaMode === 'dimensions') || (!isRoofArea && lengthMode === 'individual')) && (
+          <NumField label="Quantity" value={entry.quantity ?? 1} onChange={(v) => onUpdate({ quantity: Math.max(1, Math.round(v)) })} step={1} min={1} />
+        )}
         {/* Computed result */}
         <div className="rounded-lg bg-orange-50/50 border border-orange-100 px-3 py-1.5">
           <div className="text-xs text-slate-500">Computed</div>

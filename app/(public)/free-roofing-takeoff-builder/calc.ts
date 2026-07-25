@@ -44,6 +44,11 @@ export function computeEntry(entry: Entry, kind: ComponentKind): number {
   if (entry.inputMode === 'actual') {
     return (entry.actualValue ?? 0) * qty;
   }
+  // pitch_calculated mode
+  if (entry.isTotalInput) {
+    // User entered the total plan value directly (not width x length)
+    return (entry.actualValue ?? 0) * pitchFactor(entry.pitchDegrees, def.pitchType) * qty;
+  }
   if (kind === 'roof_area') {
     const planArea = (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0);
     return planArea * pitchFactor(entry.pitchDegrees, def.pitchType) * qty;

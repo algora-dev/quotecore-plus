@@ -32,6 +32,7 @@ export interface Entry {
   computedValue: number;
   selectedComponentId: string | null;
   quantity?: number;
+  isTotalInput?: boolean;
 }
 
 export interface ComponentSection {
