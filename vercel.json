@@ -27,7 +27,7 @@
     },
     {
       "path": "/api/cron/process-ai-scan-queue",
-      "schedule": "*/30 * * * * *"
+      "schedule": "*/30 * * * *"
     }
   ]
 }
