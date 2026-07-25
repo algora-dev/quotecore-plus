@@ -207,7 +207,7 @@ export function RoofTakeoffBuilder() {
 
     return (
       <div key={key} className={`rounded-xl border bg-white transition ${isExpanded ? 'border-slate-300 shadow-sm' : 'border-slate-200'}`}>
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-2 md:px-4 py-3">
           <button onClick={() => setExpandedSection(isExpanded ? null : key)} className="flex items-center gap-2.5 cursor-pointer hover:text-[#FF6B35] transition flex-1 min-w-0">
             <ComponentSymbol kind={key} customDef={section.customDef} className="w-4 h-4 text-slate-500 flex-shrink-0" />
             <span className="text-sm font-semibold text-slate-900 truncate">{label}</span>
@@ -236,12 +236,12 @@ export function RoofTakeoffBuilder() {
           </div>
         </div>
         {isExpanded && (
-          <div className="border-t border-slate-100 p-4 space-y-3">
+          <div className="border-t border-slate-100 p-2 md:p-4 space-y-3">
             {isGuided && <ComponentGuideBox componentKey={key} />}
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-slate-600 flex items-center gap-1">Waste<InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps." /></label>
               <div className="relative">
-                <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm text-center focus:border-orange-500 focus:outline-none" />
+                <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
               </div>
             </div>
@@ -278,7 +278,7 @@ export function RoofTakeoffBuilder() {
           </div>
         </section>
 
-        <div className="mx-auto max-w-5xl px-2 md:px-6 py-6 md:py-10 pb-20 md:pb-10">
+        <div className="mx-auto max-w-5xl px-2 md:px-6 py-6 md:py-10 pb-24 md:pb-10">
           {/* Step 1: Measurement Mode */}
           {!measureMode && (
             <div className="space-y-4">
@@ -355,7 +355,7 @@ export function RoofTakeoffBuilder() {
           {measureMode && unitSystem && (
             <>
               {/* Setup bar */}
-              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   <div className="w-px h-4 bg-slate-200" />
@@ -374,7 +374,7 @@ export function RoofTakeoffBuilder() {
 
               {/* Pitch input (plan mode only) */}
               {measureMode === 'plan' && (
-                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:p-5 mb-6">
+                <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-5 mb-6">
                   <div className="flex flex-col md:flex-row md:items-center gap-3">
                     <div className="flex items-center gap-2">
                       <svg className="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -390,14 +390,14 @@ export function RoofTakeoffBuilder() {
                     {pitchMode === 'degrees' ? (
                       <div className="flex items-center gap-2">
                         <div className="relative">
-                          <input type="number" value={masterPitch} onChange={(e) => updatePitchDegrees(e.target.value)} min={0} max={89} step={0.5} inputMode="decimal" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-center focus:border-orange-500 focus:outline-none" />
+                          <input type="number" value={masterPitch} onChange={(e) => updatePitchDegrees(e.target.value)} min={0} max={89} step={0.5} inputMode="decimal" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">deg</span>
                         </div>
                         <span className="text-xs text-slate-400">= {masterRatio}</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <input type="text" value={masterRatio} onChange={(e) => updatePitchRatio(e.target.value)} placeholder="5:12" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-center focus:border-orange-500 focus:outline-none" />
+                        <input type="text" value={masterRatio} onChange={(e) => updatePitchRatio(e.target.value)} placeholder="5:12" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
                         <span className="text-xs text-slate-400">= {masterPitch} deg</span>
                       </div>
                     )}
@@ -425,7 +425,7 @@ export function RoofTakeoffBuilder() {
 
               {/* Summary */}
               {hasData ? (
-                <div className="mt-6 rounded-xl bg-slate-900 text-white p-5">
+                <div className="mt-6 rounded-xl bg-slate-900 text-white p-4 md:p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold">Summary</h3>
                     <span className="text-xs text-slate-400">{totalEntries} {totalEntries === 1 ? 'entry' : 'entries'} total</span>

@@ -162,10 +162,10 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
     ? (areaMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(totalVal) > 0)
     : parseFloat(val1) > 0;
 
-  const inputCls = "mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none";
+  const inputCls = "mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-base md:text-sm focus:border-orange-500 focus:outline-none";
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
+    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-3 space-y-2">
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold text-slate-600">Add New Entry</span>
       </div>
@@ -217,7 +217,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
         <div>
           <label className="text-xs font-medium text-slate-600">Component</label>
           <select value={selectedComponentId || ''} onChange={(e) => setSelectedComponentId(e.target.value || null)}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
             <option value="">- No component (lengths only) -</option>
             {availableComponents.map(comp => (
               <option key={comp.id} value={comp.id}>{comp.name} ({'\u00A3'}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
@@ -227,7 +227,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       )}
 
       <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
-        className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />
+        className="w-full rounded-lg border border-slate-200 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />
     </div>
   );
 }
@@ -283,7 +283,7 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
       <div>
         <label className="text-xs font-medium text-slate-600">Name</label>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Apron Flashing, Step Flashing"
-          className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+          className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-2 text-base md:text-sm focus:border-orange-500 focus:outline-none" />
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -306,7 +306,7 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
         <div>
           <label className="text-xs font-medium text-slate-600">Waste %</label>
           <input type="number" value={wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-center focus:border-orange-500 focus:outline-none" />
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm md:text-xs text-center focus:border-orange-500 focus:outline-none" />
         </div>
       </div>
 
