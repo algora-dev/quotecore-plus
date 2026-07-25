@@ -18,18 +18,10 @@ const KIND_LABELS: Record<string, string> = {
   valley: 'Valley',
   barge: 'Barge',
   spouting: 'Spouting',
+  custom: 'Custom',
 };
 
-const KIND_COLOURS: Record<string, string> = {
-  roof_area: '#3B82F6',
-  ridge: '#22C55E',
-  hip: '#EF4444',
-  valley: '#EAB308',
-  barge: '#A855F7',
-  spouting: '#64748B',
-};
-
-const KIND_ORDER: ComponentKind[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting'];
+const KIND_ORDER: ComponentKind[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting', 'custom'];
 
 const PITCH_TYPES = [
   { value: 'rafter', label: 'Rafter Pitch' },
@@ -79,10 +71,18 @@ export function RoofComponentsPanel() {
     for (const kind of KIND_ORDER) {
       groups[kind] = components.filter(c => c.component_kind === kind);
     }
+    // Group any custom kinds not in KIND_ORDER
+    for (const comp of components) {
+      if (!KIND_ORDER.includes(comp.component_kind as any)) {
+        if (!groups[comp.component_kind]) groups[comp.component_kind] = [];
+        groups[comp.component_kind].push(comp);
+      }
+    }
     return groups;
   }
 
   const groups = groupedByKind();
+  const allKinds = [...KIND_ORDER, ...Object.keys(groups).filter(k => !KIND_ORDER.includes(k as any))];
 
   return (
     <div className="space-y-5">
@@ -137,14 +137,13 @@ export function RoofComponentsPanel() {
           )}
 
           {/* Component groups */}
-          {KIND_ORDER.map(kind => {
+          {allKinds.map(kind => {
             const items = groups[kind] || [];
             if (items.length === 0) return null;
             return (
               <div key={kind}>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: KIND_COLOURS[kind] }} />
-                  <h3 className="text-sm font-semibold text-slate-700">{KIND_LABELS[kind]}</h3>
+                  <h3 className="text-sm font-semibold text-slate-700">{KIND_LABELS[kind] || kind}</h3>
                   <span className="text-xs text-slate-400">({items.length})</span>
                 </div>
                 <div className="space-y-2">
@@ -288,16 +287,21 @@ function ComponentForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Kind */}
         <FormField label="Component Type" required>
-          <select
+          <input
+            type="text"
             name="component_kind"
-            defaultValue={initialData?.component_kind || 'ridge'}
+            defaultValue={initialData?.component_kind || ''}
+            required
             disabled={editing}
+            list="component-kinds"
+            placeholder="e.g. ridge, hip, valley, barge, spouting, or custom type"
             className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:bg-slate-100"
-          >
+          />
+          <datalist id="component-kinds">
             {KIND_ORDER.map(k => (
               <option key={k} value={k}>{KIND_LABELS[k]}</option>
             ))}
-          </select>
+          </datalist>
         </FormField>
 
         {/* Name */}

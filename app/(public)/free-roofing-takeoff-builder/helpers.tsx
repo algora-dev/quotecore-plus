@@ -66,10 +66,10 @@ export function ComponentSymbol({ kind, customDef, className = 'w-4 h-4' }: { ki
         </svg>
       );
     case 'barge':
-      // L-shape: down then right - represents barge edge dropping from ridge to eaves
+      // ┌ shape: up then right - flashing rising up the barge edge then over the roof
       return (
         <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 4v16h14" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 20V4h14" />
         </svg>
       );
     case 'spouting':
@@ -118,13 +118,13 @@ export function InfoIcon({ text }: { text: string }) {
 // ─── Component display labels ────────────────────────
 
 export function componentLabel(kind: string, customDef?: CustomComponentDef): string {
-  if (kind === 'custom' && customDef) return customDef.name;
+  if (kind.startsWith('custom-') && customDef) return `${customDef.name} (Custom)`;
   const def = COMPONENT_DEFS[kind];
   return def ? def.label : 'Custom';
 }
 
 export function componentDescription(kind: string, customDef?: CustomComponentDef): string {
-  if (kind === 'custom' && customDef) {
+  if (kind.startsWith('custom-') && customDef) {
     const mt = customDef.measurementType === 'area' ? 'Area-based' : 'Linear';
     const pt = customDef.pitchType === 'rafter' ? 'rafter pitch' : customDef.pitchType === 'hip_valley' ? 'hip/valley pitch' : 'no pitch';
     return `${mt} component, ${pt}.`;

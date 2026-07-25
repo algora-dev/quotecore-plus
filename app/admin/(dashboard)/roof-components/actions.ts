@@ -4,7 +4,7 @@ import { createAdminClient } from '@/app/lib/supabase/admin';
 import { requireAdmin } from '@/app/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
-export type ComponentKind = 'roof_area' | 'ridge' | 'hip' | 'valley' | 'barge' | 'spouting';
+export type ComponentKind = 'roof_area' | 'ridge' | 'hip' | 'valley' | 'barge' | 'spouting' | 'custom' | (string & {});
 
 export interface RoofComponent {
   id: string;

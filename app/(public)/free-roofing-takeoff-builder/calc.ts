@@ -46,7 +46,7 @@ export function computeEntry(entry: Entry, kind: string, pitchType: PitchType): 
   if (entry.isTotalInput) {
     return (entry.actualValue ?? 0) * pitchFactor(entry.pitchDegrees, pitchType) * qty;
   }
-  const isArea = kind === 'roof_area' || (kind === 'custom' && isCustomArea(kind));
+  const isArea = kind === 'roof_area' || (kind.startsWith('custom-') && isCustomArea(kind));
   if (isArea) {
     const planArea = (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0);
     return planArea * pitchFactor(entry.pitchDegrees, pitchType) * qty;
@@ -120,7 +120,7 @@ export function makeInitialSections(): Record<string, ComponentSection> {
 export function makeCustomSection(def: CustomComponentDef): ComponentSection {
   registerCustomKind(def.id, def.measurementType === 'area');
   return {
-    kind: 'custom',
+    kind: def.id as ComponentKind,
     entries: [],
     wastePercent: def.wastePercent,
     customDef: def,

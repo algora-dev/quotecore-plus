@@ -7,14 +7,14 @@ import { COMPONENT_DEFS, computeEntry, makeId } from './calc';
 type MeasureMode = 'actual' | 'plan';
 
 function getPitchType(kind: string, customDef?: CustomComponentDef): PitchType {
-  if (kind === 'custom' && customDef) return customDef.pitchType;
+  if (kind.startsWith('custom-') && customDef) return customDef.pitchType;
   const def = COMPONENT_DEFS[kind];
   return def ? def.pitchType : 'none';
 }
 
 function isAreaKind(kind: string, customDef?: CustomComponentDef): boolean {
   if (kind === 'roof_area') return true;
-  if (kind === 'custom' && customDef) return customDef.measurementType === 'area';
+  if (kind.startsWith('custom-') && customDef) return customDef.measurementType === 'area';
   return false;
 }
 
