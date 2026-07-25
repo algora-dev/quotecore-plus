@@ -106,7 +106,7 @@ export function RoofTakeoffBuilder() {
 
   const componentsByKind = useMemo(() => {
     const map: Record<string, RoofComponentDef[]> = {};
-    for (const kind of BUILT_IN_ORDER) map[kind] = components.filter(c => c.component_kind === kind);
+    for (const kind of BUILT_IN_ORDER) map[kind] = components;
     return map;
   }, [components]);
 

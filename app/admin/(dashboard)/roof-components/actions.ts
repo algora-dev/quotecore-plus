@@ -42,7 +42,7 @@ export async function createRoofComponent(formData: FormData) {
   const supabase = createAdminClient();
 
   const component = {
-    component_kind: formData.get('component_kind') as string,
+    component_kind: (formData.get('component_kind') as string) || 'general',
     name: formData.get('name') as string,
     description: (formData.get('description') as string) || null,
     unit: (formData.get('unit') as string) || 'm',

@@ -8,20 +8,7 @@ import {
   toggleRoofComponent,
   deleteRoofComponent,
   type RoofComponent,
-  type ComponentKind,
 } from './actions';
-
-const KIND_LABELS: Record<string, string> = {
-  roof_area: 'Roof Area',
-  ridge: 'Ridges',
-  hip: 'Hip',
-  valley: 'Valley',
-  barge: 'Barge',
-  spouting: 'Spouting',
-  custom: 'Custom',
-};
-
-const KIND_ORDER: ComponentKind[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting', 'custom'];
 
 const PITCH_TYPES = [
   { value: 'rafter', label: 'Rafter Pitch' },
@@ -65,24 +52,6 @@ export function RoofComponentsPanel() {
       setLoading(false);
     }
   }
-
-  function groupedByKind(): Record<string, RoofComponent[]> {
-    const groups: Record<string, RoofComponent[]> = {};
-    for (const kind of KIND_ORDER) {
-      groups[kind] = components.filter(c => c.component_kind === kind);
-    }
-    // Group any custom kinds not in KIND_ORDER
-    for (const comp of components) {
-      if (!KIND_ORDER.includes(comp.component_kind as any)) {
-        if (!groups[comp.component_kind]) groups[comp.component_kind] = [];
-        groups[comp.component_kind].push(comp);
-      }
-    }
-    return groups;
-  }
-
-  const groups = groupedByKind();
-  const allKinds = [...KIND_ORDER, ...Object.keys(groups).filter(k => !KIND_ORDER.includes(k as any))];
 
   return (
     <div className="space-y-5">
@@ -136,50 +105,46 @@ export function RoofComponentsPanel() {
             />
           )}
 
-          {/* Component groups */}
-          {allKinds.map(kind => {
-            const items = groups[kind] || [];
-            if (items.length === 0) return null;
-            return (
-              <div key={kind}>
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-sm font-semibold text-slate-700">{KIND_LABELS[kind] || kind}</h3>
-                  <span className="text-xs text-slate-400">({items.length})</span>
-                </div>
-                <div className="space-y-2">
-                  {items.map(comp => (
-                    <ComponentRow
-                      key={comp.id}
-                      component={comp}
-                      onEdit={() => { setEditingId(comp.id); setShowAddForm(true); }}
-                      onToggle={(active) => {
+          {/* Component list - flat, sorted by name */}
+          {components.length > 0 ? (
+            <div className="space-y-2">
+              {components
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(comp => (
+                  <ComponentRow
+                    key={comp.id}
+                    component={comp}
+                    onEdit={() => { setEditingId(comp.id); setShowAddForm(true); }}
+                    onToggle={(active) => {
+                      startTransition(async () => {
+                        try {
+                          await toggleRoofComponent(comp.id, active);
+                          await loadComponents();
+                        } catch (e) {
+                          setError(e instanceof Error ? e.message : 'Failed to toggle');
+                        }
+                      });
+                    }}
+                    onDelete={() => {
+                      if (confirm(`Delete "${comp.name}"? This cannot be undone.`)) {
                         startTransition(async () => {
                           try {
-                            await toggleRoofComponent(comp.id, active);
+                            await deleteRoofComponent(comp.id);
                             await loadComponents();
                           } catch (e) {
-                            setError(e instanceof Error ? e.message : 'Failed to toggle');
+                            setError(e instanceof Error ? e.message : 'Failed to delete');
                           }
                         });
-                      }}
-                      onDelete={() => {
-                        if (confirm(`Delete "${comp.name}"? This cannot be undone.`)) {
-                          startTransition(async () => {
-                            try {
-                              await deleteRoofComponent(comp.id);
-                              await loadComponents();
-                            } catch (e) {
-                              setError(e instanceof Error ? e.message : 'Failed to delete');
-                            }
-                          });
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+                      }
+                    }}
+                  />
+                ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center">
+              <p className="text-sm text-slate-400">No components yet. Click "Add Component" to create one.</p>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -285,25 +250,6 @@ function ComponentForm({
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Kind */}
-        <FormField label="Component Type" required>
-          <input
-            type="text"
-            name="component_kind"
-            defaultValue={initialData?.component_kind || ''}
-            required
-            disabled={editing}
-            list="component-kinds"
-            placeholder="e.g. ridge, hip, valley, barge, spouting, or custom type"
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:bg-slate-100"
-          />
-          <datalist id="component-kinds">
-            {KIND_ORDER.map(k => (
-              <option key={k} value={k}>{KIND_LABELS[k]}</option>
-            ))}
-          </datalist>
-        </FormField>
-
         {/* Name */}
         <FormField label="Name" required>
           <input
@@ -317,7 +263,7 @@ function ComponentForm({
         </FormField>
 
         {/* Description */}
-        <FormField label="Description" full>
+        <FormField label="Description">
           <input
             type="text"
             name="description"
