@@ -7,22 +7,27 @@ export const homepageFaqs: FaqItem[] = [
   {
     question: "Who is QuoteCore+ built for?",
     answer:
-      "Built for contractors, builders, and tradespeople who want a faster, cleaner, and a more professional way to measure, quote, store, and manage jobs digitally.",
+      "Designed specifically for tradespeople, but works for absolutely anyone in any industry who want a faster, cleaner, and a more professional way to measure, quote, store, and manage jobs digitally.",
+  },
+  {
+    question: "Why is QuoteCore+ so good for roofing?",
+    answer:
+      "QuoteCore+ focuses on roofing and was built to become the best roof measuring and quoting app on the market. The core of its measuring engine comes from metal long run roofing, traditionally the most complex type of roof to measure and quote for because most sheets and flashings are all cut and bent to exact lengths for all different pitch types. This complexity allows the system to handle all other roofing systems like shingles, tiles, slate, membrane with ease.",
   },
   {
     question: "How fast can I create a quote?",
     answer:
-      "Once set up, most standard job quotes can be measured, built, and sent in as little as 10-15 minutes using reusable templates and our customer approval link system.",
+      "Once you're set up, depending on the complexity and the features you use in the app, you can go from a complex roof measure from a plan, to a professional high quality custom quote sent to the client/customer within 3 minutes - And thats a complex task, made easy by QuoteCore+, so anything else becomes even easier or faster.",
+  },
+  {
+    question: "Does QuoteCore+ create quotes automatically?",
+    answer:
+      "Its possible with our app, but we suggest always checking and editing anything that our AI assist tools build for you, no system on the planet should be 100% trusted to automate quoting, unless it is 100% accurate and system. We've built multiple tools and features with different uses that you can use to make your quoting journey as frictionless as possible, leading to faster, more accurate, more efficient quoting, no matter your industry.",
   },
   {
     question: "How do I get started?",
     answer:
       "Simply create a free account and test the full system risk-free for 14 days.",
-  },
-  {
-    question: "Does QuoteCore+ create quotes automatically?",
-    answer:
-      "QuoteCore+ gives you the tools to measure, build, and fully customise professional quotes quickly. You control your pricing, materials, labour, and templates - making every future quote faster and more consistent.",
   },
   {
     question: "Why do contractors switch to QuoteCore+?",
@@ -32,6 +37,6 @@ export const homepageFaqs: FaqItem[] = [
   {
     question: "Is QuoteCore+ only for roofers?",
     answer:
-      "No. QuoteCore+ started in roofing - that's where our founder's experience is - but it's built for construction businesses that measure, price, and quote jobs. Roofing, cladding, flooring, fencing, landscaping, general building work, and more.",
+      "Not at all. QuoteCore+ started by desingning the main engine around roofing - Getting that right means everything else becomes easy - so the system and app caters for all industries, specialising in construction businesses that measure, price, and quote jobs. Roofing, cladding, flooring, fencing, landscaping, general building work, and more. The app is so modular and offers multiple ways to quote that literally anyone who prices jobs can use it for any type of work.",
   },
 ];

@@ -423,20 +423,18 @@ export default function HomePage() {
             <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-12">
               {/* Left: text */}
               <div className="relative z-20 flex-1 text-center lg:flex-[1.12] lg:text-left">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Each feature built from real experience</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Not your average quoting app.</p>
                 <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-6xl">
-                  Build your business once. Quote it forever.
+                  Built for roofing. Powerful enough for everything else.
                 </h1>
-                <p className="mt-4 text-xl font-semibold leading-tight text-zinc-700 sm:text-2xl lg:whitespace-nowrap">
-                  Every quote starts with a Smart Component™
-                  <br />
-                  Built once, reused forever.
+                <p className="mt-4 text-xl font-semibold leading-tight text-zinc-700 sm:text-2xl">
+                  Roofing is one of the hardest trades to measure and quote. We built QuoteCore+ to master it. Now every trade is using it.
                 </p>
                 <p className="mt-4 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
-                  Every business has its own way of pricing, measuring and delivering work. QuoteCore+ captures that knowledge inside Smart Components™, allowing you to build a reusable digital system for the way your business operates.
+                  AI roof scans, digital takeoffs, and Smart Components™ that crunch the angles, pitches, and calculations roofers deal with daily. Metal, tile, shingle, membrane - every roof type, handled with ease.
                 </p>
                 <p className="mt-3 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
-                  Build your pricing, products, services and processes once, then reuse them across every quote, job and invoice - saving time, reducing mistakes and creating a faster, more consistent workflow.
+                  When you build an engine powerful enough for roofing&apos;s complexity, everything else falls into place. Construction, concrete, landscaping, electrical, plumbing - QuoteCore+ adapts to any trade that measures and quotes. Free tools, calculators, material ordering, invoicing, job management. One platform. Every industry.
                 </p>
                 <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
                   <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]" onClick={() => trackEvent("free_trial_click", { location: "hero" })}>
