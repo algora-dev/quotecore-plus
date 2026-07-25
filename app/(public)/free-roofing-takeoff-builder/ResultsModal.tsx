@@ -14,24 +14,64 @@ interface ResultsModalProps {
 }
 
 export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, onClose }: ResultsModalProps) {
-  const cur = '£';
+  const cur = '\u00A3';
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
   const areaUnit = unitSystem === 'metric' ? 'm\u00B2' : unitSystem === 'imperial' ? 'sq ft' : 'squares';
   const unitFor = (kind: ComponentKind) => kind === 'roof_area' ? areaUnit : lenUnit;
 
+  // Build convertible lines for the quote generator
+  function buildConvertToQuoteUrl(): string {
+    const lines: { description: string; qty: number; unit: string; rate: number }[] = [];
+    for (const kind of COMPONENT_ORDER) {
+      const section = sections[kind];
+      if (section.entries.length === 0) continue;
+      const def = COMPONENT_DEFS[kind];
+      const unit = unitFor(kind);
+      const wasteMultiplier = 1 + section.wastePercent / 100;
+
+      for (const entry of section.entries) {
+        const comp = getComponentById(entry.selectedComponentId);
+        const withWaste = entry.computedValue * wasteMultiplier;
+        const matCost = comp ? computeMaterialCost(withWaste, comp) : { cost: 0, packs: 0 };
+        const labCost = comp ? computeLabourCost(withWaste, comp) : 0;
+        const rate = comp ? (matCost.cost + labCost) / (withWaste || 1) : 0;
+
+        const label = entry.label || `${componentLabel(kind)} ${section.entries.indexOf(entry) + 1}`;
+        const desc = comp
+          ? `${label} - ${comp.name}${section.wastePercent > 0 ? ` (+${section.wastePercent}% waste)` : ''}`
+          : `${label}${section.wastePercent > 0 ? ` (+${section.wastePercent}% waste)` : ''}`;
+
+        lines.push({
+          description: desc,
+          qty: Math.round(withWaste * 100) / 100,
+          unit,
+          rate: Math.round(rate * 100) / 100,
+        });
+      }
+    }
+
+    const params = new URLSearchParams();
+    params.set('amount', grandTotal.toFixed(2));
+    if (lines.length > 0) {
+      params.set('lines', encodeURIComponent(JSON.stringify(lines)));
+    }
+    params.set('ref', 'free-roofing-takeoff-builder');
+    return `/free-quote-generator?${params.toString()}`;
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4 print:static print:p-0 print:bg-white print:block">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col print:shadow-none print:rounded-none print:max-h-none print:w-full print:max-w-none" id="takeoff-print">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 print:border-slate-300">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Roof Takeoff Report</h2>
             <p className="text-xs text-slate-400">Generated {new Date().toLocaleDateString('en-GB')}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 transition rounded-full hover:bg-slate-50"
+            className="p-2 text-slate-400 hover:text-slate-600 transition rounded-full hover:bg-slate-50 print:hidden"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -40,7 +80,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto px-6 py-5 space-y-5">
+        <div className="overflow-y-auto px-6 py-5 space-y-5 print:overflow-visible">
           {COMPONENT_ORDER.map(kind => {
             const def = COMPONENT_DEFS[kind];
             const section = sections[kind];
@@ -48,7 +88,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
             if (t.count === 0) return null;
 
             return (
-              <div key={kind}>
+              <div key={kind} className="print:break-inside-avoid">
                 <div className="flex items-center gap-2 mb-2">
                   <ComponentSymbol kind={kind} className="w-3.5 h-3.5 text-slate-500" />
                   <h3 className="text-sm font-semibold text-slate-900">{componentLabel(kind)}</h3>
@@ -72,12 +112,12 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                       : null;
                     const withWasteVal = entry.computedValue * (1 + section.wastePercent / 100);
                     return (
-                      <div key={entry.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-xs">
+                      <div key={entry.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-xs print:bg-white print:border print:border-slate-100">
                         <div className="min-w-0 flex-1">
                           <span className="text-slate-500">
                             {entry.label || `Entry ${idx + 1}`}
                             {isPitchCalc && (
-                              <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}°</span>
+                              <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}{'\u00b0'}</span>
                             )}
                           </span>
                           {comp && (
@@ -88,7 +128,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                           {isPitchCalc && originalValue !== null && originalValue > 0 && (
                             <span className="text-slate-400">
                               {originalValue.toFixed(2)} {unitFor(kind)}
-                              <span className="ml-1 text-slate-300">→</span>
+                              <span className="ml-1 text-slate-300">{'\u2192'}</span>
                             </span>
                           )}
                           <span className="font-medium text-slate-700">
@@ -111,7 +151,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                 </div>
 
                 {/* Totals */}
-                <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
+                <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 print:break-inside-avoid">
                   <div className="text-xs text-slate-500">
                     Subtotal
                     {section.wastePercent > 0 && (
@@ -142,7 +182,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
 
           {/* Grand total */}
           {hasPricing && (
-            <div className="rounded-xl bg-slate-900 text-white p-4 space-y-2">
+            <div className="rounded-xl bg-slate-900 text-white p-4 space-y-2 print:break-inside-avoid">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">Total Materials</span>
                 <span className="text-lg font-bold">
@@ -164,7 +204,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
 
           {/* Total roof area highlight (when no pricing) */}
           {!hasPricing && totals.roof_area.count > 0 && (
-            <div className="rounded-xl bg-slate-900 text-white p-4">
+            <div className="rounded-xl bg-slate-900 text-white p-4 print:break-inside-avoid">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">Total Roof Area (with waste)</span>
                 <span className="text-xl font-bold">
@@ -176,7 +216,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100">
+        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 print:hidden">
           <button
             onClick={() => window.print()}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
@@ -194,8 +234,17 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
               Close
             </button>
             <a
+              href={buildConvertToQuoteUrl()}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)]"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Convert to Quote
+            </a>
+            <a
               href="/signup?ref=free-roofing-takeoff-builder"
-              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800"
             >
               Save to QuoteCore+
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -205,6 +254,14 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
           </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        @media print {
+          @page { margin: 1cm; }
+          body { background: white; }
+          header, footer, button { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

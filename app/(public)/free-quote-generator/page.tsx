@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PostGenerationModal } from '../shared/PostGenerationModal';
-import { buildConvertUrl } from '../shared/convertLines';
+import { buildConvertUrl, parseConvertLines } from '../shared/convertLines';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
 import { PromptBox } from './PromptBox';
@@ -64,6 +64,10 @@ function QuoteGeneratorForm() {
   const qtyParam = searchParams.get('qty');
   const unitParam = searchParams.get('unit');
   const pitchParam = searchParams.get('pitch');
+  const linesParam = searchParams.get('lines');
+  const amountParam = searchParams.get('amount');
+  const clientParam = searchParams.get('client');
+  const convertedLines = parseConvertLines(linesParam);
 
   // Settings
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementSystem>('metric');
@@ -76,7 +80,7 @@ function QuoteGeneratorForm() {
   const [fromName, setFromName] = useState('');
   const [fromPhone, setFromPhone] = useState('');
   const [fromEmail, setFromEmail] = useState('');
-  const [clientName, setClientName] = useState('');
+  const [clientName, setClientName] = useState(clientParam || '');
   const [clientEmail, setClientEmail] = useState('');
   const [clientAddress, setClientAddress] = useState('');
   const [quoteDate, setQuoteDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -90,6 +94,16 @@ function QuoteGeneratorForm() {
   const [taxName, setTaxName] = useState('Tax');
 
   const [lines, setLines] = useState<QuoteLine[]>(() => {
+    if (convertedLines && convertedLines.length > 0) {
+      return convertedLines.map((l, i) => ({
+        id: String(Date.now() + i),
+        description: l.description,
+        qty: l.qty,
+        unit: l.unit,
+        rate: l.rate,
+        lineHidden: false,
+      }));
+    }
     if (qtyParam) {
       const unit = unitParam || 'm\u00b2';
       return [{
