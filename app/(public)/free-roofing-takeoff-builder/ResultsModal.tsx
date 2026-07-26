@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { ComponentKind, Entry, ComponentSection, RoofComponentDef, CustomComponentDef } from './types';
-import { COMPONENT_DEFS, BUILT_IN_ORDER, computeMaterialCost, computeLabourCost } from './calc';
+import Link from 'next/link';
+import type { ComponentSection, RoofComponentDef } from './types';
+import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost } from './calc';
 import { ComponentSymbol, componentLabel } from './helpers';
 
 interface ResultsModalProps {
@@ -76,7 +77,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
 
   const unitFor = (key: string) => {
     const section = sections[key];
-    if (key === 'roof_area') return areaUnit;
+    if (key === 'roof_area' || key === 'underlay' || key === 'fixings') return areaUnit;
     if (key.startsWith('custom-') && section?.customDef?.measurementType === 'area') return areaUnit;
     return lenUnit;
   };
@@ -147,7 +148,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                     const labCost = comp ? computeLabourCost(entry.computedValue, comp) : 0;
                     const entryTotal = matCost.cost + labCost;
                     const isPitchCalc = entry.inputMode === 'pitch_calculated' && pitchType !== 'none';
-                    const isArea = key === 'roof_area' || (key.startsWith('custom-') && section.customDef?.measurementType === 'area');
+                    const isArea = key === 'roof_area' || key === 'underlay' || key === 'fixings' || (key.startsWith('custom-') && section.customDef?.measurementType === 'area');
                     const originalValue = isPitchCalc
                       ? (entry.isTotalInput
                           ? (entry.actualValue ?? 0) * (entry.quantity ?? 1)
@@ -213,10 +214,10 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               Convert to Quote
             </a>
-            <a href="/signup?ref=free-roofing-takeoff-builder" className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800">
+            <Link href="/signup?ref=free-roofing-takeoff-builder" className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800">
               Save to QuoteCore+
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-            </a>
+            </Link>
           </div>
         </div>
       </div>

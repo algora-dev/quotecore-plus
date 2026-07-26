@@ -5,15 +5,14 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { trackEvent } from '@/lib/analytics';
-import type { ComponentKind, Entry, ComponentSection, RoofComponentDef, CustomComponentDef, PitchType } from './types';
+import type { Entry, ComponentSection, RoofComponentDef, CustomComponentDef } from './types';
 import {
   COMPONENT_DEFS,
   BUILT_IN_ORDER,
+  areaValueForUnit,
   computeEntry,
   computeMaterialCost,
   computeLabourCost,
-  makeId,
-  makeCustomId,
   makeInitialSections,
   makeCustomSection,
   registerCustomKind,
@@ -36,6 +35,16 @@ type MeasureMode = 'actual' | 'plan';
 type UnitSystem = 'metric' | 'imperial' | 'squares';
 type ExperienceLevel = 'guided' | 'fast';
 
+interface PersistedTakeoffState {
+  measureMode?: MeasureMode;
+  unitSystem?: UnitSystem;
+  experience?: ExperienceLevel;
+  masterPitch?: string;
+  masterRatio?: string;
+  sections?: Record<string, ComponentSection>;
+  customSections?: Record<string, ComponentSection>;
+}
+
 const SESSION_KEY = 'qcp:frtb:session';
 
 export function RoofTakeoffBuilder() {
@@ -51,14 +60,14 @@ export function RoofTakeoffBuilder() {
   const [showResults, setShowResults] = useState(false);
   const [components, setComponents] = useState<RoofComponentDef[]>([]);
   const [componentsLoading, setComponentsLoading] = useState(true);
-  const [showCustomCreator, setShowCustomCreator] = useState(false);
 
   // Restore from sessionStorage on mount
   useEffect(() => {
-    const saved = sessionStorage.getItem(SESSION_KEY);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
+    const timeoutId = window.setTimeout(() => {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) {
+        try {
+        const data = JSON.parse(saved) as PersistedTakeoffState;
         if (data.measureMode) setMeasureMode(data.measureMode);
         if (data.unitSystem) setUnitSystem(data.unitSystem);
         if (data.experience) setExperience(data.experience);
@@ -67,22 +76,24 @@ export function RoofTakeoffBuilder() {
         if (data.sections) {
           // Re-register custom kinds
           for (const [key, section] of Object.entries(data.sections)) {
-            if (key.startsWith('custom-') && (section as any).customDef) {
-              registerCustomKind((section as any).customDef.id, (section as any).customDef.measurementType === 'area');
+            if (key.startsWith('custom-') && section.customDef) {
+              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area');
             }
           }
           setSections(data.sections);
         }
         if (data.customSections) {
-          for (const [key, section] of Object.entries(data.customSections)) {
-            if ((section as any).customDef) {
-              registerCustomKind((section as any).customDef.id, (section as any).customDef.measurementType === 'area');
+          for (const section of Object.values(data.customSections)) {
+            if (section.customDef) {
+              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area');
             }
           }
           setCustomSections(data.customSections);
         }
-      } catch {}
-    }
+        } catch {}
+      }
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   // Save to sessionStorage on change
@@ -106,7 +117,7 @@ export function RoofTakeoffBuilder() {
 
   const componentsByKind = useMemo(() => {
     const map: Record<string, RoofComponentDef[]> = {};
-    for (const kind of BUILT_IN_ORDER) map[kind] = components;
+    for (const kind of BUILT_IN_ORDER) map[kind] = components.filter(component => component.component_kind === kind);
     return map;
   }, [components]);
 
@@ -129,8 +140,39 @@ export function RoofTakeoffBuilder() {
   const effectivePitch = parseFloat(masterPitch) || 0;
   const isGuided = experience === 'guided';
 
-  const allSections = { ...sections, ...customSections };
-  const allKeys = [...BUILT_IN_ORDER, ...Object.keys(customSections)];
+  useEffect(() => {
+    if (measureMode !== 'plan') return;
+
+    const recalculate = (current: Record<string, ComponentSection>) => {
+      let changed = false;
+      const next: Record<string, ComponentSection> = {};
+
+      for (const [key, section] of Object.entries(current)) {
+        const pitchType = section.customDef?.pitchType ?? COMPONENT_DEFS[key]?.pitchType ?? 'none';
+        const isArea = key === 'roof_area' || key === 'underlay' || key === 'fixings' || section.customDef?.measurementType === 'area';
+        const entries = section.entries.map(entry => {
+          if (entry.inputMode !== 'pitch_calculated') return entry;
+          const updated = { ...entry, pitchDegrees: effectivePitch };
+          let computedValue = computeEntry(updated, key, pitchType);
+          if (isArea) computedValue = areaValueForUnit(computedValue, unitSystem || 'metric', !entry.isTotalInput);
+          changed = changed || computedValue !== entry.computedValue || entry.pitchDegrees !== effectivePitch;
+          return { ...updated, computedValue };
+        });
+        next[key] = { ...section, entries };
+      }
+
+      return changed ? next : current;
+    };
+
+    const timeoutId = window.setTimeout(() => {
+      setSections(recalculate);
+      setCustomSections(recalculate);
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [effectivePitch, measureMode, unitSystem]);
+
+  const allSections = useMemo(() => ({ ...sections, ...customSections }), [sections, customSections]);
+  const allKeys = useMemo(() => [...BUILT_IN_ORDER, ...Object.keys(customSections)], [customSections]);
 
   const addEntry = (key: string, entry: Entry) => {
     const setter = key.startsWith('custom-') ? setCustomSections : setSections;
@@ -152,7 +194,6 @@ export function RoofTakeoffBuilder() {
     const section = makeCustomSection(def);
     setCustomSections(prev => ({ ...prev, [key]: section }));
     setExpandedSection(key);
-    setShowCustomCreator(false);
   };
 
   const removeCustomComponent = (key: string) => {
@@ -168,7 +209,6 @@ export function RoofTakeoffBuilder() {
     for (const key of allKeys) {
       const section = allSections[key];
       if (!section) { result[key] = { rawTotal: 0, withWaste: 0, count: 0, materialCost: 0, labourCost: 0, totalCost: 0 }; continue; }
-      const pitchType = key === 'roof_area' ? 'rafter' : key.startsWith('custom-') ? (section.customDef?.pitchType ?? 'none') : (COMPONENT_DEFS[key]?.pitchType ?? 'none');
       const rawTotal = section.entries.reduce((sum, e) => sum + e.computedValue, 0);
       const withWaste = rawTotal * (1 + section.wastePercent / 100);
       let materialCost = 0, labourCost = 0;
@@ -185,6 +225,28 @@ export function RoofTakeoffBuilder() {
   const totalEntries = allKeys.reduce((sum, k) => sum + (totals[k]?.count ?? 0), 0);
   const hasData = totalEntries > 0;
   const grandTotal = allKeys.reduce((sum, k) => sum + (totals[k]?.totalCost ?? 0), 0);
+  const clearTakeoff = () => {
+    setSections(makeInitialSections());
+    setCustomSections({});
+    setMasterPitch('25');
+    setMasterRatio('5:12');
+    setExpandedSection('roof_area');
+    setShowResults(false);
+    sessionStorage.removeItem(SESSION_KEY);
+  };
+
+  const changeUnits = () => {
+    if (hasData && !window.confirm('Changing units clears the current takeoff. Continue?')) return;
+    if (hasData) clearTakeoff();
+    setUnitSystem(null);
+  };
+
+  const startOver = () => {
+    if (hasData && !window.confirm('Start over and clear the current takeoff?')) return;
+    clearTakeoff();
+    setMeasureMode(null);
+    setUnitSystem(null);
+  };
   const cur = '\u00A3';
 
   const u = unitSystem || 'metric';
@@ -195,10 +257,9 @@ export function RoofTakeoffBuilder() {
     const section = allSections[key];
     if (!section) return null;
     const isCustom = key.startsWith('custom-');
-    const def = COMPONENT_DEFS[key];
     const label = componentLabel(key, section.customDef);
     const desc = componentDescription(key, section.customDef);
-    const isRoofArea = key === 'roof_area';
+    const isRoofArea = key === 'roof_area' || key === 'underlay' || key === 'fixings';
     const isExpanded = expandedSection === key;
     const total = totals[key] ?? { rawTotal: 0, withWaste: 0, count: 0, totalCost: 0 };
     const hasEntries = section.entries.length > 0;
@@ -246,7 +307,7 @@ export function RoofTakeoffBuilder() {
               </div>
             </div>
 
-            <AddEntryForm kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={availableComponents} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} onAdd={(entry) => addEntry(key, entry)} />
+            <AddEntryForm kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={availableComponents} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} unitSystem={u} roofAreaTotal={isRoofArea && key !== 'roof_area' ? roofAreaTotal : null} onAdd={(entry) => addEntry(key, entry)} />
 
             {hasEntries && (
               <div className="space-y-1.5">
@@ -262,6 +323,8 @@ export function RoofTakeoffBuilder() {
       </div>
     );
   };
+
+  const roofAreaTotal = (totals.roof_area?.rawTotal ?? 0) > 0 ? totals.roof_area.rawTotal : null;
 
   return (
     <FreeToolsAuthProvider>
@@ -310,8 +373,8 @@ export function RoofTakeoffBuilder() {
                     </div>
                     <InfoIcon text="Use this if you're measuring off a plan view. Enter plan lengths and the roof pitch - we'll calculate the real sloped lengths automatically." />
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900">I'm measuring from a plan</h3>
-                  <p className="mt-1 text-sm text-slate-500 flex-1">You have a top-down roof plan. Enter plan dimensions and the roof pitch - we'll calculate the real sloped lengths and areas.</p>
+                  <h3 className="text-base font-semibold text-slate-900">I&apos;m measuring from a plan</h3>
+                  <p className="mt-1 text-sm text-slate-500 flex-1">You have a top-down roof plan. Enter plan dimensions and the roof pitch - we&apos;ll calculate the real sloped lengths and areas.</p>
                 </button>
               </div>
             </div>
@@ -367,8 +430,8 @@ export function RoofTakeoffBuilder() {
                     <button onClick={() => setExperience('guided')} className={`rounded-full px-3 py-1 text-xs font-medium transition ${isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Guided</button>
                     <button onClick={() => setExperience('fast')} className={`rounded-full px-3 py-1 text-xs font-medium transition ${!isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Fast</button>
                   </div>
-                  <button onClick={() => setUnitSystem(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change units</button>
-                  <button onClick={() => { setMeasureMode(null); setUnitSystem(null); }} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Start over</button>
+                  <button onClick={changeUnits} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change units</button>
+                  <button onClick={startOver} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Start over</button>
                 </div>
               </div>
 
@@ -435,7 +498,7 @@ export function RoofTakeoffBuilder() {
                       const t = totals[key];
                       if (!t || t.count === 0) return null;
                       const section = allSections[key];
-                      const isArea = key === 'roof_area' || (key.startsWith('custom-') && section.customDef?.measurementType === 'area');
+                      const isArea = key === 'roof_area' || key === 'underlay' || key === 'fixings' || (key.startsWith('custom-') && section.customDef?.measurementType === 'area');
                       const du = isArea ? areaLbl : lenLbl;
                       return (
                         <div key={key} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2">

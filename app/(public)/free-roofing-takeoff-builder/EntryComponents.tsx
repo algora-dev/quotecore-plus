@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import type { ComponentKind, Entry, RoofComponentDef, CustomComponentDef, PitchType } from './types';
-import { COMPONENT_DEFS, computeEntry, makeId } from './calc';
+import type { Entry, RoofComponentDef, CustomComponentDef, PitchType } from './types';
+import { areaValueForUnit, COMPONENT_DEFS, computeEntry, makeId } from './calc';
+import { InfoIcon } from './helpers';
 
 type MeasureMode = 'actual' | 'plan';
 
@@ -13,7 +14,7 @@ function getPitchType(kind: string, customDef?: CustomComponentDef): PitchType {
 }
 
 function isAreaKind(kind: string, customDef?: CustomComponentDef): boolean {
-  if (kind === 'roof_area') return true;
+  if (kind === 'roof_area' || kind === 'underlay' || kind === 'fixings') return true;
   if (kind.startsWith('custom-') && customDef) return customDef.measurementType === 'area';
   return false;
 }
@@ -100,10 +101,12 @@ interface AddEntryFormProps {
   availableComponents: RoofComponentDef[];
   componentsLoading: boolean;
   pitchDegrees: number;
+  unitSystem: 'metric' | 'imperial' | 'squares';
+  roofAreaTotal: number | null;
   onAdd: (entry: Entry) => void;
 }
 
-export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, onAdd }: AddEntryFormProps) {
+export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, unitSystem, roofAreaTotal, onAdd }: AddEntryFormProps) {
   const pitchType = getPitchType(kind, customDef);
   const isRoofArea = isAreaKind(kind, customDef);
   const usePitch = measureMode === 'plan' && pitchType !== 'none';
@@ -154,6 +157,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
     }
 
     entry.computedValue = computeEntry(entry, kind, pitchType);
+    if (isRoofArea) entry.computedValue = areaValueForUnit(entry.computedValue, unitSystem, areaMode === 'dimensions');
     onAdd(entry);
     resetForm();
   };
@@ -167,14 +171,29 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-600">Add New Entry</span>
+        <div className="flex items-center gap-1">
+          <span className="text-xs font-semibold text-slate-600">Add New Entry</span>
+          {!isRoofArea && <InfoIcon text="Add each individual length or add the total length. You can also multiply a length using the quantity value." />}
+        </div>
       </div>
 
       {isRoofArea && (
-        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
-          <button onClick={() => setAreaMode('dimensions')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Width x Length</button>
-          <button onClick={() => setAreaMode('total')} className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Total Area</button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+            <button onClick={() => setAreaMode('dimensions')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-[#FF6B35] text-white' : 'text-slate-500'}`}>Width x Length</button>
+            <button onClick={() => setAreaMode('total')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-[#FF6B35] text-white' : 'text-slate-500'}`}>Total Area</button>
+          </div>
+          <InfoIcon text="Enter width and length and the area is calculated, or enter a known total area." />
         </div>
+      )}
+
+      {isRoofArea && kind !== 'roof_area' && roofAreaTotal !== null && roofAreaTotal > 0 && (
+        <button
+          onClick={() => { setAreaMode('total'); setTotalVal(roofAreaTotal.toFixed(2)); }}
+          className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#ff5722]"
+        >
+          Use Roof Area ({roofAreaTotal.toFixed(2)} {areaLabel})
+        </button>
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -207,7 +226,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
         </div>
 
         <button onClick={handleAdd} disabled={!canAdd}
-          className={`rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAdd ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
+          className={`cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAdd ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
           <svg className="w-4 h-4 inline -mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           {' '}Add
         </button>
@@ -225,6 +244,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
           </select>
         </div>
       )}
+      {componentsLoading && <p className="text-xs text-slate-400">Loading component pricing...</p>}
 
       <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
         className="w-full rounded-lg border border-slate-200 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />

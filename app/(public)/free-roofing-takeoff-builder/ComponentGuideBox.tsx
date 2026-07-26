@@ -11,6 +11,8 @@ const GUIDE_LABELS: Record<string, string> = {
   valley: 'Valleys',
   barge: 'Barges',
   spouting: 'Spouting',
+  underlay: 'Underlay',
+  fixings: 'Fixings',
 };
 
 // Inline SVGs - same as the docs/component-guides/*.svg files
@@ -18,8 +20,8 @@ const GUIDE_LABELS: Record<string, string> = {
 function GuideSVG({ componentKey }: { componentKey: string }) {
   const black = '#1e293b';
   const orange = '#FF6B35';
-  const sw = 2.5;
-  const ow = 3.5;
+  const sw = 1.5;
+  const ow = 2.25;
 
   // Building outline path
   const outline = 'M 40 40 L 420 40 L 420 280 L 320 280 L 320 340 L 140 340 L 140 280 L 40 280 Z';
@@ -61,6 +63,8 @@ function GuideSVG({ componentKey }: { componentKey: string }) {
 
   switch (componentKey) {
     case 'roof_area':
+    case 'underlay':
+    case 'fixings':
       // Outline orange, all internal black
       outlineColor = orange;
       outlineWidth = ow;
@@ -151,6 +155,7 @@ function GuideSVG({ componentKey }: { componentKey: string }) {
 export function ComponentGuideBox({ componentKey }: ComponentGuideBoxProps) {
   const label = GUIDE_LABELS[componentKey];
   if (!label) return null;
+  const isAreaComponent = componentKey === 'roof_area' || componentKey === 'underlay' || componentKey === 'fixings';
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 mb-3">
@@ -160,10 +165,10 @@ export function ComponentGuideBox({ componentKey }: ComponentGuideBoxProps) {
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-600">
-            {label} <span className="text-[#FF6B35] font-semibold">indicated in orange</span>
+            {label} <span className="text-[#FF6B35] font-semibold">{isAreaComponent ? 'covers the entire roof area' : 'indicated in orange'}</span>
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">
-            Example diagram showing where {label.toLowerCase()} appear on a roof plan.
+            {isAreaComponent ? 'Calculated using the total roof area with pitch adjustment.' : `Example diagram showing where ${label.toLowerCase()} appear on a roof plan.`}
           </p>
         </div>
       </div>

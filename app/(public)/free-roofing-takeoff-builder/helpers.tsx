@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { ComponentKind, CustomComponentDef } from './types';
+import type { CustomComponentDef } from './types';
 import { COMPONENT_DEFS } from './calc';
 
 // ─── Unit conversion helpers ─────────────────────────
@@ -37,8 +37,8 @@ export function degreesToRatio(deg: number, unit: 'metric' | 'imperial' | 'squar
 
 // ─── Component symbols (SVG) ─────────────────────────
 
-export function ComponentSymbol({ kind, customDef, className = 'w-4 h-4' }: { kind: string; customDef?: CustomComponentDef; className?: string }) {
-  const stroke = 'currentColor';
+export function ComponentSymbol({ kind, customDef, className = 'w-4 h-4', color }: { kind: string; customDef?: CustomComponentDef; className?: string; color?: string }) {
+  const stroke = color || 'currentColor';
   const sw = 1.8;
   switch (kind) {
     case 'roof_area':
@@ -78,7 +78,29 @@ export function ComponentSymbol({ kind, customDef, className = 'w-4 h-4' }: { ki
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 8h18M5 8v4a2 2 0 002 2h10a2 2 0 002-2V8" />
         </svg>
       );
+    case 'underlay':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9-5 9 5-9 5-9-5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9 5 9-5" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16l9 5 9-5" />
+        </svg>
+      );
+    case 'fixings':
+      return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 4h8M12 4v16M9 20l3-2 3 2" />
+        </svg>
+      );
     default:
+      if (customDef?.measurementType === 'area') {
+        return (
+          <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
+            <rect x="4" y="4" width="16" height="16" rx="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16l8-8M8 8h.01M16 16h.01" />
+          </svg>
+        );
+      }
       // Custom component - use a generic tool icon
       return (
         <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
@@ -98,7 +120,7 @@ export function InfoIcon({ text }: { text: string }) {
         type="button"
         onClick={() => setOpen(o => !o)}
         onMouseEnter={() => setOpen(true)}
-        className="text-slate-300 hover:text-slate-500 transition rounded-full p-0.5"
+        className="text-slate-300 hover:text-slate-500 transition rounded-full p-0.5 cursor-pointer"
         aria-label="More info"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

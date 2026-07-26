@@ -11,9 +11,11 @@ export const COMPONENT_DEFS: Record<string, { label: string; unit: string; pitch
   valley: { label: 'Valley', unit: 'm', pitchType: 'hip_valley', colour: '#EAB308', description: 'The angled line where two roof slopes meet on an internal corner. Water flows into valleys. Runs from ridge down to the eaves.' },
   barge: { label: 'Barge', unit: 'm', pitchType: 'rafter', colour: '#A855F7', description: 'The sloped edge of the roof at a gable end. Also called a rafter edge, rake or verge. Runs from the ridge down to the eaves at the side of the roof.' },
   spouting: { label: 'Spouting', unit: 'm', pitchType: 'none', colour: '#64748B', description: 'The gutter system along the bottom edge of the roof. Measured along the eaves where water runs off.' },
+  underlay: { label: 'Underlay', unit: 'm\u00B2', pitchType: 'rafter', colour: '#0EA5E9', description: 'A secondary layer that goes under the main roofing material. Measured by area, using the same pitch calculation as roof area.' },
+  fixings: { label: 'Fixings', unit: 'm\u00B2', pitchType: 'rafter', colour: '#F59E0B', description: 'Nails, screws, and clips used to secure the roof covering. Measured by roof area, using the same pitch calculation as roof area.' },
 };
 
-export const BUILT_IN_ORDER: string[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting'];
+export const BUILT_IN_ORDER: string[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting', 'underlay', 'fixings'];
 
 // ─── Pitch calculation ───────────────────────────────
 
@@ -26,14 +28,18 @@ export function rafterPitchFactor(degrees: number): number {
 
 export function hipValleyPitchFactor(degrees: number): number {
   if (!degrees || degrees <= 0 || degrees >= 90) return 1;
-  const rf = rafterPitchFactor(degrees);
-  return Math.sqrt(rf * rf + 1);
+  const tangent = Math.tan(degrees * RAD);
+  return Math.sqrt(1 + (tangent * tangent) / 2);
 }
 
 export function pitchFactor(degrees: number, pitchType: PitchType): number {
   if (pitchType === 'none') return 1;
   if (pitchType === 'hip_valley') return hipValleyPitchFactor(degrees);
   return rafterPitchFactor(degrees);
+}
+
+export function areaValueForUnit(value: number, unitSystem: 'metric' | 'imperial' | 'squares', fromDimensions: boolean): number {
+  return unitSystem === 'squares' && fromDimensions ? value / 100 : value;
 }
 
 // ─── Entry computation ───────────────────────────────
@@ -46,7 +52,7 @@ export function computeEntry(entry: Entry, kind: string, pitchType: PitchType): 
   if (entry.isTotalInput) {
     return (entry.actualValue ?? 0) * pitchFactor(entry.pitchDegrees, pitchType) * qty;
   }
-  const isArea = kind === 'roof_area' || (kind.startsWith('custom-') && isCustomArea(kind));
+  const isArea = kind === 'roof_area' || kind === 'underlay' || kind === 'fixings' || (kind.startsWith('custom-') && isCustomArea(kind));
   if (isArea) {
     const planArea = (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0);
     return planArea * pitchFactor(entry.pitchDegrees, pitchType) * qty;

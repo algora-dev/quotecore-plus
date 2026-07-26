@@ -26,6 +26,8 @@ export interface RoofComponentDef {
   labour_unit: string;
   suggested_waste_percent: number;
   pitch_type: string;
+  is_active: boolean;
+  sort_order: number;
 }
 
 export interface Entry {
