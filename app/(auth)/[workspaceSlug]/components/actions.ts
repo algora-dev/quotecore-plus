@@ -326,7 +326,7 @@ export async function loadComponentCollections() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from('component_collections')
-    .select('id, name, is_bootstrap')
+    .select('id, name, is_bootstrap, visibility, publication_status, published_at, public_title, public_description, roofing_types, product_categories, brands, keywords')
     .eq('company_id', profile.company_id)
     .order('is_bootstrap', { ascending: false })
     .order('name');
@@ -433,6 +433,76 @@ export async function renameComponentCollection(
     }
     revalidatePath('/components');
     return { ok: true, name: data.name };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Update library visibility/publication settings (supplier-only).
+ */
+export async function updateLibraryVisibility(
+  id: string,
+  input: Partial<{
+    visibility: 'private' | 'unlisted' | 'published';
+    public_title: string | null;
+    public_description: string | null;
+    roofing_types: string[];
+    product_categories: string[];
+    brands: string[];
+    keywords: string[];
+  }>,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    // Verify this company is a supplier
+    const { data: company } = await supabase
+      .from('companies')
+      .select('is_supplier')
+      .eq('id', profile.company_id)
+      .single();
+
+    if (!company?.is_supplier) {
+      return { ok: false, message: 'Only approved suppliers can publish libraries.' };
+    }
+
+    // Get supplier_profile_id
+    const { data: supplierProfile } = await supabase
+      .from('supplier_profiles')
+      .select('id')
+      .eq('company_id', profile.company_id)
+      .eq('status', 'approved')
+      .single();
+
+    const update: Record<string, unknown> = {};
+    if (input.visibility !== undefined) {
+      update.visibility = input.visibility;
+      if (input.visibility === 'published') {
+        update.publication_status = 'published';
+        update.published_at = new Date().toISOString();
+        if (supplierProfile) update.supplier_profile_id = supplierProfile.id;
+      } else if (input.visibility === 'private') {
+        update.publication_status = 'draft';
+      }
+    }
+    if (input.public_title !== undefined) update.public_title = input.public_title;
+    if (input.public_description !== undefined) update.public_description = input.public_description;
+    if (input.roofing_types !== undefined) update.roofing_types = input.roofing_types;
+    if (input.product_categories !== undefined) update.product_categories = input.product_categories;
+    if (input.brands !== undefined) update.brands = input.brands;
+    if (input.keywords !== undefined) update.keywords = input.keywords;
+
+    const { error } = await supabase
+      .from('component_collections')
+      .update(update)
+      .eq('id', id)
+      .eq('company_id', profile.company_id);
+
+    if (error) return { ok: false, message: error.message };
+    revalidatePath('/components');
+    return { ok: true };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
   }

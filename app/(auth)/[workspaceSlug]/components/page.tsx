@@ -59,6 +59,7 @@ export default async function ComponentsPage(props: {
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}
+        isSupplier={(company as { is_supplier?: boolean }).is_supplier ?? false}
       />
     </>
   );
