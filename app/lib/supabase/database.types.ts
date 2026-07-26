@@ -1923,6 +1923,7 @@ export type Database = {
           pricing_strategy: string
           sort_order: number
           suggested_waste_percent: number
+          takeoff_slot: string | null
           tenant_id: string | null
           unit: string
           updated_at: string
@@ -1944,6 +1945,7 @@ export type Database = {
           pricing_strategy?: string
           sort_order?: number
           suggested_waste_percent?: number
+          takeoff_slot?: string | null
           tenant_id?: string | null
           unit?: string
           updated_at?: string
@@ -1965,6 +1967,7 @@ export type Database = {
           pricing_strategy?: string
           sort_order?: number
           suggested_waste_percent?: number
+          takeoff_slot?: string | null
           tenant_id?: string | null
           unit?: string
           updated_at?: string
@@ -4166,8 +4169,11 @@ export type Database = {
           pitch_type: string
           price_per_unit: number
           pricing_strategy: string
+          sku: string | null
           sort_order: number
           suggested_waste_percent: number
+          supplier_profile_id: string | null
+          takeoff_slot: string | null
           tenant_id: string | null
           unit: string
           updated_at: string
@@ -4186,8 +4192,11 @@ export type Database = {
           pitch_type?: string
           price_per_unit?: number
           pricing_strategy?: string
+          sku?: string | null
           sort_order?: number
           suggested_waste_percent?: number
+          supplier_profile_id?: string | null
+          takeoff_slot?: string | null
           tenant_id?: string | null
           unit?: string
           updated_at?: string
@@ -4206,13 +4215,24 @@ export type Database = {
           pitch_type?: string
           price_per_unit?: number
           pricing_strategy?: string
+          sku?: string | null
           sort_order?: number
           suggested_waste_percent?: number
+          supplier_profile_id?: string | null
+          takeoff_slot?: string | null
           tenant_id?: string | null
           unit?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "roof_components_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scheduled_messages: {
         Row: {
@@ -4536,7 +4556,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           brands: string[] | null
-          company_id: string
+          company_id: string | null
           created_at: string
           description: string | null
           id: string
@@ -4555,7 +4575,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           brands?: string[] | null
-          company_id: string
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -4574,7 +4594,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           brands?: string[] | null
-          company_id?: string
+          company_id?: string | null
           created_at?: string
           description?: string | null
           id?: string

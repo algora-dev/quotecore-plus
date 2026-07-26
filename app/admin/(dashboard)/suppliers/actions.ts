@@ -178,7 +178,7 @@ export async function setSupplierStatus(
     .eq('id', id)
     .single();
 
-  if (profile) {
+  if (profile && profile.company_id) {
     await supabase
       .from('companies')
       .update({ is_supplier: status === 'approved' })
