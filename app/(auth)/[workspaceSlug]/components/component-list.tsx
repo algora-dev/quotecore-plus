@@ -464,6 +464,7 @@ export function ComponentList({
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
+      sku: (fd.get('sku') as string)?.trim() || null,
     };
 
     // Phase 6.5 (Generic Trades) additions. Only attached when the client flag
@@ -574,6 +575,7 @@ export function ComponentList({
       default_pitch_type: formPitchEnabled ? (fd.get('default_pitch_type') as PitchType) : 'none',
       eligible_for_orders: fd.get('eligible_for_orders') === 'on',
       flashing_ids: assignedFlashings.length > 0 ? assignedFlashings : null,
+      sku: (fd.get('sku') as string)?.trim() || null,
     };
 
     // Phase 6.5 (Generic Trades) additions: same as create.
@@ -969,6 +971,10 @@ export function ComponentList({
                 <label className="block text-xs text-slate-500 mb-1">Name</label>
                 <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
               </div>
+              <div data-copilot="component-sku">
+                <label className="block text-xs text-slate-500 mb-1">SKU / Product Code <span className="text-slate-400">(optional)</span></label>
+                <input name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+              </div>
               <div data-copilot="component-type">
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
                 <select 
@@ -1224,6 +1230,10 @@ export function ComponentList({
                      <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                    </div>
                    <div>
+                     <label className="block text-xs text-slate-500 mb-1">SKU / Product Code <span className="text-slate-400">(optional)</span></label>
+                     <input name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                   </div>
+                   <div>
                      <label className="block text-xs text-slate-500 mb-1">Measurement</label>
                      <select
                        value={formMeasurementType}
@@ -1461,6 +1471,9 @@ export function ComponentList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-slate-900">{comp.name}</h3>
+                    {comp.sku && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono">{comp.sku}</span>
+                    )}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${comp.component_type === 'main' ? 'bg-orange-100 text-orange-700' : 'bg-amber-100 text-amber-700'}`}>
                       {comp.component_type}
                     </span>

@@ -857,6 +857,7 @@ export type Database = {
           dunning_stage_entered_at: string | null
           first_payment_failure_at: string | null
           id: string
+          is_supplier: boolean
           name: string
           notification_prefs: Json
           notify_on_recipient_view: boolean
@@ -906,6 +907,7 @@ export type Database = {
           dunning_stage_entered_at?: string | null
           first_payment_failure_at?: string | null
           id?: string
+          is_supplier?: boolean
           name: string
           notification_prefs?: Json
           notify_on_recipient_view?: boolean
@@ -955,6 +957,7 @@ export type Database = {
           dunning_stage_entered_at?: string | null
           first_payment_failure_at?: string | null
           id?: string
+          is_supplier?: boolean
           name?: string
           notification_prefs?: Json
           notify_on_recipient_view?: boolean
@@ -1192,28 +1195,64 @@ export type Database = {
       }
       component_collections: {
         Row: {
+          brands: string[] | null
           company_id: string
           created_at: string
           id: string
           is_bootstrap: boolean
+          keywords: string[] | null
           name: string
+          product_categories: string[] | null
+          public_description: string | null
+          public_title: string | null
+          publication_status: string
+          published_at: string | null
+          published_version: number | null
+          roofing_types: string[] | null
+          search_tsv: unknown
+          supplier_profile_id: string | null
           updated_at: string
+          visibility: string
         }
         Insert: {
+          brands?: string[] | null
           company_id: string
           created_at?: string
           id?: string
           is_bootstrap?: boolean
+          keywords?: string[] | null
           name: string
+          product_categories?: string[] | null
+          public_description?: string | null
+          public_title?: string | null
+          publication_status?: string
+          published_at?: string | null
+          published_version?: number | null
+          roofing_types?: string[] | null
+          search_tsv?: unknown
+          supplier_profile_id?: string | null
           updated_at?: string
+          visibility?: string
         }
         Update: {
+          brands?: string[] | null
           company_id?: string
           created_at?: string
           id?: string
           is_bootstrap?: boolean
+          keywords?: string[] | null
           name?: string
+          product_categories?: string[] | null
+          public_description?: string | null
+          public_title?: string | null
+          publication_status?: string
+          published_at?: string | null
+          published_version?: number | null
+          roofing_types?: string[] | null
+          search_tsv?: unknown
+          supplier_profile_id?: string | null
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -1221,6 +1260,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_collections_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1242,6 +1288,7 @@ export type Database = {
           flashing_ids: string[] | null
           height_value_mm: number | null
           id: string
+          imported_at: string | null
           is_active: boolean
           is_system: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
@@ -1253,7 +1300,13 @@ export type Database = {
           pricing_strategy: Database["public"]["Enums"]["pricing_strategy"]
           show_dimensions_default: boolean
           show_price_default: boolean
+          sku: string | null
           sort_order: number
+          source_component_id: string | null
+          source_library_id: string | null
+          source_version: number | null
+          supplier_profile_id: string | null
+          takeoff_slot: string | null
           updated_at: string
           waste_unit: Database["public"]["Enums"]["waste_unit"]
         }
@@ -1273,6 +1326,7 @@ export type Database = {
           flashing_ids?: string[] | null
           height_value_mm?: number | null
           id?: string
+          imported_at?: string | null
           is_active?: boolean
           is_system?: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
@@ -1284,7 +1338,13 @@ export type Database = {
           pricing_strategy?: Database["public"]["Enums"]["pricing_strategy"]
           show_dimensions_default?: boolean
           show_price_default?: boolean
+          sku?: string | null
           sort_order?: number
+          source_component_id?: string | null
+          source_library_id?: string | null
+          source_version?: number | null
+          supplier_profile_id?: string | null
+          takeoff_slot?: string | null
           updated_at?: string
           waste_unit?: Database["public"]["Enums"]["waste_unit"]
         }
@@ -1304,6 +1364,7 @@ export type Database = {
           flashing_ids?: string[] | null
           height_value_mm?: number | null
           id?: string
+          imported_at?: string | null
           is_active?: boolean
           is_system?: boolean
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
@@ -1315,7 +1376,13 @@ export type Database = {
           pricing_strategy?: Database["public"]["Enums"]["pricing_strategy"]
           show_dimensions_default?: boolean
           show_price_default?: boolean
+          sku?: string | null
           sort_order?: number
+          source_component_id?: string | null
+          source_library_id?: string | null
+          source_version?: number | null
+          supplier_profile_id?: string | null
+          takeoff_slot?: string | null
           updated_at?: string
           waste_unit?: Database["public"]["Enums"]["waste_unit"]
         }
@@ -1325,6 +1392,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_library_source_component_id_fkey"
+            columns: ["source_component_id"]
+            isOneToOne: false
+            referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "component_library_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -4070,6 +4151,69 @@ export type Database = {
         }
         Relationships: []
       }
+      roof_components: {
+        Row: {
+          component_kind: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          labour_rate: number
+          labour_unit: string
+          name: string
+          pack_price: number | null
+          pack_size: number | null
+          pitch_type: string
+          price_per_unit: number
+          pricing_strategy: string
+          sort_order: number
+          suggested_waste_percent: number
+          tenant_id: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          component_kind: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          labour_rate?: number
+          labour_unit?: string
+          name: string
+          pack_price?: number | null
+          pack_size?: number | null
+          pitch_type?: string
+          price_per_unit?: number
+          pricing_strategy?: string
+          sort_order?: number
+          suggested_waste_percent?: number
+          tenant_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          component_kind?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          labour_rate?: number
+          labour_unit?: string
+          name?: string
+          pack_price?: number | null
+          pack_size?: number | null
+          pitch_type?: string
+          price_per_unit?: number
+          pricing_strategy?: string
+          sort_order?: number
+          suggested_waste_percent?: number
+          tenant_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scheduled_messages: {
         Row: {
           cancelled_reason: string | null
@@ -4386,6 +4530,74 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      supplier_profiles: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          brands: string[] | null
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          keywords: string[] | null
+          logo_url: string | null
+          product_categories: string[] | null
+          roofing_types: string[] | null
+          service_areas: string[] | null
+          slug: string
+          status: string
+          supplier_name: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          brands?: string[] | null
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          keywords?: string[] | null
+          logo_url?: string | null
+          product_categories?: string[] | null
+          roofing_types?: string[] | null
+          service_areas?: string[] | null
+          slug: string
+          status?: string
+          supplier_name: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          brands?: string[] | null
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          keywords?: string[] | null
+          logo_url?: string | null
+          product_categories?: string[] | null
+          roofing_types?: string[] | null
+          service_areas?: string[] | null
+          slug?: string
+          status?: string
+          supplier_name?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_tickets: {
         Row: {
@@ -4730,6 +4942,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tenants: {
+        Row: {
+          copy: Json
+          created_at: string
+          currency: string
+          currency_symbol: string
+          default_units: string
+          domains: string[]
+          favicon_url: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          slug: string
+          status: string
+          theme: Json
+          updated_at: string
+        }
+        Insert: {
+          copy?: Json
+          created_at?: string
+          currency?: string
+          currency_symbol?: string
+          default_units?: string
+          domains?: string[]
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          slug: string
+          status?: string
+          theme?: Json
+          updated_at?: string
+        }
+        Update: {
+          copy?: Json
+          created_at?: string
+          currency?: string
+          currency_symbol?: string
+          default_units?: string
+          domains?: string[]
+          favicon_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          status?: string
+          theme?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_recovery_codes: {
         Row: {
