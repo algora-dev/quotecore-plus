@@ -223,6 +223,9 @@ const UPDATABLE_COMPONENT_FIELDS = [
   'pack_size',
   'pack_coverage_m2',
   'notes',
+  // Phase: Supplier components - SKU and takeoff slot
+  'sku',
+  'takeoff_slot',
 ] as const;
 
 export async function updateComponent(id: string, input: Partial<ComponentLibraryInsert>) {
