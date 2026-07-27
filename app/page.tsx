@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 import type { Metadata } from 'next';
 import MarketingHome from './(marketing)/home/page';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
-import { shouldRenderMarketing } from '@/lib/app-url';
+import { shouldRenderMarketing, marketingUrl } from '@/lib/app-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +29,7 @@ export default async function Home() {
   const headersList = await headers();
   const host = headersList.get('host') || '';
   const isMarketingDomain = shouldRenderMarketing(host);
+  const marketingLink = marketingUrl(host);
 
   if (isMarketingDomain) {
     return <MarketingHome />;
@@ -66,7 +67,7 @@ export default async function Home() {
             Sign up
           </Link>
           <Link
-            href="/"
+            href={marketingLink}
             className="rounded-full bg-[#FF6B35] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#E55A28] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Website

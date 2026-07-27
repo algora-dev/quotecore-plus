@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, Suspense } from 'react';
+import { useState, useTransition, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { loginAction, resendConfirmationAction, sendLoginLinkAction, type LoginResult } from './actions';
@@ -9,6 +9,7 @@ import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { PasswordField } from '@/app/components/ui/PasswordField';
+import { marketingUrl } from '@/lib/app-url';
 
 export default function LoginPage() {
   return (
@@ -19,6 +20,7 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
+  const [marketingLink, setMarketingLink] = useState('https://quote-core.com');
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
@@ -26,6 +28,10 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const signupPending = searchParams.get('signup') === 'pending';
   const redirectParam = searchParams.get('redirect');
+
+  useEffect(() => {
+    setMarketingLink(marketingUrl() || '/');
+  }, []);
 
   async function handleResend() {
     if (!pendingEmail) return;
@@ -190,12 +196,16 @@ function LoginForm() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-sm text-slate-600">
-          Don&apos;t have an account?{' '}
+        <div className="mt-6 flex items-center justify-center gap-3 text-sm text-slate-600">
+          <span>Don&apos;t have an account?</span>
           <Link href="/signup" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
             Sign up
           </Link>
-        </p>
+          <span className="text-slate-300">|</span>
+          <Link href={marketingLink} className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+            Website
+          </Link>
+        </div>
       </div>
       <PublicFooter />
     </main>
