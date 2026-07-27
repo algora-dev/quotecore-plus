@@ -9,7 +9,9 @@ const ROOFING_TYPES = [
   'Tile Roofing',
   'Flat Roofing',
   'Shingle Roofing',
+  'Membrane',
   'EPDM/TPO',
+  'Slate',
 ];
 
 export function PublishLibraryModal({
