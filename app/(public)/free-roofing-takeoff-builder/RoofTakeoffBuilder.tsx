@@ -17,9 +17,7 @@ import {
   makeCustomSection,
   registerCustomKind,
 } from './calc';
-import { ResultsModal } from './ResultsModal';
-import { EntryListItem, AddEntryForm, CustomComponentCreator } from './EntryComponents';
-import { ComponentGuideBox } from './ComponentGuideBox';
+import { EntryListItem, AddEntryForm } from './EntryComponents';
 import {
   InfoIcon,
   ComponentSymbol,
@@ -30,6 +28,12 @@ import {
   ratioToDegrees,
   degreesToRatio,
 } from './helpers';
+import dynamic from 'next/dynamic';
+
+// Lazy-load modals and conditional UI to reduce initial bundle
+const ResultsModal = dynamic(() => import('./ResultsModal').then(m => ({ default: m.ResultsModal })));
+const ComponentGuideBox = dynamic(() => import('./ComponentGuideBox').then(m => ({ default: m.ComponentGuideBox })));
+const CustomComponentCreator = dynamic(() => import('./EntryComponents').then(m => ({ default: m.CustomComponentCreator })));
 
 type MeasureMode = 'actual' | 'plan';
 type UnitSystem = 'metric' | 'imperial' | 'squares';
