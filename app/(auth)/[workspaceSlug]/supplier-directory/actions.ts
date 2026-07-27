@@ -836,17 +836,26 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
   const sourceLibraryIds = [...new Set(imported.map(i => i.source_library_id).filter(Boolean))] as string[];
   const { data: subscriptions } = await supabase
     .from('supplier_library_subscriptions')
-    .select('source_library_id, alerts_enabled')
+    .select('source_library_id, alerts_enabled, field_preferences')
     .eq('company_id', profile.company_id)
     .in('source_library_id', sourceLibraryIds);
 
-  // Only include libraries where alerts are enabled
-  const alertLibIds = new Set(
-    (subscriptions ?? [])
-      .filter(s => s.alerts_enabled)
-      .map(s => s.source_library_id)
-  );
+  // Build subscription map: library_id -> { enabled, fieldPrefs }
+  const subMap = new Map<string, { enabled: boolean; fieldPrefs: Set<string> | null }>();
+  for (const s of subscriptions ?? []) {
+    if (s.alerts_enabled) {
+      let fieldPrefs: Set<string> | null = null;
+      const prefs = s.field_preferences as Record<string, boolean> | null;
+      if (prefs) {
+        // If prefs exist, only include fields explicitly set to true
+        const enabledFields = Object.entries(prefs).filter(([, v]) => v === true).map(([k]) => k);
+        fieldPrefs = enabledFields.length > 0 ? new Set(enabledFields) : null; // null = all fields (if all false, treat as all)
+      }
+      subMap.set(s.source_library_id, { enabled: true, fieldPrefs });
+    }
+  }
 
+  const alertLibIds = new Set(subMap.keys());
   if (alertLibIds.size === 0) return [];
 
   // Filter imported components to only those from alert-enabled libraries
@@ -962,6 +971,15 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
       } else if (newSnap && relevantNotif.change_type === 'added') {
         changedFields = Object.keys(newSnap).filter(k => k !== 'id');
       }
+
+      // Filter by field preferences for this subscription
+      const sub = subMap.get(sourceLibId);
+      if (sub?.fieldPrefs) {
+        changedFields = changedFields.filter(f => sub.fieldPrefs!.has(f));
+      }
+
+      // If no fields remain after filtering, skip this notification
+      if (changedFields.length === 0 && relevantNotif.change_type !== 'removed') continue;
 
       results.push({
         notification_id: relevantNotif.id,
@@ -1230,10 +1248,13 @@ export async function resolveSupplierUpdate(params: {
 
 /**
  * Update the alert preference for a supplier library.
+ * If fieldPreferences is provided, stores per-field alert toggles.
+ * If fieldPreferences is null, clears field preferences (alert on all fields).
  */
 export async function updateSupplierAlertPreference(
   sourceLibraryId: string,
   enabled: boolean,
+  fieldPreferences?: Record<string, boolean> | null,
 ): Promise<{ ok: boolean; message?: string }> {
   let profile;
   try {
@@ -1244,18 +1265,89 @@ export async function updateSupplierAlertPreference(
 
   const supabase = await createSupabaseServerClient();
 
+  const update: {
+    company_id: string;
+    source_library_id: string;
+    alerts_enabled: boolean;
+    updated_at: string;
+    field_preferences?: Record<string, boolean> | null;
+  } = {
+    company_id: profile.company_id,
+    source_library_id: sourceLibraryId,
+    alerts_enabled: enabled,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (fieldPreferences !== undefined) {
+    update.field_preferences = fieldPreferences;
+  }
+
   const { error } = await supabase
     .from('supplier_library_subscriptions')
-    .upsert({
-      company_id: profile.company_id,
-      source_library_id: sourceLibraryId,
-      alerts_enabled: enabled,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'company_id,source_library_id' });
+    .upsert(update, { onConflict: 'company_id,source_library_id' });
 
   if (error) {
     return { ok: false, message: error.message };
   }
 
   return { ok: true };
+}
+
+/**
+ * Get all supplier library subscriptions for the current company.
+ * Used by the subscription settings UI.
+ */
+export async function getSupplierSubscriptions(): Promise<Array<{
+  id: string;
+  source_library_id: string;
+  library_name: string;
+  supplier_name: string;
+  alerts_enabled: boolean;
+  field_preferences: Record<string, boolean> | null;
+  created_at: string;
+}>> {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch {
+    return [];
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { data: subs } = await supabase
+    .from('supplier_library_subscriptions')
+    .select(`
+      id, source_library_id, alerts_enabled, field_preferences, created_at
+    `)
+    .eq('company_id', profile.company_id)
+    .order('created_at', { ascending: false });
+
+  if (!subs || subs.length === 0) return [];
+
+  // Batch fetch library + supplier names
+  const libIds = subs.map(s => s.source_library_id);
+  const { data: libs } = await supabase
+    .from('component_collections')
+    .select('id, name, supplier_profiles!inner(supplier_name)')
+    .in('id', libIds);
+
+  const libMap = new Map<string, { name: string; supplier_name: string }>();
+  for (const lib of libs ?? []) {
+    const sp = lib.supplier_profiles as unknown as { supplier_name: string };
+    libMap.set(lib.id, { name: lib.name, supplier_name: sp.supplier_name });
+  }
+
+  return subs.map(s => {
+    const info = libMap.get(s.source_library_id);
+    return {
+      id: s.id,
+      source_library_id: s.source_library_id,
+      library_name: info?.name ?? 'Unknown library',
+      supplier_name: info?.supplier_name ?? 'Unknown supplier',
+      alerts_enabled: s.alerts_enabled,
+      field_preferences: s.field_preferences as Record<string, boolean> | null,
+      created_at: s.created_at,
+    };
+  });
 }

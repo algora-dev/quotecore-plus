@@ -2,6 +2,7 @@ import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections,
 import { ComponentList } from './component-list';
 import { ComponentsIntroModal } from './components-intro-modal';
 import { PendingUpdatesBanner } from './PendingUpdatesBanner';
+import { SupplierAlertSettingsButton } from './SupplierAlertSettingsButton';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { BackButton } from '@/app/components/BackButton';
@@ -59,6 +60,9 @@ export default async function ComponentsPage(props: {
       {pendingUpdates.length > 0 && (
         <PendingUpdatesBanner workspaceSlug={workspaceSlug} updates={pendingUpdates} />
       )}
+      <div className="flex justify-end mb-2">
+        <SupplierAlertSettingsButton workspaceSlug={workspaceSlug} />
+      </div>
       <ComponentList
         initialComponents={components}
         workspaceSlug={workspaceSlug}
