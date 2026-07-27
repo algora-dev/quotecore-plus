@@ -787,6 +787,42 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
     return { ok: false, message: 'Publish failed: no result from database.' };
   }
 
+  // 5. If changes were recorded, insert inbox alerts for all subscribed companies
+  if (row.ok && row.changes_recorded > 0) {
+    try {
+      // Find all companies with alerts_enabled subscriptions to this library
+      const { data: subscribers } = await supabase
+        .from('supplier_library_subscriptions')
+        .select('company_id')
+        .eq('source_library_id', libraryId)
+        .eq('alerts_enabled', true);
+
+      if (subscribers && subscribers.length > 0) {
+        // Get library name + supplier name for the alert text
+        const { data: libInfo } = await supabase
+          .from('component_collections')
+          .select('name, supplier_profiles!inner(supplier_name)')
+          .eq('id', libraryId)
+          .single();
+
+        const supplierName = (libInfo?.supplier_profiles as unknown as { supplier_name: string })?.supplier_name ?? 'A supplier';
+        const libName = libInfo?.name ?? 'library';
+
+        const alertRows = subscribers.map(s => ({
+          company_id: s.company_id,
+          alert_type: 'supplier_update',
+          title: `${supplierName} updated ${libName}`,
+          message: `${row.changes_recorded} component change${row.changes_recorded !== 1 ? 's' : ''} published. Review and apply to your imported components.`,
+        }));
+
+        await supabase.from('alerts').insert(alertRows);
+      }
+    } catch (err) {
+      console.error('[publishLibraryUpdate] Alert insert failed:', err);
+      // Don't fail the publish if alerts fail
+    }
+  }
+
   revalidatePath('/components');
   revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
 
