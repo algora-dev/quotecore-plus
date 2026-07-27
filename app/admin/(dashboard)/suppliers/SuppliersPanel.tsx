@@ -17,7 +17,7 @@ const STATUS_STYLES: Record<string, string> = {
   revoked: 'bg-red-100 text-red-700 border-red-200',
 };
 
-const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'EPDM/TPO'];
+const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'Membrane', 'EPDM/TPO'];
 
 export function SuppliersPanel() {
   const [suppliers, setSuppliers] = useState<SupplierProfile[]>([]);
@@ -35,6 +35,7 @@ export function SuppliersPanel() {
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [serviceAreas, setServiceAreas] = useState('');
   const [roofingTypes, setRoofingTypes] = useState<string[]>([]);
+  const [masterEmail, setMasterEmail] = useState('');
   const [description, setDescription] = useState('');
 
   useEffect(() => {
@@ -82,8 +83,9 @@ export function SuppliersPanel() {
         .map(s => s.trim())
         .filter(Boolean);
       await createSupplier({
-        company_id: selectedCompanyId,
+        company_id: selectedCompanyId || undefined,
         supplier_name: supplierName.trim(),
+        master_email: masterEmail.trim() || undefined,
         website_url: websiteUrl.trim() || undefined,
         service_areas: areas,
         roofing_types: roofingTypes,
@@ -112,6 +114,7 @@ export function SuppliersPanel() {
     try {
       await updateSupplier(id, {
         supplier_name: supplierName.trim(),
+        master_email: masterEmail.trim() || null,
         website_url: websiteUrl.trim() || null,
         service_areas: serviceAreas.split(',').map(s => s.trim()).filter(Boolean),
         roofing_types: roofingTypes,
@@ -127,11 +130,12 @@ export function SuppliersPanel() {
 
   function startEdit(s: SupplierProfile) {
     setEditingId(s.id);
-    setSelectedCompanyId(s.company_id);
+    setSelectedCompanyId(s.company_id || '');
     setSupplierName(s.supplier_name);
     setWebsiteUrl(s.website_url || '');
     setServiceAreas(s.service_areas?.join(', ') || '');
     setRoofingTypes(s.roofing_types || []);
+    setMasterEmail(s.master_email || '');
     setDescription(s.description || '');
     setShowAddForm(false);
   }
@@ -144,6 +148,7 @@ export function SuppliersPanel() {
     setWebsiteUrl('');
     setServiceAreas('');
     setRoofingTypes([]);
+    setMasterEmail('');
     setDescription('');
   }
 
@@ -182,7 +187,7 @@ export function SuppliersPanel() {
 
               {!editingId && (
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Search Company</label>
+                  <label className="block text-xs text-slate-500 mb-1">Search Company (optional)</label>
                   <input
                     type="text"
                     value={companySearch}
@@ -214,6 +219,18 @@ export function SuppliersPanel() {
                   )}
                 </div>
               )}
+
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">Master Email <span className="text-orange-500">*</span></label>
+                <input
+                  type="email"
+                  value={masterEmail}
+                  onChange={(e) => setMasterEmail(e.target.value)}
+                  placeholder="supplier@example.com"
+                  className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                />
+                <p className="text-xs text-slate-400 mt-1">When this user logs in with this email, they get supplier abilities.</p>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -277,7 +294,7 @@ export function SuppliersPanel() {
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={() => editingId ? handleSaveEdit(editingId) : handleCreate()}
-                  disabled={!supplierName.trim() || (!editingId && !selectedCompanyId)}
+                  disabled={!supplierName.trim() || !masterEmail.trim()}
                   className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {editingId ? 'Save Changes' : 'Create Supplier'}
@@ -314,6 +331,9 @@ export function SuppliersPanel() {
                         </span>
                         {s.company_name && (
                           <span className="text-xs text-slate-400">- {s.company_name}</span>
+                        )}
+                        {s.master_email && (
+                          <span className="text-xs text-orange-600 font-medium">- {s.master_email}</span>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-2">
