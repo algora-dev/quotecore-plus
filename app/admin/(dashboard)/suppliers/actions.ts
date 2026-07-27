@@ -196,23 +196,57 @@ export async function setSupplierStatus(
 }
 
 export async function searchCompanies(query: string): Promise<
-  { id: string; name: string; email: string }[]
+  { id: string; name: string; email: string; type: 'company' | 'user' }[]
 > {
   await requireAdmin();
   const supabase = await createSupabaseServerClient();
 
-  // Search companies by name - look up via company profiles/users
-  const { data, error } = await supabase
+  const results: { id: string; name: string; email: string; type: 'company' | 'user' }[] = [];
+
+  // Search companies by name
+  const { data: companies, error: companyError } = await supabase
     .from('companies')
     .select('id, name, slug')
     .ilike('name', `%${query}%`)
-    .limit(10);
+    .limit(5);
 
-  if (error) throw new Error(error.message);
+  if (companyError) throw new Error(companyError.message);
 
-  return (data ?? []).map((c) => ({
-    id: c.id,
-    name: c.name,
-    email: c.slug || '',
-  }));
+  for (const c of companies ?? []) {
+    results.push({ id: c.id, name: c.name, email: c.slug || '', type: 'company' });
+  }
+
+  // Search users by email
+  const { data: users, error: userError } = await supabase
+    .from('users')
+    .select('id, email, full_name, company_id')
+    .ilike('email', `%${query}%`)
+    .limit(5);
+
+  if (userError) throw new Error(userError.message);
+
+  for (const u of users ?? []) {
+    // Look up company name if user has one
+    let companyName = u.full_name || u.email;
+    let companyId = u.company_id;
+    if (u.company_id) {
+      const { data: company } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', u.company_id)
+        .maybeSingle();
+      if (company) companyName = company.name;
+    }
+    if (companyId) {
+      results.push({ id: companyId, name: companyName, email: u.email, type: 'user' });
+    }
+  }
+
+  // Deduplicate by id
+  const seen = new Set<string>();
+  return results.filter(r => {
+    if (seen.has(r.id)) return false;
+    seen.add(r.id);
+    return true;
+  });
 }

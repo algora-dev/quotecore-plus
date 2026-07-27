@@ -29,7 +29,7 @@ export function SuppliersPanel() {
 
   // Add form state
   const [companySearch, setCompanySearch] = useState('');
-  const [companyResults, setCompanyResults] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [companyResults, setCompanyResults] = useState<{ id: string; name: string; email: string; type: 'company' | 'user' }[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [supplierName, setSupplierName] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
@@ -199,17 +199,21 @@ export function SuppliersPanel() {
                     <div className="mt-1 border border-slate-200 rounded-lg overflow-hidden">
                       {companyResults.map((c) => (
                         <button
-                          key={c.id}
+                          key={c.id + c.type}
                           onClick={() => {
                             setSelectedCompanyId(c.id);
                             setCompanySearch(c.name);
                             setCompanyResults([]);
                             if (!supplierName) setSupplierName(c.name);
+                            if (c.type === 'user' && c.email && !masterEmail) setMasterEmail(c.email);
                           }}
                           className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50/40 border-b border-slate-100 last:border-0"
                         >
                           <span className="font-medium text-slate-900">{c.name}</span>
-                          <span className="text-xs text-slate-400 ml-2">{c.email}</span>
+                          {c.email && <span className="text-xs text-slate-400 ml-2">{c.email}</span>}
+                          <span className={`text-xs ml-2 px-1.5 py-0.5 rounded-full ${c.type === 'user' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'}`}>
+                            {c.type === 'user' ? 'user' : 'company'}
+                          </span>
                         </button>
                       ))}
                     </div>
