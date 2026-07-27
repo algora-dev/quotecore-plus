@@ -11,6 +11,7 @@ import { homepageFaqs } from "@/lib/faqs";
 import { pricingPlans } from "@/lib/pricing";
 import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
+import { appUrl } from "@/lib/app-url";
 
 export default function HomePage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -333,7 +334,7 @@ export default function HomePage() {
               </button>
               </div>
               <a
-                href="https://app.quote-core.com/docs"
+                href={`${appUrl()}/docs`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_35px_rgba(15,23,42,0.12)] transition-colors hover:bg-zinc-700"
@@ -587,7 +588,7 @@ export default function HomePage() {
             </div>
             <div className="relative mt-5 flex flex-wrap gap-4 sm:mt-8">
               <a
-                href="https://app.quote-core.com/docs"
+                href={`${appUrl()}/docs`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-white/20 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
@@ -1267,7 +1268,7 @@ export default function HomePage() {
                         </a>
                       ) : (
                         <a
-                          href="https://app.quote-core.com/signup"
+                          href={`${appUrl()}/signup`}
                           className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                             plan.featured
                               ? "bg-[#FF6B35] text-white hover:bg-[#E55A28]"

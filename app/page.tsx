@@ -4,17 +4,14 @@ import { headers } from 'next/headers';
 import type { Metadata } from 'next';
 import MarketingHome from './(marketing)/home/page';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
+import { shouldRenderMarketing } from '@/lib/app-url';
 
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
   const host = headersList.get('host') || '';
-  const isMarketingDomain =
-    host === 'quote-core.com' ||
-    host === 'www.quote-core.com' ||
-    host === 'www.quote-core.co.nz' ||
-    host === 'quote-core.co.nz';
+  const isMarketingDomain = shouldRenderMarketing(host);
 
   if (isMarketingDomain) {
     return {
@@ -31,25 +28,24 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Home() {
   const headersList = await headers();
   const host = headersList.get('host') || '';
-  const isMarketingDomain =
-    host === 'quote-core.com' ||
-    host === 'www.quote-core.com' ||
-    host === 'www.quote-core.co.nz' ||
-    host === 'quote-core.co.nz';
+  const isMarketingDomain = shouldRenderMarketing(host);
 
   if (isMarketingDomain) {
     return <MarketingHome />;
   }
 
-  // App landing page (app.quote-core.com)
+  // App landing page (app.quote-core.com or any non-marketing host)
+  // On preview/dev (*.vercel.app) this won't normally show because
+  // shouldRenderMarketing returns true for those hosts. But if someone
+  // navigates here from a production app domain, they see the app landing.
   return (
     <div className="flex flex-col flex-1 items-center justify-center min-h-screen bg-slate-50">
       <main className="flex flex-col items-center gap-8 py-20 px-6 text-center">
-        <Image 
-          src="/logo.png" 
-          alt="QuoteCore+" 
-          width={320} 
-          height={80} 
+        <Image
+          src="/logo.png"
+          alt="QuoteCore+"
+          width={320}
+          height={80}
           priority
           className="h-16 w-auto"
         />
@@ -68,6 +64,12 @@ export default async function Home() {
             className="rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:border-slate-400 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Sign up
+          </Link>
+          <Link
+            href="/"
+            className="rounded-full bg-[#FF6B35] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#E55A28] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            Website
           </Link>
         </div>
         <Link

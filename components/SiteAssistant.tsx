@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { appUrl } from "@/lib/app-url";
 
 type Mode = "ask" | "contact";
 type Sender = "assistant" | "visitor";
@@ -29,7 +30,7 @@ const quickQuestions = [
   "Can I talk to someone?",
 ];
 
-const docsBaseUrl = "https://app.quote-core.com";
+const docsBaseUrl = typeof window !== "undefined" ? `${appUrl()}/docs` : "https://app.quote-core.com";
 
 const docsTopics = [
   {

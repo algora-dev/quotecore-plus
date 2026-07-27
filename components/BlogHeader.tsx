@@ -2,22 +2,27 @@
 
 import { useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { appUrl } from "@/lib/app-url";
 
-const navItems = [
-  { label: "Home", href: "/" },
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "Services", href: "/services" },
-  { label: "Pricing", href: "/#pricing" },
-  { label: "Free Tools", href: "/free-tools" },
-  { label: "Blog", href: "/blog" },
-  { label: "Documentation", href: "https://app.quote-core.com/docs", external: true },
-  { label: "App", href: "https://app.quote-core.com", external: true },
-  { label: "Contact us", href: "/contact" },
-  { label: "Free trial", href: "/free-trial" },
-];
+function buildNavItems() {
+  const app = appUrl();
+  return [
+    { label: "Home", href: "/" },
+    { label: "How it works", href: "/#how-it-works" },
+    { label: "Services", href: "/services" },
+    { label: "Pricing", href: "/#pricing" },
+    { label: "Free Tools", href: "/free-tools" },
+    { label: "Blog", href: "/blog" },
+    { label: "Documentation", href: `${app}/docs`, external: true },
+    { label: "App", href: app, external: true },
+    { label: "Contact us", href: "/contact" },
+    { label: "Free trial", href: "/free-trial" },
+  ];
+}
 
 export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: string; backHref?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navItems = buildNavItems();
 
   const headerButton =
     "inline-flex h-12 min-w-[138px] items-center justify-center rounded-full px-5 text-sm transition-colors duration-200";
@@ -61,7 +66,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
               Free Tools
             </a>
             <a
-              href="https://app.quote-core.com"
+              href={appUrl()}
               className={appButton}
               onClick={() => trackEvent("app_click", { location: "nav" })}
             >
@@ -125,7 +130,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
           </div>
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 pb-6 pt-2 sm:flex-row lg:px-8">
             <a
-              href="https://app.quote-core.com"
+              href={appUrl()}
               className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
               onClick={() => { trackEvent("app_click", { location: "nav-menu" }); setMenuOpen(false); }}
             >

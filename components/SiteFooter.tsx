@@ -1,4 +1,5 @@
 import SocialIcons from "@/components/SocialIcons";
+import { appUrl } from "@/lib/app-url";
 
 export default function SiteFooter() {
   return (
@@ -18,7 +19,7 @@ export default function SiteFooter() {
         {" · "}
         <a href="/blog" className="hover:text-zinc-800">Blog</a>
         {" · "}
-        <a href="https://app.quote-core.com/docs" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-800">Documentation</a>
+        <a href={`${appUrl()}/docs`} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-800">Documentation</a>
         {" · "}
         <a href="/contact" className="hover:text-zinc-800">Contact</a>
         {" · "}

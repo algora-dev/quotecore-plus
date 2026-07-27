@@ -5,6 +5,10 @@ import {
   authCookieOptions,
   legacyAuthCookiePrefix,
 } from '@/app/lib/supabase/cookie-config';
+import {
+  isProductionMarketingHost,
+  isPreviewHost,
+} from '@/lib/app-url';
 
 // Canonical host for the public marketing site + free tools. Matches the
 // existing sitemap/robots canonical (apex, not www) so we don't churn
@@ -131,18 +135,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
-  // ── Domain-based routing ─────────────────────────────
-  // quote-core.com (and www) = public-facing free tools site only.
-  // app.quote-core.com (and *.vercel.app) = full application.
-  // When accessed via quote-core.com, only public routes are allowed;
-  // everything else redirects to app.quote-core.com.
-  const isPublicDomain =
-    hostname === 'quote-core.com' ||
-    hostname === 'www.quote-core.com' ||
-    hostname === 'quote-core.co.nz' ||
-    hostname === 'www.quote-core.co.nz';
+  // -- Domain-based routing ------------------------------
+  // Production:
+  //   quote-core.com (and www, .co.nz) = public-facing marketing site.
+  //   app.quote-core.com               = full application.
+  //   When on a marketing domain, only public routes are allowed;
+  //   everything else redirects to app.quote-core.com.
+  //
+  // Preview/dev (*.vercel.app, localhost):
+  //   Single host serves both marketing and app. No cross-domain
+  //   redirects - everything stays on the same origin so dev/staging
+  //   is fully self-contained.
+  const isPreview = isPreviewHost(hostname);
+  const isPublicDomain = isProductionMarketingHost(hostname);
 
-  if (isPublicDomain) {
+  if (isPreview) {
+    // On preview hosts, skip all cross-domain redirects. The homepage
+    // renders marketing (via shouldRenderMarketing in app/page.tsx) and
+    // auth paths stay on the same origin.
+    if (isStaticAsset(pathname)) {
+      return NextResponse.next();
+    }
+    // Public paths and root are allowed without auth
+    if (pathname === '/' || isPublicPath(pathname)) {
+      return NextResponse.next();
+    }
+    // Fall through to auth check below (same as app domain)
+  } else if (isPublicDomain) {
     // Allow static assets, API routes, and public paths on the public domain
     if (isStaticAsset(pathname)) {
       return NextResponse.next();
