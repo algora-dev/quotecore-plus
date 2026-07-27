@@ -30,8 +30,6 @@ const quickQuestions = [
   "Can I talk to someone?",
 ];
 
-const docsBaseUrl = typeof window !== "undefined" ? `${appUrl()}/docs` : "https://app.quote-core.com";
-
 const docsTopics = [
   {
     pattern: /(first quote|getting started|start|setup|set up|company)/,
@@ -119,8 +117,8 @@ const docsTopics = [
   },
 ];
 
-function docsLink(path: string) {
-  return `${docsBaseUrl}${path}`;
+function docsLink(base: string, path: string) {
+  return `${base}${path}`;
 }
 
 function shouldShowHowItWorks(message: string, matchedTopic?: (typeof docsTopics)[number]) {
@@ -142,7 +140,7 @@ function shouldShowHowItWorks(message: string, matchedTopic?: (typeof docsTopics
   ].includes(matchedTopic.href);
 }
 
-function getAnswer(rawMessage: string): ChatMessage {
+function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   const message = rawMessage.toLowerCase();
   const matchedTopic = docsTopics.find((item) => item.pattern.test(message));
   const howItWorksLink = shouldShowHowItWorks(message, matchedTopic)
@@ -159,7 +157,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       sectionLink: howItWorksLink,
       link: {
         label: "Open the docs library",
-        href: docsLink("/docs"),
+        href: docsLink(docsBaseUrl, "/docs"),
       },
     };
   }
@@ -171,7 +169,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       sectionLink: howItWorksLink,
       link: {
         label: matchedTopic?.label || "Open the docs library",
-        href: matchedTopic ? docsLink(matchedTopic.href) : docsLink("/docs"),
+        href: matchedTopic ? docsLink(docsBaseUrl, matchedTopic.href) : docsLink(docsBaseUrl, "/docs"),
       },
     };
   }
@@ -191,7 +189,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       sectionLink: howItWorksLink,
       link: {
         label: matchedTopic.label,
-        href: docsLink(matchedTopic.href),
+        href: docsLink(docsBaseUrl, matchedTopic.href),
       },
     };
   }
@@ -202,7 +200,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       text: "QuoteCore+ starts with a 14-day free trial. After that, there is a limited Lite plan, plus paid plans from Starter at $19/month for solo traders who quote regularly.",
       link: {
         label: "Read the billing docs",
-        href: docsLink("/docs/account/billing"),
+        href: docsLink(docsBaseUrl, "/docs/account/billing"),
       },
     };
   }
@@ -213,7 +211,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       text: "The free trial gives you 14 days to test the full quoting workflow. No credit card is required.",
       link: {
         label: "Read the free trial docs",
-        href: docsLink("/docs/account/trial"),
+        href: docsLink(docsBaseUrl, "/docs/account/trial"),
       },
     };
   }
@@ -224,7 +222,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       text: "You can start with the 14-day free trial. After the trial, you can continue on a limited free plan or upgrade when you are ready.",
       link: {
         label: "Read the free trial docs",
-        href: docsLink("/docs/account/trial"),
+        href: docsLink(docsBaseUrl, "/docs/account/trial"),
       },
     };
   }
@@ -236,7 +234,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       sectionLink: howItWorksLink,
       link: {
         label: "Read the invoice docs",
-        href: docsLink("/docs/invoices/create-an-invoice"),
+        href: docsLink(docsBaseUrl, "/docs/invoices/create-an-invoice"),
       },
     };
   }
@@ -248,7 +246,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       sectionLink: howItWorksLink,
       link: {
         label: "Read the material orders docs",
-        href: docsLink("/docs/material-orders/order-from-a-quote"),
+        href: docsLink(docsBaseUrl, "/docs/material-orders/order-from-a-quote"),
       },
     };
   }
@@ -260,7 +258,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       sectionLink: howItWorksLink,
       link: {
         label: "Read the quote builder docs",
-        href: docsLink("/docs/building-a-quote/quote-builder"),
+        href: docsLink(docsBaseUrl, "/docs/building-a-quote/quote-builder"),
       },
     };
   }
@@ -279,7 +277,7 @@ function getAnswer(rawMessage: string): ChatMessage {
       sectionLink: howItWorksLink,
       link: {
         label: "Open the docs library",
-        href: docsLink("/docs"),
+        href: docsLink(docsBaseUrl, "/docs"),
       },
     };
   }
@@ -292,6 +290,10 @@ function getAnswer(rawMessage: string): ChatMessage {
 }
 
 export default function SiteAssistant() {
+  const [docsBaseUrl, setDocsBaseUrl] = useState("https://app.quote-core.com/docs");
+  useEffect(() => {
+    setDocsBaseUrl(`${appUrl()}/docs`);
+  }, []);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("ask");
   const [input, setInput] = useState("");
@@ -346,7 +348,7 @@ export default function SiteAssistant() {
     const trimmed = question.trim();
     if (!trimmed) return;
 
-    const answer = getAnswer(trimmed);
+    const answer = getAnswer(trimmed, docsBaseUrl);
     setMessages((current) => [
       ...current,
       { sender: "visitor", text: trimmed },

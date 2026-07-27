@@ -18,6 +18,7 @@ export default function HomePage() {
   const [isMuted, setIsMuted] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
+  const [appLink, setAppLink] = useState("https://app.quote-core.com");
   const [videoHovered, setVideoHovered] = useState(false);
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [currency, setCurrency] = useState<"GBP" | "USD">("USD");
@@ -44,6 +45,10 @@ export default function HomePage() {
     const pct = (e.clientX - rect.left) / rect.width;
     video.currentTime = pct * video.duration;
   };
+
+  useEffect(() => {
+    setAppLink(appUrl());
+  }, []);
 
   useEffect(() => {
     // Lazy-load the story video: only play when scrolled into view
@@ -334,7 +339,7 @@ export default function HomePage() {
               </button>
               </div>
               <a
-                href={`${appUrl()}/docs`}
+                href={`${appLink}/docs`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_35px_rgba(15,23,42,0.12)] transition-colors hover:bg-zinc-700"
@@ -588,7 +593,7 @@ export default function HomePage() {
             </div>
             <div className="relative mt-5 flex flex-wrap gap-4 sm:mt-8">
               <a
-                href={`${appUrl()}/docs`}
+                href={`${appLink}/docs`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-white/20 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-white/10"
@@ -1268,7 +1273,7 @@ export default function HomePage() {
                         </a>
                       ) : (
                         <a
-                          href={`${appUrl()}/signup`}
+                          href={`${appLink}/signup`}
                           className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                             plan.featured
                               ? "bg-[#FF6B35] text-white hover:bg-[#E55A28]"

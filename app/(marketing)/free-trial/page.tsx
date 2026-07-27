@@ -7,7 +7,6 @@ import BlogHeader from "@/components/BlogHeader";
 import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
-import { appUrl } from "@/lib/app-url";
 
 export const metadata: Metadata = {
   title: "Free 14-Day Trial - No Card Required | QuoteCore+",
@@ -37,7 +36,7 @@ const faqs = [
   },
   {
     question: "What if I need help?",
-    answer: "You can chat to \"Q\" our smart assistant in the bottom right corner, check the <a href=\`${appUrl()}/docs\` class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">docs</a>, or <a href=\"https://quote-core.com/contact\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">contact us here</a>.",
+    answer: "You can chat to \"Q\" our smart assistant in the bottom right corner, check the <a href=\"/docs\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">docs</a>, or <a href=\"https://quote-core.com/contact\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">contact us here</a>.",
   },
   {
     question: "What is included in the free trial?",

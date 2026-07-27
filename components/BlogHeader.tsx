@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { appUrl } from "@/lib/app-url";
 
-function buildNavItems() {
-  const app = appUrl();
+function buildNavItems(app: string) {
   return [
     { label: "Home", href: "/" },
     { label: "How it works", href: "/#how-it-works" },
@@ -14,7 +13,7 @@ function buildNavItems() {
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
     { label: "Documentation", href: `${app}/docs`, external: true },
-    { label: "App", href: app, external: true },
+    { label: "App", href: app || "/login", external: true },
     { label: "Contact us", href: "/contact" },
     { label: "Free trial", href: "/free-trial" },
   ];
@@ -22,7 +21,12 @@ function buildNavItems() {
 
 export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: string; backHref?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const navItems = buildNavItems();
+  const [appLink, setAppLink] = useState("https://app.quote-core.com");
+  const navItems = buildNavItems(appLink);
+
+  useEffect(() => {
+    setAppLink(appUrl());
+  }, []);
 
   const headerButton =
     "inline-flex h-12 min-w-[138px] items-center justify-center rounded-full px-5 text-sm transition-colors duration-200";
@@ -66,7 +70,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
               Free Tools
             </a>
             <a
-              href={appUrl()}
+              href={appLink || "/login"}
               className={appButton}
               onClick={() => trackEvent("app_click", { location: "nav" })}
             >
@@ -130,7 +134,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
           </div>
           <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 pb-6 pt-2 sm:flex-row lg:px-8">
             <a
-              href={appUrl()}
+              href={appLink || "/login"}
               className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
               onClick={() => { trackEvent("app_click", { location: "nav-menu" }); setMenuOpen(false); }}
             >

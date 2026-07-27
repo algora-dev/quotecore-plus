@@ -7,8 +7,12 @@
  *
  * On Vercel preview/dev deployments (*.vercel.app) there is only one host,
  * so both marketing and app content are served from the same origin.
- * These helpers detect the current host and return the correct app URL
- * so links never point to the wrong environment.
+ * These helpers return the correct app URL so links never point to the
+ * wrong environment.
+ *
+ * IMPORTANT: During static prerender (build time), window is unavailable.
+ * On preview hosts we return empty string (relative URL) so links resolve
+ * to the same origin. On production we return the absolute app URL.
  */
 
 const PRODUCTION_MARKETING_HOSTS = new Set([
@@ -21,8 +25,7 @@ const PRODUCTION_MARKETING_HOSTS = new Set([
 const PRODUCTION_APP_HOST = 'app.quote-core.com';
 
 /**
- * Returns true when the given host is a production marketing domain
- * (quote-core.com, www, .co.nz variants).
+ * Returns true when the given host is a production marketing domain.
  */
 export function isProductionMarketingHost(host: string): boolean {
   return PRODUCTION_MARKETING_HOSTS.has(host);
@@ -45,21 +48,29 @@ export function isPreviewHost(host: string): boolean {
  *
  * - On production marketing domains -> https://app.quote-core.com
  * - On app.quote-core.com itself     -> https://app.quote-core.com
- * - On *.vercel.app / localhost      -> same origin (so dev stays self-contained)
+ * - On *.vercel.app / localhost      -> '' (empty string, so links are relative)
+ *
+ * Use as: href={`${appUrl()}/login`} or href={appUrl() || '/'}
  */
 export function appUrl(host?: string): string {
-  if (!host) {
-    if (typeof window !== 'undefined') {
-      host = window.location.host;
-    } else {
-      return 'https://app.quote-core.com';
+  // Client-side: use window
+  if (typeof window !== 'undefined') {
+    host = host || window.location.host;
+    if (isPreviewHost(host)) {
+      return ''; // relative - same origin
     }
+    return `https://${PRODUCTION_APP_HOST}`;
   }
 
-  if (isPreviewHost(host)) {
-    return `${window.location.protocol}//${host}`;
+  // Server-side / prerender: use provided host or fall back to production
+  if (host) {
+    if (isPreviewHost(host)) {
+      return ''; // relative - will resolve correctly at runtime
+    }
+    return `https://${PRODUCTION_APP_HOST}`;
   }
 
+  // No host info available (static prerender without context)
   return `https://${PRODUCTION_APP_HOST}`;
 }
 
@@ -68,19 +79,22 @@ export function appUrl(host?: string): string {
  *
  * - On quote-core.com / .co.nz       -> https://quote-core.com
  * - On app.quote-core.com            -> https://quote-core.com
- * - On *.vercel.app / localhost       -> same origin
+ * - On *.vercel.app / localhost      -> '' (empty string, relative)
  */
 export function marketingUrl(host?: string): string {
-  if (!host) {
-    if (typeof window !== 'undefined') {
-      host = window.location.host;
-    } else {
-      return 'https://quote-core.com';
+  if (typeof window !== 'undefined') {
+    host = host || window.location.host;
+    if (isPreviewHost(host)) {
+      return '';
     }
+    return 'https://quote-core.com';
   }
 
-  if (isPreviewHost(host)) {
-    return `${window.location.protocol}//${host}`;
+  if (host) {
+    if (isPreviewHost(host)) {
+      return '';
+    }
+    return 'https://quote-core.com';
   }
 
   return 'https://quote-core.com';
