@@ -620,3 +620,392 @@ export async function importSupplierComponents(params: {
     errors: [],
   };
 }
+
+// ─── Phase 9: Controlled publishing + change notifications ───
+
+export type ChangeNotification = {
+  id: string;
+  supplier_library_id: string;
+  component_id: string | null;
+  change_type: 'added' | 'modified' | 'removed' | 'price_changed';
+  old_snapshot: Record<string, unknown> | null;
+  new_snapshot: Record<string, unknown> | null;
+  version_from: number;
+  version_to: number;
+  created_at: string;
+};
+
+export type PendingUpdate = {
+  notification_id: string;
+  source_library_id: string;
+  source_library_name: string;
+  supplier_name: string;
+  component_id: string;
+  imported_component_id: string;
+  imported_component_name: string;
+  change_type: string;
+  version_from: number;
+  version_to: number;
+  created_at: string;
+  new_snapshot: Record<string, unknown> | null;
+};
+
+/**
+ * Supplier action: publish an update to a library.
+ * Bumps published_version, diffs current components against the last published snapshot,
+ * and records change notifications for each changed component.
+ */
+export async function publishLibraryUpdate(libraryId: string): Promise<{
+  ok: boolean;
+  newVersion?: number;
+  changesRecorded?: number;
+  message?: string;
+}> {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch {
+    return { ok: false, message: 'Authentication required.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // 1. Verify ownership and supplier status
+  const { data: lib } = await supabase
+    .from('component_collections')
+    .select('id, name, visibility, published_version, supplier_profile_id, company_id')
+    .eq('id', libraryId)
+    .single();
+
+  if (!lib || lib.company_id !== profile.company_id) {
+    return { ok: false, message: 'Library not found.' };
+  }
+
+  if (lib.visibility !== 'published') {
+    return { ok: false, message: 'Library must be published first.' };
+  }
+
+  const currentVersion = lib.published_version ?? 0;
+  const newVersion = currentVersion + 1;
+
+  // 2. Get current components in the library
+  const { data: currentComponents } = await supabase
+    .from('component_library')
+    .select('*')
+    .eq('collection_id', libraryId)
+    .eq('is_active', true)
+    .order('name');
+
+  // 3. Get the last published snapshot (components as they were when last published)
+  // We use the change_notifications table to find the last known state,
+  // or if no notifications exist yet, everything is 'added'.
+  const { data: lastNotifs } = await supabase
+    .from('supplier_change_notifications')
+    .select('component_id, new_snapshot, change_type')
+    .eq('supplier_library_id', libraryId)
+    .in('change_type', ['added', 'modified', 'price_changed'])
+    .order('created_at', { ascending: false });
+
+  // Build a map of last-known published state by component_id
+  const lastPublishedMap = new Map<string, Record<string, unknown>>();
+  for (const n of lastNotifs ?? []) {
+    if (n.component_id && n.new_snapshot && !lastPublishedMap.has(n.component_id)) {
+      lastPublishedMap.set(n.component_id, n.new_snapshot as Record<string, unknown>);
+    }
+  }
+
+  // Also check for 'removed' notifications to know what was removed
+  const removedIds = new Set(
+    (lastNotifs ?? []).filter(n => n.change_type === 'removed' && n.component_id).map(n => n.component_id!)
+  );
+
+  const currentIds = new Set((currentComponents ?? []).map(c => c.id));
+  const changes: Array<{
+    component_id: string | null;
+    change_type: 'added' | 'modified' | 'removed' | 'price_changed';
+    old_snapshot: Record<string, unknown> | null;
+    new_snapshot: Record<string, unknown> | null;
+  }> = [];
+
+  // Detect added and modified components
+  for (const comp of currentComponents ?? []) {
+    const snapshot: Record<string, unknown> = {
+      name: comp.name,
+      default_material_rate: comp.default_material_rate,
+      default_labour_rate: comp.default_labour_rate,
+      pack_price: comp.pack_price,
+      pack_size: comp.pack_size,
+      pricing_strategy: comp.pricing_strategy,
+      component_type: comp.component_type,
+      measurement_type: comp.measurement_type,
+      sku: comp.sku,
+      takeoff_slot: comp.takeoff_slot,
+      notes: comp.notes,
+      default_waste_percent: comp.default_waste_percent,
+      default_waste_fixed: comp.default_waste_fixed,
+      pack_coverage_m2: comp.pack_coverage_m2,
+    };
+
+    const prev = lastPublishedMap.get(comp.id);
+    if (!prev && !removedIds.has(comp.id)) {
+      // New component since last publish
+      changes.push({
+        component_id: comp.id,
+        change_type: 'added',
+        old_snapshot: null,
+        new_snapshot: snapshot,
+      });
+    } else if (prev) {
+      // Compare key fields
+      const priceChanged =
+        prev.default_material_rate !== comp.default_material_rate ||
+        prev.default_labour_rate !== comp.default_labour_rate ||
+        prev.pack_price !== comp.pack_price;
+      const otherChanged =
+        prev.name !== comp.name ||
+        prev.pricing_strategy !== comp.pricing_strategy ||
+        prev.component_type !== comp.component_type ||
+        prev.measurement_type !== comp.measurement_type ||
+        prev.sku !== comp.sku ||
+        prev.takeoff_slot !== comp.takeoff_slot ||
+        prev.notes !== comp.notes ||
+        prev.default_waste_percent !== comp.default_waste_percent ||
+        prev.default_waste_fixed !== comp.default_waste_fixed ||
+        prev.pack_size !== comp.pack_size ||
+        prev.pack_coverage_m2 !== comp.pack_coverage_m2;
+
+      if (priceChanged && !otherChanged) {
+        changes.push({
+          component_id: comp.id,
+          change_type: 'price_changed',
+          old_snapshot: prev,
+          new_snapshot: snapshot,
+        });
+      } else if (priceChanged || otherChanged) {
+        changes.push({
+          component_id: comp.id,
+          change_type: 'modified',
+          old_snapshot: prev,
+          new_snapshot: snapshot,
+        });
+      }
+    }
+  }
+
+  // Detect removed components (were in last published, not in current)
+  for (const [compId, snapshot] of lastPublishedMap) {
+    if (!currentIds.has(compId)) {
+      changes.push({
+        component_id: compId,
+        change_type: 'removed',
+        old_snapshot: snapshot,
+        new_snapshot: null,
+      });
+    }
+  }
+
+  // 4. Insert change notifications
+  if (changes.length > 0) {
+    const notifRows = changes.map(c => ({
+      supplier_library_id: libraryId,
+      component_id: c.component_id,
+      change_type: c.change_type,
+      old_snapshot: c.old_snapshot as unknown as import('@/app/lib/supabase/database.types').Json | null,
+      new_snapshot: c.new_snapshot as unknown as import('@/app/lib/supabase/database.types').Json | null,
+      version_from: currentVersion,
+      version_to: newVersion,
+    }));
+
+    const { error: notifError } = await supabase
+      .from('supplier_change_notifications')
+      .insert(notifRows);
+
+    if (notifError) {
+      console.error('[publishLibraryUpdate] Notification insert error:', notifError);
+      // Don't fail the whole publish if notifications fail - version bump is the critical part
+    }
+  }
+
+  // 5. Bump published_version
+  const { error: bumpError } = await supabase
+    .from('component_collections')
+    .update({ published_version: newVersion })
+    .eq('id', libraryId);
+
+  if (bumpError) {
+    return { ok: false, message: bumpError.message };
+  }
+
+  revalidatePath('/components');
+  revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
+
+  return {
+    ok: true,
+    newVersion,
+    changesRecorded: changes.length,
+  };
+}
+
+/**
+ * Get pending updates for a user's imported supplier components.
+ * Returns notifications where the source component has changed since the user imported it.
+ */
+export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch {
+    return [];
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // Get all imported components for this company (ones with source_component_id)
+  const { data: imported } = await supabase
+    .from('component_library')
+    .select('id, name, source_component_id, source_library_id, source_version')
+    .eq('company_id', profile.company_id)
+    .not('source_component_id', 'is', null);
+
+  if (!imported || imported.length === 0) return [];
+
+  // Group by source_library_id to batch query notifications
+  const byLibrary = new Map<string, typeof imported>();
+  for (const imp of imported) {
+    const libId = imp.source_library_id;
+    if (!libId) continue;
+    if (!byLibrary.has(libId)) byLibrary.set(libId, []);
+    byLibrary.get(libId)!.push(imp);
+  }
+
+  const results: PendingUpdate[] = [];
+
+  for (const [sourceLibId, imports] of byLibrary) {
+    // Get the library + supplier info
+    const { data: lib } = await supabase
+      .from('component_collections')
+      .select('id, name, supplier_profiles!inner(supplier_name)')
+      .eq('id', sourceLibId)
+      .maybeSingle();
+
+    if (!lib) continue;
+    const supplierInfo = lib.supplier_profiles as unknown as { supplier_name: string };
+
+    // Get notifications newer than each import's source_version
+    for (const imp of imports) {
+      if (!imp.source_component_id || imp.source_version === null) continue;
+
+      const { data: notifs } = await supabase
+        .from('supplier_change_notifications')
+        .select('*')
+        .eq('supplier_library_id', sourceLibId)
+        .eq('component_id', imp.source_component_id)
+        .gt('version_to', imp.source_version)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (notifs && notifs.length > 0) {
+        const n = notifs[0];
+        results.push({
+          notification_id: n.id,
+          source_library_id: sourceLibId,
+          source_library_name: lib.name,
+          supplier_name: supplierInfo.supplier_name,
+          component_id: imp.source_component_id,
+          imported_component_id: imp.id,
+          imported_component_name: imp.name,
+          change_type: n.change_type,
+          version_from: n.version_from,
+          version_to: n.version_to,
+          created_at: n.created_at,
+          new_snapshot: n.new_snapshot as Record<string, unknown> | null,
+        });
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Update a user's imported component with the latest from the supplier.
+ * Syncs the component fields from the supplier's latest published version.
+ */
+export async function updateImportedComponent(
+  importedComponentId: string,
+  notificationId: string,
+): Promise<{ ok: boolean; message?: string }> {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch {
+    return { ok: false, message: 'Authentication required.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  // 1. Get the imported component
+  const { data: comp } = await supabase
+    .from('component_library')
+    .select('id, source_component_id, source_library_id, source_version, company_id')
+    .eq('id', importedComponentId)
+    .single();
+
+  if (!comp || comp.company_id !== profile.company_id) {
+    return { ok: false, message: 'Component not found.' };
+  }
+
+  // 2. Get the notification
+  const { data: notif } = await supabase
+    .from('supplier_change_notifications')
+    .select('*')
+    .eq('id', notificationId)
+    .single();
+
+  if (!notif) {
+    return { ok: false, message: 'Notification not found.' };
+  }
+
+  if (notif.change_type === 'removed') {
+    // Source component was removed - don't auto-delete, just inform user
+    return { ok: false, message: 'The source component has been removed by the supplier. Your imported copy is preserved.' };
+  }
+
+  // 3. Apply the new snapshot to the imported component
+  const snapshot = notif.new_snapshot as Record<string, unknown> | null;
+  if (!snapshot) {
+    return { ok: false, message: 'No update data available.' };
+  }
+
+  const update: Record<string, unknown> = {};
+  if (snapshot.name !== undefined) update.name = snapshot.name;
+  if (snapshot.default_material_rate !== undefined) update.default_material_rate = snapshot.default_material_rate;
+  if (snapshot.default_labour_rate !== undefined) update.default_labour_rate = snapshot.default_labour_rate;
+  if (snapshot.pack_price !== undefined) update.pack_price = snapshot.pack_price;
+  if (snapshot.pack_size !== undefined) update.pack_size = snapshot.pack_size;
+  if (snapshot.pack_coverage_m2 !== undefined) update.pack_coverage_m2 = snapshot.pack_coverage_m2;
+  if (snapshot.pricing_strategy !== undefined) update.pricing_strategy = snapshot.pricing_strategy;
+  if (snapshot.component_type !== undefined) update.component_type = snapshot.component_type;
+  if (snapshot.measurement_type !== undefined) update.measurement_type = snapshot.measurement_type;
+  if (snapshot.sku !== undefined) update.sku = snapshot.sku;
+  if (snapshot.takeoff_slot !== undefined) update.takeoff_slot = snapshot.takeoff_slot;
+  if (snapshot.notes !== undefined) update.notes = snapshot.notes;
+  if (snapshot.default_waste_percent !== undefined) update.default_waste_percent = snapshot.default_waste_percent;
+  if (snapshot.default_waste_fixed !== undefined) update.default_waste_fixed = snapshot.default_waste_fixed;
+  // Update source version to the notification's version_to
+  update.source_version = notif.version_to;
+
+  const { error } = await supabase
+    .from('component_library')
+    .update(update)
+    .eq('id', importedComponentId)
+    .eq('company_id', profile.company_id);
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath('/[workspaceSlug]/components', 'page');
+
+  return { ok: true };
+}

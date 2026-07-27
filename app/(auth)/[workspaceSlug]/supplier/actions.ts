@@ -26,6 +26,7 @@ export type SupplierLibraryData = {
   visibility: string | null;
   publication_status: string | null;
   published_at: string | null;
+  published_version: number | null;
   public_title: string | null;
   public_description: string | null;
   component_count: number;
@@ -68,6 +69,7 @@ export async function loadSupplierLibraries(): Promise<SupplierLibraryData[]> {
       visibility,
       publication_status,
       published_at,
+      published_version,
       public_title,
       public_description,
       roofing_types,

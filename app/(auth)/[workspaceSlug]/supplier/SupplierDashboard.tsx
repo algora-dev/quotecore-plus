@@ -35,6 +35,8 @@ export function SupplierDashboard({
   const [editingProfile, setEditingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState<string | null>(null);
+  const [publishResult, setPublishResult] = useState<Record<string, { ok: boolean; message: string }>>({});
 
   // Editable profile fields
   const [websiteUrl, setWebsiteUrl] = useState(profile?.website_url ?? '');
@@ -62,6 +64,33 @@ export function SupplierDashboard({
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handlePublishUpdate(libraryId: string) {
+    setPublishing(libraryId);
+    try {
+      const res = await fetch('/api/supplier-publish-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ libraryId }),
+      });
+      const data = await res.json();
+      setPublishResult(prev => ({
+        ...prev,
+        [libraryId]: {
+          ok: data.ok,
+          message: data.ok
+            ? `Published v${data.newVersion} (${data.changesRecorded} change${data.changesRecorded !== 1 ? 's' : ''})`
+            : data.message || 'Failed',
+        },
+      }));
+    } catch {
+      setPublishResult(prev => ({
+        ...prev,
+        [libraryId]: { ok: false, message: 'Network error' },
+      }));
+    }
+    setPublishing(null);
   }
 
   const publishedCount = libraries.filter(l => l.visibility === 'published').length;
@@ -288,6 +317,23 @@ export function SupplierDashboard({
                   >
                     Manage
                   </Link>
+                  {lib.visibility === 'published' && (
+                    <button
+                      onClick={() => handlePublishUpdate(lib.id)}
+                      disabled={publishing === lib.id}
+                      className="shrink-0 cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50"
+                    >
+                      {publishing === lib.id ? 'Publishing...' : 'Publish Update'}
+                    </button>
+                  )}
+                  {publishResult[lib.id] && (
+                    <span className={`text-xs ${publishResult[lib.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {publishResult[lib.id].message}
+                    </span>
+                  )}
+                  {lib.published_version != null && lib.published_version > 0 && lib.visibility === 'published' && (
+                    <span className="text-xs text-slate-400">v{lib.published_version}</span>
+                  )}
                 </div>
               </div>
             ))

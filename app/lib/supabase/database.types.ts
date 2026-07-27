@@ -4551,6 +4551,57 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_change_notifications: {
+        Row: {
+          change_type: string
+          component_id: string | null
+          created_at: string
+          id: string
+          new_snapshot: Json | null
+          old_snapshot: Json | null
+          supplier_library_id: string
+          version_from: number
+          version_to: number
+        }
+        Insert: {
+          change_type: string
+          component_id?: string | null
+          created_at?: string
+          id?: string
+          new_snapshot?: Json | null
+          old_snapshot?: Json | null
+          supplier_library_id: string
+          version_from?: number
+          version_to?: number
+        }
+        Update: {
+          change_type?: string
+          component_id?: string | null
+          created_at?: string
+          id?: string
+          new_snapshot?: Json | null
+          old_snapshot?: Json | null
+          supplier_library_id?: string
+          version_from?: number
+          version_to?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_change_notifications_component_id_fkey"
+            columns: ["component_id"]
+            isOneToOne: false
+            referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_change_notifications_supplier_library_id_fkey"
+            columns: ["supplier_library_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_profiles: {
         Row: {
           approved_at: string | null
