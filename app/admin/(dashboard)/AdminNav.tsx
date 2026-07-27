@@ -15,6 +15,7 @@ const ADMIN_NAV: { label: string; href: string; soon?: boolean }[] = [
   { label: 'Users', href: '/admin/users' },
   { label: 'Free Tool Usage', href: '/admin/free-tool-usage' },
   { label: 'Roof Components', href: '/admin/roof-components' },
+  { label: 'Suppliers', href: '/admin/suppliers' },
   { label: 'Rate limits', href: '/admin/rate-limits' },
   { label: 'Settings', href: '/admin/settings' },
   { label: 'Companies', href: '/admin/companies', soon: true },

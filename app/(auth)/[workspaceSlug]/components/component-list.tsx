@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility } from './actions';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
@@ -29,6 +29,7 @@ import { loadCalcDraftAsync, clearCalcDraft } from '@/app/(public)/free-calculat
 // F-15: Extracted helpers + sub-components
 import { buildMeasurementLabels, allowedStrategiesFor, ROOFING_DEFAULT_TYPES, PRICING_STRATEGY_LABELS, WASTE_UNIT_LABELS, WASTE_LABELS, PITCH_LABELS } from './parts/helpers';
 import { TypeSpecificFields } from './parts/TypeSpecificFields';
+import { PublishLibraryModal } from './components/PublishLibraryModal';
 export function ComponentList({
   initialComponents,
   workspaceSlug,
@@ -43,6 +44,7 @@ export function ComponentList({
   editWarningDismissed = false,
   restoreDraftId,
   highlightComponentId,
+  isSupplier = false,
 }: {
   initialComponents: ComponentLibraryRow[];
   workspaceSlug: string;
@@ -51,7 +53,7 @@ export function ComponentList({
   /** Company default trade; hides pitch for non-roofing trades. */
   companyDefaultTrade?: string;
   /** Component collections for the company (for library assignment UI). */
-  componentCollections?: { id: string; name: string; is_bootstrap: boolean }[];
+  componentCollections?: { id: string; name: string; is_bootstrap: boolean; visibility?: string | null; publication_status?: string | null; public_title?: string | null; public_description?: string | null; roofing_types?: string[] | null; product_categories?: string[] | null; brands?: string[] | null; keywords?: string[] | null; }[];
   /** Plan cap on lifetime active components. NULL = unlimited. */
   componentLimit: number | null;
   /** Lifetime active component count as of server render. Local state
@@ -76,6 +78,8 @@ export function ComponentList({
   /** Component ID from ?created= - scrolls to + highlights a component just
    *  created from a free-calculator draft (restore-calc-draft route). */
   highlightComponentId?: string;
+  /** Whether this company is an approved supplier. Shows publishing controls. */
+  isSupplier?: boolean;
 }) {
   const MEASUREMENT_LABELS = buildMeasurementLabels(companyMeasurementSystem);
   // Pitch is shown when the trade requires it (roofing) or opts in optionally
@@ -168,6 +172,8 @@ export function ComponentList({
   // Delete library state
   const [deletingLibraryId, setDeletingLibraryId] = useState<string | null>(null);
   const [deleteLibraryLoading, setDeleteLibraryLoading] = useState(false);
+  // Publish library modal (supplier-only)
+  const [showPublishModal, setShowPublishModal] = useState<string | null>(null);
 
   // Form state for dynamic fields
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
@@ -725,6 +731,18 @@ export function ComponentList({
         <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Smart Components™</h1>
         <p className="text-xs md:text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
       </div>
+
+      {/* Supplier Directory link */}
+      <Link
+        href={`/${workspaceSlug}/supplier-directory`}
+        prefetch={false}
+        className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8] rounded-full border border-blue-200 px-3 py-1.5 hover:bg-blue-50 transition"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        Supplier Directory
+      </Link>
       
 
       {/* Active library title + rename */}
@@ -767,6 +785,33 @@ export function ComponentList({
                   ? ((collections.find(c => c.id === activeLibraryId)?.name ?? 'Library') + (collections.find(c => c.id === activeLibraryId)?.is_bootstrap ? ' (default)' : ''))
                   : 'All Libraries'}
               </span>
+              {activeLibraryId && isSupplier && (() => {
+                const col = collections.find(c => c.id === activeLibraryId);
+                const vis = col?.visibility ?? 'private';
+                return (
+                  <>
+                    {vis === 'published' && (
+                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Published
+                      </span>
+                    )}
+                    {vis === 'unlisted' && (
+                      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        Unlisted
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowPublishModal(activeLibraryId)}
+                      className="text-xs px-2.5 py-1 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition"
+                    >
+                      {vis === 'private' ? 'Publish' : 'Settings'}
+                    </button>
+                  </>
+                );
+              })()}
               {activeLibraryId && (
                 <>
                   <button
@@ -1625,6 +1670,26 @@ export function ComponentList({
           </div>
         </div>
       )}
+
+      {/* Publish Library Modal (supplier-only) */}
+      {showPublishModal && isSupplier && (() => {
+        const col = collections.find(c => c.id === showPublishModal);
+        if (!col) return null;
+        return <PublishLibraryModal
+          collectionId={col.id}
+          collectionName={col.name}
+          currentVisibility={(col.visibility ?? 'private') as 'private' | 'unlisted' | 'published'}
+          publicTitle={col.public_title ?? ''}
+          publicDescription={col.public_description ?? ''}
+          roofingTypes={col.roofing_types ?? []}
+          onClose={() => setShowPublishModal(null)}
+          onSaved={async () => {
+            setShowPublishModal(null);
+            // Reload collections by re-fetching the page data
+            window.location.reload();
+          }}
+        />;
+      })()}
     </div>
   );
 }

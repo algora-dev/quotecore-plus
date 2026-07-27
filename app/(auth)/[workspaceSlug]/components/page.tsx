@@ -1,9 +1,12 @@
 import { loadComponentLibrary, hasSeenComponentsIntro, loadComponentCollections, hasDismissedComponentEditWarning } from './actions';
 import { ComponentList } from './component-list';
 import { ComponentsIntroModal } from './components-intro-modal';
+import { PendingUpdatesBanner } from './PendingUpdatesBanner';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { BackButton } from '@/app/components/BackButton';
+import { getPendingSupplierUpdates } from '../supplier-directory/actions';
+import type { PendingUpdate } from '../supplier-directory/actions';
 
 export default async function ComponentsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
@@ -41,10 +44,21 @@ export default async function ComponentsPage(props: {
   const collections = await loadComponentCollections();
   const editWarningDismissed = await hasDismissedComponentEditWarning();
 
+  // Fetch pending supplier updates (non-blocking, best-effort)
+  let pendingUpdates: PendingUpdate[] = [];
+  try {
+    pendingUpdates = await getPendingSupplierUpdates();
+  } catch {
+    // Silently skip if not available (e.g. not logged in properly)
+  }
+
   return (
     <>
       {!introSeen && <ComponentsIntroModal />}
       <BackButton />
+      {pendingUpdates.length > 0 && (
+        <PendingUpdatesBanner workspaceSlug={workspaceSlug} updates={pendingUpdates} />
+      )}
       <ComponentList
         initialComponents={components}
         workspaceSlug={workspaceSlug}
@@ -59,6 +73,7 @@ export default async function ComponentsPage(props: {
         editWarningDismissed={editWarningDismissed}
         restoreDraftId={restoreDraftId}
         highlightComponentId={createdComponentId}
+        isSupplier={(company as { is_supplier?: boolean }).is_supplier ?? false}
       />
     </>
   );

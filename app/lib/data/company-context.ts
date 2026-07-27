@@ -20,6 +20,7 @@ type CompanyContextRow = Pick<
   | 'default_currency'
   | 'onboarding_completed_at'
   | 'created_at'
+  | 'is_supplier'
 >;
 
 export type CompanyContext = {
@@ -37,7 +38,7 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
 
   const { data: company, error } = await supabase
     .from('companies')
-    .select('id, name, slug, default_language, default_tax_rate, default_measurement_system, default_currency, default_trade, onboarding_completed_at, created_at')
+    .select('id, name, slug, default_language, default_tax_rate, default_measurement_system, default_currency, default_trade, onboarding_completed_at, created_at, is_supplier')
     .eq('id', profile.company_id)
     .limit(1)
     .maybeSingle();
@@ -72,6 +73,7 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
           default_measurement_system: 'metric',
           default_currency: 'NZD',
           onboarding_completed_at: null,
+          is_supplier: false,
         } satisfies CompanyContextRow,
       };
     }

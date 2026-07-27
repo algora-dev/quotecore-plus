@@ -151,7 +151,7 @@ export default async function WorkspaceLayout({
                     </div>
                   </div>
 
-                  <WorkspaceNav workspaceSlug={slug} entitlements={entitlements} />
+                  <WorkspaceNav workspaceSlug={slug} entitlements={entitlements} isSupplier={(company as { is_supplier?: boolean }).is_supplier ?? false} />
                 </div>
               </div>
             </header>
