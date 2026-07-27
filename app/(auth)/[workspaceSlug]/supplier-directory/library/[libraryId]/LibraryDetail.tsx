@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { DirectoryLibrary } from '../../actions';
 import type { UserCollection } from '../../actions';
+import { createComponentCollection } from '../../../components/actions';
 
 type ComponentPreview = {
   id: string;
@@ -50,9 +51,13 @@ export function LibraryDetail({
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [collectionList, setCollectionList] = useState<UserCollection[]>(userCollections);
   const [targetCollection, setTargetCollection] = useState<string>(
     userCollections.find(c => c.is_bootstrap)?.id ?? userCollections[0]?.id ?? ''
   );
+  const [showNewLibraryInput, setShowNewLibraryInput] = useState(false);
+  const [newLibraryName, setNewLibraryName] = useState('');
+  const [creatingLibrary, setCreatingLibrary] = useState(false);
   const [importState, setImportState] = useState<ImportState>('idle');
   const [importResult, setImportResult] = useState<{ imported: number; skipped: number; message: string } | null>(null);
 
@@ -111,6 +116,28 @@ export function LibraryDetail({
     } catch {
       setImportState('error');
       setImportResult({ imported: 0, skipped: 0, message: 'Network error. Please try again.' });
+    }
+  }
+
+  async function handleCreateLibrary() {
+    if (!newLibraryName.trim()) return;
+    setCreatingLibrary(true);
+    try {
+      const result = await createComponentCollection(newLibraryName.trim());
+      if (result.ok) {
+        // Add to local collections list and select it
+        const newCol: UserCollection = { id: result.id, name: result.name, is_bootstrap: false, component_count: 0 };
+        setCollectionList(prev => [...prev, newCol]);
+        setTargetCollection(result.id);
+        setShowNewLibraryInput(false);
+        setNewLibraryName('');
+      } else {
+        alert(result.message || 'Failed to create library');
+      }
+    } catch {
+      alert('Failed to create library');
+    } finally {
+      setCreatingLibrary(false);
     }
   }
 
@@ -188,22 +215,20 @@ export function LibraryDetail({
         {/* Component list */}
         <div className="rounded-xl border border-slate-200 bg-white overflow-hidden mb-4">
           <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-700">
-                {selectedCount > 0 ? `${selectedCount} selected` : 'Components'}
-              </span>
+            <div className="flex items-center gap-3">
+              <button onClick={selectAll} className="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">Select All</button>
+              {selectedCount > 0 && (
+                <button onClick={deselectAll} className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer">Clear</button>
+              )}
               {importedCount > 0 && (
                 <span className="rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-xs">
                   {importedCount} already imported
                 </span>
               )}
             </div>
-            <div className="flex gap-2">
-              <button onClick={selectAll} className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer">Select All</button>
-              {selectedCount > 0 && (
-                <button onClick={deselectAll} className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer">Clear</button>
-              )}
-            </div>
+            <span className="text-xs font-semibold text-slate-700">
+              {selectedCount > 0 ? `${selectedCount} selected` : `${components.length} components`}
+            </span>
           </div>
 
           {components.length === 0 ? (
@@ -271,28 +296,68 @@ export function LibraryDetail({
         {/* Import bar */}
         <div className="rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            {/* Collection selector */}
+            {/* Collection selector + Create new */}
             <div className="flex-1">
               <label className="text-xs font-medium text-slate-600 mb-1 block">Import to library</label>
-              <select
-                value={targetCollection}
-                onChange={e => setTargetCollection(e.target.value)}
-                disabled={importState === 'importing' || availableCount === 0}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:bg-slate-50"
-              >
-                {userCollections.map(col => (
-                  <option key={col.id} value={col.id}>
-                    {col.name} ({col.component_count} components){col.is_bootstrap ? ' - Default' : ''}
-                  </option>
-                ))}
-              </select>
+              {!showNewLibraryInput ? (
+                <div className="flex gap-2">
+                  <select
+                    value={targetCollection}
+                    onChange={e => {
+                      if (e.target.value === '__new__') {
+                        setShowNewLibraryInput(true);
+                        setNewLibraryName(library.public_title || library.name);
+                      } else {
+                        setTargetCollection(e.target.value);
+                      }
+                    }}
+                    disabled={importState === 'importing' || availableCount === 0}
+                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:bg-slate-50"
+                  >
+                    {collectionList.map(col => (
+                      <option key={col.id} value={col.id}>
+                        {col.name} ({col.component_count} components){col.is_bootstrap ? ' - Default' : ''}
+                      </option>
+                    ))}
+                    <option value="__new__">+ Create New Library...</option>
+                  </select>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newLibraryName}
+                    onChange={e => setNewLibraryName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleCreateLibrary(); } }}
+                    placeholder="Library name"
+                    maxLength={80}
+                    className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleCreateLibrary()}
+                    disabled={creatingLibrary || !newLibraryName.trim()}
+                    className="px-3 py-2 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {creatingLibrary ? 'Creating...' : 'Create'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowNewLibraryInput(false); setNewLibraryName(''); setTargetCollection(collectionList[0]?.id ?? ''); }}
+                    className="px-3 py-2 text-xs rounded-full border border-slate-300 hover:bg-slate-50 whitespace-nowrap"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Import button */}
             <div className="flex items-end gap-2">
               <button
                 onClick={handleImport}
-                disabled={selectedCount === 0 || !targetCollection || importState === 'importing'}
+                disabled={selectedCount === 0 || !targetCollection || importState === 'importing' || showNewLibraryInput}
                 className="cursor-pointer rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white hover:bg-[#e55a2b] transition disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
                 {importState === 'importing' ? 'Importing...' : `Import Selected (${selectedCount})`}

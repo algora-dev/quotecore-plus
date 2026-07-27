@@ -732,17 +732,6 @@ export function ComponentList({
         <p className="text-xs md:text-sm text-slate-500 mt-1">Manage your Smart Components™ and extras for quotes.</p>
       </div>
 
-      {/* Supplier Directory link */}
-      <Link
-        href={`/${workspaceSlug}/supplier-directory`}
-        prefetch={false}
-        className="inline-flex items-center gap-1 text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8] rounded-full border border-blue-200 px-3 py-1.5 hover:bg-blue-50 transition"
-      >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        Supplier Directory
-      </Link>
       
 
       {/* Active library title + rename */}
@@ -866,6 +855,13 @@ export function ComponentList({
               {f === 'all' ? 'All' : f === 'main' ? 'Main' : 'Extras'}
             </button>
           ))}
+          <Link
+            href={`/${workspaceSlug}/supplier-directory`}
+            prefetch={false}
+            className="px-4 py-1.5 text-sm rounded-full font-medium transition whitespace-nowrap text-slate-500 hover:text-slate-700"
+          >
+            Supplier Directory
+          </Link>
         </div>
         
         <div className="flex flex-col gap-2 md:flex-row">

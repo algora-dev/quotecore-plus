@@ -179,13 +179,13 @@ export function SupplierDirectory({
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-slate-900">{supplier.supplier_name}</span>
+                        <span className="text-sm font-semibold text-slate-900">{supLibs[0].public_title || supLibs[0].name}</span>
                         <span className="rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-xs">
                           {supLibs.length} librar{supLibs.length !== 1 ? 'ies' : 'y'}
                         </span>
                       </div>
-                      {supplier.description && (
-                        <p className="text-xs text-slate-500 mt-0.5 truncate">{supplier.description}</p>
+                      {supLibs[0].public_description && (
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">{supLibs[0].public_description}</p>
                       )}
                       {supplier.service_areas.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
@@ -194,9 +194,9 @@ export function SupplierDirectory({
                           ))}
                         </div>
                       )}
-                      {supplier.roofing_types.length > 0 && (
+                      {supLibs[0].roofing_types && supLibs[0].roofing_types.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
-                          {supplier.roofing_types.map(rt => (
+                          {supLibs[0].roofing_types.map(rt => (
                             <span key={rt} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{rt}</span>
                           ))}
                         </div>
@@ -229,12 +229,16 @@ export function SupplierDirectory({
                             <span className="text-slate-600">{supplier.phone_number}</span>
                           </div>
                         )}
-                        {supplier.website_url && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400">Website:</span>
-                            <a href={supplier.website_url} target="_blank" rel="noopener noreferrer" className="text-[#2563EB] hover:underline">{supplier.website_url}</a>
-                          </div>
-                        )}
+                        {supplier.website_url && (() => {
+                          const url = supplier.website_url;
+                          const href = url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+                          return (
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-400">Website:</span>
+                              <a href={href} target="_blank" rel="noopener noreferrer" className="text-[#2563EB] hover:underline">{url}</a>
+                            </div>
+                          );
+                        })()}
                         {supplier.service_areas && supplier.service_areas.length > 0 && (
                           <div className="flex items-center gap-2">
                             <span className="text-slate-400">Areas:</span>
@@ -283,12 +287,11 @@ export function SupplierDirectory({
                   </div>
                 )}
 
-                {/* Collapsed preview - show first library name */}
-                {expandedSupplier !== supplier.slug && supLibs[0] && (
+                {/* Collapsed preview - show count only */}
+                {expandedSupplier !== supplier.slug && supLibs.length > 1 && (
                   <div className="px-4 pb-3">
                     <p className="text-xs text-slate-400">
-                      {supLibs[0].public_title || supLibs[0].name}
-                      {supLibs.length > 1 && ` + ${supLibs.length - 1} more`}
+                      + {supLibs.length - 1} more librar{supLibs.length - 1 !== 1 ? 'ies' : 'y'}
                     </p>
                   </div>
                 )}
