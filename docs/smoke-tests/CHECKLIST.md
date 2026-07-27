@@ -280,6 +280,77 @@
 - [ ] Create Template → goes STRAIGHT to the builder (selector page removed)
 - [ ] Builder "Back" and "Cancel" return to the templates list (no redirect loop)
 
+### Pending verification (Supplier Component System - Phases 1-10, main `a64a2b0`, 2026-07-27)
+
+**Prerequisites:**
+- [ ] Admin: /admin/suppliers page loads, shows 2 existing supplier profiles
+- [ ] Admin: can create a new supplier profile (assign to a company with is_supplier=true)
+- [ ] Admin: can approve a pending supplier profile
+
+**Phase 2-3: Supplier Dashboard + Library Publishing**
+- [ ] Supplier account: /supplier page loads with profile info + library list
+- [ ] Supplier: can edit profile (website, description, service areas, roofing types)
+- [ ] Supplier: can set library visibility to 'published' via PublishLibraryModal
+- [ ] Supplier: published library shows 'Published' badge + version number (v0 initially)
+- [ ] Supplier: can add public_title, public_description, roofing_types to published library
+
+**Phase 6: Supplier Library Management**
+- [ ] Supplier: components page shows supplier-specific libraries
+- [ ] Supplier: can create/edit components in supplier libraries (same as normal components)
+- [ ] Supplier: components have SKU + takeoff_slot fields visible
+
+**Phase 7: Global Supplier Directory**
+- [ ] Non-supplier account: /supplier-directory page loads
+- [ ] Directory shows approved suppliers with search/filter
+- [ ] Search by supplier name, roofing type, brand works
+- [ ] Clicking a supplier's library opens library detail page
+- [ ] Library detail shows component list with names, SKUs, prices, takeoff slots
+
+**Phase 8: Selective Import**
+- [ ] Library detail: checkboxes appear next to each component
+- [ ] 'Select All' selects all un-imported components
+- [ ] Collection selector dropdown shows user's libraries (default = main library)
+- [ ] Click 'Import Selected' -> green success banner with count
+- [ ] Banner shows 'View My Components' link
+- [ ] Navigating to Components page shows newly imported components
+- [ ] Imported components have correct: name, price, measurement_type, takeoff_slot, SKU, notes
+- [ ] Re-visiting same library: imported components show 'Imported' badge, greyed out, can't re-select
+- [ ] 'Select All' only selects un-imported components
+- [ ] Importing 0 selected (all already imported) -> shows 'All X already imported' message
+- [ ] Tier limit: if at component limit, import shows upgrade message
+
+**Phase 9: Controlled Publishing + Change Notifications**
+- [ ] Supplier: 'Publish Update' button visible on published libraries
+- [ ] Click 'Publish Update' -> success message shows new version (v1) + change count
+- [ ] Version badge updates (v0 -> v1)
+- [ ] First publish with existing components: all show as 'added' in notifications
+- [ ] Supplier: modify a component (change price) -> Publish Update -> shows '1 change'
+- [ ] Supplier: add a new component -> Publish Update -> shows '1 change' (added)
+- [ ] Supplier: remove a component -> Publish Update -> shows '1 change' (removed)
+- [ ] Non-supplier importer: Components page shows 'Pending Updates' banner when updates available
+- [ ] Banner shows component name, change type (Price updated / Modified / Removed), supplier name
+- [ ] Click 'Update' on a price_changed notification -> component price updates to new value
+- [ ] Click 'Update' on a modified notification -> component fields sync to new values
+- [ ] After updating: banner item disappears (source_version bumped)
+- [ ] 'Dismiss' button hides banner (session-only)
+- [ ] Removed source component: clicking Update shows message (not auto-deleted)
+
+**Phase 10: Catalogue Converter**
+- [ ] Supplier dashboard: 'Catalogue Converter' section visible (approved suppliers only)
+- [ ] Paste CSV with headers SKU,Name,Price,Product Type,Notes -> click 'Preview'
+- [ ] Preview table shows parsed rows with correct data
+- [ ] Missing name column -> shows error, no preview
+- [ ] Row with missing name -> shows warning, that row skipped
+- [ ] Select target library from dropdown
+- [ ] Click 'Create N Components' -> success message with count
+- [ ] Navigating to Components page shows new components
+- [ ] Components have correct defaults: per_unit pricing, 0% waste, main type
+- [ ] Product Type 'ridge' -> takeoff_slot=ridge, measurement_type=linear
+- [ ] Product Type 'underlay' -> takeoff_slot=underlay, measurement_type=area
+- [ ] Product Type 'nail' -> takeoff_slot=fixings, measurement_type=quantity
+- [ ] Product Type 'custom thing' -> takeoff_slot=custom, measurement_type=quantity
+- [ ] Tier limit: if batch would exceed limit, shows upgrade message
+
 ### Passed (recent)
 - 2026-07-07 baseline test by Shaun ✅ — quote email send, quote notes add/edit/delete, summary file upload, no Server-Components 500s (root cause: 'use server' on adapter files, fixed in `ea0cf06`)
 - Round 10: Re-entry pitch preservation ✅
