@@ -3,7 +3,7 @@ import { SupplierDirectory } from './SupplierDirectory';
 
 export default async function SupplierDirectoryPage(props: {
   params: Promise<{ workspaceSlug: string }>;
-  searchParams: Promise<{ q?: string; type?: string; brand?: string; cat?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; brand?: string; cat?: string; location?: string }>;
 }) {
   const { workspaceSlug } = await props.params;
   const searchParams = await props.searchParams;
@@ -15,6 +15,7 @@ export default async function SupplierDirectoryPage(props: {
       roofingType: searchParams.type,
       brand: searchParams.brand,
       productCategory: searchParams.cat,
+      location: searchParams.location,
     }),
   ]);
 
@@ -35,6 +36,7 @@ export default async function SupplierDirectoryPage(props: {
       categories={[...allCategories].sort()}
       initialQuery={searchParams.q ?? ''}
       initialType={searchParams.type ?? ''}
+      initialLocation={searchParams.location ?? ''}
     />
   );
 }

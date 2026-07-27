@@ -115,10 +115,11 @@ export async function searchSupplierLibraries(params: {
   roofingType?: string;
   brand?: string;
   productCategory?: string;
+  location?: string;
   limit?: number;
 }): Promise<DirectoryLibrary[]> {
   const supabase = await createSupabaseServerClient();
-  const { query, roofingType, brand, productCategory, limit = 50 } = params;
+  const { query, roofingType, brand, productCategory, location, limit = 50 } = params;
 
   let dbQuery = supabase
     .from('component_collections')
@@ -202,6 +203,41 @@ export async function searchSupplierLibraries(params: {
         ...(l.product_categories ?? []),
       ].filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(q);
+    });
+  }
+
+  // Apply location filter - match against supplier service_areas
+  if (location && location.trim()) {
+    const loc = location.toLowerCase().trim();
+    // Get suppliers whose service_areas match the location
+    const { data: locationSuppliers } = await supabase
+      .from('supplier_profiles')
+      .select('id, service_areas')
+      .eq('status', 'approved');
+    const matchingSupplierIds = new Set<string>();
+    for (const sp of locationSuppliers ?? []) {
+      const areas = (sp.service_areas ?? []) as string[];
+      if (areas.some(a => a.toLowerCase().includes(loc))) {
+        matchingSupplierIds.add(sp.id);
+      }
+    }
+    // Filter libraries to only those from suppliers in the location
+    // Also keep libraries that have the location in their own roofing_types or brands
+    results = results.filter(l => {
+      // Check if supplier_profile_id is in matching suppliers
+      // We need to look up the supplier_profile_id for each library
+      return true; // We'll filter below after getting supplier info
+    });
+    // Actually, we need to filter by supplier_profile_id. Let's get the supplier_profile_ids for the libraries
+    const libSupplierMap = new Map<string, string>();
+    for (const c of collections ?? []) {
+      if (c.supplier_profile_id) {
+        libSupplierMap.set(c.id, c.supplier_profile_id as string);
+      }
+    }
+    results = results.filter(l => {
+      const spId = libSupplierMap.get(l.id);
+      return spId && matchingSupplierIds.has(spId);
     });
   }
 

@@ -15,6 +15,7 @@ export function SupplierDirectory({
   categories,
   initialQuery,
   initialType,
+  initialLocation,
 }: {
   workspaceSlug: string;
   suppliers: DirectorySupplier[];
@@ -23,9 +24,11 @@ export function SupplierDirectory({
   categories: string[];
   initialQuery: string;
   initialType: string;
+  initialLocation: string;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
+  const [location, setLocation] = useState(initialLocation);
   const [selectedType, setSelectedType] = useState(initialType || 'All Roofing');
   const [expandedSupplier, setExpandedSupplier] = useState<string | null>(null);
 
@@ -33,16 +36,18 @@ export function SupplierDirectory({
     const params = new URLSearchParams();
     if (query.trim()) params.set('q', query.trim());
     if (selectedType && selectedType !== 'All Roofing') params.set('type', selectedType);
+    if (location.trim()) params.set('location', location.trim());
     router.push(`/${workspaceSlug}/supplier-directory?${params.toString()}`);
   }
 
   function clearFilters() {
     setQuery('');
+    setLocation('');
     setSelectedType('All Roofing');
     router.push(`/${workspaceSlug}/supplier-directory`);
   }
 
-  const hasFilters = query.trim() || (selectedType && selectedType !== 'All Roofing');
+  const hasFilters = query.trim() || location.trim() || (selectedType && selectedType !== 'All Roofing');
 
   // Group libraries by supplier
   const librariesBySupplier = useMemo(() => {
@@ -75,29 +80,44 @@ export function SupplierDirectory({
 
         {/* Search Bar */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 mb-4">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') applyFilters(); }}
-              placeholder="Search by name, keyword, brand..."
-              className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            />
-            <button
-              onClick={applyFilters}
-              className="cursor-pointer rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
-            >
-              Search
-            </button>
-            {hasFilters && (
+          <div className="flex flex-col gap-2">
+            {/* Main search row */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyFilters(); }}
+                placeholder="Search by name, keyword, brand, product..."
+                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              />
               <button
-                onClick={clearFilters}
-                className="cursor-pointer rounded-full border border-slate-300 px-3 py-2 text-sm text-slate-500 hover:bg-slate-50"
+                onClick={applyFilters}
+                className="cursor-pointer rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition whitespace-nowrap"
               >
-                Clear
+                Search
               </button>
-            )}
+              {hasFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="cursor-pointer rounded-full border border-slate-300 px-3 py-2 text-sm text-slate-500 hover:bg-slate-50 whitespace-nowrap"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Location + Type row */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyFilters(); }}
+                placeholder="Location (e.g. New Zealand, UK, London...)"
+                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              />
+            </div>
           </div>
 
           {/* Roofing Type Filter */}
@@ -108,16 +128,12 @@ export function SupplierDirectory({
                 type="button"
                 onClick={() => {
                   setSelectedType(type);
-                  if (type === 'All Roofing') {
-                    const params = new URLSearchParams();
-                    if (query.trim()) params.set('q', query.trim());
-                    router.push(`/${workspaceSlug}/supplier-directory${params.toString() ? `?${params}` : ''}`);
-                  } else {
-                    const params = new URLSearchParams();
-                    if (query.trim()) params.set('q', query.trim());
-                    params.set('type', type);
-                    router.push(`/${workspaceSlug}/supplier-directory?${params}`);
-                  }
+                  // Auto-apply when clicking a type tab
+                  const params = new URLSearchParams();
+                  if (query.trim()) params.set('q', query.trim());
+                  if (location.trim()) params.set('location', location.trim());
+                  if (type !== 'All Roofing') params.set('type', type);
+                  router.push(`/${workspaceSlug}/supplier-directory${params.toString() ? `?${params}` : ''}`);
                 }}
                 className={`cursor-pointer text-xs px-2.5 py-1 rounded-full border transition ${
                   selectedType === type
@@ -129,6 +145,11 @@ export function SupplierDirectory({
               </button>
             ))}
           </div>
+
+          {/* Hint */}
+          {!hasFilters && (
+            <p className="text-xs text-slate-400 mt-2">Click Search to browse all published libraries, or filter by keyword, location, or roofing type.</p>
+          )}
         </div>
 
         {/* Results */}
@@ -165,6 +186,13 @@ export function SupplierDirectory({
                       </div>
                       {supplier.description && (
                         <p className="text-xs text-slate-500 mt-0.5 truncate">{supplier.description}</p>
+                      )}
+                      {supplier.service_areas.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {supplier.service_areas.map(sa => (
+                            <span key={sa} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-600">{sa}</span>
+                          ))}
+                        </div>
                       )}
                       {supplier.roofing_types.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
