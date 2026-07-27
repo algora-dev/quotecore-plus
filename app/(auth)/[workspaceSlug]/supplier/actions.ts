@@ -9,6 +9,8 @@ export type SupplierProfileData = {
   slug: string;
   status: string;
   website_url: string | null;
+  contact_email: string | null;
+  phone_number: string | null;
   description: string | null;
   service_areas: string[];
   roofing_types: string[];
@@ -45,7 +47,7 @@ export async function loadSupplierProfile(): Promise<SupplierProfileData | null>
 
   const { data, error } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, website_url, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at')
+    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at')
     .eq('company_id', profile.company_id)
     .maybeSingle();
 
@@ -109,6 +111,8 @@ export async function loadSupplierLibraries(): Promise<SupplierLibraryData[]> {
 export async function updateSupplierProfile(
   input: Partial<{
     website_url: string | null;
+    contact_email: string | null;
+    phone_number: string | null;
     description: string | null;
     service_areas: string[];
     roofing_types: string[];
@@ -131,6 +135,8 @@ export async function updateSupplierProfile(
 
     const update: Record<string, unknown> = {};
     if (input.website_url !== undefined) update.website_url = input.website_url;
+    if (input.contact_email !== undefined) update.contact_email = input.contact_email;
+    if (input.phone_number !== undefined) update.phone_number = input.phone_number;
     if (input.description !== undefined) update.description = input.description;
     if (input.service_areas !== undefined) update.service_areas = input.service_areas;
     if (input.roofing_types !== undefined) update.roofing_types = input.roofing_types;

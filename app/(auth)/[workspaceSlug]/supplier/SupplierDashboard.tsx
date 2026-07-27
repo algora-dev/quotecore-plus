@@ -23,7 +23,7 @@ const VISIBILITY_STYLES: Record<string, string> = {
   published: 'bg-emerald-100 text-emerald-700 border-emerald-200',
 };
 
-const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'EPDM/TPO'];
+const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'Membrane', 'EPDM/TPO', 'Slate'];
 
 export function SupplierDashboard({
   workspaceSlug,
@@ -44,6 +44,8 @@ export function SupplierDashboard({
 
   // Editable profile fields
   const [websiteUrl, setWebsiteUrl] = useState(profile?.website_url ?? '');
+  const [contactEmail, setContactEmail] = useState(profile?.contact_email ?? '');
+  const [phoneNumber, setPhoneNumber] = useState(profile?.phone_number ?? '');
   const [description, setDescription] = useState(profile?.description ?? '');
   const [serviceAreas, setServiceAreas] = useState(profile?.service_areas?.join(', ') ?? '');
   const [roofingTypes, setRoofingTypes] = useState(profile?.roofing_types ?? []);
@@ -54,6 +56,8 @@ export function SupplierDashboard({
     try {
       const result = await updateSupplierProfile({
         website_url: websiteUrl.trim() || null,
+        contact_email: contactEmail.trim() || null,
+        phone_number: phoneNumber.trim() || null,
         description: description.trim() || null,
         service_areas: serviceAreas.split(',').map(s => s.trim()).filter(Boolean),
         roofing_types: roofingTypes,
@@ -158,6 +162,28 @@ export function SupplierDashboard({
                     placeholder="https://..."
                   />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Contact Email (public)</label>
+                    <input
+                      type="email"
+                      value={contactEmail}
+                      onChange={e => setContactEmail(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="sales@yourcompany.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={e => setPhoneNumber(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+                      placeholder="+64 21 123 4567"
+                    />
+                  </div>
+                </div>
                 <div>
                   <label className="text-xs font-medium text-slate-600">Description</label>
                   <textarea
@@ -218,6 +244,18 @@ export function SupplierDashboard({
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-slate-400 w-20">Website</span>
                     <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="text-[#2563EB] hover:underline">{profile.website_url}</a>
+                  </div>
+                )}
+                {profile.contact_email && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-400 w-20">Contact</span>
+                    <span className="text-slate-600">{profile.contact_email}</span>
+                  </div>
+                )}
+                {profile.phone_number && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-400 w-20">Phone</span>
+                    <span className="text-slate-600">{profile.phone_number}</span>
                   </div>
                 )}
                 {profile.description && (

@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createSupabaseServerClient, requireAdmin } from '@/app/lib/supabase/server';
+import { requireAdmin, createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export type SupplierProfile = {
   id: string;
@@ -10,6 +11,8 @@ export type SupplierProfile = {
   slug: string;
   status: string;
   master_email: string | null;
+  contact_email: string | null;
+  phone_number: string | null;
   website_url: string | null;
   service_areas: string[];
   roofing_types: string[];
@@ -23,8 +26,108 @@ export type SupplierProfile = {
   created_at: string;
   updated_at: string;
   company_name?: string;
-  company_email?: string;
 };
+
+export interface SupplierSearchResult {
+  id: string;
+  email: string;
+  fullName: string | null;
+  companyId: string;
+  companyName: string;
+}
+
+export type SupplierSearchResponse =
+  | { ok: true; users: SupplierSearchResult[] }
+  | { ok: false; error: string };
+
+/**
+ * Search users by email or company name - same pattern as Users tab.
+ * Used to find existing users to assign as suppliers.
+ */
+export async function searchSupplierUsers(query: string): Promise<SupplierSearchResponse> {
+  await requireAdmin();
+  const admin = createAdminClient();
+  const q = (query ?? '').trim();
+
+  if (!q) {
+    return { ok: false, error: 'Enter a search term.' };
+  }
+
+  // Search by email first
+  const { data: emailMatches, error: emailErr } = await admin
+    .from('users')
+    .select('id, email, full_name, company_id')
+    .ilike('email', `%${q}%`)
+    .order('email', { ascending: true })
+    .limit(25);
+
+  if (emailErr) return { ok: false, error: emailErr.message };
+
+  const results: SupplierSearchResult[] = [];
+  const companyIds = new Set<string>();
+
+  for (const u of emailMatches ?? []) {
+    if (u.company_id) {
+      companyIds.add(u.company_id);
+      results.push({
+        id: u.id,
+        email: u.email,
+        fullName: u.full_name,
+        companyId: u.company_id,
+        companyName: '', // filled below
+      });
+    }
+  }
+
+  // Also search by company name
+  if (results.length < 25) {
+    const { data: coMatches } = await admin
+      .from('companies')
+      .select('id, name')
+      .ilike('name', `%${q}%`)
+      .limit(25);
+
+    for (const c of coMatches ?? []) {
+      if (!companyIds.has(c.id)) {
+        companyIds.add(c.id);
+        const { data: coUsers } = await admin
+          .from('users')
+          .select('id, email, full_name, company_id')
+          .eq('company_id', c.id)
+          .limit(5);
+
+        for (const u of coUsers ?? []) {
+          results.push({
+            id: u.id,
+            email: u.email,
+            fullName: u.full_name,
+            companyId: c.id,
+            companyName: c.name,
+          });
+        }
+      }
+    }
+  }
+
+  // Batch-load company names for email matches
+  const idsNeedingNames = results.filter(r => !r.companyName).map(r => r.companyId);
+  if (idsNeedingNames.length > 0) {
+    const { data: companies } = await admin
+      .from('companies')
+      .select('id, name')
+      .in('id', idsNeedingNames);
+
+    const nameMap: Record<string, string> = {};
+    for (const c of companies ?? []) {
+      nameMap[c.id] = c.name;
+    }
+    for (const r of results) {
+      if (!r.companyName) r.companyName = nameMap[r.companyId] || 'Unknown';
+    }
+  }
+
+  return { ok: true, users: results.slice(0, 25) };
+}
 
 export async function getSuppliers(): Promise<SupplierProfile[]> {
   await requireAdmin();
@@ -48,7 +151,6 @@ export async function getSuppliers(): Promise<SupplierProfile[]> {
     return {
       ...row,
       company_name: companies?.name,
-      company_email: undefined,
     } as SupplierProfile;
   });
 }
@@ -57,6 +159,8 @@ export async function createSupplier(input: {
   company_id?: string;
   supplier_name: string;
   master_email?: string;
+  contact_email?: string;
+  phone_number?: string;
   website_url?: string;
   service_areas?: string[];
   roofing_types?: string[];
@@ -68,7 +172,6 @@ export async function createSupplier(input: {
   await requireAdmin();
   const supabase = await createSupabaseServerClient();
 
-  // Generate slug from supplier_name
   const slug = input.supplier_name
     .toLowerCase()
     .trim()
@@ -83,6 +186,8 @@ export async function createSupplier(input: {
       slug,
       status: 'approved',
       master_email: input.master_email || null,
+      contact_email: input.contact_email || null,
+      phone_number: input.phone_number || null,
       website_url: input.website_url || null,
       service_areas: input.service_areas || [],
       roofing_types: input.roofing_types || [],
@@ -98,7 +203,6 @@ export async function createSupplier(input: {
 
   if (error) throw new Error(error.message);
 
-  // Set is_supplier flag on the company if one was linked
   if (input.company_id) {
     await supabase
       .from('companies')
@@ -115,6 +219,8 @@ export async function updateSupplier(
   input: Partial<{
     supplier_name: string;
     master_email: string | null;
+    contact_email: string | null;
+    phone_number: string | null;
     website_url: string | null;
     service_areas: string[];
     roofing_types: string[];
@@ -137,6 +243,8 @@ export async function updateSupplier(
       .replace(/^-+|-+$/g, '');
   }
   if (input.master_email !== undefined) update.master_email = input.master_email || null;
+  if (input.contact_email !== undefined) update.contact_email = input.contact_email || null;
+  if (input.phone_number !== undefined) update.phone_number = input.phone_number || null;
   if (input.website_url !== undefined) update.website_url = input.website_url;
   if (input.service_areas !== undefined) update.service_areas = input.service_areas;
   if (input.roofing_types !== undefined) update.roofing_types = input.roofing_types;
@@ -178,7 +286,6 @@ export async function setSupplierStatus(
 
   if (error) throw new Error(error.message);
 
-  // Update is_supplier flag on company
   const { data: profile } = await supabase
     .from('supplier_profiles')
     .select('company_id')
@@ -193,60 +300,4 @@ export async function setSupplierStatus(
   }
 
   revalidatePath('/admin/suppliers');
-}
-
-export async function searchCompanies(query: string): Promise<
-  { id: string; name: string; email: string; type: 'company' | 'user' }[]
-> {
-  await requireAdmin();
-  const supabase = await createSupabaseServerClient();
-
-  const results: { id: string; name: string; email: string; type: 'company' | 'user' }[] = [];
-
-  // Search companies by name
-  const { data: companies, error: companyError } = await supabase
-    .from('companies')
-    .select('id, name, slug')
-    .ilike('name', `%${query}%`)
-    .limit(5);
-
-  if (companyError) throw new Error(companyError.message);
-
-  for (const c of companies ?? []) {
-    results.push({ id: c.id, name: c.name, email: c.slug || '', type: 'company' });
-  }
-
-  // Search users by email
-  const { data: users, error: userError } = await supabase
-    .from('users')
-    .select('id, email, full_name, company_id')
-    .ilike('email', `%${query}%`)
-    .limit(5);
-
-  if (userError) throw new Error(userError.message);
-
-  for (const u of users ?? []) {
-    // Look up company name if user has one
-    let companyName = u.full_name || u.email;
-    let companyId = u.company_id;
-    if (u.company_id) {
-      const { data: company } = await supabase
-        .from('companies')
-        .select('name')
-        .eq('id', u.company_id)
-        .maybeSingle();
-      if (company) companyName = company.name;
-    }
-    if (companyId) {
-      results.push({ id: companyId, name: companyName, email: u.email, type: 'user' });
-    }
-  }
-
-  // Deduplicate by id
-  const seen = new Set<string>();
-  return results.filter(r => {
-    if (seen.has(r.id)) return false;
-    seen.add(r.id);
-    return true;
-  });
 }

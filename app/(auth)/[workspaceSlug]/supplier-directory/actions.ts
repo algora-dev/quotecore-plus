@@ -81,6 +81,8 @@ export type DirectorySupplier = {
   description: string | null;
   logo_url: string | null;
   website_url: string | null;
+  contact_email: string | null;
+  phone_number: string | null;
   roofing_types: string[];
   product_categories: string[];
   brands: string[];
@@ -237,6 +239,8 @@ export async function listDirectorySuppliers(): Promise<DirectorySupplier[]> {
       description,
       logo_url,
       website_url,
+      contact_email,
+      phone_number,
       roofing_types,
       product_categories,
       brands,
@@ -271,6 +275,8 @@ export async function listDirectorySuppliers(): Promise<DirectorySupplier[]> {
       description: s.description,
       logo_url: s.logo_url,
       website_url: s.website_url,
+      contact_email: s.contact_email,
+      phone_number: s.phone_number,
       roofing_types: s.roofing_types ?? [],
       product_categories: s.product_categories ?? [],
       brands: s.brands ?? [],
@@ -290,7 +296,7 @@ export async function getSupplierPublishedLibraries(supplierSlug: string): Promi
 
   const { data: supplier } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, description, logo_url, website_url, roofing_types, product_categories, brands, service_areas, status')
+    .select('id, supplier_name, slug, description, logo_url, website_url, contact_email, phone_number, roofing_types, product_categories, brands, service_areas, status')
     .eq('slug', supplierSlug)
     .eq('status', 'approved')
     .maybeSingle();
@@ -345,6 +351,8 @@ export async function getSupplierPublishedLibraries(supplierSlug: string): Promi
       description: supplier.description,
       logo_url: supplier.logo_url,
       website_url: supplier.website_url,
+      contact_email: supplier.contact_email,
+      phone_number: supplier.phone_number,
       roofing_types: supplier.roofing_types ?? [],
       product_categories: supplier.product_categories ?? [],
       brands: supplier.brands ?? [],

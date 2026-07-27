@@ -185,7 +185,37 @@ export function SupplierDirectory({
 
                 {/* Expanded libraries */}
                 {expandedSupplier === supplier.slug && (
-                  <div className="border-t border-slate-100 divide-y divide-slate-100">
+                  <div className="border-t border-slate-100">
+                    {/* Supplier contact info */}
+                    <div className="px-4 py-3 bg-slate-50/50 border-b border-slate-100">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        {supplier.contact_email && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">Contact:</span>
+                            <a href={`mailto:${supplier.contact_email}`} className="text-[#2563EB] hover:underline">{supplier.contact_email}</a>
+                          </div>
+                        )}
+                        {supplier.phone_number && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">Phone:</span>
+                            <span className="text-slate-600">{supplier.phone_number}</span>
+                          </div>
+                        )}
+                        {supplier.website_url && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">Website:</span>
+                            <a href={supplier.website_url} target="_blank" rel="noopener noreferrer" className="text-[#2563EB] hover:underline">{supplier.website_url}</a>
+                          </div>
+                        )}
+                        {supplier.service_areas && supplier.service_areas.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">Areas:</span>
+                            <span className="text-slate-600">{supplier.service_areas.join(', ')}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="divide-y divide-slate-100">
                     {supLibs.map(lib => (
                       <div key={lib.id} className="px-4 py-3 hover:bg-orange-50/30 transition">
                         <div className="flex items-start justify-between gap-4">
@@ -221,6 +251,7 @@ export function SupplierDirectory({
                         </div>
                       </div>
                     ))}
+                    </div>
                   </div>
                 )}
 

@@ -4608,12 +4608,14 @@ export type Database = {
           approved_by: string | null
           brands: string[] | null
           company_id: string | null
+          contact_email: string | null
           created_at: string
           description: string | null
           id: string
           keywords: string[] | null
           logo_url: string | null
           master_email: string | null
+          phone_number: string | null
           product_categories: string[] | null
           roofing_types: string[] | null
           service_areas: string[] | null
@@ -4628,12 +4630,14 @@ export type Database = {
           approved_by?: string | null
           brands?: string[] | null
           company_id?: string | null
+          contact_email?: string | null
           created_at?: string
           description?: string | null
           id?: string
           keywords?: string[] | null
           logo_url?: string | null
           master_email?: string | null
+          phone_number?: string | null
           product_categories?: string[] | null
           roofing_types?: string[] | null
           service_areas?: string[] | null
@@ -4648,12 +4652,14 @@ export type Database = {
           approved_by?: string | null
           brands?: string[] | null
           company_id?: string | null
+          contact_email?: string | null
           created_at?: string
           description?: string | null
           id?: string
           keywords?: string[] | null
           logo_url?: string | null
           master_email?: string | null
+          phone_number?: string | null
           product_categories?: string[] | null
           roofing_types?: string[] | null
           service_areas?: string[] | null
