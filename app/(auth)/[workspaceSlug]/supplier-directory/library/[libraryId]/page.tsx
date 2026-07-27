@@ -1,4 +1,4 @@
-import { getLibraryComponents, searchSupplierLibraries } from '../../actions';
+import { getLibraryComponents, searchSupplierLibraries, getUserCollections, getAlreadyImportedIds } from '../../actions';
 import { LibraryDetail } from './LibraryDetail';
 
 export default async function LibraryDetailPage(props: {
@@ -25,11 +25,19 @@ export default async function LibraryDetailPage(props: {
 
   const components = await getLibraryComponents(libraryId);
 
+  // Load user's collections and already-imported IDs in parallel
+  const [userCollections, alreadyImportedIds] = await Promise.all([
+    getUserCollections().catch(() => []),
+    getAlreadyImportedIds(components.map(c => c.id)).catch(() => new Set<string>()),
+  ]);
+
   return (
     <LibraryDetail
       workspaceSlug={workspaceSlug}
       library={lib}
       components={components}
+      userCollections={userCollections}
+      alreadyImportedIds={alreadyImportedIds}
     />
   );
 }
