@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { updateNotificationPref, updateChannelMaster } from './settings-actions';
 import type { EventPref, PrefSurface } from '@/app/lib/alerts/prefs';
 
-type NotificationChannelKey = 'quotes' | 'orders' | 'invoices';
+type NotificationChannelKey = 'quotes' | 'orders' | 'invoices' | 'suppliers';
 
 /**
  * The notification matrix - the REAL alert_type taxonomy in the codebase.
@@ -46,6 +46,13 @@ const NOTIFICATION_MATRIX: {
       { key: 'invoice_payment_reported', label: 'Payment Made' },
       { key: 'invoice_disputed', label: 'Dispute Opened' },
       { key: 'invoice_viewed', label: 'Viewed' },
+    ],
+  },
+  {
+    key: 'suppliers',
+    label: 'Suppliers',
+    events: [
+      { key: 'supplier_update', label: 'Component Updates' },
     ],
   },
 ];
@@ -124,11 +131,12 @@ interface Props {
   initialNotificationPrefs: Record<string, EventPref>;
 }
 
-type TypeFilter = 'all' | 'quotes' | 'orders' | 'invoices' | 'messages';
+type TypeFilter = 'all' | 'quotes' | 'orders' | 'invoices' | 'messages' | 'suppliers';
 
 function categoryOf(a: Alert): Exclude<TypeFilter, 'all'> {
   const t = a.alert_type;
   if (t === 'message_reply') return 'messages';
+  if (t.startsWith('supplier')) return 'suppliers';
   if (t.startsWith('invoice') || a.invoice_id) return 'invoices';
   if (t.startsWith('order') || a.order_id) return 'orders';
   return 'quotes';
@@ -139,6 +147,7 @@ const CATEGORY_BADGE: Record<string, { label: string; cls: string }> = {
   orders: { label: 'Order', cls: 'bg-blue-100 text-blue-700' },
   invoices: { label: 'Invoice', cls: 'bg-emerald-100 text-emerald-700' },
   messages: { label: 'Message', cls: 'bg-purple-100 text-purple-700' },
+  suppliers: { label: 'Supplier', cls: 'bg-amber-100 text-amber-700' },
 };
 
 const FOLDERS: { key: AlertStatus; label: string; icon: string }[] = [
@@ -153,6 +162,7 @@ const TYPE_FILTERS: { key: TypeFilter; label: string }[] = [
   { key: 'orders', label: 'Orders' },
   { key: 'invoices', label: 'Invoices' },
   { key: 'messages', label: 'Messages' },
+  { key: 'suppliers', label: 'Suppliers' },
 ];
 
 export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPrefs }: Props) {
@@ -225,6 +235,7 @@ export function InboxList({ initialAlerts, workspaceSlug, initialNotificationPre
     if (a.quote_id) return `/${workspaceSlug}/quotes/${a.quote_id}/summary?from=inbox`;
     if (a.invoice_id) return `/${workspaceSlug}/invoices/${a.invoice_id}?from=inbox`;
     if (a.order_id) return `/${workspaceSlug}/material-orders/${a.order_id}/preview?from=inbox`;
+    if (a.alert_type === 'supplier_update') return `/${workspaceSlug}/components?from=inbox`;
     return null;
   }
 

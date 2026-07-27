@@ -31,6 +31,7 @@ export const NOTIFICATION_CHANNELS = {
   quotes: ['quote_accepted', 'quote_declined', 'revision_requested', 'quote_viewed', 'quote_expired'],
   orders: ['order_accepted', 'order_declined', 'order_info_requested', 'order_viewed'],
   invoices: ['invoice_payment_reported', 'invoice_disputed', 'invoice_viewed'],
+  suppliers: ['supplier_update'],
 } as const;
 
 export type NotificationChannel = keyof typeof NOTIFICATION_CHANNELS;
@@ -56,6 +57,7 @@ export const EMAIL_ON_BY_DEFAULT: ReadonlySet<string> = new Set([
   'order_accepted',
   'order_info_requested',
   'invoice_disputed',
+  'supplier_update',
 ]);
 
 /** The default EMAIL value for a given alert_type (false for unknown keys). */
