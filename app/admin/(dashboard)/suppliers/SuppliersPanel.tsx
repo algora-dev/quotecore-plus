@@ -17,7 +17,7 @@ const STATUS_STYLES: Record<string, string> = {
   revoked: 'bg-red-100 text-red-700 border-red-200',
 };
 
-const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'Membrane', 'EPDM/TPO'];
+const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'Membrane', 'EPDM/TPO', 'Slate'];
 
 export function SuppliersPanel() {
   const [suppliers, setSuppliers] = useState<SupplierProfile[]>([]);
@@ -56,13 +56,13 @@ export function SuppliersPanel() {
   }
 
   async function handleCompanySearch(query: string) {
-    setCompanySearch(query);
-    if (query.trim().length < 2) {
+    const q = query.trim();
+    if (q.length < 2) {
       setCompanyResults([]);
       return;
     }
     try {
-      const results = await searchCompanies(query.trim());
+      const results = await searchCompanies(q);
       setCompanyResults(results);
     } catch {
       setCompanyResults([]);
@@ -76,7 +76,7 @@ export function SuppliersPanel() {
   }
 
   async function handleCreate() {
-    if (!selectedCompanyId || !supplierName.trim()) return;
+    if (!supplierName.trim() || !masterEmail.trim()) return;
     try {
       const areas = serviceAreas
         .split(',')
@@ -187,14 +187,25 @@ export function SuppliersPanel() {
 
               {!editingId && (
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1">Search Company (optional)</label>
-                  <input
-                    type="text"
-                    value={companySearch}
-                    onChange={(e) => handleCompanySearch(e.target.value)}
-                    placeholder="Type company name..."
-                    className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-                  />
+                  <label className="block text-xs text-slate-500 mb-1">Search Company or User Email (optional)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={companySearch}
+                      onChange={(e) => setCompanySearch(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && companySearch.trim().length >= 2) handleCompanySearch(companySearch); }}
+                      placeholder="Type company name or email..."
+                      className="flex-1 px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCompanySearch(companySearch)}
+                      disabled={companySearch.trim().length < 2}
+                      className="px-3 py-1.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Search
+                    </button>
+                  </div>
                   {companyResults.length > 0 && (
                     <div className="mt-1 border border-slate-200 rounded-lg overflow-hidden">
                       {companyResults.map((c) => (
@@ -205,7 +216,7 @@ export function SuppliersPanel() {
                             setCompanySearch(c.name);
                             setCompanyResults([]);
                             if (!supplierName) setSupplierName(c.name);
-                            if (c.type === 'user' && c.email && !masterEmail) setMasterEmail(c.email);
+                            if (c.email && !masterEmail) setMasterEmail(c.email);
                           }}
                           className="w-full text-left px-3 py-2 text-sm hover:bg-orange-50/40 border-b border-slate-100 last:border-0"
                         >
