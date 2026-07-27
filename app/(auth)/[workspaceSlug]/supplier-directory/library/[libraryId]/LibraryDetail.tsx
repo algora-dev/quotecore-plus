@@ -60,6 +60,7 @@ export function LibraryDetail({
   const [creatingLibrary, setCreatingLibrary] = useState(false);
   const [importState, setImportState] = useState<ImportState>('idle');
   const [importResult, setImportResult] = useState<{ imported: number; skipped: number; message: string } | null>(null);
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
 
   function toggleSelect(id: string) {
     setSelected(prev => {
@@ -92,6 +93,7 @@ export function LibraryDetail({
           sourceLibraryId: library.id,
           targetCollectionId: targetCollection,
           componentIds: [...selected],
+          alertsEnabled,
         }),
       });
       const data = await res.json();
@@ -373,6 +375,32 @@ export function LibraryDetail({
           </div>
           {availableCount === 0 && (
             <p className="text-xs text-slate-400 mt-2">All components from this library have already been imported.</p>
+          )}
+
+          {/* Alert opt-in */}
+          {selectedCount > 0 && availableCount > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-100">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={alertsEnabled}
+                  onChange={e => setAlertsEnabled(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-slate-700">Notify me about supplier updates</span>
+                  <p className="text-xs text-slate-400">Get an alert when this supplier changes imported components.</p>
+                </div>
+                <span className="relative group">
+                  <svg className="w-4 h-4 text-slate-400 hover:text-slate-600 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="absolute bottom-full right-0 mb-2 hidden group-hover:block w-56 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white shadow-lg z-10 pointer-events-none">
+                    Turn this on to review price and component-detail changes published by the supplier. You stay in control of which updates are applied.
+                  </span>
+                </span>
+              </label>
+            </div>
           )}
         </div>
       </div>
