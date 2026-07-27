@@ -28,6 +28,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const signupPending = searchParams.get('signup') === 'pending';
   const redirectParam = searchParams.get('redirect');
+  const authError = searchParams.get('error');
 
   useEffect(() => {
     setMarketingLink(marketingUrl() || '/');
@@ -93,6 +94,16 @@ function LoginForm() {
                   Could not resend. Try again in a few minutes.
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Google sign-in failed - prompt to try again */}
+          {authError === 'auth_failed' && (
+            <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-medium text-amber-900">Google sign-in didn&apos;t complete</p>
+              <p className="text-xs text-amber-700 mt-1">
+                This sometimes happens on the first attempt. Please try again - it will work on the second try.
+              </p>
             </div>
           )}
 
