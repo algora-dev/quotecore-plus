@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAdmin, createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { requireAdmin } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export type SupplierProfile = {
@@ -131,9 +131,9 @@ export async function searchSupplierUsers(query: string): Promise<SupplierSearch
 
 export async function getSuppliers(): Promise<SupplierProfile[]> {
   await requireAdmin();
-  const supabase = await createSupabaseServerClient();
+  const admin = createAdminClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('supplier_profiles')
     .select(`
       *,
@@ -170,7 +170,7 @@ export async function createSupplier(input: {
   description?: string;
 }): Promise<SupplierProfile> {
   await requireAdmin();
-  const supabase = await createSupabaseServerClient();
+  const admin = createAdminClient();
 
   const slug = input.supplier_name
     .toLowerCase()
@@ -178,7 +178,7 @@ export async function createSupplier(input: {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('supplier_profiles')
     .insert({
       company_id: input.company_id || null,
@@ -204,7 +204,7 @@ export async function createSupplier(input: {
   if (error) throw new Error(error.message);
 
   if (input.company_id) {
-    await supabase
+    await admin
       .from('companies')
       .update({ is_supplier: true })
       .eq('id', input.company_id);
@@ -231,7 +231,7 @@ export async function updateSupplier(
   }>
 ): Promise<SupplierProfile> {
   await requireAdmin();
-  const supabase = await createSupabaseServerClient();
+  const admin = createAdminClient();
 
   const update: Record<string, unknown> = {};
   if (input.supplier_name !== undefined) {
@@ -253,7 +253,7 @@ export async function updateSupplier(
   if (input.keywords !== undefined) update.keywords = input.keywords;
   if (input.description !== undefined) update.description = input.description;
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from('supplier_profiles')
     .update(update)
     .eq('id', id)
@@ -271,7 +271,7 @@ export async function setSupplierStatus(
   status: 'pending' | 'approved' | 'suspended' | 'revoked'
 ): Promise<void> {
   await requireAdmin();
-  const supabase = await createSupabaseServerClient();
+  const admin = createAdminClient();
 
   const update: Record<string, unknown> = { status };
   if (status === 'approved') {
@@ -279,21 +279,21 @@ export async function setSupplierStatus(
     update.approved_by = 'admin';
   }
 
-  const { error } = await supabase
+  const { error } = await admin
     .from('supplier_profiles')
     .update(update)
     .eq('id', id);
 
   if (error) throw new Error(error.message);
 
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from('supplier_profiles')
     .select('company_id')
     .eq('id', id)
     .single();
 
   if (profile && profile.company_id) {
-    await supabase
+    await admin
       .from('companies')
       .update({ is_supplier: status === 'approved' })
       .eq('id', profile.company_id);
