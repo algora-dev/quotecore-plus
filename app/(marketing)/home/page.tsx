@@ -20,6 +20,11 @@ export default function HomePage() {
   const [videoProgress, setVideoProgress] = useState(0);
   const [appLink, setAppLink] = useState("https://app.quote-core.com");
   const [videoHovered, setVideoHovered] = useState(false);
+  const heroVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [heroIsMuted, setHeroIsMuted] = useState(true);
+  const [heroIsPaused, setHeroIsPaused] = useState(false);
+  const [heroVideoProgress, setHeroVideoProgress] = useState(0);
+  const [heroVideoHovered, setHeroVideoHovered] = useState(false);
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [currency, setCurrency] = useState<"GBP" | "USD">("USD");
   const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -128,6 +133,45 @@ export default function HomePage() {
 
     video.pause();
     setIsPaused(true);
+  };
+
+  const handleHeroVideoTimeUpdate = () => {
+    const video = heroVideoRef.current;
+    if (!video || !video.duration) return;
+    setHeroVideoProgress((video.currentTime / video.duration) * 100);
+  };
+
+  const handleHeroProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    video.currentTime = pct * video.duration;
+  };
+
+  const toggleHeroMute = () => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setHeroIsMuted(video.muted);
+  };
+
+  const toggleHeroPlayback = async () => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      try {
+        await video.play();
+        setHeroIsPaused(false);
+      } catch {
+        setHeroIsPaused(true);
+      }
+      return;
+    }
+
+    video.pause();
+    setHeroIsPaused(true);
   };
 
   // Currency detection: geo-IP via API > browser locale > USD
@@ -459,38 +503,73 @@ export default function HomePage() {
                 </div>
                 <p className="mt-3 text-sm text-zinc-600">All features for 14 days, no card required, risk free</p>
               </div>
-              {/* Right: laptop video - bg matches section so edges blend */}
+              {/* Right: hero video with controls */}
               <div className="relative z-10 flex flex-1 items-end justify-center overflow-visible lg:-ml-12 lg:flex-[0.96] lg:justify-end xl:flex-[1.08]">
-                <HeroFloatingCard
-                  icon="measure"
-                  title="Measure"
-                  description="Use plan measurements, roof areas, lengths and quantities."
-                  className="right-4 top-1 w-52 xl:right-8 xl:top-2"
-                />
-                <HeroFloatingCard
-                  icon="quote"
-                  title="Quote"
-                  description="Turn measurements into priced customer quotes."
-                  className="-right-1 top-[47%] w-48 -translate-y-1/2 2xl:-right-8"
-                />
-                <HeroFloatingCard
-                  icon="order"
-                  title="Order + Invoice"
-                  description="Create material orders, manage the job and invoice from the same workflow."
-                  className="bottom-3 left-[48%] w-56 -translate-x-1/2 translate-y-6"
-                />
-                <video
-                  autoPlay
-                  muted
-                  playsInline
-                  preload="metadata"
-                  aria-label="Product demo: QuoteCore+ quoting interface"
-                  className="hero-video-float relative z-10 w-full max-w-none lg:w-[96%] lg:translate-x-4 xl:w-[104%] 2xl:w-[108%]"
-                  style={{display: "block"}}
+                <div
+                  className="relative w-full overflow-hidden rounded-[2rem] border border-zinc-200 bg-black shadow-[0_30px_120px_rgba(0,0,0,0.15)] lg:w-[96%] lg:translate-x-4 xl:w-[104%] 2xl:w-[108%]"
+                  style={{borderRadius: "2rem"}}
+                  onMouseEnter={() => setHeroVideoHovered(true)}
+                  onMouseLeave={() => setHeroVideoHovered(false)}
                 >
-                  <source src="/qc-hero-laptop.mp4" type="video/mp4" />
-                  <track kind="captions" srcLang="en" label="Product demo video" src="/captions/hero-demo.vtt" />
-                </video>
+                  <video
+                    ref={heroVideoRef}
+                    className="block w-full aspect-video"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    aria-label="Product demo: QuoteCore+ quoting interface"
+                    onTimeUpdate={handleHeroVideoTimeUpdate}
+                  >
+                    <source src="/Less than 3min w captions.mp4" type="video/mp4" />
+                    <track kind="captions" srcLang="en" label="Product demo video" src="/captions/hero-demo.vtt" />
+                  </video>
+                  {/* Progress bar - shows on hover */}
+                  <div
+                    className={`absolute inset-x-0 bottom-0 h-1.5 cursor-pointer transition-opacity duration-200 ${heroVideoHovered ? "opacity-100" : "opacity-0"}`}
+                    style={{background: "rgba(255,255,255,0.2)"}}
+                    onClick={handleHeroProgressClick}
+                  >
+                    <div className="h-full bg-[#FF6B35] transition-all duration-100" style={{width: `${heroVideoProgress}%`}} />
+                  </div>
+                  {/* Play/pause + mute controls */}
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-5 pb-5">
+                    <button
+                      type="button"
+                      onClick={toggleHeroPlayback}
+                      aria-label={heroIsPaused ? "Play video" : "Pause video"}
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-colors duration-200 hover:bg-black/50"
+                    >
+                      {heroIsPaused ? (
+                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+                          <path d="M8 5.14v13.72c0 .78.84 1.26 1.5.86l10-6.86a1 1 0 000-1.72l-10-6.86A1 1 0 008 5.14z" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+                          <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={toggleHeroMute}
+                      aria-label={heroIsMuted ? "Unmute video" : "Mute video"}
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-colors duration-200 hover:bg-black/50"
+                    >
+                      {heroIsMuted ? (
+                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+                          <path d="M13 5.23v13.54a1 1 0 01-1.64.77L6.91 16H3a1 1 0 01-1-1v-6a1 1 0 011-1h3.91l4.45-3.54A1 1 0 0113 5.23zM20.78 8.8a1 1 0 010 1.41L19 12l1.78 1.79a1 1 0 11-1.41 1.41L17.59 13.4l-1.8 1.8a1 1 0 01-1.41-1.41L16.17 12l-1.79-1.79a1 1 0 011.41-1.41l1.8 1.8 1.78-1.8a1 1 0 011.41 0z" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+                          <path d="M14 5.23v13.54a1 1 0 01-1.64.77L7.91 16H4a1 1 0 01-1-1v-6a1 1 0 011-1h3.91l4.45-3.54A1 1 0 0114 5.23z" />
+                          <path d="M16.5 9.5a1 1 0 011.41 0A4.97 4.97 0 0119.5 13a4.97 4.97 0 01-1.59 3.5 1 1 0 01-1.41-1.42A2.98 2.98 0 0017.5 13a2.98 2.98 0 00-1-2.08 1 1 0 010-1.42z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
             {/* Scroll indicator */}
@@ -1432,44 +1511,6 @@ export default function HomePage() {
 
       <CoffeePopup />
       <style>{`
-        .hero-video-float {
-          transition: transform 0.5s ease-out;
-        }
-        .hero-video-float:hover {
-          transform: scale(1.03) translateY(-8px);
-        }
-        .hero-floating-card {
-          animation: heroCardFloat 6.5s ease-in-out var(--hero-card-float-delay, 0s) infinite;
-          will-change: transform;
-        }
-        .hero-floating-card-reveal {
-          opacity: 0;
-          transform: translate3d(0, 12px, 0) scale(0.96);
-          animation: heroCardReveal 0.55s ease-out var(--hero-card-reveal-delay, 3s) forwards;
-          will-change: opacity, transform;
-        }
-        @keyframes heroCardReveal {
-          to {
-            opacity: 1;
-            transform: translate3d(0, 0, 0) scale(1);
-          }
-        }
-        @keyframes heroCardFloat {
-          0%, 100% {
-            transform: translate3d(0, 0, 0);
-          }
-          50% {
-            transform: translate3d(0, -8px, 0);
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-floating-card-reveal,
-          .hero-floating-card {
-            animation: none;
-            opacity: 1;
-            transform: none;
-          }
-        }
         .brand-wordmark {
           white-space: nowrap;
         }
@@ -1565,81 +1606,6 @@ function ServicesPlanGraphic() {
         </div>
       </div>
     </div>
-  );
-}
-
-function HeroFloatingCard({
-  icon,
-  title,
-  description,
-  className,
-}: {
-  icon: "measure" | "quote" | "order";
-  title: string;
-  description: string;
-  className: string;
-}) {
-  const revealDelay = icon === "measure" ? "3s" : icon === "order" ? "3.45s" : "3.9s";
-  const floatDelay = icon === "quote" ? "1.2s" : icon === "order" ? "2.2s" : "0s";
-
-  return (
-    <div
-      className={`pointer-events-none absolute z-30 hidden xl:block ${className}`}
-      aria-hidden="true"
-    >
-      <div
-        className="hero-floating-card-reveal"
-        style={{"--hero-card-reveal-delay": revealDelay} as React.CSSProperties}
-      >
-        <div
-          className="hero-floating-card rounded-xl border border-zinc-200/80 bg-white/95 p-3 shadow-[0_14px_42px_rgba(15,23,42,0.12)] backdrop-blur-md"
-          style={{"--hero-card-float-delay": floatDelay} as React.CSSProperties}
-        >
-          <div className="flex items-start gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FF6B35]/10 text-[#FF6B35]">
-              <HeroFloatingIcon type={icon} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-semibold leading-5 text-zinc-950">{title}</span>
-              <span className="mt-0.5 block text-xs leading-4 text-zinc-600">{description}</span>
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HeroFloatingIcon({type}: {type: "measure" | "quote" | "order"}) {
-  if (type === "measure") {
-    return (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 17 17 4l3 3L7 20l-3-3Z" />
-        <path d="m14 7 3 3" />
-        <path d="m11 10 2 2" />
-        <path d="m8 13 3 3" />
-      </svg>
-    );
-  }
-
-  if (type === "quote") {
-    return (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 3h8l4 4v14H6V3Z" />
-        <path d="M14 3v5h5" />
-        <path d="M9 12h6" />
-        <path d="M9 16h6" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 6h2l1.2 8.4a2 2 0 0 0 2 1.6h6.9a2 2 0 0 0 1.9-1.4L21 8H8" />
-      <path d="M10 20h.01" />
-      <path d="M18 20h.01" />
-      <path d="M12 8h4" />
-    </svg>
   );
 }
 
