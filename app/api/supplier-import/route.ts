@@ -4,10 +4,11 @@ import { importSupplierComponents } from '@/app/(auth)/[workspaceSlug]/supplier-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { sourceLibraryId, targetCollectionId, componentIds } = body as {
+    const { sourceLibraryId, targetCollectionId, componentIds, alertsEnabled } = body as {
       sourceLibraryId?: string;
       targetCollectionId?: string;
       componentIds?: string[];
+      alertsEnabled?: boolean;
     };
 
     if (!sourceLibraryId || !targetCollectionId || !Array.isArray(componentIds)) {
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
       sourceLibraryId,
       targetCollectionId,
       componentIds,
+      alertsEnabled,
     });
 
     return NextResponse.json(result, { status: result.ok ? 200 : 400 });

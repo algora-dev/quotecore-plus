@@ -484,8 +484,9 @@ export async function importSupplierComponents(params: {
   sourceLibraryId: string;
   targetCollectionId: string;
   componentIds: string[];
+  alertsEnabled?: boolean;
 }): Promise<ImportResult> {
-  const { sourceLibraryId, targetCollectionId, componentIds } = params;
+  const { sourceLibraryId, targetCollectionId, componentIds, alertsEnabled = true } = params;
 
   if (!componentIds.length) {
     return { ok: false, imported: 0, skipped: 0, errors: ['No components selected.'] };
@@ -655,6 +656,16 @@ export async function importSupplierComponents(params: {
     return { ok: false, imported: 0, skipped: skippedCount, errors: [insertError.message] };
   }
 
+  // 9. Upsert alert subscription (only after successful import)
+  await supabase
+    .from('supplier_library_subscriptions')
+    .upsert({
+      company_id: profile.company_id,
+      source_library_id: sourceLibraryId,
+      alerts_enabled: alertsEnabled,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'company_id,source_library_id' });
+
   revalidatePath('/[workspaceSlug]/components', 'page');
 
   return {
@@ -692,12 +703,16 @@ export type PendingUpdate = {
   version_to: number;
   created_at: string;
   new_snapshot: Record<string, unknown> | null;
+  old_snapshot: Record<string, unknown> | null;
+  local_values: Record<string, unknown> | null;
+  changed_fields: string[];
 };
 
 /**
  * Supplier action: publish an update to a library.
- * Bumps published_version, diffs current components against the last published snapshot,
- * and records change notifications for each changed component.
+ * Uses atomic RPC `supplier_publish_update` for durable snapshots + version bump.
+ * Baseline (v1) creates a publication without notifications.
+ * No-change publishes don't bump the version.
  */
 export async function publishLibraryUpdate(libraryId: string): Promise<{
   ok: boolean;
@@ -729,170 +744,65 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
     return { ok: false, message: 'Library must be published first.' };
   }
 
-  const currentVersion = lib.published_version ?? 0;
-  const newVersion = currentVersion + 1;
-
-  // 2. Get current components in the library
-  const { data: currentComponents } = await supabase
+  // 2. Fetch current active components with all canonical sync fields
+  const { data: currentComponents, error: fetchError } = await supabase
     .from('component_library')
-    .select('*')
+    .select(`
+      id, name, component_type, measurement_type, sku, takeoff_slot, notes,
+      default_material_rate, default_labour_rate,
+      default_waste_type, default_waste_percent, default_waste_fixed,
+      default_pitch_type, waste_unit,
+      pack_price, pack_size, pack_coverage_m2,
+      pricing_strategy, show_price_default, show_dimensions_default,
+      eligible_for_orders, height_value_mm, depth_value_mm
+    `)
     .eq('collection_id', libraryId)
     .eq('is_active', true)
     .order('name');
 
-  // 3. Get the last published snapshot (components as they were when last published)
-  // We use the change_notifications table to find the last known state,
-  // or if no notifications exist yet, everything is 'added'.
-  const { data: lastNotifs } = await supabase
-    .from('supplier_change_notifications')
-    .select('component_id, new_snapshot, change_type')
-    .eq('supplier_library_id', libraryId)
-    .in('change_type', ['added', 'modified', 'price_changed'])
-    .order('created_at', { ascending: false });
-
-  // Build a map of last-known published state by component_id
-  const lastPublishedMap = new Map<string, Record<string, unknown>>();
-  for (const n of lastNotifs ?? []) {
-    if (n.component_id && n.new_snapshot && !lastPublishedMap.has(n.component_id)) {
-      lastPublishedMap.set(n.component_id, n.new_snapshot as Record<string, unknown>);
-    }
+  if (fetchError) {
+    return { ok: false, message: fetchError.message };
   }
 
-  // Also check for 'removed' notifications to know what was removed
-  const removedIds = new Set(
-    (lastNotifs ?? []).filter(n => n.change_type === 'removed' && n.component_id).map(n => n.component_id!)
-  );
+  // 3. Build snapshot array using shared sync-field constants
+  const { buildSnapshotArray } = await import('@/app/lib/supabase/sync-fields');
+  const snapshot = buildSnapshotArray(currentComponents ?? []);
 
-  const currentIds = new Set((currentComponents ?? []).map(c => c.id));
-  const changes: Array<{
-    component_id: string | null;
-    change_type: 'added' | 'modified' | 'removed' | 'price_changed';
-    old_snapshot: Record<string, unknown> | null;
-    new_snapshot: Record<string, unknown> | null;
-  }> = [];
+  // 4. Call the atomic RPC
+  const { data: rpcResult, error: rpcError } = await supabase
+    .rpc('supplier_publish_update', {
+      p_library_id: libraryId,
+      p_snapshot: snapshot as unknown as import('@/app/lib/supabase/database.types').Json,
+      p_publishing_user: profile.id,
+    });
 
-  // Detect added and modified components
-  for (const comp of currentComponents ?? []) {
-    const snapshot: Record<string, unknown> = {
-      name: comp.name,
-      default_material_rate: comp.default_material_rate,
-      default_labour_rate: comp.default_labour_rate,
-      pack_price: comp.pack_price,
-      pack_size: comp.pack_size,
-      pricing_strategy: comp.pricing_strategy,
-      component_type: comp.component_type,
-      measurement_type: comp.measurement_type,
-      sku: comp.sku,
-      takeoff_slot: comp.takeoff_slot,
-      notes: comp.notes,
-      default_waste_percent: comp.default_waste_percent,
-      default_waste_fixed: comp.default_waste_fixed,
-      pack_coverage_m2: comp.pack_coverage_m2,
-    };
-
-    const prev = lastPublishedMap.get(comp.id);
-    if (!prev && !removedIds.has(comp.id)) {
-      // New component since last publish
-      changes.push({
-        component_id: comp.id,
-        change_type: 'added',
-        old_snapshot: null,
-        new_snapshot: snapshot,
-      });
-    } else if (prev) {
-      // Compare key fields
-      const priceChanged =
-        prev.default_material_rate !== comp.default_material_rate ||
-        prev.default_labour_rate !== comp.default_labour_rate ||
-        prev.pack_price !== comp.pack_price;
-      const otherChanged =
-        prev.name !== comp.name ||
-        prev.pricing_strategy !== comp.pricing_strategy ||
-        prev.component_type !== comp.component_type ||
-        prev.measurement_type !== comp.measurement_type ||
-        prev.sku !== comp.sku ||
-        prev.takeoff_slot !== comp.takeoff_slot ||
-        prev.notes !== comp.notes ||
-        prev.default_waste_percent !== comp.default_waste_percent ||
-        prev.default_waste_fixed !== comp.default_waste_fixed ||
-        prev.pack_size !== comp.pack_size ||
-        prev.pack_coverage_m2 !== comp.pack_coverage_m2;
-
-      if (priceChanged && !otherChanged) {
-        changes.push({
-          component_id: comp.id,
-          change_type: 'price_changed',
-          old_snapshot: prev,
-          new_snapshot: snapshot,
-        });
-      } else if (priceChanged || otherChanged) {
-        changes.push({
-          component_id: comp.id,
-          change_type: 'modified',
-          old_snapshot: prev,
-          new_snapshot: snapshot,
-        });
-      }
-    }
+  if (rpcError) {
+    console.error('[publishLibraryUpdate] RPC error:', rpcError);
+    return { ok: false, message: rpcError.message };
   }
 
-  // Detect removed components (were in last published, not in current)
-  for (const [compId, snapshot] of lastPublishedMap) {
-    if (!currentIds.has(compId)) {
-      changes.push({
-        component_id: compId,
-        change_type: 'removed',
-        old_snapshot: snapshot,
-        new_snapshot: null,
-      });
-    }
-  }
-
-  // 4. Insert change notifications
-  if (changes.length > 0) {
-    const notifRows = changes.map(c => ({
-      supplier_library_id: libraryId,
-      component_id: c.component_id,
-      change_type: c.change_type,
-      old_snapshot: c.old_snapshot as unknown as import('@/app/lib/supabase/database.types').Json | null,
-      new_snapshot: c.new_snapshot as unknown as import('@/app/lib/supabase/database.types').Json | null,
-      version_from: currentVersion,
-      version_to: newVersion,
-    }));
-
-    const { error: notifError } = await supabase
-      .from('supplier_change_notifications')
-      .insert(notifRows);
-
-    if (notifError) {
-      console.error('[publishLibraryUpdate] Notification insert error:', notifError);
-      // Don't fail the whole publish if notifications fail - version bump is the critical part
-    }
-  }
-
-  // 5. Bump published_version
-  const { error: bumpError } = await supabase
-    .from('component_collections')
-    .update({ published_version: newVersion })
-    .eq('id', libraryId);
-
-  if (bumpError) {
-    return { ok: false, message: bumpError.message };
+  // RPC returns a table with one row
+  const row = rpcResult?.[0];
+  if (!row) {
+    return { ok: false, message: 'Publish failed: no result from database.' };
   }
 
   revalidatePath('/components');
   revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
 
   return {
-    ok: true,
-    newVersion,
-    changesRecorded: changes.length,
+    ok: row.ok,
+    newVersion: row.new_version,
+    changesRecorded: row.changes_recorded,
+    message: row.message,
   };
 }
 
 /**
  * Get pending updates for a user's imported supplier components.
- * Returns notifications where the source component has changed since the user imported it.
+ * Batched, subscription-aware, resolution-aware.
+ * Only returns updates where: subscription exists + alerts_enabled, notification unresolved,
+ * notification version > component's applied source_version.
  */
 export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
   let profile;
@@ -904,67 +814,172 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
 
   const supabase = await createSupabaseServerClient();
 
-  // Get all imported components for this company (ones with source_component_id)
+  // 1. Get all imported components for this company with source tracking
   const { data: imported } = await supabase
     .from('component_library')
-    .select('id, name, source_component_id, source_library_id, source_version')
+    .select(`
+      id, name, source_component_id, source_library_id, source_version,
+      default_material_rate, default_labour_rate, pack_price, pack_size,
+      default_waste_percent, default_waste_fixed, pack_coverage_m2,
+      pricing_strategy, component_type, measurement_type, sku, takeoff_slot, notes,
+      default_waste_type, default_pitch_type, waste_unit,
+      show_price_default, show_dimensions_default, eligible_for_orders,
+      height_value_mm, depth_value_mm
+    `)
     .eq('company_id', profile.company_id)
-    .not('source_component_id', 'is', null);
+    .not('source_component_id', 'is', null)
+    .not('source_library_id', 'is', null);
 
   if (!imported || imported.length === 0) return [];
 
-  // Group by source_library_id to batch query notifications
-  const byLibrary = new Map<string, typeof imported>();
-  for (const imp of imported) {
-    const libId = imp.source_library_id;
-    if (!libId) continue;
-    if (!byLibrary.has(libId)) byLibrary.set(libId, []);
-    byLibrary.get(libId)!.push(imp);
+  // 2. Get subscriptions for the libraries this company has imported from
+  const sourceLibraryIds = [...new Set(imported.map(i => i.source_library_id).filter(Boolean))] as string[];
+  const { data: subscriptions } = await supabase
+    .from('supplier_library_subscriptions')
+    .select('source_library_id, alerts_enabled')
+    .eq('company_id', profile.company_id)
+    .in('source_library_id', sourceLibraryIds);
+
+  // Only include libraries where alerts are enabled
+  const alertLibIds = new Set(
+    (subscriptions ?? [])
+      .filter(s => s.alerts_enabled)
+      .map(s => s.source_library_id)
+  );
+
+  if (alertLibIds.size === 0) return [];
+
+  // Filter imported components to only those from alert-enabled libraries
+  const relevantImports = imported.filter(i => i.source_library_id && alertLibIds.has(i.source_library_id));
+  if (relevantImports.length === 0) return [];
+
+  // 3. Get library + supplier info for relevant libraries (batched)
+  const { data: libs } = await supabase
+    .from('component_collections')
+    .select('id, name, supplier_profiles!inner(supplier_name)')
+    .in('id', sourceLibraryIds);
+
+  const libMap = new Map<string, { name: string; supplier_name: string }>();
+  for (const lib of libs ?? []) {
+    const sp = lib.supplier_profiles as unknown as { supplier_name: string };
+    libMap.set(lib.id, { name: lib.name, supplier_name: sp.supplier_name });
   }
 
+  // 4. Get all unresolved notification IDs for this company (batched)
+  // First get resolved notification IDs
+  const { data: resolutions } = await supabase
+    .from('supplier_update_resolutions')
+    .select('notification_id, imported_component_id, status')
+    .eq('company_id', profile.company_id);
+
+  // Build resolved set: notification_id + imported_component_id -> status
+  const resolvedMap = new Map<string, string>();
+  for (const r of resolutions ?? []) {
+    const key = `${r.notification_id}:${r.imported_component_id ?? 'null'}`;
+    resolvedMap.set(key, r.status);
+  }
+
+  // 5. Batch query: get all notifications for relevant libraries where version > component's source_version
+  // We need to query per library because the version filter depends on each component's source_version
+  // But we can batch by library
   const results: PendingUpdate[] = [];
+  const { diffSnapshots } = await import('@/app/lib/supabase/sync-fields');
 
-  for (const [sourceLibId, imports] of byLibrary) {
-    // Get the library + supplier info
-    const { data: lib } = await supabase
-      .from('component_collections')
-      .select('id, name, supplier_profiles!inner(supplier_name)')
-      .eq('id', sourceLibId)
-      .maybeSingle();
+  // Group imports by source library
+  const importsByLib = new Map<string, typeof relevantImports>();
+  for (const imp of relevantImports) {
+    const libId = imp.source_library_id!;
+    if (!importsByLib.has(libId)) importsByLib.set(libId, []);
+    importsByLib.get(libId)!.push(imp);
+  }
 
-    if (!lib) continue;
-    const supplierInfo = lib.supplier_profiles as unknown as { supplier_name: string };
+  for (const [sourceLibId, imports] of importsByLib) {
+    const libInfo = libMap.get(sourceLibId);
+    if (!libInfo) continue;
 
-    // Get notifications newer than each import's source_version
+    // Get the max source_version across all imports from this library
+    // We query all notifications newer than the MIN source_version, then filter per-component
+    const minSourceVersion = Math.min(...imports.map(i => i.source_version ?? 0));
+
+    const { data: notifs } = await supabase
+      .from('supplier_change_notifications')
+      .select('*')
+      .eq('supplier_library_id', sourceLibId)
+      .gt('version_to', minSourceVersion)
+      .order('created_at', { ascending: false });
+
+    if (!notifs || notifs.length === 0) continue;
+
+    // For each import, find the latest relevant notification
     for (const imp of imports) {
       if (!imp.source_component_id || imp.source_version === null) continue;
 
-      const { data: notifs } = await supabase
-        .from('supplier_change_notifications')
-        .select('*')
-        .eq('supplier_library_id', sourceLibId)
-        .eq('component_id', imp.source_component_id)
-        .gt('version_to', imp.source_version)
-        .order('created_at', { ascending: false })
-        .limit(1);
+      const relevantNotif = notifs.find(n =>
+        n.component_id === imp.source_component_id &&
+        n.version_to > (imp.source_version ?? 0)
+      );
 
-      if (notifs && notifs.length > 0) {
-        const n = notifs[0];
-        results.push({
-          notification_id: n.id,
-          source_library_id: sourceLibId,
-          source_library_name: lib.name,
-          supplier_name: supplierInfo.supplier_name,
-          component_id: imp.source_component_id,
-          imported_component_id: imp.id,
-          imported_component_name: imp.name,
-          change_type: n.change_type,
-          version_from: n.version_from,
-          version_to: n.version_to,
-          created_at: n.created_at,
-          new_snapshot: n.new_snapshot as Record<string, unknown> | null,
-        });
+      if (!relevantNotif) continue;
+
+      // Check if this notification is already resolved for this company + component
+      const resKey = `${relevantNotif.id}:${imp.id}`;
+      const nullResKey = `${relevantNotif.id}:null`;
+      if (resolvedMap.has(resKey) || resolvedMap.has(nullResKey)) continue;
+
+      // Build local values snapshot from the imported component
+      const localValues: Record<string, unknown> = {
+        name: imp.name,
+        default_material_rate: imp.default_material_rate,
+        default_labour_rate: imp.default_labour_rate,
+        pack_price: imp.pack_price,
+        pack_size: imp.pack_size,
+        pricing_strategy: imp.pricing_strategy,
+        component_type: imp.component_type,
+        measurement_type: imp.measurement_type,
+        sku: imp.sku,
+        takeoff_slot: imp.takeoff_slot,
+        notes: imp.notes,
+        default_waste_percent: imp.default_waste_percent,
+        default_waste_fixed: imp.default_waste_fixed,
+        pack_coverage_m2: imp.pack_coverage_m2,
+        default_waste_type: imp.default_waste_type,
+        default_pitch_type: imp.default_pitch_type,
+        waste_unit: imp.waste_unit,
+        show_price_default: imp.show_price_default,
+        show_dimensions_default: imp.show_dimensions_default,
+        eligible_for_orders: imp.eligible_for_orders,
+        height_value_mm: imp.height_value_mm,
+        depth_value_mm: imp.depth_value_mm,
+      };
+
+      const newSnap = relevantNotif.new_snapshot as Record<string, unknown> | null;
+      const oldSnap = relevantNotif.old_snapshot as Record<string, unknown> | null;
+
+      // Compute changed fields (old vs new from supplier)
+      let changedFields: string[] = [];
+      if (oldSnap && newSnap) {
+        changedFields = diffSnapshots(oldSnap, newSnap).map(c => c.field);
+      } else if (newSnap && relevantNotif.change_type === 'added') {
+        changedFields = Object.keys(newSnap).filter(k => k !== 'id');
       }
+
+      results.push({
+        notification_id: relevantNotif.id,
+        source_library_id: sourceLibId,
+        source_library_name: libInfo.name,
+        supplier_name: libInfo.supplier_name,
+        component_id: imp.source_component_id,
+        imported_component_id: imp.id,
+        imported_component_name: imp.name,
+        change_type: relevantNotif.change_type,
+        version_from: relevantNotif.version_from,
+        version_to: relevantNotif.version_to,
+        created_at: relevantNotif.created_at,
+        new_snapshot: newSnap,
+        old_snapshot: oldSnap,
+        local_values: localValues,
+        changed_fields: changedFields,
+      });
     }
   }
 
@@ -1050,6 +1065,197 @@ export async function updateImportedComponent(
   }
 
   revalidatePath('/[workspaceSlug]/components', 'page');
+
+  return { ok: true };
+}
+
+// ─── Phase 1f: Safe server actions for selective apply + resolution ───
+
+/**
+ * Apply selected supplier updates to imported components.
+ * Reloads authoritative data, verifies ownership + source matching,
+ * applies only selected changed fields, persists resolution.
+ */
+export async function applySupplierUpdates(selections: Array<{
+  notificationId: string;
+  importedComponentId: string;
+  fields: string[];
+}>): Promise<Record<string, { ok: boolean; message?: string }>> {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch {
+    return {};
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { SYNC_FIELDS } = await import('@/app/lib/supabase/sync-fields');
+  const results: Record<string, { ok: boolean; message?: string }> = {};
+
+  for (const sel of selections) {
+    const key = `${sel.notificationId}:${sel.importedComponentId}`;
+
+    // 1. Get the imported component and verify ownership
+    const { data: comp } = await supabase
+      .from('component_library')
+      .select('id, source_component_id, source_library_id, source_version, company_id')
+      .eq('id', sel.importedComponentId)
+      .single();
+
+    if (!comp || comp.company_id !== profile.company_id) {
+      results[key] = { ok: false, message: 'Component not found.' };
+      continue;
+    }
+
+    // 2. Get the notification
+    const { data: notif } = await supabase
+      .from('supplier_change_notifications')
+      .select('*')
+      .eq('id', sel.notificationId)
+      .single();
+
+    if (!notif) {
+      results[key] = { ok: false, message: 'Notification not found.' };
+      continue;
+    }
+
+    // 3. Verify source matching
+    if (notif.supplier_library_id !== comp.source_library_id ||
+        notif.component_id !== comp.source_component_id) {
+      results[key] = { ok: false, message: 'Notification does not match this component.' };
+      continue;
+    }
+
+    // 4. Verify notification is newer than applied version
+    if (notif.version_to <= (comp.source_version ?? 0)) {
+      results[key] = { ok: false, message: 'Update already applied.' };
+      continue;
+    }
+
+    // 5. Apply only selected fields (validate against SYNC_FIELDS allowlist)
+    const snapshot = notif.new_snapshot as Record<string, unknown> | null;
+    if (!snapshot) {
+      results[key] = { ok: false, message: 'No update data available.' };
+      continue;
+    }
+
+    const update: Record<string, unknown> = {};
+    const validFields: string[] = [];
+    for (const field of sel.fields) {
+      if (SYNC_FIELDS.includes(field as never) && field in snapshot) {
+        update[field] = snapshot[field];
+        validFields.push(field);
+      }
+    }
+
+    if (validFields.length === 0) {
+      results[key] = { ok: false, message: 'No valid fields selected.' };
+      continue;
+    }
+
+    // Update source_version to the notification's version_to
+    update.source_version = notif.version_to;
+
+    const { error } = await supabase
+      .from('component_library')
+      .update(update)
+      .eq('id', sel.importedComponentId)
+      .eq('company_id', profile.company_id);
+
+    if (error) {
+      results[key] = { ok: false, message: error.message };
+      continue;
+    }
+
+    // 6. Persist resolution
+    await supabase
+      .from('supplier_update_resolutions')
+      .upsert({
+        company_id: profile.company_id,
+        notification_id: sel.notificationId,
+        imported_component_id: sel.importedComponentId,
+        status: 'applied',
+        applied_fields: validFields,
+        resolved_by: profile.id,
+        resolved_at: new Date().toISOString(),
+      }, { onConflict: 'company_id,notification_id,imported_component_id' });
+
+    results[key] = { ok: true };
+  }
+
+  revalidatePath('/[workspaceSlug]/components', 'page');
+  return results;
+}
+
+/**
+ * Resolve a supplier update notification without applying it.
+ * status: 'dismissed' | 'kept_local' | 'archived'
+ */
+export async function resolveSupplierUpdate(params: {
+  notificationId: string;
+  importedComponentId?: string;
+  status: 'dismissed' | 'kept_local' | 'archived';
+}): Promise<{ ok: boolean; message?: string }> {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch {
+    return { ok: false, message: 'Authentication required.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('supplier_update_resolutions')
+    .upsert({
+      company_id: profile.company_id,
+      notification_id: params.notificationId,
+      imported_component_id: params.importedComponentId ?? null,
+      status: params.status,
+      resolved_by: profile.id,
+      resolved_at: new Date().toISOString(),
+    }, {
+      onConflict: params.importedComponentId
+        ? 'company_id,notification_id,imported_component_id'
+        : 'company_id,notification_id',
+    });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath('/[workspaceSlug]/components', 'page');
+  return { ok: true };
+}
+
+/**
+ * Update the alert preference for a supplier library.
+ */
+export async function updateSupplierAlertPreference(
+  sourceLibraryId: string,
+  enabled: boolean,
+): Promise<{ ok: boolean; message?: string }> {
+  let profile;
+  try {
+    profile = await requireCompanyContext();
+  } catch {
+    return { ok: false, message: 'Authentication required.' };
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  const { error } = await supabase
+    .from('supplier_library_subscriptions')
+    .upsert({
+      company_id: profile.company_id,
+      source_library_id: sourceLibraryId,
+      alerts_enabled: enabled,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'company_id,source_library_id' });
+
+  if (error) {
+    return { ok: false, message: error.message };
+  }
 
   return { ok: true };
 }

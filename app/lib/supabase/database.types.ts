@@ -4602,6 +4602,86 @@ export type Database = {
           },
         ]
       }
+      supplier_library_publications: {
+        Row: {
+          components_snapshot: Json
+          id: string
+          published_at: string
+          published_by: string | null
+          supplier_library_id: string
+          version: number
+        }
+        Insert: {
+          components_snapshot?: Json
+          id?: string
+          published_at?: string
+          published_by?: string | null
+          supplier_library_id: string
+          version: number
+        }
+        Update: {
+          components_snapshot?: Json
+          id?: string
+          published_at?: string
+          published_by?: string | null
+          supplier_library_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_library_publications_supplier_library_id_fkey"
+            columns: ["supplier_library_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_library_subscriptions: {
+        Row: {
+          alerts_enabled: boolean
+          company_id: string
+          created_at: string
+          field_preferences: Json | null
+          id: string
+          source_library_id: string
+          updated_at: string
+        }
+        Insert: {
+          alerts_enabled?: boolean
+          company_id: string
+          created_at?: string
+          field_preferences?: Json | null
+          id?: string
+          source_library_id: string
+          updated_at?: string
+        }
+        Update: {
+          alerts_enabled?: boolean
+          company_id?: string
+          created_at?: string
+          field_preferences?: Json | null
+          id?: string
+          source_library_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_library_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_library_subscriptions_source_library_id_fkey"
+            columns: ["source_library_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_profiles: {
         Row: {
           approved_at: string | null
@@ -4675,6 +4755,61 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_update_resolutions: {
+        Row: {
+          applied_fields: string[] | null
+          company_id: string
+          id: string
+          imported_component_id: string | null
+          notification_id: string
+          resolved_at: string
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          applied_fields?: string[] | null
+          company_id: string
+          id?: string
+          imported_component_id?: string | null
+          notification_id: string
+          resolved_at?: string
+          resolved_by?: string | null
+          status: string
+        }
+        Update: {
+          applied_fields?: string[] | null
+          company_id?: string
+          id?: string
+          imported_component_id?: string | null
+          notification_id?: string
+          resolved_at?: string
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_update_resolutions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_update_resolutions_imported_component_id_fkey"
+            columns: ["imported_component_id"]
+            isOneToOne: false
+            referencedRelation: "component_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_update_resolutions_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_change_notifications"
             referencedColumns: ["id"]
           },
         ]
@@ -5578,6 +5713,19 @@ export type Database = {
           points_cost: number
           points_remaining: number
           status: string
+        }[]
+      }
+      supplier_publish_update: {
+        Args: {
+          p_library_id: string
+          p_publishing_user?: string
+          p_snapshot: Json
+        }
+        Returns: {
+          changes_recorded: number
+          message: string
+          new_version: number
+          ok: boolean
         }[]
       }
       update_scan_stage: {
