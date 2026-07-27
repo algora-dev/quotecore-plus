@@ -48,6 +48,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/free-quote-generator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-purchase-order-generator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-invoice-generator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    // Roof takeoff builder (standalone tool, not part of slug system)
+    { url: `${SITE_URL}/free-roofing-takeoff-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
   ];
 
   // Blog posts (from shared source)
