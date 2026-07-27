@@ -251,6 +251,7 @@ export function LibraryDetail({
                       type="checkbox"
                       checked={selected.has(comp.id)}
                       onChange={() => !isImported && toggleSelect(comp.id)}
+                      onClick={e => e.stopPropagation()}
                       disabled={isImported}
                       className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer disabled:opacity-40"
                     />
