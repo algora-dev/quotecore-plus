@@ -9,6 +9,8 @@ import {
 } from './actions';
 import { CatalogueConverter } from './CatalogueConverter';
 import { getUserCollections, type UserCollection } from '../supplier-directory/actions';
+import { PublishLibraryModal } from '../components/components/PublishLibraryModal';
+import { renameComponentCollection, deleteComponentCollection } from '../components/actions';
 
 const STATUS_STYLES: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -41,6 +43,21 @@ export function SupplierDashboard({
   const [error, setError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState<string | null>(null);
   const [publishResult, setPublishResult] = useState<Record<string, { ok: boolean; message: string }>>({});
+
+  // Publish modal state
+  const [showPublishModal, setShowPublishModal] = useState<string | null>(null);
+
+  // Rename state
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renaming, setRenaming] = useState(false);
+
+  // Delete state
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Local libraries state (so we can update after rename/delete/publish without reload)
+  const [localLibraries, setLocalLibraries] = useState(libraries);
 
   // Editable profile fields
   const [websiteUrl, setWebsiteUrl] = useState(profile?.website_url ?? '');
@@ -101,8 +118,44 @@ export function SupplierDashboard({
     setPublishing(null);
   }
 
-  const publishedCount = libraries.filter(l => l.visibility === 'published').length;
-  const totalComponents = libraries.reduce((sum, l) => sum + l.component_count, 0);
+  async function handleRename(id: string) {
+    if (!renameValue.trim()) return;
+    setRenaming(true);
+    try {
+      const result = await renameComponentCollection(id, renameValue);
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+      setLocalLibraries(prev => prev.map(l => l.id === id ? { ...l, name: result.name } : l));
+      setRenamingId(null);
+      setRenameValue('');
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to rename');
+    } finally {
+      setRenaming(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setDeleteLoading(true);
+    try {
+      const result = await deleteComponentCollection(id);
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+      setLocalLibraries(prev => prev.filter(l => l.id !== id));
+      setDeletingId(null);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to delete');
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  const publishedCount = localLibraries.filter(l => l.visibility === 'published').length;
+  const totalComponents = localLibraries.reduce((sum, l) => sum + l.component_count, 0);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
@@ -316,8 +369,16 @@ export function SupplierDashboard({
 
         {/* Libraries */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-slate-900">Libraries</h3>
-          {libraries.length === 0 ? (
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900">Libraries</h3>
+            <Link
+              href={`/${workspaceSlug}/components`}
+              className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]"
+            >
+              Manage in Components →
+            </Link>
+          </div>
+          {localLibraries.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
               <p className="text-sm text-slate-400">No libraries yet.</p>
               <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">
@@ -325,19 +386,51 @@ export function SupplierDashboard({
               </Link>
             </div>
           ) : (
-            libraries.map(lib => (
+            localLibraries.map(lib => (
               <div key={lib.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-slate-900">{lib.name}</span>
-                      {lib.is_bootstrap && (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Default</span>
-                      )}
-                      <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${VISIBILITY_STYLES[lib.visibility ?? 'private'] || VISIBILITY_STYLES.private}`}>
-                        {lib.visibility ?? 'private'}
-                      </span>
-                    </div>
+                    {renamingId === lib.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') { e.preventDefault(); void handleRename(lib.id); }
+                            if (e.key === 'Escape') { setRenamingId(null); setRenameValue(''); }
+                          }}
+                          maxLength={80}
+                          className="px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleRename(lib.id)}
+                          disabled={renaming || !renameValue.trim()}
+                          className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50"
+                        >
+                          {renaming ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setRenamingId(null); setRenameValue(''); }}
+                          className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-slate-900">{lib.name}</span>
+                        {lib.is_bootstrap && (
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Default</span>
+                        )}
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${VISIBILITY_STYLES[lib.visibility ?? 'private'] || VISIBILITY_STYLES.private}`}>
+                          {lib.visibility ?? 'private'}
+                        </span>
+                      </div>
+                    )}
                     {lib.public_title && lib.visibility !== 'private' && (
                       <p className="text-xs text-slate-500 mt-1">Public title: {lib.public_title}</p>
                     )}
@@ -358,34 +451,111 @@ export function SupplierDashboard({
                       </div>
                     )}
                   </div>
-                  <Link
-                    href={`/${workspaceSlug}/components`}
-                    className="shrink-0 text-xs font-medium text-slate-500 hover:text-slate-700 rounded-full border border-slate-300 px-3 py-1.5 hover:bg-slate-50"
-                  >
-                    Manage
-                  </Link>
-                  {lib.visibility === 'published' && (
+
+                  {/* Action buttons */}
+                  <div className="flex flex-col gap-1.5 items-end shrink-0">
+                    {/* Publish / Settings button */}
                     <button
-                      onClick={() => handlePublishUpdate(lib.id)}
-                      disabled={publishing === lib.id}
-                      className="shrink-0 cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50"
+                      type="button"
+                      onClick={() => setShowPublishModal(lib.id)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition font-medium"
                     >
-                      {publishing === lib.id ? 'Publishing...' : 'Publish Update'}
+                      {(lib.visibility ?? 'private') === 'private' ? 'Publish' : 'Settings'}
                     </button>
-                  )}
-                  {publishResult[lib.id] && (
-                    <span className={`text-xs ${publishResult[lib.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>
-                      {publishResult[lib.id].message}
-                    </span>
-                  )}
-                  {lib.published_version != null && lib.published_version > 0 && lib.visibility === 'published' && (
-                    <span className="text-xs text-slate-400">v{lib.published_version}</span>
-                  )}
+
+                    {/* Rename button */}
+                    {renamingId !== lib.id && !lib.is_bootstrap && (
+                      <button
+                        type="button"
+                        title="Rename"
+                        onClick={() => { setRenamingId(lib.id); setRenameValue(lib.name); }}
+                        className="text-xs text-slate-400 hover:text-orange-500 transition"
+                      >
+                        Rename
+                      </button>
+                    )}
+
+                    {/* Delete button */}
+                    {!lib.is_bootstrap && deletingId !== lib.id && (
+                      <button
+                        type="button"
+                        title="Delete"
+                        onClick={() => setDeletingId(lib.id)}
+                        className="text-xs text-slate-400 hover:text-red-500 transition"
+                      >
+                        Delete
+                      </button>
+                    )}
+
+                    {/* Delete confirmation */}
+                    {deletingId === lib.id && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(lib.id)}
+                          disabled={deleteLoading}
+                          className="text-xs px-2 py-1 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {deleteLoading ? 'Deleting...' : 'Confirm'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingId(null)}
+                          className="text-xs px-2 py-1 rounded-full border border-slate-300 hover:bg-slate-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Publish update button for already-published libraries */}
+                    {lib.visibility === 'published' && (
+                      <button
+                        onClick={() => handlePublishUpdate(lib.id)}
+                        disabled={publishing === lib.id}
+                        className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-50 font-medium"
+                      >
+                        {publishing === lib.id ? 'Publishing...' : 'Push Update'}
+                      </button>
+                    )}
+
+                    {publishResult[lib.id] && (
+                      <span className={`text-xs ${publishResult[lib.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {publishResult[lib.id].message}
+                      </span>
+                    )}
+                    {lib.published_version != null && lib.published_version > 0 && lib.visibility === 'published' && (
+                      <span className="text-xs text-slate-400">v{lib.published_version}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))
           )}
         </div>
+
+        {/* Publish Library Modal */}
+        {showPublishModal && (() => {
+          const lib = localLibraries.find(l => l.id === showPublishModal);
+          if (!lib) return null;
+          return (
+            <PublishLibraryModal
+              collectionId={lib.id}
+              collectionName={lib.name}
+              currentVisibility={(lib.visibility as 'private' | 'unlisted' | 'published') || 'private'}
+              publicTitle={lib.public_title || ''}
+              publicDescription={lib.public_description || ''}
+              roofingTypes={lib.roofing_types || []}
+              onClose={() => setShowPublishModal(null)}
+              onSaved={() => {
+                // Refresh local state optimistically
+                setShowPublishModal(null);
+                // Force a reload to get fresh data
+                window.location.reload();
+              }}
+            />
+          );
+        })()}
       </div>
     </div>
   );
