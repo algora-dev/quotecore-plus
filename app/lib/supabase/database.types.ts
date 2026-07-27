@@ -4613,6 +4613,7 @@ export type Database = {
           id: string
           keywords: string[] | null
           logo_url: string | null
+          master_email: string | null
           product_categories: string[] | null
           roofing_types: string[] | null
           service_areas: string[] | null
@@ -4632,6 +4633,7 @@ export type Database = {
           id?: string
           keywords?: string[] | null
           logo_url?: string | null
+          master_email?: string | null
           product_categories?: string[] | null
           roofing_types?: string[] | null
           service_areas?: string[] | null
@@ -4651,6 +4653,7 @@ export type Database = {
           id?: string
           keywords?: string[] | null
           logo_url?: string | null
+          master_email?: string | null
           product_categories?: string[] | null
           roofing_types?: string[] | null
           service_areas?: string[] | null

@@ -60,10 +60,19 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
 
       console.log('[loadCompanyContext] Using fallback - defaulting to metric');
 
-      // Match the DB NOT NULL defaults rather than nulling these out -
-      // companies.default_currency and companies.default_language are NOT
-      // NULL with defaults of 'NZD' and 'en' respectively; the previous
-      // null fallback was a typing lie that the generated types now catch.
+      // Check supplier access by master_email
+      let isSupplier = false;
+      if (profile.email) {
+        const { data: supplierProfile } = await supabase
+          .from('supplier_profiles')
+          .select('id')
+          .eq('status', 'approved')
+          .ilike('master_email', profile.email)
+          .limit(1)
+          .maybeSingle();
+        isSupplier = !!supplierProfile;
+      }
+
       return {
         profile,
         company: {
@@ -73,12 +82,26 @@ export async function loadCompanyContext(): Promise<CompanyContext> {
           default_measurement_system: 'metric',
           default_currency: 'NZD',
           onboarding_completed_at: null,
-          is_supplier: false,
+          is_supplier: isSupplier,
         } satisfies CompanyContextRow,
       };
     }
 
     throw new Error(error?.message ?? 'Company context not found.');
+  }
+
+  // Check supplier access by master_email (overrides company flag if set)
+  if (!company.is_supplier && profile.email) {
+    const { data: supplierProfile } = await supabase
+      .from('supplier_profiles')
+      .select('id')
+      .eq('status', 'approved')
+      .ilike('master_email', profile.email)
+      .limit(1)
+      .maybeSingle();
+    if (supplierProfile) {
+      company.is_supplier = true;
+    }
   }
 
   return { profile, company };

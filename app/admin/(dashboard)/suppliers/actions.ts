@@ -5,10 +5,11 @@ import { createSupabaseServerClient, requireAdmin } from '@/app/lib/supabase/ser
 
 export type SupplierProfile = {
   id: string;
-  company_id: string;
+  company_id: string | null;
   supplier_name: string;
   slug: string;
   status: string;
+  master_email: string | null;
   website_url: string | null;
   service_areas: string[];
   roofing_types: string[];
@@ -33,7 +34,7 @@ export async function getSuppliers(): Promise<SupplierProfile[]> {
     .from('supplier_profiles')
     .select(`
       *,
-      companies!inner (
+      companies!left (
         name,
         slug
       )
@@ -53,8 +54,9 @@ export async function getSuppliers(): Promise<SupplierProfile[]> {
 }
 
 export async function createSupplier(input: {
-  company_id: string;
+  company_id?: string;
   supplier_name: string;
+  master_email?: string;
   website_url?: string;
   service_areas?: string[];
   roofing_types?: string[];
@@ -76,10 +78,11 @@ export async function createSupplier(input: {
   const { data, error } = await supabase
     .from('supplier_profiles')
     .insert({
-      company_id: input.company_id,
+      company_id: input.company_id || null,
       supplier_name: input.supplier_name,
       slug,
       status: 'approved',
+      master_email: input.master_email || null,
       website_url: input.website_url || null,
       service_areas: input.service_areas || [],
       roofing_types: input.roofing_types || [],
@@ -95,11 +98,13 @@ export async function createSupplier(input: {
 
   if (error) throw new Error(error.message);
 
-  // Set is_supplier flag on the company
-  await supabase
-    .from('companies')
-    .update({ is_supplier: true })
-    .eq('id', input.company_id);
+  // Set is_supplier flag on the company if one was linked
+  if (input.company_id) {
+    await supabase
+      .from('companies')
+      .update({ is_supplier: true })
+      .eq('id', input.company_id);
+  }
 
   revalidatePath('/admin/suppliers');
   return data as SupplierProfile;
@@ -109,6 +114,7 @@ export async function updateSupplier(
   id: string,
   input: Partial<{
     supplier_name: string;
+    master_email: string | null;
     website_url: string | null;
     service_areas: string[];
     roofing_types: string[];
@@ -130,6 +136,7 @@ export async function updateSupplier(
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
+  if (input.master_email !== undefined) update.master_email = input.master_email || null;
   if (input.website_url !== undefined) update.website_url = input.website_url;
   if (input.service_areas !== undefined) update.service_areas = input.service_areas;
   if (input.roofing_types !== undefined) update.roofing_types = input.roofing_types;
