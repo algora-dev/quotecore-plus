@@ -7,6 +7,8 @@ import {
   type SupplierProfileData,
   type SupplierLibraryData,
 } from './actions';
+import { CatalogueConverter } from './CatalogueConverter';
+import { getUserCollections, type UserCollection } from '../supplier-directory/actions';
 
 const STATUS_STYLES: Record<string, string> = {
   pending: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -27,10 +29,12 @@ export function SupplierDashboard({
   workspaceSlug,
   profile,
   libraries,
+  collections,
 }: {
   workspaceSlug: string;
   profile: SupplierProfileData | null;
   libraries: SupplierLibraryData[];
+  collections: UserCollection[];
 }) {
   const [editingProfile, setEditingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -266,6 +270,11 @@ export function SupplierDashboard({
             <div className="text-xs text-slate-400 mt-0.5">Components</div>
           </div>
         </div>
+
+        {/* Catalogue Converter */}
+        {profile?.status === 'approved' && (
+          <CatalogueConverter workspaceSlug={workspaceSlug} collections={collections} />
+        )}
 
         {/* Libraries */}
         <div className="space-y-3">
