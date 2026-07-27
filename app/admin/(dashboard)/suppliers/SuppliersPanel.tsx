@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import {
   getSuppliers,
   createSupplier,
@@ -44,6 +44,10 @@ export function SuppliersPanel() {
   const [serviceAreas, setServiceAreas] = useState('');
   const [roofingTypes, setRoofingTypes] = useState<string[]>([]);
   const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
 
   async function loadSuppliers() {
     setLoading(true);
