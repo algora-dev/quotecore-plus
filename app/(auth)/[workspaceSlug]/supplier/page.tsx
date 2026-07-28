@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
-import { loadSupplierProfile, loadSupplierLibraries } from './actions';
+import { loadSupplierProfile, loadSupplierLibraries, loadSupplierCatalogs } from './actions';
 import { getUserCollections } from '../supplier-directory/actions';
 import { SupplierDashboard } from './SupplierDashboard';
 
@@ -15,9 +15,10 @@ export default async function SupplierPage(props: {
     redirect(`/${workspaceSlug}/components`);
   }
 
-  const [profile, libraries, collections] = await Promise.all([
+  const [profile, libraries, catalogs, collections] = await Promise.all([
     loadSupplierProfile(),
     loadSupplierLibraries(),
+    loadSupplierCatalogs(),
     getUserCollections().catch(() => []),
   ]);
 
@@ -26,6 +27,7 @@ export default async function SupplierPage(props: {
       workspaceSlug={workspaceSlug}
       profile={profile}
       libraries={libraries}
+      catalogs={catalogs}
       collections={collections}
     />
   );
