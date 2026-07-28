@@ -363,7 +363,7 @@ export function SupplierDashboard({
 
         {/* Catalogue Converter */}
         {profile?.status === 'approved' && (
-          <CatalogueConverter workspaceSlug={workspaceSlug} collections={collections} />
+          <CatalogueConverter workspaceSlug={workspaceSlug} collections={collections} catalogs={catalogs.map(c => ({ id: c.id, name: c.name, row_count: c.row_count, source_catalog_id: null }))} />
         )}
 
         {/* Tabs */}

@@ -3,130 +3,181 @@
 import { useState } from 'react';
 import type { UserCollection } from '../supplier-directory/actions';
 
-type ParsedRow = {
-  sku: string;
+interface CatalogSummary {
+  id: string;
   name: string;
-  price: number;
-  product_type: string;
-  notes: string;
-};
+  row_count: number;
+  source_catalog_id: string | null;
+}
 
-type ImportState = 'idle' | 'parsing' | 'preview' | 'importing' | 'success' | 'error';
+type Step = 'select-catalog' | 'map-columns' | 'select-rows' | 'converting' | 'success' | 'error';
+
+const FIELD_OPTIONS = [
+  { value: '', label: '- Skip -' },
+  { value: 'name', label: 'Name *' },
+  { value: 'price', label: 'Price *' },
+  { value: 'sku', label: 'SKU' },
+  { value: 'product_type', label: 'Product Type' },
+  { value: 'notes', label: 'Notes' },
+];
 
 export function CatalogueConverter({
   workspaceSlug,
   collections,
+  catalogs,
 }: {
   workspaceSlug: string;
   collections: UserCollection[];
+  catalogs: CatalogSummary[];
 }) {
-  const [csvText, setCsvText] = useState('');
-  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
-  const [parseErrors, setParseErrors] = useState<string[]>([]);
+  const [step, setStep] = useState<Step>('select-catalog');
+  const [selectedCatalogId, setSelectedCatalogId] = useState('');
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [allRows, setAllRows] = useState<Record<string, string>[]>([]);
+  const [columnMapping, setColumnMapping] = useState<Record<string, string | null>>({});
+  const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
   const [targetCollection, setTargetCollection] = useState<string>(
     collections.find(c => c.is_bootstrap)?.id ?? collections[0]?.id ?? ''
   );
-  const [importState, setImportState] = useState<ImportState>('idle');
-  const [importResult, setImportResult] = useState<{ created: number; message: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [createdCount, setCreatedCount] = useState(0);
+  const [loadingRows, setLoadingRows] = useState(false);
+  const [searchFilter, setSearchFilter] = useState('');
 
-  function handleParse() {
-    setImportState('parsing');
-    setParseErrors([]);
-    setImportResult(null);
-
-    // Client-side parse (the server action also parses, but we want a preview)
-    const lines = csvText.trim().split(/\r?\n/);
-    if (lines.length < 2) {
-      setParseErrors(['Need at least a header row and one data row.']);
-      setImportState('idle');
-      return;
-    }
-
-    const header = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
-    const colMap: Record<string, number> = {};
-    header.forEach((h, i) => {
-      if (h === 'sku' || h === 'code') colMap.sku = i;
-      else if (h === 'name' || h === 'product' || h === 'product name') colMap.name = i;
-      else if (h === 'price' || h === 'cost' || h === 'rate') colMap.price = i;
-      else if (h === 'product type' || h === 'type' || h === 'category' || h === 'takeoff_slot' || h === 'slot') colMap.product_type = i;
-      else if (h === 'notes' || h === 'description') colMap.notes = i;
-    });
-
-    if (colMap.name === undefined) {
-      setParseErrors(['Missing required column: Name (or "Product", "Product Name").']);
-      setImportState('idle');
-      return;
-    }
-    if (colMap.price === undefined) {
-      setParseErrors(['Missing required column: Price (or "Cost", "Rate").']);
-      setImportState('idle');
-      return;
-    }
-
-    const rows: ParsedRow[] = [];
-    const errors: string[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      const cols = parseCSVLine(line);
-      const row: ParsedRow = {
-        sku: colMap.sku !== undefined ? (cols[colMap.sku] ?? '').trim() : '',
-        name: (cols[colMap.name] ?? '').trim(),
-        price: parseFloat((cols[colMap.price] ?? '0').replace(/[^0-9.\-]/g, '')) || 0,
-        product_type: colMap.product_type !== undefined ? (cols[colMap.product_type] ?? '').trim() : '',
-        notes: colMap.notes !== undefined ? (cols[colMap.notes] ?? '').trim() : '',
-      };
-      if (!row.name) {
-        errors.push(`Row ${i + 1}: Missing name, skipped.`);
-        continue;
-      }
-      rows.push(row);
-    }
-
-    setParsedRows(rows);
-    setParseErrors(errors);
-    setImportState(rows.length > 0 ? 'preview' : 'idle');
-  }
-
-  async function handleImport() {
-    if (!parsedRows.length || !targetCollection) return;
-    setImportState('importing');
+  async function handleCatalogSelect() {
+    if (!selectedCatalogId) return;
+    setLoadingRows(true);
+    setError(null);
 
     try {
-      const res = await fetch('/api/supplier-catalogue-import', {
+      const res = await fetch('/api/supplier-catalogue-rows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catalogId: selectedCatalogId, limit: 500 }),
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        setHeaders(data.headers);
+        setAllRows(data.rows);
+        // Auto-map columns by matching header names
+        const autoMap: Record<string, string | null> = {};
+        for (const h of data.headers as string[]) {
+          const lower = h.toLowerCase().trim();
+          if (lower === 'sku' || lower === 'code') autoMap[h] = 'sku';
+          else if (lower === 'name' || lower === 'product' || lower === 'product name' || lower === 'description') autoMap[h] = 'name';
+          else if (lower === 'price' || lower === 'cost' || lower === 'rate') autoMap[h] = 'price';
+          else if (lower === 'type' || lower === 'product type' || lower === 'category' || lower === 'takeoff_slot') autoMap[h] = 'product_type';
+          else if (lower === 'notes' || lower === 'note') autoMap[h] = 'notes';
+          else autoMap[h] = null;
+        }
+        setColumnMapping(autoMap);
+        setStep('map-columns');
+      } else {
+        setError(data.error || 'Failed to load catalogue rows.');
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoadingRows(false);
+    }
+  }
+
+  function handleProceedToRowSelect() {
+    // Verify required fields are mapped
+    const hasName = Object.values(columnMapping).includes('name');
+    const hasPrice = Object.values(columnMapping).includes('price');
+    if (!hasName || !hasPrice) {
+      setError('Please map at least Name and Price columns.');
+      return;
+    }
+    setError(null);
+    // Default: select all rows
+    setSelectedRowIndices(new Set(allRows.map((_, i) => i)));
+    setStep('select-rows');
+  }
+
+  function toggleRow(idx: number) {
+    setSelectedRowIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (selectedRowIndices.size === allRows.length) {
+      setSelectedRowIndices(new Set());
+    } else {
+      setSelectedRowIndices(new Set(allRows.map((_, i) => i)));
+    }
+  }
+
+  async function handleConvert() {
+    const rows = allRows.filter((_, i) => selectedRowIndices.has(i));
+    if (rows.length === 0) {
+      setError('Select at least one row to convert.');
+      return;
+    }
+    if (!targetCollection) {
+      setError('Select a target library.');
+      return;
+    }
+
+    setStep('converting');
+    setError(null);
+
+    try {
+      const res = await fetch('/api/supplier-catalogue-convert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           targetCollectionId: targetCollection,
-          rows: parsedRows,
+          selectedRows: rows,
+          columnMapping,
         }),
       });
       const data = await res.json();
 
       if (data.ok) {
-        setImportState('success');
-        setImportResult({
-          created: data.created,
-          message: `Created ${data.created} component${data.created !== 1 ? 's' : ''} from catalogue.`,
-        });
-        setCsvText('');
-        setParsedRows([]);
+        setCreatedCount(data.created);
+        setStep('success');
       } else {
-        setImportState('error');
-        setImportResult({ created: 0, message: data.errors?.[0] ?? 'Import failed' });
+        setError(data.errors?.[0] ?? 'Conversion failed.');
+        setStep('select-rows');
       }
     } catch {
-      setImportState('error');
-      setImportResult({ created: 0, message: 'Network error. Please try again.' });
+      setError('Network error. Please try again.');
+      setStep('select-rows');
     }
   }
 
   function handleReset() {
-    setCsvText('');
-    setParsedRows([]);
-    setParseErrors([]);
-    setImportState('idle');
-    setImportResult(null);
+    setStep('select-catalog');
+    setSelectedCatalogId('');
+    setHeaders([]);
+    setAllRows([]);
+    setColumnMapping({});
+    setSelectedRowIndices(new Set());
+    setError(null);
+    setCreatedCount(0);
+    setSearchFilter('');
+  }
+
+  const filteredRows = allRows
+    .map((row, i) => ({ row, i }))
+    .filter(({ row }) => {
+      if (!searchFilter) return true;
+      return Object.values(row).some(v => v.toLowerCase().includes(searchFilter.toLowerCase()));
+    });
+
+  // Get the mapped header for a field
+  function getHeaderForField(field: string): string | undefined {
+    for (const [header, f] of Object.entries(columnMapping)) {
+      if (f === field) return header;
+    }
+    return undefined;
   }
 
   return (
@@ -134,125 +185,159 @@ export function CatalogueConverter({
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Catalogue Converter</h3>
-          <p className="text-xs text-slate-400 mt-0.5">Bulk-create components from CSV (SKU, Name, Price, Product Type, Notes)</p>
+          <p className="text-xs text-slate-400 mt-0.5">Convert catalogue rows into components</p>
         </div>
-        {importState === 'preview' && (
-          <button
-            onClick={handleReset}
-            className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
-          >
-            Cancel
+        {step !== 'select-catalog' && step !== 'success' && (
+          <button onClick={handleReset} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer">
+            Start over
           </button>
         )}
       </div>
 
-      {/* Success banner */}
-      {importState === 'success' && importResult && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm font-medium text-emerald-800">{importResult.message}</span>
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 mb-3">{error}</div>
+      )}
+
+      {/* Step 1: Select catalogue */}
+      {step === 'select-catalog' && (
+        <div className="space-y-3">
+          {catalogs.length === 0 ? (
+            <p className="text-sm text-slate-400">No catalogues available. Upload a CSV catalogue first.</p>
+          ) : (
+            <>
+              <label className="text-xs font-medium text-slate-600">Select a catalogue to convert</label>
+              <select
+                value={selectedCatalogId}
+                onChange={e => setSelectedCatalogId(e.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+              >
+                <option value="">Choose a catalogue...</option>
+                {catalogs.map(cat => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name} ({cat.row_count} rows){cat.source_catalog_id ? ' - Supplier' : ''}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleCatalogSelect}
+                disabled={!selectedCatalogId || loadingRows}
+                className="cursor-pointer rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {loadingRows ? 'Loading...' : 'Load Catalogue'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Step 2: Map columns */}
+      {step === 'map-columns' && (
+        <div className="space-y-3">
+          <p className="text-xs text-slate-500">Map your catalogue columns to component fields. Name and Price are required.</p>
+          <div className="rounded-lg border border-slate-200 overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Catalogue Column</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Maps To</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Sample Value</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {headers.map(h => (
+                  <tr key={h}>
+                    <td className="px-3 py-2 font-mono text-slate-700">{h}</td>
+                    <td className="px-3 py-2">
+                      <select
+                        value={columnMapping[h] ?? ''}
+                        onChange={e => setColumnMapping(prev => ({ ...prev, [h]: e.target.value || null }))}
+                        className="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none"
+                      >
+                        {FIELD_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2 text-slate-400 truncate max-w-[200px]">{allRows[0]?.[h] ?? '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
           <button
-            onClick={handleReset}
-            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 rounded-full border border-emerald-300 px-3 py-1"
+            onClick={handleProceedToRowSelect}
+            className="cursor-pointer rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
           >
-            Import More
+            Next: Select Rows
           </button>
         </div>
       )}
 
-      {/* Error banner */}
-      {importState === 'error' && importResult && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 mb-3 flex items-center gap-2">
-          <svg className="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span className="text-sm font-medium text-red-800">{importResult.message}</span>
-        </div>
-      )}
-
-      {/* Parse errors */}
-      {parseErrors.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 mb-3">
-          <p className="text-xs font-medium text-amber-700 mb-1">Warnings:</p>
-          {parseErrors.map((e, i) => (
-            <p key={i} className="text-xs text-amber-600">{e}</p>
-          ))}
-        </div>
-      )}
-
-      {/* Input / Preview */}
-      {importState !== 'preview' && importState !== 'importing' && importState !== 'success' && (
-        <>
-          <textarea
-            value={csvText}
-            onChange={e => setCsvText(e.target.value)}
-            rows={6}
-            placeholder={'SKU,Name,Price,Product Type,Notes\nRG-100,Ridge Cap 1m,12.50,ridge,Pre-painted ridge cap\nVP-200,Valley Tray 3m,28.00,valley,Galvanised valley tray'}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:border-orange-500 focus:outline-none"
-          />
-          <div className="flex items-center gap-2 mt-2">
-            <button
-              onClick={handleParse}
-              disabled={!csvText.trim()}
-              className="cursor-pointer rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Preview
-            </button>
-            <span className="text-xs text-slate-400">
-              Columns: SKU, Name, Price, Product Type, Notes (order-independent)
+      {/* Step 3: Select rows */}
+      {step === 'select-rows' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <input
+              type="text"
+              value={searchFilter}
+              onChange={e => setSearchFilter(e.target.value)}
+              placeholder="Filter rows..."
+              className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+            />
+            <span className="text-xs text-slate-500 whitespace-nowrap">
+              {selectedRowIndices.size} / {allRows.length} selected
             </span>
           </div>
-        </>
-      )}
 
-      {/* Preview table */}
-      {(importState === 'preview' || importState === 'importing') && (
-        <div>
-          <div className="rounded-lg border border-slate-200 overflow-hidden mb-3">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 bg-slate-50">
-              <span className="text-xs font-semibold text-slate-700">
-                {parsedRows.length} component{parsedRows.length !== 1 ? 's' : ''} ready
-              </span>
-            </div>
-            <div className="max-h-64 overflow-y-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-slate-50 sticky top-0">
-                  <tr className="text-left text-slate-500">
-                    <th className="px-3 py-1.5 font-medium">SKU</th>
-                    <th className="px-3 py-1.5 font-medium">Name</th>
-                    <th className="px-3 py-1.5 font-medium text-right">Price</th>
-                    <th className="px-3 py-1.5 font-medium">Type</th>
-                    <th className="px-3 py-1.5 font-medium">Notes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {parsedRows.map((row, i) => (
-                    <tr key={i} className="hover:bg-orange-50/30">
-                      <td className="px-3 py-1.5 font-mono text-slate-600">{row.sku || '-'}</td>
-                      <td className="px-3 py-1.5 font-medium text-slate-900">{row.name}</td>
-                      <td className="px-3 py-1.5 text-right text-slate-600">${row.price.toFixed(2)}</td>
-                      <td className="px-3 py-1.5 text-slate-600">{row.product_type || '-'}</td>
-                      <td className="px-3 py-1.5 text-slate-400 truncate max-w-[150px]">{row.notes || '-'}</td>
-                    </tr>
+          <div className="rounded-lg border border-slate-200 overflow-hidden max-h-96 overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 sticky top-0 z-10">
+                <tr className="border-b border-slate-200">
+                  <th className="px-2 py-2 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectedRowIndices.size === allRows.length && allRows.length > 0}
+                      onChange={toggleAll}
+                      className="cursor-pointer"
+                    />
+                  </th>
+                  {headers.map(h => (
+                    <th key={h} className="px-2 py-2 text-left font-medium text-slate-600 whitespace-nowrap">
+                      {h}
+                      {columnMapping[h] && (
+                        <span className="ml-1 text-[10px] text-orange-500">({columnMapping[h]})</span>
+                      )}
+                    </th>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filteredRows.map(({ row, i }) => (
+                  <tr key={i} className={`hover:bg-orange-50/30 ${selectedRowIndices.has(i) ? 'bg-orange-50/20' : ''}`}>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedRowIndices.has(i)}
+                        onChange={() => toggleRow(i)}
+                        className="cursor-pointer"
+                      />
+                    </td>
+                    {headers.map(h => (
+                      <td key={h} className="px-2 py-1.5 text-slate-600 whitespace-nowrap">{row[h] ?? '-'}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          {/* Import bar */}
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <label className="text-xs font-medium text-slate-600 mb-1 block">Import to library</label>
               <select
                 value={targetCollection}
                 onChange={e => setTargetCollection(e.target.value)}
-                disabled={importState === 'importing'}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:bg-slate-50"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
               >
                 {collections.map(col => (
                   <option key={col.id} value={col.id}>
@@ -263,40 +348,44 @@ export function CatalogueConverter({
             </div>
             <div className="flex items-end">
               <button
-                onClick={handleImport}
-                disabled={importState === 'importing' || !targetCollection}
+                onClick={handleConvert}
+                disabled={selectedRowIndices.size === 0 || !targetCollection}
                 className="cursor-pointer rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {importState === 'importing' ? 'Creating...' : `Create ${parsedRows.length} Component${parsedRows.length !== 1 ? 's' : ''}`}
+                Create {selectedRowIndices.size} Component{selectedRowIndices.size !== 1 ? 's' : ''}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Converting */}
+      {step === 'converting' && (
+        <div className="text-center py-8">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-3" />
+          <p className="text-sm text-slate-500">Creating components...</p>
+        </div>
+      )}
+
+      {/* Success */}
+      {step === 'success' && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium text-emerald-800">
+              Created {createdCount} component{createdCount !== 1 ? 's' : ''} from catalogue.
+            </span>
+          </div>
+          <button
+            onClick={handleReset}
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 rounded-full border border-emerald-300 px-3 py-1 cursor-pointer"
+          >
+            Convert More
+          </button>
+        </div>
+      )}
     </div>
   );
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (ch === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  result.push(current);
-  return result;
 }
