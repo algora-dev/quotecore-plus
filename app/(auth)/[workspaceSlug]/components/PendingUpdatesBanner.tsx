@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { PendingUpdate } from '../supplier-directory/actions';
 import { UpdateNotificationModal } from './components/UpdateNotificationModal';
 import { SubscriptionSettingsModal } from './components/SubscriptionSettingsModal';
@@ -15,6 +16,7 @@ export function PendingUpdatesBanner({
   const [remindLater, setRemindLater] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const router = useRouter();
 
   if (remindLater || updates.length === 0) return null;
 
@@ -73,7 +75,7 @@ export function PendingUpdatesBanner({
         <UpdateNotificationModal
           workspaceSlug={workspaceSlug}
           updates={updates}
-          onClose={() => setModalOpen(false)}
+          onClose={() => { setModalOpen(false); router.refresh(); }}
         />
       )}
 

@@ -148,6 +148,7 @@ export function ComponentList({
   const [newLibraryName, setNewLibraryName] = useState('');
   const [creatingLibrary, setCreatingLibrary] = useState(false);
   const [createLibraryError, setCreateLibraryError] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Active library filter: '' = All Libraries, otherwise a collection id.
   // Initialise from localStorage so the user's last-set default is applied on landing.
@@ -325,6 +326,7 @@ export function ComponentList({
 
   function startEdit(comp: ComponentLibraryRow) {
     setEditingId(comp.id);
+    setFormError(null);
     setFormMeasurementType(comp.measurement_type);
     setFormWasteType(comp.default_waste_type);
     setFormPitchEnabled(comp.default_pitch_type !== 'none');
@@ -351,6 +353,7 @@ export function ComponentList({
 
   function cancelEdit() {
     setEditingId(null);
+    setFormError(null);
     setFormWasteType('none');
     setFormMeasurementType('area');
     setFormPitchEnabled(false);
@@ -426,6 +429,7 @@ export function ComponentList({
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
+    setFormError(null);
 
     // Suppliers: SKU required for components in published libraries
     if (isSupplier) {
@@ -433,7 +437,7 @@ export function ComponentList({
       const isPublishedLib = activeCol?.visibility === 'published';
       const skuVal = (new FormData(e.currentTarget).get('sku') as string)?.trim();
       if (isPublishedLib && !skuVal) {
-        alert('SKU / Product Code is required for components in published supplier libraries.');
+        setFormError('SKU / Product Code is required for components in published supplier libraries.');
         setSaving(false);
         return;
       }
@@ -518,7 +522,7 @@ export function ComponentList({
           setShowForm(false);
           setUpgradeOpen(true);
         } else {
-          alert(result.code === 'internal_error' ? result.message : 'Could not create component.');
+          setFormError(result.code === 'internal_error' ? result.message : 'Could not create component.');
         }
         return;
       }
@@ -549,7 +553,7 @@ export function ComponentList({
         clearCalcDraft(restoreDraftId);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create component');
+      setFormError(err instanceof Error ? err.message : 'Failed to create component');
     } finally {
       setSaving(false);
     }
@@ -564,7 +568,7 @@ export function ComponentList({
       const isPublishedLib = activeCol?.visibility === 'published';
       const skuVal = (new FormData(e.currentTarget).get('sku') as string)?.trim();
       if (isPublishedLib && !skuVal) {
-        alert('SKU / Product Code is required for components in published supplier libraries.');
+        setFormError('SKU / Product Code is required for components in published supplier libraries.');
         return;
       }
     }
@@ -651,7 +655,7 @@ export function ComponentList({
       setComponents((prev) => prev.map((c) => (c.id === id ? updated : c)));
       cancelEdit();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to update component');
+      setFormError(err instanceof Error ? err.message : 'Failed to update component');
     } finally {
       setSaving(false);
     }
@@ -694,7 +698,7 @@ export function ComponentList({
       setComponents((prev) => prev.filter((c) => c.id !== deleteCompId));
       setDeleteCompId(null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete');
+      setFormError(err instanceof Error ? err.message : 'Failed to delete');
     } finally {
       setDeleteLoading(false);
     }
@@ -1029,6 +1033,9 @@ export function ComponentList({
            {showForm && (
         <div className="mb-4 p-4 border border-slate-200 rounded-xl bg-white">
           <h3 className="font-semibold text-slate-900 mb-3">New Smart Component™</h3>
+          {formError && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+          )}
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div data-copilot="component-name">
@@ -1287,6 +1294,9 @@ export function ComponentList({
             {editingId === comp.id ? (
               <div className="p-4 border border-slate-200 rounded-xl bg-white">
                 <h3 className="font-semibold text-slate-900 mb-3">Edit {comp.name}</h3>
+                {formError && (
+                  <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{formError}</div>
+                )}
                 <form onSubmit={(e) => handleUpdate(e, comp.id)} className="space-y-3">
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                    <div>

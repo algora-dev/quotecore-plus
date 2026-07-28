@@ -894,6 +894,66 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
       .eq('company_id', profile.company_id)
       .in('source_library_id', sourceLibraryIds);
     subscriptions = refreshedSubs ?? [];
+
+    // Retroactively create bell/inbox alerts for unresolved change notifications
+    // from libraries that just got their subscription backfilled
+    try {
+      // Get all notifications for the backfilled libraries
+      const { data: unresolvedNotifs } = await supabase
+        .from('supplier_change_notifications')
+        .select('id, supplier_library_id, version_to')
+        .in('supplier_library_id', missingSubs);
+
+      if (unresolvedNotifs && unresolvedNotifs.length > 0) {
+        // Check which are actually unresolved (version_to > max source_version of imported components)
+        const importsByLib = new Map<string, number>();
+        for (const imp of imported) {
+          const libId = imp.source_library_id as string;
+          const sv = imp.source_version ?? 0;
+          importsByLib.set(libId, Math.max(importsByLib.get(libId) ?? 0, sv));
+        }
+
+        const trulyUnresolved = unresolvedNotifs.filter(n => {
+          const maxSV = importsByLib.get(n.supplier_library_id) ?? 0;
+          return n.version_to > maxSV;
+        });
+
+        if (trulyUnresolved.length > 0) {
+          // Get supplier + library names for the alert text
+          const { data: libInfo } = await supabase
+            .from('component_collections')
+            .select('id, name, supplier_profiles!inner(supplier_name)')
+            .in('id', missingSubs);
+
+          const libMap = new Map((libInfo ?? []).map(l => [l.id, {
+            name: l.name,
+            supplierName: (l.supplier_profiles as unknown as { supplier_name: string })?.supplier_name ?? 'A supplier',
+          }]));
+
+          // Group by library for summary alerts
+          const byLib = new Map<string, number>();
+          for (const n of trulyUnresolved) {
+            byLib.set(n.supplier_library_id, (byLib.get(n.supplier_library_id) ?? 0) + 1);
+          }
+
+          const alertRows = [...byLib.entries()].map(([libId, count]) => {
+            const info = libMap.get(libId);
+            const supplierName = info?.supplierName ?? 'A supplier';
+            const libName = info?.name ?? 'library';
+            return {
+              company_id: profile.company_id,
+              alert_type: 'supplier_update',
+              title: `${supplierName} updated ${libName}`,
+              message: `${count} component change${count !== 1 ? 's' : ''} available for review.`,
+            };
+          });
+
+          await supabase.from('alerts').insert(alertRows);
+        }
+      }
+    } catch (err) {
+      console.error('[getPendingSupplierUpdates] Alert backfill failed:', err);
+    }
   }
 
   // Build subscription map: library_id -> { enabled, fieldPrefs, notifyNewComponents }
