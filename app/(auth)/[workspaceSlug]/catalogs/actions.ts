@@ -34,6 +34,7 @@ export interface CatalogRow {
   column_mapping: Record<string, string | null>;
   headers: string[];
   status: 'ready' | 'importing' | 'archived' | 'error';
+  source_catalog_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -52,7 +53,7 @@ export async function loadCatalogs(): Promise<CatalogRow[]> {
 
   const { data, error } = await admin
     .from('catalogs')
-    .select('id, name, original_filename, row_count, data_bytes, column_mapping, headers, status, created_at, updated_at')
+    .select('id, name, original_filename, row_count, data_bytes, column_mapping, headers, status, source_catalog_id, created_at, updated_at')
     .eq('company_id', profile.company_id)
     .order('status', { ascending: true })   // 'archived' sorts last alphabetically
     .order('updated_at', { ascending: false });
@@ -630,6 +631,190 @@ export async function deleteCatalogMap(mapId: string): Promise<CatalogActionResu
     return { ok: true, data: undefined };
   } catch (err) {
     console.error('[deleteCatalogMap]', err);
+    return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// replaceCatalogRows - replace all rows in a catalog with new CSV data
+// Used by "Upload New Version" flow. If the catalog is a published supplier
+// catalog, bumps version + alerts users who added it.
+// ---------------------------------------------------------------------------
+export async function replaceCatalogRows(args: {
+  catalogId: string;
+  rows: Array<{ rowIndex: number; raw: Record<string, string> }>;
+  headers: string[];
+  columnMapping: Record<string, string | null>;
+  originalFilename: string;
+}): Promise<CatalogActionResult<{ rowCount: number; newVersion?: number }>> {
+  try {
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+
+    // Verify ownership
+    const { data: catalog, error: catError } = await admin
+      .from('catalogs')
+      .select('id, name, status, visibility, supplier_profile_id, published_version, source_catalog_id')
+      .eq('id', args.catalogId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (catError || !catalog) {
+      return { ok: false, code: 'not_found', message: 'Catalog not found.' };
+    }
+
+    // Can't replace rows on a catalog that references a supplier (it's read-only)
+    if (catalog.source_catalog_id) {
+      return { ok: false, code: 'read_only', message: 'This is a supplier catalogue reference. You cannot upload new versions to it.' };
+    }
+
+    // Delete existing rows
+    await admin
+      .from('catalog_rows')
+      .delete()
+      .eq('catalog_id', args.catalogId)
+      .eq('company_id', profile.company_id);
+
+    // Build search_text for each row and insert new rows
+    const newRows = args.rows.map(r => {
+      const searchText = Object.values(r.raw).join(' ').toLowerCase();
+      return {
+        catalog_id: args.catalogId,
+        company_id: profile.company_id,
+        raw_row: r.raw,
+        row_index: r.rowIndex,
+        search_text: searchText,
+      };
+    });
+
+    // Insert in batches of 500
+    for (let i = 0; i < newRows.length; i += 500) {
+      const { error: insertError } = await admin
+        .from('catalog_rows')
+        .insert(newRows.slice(i, i + 500));
+      if (insertError) throw new Error(insertError.message);
+    }
+
+    // Calculate data_bytes
+    let dataBytes = 0;
+    try {
+      dataBytes = new TextEncoder().encode(JSON.stringify(args.rows.map(r => r.raw))).length;
+    } catch { dataBytes = args.rows.length * 200; }
+
+    // Update catalog metadata
+    const update: Record<string, unknown> = {
+      headers: args.headers,
+      column_mapping: args.columnMapping,
+      row_count: args.rows.length,
+      data_bytes: dataBytes,
+      original_filename: args.originalFilename,
+      status: 'ready',
+      updated_at: new Date().toISOString(),
+    };
+
+    // If this is a published supplier catalog, bump version + alert users
+    let newVersion: number | undefined;
+    if (catalog.visibility === 'published' && catalog.supplier_profile_id) {
+      newVersion = (catalog.published_version ?? 0) + 1;
+      update.published_version = newVersion;
+      update.published_at = new Date().toISOString();
+    }
+
+    await admin
+      .from('catalogs')
+      .update(update)
+      .eq('id', args.catalogId);
+
+    // Alert users who added this supplier catalog
+    if (newVersion !== undefined) {
+      const { data: savedBy } = await admin
+        .from('catalogs')
+        .select('company_id, name')
+        .eq('source_catalog_id', args.catalogId)
+        .neq('company_id', profile.company_id);
+
+      if (savedBy && savedBy.length > 0) {
+        const alerts = savedBy.map((row: { company_id: string; name: string }) => ({
+          company_id: row.company_id,
+          alert_type: 'supplier_catalog_update',
+          title: 'Supplier catalogue updated',
+          message: `"${row.name}" has been updated to version ${newVersion}. Your copy is now current with the latest data.`,
+          is_read: false,
+          status: 'active',
+        }));
+        await admin.from('alerts').insert(alerts);
+      }
+    }
+
+    revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
+    revalidatePath(`/[workspaceSlug]/supplier`, 'page');
+    return { ok: true, data: { rowCount: args.rows.length, newVersion } };
+  } catch (err) {
+    console.error('[replaceCatalogRows]', err);
+    return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// downloadCatalogCsv - return all rows as CSV-ready array
+// ---------------------------------------------------------------------------
+export async function downloadCatalogRows(catalogId: string): Promise<CatalogActionResult<{ headers: string[]; rows: Record<string, string>[]; name: string }>> {
+  try {
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+
+    // Check if user owns this catalog OR has it via source_catalog_id
+    const { data: catalog } = await admin
+      .from('catalogs')
+      .select('id, name, headers, company_id, source_catalog_id, status')
+      .eq('id', catalogId)
+      .maybeSingle();
+
+    if (!catalog) {
+      return { ok: false, code: 'not_found', message: 'Catalog not found.' };
+    }
+
+    // If user doesn't own it, check if they have a reference to it
+    const isOwner = catalog.company_id === profile.company_id;
+    let searchCatalogId = catalogId;
+
+    if (!isOwner) {
+      // Check if user has a reference via source_catalog_id
+      const { data: ref } = await admin
+        .from('catalogs')
+        .select('id')
+        .eq('source_catalog_id', catalogId)
+        .eq('company_id', profile.company_id)
+        .maybeSingle();
+
+      if (!ref) {
+        return { ok: false, code: 'forbidden', message: 'You do not have access to this catalog.' };
+      }
+      // Use the source catalog ID to read rows (via admin client which bypasses RLS)
+      searchCatalogId = catalogId;
+    } else if (catalog.source_catalog_id) {
+      // User owns a reference catalog - read from the source
+      searchCatalogId = catalog.source_catalog_id;
+    }
+
+    const { data: rows, error } = await admin
+      .from('catalog_rows')
+      .select('raw_row, row_index')
+      .eq('catalog_id', searchCatalogId)
+      .order('row_index', { ascending: true });
+
+    if (error) throw new Error(error.message);
+
+    return {
+      ok: true,
+      data: {
+        headers: catalog.headers as string[],
+        rows: (rows ?? []).map((r: { raw_row: Record<string, string> }) => r.raw_row),
+        name: catalog.name,
+      }
+    };
+  } catch (err) {
+    console.error('[downloadCatalogRows]', err);
     return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
   }
 }

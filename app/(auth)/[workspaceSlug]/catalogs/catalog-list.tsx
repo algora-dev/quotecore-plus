@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import { UploadWizard } from './upload-wizard';
 import { EditCatalogModal } from './edit-catalog-modal';
-import { archiveCatalog, deleteCatalog, unarchiveCatalog } from './actions';
+import { archiveCatalog, deleteCatalog, unarchiveCatalog, replaceCatalogRows } from './actions';
 import type { CatalogRow } from './actions';
 import type { DirectoryCatalog } from '../supplier-directory/actions';
+import { ReplaceCatalogModal } from './replace-catalog-modal';
 
 type CatalogTab = 'my-catalogs' | 'find-catalogs';
 
@@ -79,6 +80,7 @@ export function CatalogList({
   const [activeTab, setActiveTab] = useState<CatalogTab>('my-catalogs');
   const [savingCatalogId, setSavingCatalogId] = useState<string | null>(null);
   const [saveResult, setSaveResult] = useState<Record<string, { ok: boolean; message: string }>>({});
+  const [replaceTarget, setReplaceTarget] = useState<CatalogRow | null>(null);
 
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -116,6 +118,7 @@ export function CatalogList({
           column_mapping: (partial.column_mapping ?? {}) as Record<string, string | null>,
           headers: (partial.headers ?? []) as string[],
           status: 'ready',
+          source_catalog_id: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -202,7 +205,12 @@ export function CatalogList({
       >
         {/* Name */}
         <div className="min-w-0">
-          <p className="text-sm font-medium text-slate-900 truncate">{catalog.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-slate-900 truncate">{catalog.name}</p>
+            {catalog.source_catalog_id && (
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-600 border border-blue-200">Supplier</span>
+            )}
+          </div>
           {catalog.original_filename && (
             <p className="text-xs text-slate-400 truncate">{catalog.original_filename}</p>
           )}
@@ -234,6 +242,26 @@ export function CatalogList({
             </button>
           ) : (
             <>
+              {!catalog.source_catalog_id && (
+                <button
+                  onClick={() => setReplaceTarget(catalog)}
+                  title="Upload new version"
+                  className="icon-btn opacity-0 group-hover:opacity-100"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </button>
+              )}
+              <a
+                href={`/${workspaceSlug}/catalogs/download/${catalog.id}`}
+                title="Download CSV"
+                className="icon-btn opacity-0 group-hover:opacity-100"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </a>
               <button
                 onClick={() => setEditCatalog(catalog)}
                 title="Edit catalog"
@@ -493,6 +521,18 @@ export function CatalogList({
         }
         recommendedPlan="pro"
       />
+
+      {/* Replace catalog modal */}
+      {replaceTarget && (
+        <ReplaceCatalogModal
+          catalog={replaceTarget}
+          onClose={() => setReplaceTarget(null)}
+          onReplaced={() => {
+            setReplaceTarget(null);
+            startTransition(() => router.refresh());
+          }}
+        />
+      )}
       </>
       )}
     </section>

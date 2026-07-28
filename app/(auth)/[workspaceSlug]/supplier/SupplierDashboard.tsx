@@ -495,10 +495,9 @@ export function SupplierDashboard({
                         {cat.visibility === 'private' ? 'Publish' : 'Settings'}
                       </button>
                       {cat.visibility === 'published' && (
-                        <button onClick={() => handleCatalogPublish(cat.id)} disabled={publishing === cat.id}
-                          className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-50 font-medium">
-                          {publishing === cat.id ? 'Publishing...' : 'Push Update'}
-                        </button>
+                        <Link href={`/${workspaceSlug}/catalogs`} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">
+                          Upload New Version
+                        </Link>
                       )}
                       {publishResult[cat.id] && <span className={`text-xs ${publishResult[cat.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[cat.id].message}</span>}
                       {cat.published_version > 0 && cat.visibility === 'published' && <span className="text-xs text-slate-400">v{cat.published_version}</span>}

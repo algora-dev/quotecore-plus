@@ -1702,7 +1702,10 @@ export async function saveSupplierCatalog(catalogId: string): Promise<
       return { ok: false, message: 'You already have this catalogue in your account.' };
     }
 
-    // Create the copy
+    // Create a reference row - NO row copy. The user's catalog points to
+    // the supplier's catalog via source_catalog_id. Searches follow the
+    // reference to read the supplier's catalog_rows (RLS allows this for
+    // published supplier catalogs).
     const { data: newCat, error: insertError } = await supabase
       .from('catalogs')
       .insert({
@@ -1711,7 +1714,7 @@ export async function saveSupplierCatalog(catalogId: string): Promise<
         column_mapping: source.column_mapping,
         headers: source.headers,
         row_count: source.row_count,
-        data_bytes: source.data_bytes,
+        data_bytes: 0, // No local rows - data lives on the supplier's catalog
         status: 'ready',
         source_catalog_id: catalogId,
         source_version: source.published_version,
@@ -1721,29 +1724,7 @@ export async function saveSupplierCatalog(catalogId: string): Promise<
       .single();
 
     if (insertError || !newCat) {
-      return { ok: false, message: insertError?.message ?? 'Failed to create catalogue copy.' };
-    }
-
-    // Copy rows from source catalog
-    const { data: rows } = await supabase
-      .from('catalog_rows')
-      .select('raw_row, row_index, search_text')
-      .eq('catalog_id', catalogId)
-      .order('row_index', { ascending: true });
-
-    if (rows && rows.length > 0) {
-      const newRows = rows.map(r => ({
-        catalog_id: newCat.id,
-        company_id: profile.company_id,
-        raw_row: r.raw_row,
-        row_index: r.row_index,
-        search_text: r.search_text,
-      }));
-
-      // Insert in batches of 500
-      for (let i = 0; i < newRows.length; i += 500) {
-        await supabase.from('catalog_rows').insert(newRows.slice(i, i + 500));
-      }
+      return { ok: false, message: insertError?.message ?? 'Failed to add catalogue.' };
     }
 
     return { ok: true, newCatalogId: newCat.id };
