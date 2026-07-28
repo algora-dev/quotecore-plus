@@ -46,6 +46,9 @@ export function areaValueForUnit(value: number, unitSystem: 'metric' | 'imperial
 
 export function computeEntry(entry: Entry, kind: string, pitchType: PitchType): number {
   const qty = entry.quantity ?? 1;
+  if (isCustomFixed(kind)) {
+    return qty;
+  }
   if (entry.inputMode === 'actual') {
     return (entry.actualValue ?? 0) * qty;
   }
@@ -64,12 +67,20 @@ export function computeEntry(entry: Entry, kind: string, pitchType: PitchType): 
 // Track which custom components are area-based
 const customAreaMap = new Map<string, boolean>();
 
-export function registerCustomKind(id: string, isArea: boolean) {
-  customAreaMap.set(id, isArea);
-}
-
 function isCustomArea(kind: string): boolean {
   return customAreaMap.get(kind) ?? false;
+}
+
+// Track which custom components are fixed
+const customFixedMap = new Map<string, boolean>();
+
+export function registerCustomKind(id: string, isArea: boolean, isFixed?: boolean) {
+  customAreaMap.set(id, isArea);
+  if (isFixed !== undefined) customFixedMap.set(id, isFixed);
+}
+
+export function isCustomFixed(kind: string): boolean {
+  return customFixedMap.get(kind) ?? false;
 }
 
 // ─── Pricing calculation ─────────────────────────────
@@ -84,6 +95,11 @@ export function computeMaterialCost(qty: number, comp: RoofComponentDef | null):
   const packs = Math.ceil(qty / packSize);
   const packPrice = comp.pack_price ?? comp.price_per_unit;
   return { cost: packs * packPrice, packs };
+}
+
+export function computeKnownPriceCost(qty: number, knownPrice: number): number {
+  if (qty <= 0 || knownPrice <= 0) return 0;
+  return qty * knownPrice;
 }
 
 export function computeLabourCost(qty: number, comp: RoofComponentDef | null): number {
@@ -124,11 +140,11 @@ export function makeInitialSections(): Record<string, ComponentSection> {
 }
 
 export function makeCustomSection(def: CustomComponentDef): ComponentSection {
-  registerCustomKind(def.id, def.measurementType === 'area');
+  registerCustomKind(def.id, def.measurementType === 'area', def.measurementType === 'fixed');
   return {
     kind: def.id as ComponentKind,
     entries: [],
-    wastePercent: def.wastePercent,
+    wastePercent: def.measurementType === 'fixed' ? 0 : def.wastePercent,
     customDef: def,
   };
 }

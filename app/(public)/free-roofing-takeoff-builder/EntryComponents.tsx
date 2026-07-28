@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { Entry, RoofComponentDef, CustomComponentDef, PitchType } from './types';
-import { areaValueForUnit, COMPONENT_DEFS, computeEntry, makeId } from './calc';
+import { areaValueForUnit, COMPONENT_DEFS, computeEntry, makeId, isCustomFixed } from './calc';
 import { InfoIcon } from './helpers';
 
 type MeasureMode = 'actual' | 'plan';
@@ -19,6 +19,11 @@ function isAreaKind(kind: string, customDef?: CustomComponentDef): boolean {
   return false;
 }
 
+function isFixedKind(kind: string): boolean {
+  if (kind.startsWith('custom-')) return isCustomFixed(kind);
+  return false;
+}
+
 // ─── Entry List Item ─────────────────────────────────
 
 interface EntryListItemProps {
@@ -30,31 +35,36 @@ interface EntryListItemProps {
   lenLabel: string;
   areaLabel: string;
   wastePercent: number;
+  isFixed?: boolean;
   getComponentById: (id: string | null) => RoofComponentDef | null;
   onRemove: () => void;
 }
 
-export function EntryListItem({ entry, index, kind, customDef, measureMode, lenLabel, areaLabel, wastePercent, getComponentById, onRemove }: EntryListItemProps) {
+export function EntryListItem({ entry, index, kind, customDef, measureMode, lenLabel, areaLabel, wastePercent, isFixed, getComponentById, onRemove }: EntryListItemProps) {
   const pitchType = getPitchType(kind, customDef);
   const isRoofArea = isAreaKind(kind, customDef);
   const usePitch = measureMode === 'plan' && pitchType !== 'none';
-  const unit = isRoofArea ? areaLabel : lenLabel;
+  const unit = isFixed ? 'pcs' : (isRoofArea ? areaLabel : lenLabel);
   const selectedComp = getComponentById(entry.selectedComponentId);
-  const withWasteVal = entry.computedValue * (1 + wastePercent / 100);
+  const withWasteVal = isFixed ? (entry.quantity ?? 1) : (entry.computedValue * (1 + wastePercent / 100));
 
-  const originalValue = usePitch
-    ? (entry.isTotalInput
-        ? (entry.actualValue ?? 0) * (entry.quantity ?? 1)
-        : isRoofArea
-          ? (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0) * (entry.quantity ?? 1)
-          : (entry.planLength ?? 0) * (entry.quantity ?? 1))
-    : entry.computedValue;
+  const originalValue = isFixed
+    ? (entry.quantity ?? 1)
+    : usePitch
+      ? (entry.isTotalInput
+          ? (entry.actualValue ?? 0) * (entry.quantity ?? 1)
+          : isRoofArea
+            ? (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0) * (entry.quantity ?? 1)
+            : (entry.planLength ?? 0) * (entry.quantity ?? 1))
+      : entry.computedValue;
 
-  const inputDesc = entry.isTotalInput
-    ? `Total: ${entry.actualValue ?? 0}`
-    : isRoofArea
-      ? `${entry.planWidth ?? 0} \u00d7 ${entry.planLengthVal ?? 0}`
-      : `${entry.planLength ?? entry.actualValue ?? 0}`;
+  const inputDesc = isFixed
+    ? `Qty: ${entry.quantity ?? 1}`
+    : entry.isTotalInput
+      ? `Total: ${entry.actualValue ?? 0}`
+      : isRoofArea
+        ? `${entry.planWidth ?? 0} \u00d7 ${entry.planLengthVal ?? 0}`
+        : `${entry.planLength ?? entry.actualValue ?? 0}`;
 
   return (
     <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white hover:bg-orange-50/40 hover:border-orange-200 px-3 py-2 transition">
@@ -72,11 +82,17 @@ export function EntryListItem({ entry, index, kind, customDef, measureMode, lenL
               <span className="text-[10px] text-slate-500">{entry.computedValue.toFixed(2)} {unit}</span>
             </>
           )}
-          {!usePitch && (
+          {!usePitch && !isFixed && (
             <span className="text-[10px] text-slate-500">{entry.computedValue.toFixed(2)} {unit}</span>
           )}
-          {wastePercent > 0 && (
+          {isFixed && (
+            <span className="text-[10px] text-slate-500">{entry.quantity ?? 1} {unit}</span>
+          )}
+          {wastePercent > 0 && !isFixed && (
             <span className="text-[10px] text-slate-400">+{wastePercent}% = {withWasteVal.toFixed(2)}</span>
+          )}
+          {entry.knownPrice != null && entry.knownPrice > 0 && (
+            <span className="text-[10px] text-[#FF6B35] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
           )}
           {selectedComp && <span className="text-[10px] text-slate-400 truncate">{selectedComp.name}</span>}
         </div>
@@ -103,10 +119,11 @@ interface AddEntryFormProps {
   pitchDegrees: number;
   unitSystem: 'metric' | 'imperial' | 'squares';
   roofAreaTotal: number | null;
+  isFixed?: boolean;
   onAdd: (entry: Entry) => void;
 }
 
-export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, unitSystem, roofAreaTotal, onAdd }: AddEntryFormProps) {
+export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, unitSystem, roofAreaTotal, isFixed, onAdd }: AddEntryFormProps) {
   const pitchType = getPitchType(kind, customDef);
   const isRoofArea = isAreaKind(kind, customDef);
   const usePitch = measureMode === 'plan' && pitchType !== 'none';
@@ -119,14 +136,26 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
   const [quantity, setQuantity] = useState('1');
   const [label, setLabel] = useState('');
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(availableComponents[0]?.id ?? null);
+  const [pricingMode, setPricingMode] = useState<'component' | 'known_price'>('component');
+  const [knownPrice, setKnownPrice] = useState('');
 
-  const resetForm = () => { setVal1(''); setVal2(''); setTotalVal(''); setQuantity('1'); setLabel(''); };
+  const resetForm = () => { setVal1(''); setVal2(''); setTotalVal(''); setQuantity('1'); setLabel(''); setKnownPrice(''); };
 
   const handleAdd = () => {
     let entry: Entry;
     const qty = parseInt(quantity) || 1;
+    const kp = pricingMode === 'known_price' ? parseFloat(knownPrice) : undefined;
 
-    if (isRoofArea) {
+    if (isFixed) {
+      // Fixed: just quantity, optional known price
+      entry = {
+        id: makeId(), label, inputMode: 'actual',
+        pitchDegrees: 0, actualValue: qty, computedValue: qty,
+        selectedComponentId: pricingMode === 'component' ? selectedComponentId : null,
+        quantity: qty, isTotalInput: false,
+        knownPrice: kp,
+      };
+    } else if (isRoofArea) {
       if (areaMode === 'dimensions') {
         const w = parseFloat(val1);
         const l = parseFloat(val2);
@@ -135,6 +164,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
           id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
           planWidth: w, planLengthVal: l, pitchDegrees, actualValue: usePitch ? 0 : w * l, computedValue: 0,
           selectedComponentId, quantity: qty, isTotalInput: false,
+          knownPrice: kp,
         };
       } else {
         const t = parseFloat(totalVal);
@@ -143,6 +173,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
           id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
           pitchDegrees, actualValue: t, computedValue: 0,
           selectedComponentId, quantity: qty, isTotalInput: true,
+          knownPrice: kp,
         };
       }
     } else {
@@ -153,6 +184,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
         id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
         planLength: l, pitchDegrees, actualValue: usePitch ? 0 : l, computedValue: 0,
         selectedComponentId, quantity: qty, isTotalInput: false,
+        knownPrice: kp,
       };
     }
 
@@ -162,9 +194,12 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
     resetForm();
   };
 
-  const canAdd = isRoofArea
-    ? (areaMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(totalVal) > 0)
-    : parseFloat(val1) > 0;
+  const canAdd = isFixed
+    ? parseInt(quantity) > 0
+    : isRoofArea
+      ? (areaMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(totalVal) > 0)
+      : parseFloat(val1) > 0;
+  const canAddWithPrice = canAdd && (pricingMode === 'component' || (pricingMode === 'known_price' && parseFloat(knownPrice) > 0));
 
   const inputCls = "mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-base md:text-sm focus:border-orange-500 focus:outline-none";
 
@@ -197,7 +232,12 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {isRoofArea && areaMode === 'dimensions' ? (
+        {isFixed ? (
+          <div className="col-span-2">
+            <label className="text-xs font-medium text-slate-600">Quantity</label>
+            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" placeholder="1" className={inputCls} />
+          </div>
+        ) : isRoofArea && areaMode === 'dimensions' ? (
           <>
             <div>
               <label className="text-xs font-medium text-slate-600">{planPrefix}Width ({lenLabel})</label>
@@ -225,14 +265,34 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
           <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" className={inputCls} />
         </div>
 
-        <button onClick={handleAdd} disabled={!canAdd}
-          className={`cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAdd ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
+        <button onClick={handleAdd} disabled={!canAddWithPrice}
+          className={`cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAddWithPrice ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
           <svg className="w-4 h-4 inline -mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           {' '}Add
         </button>
       </div>
 
-      {availableComponents.length > 0 && (
+      {/* Pricing mode toggle: component vs known price */}
+      {!isFixed && (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+            <button onClick={() => setPricingMode('component')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${pricingMode === 'component' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Component</button>
+            <button onClick={() => setPricingMode('known_price')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${pricingMode === 'known_price' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Known Price</button>
+          </div>
+          <InfoIcon text={`Select a component from the dropdown, or enter your own known price per ${isRoofArea ? areaLabel : lenLabel}.`} />
+        </div>
+      )}
+      {isFixed && (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+            <button onClick={() => setPricingMode('component')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${pricingMode === 'component' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Component</button>
+            <button onClick={() => setPricingMode('known_price')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${pricingMode === 'known_price' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Known Price</button>
+          </div>
+        </div>
+      )}
+
+      {/* Component dropdown OR known price input */}
+      {pricingMode === 'component' && availableComponents.length > 0 && (
         <div>
           <label className="text-xs font-medium text-slate-600">Component</label>
           <select value={selectedComponentId || ''} onChange={(e) => setSelectedComponentId(e.target.value || null)}
@@ -244,7 +304,16 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
           </select>
         </div>
       )}
-      {componentsLoading && <p className="text-xs text-slate-400">Loading component pricing...</p>}
+      {pricingMode === 'component' && availableComponents.length === 0 && !componentsLoading && (
+        <p className="text-xs text-slate-400">No components available. Use Known Price to enter your own pricing.</p>
+      )}
+      {pricingMode === 'known_price' && (
+        <div>
+          <label className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({'\u00A3'})</label>
+          <input type="number" value={knownPrice} onChange={(e) => setKnownPrice(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0.00" className={inputCls} />
+        </div>
+      )}
+      {pricingMode === 'component' && componentsLoading && <p className="text-xs text-slate-400">Loading component pricing...</p>}
 
       <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
         className="w-full rounded-lg border border-slate-200 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />
@@ -261,7 +330,7 @@ interface CustomComponentCreatorProps {
 export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
-  const [measurementType, setMeasurementType] = useState<'linear' | 'area'>('linear');
+  const [measurementType, setMeasurementType] = useState<'linear' | 'area' | 'fixed'>('linear');
   const [pitchType, setPitchType] = useState<PitchType>('none');
   const [wastePercent, setWastePercent] = useState('5');
 
@@ -312,12 +381,13 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
           <div className="mt-0.5 flex rounded-lg border border-slate-300 overflow-hidden">
             <button onClick={() => setMeasurementType('linear')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'linear' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Linear</button>
             <button onClick={() => setMeasurementType('area')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'area' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Area</button>
+            <button onClick={() => setMeasurementType('fixed')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'fixed' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Fixed</button>
           </div>
         </div>
         <div>
           <label className="text-xs font-medium text-slate-600">Pitch calc</label>
-          <select value={pitchType} onChange={(e) => setPitchType(e.target.value as PitchType)}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
+          <select value={measurementType === 'fixed' ? 'none' : pitchType} onChange={(e) => setPitchType(e.target.value as PitchType)} disabled={measurementType === 'fixed'}
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400">
             <option value="none">None</option>
             <option value="rafter">Rafter pitch</option>
             <option value="hip_valley">Hip/Valley pitch</option>
@@ -325,10 +395,14 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
         </div>
         <div>
           <label className="text-xs font-medium text-slate-600">Waste %</label>
-          <input type="number" value={wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm md:text-xs text-center focus:border-orange-500 focus:outline-none" />
+          <input type="number" value={measurementType === 'fixed' ? '0' : wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1} disabled={measurementType === 'fixed'}
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm md:text-xs text-center focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400" />
         </div>
       </div>
+
+      {measurementType === 'fixed' && (
+        <p className="text-xs text-slate-400">Fixed components are priced per piece. Enter the quantity when adding entries.</p>
+      )}
 
       <button onClick={handleCreate} disabled={!name.trim()}
         className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${name.trim() ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
