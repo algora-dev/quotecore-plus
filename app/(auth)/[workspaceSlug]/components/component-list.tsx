@@ -427,6 +427,18 @@ export function ComponentList({
     e.preventDefault();
     setSaving(true);
 
+    // Suppliers: SKU required for components in published libraries
+    if (isSupplier) {
+      const activeCol = collections.find(c => c.id === activeLibraryId);
+      const isPublishedLib = activeCol?.visibility === 'published';
+      const skuVal = (new FormData(e.currentTarget).get('sku') as string)?.trim();
+      if (isPublishedLib && !skuVal) {
+        alert('SKU / Product Code is required for components in published supplier libraries.');
+        setSaving(false);
+        return;
+      }
+    }
+
     // Validate per_pack_coverage requires all three pack fields.
     if (formPricingStrategy === 'per_pack_coverage') {
       if (!formPackPrice || !formPackSize || !formPackCoverageM2) {
@@ -545,6 +557,17 @@ export function ComponentList({
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>, id: string) {
     e.preventDefault();
+
+    // Suppliers: SKU required for components in published libraries, and cannot be changed once published
+    if (isSupplier) {
+      const activeCol = collections.find(c => c.id === activeLibraryId);
+      const isPublishedLib = activeCol?.visibility === 'published';
+      const skuVal = (new FormData(e.currentTarget).get('sku') as string)?.trim();
+      if (isPublishedLib && !skuVal) {
+        alert('SKU / Product Code is required for components in published supplier libraries.');
+        return;
+      }
+    }
 
     // Validate per_pack_coverage requires all three pack fields.
     if (formPricingStrategy === 'per_pack_coverage') {
@@ -1013,8 +1036,8 @@ export function ComponentList({
                 <input name="name" required defaultValue={restoredName} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
               </div>
               <div data-copilot="component-sku">
-                <label className="block text-xs text-slate-500 mb-1">SKU / Product Code <span className="text-slate-400">(optional)</span></label>
-                <input name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
+                <input name="sku" defaultValue={''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" />
               </div>
               <div data-copilot="component-type">
                 <label className="block text-xs text-slate-500 mb-1">Type</label>
@@ -1271,8 +1294,8 @@ export function ComponentList({
                      <input name="name" required defaultValue={comp.name} className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
                    </div>
                    <div>
-                     <label className="block text-xs text-slate-500 mb-1">SKU / Product Code <span className="text-slate-400">(optional)</span></label>
-                     <input name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg" />
+                     <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
+                     <input name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" readOnly={isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' && !!comp.sku} title={isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' && !!comp.sku ? 'SKU is locked once published' : ''} />
                    </div>
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">Measurement</label>

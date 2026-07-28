@@ -486,6 +486,19 @@ export async function updateLibraryVisibility(
     const isFirstPublish = input.visibility === 'published' &&
       (!currentLib?.published_version || currentLib.published_version === 0);
 
+    // Enforce SKU requirement: all components must have a SKU before publishing
+    if (isFirstPublish) {
+      const { count: missingSkuCount } = await supabase
+        .from('component_library')
+        .select('id', { count: 'exact', head: true })
+        .eq('collection_id', id)
+        .eq('is_active', true)
+        .or('sku.is.null,sku.eq.');
+      if (missingSkuCount && missingSkuCount > 0) {
+        return { ok: false, message: `Cannot publish: ${missingSkuCount} component(s) are missing a SKU / Product Code. Add SKUs to all components before publishing.` };
+      }
+    }
+
     const update: Record<string, unknown> = {};
     if (input.visibility !== undefined) {
       update.visibility = input.visibility;

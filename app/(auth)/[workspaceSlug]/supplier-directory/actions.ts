@@ -896,18 +896,21 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
     subscriptions = refreshedSubs ?? [];
   }
 
-  // Build subscription map: library_id -> { enabled, fieldPrefs }
-  const subMap = new Map<string, { enabled: boolean; fieldPrefs: Set<string> | null }>();
+  // Build subscription map: library_id -> { enabled, fieldPrefs, notifyNewComponents }
+  const subMap = new Map<string, { enabled: boolean; fieldPrefs: Set<string> | null; notifyNewComponents: boolean }>();
   for (const s of subscriptions ?? []) {
     if (s.alerts_enabled) {
       let fieldPrefs: Set<string> | null = null;
       const prefs = s.field_preferences as Record<string, boolean> | null;
+      let notifyNewComponents = true; // default ON
       if (prefs) {
         // If prefs exist, only include fields explicitly set to true
         const enabledFields = Object.entries(prefs).filter(([, v]) => v === true).map(([k]) => k);
         fieldPrefs = enabledFields.length > 0 ? new Set(enabledFields) : null; // null = all fields (if all false, treat as all)
+        // Check new_components preference (default ON if not explicitly set to false)
+        notifyNewComponents = prefs['new_components'] !== false;
       }
-      subMap.set(s.source_library_id, { enabled: true, fieldPrefs });
+      subMap.set(s.source_library_id, { enabled: true, fieldPrefs, notifyNewComponents });
     }
   }
 
@@ -1054,6 +1057,53 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
         local_values: localValues,
         changed_fields: changedFields,
       });
+    }
+
+    // Check for 'added' notifications (new components the supplier added that the user hasn't imported)
+    const subInfo = subMap.get(sourceLibId);
+    if (subInfo?.notifyNewComponents) {
+      // Get all 'added' notifications for this library
+      const { data: addedNotifs } = await supabase
+        .from('supplier_change_notifications')
+        .select('*')
+        .eq('supplier_library_id', sourceLibId)
+        .eq('change_type', 'added')
+        .gt('version_to', minSourceVersion)
+        .order('created_at', { ascending: false });
+
+      if (addedNotifs && addedNotifs.length > 0) {
+        // Get the user's existing source_component_ids to filter out already-imported ones
+        const existingSourceIds = new Set(imports.map(i => i.source_component_id));
+
+        for (const notif of addedNotifs) {
+          // Skip if already resolved
+          const resKey = `${notif.id}:null`;
+          if (resolvedMap.has(resKey)) continue;
+          // Skip if user already imported this component
+          if (existingSourceIds.has(notif.component_id)) continue;
+
+          const newSnap = notif.new_snapshot as Record<string, unknown> | null;
+          const changedFields: string[] = newSnap ? Object.keys(newSnap).filter(k => k !== 'id') : [];
+
+          results.push({
+            notification_id: notif.id,
+            source_library_id: sourceLibId,
+            source_library_name: libInfo.name,
+            supplier_name: libInfo.supplier_name,
+            component_id: notif.component_id ?? '',
+            imported_component_id: '', // no imported component yet
+            imported_component_name: (newSnap?.name as string) ?? 'New component',
+            change_type: 'added',
+            version_from: notif.version_from,
+            version_to: notif.version_to,
+            created_at: notif.created_at,
+            new_snapshot: newSnap,
+            old_snapshot: null,
+            local_values: null,
+            changed_fields: changedFields,
+          });
+        }
+      }
     }
   }
 

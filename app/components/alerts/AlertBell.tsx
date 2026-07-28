@@ -67,6 +67,7 @@ export function AlertBell({ initialAlerts, initialUnreadCount, workspaceSlug, us
     if (alert.quote_id) return `/${workspaceSlug}/quotes/${alert.quote_id}/summary?from=inbox`;
     if (alert.invoice_id) return `/${workspaceSlug}/invoices/${alert.invoice_id}?from=inbox`;
     if (alert.order_id) return `/${workspaceSlug}/material-orders/${alert.order_id}/preview?from=inbox`;
+    if (alert.alert_type === 'supplier_update') return `/${workspaceSlug}/components`;
     return `/${workspaceSlug}/inbox`;
   }
 

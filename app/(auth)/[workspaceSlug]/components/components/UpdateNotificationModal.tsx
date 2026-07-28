@@ -24,6 +24,8 @@ export function UpdateNotificationModal({
   const [applying, setApplying] = useState(false);
   const [results, setResults] = useState<Record<string, { ok: boolean; message?: string }>>({});
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [applyDone, setApplyDone] = useState(false);
+  const [appliedCount, setAppliedCount] = useState(0);
 
   // Group updates by supplier library
   const grouped = new Map<string, { supplierName: string; libraryName: string; updates: PendingUpdate[] }>();
@@ -105,14 +107,24 @@ export function UpdateNotificationModal({
       if (data.results) {
         setResults(data.results);
         // Remove successfully applied updates
+        let successCount = 0;
         const applied = new Set<string>();
         for (const [key, result] of Object.entries(data.results as Record<string, { ok: boolean }>) ) {
           if (result.ok) {
+            successCount++;
             const [notifId] = key.split(':');
             applied.add(notifId);
           }
         }
+        setAppliedCount(successCount);
+        setApplyDone(true);
         setDismissedIds(prev => new Set([...prev, ...applied]));
+        // Auto-close after showing success state briefly
+        if (successCount > 0) {
+          setTimeout(() => {
+            onClose();
+          }, 1200);
+        }
       }
     } catch {
       // Network error
@@ -151,7 +163,26 @@ export function UpdateNotificationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col relative">
+        {/* Loading overlay when applying */}
+        {applying && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 rounded-2xl">
+            <svg className="animate-spin h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <p className="mt-3 text-sm font-medium text-slate-700">Applying updates...</p>
+          </div>
+        )}
+        {/* Success overlay */}
+        {applyDone && !applying && appliedCount > 0 && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/90 rounded-2xl">
+            <svg className="h-10 w-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <p className="mt-3 text-sm font-medium text-slate-700">{appliedCount} component{appliedCount !== 1 ? 's' : ''} updated</p>
+          </div>
+        )}
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 rounded-t-2xl bg-white">
           <div>
@@ -180,8 +211,8 @@ export function UpdateNotificationModal({
             <div key={libId} className="space-y-2">
               {/* Library header */}
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-semibold text-slate-900">{group.supplierName}</span>
-                <span className="text-xs text-slate-400">{group.libraryName}</span>
+                <span className="text-sm font-semibold text-slate-900">{group.libraryName}</span>
+                <span className="text-xs text-slate-400">({group.supplierName})</span>
               </div>
 
               {/* Updates for this library */}
