@@ -66,6 +66,7 @@ export function SupplierDashboard({
   const [description, setDescription] = useState(profile?.description ?? '');
   const [serviceAreas, setServiceAreas] = useState(profile?.service_areas?.join(', ') ?? '');
   const [roofingTypes, setRoofingTypes] = useState(profile?.roofing_types ?? []);
+  const [allowCustomPricing, setAllowCustomPricing] = useState(profile?.allow_custom_pricing ?? false);
 
   async function handleSaveProfile() {
     setSaving(true);
@@ -78,6 +79,7 @@ export function SupplierDashboard({
         description: description.trim() || null,
         service_areas: serviceAreas.split(',').map(s => s.trim()).filter(Boolean),
         roofing_types: roofingTypes,
+        allow_custom_pricing: allowCustomPricing,
       });
       if (!result.ok) {
         setError(result.message);
@@ -275,6 +277,22 @@ export function SupplierDashboard({
                     })}
                   </div>
                 </div>
+                {/* Allow custom pricing toggle */}
+                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-xs font-medium text-slate-700">Allow custom pricing on takeoff tool</label>
+                      <p className="text-[11px] text-slate-400 mt-0.5">When enabled, users on your branded takeoff tool can enter their own known prices instead of only selecting your components. When disabled, only your published components appear in the dropdown.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAllowCustomPricing(!allowCustomPricing)}
+                      className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${allowCustomPricing ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}
+                    >
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${allowCustomPricing ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+                </div>
                 <div className="flex items-center gap-2 pt-2">
                   <button
                     onClick={handleSaveProfile}
@@ -337,6 +355,10 @@ export function SupplierDashboard({
                     </div>
                   </div>
                 )}
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-400 w-20">Custom Price</span>
+                  <span className={`rounded-full px-2 py-0.5 ${profile.allow_custom_pricing ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{profile.allow_custom_pricing ? 'Enabled' : 'Disabled (components only)'}</span>
+                </div>
               </div>
             )}
           </div>
