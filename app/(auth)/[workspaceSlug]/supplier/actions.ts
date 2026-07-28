@@ -185,6 +185,7 @@ export type SupplierCatalogData = {
   roofing_types: string[] | null;
   brands: string[] | null;
   keywords: string[] | null;
+  service_areas: string[] | null;
   created_at: string;
   updated_at: string;
 };
@@ -202,7 +203,7 @@ export async function loadSupplierCatalogs(): Promise<SupplierCatalogData[]> {
       id, name, original_filename, row_count, data_bytes, status,
       visibility, publication_status, published_version, published_at,
       public_title, public_description, roofing_types, brands, keywords,
-      created_at, updated_at
+      service_areas, created_at, updated_at
     `)
     .eq('company_id', profile.company_id)
     .order('status', { ascending: true })
@@ -224,6 +225,7 @@ export async function updateCatalogVisibility(
     roofing_types?: string[];
     brands?: string[];
     keywords?: string[];
+    service_areas?: string[];
   }
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
@@ -258,6 +260,7 @@ export async function updateCatalogVisibility(
       roofing_types: settings.roofing_types ?? null,
       brands: settings.brands ?? null,
       keywords: settings.keywords ?? null,
+      service_areas: settings.service_areas ?? null,
       supplier_profile_id: supplier.id,
     };
 

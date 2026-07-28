@@ -2,11 +2,15 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import { UploadWizard } from './upload-wizard';
 import { EditCatalogModal } from './edit-catalog-modal';
 import { archiveCatalog, deleteCatalog, unarchiveCatalog } from './actions';
 import type { CatalogRow } from './actions';
+import type { DirectoryCatalog } from '../supplier-directory/actions';
+
+type CatalogTab = 'my-catalogs' | 'find-catalogs';
 
 interface Props {
   initialCatalogs: CatalogRow[];
@@ -18,6 +22,8 @@ interface Props {
   subscriptionActive: boolean;
   /** When true the company is over storage - block CSV uploads. */
   isOverStorage?: boolean;
+  /** Supplier catalogues for the Find Catalogs tab */
+  supplierCatalogs?: DirectoryCatalog[];
 }
 
 function timeAgo(dateStr: string): string {
@@ -64,11 +70,15 @@ export function CatalogList({
   catalogCount,
   subscriptionActive,
   isOverStorage,
+  supplierCatalogs = [],
 }: Props) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [catalogs, setCatalogs] = useState<CatalogRow[]>(initialCatalogs);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<CatalogTab>('my-catalogs');
+  const [savingCatalogId, setSavingCatalogId] = useState<string | null>(null);
+  const [saveResult, setSaveResult] = useState<Record<string, { ok: boolean; message: string }>>({});
 
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -155,6 +165,30 @@ export function CatalogList({
     } else {
       alert(result.message);
     }
+  }
+
+  async function handleSaveSupplierCatalog(catalogId: string) {
+    setSavingCatalogId(catalogId);
+    try {
+      const res = await fetch('/api/supplier-directory/save-catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catalogId }),
+      });
+      const data = await res.json();
+      setSaveResult(prev => ({
+        ...prev,
+        [catalogId]: data.ok
+          ? { ok: true, message: 'Added to your catalogs' }
+          : { ok: false, message: data.message || 'Failed' },
+      }));
+      if (data.ok) {
+        startTransition(() => router.refresh());
+      }
+    } catch {
+      setSaveResult(prev => ({ ...prev, [catalogId]: { ok: false, message: 'Network error' } }));
+    }
+    setSavingCatalogId(null);
   }
 
   function renderRow(catalog: CatalogRow) {
@@ -247,17 +281,89 @@ export function CatalogList({
             )}
           </p>
         </div>
-        <button
-          onClick={handleNewCatalog}
-          data-copilot="upload-catalog"
-          className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 self-start sm:self-auto"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Upload catalog
-        </button>
+        {activeTab === 'my-catalogs' && (
+          <button
+            onClick={handleNewCatalog}
+            data-copilot="upload-catalog"
+            className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 self-start sm:self-auto"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Upload catalog
+          </button>
+        )}
       </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setActiveTab('my-catalogs')}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'my-catalogs' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+          My Catalogs ({catalogs.length})
+        </button>
+        <button onClick={() => setActiveTab('find-catalogs')}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'find-catalogs' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+            Find Supplier Catalogs ({supplierCatalogs.length})
+          </button>
+      </div>
+
+      {/* Find Supplier Catalogs Tab */}
+      {activeTab === 'find-catalogs' && (
+        supplierCatalogs.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
+            <p className="text-sm font-medium text-slate-700 mb-1">No supplier catalogs available</p>
+            <p className="text-xs text-slate-400 mb-4">When suppliers publish catalogues, they'll appear here for you to add to your account.</p>
+            <Link href={`/${workspaceSlug}/supplier-directory`}
+              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800">
+              Browse Supplier Directory
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {supplierCatalogs.map(cat => (
+              <div key={cat.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3 hover:bg-orange-50/40 hover:border-orange-200 transition">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-slate-900">{cat.public_title || cat.name}</span>
+                      <span className="rounded-full bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 text-xs">
+                        {cat.row_count} row{cat.row_count !== 1 ? 's' : ''}
+                      </span>
+                      {cat.published_version > 0 && <span className="text-xs text-slate-400">v{cat.published_version}</span>}
+                    </div>
+                    {cat.public_description && <p className="text-xs text-slate-500 mt-0.5">{cat.public_description}</p>}
+                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                      <span>by {cat.supplier_name}</span>
+                      {cat.published_at && <span>Updated: {new Date(cat.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+                    </div>
+                    {cat.service_areas && cat.service_areas.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">{cat.service_areas.map(a => <span key={a} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-600">{a}</span>)}</div>
+                    )}
+                    {cat.roofing_types && cat.roofing_types.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">{cat.roofing_types.map(rt => <span key={rt} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{rt}</span>)}</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5 items-end shrink-0">
+                    <button
+                      onClick={() => handleSaveSupplierCatalog(cat.id)}
+                      disabled={savingCatalogId === cat.id}
+                      className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#e55a2b] transition disabled:opacity-50"
+                    >
+                      {savingCatalogId === cat.id ? 'Adding...' : 'Add Catalog'}
+                    </button>
+                    {saveResult[cat.id] && (
+                      <span className={`text-xs ${saveResult[cat.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{saveResult[cat.id].message}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* My Catalogs Tab Content */}
+      {activeTab === 'my-catalogs' && (<>
 
       {/* Search */}
       {catalogs.length > 0 && (
@@ -387,6 +493,8 @@ export function CatalogList({
         }
         recommendedPlan="pro"
       />
+      </>
+      )}
     </section>
   );
 }

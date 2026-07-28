@@ -800,6 +800,7 @@ export type Database = {
           roofing_types: string[] | null
           row_count: number
           search_tsv: unknown
+          service_areas: string[] | null
           source_catalog_id: string | null
           source_version: number | null
           status: string
@@ -828,6 +829,7 @@ export type Database = {
           roofing_types?: string[] | null
           row_count?: number
           search_tsv?: unknown
+          service_areas?: string[] | null
           source_catalog_id?: string | null
           source_version?: number | null
           status?: string
@@ -856,6 +858,7 @@ export type Database = {
           roofing_types?: string[] | null
           row_count?: number
           search_tsv?: unknown
+          service_areas?: string[] | null
           source_catalog_id?: string | null
           source_version?: number | null
           status?: string

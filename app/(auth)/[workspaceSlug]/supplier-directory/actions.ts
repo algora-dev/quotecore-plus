@@ -1558,6 +1558,7 @@ export type DirectoryCatalog = {
   roofing_types: string[] | null;
   brands: string[] | null;
   keywords: string[] | null;
+  service_areas: string[] | null;
   supplier_name: string;
   supplier_slug: string;
   supplier_logo_url: string | null;
@@ -1581,7 +1582,7 @@ export async function searchSupplierCatalogs(params: {
     .select(`
       id, name, public_title, public_description, visibility,
       published_at, published_version, row_count, original_filename,
-      roofing_types, brands, keywords,
+      roofing_types, brands, keywords, service_areas,
       supplier_profile_id,
       supplier_profiles!inner (
         id, supplier_name, slug, logo_url, status, service_areas
@@ -1616,6 +1617,7 @@ export async function searchSupplierCatalogs(params: {
       roofing_types: c.roofing_types,
       brands: c.brands,
       keywords: c.keywords,
+      service_areas: c.service_areas,
       supplier_name: sp.supplier_name,
       supplier_slug: sp.slug,
       supplier_logo_url: sp.logo_url,
@@ -1646,13 +1648,15 @@ export async function searchSupplierCatalogs(params: {
     results = results.filter(c => (c.brands ?? []).some(b => b.toLowerCase() === brand.toLowerCase()));
   }
 
-  // Location filter
+  // Location filter - check both catalogue service_areas and supplier service_areas
   if (location && location.trim()) {
     const loc = location.toLowerCase().trim();
     results = results.filter(c => {
+      const catAreas = c.service_areas ?? [];
+      if (catAreas.some(a => a.toLowerCase().includes(loc))) return true;
       const sp = catalogs.find(cat => cat.id === c.id)?.supplier_profiles as unknown as { service_areas: string[] } | null;
-      const areas = sp?.service_areas ?? [];
-      return areas.some(a => a.toLowerCase().includes(loc));
+      const spAreas = sp?.service_areas ?? [];
+      return spAreas.some(a => a.toLowerCase().includes(loc));
     });
   }
 

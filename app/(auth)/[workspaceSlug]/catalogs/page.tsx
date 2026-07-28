@@ -1,5 +1,6 @@
 import { loadCatalogs, loadCatalogEntitlements } from './actions';
 import { CatalogList } from './catalog-list';
+import { searchSupplierCatalogs } from '../supplier-directory/actions';
 
 export default async function CatalogsPage(props: {
   params: Promise<{ workspaceSlug: string }>;
@@ -22,6 +23,9 @@ export default async function CatalogsPage(props: {
 
   const ent = await loadCatalogEntitlements();
 
+  // Fetch published supplier catalogues for the Find Catalogs tab
+  const supplierCatalogs = await searchSupplierCatalogs({ limit: 50 });
+
   return (
     <CatalogList
       initialCatalogs={catalogs}
@@ -32,6 +36,7 @@ export default async function CatalogsPage(props: {
       effectivePlanCode={ent.effectivePlanCode}
       subscriptionActive={ent.isActive}
       isOverStorage={ent.isOverStorage}
+      supplierCatalogs={supplierCatalogs}
     />
   );
 }
