@@ -15,10 +15,12 @@ export function UpdateNotificationModal({
   workspaceSlug,
   updates,
   onClose,
+  onApplied,
 }: {
   workspaceSlug: string;
   updates: PendingUpdate[];
   onClose: () => void;
+  onApplied?: () => void;
 }) {
   const [selection, setSelection] = useState<Selection>({});
   const [applying, setApplying] = useState(false);
@@ -123,6 +125,7 @@ export function UpdateNotificationModal({
         if (successCount > 0) {
           setTimeout(() => {
             onClose();
+            onApplied?.();
           }, 1200);
         }
       }
