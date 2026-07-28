@@ -468,13 +468,23 @@ export async function updateLibraryVisibility(
       return { ok: false, message: 'Only approved suppliers can publish libraries.' };
     }
 
-    // Get supplier_profile_id
+    // Get supplier_profile_id and current published_version
     const { data: supplierProfile } = await supabase
       .from('supplier_profiles')
       .select('id')
       .eq('company_id', profile.company_id)
       .eq('status', 'approved')
       .single();
+
+    // Fetch current published_version to detect first-time publish
+    const { data: currentLib } = await supabase
+      .from('component_collections')
+      .select('published_version')
+      .eq('id', id)
+      .single();
+
+    const isFirstPublish = input.visibility === 'published' &&
+      (!currentLib?.published_version || currentLib.published_version === 0);
 
     const update: Record<string, unknown> = {};
     if (input.visibility !== undefined) {
@@ -501,6 +511,40 @@ export async function updateLibraryVisibility(
       .eq('company_id', profile.company_id);
 
     if (error) return { ok: false, message: error.message };
+
+    // First-time publish: create baseline snapshot via RPC so future edits can be diffed
+    if (isFirstPublish) {
+      const { buildSnapshotArray } = await import('@/app/lib/supabase/sync-fields');
+      const { data: currentComponents } = await supabase
+        .from('component_library')
+        .select(`
+          id, name, component_type, measurement_type, sku, takeoff_slot, notes,
+          default_material_rate, default_labour_rate,
+          default_waste_type, default_waste_percent, default_waste_fixed,
+          default_pitch_type, waste_unit,
+          pack_price, pack_size, pack_coverage_m2,
+          pricing_strategy, show_price_default, show_dimensions_default,
+          eligible_for_orders, height_value_mm, depth_value_mm
+        `)
+        .eq('collection_id', id)
+        .eq('is_active', true)
+        .order('name');
+
+      const snapshot = buildSnapshotArray(currentComponents ?? []);
+
+      const { error: rpcError } = await supabase
+        .rpc('supplier_publish_update', {
+          p_library_id: id,
+          p_snapshot: snapshot as unknown as import('@/app/lib/supabase/database.types').Json,
+          p_publishing_user: profile.id,
+        });
+
+      if (rpcError) {
+        console.error('[updateLibraryVisibility] Baseline snapshot RPC error:', rpcError);
+        // Don't fail the whole operation - visibility was already updated successfully
+      }
+    }
+
     revalidatePath('/components');
     return { ok: true };
   } catch (err) {
