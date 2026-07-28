@@ -19,6 +19,7 @@ export type SupplierProfileData = {
   keywords: string[];
   logo_url: string | null;
   approved_at: string | null;
+  allow_custom_pricing: boolean;
 };
 
 export type SupplierLibraryData = {
@@ -47,7 +48,7 @@ export async function loadSupplierProfile(): Promise<SupplierProfileData | null>
 
   const { data, error } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at')
+    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing')
     .eq('company_id', profile.company_id)
     .maybeSingle();
 
@@ -119,6 +120,7 @@ export async function updateSupplierProfile(
     product_categories: string[];
     brands: string[];
     keywords: string[];
+    allow_custom_pricing: boolean;
   }>
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
@@ -143,6 +145,7 @@ export async function updateSupplierProfile(
     if (input.product_categories !== undefined) update.product_categories = input.product_categories;
     if (input.brands !== undefined) update.brands = input.brands;
     if (input.keywords !== undefined) update.keywords = input.keywords;
+    if (input.allow_custom_pricing !== undefined) update.allow_custom_pricing = input.allow_custom_pricing;
 
     const { error } = await supabase
       .from('supplier_profiles')

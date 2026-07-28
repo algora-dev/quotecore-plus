@@ -191,6 +191,20 @@ export function SubscriptionSettingsModal({
                       )}
                     </div>
 
+                    {/* New component toggle */}
+                    <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">New Components</p>
+                      <label className="flex items-center gap-2 cursor-pointer hover:bg-orange-50/30 rounded-lg px-2 py-1">
+                        <input
+                          type="checkbox"
+                          checked={!prefs || prefs['new_components'] !== false}
+                          onChange={() => toggleFieldPref(sub.source_library_id, 'new_components', prefs)}
+                          className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                        />
+                        <span className="text-sm text-slate-700">Alert me when new components are added</span>
+                      </label>
+                    </div>
+
                     {/* Price fields */}
                     <div>
                       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Pricing</p>

@@ -125,7 +125,7 @@ export function WorkspaceNav({
             href={`/${workspaceSlug}/supplier`}
             prefetch={false}
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 transition-all duration-200 ease-in-out ${
-              pathname?.startsWith(`/${workspaceSlug}/supplier`)
+              pathname === `/${workspaceSlug}/supplier` || pathname?.startsWith(`/${workspaceSlug}/supplier/`)
                 ? 'bg-black text-white border-2 border-black'
                 : 'text-slate-600 border-2 border-transparent pill-shimmer'
             }`}

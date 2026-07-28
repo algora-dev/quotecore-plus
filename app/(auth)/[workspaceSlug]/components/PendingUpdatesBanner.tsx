@@ -74,6 +74,7 @@ export function PendingUpdatesBanner({
           workspaceSlug={workspaceSlug}
           updates={updates}
           onClose={() => setModalOpen(false)}
+          onApplied={() => window.location.reload()}
         />
       )}
 

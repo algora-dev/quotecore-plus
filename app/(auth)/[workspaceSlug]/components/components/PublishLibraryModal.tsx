@@ -195,7 +195,7 @@ export function PublishLibraryModal({
           )}
 
           {error && (
-            <p className="text-xs text-red-600">{error}</p>
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{error}</div>
           )}
 
           <div className="flex gap-2 pt-2">

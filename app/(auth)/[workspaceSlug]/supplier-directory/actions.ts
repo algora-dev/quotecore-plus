@@ -788,6 +788,8 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
   }
 
   // 5. If changes were recorded, insert inbox alerts for all subscribed companies
+  // Use admin client (service role) to bypass RLS - the supplier is inserting alerts
+  // for OTHER companies (the importers), which RLS would block with user-scoped client.
   if (row.ok && row.changes_recorded > 0) {
     try {
       // Find all companies with alerts_enabled subscriptions to this library
@@ -815,7 +817,9 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
           message: `${row.changes_recorded} component change${row.changes_recorded !== 1 ? 's' : ''} published. Review and apply to your imported components.`,
         }));
 
-        await supabase.from('alerts').insert(alertRows);
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const admin = createAdminClient();
+        await admin.from('alerts').insert(alertRows);
       }
     } catch (err) {
       console.error('[publishLibraryUpdate] Alert insert failed:', err);
@@ -870,24 +874,126 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
 
   // 2. Get subscriptions for the libraries this company has imported from
   const sourceLibraryIds = [...new Set(imported.map(i => i.source_library_id).filter(Boolean))] as string[];
-  const { data: subscriptions } = await supabase
+  let { data: subscriptions } = await supabase
     .from('supplier_library_subscriptions')
     .select('source_library_id, alerts_enabled, field_preferences')
     .eq('company_id', profile.company_id)
     .in('source_library_id', sourceLibraryIds);
 
-  // Build subscription map: library_id -> { enabled, fieldPrefs }
-  const subMap = new Map<string, { enabled: boolean; fieldPrefs: Set<string> | null }>();
+  // Auto-backfill: if a company has imported components but no subscription exists,
+  // create one with alerts_enabled = true (covers imports done before subscription table existed)
+  const subscribedLibIds = new Set((subscriptions ?? []).map(s => s.source_library_id));
+  const missingSubs = sourceLibraryIds.filter(id => !subscribedLibIds.has(id));
+  if (missingSubs.length > 0) {
+    const newSubs = missingSubs.map(libId => ({
+      company_id: profile.company_id,
+      source_library_id: libId,
+      alerts_enabled: true,
+    }));
+    await supabase.from('supplier_library_subscriptions').upsert(newSubs, { onConflict: 'company_id,source_library_id' });
+    // Re-query to include the new subscriptions
+    const { data: refreshedSubs } = await supabase
+      .from('supplier_library_subscriptions')
+      .select('source_library_id, alerts_enabled, field_preferences')
+      .eq('company_id', profile.company_id)
+      .in('source_library_id', sourceLibraryIds);
+    subscriptions = refreshedSubs ?? [];
+  }
+
+  // Bell/inbox alert backfill: create alert rows for unresolved change notifications
+  // that have no corresponding alert yet. This covers libraries where the supplier
+  // published updates before the subscription existed (so no alert was inserted at publish time).
+  // Runs every page load but is idempotent - checks if alert already exists before creating.
+  try {
+    // Build map of max source_version per library from imported components
+    const importsByLib = new Map<string, number>();
+    for (const imp of imported) {
+      const libId = imp.source_library_id as string;
+      const sv = imp.source_version ?? 0;
+      importsByLib.set(libId, Math.max(importsByLib.get(libId) ?? 0, sv));
+    }
+
+    // Get all notifications for ALL source libraries the user has imported from
+    const { data: allNotifs } = await supabase
+      .from('supplier_change_notifications')
+      .select('id, supplier_library_id, version_to')
+      .in('supplier_library_id', sourceLibraryIds);
+
+    if (allNotifs && allNotifs.length > 0) {
+      // Filter to truly unresolved (version_to > max source_version)
+      const trulyUnresolved = allNotifs.filter(n => {
+        const maxSV = importsByLib.get(n.supplier_library_id) ?? 0;
+        return n.version_to > maxSV;
+      });
+
+      if (trulyUnresolved.length > 0) {
+        // Check which libraries already have an unread supplier_update alert
+        const { data: existingAlerts } = await supabase
+          .from('alerts')
+          .select('title')
+          .eq('company_id', profile.company_id)
+          .eq('alert_type', 'supplier_update')
+          .is('bell_cleared_at', null);
+
+        // Get supplier + library names
+        const { data: libInfo } = await supabase
+          .from('component_collections')
+          .select('id, name, supplier_profiles!inner(supplier_name)')
+          .in('id', sourceLibraryIds);
+
+        const libMap = new Map((libInfo ?? []).map(l => [l.id, {
+          name: l.name,
+          supplierName: (l.supplier_profiles as unknown as { supplier_name: string })?.supplier_name ?? 'A supplier',
+        }]));
+
+        // Build set of existing alert titles to avoid duplicates
+        const existingTitles = new Set((existingAlerts ?? []).map(a => a.title));
+
+        // Group unresolved by library
+        const byLib = new Map<string, number>();
+        for (const n of trulyUnresolved) {
+          byLib.set(n.supplier_library_id, (byLib.get(n.supplier_library_id) ?? 0) + 1);
+        }
+
+        const alertRows = [...byLib.entries()].map(([libId, count]) => {
+          const info = libMap.get(libId);
+          const supplierName = info?.supplierName ?? 'A supplier';
+          const libName = info?.name ?? 'library';
+          const title = `${supplierName} updated ${libName}`;
+          return {
+            company_id: profile.company_id,
+            alert_type: 'supplier_update',
+            title,
+            message: `${count} component change${count !== 1 ? 's' : ''} available for review.`,
+          };
+        }).filter(r => !existingTitles.has(r.title)); // Skip if alert already exists
+
+        if (alertRows.length > 0) {
+          const { createAdminClient } = await import('@/app/lib/supabase/admin');
+          const admin = createAdminClient();
+          await admin.from('alerts').insert(alertRows);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[getPendingSupplierUpdates] Alert backfill failed:', err);
+  }
+
+  // Build subscription map: library_id -> { enabled, fieldPrefs, notifyNewComponents }
+  const subMap = new Map<string, { enabled: boolean; fieldPrefs: Set<string> | null; notifyNewComponents: boolean }>();
   for (const s of subscriptions ?? []) {
     if (s.alerts_enabled) {
       let fieldPrefs: Set<string> | null = null;
       const prefs = s.field_preferences as Record<string, boolean> | null;
+      let notifyNewComponents = true; // default ON
       if (prefs) {
         // If prefs exist, only include fields explicitly set to true
         const enabledFields = Object.entries(prefs).filter(([, v]) => v === true).map(([k]) => k);
         fieldPrefs = enabledFields.length > 0 ? new Set(enabledFields) : null; // null = all fields (if all false, treat as all)
+        // Check new_components preference (default ON if not explicitly set to false)
+        notifyNewComponents = prefs['new_components'] !== false;
       }
-      subMap.set(s.source_library_id, { enabled: true, fieldPrefs });
+      subMap.set(s.source_library_id, { enabled: true, fieldPrefs, notifyNewComponents });
     }
   }
 
@@ -1034,6 +1140,53 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
         local_values: localValues,
         changed_fields: changedFields,
       });
+    }
+
+    // Check for 'added' notifications (new components the supplier added that the user hasn't imported)
+    const subInfo = subMap.get(sourceLibId);
+    if (subInfo?.notifyNewComponents) {
+      // Get all 'added' notifications for this library
+      const { data: addedNotifs } = await supabase
+        .from('supplier_change_notifications')
+        .select('*')
+        .eq('supplier_library_id', sourceLibId)
+        .eq('change_type', 'added')
+        .gt('version_to', minSourceVersion)
+        .order('created_at', { ascending: false });
+
+      if (addedNotifs && addedNotifs.length > 0) {
+        // Get the user's existing source_component_ids to filter out already-imported ones
+        const existingSourceIds = new Set(imports.map(i => i.source_component_id));
+
+        for (const notif of addedNotifs) {
+          // Skip if already resolved
+          const resKey = `${notif.id}:null`;
+          if (resolvedMap.has(resKey)) continue;
+          // Skip if user already imported this component
+          if (existingSourceIds.has(notif.component_id)) continue;
+
+          const newSnap = notif.new_snapshot as Record<string, unknown> | null;
+          const changedFields: string[] = newSnap ? Object.keys(newSnap).filter(k => k !== 'id') : [];
+
+          results.push({
+            notification_id: notif.id,
+            source_library_id: sourceLibId,
+            source_library_name: libInfo.name,
+            supplier_name: libInfo.supplier_name,
+            component_id: notif.component_id ?? '',
+            imported_component_id: '', // no imported component yet
+            imported_component_name: (newSnap?.name as string) ?? 'New component',
+            change_type: 'added',
+            version_from: notif.version_from,
+            version_to: notif.version_to,
+            created_at: notif.created_at,
+            new_snapshot: newSnap,
+            old_snapshot: null,
+            local_values: null,
+            changed_fields: changedFields,
+          });
+        }
+      }
     }
   }
 

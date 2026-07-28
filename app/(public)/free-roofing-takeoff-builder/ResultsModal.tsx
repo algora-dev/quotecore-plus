@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import type { ComponentSection, RoofComponentDef } from './types';
-import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost } from './calc';
+import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost, computeKnownPriceCost, isCustomFixed } from './calc';
 import { ComponentSymbol, componentLabel } from './helpers';
 
 interface ResultsModalProps {
@@ -79,6 +79,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
     const section = sections[key];
     if (key === 'roof_area' || key === 'underlay' || key === 'fixings') return areaUnit;
     if (key.startsWith('custom-') && section?.customDef?.measurementType === 'area') return areaUnit;
+    if (key.startsWith('custom-') && section?.customDef?.measurementType === 'fixed') return 'pcs';
     return lenUnit;
   };
 
@@ -90,18 +91,24 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
       const unit = unitFor(key);
       const wasteMultiplier = 1 + section.wastePercent / 100;
       const label = componentLabel(key, section.customDef);
+      const isFixed = key.startsWith('custom-') && section.customDef?.measurementType === 'fixed';
 
       for (const entry of section.entries) {
         const comp = getComponentById(entry.selectedComponentId);
-        const withWaste = entry.computedValue * wasteMultiplier;
-        const matCost = comp ? computeMaterialCost(withWaste, comp) : { cost: 0, packs: 0 };
-        const labCost = comp ? computeLabourCost(withWaste, comp) : 0;
-        const rate = comp ? (matCost.cost + labCost) / (withWaste || 1) : 0;
+        const costQty = isFixed ? (entry.quantity ?? 1) : entry.computedValue;
+        const withWaste = isFixed ? (entry.quantity ?? 1) : (entry.computedValue * wasteMultiplier);
+        const matCost = entry.knownPrice != null && entry.knownPrice > 0
+          ? { cost: computeKnownPriceCost(costQty, entry.knownPrice), packs: 0 }
+          : comp ? computeMaterialCost(costQty, comp) : { cost: 0, packs: 0 };
+        const labCost = entry.knownPrice != null && entry.knownPrice > 0 ? 0 : (comp ? computeLabourCost(costQty, comp) : 0);
+        const rate = (matCost.cost + labCost) / (withWaste || 1);
         const entryLabel = entry.label || `${label} ${section.entries.indexOf(entry) + 1}`;
-        const desc = comp
-          ? `${entryLabel} - ${comp.name}${section.wastePercent > 0 ? ` (+${section.wastePercent}% waste)` : ''}`
-          : `${entryLabel}${section.wastePercent > 0 ? ` (+${section.wastePercent}% waste)` : ''}`;
-        lines.push({ description: desc, qty: Math.round(withWaste * 100) / 100, unit, rate: Math.round(rate * 100) / 100 });
+        const desc = entry.knownPrice != null && entry.knownPrice > 0
+          ? `${entryLabel} - Known price ${'\u00A3'}${entry.knownPrice.toFixed(2)}/${isFixed ? 'pc' : unit}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
+          : comp
+            ? `${entryLabel} - ${comp.name}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
+            : `${entryLabel}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`;
+        lines.push({ description: desc, qty: Math.round(withWaste * 100) / 100, unit: isFixed ? 'pcs' : unit, rate: Math.round(rate * 100) / 100 });
       }
     }
     const params = new URLSearchParams();
@@ -132,6 +139,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
             if (!t || t.count === 0) return null;
             const label = componentLabel(key, section.customDef);
             const pitchType = key === 'roof_area' ? 'rafter' : key.startsWith('custom-') ? (section.customDef?.pitchType ?? 'none') : (COMPONENT_DEFS[key]?.pitchType ?? 'none');
+            const isFixed = key.startsWith('custom-') && section.customDef?.measurementType === 'fixed';
 
             return (
               <div key={key} className="print:break-inside-avoid">
@@ -144,32 +152,39 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                 <div className="space-y-1 mb-2">
                   {section.entries.map((entry, idx) => {
                     const comp = getComponentById(entry.selectedComponentId);
-                    const matCost = comp ? computeMaterialCost(entry.computedValue, comp) : { cost: 0, packs: 0 };
-                    const labCost = comp ? computeLabourCost(entry.computedValue, comp) : 0;
+                    const costQty = isFixed ? (entry.quantity ?? 1) : entry.computedValue;
+                    const matCost = entry.knownPrice != null && entry.knownPrice > 0
+                      ? { cost: computeKnownPriceCost(costQty, entry.knownPrice), packs: 0 }
+                      : comp ? computeMaterialCost(costQty, comp) : { cost: 0, packs: 0 };
+                    const labCost = entry.knownPrice != null && entry.knownPrice > 0 ? 0 : (comp ? computeLabourCost(costQty, comp) : 0);
                     const entryTotal = matCost.cost + labCost;
-                    const isPitchCalc = entry.inputMode === 'pitch_calculated' && pitchType !== 'none';
+                    const isPitchCalc = !isFixed && entry.inputMode === 'pitch_calculated' && pitchType !== 'none';
                     const isArea = key === 'roof_area' || key === 'underlay' || key === 'fixings' || (key.startsWith('custom-') && section.customDef?.measurementType === 'area');
-                    const originalValue = isPitchCalc
-                      ? (entry.isTotalInput
-                          ? (entry.actualValue ?? 0) * (entry.quantity ?? 1)
-                          : isArea
-                            ? (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0) * (entry.quantity ?? 1)
-                            : (entry.planLength ?? 0) * (entry.quantity ?? 1))
-                      : null;
-                    const withWasteVal = entry.computedValue * (1 + section.wastePercent / 100);
+                    const originalValue = isFixed
+                      ? null
+                      : isPitchCalc
+                        ? (entry.isTotalInput
+                            ? (entry.actualValue ?? 0) * (entry.quantity ?? 1)
+                            : isArea
+                              ? (entry.planWidth ?? 0) * (entry.planLengthVal ?? 0) * (entry.quantity ?? 1)
+                              : (entry.planLength ?? 0) * (entry.quantity ?? 1))
+                        : null;
+                    const withWasteVal = isFixed ? (entry.quantity ?? 1) : (entry.computedValue * (1 + section.wastePercent / 100));
+                    const displayValue = isFixed ? (entry.quantity ?? 1) : entry.computedValue;
                     return (
                       <div key={entry.id} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-xs print:bg-white print:border print:border-slate-100">
                         <div className="min-w-0 flex-1">
                           <span className="text-slate-500">{entry.label || `Entry ${idx + 1}`}</span>
                           {isPitchCalc && <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}{'\u00b0'}</span>}
+                          {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#FF6B35] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
                           {comp && <span className="ml-2 text-slate-400 truncate">{comp.name}</span>}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
                           {isPitchCalc && originalValue !== null && originalValue > 0 && (
                             <span className="text-slate-400">{originalValue.toFixed(2)} {unitFor(key)}<span className="ml-1 text-slate-300">{'\u2192'}</span></span>
                           )}
-                          <span className="font-medium text-slate-700">{entry.computedValue.toFixed(2)} {unitFor(key)}</span>
-                          {section.wastePercent > 0 && <span className="text-slate-400 text-[10px]">+{section.wastePercent}% = {withWasteVal.toFixed(2)}</span>}
+                          <span className="font-medium text-slate-700">{displayValue.toFixed(2)} {unitFor(key)}</span>
+                          {section.wastePercent > 0 && !isFixed && <span className="text-slate-400 text-[10px]">+{section.wastePercent}% = {withWasteVal.toFixed(2)}</span>}
                           {entryTotal > 0 && <span className="text-[#FF6B35] font-medium">{cur}{entryTotal.toFixed(2)}</span>}
                         </div>
                       </div>

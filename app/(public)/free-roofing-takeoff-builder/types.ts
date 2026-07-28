@@ -7,7 +7,7 @@ export type PitchType = 'rafter' | 'hip_valley' | 'none';
 export interface CustomComponentDef {
   id: string;
   name: string;
-  measurementType: 'linear' | 'area';
+  measurementType: 'linear' | 'area' | 'fixed';
   pitchType: PitchType;
   wastePercent: number;
 }
@@ -43,6 +43,7 @@ export interface Entry {
   selectedComponentId: string | null;
   quantity?: number;
   isTotalInput?: boolean;
+  knownPrice?: number;
 }
 
 export interface ComponentSection {

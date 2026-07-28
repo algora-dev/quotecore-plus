@@ -63,6 +63,17 @@ export default async function WorkspaceLayout({
   // not is_read - the bell has its own lifecycle now.
   const unreadCount = (alerts || []).length;
 
+  // Inbox envelope badge: counts ALL unread alerts (is_read = false) for the
+  // company, independent of the bell's clear lifecycle. This reflects the
+  // Message Center's unread state. Uses status = 'active' to exclude archived.
+  const { count: inboxUnreadCountRaw } = await supabase
+    .from('alerts')
+    .select('*', { count: 'exact', head: true })
+    .eq('company_id', company.id)
+    .eq('is_read', false)
+    .eq('status', 'active');
+  const inboxUnreadCount = inboxUnreadCountRaw ?? 0;
+
   // Per-user Chat Assistant visibility preference (default ON). When false the
   // widget renders nothing. Read directly here (not in the shared profile
   // selector) to avoid touching getCurrentProfile's broad usage.
@@ -119,7 +130,7 @@ export default async function WorkspaceLayout({
                     userId={profile.id}
                   />
                 }
-                inbox={<InboxLink workspaceSlug={slug} />}
+                inbox={<InboxLink workspaceSlug={slug} unreadCount={inboxUnreadCount} />}
                 help={<HelpDrawerTrigger />}
               />
 
@@ -137,7 +148,7 @@ export default async function WorkspaceLayout({
                         workspaceSlug={slug}
                         userId={profile.id}
                       />
-                      <InboxLink workspaceSlug={slug} />
+                      <InboxLink workspaceSlug={slug} unreadCount={inboxUnreadCount} />
                       <HelpDrawerTrigger />
                       <Link
                         href={`/${slug}/account`}

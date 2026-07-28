@@ -4684,6 +4684,7 @@ export type Database = {
       }
       supplier_profiles: {
         Row: {
+          allow_custom_pricing: boolean
           approved_at: string | null
           approved_by: string | null
           brands: string[] | null
@@ -4706,6 +4707,7 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
           brands?: string[] | null
@@ -4728,6 +4730,7 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
           brands?: string[] | null

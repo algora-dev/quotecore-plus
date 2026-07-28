@@ -234,6 +234,27 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
   // Whitelist columns before passing to the DB; see pickFields.ts for why.
   const update = pickFields(input as Record<string, unknown>, UPDATABLE_COMPONENT_FIELDS);
 
+  // Supplier SKU lock: if the component is in a published library, SKU cannot be changed
+  if ('sku' in update) {
+    const supabaseCheck = await createSupabaseServerClient();
+    const { data: existing } = await supabaseCheck
+      .from('component_library')
+      .select('id, sku, collection_id, component_collections!inner(visibility)')
+      .eq('id', id)
+      .eq('company_id', profile.company_id)
+      .single();
+    
+    if (existing) {
+      const colVisibility = (existing.component_collections as unknown as { visibility: string })?.visibility;
+      const hasExistingSku = !!existing.sku;
+      const newSku = (update as Record<string, unknown>).sku as string | null;
+      
+      if (colVisibility === 'published' && hasExistingSku && newSku !== existing.sku) {
+        throw new Error('SKU cannot be changed once a library is published. Create a new component or contact admin.');
+      }
+    }
+  }
+
   // Note: After migration 022, database accepts 'lineal' directly (no transform needed)
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -468,13 +489,36 @@ export async function updateLibraryVisibility(
       return { ok: false, message: 'Only approved suppliers can publish libraries.' };
     }
 
-    // Get supplier_profile_id
+    // Get supplier_profile_id and current published_version
     const { data: supplierProfile } = await supabase
       .from('supplier_profiles')
       .select('id')
       .eq('company_id', profile.company_id)
       .eq('status', 'approved')
       .single();
+
+    // Fetch current published_version to detect first-time publish
+    const { data: currentLib } = await supabase
+      .from('component_collections')
+      .select('published_version')
+      .eq('id', id)
+      .single();
+
+    const isFirstPublish = input.visibility === 'published' &&
+      (!currentLib?.published_version || currentLib.published_version === 0);
+
+    // Enforce SKU requirement: all components must have a SKU before publishing
+    if (isFirstPublish) {
+      const { count: missingSkuCount } = await supabase
+        .from('component_library')
+        .select('id', { count: 'exact', head: true })
+        .eq('collection_id', id)
+        .eq('is_active', true)
+        .or('sku.is.null,sku.eq.');
+      if (missingSkuCount && missingSkuCount > 0) {
+        return { ok: false, message: `Cannot publish: ${missingSkuCount} component(s) are missing a SKU / Product Code. Add SKUs to all components before publishing.` };
+      }
+    }
 
     const update: Record<string, unknown> = {};
     if (input.visibility !== undefined) {
@@ -501,6 +545,40 @@ export async function updateLibraryVisibility(
       .eq('company_id', profile.company_id);
 
     if (error) return { ok: false, message: error.message };
+
+    // First-time publish: create baseline snapshot via RPC so future edits can be diffed
+    if (isFirstPublish) {
+      const { buildSnapshotArray } = await import('@/app/lib/supabase/sync-fields');
+      const { data: currentComponents } = await supabase
+        .from('component_library')
+        .select(`
+          id, name, component_type, measurement_type, sku, takeoff_slot, notes,
+          default_material_rate, default_labour_rate,
+          default_waste_type, default_waste_percent, default_waste_fixed,
+          default_pitch_type, waste_unit,
+          pack_price, pack_size, pack_coverage_m2,
+          pricing_strategy, show_price_default, show_dimensions_default,
+          eligible_for_orders, height_value_mm, depth_value_mm
+        `)
+        .eq('collection_id', id)
+        .eq('is_active', true)
+        .order('name');
+
+      const snapshot = buildSnapshotArray(currentComponents ?? []);
+
+      const { error: rpcError } = await supabase
+        .rpc('supplier_publish_update', {
+          p_library_id: id,
+          p_snapshot: snapshot as unknown as import('@/app/lib/supabase/database.types').Json,
+          p_publishing_user: profile.id,
+        });
+
+      if (rpcError) {
+        console.error('[updateLibraryVisibility] Baseline snapshot RPC error:', rpcError);
+        // Don't fail the whole operation - visibility was already updated successfully
+      }
+    }
+
     revalidatePath('/components');
     return { ok: true };
   } catch (err) {

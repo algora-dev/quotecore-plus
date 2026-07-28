@@ -13,9 +13,11 @@ import {
   computeEntry,
   computeMaterialCost,
   computeLabourCost,
+  computeKnownPriceCost,
   makeInitialSections,
   makeCustomSection,
   registerCustomKind,
+  isCustomFixed,
 } from './calc';
 import { EntryListItem, AddEntryForm } from './EntryComponents';
 import {
@@ -54,6 +56,36 @@ const SESSION_KEY = 'qcp:frtb:session';
 export function RoofTakeoffBuilder() {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
+
+  // History management so browser back steps through: builder -> units -> mode -> exit
+  useEffect(() => {
+    const handlePopState = () => {
+      // On back: if in builder, go to units; if in units, go to mode; if in mode, let browser navigate away
+      if (measureMode && unitSystem) {
+        setUnitSystem(null);
+        window.history.pushState(null, '', window.location.href);
+      } else if (measureMode && !unitSystem) {
+        setMeasureMode(null);
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [measureMode, unitSystem]);
+
+  // Push history state when entering mode selection
+  useEffect(() => {
+    if (measureMode && !unitSystem) {
+      window.history.pushState({ step: 'units' }, '', window.location.href);
+    }
+  }, [measureMode]);
+
+  // Push history state when entering builder
+  useEffect(() => {
+    if (measureMode && unitSystem) {
+      window.history.pushState({ step: 'builder' }, '', window.location.href);
+    }
+  }, [unitSystem]);
   const [experience, setExperience] = useState<ExperienceLevel>('fast');
   const [pitchMode, setPitchMode] = useState<'degrees' | 'ratio'>('degrees');
   const [sections, setSections] = useState<Record<string, ComponentSection>>(makeInitialSections);
@@ -81,7 +113,7 @@ export function RoofTakeoffBuilder() {
           // Re-register custom kinds
           for (const [key, section] of Object.entries(data.sections)) {
             if (key.startsWith('custom-') && section.customDef) {
-              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area');
+              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area', section.customDef.measurementType === 'fixed');
             }
           }
           setSections(data.sections);
@@ -89,7 +121,7 @@ export function RoofTakeoffBuilder() {
         if (data.customSections) {
           for (const section of Object.values(data.customSections)) {
             if (section.customDef) {
-              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area');
+              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area', section.customDef.measurementType === 'fixed');
             }
           }
           setCustomSections(data.customSections);
@@ -213,13 +245,22 @@ export function RoofTakeoffBuilder() {
     for (const key of allKeys) {
       const section = allSections[key];
       if (!section) { result[key] = { rawTotal: 0, withWaste: 0, count: 0, materialCost: 0, labourCost: 0, totalCost: 0 }; continue; }
-      const rawTotal = section.entries.reduce((sum, e) => sum + e.computedValue, 0);
-      const withWaste = rawTotal * (1 + section.wastePercent / 100);
+      const isFixed = isCustomFixed(key);
+      const rawTotal = isFixed
+        ? section.entries.reduce((sum, e) => sum + (e.quantity ?? 1), 0)
+        : section.entries.reduce((sum, e) => sum + e.computedValue, 0);
+      const withWaste = isFixed ? rawTotal : rawTotal * (1 + section.wastePercent / 100);
       let materialCost = 0, labourCost = 0;
       for (const entry of section.entries) {
-        const comp = getComponentById(entry.selectedComponentId);
-        materialCost += computeMaterialCost(entry.computedValue, comp).cost;
-        labourCost += computeLabourCost(entry.computedValue, comp);
+        if (entry.knownPrice != null && entry.knownPrice > 0) {
+          const costQty = isFixed ? (entry.quantity ?? 1) : entry.computedValue;
+          materialCost += computeKnownPriceCost(costQty, entry.knownPrice);
+        } else {
+          const comp = getComponentById(entry.selectedComponentId);
+          const costQty = isFixed ? (entry.quantity ?? 1) : entry.computedValue;
+          materialCost += computeMaterialCost(costQty, comp).cost;
+          labourCost += computeLabourCost(costQty, comp);
+        }
       }
       result[key] = { rawTotal, withWaste, count: section.entries.length, materialCost, labourCost, totalCost: materialCost + labourCost };
     }
@@ -264,10 +305,11 @@ export function RoofTakeoffBuilder() {
     const label = componentLabel(key, section.customDef);
     const desc = componentDescription(key, section.customDef);
     const isRoofArea = key === 'roof_area' || key === 'underlay' || key === 'fixings';
+    const isFixed = isCustomFixed(key);
     const isExpanded = expandedSection === key;
     const total = totals[key] ?? { rawTotal: 0, withWaste: 0, count: 0, totalCost: 0 };
     const hasEntries = section.entries.length > 0;
-    const displayUnit = isRoofArea || (isCustom && section.customDef?.measurementType === 'area') ? areaLbl : lenLbl;
+    const displayUnit = isFixed ? 'pcs' : (isRoofArea || (isCustom && section.customDef?.measurementType === 'area') ? areaLbl : lenLbl);
     const availableComponents = isCustom ? components : (componentsByKind[key] || []);
 
     return (
@@ -311,12 +353,12 @@ export function RoofTakeoffBuilder() {
               </div>
             </div>
 
-            <AddEntryForm kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={availableComponents} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} unitSystem={u} roofAreaTotal={isRoofArea && key !== 'roof_area' ? roofAreaTotal : null} onAdd={(entry) => addEntry(key, entry)} />
+            <AddEntryForm kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={availableComponents} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} unitSystem={u} roofAreaTotal={isRoofArea && key !== 'roof_area' ? roofAreaTotal : null} isFixed={isFixed} onAdd={(entry) => addEntry(key, entry)} />
 
             {hasEntries && (
               <div className="space-y-1.5">
                 {section.entries.map((entry, idx) => (
-                  <EntryListItem key={entry.id} entry={entry} index={idx} kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} getComponentById={getComponentById} onRemove={() => removeEntry(key, entry.id)} />
+                  <EntryListItem key={entry.id} entry={entry} index={idx} kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} isFixed={isFixed} getComponentById={getComponentById} onRemove={() => removeEntry(key, entry.id)} />
                 ))}
               </div>
             )}
@@ -387,6 +429,11 @@ export function RoofTakeoffBuilder() {
           {/* Step 2: Units */}
           {measureMode && !unitSystem && (
             <div className="space-y-4">
+              {/* Breadcrumb */}
+              <button onClick={() => setMeasureMode(null)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Back to measurement mode
+              </button>
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
                 <button onClick={() => setMeasureMode(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change mode</button>
@@ -421,6 +468,11 @@ export function RoofTakeoffBuilder() {
           {/* Step 3: Builder */}
           {measureMode && unitSystem && (
             <>
+              {/* Breadcrumb */}
+              <button onClick={() => { setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition mb-3">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Back to unit selection
+              </button>
               {/* Setup bar */}
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
@@ -503,7 +555,8 @@ export function RoofTakeoffBuilder() {
                       if (!t || t.count === 0) return null;
                       const section = allSections[key];
                       const isArea = key === 'roof_area' || key === 'underlay' || key === 'fixings' || (key.startsWith('custom-') && section.customDef?.measurementType === 'area');
-                      const du = isArea ? areaLbl : lenLbl;
+                      const isFixedSummary = key.startsWith('custom-') && section.customDef?.measurementType === 'fixed';
+                      const du = isFixedSummary ? 'pcs' : (isArea ? areaLbl : lenLbl);
                       return (
                         <div key={key} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2">
                           <div className="flex items-center gap-1.5">
