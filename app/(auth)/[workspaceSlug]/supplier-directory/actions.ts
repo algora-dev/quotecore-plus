@@ -870,11 +870,31 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
 
   // 2. Get subscriptions for the libraries this company has imported from
   const sourceLibraryIds = [...new Set(imported.map(i => i.source_library_id).filter(Boolean))] as string[];
-  const { data: subscriptions } = await supabase
+  let { data: subscriptions } = await supabase
     .from('supplier_library_subscriptions')
     .select('source_library_id, alerts_enabled, field_preferences')
     .eq('company_id', profile.company_id)
     .in('source_library_id', sourceLibraryIds);
+
+  // Auto-backfill: if a company has imported components but no subscription exists,
+  // create one with alerts_enabled = true (covers imports done before subscription table existed)
+  const subscribedLibIds = new Set((subscriptions ?? []).map(s => s.source_library_id));
+  const missingSubs = sourceLibraryIds.filter(id => !subscribedLibIds.has(id));
+  if (missingSubs.length > 0) {
+    const newSubs = missingSubs.map(libId => ({
+      company_id: profile.company_id,
+      source_library_id: libId,
+      alerts_enabled: true,
+    }));
+    await supabase.from('supplier_library_subscriptions').upsert(newSubs, { onConflict: 'company_id,source_library_id' });
+    // Re-query to include the new subscriptions
+    const { data: refreshedSubs } = await supabase
+      .from('supplier_library_subscriptions')
+      .select('source_library_id, alerts_enabled, field_preferences')
+      .eq('company_id', profile.company_id)
+      .in('source_library_id', sourceLibraryIds);
+    subscriptions = refreshedSubs ?? [];
+  }
 
   // Build subscription map: library_id -> { enabled, fieldPrefs }
   const subMap = new Map<string, { enabled: boolean; fieldPrefs: Set<string> | null }>();
