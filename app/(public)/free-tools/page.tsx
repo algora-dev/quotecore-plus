@@ -181,6 +181,14 @@ export default function FreeToolsPage() {
                 </ul>
               </div>
               <div className="order-1 lg:order-2">
+                <ImageCarousel
+                  images={[
+                    '/free-tools/FreeRoofTakeOffTool1.png',
+                    '/free-tools/FreeRoofTakeOffTool2.png',
+                    '/free-tools/FreeRoofTakeOffTool3.png',
+                  ]}
+                  alt="Free Roof Takeoff Builder"
+                />
                 <ToolCtaCentered href="/free-roofing-takeoff-builder" label="Open Takeoff Builder" onClick={() => trackEvent('free_tools_hub_click', { tool: 'roof-takeoff-builder' })} />
               </div>
             </div>
