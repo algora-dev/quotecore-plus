@@ -351,6 +351,49 @@
 - [ ] Product Type 'custom thing' -> takeoff_slot=custom, measurement_type=quantity
 - [ ] Tier limit: if batch would exceed limit, shows upgrade message
 
+### Pending verification (Supplier Update System Fixes - development `c9f8346`, 2026-07-28)
+
+**Prerequisites:**
+- [ ] Supplier account (secarter23): Publish library with all components having SKUs
+- [ ] Supplier account: Edit a component price, Push Update, verify change count
+- [ ] Importer account (dev.algora): Components page shows pending updates banner
+
+**Fix 1: SKU enforcement**
+- [ ] Supplier: can't publish a library if any component lacks a SKU (error message shows count)
+- [ ] Supplier: SKU field shows red asterisk in published libraries
+- [ ] Supplier: SKU field is readonly (locked) for components in published libraries that already have a SKU
+- [ ] Supplier: can still edit other fields (name, price, etc.) on components with locked SKUs
+
+**Fix 2: New component alert toggle**
+- [ ] Importer: Alert Preferences modal shows "Alert me when new components are added" toggle
+- [ ] Toggle defaults ON for new subscriptions
+- [ ] When OFF: new component notifications don't appear in pending updates
+- [ ] When ON: new component notifications appear with "New component" label
+
+**Fix 3: Supplier nav routing**
+- [ ] Supplier: clicking "Supplier" nav always goes to /supplier (not /supplier-directory)
+- [ ] Supplier: nav active state highlights correctly on /supplier, NOT on /supplier-directory
+
+**Fix 4: Update modal display**
+- [ ] Importer: update modal shows "Library Name (Supplier Name)" format
+- [ ] Multiple libraries from same supplier are distinguishable
+
+**Fix 5: Modal loading state**
+- [ ] Importer: clicking Update shows spinner overlay (not blank modal)
+- [ ] After apply: green checkmark + "N components updated" for ~1.2s
+- [ ] Modal auto-closes after success state
+
+**Fix 6: Components actually update**
+- [ ] Importer: after clicking Update, component values match supplier's latest
+- [ ] Importer: source_version bumps on imported components
+- [ ] Importer: pending update disappears after applying
+
+**Fix 7: Bell + dashboard alerts**
+- [ ] Importer: bell icon shows badge count for supplier updates
+- [ ] Importer: clicking bell alert routes to /components page
+- [ ] Importer: dashboard shows alert banner for supplier updates
+- [ ] Importer: message center / inbox shows supplier update alert
+
 ### Passed (recent)
 - 2026-07-07 baseline test by Shaun ✅ — quote email send, quote notes add/edit/delete, summary file upload, no Server-Components 500s (root cause: 'use server' on adapter files, fixed in `ea0cf06`)
 - Round 10: Re-entry pitch preservation ✅

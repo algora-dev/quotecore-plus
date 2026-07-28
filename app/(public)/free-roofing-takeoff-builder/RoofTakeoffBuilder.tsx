@@ -54,6 +54,36 @@ const SESSION_KEY = 'qcp:frtb:session';
 export function RoofTakeoffBuilder() {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
+
+  // History management so browser back steps through: builder -> units -> mode -> exit
+  useEffect(() => {
+    const handlePopState = () => {
+      // On back: if in builder, go to units; if in units, go to mode; if in mode, let browser navigate away
+      if (measureMode && unitSystem) {
+        setUnitSystem(null);
+        window.history.pushState(null, '', window.location.href);
+      } else if (measureMode && !unitSystem) {
+        setMeasureMode(null);
+        window.history.pushState(null, '', window.location.href);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [measureMode, unitSystem]);
+
+  // Push history state when entering mode selection
+  useEffect(() => {
+    if (measureMode && !unitSystem) {
+      window.history.pushState({ step: 'units' }, '', window.location.href);
+    }
+  }, [measureMode]);
+
+  // Push history state when entering builder
+  useEffect(() => {
+    if (measureMode && unitSystem) {
+      window.history.pushState({ step: 'builder' }, '', window.location.href);
+    }
+  }, [unitSystem]);
   const [experience, setExperience] = useState<ExperienceLevel>('fast');
   const [pitchMode, setPitchMode] = useState<'degrees' | 'ratio'>('degrees');
   const [sections, setSections] = useState<Record<string, ComponentSection>>(makeInitialSections);
@@ -387,6 +417,11 @@ export function RoofTakeoffBuilder() {
           {/* Step 2: Units */}
           {measureMode && !unitSystem && (
             <div className="space-y-4">
+              {/* Breadcrumb */}
+              <button onClick={() => setMeasureMode(null)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Back to measurement mode
+              </button>
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
                 <button onClick={() => setMeasureMode(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change mode</button>
@@ -421,6 +456,11 @@ export function RoofTakeoffBuilder() {
           {/* Step 3: Builder */}
           {measureMode && unitSystem && (
             <>
+              {/* Breadcrumb */}
+              <button onClick={() => { setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition mb-3">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Back to unit selection
+              </button>
               {/* Setup bar */}
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
