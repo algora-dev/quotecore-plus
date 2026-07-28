@@ -495,7 +495,7 @@ export function SupplierDashboard({
                         {cat.visibility === 'private' ? 'Publish' : 'Settings'}
                       </button>
                       {cat.visibility === 'published' && (
-                        <Link href={`/${workspaceSlug}/catalogs`} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">
+                        <Link href={`/${workspaceSlug}/catalogs?replace=${cat.id}`} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">
                           Upload New Version
                         </Link>
                       )}

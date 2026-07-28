@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useTransition, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import { UploadWizard } from './upload-wizard';
@@ -81,6 +81,22 @@ export function CatalogList({
   const [savingCatalogId, setSavingCatalogId] = useState<string | null>(null);
   const [saveResult, setSaveResult] = useState<Record<string, { ok: boolean; message: string }>>({});
   const [replaceTarget, setReplaceTarget] = useState<CatalogRow | null>(null);
+
+  const searchParams = useSearchParams();
+
+  // Auto-open ReplaceCatalogModal when navigated with ?replace=<catalogId>
+  useEffect(() => {
+    const replaceId = searchParams.get('replace');
+    if (replaceId) {
+      const target = catalogs.find(c => c.id === replaceId);
+      if (target) {
+        setReplaceTarget(target);
+        // Clean the URL so it doesn't re-trigger on refresh
+        router.replace(`/${workspaceSlug}/catalogs`);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);

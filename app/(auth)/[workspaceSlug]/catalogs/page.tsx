@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { loadCatalogs, loadCatalogEntitlements } from './actions';
 import { CatalogList } from './catalog-list';
 import { searchSupplierCatalogs } from '../supplier-directory/actions';
@@ -27,16 +28,18 @@ export default async function CatalogsPage(props: {
   const supplierCatalogs = await searchSupplierCatalogs({ limit: 50 });
 
   return (
-    <CatalogList
-      initialCatalogs={catalogs}
-      workspaceSlug={workspaceSlug}
-      catalogsEnabled={ent.catalogsEnabled}
-      catalogLimit={ent.catalogLimit}
-      catalogCount={ent.catalogCount}
-      effectivePlanCode={ent.effectivePlanCode}
-      subscriptionActive={ent.isActive}
-      isOverStorage={ent.isOverStorage}
-      supplierCatalogs={supplierCatalogs}
-    />
+    <Suspense fallback={null}>
+      <CatalogList
+        initialCatalogs={catalogs}
+        workspaceSlug={workspaceSlug}
+        catalogsEnabled={ent.catalogsEnabled}
+        catalogLimit={ent.catalogLimit}
+        catalogCount={ent.catalogCount}
+        effectivePlanCode={ent.effectivePlanCode}
+        subscriptionActive={ent.isActive}
+        isOverStorage={ent.isOverStorage}
+        supplierCatalogs={supplierCatalogs}
+      />
+    </Suspense>
   );
 }
