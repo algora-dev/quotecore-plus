@@ -788,6 +788,8 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
   }
 
   // 5. If changes were recorded, insert inbox alerts for all subscribed companies
+  // Use admin client (service role) to bypass RLS - the supplier is inserting alerts
+  // for OTHER companies (the importers), which RLS would block with user-scoped client.
   if (row.ok && row.changes_recorded > 0) {
     try {
       // Find all companies with alerts_enabled subscriptions to this library
@@ -815,7 +817,9 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
           message: `${row.changes_recorded} component change${row.changes_recorded !== 1 ? 's' : ''} published. Review and apply to your imported components.`,
         }));
 
-        await supabase.from('alerts').insert(alertRows);
+        const { createAdminClient } = await import('@/app/lib/supabase/admin');
+        const admin = createAdminClient();
+        await admin.from('alerts').insert(alertRows);
       }
     } catch (err) {
       console.error('[publishLibraryUpdate] Alert insert failed:', err);
@@ -929,7 +933,7 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
           .select('title')
           .eq('company_id', profile.company_id)
           .eq('alert_type', 'supplier_update')
-          .is('read_at', null);
+          .is('bell_cleared_at', null);
 
         // Get supplier + library names
         const { data: libInfo } = await supabase
@@ -965,7 +969,9 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
         }).filter(r => !existingTitles.has(r.title)); // Skip if alert already exists
 
         if (alertRows.length > 0) {
-          await supabase.from('alerts').insert(alertRows);
+          const { createAdminClient } = await import('@/app/lib/supabase/admin');
+          const admin = createAdminClient();
+          await admin.from('alerts').insert(alertRows);
         }
       }
     }

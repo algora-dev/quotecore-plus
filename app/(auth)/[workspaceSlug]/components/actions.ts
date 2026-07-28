@@ -234,6 +234,27 @@ export async function updateComponent(id: string, input: Partial<ComponentLibrar
   // Whitelist columns before passing to the DB; see pickFields.ts for why.
   const update = pickFields(input as Record<string, unknown>, UPDATABLE_COMPONENT_FIELDS);
 
+  // Supplier SKU lock: if the component is in a published library, SKU cannot be changed
+  if ('sku' in update) {
+    const supabaseCheck = await createSupabaseServerClient();
+    const { data: existing } = await supabaseCheck
+      .from('component_library')
+      .select('id, sku, collection_id, component_collections!inner(visibility)')
+      .eq('id', id)
+      .eq('company_id', profile.company_id)
+      .single();
+    
+    if (existing) {
+      const colVisibility = (existing.component_collections as unknown as { visibility: string })?.visibility;
+      const hasExistingSku = !!existing.sku;
+      const newSku = (update as Record<string, unknown>).sku as string | null;
+      
+      if (colVisibility === 'published' && hasExistingSku && newSku !== existing.sku) {
+        throw new Error('SKU cannot be changed once a library is published. Create a new component or contact admin.');
+      }
+    }
+  }
+
   // Note: After migration 022, database accepts 'lineal' directly (no transform needed)
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase

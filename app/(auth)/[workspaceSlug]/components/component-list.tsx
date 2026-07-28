@@ -1305,7 +1305,7 @@ export function ComponentList({
                    </div>
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">SKU / Product Code {isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' ? <span className="text-red-500">*</span> : <span className="text-slate-400">(optional)</span>}</label>
-                     <input name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className="w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none" readOnly={isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' && !!comp.sku} title={isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' && !!comp.sku ? 'SKU is locked once published' : ''} />
+                     <input name="sku" defaultValue={comp.sku ?? ''} placeholder="e.g. RDG-250-BLK" className={`w-full px-2 py-1.5 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none ${isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' && !!comp.sku ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}`} readOnly={isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' && !!comp.sku} title={isSupplier && collections.find(c => c.id === activeLibraryId)?.visibility === 'published' && !!comp.sku ? 'SKU is locked once published' : ''} />
                    </div>
                    <div>
                      <label className="block text-xs text-slate-500 mb-1">Measurement</label>
