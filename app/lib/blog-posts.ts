@@ -131,6 +131,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'What AI roof measuring can actually do in 2026: how AI traces roof plans, detects lines, and classifies geometry. Where it excels, where it struggles, and what always needs human verification.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
+    draft: true,
   },
   {
     slug: 'ai-roofing-tools-guide',
@@ -139,6 +140,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Honest guide to AI in roofing: the three layers of AI technology, what it does well, what it does poorly, what always needs a human, and how to evaluate AI roofing tools for your business.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
+    draft: true,
   },
   {
     slug: 'ai-quoting-software',
@@ -147,6 +149,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Can AI write quotes for contractors? What AI quoting software can do (draft line items, calculate materials, format documents) and what it cannot do (set prices, assess job difficulty, define scope).',
     date: '2026-07-29',
     lastModified: '2026-07-29',
+    draft: true,
   },
 ];
 
