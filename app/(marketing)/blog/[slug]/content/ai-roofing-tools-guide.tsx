@@ -4,286 +4,241 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        AI is showing up in more roofing tools every year. Some of it is genuinely useful. Some of
-        it is marketing wrapped around existing technology. This guide covers what AI in roofing
-        actually does in 2026, which tools are worth using, and where the technology still falls
-        short.
+        Type "AI roofing tools" into Google and you will get a mix of genuine products, marketing
+        fluff, and predictions about the future. This guide is none of those things. It is a
+        practical look at what AI is actually being used for in roofing right now, what it cannot
+        do, and how to think about it if you are running a roofing or construction business.
       </p>
       <p>
-        We will be honest about the limits because we build AI tools ourselves. QuoteCore+ uses AI
-        vision models to trace roof plans, and we know exactly where it works and where it does not.
+        We use AI at QuoteCore+ - it powers our roof plan takeoff - so we are not anti-AI. But we
+        are also not going to pretend it is more than it is. AI in roofing is image recognition and
+        text processing. It is not running a estimating engine. It is not making structural
+        assessments. It is a tool that does specific things well and leaves the rest to you.
       </p>
 
       <hr />
 
-      <h2>The three layers of AI in roofing</h2>
+      <h2>What AI actually means in roofing</h2>
       <p>
-        AI in roofing is not one technology. It is three distinct layers that serve different parts
-        of the workflow:
+        When a roofing product says "AI-powered," it usually means one of three things:
       </p>
-      <h3>1. AI measurement and takeoff</h3>
+      <h3>Image recognition</h3>
       <p>
-        This is where AI analyses a roof plan, image, or 3D model and produces measurements. It
-        includes tracing roof outlines, detecting internal lines (ridges, hips, valleys), and
-        classifying line types. QuoteCore+ operates in this layer with its 3-scan AI pipeline.
+        The AI looks at an image - a roof plan, a satellite photo, a drone shot - and identifies
+        what is in it. This could be tracing a roof outline from a plan, detecting damage from drone
+        photos, or reading dimension annotations. This is the most mature use of AI in roofing and
+        the one most likely to save you real time.
+      </p>
+      <h3>Text and data processing</h3>
+      <p>
+        The AI reads text from plans, documents, or emails and extracts useful information. Reading
+        a dimension line that says "12.5m" and using it to calibrate a scale. Reading a material
+        spec from a manufacturer datasheet. This is less flashy than image recognition but equally
+        useful.
+      </p>
+      <h3>Generative drafting</h3>
+      <p>
+        The AI produces content based on a prompt - generating a roof design from satellite imagery,
+        drafting a quote document from takeoff data, or suggesting material lists. This is the
+        newest category and the one where the hype is loudest. Some of it is genuinely useful. Some
+        of it is a parlor trick.
       </p>
       <p>
-        Aerial measurement services like <a href="https://www.eagleview.com" target="_blank" rel="noopener noreferrer">EagleView</a>{' '}
-        and <a href="https://www.roofr.com" target="_blank" rel="noopener noreferrer">Roofr</a> also
-        produce measurements, but they use photogrammetry and image processing rather than AI vision
-        models. The distinction matters: photogrammetry is a mature, deterministic technology. AI
-        vision is probabilistic - it makes predictions based on patterns, which is why human
-        verification is always needed.
-      </p>
-      <h3>2. AI damage detection</h3>
-      <p>
-        This is the newest layer. AI analyses drone or smartphone photos of a roof and automatically
-        classifies damage types: cracked shingles, missing flashing, ponding water, membrane
-        blistering, biological growth. Each defect gets GPS-tagged and added to a report.
-      </p>
-      <p>
-        This is primarily used for insurance claims and storm damage assessment. For standard
-        re-roof quoting, you do not need AI damage detection - you need measurements and a price.
-      </p>
-      <h3>3. AI in quoting and estimating</h3>
-      <p>
-        AI can assist with drafting quotes, suggesting material quantities, and pre-filling pricing
-        based on historical data. This is the layer where AI speeds up the office side of the
-        business - turning a completed takeoff into a professional, sendable quote.
+        Notice what is not on that list: AI is not running calculations, applying building codes,
+        or making structural decisions. Those are done by traditional software - rule-based
+        calculation engines that take measurements and apply formulas. The AI gets the measurements.
+        The software does the maths.
       </p>
 
-      <h2>What AI does well in roofing</h2>
-      <h3>Speeding up plan takeoff</h3>
-      <p>
-        This is the single biggest win. A roof plan that takes 20-30 minutes to trace by hand can be
-        processed by AI in under a minute. The AI traces the outline, detects internal lines, and
-        classifies them. A human then spends 2-3 minutes verifying and adjusting. Total time: under
-        5 minutes, compared to 30+ minutes manually.
-      </p>
-      <h3>Reading dimensions and annotations from plans</h3>
-      <p>
-        AI vision models can read text annotations on plans - dimension lines, pitch labels, material
-        notes. This means if a plan says "12.5m" with a dimension arrow, the AI can read that number
-        and use it to calibrate the scale of the entire image automatically.
-      </p>
-      <h3>Producing consistent first-pass results</h3>
-      <p>
-        Humans get tired, distracted, and inconsistent. One takeoff done at 9am might be more
-        accurate than one done at 5pm. AI produces consistent results regardless of time of day or
-        workload. The consistency is not perfect - but it is repeatable, which means errors are
-        predictable and can be systematically addressed.
-      </p>
-      <h3>Reducing physical risk</h3>
-      <p>
-        AI-assisted measurement from plans or images means fewer trips up a ladder just to get
-        dimensions. This is not a direct AI capability - aerial measurement services do the same
-        thing - but AI plan takeoff means you can work from plans you already have without sending
-        someone onto the roof.
-      </p>
-
-      <h2>What AI does poorly in roofing</h2>
-      <h3>Complex and non-standard roof geometry</h3>
-      <p>
-        AI vision models are trained on data. Simple roofs (gables, hips, standard combinations) are
-        well-represented in training data. Complex roofs with unusual intersections, curved
-        surfaces, or non-standard angles are not. The AI will still produce a result, but confidence
-        scores drop and the likelihood of errors increases.
-      </p>
-      <p>
-        In QuoteCore+'s pipeline, lines the AI is unsure about get flagged as "uncertain" rather
-        than silently classified. This is by design - it is better to flag uncertainty than to
-        confidently produce a wrong answer.
-      </p>
-      <h3>Understanding context outside the plan</h3>
-      <p>
-        AI can trace what is visible on a plan image. It cannot know that the extension on the east
-        side was rebuilt last year with a different pitch, or that the valley gutter needs replacing
-        because of a known drainage issue. Contextual knowledge about the specific job lives with
-        the roofer, not the AI.
-      </p>
-      <h3>Making pricing decisions</h3>
-      <p>
-        AI can suggest material quantities based on area calculations. It cannot decide whether you
-        should charge 35 or 45 per square metre for labour on a particular job. Pricing depends on
-        local market conditions, your relationship with the client, access difficulty, time of year,
-        and dozens of other factors that AI does not have access to.
-      </p>
-      <h3>Replacing site visits for complex jobs</h3>
-      <p>
-        For a straightforward re-roof with a good-quality plan, AI takeoff can replace a site visit
-        for measurement purposes. For complex jobs - multiple roof levels, unusual access,
-        structural concerns, heritage properties - a site visit is still essential. AI reduces the
-        number of jobs where a visit is needed just for measurements, but it does not eliminate site
-        visits entirely.
-      </p>
-
-      <h2>What always needs a human</h2>
-      <ul>
-        <li>
-          <strong>Final measurement verification</strong> - always review the AI's output against
-          the plan before using it for quoting
-        </li>
-        <li>
-          <strong>Pitch confirmation</strong> - if pitch is not clearly annotated on the plan, the
-          human must provide it
-        </li>
-        <li>
-          <strong>Pricing and quote decisions</strong> - AI can draft a quote, but the price you
-          send is your responsibility
-        </li>
-        <li>
-          <strong>Material specification</strong> - AI can calculate quantities, but the specific
-          product (tile type, underlay grade, batten size) must be confirmed by the roofer
-        </li>
-        <li>
-          <strong>Structural assessment</strong> - AI cannot assess whether a roof structure is
-          sound, whether timbers need replacing, or whether there are structural issues that affect
-          the re-roofing approach
-        </li>
-        <li>
-          <strong>Building code compliance</strong> - AI does not know your local building codes.
-          Ventilation requirements, underlay specifications, and fixing schedules vary by region and
-          must be verified by someone who knows the regulations
-        </li>
-      </ul>
-
-      <h2>AI roofing tools available in 2026</h2>
-      <p>
-        Here is a summary of the main categories of AI and technology-assisted roofing tools
-        available:
-      </p>
+      <h2>What is actually available in 2026</h2>
       <table>
         <thead>
           <tr>
-            <th>Category</th>
-            <th>Examples</th>
+            <th>Tool category</th>
             <th>What it does</th>
-            <th>AI?</th>
+            <th>Is it actually AI?</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Aerial measurement</td>
-            <td>EagleView, Roofr, GAF QuickMeasure</td>
-            <td>Satellite/aerial imagery to dimensioned report</td>
-            <td>Photogrammetry (not AI vision)</td>
+            <td>Aerial measurement (EagleView, Roofr)</td>
+            <td>Satellite imagery to dimensioned roof report</td>
+            <td>No - photogrammetry and image processing</td>
           </tr>
           <tr>
-            <td>AI plan takeoff</td>
-            <td>QuoteCore+</td>
+            <td>AI plan takeoff (QuoteCore+)</td>
             <td>Upload plan image, AI traces outline and lines</td>
-            <td>Yes (GPT vision)</td>
+            <td>Yes - GPT vision models</td>
           </tr>
           <tr>
-            <td>Smartphone 3D capture</td>
-            <td><a href="https://www.hover.to" target="_blank" rel="noopener noreferrer">Hover</a></td>
+            <td>Smartphone 3D capture (Hover)</td>
             <td>Phone photos to 3D model with material visualisation</td>
-            <td>Image processing + 3D reconstruction</td>
+            <td>Partially - image processing and 3D reconstruction</td>
           </tr>
           <tr>
-            <td>Drone AI inspection</td>
-            <td>Various drone + AI processing services</td>
-            <td>Drone photos to damage classification report</td>
-            <td>Yes (image classification)</td>
+            <td>AI damage detection (various drone services)</td>
+            <td>Drone photos to classified damage report</td>
+            <td>Yes - image classification models</td>
           </tr>
           <tr>
-            <td>AI-generated roof design</td>
-            <td><a href="https://www.artemisroof.com" target="_blank" rel="noopener noreferrer">Artemis</a></td>
-            <td>AI generates roof designs from satellite imagery in seconds</td>
-            <td>Yes (generative AI)</td>
+            <td>AI roof design generation (Artemis)</td>
+            <td>Generates roof designs from satellite imagery in seconds</td>
+            <td>Yes - generative AI</td>
           </tr>
         </tbody>
       </table>
       <p>
-        These categories overlap but serve different workflows. The right tool depends on whether
-        you have a plan already, whether you need to visit the site, and what stage of the sales
-        process you are in.
+        The important thing to understand is that "AI" is not a single technology. Aerial
+        measurement services have been around for over a decade and are not AI - they are
+        photogrammetry. They are good at what they do, but calling them AI is marketing. The newer
+        AI vision tools are different - they use large language models with vision capabilities to
+        actually interpret images, which is why they can read plans and trace geometry in a way
+        traditional software cannot.
       </p>
 
-      <h2>How to evaluate AI roofing tools</h2>
+      <h2>What AI does well in roofing</h2>
+      <ul>
+        <li>
+          <strong>Tracing geometry from plans</strong> - the single biggest time-saver. Instead of
+          manually clicking around a roof outline, the AI does the first pass and you verify it.
+        </li>
+        <li>
+          <strong>Reading text and numbers from plans</strong> - dimension lines, pitch labels,
+          material specs. The AI reads these and uses them to calibrate measurements.
+        </li>
+        <li>
+          <strong>Detecting visible damage from photos</strong> - for insurance and storm work, AI
+          damage detection from drone photos is faster and safer than walking a damaged roof.
+        </li>
+        <li>
+          <strong>Doing the boring, repetitive work consistently</strong> - tracing the 50th roof
+          plan of the month is where errors creep in for humans. AI does not get bored or tired.
+        </li>
+      </ul>
+
+      <h2>What AI does poorly in roofing</h2>
+      <ul>
+        <li>
+          <strong>Complex, unusual roof shapes</strong> - AI vision models are trained on existing
+          data. A standard gable or hip roof is well represented. A roof with unusual intersections,
+          curved sections, or non-standard angles is where confidence drops and errors are more
+          likely.
+        </li>
+        <li>
+          <strong>Understanding context</strong> - the AI sees what is on the plan. It does not
+          know the site history, the client relationship, the access issues, or the structural
+          concerns. All of that context lives with you.
+        </li>
+        <li>
+          <strong>Making pricing decisions</strong> - AI can calculate material quantities from
+          measurements. It cannot decide whether you should charge 35 or 45 per square metre for
+          labour. That depends on your market, your client, and your judgement.
+        </li>
+        <li>
+          <strong>Anything requiring physical site knowledge</strong> - is the substrate sound? Are
+          the timbers adequate? Is the access going to require a different scaffolding setup? The AI
+          cannot answer any of these.
+        </li>
+        <li>
+          <strong>Knowing your local building codes</strong> - ventilation requirements, underlay
+          specifications, fixing schedules. These vary by region and must be verified by someone
+          who knows the regulations.
+        </li>
+      </ul>
+
+      <h2>The concern that nobody addresses</h2>
       <p>
-        If you are considering an AI roofing tool, ask these questions:
+        A lot of contractors are worried about AI, and not because they think it will replace them.
+        The real concern is simpler: if the AI gets a measurement wrong and I send a quote based on
+        it, who pays for the mistake?
       </p>
+      <p>
+        The answer is: you do. The AI does not carry liability. The tool provider does not carry
+        liability. If you underorder materials because an AI traced an outline wrong, you absorb
+        that cost. This is exactly why human verification is non-negotiable. The AI is a tool that
+        speeds up your work. It is not an employee you can hold responsible for mistakes.
+      </p>
+      <p>
+        The right way to think about it is like a nail gun. A nail gun is much faster than a
+        hammer. But you still check that the nail went in straight. You do not fire blindly and
+        assume every nail is perfect. AI plan takeoff is the same - it is faster than manual
+        tracing, but you still check the work.
+      </p>
+
+      <h2>How to evaluate an AI roofing tool</h2>
       <ol>
         <li>
-          <strong>What does the AI actually do?</strong> - Is it using AI vision models, or is it
-          marketing existing technology as "AI"? Photogrammetry, image processing, and rule-based
-          automation are not AI, even if they are useful.
+          <strong>What does the AI actually do?</strong> Ask specifically. "AI-powered" tells you
+          nothing. Does it trace plans? Read dimensions? Detect damage? Generate designs? If the
+          vendor cannot explain it clearly, that is a red flag.
         </li>
         <li>
-          <strong>Where does the human fit in?</strong> - Good AI tools show you what the AI produced
-          and let you verify and adjust. Bad AI tools produce a black-box report with no way to
-          check the work.
+          <strong>Can you see and verify the output?</strong> Good AI tools show you what the AI
+          produced and let you adjust it. If the tool gives you a black-box report with no way to
+          check the work, you are trusting it blindly.
         </li>
         <li>
-          <strong>What is the input requirement?</strong> - AI plan takeoff needs a plan image.
-          Aerial measurement needs an address. Drone inspection needs a drone pilot. Make sure the
-          input matches your workflow.
+          <strong>What is the input?</strong> AI plan takeoff needs a plan image. Aerial measurement
+          needs an address. Drone inspection needs a drone pilot. Make sure the input matches how
+          you actually work.
         </li>
         <li>
-          <strong>What does it cost per job?</strong> - Aerial reports charge per address. AI plan
-          takeoff is typically included in a subscription. Drone inspections cost $150-$500 per
-          property. Know the unit economics.
+          <strong>What does it cost per job?</strong> Aerial reports charge per address. AI takeoff
+          is usually subscription-based. Know the unit economics before committing.
         </li>
         <li>
-          <strong>Can you export the results?</strong> - If the tool produces a takeoff, can you
-          export it to a quote? If it produces a measurement report, can you use it in your
-          estimating workflow? Tools that lock data inside their own ecosystem are less valuable.
+          <strong>Does it connect to your quote workflow?</strong> A measurement is only useful if
+          you can turn it into a quote. If the tool locks data inside its own ecosystem, it is less
+          valuable than one that exports to your quoting process.
         </li>
       </ol>
 
-      <h2>QuoteCore+ AI tools overview</h2>
+      <h2>How QuoteCore+ uses AI</h2>
       <p>
-        QuoteCore+ offers both free tools and AI-powered paid tools:
+        QuoteCore+ uses AI for one specific thing: tracing roof plans. You upload a plan image, the
+        AI traces the outline, detects internal lines, and classifies them. You verify everything on
+        an interactive canvas. Then the system calculates measurements and material quantities from
+        the verified takeoff.
       </p>
-      <h3>Free tools (no account needed)</h3>
-      <ul>
-        <li><a href="/free-roof-pitch-calculator">Roof Pitch Calculator</a> - manual pitch calculation</li>
-        <li><a href="/free-roof-area-calculator">Roof Area Calculator</a> - surface area from plan dimensions and pitch</li>
-        <li><a href="/free-roofing-material-calculator">Roofing Material Calculator</a> - tile, underlay, and batten quantities</li>
-        <li><a href="/free-roofing-takeoff-builder">Roofing Takeoff Builder</a> - limited AI scans for free users</li>
-        <li><a href="/free-quote-generator">Quote Generator</a> - create a professional quote PDF</li>
-        <li><a href="/free-invoice-generator">Invoice Generator</a> - create and send invoices</li>
-        <li><a href="/free-tools">View all free tools</a></li>
-      </ul>
-      <h3>Paid AI tools (in the app)</h3>
+      <p>
+        The AI does not set prices. It does not assess structural condition. It does not write terms
+        and conditions. It traces geometry, reads dimensions, and flags uncertainty. Everything else
+        is either rule-based calculation or human input.
+      </p>
+      <p>
+        You can try this yourself:
+      </p>
       <ul>
         <li>
-          <strong>AI Takeoff Builder</strong> - the full 3-scan pipeline with unlimited scans. Upload
-          a roof plan, AI traces the outline and lines, you verify and adjust, then generate a
-          material takeoff and quote from the results.
+          <a href="/free-roofing-takeoff-builder">Roof Takeoff Builder</a> - upload a plan and watch
+          the AI trace it. Limited free scans.
         </li>
         <li>
-          <strong>Component Library</strong> - a registry of roofing components (tiles, membranes,
-          fixings) with real coverage rates and specifications. The AI uses this to calculate
-          accurate material quantities from the takeoff.
+          <a href="/free-roofing-material-calculator">Roofing Material Calculator</a> - calculate
+          tile, underlay, and batten quantities from your measurements.
         </li>
         <li>
-          <strong>Quote Builder</strong> - turns the takeoff into a professional, sendable quote with
-          line items, pricing, and terms. The AI pre-fills material lines from the takeoff, and you
-          adjust pricing and add labour lines.
+          <a href="/free-quote-generator">Free Quote Generator</a> - turn measurements into a
+          professional quote.
         </li>
       </ul>
       <p>
-        The free tools use manual entry - no AI. The paid tools use AI for the takeoff and
-        material calculation, with human verification at every step.
+        All three are free, no account needed. For the full AI takeoff pipeline with unlimited
+        scans, the complete component library, and integrated quote building,{' '}
+        <a href="/free-trial">start a free 14-day trial</a>. Every feature is included - the AI
+        takeoff, the component library, the quote builder - all free for 14 days. No card required.
       </p>
 
       <hr />
 
-      <h2>The bottom line</h2>
+      <h2>Bottom line</h2>
       <p>
-        AI in roofing is real and useful, but it is not magic. It is a tool that speeds up specific
-        tasks - plan tracing, line detection, material calculation - while leaving the judgment
-        calls to the human. The contractors who benefit most are the ones who use AI to handle the
-        tedious parts and focus their time on the parts that actually require expertise: pricing,
-        client relationships, quality of work, and knowing the local market.
-      </p>
-      <p>
-        If you want to try AI-assisted roof measuring,{' '}
-        <a href="/free-trial">start a free trial of QuoteCore+</a> and upload a roof plan. You will
-        see the AI scan results in under a minute, and you can decide for yourself whether it is
-        useful for your workflow.
+        AI in roofing is a tool, not a revolution. It traces plans faster than you can by hand. It
+        reads dimensions so you do not have to enter them manually. It flags uncertainty instead of
+        silently producing wrong answers. But it does not replace your expertise, your site
+        knowledge, or your judgment. The contractors who get the most value from AI are the ones who
+        use it to handle the tedious work and spend their time on the things that actually require a
+        human.
       </p>
     </div>
   );

@@ -4,272 +4,247 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        AI roof measuring is one of the most practical applications of artificial intelligence in
-        the roofing industry. Instead of climbing a ladder with a tape measure or paying for an
-        aerial measurement report that takes hours to arrive, AI can analyse a roof plan or image
-        and produce dimensioned measurements in minutes.
+        If you have ever spent half an hour tracing a roof plan by hand, marking out ridges and
+        valleys with a ruler and a calculator, you will understand why AI roof measuring is getting
+        attention. It takes a job that is tedious, error-prone, and frankly boring, and does the
+        first pass in seconds.
       </p>
       <p>
-        But AI roof measuring is not a single thing. There are different tools doing different jobs,
-        with different levels of accuracy, and different points where a human still needs to step in.
-        This guide breaks down what AI roof measuring can actually do in 2026, where it falls short,
-        and how to use it in a real roofing workflow.
+        But there is a lot of hype around "AI" in roofing, and not all of it holds up. This guide
+        covers what AI roof measuring actually does, how it works in practice, and where you still
+        need to do the thinking yourself.
       </p>
 
       <hr />
 
-      <h2>What AI roof measuring means in 2026</h2>
+      <h2>What AI roof measuring actually is</h2>
       <p>
-        AI roof measuring falls into three broad categories:
+        There are three different technologies that get called "AI roof measuring" and they are not
+        the same thing:
+      </p>
+      <h3>1. Aerial measurement reports</h3>
+      <p>
+        Services like <a href="https://www.eagleview.com" target="_blank" rel="noopener noreferrer">EagleView</a> and{' '}
+        <a href="https://www.roofr.com" target="_blank" rel="noopener noreferrer">Roofr</a> take satellite or aerial
+        imagery and produce a dimensioned roof report. These have been around for years and use
+        photogrammetry - mathematical image processing, not AI. They are accurate and reliable, but
+        they cost $7-15 per report and you wait 30 minutes to 2 hours for delivery. You also have
+        no way to check or adjust the measurements - you get a PDF and that is it.
+      </p>
+      <h3>2. AI-assisted plan takeoff</h3>
+      <p>
+        This is where you upload a roof plan image - from an architect, a council submission, or
+        your own site sketch - and AI vision models trace the roof geometry for you. The AI reads
+        the plan, identifies the outline, detects internal lines like ridges and valleys, and
+        classifies them. You see the results overlaid on your original image and can adjust anything
+        that looks wrong before generating measurements.
+      </p>
+      <p>
+        This is what QuoteCore+ does. The AI does the tracing. You do the verifying. The difference
+        from an aerial report is that you stay in control of the output and can fix errors on the
+        spot instead of hoping the report is right.
+      </p>
+      <h3>3. AI damage detection</h3>
+      <p>
+        Drone or smartphone photos analysed by AI to find cracked shingles, missing flashing,
+        ponding water. This is genuinely useful for insurance work and storm damage, but it is a
+        different workflow - it does not produce material takeoffs. If you are quoting a re-roof,
+        you do not need AI damage detection. You need measurements.
+      </p>
+
+      <h2>How AI plan takeoff works in practice</h2>
+      <p>
+        Here is what actually happens when you use the AI takeoff in QuoteCore+:
+      </p>
+      <p>
+        You upload a roof plan image. Could be a PDF you exported, a photo of a drawing, or a
+        screenshot from planning software. The AI runs a three-stage scan:
       </p>
       <ol>
         <li>
-          <strong>Aerial measurement</strong> - satellite or drone imagery turned into a dimensioned
-          roof report. Companies like <a href="https://www.eagleview.com" target="_blank" rel="noopener noreferrer">EagleView</a> and{' '}
-          <a href="https://www.roofr.com" target="_blank" rel="noopener noreferrer">Roofr</a> provide
-          reports based on aerial imagery, typically delivered in under an hour. These are
-          well-established and widely used, but they are not really "AI" in the modern sense - they
-          use photogrammetry and image processing rather than large language models.
+          <strong>Outline scan</strong> - the AI traces the roof perimeter and draws a closed
+          polygon around it. You see this overlaid on your image immediately. If the AI missed a
+          notch where the extension meets the main roof, you drag that vertex into place and move on.
         </li>
         <li>
-          <strong>AI-assisted plan takeoff</strong> - uploading a roof plan, drawing, or measurement
-          sketch and having AI trace the roof outline, detect internal lines (ridges, hips, valleys),
-          and classify them automatically. This is what QuoteCore+ does with its 3-scan AI pipeline,
-          which uses GPT vision to trace roof geometry from plan images.
+          <strong>Line detection scan</strong> - the AI looks inside the outline for visible lines.
+          Ridges, hips, valleys, barges. Each line gets a confidence score. A clearly drawn ridge
+          line scores high. A faint, ambiguous line scores low and gets flagged so you know to
+          check it.
         </li>
         <li>
-          <strong>AI damage detection</strong> - using drone or smartphone imagery to automatically
-          classify damage types like cracked shingles, missing flashing, or ponding water. This is
-          the newest category and is primarily used for insurance and storm damage assessment, not
-          for material takeoffs.
+          <strong>Classification scan</strong> - the AI names each line. Ridge. Hip. Valley. Barge.
+          Spouting. Or "uncertain" if it is not sure. The classification matters because it
+          determines how areas are calculated - a valley line affects area differently than a ridge.
         </li>
       </ol>
       <p>
-        For most contractors reading this, category 2 - AI-assisted plan takeoff - is the most
-        relevant. It is what replaces the manual process of tracing roof plans by hand.
+        Then you review. You check the outline, look at any lines flagged as uncertain, confirm the
+        scale and pitch, and adjust anything that is wrong. The AI did the boring part. You did the
+        quality check. That is the workflow.
       </p>
 
-      <h2>What AI is good at in roof measuring</h2>
+      <h2>What happens if you do not verify</h2>
       <p>
-        AI vision models have become genuinely useful for several specific tasks in the roof
-        measurement workflow:
-      </p>
-      <h3>Tracing roof outlines</h3>
-      <p>
-        Modern AI vision models can trace the perimeter of a roof from a plan image with high
-        accuracy. The AI identifies the outer edges of the roof and produces a closed polygon that
-        represents the roof footprint. This is the foundation of any roof takeoff - get the outline
-        right and the rest of the measurements follow.
-      </p>
-      <h3>Detecting internal roof lines</h3>
-      <p>
-        Once the outline is established, AI can detect internal lines that represent ridges, hips,
-        valleys, barges, and spouting. In QuoteCore+'s pipeline, this happens in a separate scan
-        that focuses exclusively on finding visible lines inside the confirmed outline. Each line
-        gets a confidence score so you can see where the AI was uncertain.
-      </p>
-      <h3>Classifying line types</h3>
-      <p>
-        After lines are detected, AI can classify them - ridge, hip, valley, barge, spouting, or
-        uncertain. This classification matters because it determines how areas are calculated and
-        how materials are quantified. A ridge line and a valley line serve completely different
-        structural purposes and require different materials.
-      </p>
-      <h3>Reading scale dimensions</h3>
-      <p>
-        If a plan image includes a dimension line (e.g. "12.5m" with an arrow), AI can read the
-        number and use it to calibrate the scale of the entire image. This means the AI can convert
-        pixel-based measurements into real-world dimensions without you having to manually enter a
-        scale ratio.
-      </p>
-
-      <h2>What AI struggles with</h2>
-      <p>
-        AI roof measuring is not perfect. There are specific scenarios where it produces
-        lower-confidence results or requires human intervention:
-      </p>
-      <h3>Complex roof geometry</h3>
-      <p>
-        Roofs with many intersecting planes, unusual angles, or non-standard shapes are harder for
-        AI to trace accurately. A simple gable roof is straightforward. A roof with five hip
-        intersections, two dormers, and a valley that meets a broken hip at an unusual angle is
-        where the AI's confidence scores start dropping. In QuoteCore+'s pipeline, these lines get
-        flagged as "uncertain" so the user knows to check them manually.
-      </p>
-      <h3>Low-quality or hand-drawn plans</h3>
-      <p>
-        AI vision models work best with clear, high-resolution plan images. Blurry photos of plans,
-        hand-drawn sketches with inconsistent line weights, or plans with heavy annotations and
-        markings over the roof geometry will reduce accuracy. The cleaner the input image, the
-        better the output.
-      </p>
-      <h3>Detecting pitch from a 2D plan</h3>
-      <p>
-        If a roof plan is a top-down 2D view with a pitch annotation (e.g. "35 degrees" or "17.5/12
-        pitch"), AI can read the annotation. But if the pitch is not annotated on the plan, the AI
-        cannot infer it from a top-down image alone - pitch is a 3D property that does not exist in
-        a 2D top view. In these cases, the user needs to enter the pitch manually.
-      </p>
-
-      <h2>What always needs human verification</h2>
-      <p>
-        Regardless of which AI tool you use, there are things that should always be checked by a
-        human before the measurements are used for quoting or material ordering:
+        Here is where I am going to be honest, because most AI marketing is not. If you blindly
+        trust the AI output and send a quote based on it without checking, here is what can go
+        wrong:
       </p>
       <ul>
         <li>
-          <strong>Outline accuracy</strong> - verify the AI-traced perimeter matches the actual roof
-          shape. A missed notch or an extra vertex can throw off area calculations by 5-10%.
+          The AI traces an outline that misses a small extension. Your area is 10% low. You order
+          10% fewer tiles. You run out on day two and have to send someone to the merchants.
         </li>
         <li>
-          <strong>Line classification on unusual roofs</strong> - if the AI flagged a line as
-          "uncertain", check whether it is actually a ridge, hip, or valley. The structural
-          implications are different for each.
+          The AI misreads a dimension line - "12.5m" becomes "125m" because the decimal point was
+          faint. Every measurement is now 10x too large. The quote is absurd and the client thinks
+          you are incompetent.
         </li>
         <li>
-          <strong>Scale calibration</strong> - if the AI read a scale dimension from the plan,
-          verify the number matches what is actually written. A misread "12.5m" as "125m" would be
-          catastrophic.
+          The AI classifies a broken hip as a full hip. The area calculation is wrong. You order
+          the wrong length of hip tiles.
         </li>
         <li>
-          <strong>Pitch entry</strong> - if pitch was not on the plan, make sure the correct pitch
-          is entered before calculating areas. Wrong pitch = wrong surface area = wrong material
-          quantities.
+          The pitch was not annotated on the plan. The AI assumed flat. Your surface area is
+          calculated as plan area, not actual roof area. You underorder by 15-20%.
+        </li>
+      </ul>
+      <p>
+        These are not theoretical. They are the kinds of errors that happen when you remove the
+        human from the loop. The AI is fast but it is not infallible. The whole point of showing
+        you the results on an interactive canvas is so you can catch these things before they
+        become a problem.
+      </p>
+
+      <h2>What AI is genuinely good at</h2>
+      <p>
+        Despite the warnings above, AI plan takeoff is genuinely useful for specific tasks:
+      </p>
+      <ul>
+        <li>
+          <strong>Initial outline tracing</strong> - for most standard roofs, the AI gets the
+          outline right on the first pass. That saves 10-15 minutes of manual tracing.
         </li>
         <li>
-          <strong>Material quantities</strong> - always sense-check the final material list against
-          the roof area. If the AI says you need 4,000 tiles for a 120m2 roof, something is wrong.
+          <strong>Reading scale dimensions</strong> - if the plan has a dimension line with a
+          measurement written on it, the AI reads the number and calibrates the scale automatically.
+          No manual scale entry.
+        </li>
+        <li>
+          <strong>Consistency</strong> - the AI traces the same plan the same way every time. A
+          human tracing the same plan at 5pm on a Friday might not be as accurate as at 9am on a
+          Monday. The AI does not get tired.
+        </li>
+        <li>
+          <strong>Speed</strong> - the AI produces a first pass in under a minute. Even with
+          verification, the total time is a fraction of manual tracing.
         </li>
       </ul>
 
-      <h2>How QuoteCore+ uses AI for roof measuring</h2>
-      <p>
-        QuoteCore+ includes an AI takeoff builder that uses a 3-scan pipeline powered by GPT vision
-        models. Here is how it works:
-      </p>
-      <h3>Scan 1: Outline tracing</h3>
-      <p>
-        You upload a roof plan image. The AI traces the roof perimeter and produces a closed
-        polygon. You see the outline overlaid on the original image so you can verify it
-        immediately. If the AI missed a notch or added an extra vertex, you can adjust it on the
-        canvas before moving on.
-      </p>
-      <h3>Scan 2: Internal line detection</h3>
-      <p>
-        With the outline confirmed, the AI scans inside the perimeter for visible lines. Each
-        detected line gets a confidence score. Lines that are clearly visible score high. Lines that
-        are faint or ambiguous score lower. You can see every line the AI detected and delete or
-        adjust any that are wrong.
-      </p>
-      <h3>Scan 3: Line classification</h3>
-      <p>
-        The AI classifies each detected line as a ridge, hip, valley, barge, spouting, broken hip,
-        broken barge, or uncertain. Classification determines how the line contributes to area
-        calculations. You can override any classification if you disagree.
-      </p>
-      <h3>After the scans: Human verification</h3>
-      <p>
-        Once all three scans are complete, you have a fully traced roof with classified lines on an
-        interactive canvas. This is where the human step happens - you review the outline, check the
-        uncertain lines, verify the scale and pitch, and make any adjustments. The AI does the heavy
-        lifting of initial detection. You do the final quality check.
-      </p>
-      <p>
-        The result is a roof takeoff that combines AI speed with human accuracy. The AI might
-        produce a first pass in under a minute. The human verification takes another 2-3 minutes.
-        Total time from plan upload to quote-ready takeoff: under 5 minutes.
-      </p>
+      <h2>What AI cannot do</h2>
+      <ul>
+        <li>
+          <strong>Infer pitch from a 2D top-down plan</strong> - pitch is a 3D property. If it is
+          not written on the plan, the AI cannot guess it. You need to enter it.
+        </li>
+        <li>
+          <strong>Know what is not on the plan</strong> - if the extension was rebuilt last year
+          with a different pitch, the AI does not know that. It traces what is on the paper.
+        </li>
+        <li>
+          <strong>Make judgment calls about complex geometry</strong> - a roof with five hip
+          intersections and two dormers will produce lower-confidence results. The AI will flag
+          lines as "uncertain" rather than guessing, which is the right behaviour, but it means
+          you need to spend more time on verification.
+        </li>
+        <li>
+          <strong>Assess structural condition</strong> - the AI can tell you the roof area. It
+          cannot tell you the timbers are rotting or the substrate needs replacing.
+        </li>
+      </ul>
 
-      <h2>AI roof measuring vs aerial measurement reports</h2>
+      <h2>AI plan takeoff vs aerial reports</h2>
       <p>
-        A common question is whether AI-assisted plan takeoff replaces services like EagleView or
-        Roofr Measurements. They serve different workflows:
+        People ask whether AI plan takeoff replaces EagleView or Roofr. It does not - they serve
+        different situations:
       </p>
       <table>
         <thead>
           <tr>
-            <th>Feature</th>
+            <th></th>
             <th>AI Plan Takeoff (QuoteCore+)</th>
             <th>Aerial Report (EagleView, Roofr)</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Input</td>
-            <td>Rooftop plan image you upload</td>
-            <td>Property address (they source imagery)</td>
+            <td>When to use</td>
+            <td>You have a roof plan or measurement sketch</td>
+            <td>You have no plan and need measurements from aerial imagery</td>
           </tr>
           <tr>
-            <td>Turnaround</td>
-            <td>Under 1 minute for AI scan</td>
-            <td>30 minutes to 2 hours</td>
+            <td>What you provide</td>
+            <td>Upload the plan image</td>
+            <td>Enter the property address</td>
           </tr>
           <tr>
-            <td>Cost per report</td>
-            <td>Included in subscription (from 20 scans/trial)</td>
-            <td>$7-$15 per report</td>
+            <td>Can you check the work?</td>
+            <td>Yes - results on an interactive canvas, adjust anything</td>
+            <td>No - you get a PDF report</td>
           </tr>
           <tr>
-            <td>Accuracy</td>
-            <td>High with human verification</td>
-            <td>High (photogrammetry-based)</td>
-          </tr>
-          <tr>
-            <td>Best for</td>
-            <td>When you have a roof plan or measurement sketch</td>
-            <td>When you need measurements without visiting the site or having a plan</td>
+            <td>Cost</td>
+            <td>Included in QuoteCore+ subscription</td>
+            <td>$7-15 per report</td>
           </tr>
         </tbody>
       </table>
       <p>
-        If you already have a roof plan - whether from an architect, a council submission, or your
-        own site measurements - AI plan takeoff is faster and cheaper. If you do not have a plan and
-        need measurements from aerial imagery, an aerial report service is the right tool.
+        If you already have a plan, AI takeoff is faster, cheaper, and gives you control over the
+        output. If you do not have a plan and cannot get one easily, an aerial report is the right
+        tool for that situation.
       </p>
 
-      <h2>Free tools to get started</h2>
+      <h2>Try it yourself</h2>
       <p>
-        If you want to start with the basics before using AI takeoff, QuoteCore+ offers several
-        free tools that handle the manual measurement workflow:
+        The best way to understand what AI roof measuring can and cannot do is to try it with a
+        real roof plan. Here is what to do:
       </p>
       <ul>
         <li>
-          <a href="/free-roof-pitch-calculator">Roof Pitch Calculator</a> - enter rise and run, get
-          pitch in degrees, ratio, and percentage
+          <a href="/free-roofing-takeoff-builder">Roof Takeoff Builder</a> - upload a plan and let
+          the AI trace it. You get limited free scans to see how it works.
         </li>
         <li>
-          <a href="/free-roof-area-calculator">Roof Area Calculator</a> - calculate true surface
-          area from plan dimensions and pitch
+          <a href="/free-roofing-material-calculator">Roofing Material Calculator</a> - once you
+          have your measurements, calculate tile and material quantities.
         </li>
         <li>
-          <a href="/free-roofing-takeoff-builder">Roofing Takeoff Builder</a> - a free version of
-          the takeoff tool with limited AI scans
-        </li>
-        <li>
-          <a href="/free-roofing-material-calculator">Roofing Material Calculator</a> - estimate
-          tile, underlay, and batten quantities from roof area
+          <a href="/free-quote-generator">Free Quote Generator</a> - turn those measurements into a
+          professional quote you can send to a client.
         </li>
       </ul>
       <p>
-        These tools are free and do not require an account. When you are ready for the full AI
-        takeoff pipeline with unlimited scans,{' '}
-        <a href="/free-trial">start a free trial of QuoteCore+</a>.
+        The takeoff builder, material calculator, and quote generator are all free. When you want
+        the full AI pipeline with unlimited scans, the full component library, and the ability to
+        generate quotes directly from takeoffs,{' '}
+        <a href="/free-trial">start a free 14-day trial of QuoteCore+</a>. You get every feature,
+        including the AI takeoff assistant, at no cost for 14 days. No card required.
       </p>
 
       <hr />
 
-      <h2>The bottom line</h2>
+      <h2>The honest summary</h2>
       <p>
-        AI roof measuring in 2026 is a genuine time-saver, not a gimmick. The ability to upload a
-        plan and get a traced, classified roof takeoff in under a minute changes the quoting
-        workflow significantly. But it is not a replacement for human judgment. The best results
-        come from combining AI speed with human verification - letting the AI do the tedious initial
-        tracing, and letting the roofer do the final quality check.
+        AI roof measuring is not going to replace you. It is not going to replace your site visit
+        on a complex job. It is not going to set your prices or assess your structural risks. What
+        it does is take the most tedious part of the quoting process - tracing a plan, marking
+        lines, calculating areas - and do it fast enough that you can spend your time on the parts
+        that actually need a roofer's brain.
       </p>
       <p>
-        If you are still tracing roof plans by hand or paying $15 per aerial report, AI-assisted
-        plan takeoff is worth trying. <a href="/free-trial">Start a free trial</a> and upload a
-        roof plan to see how it works.
+        If you are still tracing plans by hand, that is the part AI can help with today.{' '}
+        <a href="/free-trial">Try it free for 14 days</a> and see whether it fits your workflow.
       </p>
     </div>
   );
