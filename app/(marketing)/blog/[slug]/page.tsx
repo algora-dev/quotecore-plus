@@ -20,6 +20,11 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'construction-quote-speed-checklist': () => import('./content/construction-quote-speed-checklist'),
   'how-to-get-more-work-as-a-contractor': () => import('./content/how-to-get-more-work-as-a-contractor'),
   'best-roofing-quoting-software-uk-2026': () => import('./content/best-roofing-quoting-software-uk-2026'),
+  'how-to-calculate-roof-pitch': () => import('./content/how-to-calculate-roof-pitch'),
+  'how-to-measure-a-roof': () => import('./content/how-to-measure-a-roof'),
+  'how-much-roofing-material': () => import('./content/how-much-roofing-material'),
+  'how-to-price-a-roofing-job': () => import('./content/how-to-price-a-roofing-job'),
+  'best-free-tools-for-roofers': () => import('./content/best-free-tools-for-roofers'),
 };
 
 type Props = { params: Promise<{ slug: string }> };
