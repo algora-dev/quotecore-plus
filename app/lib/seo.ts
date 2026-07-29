@@ -180,6 +180,7 @@ export function blogPostingSchema({
       name: authorName,
       jobTitle: authorRole,
       url: `${SITE_URL}/about`,
+      sameAs: [ORG_LINKEDIN],
     },
     publisher: {
       '@type': 'Organization',
@@ -188,13 +189,34 @@ export function blogPostingSchema({
       logo: {
         '@type': 'ImageObject',
         url: ORG_LOGO,
+        width: 512,
+        height: 512,
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': canonicalUrl(`/blog/${slug}`),
     },
-    ...(image ? { image: { '@type': 'ImageObject', url: image } } : {}),
+    image: {
+      '@type': 'ImageObject',
+      url: image || `${SITE_URL}/og-image.png`,
+      width: 1200,
+      height: 630,
+    },
+  };
+}
+
+/** Blog schema for the blog index page. */
+export function blogIndexSchema() {
+  return {
+    '@type': 'Blog' as const,
+    '@id': `${SITE_URL}/blog/#blog`,
+    name: 'QuoteCore+ Blog',
+    description:
+      'Practical guides for roofing and construction contractors on quoting, pricing, material ordering, job management, and getting more work.',
+    url: canonicalUrl('/blog'),
+    publisher: { '@id': `${SITE_URL}/#organization` },
+    blogPost: [] as Record<string, unknown>[],
   };
 }
 
