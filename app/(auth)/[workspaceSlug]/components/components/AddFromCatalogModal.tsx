@@ -551,7 +551,7 @@ export function AddFromCatalogModal({
                   {/* Rows table */}
                   <div className="rounded-lg border border-slate-200 overflow-auto max-h-[40vh]">
                     <table className="text-xs min-w-max">
-                      <thead className="bg-slate-50 sticky top-0 z-10">
+                      <thead className="sticky top-0 z-10">
                         <tr className="border-b border-slate-200">
                           <th className="px-2 py-2 text-left w-8">
                             <input
