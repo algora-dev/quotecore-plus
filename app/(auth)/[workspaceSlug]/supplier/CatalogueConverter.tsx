@@ -347,7 +347,7 @@ export function CatalogueConverter({
 
           <div className="rounded-lg border border-slate-200 overflow-auto max-h-96">
             <table className="w-full text-xs min-w-max">
-              <thead className="bg-slate-50 sticky top-0 z-10">
+              <thead className="sticky top-0 z-10">
                 <tr className="border-b border-slate-200">
                   <th className="px-2 py-2 text-left">
                     <input
@@ -358,10 +358,10 @@ export function CatalogueConverter({
                     />
                   </th>
                   {headers.map(h => (
-                    <th key={h} className="px-2 py-2 text-left font-medium text-slate-600 whitespace-nowrap">
+                    <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${(columnMapping[h] ?? []).length > 0 ? 'bg-orange-50/60 text-slate-700' : 'text-slate-600'}`}>
                       {h}
                       {(columnMapping[h] ?? []).length > 0 && (
-                        <span className="ml-1 text-[10px] text-orange-500">({columnMapping[h].join(', ')})</span>
+                        <span className="ml-1 text-xs font-semibold text-orange-500">({columnMapping[h].join(', ')})</span>
                       )}
                     </th>
                   ))}
@@ -369,8 +369,8 @@ export function CatalogueConverter({
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredRows.map(({ row, i }) => (
-                  <tr key={i} className={`hover:bg-orange-50/30 ${selectedRowIndices.has(i) ? 'bg-orange-50/20' : ''}`}>
-                    <td className="px-2 py-1.5">
+                  <tr key={i} className={`${selectedRowIndices.has(i) ? '' : ''}`}>
+                    <td className={`px-2 py-1.5 ${selectedRowIndices.has(i) ? 'bg-orange-50/20' : ''}`}>
                       <input
                         type="checkbox"
                         checked={selectedRowIndices.has(i)}
@@ -379,7 +379,7 @@ export function CatalogueConverter({
                       />
                     </td>
                     {headers.map(h => (
-                      <td key={h} className="px-2 py-1.5 text-slate-600 whitespace-nowrap">{row[h] ?? '-'}</td>
+                      <td key={h} style={(columnMapping[h] ?? []).length === 0 ? { backgroundColor: '#ffffff' } : undefined} className={`px-2 py-1.5 whitespace-nowrap ${(columnMapping[h] ?? []).length > 0 ? (selectedRowIndices.has(i) ? 'bg-orange-50/70 text-slate-700' : 'bg-orange-50/50 text-slate-700') : (selectedRowIndices.has(i) ? 'bg-orange-50/20 text-slate-600' : 'text-slate-600')}`}>{row[h] ?? '-'}</td>
                     ))}
                   </tr>
                 ))}
