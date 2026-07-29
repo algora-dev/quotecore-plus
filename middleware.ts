@@ -44,6 +44,7 @@ function expireLegacyAuthCookies(request: NextRequest, response: NextResponse) {
  * usable for internal testing.
  */
 const STABLE_VERCEL_ALIASES = new Set([
+  'quotecore-plus.vercel.app',
   'quotecore-plus-dev.vercel.app',
   'quotecore-plus-main.vercel.app',
   'quotecore-git-main-algora-devs-projects.vercel.app',
