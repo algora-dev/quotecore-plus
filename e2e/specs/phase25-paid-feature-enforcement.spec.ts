@@ -1,5 +1,5 @@
-/**
- * P2.5-02 — Server-side paid-feature enforcement (HARDENED)
+﻿/**
+ * P2.5-02 â€” Server-side paid-feature enforcement (HARDENED)
  *
  * Hits API routes directly as trial and paid users.
  * Asserts not just 4xx but also that NO side effects occur
@@ -9,7 +9,7 @@
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** High-value routes that should be restricted for trial users */
 const PAID_ROUTES = [
@@ -103,7 +103,7 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
       }
     );
 
-    // Must be 4xx — NOT 200 with real AI results
+    // Must be 4xx â€” NOT 200 with real AI results
     expect(response.status()).toBeGreaterThanOrEqual(400);
     expect(response.status()).toBeLessThan(500);
 
@@ -179,7 +179,7 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
       }
     );
 
-    // Must be 401 — not 200, not 500
+    // Must be 401 â€” not 200, not 500
     expect(response.status()).toBe(401);
   });
 

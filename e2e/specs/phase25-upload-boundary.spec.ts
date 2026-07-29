@@ -1,5 +1,5 @@
-/**
- * P2.5-04 — Upload boundary and type validation (HARDENED)
+﻿/**
+ * P2.5-04 â€” Upload boundary and type validation (HARDENED)
  *
  * Tests that rejected files actually produce visible errors and
  * do NOT appear in the attachments list. Not just "no 5xx".
@@ -10,7 +10,7 @@ import { test, expect, type Page } from '../fixtures/base';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 /** Generate a temporary file of approximately the given size */
@@ -78,7 +78,7 @@ test.describe('P2.5-04: Upload boundary and type validation @mutation @attachmen
         expect(afterCount).toBe(beforeCount);
 
         if (errorVisible) {
-          // Great — explicit error message shown
+          // Great â€” explicit error message shown
         } else {
           // File count unchanged is the minimum assertion
           expect(afterCount).toBe(beforeCount);
@@ -106,7 +106,7 @@ test.describe('P2.5-04: Upload boundary and type validation @mutation @attachmen
         await fileInput.setInputFiles(fakePng);
         await page.waitForTimeout(3000);
 
-        // Either rejected or accepted — either way no 5xx
+        // Either rejected or accepted â€” either way no 5xx
         // If accepted, it should render safely (no XSS from file content)
         assertNoServerErrors();
       } else {

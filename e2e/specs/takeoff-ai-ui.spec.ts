@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E-18/19/21: Mocked AI queue, points/failure, two-tab (HARDENED)
  *
  * Mocks the 3 AI scan endpoints and verifies the full flow:
@@ -12,7 +12,7 @@
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Dismiss cookie banner */
 async function dismissCookies(page: Page) {
@@ -99,7 +99,7 @@ test.describe('Mocked AI & Concurrency', () => {
   test('E2E-19b: AI scan API rejects invalid quote ID with 4xx @mocked-ai', async ({ loginAs, assertNoServerErrors }) => {
     const { page } = await loginAs('paid-c');
 
-    // Hit the API directly with a fake quote ID — should get 4xx, not 5xx
+    // Hit the API directly with a fake quote ID â€” should get 4xx, not 5xx
     const response = await page.request.post(`${BASE_URL}/api/takeoff/ai-scan-v3`, {
       data: {
         quoteId: '00000000-0000-0000-0000-000000000000',

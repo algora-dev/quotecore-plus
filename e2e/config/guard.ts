@@ -1,13 +1,13 @@
-/**
- * Origin Guard — Safety Rule 1 & 2
+﻿/**
+ * Origin Guard â€” Safety Rule 1 & 2
  *
  * Aborts before any browser launches unless BASE_URL is exactly
- * https://quotecore-plus-dev.vercel.app.
+ * https://quotecore-plus-testing.vercel.app.
  *
  * Rejects: main, production, preview, localhost, IP addresses, and lookalike hosts.
  */
 
-const APPROVED_HOST = 'quotecore-plus-dev.vercel.app';
+const APPROVED_HOST = 'quotecore-plus-testing.vercel.app';
 const APPROVED_ORIGIN = `https://${APPROVED_HOST}`;
 
 /** Forbidden host patterns */
@@ -26,7 +26,7 @@ const FORBIDDEN_PATTERNS = [
 
 /**
  * Throws (not returns) if the origin is not approved.
- * Called at config load time — before any Playwright worker starts.
+ * Called at config load time â€” before any Playwright worker starts.
  */
 export function guardOrigin(baseUrl: string): void {
   if (!baseUrl) {
@@ -51,7 +51,7 @@ export function guardOrigin(baseUrl: string): void {
     );
   }
 
-  // Must be exactly the approved host — no subdomains, no ports, no paths
+  // Must be exactly the approved host â€” no subdomains, no ports, no paths
   if (parsed.host !== APPROVED_HOST) {
     throw new Error(
       `[e2e:guard] E2E_BASE_URL host must be exactly "${APPROVED_HOST}". Got: "${parsed.host}".`
@@ -75,7 +75,7 @@ export function guardOrigin(baseUrl: string): void {
     );
   }
 
-  // Silent pass — origin is approved
+  // Silent pass â€” origin is approved
 }
 
 /**
@@ -87,7 +87,7 @@ export function assertOrigin(baseUrl: string): void {
 }
 
 /**
- * Account guard — Safety Rule 3 & 4
+ * Account guard â€” Safety Rule 3 & 4
  * Ensures only named E2E accounts are used.
  */
 export function assertE2EAccount(email: string, knownAccounts: string[]): void {
@@ -103,7 +103,7 @@ export function assertE2EAccount(email: string, knownAccounts: string[]): void {
   }
 }
 
-/** Redact email for logging — show first 3 chars + domain */
+/** Redact email for logging â€” show first 3 chars + domain */
 export function redact(email: string): string {
   const [local, domain] = email.split('@');
   if (!domain) return '[redacted]';

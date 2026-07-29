@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase C: Supplier System & Catalogue Tests
  *
  * Tests CSV catalogue upload, conversion to components, atomicity
@@ -10,7 +10,7 @@ import { test, expect, type Page } from '../fixtures/base';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Dismiss cookie banner */
 async function dismissCookies(page: Page) {
@@ -57,7 +57,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     // If this account isn't a supplier, the page might redirect.
     // We test the catalogue converter flow if accessible.
     if (!page.url().includes('/supplier')) {
-      // Not a supplier account — skip this test for non-supplier accounts
+      // Not a supplier account â€” skip this test for non-supplier accounts
       test.skip(true, 'Paid-c is not a supplier account');
       return;
     }
@@ -83,7 +83,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
         cleanupFile(csvPath);
       }
     } else {
-      // No file input found — catalogue converter not accessible
+      // No file input found â€” catalogue converter not accessible
       test.skip(true, 'Catalogue converter not accessible');
     }
   });
@@ -117,7 +117,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
         // Count components BEFORE conversion attempt
         const beforeCount = await page.locator('[data-component-id], .component-row').count();
 
-        // Try to convert — should be blocked with error
+        // Try to convert â€” should be blocked with error
         // Look for a convert/submit button
         const convertBtn = page.getByRole('button', { name: /convert|create|import/i }).first();
         if (await convertBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -133,7 +133,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
           expect(afterCount).toBe(beforeCount);
 
           if (errorVisible) {
-            // Good — explicit error shown
+            // Good â€” explicit error shown
           }
         }
 
@@ -181,7 +181,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
       // Either way, no 5xx
       assertNoServerErrors();
     } else {
-      // No search input — directory might be empty or different layout
+      // No search input â€” directory might be empty or different layout
       assertNoServerErrors();
     }
   });
@@ -273,7 +273,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     }
 
     // CSV with a long description
-    const longName = 'A'.repeat(75); // 75 chars — exceeds 60 char limit
+    const longName = 'A'.repeat(75); // 75 chars â€” exceeds 60 char limit
     const csv = `SKU,Name,Price,Product Type,Notes\nTEST-LONG,${longName},20.00,Ridge,Full description here\n`;
     const csvPath = generateCSV(`e2e-longname-${Date.now()}.csv`, csv);
 

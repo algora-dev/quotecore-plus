@@ -1,5 +1,5 @@
-/**
- * Phase B: Tenant Isolation & Security — Direct API tests
+﻿/**
+ * Phase B: Tenant Isolation & Security â€” Direct API tests
  *
  * Tests that Company D CANNOT read or write Company A's data
  * via direct API calls. RLS is the last line of defence and
@@ -9,7 +9,7 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 test.describe('Phase B: Tenant Isolation @security @cross-tenant', () => {
 
@@ -85,7 +85,7 @@ test.describe('Phase B: Tenant Isolation @security @cross-tenant', () => {
       },
     });
 
-    // Must be 4xx — not 200 (which would mean the write succeeded)
+    // Must be 4xx â€” not 200 (which would mean the write succeeded)
     expect(response.status()).toBeGreaterThanOrEqual(400);
     expect(response.status()).toBeLessThan(500);
 
@@ -125,7 +125,7 @@ test.describe('Phase B: Tenant Isolation @security @cross-tenant', () => {
       },
     });
 
-    // Must be 4xx — the import must not succeed
+    // Must be 4xx â€” the import must not succeed
     expect(response.status()).toBeGreaterThanOrEqual(400);
     expect(response.status()).toBeLessThan(500);
 

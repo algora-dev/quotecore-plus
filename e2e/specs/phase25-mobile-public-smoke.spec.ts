@@ -1,5 +1,5 @@
-/**
- * P2.5-08 — Mobile public customer-flow smoke
+﻿/**
+ * P2.5-08 â€” Mobile public customer-flow smoke
  *
  * Phone viewport project for the public customer page only:
  * - open valid E2E public quote link
@@ -11,9 +11,9 @@
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
-// Mobile viewport — iPhone 14 Pro dimensions
+// Mobile viewport â€” iPhone 14 Pro dimensions
 const MOBILE_VIEWPORT = { width: 393, height: 852 };
 
 test.describe('P2.5-08: Mobile public customer-flow smoke @mobile @public', () => {
@@ -98,7 +98,7 @@ test.describe('P2.5-08: Mobile public customer-flow smoke @mobile @public', () =
       await page.waitForLoadState('networkidle');
     }
 
-    // Should still render safely — no 5xx, no crash
+    // Should still render safely â€” no 5xx, no crash
     assertNoServerErrors();
   });
 });

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Console & Network Noise Allowlist
  *
  * Evidence contract section 8: Do not blanket-fail console warnings or
@@ -18,30 +18,30 @@ export interface NoiseEntry {
 
 /**
  * Known harmless third-party console/network events.
- * Keep this list SHORT — every entry is technical debt.
+ * Keep this list SHORT â€” every entry is technical debt.
  */
 export const CONSOLE_NOISE: NoiseEntry[] = [
   {
     pattern: /fonts\.googleapis\.com|fonts\.gstatic\.com/i,
-    reason: 'Google Fonts CDN — non-critical resource loading noise',
+    reason: 'Google Fonts CDN â€” non-critical resource loading noise',
     owner: 'gavin',
     expiry: '2026-10-01',
   },
   {
     pattern: /vercel\.live|vitals\.vercel-insights/i,
-    reason: 'Vercel analytics/live — non-critical telemetry',
+    reason: 'Vercel analytics/live â€” non-critical telemetry',
     owner: 'gavin',
     expiry: '2026-10-01',
   },
   {
     pattern: /chrome-extension:\/\//i,
-    reason: 'Browser extension noise — not from app',
+    reason: 'Browser extension noise â€” not from app',
     owner: 'gavin',
     expiry: '2026-10-01',
   },
   {
     pattern: /Download the React DevTools/i,
-    reason: 'React devtools promo — harmless in production builds',
+    reason: 'React devtools promo â€” harmless in production builds',
     owner: 'gavin',
     expiry: '2026-10-01',
   },

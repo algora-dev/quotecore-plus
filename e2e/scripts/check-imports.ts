@@ -1,5 +1,5 @@
-/**
- * Static Import Guard — Safety Rule (Phase 1, item 7)
+﻿/**
+ * Static Import Guard â€” Safety Rule (Phase 1, item 7)
  *
  * This file is imported by the base fixture to provide a runtime check.
  * The real enforcement is via a separate ESLint rule or test script.
@@ -52,7 +52,7 @@ try {
   }
 } catch (err) {
   // e2e dir might not exist yet during early setup
-  console.log('[import-guard] e2e/ directory not found or empty — skipping.');
+  console.log('[import-guard] e2e/ directory not found or empty â€” skipping.');
 }
 
 if (violations > 0) {
@@ -60,6 +60,6 @@ if (violations > 0) {
   console.error('[import-guard] E2E tests must NOT import Supabase, Stripe, OpenAI, or admin clients.');
   process.exit(1);
 } else {
-  console.log('[import-guard] OK — no forbidden imports under e2e/.');
+  console.log('[import-guard] OK â€” no forbidden imports under e2e/.');
   process.exit(0);
 }

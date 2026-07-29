@@ -1,14 +1,14 @@
-/**
+﻿/**
  * E2E-12 extended: Email send (opt-in)
  *
  * Requires E2E_ALLOW_EMAIL_SEND=true AND E2E_SAFE_RECIPIENT_EMAIL matching.
- * Uses @email-opt-in tag — not in default smoke set.
+ * Uses @email-opt-in tag â€” not in default smoke set.
  *
  * @email-opt-in @mutation
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const ALLOW_SEND = process.env.E2E_ALLOW_EMAIL_SEND === 'true';
 const SAFE_EMAIL = process.env.E2E_SAFE_RECIPIENT_EMAIL ?? '';
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase D: Quote Builder & Takeoff Persistence
  *
  * Tests real calculation assertions and data persistence.
@@ -9,7 +9,7 @@
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Dismiss cookie banner */
 async function dismissCookies(page: Page) {
@@ -74,7 +74,7 @@ async function createQuote(
 async function getBuilderTotal(page: Page): Promise<string | null> {
   const totalText = await page.locator('span.font-semibold:has-text("Total:")').first().textContent();
   if (!totalText) return null;
-  const match = totalText.match(/Total:\s*([£$€¥][\d,.]+)/i);
+  const match = totalText.match(/Total:\s*([Â£$â‚¬Â¥][\d,.]+)/i);
   return match ? match[1] : null;
 }
 
@@ -84,18 +84,18 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     const { page, slug } = await loginAs('starter-b');
     await createQuote(page, slug, prefix);
 
-    // Empty quote should show £0.00 — not NaN, not undefined, not blank
+    // Empty quote should show Â£0.00 â€” not NaN, not undefined, not blank
     const total = await getBuilderTotal(page);
     expect(total).not.toBeNull();
-    expect(total).toMatch(/[£$€¥]/);
+    expect(total).toMatch(/[Â£$â‚¬Â¥]/);
     // The value should be 0 or 0.00
-    const numVal = parseFloat(total!.replace(/[£$€¥,]/g, ''));
+    const numVal = parseFloat(total!.replace(/[Â£$â‚¬Â¥,]/g, ''));
     expect(numVal).toBe(0);
 
     assertNoServerErrors();
   });
 
-  test('D2: Quote persists after reload — customer name and job name survive', async ({ loginAs, prefix, assertNoServerErrors }) => {
+  test('D2: Quote persists after reload â€” customer name and job name survive', async ({ loginAs, prefix, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
     const customerName = prefix('Persist Customer');
     const quoteUrl = await createQuote(page, slug, prefix);
@@ -130,7 +130,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
       await page.waitForLoadState('networkidle');
       await dismissModals(page);
 
-      // Takeoff page should load — canvas or upload prompt should be visible
+      // Takeoff page should load â€” canvas or upload prompt should be visible
       expect(page.url()).toContain('/takeoff');
       assertNoServerErrors();
     } else {
@@ -138,7 +138,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     }
   });
 
-  test('D4: Multi-page takeoff — page switching does not corrupt areas', async ({ loginAs, prefix, assertNoServerErrors }) => {
+  test('D4: Multi-page takeoff â€” page switching does not corrupt areas', async ({ loginAs, prefix, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
     const quoteUrl = await createQuote(page, slug, prefix);
     const match = quoteUrl.match(/\/quotes\/([a-f0-9-]+)/);
@@ -168,7 +168,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     const { page, slug } = await loginAs('starter-b');
     await createQuote(page, slug, prefix);
 
-    // Navigate through all phases: areas → components → extras → review → areas
+    // Navigate through all phases: areas â†’ components â†’ extras â†’ review â†’ areas
     const phases = [
       { name: /components/i, label: 'Components' },
       { name: /extras/i, label: 'Extras' },
@@ -187,7 +187,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     // After cycling through all phases, total should still be present
     const total = await getBuilderTotal(page);
     expect(total).not.toBeNull();
-    expect(total).toMatch(/[£$€¥][\d,.]+/);
+    expect(total).toMatch(/[Â£$â‚¬Â¥][\d,.]+/);
 
     assertNoServerErrors();
   });
@@ -222,7 +222,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
       await page.waitForTimeout(1000);
     }
 
-    // Look for tax row — if tax_rate is set, it should show "Tax (X%)"
+    // Look for tax row â€” if tax_rate is set, it should show "Tax (X%)"
     const taxRow = page.locator('div.flex.justify-between:has(span:has-text(/Tax\s*\(/))').first();
     const hasTax = await taxRow.isVisible({ timeout: 2000 }).catch(() => false);
 
@@ -238,7 +238,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
       }
 
       // Extract the tax amount
-      const amtMatch = taxText.match(/[£$€¥]([\d,.]+)/);
+      const amtMatch = taxText.match(/[Â£$â‚¬Â¥]([\d,.]+)/);
       if (amtMatch) {
         const taxAmount = parseFloat(amtMatch[1].replace(/,/g, ''));
         expect(taxAmount).toBeGreaterThanOrEqual(0);
@@ -265,7 +265,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
 
     if (totalsText) {
       // Parse all currency values
-      const matches = totalsText.matchAll(/[£$€¥]([\d,.]+)/g);
+      const matches = totalsText.matchAll(/[Â£$â‚¬Â¥]([\d,.]+)/g);
       const values: number[] = [];
       for (const m of matches) {
         values.push(parseFloat(m[1].replace(/,/g, '')));

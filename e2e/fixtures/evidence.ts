@@ -1,5 +1,5 @@
-/**
- * Evidence Fixture — Failure Evidence Capture
+﻿/**
+ * Evidence Fixture â€” Failure Evidence Capture
  *
  * Evidence contract section 8:
  * Every failure records stable ID/severity, run ID, account/plan,

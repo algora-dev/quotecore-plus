@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E-20: Rapid duplicate submit protection
  * E2E-22: Refresh/back/forward recovery
  * E2E-23: Same-origin allowlisted public route crawl
@@ -7,10 +7,10 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 test.describe('Resilience', () => {
-  test('E2E-20: Rapid duplicate submit — no broken state @smoke', async ({ loginAs, assertNoServerErrors }) => {
+  test('E2E-20: Rapid duplicate submit â€” no broken state @smoke', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
 
     // Navigate to quotes
@@ -51,7 +51,7 @@ test.describe('Resilience', () => {
   test('E2E-23: Same-origin public route crawl @smoke', async ({ freshPage, assertNoServerErrors }) => {
     const page = await freshPage();
 
-    // Crawl public pages — same origin only, no form submissions
+    // Crawl public pages â€” same origin only, no form submissions
     const publicPaths = ['/', '/login', '/signup', '/privacy', '/terms', '/cookies'];
     const visited: string[] = [];
 
@@ -60,7 +60,7 @@ test.describe('Resilience', () => {
       await page.waitForLoadState('networkidle');
 
       // Verify same origin
-      expect(page.url()).toContain('quotecore-plus-dev.vercel.app');
+      expect(page.url()).toContain('quotecore-plus-testing.vercel.app');
 
       // Verify no 404 (page should have content, not a Next.js 404)
       const notFound = await page.getByText('404 | This page could not be found').count();

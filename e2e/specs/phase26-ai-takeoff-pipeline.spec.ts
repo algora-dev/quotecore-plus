@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 2.6-01: AI Takeoff real pipeline E2E (HARDENED)
  *
  * When E2E_AI_TAKEOFF_ENABLED=true, runs the actual 3-scan pipeline.
@@ -12,7 +12,7 @@
 import { test, expect, type Page } from '../fixtures/base';
 import * as path from 'path';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const ROOF_PLAN = path.join(process.cwd(), 'e2e', 'test-data', 'roof-plan-sample.png');
 const AI_ENABLED = process.env.E2E_AI_TAKEOFF_ENABLED === 'true';
 
@@ -116,7 +116,7 @@ test.describe('AI Takeoff Real Pipeline', () => {
 
       // 10. Assert there's at least one area or component mentioned
       // (Not just an empty modal)
-      const hasAreaContent = /area|roof|pitch|°/i.test(modalText);
+      const hasAreaContent = /area|roof|pitch|Â°/i.test(modalText);
       expect(hasAreaContent).toBeTruthy();
 
       // 11. Apply results

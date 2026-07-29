@@ -1,5 +1,5 @@
-/**
- * Combined Base Fixture — E2E test entry point
+﻿/**
+ * Combined Base Fixture â€” E2E test entry point
  *
  * Merges: auth, evidence capture, run context, manifest, noise filtering.
  * All specs import { test, expect } from this file.
@@ -21,7 +21,7 @@ import { assertE2EAccount } from '../config/guard';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const AUTH_DIR = path.join(process.cwd(), '.auth');
 try { fs.mkdirSync(AUTH_DIR, { recursive: true }); } catch {}
 

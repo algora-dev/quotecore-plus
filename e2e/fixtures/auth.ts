@@ -1,5 +1,5 @@
-/**
- * Auth Fixture — Login, Session Persistence, Storage State
+﻿/**
+ * Auth Fixture â€” Login, Session Persistence, Storage State
  *
  * Phase 2: Adds storage state caching so login happens once per account
  * per test run, not on every test.
@@ -10,7 +10,7 @@ import { getKnownAccountEmails, assertE2EAccount } from '../config/guard';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const AUTH_DIR = path.join(process.cwd(), '.auth');
 
 // Ensure .auth directory exists

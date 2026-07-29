@@ -1,15 +1,15 @@
-/**
- * P2.5-03 — Attachment & data tenant isolation (HARDENED)
+﻿/**
+ * P2.5-03 â€” Attachment & data tenant isolation (HARDENED)
  *
  * Uses E2E Company A (trial-a) and E2E Company D (cross-tenant-d).
  * Asserts not just "redirected" but that ZERO foreign data appears
- * in responses — no customer names, no line items, no quote data.
+ * in responses â€” no customer names, no line items, no quote data.
  *
  * @smoke @security @attachments
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Dismiss cookie banner */
 async function dismissCookies(page: Page) {

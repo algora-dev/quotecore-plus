@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 2.6-02: Document sending flow E2E
  *
  * Tests the quote/order/invoice send flow:
@@ -15,7 +15,7 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const EMAIL_ENABLED = process.env.E2E_ALLOW_EMAIL_SEND === 'true';
 const SAFE_EMAIL = process.env.E2E_SAFE_RECIPIENT_EMAIL ?? '';
 
@@ -85,7 +85,7 @@ test.describe('Document Sending Flow', () => {
     // Verify we're on a quote page (not 404)
     expect(quoteUrl).not.toMatch(/\/404|not-found/);
 
-    // Look for Send button — it may be disabled if no line items
+    // Look for Send button â€” it may be disabled if no line items
     const sendBtn = page.getByRole('button', { name: /^send$/i }).first();
     const sendBtnExists = await sendBtn.isVisible({ timeout: 5000 }).catch(() => false);
 
@@ -93,7 +93,7 @@ test.describe('Document Sending Flow', () => {
       const isDisabled = await sendBtn.isDisabled();
 
       if (!isDisabled) {
-        // Send button is enabled — click it
+        // Send button is enabled â€” click it
         await sendBtn.click();
         await page.waitForTimeout(2000);
 
@@ -133,7 +133,7 @@ test.describe('Document Sending Flow', () => {
           }
         }
       } else {
-        // Send button is disabled — expected for a fresh quote with no line items
+        // Send button is disabled â€” expected for a fresh quote with no line items
         // Just verify the button exists (the send feature is present)
         expect(sendBtnExists).toBe(true);
       }
@@ -142,7 +142,7 @@ test.describe('Document Sending Flow', () => {
     assertNoServerErrors();
   });
 
-  test('P2.6-02b: Send modal validation — invalid email blocked @send-flow', async ({ loginAs, prefix, assertNoServerErrors }) => {
+  test('P2.6-02b: Send modal validation â€” invalid email blocked @send-flow', async ({ loginAs, prefix, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
 
     // Create a quote and navigate to it
@@ -183,7 +183,7 @@ test.describe('Document Sending Flow', () => {
           }
         }
       } else {
-        // Send button disabled — verify it exists (feature is present)
+        // Send button disabled â€” verify it exists (feature is present)
         expect(await sendBtn.isVisible()).toBe(true);
       }
     }

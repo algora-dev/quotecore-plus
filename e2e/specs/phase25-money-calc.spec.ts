@@ -1,5 +1,5 @@
-/**
- * P2.5-01 — Money-boundary calculation matrix (HARDENED)
+﻿/**
+ * P2.5-01 â€” Money-boundary calculation matrix (HARDENED)
  *
  * Real assertion tests replacing the previous "no 5xx" scaffolds.
  * Each test creates a quote, adds components with known values, and
@@ -9,7 +9,7 @@
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Dismiss cookie banner */
 async function dismissCookies(page: Page) {
@@ -78,11 +78,11 @@ async function createQuoteAndNavigate(
 
 /** Extract the "Total:" value from the builder summary bar */
 async function getBuilderTotal(page: Page): Promise<string | null> {
-  // The summary bar shows: "Total: £X.XX"
+  // The summary bar shows: "Total: Â£X.XX"
   const totalText = await page.locator('span.font-semibold:has-text("Total:")').first().textContent();
   if (!totalText) return null;
   // Extract the currency value after "Total:"
-  const match = totalText.match(/Total:\s*([£$€¥][\d,.]+)/i);
+  const match = totalText.match(/Total:\s*([Â£$â‚¬Â¥][\d,.]+)/i);
   return match ? match[1] : null;
 }
 
@@ -98,11 +98,11 @@ async function goToReview(page: Page) {
 /** Get the "Grand Total" value from the review phase */
 async function getGrandTotal(page: Page): Promise<string | null> {
   await goToReview(page);
-  // The review phase has: <div class="flex justify-between text-lg font-bold ..."> <span>Grand Total</span> <span>£X.XX</span> </div>
+  // The review phase has: <div class="flex justify-between text-lg font-bold ..."> <span>Grand Total</span> <span>Â£X.XX</span> </div>
   const grandTotalRow = page.locator('div.flex.justify-between.text-lg.font-bold:has(span:has-text("Grand Total"))').first();
   const text = await grandTotalRow.textContent().catch(() => null);
   if (!text) return null;
-  const match = text.match(/([£$€¥][\d,.]+)/i);
+  const match = text.match(/([Â£$â‚¬Â¥][\d,.]+)/i);
   return match ? match[1] : null;
 }
 
@@ -115,11 +115,11 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
     const { page, slug } = await loginAs('starter-b');
     await createQuoteAndNavigate(page, slug, prefix);
 
-    // An empty quote should show £0.00 total, not NaN or undefined
+    // An empty quote should show Â£0.00 total, not NaN or undefined
     const total = await getBuilderTotal(page);
     expect(total).not.toBeNull();
     // Should contain a currency symbol and a number (even if 0.00)
-    expect(total).toMatch(/[£$€¥]/);
+    expect(total).toMatch(/[Â£$â‚¬Â¥]/);
     expect(total).toMatch(/\d/);
 
     assertNoServerErrors();
@@ -152,7 +152,7 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
 
     // The grand total should be visible and contain a currency value
     expect(grandTotal).not.toBeNull();
-    expect(grandTotal).toMatch(/[£$€¥][\d,.]+/);
+    expect(grandTotal).toMatch(/[Â£$â‚¬Â¥][\d,.]+/);
 
     assertNoServerErrors();
   });
@@ -165,7 +165,7 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
     await goToReview(page);
 
     // If tax rate > 0, there should be a "Tax (X%)" row
-    // If tax rate = 0, the row is hidden — that's correct behaviour
+    // If tax rate = 0, the row is hidden â€” that's correct behaviour
     const taxRow = page.locator('div.flex.justify-between:has(span:has-text(/Tax\s*\(/))').first();
     const hasTax = await taxRow.isVisible({ timeout: 2000 }).catch(() => false);
 
@@ -173,7 +173,7 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
       const taxText = await taxRow.textContent() ?? '';
       // Tax row should contain a percentage and a currency amount
       expect(taxText).toMatch(/Tax\s*\(\d+(\.\d+)?%\)/);
-      expect(taxText).toMatch(/[£$€¥][\d,.]+/);
+      expect(taxText).toMatch(/[Â£$â‚¬Â¥][\d,.]+/);
     }
 
     assertNoServerErrors();
@@ -192,9 +192,9 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
     if (totalsText) {
       // All currency values in the totals box should be valid numbers
       // (not NaN, undefined, or Infinity)
-      const currencyValues = totalsText.match(/[£$€¥][\d,.]+/g) ?? [];
+      const currencyValues = totalsText.match(/[Â£$â‚¬Â¥][\d,.]+/g) ?? [];
       for (const val of currencyValues) {
-        const num = parseFloat(val.replace(/[£$€¥,]/g, ''));
+        const num = parseFloat(val.replace(/[Â£$â‚¬Â¥,]/g, ''));
         expect(num).not.toBeNaN();
         expect(num).toBeGreaterThanOrEqual(0);
       }
@@ -219,7 +219,7 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
     // Total should still be present and valid after all the switching
     const total = await getBuilderTotal(page);
     expect(total).not.toBeNull();
-    expect(total).toMatch(/[£$€¥][\d,.]+/);
+    expect(total).toMatch(/[Â£$â‚¬Â¥][\d,.]+/);
 
     assertNoServerErrors();
   });
@@ -237,13 +237,13 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
 
     if (hasTax) {
       const taxText = await taxRow.textContent() ?? '';
-      const taxMatch = taxText.match(/[£$€¥]([\d,.]+)/);
+      const taxMatch = taxText.match(/[Â£$â‚¬Â¥]([\d,.]+)/);
       if (taxMatch) {
         const taxAmount = parseFloat(taxMatch[1].replace(/,/g, ''));
         expect(taxAmount).toBeGreaterThanOrEqual(0);
       }
     }
-    // Either way — no 5xx, no NaN. That's the assertion.
+    // Either way â€” no 5xx, no NaN. That's the assertion.
 
     assertNoServerErrors();
   });

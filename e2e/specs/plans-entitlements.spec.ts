@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E-03: Password-reset request
  * E2E-04: Onboarding gate/workspace routing
  * E2E-09: Catalogue/component entitlement
@@ -11,7 +11,7 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 test.describe('Entitlements & Secondary Workflows', () => {
   test('E2E-03: Password-reset request @read-only', async ({ freshPage, assertNoServerErrors }) => {
@@ -26,13 +26,13 @@ test.describe('Entitlements & Secondary Workflows', () => {
       await page.waitForTimeout(2000);
     }
 
-    // Should not show enumeration — generic confirmation only
+    // Should not show enumeration â€” generic confirmation only
     // No 5xx errors
     assertNoServerErrors();
   });
 
-  test('E2E-04: Onboarding gate — User E stays in onboarding @read-only', async ({ loginAs, assertNoServerErrors }) => {
-    // User E has incomplete onboarding — should be redirected to onboarding
+  test('E2E-04: Onboarding gate â€” User E stays in onboarding @read-only', async ({ loginAs, assertNoServerErrors }) => {
+    // User E has incomplete onboarding â€” should be redirected to onboarding
     const { page } = await loginAs('onboarding-e');
 
     // Should be on onboarding page or redirected there
@@ -77,10 +77,10 @@ test.describe('Entitlements & Secondary Workflows', () => {
     assertNoServerErrors();
   });
 
-  test('E2E-12: Public quote link — invalid token is safe @smoke', async ({ freshPage, assertNoServerErrors }) => {
+  test('E2E-12: Public quote link â€” invalid token is safe @smoke', async ({ freshPage, assertNoServerErrors }) => {
     const page = await freshPage();
 
-    // Visit a non-existent public quote link — should be safe (not crash)
+    // Visit a non-existent public quote link â€” should be safe (not crash)
     await page.goto(`${BASE_URL}/q/invalid-token-12345`);
     await page.waitForLoadState('networkidle');
 
@@ -114,7 +114,7 @@ test.describe('Entitlements & Secondary Workflows', () => {
     assertNoServerErrors();
   });
 
-  test('E2E-16: Trial restrictions — user can still view workspace @read-only', async ({ loginAs, assertNoServerErrors }) => {
+  test('E2E-16: Trial restrictions â€” user can still view workspace @read-only', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('trial-a');
 
     await page.goto(`${BASE_URL}/${slug}/quotes`);
@@ -125,7 +125,7 @@ test.describe('Entitlements & Secondary Workflows', () => {
     assertNoServerErrors();
   });
 
-  test('E2E-16b: Paid user — components accessible @read-only', async ({ loginAs, assertNoServerErrors }) => {
+  test('E2E-16b: Paid user â€” components accessible @read-only', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
 
     await page.goto(`${BASE_URL}/${slug}/components`);
