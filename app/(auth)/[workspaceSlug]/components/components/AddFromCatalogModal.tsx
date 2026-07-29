@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   listUserCatalogs,
   searchPublicCatalogs,
@@ -68,6 +68,10 @@ export function AddFromCatalogModal({
 
   // Row selection
   const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
+
+  // Incremental rendering for large catalogs
+  const VISIBLE_INCREMENT = 50;
+  const [visibleCount, setVisibleCount] = useState(VISIBLE_INCREMENT);
 
   // Destination
   const [destMode, setDestMode] = useState<'existing' | 'new'>('existing');
@@ -276,6 +280,7 @@ export function AddFromCatalogModal({
     setRowSearchFilter('');
     setNewLibraryName('');
     setDestMode('existing');
+    setVisibleCount(VISIBLE_INCREMENT);
   }
 
   // Filtered rows for display
@@ -288,9 +293,14 @@ export function AddFromCatalogModal({
       });
   }, [allRows, rowSearchFilter]);
 
+  // Only render visible rows for performance with large catalogs
+  const visibleRowData = filteredRowData.slice(0, visibleCount);
   const filteredIndices = filteredRowData.map(d => d.i);
 
-  // ── Render ──────────────────────────────────────────────────────────
+  // Reset visible count when filter or rows change
+  useEffect(() => {
+    setVisibleCount(VISIBLE_INCREMENT);
+  }, [rowSearchFilter, allRows]);
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl border border-slate-200 max-h-[90vh] flex flex-col">
@@ -308,7 +318,7 @@ export function AddFromCatalogModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 overflow-y-auto flex-1">
+        <div className="px-6 py-5 overflow-auto flex-1">
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600 mb-4">
               {error}
@@ -499,7 +509,7 @@ export function AddFromCatalogModal({
                     <span className="text-xs text-slate-500 whitespace-nowrap">
                       {selectedRowIndices.size}/{MAX_ROWS} selected
                       {selectedRowIndices.size >= MAX_ROWS && <span className="text-orange-500 ml-1">(max reached)</span>}
-                      <span className="text-slate-300 ml-2">- {allRows.length} rows loaded (max 500)</span>
+                      <span className="text-slate-300 ml-2">- {allRows.length.toLocaleString()} rows loaded</span>
                     </span>
                   </div>
 
@@ -527,7 +537,7 @@ export function AddFromCatalogModal({
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
-                        {filteredRowData.map(({ row, i }) => (
+                        {visibleRowData.map(({ row, i }) => (
                           <tr
                             key={i}
                             className={`hover:bg-orange-50/30 cursor-pointer ${selectedRowIndices.has(i) ? 'bg-orange-50/20' : ''}`}
@@ -551,6 +561,18 @@ export function AddFromCatalogModal({
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Load more rows */}
+                  {visibleCount < filteredRowData.length && (
+                    <div className="text-center py-2">
+                      <button
+                        onClick={() => setVisibleCount(c => c + VISIBLE_INCREMENT)}
+                        className="text-xs font-medium text-slate-500 hover:text-orange-500 transition cursor-pointer"
+                      >
+                        Load more rows ({filteredRowData.length - visibleCount} remaining)
+                      </button>
+                    </div>
+                  )}
 
                   {/* Action bar */}
                   <div className="flex items-center justify-between">

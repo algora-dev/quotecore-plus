@@ -131,7 +131,7 @@ export type CatalogRowsResult = {
  * Fetch rows from a catalog. Works for both user's own catalogs and public supplier catalogs.
  * For public catalogs, follows source_catalog_id to read the original rows.
  */
-export async function fetchCatalogRows(catalogId: string, limit = 500): Promise<CatalogRowsResult> {
+export async function fetchCatalogRows(catalogId: string, limit = 30000): Promise<CatalogRowsResult> {
   try {
     const profile = await requireCompanyContext();
     const admin = createAdminClient() as AdminAny;

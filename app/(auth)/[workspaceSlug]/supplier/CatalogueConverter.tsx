@@ -54,7 +54,7 @@ export function CatalogueConverter({
       const res = await fetch('/api/supplier-catalogue-rows', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ catalogId: selectedCatalogId, limit: 500 }),
+        body: JSON.stringify({ catalogId: selectedCatalogId, limit: 30000 }),
       });
       const data = await res.json();
 

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'Missing catalogId.' }, { status: 400 });
     }
 
-    const result = await fetchCatalogRowsForConversion(catalogId, limit ?? 500);
+    const result = await fetchCatalogRowsForConversion(catalogId, limit ?? 30000);
     return NextResponse.json(result, { status: result.ok ? 200 : 400 });
   } catch (err) {
     console.error('[supplier-catalogue-rows] Error:', err);

@@ -285,7 +285,7 @@ export type CatalogRowsResult = {
   error?: string;
 };
 
-export async function fetchCatalogRowsForConversion(catalogId: string, limit = 500): Promise<CatalogRowsResult> {
+export async function fetchCatalogRowsForConversion(catalogId: string, limit = 30000): Promise<CatalogRowsResult> {
   try {
     const profile = await requireCompanyContext();
     const admin = createAdminClient() as AdminAny;
