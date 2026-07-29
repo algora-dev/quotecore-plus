@@ -246,9 +246,11 @@ export default function Post() {
 
       <h3>How many concrete tiles do I need per square metre?</h3>
       <p>
-        It depends on the tile profile and batten gauge. Standard concrete interlocking tiles
-        (like Marley Modern or Redland 49) cover about 9-10 per sqm. Plain concrete tiles are
-        around 60 per sqm. Always check the manufacturer datasheet for exact coverage.
+        It depends on the tile type. Concrete interlocking tiles (like Marley Modern or Redland 49)
+        cover about 9-10 tiles per sqm because each tile covers a large area. Concrete plain tiles
+        are much smaller and cover about 60 tiles per sqm. These are completely different products -
+        check which one your job specifies before calculating quantities. Always verify against the
+        manufacturer datasheet.
       </p>
 
       <h3>How much extra roofing material should I order?</h3>

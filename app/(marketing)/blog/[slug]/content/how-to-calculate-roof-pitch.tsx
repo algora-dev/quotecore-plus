@@ -234,8 +234,8 @@ export default function Post() {
 
       <h2>Quick reference: common UK roof pitches</h2>
       <ul>
-        <li><strong>10-15 degrees:</strong> flat or low-slope roofs (felt, EPDM, single-ply)</li>
-        <li><strong>15-25 degrees:</strong> low-pitch tiled roofs (concrete interlocking tiles)</li>
+        <li><strong>0-10 degrees:</strong> flat or low-slope roofs (membrane, TPO, EPDM, felt,GRP)</li>
+        <li><strong>10-25 degrees:</strong> low-pitch tiled roofs (concrete interlocking tiles,metal roofing)</li>
         <li><strong>25-35 degrees:</strong> standard residential pitch (most UK houses)</li>
         <li><strong>35-45 degrees:</strong> steep pitch (older properties, barn conversions)</li>
         <li><strong>45+ degrees:</strong> very steep (churches, heritage buildings)</li>

@@ -67,24 +67,25 @@ export default function Post() {
 
       <h3>3. Digital takeoff from plans</h3>
       <p>
-        Digital takeoff tools let you upload a plan (PDF or image) and measure directly on screen.
-        You click points to define roof planes, and the tool calculates areas, lengths, and
-        quantities automatically. Some can even apply pitch factors and calculate material
-        quantities in the same pass.
+        Digital takeoff tools let you upload a plan (PDF or image) and the software measures
+        roof planes automatically using AI. This is the fastest method and is a core feature of
+        the QuoteCore+ app - you upload a plan, AI scans it, and you get roof area, ridges, hips,
+        valleys, and material quantities calculated automatically.
       </p>
       <p>
         <strong>Pros:</strong> fastest method, repeatable, and you can save and review the takeoff
         later. No maths errors. No missed sections.
       </p>
       <p>
-        <strong>Cons:</strong> you need a digital copy of the plan, and you still need to know the
-        pitch.
+        <strong>Cons:</strong> you need a digital copy of the plan, and you still need to verify
+        the AI measurements on complex or unusual roof shapes.
       </p>
       <p>
-        You can try this method right now with the <a href="/free-roofing-takeoff-builder">free
-        Roof Takeoff Builder</a>. Upload or enter your plan dimensions, set the pitch, and it
-        calculates roof area, ridges, hips, valleys, barges, underlay, and fixings - all with the
-        correct pitch factors applied.
+        The <a href="/free-roofing-takeoff-builder">free Roof Takeoff Builder</a> is a simpler
+        version of this: you enter your plan dimensions manually (lengths and widths from your
+        plans or site measurements), set the pitch, and it calculates roof area, ridges, hips,
+        valleys, barges, underlay, and fixings with the correct pitch factors applied. For the
+        full AI-powered plan scanning, <a href="/free-trial">try the QuoteCore+ app free</a>.
       </p>
 
       <hr />
