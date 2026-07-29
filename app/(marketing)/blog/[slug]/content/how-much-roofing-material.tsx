@@ -10,8 +10,8 @@ export default function Post() {
         stuck with stock you cannot send back.
       </p>
       <p>
-        This guide breaks down exactly how to calculate material quantities for any roofing job,
-        with real coverage rates, waste allowances, and a free tool that does the maths for you.
+        This guide explains how to calculate quantities from measured roof components, current
+        manufacturer coverage data, pack sizes, and a job-specific allowance.
       </p>
 
       <hr />
@@ -29,15 +29,16 @@ export default function Post() {
       </p>
       <p>
         If you have not measured the roof yet, see <a href="/blog/how-to-measure-a-roof">How to
-        Measure a Roof for Materials (Complete Guide)</a> for the full measurement process.
+        Measure a Roof for Materials (Complete Guide)</a> for the full measurement process, or
+        <a href="/blog/how-to-calculate-roof-pitch">How to Calculate Roof Pitch</a> for pitch-specific guidance.
       </p>
 
       <hr />
 
       <h2>How to calculate tile quantities</h2>
       <p>
-        Tile coverage depends on the tile type, the batten gauge, and the pitch. Here are the most
-        common UK roofing tiles and their approximate coverage rates:
+        Tile coverage depends on the exact product, gauge, headlap, pitch, and exposure. The table
+        below uses examples from <a href="https://www.marley.co.uk/blog/roof-tile-sizes-how-many-roof-tiles-per-square-metre" target="_blank" rel="noopener noreferrer">Marley&apos;s official coverage guide</a>. Use the current datasheet for the product specified on your job.
       </p>
 
       <div className="not-prose my-8 overflow-x-auto">
@@ -51,30 +52,22 @@ export default function Post() {
             </tr>
           </thead>
           <tbody className="text-zinc-700">
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete interlocking (e.g. Marley Modern, Redland Duo Modern)</td><td className="py-2 pr-4">9.7-10.6 per sqm</td><td className="py-2 pr-4">345mm</td><td className="py-2">15 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete pantile (e.g. Marley Anglia, Redland 49)</td><td className="py-2 pr-4">15.7-17.1 per sqm</td><td className="py-2 pr-4">312mm</td><td className="py-2">15 degrees</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Marley Modern</td><td className="py-2 pr-4">9.7-10.6 per sqm</td><td className="py-2 pr-4">Check current product data</td><td className="py-2">Check current product data</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Marley Anglia</td><td className="py-2 pr-4">15.7-17.1 per sqm</td><td className="py-2 pr-4">Check current product data</td><td className="py-2">Check current product data</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Clay plain tile (e.g. Marley Acme, 265x165mm)</td><td className="py-2 pr-4">60 per sqm</td><td className="py-2 pr-4">100mm</td><td className="py-2">35 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete plain tile, traditional size (265x165mm)</td><td className="py-2 pr-4">60 per sqm</td><td className="py-2 pr-4">100mm</td><td className="py-2">35 degrees</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete plain tile, large format (e.g. Marley Ashmore, 267x333mm)</td><td className="py-2 pr-4">17.5-19 per sqm</td><td className="py-2 pr-4">190mm</td><td className="py-2">30 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Slate (500mm, double lap)</td><td className="py-2 pr-4">~12-15 per sqm</td><td className="py-2 pr-4">200mm</td><td className="py-2">20 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Slate (600mm, double lap)</td><td className="py-2 pr-4">~9-11 per sqm</td><td className="py-2 pr-4">255mm</td><td className="py-2">20 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Metal roofing (long-run)</td><td className="py-2 pr-4">By linear metre</td><td className="py-2 pr-4">Varies</td><td className="py-2">3 degrees</td></tr>
           </tbody>
         </table>
       </div>
 
       <p>
-        Coverage rates vary by manufacturer and tile profile. The figures above are based on
-        data from <a href="https://www.marley.co.uk/blog/roof-tile-sizes-how-many-roof-tiles-per-square-metre" target="_blank" rel="noopener noreferrer">Marley&apos;s official tile coverage guide</a> and
-        should be used as a starting point. Always confirm against the manufacturer datasheet for
-        your specific tile before ordering.
+        These are product examples, not interchangeable generic rates. Confirm the current product
+        datasheet before ordering.
       </p>
 
       <p>
-        <strong>Important distinction:</strong> Concrete interlocking tiles (the most common type
-        on UK residential roofs) cover about 10 per sqm. Traditional plain tiles (both clay and
-        concrete, 265x165mm) cover 60 per sqm because each tile is much smaller. These are
-        completely different products - make sure you know which one your job specifies.
+        <strong>Important distinction:</strong> Similar-looking roof coverings can have very
+        different coverage rates. Calculate from the specified product, not a generic tile category.
       </p>
 
       <p>
@@ -84,12 +77,13 @@ export default function Post() {
         <strong>Tiles = roof area x coverage rate x (1 + waste percentage)</strong>
       </p>
       <p>
-        Example: 92.4 sqm roof, concrete interlocking tiles at 10 per sqm, 10% waste:
+        Worked example only: 92.4 sqm roof, a product stated at 10 tiles per sqm, and a 10% project
+        allowance selected by the estimator:
       </p>
       <ul>
         <li>92.4 x 10 = 924 tiles</li>
         <li>924 x 1.10 = 1,017 tiles</li>
-        <li>Round up to nearest pack size (typically 168 or 336 per pallet)</li>
+        <li>Then round to the supplier&apos;s current pack or pallet quantity</li>
       </ul>
       <p>
         Always check the manufacturer datasheet for the exact coverage rate. It varies by tile
@@ -101,16 +95,9 @@ export default function Post() {
 
       <h2>Calculating underlay and felt quantities</h2>
       <p>
-        Underlay coverage is based on roof area, but you need to add extra for horizontal laps
-        (typically 150mm) and vertical laps (typically 100mm). A standard 1m wide roll covers
-        approximately 0.9 sqm per linear metre once laps are accounted for.
-      </p>
-      <p>
-        <strong>Underlay (sqm) = roof area x 1.10</strong>
-      </p>
-      <p>
-        The 10% addition covers laps and waste. For a 92.4 sqm roof, you need about 102 sqm of
-        underlay.
+        Underlay coverage is based on roof area plus the laps, details, and allowance required by
+        the specified product. Use the roll coverage and installation instructions rather than a
+        universal percentage because lap requirements vary by roof and system.
       </p>
 
       <hr />
@@ -121,38 +108,28 @@ export default function Post() {
         between battens), which is set by the tile manufacturer.
       </p>
       <p>
-        <strong>Batten length (linear m) = roof area / gauge x batten coverage factor</strong>
+        <strong>Batten length (linear m) = roof area / batten gauge in metres</strong>
       </p>
       <p>
-        For concrete interlocking tiles at 345mm gauge, you need approximately 2.9 linear metres of
-        batten per sqm of roof. For plain tiles at 114mm gauge, that rises to about 8.8 linear
-        metres per sqm.
+        For example, a 345mm gauge is 0.345m, so 1 / 0.345 = approximately 2.9 linear metres of
+        batten per square metre before project-specific allowances. <a href="https://www.marley.co.uk/blog/setting-out-tile-battens" target="_blank" rel="noopener noreferrer">Marley&apos;s setting-out guide</a> explains why the gauge must come from the tile specification.
       </p>
       <p>
         Example: 92.4 sqm roof, concrete tiles at 345mm gauge:
       </p>
       <ul>
         <li>92.4 x 2.9 = 268 linear metres of batten</li>
-        <li>Add 5% for cuts and waste = 281 linear metres</li>
-        <li>Standard batten length is 3.9m, so 281 / 3.9 = 72 battens</li>
+        <li>Add the estimator&apos;s project-specific allowance</li>
+        <li>Divide by the stock length offered by the selected supplier and round up</li>
       </ul>
 
       <hr />
 
       <h2>Calculating fixings and nails</h2>
       <p>
-        Fixings are usually sold by weight or by the box. For standard tile nailing:
-      </p>
-      <ul>
-        <li>Concrete interlocking tiles: 2 nails per tile (every tile or every 4th tile depending on pitch and exposure)</li>
-        <li>Plain tiles: 2 nails per tile</li>
-        <li>Slate: 2 nails per slate (copper or stainless)</li>
-        <li>Battens: 2 nails per batten per rafter crossing</li>
-      </ul>
-      <p>
-        For a fully nailed concrete tile roof at 10 tiles per sqm on a 92.4 sqm roof: 924 tiles x
-        2 nails = 1,848 nails. Add 10% waste = ~2,033 nails. A 5kg box of clout nails typically
-        contains around 700-800 nails, so you need 3 boxes.
+        Fixing requirements depend on the roof covering, fixing specification, pitch, exposure,
+        location, and manufacturer instructions. Do not apply a generic nails-per-tile rule. Use the
+        fixing schedule for the specified system; see <a href="https://www.marley.co.uk/blog/things-to-consider-when-fixing-roof-tiles-or-slates" target="_blank" rel="noopener noreferrer">Marley&apos;s fixing guidance</a>.
       </p>
 
       <hr />
@@ -162,58 +139,28 @@ export default function Post() {
         These are linear measurements, separate from the roof area calculation.
       </p>
 
-      <h3>Ridge tiles</h3>
       <p>
-        Standard ridge tiles cover about 300mm each (including the joint). For a 10m ridge, you
-        need 10 / 0.3 = 33 ridge tiles. Add 5% for cuts = 35.
-      </p>
-
-      <h3>Hip tiles</h3>
-      <p>
-        Hip tiles are similar to ridge tiles but angled. Coverage is about 300mm per tile. Measure
-        the total hip length and divide by 0.3, then add 5% for cuts.
-      </p>
-
-      <h3>Valley linings</h3>
-      <p>
-        Valleys need a valley trough or GRP lining. Measure the valley length and add 150mm per
-        joint for overlaps. Order valley troughs by linear metre.
+        Measure each ridge, hip, valley, verge, eaves, and flashing run separately. Convert each
+        measured length using the specified system&apos;s declared coverage, joint, overlap, accessory,
+        and pack requirements. Do not infer ridge or valley quantities from roof area alone.
       </p>
 
       <hr />
 
-      <h2>Waste allowances by roof type</h2>
-
-      <div className="not-prose my-8 overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-zinc-300">
-              <th className="py-3 pr-4 text-left font-semibold text-zinc-900">Roof type</th>
-              <th className="py-3 pr-4 text-left font-semibold text-zinc-900">Waste allowance</th>
-              <th className="py-3 text-left font-semibold text-zinc-900">Notes</th>
-            </tr>
-          </thead>
-          <tbody className="text-zinc-700">
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Simple gable, single pitch</td><td className="py-2 pr-4">5%</td><td className="py-2">Few cuts, straightforward</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Hip roof, standard</td><td className="py-2 pr-4">7.5%</td><td className="py-2">Hip cuts add some waste</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Complex (dormers, valleys)</td><td className="py-2 pr-4">10-12.5%</td><td className="py-2">Lots of cutting around details</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Heritage / restoration</td><td className="py-2 pr-4">15%</td><td className="py-2">Matching old tiles, breakages higher</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Slate (hand-cut)</td><td className="py-2 pr-4">10-15%</td><td className="py-2">Higher breakage rate than concrete</td></tr>
-          </tbody>
-        </table>
-      </div>
-
+      <h2>Set a defensible allowance</h2>
       <p>
-        If you are unsure, 10% is a safe default for most residential roofs. The
-        <a href="/free-roofing-waste-calculator">Roofing Waste Calculator</a> can help you fine-tune
-        the percentage based on roof complexity.
+        Choose the allowance after reviewing roof geometry, cuts, breakage risk, reusable offcuts,
+        pack sizes, lead times, and supplier return terms. Record the reason for the percentage in
+        the estimate. The <a href="/free-roofing-waste-calculator">Roofing Waste Calculator</a>
+        helps apply the chosen allowance consistently; it does not replace estimator judgement.
       </p>
 
       <hr />
 
       <h2>Free tools for material calculation</h2>
       <p>
-        Rather than doing all of this by hand, use one of these free tools:
+        Rather than doing all of this by hand, use one of these free tools. For the complete list,
+        see <a href="/blog/best-free-tools-for-roofers">Best Free Tools for Roofers (2026 Guide)</a>:
       </p>
       <ul>
         <li>
@@ -245,7 +192,7 @@ export default function Post() {
       </p>
       <p>
         If you just need to turn a list of materials and prices into a professional-looking quote
-        quickly, the <a href="/free-quote-generator">free Quote Generator</a> does that in minutes.
+        clearly, the <a href="/free-quote-generator">free Quote Generator</a> creates a printable document.
         No signup needed.
       </p>
       <p>
@@ -261,40 +208,35 @@ export default function Post() {
 
       <h3>How many concrete tiles do I need per square metre?</h3>
       <p>
-        It depends on the tile type. Concrete interlocking tiles (like Marley Modern or Redland
-        Duo Modern) cover about 9.7-10.6 tiles per sqm. Concrete pantiles (like Marley Anglia)
-        cover about 15.7-17.1 per sqm. Traditional plain tiles (265x165mm, both clay and concrete)
-        cover 60 per sqm because each tile is much smaller. Large format concrete plain tiles
-        (like Marley Ashmore) cover 17.5-19 per sqm. These are all different products - check
-        which tile your job specifies before calculating. Coverage data from
+        It depends on the exact product. Marley&apos;s published examples include Modern at 9.7-10.6
+        tiles per sqm, Anglia at 15.7-17.1, Acme plain tile at 60, and Ashmore at 17.5-19.
+        Check the current datasheet for the exact product before calculating. Coverage data from
         <a href="https://www.marley.co.uk/blog/roof-tile-sizes-how-many-roof-tiles-per-square-metre" target="_blank" rel="noopener noreferrer">Marley&apos;s official guide</a>.
       </p>
 
       <h3>How much extra roofing material should I order?</h3>
       <p>
-        For most residential roofs, 10% is a safe waste allowance. Simple gable roofs can get away
-        with 5%. Complex roofs with dormers, valleys, and hips may need 12-15%. Always round up to
-        the nearest pack or pallet size.
+        There is no universal percentage. Base the allowance on the product, roof geometry, cutting
+        pattern, breakage risk, pack size, and supplier terms, then record the assumption in the quote.
       </p>
 
       <h3>How do I calculate underlay for a roof?</h3>
       <p>
-        Take the actual roof surface area and add 10% for laps and waste. A standard 1m wide roll
-        covers about 0.9 sqm per linear metre once horizontal and vertical laps are accounted for.
+        Start with actual roof surface area, then apply the laps, details, and allowance stated in
+        the selected underlay&apos;s installation instructions and roll coverage.
       </p>
 
       <h3>Can I return unused roofing materials?</h3>
       <p>
-        Most builders&apos; merchants accept returns of unused, undamaged materials within 30 days,
-        often with a restocking fee of 10-25%. Special order items may not be returnable. Check with
-        your supplier before ordering.
+        Return windows, condition requirements, collection charges, restocking fees, and exclusions
+        vary by supplier and product. Check the supplier&apos;s current terms before ordering.
       </p>
 
       <h3>How do I calculate batten quantities?</h3>
       <p>
-        Multiply the roof area by the batten coverage factor for your tile type. Concrete
-        interlocking tiles at 345mm gauge need about 2.9 linear metres of batten per sqm. Plain
-        tiles at 114mm gauge need about 8.8 linear metres per sqm. Add 5% for cuts and waste.
+        Divide roof area by the specified batten gauge in metres. For example, 1 / 0.345 gives
+        approximately 2.9 linear metres per sqm at a 345mm gauge. Then add the documented project
+        allowance and convert the result to the supplier&apos;s stock lengths.
       </p>
 
       <hr />

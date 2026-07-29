@@ -11,7 +11,8 @@ export default function Post() {
       </p>
       <p>
         The good news is that calculating roof pitch is straightforward once you know the three
-        ways it gets expressed, and there is a free tool that does the maths for you in seconds.
+        ways it gets expressed, and there is a free tool that handles the conversion once you enter
+        the measurements.
       </p>
 
       <hr />
@@ -19,8 +20,7 @@ export default function Post() {
       <h2>What is roof pitch?</h2>
       <p>
         Roof pitch is the angle of the roof surface relative to the horizontal plane. In simple
-        terms, it is how steep the roof is. A flat roof has a pitch close to zero. A steep Victorian
-        roof might be 40 or 45 degrees.
+        terms, it is how steep the roof is.
       </p>
       <p>
         Pitch matters because it changes the actual surface area of the roof. A roof that covers
@@ -33,9 +33,9 @@ export default function Post() {
       </p>
       <ul>
         <li><strong>Material quantities</strong> - steeper roofs need more tiles, more underlay, more fixings</li>
-        <li><strong>Labour costs</strong> - working on a steep roof is slower and may need scaffolding or edge protection</li>
-        <li><strong>Waste allowances</strong> - cutting waste goes up on complex, steep roofs</li>
-        <li><strong>Building regulations</strong> - some materials have minimum pitch requirements</li>
+        <li><strong>Labour and access</strong> - pitch affects the safe system of work; see the <a href="https://www.hse.gov.uk/construction/safetytopics/roofwork.htm" target="_blank" rel="noopener noreferrer">HSE guidance on roof work</a></li>
+        <li><strong>Waste allowances</strong> - complex roof geometry can create more cuts and offcuts</li>
+        <li><strong>Product suitability</strong> - roof coverings have product-specific pitch limits; see <a href="https://www.marley.co.uk/blog/what-is-the-minimum-pitch-for-a-roof-tile-or-slate" target="_blank" rel="noopener noreferrer">Marley&apos;s minimum-pitch guidance</a></li>
       </ul>
 
       <hr />
@@ -49,9 +49,8 @@ export default function Post() {
 
       <h3>1. Degrees</h3>
       <p>
-        The most common way to express pitch in the UK and Europe. A 30 degree roof has a surface
-        that rises at a 30 degree angle from horizontal. Most UK residential roofs sit between 30
-        and 45 degrees.
+        Degrees are commonly used on UK plans. A 30 degree roof has a surface
+        that rises at a 30 degree angle from horizontal.
       </p>
 
       <h3>2. Ratio (rise over run)</h3>
@@ -114,8 +113,8 @@ export default function Post() {
         arctan(2.5 / 4.3) = arctan(0.581) = 30.2 degrees.
       </p>
       <p>
-        You can use a digital inclinometer or a smartphone app to get the angle directly. These are
-        quick and accurate enough for most quoting purposes.
+        You can also use a digital inclinometer, but verify the reading and follow the device
+        manufacturer&apos;s instructions before using it for a quote or material order.
       </p>
 
       <h3>Method 2: From plans</h3>
@@ -131,12 +130,11 @@ export default function Post() {
         <li>Pitch = arctan(rise / run)</li>
       </ol>
 
-      <h3>Method 3: From a photo</h3>
+      <h3>Method 3: From a photo or aerial image</h3>
       <p>
-        Some modern tools can estimate pitch from a photo of the roof. This is not as accurate as
-        measuring directly, but it can be good enough for an initial estimate. AI-assisted
-        measurement tools are getting better at this, and can save a site visit for straightforward
-        residential roofs.
+        A photo can help with an early visual assessment, but it does not provide a reliable scale
+        or verified pitch on its own. Do not use a photo-only estimate for final quantities or
+        pricing without confirming it from a plan or site measurement.
       </p>
 
       <hr />
@@ -163,7 +161,7 @@ export default function Post() {
 
       <h3>Forgetting to apply the pitch factor to material quantities</h3>
       <p>
-        This is the most expensive mistake. If a roof is 100 sqm on plan at 35 degrees, the actual
+        If a roof is 100 sqm on plan at 35 degrees, the actual
         surface area is 122.1 sqm. If you order 100 sqm of tiles, you will be 22 sqm short - and
         probably waste time and money on a second delivery.
       </p>
@@ -209,9 +207,9 @@ export default function Post() {
 
       <h2>Why pitch matters for your quote</h2>
       <p>
-        Pitch is not just a technical detail. It directly affects your price. A 35-degree roof costs
-        more to roof than a 20-degree roof of the same plan size because it needs more materials,
-        more labour time, and often more safety equipment.
+        Pitch is not just a technical detail. For the same plan area, a steeper roof has more surface
+        area, so the measured material quantity increases. Pitch can also change the access plan and
+        safe system of work.
       </p>
       <p>
         If you are quoting manually, you need to remember to apply the pitch factor at every stage:
@@ -229,17 +227,22 @@ export default function Post() {
         digital takeoff - see <a href="/blog/how-to-measure-a-roof">How to Measure a Roof for
         Materials (Complete Guide)</a>.
       </p>
+      <p>
+        Once you have your pitch and measurements, <a href="/blog/best-free-tools-for-roofers">the
+        best free roofing tools</a> can speed up the rest of your workflow. And when you are ready
+        to turn those numbers into a price, <a href="/blog/how-to-price-a-roofing-job">the roofing
+        pricing guide</a> walks through the full quoting process step by step.
+      </p>
 
       <hr />
 
-      <h2>Quick reference: common UK roof pitches</h2>
-      <ul>
-        <li><strong>0-10 degrees:</strong> flat or low-slope roofs (membrane, TPO, EPDM, felt,GRP)</li>
-        <li><strong>10-25 degrees:</strong> low-pitch tiled roofs (concrete interlocking tiles,metal roofing)</li>
-        <li><strong>25-35 degrees:</strong> standard residential pitch (most UK houses)</li>
-        <li><strong>35-45 degrees:</strong> steep pitch (older properties, barn conversions)</li>
-        <li><strong>45+ degrees:</strong> very steep (churches, heritage buildings)</li>
-      </ul>
+      <h2>Check pitch against the specified roof system</h2>
+      <p>
+        There is no single safe pitch range for every tile, slate, sheet, or membrane system. Use
+        the project specification and the current manufacturer datasheet for the exact product,
+        fixing method, exposure, headlap, and minimum pitch. Marley explains why minimum pitch is
+        product-specific in its <a href="https://www.marley.co.uk/blog/what-is-the-minimum-pitch-for-a-roof-tile-or-slate" target="_blank" rel="noopener noreferrer">roof tile and slate guidance</a>.
+      </p>
 
       <hr />
 
@@ -247,9 +250,9 @@ export default function Post() {
 
       <h3>What is the most common roof pitch in the UK?</h3>
       <p>
-        Most UK residential roofs sit between 30 and 40 degrees. 35 degrees is one of the most
-        common pitches for new-build housing. Traditional Victorian and Edwardian roofs tend to be
-        steeper, often around 40-45 degrees.
+        There is no single pitch that applies to all UK homes. The correct answer comes from the
+        project drawings and the roof covering specification. Never substitute a typical-looking
+        angle for a measured or specified pitch.
       </p>
 
       <h3>How do I calculate roof pitch from the ground?</h3>
@@ -261,23 +264,13 @@ export default function Post() {
 
       <h3>What pitch is considered a flat roof?</h3>
       <p>
-        Technically, any roof under 10 degrees is classed as a flat roof in most building
-        regulations. Flat roofs still need a slight fall (usually 1:40 to 1:80) for drainage, but
-        this is typically achieved with the substrate rather than the structural pitch.
-      </p>
-
-      <h3>Does roof pitch affect insurance?</h3>
-      <p>
-        It can. Some insurers charge more for very steep roofs because they are harder and more
-        expensive to repair. Very low-pitch roofs may also carry higher premiums due to drainage
-        and weatherproofing risks. Check with your insurer if you are unsure.
+        Flat-roof design distinguishes between the design fall and the finished fall. <a href="https://www.bauder.co.uk/knowledge-hub/flat-roof-design/falls" target="_blank" rel="noopener noreferrer">Bauder&apos;s drainage guidance</a> explains the common design approach of 1:40 to achieve a finished fall of at least 1:80. Confirm the requirement for the specified system and project.
       </p>
 
       <h3>What is the minimum pitch for concrete roof tiles?</h3>
       <p>
-        Most concrete interlocking tiles have a minimum pitch of 15-17.5 degrees depending on the
-        manufacturer and tile profile. Always check the manufacturer datasheet - installing tiles
-        below their minimum pitch can void warranties and cause leaks.
+        There is no universal minimum. It varies by product, headlap, exposure, and fixing
+        specification. Check the exact manufacturer datasheet; <a href="https://www.marley.co.uk/blog/can-i-use-a-roof-tile-below-the-recommended-roof-pitch" target="_blank" rel="noopener noreferrer">Marley explains why tiles should not be used below their recommended pitch</a>.
       </p>
 
       <hr />
