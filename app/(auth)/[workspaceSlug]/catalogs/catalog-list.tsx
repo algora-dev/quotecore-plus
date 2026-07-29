@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import { UploadWizard } from './upload-wizard';
 import { EditCatalogModal } from './edit-catalog-modal';
-import { archiveCatalog, deleteCatalog, unarchiveCatalog, replaceCatalogRows } from './actions';
+import { archiveCatalog, deleteCatalog, unarchiveCatalog } from './actions';
 import type { CatalogRow } from './actions';
 import type { DirectoryCatalog } from '../supplier-directory/actions';
 import { ReplaceCatalogModal } from './replace-catalog-modal';
@@ -542,6 +542,7 @@ export function CatalogList({
       {replaceTarget && (
         <ReplaceCatalogModal
           catalog={replaceTarget}
+          workspaceSlug={workspaceSlug}
           onClose={() => setReplaceTarget(null)}
           onReplaced={() => {
             setReplaceTarget(null);

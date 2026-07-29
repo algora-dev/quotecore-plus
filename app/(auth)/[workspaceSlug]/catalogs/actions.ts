@@ -636,22 +636,18 @@ export async function deleteCatalogMap(mapId: string): Promise<CatalogActionResu
 }
 
 // ---------------------------------------------------------------------------
-// replaceCatalogRows - replace all rows in a catalog with new CSV data
-// Used by "Upload New Version" flow. If the catalog is a published supplier
-// catalog, bumps version + alerts users who added it.
+// replaceCatalogRows - SPLIT into startReplaceCatalog + finishReplaceCatalog
+// to avoid server action payload limits on large CSVs (25K+ rows).
+// The client calls startReplaceCatalog (deletes old rows, sets status),
+// then batches via /import-rows API, then calls finishReplaceCatalog.
 // ---------------------------------------------------------------------------
-export async function replaceCatalogRows(args: {
+export async function startReplaceCatalog(args: {
   catalogId: string;
-  rows: Array<{ rowIndex: number; raw: Record<string, string> }>;
-  headers: string[];
-  columnMapping: Record<string, string | null>;
-  originalFilename: string;
-}): Promise<CatalogActionResult<{ rowCount: number; newVersion?: number }>> {
+}): Promise<CatalogActionResult<{ ok: true }>> {
   try {
     const profile = await requireCompanyContext();
     const admin = createAdminClient() as AdminAny;
 
-    // Verify ownership
     const { data: catalog, error: catError } = await admin
       .from('catalogs')
       .select('id, name, status, visibility, supplier_profile_id, published_version, source_catalog_id')
@@ -663,7 +659,6 @@ export async function replaceCatalogRows(args: {
       return { ok: false, code: 'not_found', message: 'Catalog not found.' };
     }
 
-    // Can't replace rows on a catalog that references a supplier (it's read-only)
     if (catalog.source_catalog_id) {
       return { ok: false, code: 'read_only', message: 'This is a supplier catalogue reference. You cannot upload new versions to it.' };
     }
@@ -675,44 +670,54 @@ export async function replaceCatalogRows(args: {
       .eq('catalog_id', args.catalogId)
       .eq('company_id', profile.company_id);
 
-    // Build search_text for each row and insert new rows
-    const newRows = args.rows.map(r => {
-      const searchText = Object.values(r.raw).join(' ').toLowerCase();
-      return {
-        catalog_id: args.catalogId,
-        company_id: profile.company_id,
-        raw_row: r.raw,
-        row_index: r.rowIndex,
-        search_text: searchText,
-      };
-    });
+    // Set status to importing
+    await admin
+      .from('catalogs')
+      .update({ status: 'importing', updated_at: new Date().toISOString() })
+      .eq('id', args.catalogId)
+      .eq('company_id', profile.company_id);
 
-    // Insert in batches of 500
-    for (let i = 0; i < newRows.length; i += 500) {
-      const { error: insertError } = await admin
-        .from('catalog_rows')
-        .insert(newRows.slice(i, i + 500));
-      if (insertError) throw new Error(insertError.message);
+    return { ok: true, data: { ok: true as const } };
+  } catch (err) {
+    console.error('[startReplaceCatalog]', err);
+    return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
+  }
+}
+
+export async function finishReplaceCatalog(args: {
+  catalogId: string;
+  headers: string[];
+  columnMapping: Record<string, string | null>;
+  originalFilename: string;
+  rowCount: number;
+  dataBytes: number;
+}): Promise<CatalogActionResult<{ rowCount: number; newVersion?: number }>> {
+  try {
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+
+    const { data: catalog } = await admin
+      .from('catalogs')
+      .select('id, visibility, supplier_profile_id, published_version')
+      .eq('id', args.catalogId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!catalog) {
+      return { ok: false, code: 'not_found', message: 'Catalog not found.' };
     }
-
-    // Calculate data_bytes
-    let dataBytes = 0;
-    try {
-      dataBytes = new TextEncoder().encode(JSON.stringify(args.rows.map(r => r.raw))).length;
-    } catch { dataBytes = args.rows.length * 200; }
 
     // Update catalog metadata
     const update: Record<string, unknown> = {
       headers: args.headers,
       column_mapping: args.columnMapping,
-      row_count: args.rows.length,
-      data_bytes: dataBytes,
+      row_count: args.rowCount,
+      data_bytes: args.dataBytes,
       original_filename: args.originalFilename,
       status: 'ready',
       updated_at: new Date().toISOString(),
     };
 
-    // If this is a published supplier catalog, bump version + alert users
     let newVersion: number | undefined;
     if (catalog.visibility === 'published' && catalog.supplier_profile_id) {
       newVersion = (catalog.published_version ?? 0) + 1;
@@ -748,9 +753,9 @@ export async function replaceCatalogRows(args: {
 
     revalidatePath(`/[workspaceSlug]/catalogs`, 'page');
     revalidatePath(`/[workspaceSlug]/supplier`, 'page');
-    return { ok: true, data: { rowCount: args.rows.length, newVersion } };
+    return { ok: true, data: { rowCount: args.rowCount, newVersion } };
   } catch (err) {
-    console.error('[replaceCatalogRows]', err);
+    console.error('[finishReplaceCatalog]', err);
     return { ok: false, code: 'unknown', message: err instanceof Error ? err.message : 'Unexpected error' };
   }
 }

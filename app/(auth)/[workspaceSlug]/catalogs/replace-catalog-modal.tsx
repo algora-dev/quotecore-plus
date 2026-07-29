@@ -2,10 +2,11 @@
 
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { replaceCatalogRows, type CatalogRow } from './actions';
+import { startReplaceCatalog, finishReplaceCatalog, type CatalogRow } from './actions';
 
 interface Props {
   catalog: CatalogRow;
+  workspaceSlug: string;
   onClose: () => void;
   onReplaced: () => void;
 }
@@ -17,10 +18,11 @@ function parsePrice(raw: string): number {
   return Math.round(parsed * 100) / 100;
 }
 
-export function ReplaceCatalogModal({ catalog, onClose, onReplaced }: Props) {
+export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplaced }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [parsing, setParsing] = useState(false);
   const [replacing, setReplacing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ headers: string[]; rowCount: number; firstRows: Record<string, string>[] } | null>(null);
   const [parsedData, setParsedData] = useState<{ headers: string[]; rows: Record<string, string>[] } | null>(null);
@@ -62,26 +64,67 @@ export function ReplaceCatalogModal({ catalog, onClose, onReplaced }: Props) {
     if (!parsedData) return;
     setReplacing(true);
     setError(null);
+    setUploadProgress(0);
 
     try {
-      const rows = parsedData.rows.map((raw, i) => ({
-        rowIndex: i,
-        raw,
-      }));
+      const CHUNK_SIZE = 2000;
+      const allRows = parsedData.rows.map((raw, i) => ({ rowIndex: i, raw }));
+      const totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
 
-      const result = await replaceCatalogRows({
+      // 1. Start replace (deletes old rows, sets status to importing)
+      const startResult = await startReplaceCatalog({ catalogId: catalog.id });
+      if (!startResult.ok) {
+        setError(startResult.message);
+        setReplacing(false);
+        return;
+      }
+
+      // 2. Batch insert via /import-rows API (same as initial upload)
+      for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
+        const start = chunkIdx * CHUNK_SIZE;
+        const chunkRows = allRows.slice(start, start + CHUNK_SIZE);
+
+        const res = await fetch(`/${workspaceSlug}/catalogs/import-rows`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            catalogId: catalog.id,
+            rows: chunkRows.map(r => ({ rowIndex: start + (r.rowIndex - start), raw: r.raw })),
+            isFirstBatch: chunkIdx === 0,
+            isLastBatch: chunkIdx === totalChunks - 1,
+          }),
+        });
+
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.message || `Upload failed at batch ${chunkIdx + 1}`);
+        }
+
+        setUploadProgress(Math.round(((chunkIdx + 1) / totalChunks) * 100));
+      }
+
+      // 3. Finish replace (update metadata, bump version, alert users)
+      let dataBytes = 0;
+      try {
+        dataBytes = new TextEncoder().encode(JSON.stringify(parsedData.rows)).length;
+      } catch { dataBytes = parsedData.rows.length * 200; }
+
+      const finishResult = await finishReplaceCatalog({
         catalogId: catalog.id,
-        rows,
         headers: parsedData.headers,
         columnMapping: catalog.column_mapping,
         originalFilename: fileRef.current?.files?.[0]?.name ?? catalog.original_filename ?? 'replacement.csv',
+        rowCount: allRows.length,
+        dataBytes,
       });
 
-      if (!result.ok) {
-        setError(result.message);
-      } else {
-        onReplaced();
+      if (!finishResult.ok) {
+        setError(finishResult.message);
+        setReplacing(false);
+        return;
       }
+
+      onReplaced();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to replace');
     } finally {
@@ -159,10 +202,19 @@ export function ReplaceCatalogModal({ catalog, onClose, onReplaced }: Props) {
               </div>
             </div>
 
+            {replacing && uploadProgress > 0 && (
+              <div className="w-full">
+                <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#FF6B35] transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                </div>
+                <p className="text-xs text-slate-400 text-center mt-1">Uploading {uploadProgress}%</p>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 pt-2">
               <button onClick={handleReplace} disabled={replacing}
                 className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-40">
-                {replacing ? 'Replacing...' : `Replace ${preview.rowCount} rows`}
+                {replacing ? `Replacing... ${uploadProgress}%` : `Replace ${preview.rowCount} rows`}
               </button>
               <button onClick={() => { setPreview(null); setParsedData(null); }}
                 disabled={replacing}
