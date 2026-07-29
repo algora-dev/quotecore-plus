@@ -1,5 +1,5 @@
-/**
- * P2.5-06 — Suspended/expired account enforcement after reload
+﻿/**
+ * P2.5-06 â€” Suspended/expired account enforcement after reload
  *
  * For admin-prepared suspended/expired/trial-expired E2E states:
  * - start with a normal user session
@@ -16,7 +16,7 @@
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Skip if suspended/expired E2E accounts are not configured */
 const HAS_SUSPENDED_ACCOUNT = process.env.E2E_SUSPENDED_EMAIL && process.env.E2E_SUSPENDED_PASSWORD && process.env.E2E_SUSPENDED_SLUG;
@@ -54,7 +54,7 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
     await page.goto(`${BASE_URL}/${slug}/quotes`);
     await page.waitForLoadState('networkidle');
 
-    // Should be restricted — either redirected, shown a suspension notice,
+    // Should be restricted â€” either redirected, shown a suspension notice,
     // or the "New Quote" button is absent/disabled
     const url = page.url();
 
@@ -76,7 +76,7 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
         if (await submitBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
           await submitBtn.click().catch(() => {});
           await page.waitForTimeout(2000);
-          // Should not have created a quote — either error or redirect
+          // Should not have created a quote â€” either error or redirect
         }
       }
     }
@@ -185,7 +185,7 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
     expect(page.url()).toContain(slug);
     expect(page.url()).toContain('/quotes');
 
-    // No 5xx — paid account is fully functional
+    // No 5xx â€” paid account is fully functional
     assertNoServerErrors();
   });
 });

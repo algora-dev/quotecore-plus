@@ -1,5 +1,5 @@
-/**
- * P2.5-07 — Public-link privacy
+﻿/**
+ * P2.5-07 â€” Public-link privacy
  *
  * For an E2E public quote/customer link:
  * - valid token exposes only intended public content
@@ -12,15 +12,15 @@
  */
 import { test, expect, type Page } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 /** Patterns that must NEVER appear on a denial page */
 const LEAK_PATTERNS = [
   /customer\s*name/i,
   /company\s*name/i,
-  /£\d/,
+  /Â£\d/,
   /\$\d/,
-  /€\d/,
+  /â‚¬\d/,
   /total/i,
   /subtotal/i,
   /grand total/i,
@@ -36,17 +36,17 @@ async function assertNoDataLeak(page: Page) {
   expect(bodyText).toBeTruthy();
 
   for (const pattern of LEAK_PATTERNS) {
-    // Some words like "total" may appear in generic UI text — only flag
+    // Some words like "total" may appear in generic UI text â€” only flag
     // if it appears alongside numbers or in a data-like context
     if (pattern.source.includes('\\d')) {
-      // Pattern requires a number nearby — check directly
+      // Pattern requires a number nearby â€” check directly
       expect(bodyText).not.toMatch(pattern);
     }
   }
 
   // No open redirect: URL must stay on the same origin
   const url = page.url();
-  expect(url).toContain('quotecore-plus-dev.vercel.app');
+  expect(url).toContain('quotecore-plus-testing.vercel.app');
 }
 
 test.describe('P2.5-07: Public-link privacy @security @public', () => {
@@ -57,7 +57,7 @@ test.describe('P2.5-07: Public-link privacy @security @public', () => {
     await page.goto(`${BASE_URL}/accept/not-a-real-token`);
     await page.waitForLoadState('networkidle');
 
-    // Should show a "not found" or "invalid" message — NOT a 500
+    // Should show a "not found" or "invalid" message â€” NOT a 500
     // Use innerText to get visible text only (excludes Next.js RSC script payloads)
     const bodyText = (await page.innerText('body')) ?? '';
     const hasNotFound = /not found|invalid|expired|may be invalid/i.test(bodyText);
@@ -75,7 +75,7 @@ test.describe('P2.5-07: Public-link privacy @security @public', () => {
     await page.goto(`${BASE_URL}/accept/00000000-0000-0000-0000-000000000000`);
     await page.waitForLoadState('networkidle');
 
-    // Should show safe denial — either "not found" or redirect
+    // Should show safe denial â€” either "not found" or redirect
     const hasServerError = await page.getByText(/500|internal server error/i).count();
     expect(hasServerError).toBe(0);
 
@@ -127,10 +127,10 @@ test.describe('P2.5-07: Public-link privacy @security @public', () => {
     await page.goto(`${BASE_URL}/accept/../../../login`);
     await page.waitForLoadState('networkidle');
 
-    // Must stay on same origin — no external redirect
+    // Must stay on same origin â€” no external redirect
     const url = page.url();
-    expect(url).toContain('quotecore-plus-dev.vercel.app');
-    expect(url).not.toMatch(/\/\/(?!quotecore-plus-dev)/);
+    expect(url).toContain('quotecore-plus-testing.vercel.app');
+    expect(url).not.toMatch(/\/\/(?!quotecore-plus-testing)/);
 
     assertNoServerErrors();
   });

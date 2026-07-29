@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Quotes Page Object
  */
 import type { Page } from '@playwright/test';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 export class QuotesPage {
   constructor(private page: Page) {}

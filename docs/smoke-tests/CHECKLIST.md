@@ -394,6 +394,51 @@
 - [ ] Importer: dashboard shows alert banner for supplier updates
 - [ ] Importer: message center / inbox shows supplier update alert
 
+### Pending verification (Supplier Catalogue System - development `9626332`, 2026-07-28)
+
+**Catalogue Publishing + Directory:**
+- [ ] Supplier dashboard: Catalogues tab shows catalogue list with Publish/Settings buttons
+- [ ] Supplier: clicking Publish opens modal with public title, description, roofing types, brands, keywords, service areas
+- [ ] Supplier: published catalogue shows "published" badge + version number
+- [ ] Supplier: clicking "Upload New Version" from supplier dashboard auto-opens the replace modal on the Catalogs page
+- [ ] Non-supplier: /supplier-directory shows Catalogues tab with published supplier catalogues
+- [ ] Non-supplier: can search supplier catalogues by name, roofing type, service area
+- [ ] Non-supplier: clicking "Add" on a supplier catalogue saves it to their account
+
+**Single Source of Truth (no row copies):**
+- [ ] After adding a supplier catalogue, user's Catalogs page shows it with "Supplier" blue badge
+- [ ] Catalogue search returns results from the supplier's rows (not local copies)
+- [ ] Supplier uploads new version → user automatically sees updated data (no action needed)
+- [ ] Alert fires to users who added the catalogue: "Supplier catalogue [name] has been updated"
+
+**Upload New Version:**
+- [ ] Upload New Version button (cloud icon) visible on own + supplier catalogue rows
+- [ ] NOT visible on supplier-reference catalogues (read-only)
+- [ ] Opens modal: select CSV → preview first 5 rows → Replace button
+- [ ] Replaces all existing rows, preserves column mapping and catalogue name
+- [ ] If published supplier catalogue: bumps version + alerts all users who added it
+
+**Download CSV:**
+- [ ] Download icon visible on all catalogue rows
+- [ ] Clicking downloads a .csv file with correct headers and all rows
+- [ ] Works on supplier-reference catalogues (reads from source)
+
+**Catalogue Converter (3-step row selection):**
+- [ ] Supplier dashboard: Catalogue Converter section visible (approved suppliers only)
+- [ ] Step 1: Select catalogue from dropdown (own + supplier catalogues listed)
+- [ ] Step 1: Click Load Catalogue → fetches rows
+- [ ] Step 2: Column mapping table shows headers + dropdowns + sample values
+- [ ] Step 2: Auto-detects common headers (Code→SKU, Rate→Price, etc.)
+- [ ] Step 2: Name and Price are required (error if not mapped)
+- [ ] Step 3: Row table with checkboxes, filter box, select all/deselect all
+- [ ] Step 3: Select target library from dropdown
+- [ ] Step 3: Click "Create N Components" → success message with count
+- [ ] Created components have correct: name, price, SKU, takeoff_slot, measurement_type
+- [ ] Product Type "ridge" → takeoff_slot=ridge, measurement_type=linear
+- [ ] Product Type "underlay" → takeoff_slot=underlay, measurement_type=area
+- [ ] Product Type "nail" → takeoff_slot=fixings, measurement_type=quantity
+- [ ] Tier limit: if batch would exceed limit, shows error message
+
 ### Passed (recent)
 - 2026-07-07 baseline test by Shaun ✅ — quote email send, quote notes add/edit/delete, summary file upload, no Server-Components 500s (root cause: 'use server' on adapter files, fixed in `ea0cf06`)
 - Round 10: Re-entry pitch preservation ✅

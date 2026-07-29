@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E-24: Cross-tenant access denial
  * E2E-25: Ordinary user attempts admin routes
  *
@@ -6,7 +6,7 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 test.describe('Access Boundaries', () => {
   test('E2E-24: Company A cannot access Company D data @smoke @cross-tenant', async ({ loginAs, assertNoServerErrors }) => {
@@ -17,7 +17,7 @@ test.describe('Access Boundaries', () => {
     const otherSlug = 'e2e-crosstenant-company-d';
     await page.goto(`${BASE_URL}/${otherSlug}/quotes`);
 
-    // Should NOT show Company D's data — either redirect, 404, or deny
+    // Should NOT show Company D's data â€” either redirect, 404, or deny
     // The app should redirect back to the user's own workspace or show a denial
     const url = page.url();
 
@@ -41,7 +41,7 @@ test.describe('Access Boundaries', () => {
     // Try to access admin dashboard
     await page.goto(`${BASE_URL}/admin`);
 
-    // Should be redirected away from admin — to login, home, or denied
+    // Should be redirected away from admin â€” to login, home, or denied
     await page.waitForLoadState('networkidle');
 
     const url = page.url();

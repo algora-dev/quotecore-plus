@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E Account Definitions
  *
  * Five ordinary (non-admin) accounts created through dev admin UI.
@@ -13,7 +13,7 @@ export interface E2EAccount {
   fixture: string;
   /** Email address (e2e-* prefix, quotecore.invalid domain preferred) */
   email: string;
-  /** Password loaded from env — never hardcoded */
+  /** Password loaded from env â€” never hardcoded */
   password: string;
   /** Workspace slug for direct URL access */
   workspaceSlug: string;

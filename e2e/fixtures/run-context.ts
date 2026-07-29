@@ -1,5 +1,5 @@
-/**
- * Run Context — Run IDs and Ownership Manifests
+﻿/**
+ * Run Context â€” Run IDs and Ownership Manifests
  *
  * Safety Rule 7: Prefix every generated entity with E2E-<run-id>.
  * Safety Rule 8: Track created entities in a local manifest.
@@ -14,7 +14,7 @@ export function generateRunId(): string {
   return `${date}-${rand}`;
 }
 
-/** The current run ID — generated once per test run */
+/** The current run ID â€” generated once per test run */
 let CURRENT_RUN_ID: string | null = null;
 
 export function getRunId(): string {

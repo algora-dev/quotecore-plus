@@ -1540,3 +1540,195 @@ export async function getSupplierSubscriptions(): Promise<Array<{
     };
   });
 }
+
+// ---------------------------------------------------------------------------
+// Supplier Catalogue Directory
+// ---------------------------------------------------------------------------
+
+export type DirectoryCatalog = {
+  id: string;
+  name: string;
+  public_title: string | null;
+  public_description: string | null;
+  visibility: string;
+  published_at: string | null;
+  published_version: number;
+  row_count: number;
+  original_filename: string | null;
+  roofing_types: string[] | null;
+  brands: string[] | null;
+  keywords: string[] | null;
+  service_areas: string[] | null;
+  supplier_name: string;
+  supplier_slug: string;
+  supplier_logo_url: string | null;
+};
+
+/**
+ * Search published supplier catalogues by text query, roofing type, brand, or location.
+ */
+export async function searchSupplierCatalogs(params: {
+  query?: string;
+  roofingType?: string;
+  brand?: string;
+  location?: string;
+  limit?: number;
+}): Promise<DirectoryCatalog[]> {
+  const supabase = await createSupabaseServerClient();
+  const { query, roofingType, brand, location, limit = 50 } = params;
+
+  const { data: catalogs, error } = await supabase
+    .from('catalogs')
+    .select(`
+      id, name, public_title, public_description, visibility,
+      published_at, published_version, row_count, original_filename,
+      roofing_types, brands, keywords, service_areas,
+      supplier_profile_id,
+      supplier_profiles!inner (
+        id, supplier_name, slug, logo_url, status, service_areas
+      )
+    `)
+    .eq('visibility', 'published')
+    .eq('publication_status', 'published')
+    .eq('supplier_profiles.status', 'approved')
+    .not('supplier_profile_id', 'is', null)
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('[searchSupplierCatalogs] Error:', error.message);
+    return [];
+  }
+
+  if (!catalogs || catalogs.length === 0) return [];
+
+  let results: DirectoryCatalog[] = catalogs.map(c => {
+    const sp = c.supplier_profiles as unknown as { supplier_name: string; slug: string; logo_url: string | null; status: string; service_areas: string[] };
+    return {
+      id: c.id,
+      name: c.name,
+      public_title: c.public_title,
+      public_description: c.public_description,
+      visibility: c.visibility,
+      published_at: c.published_at,
+      published_version: c.published_version,
+      row_count: c.row_count,
+      original_filename: c.original_filename,
+      roofing_types: c.roofing_types,
+      brands: c.brands,
+      keywords: c.keywords,
+      service_areas: c.service_areas,
+      supplier_name: sp.supplier_name,
+      supplier_slug: sp.slug,
+      supplier_logo_url: sp.logo_url,
+    };
+  });
+
+  // Text search filter
+  if (query && query.trim()) {
+    const q = query.toLowerCase().trim();
+    results = results.filter(c => {
+      const haystack = [
+        c.name, c.public_title, c.public_description,
+        c.supplier_name,
+        ...(c.roofing_types ?? []), ...(c.brands ?? []),
+        ...(c.keywords ?? []),
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+  }
+
+  // Roofing type filter
+  if (roofingType && roofingType !== 'All Roofing') {
+    results = results.filter(c => (c.roofing_types ?? []).includes(roofingType));
+  }
+
+  // Brand filter
+  if (brand) {
+    results = results.filter(c => (c.brands ?? []).some(b => b.toLowerCase() === brand.toLowerCase()));
+  }
+
+  // Location filter - check both catalogue service_areas and supplier service_areas
+  if (location && location.trim()) {
+    const loc = location.toLowerCase().trim();
+    results = results.filter(c => {
+      const catAreas = c.service_areas ?? [];
+      if (catAreas.some(a => a.toLowerCase().includes(loc))) return true;
+      const sp = catalogs.find(cat => cat.id === c.id)?.supplier_profiles as unknown as { service_areas: string[] } | null;
+      const spAreas = sp?.service_areas ?? [];
+      return spAreas.some(a => a.toLowerCase().includes(loc));
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Save a supplier catalogue to the user's own account.
+ * Copies metadata + rows, tracks source for update notifications.
+ */
+export async function saveSupplierCatalog(catalogId: string): Promise<
+  { ok: true; newCatalogId: string } | { ok: false; message: string }
+> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    // Fetch the source catalog (must be published)
+    const { data: source, error: srcError } = await supabase
+      .from('catalogs')
+      .select(`
+        id, name, column_mapping, headers, row_count, data_bytes,
+        public_title, published_version, supplier_profile_id
+      `)
+      .eq('id', catalogId)
+      .eq('visibility', 'published')
+      .eq('publication_status', 'published')
+      .maybeSingle();
+
+    if (srcError || !source) {
+      return { ok: false, message: 'Catalogue not found or not published.' };
+    }
+
+    // Check if already saved
+    const { data: existing } = await supabase
+      .from('catalogs')
+      .select('id')
+      .eq('source_catalog_id', catalogId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (existing) {
+      return { ok: false, message: 'You already have this catalogue in your account.' };
+    }
+
+    // Create a reference row - NO row copy. The user's catalog points to
+    // the supplier's catalog via source_catalog_id. Searches follow the
+    // reference to read the supplier's catalog_rows (RLS allows this for
+    // published supplier catalogs).
+    const { data: newCat, error: insertError } = await supabase
+      .from('catalogs')
+      .insert({
+        company_id: profile.company_id,
+        name: source.name,
+        column_mapping: source.column_mapping,
+        headers: source.headers,
+        row_count: source.row_count,
+        data_bytes: 0, // No local rows - data lives on the supplier's catalog
+        status: 'ready',
+        source_catalog_id: catalogId,
+        source_version: source.published_version,
+        imported_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+
+    if (insertError || !newCat) {
+      return { ok: false, message: insertError?.message ?? 'Failed to add catalogue.' };
+    }
+
+    return { ok: true, newCatalogId: newCat.id };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}

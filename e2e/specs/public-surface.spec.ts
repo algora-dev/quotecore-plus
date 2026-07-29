@@ -1,5 +1,5 @@
-/**
- * Public Surface Crawl — same-origin, allowlisted paths only
+﻿/**
+ * Public Surface Crawl â€” same-origin, allowlisted paths only
  *
  * E2E-23 extended: Crawl more public-facing pages.
  * Never follows external links, submits forms, downloads files, or mutates state.
@@ -8,7 +8,7 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 test.describe('Public Surface', () => {
   test('Public pages render without errors @smoke @read-only', async ({ freshPage, assertNoServerErrors }) => {
@@ -29,7 +29,7 @@ test.describe('Public Surface', () => {
       await page.waitForLoadState('networkidle');
 
       // Same origin
-      expect(page.url()).toContain('quotecore-plus-dev.vercel.app');
+      expect(page.url()).toContain('quotecore-plus-testing.vercel.app');
 
       // No 404
       const notFound = await page.getByText('404 | This page could not be found').count();

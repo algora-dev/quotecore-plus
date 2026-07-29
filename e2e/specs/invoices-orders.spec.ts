@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E-13: Invoice create/edit/reload/preview/delete
  * E2E-14: Material order create/edit/reload/preview/delete
  *
@@ -6,7 +6,7 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 test.describe('Invoices & Orders', () => {
   test('E2E-13: Invoice page loads, create modal works @smoke', async ({ loginAs, prefix, assertNoServerErrors }) => {

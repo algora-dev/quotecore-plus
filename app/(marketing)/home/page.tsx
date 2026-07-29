@@ -504,10 +504,10 @@ export default function HomePage() {
                 <p className="mt-3 text-sm text-zinc-600">All features for 14 days, no card required, risk free</p>
               </div>
               {/* Right: hero video with controls */}
-              <div className="relative z-10 flex flex-1 items-end justify-center overflow-visible lg:-ml-12 lg:flex-[0.96] lg:justify-end xl:flex-[1.08]">
+              <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
                 <div
-                  className="relative w-full overflow-hidden rounded-[2rem] border border-zinc-200 bg-black shadow-[0_30px_120px_rgba(0,0,0,0.15)] lg:w-[96%] lg:translate-x-4 xl:w-[104%] 2xl:w-[108%]"
-                  style={{borderRadius: "2rem"}}
+                  className="relative w-full overflow-hidden rounded-[2rem] border border-zinc-200 bg-black shadow-[0_30px_120px_rgba(0,0,0,0.15)]"
+                  style={{borderRadius: "2rem", aspectRatio: "16 / 9"}}
                   onMouseEnter={() => setHeroVideoHovered(true)}
                   onMouseLeave={() => setHeroVideoHovered(false)}
                 >
@@ -525,9 +525,9 @@ export default function HomePage() {
                     <source src="/Less than 3min w captions.mp4" type="video/mp4" />
                     <track kind="captions" srcLang="en" label="Product demo video" src="/captions/hero-demo.vtt" />
                   </video>
-                  {/* Progress bar - shows on hover */}
+                  {/* Progress bar - always seekable, visible on hover */}
                   <div
-                    className={`absolute inset-x-0 bottom-0 h-1.5 cursor-pointer transition-opacity duration-200 ${heroVideoHovered ? "opacity-100" : "opacity-0"}`}
+                    className="absolute inset-x-0 bottom-0 h-1.5 cursor-pointer transition-all duration-200 hover:h-2.5"
                     style={{background: "rgba(255,255,255,0.2)"}}
                     onClick={handleHeroProgressClick}
                   >
@@ -602,11 +602,11 @@ export default function HomePage() {
                   <source src="/kids-horizontal.mp4" type="video/mp4" />
                   <track kind="captions" srcLang="en" label="Brand story video" src="/captions/brand-story.vtt" />
                 </video>
-                {/* Progress bar - shows on hover */}
+                {/* Progress bar - always seekable, visible on hover */}
                 <div
-                  className={`absolute inset-x-0 bottom-0 h-1.5 cursor-pointer transition-opacity duration-200 ${videoHovered ? "opacity-100" : "opacity-0"}`}
-                  style={{background: "rgba(255,255,255,0.2)"}}
-                  onClick={handleProgressClick}
+                  className="absolute inset-x-0 bottom-0 h-1.5 cursor-pointer transition-all duration-200 hover:h-2.5"
+                    style={{background: "rgba(255,255,255,0.2)"}}
+                    onClick={handleProgressClick}
                 >
                   <div className="h-full bg-[#FF6B35] transition-all duration-100" style={{width: `${videoProgress}%`}} />
                 </div>

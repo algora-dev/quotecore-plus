@@ -69,24 +69,37 @@ const nextConfig: NextConfig = {
       { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
     ];
 
+    // X-Robots-Tag: noindex on non-production deployments only.
+    // VERCEL_ENV is 'production' | 'preview' | 'development', set at build
+    // time. On production (quote-core.com) the header is never added.
+    // On preview/dev deployments, Google sees noindex and removes them.
+    const isProduction = process.env.VERCEL_ENV === 'production';
+    const robotsHeader = isProduction
+      ? []
+      : [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }];
+    const globalHeaders = [
+      ...baseSecurityHeaders,
+      ...robotsHeader,
+    ];
+
     return [
       // Global defence-in-depth headers for every route.
       {
         source: '/(.*)',
-        headers: baseSecurityHeaders,
+        headers: globalHeaders,
       },
       // Strict CSP for the public docs surface (HTML).
       {
         source: '/docs/:path*',
         headers: [
-          ...baseSecurityHeaders,
+          ...globalHeaders,
           { key: 'Content-Security-Policy', value: DOCS_CSP },
         ],
       },
       {
         source: '/docs',
         headers: [
-          ...baseSecurityHeaders,
+          ...globalHeaders,
           { key: 'Content-Security-Policy', value: DOCS_CSP },
         ],
       },
@@ -95,8 +108,7 @@ const nextConfig: NextConfig = {
       {
         source: '/api/docs/:path*',
         headers: [
-          ...baseSecurityHeaders,
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          ...globalHeaders,
           { key: 'Cache-Control', value: 'no-store' },
         ],
       },

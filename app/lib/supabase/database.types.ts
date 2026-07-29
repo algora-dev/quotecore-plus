@@ -780,43 +780,91 @@ export type Database = {
       }
       catalogs: {
         Row: {
+          brands: string[] | null
           column_mapping: Json
           company_id: string
           created_at: string
           data_bytes: number
           headers: Json
           id: string
+          imported_at: string | null
+          keywords: string[] | null
           name: string
           original_filename: string | null
+          product_categories: string[] | null
+          public_description: string | null
+          public_title: string | null
+          publication_status: string
+          published_at: string | null
+          published_version: number
+          roofing_types: string[] | null
           row_count: number
+          search_tsv: unknown
+          service_areas: string[] | null
+          source_catalog_id: string | null
+          source_version: number | null
           status: string
+          supplier_profile_id: string | null
           updated_at: string
+          visibility: string
         }
         Insert: {
+          brands?: string[] | null
           column_mapping?: Json
           company_id: string
           created_at?: string
           data_bytes?: number
           headers?: Json
           id?: string
+          imported_at?: string | null
+          keywords?: string[] | null
           name: string
           original_filename?: string | null
+          product_categories?: string[] | null
+          public_description?: string | null
+          public_title?: string | null
+          publication_status?: string
+          published_at?: string | null
+          published_version?: number
+          roofing_types?: string[] | null
           row_count?: number
+          search_tsv?: unknown
+          service_areas?: string[] | null
+          source_catalog_id?: string | null
+          source_version?: number | null
           status?: string
+          supplier_profile_id?: string | null
           updated_at?: string
+          visibility?: string
         }
         Update: {
+          brands?: string[] | null
           column_mapping?: Json
           company_id?: string
           created_at?: string
           data_bytes?: number
           headers?: Json
           id?: string
+          imported_at?: string | null
+          keywords?: string[] | null
           name?: string
           original_filename?: string | null
+          product_categories?: string[] | null
+          public_description?: string | null
+          public_title?: string | null
+          publication_status?: string
+          published_at?: string | null
+          published_version?: number
+          roofing_types?: string[] | null
           row_count?: number
+          search_tsv?: unknown
+          service_areas?: string[] | null
+          source_catalog_id?: string | null
+          source_version?: number | null
           status?: string
+          supplier_profile_id?: string | null
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -824,6 +872,20 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalogs_source_catalog_id_fkey"
+            columns: ["source_catalog_id"]
+            isOneToOne: false
+            referencedRelation: "catalogs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalogs_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
             referencedColumns: ["id"]
           },
         ]

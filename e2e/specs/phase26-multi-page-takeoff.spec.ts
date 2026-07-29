@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 2.6-03: Multi-page takeoff E2E
  *
  * Tests the full multi-page takeoff flow:
@@ -18,7 +18,7 @@ import { test, expect } from '../fixtures/base';
 import * as path from 'path';
 import * as fs from 'fs';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const ROOF_PLAN = path.join(process.cwd(), 'e2e', 'test-data', 'roof-plan-sample.png');
 
 /** Dismiss cookie banner */
@@ -121,7 +121,7 @@ async function setupTakeoffPage(page: import('@playwright/test').Page, slug: str
 
 /** Upload a plan image on the takeoff page */
 async function uploadPlan(page: import('@playwright/test').Page, filePath: string) {
-  // The file input may be hidden — find it and use setInputFiles directly
+  // The file input may be hidden â€” find it and use setInputFiles directly
   const fileInput = page.locator('input[type="file"]').first();
 
   // Wait for the input to exist in DOM (it may be hidden)
@@ -153,7 +153,7 @@ test.describe('Multi-Page Takeoff', () => {
     const hasMultiPage = await uploadAnotherBtn.isVisible({ timeout: 5000 }).catch(() => false);
 
     if (hasMultiPage) {
-      // 5. Save current state first (non-blocking — auto-save may have already done it)
+      // 5. Save current state first (non-blocking â€” auto-save may have already done it)
       const saveBtn = page.getByRole('button', { name: /save/i }).first();
       if (await saveBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
         await saveBtn.click({ force: true }).catch(() => {});
@@ -170,7 +170,7 @@ test.describe('Multi-Page Takeoff', () => {
         const modalText = await uploadModal.innerText();
         expect(modalText).toMatch(/upload.*plan|another.*plan/i);
 
-        // 8. Select file in modal (hidden input — use filechooser event)
+        // 8. Select file in modal (hidden input â€” use filechooser event)
         const fileChooserPromise = page.waitForEvent('filechooser', { timeout: 5000 }).catch(() => null);
         // Click the upload area inside the modal to trigger file input
         const modalUploadArea = uploadModal.locator('[class*="border-dashed"], [class*="upload"]').first();
@@ -257,7 +257,7 @@ test.describe('Multi-Page Takeoff', () => {
     const customerName = prefix('Persistence Test');
     await setupTakeoffPage(page, slug, customerName);
 
-    // Plan was uploaded during quote creation — dismiss modals
+    // Plan was uploaded during quote creation â€” dismiss modals
     await dismissModals(page);
 
     // Verify canvas

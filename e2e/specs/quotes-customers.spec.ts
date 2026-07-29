@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E-05: Quote required-field validation
  * E2E-06: Quote create/save/reload/edit
  * E2E-07: Customer create/search/select/edit (covered via quote flow)
@@ -9,9 +9,9 @@
  */
 import { test, expect } from '../fixtures/base';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
-/** Dismiss cookie banner — use force to bypass assistant launcher overlay */
+/** Dismiss cookie banner â€” use force to bypass assistant launcher overlay */
 async function dismissCookies(page: import('@playwright/test').Page) {
   const cookieBtn = page.getByRole('button', { name: /^got it$/i }).last();
   if (await cookieBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -61,7 +61,7 @@ test.describe('Quotes & Customers', () => {
     await page.waitForURL((url) => url.pathname.includes('/quotes/new'), { timeout: 15_000 });
     await page.waitForLoadState('networkidle');
 
-    // Fill customer name — find input next to "Customer Name" label
+    // Fill customer name â€” find input next to "Customer Name" label
     const customerLabel = page.getByText('Customer Name');
     const customerField = customerLabel.locator('..').locator('input').first();
     await customerField.fill(customerName);
@@ -88,7 +88,7 @@ test.describe('Quotes & Customers', () => {
       timeout: 30_000,
     });
 
-    // Reload — verify persistence
+    // Reload â€” verify persistence
     await page.reload();
     await page.waitForLoadState('networkidle');
 
@@ -97,13 +97,13 @@ test.describe('Quotes & Customers', () => {
       owner: 'starter-b',
       visibleName: customerName,
       urlOrId: page.url(),
-      cleanupPath: 'quotes-list → delete',
+      cleanupPath: 'quotes-list â†’ delete',
     });
 
     assertNoServerErrors();
   });
 
-  test('E2E-08: Builder calculation — verify no 5xx @smoke', async ({ loginAs, assertNoServerErrors }) => {
+  test('E2E-08: Builder calculation â€” verify no 5xx @smoke', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
 
     await page.goto(`${BASE_URL}/${slug}/quotes`);

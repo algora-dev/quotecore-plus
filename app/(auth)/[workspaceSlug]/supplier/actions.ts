@@ -1,7 +1,11 @@
 'use server';
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AdminAny = any;
 
 export type SupplierProfileData = {
   id: string;
@@ -156,6 +160,189 @@ export async function updateSupplierProfile(
 
     revalidatePath('/[workspaceSlug]/supplier', 'page');
     return { ok: true };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Supplier Catalogues
+// ---------------------------------------------------------------------------
+
+export type SupplierCatalogData = {
+  id: string;
+  name: string;
+  original_filename: string | null;
+  row_count: number;
+  data_bytes: number;
+  status: string;
+  visibility: string;
+  publication_status: string;
+  published_version: number;
+  published_at: string | null;
+  public_title: string | null;
+  public_description: string | null;
+  roofing_types: string[] | null;
+  brands: string[] | null;
+  keywords: string[] | null;
+  service_areas: string[] | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * Load catalogues belonging to the current supplier company.
+ */
+export async function loadSupplierCatalogs(): Promise<SupplierCatalogData[]> {
+  const profile = await requireCompanyContext();
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from('catalogs')
+    .select(`
+      id, name, original_filename, row_count, data_bytes, status,
+      visibility, publication_status, published_version, published_at,
+      public_title, public_description, roofing_types, brands, keywords,
+      service_areas, created_at, updated_at
+    `)
+    .eq('company_id', profile.company_id)
+    .order('status', { ascending: true })
+    .order('updated_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as SupplierCatalogData[];
+}
+
+/**
+ * Update catalogue visibility / publication settings.
+ */
+export async function updateCatalogVisibility(
+  catalogId: string,
+  settings: {
+    visibility: 'private' | 'unlisted' | 'published';
+    public_title?: string | null;
+    public_description?: string | null;
+    roofing_types?: string[];
+    brands?: string[];
+    keywords?: string[];
+    service_areas?: string[];
+  }
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+
+    // Verify ownership
+    const { data: catalog } = await admin
+      .from('catalogs')
+      .select('id, supplier_profile_id')
+      .eq('id', catalogId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!catalog) return { ok: false, message: 'Catalogue not found.' };
+
+    // Get supplier profile
+    const { data: supplier } = await admin
+      .from('supplier_profiles')
+      .select('id, status')
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!supplier || supplier.status !== 'approved') {
+      return { ok: false, message: 'Only approved suppliers can publish catalogues.' };
+    }
+
+    const update: Record<string, unknown> = {
+      visibility: settings.visibility,
+      public_title: settings.public_title ?? null,
+      public_description: settings.public_description ?? null,
+      roofing_types: settings.roofing_types ?? null,
+      brands: settings.brands ?? null,
+      keywords: settings.keywords ?? null,
+      service_areas: settings.service_areas ?? null,
+      supplier_profile_id: supplier.id,
+    };
+
+    if (settings.visibility === 'published') {
+      update.publication_status = 'published';
+      update.published_at = new Date().toISOString();
+      update.published_version = (catalog.published_version ?? 0) + 1;
+    } else if (settings.visibility === 'private') {
+      update.publication_status = 'draft';
+    }
+
+    const { error } = await admin
+      .from('catalogs')
+      .update(update)
+      .eq('id', catalogId);
+
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath('/[workspaceSlug]/supplier', 'page');
+    revalidatePath('/[workspaceSlug]/supplier-directory', 'page');
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Publish a catalogue update (bump version, notify users who saved it).
+ */
+export async function publishCatalogUpdate(
+  catalogId: string
+): Promise<{ ok: true; newVersion: number } | { ok: false; message: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const admin = createAdminClient() as AdminAny;
+
+    const { data: catalog } = await admin
+      .from('catalogs')
+      .select('id, published_version, supplier_profile_id, visibility')
+      .eq('id', catalogId)
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!catalog) return { ok: false, message: 'Catalogue not found.' };
+    if (catalog.visibility !== 'published') {
+      return { ok: false, message: 'Catalogue must be published first.' };
+    }
+
+    const newVersion = (catalog.published_version ?? 0) + 1;
+
+    const { error } = await admin
+      .from('catalogs')
+      .update({
+        published_version: newVersion,
+        published_at: new Date().toISOString(),
+      })
+      .eq('id', catalogId);
+
+    if (error) return { ok: false, message: error.message };
+
+    // Create alerts for companies that saved this catalogue
+    const { data: savedBy } = await admin
+      .from('catalogs')
+      .select('company_id, name')
+      .eq('source_catalog_id', catalogId)
+      .neq('company_id', profile.company_id);
+
+    if (savedBy && savedBy.length > 0) {
+      const alerts = savedBy.map((row: { company_id: string; name: string }) => ({
+        company_id: row.company_id,
+        alert_type: 'supplier_catalog_update',
+        title: 'Supplier catalogue updated',
+        message: `"${row.name}" has been updated by the supplier. Review the latest version.`,
+        is_read: false,
+        status: 'active',
+      }));
+
+      await admin.from('alerts').insert(alerts);
+    }
+
+    revalidatePath('/[workspaceSlug]/supplier', 'page');
+    return { ok: true, newVersion };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
   }

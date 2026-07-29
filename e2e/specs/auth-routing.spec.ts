@@ -1,4 +1,4 @@
-/**
+﻿/**
  * E2E-01: Login, reload persistence, logout
  * E2E-02: Invalid login and unauthenticated direct route
  *
@@ -7,7 +7,7 @@
 import { test, expect } from '../fixtures/base';
 import { getAccount } from '../config/accounts';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-dev.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
 test.describe('Auth & Session', () => {
   test('E2E-01: Login, reload persistence, logout @smoke', async ({ loginAs, assertNoServerErrors }) => {
@@ -16,7 +16,7 @@ test.describe('Auth & Session', () => {
     // Verify we're on the workspace
     expect(page.url()).toContain(slug);
 
-    // Reload — session should persist
+    // Reload â€” session should persist
     await page.reload();
     await page.waitForURL((url) => url.pathname.includes(slug), { timeout: 15_000 });
 
@@ -56,7 +56,7 @@ test.describe('Auth & Session', () => {
     await page.waitForTimeout(3000);
     expect(page.url()).toContain('/login');
 
-    // Try unauthenticated direct route — should redirect
+    // Try unauthenticated direct route â€” should redirect
     await page.goto(`${BASE_URL}/e2e-trial-company-a/quotes`);
     await page.waitForURL((url) => url.pathname.includes('/login'), { timeout: 15_000 });
 

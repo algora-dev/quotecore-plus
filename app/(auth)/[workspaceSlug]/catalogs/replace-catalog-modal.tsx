@@ -1,0 +1,182 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import Papa from 'papaparse';
+import { replaceCatalogRows, type CatalogRow } from './actions';
+
+interface Props {
+  catalog: CatalogRow;
+  onClose: () => void;
+  onReplaced: () => void;
+}
+
+function parsePrice(raw: string): number {
+  const cleaned = String(raw ?? '').replace(/[^0-9.-]/g, '');
+  const parsed = parseFloat(cleaned);
+  if (isNaN(parsed)) return 0;
+  return Math.round(parsed * 100) / 100;
+}
+
+export function ReplaceCatalogModal({ catalog, onClose, onReplaced }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [parsing, setParsing] = useState(false);
+  const [replacing, setReplacing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ headers: string[]; rowCount: number; firstRows: Record<string, string>[] } | null>(null);
+  const [parsedData, setParsedData] = useState<{ headers: string[]; rows: Record<string, string>[] } | null>(null);
+
+  function handleFile(file: File) {
+    setParsing(true);
+    setError(null);
+    setPreview(null);
+    setParsedData(null);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const data = results.data as Record<string, string>[];
+        if (!data || data.length === 0) {
+          setError('CSV appears to be empty or could not be parsed.');
+          setParsing(false);
+          return;
+        }
+
+        const headers = Object.keys(data[0]);
+        setParsedData({ headers, rows: data });
+        setPreview({
+          headers,
+          rowCount: data.length,
+          firstRows: data.slice(0, 5),
+        });
+        setParsing(false);
+      },
+      error: (err) => {
+        setError(err.message);
+        setParsing(false);
+      },
+    });
+  }
+
+  async function handleReplace() {
+    if (!parsedData) return;
+    setReplacing(true);
+    setError(null);
+
+    try {
+      const rows = parsedData.rows.map((raw, i) => ({
+        rowIndex: i,
+        raw,
+      }));
+
+      const result = await replaceCatalogRows({
+        catalogId: catalog.id,
+        rows,
+        headers: parsedData.headers,
+        columnMapping: catalog.column_mapping,
+        originalFilename: fileRef.current?.files?.[0]?.name ?? catalog.original_filename ?? 'replacement.csv',
+      });
+
+      if (!result.ok) {
+        setError(result.message);
+      } else {
+        onReplaced();
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to replace');
+    } finally {
+      setReplacing(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg font-semibold text-slate-900">Upload New Version</h3>
+        <p className="text-sm text-slate-400 mb-4">
+          Replace the data in <strong className="text-slate-600">{catalog.name}</strong> with a new CSV file.
+          The column mapping will be preserved.
+        </p>
+
+        {error && (
+          <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
+        )}
+
+        {!preview && (
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 px-6 py-10 text-center transition"
+          >
+            <svg className="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p className="text-sm font-medium text-slate-600">
+              {parsing ? 'Parsing...' : 'Click to select a CSV file'}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">All existing rows will be replaced</p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+              }}
+            />
+          </div>
+        )}
+
+        {preview && (
+          <div className="space-y-3">
+            <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-700">
+              {preview.rowCount} rows detected, {preview.headers.length} columns
+            </div>
+
+            <div className="rounded-lg border border-slate-200 overflow-hidden">
+              <div className="bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-500 border-b border-slate-200">
+                Preview (first 5 rows)
+              </div>
+              <div className="overflow-x-auto max-h-48">
+                <table className="w-full text-xs">
+                  <thead className="bg-white sticky top-0">
+                    <tr>
+                      {preview.headers.map(h => (
+                        <th key={h} className="px-2 py-1 text-left font-medium text-slate-600 border-b border-slate-100 whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preview.firstRows.map((row, i) => (
+                      <tr key={i} className="hover:bg-slate-50">
+                        {preview.headers.map(h => (
+                          <td key={h} className="px-2 py-1 text-slate-500 border-b border-slate-50 whitespace-nowrap">{row[h]}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button onClick={handleReplace} disabled={replacing}
+                className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-40">
+                {replacing ? 'Replacing...' : `Replace ${preview.rowCount} rows`}
+              </button>
+              <button onClick={() => { setPreview(null); setParsedData(null); }}
+                disabled={replacing}
+                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-40">
+                Choose different file
+              </button>
+              <button onClick={onClose}
+                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

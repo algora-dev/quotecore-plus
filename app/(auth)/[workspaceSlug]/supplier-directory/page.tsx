@@ -1,4 +1,4 @@
-import { listDirectorySuppliers, searchSupplierLibraries } from './actions';
+import { listDirectorySuppliers, searchSupplierLibraries, searchSupplierCatalogs } from './actions';
 import { SupplierDirectory } from './SupplierDirectory';
 
 export default async function SupplierDirectoryPage(props: {
@@ -8,13 +8,19 @@ export default async function SupplierDirectoryPage(props: {
   const { workspaceSlug } = await props.params;
   const searchParams = await props.searchParams;
 
-  const [suppliers, libraries] = await Promise.all([
+  const [suppliers, libraries, catalogs] = await Promise.all([
     listDirectorySuppliers(),
     searchSupplierLibraries({
       query: searchParams.q,
       roofingType: searchParams.type,
       brand: searchParams.brand,
       productCategory: searchParams.cat,
+      location: searchParams.location,
+    }),
+    searchSupplierCatalogs({
+      query: searchParams.q,
+      roofingType: searchParams.type,
+      brand: searchParams.brand,
       location: searchParams.location,
     }),
   ]);
@@ -26,12 +32,16 @@ export default async function SupplierDirectoryPage(props: {
     (lib.brands ?? []).forEach(b => allBrands.add(b));
     (lib.product_categories ?? []).forEach(c => allCategories.add(c));
   }
+  for (const cat of catalogs) {
+    (cat.brands ?? []).forEach(b => allBrands.add(b));
+  }
 
   return (
     <SupplierDirectory
       workspaceSlug={workspaceSlug}
       suppliers={suppliers}
       libraries={libraries}
+      catalogs={catalogs}
       brands={[...allBrands].sort()}
       categories={[...allCategories].sort()}
       initialQuery={searchParams.q ?? ''}

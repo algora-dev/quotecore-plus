@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility } from './actions';
+import { AddFromCatalogModal } from './components/AddFromCatalogModal';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
   ComponentLibraryRow,
@@ -145,6 +146,7 @@ export function ComponentList({
     componentCollections.find(c => c.is_bootstrap)?.id ?? componentCollections[0]?.id ?? ''
   );
   const [showCreateLibraryModal, setShowCreateLibraryModal] = useState(false);
+  const [showCatalogModal, setShowCatalogModal] = useState(false);
   const [newLibraryName, setNewLibraryName] = useState('');
   const [creatingLibrary, setCreatingLibrary] = useState(false);
   const [createLibraryError, setCreateLibraryError] = useState('');
@@ -913,6 +915,21 @@ export function ComponentList({
                 {effectiveCount}/{componentLimit}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => {
+              if (!subscriptionActive) {
+                setSubBlockedOpen(true);
+                return;
+              }
+              setShowCatalogModal(true);
+            }}
+            className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            Add from Catalog
           </button>
           {flashingsFeatureEnabled ? (
             <Link
@@ -1719,6 +1736,24 @@ export function ComponentList({
           }}
         />;
       })()}
+
+      {/* Add from Catalog Modal */}
+      {showCatalogModal && (
+        <AddFromCatalogModal
+          workspaceSlug={workspaceSlug}
+          collections={collections.map(c => ({
+            id: c.id,
+            name: c.name,
+            is_bootstrap: c.is_bootstrap,
+            component_count: undefined,
+          }))}
+          onClose={() => setShowCatalogModal(false)}
+          onCreated={() => {
+            // Reload to pick up new components
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }
