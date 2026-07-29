@@ -99,7 +99,7 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
           body: JSON.stringify({
             catalogId: catalog.id,
             rows: chunkRows.map(r => ({ rowIndex: r.rowIndex, raw: r.raw })),
-            isFirstBatch: false,
+            isFirstBatch: chunkIdx === 0,
             isLastBatch: chunkIdx === totalChunks - 1,
           }),
         });
