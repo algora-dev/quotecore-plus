@@ -17,9 +17,9 @@
 
 | # | Slug | Title | Status | Owner | Primary Keyword | Links To |
 |---|------|-------|--------|-------|----------------|----------|
-| 4 | how-to-calculate-roof-pitch | How to Calculate Roof Pitch (And Why It Matters for Your Quote) | draft-complete | Ron | how to calculate roof pitch | /free-roof-pitch-calculator, /free-roof-pitch-converter, #5, #9 |
-| 5 | how-to-measure-a-roof | How to Measure a Roof for Materials (Complete Guide) | draft-complete | Ron | how to measure a roof | /free-roof-area-calculator, /free-roof-square-footage-calculator, /free-roofing-takeoff-builder, #4, #6 |
-| 6 | how-much-roofing-material | How Much Roofing Material Do You Need? (Material Calculator Guide) | draft-complete | Ron | how much roofing material do i need | /free-roofing-material-calculator, /free-shingle-calculator, /free-roof-tile-calculator, #5, #9 |
+| 4 | how-to-calculate-roof-pitch | How to Calculate Roof Pitch (And Why It Matters for Your Quote) | published | Ron | how to calculate roof pitch | /free-roof-pitch-calculator, /free-roof-pitch-converter, #5, #9 |
+| 5 | how-to-measure-a-roof | How to Measure a Roof for Materials (Complete Guide) | published | Ron | how to measure a roof | /free-roof-area-calculator, /free-roof-square-footage-calculator, /free-roofing-takeoff-builder, #4, #6 |
+| 6 | how-much-roofing-material | How Much Roofing Material Do You Need? (Material Calculator Guide) | published | Ron | how much roofing material do i need | /free-roofing-material-calculator, /free-shingle-calculator, /free-roof-tile-calculator, #5, #9 |
 | 7 | how-to-create-a-quote-online | How to Create a Professional Quote Online (Free Quote Guide) | planned | - | how to create a quote online | /free-quote-generator, /free-invoice-generator, /free-purchase-order-generator, /free-trial, #3, #9 |
 | 8 | how-to-estimate-construction-costs | How to Estimate Construction Costs (Step-by-Step Guide) | planned | - | how to estimate construction costs | /free-construction-calculator, /free-concrete-calculator, /construction-quoting-software, #6 |
 
@@ -27,14 +27,14 @@
 
 | # | Slug | Title | Status | Owner | Primary Keyword | Links To |
 |---|------|-------|--------|-------|----------------|----------|
-| 9 | how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide | draft-complete | Ron | how to price a roofing job | /free-quote-generator, /roofing-quoting-software, /free-trial, #4, #5, #6, #7 |
+| 9 | how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide | published | Ron | how to price a roofing job | /free-quote-generator, /roofing-quoting-software, /free-trial, #4, #5, #6, #7 |
 | 10 | spreadsheets-vs-quoting-software | Spreadsheets vs Quoting Software: What Actually Costs Less? | planned | - | quoting software vs spreadsheets | /roofing-quoting-software, /free-trial, existing spreadsheet post |
 
 ### Authority / Roundup
 
 | # | Slug | Title | Status | Owner | Primary Keyword | Links To |
 |---|------|-------|--------|-------|----------------|----------|
-| 11 | best-free-tools-for-roofers | Best Free Tools for Roofers and Contractors (2026) | draft-complete | Ron | free tools for roofers | /free-tools, ALL calculator pages, takeoff builder, every post |
+| 11 | best-free-tools-for-roofers | Best Free Tools for Roofers and Contractors (2026) | published | Ron | free tools for roofers | /free-tools, ALL calculator pages, takeoff builder, every post |
 
 ### Supplier Cluster
 

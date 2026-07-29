@@ -91,7 +91,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Complete guide to roof pitch: what it is, the three ways it gets expressed (degrees, ratio, percentage), how to calculate it from measurements, common mistakes, and free tools that do the maths for you.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'how-to-measure-a-roof',
@@ -100,7 +99,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Three ways to measure a roof (site visit, plans, digital takeoff), how to calculate actual surface area from plan dimensions with pitch factors, and free tools that handle the maths for you.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'how-much-roofing-material',
@@ -109,7 +107,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'How to calculate tile, underlay, batten, and fixing quantities for any roofing job. Real coverage rates, waste allowances by roof type, and free tools that do the calculation for you.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'how-to-price-a-roofing-job',
@@ -118,7 +115,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Complete roofing pricing guide with worked example. Covers materials, labour, scaffold, disposal, overhead, profit margin, common pricing mistakes, and how to present your price professionally.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'best-free-tools-for-roofers',
@@ -127,7 +123,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Complete list of the best free roofing and construction tools: takeoff builder, pitch calculator, area calculator, material calculator, quote generator, invoice generator, and 30+ specialised calculators. All free, no signup.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
 ];
 
