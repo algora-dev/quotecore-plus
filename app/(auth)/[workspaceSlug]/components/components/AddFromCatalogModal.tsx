@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   listUserCatalogs,
   searchPublicCatalogs,
-  fetchCatalogRows,
   convertCatalogRowsToComponents,
   type UserCatalogSummary,
   type PublicCatalogSummary,
@@ -124,7 +123,12 @@ export function AddFromCatalogModal({
     setStep('view-rows');
 
     try {
-      const result = await fetchCatalogRows(catalogId);
+      const res = await fetch('/api/catalog-rows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catalogId }),
+      });
+      const result = await res.json();
       if (result.ok && result.headers && result.rows) {
         setHeaders(result.headers);
         setAllRows(result.rows);
@@ -154,7 +158,7 @@ export function AddFromCatalogModal({
         }
         setColumnMapping(autoColMap);
         // Default: select first MAX_ROWS rows
-        setSelectedRowIndices(new Set(result.rows.slice(0, MAX_ROWS).map((_, i) => i)));
+        setSelectedRowIndices(new Set(result.rows.slice(0, MAX_ROWS).map((_: unknown, i: number) => i)));
       } else {
         setError(result.error ?? 'Failed to load catalog rows.');
         setStep('select-catalog');
@@ -551,7 +555,7 @@ export function AddFromCatalogModal({
                   {/* Rows table */}
                   <div className="rounded-lg border border-slate-200 overflow-auto max-h-[40vh]">
                     <table className="text-xs min-w-max">
-                      <thead className="sticky top-0 z-10">
+                      <thead className="sticky top-0 z-10 bg-white">
                         <tr className="border-b border-slate-200">
                           <th className="px-2 py-2 text-left w-8">
                             <input
@@ -564,7 +568,7 @@ export function AddFromCatalogModal({
                           {headers.map(h => {
                             const isMapped = mappedHeaders.has(h);
                             return (
-                            <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${isMapped ? 'bg-orange-50/60 text-slate-900' : 'text-slate-600'}`}>
+                            <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${isMapped ? 'bg-orange-50/60 text-slate-900' : 'bg-white text-slate-600'}`}>
                               {h}
                               {(columnMapping[h] ?? []).length > 0 && (
                                 <span className="ml-1 text-xs text-orange-500 font-semibold">({columnMapping[h].join(', ')})</span>

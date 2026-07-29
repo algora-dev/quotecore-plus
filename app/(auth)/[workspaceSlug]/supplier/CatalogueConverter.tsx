@@ -347,7 +347,7 @@ export function CatalogueConverter({
 
           <div className="rounded-lg border border-slate-200 overflow-auto max-h-96">
             <table className="w-full text-xs min-w-max">
-              <thead className="sticky top-0 z-10">
+              <thead className="sticky top-0 z-10 bg-white">
                 <tr className="border-b border-slate-200">
                   <th className="px-2 py-2 text-left">
                     <input
@@ -358,7 +358,7 @@ export function CatalogueConverter({
                     />
                   </th>
                   {headers.map(h => (
-                    <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${(columnMapping[h] ?? []).length > 0 ? 'bg-orange-50/60 text-slate-700' : 'text-slate-600'}`}>
+                    <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${(columnMapping[h] ?? []).length > 0 ? 'bg-orange-50/60 text-slate-700' : 'bg-white text-slate-600'}`}>
                       {h}
                       {(columnMapping[h] ?? []).length > 0 && (
                         <span className="ml-1 text-xs font-semibold text-orange-500">({columnMapping[h].join(', ')})</span>
