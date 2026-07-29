@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { startReplaceCatalog, finishReplaceCatalog, type CatalogRow } from './actions';
+import { type CatalogRow } from './actions';
 
 interface Props {
   catalog: CatalogRow;
@@ -71,15 +71,24 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
       const allRows = parsedData.rows.map((raw, i) => ({ rowIndex: i, raw }));
       const totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
 
-      // 1. Start replace (deletes old rows, sets status to importing)
-      const startResult = await startReplaceCatalog({ catalogId: catalog.id });
-      if (!startResult.ok) {
-        setError(startResult.message);
-        setReplacing(false);
-        return;
+      // 1. Start replace (set status to importing via API, NOT server action)
+      const startRes = await fetch(`/${workspaceSlug}/catalogs/import-rows`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          catalogId: catalog.id,
+          rows: [],
+          isFirstBatch: true,
+          isLastBatch: false,
+          startReplace: true,
+        }),
+      });
+      if (!startRes.ok) {
+        const errBody = await startRes.json().catch(() => ({}));
+        throw new Error(errBody.message || `Failed to start replace (HTTP ${startRes.status})`);
       }
 
-      // 2. Batch insert via /import-rows API (same as initial upload)
+      // 2. Batch insert via /import-rows API
       for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
         const start = chunkIdx * CHUNK_SIZE;
         const chunkRows = allRows.slice(start, start + CHUNK_SIZE);
@@ -89,39 +98,45 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             catalogId: catalog.id,
-            rows: chunkRows.map(r => ({ rowIndex: start + (r.rowIndex - start), raw: r.raw })),
-            isFirstBatch: chunkIdx === 0,
+            rows: chunkRows.map(r => ({ rowIndex: r.rowIndex, raw: r.raw })),
+            isFirstBatch: false,
             isLastBatch: chunkIdx === totalChunks - 1,
           }),
         });
 
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
-          throw new Error(errBody.message || `Upload failed at batch ${chunkIdx + 1}`);
+          throw new Error(errBody.message || `Upload failed at batch ${chunkIdx + 1} (HTTP ${res.status})`);
         }
 
         setUploadProgress(Math.round(((chunkIdx + 1) / totalChunks) * 100));
       }
 
-      // 3. Finish replace (update metadata, bump version, alert users)
+      // 3. Finish replace (update metadata via API, NOT server action)
       let dataBytes = 0;
       try {
         dataBytes = new TextEncoder().encode(JSON.stringify(parsedData.rows)).length;
       } catch { dataBytes = parsedData.rows.length * 200; }
 
-      const finishResult = await finishReplaceCatalog({
-        catalogId: catalog.id,
-        headers: parsedData.headers,
-        columnMapping: catalog.column_mapping,
-        originalFilename: fileRef.current?.files?.[0]?.name ?? catalog.original_filename ?? 'replacement.csv',
-        rowCount: allRows.length,
-        dataBytes,
+      const finishRes = await fetch(`/${workspaceSlug}/catalogs/import-rows`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          catalogId: catalog.id,
+          rows: [],
+          isFirstBatch: false,
+          isLastBatch: true,
+          finishReplace: true,
+          headers_data: parsedData.headers,
+          columnMapping: catalog.column_mapping,
+          originalFilename: fileRef.current?.files?.[0]?.name ?? catalog.original_filename ?? 'replacement.csv',
+          rowCount: allRows.length,
+          dataBytes,
+        }),
       });
-
-      if (!finishResult.ok) {
-        setError(finishResult.message);
-        setReplacing(false);
-        return;
+      if (!finishRes.ok) {
+        const errBody = await finishRes.json().catch(() => ({}));
+        throw new Error(errBody.message || `Failed to finish replace (HTTP ${finishRes.status})`);
       }
 
       onReplaced();

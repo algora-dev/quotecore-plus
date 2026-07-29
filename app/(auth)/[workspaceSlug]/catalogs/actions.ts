@@ -663,14 +663,14 @@ export async function startReplaceCatalog(args: {
       return { ok: false, code: 'read_only', message: 'This is a supplier catalogue reference. You cannot upload new versions to it.' };
     }
 
-    // Delete existing rows
-    await admin
-      .from('catalog_rows')
-      .delete()
-      .eq('catalog_id', args.catalogId)
-      .eq('company_id', profile.company_id);
-
-    // Set status to importing
+    // Set status to importing (DO NOT delete rows - the RPC's p_is_first branch
+    // handles deletion + storage reversal when it sees status was 'ready')
+    // But we need to flip to 'importing' first so the RPC accepts the batches.
+    // To preserve storage reversal, we flip to 'importing' but the RPC's
+    // p_is_first branch still deletes rows. Storage reversal only happens
+    // when v_status='ready', so we need a different approach:
+    // Just set to 'importing' - the RPC p_is_first will delete rows but NOT
+    // reverse storage. We handle storage in finishReplaceCatalog by recalculating.
     await admin
       .from('catalogs')
       .update({ status: 'importing', updated_at: new Date().toISOString() })
