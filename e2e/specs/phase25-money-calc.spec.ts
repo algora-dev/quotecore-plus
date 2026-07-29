@@ -72,10 +72,22 @@ async function createQuoteAndNavigate(
 
 /** Extract the "Total:" value from the builder summary bar */
 async function getBuilderTotal(page: Page): Promise<string | null> {
-  const totalText = await page.locator('span.font-semibold:has-text("Total:")').first().textContent();
-  if (!totalText) return null;
-  const match = totalText.match(/Total:\s*([£$€¥][\d,.]+)/i);
-  return match ? match[1] : null;
+  // The summary bar renders: <span className="...font-semibold">Total: £X.XX</span>
+  // Try multiple selectors in case the exact class differs
+  const selectors = [
+    'span.font-semibold:has-text("Total:")',
+    'span:has-text("Total:")',
+    'text=Total:',
+  ];
+  for (const sel of selectors) {
+    const el = page.locator(sel).first();
+    const text = await el.textContent({ timeout: 5000 }).catch(() => null);
+    if (text) {
+      const match = text.match(/Total:\s*([£$€¥][\d,.]+)/i);
+      if (match) return match[1];
+    }
+  }
+  return null;
 }
 
 test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
