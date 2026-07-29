@@ -51,10 +51,11 @@ export default function Post() {
             </tr>
           </thead>
           <tbody className="text-zinc-700">
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete interlocking (e.g. Marley Modern)</td><td className="py-2 pr-4">9-10 per sqm</td><td className="py-2 pr-4">345mm</td><td className="py-2">15 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete pantile (e.g. Redland 49)</td><td className="py-2 pr-4">~10 per sqm</td><td className="py-2 pr-4">345mm</td><td className="py-2">15 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Clay plain tile</td><td className="py-2 pr-4">~60 per sqm</td><td className="py-2 pr-4">114mm</td><td className="py-2">35 degrees</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete plain tile</td><td className="py-2 pr-4">~60 per sqm</td><td className="py-2 pr-4">114mm</td><td className="py-2">35 degrees</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete interlocking (e.g. Marley Modern, Redland Duo Modern)</td><td className="py-2 pr-4">9.7-10.6 per sqm</td><td className="py-2 pr-4">345mm</td><td className="py-2">15 degrees</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete pantile (e.g. Marley Anglia, Redland 49)</td><td className="py-2 pr-4">15.7-17.1 per sqm</td><td className="py-2 pr-4">312mm</td><td className="py-2">15 degrees</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Clay plain tile (e.g. Marley Acme, 265x165mm)</td><td className="py-2 pr-4">60 per sqm</td><td className="py-2 pr-4">100mm</td><td className="py-2">35 degrees</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete plain tile, traditional size (265x165mm)</td><td className="py-2 pr-4">60 per sqm</td><td className="py-2 pr-4">100mm</td><td className="py-2">35 degrees</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete plain tile, large format (e.g. Marley Ashmore, 267x333mm)</td><td className="py-2 pr-4">17.5-19 per sqm</td><td className="py-2 pr-4">190mm</td><td className="py-2">30 degrees</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Slate (500mm, double lap)</td><td className="py-2 pr-4">~12-15 per sqm</td><td className="py-2 pr-4">200mm</td><td className="py-2">20 degrees</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Slate (600mm, double lap)</td><td className="py-2 pr-4">~9-11 per sqm</td><td className="py-2 pr-4">255mm</td><td className="py-2">20 degrees</td></tr>
             <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Metal roofing (long-run)</td><td className="py-2 pr-4">By linear metre</td><td className="py-2 pr-4">Varies</td><td className="py-2">3 degrees</td></tr>
@@ -63,17 +64,31 @@ export default function Post() {
       </div>
 
       <p>
+        Coverage rates vary by manufacturer and tile profile. The figures above are based on
+        data from <a href="https://www.marley.co.uk/blog/roof-tile-sizes-how-many-roof-tiles-per-square-metre" target="_blank" rel="noopener noreferrer">Marley&apos;s official tile coverage guide</a> and
+        should be used as a starting point. Always confirm against the manufacturer datasheet for
+        your specific tile before ordering.
+      </p>
+
+      <p>
+        <strong>Important distinction:</strong> Concrete interlocking tiles (the most common type
+        on UK residential roofs) cover about 10 per sqm. Traditional plain tiles (both clay and
+        concrete, 265x165mm) cover 60 per sqm because each tile is much smaller. These are
+        completely different products - make sure you know which one your job specifies.
+      </p>
+
+      <p>
         To calculate the number of tiles needed:
       </p>
       <p>
         <strong>Tiles = roof area x coverage rate x (1 + waste percentage)</strong>
       </p>
       <p>
-        Example: 92.4 sqm roof, concrete interlocking tiles at 9.5 per sqm, 10% waste:
+        Example: 92.4 sqm roof, concrete interlocking tiles at 10 per sqm, 10% waste:
       </p>
       <ul>
-        <li>92.4 x 9.5 = 878 tiles</li>
-        <li>878 x 1.10 = 966 tiles</li>
+        <li>92.4 x 10 = 924 tiles</li>
+        <li>924 x 1.10 = 1,017 tiles</li>
         <li>Round up to nearest pack size (typically 168 or 336 per pallet)</li>
       </ul>
       <p>
@@ -135,8 +150,8 @@ export default function Post() {
         <li>Battens: 2 nails per batten per rafter crossing</li>
       </ul>
       <p>
-        For a fully nailed concrete tile roof at 9.5 tiles per sqm on a 92.4 sqm roof: 878 tiles x
-        2 nails = 1,756 nails. Add 10% waste = ~1,930 nails. A 5kg box of clout nails typically
+        For a fully nailed concrete tile roof at 10 tiles per sqm on a 92.4 sqm roof: 924 tiles x
+        2 nails = 1,848 nails. Add 10% waste = ~2,033 nails. A 5kg box of clout nails typically
         contains around 700-800 nails, so you need 3 boxes.
       </p>
 
@@ -246,11 +261,13 @@ export default function Post() {
 
       <h3>How many concrete tiles do I need per square metre?</h3>
       <p>
-        It depends on the tile type. Concrete interlocking tiles (like Marley Modern or Redland 49)
-        cover about 9-10 tiles per sqm because each tile covers a large area. Concrete plain tiles
-        are much smaller and cover about 60 tiles per sqm. These are completely different products -
-        check which one your job specifies before calculating quantities. Always verify against the
-        manufacturer datasheet.
+        It depends on the tile type. Concrete interlocking tiles (like Marley Modern or Redland
+        Duo Modern) cover about 9.7-10.6 tiles per sqm. Concrete pantiles (like Marley Anglia)
+        cover about 15.7-17.1 per sqm. Traditional plain tiles (265x165mm, both clay and concrete)
+        cover 60 per sqm because each tile is much smaller. Large format concrete plain tiles
+        (like Marley Ashmore) cover 17.5-19 per sqm. These are all different products - check
+        which tile your job specifies before calculating. Coverage data from
+        <a href="https://www.marley.co.uk/blog/roof-tile-sizes-how-many-roof-tiles-per-square-metre" target="_blank" rel="noopener noreferrer">Marley&apos;s official guide</a>.
       </p>
 
       <h3>How much extra roofing material should I order?</h3>
