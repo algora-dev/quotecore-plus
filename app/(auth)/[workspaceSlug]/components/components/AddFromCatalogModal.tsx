@@ -293,7 +293,7 @@ export function AddFromCatalogModal({
   // ── Render ──────────────────────────────────────────────────────────
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl border border-slate-200 max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl border border-slate-200 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-100 flex-shrink-0">
           <h2 className="text-lg font-semibold text-slate-900">Add from Catalog</h2>
@@ -499,12 +499,13 @@ export function AddFromCatalogModal({
                     <span className="text-xs text-slate-500 whitespace-nowrap">
                       {selectedRowIndices.size}/{MAX_ROWS} selected
                       {selectedRowIndices.size >= MAX_ROWS && <span className="text-orange-500 ml-1">(max reached)</span>}
+                      <span className="text-slate-300 ml-2">- {allRows.length} rows loaded (max 500)</span>
                     </span>
                   </div>
 
                   {/* Rows table */}
-                  <div className="rounded-lg border border-slate-200 overflow-hidden max-h-[40vh] overflow-y-auto">
-                    <table className="w-full text-xs">
+                  <div className="rounded-lg border border-slate-200 overflow-auto max-h-[40vh]">
+                    <table className="text-xs min-w-max">
                       <thead className="bg-slate-50 sticky top-0 z-10">
                         <tr className="border-b border-slate-200">
                           <th className="px-2 py-2 text-left w-8">

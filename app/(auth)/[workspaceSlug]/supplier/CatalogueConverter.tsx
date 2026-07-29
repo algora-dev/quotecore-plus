@@ -345,8 +345,8 @@ export function CatalogueConverter({
             </span>
           </div>
 
-          <div className="rounded-lg border border-slate-200 overflow-hidden max-h-96 overflow-y-auto">
-            <table className="w-full text-xs">
+          <div className="rounded-lg border border-slate-200 overflow-auto max-h-96">
+            <table className="w-full text-xs min-w-max">
               <thead className="bg-slate-50 sticky top-0 z-10">
                 <tr className="border-b border-slate-200">
                   <th className="px-2 py-2 text-left">
