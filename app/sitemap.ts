@@ -37,6 +37,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Docs
     { url: `${SITE_URL}/docs`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     // Free tools hub
+    { url: `${SITE_URL}/free-tools`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    // Free calculators hub (category page)
     { url: `${SITE_URL}/free-calculators`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     // Main trade calculators
     { url: `${SITE_URL}/free-roofing-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { TOOLS } from './tools-data';
 
 const SITE_URL = 'https://quote-core.com';
 
@@ -27,17 +28,13 @@ const itemListLd = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
   name: 'Free Trade Tools',
-  description: 'Free professional trade tools including calculators, generators, and a roof takeoff builder.',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Roof Takeoff Builder', url: `${SITE_URL}/free-roofing-takeoff-builder` },
-    { '@type': 'ListItem', position: 2, name: 'Roofing Calculator', url: `${SITE_URL}/free-roofing-calculator` },
-    { '@type': 'ListItem', position: 3, name: 'Construction Calculator', url: `${SITE_URL}/free-construction-calculator` },
-    { '@type': 'ListItem', position: 4, name: 'Concrete Calculator', url: `${SITE_URL}/free-concrete-calculator` },
-    { '@type': 'ListItem', position: 5, name: 'Landscaping Calculator', url: `${SITE_URL}/free-landscaping-calculator` },
-    { '@type': 'ListItem', position: 6, name: 'Quote Generator', url: `${SITE_URL}/free-quote-generator` },
-    { '@type': 'ListItem', position: 7, name: 'Invoice Generator', url: `${SITE_URL}/free-invoice-generator` },
-    { '@type': 'ListItem', position: 8, name: 'Purchase Order Generator', url: `${SITE_URL}/free-purchase-order-generator` },
-  ],
+  description: `Free professional trade tools including ${TOOLS.length} calculators, generators, and a roof takeoff builder.`,
+  itemListElement: TOOLS.map((tool, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: tool.name,
+    url: `${SITE_URL}/${tool.slug}`,
+  })),
 };
 
 export default function FreeToolsLayout({ children }: { children: ReactNode }) {

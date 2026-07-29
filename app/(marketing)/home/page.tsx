@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Script from "next/script";
 import CoffeePopup from "@/components/CoffeePopup";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -9,8 +8,6 @@ import { trackEvent } from "@/lib/analytics";
 import { CURRENCY_KEY } from "@/lib/consent";
 import { homepageFaqs } from "@/lib/faqs";
 import { pricingPlans } from "@/lib/pricing";
-import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
-import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { appUrl } from "@/lib/app-url";
 
 export default function HomePage() {
@@ -449,21 +446,6 @@ export default function HomePage() {
 
   return (
     <>
-      <Script
-        id="home-faq-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqSchema(homepageFaqs)) }}
-      />
-      <Script
-        id="home-breadcrumb-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildBreadcrumbSchema([{ name: "Home", url: `${siteUrl}/` }])) }}
-      />
-      <Script
-        id="home-software-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
-      />
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 

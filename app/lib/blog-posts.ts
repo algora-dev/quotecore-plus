@@ -91,7 +91,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Complete guide to roof pitch: what it is, the three ways it gets expressed (degrees, ratio, percentage), how to calculate it from measurements, common mistakes, and free tools that do the maths for you.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'how-to-measure-a-roof',
@@ -100,7 +99,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Three ways to measure a roof (site visit, plans, digital takeoff), how to calculate actual surface area from plan dimensions with pitch factors, and free tools that handle the maths for you.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'how-much-roofing-material',
@@ -109,7 +107,6 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'How to calculate tile, underlay, batten, and fixing quantities for any roofing job. Real coverage rates, waste allowances by roof type, and free tools that do the calculation for you.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'how-to-price-a-roofing-job',
@@ -118,13 +115,38 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Complete roofing pricing guide with worked example. Covers materials, labour, scaffold, disposal, overhead, profit margin, common pricing mistakes, and how to present your price professionally.',
     date: '2026-07-29',
     lastModified: '2026-07-29',
-    draft: true,
   },
   {
     slug: 'best-free-tools-for-roofers',
     title: 'Best Free Tools for Roofers and Contractors (2026)',
     description:
       'Complete list of the best free roofing and construction tools: takeoff builder, pitch calculator, area calculator, material calculator, quote generator, invoice generator, and 30+ specialised calculators. All free, no signup.',
+    date: '2026-07-29',
+    lastModified: '2026-07-29',
+  },
+  {
+    slug: 'ai-roof-measuring',
+    title: 'AI Roof Measuring: How to Measure a Roof with AI in 2026',
+    description:
+      'What AI roof measuring can actually do in 2026: how AI traces roof plans, detects lines, and classifies geometry. Where it excels, where it struggles, and what always needs human verification.',
+    date: '2026-07-29',
+    lastModified: '2026-07-29',
+    draft: true,
+  },
+  {
+    slug: 'ai-roofing-tools-guide',
+    title: 'AI Roofing Tools: The Complete Guide to AI in Roofing (2026)',
+    description:
+      'Honest guide to AI in roofing: the three layers of AI technology, what it does well, what it does poorly, what always needs a human, and how to evaluate AI roofing tools for your business.',
+    date: '2026-07-29',
+    lastModified: '2026-07-29',
+    draft: true,
+  },
+  {
+    slug: 'ai-quoting-software',
+    title: 'AI Quoting Software: Can AI Write Quotes for Contractors?',
+    description:
+      'Can AI write quotes for contractors? What AI quoting software can do (draft line items, calculate materials, format documents) and what it cannot do (set prices, assess job difficulty, define scope).',
     date: '2026-07-29',
     lastModified: '2026-07-29',
     draft: true,

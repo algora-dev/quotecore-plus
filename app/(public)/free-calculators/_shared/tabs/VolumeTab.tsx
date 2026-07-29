@@ -164,7 +164,7 @@ export function VolumeTab() {
 
           {/* Expandable calculation */}
           <details className="group">
-            <summary className="cursor-pointer text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition select-none">
+            <summary className="cursor-pointer text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition select-none">
               Show calculation
             </summary>
             <div className="mt-2 rounded-lg bg-slate-50 border border-slate-100 p-4">
@@ -186,7 +186,7 @@ export function VolumeTab() {
           <div className="flex justify-end">
             <button
               onClick={useForPricing}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#FF6B35] hover:text-[#FF6B35]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[#FF6B35] hover:text-[#BD4A1A]"
             >
               {cfg.useForPricingLabel}
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

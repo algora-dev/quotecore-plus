@@ -86,7 +86,7 @@ export default function FreeToolsHeader() {
                 <a
                   key={item.label}
                   href={item.href}
-                  className="flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium text-zinc-800 transition-colors hover:text-[#FF6B35]"
+                  className="flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium text-zinc-800 transition-colors hover:text-[#BD4A1A]"
                   onClick={() => setMenuOpen(false)}
                 >
                   {item.label}

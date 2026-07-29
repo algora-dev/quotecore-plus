@@ -165,7 +165,7 @@ export function ComponentGuideBox({ componentKey }: ComponentGuideBoxProps) {
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-600">
-            {label} <span className="text-[#FF6B35] font-semibold">{isAreaComponent ? 'covers the entire roof area' : 'indicated in orange'}</span>
+            {label} <span className="text-[#BD4A1A] font-semibold">{isAreaComponent ? 'covers the entire roof area' : 'indicated in orange'}</span>
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">
             {isAreaComponent ? 'Calculated using the total roof area with pitch adjustment.' : `Example diagram showing where ${label.toLowerCase()} appear on a roof plan.`}

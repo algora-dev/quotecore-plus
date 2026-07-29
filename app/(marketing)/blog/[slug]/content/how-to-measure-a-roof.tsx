@@ -11,7 +11,7 @@ export default function Post() {
       </p>
       <p>
         This guide covers the three main ways to measure a roof, how to turn those measurements
-        into material quantities, and where most contractors go wrong. There is also a free tool
+        into material quantities, and the checks that prevent common errors. There is also a free tool
         that handles the maths for you.
       </p>
 
@@ -25,7 +25,7 @@ export default function Post() {
         length and width, note the pitch, and record everything by hand or on your phone.
       </p>
       <p>
-        <strong>Pros:</strong> accurate, you can see the actual condition, and you can spot things
+        <strong>Pros:</strong> lets you inspect the actual condition and spot things
         that do not show up on plans (damaged flashing, soft spots, existing layers).
       </p>
       <p>
@@ -51,7 +51,7 @@ export default function Post() {
       </p>
       <p>
         <strong>Pros:</strong> fast, can be done from the office, works in any weather, and the
-        dimensions are usually accurate if the plan is to scale.
+        dimensions can be used when the drawing is current, reliably scaled, and calibrated.
       </p>
       <p>
         <strong>Cons:</strong> you cannot see the actual roof condition, plans do not always show
@@ -85,7 +85,8 @@ export default function Post() {
         version of this: you enter your plan dimensions manually (lengths and widths from your
         plans or site measurements), set the pitch, and it calculates roof area, ridges, hips,
         valleys, barges, underlay, and fixings with the correct pitch factors applied. For the
-        full AI-powered plan scanning, <a href="/free-trial">try the QuoteCore+ app free</a>.
+        AI-assisted component scanning available in the app, <a href="/free-trial">try QuoteCore+
+        free</a>.
       </p>
 
       <hr />
@@ -133,10 +134,10 @@ export default function Post() {
         pitch factor. The hip/valley factor is calculated as:
       </p>
       <p>
-        hip factor = sqrt(1 + (tan(pitch) / 2))
+        hip/valley factor = sqrt(1 + (tan(pitch) squared / 2))
       </p>
       <p>
-        At 30 degrees, the rafter factor is 1.155 but the hip/valley factor is 1.083. If you apply
+        At 30 degrees, the rafter factor is 1.155 but the hip/valley factor is 1.080. If you apply
         the rafter factor to hip lengths, your quantities will be wrong. This is a common mistake
         that the <a href="/free-hip-valley-calculator">Hip and Valley Calculator</a> handles
         automatically.
@@ -146,8 +147,9 @@ export default function Post() {
 
       <h2>Turning measurements into material quantities</h2>
       <p>
-        Once you have the actual roof surface area, you can calculate material quantities. Each
-        material has its own coverage rate:
+        Once you have the actual roof surface area, calculate each material from the current
+        product datasheet. Coverage changes with the product, pitch, headlap, gauge, exposure, and
+        fixing specification.
       </p>
 
       <div className="not-prose my-8 overflow-x-auto">
@@ -155,26 +157,23 @@ export default function Post() {
           <thead>
             <tr className="border-b border-zinc-300">
               <th className="py-3 pr-4 text-left font-semibold text-zinc-900">Material</th>
-              <th className="py-3 pr-4 text-left font-semibold text-zinc-900">Coverage</th>
-              <th className="py-3 text-left font-semibold text-zinc-900">Notes</th>
+              <th className="py-3 pr-4 text-left font-semibold text-zinc-900">Calculation</th>
+              <th className="py-3 text-left font-semibold text-zinc-900">Source to check</th>
             </tr>
           </thead>
           <tbody className="text-zinc-700">
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Concrete interlocking tiles</td><td className="py-2 pr-4">~9-12 per sqm</td><td className="py-2">Depends on tile profile and batten gauge</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Plain clay tiles</td><td className="py-2 pr-4">~60 per sqm</td><td className="py-2">Double-lapped, smaller coverage per tile</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Slate (500mm)</td><td className="py-2 pr-4">~12-15 per sqm</td><td className="py-2">Depends on headlap and gauge</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Underlay (1m wide roll)</td><td className="py-2 pr-4">~1 sqm per linear metre</td><td className="py-2">Add 10% for laps</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Battens</td><td className="py-2 pr-4">Depends on gauge</td><td className="py-2">345mm gauge = ~2.9 linear m per sqm</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Dry ridge system</td><td className="py-2 pr-4">Per linear metre of ridge</td><td className="py-2">Roll + clips + caps</td></tr>
-            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Lead flashing</td><td className="py-2 pr-4">Per linear metre</td><td className="py-2">Code 4 most common; weight per width</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Tiles or slates</td><td className="py-2 pr-4">Roof area x stated units per sqm</td><td className="py-2"><a href="https://www.marley.co.uk/blog/roof-tile-sizes-how-many-roof-tiles-per-square-metre" target="_blank" rel="noopener noreferrer">Manufacturer coverage table or datasheet</a></td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Underlay</td><td className="py-2 pr-4">Roof area plus specified laps and allowance</td><td className="py-2">Roll coverage and installation instructions</td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Battens</td><td className="py-2 pr-4">Roof area divided by specified gauge</td><td className="py-2"><a href="https://www.marley.co.uk/blog/setting-out-tile-battens" target="_blank" rel="noopener noreferrer">Tile setting-out guidance</a></td></tr>
+            <tr className="border-b border-zinc-200"><td className="py-2 pr-4">Ridge, hip, valley, and flashing systems</td><td className="py-2 pr-4">Measured linear length plus system allowance</td><td className="py-2">Specified system bill of materials</td></tr>
           </tbody>
         </table>
       </div>
 
       <p>
-        You also need to add a waste allowance. Standard waste is 5-10% for simple roofs, 10-15%
-        for complex roofs with lots of cuts, valleys, and dormers. For a full breakdown of material
-        calculations, see <a href="/blog/how-much-roofing-material">How Much Roofing Material Do
+        Add an allowance that reflects the product, pack size, roof geometry, cuts, breakage risk,
+        and supplier terms. There is no universal percentage that is correct for every roof. For a
+        full breakdown of material calculations, see <a href="/blog/how-much-roofing-material">How Much Roofing Material Do
         You Need? (Material Calculator Guide)</a>.
       </p>
 
@@ -184,7 +183,7 @@ export default function Post() {
 
       <h3>Measuring plan area instead of actual surface area</h3>
       <p>
-        The single most common mistake. If you take dimensions from a plan and order materials
+        If you take dimensions from a plan and order materials
         based on that area without applying the pitch factor, you will be short. At 30 degrees you
         need 15.5% more material than the plan area suggests. At 45 degrees you need 41.4% more.
       </p>
@@ -205,9 +204,9 @@ export default function Post() {
 
       <h3>Rounding too aggressively</h3>
       <p>
-        Rounding measurements to the nearest metre might seem fine on site, but across a complex
-        roof it adds up. A 0.3m error on each of 6 planes can mean a 10-15% error in total area.
-        Measure to the nearest 10cm at minimum.
+        Rounding each plane too early can compound across a complex roof. Record the measured value,
+        keep full precision through the calculation, and round only when converting the final total
+        into purchasable packs or units.
       </p>
 
       <hr />
@@ -218,8 +217,8 @@ export default function Post() {
       </p>
       <ul>
         <li>
-          <a href="/free-roofing-takeoff-builder">Roof Takeoff Builder</a> - the most complete free
-          roofing tool. Enter plan dimensions, set pitch, and it calculates roof area, ridges, hips,
+          <a href="/free-roofing-takeoff-builder">Roof Takeoff Builder</a> - enter plan dimensions,
+          set pitch, and calculate roof area, ridges, hips,
           valleys, barges, spouting, underlay, and fixings with correct pitch factors. You can also
           price materials and labour.
         </li>
@@ -237,7 +236,7 @@ export default function Post() {
         </li>
       </ul>
       <p>
-        All free, no signup, work on mobile.
+        All free, no signup, work on mobile. For the full list of free roofing tools, see <a href="/blog/best-free-tools-for-roofers">Best Free Tools for Roofers (2026 Guide)</a>.
       </p>
 
       <hr />
@@ -257,7 +256,7 @@ export default function Post() {
       <p>
         For the full pricing guide - how to turn material quantities into a priced quote with
         labour, waste, and profit margin - see <a href="/blog/how-to-price-a-roofing-job">How to
-        Price a Roofing Job: Step-by-Step Pricing Guide</a>.
+        Price a Roofing Job: Step-by-Step Pricing Guide</a>. You can also explore <a href="/blog/best-free-tools-for-roofers">the best free roofing tools</a> to speed up the entire process.
       </p>
 
       <hr />
@@ -266,16 +265,16 @@ export default function Post() {
 
       <h3>How accurate do roof measurements need to be?</h3>
       <p>
-        For quoting, aim for within 2-3% of actual. For material ordering, round up to the nearest
-        pack size - it is always better to have a few tiles left over than to be short on site.
-        Most suppliers accept returns of unused, undamaged materials within 30 days.
+        Accurate enough that every plane and linear component is captured and the calculation can
+        be checked. For material ordering, convert the verified quantity into the supplier&apos;s pack
+        size and confirm return terms before adding an allowance.
       </p>
 
-      <h3>Can I measure a roof from Google Earth?</h3>
+      <h3>Can I measure a roof from aerial imagery?</h3>
       <p>
-        Google Earth can give a rough estimate of plan dimensions for simple residential roofs. It
-        is not accurate enough for quoting on complex roofs, and it does not give you the pitch.
-        Use it as a starting point only, then confirm with a site visit or plan.
+        Aerial imagery can help with a preliminary review, but scale, image date, visibility, and
+        pitch may be uncertain. Confirm final quote and order measurements from a reliable plan or
+        site measurement.
       </p>
 
       <h3>How do I measure a roof without getting on it?</h3>

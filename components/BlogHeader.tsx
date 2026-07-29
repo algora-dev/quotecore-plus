@@ -41,7 +41,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
     `${headerButton} border border-zinc-300 bg-white font-medium text-zinc-900 hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
 
   const trialButton =
-    `${headerButton} bg-[#FF6B35] font-semibold text-white shadow-[0_14px_34px_rgba(255,107,53,0.22)] hover:bg-[#E55A28] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
+    `${headerButton} bg-[#E55A28] font-semibold text-white shadow-[0_14px_34px_rgba(255,107,53,0.22)] hover:bg-[#BD4A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2`;
 
   const menuButton =
     "pill-shimmer inline-flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-colors duration-200 hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2";
@@ -50,7 +50,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/72 shadow-[0_8px_30px_rgba(255,255,255,0.25)_inset,0_12px_40px_rgba(0,0,0,0.05)] backdrop-blur-[24px]">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
         <a href="/" className="flex items-center gap-3" aria-label="QuoteCore+ home">
-          <img src="/MainQCP.png" alt="QuoteCore+" width={160} height={44} loading="eager" decoding="async" className="h-10 w-auto sm:h-11" />
+          <img src="/MainQCP.png" alt="QuoteCore+" width={160} height={44} loading="eager" decoding="async" fetchPriority="high" className="h-10 w-auto sm:h-11" />
         </a>
 
         <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
             </a>
             <a
               href="/free-trial"
-              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#FF6B35] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#E55A28] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#BD4A1A]"
               onClick={() => { trackEvent("free_trial_click", { location: "nav-menu" }); setMenuOpen(false); }}
             >
               Start free trial

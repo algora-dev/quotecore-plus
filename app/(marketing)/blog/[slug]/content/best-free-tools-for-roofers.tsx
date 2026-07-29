@@ -6,19 +6,18 @@ export default function Post() {
       <p>
         The right free tools save you time on every job. Instead of doing maths in your head,
         scribbling on offcuts of plasterboard, or building yet another spreadsheet, you can punch
-        in a few numbers and get an answer in seconds.
+        in the measurements and let the tool apply the calculation consistently.
       </p>
       <p>
-        This is a complete list of the best free roofing and construction tools available online in
-        2026 - all built by QuoteCore+, all free, and none requiring a signup or download. They
-        work on your phone, tablet, or computer.
+        This guide covers the free roofing and construction tools built by QuoteCore+. They run in
+        the browser, support manual use without a signup, and work across phone, tablet, and desktop.
       </p>
 
       <hr />
 
       <h2>Roof Takeoff Builder</h2>
       <p>
-        <strong>What it does:</strong> The most complete free roofing tool available. Enter your
+        <strong>What it does:</strong> Enter your
         plan dimensions, set the pitch, and it calculates roof area, ridges, hips, valleys,
         barges, spouting, underlay, and fixings - all with the correct pitch factors applied. You
         can also add material pricing and labour rates to get a full cost breakdown.
@@ -28,8 +27,8 @@ export default function Post() {
         useful for re-roof and new-build work where you need a full material breakdown.
       </p>
       <p>
-        <strong>Why it saves time:</strong> Replaces the spreadsheet + calculator + site notes
-        method. What used to take 30-60 minutes per takeoff takes about 3 minutes.
+        <strong>Why it saves time:</strong> Keeps component measurements, pitch calculations,
+        material pricing, and labour pricing in one structured result.
       </p>
       <p>
         <a href="/free-roofing-takeoff-builder">Try the Roof Takeoff Builder (free)</a>
@@ -71,8 +70,8 @@ export default function Post() {
         area to actual surface area for material ordering.
       </p>
       <p>
-        <strong>Why it saves time:</strong> Applies the pitch factor automatically. No more
-        forgetting to account for pitch and ordering 15% less material than you need.
+        <strong>Why it saves time:</strong> Applies the selected pitch factor consistently instead
+        of requiring a separate conversion table.
       </p>
       <p>
         <a href="/free-roof-area-calculator">Try the Roof Area Calculator (free)</a> |
@@ -92,12 +91,12 @@ export default function Post() {
         area. Supports multiple tile types with preset coverage rates.
       </p>
       <p>
-        <strong>Who it is for:</strong> Roofers ordering materials. Takes the guesswork out of
-        quantities and waste allowances.
+        <strong>Who it is for:</strong> Roofers building a material schedule from measured roof area
+        and selected product inputs.
       </p>
       <p>
-        <strong>Why it saves time:</strong> One calculation gives you the full material list with
-        waste included. No more emergency trips to the builders&apos; merchant for 30 more tiles.
+        <strong>Why it saves time:</strong> Applies the selected coverage and allowance inputs to the
+        measured area in one calculation. Check the result against the product datasheet before ordering.
       </p>
       <p>
         <a href="/free-roofing-material-calculator">Try the Roofing Material Calculator (free)</a> |
@@ -117,8 +116,8 @@ export default function Post() {
         hip and valley lengths with the correct pitch factors.
       </p>
       <p>
-        <strong>Who it is for:</strong> Carpenters, roofers, and builders who need accurate rafter
-        cuts.
+        <strong>Who it is for:</strong> Carpenters, roofers, and builders calculating rafter
+        dimensions. Verify the result against the drawing and structural specification before cutting.
       </p>
       <p>
         <a href="/free-rafter-length-calculator">Try the Rafter Length Calculator (free)</a> |
@@ -139,8 +138,8 @@ export default function Post() {
       </p>
       <p>
         <strong>Why it saves time:</strong> No more Word documents or spreadsheet templates. Enter
-        your line items, hit print, and you have a quote ready to send. The AI photo upload means
-        you can take a picture of your site notes and have a quote drafted automatically.
+        your line items, review the document, and print it. AI Assist can parse a photo of site notes
+        into draft fields, but the user must check every description, quantity, unit, and rate.
       </p>
       <p>
         <a href="/free-quote-generator">Try the Free Quote Generator</a>
@@ -186,8 +185,7 @@ export default function Post() {
       <h2>Full Roofing Calculator</h2>
       <p>
         <strong>What it does:</strong> All-in-one roofing calculator with tabs for roof area,
-        rafter/hip and valley lengths, battens, smart component pricing, and angle finding. The
-        most versatile single roofing calculator available free.
+        rafter/hip and valley lengths, battens, smart component pricing, and angle finding.
       </p>
       <p>
         <a href="/free-roofing-calculator">Try the Full Roofing Calculator (free)</a>
@@ -310,10 +308,9 @@ export default function Post() {
 
       <h3>Are these tools really free?</h3>
       <p>
-        Yes. All calculators, the quote generator, invoice generator, purchase order generator, and
-        roof takeoff builder are completely free. No signup, no trial period, no watermark. The AI
-        photo upload feature has daily limits for anonymous users (3 images per day), but everything
-        else is unlimited.
+        Yes. The calculators, quote generator, invoice generator, purchase order generator, and roof
+        takeoff builder support manual use without a paid plan. AI Assist has usage limits shown in
+        the tool; anonymous users currently receive 3 AI image scans per day.
       </p>
 
       <h3>Do these tools work on mobile?</h3>
@@ -324,8 +321,8 @@ export default function Post() {
 
       <h3>Can I use these tools for commercial work?</h3>
       <p>
-        Yes. There are no restrictions on commercial use. Many contractors use these tools daily
-        for quoting and material ordering.
+        The tools are designed for contractors, but you remain responsible for checking measurements,
+        calculations, product specifications, quotes, and orders. Review the current <a href="/terms">terms of service</a> before relying on an output for a client job.
       </p>
 
       <h3>Do I need to create an account?</h3>

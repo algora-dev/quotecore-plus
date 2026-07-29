@@ -36,7 +36,7 @@ const ICONS: Record<string, string> = {
 
 function CalcIcon({ category }: { category: string }) {
   return (
-    <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ICONS[category] ?? ICONS.tool} />
     </svg>
   );
@@ -159,7 +159,7 @@ export function CalculatorHubClient({
                   prefetch={false}
                   className="block w-full text-left p-3 bg-white border border-slate-200 rounded-lg hover:border-[#FF6B35] hover:shadow-sm transition-all group"
                 >
-                  <p className="text-sm font-medium text-slate-900 group-hover:text-[#FF6B35] transition">
+                  <p className="text-sm font-medium text-slate-900 group-hover:text-[#BD4A1A] transition">
                     {calc.name}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{calc.description}</p>
@@ -231,7 +231,7 @@ export function CalculatorHubClient({
                         prefetch={false}
                         className="block w-full text-left p-3 bg-white border border-slate-200 rounded-lg hover:border-[#FF6B35] hover:shadow-sm transition-all group"
                       >
-                        <p className="text-sm font-medium text-slate-900 group-hover:text-[#FF6B35] transition">
+                        <p className="text-sm font-medium text-slate-900 group-hover:text-[#BD4A1A] transition">
                           {calc.name}
                         </p>
                       </Link>
@@ -257,7 +257,7 @@ export function CalculatorHubClient({
             >
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-full bg-orange-50 group-hover:bg-orange-100 transition-colors">
-                  <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"

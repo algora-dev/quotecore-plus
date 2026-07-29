@@ -92,7 +92,7 @@ export function EntryListItem({ entry, index, kind, customDef, measureMode, lenL
             <span className="text-[10px] text-slate-400">+{wastePercent}% = {withWasteVal.toFixed(2)}</span>
           )}
           {entry.knownPrice != null && entry.knownPrice > 0 && (
-            <span className="text-[10px] text-[#FF6B35] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
+            <span className="text-[10px] text-[#BD4A1A] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
           )}
           {selectedComp && <span className="text-[10px] text-slate-400 truncate">{selectedComp.name}</span>}
         </div>
@@ -353,7 +353,7 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
   if (!open) {
     return (
       <button onClick={() => setOpen(true)}
-        className="w-full rounded-xl border-2 border-dashed border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 hover:border-[#FF6B35] hover:text-[#FF6B35] transition flex items-center justify-center gap-2">
+        className="w-full rounded-xl border-2 border-dashed border-slate-200 px-4 py-3 text-sm font-medium text-slate-500 hover:border-[#FF6B35] hover:text-[#BD4A1A] transition flex items-center justify-center gap-2">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
         Add Custom Component
       </button>

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import BlogHeader from '@/components/BlogHeader';
-import { buildPageMetadata, breadcrumbSchema, siteGraphSchema } from '@/app/lib/seo';
+import { buildPageMetadata, breadcrumbSchema, siteGraphSchema, blogPostingSchema, blogIndexSchema } from '@/app/lib/seo';
+import { getPublishedPosts } from '@/app/lib/blog-posts';
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Roofing, Construction and Quoting Guides | QuoteCore+',
@@ -10,64 +11,7 @@ export const metadata: Metadata = buildPageMetadata({
   path: '/blog',
 });
 
-const posts: { slug: string; title: string; description: string; date: string }[] = [
-  {
-    slug: 'best-roofing-quoting-software-uk-2026',
-    title: 'Best Roofing Quoting Software UK (2026): Compared for Contractors',
-    description:
-      'Comparing the best roofing quoting software available to UK contractors in 2026. Honest breakdown of QuoteCore+, Sleepless Tradesman, Tradify, Jobber, Powered Now, Fergus, and EasyEstimate - with a comparison table and recommendations by business type.',
-    date: '2026-06-15',
-  },
-  {
-    slug: 'how-to-get-more-work-as-a-contractor',
-    title: 'How to Get More Work as a Contractor: The Marketing Checklist That Actually Works',
-    description:
-      'Most contractors rely on word of mouth and hope. Here\u2019s a practical marketing checklist built for trades businesses - from getting found online to winning more of the jobs you quote.',
-    date: '2026-06-13',
-  },
-  {
-    slug: 'construction-quote-speed-checklist',
-    title: 'The Construction Quote Speed Checklist',
-    description:
-      'A practical checklist for construction businesses that want to send quotes faster without rushing the numbers or losing track of job details.',
-    date: '2026-06-05',
-  },
-  {
-    slug: 'quotecore-plus-reviews',
-    title: 'QuoteCore+ Reviews: Is It Legit and Who Is It For?',
-    description:
-      'Wondering if QuoteCore+ is legit? Here\u2019s what the platform does, who it is for, how the free trial works, and how it helps construction businesses manage the workflow from quote to material orders, job management and invoicing.',
-    date: '2026-05-27',
-  },
-  {
-    slug: 'quotecore-plus-vs-quotesmith',
-    title: 'QuoteCore+ vs QuoteSmith: Proposal Writer or Full Quote Workflow?',
-    description:
-      'QuoteSmith and QuoteCore+ both help trades create better quotes, but they solve different problems. One focuses on proposal writing, the other on the workflow from measurement to quote, material orders, job management and invoicing.',
-    date: '2026-05-23',
-  },
-  {
-    slug: 'roofing-quoting-software-vs-spreadsheets',
-    title: 'Roofing Quoting Software vs Spreadsheets: What Actually Saves Time?',
-    description:
-      'Spreadsheets can work for roofing quotes, but they start to slow businesses down when measurements, pricing, approvals, materials and job details need to stay connected.',
-    date: '2026-05-11',
-  },
-  {
-    slug: 'roofing-quoting-software-uk',
-    title: 'How UK Roofing Contractors Are Getting Quotes Out Faster',
-    description:
-      'Many UK roofing businesses lose time after the site visit, when notes, photos, pricing and material details have to be pulled together manually. Here\u2019s how a better quote workflow helps.',
-    date: '2026-05-06',
-  },
-  {
-    slug: 'built-by-a-roofer',
-    title: 'Built From Roofing Experience: The Story Behind QuoteCore+',
-    description:
-      'QuoteCore+ was shaped by real roofing and construction experience, with Shaun leading the product direction around the quoting and job workflow problems trades businesses deal with every day.',
-    date: '2026-05-06',
-  },
-];
+const posts = getPublishedPosts();
 
 const landingPages = [
   {
@@ -89,6 +33,17 @@ const blogBreadcrumb = breadcrumbSchema([
   { name: 'Blog', path: '/blog' },
 ]);
 
+const blogSchema = blogIndexSchema();
+// Populate blogPost references in the Blog schema
+blogSchema.blogPost = posts.map((p) => ({
+  '@type': 'BlogPosting',
+  url: `https://quote-core.com/blog/${p.slug}`,
+  headline: p.title,
+  datePublished: p.date,
+  dateModified: p.lastModified || p.date,
+  author: { '@id': 'https://quote-core.com/#organization' },
+}));
+
 export default function BlogIndexPage() {
   return (
     <>
@@ -101,13 +56,7 @@ export default function BlogIndexPage() {
             '@graph': [
               ...siteGraphSchema()['@graph'],
               blogBreadcrumb,
-              {
-                '@type': 'CollectionPage',
-                name: 'Blog | QuoteCore+',
-                url: `${process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://quote-core.com'}/blog`,
-                description:
-                  'Practical guides for roofing and construction contractors on quoting, pricing, and job management.',
-              },
+              blogSchema,
             ],
           }),
         }}
@@ -128,7 +77,7 @@ export default function BlogIndexPage() {
                 href={`/blog/${post.slug}`}
                 className="block rounded-[1.75rem] border border-zinc-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md"
               >
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-zinc-500">
                   {new Date(post.date).toLocaleDateString('en-GB', {
                     day: 'numeric',
                     month: 'long',
@@ -148,7 +97,7 @@ export default function BlogIndexPage() {
                 href={page.href}
                 className="block rounded-[1.75rem] border border-zinc-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-md"
               >
-                <p className="text-xs font-medium text-[#FF6B35]">Guide</p>
+                <p className="text-xs font-medium text-[#BD4A1A]">Guide</p>
                 <h2 className="mt-2 text-xl font-semibold text-zinc-950">{page.title}</h2>
                 <p className="mt-2 text-sm text-zinc-500">{page.description}</p>
               </a>

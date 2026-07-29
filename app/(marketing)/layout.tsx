@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import dynamic from "next/dynamic";
 import { Analytics } from "@vercel/analytics/next";
-import AttributionTracker from "@/components/AttributionTracker";
 import CookieConsent from "@/components/CookieConsent";
 import QuoteCorePlusStyler from "@/components/QuoteCorePlusStyler";
-import SiteAssistant from "@/components/SiteAssistant";
 import { buildBreadcrumbSchema, buildSoftwareApplicationSchema, organizationId, siteUrl, websiteId } from "@/lib/schema";
 import { robotsDirective } from "@/app/lib/seo";
+
+// Lazy-load heavy client components that aren't needed for initial render
+const AttributionTracker = dynamic(() => import("@/components/AttributionTracker"));
+const SiteAssistant = dynamic(() => import("@/components/SiteAssistant"));
 
 export const metadata: Metadata = {
   title: "QuoteCore+ | Quoting Software for Contractors & Trade Businesses",
@@ -69,6 +72,7 @@ export default function MarketingLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <>
+      <link rel="preload" as="image" href="/MainQCP.png" fetchPriority="high" />
       {children}
       <Analytics />
       <AttributionTracker />

@@ -1,25 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { buildBreadcrumbSchema, siteUrl } from "@/lib/schema";
 
 export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   return (
     <>
-      <Script
-        id="contact-breadcrumb-schema"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildBreadcrumbSchema([
-            { name: "Home", url: `${siteUrl}/` },
-            { name: "Contact", url: `${siteUrl}/contact` },
-          ])),
-        }}
-      />
       <BlogHeader backLabel="Back to homepage" backHref="/" />
 
       <main className="relative overflow-hidden bg-[linear-gradient(180deg,#fff_0%,#fff7f2_48%,#fff_100%)]">
