@@ -72,6 +72,7 @@ export default function MarketingLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <>
+      <link rel="preload" as="image" href="/MainQCP.png" fetchPriority="high" />
       {children}
       <Analytics />
       <AttributionTracker />

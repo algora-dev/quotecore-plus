@@ -50,7 +50,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
     <header className="sticky top-0 z-50 border-b border-white/60 bg-white/72 shadow-[0_8px_30px_rgba(255,255,255,0.25)_inset,0_12px_40px_rgba(0,0,0,0.05)] backdrop-blur-[24px]">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
         <a href="/" className="flex items-center gap-3" aria-label="QuoteCore+ home">
-          <img src="/MainQCP.png" alt="QuoteCore+" width={160} height={44} loading="eager" decoding="async" className="h-10 w-auto sm:h-11" />
+          <img src="/MainQCP.png" alt="QuoteCore+" width={160} height={44} loading="eager" decoding="async" fetchPriority="high" className="h-10 w-auto sm:h-11" />
         </a>
 
         <div className="flex items-center gap-3">
