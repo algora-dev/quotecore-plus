@@ -32,6 +32,23 @@ function expireLegacyAuthCookies(request: NextRequest, response: NextResponse) {
   return response;
 }
 
+/**
+ * Stable Vercel production aliases that should redirect to quote-core.com.
+ *
+ * These are the permanent per-project URLs Vercel assigns (not the
+ * random per-deployment preview URLs). Google has indexed some of them,
+ * so we 308-redirect to the canonical production domain.
+ *
+ * IMPORTANT: This list is EXACTT-hostname only. Preview deployment URLs
+ * (e.g. quotecore-plus-dev-abc123.vercel.app) are NOT matched and remain
+ * usable for internal testing.
+ */
+const STABLE_VERCEL_ALIASES = new Set([
+  'quotecore-plus-dev.vercel.app',
+  'quotecore-plus-main.vercel.app',
+  'quotecore-git-main-algora-devs-projects.vercel.app',
+]);
+
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/login',
@@ -113,6 +130,17 @@ function isStaticAsset(pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.nextUrl.hostname;
+
+  // ── Stable Vercel alias redirect ───────────────────────────
+  // Known stable production aliases (e.g. quotecore-plus-dev.vercel.app)
+  // 308-redirect to the canonical production domain so Google consolidates
+  // indexing signals on quote-core.com. This runs FIRST, before any auth
+  // logic, so Googlebot (which won't have auth cookies) gets redirected
+  // cleanly. Preview deployment URLs (with random hashes) are NOT matched.
+  if (STABLE_VERCEL_ALIASES.has(hostname)) {
+    const url = new URL(pathname + (request.nextUrl.search || ''), CANONICAL_PUBLIC_ORIGIN);
+    return NextResponse.redirect(url, 308);
+  }
 
   // ── Free-tools host canonicalisation (2026-07-15) ──────
   // Free tools live ONLY on quote-core.com (the canonical marketing host,
