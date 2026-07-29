@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   listUserCatalogs,
   searchPublicCatalogs,
@@ -70,8 +70,10 @@ export function AddFromCatalogModal({
   const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
 
   // Incremental rendering for large catalogs
-  const VISIBLE_INCREMENT = 50;
+  const VISIBLE_INCREMENT = 100;
+  const SEARCH_RENDER_LIMIT = 200;
   const [visibleCount, setVisibleCount] = useState(VISIBLE_INCREMENT);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   // Destination
   const [destMode, setDestMode] = useState<'existing' | 'new'>('existing');
@@ -294,13 +296,31 @@ export function AddFromCatalogModal({
   }, [allRows, rowSearchFilter]);
 
   // Only render visible rows for performance with large catalogs
-  const visibleRowData = filteredRowData.slice(0, visibleCount);
+  // When searching, show up to SEARCH_RENDER_LIMIT since filtered results are smaller
+  const effectiveLimit = rowSearchFilter ? SEARCH_RENDER_LIMIT : visibleCount;
+  const visibleRowData = filteredRowData.slice(0, effectiveLimit);
   const filteredIndices = filteredRowData.map(d => d.i);
 
   // Reset visible count when filter or rows change
   useEffect(() => {
     setVisibleCount(VISIBLE_INCREMENT);
   }, [rowSearchFilter, allRows]);
+
+  // Auto-load more rows when sentinel is visible (infinite scroll)
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount(c => c + VISIBLE_INCREMENT);
+        }
+      },
+      { rootMargin: '100px' }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [visibleCount, rowSearchFilter]);
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl border border-slate-200 max-h-[90vh] flex flex-col">
@@ -510,6 +530,9 @@ export function AddFromCatalogModal({
                       {selectedRowIndices.size}/{MAX_ROWS} selected
                       {selectedRowIndices.size >= MAX_ROWS && <span className="text-orange-500 ml-1">(max reached)</span>}
                       <span className="text-slate-300 ml-2">- {allRows.length.toLocaleString()} rows loaded</span>
+                      {rowSearchFilter && filteredRowData.length > SEARCH_RENDER_LIMIT && (
+                        <span className="text-orange-400 ml-1">(showing first {SEARCH_RENDER_LIMIT} matches)</span>
+                      )}
                     </span>
                   </div>
 
@@ -562,17 +585,19 @@ export function AddFromCatalogModal({
                     </table>
                   </div>
 
-                  {/* Load more rows */}
-                  {visibleCount < filteredRowData.length && (
-                    <div className="text-center py-2">
-                      <button
-                        onClick={() => setVisibleCount(c => c + VISIBLE_INCREMENT)}
-                        className="text-xs font-medium text-slate-500 hover:text-orange-500 transition cursor-pointer"
-                      >
-                        Load more rows ({filteredRowData.length - visibleCount} remaining)
-                      </button>
+                  {/* Auto-load more on scroll + status */}
+                  {!rowSearchFilter && visibleCount < filteredRowData.length ? (
+                    <div
+                      ref={sentinelRef}
+                      className="text-center py-2"
+                    >
+                      <span className="text-xs text-slate-400">Loading more rows... ({(filteredRowData.length - visibleCount).toLocaleString()} remaining)</span>
                     </div>
-                  )}
+                  ) : !rowSearchFilter && visibleCount >= filteredRowData.length && filteredRowData.length > VISIBLE_INCREMENT ? (
+                    <div className="text-center py-1">
+                      <span className="text-xs text-slate-300">Showing all {filteredRowData.length.toLocaleString()} rows</span>
+                    </div>
+                  ) : null}
 
                   {/* Action bar */}
                   <div className="flex items-center justify-between">
