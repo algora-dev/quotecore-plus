@@ -1,38 +1,34 @@
 # QuoteCore+
 
-> QuoteCore+ is construction quoting and job-management software for roofers, builders, and trade contractors.
+> Construction quoting software for contractors and trade businesses. Build accurate quotes from complex plans in under 3 minutes for less than a dollar.
 
-QuoteCore+ helps contractors upload plans, measure areas and lengths, build priced quotes, send customer-ready proposals, track quote approvals, create materials orders, manage accepted jobs, and invoice on completion.
+## Products
+- [QuoteCore+ App](https://app.quote-core.com)
+- [Roofing Quoting Software](https://quote-core.com/roofing-quoting-software)
+- [Construction Quoting Software](https://quote-core.com/construction-quoting-software)
 
-## Product pages
+## Free Tools
+- [All Free Tools](https://quote-core.com/free-tools)
+- [Free Calculators](https://quote-core.com/free-calculators)
+- [Roofing Calculator](https://quote-core.com/free-roofing-calculator)
+- [Construction Calculator](https://quote-core.com/free-construction-calculator)
+- [Concrete Calculator](https://quote-core.com/free-concrete-calculator)
+- [Landscaping Calculator](https://quote-core.com/free-landscaping-calculator)
+- [Bird's Mouth Calculator](https://quote-core.com/free-birds-mouth-calculator)
+- [Roof Takeoff Builder](https://quote-core.com/free-roofing-takeoff-builder)
+- [Quote Generator](https://quote-core.com/free-quote-generator)
+- [Invoice Generator](https://quote-core.com/free-invoice-generator)
+- [Purchase Order Generator](https://quote-core.com/free-purchase-order-generator)
 
-- [Construction quoting software](https://quote-core.com/construction-quoting-software)
-- [Roofing quoting software](https://quote-core.com/roofing-quoting-software)
-- [Free trial](https://quote-core.com/free-trial)
+## Resources
+- [Blog](https://quote-core.com/blog)
+- [Documentation](https://quote-core.com/docs)
+- [About](https://quote-core.com/about)
+- [Contact](https://quote-core.com/contact)
 
-## Blog
+## Pricing
+- [Free Trial](https://quote-core.com/free-trial) - 14 days, no card required
+- Lite, Starter, Pro, Pro Plus, and Premium plans available
 
-- [How UK roofers are winning more jobs with digital quotes](https://quote-core.com/blog/roofing-quoting-software-uk)
-- [Built by a roofer](https://quote-core.com/blog/built-by-a-roofer)
-- [Roofing quoting software vs spreadsheets](https://quote-core.com/blog/roofing-quoting-software-vs-spreadsheets)
-- [Construction quote speed checklist](https://quote-core.com/blog/construction-quote-speed-checklist)
-- [How to get more work as a contractor](https://quote-core.com/blog/how-to-get-more-work-as-a-contractor)
-
-## Comparisons
-
-- [Best roofing quoting software UK 2026](https://quote-core.com/blog/best-roofing-quoting-software-uk-2026)
-- [Best quoting software NZ 2026](https://quote-core.com/blog/best-quoting-software-nz)
-- [QuoteCore+ vs QuoteSmith](https://quote-core.com/blog/quotecore-plus-vs-quotesmith)
-- [Roofing quoting software vs spreadsheets](https://quote-core.com/blog/roofing-quoting-software-vs-spreadsheets)
-
-## Trust
-
-- [QuoteCore+ reviews](https://quote-core.com/blog/quotecore-plus-reviews)
-- [Privacy Policy](https://quote-core.com/privacy)
-- [Terms and Conditions](https://quote-core.com/terms)
-
-## Contact
-
-Email: info@quote-core.com
-
-Last updated: 17 June 2026
+## Company
+QuoteCore+ is built by T3 Play Limited. The software helps roofing, construction, and trade contractors create professional quotes from architectural plans using AI-assisted takeoff and material calculation.
