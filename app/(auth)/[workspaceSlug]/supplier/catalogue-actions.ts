@@ -340,7 +340,7 @@ export type ConvertResult = {
 export async function convertSelectedRowsToComponents(params: {
   targetCollectionId: string;
   selectedRows: Record<string, string>[];
-  columnMapping: Record<string, string | null>;
+  columnMapping: Record<string, string[]>;
 }): Promise<ConvertResult> {
   const { targetCollectionId, selectedRows, columnMapping } = params;
 
@@ -406,24 +406,31 @@ export async function convertSelectedRowsToComponents(params: {
 
   let nextSort = (maxSort && maxSort.length > 0 ? maxSort[0].sort_order : 0) + 1;
 
-  // Map columns: columnMapping maps header -> field name (sku, name, price, product_type, notes)
-  // Build reverse map: field -> header
+  // Map columns: columnMapping maps header -> array of field names
+  // Build reverse map: field -> header (first header that maps to this field)
   const fieldToHeader: Record<string, string> = {};
-  for (const [header, field] of Object.entries(columnMapping)) {
-    if (field) fieldToHeader[field] = header;
+  for (const [header, fields] of Object.entries(columnMapping)) {
+    if (!Array.isArray(fields)) continue;
+    for (const field of fields) {
+      if (field && !fieldToHeader[field]) {
+        fieldToHeader[field] = header;
+      }
+    }
   }
+
+  const NAME_CHAR_LIMIT = 60;
 
   // Build insert rows
   const insertRows = selectedRows.map(row => {
     const sku = fieldToHeader.sku ? (row[fieldToHeader.sku] ?? '').trim() : '';
-    const name = fieldToHeader.name ? (row[fieldToHeader.name] ?? '').trim() : '';
+    const fullName = fieldToHeader.name ? (row[fieldToHeader.name] ?? '').trim() : '';
+    const name = fullName.substring(0, NAME_CHAR_LIMIT) || 'Unnamed';
     const priceStr = fieldToHeader.price ? (row[fieldToHeader.price] ?? '0') : '0';
     const price = parseFloat(priceStr.replace(/[^0-9.\-]/g, '')) || 0;
-    const productType = fieldToHeader.product_type ? (row[fieldToHeader.product_type] ?? '').trim().toLowerCase() : '';
     const notes = fieldToHeader.notes ? (row[fieldToHeader.notes] ?? '').trim() : '';
 
-    const slot = mapProductType(productType);
-    const mType = mapMeasurementType(productType);
+    const slot = mapProductType('');
+    const mType = mapMeasurementType('');
 
     return {
       company_id: profile.company_id,

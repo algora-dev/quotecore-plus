@@ -15,14 +15,13 @@ type ModalStep = 'select-catalog' | 'view-rows' | 'destination' | 'creating' | '
 type CatalogTab = 'my-catalogs' | 'supplier-catalogs';
 
 const MAX_ROWS = 20;
+const NAME_CHAR_LIMIT = 60;
 
 const FIELD_OPTIONS = [
-  { value: '', label: '- Skip -' },
-  { value: 'name', label: 'Component Name *' },
-  { value: 'price', label: 'Price *' },
   { value: 'sku', label: 'SKU / Product Code' },
-  { value: 'product_type', label: 'Product Type' },
-  { value: 'notes', label: 'Description / Notes' },
+  { value: 'name', label: 'Item Name (component name, max 60 chars)' },
+  { value: 'price', label: 'Price *' },
+  { value: 'notes', label: 'Description (component notes, full text)' },
 ];
 
 interface CatalogCollection {
@@ -58,8 +57,8 @@ export function AddFromCatalogModal({
   const [loadingRows, setLoadingRows] = useState(false);
   const [rowSearchFilter, setRowSearchFilter] = useState('');
 
-  // Column mapping
-  const [columnMapping, setColumnMapping] = useState<Record<string, string | null>>({});
+  // Column mapping - each header maps to a list of fields (for multi-mapping)
+  const [columnMapping, setColumnMapping] = useState<Record<string, string[]>>({});
 
   // Row selection
   const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
@@ -116,16 +115,30 @@ export function AddFromCatalogModal({
       if (result.ok && result.headers && result.rows) {
         setHeaders(result.headers);
         setAllRows(result.rows);
-        // Auto-map columns
-        const autoMap: Record<string, string | null> = {};
+        // Column mapping state: Record<string, string[]> (header -> array of fields)
+  // For the backend: flatten to Record<string, string | null> per field
+  // But since one header can map to multiple fields, we store as header -> fields[]
+  // and the backend resolves it.
+
+  // Auto-map columns
+        const autoMap: Record<string, string[]> = {};
         for (const h of result.headers) {
           const lower = h.toLowerCase().trim();
-          if (lower === 'sku' || lower === 'code' || lower === 'product code') autoMap[h] = 'sku';
-          else if (lower === 'name' || lower === 'product' || lower === 'product name' || lower === 'item name' || lower === 'item') autoMap[h] = 'name';
-          else if (lower === 'price' || lower === 'cost' || lower === 'rate' || lower === 'unit price') autoMap[h] = 'price';
-          else if (lower === 'type' || lower === 'product type' || lower === 'category' || lower === 'takeoff_slot' || lower === 'slot') autoMap[h] = 'product_type';
-          else if (lower === 'notes' || lower === 'note' || lower === 'description' || lower === 'desc') autoMap[h] = 'notes';
-          else autoMap[h] = null;
+          const fields: string[] = [];
+          if (lower === 'sku' || lower === 'code' || lower === 'product code') fields.push('sku');
+          if (lower === 'name' || lower === 'product' || lower === 'product name' || lower === 'item name' || lower === 'item') fields.push('name');
+          if (lower === 'price' || lower === 'cost' || lower === 'rate' || lower === 'unit price') fields.push('price');
+          if (lower === 'notes' || lower === 'note' || lower === 'description' || lower === 'desc') {
+            fields.push('notes');
+            // If no name found yet, description can double as name
+            if (!fields.includes('name') && !result.headers.some(rh => {
+              const rl = rh.toLowerCase().trim();
+              return rl === 'name' || rl === 'product' || rl === 'product name' || rl === 'item name' || rl === 'item';
+            })) {
+              fields.push('name');
+            }
+          }
+          autoMap[h] = fields;
         }
         setColumnMapping(autoMap);
         // Default: select first MAX_ROWS rows
@@ -182,10 +195,11 @@ export function AddFromCatalogModal({
       return;
     }
 
-    const hasName = Object.values(columnMapping).includes('name');
-    const hasPrice = Object.values(columnMapping).includes('price');
+    const allMappedFields = Object.values(columnMapping).flat();
+    const hasName = allMappedFields.includes('name');
+    const hasPrice = allMappedFields.includes('price');
     if (!hasName || !hasPrice) {
-      setError('Please map at least Component Name and Price columns.');
+      setError('Please map at least Item Name and Price columns.');
       return;
     }
 
@@ -405,21 +419,37 @@ export function AddFromCatalogModal({
                   {/* Column mapping */}
                   <div className="rounded-lg border border-slate-200 overflow-hidden">
                     <div className="bg-slate-50 border-b border-slate-200 px-3 py-2">
-                      <p className="text-xs font-medium text-slate-600">Column Mapping</p>
+                      <p className="text-xs font-medium text-slate-600">Column Mapping - check all that apply per column</p>
                     </div>
                     <div className="divide-y divide-slate-100">
                       {headers.map(h => (
-                        <div key={h} className="flex items-center justify-between px-3 py-2">
-                          <span className="text-xs font-mono text-slate-700">{h}</span>
-                          <select
-                            value={columnMapping[h] ?? ''}
-                            onChange={e => setColumnMapping(prev => ({ ...prev, [h]: e.target.value || null }))}
-                            className="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none"
-                          >
-                            {FIELD_OPTIONS.map(opt => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                          </select>
+                        <div key={h} className="flex items-center justify-between px-3 py-2 flex-wrap gap-2">
+                          <span className="text-xs font-mono text-slate-700 min-w-0 truncate max-w-[120px]">{h}</span>
+                          <div className="flex gap-2 flex-wrap">
+                            {FIELD_OPTIONS.map(opt => {
+                              const checked = (columnMapping[h] ?? []).includes(opt.value);
+                              return (
+                                <label key={opt.value} className="flex items-center gap-1 cursor-pointer text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => {
+                                      setColumnMapping(prev => {
+                                        const current = prev[h] ?? [];
+                                        if (current.includes(opt.value)) {
+                                          return { ...prev, [h]: current.filter(v => v !== opt.value) };
+                                        } else {
+                                          return { ...prev, [h]: [...current, opt.value] };
+                                        }
+                                      });
+                                    }}
+                                    className="cursor-pointer"
+                                  />
+                                  <span className="text-slate-600">{opt.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -461,8 +491,8 @@ export function AddFromCatalogModal({
                           {headers.map(h => (
                             <th key={h} className="px-2 py-2 text-left font-medium text-slate-600 whitespace-nowrap">
                               {h}
-                              {columnMapping[h] && (
-                                <span className="ml-1 text-[10px] text-orange-500">({columnMapping[h]})</span>
+                              {(columnMapping[h] ?? []).length > 0 && (
+                                <span className="ml-1 text-[10px] text-orange-500">({columnMapping[h].join(', ')})</span>
                               )}
                             </th>
                           ))}
@@ -504,10 +534,11 @@ export function AddFromCatalogModal({
                     </button>
                     <button
                       onClick={() => {
-                        const hasName = Object.values(columnMapping).includes('name');
-                        const hasPrice = Object.values(columnMapping).includes('price');
+                        const allMappedFields = Object.values(columnMapping).flat();
+                        const hasName = allMappedFields.includes('name');
+                        const hasPrice = allMappedFields.includes('price');
                         if (!hasName || !hasPrice) {
-                          setError('Please map at least Component Name and Price columns.');
+                          setError('Please map at least Item Name and Price columns.');
                           return;
                         }
                         if (selectedRowIndices.size === 0) {

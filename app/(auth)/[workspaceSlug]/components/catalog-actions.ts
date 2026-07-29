@@ -190,7 +190,7 @@ export async function convertCatalogRowsToComponents(params: {
   targetCollectionId: string;
   newLibraryName?: string;
   selectedRows: Record<string, string>[];
-  columnMapping: Record<string, string | null>;
+  columnMapping: Record<string, string[]>;
 }): Promise<ConvertFromCatalogResult> {
   const { targetCollectionId, newLibraryName, selectedRows, columnMapping } = params;
 
@@ -284,10 +284,15 @@ export async function convertCatalogRowsToComponents(params: {
 
   let nextSort = (maxSort && maxSort.length > 0 ? maxSort[0].sort_order : 0) + 1;
 
-  // Build reverse map: field -> header
+  // Build reverse map: field -> header (first header that maps to this field)
   const fieldToHeader: Record<string, string> = {};
-  for (const [header, field] of Object.entries(columnMapping)) {
-    if (field) fieldToHeader[field] = header;
+  for (const [header, fields] of Object.entries(columnMapping)) {
+    if (!Array.isArray(fields)) continue;
+    for (const field of fields) {
+      if (field && !fieldToHeader[field]) {
+        fieldToHeader[field] = header;
+      }
+    }
   }
 
   // Map product type to slot + measurement type
@@ -305,15 +310,17 @@ export async function convertCatalogRowsToComponents(params: {
     return { slot: 'custom', mType: 'quantity' };
   }
 
+  const NAME_CHAR_LIMIT = 60;
+
   const insertRows = selectedRows.map(row => {
     const sku = fieldToHeader.sku ? (row[fieldToHeader.sku] ?? '').trim() : '';
-    const name = fieldToHeader.name ? (row[fieldToHeader.name] ?? '').trim() : '';
+    const fullName = fieldToHeader.name ? (row[fieldToHeader.name] ?? '').trim() : '';
+    const name = fullName.substring(0, NAME_CHAR_LIMIT) || 'Unnamed';
     const priceStr = fieldToHeader.price ? (row[fieldToHeader.price] ?? '0') : '0';
     const price = parseFloat(priceStr.replace(/[^0-9.\-]/g, '')) || 0;
-    const productType = fieldToHeader.product_type ? (row[fieldToHeader.product_type] ?? '').trim().toLowerCase() : '';
     const notes = fieldToHeader.notes ? (row[fieldToHeader.notes] ?? '').trim() : '';
 
-    const { slot, mType } = mapProductType(productType);
+    const { slot, mType } = mapProductType('');
 
     return {
       company_id: profile.company_id,

@@ -13,12 +13,10 @@ interface CatalogSummary {
 type Step = 'select-catalog' | 'map-columns' | 'select-rows' | 'converting' | 'success' | 'error';
 
 const FIELD_OPTIONS = [
-  { value: '', label: '- Skip -' },
-  { value: 'name', label: 'Name *' },
+  { value: 'sku', label: 'SKU / Product Code' },
+  { value: 'name', label: 'Item Name (max 60 chars)' },
   { value: 'price', label: 'Price *' },
-  { value: 'sku', label: 'SKU' },
-  { value: 'product_type', label: 'Product Type' },
-  { value: 'notes', label: 'Notes' },
+  { value: 'notes', label: 'Description (full text)' },
 ];
 
 export function CatalogueConverter({
@@ -34,7 +32,7 @@ export function CatalogueConverter({
   const [selectedCatalogId, setSelectedCatalogId] = useState('');
   const [headers, setHeaders] = useState<string[]>([]);
   const [allRows, setAllRows] = useState<Record<string, string>[]>([]);
-  const [columnMapping, setColumnMapping] = useState<Record<string, string | null>>({});
+  const [columnMapping, setColumnMapping] = useState<Record<string, string[]>>({});
   const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
   const [targetCollection, setTargetCollection] = useState<string>(
     collections.find(c => c.is_bootstrap)?.id ?? collections[0]?.id ?? ''
@@ -61,15 +59,24 @@ export function CatalogueConverter({
         setHeaders(data.headers);
         setAllRows(data.rows);
         // Auto-map columns by matching header names
-        const autoMap: Record<string, string | null> = {};
+        const autoMap: Record<string, string[]> = {};
         for (const h of data.headers as string[]) {
           const lower = h.toLowerCase().trim();
-          if (lower === 'sku' || lower === 'code') autoMap[h] = 'sku';
-          else if (lower === 'name' || lower === 'product' || lower === 'product name' || lower === 'description') autoMap[h] = 'name';
-          else if (lower === 'price' || lower === 'cost' || lower === 'rate') autoMap[h] = 'price';
-          else if (lower === 'type' || lower === 'product type' || lower === 'category' || lower === 'takeoff_slot') autoMap[h] = 'product_type';
-          else if (lower === 'notes' || lower === 'note') autoMap[h] = 'notes';
-          else autoMap[h] = null;
+          const fields: string[] = [];
+          if (lower === 'sku' || lower === 'code' || lower === 'product code') fields.push('sku');
+          if (lower === 'name' || lower === 'product' || lower === 'product name' || lower === 'description') fields.push('name');
+          if (lower === 'price' || lower === 'cost' || lower === 'rate') fields.push('price');
+          if (lower === 'notes' || lower === 'note' || lower === 'description') {
+            fields.push('notes');
+            // If description and no name mapped, also map as name
+            if (!fields.includes('name') && !data.headers.some((rh: string) => {
+              const rl = rh.toLowerCase().trim();
+              return rl === 'name' || rl === 'product' || rl === 'product name' || rl === 'item';
+            })) {
+              fields.push('name');
+            }
+          }
+          autoMap[h] = fields;
         }
         setColumnMapping(autoMap);
         setStep('map-columns');
@@ -85,10 +92,11 @@ export function CatalogueConverter({
 
   function handleProceedToRowSelect() {
     // Verify required fields are mapped
-    const hasName = Object.values(columnMapping).includes('name');
-    const hasPrice = Object.values(columnMapping).includes('price');
+    const allMappedFields = Object.values(columnMapping).flat();
+    const hasName = allMappedFields.includes('name');
+    const hasPrice = allMappedFields.includes('price');
     if (!hasName || !hasPrice) {
-      setError('Please map at least Name and Price columns.');
+      setError('Please map at least Item Name and Price columns.');
       return;
     }
     setError(null);
@@ -174,8 +182,8 @@ export function CatalogueConverter({
 
   // Get the mapped header for a field
   function getHeaderForField(field: string): string | undefined {
-    for (const [header, f] of Object.entries(columnMapping)) {
-      if (f === field) return header;
+    for (const [header, fields] of Object.entries(columnMapping)) {
+      if (Array.isArray(fields) && fields.includes(field)) return header;
     }
     return undefined;
   }
@@ -233,7 +241,7 @@ export function CatalogueConverter({
       {/* Step 2: Map columns */}
       {step === 'map-columns' && (
         <div className="space-y-3">
-          <p className="text-xs text-slate-500">Map your catalogue columns to component fields. Name and Price are required.</p>
+          <p className="text-xs text-slate-500">Map your catalogue columns to component fields. Price is required. A single column can map to multiple fields.</p>
           <div className="rounded-lg border border-slate-200 overflow-hidden">
             <table className="w-full text-xs">
               <thead className="bg-slate-50 border-b border-slate-200">
@@ -248,15 +256,31 @@ export function CatalogueConverter({
                   <tr key={h}>
                     <td className="px-3 py-2 font-mono text-slate-700">{h}</td>
                     <td className="px-3 py-2">
-                      <select
-                        value={columnMapping[h] ?? ''}
-                        onChange={e => setColumnMapping(prev => ({ ...prev, [h]: e.target.value || null }))}
-                        className="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none"
-                      >
-                        {FIELD_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                      <div className="flex gap-2 flex-wrap">
+                        {FIELD_OPTIONS.map(opt => {
+                          const checked = (columnMapping[h] ?? []).includes(opt.value);
+                          return (
+                            <label key={opt.value} className="flex items-center gap-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => {
+                                  setColumnMapping(prev => {
+                                    const current = prev[h] ?? [];
+                                    if (current.includes(opt.value)) {
+                                      return { ...prev, [h]: current.filter(v => v !== opt.value) };
+                                    } else {
+                                      return { ...prev, [h]: [...current, opt.value] };
+                                    }
+                                  });
+                                }}
+                                className="cursor-pointer"
+                              />
+                              <span className="text-slate-600">{opt.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-slate-400 truncate max-w-[200px]">{allRows[0]?.[h] ?? '-'}</td>
                   </tr>
@@ -304,8 +328,8 @@ export function CatalogueConverter({
                   {headers.map(h => (
                     <th key={h} className="px-2 py-2 text-left font-medium text-slate-600 whitespace-nowrap">
                       {h}
-                      {columnMapping[h] && (
-                        <span className="ml-1 text-[10px] text-orange-500">({columnMapping[h]})</span>
+                      {(columnMapping[h] ?? []).length > 0 && (
+                        <span className="ml-1 text-[10px] text-orange-500">({columnMapping[h].join(', ')})</span>
                       )}
                     </th>
                   ))}

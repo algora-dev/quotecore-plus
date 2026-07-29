@@ -22,9 +22,10 @@ interface ParsedCsv {
 }
 
 interface ColumnMapping {
-  description: string | null; // "Item / Description"
-  quantity: string | null;    // "Description / Quantity"
-  price: string | null;       // "Price"
+  sku: string | null;          // "SKU / Product Code"
+  name: string | null;         // "Item Name" (component name, hard cut at 60 chars)
+  price: string | null;        // "Price"
+  notes: string | null;        // "Description" (component notes, full text)
 }
 
 interface UploadWizardProps {
@@ -39,9 +40,10 @@ const MAX_ROWS = 35_000;
 const CHUNK_SIZE = 2_000;
 
 const MAPPING_FIELDS: { key: keyof ColumnMapping; label: string; hint: string }[] = [
-  { key: 'description', label: 'Item / Code', hint: 'Primary text shown on the quote line - item name, product code, or SKU.' },
-  { key: 'quantity', label: 'Description', hint: 'Optional detail text shown alongside the item (e.g. pack size, material spec, or a longer description).' },
-  { key: 'price', label: 'Price', hint: 'The unit price inserted on the quote line. Currency symbols and separators are stripped automatically. Quantity can be set per-line in the editor.' },
+  { key: 'sku', label: 'SKU / Product Code', hint: 'Product code or SKU. Maps to the component SKU field.' },
+  { key: 'name', label: 'Item Name', hint: 'The component name. Hard cut at 60 characters. A single CSV column can also be mapped to Description below.' },
+  { key: 'price', label: 'Price', hint: 'Unit price. Currency symbols and separators are stripped automatically.' },
+  { key: 'notes', label: 'Description', hint: 'Full description text, goes into component notes. Can use the same CSV column as Item Name.' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -196,7 +198,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
   const [parsing, setParsing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [catalogName, setCatalogName] = useState('');
-  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({ description: null, quantity: null, price: null });
+  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({ sku: null, name: null, price: null, notes: null });
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -219,9 +221,10 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
         return idx >= 0 ? result.headers[idx] : null;
       };
       setColumnMapping({
-        description: findHeader(/desc|name|item|product|material/) ?? result.headers[0] ?? null,
-        quantity: findHeader(/qty|quantity|pack|size|unit(?!\s*price)/) ?? null,
+        sku: findHeader(/sku|code|product.?code/) ?? null,
+        name: findHeader(/name|item|product|material/) ?? result.headers[0] ?? null,
         price: findHeader(/price|cost|rate|amount|total/) ?? null,
+        notes: findHeader(/desc|note|detail|spec/) ?? null,
       });
     } catch (err) {
       setParseError(err instanceof Error ? err.message : 'Failed to parse CSV.');
@@ -262,9 +265,10 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
       name: catalogName.trim(),
       headers: parsed.headers,
       columnMapping: {
-        description: columnMapping.description,
-        quantity: columnMapping.quantity,
+        sku: columnMapping.sku,
+        name: columnMapping.name,
         price: columnMapping.price,
+        notes: columnMapping.notes,
       },
       originalFilename: file?.name ?? '',
       rowCount: rows.length,
@@ -304,7 +308,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
         name: catalogName.trim(),
         row_count: rows.length,
         status: 'ready',
-        column_mapping: { description: columnMapping.description, quantity: columnMapping.quantity, price: columnMapping.price },
+        column_mapping: { sku: columnMapping.sku, name: columnMapping.name, price: columnMapping.price, notes: columnMapping.notes },
         headers: parsed.headers,
         data_bytes: dataBytes,
       });
@@ -319,11 +323,13 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
 
   // Which mapping slot (if any) a header is assigned to - drives the column
   // highlight in the combined preview/map step.
-  const slotForHeader = (h: string): { label: string; color: string } | null => {
-    if (columnMapping.description === h) return { label: 'Item / Description', color: 'bg-orange-100 text-orange-700 border-orange-300' };
-    if (columnMapping.quantity === h) return { label: 'Description / Quantity', color: 'bg-blue-100 text-blue-700 border-blue-300' };
-    if (columnMapping.price === h) return { label: 'Price', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' };
-    return null;
+  const slotForHeader = (h: string): { label: string; color: string }[] => {
+    const slots: { label: string; color: string }[] = [];
+    if (columnMapping.sku === h) slots.push({ label: 'SKU', color: 'bg-purple-100 text-purple-700 border-purple-300' });
+    if (columnMapping.name === h) slots.push({ label: 'Item Name', color: 'bg-orange-100 text-orange-700 border-orange-300' });
+    if (columnMapping.price === h) slots.push({ label: 'Price', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' });
+    if (columnMapping.notes === h) slots.push({ label: 'Description', color: 'bg-blue-100 text-blue-700 border-blue-300' });
+    return slots;
   };
 
   const inputCls = 'w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none';
@@ -448,15 +454,19 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                     <thead>
                       <tr className="bg-slate-50">
                         {parsed.headers.map((h, idx) => {
-                          const slot = slotForHeader(h);
+                          const slots = slotForHeader(h);
                           return (
                             <th key={h} className="px-2 py-1.5 text-left font-semibold text-slate-600 whitespace-nowrap border-b border-slate-200">
                               <span className="block text-[9px] font-bold uppercase tracking-wide text-slate-400">Col {columnLetter(idx)}</span>
                               {parsed.titles[idx] && <span className="block">{parsed.titles[idx]}</span>}
-                              {slot && (
-                                <span className={`mt-0.5 inline-block rounded px-1 py-0.5 text-[9px] font-medium ${slot.color}`}>
-                                  {slot.label}
-                                </span>
+                              {slots.length > 0 && (
+                                <div className="mt-0.5 flex flex-wrap gap-1">
+                                  {slots.map((s, i) => (
+                                    <span key={i} className={`inline-block rounded px-1 py-0.5 text-[9px] font-medium ${s.color}`}>
+                                      {s.label}
+                                    </span>
+                                  ))}
+                                </div>
                               )}
                             </th>
                           );
@@ -466,9 +476,12 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                     <tbody>
                       {parsed.rows.slice(0, 5).map((row, i) => (
                         <tr key={i} className="odd:bg-white even:bg-slate-50/50">
-                          {parsed.headers.map((h) => (
-                            <td key={h} className={`px-2 py-1 whitespace-nowrap max-w-[160px] truncate ${slotForHeader(h) ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>{row[h] ?? ''}</td>
-                          ))}
+                          {parsed.headers.map((h) => {
+                            const slots = slotForHeader(h);
+                            return (
+                              <td key={h} className={`px-2 py-1 whitespace-nowrap max-w-[160px] truncate ${slots.length > 0 ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>{row[h] ?? ''}</td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>
@@ -482,9 +495,9 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
               {/* Mapping */}
               <div data-copilot="catalog-wizard-map" className="mt-5 border-t border-slate-100 pt-4">
                 <p className="text-xs text-slate-500 mb-3">
-                  Choose which columns map to each field. All optional - unmapped fields are skipped. Item and Description combine into the quote line text.
+                  Choose which columns map to each field. All optional. A single CSV column can be mapped to multiple fields (e.g. map Description to both Item Name and Description).
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {MAPPING_FIELDS.map((field) => (
                     <div key={field.key}>
                       <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
@@ -498,6 +511,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                           <option key={h} value={h}>{`Col ${columnLetter(idx)}`}{parsed.titles[idx] ? ` - ${parsed.titles[idx]}` : ''}</option>
                         ))}
                       </select>
+                      <p className="mt-1 text-[10px] text-slate-400">{field.hint}</p>
                     </div>
                   ))}
                 </div>
@@ -528,9 +542,10 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                   <div className="rounded-lg border border-slate-200 p-4 mb-4 space-y-2 text-sm">
                     <div className="flex justify-between"><span className="text-slate-500">Catalog name</span><span className="font-medium text-slate-800">{catalogName}</span></div>
                     <div className="flex justify-between"><span className="text-slate-500">Rows</span><span className="font-medium text-slate-800">{parsed.rows.length.toLocaleString()}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Item / Description</span><span className="font-medium text-slate-800">{columnMapping.description ?? 'Not mapped'}</span></div>
-                    <div className="flex justify-between"><span className="text-slate-500">Description / Quantity</span><span className="font-medium text-slate-800">{columnMapping.quantity ?? 'Not mapped'}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">SKU / Product Code</span><span className="font-medium text-slate-800">{columnMapping.sku ?? 'Not mapped'}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Item Name</span><span className="font-medium text-slate-800">{columnMapping.name ?? 'Not mapped'}</span></div>
                     <div className="flex justify-between"><span className="text-slate-500">Price</span><span className="font-medium text-slate-800">{columnMapping.price ?? 'Not mapped'}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Description</span><span className="font-medium text-slate-800">{columnMapping.notes ?? 'Not mapped'}</span></div>
                   </div>
                   <div className="flex gap-3 justify-end">
                     <button onClick={() => setStep(2)} className={ghostBtn}>Back</button>

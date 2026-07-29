@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const { targetCollectionId, selectedRows, columnMapping } = body as {
       targetCollectionId?: string;
       selectedRows?: Record<string, string>[];
-      columnMapping?: Record<string, string | null>;
+      columnMapping?: Record<string, string[]>;
     };
 
     if (!targetCollectionId || !Array.isArray(selectedRows) || !columnMapping) {
