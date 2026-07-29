@@ -15,6 +15,12 @@
  * 8. Coming-soon docs pages in sitemap
  * 9. Schema markup presence on key pages
  * 10. Canonical URL correctness (must match SITE_URL pattern)
+ * 11. Sitemap/robots conflicts (paths in sitemap but blocked by robots)
+ * 12. Non-self-canonicals (pages canonicalising to a different URL)
+ * 13. Duplicate title suffixes (repeated brand name patterns)
+ * 14. Client-only JSON-LD (schema only in client components)
+ * 15. Missing H1 in server-rendered pages
+ * 16. Orphan tool pages (tool routes with no inbound links from hubs)
  *
  * Exits with code 1 if critical issues are found.
  */
@@ -298,6 +304,262 @@ function checkCanonicalCorrectness() {
   });
 }
 
+// ── Check 11: Sitemap/robots conflicts ─────────────────────────────────────
+function checkSitemapRobotsConflicts() {
+  const sitemapFile = join(APP_DIR, 'sitemap.ts');
+  const robotsFile = join(APP_DIR, 'robots.ts');
+  if (!existsSync(sitemapFile) || !existsSync(robotsFile)) return;
+
+  const sitemapContent = readFileSync(sitemapFile, 'utf-8');
+  const robotsContent = readFileSync(robotsFile, 'utf-8');
+
+  // Extract allowed paths from robots.ts
+  const allowMatches = robotsContent.matchAll(/'([^']+)'/g);
+  const allowedPaths = new Set();
+  for (const m of allowMatches) {
+    if (m[1].startsWith('/')) allowedPaths.add(m[1]);
+  }
+
+  // Extract sitemap URL paths
+  const sitemapUrlMatches = sitemapContent.matchAll(/url:\s*\(?[^,)]*?\/([^'"),]+)\)?,/g);
+  const sitemapPaths = new Set();
+  for (const m of sitemapUrlMatches) {
+    const path = m[1].trim();
+    if (path) sitemapPaths.add(path);
+  }
+
+  // Check for /free-tools specifically
+  if (sitemapContent.includes('/free-tools') && !robotsContent.includes('/free-tools')) {
+    errors.push('/free-tools is in sitemap but NOT in robots.txt allow list');
+  }
+  if (!sitemapContent.includes('/free-tools')) {
+    warnings.push('/free-tools is NOT in sitemap - the free tools hub page is missing');
+  }
+  if (!robotsContent.includes('/free-tools')) {
+    errors.push('/free-tools is NOT in robots.txt allow list - crawlers may not reach it');
+  }
+
+  // Check that all free-tool routes in sitemap are also in robots allow list
+  const freeToolRoutes = [
+    '/free-calculators',
+    '/free-roofing-calculator',
+    '/free-construction-calculator',
+    '/free-concrete-calculator',
+    '/free-landscaping-calculator',
+    '/free-birds-mouth-calculator',
+    '/free-quote-generator',
+    '/free-invoice-generator',
+    '/free-purchase-order-generator',
+    '/free-roofing-takeoff-builder',
+    '/free-tools',
+  ];
+  for (const route of freeToolRoutes) {
+    if (sitemapContent.includes(route) && !robotsContent.includes(route)) {
+      errors.push(`${route} is in sitemap but NOT in robots.txt allow list`);
+    }
+  }
+}
+
+// ── Check 12: Non-self-canonicals ──────────────────────────────────────────
+function checkNonSelfCanonicals() {
+  const marketingDir = join(APP_DIR, '(marketing)');
+  const publicDir = join(APP_DIR, '(public)');
+
+  function checkDir(dir) {
+    if (!existsSync(dir)) return;
+    walkDir(dir, '.tsx', (file) => {
+      if (!file.endsWith('page.tsx') && !file.endsWith('layout.tsx')) return;
+      const content = readFileSync(file, 'utf-8');
+      // Look for canonical URLs that don't match the file path
+      const canonicalMatch = content.match(/canonical['"]?\s*:\s*['"`]([^'"`]+)['"`]/);
+      if (canonicalMatch) {
+        const canonical = canonicalMatch[1];
+        // Check for common mistakes: trailing slash mismatch, wrong domain, http
+        if (canonical.match(/http:\/\/[^/]*quote-core/)) {
+          errors.push(`${file}: canonical uses http:// instead of https://`);
+        }
+        if (canonical.endsWith('//')) {
+          errors.push(`${file}: canonical has double trailing slash`);
+        }
+      }
+    });
+  }
+  checkDir(marketingDir);
+  checkDir(publicDir);
+}
+
+// ── Check 13: Duplicate title suffixes ─────────────────────────────────────
+function checkDuplicateTitleSuffixes() {
+  const titleSuffixPattern = /title:\s*['"`]([^'"`]+)['"`]/g;
+  const suffixCounts = {};
+
+  function scanDir(dir) {
+    if (!existsSync(dir)) return;
+    walkDir(dir, '.tsx', (file) => {
+      if (!file.endsWith('page.tsx') && !file.endsWith('layout.tsx')) return;
+      const content = readFileSync(file, 'utf-8');
+      let match;
+      while ((match = titleSuffixPattern.exec(content)) !== null) {
+        const title = match[1];
+        // Extract the suffix after the last separator
+        const parts = title.split(/\s+[\-|]\s+/);
+        if (parts.length > 1) {
+          const suffix = parts[parts.length - 1].trim();
+          suffixCounts[suffix] = (suffixCounts[suffix] || 0) + 1;
+        }
+      }
+    });
+  }
+
+  scanDir(join(APP_DIR, '(marketing)'));
+  scanDir(join(APP_DIR, '(public)'));
+
+  for (const [suffix, count] of Object.entries(suffixCounts)) {
+    if (count > 3) {
+      warnings.push(`Title suffix "${suffix}" appears ${count} times - consider varying titles to avoid duplication`);
+    }
+  }
+}
+
+// ── Check 14: Client-only JSON-LD ──────────────────────────────────────────
+function checkClientOnlyJsonLd() {
+  walkDir(APP_DIR, '.tsx', (file) => {
+    if (!file.endsWith('page.tsx')) return;
+    const content = readFileSync(file, 'utf-8');
+    // If file is a client component AND has JSON-LD, the schema won't be in initial HTML
+    if (content.includes('"use client"') && content.includes('application/ld+json')) {
+      warnings.push(`Client component with JSON-LD (schema may not be in initial HTML): ${file}`);
+    }
+  });
+
+  // Also check: layout files with JSON-LD should NOT be client components
+  walkDir(APP_DIR, '.tsx', (file) => {
+    if (!file.endsWith('layout.tsx')) return;
+    const content = readFileSync(file, 'utf-8');
+    if (content.includes('"use client"') && content.includes('application/ld+json')) {
+      errors.push(`Client layout with JSON-LD (schema not server-rendered): ${file}`);
+    }
+  });
+}
+
+// ── Check 15: Missing H1 in server-rendered pages ──────────────────────────
+function checkMissingH1() {
+  // Only check marketing and public server components (not auth pages - they're noindex)
+  const checkDirs = [
+    join(APP_DIR, '(marketing)'),
+    join(APP_DIR, '(public)'),
+  ];
+  // Track files we've already confirmed have H1 via shared component
+  const confirmedH1 = new Set();
+
+  function fileHasH1(filepath) {
+    if (confirmedH1.has(filepath)) return true;
+    if (!existsSync(filepath)) return false;
+    const content = readFileSync(filepath, 'utf-8');
+    if (content.includes('<h1') || content.includes('<H1')) return true;
+    return false;
+  }
+
+  // Pre-scan: find all files with H1 and mark their exports
+  for (const dir of checkDirs) {
+    if (!existsSync(dir)) continue;
+    walkDir(dir, '.tsx', (file) => {
+      const content = readFileSync(file, 'utf-8');
+      if (content.includes('<h1') || content.includes('<H1')) {
+        confirmedH1.add(file);
+      }
+    });
+  }
+
+  function resolveImport(fromFile, importPath) {
+    if (!importPath.startsWith('.')) return null;
+    const dir = fromFile.substring(0, fromFile.lastIndexOf('\\') + 1);
+    const resolved = join(dir, importPath);
+    for (const ext of ['.tsx', '.ts', '.jsx', '.js']) {
+      if (existsSync(resolved + ext)) return resolved + ext;
+    }
+    // Check for index files
+    if (existsSync(join(resolved, 'index.tsx'))) return join(resolved, 'index.tsx');
+    if (existsSync(join(resolved, 'index.ts'))) return join(resolved, 'index.ts');
+    return null;
+  }
+
+  function checkFileForH1(file, depth = 0) {
+    if (depth > 3) return false; // prevent infinite recursion
+    if (confirmedH1.has(file)) return true;
+    if (!existsSync(file)) return false;
+    const content = readFileSync(file, 'utf-8');
+    if (content.includes('<h1') || content.includes('<H1')) {
+      confirmedH1.add(file);
+      return true;
+    }
+    // Check imports
+    const importMatches = content.matchAll(/from\s+['"]([^'"]+)['"]/g);
+    for (const m of importMatches) {
+      const resolved = resolveImport(file, m[1]);
+      if (resolved && checkFileForH1(resolved, depth + 1)) {
+        confirmedH1.add(file);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  for (const dir of checkDirs) {
+    if (!existsSync(dir)) continue;
+    walkDir(dir, '.tsx', (file) => {
+      if (!file.endsWith('page.tsx')) return;
+      const content = readFileSync(file, 'utf-8');
+      if (content.includes('"use client"')) return;
+      if (!checkFileForH1(file)) {
+        const relPath = file.replace(ROOT + '\\', '').replace(/\\/g, '/');
+        warnings.push(`Server page may be missing H1: ${relPath}`);
+      }
+    });
+  }
+}
+
+// ── Check 16: Orphan tool pages ────────────────────────────────────────────
+function checkOrphanToolPages() {
+  const freeTools = [
+    '/free-roofing-calculator',
+    '/free-construction-calculator',
+    '/free-concrete-calculator',
+    '/free-landscaping-calculator',
+    '/free-birds-mouth-calculator',
+    '/free-quote-generator',
+    '/free-invoice-generator',
+    '/free-purchase-order-generator',
+    '/free-roofing-takeoff-builder',
+  ];
+
+  // Check that the free-tools hub page links to each tool
+  const freeToolsPage = join(APP_DIR, '(public)', 'free-tools', 'page.tsx');
+  if (!existsSync(freeToolsPage)) {
+    errors.push('Missing /free-tools hub page - tool pages may be orphaned');
+    return;
+  }
+
+  const hubContent = readFileSync(freeToolsPage, 'utf-8');
+  for (const tool of freeTools) {
+    const toolSlug = tool.replace('/', '');
+    if (!hubContent.includes(toolSlug)) {
+      warnings.push(`Tool ${tool} may not be linked from /free-tools hub - potential orphan page`);
+    }
+  }
+
+  // Check that each tool is in the sitemap
+  const sitemapFile = join(APP_DIR, 'sitemap.ts');
+  if (existsSync(sitemapFile)) {
+    const sitemapContent = readFileSync(sitemapFile, 'utf-8');
+    for (const tool of freeTools) {
+      if (!sitemapContent.includes(tool)) {
+        errors.push(`Tool ${tool} is NOT in sitemap - crawlers won't find it`);
+      }
+    }
+  }
+}
+
 // ── Run all checks ─────────────────────────────────────────────────────────
 console.log('Running SEO checks...\n');
 checkMarketingCanonicals();
@@ -310,6 +572,12 @@ checkComingSoonDocsFiltered();
 checkDocsCanonicals();
 checkSoftwareApplicationScope();
 checkCanonicalCorrectness();
+checkSitemapRobotsConflicts();
+checkNonSelfCanonicals();
+checkDuplicateTitleSuffixes();
+checkClientOnlyJsonLd();
+checkMissingH1();
+checkOrphanToolPages();
 
 // Report
 if (warnings.length > 0) {
