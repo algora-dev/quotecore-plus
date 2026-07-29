@@ -70,10 +70,11 @@ export function AddFromCatalogModal({
   const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
 
   // Incremental rendering for large catalogs
-  const VISIBLE_INCREMENT = 100;
-  const SEARCH_RENDER_LIMIT = 200;
+  const VISIBLE_INCREMENT = 500;
+  const SEARCH_RENDER_LIMIT = 500;
   const [visibleCount, setVisibleCount] = useState(VISIBLE_INCREMENT);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const loadingMoreRef = useRef(false);
 
   // Destination
   const [destMode, setDestMode] = useState<'existing' | 'new'>('existing');
@@ -301,26 +302,37 @@ export function AddFromCatalogModal({
   const visibleRowData = filteredRowData.slice(0, effectiveLimit);
   const filteredIndices = filteredRowData.map(d => d.i);
 
+  // Set of headers that are currently mapped to a field (for column highlighting)
+  const mappedHeaders = useMemo(() => {
+    const s = new Set<string>();
+    for (const v of Object.values(fieldToHeader)) { if (v) s.add(v); }
+    return s;
+  }, [fieldToHeader]);
+
   // Reset visible count when filter or rows change
   useEffect(() => {
     setVisibleCount(VISIBLE_INCREMENT);
   }, [rowSearchFilter, allRows]);
 
   // Auto-load more rows when sentinel is visible (infinite scroll)
+  // Guard with loadingMoreRef to prevent rapid-fire cascades
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
+        if (entries[0]?.isIntersecting && !loadingMoreRef.current) {
+          loadingMoreRef.current = true;
           setVisibleCount(c => c + VISIBLE_INCREMENT);
+          // Allow next batch after a short delay for DOM to settle
+          setTimeout(() => { loadingMoreRef.current = false; }, 150);
         }
       },
-      { rootMargin: '100px' }
+      { rootMargin: '0px', threshold: 0.1 }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [visibleCount, rowSearchFilter]);
+  }, [visibleCount, rowSearchFilter, filteredRowData.length]);
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl border border-slate-200 max-h-[90vh] flex flex-col">
@@ -549,14 +561,17 @@ export function AddFromCatalogModal({
                               className="cursor-pointer"
                             />
                           </th>
-                          {headers.map(h => (
-                            <th key={h} className="px-2 py-2 text-left font-medium text-slate-600 whitespace-nowrap">
+                          {headers.map(h => {
+                            const isMapped = mappedHeaders.has(h);
+                            return (
+                            <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${isMapped ? 'bg-orange-50/60' : 'text-slate-600 bg-slate-50'}`}>
                               {h}
                               {(columnMapping[h] ?? []).length > 0 && (
-                                <span className="ml-1 text-[10px] text-orange-500">({columnMapping[h].join(', ')})</span>
+                                <span className="ml-1 text-xs text-orange-500 font-semibold">({columnMapping[h].join(', ')})</span>
                               )}
                             </th>
-                          ))}
+                            );
+                          })}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
@@ -575,7 +590,7 @@ export function AddFromCatalogModal({
                               />
                             </td>
                             {headers.map(h => (
-                              <td key={h} className="px-2 py-1.5 text-slate-600 whitespace-nowrap">
+                              <td key={h} className={`px-2 py-1.5 whitespace-nowrap ${mappedHeaders.has(h) ? 'bg-orange-50/40 text-slate-700' : 'text-slate-600'}`}>
                                 {row[h] ?? '-'}
                               </td>
                             ))}
