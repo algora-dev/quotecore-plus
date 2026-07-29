@@ -145,7 +145,7 @@ export default function Post() {
         <li>you do not need approval tracking or material ordering</li>
         <li>the job admin after the quote is already well organised</li>
       </ul>
-      <p>The easiest way to know is to try one real job. While you are deciding, <a href="/blog/construction-quote-speed-checklist">the Construction Quote Speed Checklist is free to download</a> - it gives you a clear benchmark for what same-day quoting actually looks like before you commit to any software.</p>
+      <p>The easiest way to know is to try one real job. While you are deciding, <a href="/blog/construction-quote-speed-checklist">the Construction Quote Speed Checklist is free to download</a> - it gives you a clear benchmark for what same-day quoting actually looks like before you commit to any software. For a full list of free tools, see <a href="/blog/best-free-tools-for-roofers">Best Free Tools for Roofers and Contractors (2026)</a>.</p>
 
       <hr />
 

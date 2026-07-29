@@ -74,7 +74,7 @@ export default function Post() {
       <p>Shaun&apos;s background matters because QuoteCore+ was not shaped by a team guessing from the outside. It was led by someone who had lived the quoting pain properly and understood where the process tends to fall apart.</p>
       <p>That is why the product is not only about making a nicer quote document. It is about the whole path from measurement to quote, material orders, job management and invoicing.</p>
       <p>For construction businesses still using spreadsheets, notes, old templates and disconnected folders, QuoteCore+ gives the workflow a cleaner place to live.</p>
-      <p>If you are wondering whether QuoteCore+ is the right fit for your business, <a href="/blog/quotecore-plus-reviews">here is an honest breakdown of what to expect from the product and the free trial</a> - including how to verify it is legitimate before committing to anything.</p>
+      <p>If you are wondering whether QuoteCore+ is the right fit for your business, <a href="/blog/quotecore-plus-reviews">here is an honest breakdown of what to expect from the product and the free trial</a> - including how to verify it is legitimate before committing to anything. For a full list of free tools that work alongside the app, see <a href="/blog/best-free-tools-for-roofers">Best Free Tools for Roofers and Contractors (2026)</a>.</p>
     </div>
   );
 }

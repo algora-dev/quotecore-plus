@@ -72,7 +72,7 @@ export default function Post() {
         />
       </div>
       
-      <p>If you want a repeatable process for getting quotes out the same day as a site visit, <a href="/blog/construction-quote-speed-checklist">the Construction Quote Speed Checklist</a> breaks it down into four stages you can run through every time.</p>
+      <p>If you want a repeatable process for getting quotes out the same day as a site visit, <a href="/blog/construction-quote-speed-checklist">the Construction Quote Speed Checklist</a> breaks it down into four stages you can run through every time. For the full pricing process, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
 
       <hr />
 

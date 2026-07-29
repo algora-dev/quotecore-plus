@@ -68,7 +68,7 @@ export default function Post() {
         />
       </div>
       <p>Getting quotes out faster solves one part of the problem - if you want the broader picture on growing a contracting business without spending money on ads first, <a href="/blog/how-to-get-more-work-as-a-contractor">here are the basics worth fixing</a>.</p>
-      <p><a href="/free-trial" className="text-[#FF6B35] font-medium hover:underline">Start your free 14-day trial</a> - no card required.</p>
+      <p><a href="/free-trial" className="text-[#FF6B35] font-medium hover:underline">Start your free 14-day trial</a> - no card required. From complex plan to quote in under 3 minutes for less than a dollar.</p>
     </div>
   );
 }

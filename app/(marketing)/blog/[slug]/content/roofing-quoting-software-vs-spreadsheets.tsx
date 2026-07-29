@@ -137,7 +137,7 @@ export default function Post() {
       <p>Spreadsheets are not the enemy. Disconnected admin is.</p>
       <p>QuoteCore+ was built for roofing and construction businesses that want measurements, pricing, quotes, approvals, material orders, job details and invoicing to stay connected.</p>
       <p>If your spreadsheet still works, keep it.</p>
-      <p>If it has become the thing you are constantly working around, it may be time to try a different workflow. <a href="/blog/best-roofing-quoting-software-uk-2026">Here is a full comparison of the best roofing quoting software for UK contractors in 2026</a> - with honest assessments of six tools across the criteria that actually matter for roofers.</p>
+      <p>If it has become the thing you are constantly working around, it may be time to try a different workflow. <a href="/blog/best-roofing-quoting-software-uk-2026">Here is a full comparison of the best roofing quoting software for UK contractors in 2026</a> - with honest assessments of six tools across the criteria that actually matter for roofers. For the full pricing process that software handles, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
     </div>
   );
 }

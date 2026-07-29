@@ -67,7 +67,7 @@ export default function Post() {
         />
       </div>
       
-      <p>If you are still putting quotes together manually, <a href="/blog/roofing-quoting-software-uk">here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work</a>.</p>
+      <p>If you are still putting quotes together manually, <a href="/blog/roofing-quoting-software-uk">here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work</a>. For the full pricing process, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
 
       <hr />
 
@@ -111,7 +111,7 @@ export default function Post() {
       <p>A lot of contractors think getting more work means getting more leads. Sometimes it does. But often, the quickest win is converting more of the enquiries and quotes you already have.</p>
       <p>If you send ten quotes and win five, the other five are not just &quot;lost&quot;. Some may have gone elsewhere, but some may have needed a follow-up. Some may have wanted more detail. Some may have trusted another contractor more because their quote looked clearer and more professional.</p>
       <p>That is why your quoting process matters so much. Speed matters. Detail matters. Follow-up matters. If a customer contacts three contractors and you are the first to send a clear, professional quote, you have already made their decision easier. If you then follow up properly, you give yourself another chance to win the job.</p>
-      <p>This is exactly the kind of workflow <a href="/free-trial">QuoteCore+</a> was built for. If you are weighing up which quoting software to use, <a href="/blog/quotecore-plus-vs-quotesmith">here is a direct comparison of QuoteCore+ and QuoteSmith</a> - two of the main options for UK contractors - so you can see which one fits your workflow. It helps trades businesses keep the quoting process organised, from measuring and pricing through to sending the quote, tracking what happens next, creating material orders, managing the job and invoicing. Instead of jobs getting lost across emails, notes, spreadsheets, quote documents and messages, everything stays in one place.</p>
+      <p>This is exactly the kind of workflow <a href="/free-trial">QuoteCore+</a> was built for. It helps trades businesses keep the quoting process organised, from measuring and pricing through to sending the quote, tracking what happens next, creating material orders, managing the job and invoicing. Instead of jobs getting lost across emails, notes, spreadsheets, quote documents and messages, everything stays in one place. For a full list of free tools that can help speed up your workflow, see <a href="/blog/best-free-tools-for-roofers">Best Free Tools for Roofers and Contractors (2026)</a>.</p>
 
       <hr />
 
@@ -153,7 +153,7 @@ export default function Post() {
 
       <hr />
 
-      <p>Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>. No card needed.</p>
+      <p>Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>. No card needed. From complex plan to quote in under 3 minutes for less than a dollar.</p>
     </div>
   );
 }
