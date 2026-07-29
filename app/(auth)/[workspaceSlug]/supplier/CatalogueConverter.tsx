@@ -12,12 +12,14 @@ interface CatalogSummary {
 
 type Step = 'select-catalog' | 'map-columns' | 'select-rows' | 'converting' | 'success' | 'error';
 
-const FIELD_OPTIONS = [
-  { value: 'sku', label: 'SKU / Product Code' },
-  { value: 'name', label: 'Item Name (max 60 chars)' },
-  { value: 'price', label: 'Price *' },
-  { value: 'notes', label: 'Description (full text)' },
-];
+// Field-first mapping: each component field gets a dropdown of catalog columns.
+// Only `name` is required.
+const MAPPABLE_FIELDS = [
+  { value: 'name', label: 'Component Name', required: true, placeholder: 'Select a column...' },
+  { value: 'sku', label: 'SKU / Product Code', required: false, placeholder: 'Select a column...' },
+  { value: 'price', label: 'Price', required: false, placeholder: 'Select a column...' },
+  { value: 'notes', label: 'Description / Notes', required: false, placeholder: 'Select a column...' },
+] as const;
 
 export function CatalogueConverter({
   workspaceSlug,
@@ -33,6 +35,7 @@ export function CatalogueConverter({
   const [headers, setHeaders] = useState<string[]>([]);
   const [allRows, setAllRows] = useState<Record<string, string>[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string[]>>({});
+  const [fieldToHeader, setFieldToHeader] = useState<Record<string, string>>({});
   const [selectedRowIndices, setSelectedRowIndices] = useState<Set<number>>(new Set());
   const [targetCollection, setTargetCollection] = useState<string>(
     collections.find(c => c.is_bootstrap)?.id ?? collections[0]?.id ?? ''
@@ -58,25 +61,29 @@ export function CatalogueConverter({
       if (data.ok) {
         setHeaders(data.headers);
         setAllRows(data.rows);
-        // Auto-map columns by matching header names
-        const autoMap: Record<string, string[]> = {};
+        // Auto-map: build fieldToHeader by matching header names to known field patterns
+        const autoFieldMap: Record<string, string> = {};
         for (const h of data.headers as string[]) {
           const lower = h.toLowerCase().trim();
-          const fields: string[] = [];
-          if (lower === 'sku' || lower === 'code' || lower === 'product code') fields.push('sku');
-          if (lower === 'name' || lower === 'product' || lower === 'product name' || lower === 'description') fields.push('name');
-          if (lower === 'price' || lower === 'cost' || lower === 'rate') fields.push('price');
-          if (lower === 'notes' || lower === 'note' || lower === 'description') {
-            fields.push('notes');
-            // If description and no name mapped, also map as name
-            if (!fields.includes('name') && !data.headers.some((rh: string) => {
-              const rl = rh.toLowerCase().trim();
-              return rl === 'name' || rl === 'product' || rl === 'product name' || rl === 'item';
-            })) {
-              fields.push('name');
-            }
+          if (!autoFieldMap.sku && (lower === 'sku' || lower === 'code' || lower === 'product code' || lower === 'item code')) {
+            autoFieldMap.sku = h;
           }
-          autoMap[h] = fields;
+          if (!autoFieldMap.name && (lower === 'name' || lower === 'product' || lower === 'product name' || lower === 'item name' || lower === 'item' || lower === 'description')) {
+            autoFieldMap.name = h;
+          }
+          if (!autoFieldMap.price && (lower === 'price' || lower === 'cost' || lower === 'rate' || lower === 'unit price' || lower === 'buy price')) {
+            autoFieldMap.price = h;
+          }
+          if (!autoFieldMap.notes && (lower === 'notes' || lower === 'note' || lower === 'description' || lower === 'desc')) {
+            autoFieldMap.notes = h;
+          }
+        }
+        setFieldToHeader(autoFieldMap);
+        // Sync columnMapping for backend compat
+        const autoMap: Record<string, string[]> = {};
+        for (const h of data.headers as string[]) autoMap[h] = [];
+        for (const [field, header] of Object.entries(autoFieldMap)) {
+          if (header && autoMap[header]) autoMap[header].push(field);
         }
         setColumnMapping(autoMap);
         setStep('map-columns');
@@ -94,9 +101,8 @@ export function CatalogueConverter({
     // Verify required fields are mapped
     const allMappedFields = Object.values(columnMapping).flat();
     const hasName = allMappedFields.includes('name');
-    const hasPrice = allMappedFields.includes('price');
-    if (!hasName || !hasPrice) {
-      setError('Please map at least Item Name and Price columns.');
+    if (!hasName) {
+      setError('Please select a column for Component Name.');
       return;
     }
     setError(null);
@@ -167,6 +173,7 @@ export function CatalogueConverter({
     setHeaders([]);
     setAllRows([]);
     setColumnMapping({});
+    setFieldToHeader({});
     setSelectedRowIndices(new Set());
     setError(null);
     setCreatedCount(0);
@@ -241,53 +248,78 @@ export function CatalogueConverter({
       {/* Step 2: Map columns */}
       {step === 'map-columns' && (
         <div className="space-y-3">
-          <p className="text-xs text-slate-500">Map your catalogue columns to component fields. Price is required. A single column can map to multiple fields.</p>
           <div className="rounded-lg border border-slate-200 overflow-hidden">
-            <table className="w-full text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Catalogue Column</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Maps To</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Sample Value</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {headers.map(h => (
-                  <tr key={h}>
-                    <td className="px-3 py-2 font-mono text-slate-700">{h}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex gap-2 flex-wrap">
-                        {FIELD_OPTIONS.map(opt => {
-                          const checked = (columnMapping[h] ?? []).includes(opt.value);
-                          return (
-                            <label key={opt.value} className="flex items-center gap-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => {
-                                  setColumnMapping(prev => {
-                                    const current = prev[h] ?? [];
-                                    if (current.includes(opt.value)) {
-                                      return { ...prev, [h]: current.filter(v => v !== opt.value) };
-                                    } else {
-                                      return { ...prev, [h]: [...current, opt.value] };
-                                    }
-                                  });
-                                }}
-                                className="cursor-pointer"
-                              />
-                              <span className="text-slate-600">{opt.label}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 text-slate-400 truncate max-w-[200px]">{allRows[0]?.[h] ?? '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5">
+              <p className="text-xs font-medium text-slate-600">Map your catalog columns to component fields</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. We auto-detected matches where possible.</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {MAPPABLE_FIELDS.map(field => {
+                const selectedHeader = fieldToHeader[field.value] ?? '';
+                const isNameUnset = field.required && !selectedHeader;
+                return (
+                  <div key={field.value} className="flex items-center justify-between px-4 py-2.5 gap-3">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-xs font-medium text-slate-700">{field.label}</span>
+                      {field.required && <span className="text-red-500 text-xs">*</span>}
+                      {isNameUnset && (
+                        <span className="text-[10px] text-orange-500 font-medium">required</span>
+                      )}
+                    </div>
+                    <select
+                      value={selectedHeader}
+                      onChange={e => {
+                        const hdr = e.target.value;
+                        setFieldToHeader(prev => {
+                          const next = { ...prev };
+                          if (hdr) next[field.value] = hdr;
+                          else delete next[field.value];
+                          // Sync columnMapping
+                          setColumnMapping(() => {
+                            const colMap: Record<string, string[]> = {};
+                            for (const h of headers) colMap[h] = [];
+                            for (const [f, h] of Object.entries(next)) {
+                              if (h && colMap[h]) colMap[h].push(f);
+                            }
+                            return colMap;
+                          });
+                          return next;
+                        });
+                      }}
+                      className={`text-xs rounded-lg border px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px] ${
+                        isNameUnset
+                          ? 'border-orange-300 ring-1 ring-orange-200'
+                          : 'border-slate-300'
+                      }`}
+                    >
+                      <option value="">{field.placeholder}</option>
+                      {headers.map(h => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+          {/* Sample value preview */}
+          {allRows.length > 0 && (
+            <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <p className="text-[11px] text-slate-400 mb-1">Sample row preview:</p>
+              <div className="flex gap-3 flex-wrap">
+                {MAPPABLE_FIELDS.map(field => {
+                  const hdr = fieldToHeader[field.value];
+                  const sample = hdr ? (allRows[0]?.[hdr] ?? '-') : '-';
+                  return (
+                    <div key={field.value} className="text-xs">
+                      <span className="text-slate-400">{field.label}:</span>{' '}
+                      <span className="text-slate-600 font-medium truncate max-w-[120px] inline-block align-bottom">{sample}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <button
             onClick={handleProceedToRowSelect}
             className="cursor-pointer rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition"
