@@ -534,13 +534,22 @@ function checkOrphanToolPages() {
   ];
 
   // Check that the free-tools hub page links to each tool
-  const freeToolsPage = join(APP_DIR, '(public)', 'free-tools', 'page.tsx');
-  if (!existsSync(freeToolsPage)) {
+  // Look in page.tsx AND all files in the same directory (shared data, components)
+  const freeToolsDir = join(APP_DIR, '(public)', 'free-tools');
+  if (!existsSync(freeToolsDir)) {
     errors.push('Missing /free-tools hub page - tool pages may be orphaned');
     return;
   }
 
-  const hubContent = readFileSync(freeToolsPage, 'utf-8');
+  // Gather all content from the free-tools directory
+  let hubContent = '';
+  walkDir(freeToolsDir, '.tsx', (file) => {
+    hubContent += readFileSync(file, 'utf-8');
+  });
+  walkDir(freeToolsDir, '.ts', (file) => {
+    hubContent += readFileSync(file, 'utf-8');
+  });
+
   for (const tool of freeTools) {
     const toolSlug = tool.replace('/', '');
     if (!hubContent.includes(toolSlug)) {
