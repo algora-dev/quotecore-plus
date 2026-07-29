@@ -564,7 +564,7 @@ export function AddFromCatalogModal({
                           {headers.map(h => {
                             const isMapped = mappedHeaders.has(h);
                             return (
-                            <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${isMapped ? 'bg-orange-50/60' : 'text-slate-600 bg-slate-50'}`}>
+                            <th key={h} className={`px-2 py-2 text-left font-medium whitespace-nowrap ${isMapped ? 'bg-orange-50/60 text-slate-900' : 'text-slate-600'}`}>
                               {h}
                               {(columnMapping[h] ?? []).length > 0 && (
                                 <span className="ml-1 text-xs text-orange-500 font-semibold">({columnMapping[h].join(', ')})</span>
@@ -590,7 +590,7 @@ export function AddFromCatalogModal({
                               />
                             </td>
                             {headers.map(h => (
-                              <td key={h} className={`px-2 py-1.5 whitespace-nowrap ${mappedHeaders.has(h) ? 'bg-orange-50/40 text-slate-700' : 'text-slate-600'}`}>
+                              <td key={h} className={`px-2 py-1.5 whitespace-nowrap ${mappedHeaders.has(h) ? 'bg-orange-50/50 text-slate-700' : 'text-slate-600'}`}>
                                 {row[h] ?? '-'}
                               </td>
                             ))}
