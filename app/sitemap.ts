@@ -4,7 +4,7 @@ import { ROOFING_SLUGS } from '@/app/(public)/free-calculators/configs/roofingSl
 import { CONCRETE_SLUGS } from '@/app/(public)/free-calculators/configs/concreteSlugs';
 import { CONSTRUCTION_SLUGS } from '@/app/(public)/free-calculators/configs/constructionSlugs';
 import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs';
-import { BLOG_POSTS } from '@/app/lib/blog-posts';
+import { BLOG_POSTS, getSitemapPosts } from '@/app/lib/blog-posts';
 import { SITE_URL } from '@/lib/seo/site-url';
 
 /**
@@ -52,8 +52,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/free-roofing-takeoff-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
   ];
 
-  // Blog posts (from shared source)
-  const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
+  // Blog posts (from shared source, excludes drafts)
+  const blogEntries: MetadataRoute.Sitemap = getSitemapPosts().map((post) => ({
     url: `${SITE_URL}/blog/${post.slug}`,
     lastModified: new Date(post.lastModified),
     changeFrequency: 'monthly',

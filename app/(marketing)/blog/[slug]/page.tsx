@@ -34,12 +34,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = BLOG_POST_MAP.get(slug);
   if (!post) return {};
 
-  return buildPageMetadata({
+  const metadata = buildPageMetadata({
     title: `${post.title} | QuoteCore+`,
     description: post.description,
     path: `/blog/${slug}`,
     type: 'article',
   });
+
+  if (post.draft) {
+    return {
+      ...metadata,
+      robots: { index: false, follow: false },
+    };
+  }
+
+  return metadata;
 }
 
 export async function generateStaticParams() {

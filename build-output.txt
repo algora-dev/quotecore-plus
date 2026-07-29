@@ -1,0 +1,667 @@
+﻿Ôû▓ Next.js 16.2.12 (Turbopack)
+
+node.exe : ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: 
+https://nextjs.org/docs/messages/middleware-to-proxy
+At line:1 char:1
++ & "C:\nodejs/node.exe" "C:\nodejs/node_modules/npm/bin/npx-cli.js" ne ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ÔÜá The "middle...leware-to-proxy:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 10.9s
+  Running TypeScript ...
+  Finished TypeScript in 17.0s ...
+  Collecting page data using 31 workers ...
+  Generating static pages using 31 workers (0/181) ...
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /home. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-replacement-cost-calculator. 
+Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-construction-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /roofing-quoting-software. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-sheet-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /services. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /_not-found. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-flat-roof-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-sheathing-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /onboarding. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-flooring-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /about. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-square-footage-calculator. Please 
+move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-footing-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /login. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-square-metre-calculator. Please 
+move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-gable-roof-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-squares-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-guttering-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-tile-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-hip-valley-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roofing-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-hip-roof-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /privacy. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /auth/reset-password. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+  Generating static pages using 31 workers (45/181) 
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roofing-material-calculator. Please 
+move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roofing-quote-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roofing-takeoff-builder. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-hip-valley-converter. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roofing-takeoff-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-invoice-generator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roofing-waste-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /terms. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /signup. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-landscaping-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-metal-roofing-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-paint-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-shingle-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-pipe-slope-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-slope-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-purchase-order-generator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-skillion-roof-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-quote-generator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog/[slug]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /blog. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /coffee-terms. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /construction-quoting-software. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /contact. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+  Generating static pages using 31 workers (90/181) 
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-trial. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /cookie-policy. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-tile-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-tools. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-rafter-length-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-trench-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-rafter-length-converter. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-wall-area-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-rebar-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /2fa. Please move it to viewport export 
+instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-area-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /2fa/recover. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-flashing-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-pitch-converter. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-roof-pitch-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+  Generating static pages using 31 workers (135/181) 
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /docs/[[...slug]]. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-birds-mouth-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-calculators. Please move it to viewport 
+export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-concrete-bag-calculator. Please move it 
+to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-concrete-slab-calculator. Please move 
+it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+ÔÜá Unsupported metadata colorScheme is configured in metadata export in /free-concrete-calculator. Please move it to 
+viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+Ô£ô Generating static pages using 31 workers (181/181) in 1234ms
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî ãÆ /
+Ôö£ Ôùï /_not-found
+Ôö£ ãÆ /[workspaceSlug]
+Ôö£ ãÆ /[workspaceSlug]/account
+Ôö£ ãÆ /[workspaceSlug]/account/billing
+Ôö£ ãÆ /[workspaceSlug]/account/company
+Ôö£ ãÆ /[workspaceSlug]/account/notifications
+Ôö£ ãÆ /[workspaceSlug]/account/security
+Ôö£ ãÆ /[workspaceSlug]/catalogs
+Ôö£ ãÆ /[workspaceSlug]/catalogs/import-rows
+Ôö£ ãÆ /[workspaceSlug]/catalogs/search
+Ôö£ ãÆ /[workspaceSlug]/components
+Ôö£ ãÆ /[workspaceSlug]/customer-quote-templates
+Ôö£ ãÆ /[workspaceSlug]/customer-quote-templates/[templateId]
+Ôö£ ãÆ /[workspaceSlug]/customer-quote-templates/[templateId]/edit
+Ôö£ ãÆ /[workspaceSlug]/customer-quote-templates/create
+Ôö£ ãÆ /[workspaceSlug]/customer-quote-templates/create/build
+Ôö£ ãÆ /[workspaceSlug]/customer-quote-templates/save-from-quote
+Ôö£ ãÆ /[workspaceSlug]/drawings
+Ôö£ ãÆ /[workspaceSlug]/drawings/[id]/edit
+Ôö£ ãÆ /[workspaceSlug]/drawings/draw
+Ôö£ ãÆ /[workspaceSlug]/inbox
+Ôö£ ãÆ /[workspaceSlug]/invoices
+Ôö£ ãÆ /[workspaceSlug]/invoices/[id]
+Ôö£ ãÆ /[workspaceSlug]/invoices/invoice-from-quote/[quoteId]
+Ôö£ ãÆ /[workspaceSlug]/invoices/new-from-quote
+Ôö£ ãÆ /[workspaceSlug]/material-orders
+Ôö£ ãÆ /[workspaceSlug]/material-orders/[orderId]/preview
+Ôö£ ãÆ /[workspaceSlug]/material-orders/create
+Ôö£ ãÆ /[workspaceSlug]/material-orders/order-from-quote
+Ôö£ ãÆ /[workspaceSlug]/material-orders/order-from-quote/[quoteId]
+Ôö£ ãÆ /[workspaceSlug]/quotes
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/blank-build
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/build
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/customer
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/customer-edit
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/labor
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/labor-sheet
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/summary
+Ôö£ ãÆ /[workspaceSlug]/quotes/[id]/takeoff
+Ôö£ ãÆ /[workspaceSlug]/quotes/create
+Ôö£ ãÆ /[workspaceSlug]/quotes/new
+Ôö£ ãÆ /[workspaceSlug]/quotes/new/upload-plan
+Ôö£ ãÆ /[workspaceSlug]/resources
+Ôö£ ãÆ /[workspaceSlug]/resources/[id]/edit
+Ôö£ ãÆ /[workspaceSlug]/resources/attachments
+Ôö£ ãÆ /[workspaceSlug]/resources/catalogs
+Ôö£ ãÆ /[workspaceSlug]/resources/create
+Ôö£ ãÆ /[workspaceSlug]/resources/invoice-templates
+Ôö£ ãÆ /[workspaceSlug]/resources/invoice-templates/[id]/edit
+Ôö£ ãÆ /[workspaceSlug]/resources/invoice-templates/new
+Ôö£ ãÆ /[workspaceSlug]/resources/message-templates
+Ôö£ ãÆ /[workspaceSlug]/resources/new
+Ôö£ ãÆ /[workspaceSlug]/resources/order-header-templates
+Ôö£ ãÆ /[workspaceSlug]/resources/quote-header-templates
+Ôö£ ãÆ /[workspaceSlug]/resources/quote-templates
+Ôö£ ãÆ /[workspaceSlug]/settings
+Ôö£ ãÆ /[workspaceSlug]/supplier
+Ôö£ ãÆ /[workspaceSlug]/supplier-directory
+Ôö£ ãÆ /[workspaceSlug]/supplier-directory/library/[libraryId]
+Ôö£ ãÆ /[workspaceSlug]/templates/[[...rest]]
+Ôö£ ãÆ /[workspaceSlug]/tutorials
+Ôö£ ãÆ /2fa
+Ôö£ ãÆ /2fa/recover
+Ôö£ Ôùï /about
+Ôö£ ãÆ /accept/[token]
+Ôö£ ãÆ /admin
+Ôö£ ãÆ /admin/admins
+Ôö£ ãÆ /admin/free-tool-usage
+Ôö£ ãÆ /admin/login
+Ôö£ ãÆ /admin/rate-limits
+Ôö£ ãÆ /admin/roof-components
+Ôö£ ãÆ /admin/settings
+Ôö£ ãÆ /admin/suppliers
+Ôö£ ãÆ /admin/support-tickets
+Ôö£ ãÆ /admin/suppressions
+Ôö£ ãÆ /admin/users
+Ôö£ ãÆ /admin/users/[userId]
+Ôö£ ãÆ /api/alerts/[id]/delete
+Ôö£ ãÆ /api/alerts/[id]/read
+Ôö£ ãÆ /api/alerts/bulk
+Ôö£ ãÆ /api/alerts/clear-all
+Ôö£ ãÆ /api/alerts/read-all
+Ôö£ ãÆ /api/app/ai-quota
+Ôö£ ãÆ /api/app/check-save-eligibility
+Ôö£ ãÆ /api/app/import-free-document
+Ôö£ ãÆ /api/app/parse-document
+Ôö£ ãÆ /api/app/restore-calc-draft
+Ôö£ ãÆ /api/assistant-contact
+Ôö£ ãÆ /api/assistant/chat
+Ôö£ ãÆ /api/assistant/workflow
+Ôö£ ãÆ /api/attachments/[token]/download
+Ôö£ ãÆ /api/contact
+Ôö£ ãÆ /api/cron/dispatch-scheduled-messages
+Ôö£ ãÆ /api/cron/expire-quotes
+Ôö£ ãÆ /api/cron/expire-trials
+Ôö£ ãÆ /api/cron/process-ai-scan-queue
+Ôö£ ãÆ /api/cron/process-billing-lifecycle
+Ôö£ ãÆ /api/cron/prune-rate-limits
+Ôö£ ãÆ /api/cron/sweep-orphan-objects
+Ôö£ ãÆ /api/currency
+Ôö£ ãÆ /api/docs/[[...slug]]
+Ôö£ ãÆ /api/docs/feedback
+Ôö£ ãÆ /api/docs/tree
+Ôö£ ãÆ /api/free-tools/account-status
+Ôö£ ãÆ /api/free-tools/check-doc-limit
+Ôö£ ãÆ /api/free-tools/drafts
+Ôö£ ãÆ /api/free-tools/drafts/[id]
+Ôö£ ãÆ /api/free-tools/parse-document
+Ôö£ ãÆ /api/free-tools/roof-components
+Ôö£ ãÆ /api/geo
+Ôö£ ãÆ /api/invoices/catalog-rows
+Ôö£ ãÆ /api/invoices/public/[token]/dispute
+Ôö£ ãÆ /api/invoices/public/[token]/payment-sent
+Ôö£ ãÆ /api/invoices/quote-search
+Ôö£ ãÆ /api/invoices/templates
+Ôö£ ãÆ /api/leads
+Ôö£ ãÆ /api/supplier-alert-preferences
+Ôö£ ãÆ /api/supplier-apply-updates
+Ôö£ ãÆ /api/supplier-catalogue-import
+Ôö£ ãÆ /api/supplier-import
+Ôö£ ãÆ /api/supplier-publish-update
+Ôö£ ãÆ /api/supplier-resolve-update
+Ôö£ ãÆ /api/supplier-update-component
+Ôö£ ãÆ /api/takeoff/ai-scan-v3
+Ôö£ ãÆ /api/takeoff/scan-jobs
+Ôö£ ãÆ /api/upload-logo
+Ôö£ ãÆ /api/webhooks/stripe
+Ôö£ ãÆ /auth/callback
+Ôö£ Ôùï /auth/reset-password
+Ôö£ ãÆ /auth/verify
+Ôö£ Ôùï /blog
+Ôö£ ÔùÅ /blog/[slug]
+Ôöé Ôö£ /blog/quotecore-plus-reviews
+Ôöé Ôö£ /blog/quotecore-plus-vs-quotesmith
+Ôöé Ôö£ /blog/roofing-quoting-software-uk
+Ôöé Ôöö [+10 more paths]
+Ôö£ Ôùï /coffee-terms
+Ôö£ Ôùï /construction-quoting-software
+Ôö£ Ôùï /contact
+Ôö£ Ôùï /cookie-policy
+Ôö£ ÔùÅ /docs/[[...slug]]
+Ôöé Ôö£ /docs
+Ôöé Ôö£ /docs/getting-started/set-up-your-company
+Ôöé Ôö£ /docs/getting-started/your-first-quote
+Ôöé Ôöö [+58 more paths]
+Ôö£ ãÆ /file/[token]
+Ôö£ Ôùï /free-birds-mouth-calculator
+Ôö£ Ôùï /free-calculators
+Ôö£ Ôùï /free-concrete-bag-calculator
+Ôö£ Ôùï /free-concrete-calculator
+Ôö£ Ôùï /free-concrete-slab-calculator
+Ôö£ Ôùï /free-construction-calculator
+Ôö£ Ôùï /free-flat-roof-calculator
+Ôö£ Ôùï /free-flooring-calculator
+Ôö£ Ôùï /free-footing-calculator
+Ôö£ Ôùï /free-gable-roof-calculator
+Ôö£ Ôùï /free-guttering-calculator
+Ôö£ Ôùï /free-hip-roof-calculator
+Ôö£ Ôùï /free-hip-valley-calculator
+Ôö£ Ôùï /free-hip-valley-converter
+Ôö£ Ôùï /free-invoice-generator
+Ôö£ Ôùï /free-landscaping-calculator
+Ôö£ Ôùï /free-metal-roofing-calculator
+Ôö£ Ôùï /free-paint-calculator
+Ôö£ Ôùï /free-pipe-slope-calculator
+Ôö£ Ôùï /free-purchase-order-generator
+Ôö£ Ôùï /free-quote-generator
+Ôö£ Ôùï /free-rafter-length-calculator
+Ôö£ Ôùï /free-rafter-length-converter
+Ôö£ Ôùï /free-rebar-calculator
+Ôö£ Ôùï /free-roof-area-calculator
+Ôö£ Ôùï /free-roof-flashing-calculator
+Ôö£ Ôùï /free-roof-pitch-calculator
+Ôö£ Ôùï /free-roof-pitch-converter
+Ôö£ Ôùï /free-roof-replacement-cost-calculator
+Ôö£ Ôùï /free-roof-sheathing-calculator
+Ôö£ Ôùï /free-roof-sheet-calculator
+Ôö£ Ôùï /free-roof-square-footage-calculator
+Ôö£ Ôùï /free-roof-square-metre-calculator
+Ôö£ Ôùï /free-roof-squares-calculator
+Ôö£ Ôùï /free-roof-tile-calculator
+Ôö£ Ôùï /free-roofing-calculator
+Ôö£ Ôùï /free-roofing-material-calculator
+Ôö£ Ôùï /free-roofing-quote-calculator
+Ôö£ Ôùï /free-roofing-takeoff-builder
+Ôö£ Ôùï /free-roofing-takeoff-calculator
+Ôö£ Ôùï /free-roofing-waste-calculator
+Ôö£ Ôùï /free-shingle-calculator
+Ôö£ Ôùï /free-skillion-roof-calculator
+Ôö£ Ôùï /free-slope-calculator
+Ôö£ Ôùï /free-tile-calculator
+Ôö£ Ôùï /free-tools
+Ôö£ Ôùï /free-trench-calculator
+Ôö£ Ôùï /free-trial
+Ôö£ Ôùï /free-wall-area-calculator
+Ôö£ Ôùï /home
+Ôö£ Ôùï /icon.png
+Ôö£ ãÆ /invoice/[token]
+Ôö£ Ôùï /login
+Ôö£ ãÆ /login/recover
+Ôö£ ãÆ /m/[token]
+Ôö£ ãÆ /m/[token]/stop
+Ôö£ ãÆ /onboarding
+Ôö£ ãÆ /orders/[token]
+Ôö£ Ôùï /privacy
+Ôö£ Ôùï /robots.txt
+Ôö£ Ôùï /roofing-quoting-software
+Ôö£ Ôùï /services
+Ôö£ Ôùï /signup
+Ôö£ Ôùï /sitemap.xml
+Ôöö Ôùï /terms
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ÔùÅ  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ãÆ  (Dynamic)  server-rendered on demand
+

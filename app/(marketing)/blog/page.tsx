@@ -67,41 +67,6 @@ const posts: { slug: string; title: string; description: string; date: string }[
       'QuoteCore+ was shaped by real roofing and construction experience, with Shaun leading the product direction around the quoting and job workflow problems trades businesses deal with every day.',
     date: '2026-05-06',
   },
-  {
-    slug: 'how-to-calculate-roof-pitch',
-    title: 'How to Calculate Roof Pitch (And Why It Matters for Your Quote)',
-    description:
-      'Complete guide to roof pitch: what it is, how to calculate it from measurements, conversion tables, common mistakes, and free tools that do the maths for you.',
-    date: '2026-07-29',
-  },
-  {
-    slug: 'how-to-measure-a-roof',
-    title: 'How to Measure a Roof for Materials (Complete Guide)',
-    description:
-      'Three ways to measure a roof, how to calculate actual surface area from plan dimensions with pitch factors, and free tools that handle the maths for you.',
-    date: '2026-07-29',
-  },
-  {
-    slug: 'how-much-roofing-material',
-    title: 'How Much Roofing Material Do You Need? (Material Calculator Guide)',
-    description:
-      'How to calculate tile, underlay, batten, and fixing quantities with real coverage rates and waste allowances.',
-    date: '2026-07-29',
-  },
-  {
-    slug: 'how-to-price-a-roofing-job',
-    title: 'How to Price a Roofing Job: Step-by-Step Pricing Guide',
-    description:
-      'Complete roofing pricing guide with worked example covering materials, labour, scaffold, overhead, and profit margin.',
-    date: '2026-07-29',
-  },
-  {
-    slug: 'best-free-tools-for-roofers',
-    title: 'Best Free Tools for Roofers and Contractors (2026)',
-    description:
-      'Complete list of the best free roofing and construction tools: takeoff builder, calculators, quote generator, invoice generator, and 30+ specialised tools.',
-    date: '2026-07-29',
-  },
 ];
 
 const landingPages = [
