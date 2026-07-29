@@ -269,6 +269,7 @@ CTA block (existing component):
 - **No AI slop phrases:** No "in today's fast-paced world," no "revolutionize," no "game-changer," no "seamless," no em dashes in copy
 - **Formatting:** Short paragraphs (2-4 sentences). Bold key terms. Use lists and tables. Break up text with H2/H3 headings every 200-300 words.
 - **Evidence:** Every claim about the app or tools must match Product Truth above. No feature claims that aren't live.
+- **Technical accuracy (CRITICAL):** If you are not 100% certain a technical claim is correct, do NOT include it. No guessing. No filler. No estimated numbers presented as facts. When unsure, either verify with Shaun, check the codebase, or omit the claim entirely. Wrong information with Shaun's name on it destroys trust.
 - **Tone:** Direct, practical, experienced. Written by someone who has been on a roof, not someone who has read about roofing.
 
 ### 4. Conversion Elements
