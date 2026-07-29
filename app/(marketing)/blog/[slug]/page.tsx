@@ -140,8 +140,9 @@ export default async function BlogPostPage({ params }: Props) {
       )}
       <div className="min-h-screen bg-white text-zinc-950">
         <BlogHeader backLabel="Back to blogs" backHref="/blog" />
+        <main>
         <article className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-zinc-500">
             {new Date(post.date).toLocaleDateString('en-GB', {
               day: 'numeric',
               month: 'long',
@@ -176,17 +177,18 @@ export default async function BlogPostPage({ params }: Props) {
                 href="/"
                 className="pill-shimmer inline-flex items-center justify-center rounded-full border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
               >
-                Learn more
+                Explore QuoteCore+
               </a>
               <a
                 href="/free-trial"
-                className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+                className="inline-flex items-center justify-center rounded-full bg-[#E55A28] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#BD4A1A]"
               >
                 Start free trial
               </a>
             </div>
           </div>
         </article>
+        </main>
         <div className="mt-12 border-t border-zinc-200 pt-8 text-center" />
       </div>
     </>
