@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
 
 interface ImageCarouselProps {
   images: string[];
@@ -25,19 +26,17 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
 
   return (
     <div className="relative rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
-      {/* Image */}
+      {/* Only render the active image - reduces DOM nodes and image downloads */}
       <div className="relative aspect-[4/3] bg-slate-50">
-        {images.map((src, i) => (
-          <img
-            key={src}
-            src={src}
-            alt={`${alt} - view ${i + 1}`}
-            className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${
-              i === index ? 'opacity-100' : 'opacity-0'
-            }`}
-            loading={i === 0 ? 'eager' : 'lazy'}
-          />
-        ))}
+        <img
+          key={images[index]}
+          src={images[index]}
+          alt={`${alt} - view ${index + 1}`}
+          className="absolute inset-0 h-full w-full object-contain"
+          loading={index === 0 ? 'eager' : 'lazy'}
+          width={800}
+          height={600}
+        />
       </div>
 
       {/* Nav arrows */}
@@ -45,7 +44,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
         <>
           <button
             onClick={prev}
-            className="absolute left-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 border border-slate-200 text-slate-600 shadow-sm hover:bg-white hover:text-[#FF6B35] transition-colors"
+            className="absolute left-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 border border-slate-200 text-slate-600 shadow-sm hover:bg-white hover:text-[#BD4A1A] transition-colors"
             aria-label="Previous image"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -54,7 +53,7 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
           </button>
           <button
             onClick={next}
-            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 border border-slate-200 text-slate-600 shadow-sm hover:bg-white hover:text-[#FF6B35] transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 border border-slate-200 text-slate-600 shadow-sm hover:bg-white hover:text-[#BD4A1A] transition-colors"
             aria-label="Next image"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

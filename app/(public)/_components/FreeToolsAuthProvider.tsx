@@ -340,7 +340,7 @@ function FreeToolsAuthModal({
               Already have an account?{' '}
               <button
                 onClick={() => { onModeChange('signin'); setError(''); setSuccess(''); }}
-                className="font-medium text-[#FF6B35] hover:text-[#ff5722]"
+                className="font-medium text-[#BD4A1A] hover:text-[#ff5722]"
               >
                 Log in
               </button>
@@ -350,7 +350,7 @@ function FreeToolsAuthModal({
               No account yet?{' '}
               <button
                 onClick={() => { onModeChange('signup'); setError(''); setSuccess(''); }}
-                className="font-medium text-[#FF6B35] hover:text-[#ff5722]"
+                className="font-medium text-[#BD4A1A] hover:text-[#ff5722]"
               >
                 Sign up free
               </button>

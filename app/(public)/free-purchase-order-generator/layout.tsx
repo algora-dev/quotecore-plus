@@ -119,11 +119,11 @@ export default function POLayout({ children }: { children: React.ReactNode }) {
           <div>
             <h3 className="text-sm font-semibold text-slate-900 mb-2">Related tools</h3>
             <ul className="space-y-1.5 text-sm">
-              <li><Link href="/free-quote-generator" className="text-[#BD4A1A] hover:text-[#FF6B35]">Free Quote Generator</Link></li>
-              <li><Link href="/free-invoice-generator" className="text-[#BD4A1A] hover:text-[#FF6B35]">Free Invoice Generator</Link></li>
-              <li><Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] hover:text-[#FF6B35]">Roof Takeoff Builder</Link></li>
-              <li><Link href="/free-roofing-calculator" className="text-[#BD4A1A] hover:text-[#FF6B35]">Roofing Calculator</Link></li>
-              <li><Link href="/free-tools" className="text-[#BD4A1A] hover:text-[#FF6B35]">All Free Tools</Link></li>
+              <li><Link href="/free-quote-generator" className="text-[#BD4A1A] hover:text-[#BD4A1A]">Free Quote Generator</Link></li>
+              <li><Link href="/free-invoice-generator" className="text-[#BD4A1A] hover:text-[#BD4A1A]">Free Invoice Generator</Link></li>
+              <li><Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] hover:text-[#BD4A1A]">Roof Takeoff Builder</Link></li>
+              <li><Link href="/free-roofing-calculator" className="text-[#BD4A1A] hover:text-[#BD4A1A]">Roofing Calculator</Link></li>
+              <li><Link href="/free-tools" className="text-[#BD4A1A] hover:text-[#BD4A1A]">All Free Tools</Link></li>
             </ul>
           </div>
         </div>

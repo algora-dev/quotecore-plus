@@ -176,7 +176,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                         <div className="min-w-0 flex-1">
                           <span className="text-slate-500">{entry.label || `Entry ${idx + 1}`}</span>
                           {isPitchCalc && <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}{'\u00b0'}</span>}
-                          {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#FF6B35] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
+                          {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#BD4A1A] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
                           {comp && <span className="ml-2 text-slate-400 truncate">{comp.name}</span>}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
@@ -185,7 +185,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                           )}
                           <span className="font-medium text-slate-700">{displayValue.toFixed(2)} {unitFor(key)}</span>
                           {section.wastePercent > 0 && !isFixed && <span className="text-slate-400 text-[10px]">+{section.wastePercent}% = {withWasteVal.toFixed(2)}</span>}
-                          {entryTotal > 0 && <span className="text-[#FF6B35] font-medium">{cur}{entryTotal.toFixed(2)}</span>}
+                          {entryTotal > 0 && <span className="text-[#BD4A1A] font-medium">{cur}{entryTotal.toFixed(2)}</span>}
                         </div>
                       </div>
                     );
@@ -197,7 +197,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                   <div className="text-right">
                     <span className="text-sm font-semibold text-slate-900">{t.withWaste.toFixed(2)} {unitFor(key)}</span>
                     {section.wastePercent > 0 && <span className="ml-2 text-xs text-slate-400">(raw: {t.rawTotal.toFixed(2)})</span>}
-                    {t.totalCost > 0 && <div className="text-xs text-[#FF6B35] font-medium">Material: {cur}{t.materialCost.toFixed(2)}{t.labourCost > 0 ? ` + Labour: ${cur}${t.labourCost.toFixed(2)}` : ''} = {cur}{t.totalCost.toFixed(2)}</div>}
+                    {t.totalCost > 0 && <div className="text-xs text-[#BD4A1A] font-medium">Material: {cur}{t.materialCost.toFixed(2)}{t.labourCost > 0 ? ` + Labour: ${cur}${t.labourCost.toFixed(2)}` : ''} = {cur}{t.totalCost.toFixed(2)}</div>}
                   </div>
                 </div>
               </div>

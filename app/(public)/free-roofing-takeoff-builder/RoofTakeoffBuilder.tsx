@@ -315,7 +315,7 @@ export function RoofTakeoffBuilder() {
     return (
       <div key={key} className={`rounded-xl border bg-white transition ${isExpanded ? 'border-slate-300 shadow-sm' : 'border-slate-200'}`}>
         <div className="flex items-center justify-between px-2 md:px-4 py-3">
-          <button onClick={() => setExpandedSection(isExpanded ? null : key)} className="flex items-center gap-2.5 cursor-pointer hover:text-[#FF6B35] transition flex-1 min-w-0">
+          <button onClick={() => setExpandedSection(isExpanded ? null : key)} className="flex items-center gap-2.5 cursor-pointer hover:text-[#BD4A1A] transition flex-1 min-w-0">
             <ComponentSymbol kind={key} customDef={section.customDef} className="w-4 h-4 text-slate-500 flex-shrink-0" />
             <span className="text-sm font-semibold text-slate-900 truncate">{label}</span>
             {hasEntries && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 flex-shrink-0">{section.entries.length} {section.entries.length === 1 ? 'entry' : 'entries'}</span>}
@@ -326,7 +326,7 @@ export function RoofTakeoffBuilder() {
             {hasEntries && (
               <div className="text-right">
                 <span className="text-sm font-semibold text-slate-900">{total.rawTotal.toFixed(2)} {displayUnit}</span>
-                {total.totalCost > 0 && <span className="ml-2 text-xs text-[#FF6B35] font-medium">{cur}{total.totalCost.toFixed(2)}</span>}
+                {total.totalCost > 0 && <span className="ml-2 text-xs text-[#BD4A1A] font-medium">{cur}{total.totalCost.toFixed(2)}</span>}
                 {section.wastePercent > 0 && <span className="ml-2 text-xs text-slate-400">+{section.wastePercent}%</span>}
               </div>
             )}
@@ -413,7 +413,7 @@ export function RoofTakeoffBuilder() {
                   className="group rounded-2xl border-2 border-slate-200 bg-white p-6 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] min-h-[180px] flex flex-col">
                   <div className="flex items-start justify-between mb-3">
                     <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -430,7 +430,7 @@ export function RoofTakeoffBuilder() {
           {measureMode && !unitSystem && (
             <div className="space-y-4">
               {/* Breadcrumb */}
-              <button onClick={() => setMeasureMode(null)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition">
+              <button onClick={() => setMeasureMode(null)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 Back to measurement mode
               </button>
@@ -469,7 +469,7 @@ export function RoofTakeoffBuilder() {
           {measureMode && unitSystem && (
             <>
               {/* Breadcrumb */}
-              <button onClick={() => { setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#FF6B35] transition mb-3">
+              <button onClick={() => { setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition mb-3">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 Back to unit selection
               </button>
@@ -565,7 +565,7 @@ export function RoofTakeoffBuilder() {
                           </div>
                           <div className="mt-1 text-sm font-semibold">{t.rawTotal.toFixed(2)} {du}</div>
                           {section.wastePercent > 0 && <div className="text-xs text-slate-400">w/ waste: {t.withWaste.toFixed(2)} {du}</div>}
-                          {t.totalCost > 0 && <div className="text-xs text-[#FF6B35] font-medium mt-0.5">{cur}{t.totalCost.toFixed(2)}</div>}
+                          {t.totalCost > 0 && <div className="text-xs text-[#BD4A1A] font-medium mt-0.5">{cur}{t.totalCost.toFixed(2)}</div>}
                         </div>
                       );
                     })}
@@ -605,61 +605,61 @@ export function RoofTakeoffBuilder() {
               <a href="/free-roofing-calculator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
+                    <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
                   </div>
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900">Roofing Calculator</h3>
                 <p className="mt-1 text-xs text-slate-500">Calculate roof area, pitch, and materials with waste allowances.</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#FF6B35]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
               </a>
               {/* Construction Calculator */}
               <a href="/free-construction-calculator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 9H9L8 4z" /></svg>
+                    <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 9H9L8 4z" /></svg>
                   </div>
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900">Construction Calculator</h3>
                 <p className="mt-1 text-xs text-slate-500">General construction math for areas, volumes, and quantities.</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#FF6B35]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
               </a>
               {/* Quote Generator */}
               <a href="/free-quote-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   </div>
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900">Free Quote Generator</h3>
                 <p className="mt-1 text-xs text-slate-500">Create a professional quote in seconds. Print or save as PDF.</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#FF6B35]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
               </a>
               {/* Purchase Order Generator */}
               <a href="/free-purchase-order-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+                    <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                   </div>
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900">Purchase Order Generator</h3>
                 <p className="mt-1 text-xs text-slate-500">Create and print professional purchase orders for suppliers.</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#FF6B35]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
               </a>
               {/* Invoice Generator */}
               <a href="/free-invoice-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <svg className="w-5 h-5 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>
+                    <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>
                   </div>
                 </div>
                 <h3 className="text-sm font-semibold text-slate-900">Free Invoice Generator</h3>
                 <p className="mt-1 text-xs text-slate-500">Generate and print professional invoices. No signup required.</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#FF6B35]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
               </a>
               {/* Free Tools Hub */}
               <a href="/free-tools" className="block rounded-xl border-2 border-dashed border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all group flex flex-col items-center justify-center text-center">
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                  <svg className="w-5 h-5 text-slate-500 group-hover:text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                  <svg className="w-5 h-5 text-slate-500 group-hover:text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                 </div>
                 <h3 className="mt-3 text-sm font-semibold text-slate-900">All Free Tools</h3>
                 <p className="mt-1 text-xs text-slate-500">Browse all calculators and generators.</p>
