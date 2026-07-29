@@ -25,6 +25,9 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'how-much-roofing-material': () => import('./content/how-much-roofing-material'),
   'how-to-price-a-roofing-job': () => import('./content/how-to-price-a-roofing-job'),
   'best-free-tools-for-roofers': () => import('./content/best-free-tools-for-roofers'),
+  'ai-roof-measuring': () => import('./content/ai-roof-measuring'),
+  'ai-roofing-tools-guide': () => import('./content/ai-roofing-tools-guide'),
+  'ai-quoting-software': () => import('./content/ai-quoting-software'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

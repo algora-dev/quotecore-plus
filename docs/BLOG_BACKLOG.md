@@ -9,9 +9,9 @@
 
 | # | Slug | Title | Status | Owner | Primary Keyword | Links To |
 |---|------|-------|--------|-------|----------------|----------|
-| 1 | ai-roof-measuring | AI Roof Measuring: How to Measure a Roof with AI in 2026 | planned | - | ai roof measuring | takeoff-builder, /roofing-quoting-software, #2, #4, #5 |
-| 2 | ai-roofing-tools-guide | AI Roofing Tools: The Complete Guide to AI in Roofing (2026) | planned | - | ai roofing tools | /free-tools, /roofing-quoting-software, /free-trial, #1, #3, #4-8 |
-| 3 | ai-quoting-software | AI Quoting Software: Can AI Write Quotes for Contractors? | planned | - | ai quoting software | /free-quote-generator, /roofing-quoting-software, /free-trial, #2, #7 |
+| 1 | ai-roof-measuring | AI Roof Measuring: How to Measure a Roof with AI in 2026 | published | Ron | ai roof measuring | takeoff-builder, /roofing-quoting-software, #2, #4, #5 |
+| 2 | ai-roofing-tools-guide | AI Roofing Tools: The Complete Guide to AI in Roofing (2026) | published | Ron | ai roofing tools | /free-tools, /roofing-quoting-software, /free-trial, #1, #3, #4-8 |
+| 3 | ai-quoting-software | AI Quoting Software: Can AI Write Quotes for Contractors? | published | Ron | ai quoting software | /free-quote-generator, /roofing-quoting-software, /free-trial, #2, #7 |
 
 ### Tool Education Cluster
 

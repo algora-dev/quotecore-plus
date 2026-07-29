@@ -124,6 +124,30 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     date: '2026-07-29',
     lastModified: '2026-07-29',
   },
+  {
+    slug: 'ai-roof-measuring',
+    title: 'AI Roof Measuring: How to Measure a Roof with AI in 2026',
+    description:
+      'What AI roof measuring can actually do in 2026: how AI traces roof plans, detects lines, and classifies geometry. Where it excels, where it struggles, and what always needs human verification.',
+    date: '2026-07-29',
+    lastModified: '2026-07-29',
+  },
+  {
+    slug: 'ai-roofing-tools-guide',
+    title: 'AI Roofing Tools: The Complete Guide to AI in Roofing (2026)',
+    description:
+      'Honest guide to AI in roofing: the three layers of AI technology, what it does well, what it does poorly, what always needs a human, and how to evaluate AI roofing tools for your business.',
+    date: '2026-07-29',
+    lastModified: '2026-07-29',
+  },
+  {
+    slug: 'ai-quoting-software',
+    title: 'AI Quoting Software: Can AI Write Quotes for Contractors?',
+    description:
+      'Can AI write quotes for contractors? What AI quoting software can do (draft line items, calculate materials, format documents) and what it cannot do (set prices, assess job difficulty, define scope).',
+    date: '2026-07-29',
+    lastModified: '2026-07-29',
+  },
 ];
 
 /** Map slug -> BlogPostMeta for quick lookups. */
