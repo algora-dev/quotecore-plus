@@ -590,9 +590,9 @@ export function AddFromCatalogModal({
                               />
                             </td>
                             {headers.map(h => (
-                              <td key={h} className={`px-2 py-1.5 whitespace-nowrap ${mappedHeaders.has(h)
+                              <td key={h} style={mappedHeaders.has(h) ? undefined : { backgroundColor: '#ffffff' }} className={`px-2 py-1.5 whitespace-nowrap ${mappedHeaders.has(h)
                                 ? (selectedRowIndices.has(i) ? 'bg-orange-50/70 text-slate-700' : 'bg-orange-50/50 text-slate-700')
-                                : (selectedRowIndices.has(i) ? 'bg-orange-50/20 text-slate-600' : 'bg-white text-slate-600')
+                                : 'text-slate-600'
                               }`}>
                                 {row[h] ?? '-'}
                               </td>
