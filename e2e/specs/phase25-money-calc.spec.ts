@@ -38,12 +38,12 @@ async function createQuoteAndNavigate(
   const jobName = prefix('Money Job');
 
   await page.goto(`${BASE_URL}/${slug}/quotes`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await dismissCookies(page);
 
   await page.getByText(/new quote/i).first().click();
   await page.waitForURL((url) => url.pathname.includes('/quotes/new'), { timeout: 15_000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   const customerLabel = page.getByText('Customer Name');
   const customerField = customerLabel.locator('..').locator('input').first();
@@ -64,7 +64,7 @@ async function createQuoteAndNavigate(
   await createBtn.click();
 
   await page.waitForURL((url) => !url.pathname.includes('/quotes/new'), { timeout: 30_000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await dismissModals(page);
 
   return page.url();
@@ -114,7 +114,7 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
     const totalBefore = await getBuilderTotal(page);
 
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await dismissModals(page);
 
     const totalAfter = await getBuilderTotal(page);

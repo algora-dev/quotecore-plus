@@ -33,17 +33,18 @@ async function dismissModals(page: Page) {
 async function createQuote(
   page: Page,
   slug: string,
-  prefix: (s: string) => string
+  prefix: (s: string) => string,
+  customerLabel: string = 'PhaseD Customer'
 ): Promise<string> {
-  const customerName = prefix('PhaseD Customer');
+  const customerName = prefix(customerLabel);
 
   await page.goto(`${BASE_URL}/${slug}/quotes`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await dismissCookies(page);
 
   await page.getByText(/new quote/i).first().click();
   await page.waitForURL((url) => url.pathname.includes('/quotes/new'), { timeout: 15_000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
 
   const customerLabel = page.getByText('Customer Name');
   const customerField = customerLabel.locator('..').locator('input').first();
@@ -64,7 +65,7 @@ async function createQuote(
   await createBtn.click();
 
   await page.waitForURL((url) => !url.pathname.includes('/quotes/new'), { timeout: 30_000 });
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await dismissModals(page);
 
   return page.url();
@@ -98,14 +99,14 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
   test('D2: Quote persists after reload â€” customer name and job name survive', async ({ loginAs, prefix, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
     const customerName = prefix('Persist Customer');
-    const quoteUrl = await createQuote(page, slug, prefix);
+    const quoteUrl = await createQuote(page, slug, prefix, 'Persist Customer');
 
     // Verify we're on the builder
     expect(page.url()).toMatch(/\/quotes\/[a-f0-9-]+/);
 
     // Reload
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await dismissModals(page);
 
     // URL should be the same
@@ -127,7 +128,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     if (match) {
       const quoteId = match[1];
       await page.goto(`${BASE_URL}/${slug}/quotes/${quoteId}/takeoff`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await dismissModals(page);
 
       // Takeoff page should load â€” canvas or upload prompt should be visible
@@ -147,7 +148,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     const quoteId = match[1];
 
     await page.goto(`${BASE_URL}/${slug}/quotes/${quoteId}/takeoff`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await dismissModals(page);
 
     // If there are multiple pages, switching between them should not cause errors
@@ -157,7 +158,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     // Even if no pages exist yet, the takeoff page should be stable
     // Rapid reloads should not cause 5xx
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await dismissModals(page);
 
     expect(page.url()).toContain('/takeoff');
@@ -199,7 +200,7 @@ test.describe('Phase D: Quote Builder & Takeoff Persistence @mutation', () => {
     // Rapid reloads (simulating user impatience)
     for (let i = 0; i < 3; i++) {
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await dismissModals(page);
       expect(page.url()).toMatch(/\/quotes\/[a-f0-9-]+/);
     }

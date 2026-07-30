@@ -525,7 +525,12 @@ export async function POST(req: NextRequest) {
   timer.mark('auth_start');
 
   try {
-    const profile = await requireCompanyContext();
+    let profile;
+    try {
+      profile = await requireCompanyContext();
+    } catch {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
     const supabase = await createSupabaseServerClient();
 
     if (process.env.AI_TAKEOFF_ENABLED !== 'true') {
