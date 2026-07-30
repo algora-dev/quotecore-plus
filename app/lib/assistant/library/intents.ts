@@ -73,6 +73,12 @@ const BASE_INTENTS: Record<string, string[]> = {
     'measure off an uploaded roof plan',
     'use the takeoff tools',
     'measure areas and lengths on screen',
+    'use ai to trace my roof plan',
+    'ai assist takeoff',
+    'automatically measure a roof plan',
+    'ai scan my roof',
+    'how do I use ai assist',
+    'trace roof perimeter with ai',
   ],
   'flashing-draw': [
     'draw a flashing',
@@ -222,6 +228,29 @@ const BASE_INTENTS: Record<string, string[]> = {
     'move an alert to do later',
     'archive a message',
     'how do I delete an alert',
+  ],
+  // ── AI Assist (added 2026-07-30) ──
+  // AI Assist intents merged into digital-takeoff above.
+
+  // ── Supplier features (added 2026-07-30) ──
+  // Note: these don't have Guide Me flows yet (no data-copilot targets on
+  // supplier pages). Intents are here so Q's keyword finder can surface
+  // relevant docs via search_help_docs when users ask about these features.
+  'supplier-directory': [
+    'browse supplier components',
+    'find supplier libraries',
+    'import supplier components',
+    'search supplier directory',
+    'how do I find supplier prices',
+    'import components from a supplier',
+  ],
+  'supplier-dashboard': [
+    'publish my component library',
+    'set up supplier profile',
+    'convert catalogue to components',
+    'publish a supplier library',
+    'use the catalogue converter',
+    'manage supplier account',
   ],
 };
 

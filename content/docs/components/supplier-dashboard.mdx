@@ -1,0 +1,94 @@
+---
+title: Supplier dashboard
+description: For supplier accounts - publish component libraries, manage your supplier profile, and convert catalogues to components.
+order: 4
+status: published
+updated: 2026-07-30
+---
+
+# Supplier dashboard
+
+If your company is set up as a **supplier** (by the QuoteCore+ admin team), you get access to the supplier dashboard. This is where you publish component libraries that other QuoteCore+ users can browse and import from.
+
+## Getting supplier access
+
+Supplier accounts are created manually by the QuoteCore+ admin team. If you want your company set up as a supplier:
+
+1. Contact support from **Account > Support**.
+2. The admin team verifies your business and creates a supplier profile.
+3. Your company dashboard gets a **Supplier** tab.
+
+Only approved suppliers can publish libraries. All users can browse and import.
+
+## Managing your supplier profile
+
+In the **Supplier** tab:
+
+- **Supplier name** - your trading name (must be unique across QuoteCore+).
+- **Description** - tell users what you supply.
+- **Website URL** - link to your website.
+- **Service areas** - regions you deliver to.
+- **Roofing types** - e.g. long-run, tile, membrane.
+- **Product categories** - e.g. roofing iron, underlay, flashings, fixings.
+- **Brands** - brands you stock.
+- **Keywords** - help users find you in the directory.
+
+Your profile must be **approved** by the admin team before it appears in the public directory.
+
+## Publishing a component library
+
+1. Go to your **Components** page.
+2. Create components as normal, filling in SKU, price, product type, and notes.
+3. Components must have a **SKU** to be published (this is how we track updates).
+4. Click **Publish Library** to open the publication modal.
+5. Set:
+   - **Visibility** - Published (visible in directory), Unlisted (link only), or Private.
+   - **Public title and description** - what directory browsers see.
+   - **Roofing types, product categories, brands, keywords** - for search filtering.
+6. Click **Publish**. Your library is now live in the directory.
+
+### Publishing an update
+
+When you change prices, add components, or modify existing ones:
+
+1. Click **Publish Update** on the components page.
+2. The system detects what changed since the last published version (added, modified, removed, price changed).
+3. Users who imported your components get a pending update notification.
+4. They choose whether to accept or dismiss each change.
+
+Version numbers increment automatically with each published update.
+
+## Catalogue converter
+
+The catalogue converter lets suppliers turn a CSV price list into QuoteCore+ components quickly. Instead of manually creating each component, you upload a CSV and map columns.
+
+### Using the catalogue converter
+
+1. Go to your **Supplier** tab and click **Catalogue Converter**.
+2. **Upload a CSV file** - up to 30,000+ rows supported.
+3. **Map columns** - tell the system which columns map to:
+   - SKU (required)
+   - Component name (required)
+   - Price (required)
+   - Product type
+   - Notes
+4. **Review** - see a preview of how the rows will become components.
+5. **Convert** - the system creates components in your library from the CSV rows.
+
+Only 5 fields are mapped (SKU, name, price, product type, notes) to keep the process fast. You can edit the full component details (waste, pitch, measurement type, etc.) after conversion.
+
+### Column mapping
+
+The converter supports:
+
+- **Multi-map** - create multiple column maps over the same CSV (e.g. trade price vs retail price).
+- **Name limit** - component names are capped at 60 characters.
+- **SKU immutability** - once a component has a SKU, the SKU cannot be changed (so update tracking works correctly).
+- **Column highlighting** - selected and mapped columns are visually highlighted during mapping.
+- **Infinite scroll** - large catalogues load progressively.
+
+## Related
+
+- [Components overview](/docs/components/overview)
+- [Supplier directory](/docs/components/supplier-directory) - for users browsing your libraries.
+- [Catalog library](/docs/catalog/overview) - for uploading your own internal CSV price lists (separate from supplier publishing).

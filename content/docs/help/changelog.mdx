@@ -3,12 +3,78 @@ title: Changelog
 description: What changed and when.
 order: 4
 status: published
-updated: 2026-07-15
+updated: 2026-07-30
 ---
 
 # Changelog
 
 A running log of features added and significant changes.
+
+## 2026-07-30 — Supplier component system, AI takeoff V3, catalogue converter, Smart Component Creator, SEO overhaul
+
+### Supplier component system (all 10 phases)
+
+QuoteCore+ now supports a full supplier-to-user component pipeline:
+
+- **Supplier profiles** - approved suppliers get a profile with name, description, service areas, product categories, brands, and keywords.
+- **Supplier dashboard** - suppliers can publish component libraries (with SKU, price, product type, notes) to the public directory.
+- **Supplier directory** - all users can browse approved suppliers, search by keyword/category/brand, and import individual components or entire libraries into their own component library.
+- **Selective import** - pick which components to import; you don't have to take a whole library.
+- **Pending update notifications** - when a supplier updates a component you've imported, a banner on your Components page lets you review and accept or dismiss each change.
+- **Catalogue converter** - suppliers can upload a CSV price list (up to 30,000+ rows) and map columns (SKU, name, price, product type, notes) to batch-create components. Supports multi-map, infinite scroll, and column highlighting.
+- **Publication controls** - libraries can be Published (public in directory), Unlisted (link only), or Private.
+- **Change notifications** - the system tracks added, modified, removed, and price-changed components per published version.
+
+Supplier access is admin-created only (manual verification). Non-supplier accounts see zero changes.
+
+### AI Takeoff V3 (3-scan pipeline)
+
+AI Assist is out of alpha and into V3 with a streamlined 1-step flow:
+
+- **3-scan pipeline** - Scan 1 traces roof perimeters, Scan 2 traces internal lines (ridges, hips, valleys, barges, spouting), Scan 3 classifies each line type. All three run continuously without intermediate modals.
+- **Quality selector** - choose Low, Medium, or High before starting. Low is fastest (~40s), Medium is balanced (~2-4 min), High is most detailed (~5+ min).
+- **1-step flow** - no intermediate modal between Scan 1 and the final results. Area name and pitch inputs are in the final results modal only.
+- **Roofing-only** - AI Assist controls only appear for companies whose default trade is roofing.
+- **Perimeter corner check** - Scan 3 uses convex/concave corner geometry to distinguish hips from valleys.
+
+### Smart Component Creator
+
+The Roofing Material Calculator has been renamed to **Smart Component Creator** and is available as a standalone free tool. Same functionality - pick a material type, enter measurements, get a material list with waste applied.
+
+### SEO overhaul
+
+Major SEO improvements across the marketing site and free tools:
+
+- **Server-rendered SEO shells** on quote, invoice, and PO generators with WebApplication, BreadcrumbList, and FAQPage structured data.
+- **Blog structured data** - enriched BlogPosting schema with author, publisher logo, and default OG image.
+- **Free tools hub** split into a server component with crawl-friendly tool directory and expanded ItemList schema.
+- **Crawl signals fixed** - /free-tools and /free-roofing-takeoff-builder added to robots.txt and sitemap. JSON-LD moved from client to server layouts. llms.txt added for AI crawlers.
+- **Accessibility** - WCAG AA contrast fixes on orange text (#FF6B35 to #BD4A1A), main landmarks on blog posts, aria-labels on free tools, improved touch targets.
+- **Blog index performance** - lazy-loaded SiteAssistant and AttributionTracker, compressed icons, modern JS target via browserslist.
+- **Noindex on non-prod** - X-Robots-Tag noindex on non-production Vercel aliases. 308 redirects on stable aliases.
+
+### Blog launch
+
+8 blog posts published covering AI roof measuring, AI roofing tools, AI quoting software, and related topics. Content follows a technical accuracy rule: no guessing, no filler, verify or omit.
+
+### Catalog converter improvements
+
+- **Infinite scroll** for large catalogues with better search UX.
+- **Column highlighting** - selected and mapped columns are visually highlighted.
+- **30K row support** - progressive loading for very large supplier price lists.
+- **Sticky header** with white background for column mapping.
+
+### Breadcrumbs
+
+Added breadcrumbs to supplier dashboard, supplier directory, and library detail pages for better navigation.
+
+### E2E test harness
+
+30 end-to-end tests across 4 phases with real assertions, covering authentication, quote creation, component management, and order flows. GitHub Actions workflow triggers Vercel testing deploy on development push.
+
+### Team git workflow
+
+Added TEAM_GIT_WORKFLOW.md defining branch and deploy rules for all agents (Gavin, Ron, Barry) working on the codebase.
 
 ## 2026-07-15 — Free tools unified auth, save-to-app, server-side drafts
 

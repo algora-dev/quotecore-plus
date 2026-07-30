@@ -1,0 +1,93 @@
+---
+title: AI Assist takeoff
+description: Let AI trace roof plans automatically - areas, ridges, hips, valleys, and more.
+order: 4
+status: published
+updated: 2026-07-30
+---
+
+# AI Assist takeoff
+
+AI Assist is a beta feature that uses vision AI to automatically trace roof plans. Upload your plan, calibrate the scale, and let the AI trace roof perimeters, internal lines (ridges, hips, valleys, barges, spouting), and classify each line type - all in one continuous flow.
+
+## Availability
+
+- **Roofing trade only.** AI Assist controls only appear for companies whose default trade is roofing.
+- **Growth plan and above** (same as digital takeoff).
+- Requires a calibrated scale before use.
+
+## How it works
+
+AI Assist runs a 3-scan pipeline continuously:
+
+1. **Scan 1 - Perimeter trace.** The AI traces the outer roof perimeter and produces a closed polygon for each roof area.
+2. **Scan 2 - Internal line trace.** The AI traces visible solid internal lines (ridges, hips, valleys, etc.) and labels them sequentially (L1, L2, L3...).
+3. **Scan 3 - Line classification.** The AI classifies each labeled line as ridge, hip, valley, barge, spouting, broken hip, broken barge, or uncertain. It uses perimeter corner geometry to distinguish hips (convex corners) from valleys (concave corners).
+
+All three scans run automatically in sequence. You see a progress indicator during each scan, then a single results modal at the end.
+
+## Quality selector
+
+Before starting AI Assist, you pick a quality level:
+
+| Level | Speed | Accuracy | Cost |
+|-------|-------|----------|------|
+| **Low** | Fastest (~40s) | Good for simple roofs | Lowest |
+| **Medium** (default) | Balanced (~2-4 min) | Best for most roofs | Moderate |
+| **High** | Slowest (~5+ min) | Most detailed, best for complex roofs | Highest |
+
+Higher quality uses more reasoning effort, which produces more accurate traces on complex roof plans but takes longer.
+
+## Using AI Assist
+
+1. **Upload your roof plan** in the digital takeoff screen.
+2. **Calibrate the scale** using a known measurement on the plan.
+3. After calibration, the **AI Assist (BETA)** button appears.
+4. **Select a quality level** (Low, Medium, or High).
+5. Click **AI Assist (BETA)** to start.
+6. Wait for the 3-scan pipeline to complete. Each scan shows a progress indicator.
+7. When all scans finish, a **results modal** appears with:
+   - Each detected roof area as a card.
+   - **Name** field (starts empty - type a name for each area).
+   - **Pitch** field (enter the pitch angle for each area).
+   - Orange rings on empty name/pitch fields until you fill them in.
+8. Click **Apply** to send the results to your canvas.
+
+After applying, the traced areas and lines appear on your plan. You can then:
+
+- Continue measuring manually (add more areas, adjust lines, etc.).
+- Proceed to the [quote builder](/docs/building-a-quote/quote-builder) with the AI-traced measurements.
+
+## What AI Assist detects
+
+- **Roof area perimeters** - closed polygons for each roof section.
+- **Ridges** - horizontal lines at the roof peak.
+- **Hips** - sloping lines at external corners.
+- **Valleys** - sloping lines at internal corners (where two roofs meet).
+- **Barges** - sloping lines at gable ends.
+- **Spouting** - gutter/fascia lines.
+- **Broken hips** and **broken barges** - interrupted hip or barge lines.
+- **Uncertain** - lines the AI cannot confidently classify. These are still traced; you can reclassify them manually.
+
+## Tips for best results
+
+- **Use a clear, high-resolution plan.** Blurry or low-res plans reduce accuracy.
+- **Calibrate accurately.** The AI uses your calibration for all measurements.
+- **Medium quality is the sweet spot** for most residential roofs. Use High for complex multi-gable roofs.
+- **Review results before applying.** Check area names and pitches, then adjust on the canvas if needed.
+- **AI Assist is a starting point.** It traces most lines accurately but may miss or misclassify some. You can always edit the canvas manually after applying.
+
+## Cost
+
+Each AI Assist run uses OpenAI vision model calls. The approximate cost per scan:
+
+- **Low:** ~$0.05-0.10
+- **Medium:** ~$0.20-0.25
+- **High:** ~$0.40-0.50
+
+These costs are covered by QuoteCore+ - you do not pay per scan.
+
+## Related
+
+- [Digital takeoff](/docs/building-a-quote/digital-takeoff) - manual measurement tools.
+- [Quote builder](/docs/building-a-quote/quote-builder) - where your measurements go next.
