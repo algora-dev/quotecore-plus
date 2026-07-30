@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
@@ -317,13 +318,12 @@ export default function ConstructionQuotingSoftwarePage() {
             This walkthrough shows how QuoteCore+ helps turn job details and measurements into a professional quote, while keeping the job information ready for the next steps.
           </p>
 
-          <div className="mt-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
-            <iframe
-              src="https://www.youtube.com/embed/pqIfx-rOcmo?start=3"
+          <div className="mt-8">
+            <YouTubeLite
+              videoId="pqIfx-rOcmo"
               title="Create a quote from start to finish with QuoteCore+"
-              className="h-full w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
+              start={3}
+              className="w-full"
             />
           </div>
         </section>
@@ -369,13 +369,12 @@ export default function ConstructionQuotingSoftwarePage() {
                 This tutorial shows how QuoteCore+ lets you save materials, labour, waste, measurements, drawings and pricing logic so the next quote is faster to build.
               </p>
 
-              <div className="mt-6 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
-                <iframe
-                  src="https://www.youtube.com/embed/XZSTIfGUHAU?start=3"
+              <div className="mt-6">
+                <YouTubeLite
+                  videoId="XZSTIfGUHAU"
                   title="How to set up Smart Components in QuoteCore+"
-                  className="h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
+                  start={3}
+                  className="w-full"
                 />
               </div>
             </div>

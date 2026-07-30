@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import CoffeePopup from "@/components/CoffeePopup";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import YouTubeLite from "@/components/YouTubeLite";
 import { trackEvent } from "@/lib/analytics";
 import { CURRENCY_KEY } from "@/lib/consent";
 import { homepageFaqs } from "@/lib/faqs";
@@ -11,17 +12,7 @@ import { pricingPlans } from "@/lib/pricing";
 import { appUrl } from "@/lib/app-url";
 
 export default function HomePage() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
-  const [videoProgress, setVideoProgress] = useState(0);
   const [appLink, setAppLink] = useState("https://app.quote-core.com");
-  const [videoHovered, setVideoHovered] = useState(false);
-  const heroVideoRef = useRef<HTMLVideoElement | null>(null);
-  const [heroIsMuted, setHeroIsMuted] = useState(true);
-  const [heroIsPaused, setHeroIsPaused] = useState(false);
-  const [heroVideoProgress, setHeroVideoProgress] = useState(0);
-  const [heroVideoHovered, setHeroVideoHovered] = useState(false);
   const [quoteModalOpen, setQuoteModalOpen] = useState(false);
   const [currency, setCurrency] = useState<"GBP" | "USD">("USD");
   const [activeTestimonial, setActiveTestimonial] = useState(0);
@@ -34,42 +25,8 @@ export default function HomePage() {
   const bannerTrackRef = useRef<HTMLDivElement | null>(null);
   const bannerPosRef = useRef(0);
 
-  const handleVideoTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-    setVideoProgress((video.currentTime / video.duration) * 100);
-  };
-
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const video = videoRef.current;
-    if (!video) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    video.currentTime = pct * video.duration;
-  };
-
   useEffect(() => {
     setAppLink(appUrl());
-  }, []);
-
-  useEffect(() => {
-    // Lazy-load the story video: only play when scrolled into view
-    const video = videoRef.current;
-    if (!video) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video.play().catch(() => {/* autoplay may be blocked */});
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { rootMargin: '200px' }
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -106,70 +63,6 @@ export default function HomePage() {
     timerId = setTimeout(step, PAUSE_MS);
     return () => { clearTimeout(timerId); cancelAnimationFrame(rafId); };
   }, []);
-
-  const toggleMute = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = !video.muted;
-    setIsMuted(video.muted);
-  };
-
-  const togglePlayback = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      try {
-        await video.play();
-        setIsPaused(false);
-      } catch {
-        setIsPaused(true);
-      }
-      return;
-    }
-
-    video.pause();
-    setIsPaused(true);
-  };
-
-  const handleHeroVideoTimeUpdate = () => {
-    const video = heroVideoRef.current;
-    if (!video || !video.duration) return;
-    setHeroVideoProgress((video.currentTime / video.duration) * 100);
-  };
-
-  const handleHeroProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const video = heroVideoRef.current;
-    if (!video) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    video.currentTime = pct * video.duration;
-  };
-
-  const toggleHeroMute = () => {
-    const video = heroVideoRef.current;
-    if (!video) return;
-    video.muted = !video.muted;
-    setHeroIsMuted(video.muted);
-  };
-
-  const toggleHeroPlayback = async () => {
-    const video = heroVideoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      try {
-        await video.play();
-        setHeroIsPaused(false);
-      } catch {
-        setHeroIsPaused(true);
-      }
-      return;
-    }
-
-    video.pause();
-    setHeroIsPaused(true);
-  };
 
   // Currency detection: geo-IP via API > browser locale > USD
   // Clear any stale localStorage value from old manual toggle
@@ -485,73 +378,13 @@ export default function HomePage() {
                 </div>
                 <p className="mt-3 text-sm text-zinc-600">All features for 14 days, no card required, risk free</p>
               </div>
-              {/* Right: hero video with controls */}
+              {/* Right: hero video (YouTube lite embed) */}
               <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
-                <div
-                  className="relative w-full overflow-hidden rounded-[2rem] border border-zinc-200 bg-black shadow-[0_30px_120px_rgba(0,0,0,0.15)]"
-                  style={{borderRadius: "2rem", aspectRatio: "16 / 9"}}
-                  onMouseEnter={() => setHeroVideoHovered(true)}
-                  onMouseLeave={() => setHeroVideoHovered(false)}
-                >
-                  <video
-                    ref={heroVideoRef}
-                    className="block w-full aspect-video"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    aria-label="Product demo: QuoteCore+ quoting interface"
-                    onTimeUpdate={handleHeroVideoTimeUpdate}
-                  >
-                    <source src="/Less than 3min w captions.mp4" type="video/mp4" />
-                    <track kind="captions" srcLang="en" label="Product demo video" src="/captions/hero-demo.vtt" />
-                  </video>
-                  {/* Progress bar - always seekable, visible on hover */}
-                  <div
-                    className="absolute inset-x-0 bottom-0 h-1.5 cursor-pointer transition-all duration-200 hover:h-2.5"
-                    style={{background: "rgba(255,255,255,0.2)"}}
-                    onClick={handleHeroProgressClick}
-                  >
-                    <div className="h-full bg-[#FF6B35] transition-all duration-100" style={{width: `${heroVideoProgress}%`}} />
-                  </div>
-                  {/* Play/pause + mute controls */}
-                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-5 pb-5">
-                    <button
-                      type="button"
-                      onClick={toggleHeroPlayback}
-                      aria-label={heroIsPaused ? "Play video" : "Pause video"}
-                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-colors duration-200 hover:bg-black/50"
-                    >
-                      {heroIsPaused ? (
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                          <path d="M8 5.14v13.72c0 .78.84 1.26 1.5.86l10-6.86a1 1 0 000-1.72l-10-6.86A1 1 0 008 5.14z" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                          <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
-                        </svg>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={toggleHeroMute}
-                      aria-label={heroIsMuted ? "Unmute video" : "Mute video"}
-                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-colors duration-200 hover:bg-black/50"
-                    >
-                      {heroIsMuted ? (
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                          <path d="M13 5.23v13.54a1 1 0 01-1.64.77L6.91 16H3a1 1 0 01-1-1v-6a1 1 0 011-1h3.91l4.45-3.54A1 1 0 0113 5.23zM20.78 8.8a1 1 0 010 1.41L19 12l1.78 1.79a1 1 0 11-1.41 1.41L17.59 13.4l-1.8 1.8a1 1 0 01-1.41-1.41L16.17 12l-1.79-1.79a1 1 0 011.41-1.41l1.8 1.8 1.78-1.8a1 1 0 011.41 0z" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                          <path d="M14 5.23v13.54a1 1 0 01-1.64.77L7.91 16H4a1 1 0 01-1-1v-6a1 1 0 011-1h3.91l4.45-3.54A1 1 0 0114 5.23z" />
-                          <path d="M16.5 9.5a1 1 0 011.41 0A4.97 4.97 0 0119.5 13a4.97 4.97 0 01-1.59 3.5 1 1 0 01-1.41-1.42A2.98 2.98 0 0017.5 13a2.98 2.98 0 00-1-2.08 1 1 0 010-1.42z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
+                <YouTubeLite
+                  videoId="QyYa1VbQkbQ"
+                  title="Roofing Quoting Software That Actually Works | QuoteCore+"
+                  className="w-full"
+                />
               </div>
             </div>
             {/* Scroll indicator */}
@@ -562,72 +395,14 @@ export default function HomePage() {
               </svg>
             </div>
           </div>
-          {/* Video below centered */}
+          {/* Video below centered (YouTube lite embed) */}
           <div className="relative mx-auto max-w-4xl px-6 lg:px-8 -mt-6">
             <div id="hero-story-video" className="relative">
-              <div
-                className="relative overflow-hidden rounded-[2rem] border border-zinc-200 bg-black shadow-[0_30px_120px_rgba(0,0,0,0.15)]"
-                style={{borderRadius: "2rem"}}
-                onMouseEnter={() => setVideoHovered(true)}
-                onMouseLeave={() => setVideoHovered(false)}
-              >
-                <video
-                  ref={videoRef}
-                  className="block w-full aspect-video"
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  aria-label="Brand story video showing the QuoteCore+ team and product in action"
-                  onTimeUpdate={handleVideoTimeUpdate}
-                >
-                  <source src="/kids-horizontal.mp4" type="video/mp4" />
-                  <track kind="captions" srcLang="en" label="Brand story video" src="/captions/brand-story.vtt" />
-                </video>
-                {/* Progress bar - always seekable, visible on hover */}
-                <div
-                  className="absolute inset-x-0 bottom-0 h-1.5 cursor-pointer transition-all duration-200 hover:h-2.5"
-                    style={{background: "rgba(255,255,255,0.2)"}}
-                    onClick={handleProgressClick}
-                >
-                  <div className="h-full bg-[#FF6B35] transition-all duration-100" style={{width: `${videoProgress}%`}} />
-                </div>
-                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 px-5 pb-5">
-                  <button
-                    type="button"
-                    onClick={togglePlayback}
-                    aria-label={isPaused ? "Play video" : "Pause video"}
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-colors duration-200 hover:bg-black/50"
-                  >
-                    {isPaused ? (
-                      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                        <path d="M8 5.14v13.72c0 .78.84 1.26 1.5.86l10-6.86a1 1 0 000-1.72l-10-6.86A1 1 0 008 5.14z" />
-                      </svg>
-                    ) : (
-                      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                        <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
-                      </svg>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={toggleMute}
-                    aria-label={isMuted ? "Unmute video" : "Mute video"}
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/35 text-white backdrop-blur-md transition-colors duration-200 hover:bg-black/50"
-                  >
-                    {isMuted ? (
-                      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                        <path d="M13 5.23v13.54a1 1 0 01-1.64.77L6.91 16H3a1 1 0 01-1-1v-6a1 1 0 011-1h3.91l4.45-3.54A1 1 0 0113 5.23zM20.78 8.8a1 1 0 010 1.41L19 12l1.78 1.79a1 1 0 11-1.41 1.41L17.59 13.4l-1.8 1.8a1 1 0 01-1.41-1.41L16.17 12l-1.79-1.79a1 1 0 011.41-1.41l1.8 1.8 1.78-1.8a1 1 0 011.41 0z" />
-                      </svg>
-                    ) : (
-                      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
-                        <path d="M14 5.23v13.54a1 1 0 01-1.64.77L7.91 16H4a1 1 0 01-1-1v-6a1 1 0 011-1h3.91l4.45-3.54A1 1 0 0114 5.23z" />
-                        <path d="M16.5 9.5a1 1 0 011.41 0A4.97 4.97 0 0119.5 13a4.97 4.97 0 01-1.59 3.5 1 1 0 01-1.41-1.42A2.98 2.98 0 0017.5 13a2.98 2.98 0 00-1-2.08 1 1 0 010-1.42z" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
+              <YouTubeLite
+                videoId="ntyS1giH5p0"
+                title="A Better Way to Measure, Quote and Invoice with QuoteCore+"
+                className="w-full"
+              />
             </div>
           </div>
         </section>
