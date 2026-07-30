@@ -11,6 +11,8 @@ import { test, expect, type Page } from '../fixtures/base';
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 const FIXTURE_CATALOGUE = 'E2E Supplier Catalogue Fixture (25 rows)';
+const FIXTURE_COMPONENT_NAME = 'Test Component';
+const FIXTURE_COMPONENT_SKU = 'TEST-001';
 
 async function dismissCookies(page: Page) {
   const button = page.getByRole('button', { name: /^got it$/i }).last();
@@ -38,6 +40,43 @@ async function openCatalogueRows(page: Page, slug: string) {
   await expect(page.getByText('25 / 25 selected', { exact: true })).toBeVisible();
 }
 
+async function openTargetLibrary(page: Page, slug: string, collectionId: string) {
+  await page.goto(`${BASE_URL}/${slug}/components`);
+  await page.waitForLoadState('domcontentloaded');
+  await dismissCookies(page);
+
+  const librarySelect = page.locator('select').filter({
+    has: page.locator(`option[value="${collectionId}"]`),
+  }).first();
+  await expect(librarySelect).toBeVisible();
+  await librarySelect.selectOption(collectionId);
+
+  const search = page.locator('input[placeholder^="Search Smart Components"]');
+  await search.fill(FIXTURE_COMPONENT_NAME);
+}
+
+function fixtureComponentCards(page: Page) {
+  return page.getByText(FIXTURE_COMPONENT_SKU, { exact: true }).locator(
+    'xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " group ")][1]'
+  );
+}
+
+async function deleteFixtureComponents(page: Page, slug: string, collectionId: string) {
+  await openTargetLibrary(page, slug, collectionId);
+
+  while (await fixtureComponentCards(page).count()) {
+    const previousCount = await fixtureComponentCards(page).count();
+    const card = fixtureComponentCards(page).first();
+    await expect(card).toContainText(FIXTURE_COMPONENT_NAME);
+    await card.hover();
+    await card.getByTitle('Click to delete').click();
+
+    const modal = page.getByRole('heading', { name: /Delete Smart Component/ }).locator('..');
+    await modal.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect(fixtureComponentCards(page)).toHaveCount(previousCount - 1);
+  }
+}
+
 test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => {
   test('C1: deterministic supplier catalogue loads exact mapped fields', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
@@ -51,7 +90,37 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     assertNoServerErrors();
   });
 
-  test('C2: oversized catalogue conversion is atomic', async ({ loginAs, assertNoServerErrors }) => {
+  test('C2: selected catalogue row creates a component in the owned library', async ({ loginAs, assertNoServerErrors }) => {
+    test.setTimeout(90_000);
+    const { page, slug } = await loginAs('paid-c');
+    await openCatalogueRows(page, slug);
+
+    const targetCollectionId = await page.locator('select').last().inputValue();
+    expect(targetCollectionId).not.toBe('');
+    await deleteFixtureComponents(page, slug, targetCollectionId);
+
+    try {
+      await openCatalogueRows(page, slug);
+      await page.locator('select').last().selectOption(targetCollectionId);
+      await page.locator('thead input[type="checkbox"]').uncheck();
+      await page.locator('tbody tr').first().locator('input[type="checkbox"]').check();
+      await expect(page.getByText('1 / 25 selected', { exact: true })).toBeVisible();
+
+      await page.getByRole('button', { name: 'Create 1 Component', exact: true }).click();
+      await expect(page.getByText('Created 1 component from catalogue.', { exact: true })).toBeVisible();
+
+      await openTargetLibrary(page, slug, targetCollectionId);
+      const createdCard = fixtureComponentCards(page);
+      await expect(createdCard).toHaveCount(1);
+      await expect(createdCard).toContainText(FIXTURE_COMPONENT_NAME);
+    } finally {
+      await deleteFixtureComponents(page, slug, targetCollectionId);
+    }
+
+    assertNoServerErrors();
+  });
+
+  test('C3: oversized catalogue conversion is atomic', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
     await openCatalogueRows(page, slug);
 
@@ -74,7 +143,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     assertNoServerErrors();
   });
 
-  test('C3: supplier directory excludes private catalogue status labels', async ({ loginAs, assertNoServerErrors }) => {
+  test('C4: supplier directory excludes private catalogue status labels', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
     await page.goto(`${BASE_URL}/${slug}/supplier-directory`);
     await page.waitForLoadState('domcontentloaded');
@@ -85,7 +154,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     assertNoServerErrors();
   });
 
-  test('C4: supplier directory search is always available', async ({ loginAs, assertNoServerErrors }) => {
+  test('C5: supplier directory search is always available', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
     await page.goto(`${BASE_URL}/${slug}/supplier-directory`);
     await page.waitForLoadState('domcontentloaded');
@@ -98,7 +167,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     assertNoServerErrors();
   });
 
-  test('C5: supplier import API rejects unauthenticated and malformed requests', async ({ freshPage }) => {
+  test('C6: supplier import API rejects unauthenticated and malformed requests', async ({ freshPage }) => {
     const anonymousPage = await freshPage();
     const unauthenticated = await anonymousPage.request.post(`${BASE_URL}/api/supplier-import`, {
       data: { sourceLibraryId: 'invalid', targetCollectionId: 'invalid', componentIds: [] },
@@ -109,7 +178,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     expect(body).toMatchObject({ ok: false, message: 'Authentication required.' });
   });
 
-  test('C6: authenticated catalogue conversion rejects missing fields as 400', async ({ loginAs }) => {
+  test('C7: authenticated catalogue conversion rejects missing fields as 400', async ({ loginAs }) => {
     const { page } = await loginAs('paid-c');
     const response = await page.request.post(`${BASE_URL}/api/supplier-catalogue-convert`, {
       data: { selectedRows: [] },
@@ -119,7 +188,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     await expect(response.json()).resolves.toMatchObject({ ok: false });
   });
 
-  test('C7: quoted commas remain within catalogue fields', async ({ loginAs, assertNoServerErrors }) => {
+  test('C8: quoted commas remain within catalogue fields', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
     await openCatalogueRows(page, slug);
 
@@ -128,7 +197,7 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     assertNoServerErrors();
   });
 
-  test('C8: long source descriptions remain intact before conversion', async ({ loginAs, assertNoServerErrors }) => {
+  test('C9: long source descriptions remain intact before conversion', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
     await openCatalogueRows(page, slug);
 
