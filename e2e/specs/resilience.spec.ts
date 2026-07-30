@@ -57,7 +57,7 @@ test.describe('Resilience', () => {
 
     for (const pubPath of publicPaths) {
       await page.goto(`${BASE_URL}${pubPath}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Verify same origin
       expect(page.url()).toContain('quotecore-plus-testing.vercel.app');
