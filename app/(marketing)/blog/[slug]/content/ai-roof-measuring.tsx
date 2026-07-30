@@ -58,30 +58,15 @@ export default function Post() {
       </p>
       <p>
         You upload a roof plan image. Could be a PDF you exported, a photo of a drawing, or a
-        screenshot from planning software. The AI runs a three-stage scan:
+        screenshot from planning software. The AI runs multiple specialised scans using
+        industry-leading vision models to trace the roof geometry, detect internal lines,
+        and classify them. The whole pipeline is designed to be fast and cost-efficient,
+        so you get results in seconds without high per-scan costs being passed on to you.
       </p>
-      <ol>
-        <li>
-          <strong>Outline scan</strong> - the AI traces the roof perimeter and draws a closed
-          polygon around it. You see this overlaid on your image immediately. If the AI missed a
-          notch where the extension meets the main roof, you drag that vertex into place and move on.
-        </li>
-        <li>
-          <strong>Line detection scan</strong> - the AI looks inside the outline for visible lines.
-          Ridges, hips, valleys, barges. Each line gets a confidence score. A clearly drawn ridge
-          line scores high. A faint, ambiguous line scores low and gets flagged so you know to
-          check it.
-        </li>
-        <li>
-          <strong>Classification scan</strong> - the AI names each line. Ridge. Hip. Valley. Barge.
-          Spouting. Or "uncertain" if it is not sure. The classification matters because it
-          determines how areas are calculated - a valley line affects area differently than a ridge.
-        </li>
-      </ol>
       <p>
-        Then you review. You check the outline, look at any lines flagged as uncertain, confirm the
-        scale and pitch, and adjust anything that is wrong. The AI did the boring part. You did the
-        quality check. That is the workflow.
+        Then you review. You check the outline, look at any lines the AI flags as uncertain,
+        confirm the scale and pitch, and adjust anything that is wrong. The AI did the boring
+        part. You did the quality check. That is the workflow.
       </p>
 
       <h2>What happens if you do not verify</h2>
@@ -222,6 +207,34 @@ export default function Post() {
         <li>
           <a href="/free-quote-generator">Free Quote Generator</a> - turn those measurements into a
           professional quote you can send to a client.
+        </li>
+        <li>
+          <a href="/free-invoice-generator">Free Invoice Generator</a> - create and send
+          professional invoices in minutes.
+        </li>
+        <li>
+          <a href="/free-purchase-order-generator">Free Purchase Order Generator</a> - generate
+          POs for material orders quickly and accurately.
+        </li>
+        <li>
+          <a href="/free-construction-calculator">Construction Calculator</a> - handle general
+          construction material calculations.
+        </li>
+        <li>
+          <a href="/free-concrete-calculator">Concrete Calculator</a> - work out concrete volumes
+          for foundations, slabs, and footings.
+        </li>
+        <li>
+          <a href="/free-landscaping-calculator">Landscaping Calculator</a> - estimate materials
+          for landscaping projects.
+        </li>
+        <li>
+          <a href="/free-birds-mouth-calculator">Bird&apos;s-mouth Calculator</a> - calculate
+          bird&apos;s-mouth cuts for rafters.
+        </li>
+        <li>
+          <a href="/free-tools">Browse all free tools</a> - see the full range of free
+          calculators and generators.
         </li>
       </ul>
       <p>
