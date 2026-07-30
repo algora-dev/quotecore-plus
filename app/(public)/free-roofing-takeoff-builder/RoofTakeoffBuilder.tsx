@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import BlogHeader from '@/components/BlogHeader';
@@ -9,6 +9,7 @@ import type { Entry, ComponentSection, RoofComponentDef, CustomComponentDef } fr
 import {
   COMPONENT_DEFS,
   BUILT_IN_ORDER,
+  DEFAULT_COMPONENTS,
   areaValueForUnit,
   computeEntry,
   computeMaterialCost,
@@ -146,8 +147,14 @@ export function RoofTakeoffBuilder() {
   useEffect(() => {
     fetch('/api/free-tools/roof-components')
       .then(r => r.json())
-      .then(data => { if (data.components) setComponents(data.components); })
-      .catch(() => {})
+      .then(data => {
+        if (data.components && data.components.length > 0) {
+          setComponents(data.components);
+        } else {
+          setComponents(DEFAULT_COMPONENTS);
+        }
+      })
+      .catch(() => setComponents(DEFAULT_COMPONENTS))
       .finally(() => setComponentsLoading(false));
   }, []);
 
@@ -348,7 +355,7 @@ export function RoofTakeoffBuilder() {
             <div className="flex items-center gap-2">
               <label className="text-xs font-medium text-slate-600 flex items-center gap-1">Waste<InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps." /></label>
               <div className="relative">
-                <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
+                <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-base md:text-sm text-center focus:border-slate-900 focus:outline-none" />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
               </div>
             </div>
@@ -445,7 +452,7 @@ export function RoofTakeoffBuilder() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <button onClick={() => { setUnitSystem('metric'); setExpandedSection('roof_area'); }}
                   className="rounded-2xl border-2 border-slate-200 bg-white p-5 text-center transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] flex flex-col items-center">
-                  <span className="text-2xl font-bold text-slate-900">m / m&#178;</span>
+                  <span className="text-2xl font-bold text-slate-900">m / m{'\u00B2'}</span>
                   <span className="mt-1 text-sm text-slate-500">Metric</span>
                   <span className="mt-1 text-xs text-slate-400">Metres &amp; square metres</span>
                 </button>
@@ -478,7 +485,7 @@ export function RoofTakeoffBuilder() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   <div className="w-px h-4 bg-slate-200" />
-                  <span className="text-sm font-medium text-slate-500">{u === 'metric' ? 'Metric (m / m&#178;)' : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</span>
+                  <span className="text-sm font-medium text-slate-500">{u === 'metric' ? <>Metric (m / m{'\u00B2'})</> : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Experience toggle */}
@@ -509,14 +516,14 @@ export function RoofTakeoffBuilder() {
                     {pitchMode === 'degrees' ? (
                       <div className="flex items-center gap-2">
                         <div className="relative">
-                          <input type="number" value={masterPitch} onChange={(e) => updatePitchDegrees(e.target.value)} min={0} max={89} step={0.5} inputMode="decimal" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
+                          <input type="number" value={masterPitch} onChange={(e) => updatePitchDegrees(e.target.value)} min={0} max={89} step={0.5} inputMode="decimal" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-slate-900 focus:outline-none" />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">deg</span>
                         </div>
                         <span className="text-xs text-slate-400">= {masterRatio}</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <input type="text" value={masterRatio} onChange={(e) => updatePitchRatio(e.target.value)} placeholder="5:12" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
+                        <input type="text" value={masterRatio} onChange={(e) => updatePitchRatio(e.target.value)} placeholder="5:12" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-slate-900 focus:outline-none" />
                         <span className="text-xs text-slate-400">= {masterPitch} deg</span>
                       </div>
                     )}

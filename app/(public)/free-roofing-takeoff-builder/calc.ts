@@ -17,6 +17,30 @@ export const COMPONENT_DEFS: Record<string, { label: string; unit: string; pitch
 
 export const BUILT_IN_ORDER: string[] = ['roof_area', 'ridge', 'hip', 'valley', 'barge', 'spouting', 'underlay', 'fixings'];
 
+// ─── Default example components (fallback when DB is empty) ─────
+
+export const DEFAULT_COMPONENTS: RoofComponentDef[] = [
+  // Roof Area
+  { id: 'default-roofing-iron', component_kind: 'roof_area' as ComponentKind, name: 'Corrugated Iron Roofing', description: '0.42mm corrugated iron profile', unit: 'm\u00B2', price_per_unit: 18.50, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 12.00, labour_unit: 'm\u00B2', suggested_waste_percent: 5, pitch_type: 'rafter', is_active: true, sort_order: 1 },
+  { id: 'default-metal-tile', component_kind: 'roof_area' as ComponentKind, name: 'Pressed Metal Tile', description: 'Stone-coated metal tile panel', unit: 'm\u00B2', price_per_unit: 32.00, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 18.00, labour_unit: 'm\u00B2', suggested_waste_percent: 7, pitch_type: 'rafter', is_active: true, sort_order: 2 },
+  // Ridge
+  { id: 'default-ridge-cap', component_kind: 'ridge' as ComponentKind, name: 'Ridge Cap Flashing', description: 'Pre-formed ridge cap', unit: 'm', price_per_unit: 12.00, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 8.00, labour_unit: 'm', suggested_waste_percent: 3, pitch_type: 'none', is_active: true, sort_order: 1 },
+  { id: 'default-ridge-roll', component_kind: 'ridge' as ComponentKind, name: 'Ridge Roll', description: 'Flexible ridge roll for metal roofs', unit: 'm', price_per_unit: 6.50, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 5.00, labour_unit: 'm', suggested_waste_percent: 3, pitch_type: 'none', is_active: true, sort_order: 2 },
+  // Hip
+  { id: 'default-hip-cap', component_kind: 'hip' as ComponentKind, name: 'Hip Cap Flashing', description: 'Pre-formed hip capping', unit: 'm', price_per_unit: 14.00, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 10.00, labour_unit: 'm', suggested_waste_percent: 5, pitch_type: 'hip_valley', is_active: true, sort_order: 1 },
+  // Valley
+  { id: 'default-valley-flash', component_kind: 'valley' as ComponentKind, name: 'Valley Flashing', description: 'Pre-formed valley tray', unit: 'm', price_per_unit: 16.00, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 12.00, labour_unit: 'm', suggested_waste_percent: 5, pitch_type: 'hip_valley', is_active: true, sort_order: 1 },
+  // Barge
+  { id: 'default-barge-flash', component_kind: 'barge' as ComponentKind, name: 'Barge Flashing', description: 'Barge board flashing', unit: 'm', price_per_unit: 10.00, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 7.00, labour_unit: 'm', suggested_waste_percent: 3, pitch_type: 'rafter', is_active: true, sort_order: 1 },
+  // Spouting
+  { id: 'default-spouting', component_kind: 'spouting' as ComponentKind, name: 'Spouting/Gutter', description: 'Continuous gutter system', unit: 'm', price_per_unit: 22.00, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 10.00, labour_unit: 'm', suggested_waste_percent: 3, pitch_type: 'none', is_active: true, sort_order: 1 },
+  { id: 'default-downpipe', component_kind: 'spouting' as ComponentKind, name: 'Downpipe', description: '100mm round downpipe', unit: 'm', price_per_unit: 15.00, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 8.00, labour_unit: 'm', suggested_waste_percent: 3, pitch_type: 'none', is_active: true, sort_order: 2 },
+  // Underlay
+  { id: 'default-underlay', component_kind: 'underlay' as ComponentKind, name: 'Roofing Underlay', description: 'Breathable roofing underlay', unit: 'm\u00B2', price_per_unit: 4.50, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 3.00, labour_unit: 'm\u00B2', suggested_waste_percent: 10, pitch_type: 'rafter', is_active: true, sort_order: 1 },
+  // Fixings
+  { id: 'default-fixings', component_kind: 'fixings' as ComponentKind, name: 'Roofing Screws', description: '10g x 50mm roofing screws with EPDM washers', unit: 'm\u00B2', price_per_unit: 3.50, pricing_strategy: 'per_unit', pack_size: null, pack_price: null, labour_rate: 2.00, labour_unit: 'm\u00B2', suggested_waste_percent: 5, pitch_type: 'rafter', is_active: true, sort_order: 1 },
+];
+
 // ─── Pitch calculation ───────────────────────────────
 
 const RAD = Math.PI / 180;
