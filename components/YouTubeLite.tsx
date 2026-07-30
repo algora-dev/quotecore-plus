@@ -69,12 +69,15 @@ export default function YouTubeLite({
   }
 
   return (
+    <>
     <button
       type="button"
       onClick={handleClick}
       className={`${containerClass} group cursor-pointer ${aspectClass}`}
       style={{ aspectRatio: "16 / 9" }}
       aria-label={`Play: ${title}`}
+      itemScope
+      itemType="https://schema.org/VideoObject"
     >
       {/* Thumbnail */}
       <img
@@ -84,6 +87,12 @@ export default function YouTubeLite({
         loading="lazy"
         onError={() => setImgError(true)}
       />
+      {/* Hidden metadata for crawlers (visible in DOM, not visually) */}
+      <meta itemProp="name" content={title} />
+      <meta itemProp="thumbnailUrl" content={thumbSrc} />
+      <meta itemProp="embedUrl" content={`https://www.youtube-nocookie.com/embed/${videoId}`} />
+      <meta itemProp="contentUrl" content={`https://www.youtube.com/watch?v=${videoId}`} />
+      <meta itemProp="uploadDate" content="2026-07-28" />
       {/* Dark gradient overlay for contrast */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
       {/* Play button */}
@@ -101,5 +110,15 @@ export default function YouTubeLite({
         </div>
       )}
     </button>
+    <noscript>
+      <a
+        href={`https://www.youtube.com/watch?v=${videoId}`}
+        className="sr-only"
+        aria-label={`Watch: ${title}`}
+      >
+        Watch: {title} on YouTube
+      </a>
+    </noscript>
+    </>
   );
 }

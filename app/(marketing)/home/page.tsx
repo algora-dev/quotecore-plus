@@ -181,24 +181,24 @@ export default function HomePage() {
 
   const tutorials = [
     {
-      title: "How to Create a Roofing Materials Order from a Quote",
-      image: "/tutorials/orders.png",
-      href: "https://www.youtube.com/watch?v=kOkQuUy8MWQ&t=10s",
+      title: "What are Smart Components™?",
+      image: "https://i.ytimg.com/vi/aFXJwOiliPI/maxresdefault.jpg",
+      href: "https://www.youtube.com/watch?v=aFXJwOiliPI",
     },
     {
-      title: "Quote Tutorial",
-      image: "/tutorials/quote-tutorial.png",
-      href: "https://www.youtube.com/watch?v=pqIfx-rOcmo&t=197s",
-    },
-    {
-      title: "How to Create a Roofing Component Quote without digital measure",
-      image: "/tutorials/roofing-component-quote.png",
-      href: "https://www.youtube.com/watch?v=1MOvQX-Lf_c&t=108s",
-    },
-    {
-      title: "Roofing Components Tutorial",
-      image: "/tutorials/roofing-components.png",
+      title: "How to Set Up Roofing Smart Components in QuoteCore+",
+      image: "https://i.ytimg.com/vi/XZSTIfGUHAU/maxresdefault.jpg",
       href: "https://www.youtube.com/watch?v=XZSTIfGUHAU",
+    },
+    {
+      title: "How to Order Materials from an Accepted Quote",
+      image: "https://i.ytimg.com/vi/kOkQuUy8MWQ/maxresdefault.jpg",
+      href: "https://www.youtube.com/watch?v=kOkQuUy8MWQ",
+    },
+    {
+      title: "Create a Quote from Start to Finish with QuoteCore+",
+      image: "https://i.ytimg.com/vi/pqIfx-rOcmo/maxresdefault.jpg",
+      href: "https://www.youtube.com/watch?v=pqIfx-rOcmo",
     },
   ];
   const tutorialVisibleCount = isMobile ? 1 : 4;
@@ -381,8 +381,8 @@ export default function HomePage() {
               {/* Right: hero video (YouTube lite embed) */}
               <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
                 <YouTubeLite
-                  videoId="QyYa1VbQkbQ"
-                  title="Roofing Quoting Software That Actually Works | QuoteCore+"
+                  videoId="DziFjqnPdqQ"
+                  title="Create a complex roofing quote in under 3min for less than $1!"
                   className="w-full"
                 />
               </div>
@@ -399,8 +399,8 @@ export default function HomePage() {
           <div className="relative mx-auto max-w-4xl px-6 lg:px-8 -mt-6">
             <div id="hero-story-video" className="relative">
               <YouTubeLite
-                videoId="ntyS1giH5p0"
-                title="A Better Way to Measure, Quote and Invoice with QuoteCore+"
+                videoId="rqmEtartkYw"
+                title="Still looking for the long wait?"
                 className="w-full"
               />
             </div>
