@@ -73,9 +73,10 @@ export function ComponentSymbol({ kind, customDef, className = 'w-4 h-4', color 
         </svg>
       );
     case 'spouting':
+      // Open U-shape gutter - no lid on top
       return (
         <svg className={className} fill="none" viewBox="0 0 24 24" stroke={stroke} strokeWidth={sw}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8h18M5 8v4a2 2 0 002 2h10a2 2 0 002-2V8" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 8v3a2 2 0 002 2h12a2 2 0 002-2V8" />
         </svg>
       );
     case 'underlay':

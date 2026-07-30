@@ -42,12 +42,21 @@ type MeasureMode = 'actual' | 'plan';
 type UnitSystem = 'metric' | 'imperial' | 'squares';
 type ExperienceLevel = 'guided' | 'fast';
 
+const CURRENCY_OPTIONS: { code: string; symbol: string; label: string }[] = [
+  { code: 'GBP', symbol: '\u00A3', label: 'GBP (\u00A3)' },
+  { code: 'USD', symbol: '$', label: 'USD ($)' },
+  { code: 'EUR', symbol: '\u20AC', label: 'EUR (\u20AC)' },
+  { code: 'AUD', symbol: 'A$', label: 'AUD (A$)' },
+  { code: 'NZD', symbol: 'NZ$', label: 'NZD (NZ$)' },
+];
+
 interface PersistedTakeoffState {
   measureMode?: MeasureMode;
   unitSystem?: UnitSystem;
   experience?: ExperienceLevel;
   masterPitch?: string;
   masterRatio?: string;
+  currencyCode?: string;
   sections?: Record<string, ComponentSection>;
   customSections?: Record<string, ComponentSection>;
 }
@@ -93,6 +102,7 @@ export function RoofTakeoffBuilder() {
   const [customSections, setCustomSections] = useState<Record<string, ComponentSection>>({});
   const [masterPitch, setMasterPitch] = useState('25');
   const [masterRatio, setMasterRatio] = useState('5:12');
+  const [currency, setCurrency] = useState(CURRENCY_OPTIONS[0]);
   const [expandedSection, setExpandedSection] = useState<string | null>('roof_area');
   const [showResults, setShowResults] = useState(false);
   const [components, setComponents] = useState<RoofComponentDef[]>([]);
@@ -110,6 +120,7 @@ export function RoofTakeoffBuilder() {
         if (data.experience) setExperience(data.experience);
         if (data.masterPitch) setMasterPitch(data.masterPitch);
         if (data.masterRatio) setMasterRatio(data.masterRatio);
+        if (data.currencyCode) setCurrency(CURRENCY_OPTIONS.find(c => c.code === data.currencyCode) || CURRENCY_OPTIONS[0]);
         if (data.sections) {
           // Re-register custom kinds
           for (const [key, section] of Object.entries(data.sections)) {
@@ -138,11 +149,11 @@ export function RoofTakeoffBuilder() {
     if (measureMode && unitSystem) {
       try {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-          measureMode, unitSystem, experience, masterPitch, masterRatio, sections, customSections,
+          measureMode, unitSystem, experience, masterPitch, masterRatio, currencyCode: currency.code, sections, customSections,
         }));
       } catch {}
     }
-  }, [measureMode, unitSystem, experience, masterPitch, masterRatio, sections, customSections]);
+  }, [measureMode, unitSystem, experience, masterPitch, masterRatio, currency, sections, customSections]);
 
   useEffect(() => {
     fetch('/api/free-tools/roof-components')
@@ -282,6 +293,7 @@ export function RoofTakeoffBuilder() {
     setCustomSections({});
     setMasterPitch('25');
     setMasterRatio('5:12');
+    setCurrency(CURRENCY_OPTIONS[0]);
     setExpandedSection('roof_area');
     setShowResults(false);
     sessionStorage.removeItem(SESSION_KEY);
@@ -299,7 +311,7 @@ export function RoofTakeoffBuilder() {
     setMeasureMode(null);
     setUnitSystem(null);
   };
-  const cur = '\u00A3';
+  const cur = currency.symbol;
 
   const u = unitSystem || 'metric';
   const lenLbl = unitLabel(u);
@@ -360,12 +372,12 @@ export function RoofTakeoffBuilder() {
               </div>
             </div>
 
-            <AddEntryForm kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={availableComponents} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} unitSystem={u} roofAreaTotal={isRoofArea && key !== 'roof_area' ? roofAreaTotal : null} isFixed={isFixed} onAdd={(entry) => addEntry(key, entry)} />
+            <AddEntryForm kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} availableComponents={availableComponents} componentsLoading={componentsLoading} pitchDegrees={effectivePitch} unitSystem={u} roofAreaTotal={isRoofArea && key !== 'roof_area' ? roofAreaTotal : null} isFixed={isFixed} currencySymbol={cur} onAdd={(entry) => addEntry(key, entry)} />
 
             {hasEntries && (
               <div className="space-y-1.5">
                 {section.entries.map((entry, idx) => (
-                  <EntryListItem key={entry.id} entry={entry} index={idx} kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} isFixed={isFixed} getComponentById={getComponentById} onRemove={() => removeEntry(key, entry.id)} />
+                  <EntryListItem key={entry.id} entry={entry} index={idx} kind={key} customDef={section.customDef} measureMode={measureMode!} lenLabel={lenLbl} areaLabel={areaLbl} wastePercent={section.wastePercent} isFixed={isFixed} currencySymbol={cur} getComponentById={getComponentById} onRemove={() => removeEntry(key, entry.id)} />
                 ))}
               </div>
             )}
@@ -486,6 +498,10 @@ export function RoofTakeoffBuilder() {
                   <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   <div className="w-px h-4 bg-slate-200" />
                   <span className="text-sm font-medium text-slate-500">{u === 'metric' ? <>Metric (m / m{'\u00B2'})</> : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</span>
+                  <div className="w-px h-4 bg-slate-200" />
+                  <select value={currency.code} onChange={(e) => setCurrency(CURRENCY_OPTIONS.find(c => c.code === e.target.value) || CURRENCY_OPTIONS[0])} className="rounded-lg border border-slate-300 px-2 py-1 text-xs font-medium text-slate-600 focus:border-slate-900 focus:outline-none cursor-pointer">
+                    {CURRENCY_OPTIONS.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+                  </select>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Experience toggle */}
@@ -600,7 +616,7 @@ export function RoofTakeoffBuilder() {
           )}
         </div>
 
-        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} />}
+        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} currencySymbol={cur} currencyCode={currency.code} onClose={() => setShowResults(false)} />}
 
         {/* Related Tools */}
         <section className="border-t border-slate-200 bg-slate-50">
