@@ -87,8 +87,8 @@ export default function Post() {
       </ul>
       <p>
         Always check the manufacturer datasheet for the exact coverage rate. It varies by tile
-        profile, batten gauge, and pitch. The <a href="/free-roofing-material-calculator">Roofing
-        Material Calculator</a> handles this with preset coverage rates.
+        profile, batten gauge, and pitch. The <a href="/free-smart-component-creator">Smart
+        Component Creator</a> handles this with preset coverage rates.
       </p>
 
       <hr />
@@ -164,7 +164,7 @@ export default function Post() {
       </p>
       <ul>
         <li>
-          <a href="/free-roofing-material-calculator">Roofing Material Calculator</a> - calculates
+          <a href="/free-smart-component-creator">Smart Component Creator</a> - calculates
           tile, underlay, and batten quantities from roof area and pitch
         </li>
         <li>

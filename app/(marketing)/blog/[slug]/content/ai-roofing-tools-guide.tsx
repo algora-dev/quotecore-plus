@@ -211,11 +211,12 @@ export default function Post() {
       </p>
       <ul>
         <li>
-          <a href="/free-roofing-takeoff-builder">Roof Takeoff Builder</a> - upload a plan and watch
-          the AI trace it. Limited free scans.
+          <a href="/free-roofing-takeoff-builder">Roof Takeoff Builder</a> - enter your
+          measurements manually and get roof area, ridges, hips, valleys, and material quantities
+          calculated automatically.
         </li>
         <li>
-          <a href="/free-roofing-material-calculator">Roofing Material Calculator</a> - calculate
+          <a href="/free-smart-component-creator">Smart Component Creator</a> - calculate
           tile, underlay, and batten quantities from your measurements.
         </li>
         <li>
@@ -223,32 +224,8 @@ export default function Post() {
           professional quote.
         </li>
         <li>
-          <a href="/free-invoice-generator">Free Invoice Generator</a> - create and send
-          professional invoices in minutes.
-        </li>
-        <li>
-          <a href="/free-purchase-order-generator">Free Purchase Order Generator</a> - generate
-          POs for material orders quickly and accurately.
-        </li>
-        <li>
-          <a href="/free-construction-calculator">Construction Calculator</a> - handle general
-          construction material calculations.
-        </li>
-        <li>
-          <a href="/free-concrete-calculator">Concrete Calculator</a> - work out concrete volumes
-          for foundations, slabs, and footings.
-        </li>
-        <li>
-          <a href="/free-landscaping-calculator">Landscaping Calculator</a> - estimate materials
-          for landscaping projects.
-        </li>
-        <li>
-          <a href="/free-birds-mouth-calculator">Bird&apos;s-mouth Calculator</a> - calculate
-          bird&apos;s-mouth cuts for rafters.
-        </li>
-        <li>
-          <a href="/free-tools">Browse all free tools</a> - see the full range of free
-          calculators and generators.
+          <a href="/free-tools">Browse all free tools</a> - plus more free roofing calculators
+          and generators.
         </li>
       </ul>
       <p>
