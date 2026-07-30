@@ -445,7 +445,7 @@ export function RoofTakeoffBuilder() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <button onClick={() => { setUnitSystem('metric'); setExpandedSection('roof_area'); }}
                   className="rounded-2xl border-2 border-slate-200 bg-white p-5 text-center transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] flex flex-col items-center">
-                  <span className="text-2xl font-bold text-slate-900">m / m²</span>
+                  <span className="text-2xl font-bold text-slate-900">m / m&#178;</span>
                   <span className="mt-1 text-sm text-slate-500">Metric</span>
                   <span className="mt-1 text-xs text-slate-400">Metres &amp; square metres</span>
                 </button>
@@ -478,7 +478,7 @@ export function RoofTakeoffBuilder() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   <div className="w-px h-4 bg-slate-200" />
-                  <span className="text-sm font-medium text-slate-500">{u === 'metric' ? 'Metric (m / m²)' : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</span>
+                  <span className="text-sm font-medium text-slate-500">{u === 'metric' ? 'Metric (m / m&#178;)' : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Experience toggle */}
