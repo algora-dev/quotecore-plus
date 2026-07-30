@@ -34,9 +34,9 @@ async function createQuote(
   page: Page,
   slug: string,
   prefix: (s: string) => string,
-  customerLabel: string = 'PhaseD Customer'
+  customerNameOverride?: string
 ): Promise<string> {
-  const customerName = prefix(customerLabel);
+  const customerName = prefix(customerNameOverride ?? 'PhaseD Customer');
 
   await page.goto(`${BASE_URL}/${slug}/quotes`);
   await page.waitForLoadState('domcontentloaded');
