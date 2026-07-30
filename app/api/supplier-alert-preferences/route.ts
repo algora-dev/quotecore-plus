@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateSupplierAlertPreference, getSupplierSubscriptions } from '@/app/(auth)/[workspaceSlug]/supplier-directory/actions';
+import { requireApiAuthentication } from '@/app/lib/auth/apiGuard';
 
 export async function GET() {
+  const authError = await requireApiAuthentication();
+  if (authError) return authError;
+
   try {
     const subscriptions = await getSupplierSubscriptions();
     return NextResponse.json({ ok: true, subscriptions });
@@ -15,6 +19,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const authError = await requireApiAuthentication();
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { sourceLibraryId, alertsEnabled, fieldPreferences } = body as {

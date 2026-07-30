@@ -7,6 +7,11 @@
  * @smoke @mutation @security
  */
 import { test, expect, type Page } from '../fixtures/base';
+import {
+  computeMaterialCostByStrategy,
+  computeQuoteTotals,
+  type QuoteComponent,
+} from '../../app/lib/pricing/engine';
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
 
@@ -109,7 +114,7 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
 
   test('persisted totals survive reload', async ({ loginAs, prefix, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('starter-b');
-    const quoteUrl = await createQuoteAndNavigate(page, slug, prefix);
+    await createQuoteAndNavigate(page, slug, prefix);
 
     const totalBefore = await getBuilderTotal(page);
 
@@ -238,5 +243,85 @@ test.describe('P2.5-01: Money-boundary calculation matrix @mutation', () => {
     }
 
     assertNoServerErrors();
+  });
+});
+
+function pricedComponent(materialCost: number, labourCost = 0): QuoteComponent {
+  return {
+    id: crypto.randomUUID(),
+    name: 'Money boundary fixture',
+    componentType: 'main',
+    measurementType: 'quantity',
+    inputMode: 'final',
+    wasteType: 'none',
+    wastePercent: 0,
+    wasteFixed: 0,
+    materialRate: 0,
+    labourRate: 0,
+    materialCost,
+    labourCost,
+    isRateOverridden: false,
+    isQuantityOverridden: false,
+    isWasteOverridden: false,
+    isPitchOverridden: false,
+    isCustomerVisible: true,
+  };
+}
+
+test.describe('P2.5-01B: deterministic money boundaries @security', () => {
+  test('decimal quantity and rate retain precision', () => {
+    const result = computeMaterialCostByStrategy({
+      strategy: 'per_unit',
+      totalQuantity: 2.375,
+      materialRate: 19.99,
+      packPrice: null,
+      packSize: null,
+      packCoverageM2: null,
+    });
+
+    expect(result.cost).toBeCloseTo(47.47625, 8);
+    expect(result.packDataMissing).toBe(false);
+  });
+
+  test('fractional VAT applies after material and labour margins', () => {
+    const totals = computeQuoteTotals(
+      [pricedComponent(100, 50)],
+      { materialMarginPct: 10, labourMarginPct: 20, taxRate: 17.5 },
+    );
+
+    expect(totals.subtotal).toBe(150);
+    expect(totals.materialMargin).toBe(10);
+    expect(totals.labourMargin).toBe(10);
+    expect(totals.subtotalWithMargins).toBe(170);
+    expect(totals.tax).toBeCloseTo(29.75, 8);
+    expect(totals.grandTotal).toBeCloseTo(199.75, 8);
+  });
+
+  test('zero and negative quantities cannot create negative material totals', () => {
+    for (const totalQuantity of [0, -1, -999_999]) {
+      const result = computeMaterialCostByStrategy({
+        strategy: 'per_unit',
+        totalQuantity,
+        materialRate: 125.5,
+        packPrice: null,
+        packSize: null,
+        packCoverageM2: null,
+      });
+      expect(result.cost).toBe(0);
+    }
+  });
+
+  test('large quantities remain finite and exact at currency scale', () => {
+    const result = computeMaterialCostByStrategy({
+      strategy: 'per_unit',
+      totalQuantity: 1_000_000,
+      materialRate: 9_999.99,
+      packPrice: null,
+      packSize: null,
+      packCoverageM2: null,
+    });
+
+    expect(result.cost).toBe(9_999_990_000);
+    expect(Number.isFinite(result.cost)).toBe(true);
   });
 });

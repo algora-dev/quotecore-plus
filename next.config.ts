@@ -42,6 +42,40 @@ const DOCS_CSP = [
   "upgrade-insecure-requests",
 ].join('; ');
 
+/**
+ * Compatibility CSP for the full application surface.
+ *
+ * Report-only is deliberate for the pre-launch rollout: it gives every route
+ * CSP coverage without risking a last-minute outage in Next.js bootstrapping,
+ * analytics, Supabase Realtime, embedded videos, or customer-hosted media.
+ * Once violations have been observed and tuned, this can become enforced.
+ */
+const APP_CSP_REPORT_ONLY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  [
+    "connect-src 'self'",
+    `https://${SUPABASE_HOST}`,
+    `wss://${SUPABASE_HOST}`,
+    'https://www.google-analytics.com',
+    'https://*.google-analytics.com',
+    'https://*.analytics.google.com',
+    'https://*.vercel-insights.com',
+  ].join(' '),
+  "media-src 'self' data: blob: https:",
+  "frame-src 'self' blob: https://www.youtube.com https://www.youtube-nocookie.com",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "upgrade-insecure-requests",
+].join('; ');
+
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
   // No serverExternalPackages needed for fabric.js
@@ -80,6 +114,10 @@ const nextConfig: NextConfig = {
     const globalHeaders = [
       ...baseSecurityHeaders,
       ...robotsHeader,
+      {
+        key: 'Content-Security-Policy-Report-Only',
+        value: APP_CSP_REPORT_ONLY,
+      },
     ];
 
     return [

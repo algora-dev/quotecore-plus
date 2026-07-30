@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { getAppOrigin, setHandoffCookie } from './appOrigin';
 
 /**
  * Shared "Save to App" button for free tools.
  * Flow:
- * 1. Check if user is logged into free tools (free tools Supabase)
- * 2. If not -> show login/signup prompt modal
- * 3. If yes -> call /api/app/check-save-eligibility with email + doc type + number
- * 4. If no app account -> show signup prompt modal
+ * 1. Require a verified free-tools session; otherwise open login/signup
+ * 2. Check the authenticated user's eligibility with doc type + number
+ * 3. If onboarding is incomplete -> show the completion prompt
  * 5. If quota exceeded -> show quota modal
  * 6. If duplicate number -> show duplicate modal
  * 7. If eligible -> save draft to localStorage, redirect to app import endpoint
@@ -55,7 +55,6 @@ interface SaveToAppButtonProps {
 type ModalState =
   | { type: 'none' }
   | { type: 'loading' }
-  | { type: 'need_email' }
   | { type: 'no_app_account'; email: string }
   | { type: 'quota_exceeded'; planCode?: string; used?: number; limit?: number }
   | { type: 'subscription_inactive'; planCode?: string }
@@ -96,34 +95,33 @@ async function persistDraft(draftData: Record<string, unknown>): Promise<string>
   return draftId;
 }
 
-export function SaveToAppButton({ documentType, documentData, userEmail }: SaveToAppButtonProps) {
+export function SaveToAppButton({ documentType, documentData }: SaveToAppButtonProps) {
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
-  const { user: authUser } = useFreeToolsAuth();
+  const {
+    user: authUser,
+    accessToken,
+    loading: authLoading,
+    openAuthModal,
+  } = useFreeToolsAuth();
 
   const handleSaveToApp = useCallback(async () => {
+    if (authLoading) return;
+    if (!authUser || !accessToken) {
+      openAuthModal('signup');
+      return;
+    }
+
     setModal({ type: 'loading' });
 
     try {
-      // 1. Resolve email: auth user email > prop > localStorage
-      let email = authUser?.email || userEmail || '';
-      if (!email) {
-        // Try localStorage (free tools store email there)
-        try {
-          email = localStorage.getItem('free-tools-email') || '';
-        } catch {}
-      }
-
-      if (!email) {
-        setModal({ type: 'need_email' });
-        return;
-      }
-
-      // 2. Check eligibility against app
+      // The API derives user and company from this verified access token.
       const res = await fetch('/api/app/check-save-eligibility', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          email,
           documentType,
           documentNumber: documentData.documentNumber,
         }),
@@ -136,8 +134,8 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       const result = await res.json();
 
       if (!result.eligible) {
-        if (result.reason === 'no_app_account') {
-          setModal({ type: 'no_app_account', email });
+        if (result.reason === 'onboarding_required') {
+          setModal({ type: 'no_app_account', email: authUser.email || '' });
         } else if (result.reason === 'quota_exceeded') {
           setModal({
             type: 'quota_exceeded',
@@ -164,8 +162,7 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       const draftData = {
         documentType,
         documentData,
-        email,
-        workspaceSlug: result.workspaceSlug,
+        email: authUser.email || '',
         savedAt: new Date().toISOString(),
       };
       const draftId = await persistDraft(draftData);
@@ -174,49 +171,9 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
       const message = err instanceof Error ? err.message : 'Unknown error';
       setModal({ type: 'error', message });
     }
-  }, [documentType, documentData, userEmail, authUser]);
+  }, [accessToken, authLoading, authUser, documentType, documentData, openAuthModal]);
 
   const closeModal = () => setModal({ type: 'none' });
-
-  const handleSaveToAppWithEmail = useCallback(async (email: string) => {
-    setModal({ type: 'loading' });
-    try {
-      const res = await fetch('/api/app/check-save-eligibility', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          documentType,
-          documentNumber: documentData.documentNumber,
-        }),
-      });
-
-      if (!res.ok) throw new Error('Failed to check eligibility');
-      const result = await res.json();
-
-      if (!result.eligible) {
-        if (result.reason === 'no_app_account') {
-          setModal({ type: 'no_app_account', email });
-        } else if (result.reason === 'quota_exceeded') {
-          setModal({ type: 'quota_exceeded', planCode: result.details?.planCode, used: result.details?.used, limit: result.details?.limit });
-        } else if (result.reason === 'subscription_inactive') {
-          setModal({ type: 'subscription_inactive', planCode: result.details?.planCode });
-        } else if (result.reason === 'duplicate_number') {
-          setModal({ type: 'duplicate_number', number: result.details?.duplicateNumber || documentData.documentNumber });
-        } else {
-          setModal({ type: 'error', message: 'Unable to save to app. Please try again.' });
-        }
-        return;
-      }
-
-      // Eligible - persist draft (server-side) and redirect to the app domain
-      const draftData = { documentType, documentData, email, workspaceSlug: result.workspaceSlug, savedAt: new Date().toISOString() };
-      const draftId = await persistDraft(draftData);
-      window.location.href = `${getAppOrigin()}/api/app/import-free-document?draft=${draftId}`;
-    } catch (err: unknown) {
-      setModal({ type: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
-    }
-  }, [documentType, documentData]);
 
   return (
     <>
@@ -241,54 +198,6 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
                 <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
               <p className="text-sm font-medium text-slate-700">Checking your account...</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Need email modal */}
-      {modal.type === 'need_email' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Enter your email</h2>
-              <button onClick={closeModal} className="p-1 text-slate-400 hover:text-slate-600 transition">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <p className="text-sm text-slate-600">
-              Enter your email to save this {documentType} to your QuoteCore+ account.
-              If you don&apos;t have an account yet, we&apos;ll help you sign up.
-            </p>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              id="save-to-app-email-input"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-            />
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const input = document.getElementById('save-to-app-email-input') as HTMLInputElement;
-                  if (input?.value) {
-                    closeModal();
-                    // Re-trigger with email
-                    handleSaveToAppWithEmail(input.value);
-                  }
-                }}
-                className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"
-              >
-                Continue
-              </button>
-              <button
-                onClick={closeModal}
-                className="w-full text-center px-5 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
-              >
-                Cancel
-              </button>
             </div>
           </div>
         </div>
@@ -388,12 +297,12 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
               your quota resets next month.
             </p>
             <div className="flex flex-col gap-2">
-              <a
+              <Link
                 href="/account/billing"
                 className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
               >
                 Upgrade plan
-              </a>
+              </Link>
               <button
                 onClick={closeModal}
                 className="w-full text-center px-5 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
@@ -449,12 +358,12 @@ export function SaveToAppButton({ documentType, documentData, userEmail }: SaveT
               Reactivate your subscription to save this {documentType} to your account and access all features.
             </p>
             <div className="flex flex-col gap-2">
-              <a
+              <Link
                 href="/account/billing"
                 className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all"
               >
                 Reactivate subscription
-              </a>
+              </Link>
               <button
                 onClick={closeModal}
                 className="w-full text-center px-5 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"

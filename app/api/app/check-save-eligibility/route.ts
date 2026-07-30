@@ -1,27 +1,46 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
+import { resolveFreeToolsTier } from '@/app/lib/free-tools/resolveTier';
+import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 export const runtime = 'nodejs';
 
 interface CheckRequest {
-  email: string;
   documentType: 'quote' | 'order' | 'invoice';
   documentNumber: string;
 }
 
 interface CheckResponse {
   eligible: boolean;
-  reason?: 'no_app_account' | 'quota_exceeded' | 'duplicate_number' | 'subscription_inactive';
+  reason?: 'authentication_required' | 'onboarding_required' | 'quota_exceeded' | 'duplicate_number' | 'subscription_inactive';
   details?: {
     planCode?: string;
     used?: number;
     limit?: number;
     duplicateNumber?: string;
   };
-  workspaceSlug?: string;
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse>> {
+  const caller = await resolveFreeToolsTier(req.headers.get('authorization'));
+  if (!caller.userId) {
+    return NextResponse.json(
+      { eligible: false, reason: 'authentication_required' },
+      { status: 401 },
+    );
+  }
+
+  const ip = getClientIP(req.headers);
+  const withinLimit = await checkRateLimit(
+    `save-eligibility:${caller.userId}:${ip}`,
+    30,
+    60 * 60 * 1000,
+    { failClosed: true },
+  );
+  if (!withinLimit) {
+    return NextResponse.json({ eligible: false }, { status: 429 });
+  }
+
   let body: CheckRequest;
   try {
     body = await req.json();
@@ -29,23 +48,24 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
     return NextResponse.json({ eligible: false }, { status: 400 });
   }
 
-  const { email, documentType, documentNumber } = body;
-  if (!email || !documentType || !documentNumber) {
+  const { documentType, documentNumber } = body;
+  if (!['quote', 'order', 'invoice'].includes(documentType) || !documentNumber?.trim()) {
     return NextResponse.json({ eligible: false }, { status: 400 });
   }
 
   const admin = createAdminClient();
 
-  // 1. Find app user by email
+  // 1. Resolve the authenticated caller's own workspace. Never accept an
+  // email or user id from the client for account lookup.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: appUser, error: userError } = await (admin as any)
     .from('users')
     .select('id, company_id')
-    .eq('email', email)
+    .eq('id', caller.userId)
     .maybeSingle();
 
   if (userError || !appUser?.id || !appUser?.company_id) {
-    return NextResponse.json({ eligible: false, reason: 'no_app_account' });
+    return NextResponse.json({ eligible: false, reason: 'onboarding_required' });
   }
 
   const companyId = appUser.company_id;
@@ -58,8 +78,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
     .eq('id', companyId)
     .maybeSingle();
 
-  const workspaceSlug = company?.slug || '';
-
   // Check subscription is active
   const activeStatuses = ['active', 'trialing'];
   if (!activeStatuses.includes(company?.subscription_status)) {
@@ -67,7 +85,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
       eligible: false,
       reason: 'subscription_inactive',
       details: { planCode: company?.plan_code },
-      workspaceSlug,
     });
   }
 
@@ -87,7 +104,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
     .maybeSingle();
 
   if (!plan) {
-    return NextResponse.json({ eligible: false, reason: 'subscription_inactive', workspaceSlug });
+    return NextResponse.json({ eligible: false, reason: 'subscription_inactive' });
   }
 
   // 4. Check quotas based on document type
@@ -108,7 +125,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
         eligible: false,
         reason: 'quota_exceeded',
         details: { planCode, used, limit },
-        workspaceSlug,
       });
     }
   } else if (documentType === 'order') {
@@ -121,7 +137,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
         eligible: false,
         reason: 'quota_exceeded',
         details: { planCode, used, limit },
-        workspaceSlug,
       });
     }
   } else if (documentType === 'invoice') {
@@ -134,7 +149,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
         eligible: false,
         reason: 'quota_exceeded',
         details: { planCode, used, limit },
-        workspaceSlug,
       });
     }
   }
@@ -162,13 +176,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckResponse
       eligible: false,
       reason: 'duplicate_number',
       details: { duplicateNumber: documentNumber },
-      workspaceSlug,
     });
   }
 
   // 6. All checks passed
-  return NextResponse.json({
-    eligible: true,
-    workspaceSlug,
-  });
+  return NextResponse.json({ eligible: true });
 }

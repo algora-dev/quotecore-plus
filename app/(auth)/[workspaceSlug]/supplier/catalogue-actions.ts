@@ -287,7 +287,7 @@ export type CatalogRowsResult = {
 
 export async function fetchCatalogRowsForConversion(catalogId: string, limit = 30000): Promise<CatalogRowsResult> {
   try {
-    const profile = await requireCompanyContext();
+    await requireCompanyContext();
     const admin = createAdminClient() as AdminAny;
 
     const { data: catalog } = await admin
@@ -343,6 +343,10 @@ export async function convertSelectedRowsToComponents(params: {
   columnMapping: Record<string, string[]>;
 }): Promise<ConvertResult> {
   const { targetCollectionId, selectedRows, columnMapping } = params;
+
+  if (selectedRows.length > 20) {
+    return { ok: false, errors: ['Maximum 20 rows can be converted at once.'] };
+  }
 
   if (!selectedRows.length) {
     return { ok: false, errors: ['No rows selected.'] };
