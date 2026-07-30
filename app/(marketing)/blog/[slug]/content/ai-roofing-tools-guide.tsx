@@ -68,7 +68,7 @@ export default function Post() {
           <tr>
             <td>AI plan takeoff (QuoteCore+)</td>
             <td>Upload plan image, AI traces outline and lines</td>
-            <td>Yes - GPT vision models</td>
+            <td>Yes - industry-leading vision models</td>
           </tr>
           <tr>
             <td>Smartphone 3D capture (Hover)</td>
@@ -196,9 +196,10 @@ export default function Post() {
       <h2>How QuoteCore+ uses AI</h2>
       <p>
         QuoteCore+ uses AI for one specific thing: tracing roof plans. You upload a plan image, the
-        AI traces the outline, detects internal lines, and classifies them. You verify everything on
-        an interactive canvas. Then the system calculates measurements and material quantities from
-        the verified takeoff.
+        AI runs multiple specialised scans using industry-leading vision models to trace the outline,
+        detect internal lines, and classify them - all in an efficient pipeline that keeps costs low.
+        You verify everything on an interactive canvas. Then the system calculates measurements and
+        material quantities from the verified takeoff.
       </p>
       <p>
         The AI does not set prices. It does not assess structural condition. It does not write terms
@@ -220,6 +221,34 @@ export default function Post() {
         <li>
           <a href="/free-quote-generator">Free Quote Generator</a> - turn measurements into a
           professional quote.
+        </li>
+        <li>
+          <a href="/free-invoice-generator">Free Invoice Generator</a> - create and send
+          professional invoices in minutes.
+        </li>
+        <li>
+          <a href="/free-purchase-order-generator">Free Purchase Order Generator</a> - generate
+          POs for material orders quickly and accurately.
+        </li>
+        <li>
+          <a href="/free-construction-calculator">Construction Calculator</a> - handle general
+          construction material calculations.
+        </li>
+        <li>
+          <a href="/free-concrete-calculator">Concrete Calculator</a> - work out concrete volumes
+          for foundations, slabs, and footings.
+        </li>
+        <li>
+          <a href="/free-landscaping-calculator">Landscaping Calculator</a> - estimate materials
+          for landscaping projects.
+        </li>
+        <li>
+          <a href="/free-birds-mouth-calculator">Bird&apos;s-mouth Calculator</a> - calculate
+          bird&apos;s-mouth cuts for rafters.
+        </li>
+        <li>
+          <a href="/free-tools">Browse all free tools</a> - see the full range of free
+          calculators and generators.
         </li>
       </ul>
       <p>

@@ -20,9 +20,9 @@ export default function Post() {
       <p>
         This is where AI adds the most value. You upload a roof plan and the AI traces the outline,
         detects internal lines (ridges, hips, valleys), and reads dimension annotations. In
-        QuoteCore+, this happens through a three-stage scan where the AI traces the geometry, you
-        verify it on an interactive canvas, and then the system calculates measurements from the
-        verified data.
+        QuoteCore+, this happens through a multi-stage AI pipeline that uses industry-leading
+        vision models to trace geometry and extract measurements. You verify everything on an
+        interactive canvas, and then the system calculates measurements from the verified data.
       </p>
       <p>
         Without AI, this is the most time-consuming part of quoting. You are either tracing a plan
@@ -193,6 +193,34 @@ export default function Post() {
         <li>
           <a href="/free-quote-generator">Free Quote Generator</a> - create a professional quote you
           can send to a client.
+        </li>
+        <li>
+          <a href="/free-invoice-generator">Free Invoice Generator</a> - create and send
+          professional invoices in minutes.
+        </li>
+        <li>
+          <a href="/free-purchase-order-generator">Free Purchase Order Generator</a> - generate
+          POs for material orders quickly and accurately.
+        </li>
+        <li>
+          <a href="/free-construction-calculator">Construction Calculator</a> - handle general
+          construction material calculations.
+        </li>
+        <li>
+          <a href="/free-concrete-calculator">Concrete Calculator</a> - work out concrete volumes
+          for foundations, slabs, and footings.
+        </li>
+        <li>
+          <a href="/free-landscaping-calculator">Landscaping Calculator</a> - estimate materials
+          for landscaping projects.
+        </li>
+        <li>
+          <a href="/free-birds-mouth-calculator">Bird&apos;s-mouth Calculator</a> - calculate
+          bird&apos;s-mouth cuts for rafters.
+        </li>
+        <li>
+          <a href="/free-tools">Browse all free tools</a> - see the full range of free
+          calculators and generators.
         </li>
       </ul>
       <p>
