@@ -26,7 +26,7 @@ test.describe('Public Surface', () => {
 
     for (const path of publicPaths) {
       await page.goto(`${BASE_URL}${path}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Same origin
       expect(page.url()).toContain('quotecore-plus-testing.vercel.app');
@@ -46,7 +46,7 @@ test.describe('Public Surface', () => {
   test('Signup page loads @smoke @read-only', async ({ freshPage, assertNoServerErrors }) => {
     const page = await freshPage();
     await page.goto(`${BASE_URL}/signup`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     expect(page.url()).toContain('/signup');
 
