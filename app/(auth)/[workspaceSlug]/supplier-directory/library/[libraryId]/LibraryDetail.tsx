@@ -151,15 +151,17 @@ export function LibraryDetail({
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
       <div className="mx-auto max-w-4xl px-4 py-6">
         {/* Breadcrumb */}
-        <Link
-          href={`/${workspaceSlug}/supplier-directory`}
-          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 mb-4"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
+          <Link href={`/${workspaceSlug}/components`} className="hover:text-slate-700">Components</Link>
+          <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          Back to Directory
-        </Link>
+          <Link href={`/${workspaceSlug}/supplier-directory`} className="hover:text-slate-700">Supplier Directory</Link>
+          <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-slate-900 truncate max-w-[200px]">{library.public_title || library.name}</span>
+        </nav>
 
         {/* Library header */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 mb-4">

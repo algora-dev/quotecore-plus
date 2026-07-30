@@ -117,6 +117,15 @@ export function SupplierDirectory({
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
       <div className="mx-auto max-w-4xl px-4 py-6">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-4">
+          <Link href={`/${workspaceSlug}/components`} className="hover:text-slate-700">Components</Link>
+          <svg className="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-slate-900">Supplier Directory</span>
+        </nav>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
