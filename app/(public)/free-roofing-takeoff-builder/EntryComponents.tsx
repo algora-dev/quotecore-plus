@@ -36,11 +36,12 @@ interface EntryListItemProps {
   areaLabel: string;
   wastePercent: number;
   isFixed?: boolean;
+  currencySymbol: string;
   getComponentById: (id: string | null) => RoofComponentDef | null;
   onRemove: () => void;
 }
 
-export function EntryListItem({ entry, index, kind, customDef, measureMode, lenLabel, areaLabel, wastePercent, isFixed, getComponentById, onRemove }: EntryListItemProps) {
+export function EntryListItem({ entry, index, kind, customDef, measureMode, lenLabel, areaLabel, wastePercent, isFixed, currencySymbol, getComponentById, onRemove }: EntryListItemProps) {
   const pitchType = getPitchType(kind, customDef);
   const isRoofArea = isAreaKind(kind, customDef);
   const usePitch = measureMode === 'plan' && pitchType !== 'none';
@@ -92,7 +93,7 @@ export function EntryListItem({ entry, index, kind, customDef, measureMode, lenL
             <span className="text-[10px] text-slate-400">+{wastePercent}% = {withWasteVal.toFixed(2)}</span>
           )}
           {entry.knownPrice != null && entry.knownPrice > 0 && (
-            <span className="text-[10px] text-[#BD4A1A] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
+            <span className="text-[10px] text-[#BD4A1A] font-medium">{currencySymbol}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
           )}
           {selectedComp && <span className="text-[10px] text-slate-400 truncate">{selectedComp.name}</span>}
         </div>
@@ -120,10 +121,11 @@ interface AddEntryFormProps {
   unitSystem: 'metric' | 'imperial' | 'squares';
   roofAreaTotal: number | null;
   isFixed?: boolean;
+  currencySymbol: string;
   onAdd: (entry: Entry) => void;
 }
 
-export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, unitSystem, roofAreaTotal, isFixed, onAdd }: AddEntryFormProps) {
+export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, unitSystem, roofAreaTotal, isFixed, currencySymbol, onAdd }: AddEntryFormProps) {
   const pitchType = getPitchType(kind, customDef);
   const isRoofArea = isAreaKind(kind, customDef);
   const usePitch = measureMode === 'plan' && pitchType !== 'none';
@@ -299,7 +301,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
             className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-700 focus:border-slate-900 focus:outline-none">
             <option value="">- No component (lengths only) -</option>
             {availableComponents.map(comp => (
-              <option key={comp.id} value={comp.id}>{comp.name} ({'\u00A3'}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
+              <option key={comp.id} value={comp.id}>{comp.name} ({currencySymbol}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
             ))}
           </select>
         </div>
@@ -309,7 +311,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       )}
       {pricingMode === 'known_price' && (
         <div>
-          <label className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({'\u00A3'})</label>
+          <label className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({currencySymbol})</label>
           <input type="number" value={knownPrice} onChange={(e) => setKnownPrice(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0.00" className={inputCls} />
         </div>
       )}

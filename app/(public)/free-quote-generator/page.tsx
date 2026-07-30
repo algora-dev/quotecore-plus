@@ -68,12 +68,19 @@ function QuoteGeneratorForm() {
   const linesParam = searchParams.get('lines');
   const amountParam = searchParams.get('amount');
   const clientParam = searchParams.get('client');
+  const currencyParam = searchParams.get('currency');
   const convertedLines = parseConvertLines(linesParam);
 
   // Settings
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementSystem>('metric');
   const [measurementType, setMeasurementType] = useState<MeasurementType>('unit');
-  const [currency, setCurrency] = useState(CURRENCIES[0]);
+  const [currency, setCurrency] = useState(() => {
+    if (currencyParam) {
+      const found = CURRENCIES.find(c => c.code === currencyParam);
+      if (found) return found;
+    }
+    return CURRENCIES[0];
+  });
   const [logo, setLogo] = useState<string | null>(null);
   const defaultUnit = unitForSystem(measurementType, measurementSystem);
 
