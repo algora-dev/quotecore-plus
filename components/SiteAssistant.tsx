@@ -19,162 +19,309 @@ interface ChatMessage {
     label: string;
     href: string;
   };
+  links?: {
+    label: string;
+    href: string;
+  }[];
 }
 
 const quickQuestions = [
-  "What does QuoteCore+ do?",
-  "Where are the docs?",
+  "What is QuoteCore+?",
   "How does the free trial work?",
-  "What happens after the trial?",
-  "Can I use it for my trade business?",
+  "What are Smart Components?",
+  "What free tools are available?",
+  "How much does it cost?",
   "Can I talk to someone?",
 ];
 
-const docsTopics = [
-  {
-    pattern: /(first quote|getting started|start|setup|set up|company)/,
-    label: "Read the getting started docs",
-    href: "/docs/getting-started/your-first-quote",
-    text: "The docs walk through setting up your company and creating your first quote, which is the best place to start if you are new to QuoteCore+.",
-  },
-  {
-    pattern: /(digital takeoff|takeoff|measure|measuring|plan|plans)/,
-    label: "Read the digital takeoff docs",
-    href: "/docs/building-a-quote/digital-takeoff",
-    text: "Digital takeoff is covered in the docs, including how to measure from a plan and use those measurements in your quoting workflow.",
-  },
-  {
-    pattern: /(component|components|smart component|smart components|extras)/,
-    label: "Read the components docs",
-    href: "/docs/components/overview",
-    text: "Components are reusable quote items you can save and reuse, including measurements, materials, labour, waste, and pricing rules.",
-  },
-  {
-    pattern: /(catalog|catalogue|supplier price|price list|price lists)/,
-    label: "Read the catalog docs",
-    href: "/docs/catalog/overview",
-    text: "The catalog docs cover uploading supplier price lists, mapping columns, and using catalog items in quotes and orders.",
-  },
-  {
-    pattern: /(attachment|attachments|file|files|quote files|storage)/,
-    label: "Read the attachments docs",
-    href: "/docs/attachments/overview",
-    text: "The docs explain how attachments and quote files work, including reusable library files and sending attachments to customers.",
-  },
-  {
-    pattern: /(template|templates|quote template|email template|customer quote template)/,
-    label: "Read the templates docs",
-    href: "/docs/templates/quote-templates",
-    text: "Templates help speed up repeat work. The docs cover quote templates, customer quote templates, email templates, and labour sheet templates.",
-  },
-  {
-    pattern: /(send|acceptance|accepted|customer editor|customer quote|withdraw|approval)/,
-    label: "Read the customer quote docs",
-    href: "/docs/customer-facing/sending-and-acceptance",
-    text: "The customer-facing docs explain how customers view, accept, and interact with quotes, plus how withdrawing a quote works.",
-  },
-  {
-    pattern: /(follow up|follow-up|follow ups|follow-ups|reminder|reminders)/,
-    label: "Read the follow-up docs",
-    href: "/docs/follow-ups/follow-ups",
-    text: "Follow-ups are covered in the docs, including how automated quote reminders help you keep track after sending a quote.",
-  },
-  {
-    pattern: /(material|materials|order|orders|supplier|suppliers)/,
-    label: "Read the material orders docs",
-    href: "/docs/material-orders/order-from-a-quote",
-    text: "Material order docs cover creating orders, choosing order layouts, supplier templates, line-by-line editing, and ordering from a quote.",
-  },
-  {
-    pattern: /(invoice|invoices|invoicing|payment|paid)/,
-    label: "Read the invoice docs",
-    href: "/docs/invoices/create-an-invoice",
-    text: "The invoice docs explain creating invoices, editing invoice details, sending invoices, invoice templates, and tracking payment.",
-  },
-  {
-    pattern: /(message|messages|notification|notifications|inbox|activity)/,
-    label: "Read the Message Center docs",
-    href: "/docs/message-center/overview",
-    text: "Message Center docs cover where alerts, quote activity, order updates, invoice updates, and messages are managed.",
-  },
-  {
-    pattern: /(trial|free trial|14 day|14-day|credit card|card)/,
-    label: "Read the free trial docs",
-    href: "/docs/account/trial",
-    text: "The free trial docs explain the 14-day trial, what is included, and what happens when the trial ends.",
-  },
-  {
-    pattern: /(billing|upgrade|cancel|plan|plans|tier|limit|limits|pricing|price|cost|starter|lite)/,
-    label: "Read the billing docs",
-    href: "/docs/account/billing",
-    text: "Billing and account docs cover plans, tier limits, upgrading, cancelling, and account settings.",
-  },
-  {
-    pattern: /(q|copilot|guide me|guide|assistant|support|contact)/,
-    label: "Read the support docs",
-    href: "/docs/help/support-and-contact",
-    text: "The help docs cover Q, Guide me, support, contact options, FAQs, and product updates.",
-  },
-];
+const trialCTA = {
+  label: "Start your free 14-day trial",
+  href: "/free-trial",
+};
 
-function docsLink(base: string, path: string) {
-  return `${base}${path}`;
-}
-
-function shouldShowHowItWorks(message: string, matchedTopic?: (typeof docsTopics)[number]) {
-  if (/(how.*work|how.*use|system work|workflow|process|walkthrough|show me|what does quotecore|what is quotecore)/.test(message)) {
-    return true;
-  }
-
-  if (!matchedTopic) return false;
-
-  return [
-    "/docs/getting-started/your-first-quote",
-    "/docs/building-a-quote/digital-takeoff",
-    "/docs/components/overview",
-    "/docs/customer-facing/sending-and-acceptance",
-    "/docs/follow-ups/follow-ups",
-    "/docs/material-orders/order-from-a-quote",
-    "/docs/invoices/create-an-invoice",
-    "/docs/message-center/overview",
-  ].includes(matchedTopic.href);
-}
+const freeToolsCTA = {
+  label: "Browse all free tools",
+  href: "/free-tools",
+};
 
 function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   const message = rawMessage.toLowerCase();
-  const matchedTopic = docsTopics.find((item) => item.pattern.test(message));
-  const howItWorksLink = shouldShowHowItWorks(message, matchedTopic)
-    ? {
-        label: "See How it works",
-        href: "/#how-it-works",
-      }
-    : undefined;
 
-  if (/(how.*work|system work|workflow|process|walkthrough|what does quotecore|what is quotecore)/.test(message)) {
+  // ── What is QuoteCore+ / How does it work ──────────────────────────
+  if (/(how.*work|system work|workflow|process|walkthrough|what does quotecore|what is quotecore|what.*quotecore.*do|tell me about)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ takes the job from quote to getting paid in one connected workflow: choose how you want to quote, build the quote, send and track it, order materials, invoice, and keep everything visible.",
-      sectionLink: howItWorksLink,
-      link: {
-        label: "Open the docs library",
-        href: docsLink(docsBaseUrl, "/docs"),
-      },
+      text: "QuoteCore+ is quoting and job management software built for roofing and trade contractors. Upload a roof plan, AI traces it, you verify the measurements, and the system calculates material quantities and builds a professional quote. From complex plan to quote in under 3 minutes for less than a dollar.",
+      sectionLink: { label: "See How it works", href: "/#how-it-works" },
+      links: [
+        trialCTA,
+        freeToolsCTA,
+      ],
     };
   }
 
-  if (/(doc|docs|documentation|tutorial|tutorials|guide|how do i|where do i|where can i)/.test(message)) {
+  // ── Free Trial ─────────────────────────────────────────────────────
+  if (/(trial|free trial|14 day|14-day|sign up|signup|register|try it|test it|demo)/.test(message)) {
     return {
       sender: "assistant",
-      text: matchedTopic?.text || "The QuoteCore+ docs library has step-by-step help for setup, quoting, components, digital takeoff, material orders, invoices, templates, account settings, and support.",
-      sectionLink: howItWorksLink,
-      link: {
-        label: matchedTopic?.label || "Open the docs library",
-        href: matchedTopic ? docsLink(docsBaseUrl, matchedTopic.href) : docsLink(docsBaseUrl, "/docs"),
-      },
+      text: "The free trial gives you 14 days of full access to QuoteCore+ - every feature, including AI plan takeoff, Smart Components, quoting, material orders, and invoicing. You get 20 AI scan points included, which is enough to quote several real jobs. No credit card required, just sign up with your email. After the trial you can continue on the free Lite plan or upgrade when you're ready.",
+      links: [
+        trialCTA,
+        { label: "See how it works", href: "/#how-it-works" },
+      ],
     };
   }
 
-  if (/(contact|call|demo|speak|help|human|person|someone)/.test(message)) {
+  // ── Pricing ────────────────────────────────────────────────────────
+  if (/(price|pricing|cost|how much|plan|plans|tier|limit|upgrade|cancel|subscription|per month|per month|starter|lite|pro|premium)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ starts with a 14-day free trial with full access. After that: Lite (free, limited), Starter at $19/month for solo traders, Pro at $39/month for growing businesses, Pro Plus at $59/month for high-volume teams, and Premium (contact us for pricing). All paid plans include a free trial with no card required.",
+      link: { label: "See full pricing details", href: "/#pricing" },
+    };
+  }
+
+  // ── Smart Components ───────────────────────────────────────────────
+  if (/(smart component|smart components)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "Smart Components are reusable roofing components that bundle together materials, waste allowances, labour rates, and pricing rules. Build a component once - like a concrete tile roof with underlay, battens, and fixings - and reuse it on every quote. They ensure consistency across quotes and save you from re-entering the same materials each time.",
+      links: [
+        { label: "Try the Smart Component Creator (free)", href: "/free-smart-component-creator" },
+        trialCTA,
+      ],
+    };
+  }
+
+  if (/(component|components|extras|reusable)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "Components are reusable quote items you can save and reuse, including measurements, materials, labour, waste, and pricing rules. Smart Components take this further - they bundle a complete roofing assembly with all its materials and costs so you can drop it into a quote in seconds.",
+      links: [
+        { label: "Try the Smart Component Creator (free)", href: "/free-smart-component-creator" },
+        trialCTA,
+      ],
+    };
+  }
+
+  // ── Free Tools ─────────────────────────────────────────────────────
+  if (/(free tool|free tools|what.*tools|what.*free|calculator|calculators|generator|generators)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "We have a range of free tools that work in your browser, no signup required. Here's what's available:\n\n• Roof Takeoff Builder - build a complete takeoff with pitch calculations for all components\n• Roofing Calculator - pitch, rafters, hip/valley lengths, surface area, and material quantities\n• Smart Component Creator - build smart roofing components with materials, waste, and costs\n• Quote Generator - create professional quotes and download as PDF\n• Invoice Generator - create invoices with tax calculations, download as PDF\n• Purchase Order Generator - generate POs for suppliers, download as PDF\n\nPlus 30+ specialised roofing, construction, and concrete calculators.",
+      links: [
+        freeToolsCTA,
+        trialCTA,
+      ],
+    };
+  }
+
+  // Individual tool queries
+  if (/(takeoff|take off|roof.*takeoff|plan.*takeoff)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "The Roof Takeoff Builder lets you enter your measurements manually and calculates roof area, ridges, hips, valleys, barges, spouting, underlay, and fixings - all with the correct pitch factors applied. You can also add material pricing and labour rates for a full cost breakdown. It's free, no signup needed.",
+      links: [
+        { label: "Try the Roof Takeoff Builder", href: "/free-roofing-takeoff-builder" },
+        freeToolsCTA,
+      ],
+    };
+  }
+
+  if (/(roofing calc|roof calc|pitch calc|rafter calc|roof.*area|roof.*angle)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "The Roofing Calculator handles roof pitch, rafter and hip/valley lengths, surface area, and material quantities all in one tool. Free, no signup needed.",
+      links: [
+        { label: "Try the Roofing Calculator", href: "/free-roofing-calculator" },
+        freeToolsCTA,
+      ],
+    };
+  }
+
+  if (/(quote gen|make a quote|create.*quote|write.*quote|build.*quote|estimate gen)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "The Free Quote Generator creates professional, printable quotes with your logo, business details, and itemised line items. Download as PDF, no signup required. For the full connected workflow - takeoff to quote to material orders to invoicing - start a free trial.",
+      links: [
+        { label: "Try the Quote Generator", href: "/free-quote-generator" },
+        trialCTA,
+      ],
+    };
+  }
+
+  if (/(invoice gen|create.*invoice|make.*invoice|billing)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "The Free Invoice Generator creates professional invoices with tax calculations, multiple currencies, and logo upload. Download as PDF, no signup required.",
+      links: [
+        { label: "Try the Invoice Generator", href: "/free-invoice-generator" },
+        freeToolsCTA,
+      ],
+    };
+  }
+
+  if (/(purchase order|po gen|create.*po|material order|order.*supplier)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "The Free Purchase Order Generator creates professional POs for material orders. Same interface as the quote generator, download as PDF, no signup required.",
+      links: [
+        { label: "Try the PO Generator", href: "/free-purchase-order-generator" },
+        freeToolsCTA,
+      ],
+    };
+  }
+
+  if (/(material calc|tile calc|shingle calc|how many tile|how many sheet|material.*quantit)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "The Smart Component Creator calculates material quantities - tiles, underlay, battens, fixings - from your roof area and pitch, with waste allowance included. Supports multiple tile types and materials. Free, no signup needed.",
+      links: [
+        { label: "Try the Smart Component Creator", href: "/free-smart-component-creator" },
+        freeToolsCTA,
+      ],
+    };
+  }
+
+  // ── AI / Plan Takeoff ──────────────────────────────────────────────
+  if (/(ai|ai takeoff|plan takeoff|upload.*plan|trace.*plan|ai.*scan|ai assist|ai scan)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "AI plan takeoff is QuoteCore+'s core feature. Upload a roof plan image and the AI traces the geometry, detects lines, and classifies them using industry-leading vision models. You verify everything on an interactive canvas, then the system calculates measurements and material quantities. It takes the most tedious part of quoting and does it in seconds. Available in the paid app and the 14-day free trial (20 AI scan points included).",
+      links: [
+        trialCTA,
+        { label: "See how it works", href: "/#how-it-works" },
+      ],
+    };
+  }
+
+  // ── How do I... (push trial + free tools) ──────────────────────────
+  if (/(how do i|how to|can i|can you|do you have|does.*have|does.*support)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need is to start a risk-free 14-day trial. No card needed, full feature access, and you get 20 AI scan points to test on real jobs. If you'd rather just try the free tools first, those work instantly without signing up.",
+      links: [
+        trialCTA,
+        freeToolsCTA,
+      ],
+    };
+  }
+
+  // ── Quotes / Quoting ───────────────────────────────────────────────
+  if (/(quote|quotes|quoting|preview|track|send quote)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ helps you build, preview, send, and track professional quotes. Upload a plan, AI traces it, Smart Components calculate materials, and the quote is pre-filled. You set pricing and terms, then send it. Customers can accept online and you get notified. From complex plan to quote in under 3 minutes for less than a dollar.",
+      sectionLink: { label: "See How it works", href: "/#how-it-works" },
+      links: [
+        trialCTA,
+        { label: "Try the Quote Generator (free)", href: "/free-quote-generator" },
+      ],
+    };
+  }
+
+  // ── Invoicing ──────────────────────────────────────────────────────
+  if (/(invoice|invoicing|paid|payment)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ supports invoicing as part of the connected quote-to-getting-paid workflow. Accepted quotes become invoices with one click. You can also create standalone invoices.",
+      links: [
+        trialCTA,
+        { label: "Try the Invoice Generator (free)", href: "/free-invoice-generator" },
+      ],
+    };
+  }
+
+  // ── Material Orders ────────────────────────────────────────────────
+  if (/(material|materials|order|orders)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ turns accepted quotes into material orders automatically. No re-entering line items - the quote data flows straight into the order. You can also create standalone POs.",
+      links: [
+        trialCTA,
+        { label: "Try the PO Generator (free)", href: "/free-purchase-order-generator" },
+      ],
+    };
+  }
+
+  // ── Templates ──────────────────────────────────────────────────────
+  if (/(template|templates|quote template|email template)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ includes quote templates, customer-facing quote templates, email templates, and labour sheet templates to speed up repeat work.",
+      link: trialCTA,
+    };
+  }
+
+  // ── Follow-ups ─────────────────────────────────────────────────────
+  if (/(follow up|follow-up|reminder|reminders)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ sends automated follow-up reminders on quotes you've sent, so nothing falls through the cracks. You can see quote status at a glance.",
+      link: trialCTA,
+    };
+  }
+
+  // ── Trade / Who is it for ──────────────────────────────────────────
+  if (/(trade|contractor|roofer|roofing|construction|builder|plumber|electrician|business|who.*for|who.*use)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ is built for roofing and trade contractors who quote regularly. It works for roofers, builders, and any trade that needs to go from plan measurements to a professional quote quickly. If you're still quoting in Word or Excel, this will change how fast you get quotes out.",
+      links: [
+        trialCTA,
+        freeToolsCTA,
+      ],
+    };
+  }
+
+  // ── Features overview ──────────────────────────────────────────────
+  if (/(feature|features|what.*include|what.*do|overview)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ includes: AI plan takeoff, Smart Components (reusable roofing assemblies), quote builder with customer acceptance tracking, material orders, invoicing, follow-up reminders, supplier catalogs, templates, and a resource library. Everything connects - takeoff feeds the quote, the accepted quote becomes a material order, and the job flows through to invoicing.",
+      sectionLink: { label: "See How it works", href: "/#how-it-works" },
+      link: trialCTA,
+    };
+  }
+
+  // ── Catalog / Price Lists ──────────────────────────────────────────
+  if (/(catalog|catalogue|price list|price lists|supplier price)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ lets you upload supplier price lists and use catalog items directly in quotes and orders. Map columns from your supplier's spreadsheet and the system applies pricing automatically.",
+      link: trialCTA,
+    };
+  }
+
+  // ── Attachments / Files ────────────────────────────────────────────
+  if (/(attachment|attachments|file|files|storage|upload.*file)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "QuoteCore+ supports file attachments on quotes and in a reusable library. You can send attachments to customers with quotes.",
+      link: trialCTA,
+    };
+  }
+
+  // ── Docs / Help ────────────────────────────────────────────────────
+  if (/(doc|docs|documentation|tutorial|tutorials|guide|where.*help)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "The QuoteCore+ docs library has step-by-step guides for setup, quoting, components, takeoff, material orders, invoices, templates, and account settings.",
+      link: { label: "Open the docs library", href: `${docsBaseUrl}/docs` },
+    };
+  }
+
+  // ── YouTube / Videos ───────────────────────────────────────────────
+  if (/(video|videos|youtube|demo|watch)/.test(message)) {
+    return {
+      sender: "assistant",
+      text: "We have tutorial and demo videos on our YouTube channel covering Smart Components, quoting workflows, and how to use the AI takeoff.",
+      link: { label: "Visit our YouTube channel", href: "https://www.youtube.com/@quotecoreplus" },
+    };
+  }
+
+  // ── Contact / Human ────────────────────────────────────────────────
+  if (/(contact|call|demo|speak|talk.*someone|talk.*human|help.*human|person|someone|support)/.test(message)) {
     return {
       sender: "assistant",
       text: "Absolutely. Leave us a quick message and the team will get back to you.",
@@ -182,109 +329,26 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
     };
   }
 
-  if (matchedTopic) {
-    return {
-      sender: "assistant",
-      text: matchedTopic.text,
-      sectionLink: howItWorksLink,
-      link: {
-        label: matchedTopic.label,
-        href: docsLink(docsBaseUrl, matchedTopic.href),
-      },
-    };
-  }
-
-  if (/(price|pricing|cost|plan|starter|lite)/.test(message)) {
-    return {
-      sender: "assistant",
-      text: "QuoteCore+ starts with a 14-day free trial. After that, there is a limited Lite plan, plus paid plans from Starter at $19/month for solo traders who quote regularly.",
-      link: {
-        label: "Read the billing docs",
-        href: docsLink(docsBaseUrl, "/docs/account/billing"),
-      },
-    };
-  }
-
-  if (/(trial|free trial)/.test(message)) {
-    return {
-      sender: "assistant",
-      text: "The free trial gives you 14 days to test the full quoting workflow. No credit card is required.",
-      link: {
-        label: "Read the free trial docs",
-        href: docsLink(docsBaseUrl, "/docs/account/trial"),
-      },
-    };
-  }
-
+  // ── Free / What's free ─────────────────────────────────────────────
   if (/\bfree\b/.test(message)) {
     return {
       sender: "assistant",
-      text: "You can start with the 14-day free trial. After the trial, you can continue on a limited free plan or upgrade when you are ready.",
-      link: {
-        label: "Read the free trial docs",
-        href: docsLink(docsBaseUrl, "/docs/account/trial"),
-      },
+      text: "You can start with a risk-free 14-day trial - full access to every feature including AI takeoff, no card needed. After the trial, continue on the free Lite plan or upgrade. We also have free tools that work instantly without signing up: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator.",
+      links: [
+        trialCTA,
+        freeToolsCTA,
+      ],
     };
   }
 
-  if (/(invoice|invoicing|paid|payment)/.test(message)) {
-    return {
-      sender: "assistant",
-      text: "Yes. QuoteCore+ supports invoices as part of the connected quote-to-getting-paid workflow.",
-      sectionLink: howItWorksLink,
-      link: {
-        label: "Read the invoice docs",
-        href: docsLink(docsBaseUrl, "/docs/invoices/create-an-invoice"),
-      },
-    };
-  }
-
-  if (/(material|materials|order|orders)/.test(message)) {
-    return {
-      sender: "assistant",
-      text: "QuoteCore+ can help turn accepted quote information into material orders, so you do not have to rebuild the job from scratch.",
-      sectionLink: howItWorksLink,
-      link: {
-        label: "Read the material orders docs",
-        href: docsLink(docsBaseUrl, "/docs/material-orders/order-from-a-quote"),
-      },
-    };
-  }
-
-  if (/(quote|quotes|quoting|preview|track|send)/.test(message)) {
-    return {
-      sender: "assistant",
-      text: "QuoteCore+ helps you build, preview, send, and track professional quotes in one connected workflow.",
-      sectionLink: howItWorksLink,
-      link: {
-        label: "Read the quote builder docs",
-        href: docsLink(docsBaseUrl, "/docs/building-a-quote/quote-builder"),
-      },
-    };
-  }
-
-  if (/(trade|contractor|roofer|roofing|construction|builder|plumber|electrician|business)/.test(message)) {
-    return {
-      sender: "assistant",
-      text: "QuoteCore+ is built for contractors and trade businesses, but it can also suit other quote-heavy workflows that need to go from quote to getting paid.",
-    };
-  }
-
-  if (/(feature|features|component|components|template|templates|library|workflow)/.test(message)) {
-    return {
-      sender: "assistant",
-      text: "QuoteCore+ includes quotes, quote tracking, customer-ready previews, materials/orders, invoices, resource library templates, components, and workflow visibility.",
-      sectionLink: howItWorksLink,
-      link: {
-        label: "Open the docs library",
-        href: docsLink(docsBaseUrl, "/docs"),
-      },
-    };
-  }
-
+  // ── Fallback (doesn't know) ────────────────────────────────────────
   return {
     sender: "assistant",
-    text: "I'm not completely sure on that one. Leave us a message and we'll get back to you.",
+    text: "I'm not sure about that one. I'd recommend checking the docs library for detailed guides, or getting in touch and we'll get back to you. You can also start a free 14-day trial to explore the app firsthand.",
+    links: [
+      { label: "Open the docs library", href: `${docsBaseUrl}/docs` },
+      trialCTA,
+    ],
     showContact: true,
   };
 }
@@ -400,6 +464,36 @@ export default function SiteAssistant() {
     }
   };
 
+  const renderLinks = (message: ChatMessage) => {
+    const allLinks: { label: string; href: string }[] = [];
+    if (message.link) allLinks.push(message.link);
+    if (message.links) allLinks.push(...message.links);
+
+    if (allLinks.length === 0) return null;
+
+    return (
+      <div className="mt-3 flex flex-wrap gap-2">
+        {allLinks.map((link, i) => {
+          const isExternal = link.href.startsWith("http");
+          return (
+            <a
+              key={i}
+              href={link.href}
+              {...(isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className={`block w-fit rounded-full px-4 py-2 text-xs font-semibold transition ${
+                message.sender === "visitor"
+                  ? "bg-white text-[#FF6B35] hover:bg-orange-50"
+                  : "bg-white text-[#FF6B35] hover:bg-orange-50 border border-[#FF6B35]/20"
+              }`}
+            >
+              {link.label}
+            </a>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed bottom-5 right-4 top-24 z-40 flex flex-col items-end justify-end sm:bottom-6 sm:right-6">
       {open && (
@@ -447,7 +541,7 @@ export default function SiteAssistant() {
                   <img src="/q.png" alt="Q assistant mascot" className="mx-auto h-16 w-16 rounded-full object-contain" />
                   <h2 className="mt-3 text-lg font-semibold text-zinc-800">Hey, I'm Q.</h2>
                   <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
-                    Ask me anything about QuoteCore+ - pricing, the free trial, features, or whether it fits your workflow. I'll keep it short.
+                    Ask me about QuoteCore+, the free trial, Smart Components, our free tools, or pricing. I'll keep it short.
                   </p>
                 </div>
 
@@ -469,7 +563,12 @@ export default function SiteAssistant() {
                     {messages.map((message, index) => (
                       <div key={`${message.sender}-${index}`} className={`flex ${message.sender === "visitor" ? "justify-end" : "justify-start"}`}>
                         <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${message.sender === "visitor" ? "bg-[#FF6B35] text-white" : "bg-zinc-100 text-zinc-700"}`}>
-                          {message.text}
+                          {message.text.split("\n").map((line, i) => (
+                            <span key={i}>
+                              {line}
+                              {i < message.text.split("\n").length - 1 && <br />}
+                            </span>
+                          ))}
                           {message.sectionLink && (
                             <a
                               href={message.sectionLink.href}
@@ -478,16 +577,7 @@ export default function SiteAssistant() {
                               {message.sectionLink.label}
                             </a>
                           )}
-                          {message.link && (
-                            <a
-                              href={message.link.href}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={`mt-3 block w-fit rounded-full px-4 py-2 text-xs font-semibold transition ${message.sender === "visitor" ? "bg-white text-[#FF6B35]" : "bg-white text-[#FF6B35] hover:bg-orange-50"}`}
-                            >
-                              {message.link.label}
-                            </a>
-                          )}
+                          {renderLinks(message)}
                           {message.showContact && (
                             <button
                               type="button"
