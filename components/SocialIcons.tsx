@@ -1,4 +1,4 @@
-export default function SocialIcons() {
+export default function SocialIcons({ className = "" }: { className?: string }) {
   const socials = [
     {
       href: "https://www.instagram.com/quotecore_plus",
@@ -33,7 +33,7 @@ export default function SocialIcons() {
   ];
 
   return (
-    <div className="mt-4 flex items-center justify-center gap-5">
+    <div className={`flex items-center justify-center gap-5 ${className}`}>
       {socials.map((s) => (
         <a
           key={s.label}

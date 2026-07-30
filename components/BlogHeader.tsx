@@ -5,6 +5,7 @@ import { trackEvent } from "@/lib/analytics";
 import { appUrl } from "@/lib/app-url";
 import SocialIcons from "./SocialIcons";
 
+
 function buildNavItems(app: string) {
   return [
     { label: "Home", href: "/" },
@@ -133,30 +134,34 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
               ))}
             </div>
           </div>
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 pb-6 pt-2 sm:flex-row lg:px-8">
-            <a
-              href={appLink || "/login"}
-              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
-              onClick={() => { trackEvent("app_click", { location: "nav-menu" }); setMenuOpen(false); }}
-            >
-              App
-            </a>
-            <a
-              href="/free-trial"
-              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#E55A28] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#BD4A1A]"
-              onClick={() => { trackEvent("free_trial_click", { location: "nav-menu" }); setMenuOpen(false); }}
-            >
-              Start free trial
-            </a>
-            <a
-              href="/contact"
-              className="pill-shimmer inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
-              onClick={() => { trackEvent("contact_click", { location: "nav-menu" }); setMenuOpen(false); }}
-            >
-              Contact us
-            </a>
+          <div className="mx-auto max-w-7xl px-6 pb-6 pt-2 lg:px-8">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <a
+                href={appLink || "/login"}
+                className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
+                onClick={() => { trackEvent("app_click", { location: "nav-menu" }); setMenuOpen(false); }}
+              >
+                App
+              </a>
+              <a
+                href="/free-trial"
+                className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#E55A28] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#BD4A1A]"
+                onClick={() => { trackEvent("free_trial_click", { location: "nav-menu" }); setMenuOpen(false); }}
+              >
+                Start free trial
+              </a>
+              <a
+                href="/contact"
+                className="pill-shimmer inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 bg-white px-5 text-sm font-medium text-zinc-900 transition-colors duration-200 hover:border-[#FF6B35]/40"
+                onClick={() => { trackEvent("contact_click", { location: "nav-menu" }); setMenuOpen(false); }}
+              >
+                Contact us
+              </a>
+            </div>
+            <div className="mt-5">
+              <SocialIcons className="justify-start" />
+            </div>
           </div>
-          <SocialIcons />
         </div>
       )}
     </header>
