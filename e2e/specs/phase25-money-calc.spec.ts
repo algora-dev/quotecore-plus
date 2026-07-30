@@ -55,7 +55,7 @@ async function createQuoteAndNavigate(
     await jobField.fill(jobName);
   }
 
-  const standardBtn = page.getByText('Standard Quote').first();
+  const standardBtn = page.getByText('Component Quote').first();
   if (await standardBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
     await standardBtn.click();
   }
