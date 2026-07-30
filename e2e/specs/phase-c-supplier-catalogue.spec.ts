@@ -59,7 +59,9 @@ test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => 
     const before = await targetSelect.locator('option:checked').textContent();
     await expect(page.getByText('25 / 25 selected', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Create 25 Components', exact: true }).click();
-    await expect(page.getByText(/exceed|limit/i).first()).toBeVisible();
+    await expect(
+      page.getByText('Maximum 20 rows can be converted at once.', { exact: true })
+    ).toBeVisible();
 
     await page.reload();
     await dismissCookies(page);
