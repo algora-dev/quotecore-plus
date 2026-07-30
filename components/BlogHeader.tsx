@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { appUrl } from "@/lib/app-url";
+import SocialIcons from "./SocialIcons";
 
 function buildNavItems(app: string) {
   return [
