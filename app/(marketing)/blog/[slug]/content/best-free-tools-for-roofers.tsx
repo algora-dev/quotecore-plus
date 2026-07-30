@@ -85,10 +85,10 @@ export default function Post() {
 
       <hr />
 
-      <h2>Roofing Material Calculator</h2>
+      <h2>Smart Component Creator</h2>
       <p>
-        <strong>What it does:</strong> Calculates tile, underlay, and batten quantities from roof
-        area. Supports multiple tile types with preset coverage rates.
+        <strong>What it does:</strong> Builds smart roofing components with tile, underlay, and
+        batten quantities from roof area. Supports multiple tile types with preset coverage rates.
       </p>
       <p>
         <strong>Who it is for:</strong> Roofers building a material schedule from measured roof area
@@ -99,7 +99,7 @@ export default function Post() {
         measured area in one calculation. Check the result against the product datasheet before ordering.
       </p>
       <p>
-        <a href="/free-roofing-material-calculator">Try the Roofing Material Calculator (free)</a> |
+        <a href="/free-smart-component-creator">Try the Smart Component Creator (free)</a> |
         <a href="/free-shingle-calculator">Shingle Calculator</a> |
         <a href="/free-roof-tile-calculator">Roof Tile Calculator</a>
       </p>

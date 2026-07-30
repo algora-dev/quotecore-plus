@@ -202,7 +202,7 @@ export default function Post() {
           calculated automatically.
         </li>
         <li>
-          <a href="/free-roofing-material-calculator">Roofing Material Calculator</a> - once you
+          <a href="/free-smart-component-creator">Smart Component Creator</a> - once you
           have your measurements, calculate tile and material quantities.
         </li>
         <li>
