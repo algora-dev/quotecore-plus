@@ -155,6 +155,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
               Contact us
             </a>
           </div>
+          <SocialIcons />
         </div>
       )}
     </header>
