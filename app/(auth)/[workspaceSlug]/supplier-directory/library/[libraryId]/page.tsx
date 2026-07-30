@@ -16,7 +16,7 @@ export default async function LibraryDetailPage(props: {
         <div className="text-center">
           <p className="text-sm text-slate-400">Library not found or not published.</p>
           <a href={`/${workspaceSlug}/supplier-directory`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">
-            Back to Directory
+            ← Back to Supplier Directory
           </a>
         </div>
       </div>
