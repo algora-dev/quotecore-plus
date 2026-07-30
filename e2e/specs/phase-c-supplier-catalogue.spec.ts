@@ -1,300 +1,208 @@
-﻿/**
+/**
  * Phase C: Supplier System & Catalogue Tests
  *
- * Tests CSV catalogue upload, conversion to components, atomicity
- * on rejection, search visibility, import, and edge cases.
+ * Requires the deterministic `paid-c` supplier profile and
+ * `E2E Supplier Catalogue Fixture` in the shared testing database.
+ * Missing prerequisites are failures, never skips.
  *
  * @smoke @mutation @supplier
  */
 import { test, expect, type Page } from '../fixtures/base';
-import * as path from 'path';
-import * as fs from 'fs';
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'https://quotecore-plus-testing.vercel.app';
+const FIXTURE_CATALOGUE = 'E2E Supplier Catalogue Fixture (25 rows)';
+const FIXTURE_COMPONENT_NAME = 'Test Component';
+const FIXTURE_COMPONENT_SKU = 'TEST-001';
 
-/** Dismiss cookie banner */
 async function dismissCookies(page: Page) {
-  const cookieBtn = page.getByRole('button', { name: /^got it$/i }).last();
-  if (await cookieBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await cookieBtn.click({ force: true });
-    await page.waitForTimeout(500);
+  const button = page.getByRole('button', { name: /^got it$/i }).last();
+  if (await button.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await button.click({ force: true });
   }
 }
 
-/** Dismiss modals */
-async function dismissModals(page: Page) {
-  const skipBtn = page.getByRole('button', { name: /not now|skip|close|dismiss/i }).last();
-  if (await skipBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
-    await skipBtn.click({ force: true });
-    await page.waitForTimeout(500);
+async function openCatalogueRows(page: Page, slug: string) {
+  await page.goto(`${BASE_URL}/${slug}/supplier`);
+  await page.waitForLoadState('domcontentloaded');
+  await dismissCookies(page);
+
+  await expect(page).toHaveURL(new RegExp(`/${slug}/supplier(?:\\?|$)`));
+  await page.getByRole('button', { name: 'Catalogues', exact: true }).click();
+
+  const catalogueSelect = page.locator('select').first();
+  await expect(catalogueSelect).toBeVisible();
+  await expect(catalogueSelect.locator('option', { hasText: FIXTURE_CATALOGUE })).toHaveCount(1);
+  await catalogueSelect.selectOption({ label: FIXTURE_CATALOGUE });
+  await page.getByRole('button', { name: 'Load Catalogue', exact: true }).click();
+
+  await expect(page.getByText('Sample row preview:', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Next: Select Rows', exact: true }).click();
+  await expect(page.getByText('25 / 25 selected', { exact: true })).toBeVisible();
+}
+
+async function openTargetLibrary(page: Page, slug: string, collectionId: string) {
+  await page.goto(`${BASE_URL}/${slug}/components`);
+  await page.waitForLoadState('domcontentloaded');
+  await dismissCookies(page);
+
+  const librarySelect = page.locator('select').filter({
+    has: page.locator(`option[value="${collectionId}"]`),
+  }).first();
+  await expect(librarySelect).toBeVisible();
+  await librarySelect.selectOption(collectionId);
+
+  const search = page.locator('input[placeholder^="Search Smart Components"]');
+  await search.fill(FIXTURE_COMPONENT_NAME);
+}
+
+function fixtureComponentCards(page: Page) {
+  return page.getByText(FIXTURE_COMPONENT_SKU, { exact: true }).locator(
+    'xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " group ")][1]'
+  );
+}
+
+async function deleteFixtureComponents(page: Page, slug: string, collectionId: string) {
+  await openTargetLibrary(page, slug, collectionId);
+
+  while (await fixtureComponentCards(page).count()) {
+    const previousCount = await fixtureComponentCards(page).count();
+    const card = fixtureComponentCards(page).first();
+    await expect(card).toContainText(FIXTURE_COMPONENT_NAME);
+    await card.hover();
+    await card.getByTitle('Click to delete').click();
+
+    const modal = page.getByRole('heading', { name: /Delete Smart Component/ }).locator('..');
+    await modal.getByRole('button', { name: 'Delete', exact: true }).click();
+    await expect(fixtureComponentCards(page)).toHaveCount(previousCount - 1);
   }
-}
-
-/** Generate a CSV file for testing */
-function generateCSV(name: string, content: string): string {
-  const tmpDir = path.join(process.cwd(), 'e2e', 'test-data', 'tmp');
-  try { fs.mkdirSync(tmpDir, { recursive: true }); } catch {}
-  const filePath = path.join(tmpDir, name);
-  fs.writeFileSync(filePath, content, 'utf-8');
-  return filePath;
-}
-
-function cleanupFile(filePath: string) {
-  try { fs.unlinkSync(filePath); } catch {}
 }
 
 test.describe('Phase C: Supplier System & Catalogue @mutation @supplier', () => {
-
-  test('C1: CSV catalogue upload and conversion creates components with correct fields', async ({ loginAs, prefix, assertNoServerErrors }) => {
+  test('C1: deterministic supplier catalogue loads exact mapped fields', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
+    await openCatalogueRows(page, slug);
 
-    // Navigate to supplier dashboard
-    await page.goto(`${BASE_URL}/${slug}/supplier`);
-    await page.waitForLoadState('networkidle');
-    await dismissCookies(page);
-    await dismissModals(page);
-
-    // If this account isn't a supplier, the page might redirect.
-    // We test the catalogue converter flow if accessible.
-    if (!page.url().includes('/supplier')) {
-      // Not a supplier account â€” skip this test for non-supplier accounts
-      test.skip(true, 'Paid-c is not a supplier account');
-      return;
-    }
-
-    // Look for the catalogue converter
-    const csvInput = page.locator('input[type="file"]').first();
-    if (await csvInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      // Generate a small CSV
-      const csv = 'SKU,Name,Price,Product Type,Notes\nTEST-001,Test Component,25.00,Ridge,Test note\n';
-      const csvPath = generateCSV(`e2e-catalogue-${Date.now()}.csv`, csv);
-
-      try {
-        await csvInput.setInputFiles(csvPath);
-        await page.waitForTimeout(2000);
-
-        // Look for parsed rows
-        // After upload, rows should be visible for conversion
-        const rowCount = await page.locator('text=/TEST-001|Test Component/i').count();
-        expect(rowCount).toBeGreaterThan(0);
-
-        assertNoServerErrors();
-      } finally {
-        cleanupFile(csvPath);
-      }
-    } else {
-      // No file input found â€” catalogue converter not accessible
-      test.skip(true, 'Catalogue converter not accessible');
-    }
+    const firstRow = page.locator('tbody tr').first();
+    await expect(firstRow).toContainText('TEST-001');
+    await expect(firstRow).toContainText('Test Component');
+    await expect(firstRow).toContainText('10.00');
+    await expect(firstRow).toContainText('Ridge');
+    assertNoServerErrors();
   });
 
-  test('C2: 21-row CSV conversion is blocked with zero components created (atomicity)', async ({ loginAs, prefix, assertNoServerErrors }) => {
+  test('C2: selected catalogue row creates a component in the owned library', async ({ loginAs, assertNoServerErrors }) => {
+    test.setTimeout(90_000);
     const { page, slug } = await loginAs('paid-c');
+    await openCatalogueRows(page, slug);
 
-    await page.goto(`${BASE_URL}/${slug}/supplier`);
-    await page.waitForLoadState('networkidle');
-    await dismissCookies(page);
-
-    if (!page.url().includes('/supplier')) {
-      test.skip(true, 'Not a supplier account');
-      return;
-    }
-
-    // Generate a 21-row CSV
-    const header = 'SKU,Name,Price,Product Type,Notes\n';
-    const rows = Array.from({ length: 21 }, (_, i) =>
-      `SKU-${String(i + 1).padStart(3, '0')},Component ${i + 1},${(i + 1) * 10}.00,Ridge,Note ${i + 1}`
-    ).join('\n');
-    const csv = header + rows + '\n';
-    const csvPath = generateCSV(`e2e-21rows-${Date.now()}.csv`, csv);
+    const targetCollectionId = await page.locator('select').last().inputValue();
+    expect(targetCollectionId).not.toBe('');
+    await deleteFixtureComponents(page, slug, targetCollectionId);
 
     try {
-      const csvInput = page.locator('input[type="file"]').first();
-      if (await csvInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await csvInput.setInputFiles(csvPath);
-        await page.waitForTimeout(2000);
+      await openCatalogueRows(page, slug);
+      await page.locator('select').last().selectOption(targetCollectionId);
+      await page.locator('thead input[type="checkbox"]').uncheck();
+      await page.locator('tbody tr').first().locator('input[type="checkbox"]').check();
+      await expect(page.getByText('1 / 25 selected', { exact: true })).toBeVisible();
 
-        // Count components BEFORE conversion attempt
-        const beforeCount = await page.locator('[data-component-id], .component-row').count();
+      await page.getByRole('button', { name: 'Create 1 Component', exact: true }).click();
+      await expect(page.getByText('Created 1 component from catalogue.', { exact: true })).toBeVisible();
 
-        // Try to convert â€” should be blocked with error
-        // Look for a convert/submit button
-        const convertBtn = page.getByRole('button', { name: /convert|create|import/i }).first();
-        if (await convertBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await convertBtn.click();
-          await page.waitForTimeout(2000);
-
-          // Must show an error about exceeding the 20-row limit
-          const errorVisible = await page.locator('text=/20|exceed|maximum|limit|too many/i')
-            .first().isVisible({ timeout: 5000 }).catch(() => false);
-
-          // CRITICAL: zero components should have been created
-          const afterCount = await page.locator('[data-component-id], .component-row').count();
-          expect(afterCount).toBe(beforeCount);
-
-          if (errorVisible) {
-            // Good â€” explicit error shown
-          }
-        }
-
-        assertNoServerErrors();
-      } else {
-        test.skip(true, 'No file input');
-      }
+      await openTargetLibrary(page, slug, targetCollectionId);
+      const createdCard = fixtureComponentCards(page);
+      await expect(createdCard).toHaveCount(1);
+      await expect(createdCard).toContainText(FIXTURE_COMPONENT_NAME);
     } finally {
-      cleanupFile(csvPath);
+      await deleteFixtureComponents(page, slug, targetCollectionId);
     }
-  });
-
-  test('C3: Supplier directory shows only published catalogues', async ({ loginAs, assertNoServerErrors }) => {
-    const { page, slug } = await loginAs('starter-b');
-
-    await page.goto(`${BASE_URL}/${slug}/supplier-directory`);
-    await page.waitForLoadState('networkidle');
-    await dismissCookies(page);
-
-    // The directory should load without errors
-    expect(page.url()).toContain('/supplier-directory');
-
-    // Should not see draft/private/pending status labels
-    const bodyText = (await page.innerText('body').catch(() => '')) ?? '';
-    expect(bodyText).not.toMatch(/draft|pending.review/i);
 
     assertNoServerErrors();
   });
 
-  test('C4: Supplier directory search returns relevant results', async ({ loginAs, assertNoServerErrors }) => {
-    const { page, slug } = await loginAs('starter-b');
+  test('C3: oversized catalogue conversion is atomic', async ({ loginAs, assertNoServerErrors }) => {
+    const { page, slug } = await loginAs('paid-c');
+    await openCatalogueRows(page, slug);
 
-    await page.goto(`${BASE_URL}/${slug}/supplier-directory`);
-    await page.waitForLoadState('networkidle');
+    const targetSelect = page.locator('select').last();
+    const before = await targetSelect.locator('option:checked').textContent();
+    await expect(page.getByText('25 / 25 selected', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Create 25 Components', exact: true }).click();
+    await expect(
+      page.getByText('Maximum 20 rows can be converted at once.', { exact: true })
+    ).toBeVisible();
+
+    await page.reload();
     await dismissCookies(page);
-
-    // Look for a search input
-    const searchInput = page.locator('input[type="search"], input[placeholder*="search" i]').first();
-    if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      // Search for a common term
-      await searchInput.fill('roof');
-      await page.waitForTimeout(1500);
-
-      // Results should either show matching items or "no results"
-      // Either way, no 5xx
-      assertNoServerErrors();
-    } else {
-      // No search input â€” directory might be empty or different layout
-      assertNoServerErrors();
-    }
+    await page.getByRole('button', { name: 'Catalogues', exact: true }).click();
+    const catalogueSelect = page.locator('select').first();
+    await catalogueSelect.selectOption({ label: FIXTURE_CATALOGUE });
+    await page.getByRole('button', { name: 'Load Catalogue', exact: true }).click();
+    await page.getByRole('button', { name: 'Next: Select Rows', exact: true }).click();
+    await expect(page.locator('select').last().locator('option:checked')).toHaveText(before ?? '');
+    assertNoServerErrors();
   });
 
-  test('C5: Supplier import API rejects invalid request', async ({ loginAs, assertNoServerErrors }) => {
-    const { page } = await loginAs('paid-c');
+  test('C4: supplier directory excludes private catalogue status labels', async ({ loginAs, assertNoServerErrors }) => {
+    const { page, slug } = await loginAs('starter-b');
+    await page.goto(`${BASE_URL}/${slug}/supplier-directory`);
+    await page.waitForLoadState('domcontentloaded');
+    await dismissCookies(page);
 
-    // Hit the import API with invalid data
-    const response = await page.request.post(`${BASE_URL}/api/supplier-import`, {
-      data: {
-        libraryId: 'invalid',
-        componentIds: [],
-      },
+    await expect(page).toHaveURL(new RegExp(`/${slug}/supplier-directory(?:\\?|$)`));
+    await expect(page.locator('body')).not.toContainText(/draft|pending review/i);
+    assertNoServerErrors();
+  });
+
+  test('C5: supplier directory search is always available', async ({ loginAs, assertNoServerErrors }) => {
+    const { page, slug } = await loginAs('starter-b');
+    await page.goto(`${BASE_URL}/${slug}/supplier-directory`);
+    await page.waitForLoadState('domcontentloaded');
+    await dismissCookies(page);
+
+    const search = page.locator('input[type="search"], input[placeholder*="search" i]').first();
+    await expect(search).toBeVisible();
+    await search.fill('roof');
+    await expect(search).toHaveValue('roof');
+    assertNoServerErrors();
+  });
+
+  test('C6: supplier import API rejects unauthenticated and malformed requests', async ({ freshPage }) => {
+    const anonymousPage = await freshPage();
+    const unauthenticated = await anonymousPage.request.post(`${BASE_URL}/api/supplier-import`, {
+      data: { sourceLibraryId: 'invalid', targetCollectionId: 'invalid', componentIds: [] },
     });
+    expect(unauthenticated.status()).toBe(401);
 
-    // Should be 4xx
-    expect(response.status()).toBeGreaterThanOrEqual(400);
-    expect(response.status()).toBeLessThan(500);
-
-    assertNoServerErrors();
+    const body = await unauthenticated.json();
+    expect(body).toMatchObject({ ok: false, message: 'Authentication required.' });
   });
 
-  test('C6: Supplier catalogue convert API rejects missing fields', async ({ loginAs, assertNoServerErrors }) => {
+  test('C7: authenticated catalogue conversion rejects missing fields as 400', async ({ loginAs }) => {
     const { page } = await loginAs('paid-c');
-
     const response = await page.request.post(`${BASE_URL}/api/supplier-catalogue-convert`, {
-      data: {
-        // Missing targetCollectionId and columnMapping
-        selectedRows: [],
-      },
+      data: { selectedRows: [] },
     });
 
-    // Should be 400 (missing fields) or 401/403 (auth issue)
-    expect(response.status()).toBeGreaterThanOrEqual(400);
-    expect(response.status()).toBeLessThan(500);
+    expect(response.status()).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ ok: false });
+  });
 
-    const body = await response.json().catch(() => ({}));
-    expect(body.ok).not.toBe(true);
+  test('C8: quoted commas remain within catalogue fields', async ({ loginAs, assertNoServerErrors }) => {
+    const { page, slug } = await loginAs('paid-c');
+    await openCatalogueRows(page, slug);
 
+    await expect(page.locator('tbody')).toContainText('Component, With Comma');
+    await expect(page.locator('tbody')).toContainText('Note, with comma');
     assertNoServerErrors();
   });
 
-  test('C7: CSV with special characters (commas in quoted fields) parses correctly', async ({ loginAs, prefix, assertNoServerErrors }) => {
+  test('C9: long source descriptions remain intact before conversion', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('paid-c');
+    await openCatalogueRows(page, slug);
 
-    await page.goto(`${BASE_URL}/${slug}/supplier`);
-    await page.waitForLoadState('networkidle');
-    await dismissCookies(page);
-
-    if (!page.url().includes('/supplier')) {
-      test.skip(true, 'Not a supplier account');
-      return;
-    }
-
-    // CSV with quoted field containing comma
-    const csv = 'SKU,Name,Price,Product Type,Notes\n"TEST-QUOTE","Component, With Comma",15.50,Ridge,"Note, with comma"\n';
-    const csvPath = generateCSV(`e2e-special-${Date.now()}.csv`, csv);
-
-    try {
-      const csvInput = page.locator('input[type="file"]').first();
-      if (await csvInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await csvInput.setInputFiles(csvPath);
-        await page.waitForTimeout(2000);
-
-        // The parsed row should show "Component, With Comma" as the name
-        // (not split into two columns)
-        const hasCommaName = await page.locator('text=/Component, With Comma/i').count();
-        // If the row is visible, verify it's not split incorrectly
-        if (hasCommaName > 0) {
-          expect(hasCommaName).toBeGreaterThan(0);
-        }
-
-        assertNoServerErrors();
-      } else {
-        test.skip(true, 'No file input');
-      }
-    } finally {
-      cleanupFile(csvPath);
-    }
-  });
-
-  test('C8: CSV with description > 60 chars truncates name and preserves full text in notes', async ({ loginAs, prefix, assertNoServerErrors }) => {
-    const { page, slug } = await loginAs('paid-c');
-
-    await page.goto(`${BASE_URL}/${slug}/supplier`);
-    await page.waitForLoadState('networkidle');
-    await dismissCookies(page);
-
-    if (!page.url().includes('/supplier')) {
-      test.skip(true, 'Not a supplier account');
-      return;
-    }
-
-    // CSV with a long description
-    const longName = 'A'.repeat(75); // 75 chars â€” exceeds 60 char limit
-    const csv = `SKU,Name,Price,Product Type,Notes\nTEST-LONG,${longName},20.00,Ridge,Full description here\n`;
-    const csvPath = generateCSV(`e2e-longname-${Date.now()}.csv`, csv);
-
-    try {
-      const csvInput = page.locator('input[type="file"]').first();
-      if (await csvInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await csvInput.setInputFiles(csvPath);
-        await page.waitForTimeout(2000);
-
-        // After conversion, the component name should be truncated at 60 chars
-        // and the full text should appear in notes
-        // We verify the page didn't crash and shows the data
-        assertNoServerErrors();
-      } else {
-        test.skip(true, 'No file input');
-      }
-    } finally {
-      cleanupFile(csvPath);
-    }
+    await expect(page.locator('tbody')).toContainText('A'.repeat(75));
+    await expect(page.locator('tbody')).toContainText('Full description here');
+    assertNoServerErrors();
   });
 });

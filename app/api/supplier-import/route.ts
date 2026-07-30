@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { importSupplierComponents } from '@/app/(auth)/[workspaceSlug]/supplier-directory/actions';
+import { requireApiAuthentication } from '@/app/lib/auth/apiGuard';
 
 export async function POST(req: NextRequest) {
+  const authError = await requireApiAuthentication();
+  if (authError) return authError;
+
   try {
     const body = await req.json();
     const { sourceLibraryId, targetCollectionId, componentIds, alertsEnabled } = body as {
