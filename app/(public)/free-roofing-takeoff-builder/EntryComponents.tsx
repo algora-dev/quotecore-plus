@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { Entry, RoofComponentDef, CustomComponentDef, PitchType } from './types';
-import { areaValueForUnit, COMPONENT_DEFS, computeEntry, makeId, isCustomFixed } from './calc';
+import { areaValueForUnit, COMPONENT_DEFS, computeEntry, makeId } from './calc';
 import { InfoIcon } from './helpers';
 
 type MeasureMode = 'actual' | 'plan';
@@ -16,11 +16,6 @@ function getPitchType(kind: string, customDef?: CustomComponentDef): PitchType {
 function isAreaKind(kind: string, customDef?: CustomComponentDef): boolean {
   if (kind === 'roof_area' || kind === 'underlay' || kind === 'fixings') return true;
   if (kind.startsWith('custom-') && customDef) return customDef.measurementType === 'area';
-  return false;
-}
-
-function isFixedKind(kind: string): boolean {
-  if (kind.startsWith('custom-')) return isCustomFixed(kind);
   return false;
 }
 
@@ -234,35 +229,35 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {isFixed ? (
           <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">Quantity</label>
-            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" placeholder="1" className={inputCls} />
+            <label htmlFor={`${kind}-fixed-quantity`} className="text-xs font-medium text-slate-600">Quantity</label>
+            <input id={`${kind}-fixed-quantity`} name={`${kind}Quantity`} type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="numeric" placeholder="1" className={inputCls} />
           </div>
         ) : isRoofArea && areaMode === 'dimensions' ? (
           <>
             <div>
-              <label className="text-xs font-medium text-slate-600">{planPrefix}Width ({lenLabel})</label>
-              <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+              <label htmlFor={`${kind}-width`} className="text-xs font-medium text-slate-600">{planPrefix}Width ({lenLabel})</label>
+              <input id={`${kind}-width`} name={`${kind}Width`} type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
-              <input type="number" value={val2} onChange={(e) => setVal2(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+              <label htmlFor={`${kind}-area-length`} className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
+              <input id={`${kind}-area-length`} name={`${kind}Length`} type="number" value={val2} onChange={(e) => setVal2(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
             </div>
           </>
         ) : isRoofArea && areaMode === 'total' ? (
           <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">{planPrefix}Area ({areaLabel})</label>
-            <input type="number" value={totalVal} onChange={(e) => setTotalVal(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+            <label htmlFor={`${kind}-total-area`} className="text-xs font-medium text-slate-600">{planPrefix}Area ({areaLabel})</label>
+            <input id={`${kind}-total-area`} name={`${kind}Area`} type="number" value={totalVal} onChange={(e) => setTotalVal(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
           </div>
         ) : (
           <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
-            <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+            <label htmlFor={`${kind}-length`} className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
+            <input id={`${kind}-length`} name={`${kind}Length`} type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
           </div>
         )}
 
         <div>
-          <label className="text-xs font-medium text-slate-600">Quantity</label>
-          <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" className={inputCls} />
+          <label htmlFor={`${kind}-quantity`} className="text-xs font-medium text-slate-600">Quantity</label>
+          <input id={`${kind}-quantity`} name={`${kind}Quantity`} type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="numeric" className={inputCls} />
         </div>
 
         <button onClick={handleAdd} disabled={!canAddWithPrice}
@@ -294,8 +289,8 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       {/* Component dropdown OR known price input */}
       {pricingMode === 'component' && availableComponents.length > 0 && (
         <div>
-          <label className="text-xs font-medium text-slate-600">Component</label>
-          <select value={selectedComponentId || ''} onChange={(e) => setSelectedComponentId(e.target.value || null)}
+          <label htmlFor={`${kind}-component`} className="text-xs font-medium text-slate-600">Component</label>
+          <select id={`${kind}-component`} name={`${kind}Component`} value={selectedComponentId || ''} onChange={(e) => setSelectedComponentId(e.target.value || null)}
             className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
             <option value="">- No component (lengths only) -</option>
             {availableComponents.map(comp => (
@@ -309,13 +304,14 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       )}
       {pricingMode === 'known_price' && (
         <div>
-          <label className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({'\u00A3'})</label>
-          <input type="number" value={knownPrice} onChange={(e) => setKnownPrice(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0.00" className={inputCls} />
+          <label htmlFor={`${kind}-known-price`} className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({'\u00A3'})</label>
+          <input id={`${kind}-known-price`} name={`${kind}KnownPrice`} type="number" value={knownPrice} onChange={(e) => setKnownPrice(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0.00" className={inputCls} />
         </div>
       )}
       {pricingMode === 'component' && componentsLoading && <p className="text-xs text-slate-400">Loading component pricing...</p>}
 
-      <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
+      <label htmlFor={`${kind}-entry-label`} className="sr-only">Optional entry label</label>
+      <input id={`${kind}-entry-label`} name={`${kind}Label`} type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
         className="w-full rounded-lg border border-slate-200 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />
     </div>
   );
@@ -370,8 +366,8 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
       </div>
 
       <div>
-        <label className="text-xs font-medium text-slate-600">Name</label>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Apron Flashing, Step Flashing"
+        <label htmlFor="custom-component-name" className="text-xs font-medium text-slate-600">Name</label>
+        <input id="custom-component-name" name="customComponentName" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Apron Flashing, Step Flashing"
           className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-2 text-base md:text-sm focus:border-orange-500 focus:outline-none" />
       </div>
 
@@ -385,8 +381,8 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
           </div>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600">Pitch calc</label>
-          <select value={measurementType === 'fixed' ? 'none' : pitchType} onChange={(e) => setPitchType(e.target.value as PitchType)} disabled={measurementType === 'fixed'}
+          <label htmlFor="custom-component-pitch" className="text-xs font-medium text-slate-600">Pitch calc</label>
+          <select id="custom-component-pitch" name="customComponentPitch" value={measurementType === 'fixed' ? 'none' : pitchType} onChange={(e) => setPitchType(e.target.value as PitchType)} disabled={measurementType === 'fixed'}
             className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400">
             <option value="none">None</option>
             <option value="rafter">Rafter pitch</option>
@@ -394,8 +390,8 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600">Waste %</label>
-          <input type="number" value={measurementType === 'fixed' ? '0' : wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1} disabled={measurementType === 'fixed'}
+          <label htmlFor="custom-component-waste" className="text-xs font-medium text-slate-600">Waste %</label>
+          <input id="custom-component-waste" name="customComponentWaste" type="number" value={measurementType === 'fixed' ? '0' : wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1} disabled={measurementType === 'fixed'}
             className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm md:text-xs text-center focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400" />
         </div>
       </div>

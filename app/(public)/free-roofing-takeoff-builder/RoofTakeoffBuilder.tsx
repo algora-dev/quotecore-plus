@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
@@ -11,14 +12,17 @@ import {
   BUILT_IN_ORDER,
   areaValueForUnit,
   computeEntry,
-  computeMaterialCost,
-  computeLabourCost,
-  computeKnownPriceCost,
   makeInitialSections,
   makeCustomSection,
   registerCustomKind,
   isCustomFixed,
 } from './calc';
+import { calculateTakeoffSections } from './engine';
+import {
+  normalizePublicRoofTakeoff,
+  validatePublicInput,
+  type PublicRoofTakeoffInput,
+} from './public-contract';
 import { EntryListItem, AddEntryForm } from './EntryComponents';
 import {
   InfoIcon,
@@ -53,7 +57,11 @@ interface PersistedTakeoffState {
 
 const SESSION_KEY = 'qcp:frtb:session';
 
-export function RoofTakeoffBuilder() {
+interface RoofTakeoffBuilderProps {
+  initialInput?: PublicRoofTakeoffInput;
+}
+
+export function RoofTakeoffBuilder({ initialInput }: RoofTakeoffBuilderProps) {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
 
@@ -100,6 +108,17 @@ export function RoofTakeoffBuilder() {
   // Restore from sessionStorage on mount
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
+      if (initialInput && validatePublicInput(initialInput).length === 0) {
+        const normalized = normalizePublicRoofTakeoff(initialInput);
+        setMeasureMode(normalized.mode);
+        setUnitSystem(normalized.units);
+        setMasterPitch(String(normalized.pitchDegrees));
+        setMasterRatio(degreesToRatio(normalized.pitchDegrees, normalized.units));
+        setSections(normalized.sections);
+        setCustomSections({});
+        setExpandedSection('roof_area');
+        return;
+      }
       const saved = sessionStorage.getItem(SESSION_KEY);
       if (saved) {
         try {
@@ -130,7 +149,7 @@ export function RoofTakeoffBuilder() {
       }
     }, 0);
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [initialInput]);
 
   // Save to sessionStorage on change
   useEffect(() => {
@@ -240,36 +259,15 @@ export function RoofTakeoffBuilder() {
     });
   };
 
-  const totals = useMemo(() => {
-    const result: Record<string, { rawTotal: number; withWaste: number; count: number; materialCost: number; labourCost: number; totalCost: number }> = {};
-    for (const key of allKeys) {
-      const section = allSections[key];
-      if (!section) { result[key] = { rawTotal: 0, withWaste: 0, count: 0, materialCost: 0, labourCost: 0, totalCost: 0 }; continue; }
-      const isFixed = isCustomFixed(key);
-      const rawTotal = isFixed
-        ? section.entries.reduce((sum, e) => sum + (e.quantity ?? 1), 0)
-        : section.entries.reduce((sum, e) => sum + e.computedValue, 0);
-      const withWaste = isFixed ? rawTotal : rawTotal * (1 + section.wastePercent / 100);
-      let materialCost = 0, labourCost = 0;
-      for (const entry of section.entries) {
-        if (entry.knownPrice != null && entry.knownPrice > 0) {
-          const costQty = isFixed ? (entry.quantity ?? 1) : entry.computedValue;
-          materialCost += computeKnownPriceCost(costQty, entry.knownPrice);
-        } else {
-          const comp = getComponentById(entry.selectedComponentId);
-          const costQty = isFixed ? (entry.quantity ?? 1) : entry.computedValue;
-          materialCost += computeMaterialCost(costQty, comp).cost;
-          labourCost += computeLabourCost(costQty, comp);
-        }
-      }
-      result[key] = { rawTotal, withWaste, count: section.entries.length, materialCost, labourCost, totalCost: materialCost + labourCost };
-    }
-    return result;
-  }, [allSections, getComponentById, allKeys]);
+  const calculation = useMemo(
+    () => calculateTakeoffSections(allSections, allKeys, getComponentById),
+    [allSections, allKeys, getComponentById],
+  );
+  const totals = calculation.sections;
 
-  const totalEntries = allKeys.reduce((sum, k) => sum + (totals[k]?.count ?? 0), 0);
+  const totalEntries = calculation.totalEntries;
   const hasData = totalEntries > 0;
-  const grandTotal = allKeys.reduce((sum, k) => sum + (totals[k]?.totalCost ?? 0), 0);
+  const grandTotal = calculation.grandTotal;
   const clearTakeoff = () => {
     setSections(makeInitialSections());
     setCustomSections({});
@@ -320,8 +318,8 @@ export function RoofTakeoffBuilder() {
             <span className="text-sm font-semibold text-slate-900 truncate">{label}</span>
             {hasEntries && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 flex-shrink-0">{section.entries.length} {section.entries.length === 1 ? 'entry' : 'entries'}</span>}
             {isGuided && !hasEntries && <span className="text-xs text-slate-400 truncate hidden md:inline">{desc}</span>}
-            <InfoIcon text={desc} />
           </button>
+          <div className="mr-2 flex-shrink-0"><InfoIcon text={desc} /></div>
           <div className="flex items-center gap-3 flex-shrink-0">
             {hasEntries && (
               <div className="text-right">
@@ -346,9 +344,10 @@ export function RoofTakeoffBuilder() {
           <div className="border-t border-slate-100 p-2 md:p-4 space-y-3">
             {isGuided && <ComponentGuideBox componentKey={key} />}
             <div className="flex items-center gap-2">
-              <label className="text-xs font-medium text-slate-600 flex items-center gap-1">Waste<InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps." /></label>
+              <label htmlFor={`${key}-waste`} className="text-xs font-medium text-slate-600">Waste</label>
+              <InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps." />
               <div className="relative">
-                <input type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
+                <input id={`${key}-waste`} name={`${key}WastePercent`} type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
               </div>
             </div>
@@ -396,32 +395,36 @@ export function RoofTakeoffBuilder() {
                 <p className="mt-1 text-sm text-slate-500">Choose the method that matches your measurements.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <button onClick={() => setMeasureMode('actual')}
-                  className="group rounded-2xl border-2 border-slate-200 bg-white p-6 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] min-h-[180px] flex flex-col">
-                  <div className="flex items-start justify-between mb-3">
+                <div className="relative">
+                  <button onClick={() => setMeasureMode('actual')}
+                    className="group w-full rounded-2xl border-2 border-slate-200 bg-white p-6 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] min-h-[180px] flex flex-col">
+                  <div className="flex items-start mb-3">
                     <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
                       <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <InfoIcon text="Use this if you've already measured the roof and have the real final lengths and areas. No pitch calculation needed." />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900">I have actual measurements</h3>
                   <p className="mt-1 text-sm text-slate-500 flex-1">You already have final roof dimensions. Just type them in - no pitch calculation needed.</p>
-                </button>
-                <button onClick={() => setMeasureMode('plan')}
-                  className="group rounded-2xl border-2 border-slate-200 bg-white p-6 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] min-h-[180px] flex flex-col">
-                  <div className="flex items-start justify-between mb-3">
+                  </button>
+                  <div className="absolute right-6 top-6"><InfoIcon text="Use this if you've already measured the roof and have the real final lengths and areas. No pitch calculation needed." /></div>
+                </div>
+                <div className="relative">
+                  <button onClick={() => setMeasureMode('plan')}
+                    className="group w-full rounded-2xl border-2 border-slate-200 bg-white p-6 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.08)] min-h-[180px] flex flex-col">
+                  <div className="flex items-start mb-3">
                     <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
                       <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <InfoIcon text="Use this if you're measuring off a plan view. Enter plan lengths and the roof pitch - we'll calculate the real sloped lengths automatically." />
                   </div>
                   <h3 className="text-base font-semibold text-slate-900">I&apos;m measuring from a plan</h3>
                   <p className="mt-1 text-sm text-slate-500 flex-1">You have a top-down roof plan. Enter plan dimensions and the roof pitch - we&apos;ll calculate the real sloped lengths and areas.</p>
-                </button>
+                  </button>
+                  <div className="absolute right-6 top-6"><InfoIcon text="Use this if you're measuring off a plan view. Enter plan lengths and the roof pitch - we'll calculate the real sloped lengths automatically." /></div>
+                </div>
               </div>
             </div>
           )}
@@ -509,14 +512,16 @@ export function RoofTakeoffBuilder() {
                     {pitchMode === 'degrees' ? (
                       <div className="flex items-center gap-2">
                         <div className="relative">
-                          <input type="number" value={masterPitch} onChange={(e) => updatePitchDegrees(e.target.value)} min={0} max={89} step={0.5} inputMode="decimal" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
+                          <label htmlFor="roof-pitch-degrees" className="sr-only">Roof pitch in degrees</label>
+                          <input id="roof-pitch-degrees" name="pitchDegrees" type="number" value={masterPitch} onChange={(e) => updatePitchDegrees(e.target.value)} min={0} max={89} step={0.5} inputMode="decimal" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">deg</span>
                         </div>
                         <span className="text-xs text-slate-400">= {masterRatio}</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <input type="text" value={masterRatio} onChange={(e) => updatePitchRatio(e.target.value)} placeholder="5:12" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
+                        <label htmlFor="roof-pitch-ratio" className="sr-only">Roof pitch ratio</label>
+                        <input id="roof-pitch-ratio" name="pitchRatio" type="text" value={masterRatio} onChange={(e) => updatePitchRatio(e.target.value)} placeholder="5:12" className="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
                         <span className="text-xs text-slate-400">= {masterPitch} deg</span>
                       </div>
                     )}
@@ -602,7 +607,7 @@ export function RoofTakeoffBuilder() {
             <p className="mt-1 text-sm text-slate-500 text-center">More free tools built for trades.</p>
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Roofing Calculator */}
-              <a href="/free-roofing-calculator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
+              <Link href="/free-roofing-calculator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                     <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
@@ -611,9 +616,9 @@ export function RoofTakeoffBuilder() {
                 <h3 className="text-sm font-semibold text-slate-900">Roofing Calculator</h3>
                 <p className="mt-1 text-xs text-slate-500">Calculate roof area, pitch, and materials with waste allowances.</p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
-              </a>
+              </Link>
               {/* Construction Calculator */}
-              <a href="/free-construction-calculator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
+              <Link href="/free-construction-calculator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                     <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 9H9L8 4z" /></svg>
@@ -622,9 +627,9 @@ export function RoofTakeoffBuilder() {
                 <h3 className="text-sm font-semibold text-slate-900">Construction Calculator</h3>
                 <p className="mt-1 text-xs text-slate-500">General construction math for areas, volumes, and quantities.</p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
-              </a>
+              </Link>
               {/* Quote Generator */}
-              <a href="/free-quote-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
+              <Link href="/free-quote-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                     <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -633,9 +638,9 @@ export function RoofTakeoffBuilder() {
                 <h3 className="text-sm font-semibold text-slate-900">Free Quote Generator</h3>
                 <p className="mt-1 text-xs text-slate-500">Create a professional quote in seconds. Print or save as PDF.</p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
-              </a>
+              </Link>
               {/* Purchase Order Generator */}
-              <a href="/free-purchase-order-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
+              <Link href="/free-purchase-order-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                     <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
@@ -644,9 +649,9 @@ export function RoofTakeoffBuilder() {
                 <h3 className="text-sm font-semibold text-slate-900">Purchase Order Generator</h3>
                 <p className="mt-1 text-xs text-slate-500">Create and print professional purchase orders for suppliers.</p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
-              </a>
+              </Link>
               {/* Invoice Generator */}
-              <a href="/free-invoice-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
+              <Link href="/free-invoice-generator" className="block rounded-xl border border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                     <svg className="w-5 h-5 text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>
@@ -655,15 +660,15 @@ export function RoofTakeoffBuilder() {
                 <h3 className="text-sm font-semibold text-slate-900">Free Invoice Generator</h3>
                 <p className="mt-1 text-xs text-slate-500">Generate and print professional invoices. No signup required.</p>
                 <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A]">Open tool <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></span>
-              </a>
+              </Link>
               {/* Free Tools Hub */}
-              <a href="/free-tools" className="block rounded-xl border-2 border-dashed border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all group flex flex-col items-center justify-center text-center">
+              <Link href="/free-tools" className="block rounded-xl border-2 border-dashed border-slate-200 bg-white p-5 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all group flex flex-col items-center justify-center text-center">
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
                   <svg className="w-5 h-5 text-slate-500 group-hover:text-[#BD4A1A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                 </div>
                 <h3 className="mt-3 text-sm font-semibold text-slate-900">All Free Tools</h3>
                 <p className="mt-1 text-xs text-slate-500">Browse all calculators and generators.</p>
-              </a>
+              </Link>
             </div>
           </div>
         </section>
