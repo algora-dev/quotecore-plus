@@ -88,6 +88,7 @@ const ARRAY_ALIASES: Record<string, keyof PublicRoofTakeoffInput> = {
   spouting: 'spouting',
   gutter: 'spouting',
   gutters: 'spouting',
+  eaves: 'spouting',
 };
 
 function measurementValue(value: unknown): number | null {
