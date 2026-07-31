@@ -125,6 +125,86 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     lastModified: '2026-07-29',
   },
   {
+    slug: 'how-to-do-a-roof-takeoff',
+    title: 'How to Do a Roof Takeoff: Complete Step-by-Step Guide',
+    description:
+      'Complete roof takeoff guide: measure roof area from plans, calculate pitch-adjusted quantities, separate roof planes and linear components, apply waste, and produce a material order. With free tools and video walkthroughs.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'roofing-material-list',
+    title: 'Roofing Material List: What You Need for Every Roof Type',
+    description:
+      'Complete roofing material list for every roof type: tiles, slates, shingles, metal sheets, flat roofs, and membranes. Covers underlay, battens, fixings, flashings, gutters, and accessories with free calculators for each.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'how-to-create-an-invoice-for-contractors',
+    title: 'How to Create an Invoice: Free Guide for Contractors',
+    description:
+      'Step-by-step invoice guide for contractors: what to include, how to number invoices, describe work clearly, calculate tax, set payment terms, handle variations, and avoid common mistakes. With free invoice generator.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'how-to-send-a-purchase-order',
+    title: 'How to Send a Purchase Order to a Supplier',
+    description:
+      'Complete purchase order guide for contractors: what a PO includes, how to number and send it, avoid common mistakes, and connect quotes to material ordering. With free purchase order generator.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'roofing-waste-calculation',
+    title: 'Roofing Waste Calculation: How Much Extra Material to Order',
+    description:
+      'How to calculate roofing waste allowances by material type, roof complexity, and product format. Covers net vs gross vs order quantities, linear materials, fixings, and common mistakes. With free waste calculator.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'construction-cost-estimator-guide',
+    title: 'Construction Cost Estimator: How to Budget Any Project',
+    description:
+      'Complete construction cost estimating guide: scope definition, quantity measurement, material pricing, labour estimation, subcontractors, overheads, risk, and margin. With free construction and concrete calculators.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'roof-replacement-cost-guide-uk',
+    title: 'Roof Replacement Cost Guide: How to Build an Accurate UK Estimate',
+    description:
+      'How to build an accurate roof replacement cost estimate in the UK: factors that drive cost, material price ranges, labour and access, stripping and disposal, and how to present a replacement quote professionally.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'reusable-quoting-templates-smart-components',
+    title: 'Reusable Quoting Templates: A Practical Guide to Smart Components',
+    description:
+      'How to build reusable quoting templates with Smart Components: choose repeatable work units, define inputs, add materials, build calculation logic, separate cost and price, and test against completed jobs.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'how-to-follow-up-on-a-quote',
+    title: 'How to Follow Up on a Quote Without Losing the Job',
+    description:
+      'Practical guide to following up on quotes: when to follow up, what to say, how many times, handling objections, and using automated follow-ups to win more jobs without chasing.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
+    slug: 'how-to-start-a-roofing-business-uk',
+    title: 'How to Start a Roofing Business in the UK: Practical Guide',
+    description:
+      'Complete guide to starting a roofing business in the UK: qualifications, insurance, pricing, finding work, quoting, invoicing, and growing from sole trader to employer. With free tools and templates.',
+    date: '2026-07-31',
+    lastModified: '2026-07-31',
+  },
+  {
     slug: 'ai-roof-measuring',
     title: 'AI Roof Measuring: How to Measure a Roof with AI in 2026',
     description:

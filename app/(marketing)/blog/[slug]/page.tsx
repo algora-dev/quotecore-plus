@@ -28,6 +28,16 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'ai-roof-measuring': () => import('./content/ai-roof-measuring'),
   'ai-roofing-tools-guide': () => import('./content/ai-roofing-tools-guide'),
   'ai-quoting-software': () => import('./content/ai-quoting-software'),
+  'how-to-do-a-roof-takeoff': () => import('./content/how-to-do-a-roof-takeoff'),
+  'roofing-material-list': () => import('./content/roofing-material-list'),
+  'how-to-create-an-invoice-for-contractors': () => import('./content/how-to-create-an-invoice-for-contractors'),
+  'how-to-send-a-purchase-order': () => import('./content/how-to-send-a-purchase-order'),
+  'roofing-waste-calculation': () => import('./content/roofing-waste-calculation'),
+  'construction-cost-estimator-guide': () => import('./content/construction-cost-estimator-guide'),
+  'roof-replacement-cost-guide-uk': () => import('./content/roof-replacement-cost-guide-uk'),
+  'reusable-quoting-templates-smart-components': () => import('./content/reusable-quoting-templates-smart-components'),
+  'how-to-follow-up-on-a-quote': () => import('./content/how-to-follow-up-on-a-quote'),
+  'how-to-start-a-roofing-business-uk': () => import('./content/how-to-start-a-roofing-business-uk'),
 };
 
 type Props = { params: Promise<{ slug: string }> };
