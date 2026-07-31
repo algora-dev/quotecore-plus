@@ -79,6 +79,8 @@ const PUBLIC_PATHS = [
   '/free-purchase-order-generator', // Free AI order generator (future)
   '/free-invoice-generator',       // Free AI invoice generator (future)
   '/free-tools',                   // Free tools auth callback (future)
+  '/mcp',                          // Public roof takeoff MCP endpoint
+  '/llms.txt',                     // Public machine-discovery document
   '/admin/login',  // Admin sign-in (the rest of /admin/* is gated by
                    //  the requireAdmin() helper at the page boundary).
   '/m',            // Public recipient reply pages (Messages pipeline).

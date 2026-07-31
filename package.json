@@ -17,12 +17,14 @@
     "e2e:email": "E2E_ALLOW_EMAIL_SEND=true playwright test --grep @email-opt-in",
     "e2e:report": "playwright show-report playwright-report/html",
     "e2e:cleanup:dry-run": "node --eval \"console.log('Dry-run: no deletion performed. Manifest review only.')\"",
-    "e2e:check-imports": "npx tsx e2e/scripts/check-imports.ts"
+    "e2e:check-imports": "npx tsx e2e/scripts/check-imports.ts",
+    "test:roof-takeoff": "node --import tsx --test app/(public)/free-roofing-takeoff-builder/*.test.ts"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/mdx": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@next/mdx": "^16.2.10",
     "@supabase/ssr": "0.9.0",
     "@supabase/supabase-js": "2.100.1",
@@ -47,7 +49,8 @@
     "rehype-slug": "^6.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^4.8.0",
-    "stripe": "^22.1.1"
+    "stripe": "^22.1.1",
+    "zod": "^4.4.3"
   },
   "overrides": {
     "react": "18.3.1",
@@ -72,6 +75,7 @@
     "eslint-config-next": "16.2.6",
     "sharp": "^0.35.3",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5"
   },
   "browserslist": [
