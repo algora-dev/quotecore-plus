@@ -90,6 +90,52 @@ export default function Post() {
       <p>It is built from real roofing experience, but designed as a wider construction workflow system. That means it can also fit general builders, plumbers, electricians, carpenters, flooring teams, fencing contractors, landscapers, cladding businesses and renovation trades where the same measurement-to-quote-to-job management-to-invoice problem exists.</p>
       <p>For roofers, it means a cleaner way to handle the admin around the job without needing to change how they actually understand the work.</p>
       <p>If your quotes are still getting stuck after site visits, the issue may not be the measuring. It may be the workflow that happens afterwards.</p>
+
+      <hr />
+
+      <h2>What UK roofers are doing differently in 2026</h2>
+      <p>The contractors who are winning more work have not just sped up their quoting - they have changed the structure of how quoting fits into the business. The quote is no longer a standalone document. It is part of a connected workflow that starts with measurement and ends with invoice.</p>
+      <p>That shift means:</p>
+      <ul>
+        <li>Measurements are captured once, not re-entered at every stage</li>
+        <li>Material quantities and pricing are saved, not looked up each time</li>
+        <li>The quote document is generated from structured data, not typed from scratch</li>
+        <li>Customer acceptance is tracked, not guessed at</li>
+        <li>Material orders are created from the accepted quote without rebuilding the job</li>
+        <li>Invoices connect back to the original quote and job details</li>
+      </ul>
+      <p>This is not about working faster. It is about removing the steps that should not exist in the first place.</p>
+
+      <h3>The measurement stage</h3>
+      <p>UK roofers are increasingly measuring from plans before the site visit, or using digital tools on site. The goal is to have accurate quantities ready before the customer has even finished explaining the job. If you are still measuring by hand and transcribing later, that is where the delay starts.</p>
+      <p>For a complete measurement process, see <a href="/blog/how-to-do-a-roof-takeoff">How to Do a Roof Takeoff: Complete Step-by-Step Guide</a>. For quick area and pitch calculations, use the <a href="/free-roof-area-calculator">free roof area calculator</a> and <a href="/free-roof-pitch-calculator">free roof pitch calculator</a>.</p>
+
+      <h3>The pricing stage</h3>
+      <p>Once quantities are ready, pricing should be a matter of applying saved rates, not searching for them. Contractors who price consistently use saved material lists, labour rates, and waste allowances. That means each quote is priced the same way, with the same margin, without spending time recalculating.</p>
+      <p>For the full pricing breakdown, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>. For material quantities by roof type, see <a href="/blog/roofing-material-list">Roofing Material List: What You Need for Every Roof Type</a>.</p>
+
+      <h3>The presentation stage</h3>
+      <p>A professional quote is clear, itemised, and easy for the customer to understand. It should show scope, materials, labour, and total price without making the customer hunt for the number that matters. The presentation stage should take minutes, not hours - if it takes longer, the problem is upstream in the process.</p>
+      <p>Need a professional quote document quickly? Use the <a href="/free-quote-generator">free quote generator</a> to create and download one without signing up.</p>
+
+      <h3>The follow-up stage</h3>
+      <p>Sending the quote is not the end. Following up is where jobs are won or lost. UK contractors who follow up within 48 hours consistently win more work than those who wait a week or do not follow up at all. The follow-up does not need to be pushy - it just needs to happen.</p>
+      <p>For a structured follow-up process, see <a href="/blog/how-to-follow-up-on-a-quote">How to Follow Up on a Quote Without Losing the Job</a>.</p>
+
+      <hr />
+
+      <h2>What to look for in roofing quoting software</h2>
+      <p>If you are evaluating roofing quoting software in the UK, look for:</p>
+      <ul>
+        <li><strong>Measurement-to-quote workflow</strong> - can you go from plan or site measurement to priced quote without re-entering data?</li>
+        <li><strong>Saved materials and pricing</strong> - can you store your material list, rates, and waste rules so each quote starts from your data, not from blank?</li>
+        <li><strong>Professional quote output</strong> - does the quote look clean and branded, or does it look like a spreadsheet export?</li>
+        <li><strong>Customer acceptance tracking</strong> - can you see whether the customer has accepted, declined, or not responded?</li>
+        <li><strong>Material ordering from accepted quotes</strong> - can you generate a purchase order from the accepted quote without rebuilding it?</li>
+        <li><strong>Job management and invoicing</strong> - does the workflow extend past the quote to the actual job and invoice?</li>
+        <li><strong>UK-specific support</strong> - does it handle UK roofing materials, measurements, and VAT correctly?</li>
+      </ul>
+      <p>For a comparison of the main options, see <a href="/blog/best-roofing-quoting-software-uk-2026">Best Roofing Quoting Software UK (2026): Compared for Contractors</a>.</p>
     </div>
   );
 }
