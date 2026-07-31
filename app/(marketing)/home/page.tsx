@@ -754,7 +754,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <a
-                  href="/contact"
+                  href="/suppliers"
                   className="inline-flex min-h-12 shrink-0 items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-8 py-3 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(255,107,53,0.35)] transition-colors hover:bg-[#E55A28]"
                   onClick={() => trackEvent("supplier_connect_click", { location: "home_suppliers" })}
                 >
