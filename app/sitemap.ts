@@ -54,6 +54,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Roof takeoff builder (standalone tool, not part of slug system)
     { url: `${SITE_URL}/free-roofing-takeoff-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/docs/roof-takeoff-api`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_URL}/docs/roof-takeoff-calculate`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
   ];
 
   // Blog posts (from shared source, excludes drafts)

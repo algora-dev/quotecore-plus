@@ -17,11 +17,11 @@ export default function RoofTakeoffApiDocsPage() {
         <section className="mt-8" aria-labelledby="api-endpoints">
           <h2 id="api-endpoints" className="text-xl font-semibold text-slate-900">Endpoints</h2>
           <ul className="mt-3 space-y-2 text-sm text-slate-700">
-            <li><code>GET /api/public/roof-takeoff/schema</code></li>
-            <li><code>POST /api/public/roof-takeoff/calculate</code></li>
-            <li><code>GET /api/public/roof-takeoff/openapi</code></li>
-            <li><code>GET /free-roofing-takeoff-builder/calculate</code></li>
-            <li><code>POST https://quote-core.com/mcp</code></li>
+            <li><code>GET /api/public/roof-takeoff/schema</code> - <Link href="/api/public/roof-takeoff/schema" className="text-[#BD4A1A] hover:underline">View</Link></li>
+            <li><code>POST /api/public/roof-takeoff/calculate</code> - POST JSON body, returns JSON result</li>
+            <li><code>GET /api/public/roof-takeoff/openapi</code> - <Link href="/api/public/roof-takeoff/openapi" className="text-[#BD4A1A] hover:underline">View</Link></li>
+            <li><code>GET /free-roofing-takeoff-builder/calculate</code> - server-rendered HTML result. <Link href="/docs/roof-takeoff-calculate" className="text-[#BD4A1A] hover:underline">Full documentation and examples</Link></li>
+            <li><code>POST https://quote-core.com/mcp</code> - MCP server for AI tools</li>
           </ul>
         </section>
 
