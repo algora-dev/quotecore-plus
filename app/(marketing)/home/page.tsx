@@ -750,7 +750,7 @@ export default function HomePage() {
                     Building the largest roofing supplier network in the world.
                   </h2>
                   <p className="mt-5 text-base leading-7 text-zinc-300 sm:text-lg sm:leading-8">
-                    We&apos;re partnering with high-quality roofing suppliers to connect them with contractors who quote, order, and buy materials every day. If you supply roofing materials, we want to work with you.
+                    We&apos;re partnering with high-quality roofing suppliers to connect them with people who quote, order, and buy materials every day. If you supply quality roofing materials to your area, and you want to grow, we want to work with you.
                   </p>
                 </div>
                 <a
