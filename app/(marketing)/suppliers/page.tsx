@@ -19,6 +19,12 @@ export const metadata: Metadata = {
     url: "https://quote-core.com/suppliers",
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Partner with QuoteCore+ | Roofing Supplier Network",
+    description:
+      "Get your roofing materials in front of contractors who quote, order, and buy every day. Join the QuoteCore+ supplier network.",
+  },
 };
 
 const supplierBenefits = [
@@ -121,6 +127,22 @@ const breadcrumbSchema = {
   ],
 };
 
+const serviceSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "QuoteCore+ Supplier Network",
+  description:
+    "Get your roofing materials in front of contractors who quote, order, and buy every day. Join the QuoteCore+ supplier network to reach active buyers, upload your catalogue, and grow your business.",
+  provider: {
+    "@type": "Organization",
+    name: "QuoteCore+",
+    url: "https://quote-core.com/",
+  },
+  serviceType: "Roofing Supplier Network",
+  areaServed: "Global",
+  url: "https://quote-core.com/suppliers",
+};
+
 export default function SuppliersPage() {
   return (
     <>
@@ -131,6 +153,10 @@ export default function SuppliersPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema) }}
       />
 
       <main className="min-h-screen bg-white text-zinc-950">

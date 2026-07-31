@@ -66,6 +66,7 @@ export default function robots(): MetadataRoute.Robots {
           '/about',
           '/contact',
           '/free-trial',
+          '/suppliers',
           '/privacy',
           '/cookie-policy',
           '/terms',
