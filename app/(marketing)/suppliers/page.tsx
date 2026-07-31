@@ -28,7 +28,7 @@ const supplierBenefits = [
   },
   {
     title: "Upload your catalogue",
-    body: "Add your product catalogue so contractors can find your materials, see accurate specifications, and include them in quotes without chasing price lists or phone calls.",
+    body: "Add your products with three things contractors need: a product code or SKU, a product name or description, and a current price. That is the core of what turns a quote from a guess into an order. Contractors can find your materials and include them in quotes without chasing price lists or phone calls.",
   },
   {
     title: "Be found by area",
@@ -36,7 +36,7 @@ const supplierBenefits = [
   },
   {
     title: "Connect at quote time",
-    body: "When a contractor builds a quote, your materials can be right there in the component library. That means your products are specified before the order even goes out.",
+    body: "When a contractor builds a quote, your materials - with product codes, descriptions, and pricing - are right there in the component library. Your products are specified before the order even goes out.",
   },
   {
     title: "Branded free tools",
@@ -57,7 +57,7 @@ const howItWorks = [
   {
     step: "02",
     title: "Upload your catalogue",
-    body: "Provide your product list with specifications, codes, and pricing. We help you get it into the format contractors can use.",
+    body: "Provide your product list with three core fields: product code or SKU, product name or description, and current price. We help you get it into the format contractors can use.",
   },
   {
     step: "03",
@@ -90,11 +90,15 @@ const faqs = [
   },
   {
     q: "Can I update my catalogue after joining?",
-    a: "Yes. You can update products, prices, and specifications at any time. Keeping your catalogue current means contractors always quote with accurate information.",
+    a: "Yes. You can update product codes, names, prices, and specifications at any time. Keeping your catalogue current means contractors always quote with accurate information.",
+  },
+  {
+    q: "What does a supplier catalogue need to include?",
+    a: "Three things matter most: a product code or SKU, a product name or description, and a current price. Those three fields let contractors specify your products in a quote and generate a purchase order without calling you. Beyond that, pack quantities, coverage area, product images, and lead times all help contractors choose your products with confidence.",
   },
   {
     q: "How is this different from a supplier directory?",
-    a: "A directory lists your name and number. QuoteCore+ puts your products inside the quoting workflow itself - contractors specify your materials while building quotes, before they even contact you. That is a much stronger position than being listed on a page.",
+    a: "A directory lists your name and number. QuoteCore+ puts your products - with codes, descriptions, and pricing - inside the quoting workflow itself. Contractors specify your materials while building quotes, before they even contact you. That is a much stronger position than being listed on a page.",
   },
 ];
 
@@ -229,15 +233,27 @@ export default function SuppliersPage() {
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <div className="rounded-2xl border border-slate-200 bg-white p-8 lg:p-12">
               <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                What you can offer contractors
+                What you need in your catalogue
               </h2>
               <p className="mt-4 text-zinc-600">
-                The more complete your catalogue, the more often contractors specify your products in quotes.
+                The core of a useful catalogue is three things. Get these right and contractors can specify your products in every quote.
               </p>
-              <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {[
-                  "Product catalogue with specifications and codes",
-                  "Current pricing and pack quantities",
+                  { label: "Product code / SKU", desc: "The identifier contractors use to order. Without it, they cannot put your product on a purchase order." },
+                  { label: "Product name / description", desc: "A clear name and short description so contractors know exactly what they are specifying." },
+                  { label: "Price", desc: "Current, accurate pricing. If the price is wrong, the quote is wrong, and the contractor loses money or the job." },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl border-2 border-[#FF6B35]/20 bg-orange-50/30 p-5">
+                    <p className="text-sm font-semibold text-[#FF6B35]">{item.label}</p>
+                    <p className="mt-1 text-sm text-zinc-600">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-6 text-sm text-zinc-500">Beyond the core three, these details help contractors specify your products more confidently:</p>
+              <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {[
+                  "Pack quantities and coverage per unit",
                   "Coverage area and delivery zones",
                   "Material categories (tiles, slates, sheets, membranes, etc.)",
                   "Product images and technical drawings",
