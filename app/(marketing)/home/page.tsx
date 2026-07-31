@@ -739,6 +739,36 @@ export default function HomePage() {
           </div>
         </section>
 
+        <section id="suppliers" className="bg-zinc-950 py-16 lg:py-20">
+          <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(ellipse_at_top_left,rgba(255,107,53,0.15),transparent_50%),linear-gradient(135deg,#1a1a1a_0%,#0a0a0a_100%)] px-8 py-12 sm:px-12 sm:py-14 lg:px-14 lg:py-16">
+              <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-[#FF6B35]/10 blur-3xl" aria-hidden="true" />
+              <div className="relative flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between lg:gap-12">
+                <div className="max-w-2xl">
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Supplier Network</p>
+                  <h2 className="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">
+                    Building the largest roofing supplier network in the world.
+                  </h2>
+                  <p className="mt-5 text-base leading-7 text-zinc-300 sm:text-lg sm:leading-8">
+                    We&apos;re partnering with high-quality roofing suppliers to connect them with contractors who quote, order, and buy materials every day. If you supply roofing materials, we want to work with you.
+                  </p>
+                </div>
+                <a
+                  href="/contact"
+                  className="inline-flex min-h-12 shrink-0 items-center justify-center gap-3 rounded-full bg-[#FF6B35] px-8 py-3 text-sm font-semibold text-white shadow-[0_14px_32px_rgba(255,107,53,0.35)] transition-colors hover:bg-[#E55A28]"
+                  onClick={() => trackEvent("supplier_connect_click", { location: "home_suppliers" })}
+                >
+                  Connect with us
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M5 12h14" />
+                    <path d="M13 6l6 6-6 6" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="services" className="bg-white pb-16">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
             <div className="relative overflow-hidden rounded-[2rem] border border-[#FF6B35]/20 bg-[radial-gradient(circle_at_18%_20%,rgba(255,107,53,0.10),transparent_34%),linear-gradient(135deg,#fff_0%,#fff7f3_48%,#fff_100%)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10">
