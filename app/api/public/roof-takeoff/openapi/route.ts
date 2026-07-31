@@ -19,7 +19,7 @@ export function GET() {
         post: {
           operationId: 'calculateRoofTakeoff',
           summary: 'Calculate a roof takeoff and return a human-viewable result URL',
-          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: roofTakeoffSchema.inputs } } } },
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: roofTakeoffSchema.parameterDetails } } } },
           responses: { '200': { description: 'Structured result and resultUrl' }, '422': { description: 'Validation errors' } },
         },
       },

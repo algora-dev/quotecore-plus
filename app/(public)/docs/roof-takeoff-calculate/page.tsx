@@ -130,6 +130,64 @@ export default function RoofTakeoffCalculateDocsPage() {
           </ul>
         </section>
 
+        <section className="mt-8" aria-labelledby="agent-workflow">
+          <h2 id="agent-workflow" className="text-xl font-semibold text-slate-900">AI agent workflow</h2>
+          <p className="mt-2 text-sm text-slate-600">An external AI agent can calculate a roof takeoff by following these steps:</p>
+          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+            <li>Read the <Link href="/api/public/roof-takeoff/schema" className="text-[#BD4A1A] hover:underline">calculator schema</Link> to understand supported inputs</li>
+            <li>Extract measurements from the user&apos;s natural-language request</li>
+            <li>Map measurements to query parameters (mode, units, pitch, area, hips, ridge, valleys, barges, gutter)</li>
+            <li>Determine mode: <code>plan</code> if from a 2D roof plan, <code>actual</code> if already sloped/real measurements</li>
+            <li>Construct the GET calculation URL</li>
+            <li>Open the URL and read the server-rendered HTML result (no JavaScript required)</li>
+            <li>Report the calculated values back to the user</li>
+            <li>Return the result URL so the user can view or edit</li>
+          </ol>
+        </section>
+
+        <section className="mt-8" aria-labelledby="nl-mapping">
+          <h2 id="nl-mapping" className="text-xl font-semibold text-slate-900">Natural-language mapping examples</h2>
+          <p className="mt-2 text-sm text-slate-600">How to map a user&apos;s natural-language request to calculation URL parameters.</p>
+
+          <div className="mt-4 space-y-6">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-medium text-slate-900">User says:</p>
+              <p className="mt-1 text-sm text-slate-600">&quot;126m2 roof, 25 degree pitch, four 5m hips, one 8m ridge, two 4m valleys and 18m gutter.&quot;</p>
+              <p className="mt-3 text-xs font-semibold text-slate-500">Mapped to:</p>
+              <pre className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>mode=plan, units=metric, area=126, pitch=25, hips=5,5,5,5, ridge=8, valleys=4,4, gutter=18</code></pre>
+              <p className="mt-3 text-xs font-semibold text-slate-500">Calculation URL:</p>
+              <pre className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>/free-roofing-takeoff-builder/calculate?mode=plan&amp;units=metric&amp;area=126&amp;pitch=25&amp;hips=5,5,5,5&amp;ridge=8&amp;valleys=4,4&amp;gutter=18</code></pre>
+              <Link href="/free-roofing-takeoff-builder/calculate?mode=plan&units=metric&area=126&pitch=25&hips=5,5,5,5&ridge=8&valleys=4,4&gutter=18" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A] hover:underline">
+                Open result <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-medium text-slate-900">User says:</p>
+              <p className="mt-1 text-sm text-slate-600">&quot;150m2 roof at 35 degrees with four 4m hips, two 3m valleys, two 2.5m barges and one 5m ridge.&quot;</p>
+              <p className="mt-3 text-xs font-semibold text-slate-500">Mapped to:</p>
+              <pre className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>mode=plan, units=metric, area=150, pitch=35, hips=4,4,4,4, valleys=3,3, barges=2.5,2.5, ridge=5</code></pre>
+              <p className="mt-3 text-xs font-semibold text-slate-500">Calculation URL:</p>
+              <pre className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>/free-roofing-takeoff-builder/calculate?mode=plan&amp;units=metric&amp;area=150&amp;pitch=35&amp;hips=4,4,4,4&amp;valleys=3,3&amp;barges=2.5,2.5&amp;ridge=5</code></pre>
+              <Link href="/free-roofing-takeoff-builder/calculate?mode=plan&units=metric&area=150&pitch=35&hips=4,4,4,4&valleys=3,3&barges=2.5,2.5&ridge=5" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A] hover:underline">
+                Open result <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-medium text-slate-900">User says:</p>
+              <p className="mt-1 text-sm text-slate-600">&quot;Actual roof measurements: 200 square metres, 10m ridge, 22m hips, 12m valleys, 30m spouting. Pitch is 30 degrees but these are already sloped.&quot;</p>
+              <p className="mt-3 text-xs font-semibold text-slate-500">Mapped to (note: mode=actual because measurements are already sloped):</p>
+              <pre className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>mode=actual, units=metric, area=200, pitch=30, hips=22, ridge=10, valleys=12, gutter=30</code></pre>
+              <p className="mt-3 text-xs font-semibold text-slate-500">Calculation URL:</p>
+              <pre className="mt-1 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>/free-roofing-takeoff-builder/calculate?mode=actual&amp;units=metric&amp;area=200&amp;pitch=30&amp;hips=22&amp;ridge=10&amp;valleys=12&amp;gutter=30</code></pre>
+              <Link href="/free-roofing-takeoff-builder/calculate?mode=actual&units=metric&area=200&pitch=30&hips=22&ridge=10&valleys=12&gutter=30" className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-[#BD4A1A] hover:underline">
+                Open result <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-8" aria-labelledby="examples">
           <h2 id="examples" className="text-xl font-semibold text-slate-900">Example URLs</h2>
 
@@ -173,6 +231,7 @@ export default function RoofTakeoffCalculateDocsPage() {
             <li>Material and labour totals (when catalogue pricing is available)</li>
             <li>Warnings and notes</li>
             <li>A plain-language summary readable by screen readers and AI crawlers</li>
+            <li>JSON-LD structured data embedded in the page containing all inputs, outputs, calculator name, units, calculation version, and canonical result URL</li>
             <li>Links to edit the calculation in the builder or start a new one</li>
           </ul>
           <p className="mt-3 text-sm text-slate-600">The page is <code>noindex</code> (not indexed by search engines) but <code>follow</code> (links are followed). Result URLs are shareable and require no authentication.</p>

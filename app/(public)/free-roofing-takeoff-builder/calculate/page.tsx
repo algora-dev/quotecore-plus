@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery, type PublicTakeoffResult } from '../public-contract';
 import { BUILT_IN_ORDER, COMPONENT_DEFS } from '../calc';
+import { ROOF_TAKEOFF_CALCULATION_VERSION } from '../public-contract';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,10 +14,6 @@ export const metadata = {
   title: 'Roof Takeoff Result | QuoteCore+',
   robots: { index: false, follow: true },
 };
-
-function formatValue(value: number, units: string): string {
-  return `${value.toFixed(2)} ${units}`;
-}
 
 function plainLanguageSummary(result: PublicTakeoffResult): string {
   const parts: string[] = [];
@@ -98,14 +95,69 @@ export default async function CalculatePage({ searchParams }: CalculatePageProps
 
   const summary = plainLanguageSummary(result);
 
+  // JSON-LD structured data for machine consumption
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'QuoteCore+ Free Roof Takeoff Builder',
+    applicationCategory: 'ConstructionApplication',
+    calculationVersion: ROOF_TAKEOFF_CALCULATION_VERSION,
+    mode: result.mode,
+    units: result.units,
+    pitchDegrees: result.pitchDegrees,
+    inputs: {
+      mode: result.mode,
+      units: result.units,
+      pitchDegrees: result.pitchDegrees,
+      area: input.area ?? input.roofArea ?? null,
+      hips: input.hips ?? null,
+      ridges: input.ridges ?? input.ridge ?? null,
+      valleys: input.valleys ?? null,
+      barges: input.barges ?? null,
+      spouting: input.spouting ?? input.gutters ?? input.gutter ?? null,
+      underlay: input.underlay ?? null,
+      fixings: input.fixings ?? null,
+    },
+    outputs: {
+      components: Object.fromEntries(
+        visibleComponents.map(([key, c]) => [key, {
+          label: c.label,
+          rawTotal: c.rawTotal,
+          withWaste: c.withWaste,
+          wastePercent: c.wastePercent,
+          count: c.count,
+          unit: c.unit,
+          materialCost: c.materialCost,
+          labourCost: c.labourCost,
+          totalCost: c.totalCost,
+        }])
+      ),
+      totalEntries: result.results.totalEntries,
+      materialTotal: result.results.materialTotal,
+      labourTotal: result.results.labourTotal,
+      grandTotal: result.results.grandTotal,
+    },
+    warnings: result.warnings,
+    summary,
+    calculationUrl: `/free-roofing-takeoff-builder/calculate?${populatedQuery}`,
+    editUrl: populatedBuilderUrl,
+    calculator: 'QuoteCore+ Free Roof Takeoff Builder',
+    calculationTimestamp: result.timestamp,
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10">
+      {/* JSON-LD structured data for AI agents and crawlers */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <article className="mx-auto max-w-3xl rounded-xl border border-slate-200 bg-white p-5 shadow-sm md:p-8">
         <header className="border-b border-slate-200 pb-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#FF6B35]">QuoteCore+ Free Tool</p>
           <h1 className="mt-2 text-2xl font-semibold text-slate-900">Roof Takeoff Result</h1>
           <p className="mt-2 text-sm text-slate-500">
-            {result.mode === 'actual' ? 'Actual final measurements' : 'Plan measurements adjusted for pitch'} - {result.units} - {result.pitchDegrees} pitch
+            {result.mode === 'actual' ? 'Actual final measurements' : 'Plan measurements adjusted for pitch'} - {result.units} - {result.pitchDegrees} pitch - calculation v{ROOF_TAKEOFF_CALCULATION_VERSION}
           </p>
         </header>
 
