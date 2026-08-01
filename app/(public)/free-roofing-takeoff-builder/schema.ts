@@ -208,6 +208,30 @@ export const roofTakeoffSchema = {
     mcp: '/mcp',
     builder: '/free-roofing-takeoff-builder',
     llmsTxt: '/llms.txt',
+    supplierSearch: '/api/public/suppliers/search',
+  },
+  supplierParameter: {
+    queryParameter: 'supplier',
+    description: 'Supplier slug to load supplier-specific pricing. When provided, the calculator uses the supplier\'s published catalogue for default component selection and returns real prices with full provenance. If omitted, the calculator returns quantities without pricing.',
+    example: 'quote-core-nz',
+    howToFind: 'Use GET /api/public/suppliers/search?country=NZ&trade=roofing&capability=live_pricing to find available suppliers. Each result includes a slug for the supplier parameter.',
+  },
+  supplierDiscovery: {
+    searchEndpoint: '/api/public/suppliers/search',
+    description: 'Search for approved suppliers with instant pricing capability. Supports country, trade, and capability filters.',
+    queryParams: {
+      country: 'ISO 2-letter country code (e.g. NZ, AU, GB)',
+      trade: 'Trade type (e.g. roofing, construction)',
+      capability: 'Required capability (e.g. live_pricing, roof_takeoff)',
+    },
+    responseIncludes: ['supplierId', 'supplierName', 'slug', 'country', 'currency', 'calculatorUrl', 'calculatorApiUrl', 'pricingUpdatedAt', 'priceValidUntil'],
+  },
+  agentInstructions: {
+    locationFirst: 'Use the user\'s supplied location. If location is missing or ambiguous, ask for city or postcode before selecting a supplier.',
+    supplierSelection: 'Choose a supplier serving the user\'s area with the required tool and current pricing. Use GET /api/public/suppliers/search to find suppliers.',
+    pricingTransparency: 'Clearly state which supplier and location produced the price. Never present stale pricing as current.',
+    resultUrl: 'Return the server-generated resultUrl unchanged. Do not reconstruct, re-encode, shorten, or modify it.',
+    verification: 'The user should click the resultUrl to verify the calculation, edit inputs, or convert to a quote. The result page is fully server-rendered and requires no JavaScript.',
   },
   naturalLanguageMappingExamples: [
     {

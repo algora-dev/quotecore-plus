@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery, type PublicTakeoffResult } from '../../public-contract';
+import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery, type PublicTakeoffResult, type SupplierSlotMap } from '../../public-contract';
 import { verifyResultToken, buildResultUrl } from '../../result-token';
 import { BUILT_IN_ORDER, COMPONENT_DEFS } from '../../calc';
 import { ROOF_TAKEOFF_CALCULATION_VERSION } from '../../public-contract';
-import type { UnitSystem } from '../../engine';
+import { getSupplierBySlug, getSupplierDefaultComponents } from '@/app/lib/supplier-pricing/supplierPricingService';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,8 +51,50 @@ export default async function StableResultPage({ params }: ResultPageProps) {
   // Reconstruct the input from the canonical query string stored in the token
   const searchParams = new URLSearchParams(payload.q);
   const input = parseQueryInput(searchParams);
-  const result = calculatePublicRoofTakeoff(input);
+
+  // Load supplier pricing if a supplier slug is in the query
+  let components: Awaited<ReturnType<typeof getSupplierDefaultComponents>>['components'] = [];
+  let slotMap: SupplierSlotMap = {};
+  let supplierProfile: Awaited<ReturnType<typeof getSupplierBySlug>> = null;
+
+  if (input.supplier) {
+    supplierProfile = await getSupplierBySlug(input.supplier);
+    if (supplierProfile) {
+      const result = await getSupplierDefaultComponents(supplierProfile.id);
+      components = result.components;
+      for (const comp of components) {
+        const slot = (comp as any).takeoff_slot;
+        if (slot) {
+          slotMap[slot] = {
+            componentId: comp.id,
+            componentName: comp.name,
+            componentSku: (comp as any).sku ?? null,
+            unitPrice: comp.price_per_unit,
+          };
+        }
+      }
+    }
+  }
+
+  const result = calculatePublicRoofTakeoff(input, components, slotMap);
   if (!result.success) notFound();
+
+  // Attach pricing provenance to result for display
+  if (supplierProfile) {
+    result.pricing = {
+      supplierId: supplierProfile.id,
+      supplierName: supplierProfile.supplier_name,
+      country: supplierProfile.country,
+      currency: supplierProfile.currency,
+      taxTreatment: supplierProfile.tax_treatment,
+      priceType: supplierProfile.price_type,
+      pricingUpdatedAt: supplierProfile.pricing_updated_at,
+      priceValidUntil: supplierProfile.price_valid_until,
+      deliveryAssumptions: supplierProfile.delivery_assumptions,
+      exclusions: supplierProfile.exclusions,
+      estimateStatus: supplierProfile.instant_pricing_available ? 'indicative' : 'unavailable',
+    };
+  }
 
   const populatedQuery = toResultQuery({ ...input, mode: result.mode, units: result.units });
   const populatedBuilderUrl = `/free-roofing-takeoff-builder?${populatedQuery}`;
@@ -149,6 +191,7 @@ export default async function StableResultPage({ params }: ResultPageProps) {
     editUrl: populatedBuilderUrl,
     calculator: 'QuoteCore+ Free Roof Takeoff Builder',
     calculationTimestamp: result.timestamp,
+    pricing: result.pricing ?? null,
   };
 
   return (
@@ -206,22 +249,83 @@ export default async function StableResultPage({ params }: ResultPageProps) {
           <dl className="mt-4 space-y-3">
             {visibleComponents.map(([key, component]) => (
               <div key={key} className="flex items-start justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
-                <dt className="text-sm font-medium text-slate-700">{component.label}</dt>
+                <dt className="text-sm font-medium text-slate-700">
+                  {component.label}
+                  {component.componentName && (
+                    <span className="block text-xs text-slate-400">{component.componentName}{component.componentSku ? ` - SKU: ${component.componentSku}` : ''}</span>
+                  )}
+                </dt>
                 <dd className="text-right text-sm font-semibold text-slate-900">
                   {component.rawTotal.toFixed(2)} {component.unit}
                   {component.wastePercent > 0 && <span className="block text-xs font-normal text-slate-400">With {component.wastePercent}% waste: {component.withWaste.toFixed(2)} {component.unit}</span>}
+                  {component.materialCost > 0 && (
+                    <span className="block text-xs font-normal text-slate-500">
+                      {component.componentName ? `${component.materialCost.toFixed(2)} ${result.pricing?.currency ?? ''}` : ''}
+                    </span>
+                  )}
                 </dd>
               </div>
             ))}
           </dl>
           {result.results.grandTotal > 0 && (
             <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-              <p className="text-sm text-slate-600">Materials: {result.results.materialTotal.toFixed(2)}</p>
-              <p className="text-sm text-slate-600">Labour: {result.results.labourTotal.toFixed(2)}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">Total: {result.results.grandTotal.toFixed(2)}</p>
+              <p className="text-sm text-slate-600">Materials: {result.results.materialTotal.toFixed(2)} {result.pricing?.currency}</p>
+              <p className="text-sm text-slate-600">Labour: {result.results.labourTotal.toFixed(2)} {result.pricing?.currency}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">Total: {result.results.grandTotal.toFixed(2)} {result.pricing?.currency}</p>
+              {result.pricing?.taxTreatment && (
+                <p className="mt-1 text-xs text-slate-400">Prices are {result.pricing.taxTreatment} of tax</p>
+              )}
             </div>
           )}
         </section>
+
+        {/* Pricing provenance */}
+        {result.pricing && (
+          <section aria-labelledby="pricing-provenance" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4">
+            <h2 id="pricing-provenance" className="text-sm font-semibold text-blue-900">Pricing provenance</h2>
+            <dl className="mt-2 space-y-1">
+              <div className="flex justify-between text-xs">
+                <dt className="text-blue-700">Supplier</dt>
+                <dd className="text-blue-900">{result.pricing.supplierName}</dd>
+              </div>
+              <div className="flex justify-between text-xs">
+                <dt className="text-blue-700">Currency</dt>
+                <dd className="text-blue-900">{result.pricing.currency} ({result.pricing.taxTreatment} tax)</dd>
+              </div>
+              <div className="flex justify-between text-xs">
+                <dt className="text-blue-700">Price type</dt>
+                <dd className="text-blue-900">{result.pricing.priceType}</dd>
+              </div>
+              {result.pricing.pricingUpdatedAt && (
+                <div className="flex justify-between text-xs">
+                  <dt className="text-blue-700">Pricing updated</dt>
+                  <dd className="text-blue-900">{new Date(result.pricing.pricingUpdatedAt).toLocaleDateString()}</dd>
+                </div>
+              )}
+              {result.pricing.priceValidUntil && (
+                <div className="flex justify-between text-xs">
+                  <dt className="text-blue-700">Valid until</dt>
+                  <dd className="text-blue-900">{new Date(result.pricing.priceValidUntil).toLocaleDateString()}</dd>
+                </div>
+              )}
+              {result.pricing.deliveryAssumptions && (
+                <div className="flex justify-between text-xs">
+                  <dt className="text-blue-700">Delivery</dt>
+                  <dd className="text-blue-900">{result.pricing.deliveryAssumptions}</dd>
+                </div>
+              )}
+              {result.pricing.exclusions && (
+                <div className="flex justify-between text-xs">
+                  <dt className="text-blue-700">Exclusions</dt>
+                  <dd className="text-blue-900">{result.pricing.exclusions}</dd>
+                </div>
+              )}
+            </dl>
+            <p className="mt-2 text-xs text-blue-600">
+              This is an {result.pricing.estimateStatus} price based on current supplier catalogue data. Verify with the supplier before ordering.
+            </p>
+          </section>
+        )}
 
         {/* Warnings */}
         {result.warnings.length > 0 && (
