@@ -488,6 +488,7 @@ export default async function QuoteSummaryPage({
             <SendToAppButton
               quoteId={id}
               companyId={quote.company_id}
+              workspaceSlug={workspaceSlug}
               integrations={integrations.map(i => ({ id: i.id, provider: i.provider, enabled: i.enabled, connection_status: i.connection_status }))}
             />
             <SendDocumentButton

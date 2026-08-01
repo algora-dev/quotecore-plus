@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { queueQuoteExport } from '@/app/(auth)/[workspaceSlug]/account/integrations/actions';
 
 type Integration = {
@@ -10,20 +10,34 @@ type Integration = {
   connection_status: string;
 };
 
-const PROVIDER_LABELS: Record<string, { name: string; icon: string }> = {
-  zapier: { name: 'Zapier', icon: '⚡' },
-  jobnimbus: { name: 'JobNimbus', icon: '🏠' },
-  fergus: { name: 'Fergus', icon: '🔧' },
+const PROVIDER_LABELS: Record<string, { name: string; icon: string; description: string }> = {
+  zapier: {
+    name: 'Zapier',
+    icon: '⚡',
+    description: 'Send quotes to 6,000+ apps via Zapier webhooks.',
+  },
+  jobnimbus: {
+    name: 'JobNimbus',
+    icon: '🏠',
+    description: 'Create contacts and jobs directly in JobNimbus.',
+  },
+  fergus: {
+    name: 'Fergus',
+    icon: '🔧',
+    description: 'Send customers and quotes to Fergus job management.',
+  },
 };
 
 export function SendToAppButton({
   quoteId,
   companyId,
   integrations,
+  workspaceSlug,
 }: {
   quoteId: string;
   companyId: string;
   integrations: Integration[];
+  workspaceSlug: string;
 }) {
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState<string | null>(null);
@@ -32,11 +46,7 @@ export function SendToAppButton({
   const connectedIntegrations = integrations.filter(
     (i) => i.enabled && i.connection_status === 'connected'
   );
-
-  // No connected integrations - don't render the button at all
-  if (connectedIntegrations.length === 0) {
-    return null;
-  }
+  const hasConnected = connectedIntegrations.length > 0;
 
   const handleSend = async (integration: Integration) => {
     setSending(integration.id);
@@ -63,15 +73,17 @@ export function SendToAppButton({
 
   return (
     <>
+      {/* Always visible - orange accent to distinguish from other action buttons */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         title="Send to App"
-        className="icon-btn border-slate-300 bg-white"
+        className="inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-50/60 px-3 py-2 text-xs font-medium text-orange-700 hover:bg-orange-100 hover:border-orange-400 transition"
       >
-        <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
         </svg>
+        Send to App
       </button>
 
       {open && (
@@ -118,13 +130,13 @@ export function SendToAppButton({
                   Done
                 </button>
               </div>
-            ) : (
+            ) : hasConnected ? (
               <div className="space-y-2">
                 <p className="text-xs text-slate-500 mb-3">
                   Choose which app to send this quote to.
                 </p>
                 {connectedIntegrations.map((integration) => {
-                  const info = PROVIDER_LABELS[integration.provider] ?? { name: integration.provider, icon: '🔌' };
+                  const info = PROVIDER_LABELS[integration.provider] ?? { name: integration.provider, icon: '🔌', description: '' };
                   return (
                     <button
                       key={integration.id}
@@ -149,6 +161,47 @@ export function SendToAppButton({
                     </button>
                   );
                 })}
+              </div>
+            ) : (
+              /* No integrations connected - educate and redirect */
+              <div className="space-y-4">
+                <div className="rounded-lg bg-orange-50 p-4 text-center">
+                  <span className="text-3xl">🔗</span>
+                  <p className="mt-2 text-sm font-medium text-slate-900">
+                    No apps connected yet
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Send completed quotes directly to the job management platform you already use. Connect an app to get started.
+                  </p>
+                </div>
+
+                {/* Show available providers */}
+                <div className="space-y-2">
+                  {(Object.keys(PROVIDER_LABELS) as string[]).map((provider) => {
+                    const info = PROVIDER_LABELS[provider];
+                    return (
+                      <div key={provider} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+                        <span className="text-xl">{info.icon}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-slate-900">{info.name}</p>
+                          <p className="text-xs text-slate-400">{info.description}</p>
+                        </div>
+                        {provider === 'zapier' ? (
+                          <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Available</span>
+                        ) : (
+                          <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-400">Soon</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <a
+                  href={`/${workspaceSlug}/account?tab=integrations`}
+                  className="block w-full rounded-full bg-black px-5 py-2.5 text-center text-xs font-semibold text-white hover:bg-slate-800 transition"
+                >
+                  Go to Integrations Settings
+                </a>
               </div>
             )}
           </div>
