@@ -3,6 +3,8 @@ import {
   toResultQuery,
   type PublicRoofTakeoffInput,
 } from '@/app/(public)/free-roofing-takeoff-builder/public-contract';
+import { createResultToken, buildResultUrl } from '@/app/(public)/free-roofing-takeoff-builder/result-token';
+import { ROOF_TAKEOFF_CALCULATION_VERSION } from '@/app/(public)/free-roofing-takeoff-builder/public-contract';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 
 const MAX_BODY_BYTES = 32_000;
@@ -30,6 +32,8 @@ export async function POST(request: Request) {
   if (!result.success) return Response.json(result, { status: 422 });
 
   const origin = new URL(request.url).origin;
-  result.resultUrl = `${origin}/free-roofing-takeoff-builder/calculate?${toResultQuery({ ...input, mode: result.mode, units: result.units })}`;
+  const populatedQuery = toResultQuery({ ...input, mode: result.mode, units: result.units });
+  const token = createResultToken(populatedQuery, ROOF_TAKEOFF_CALCULATION_VERSION);
+  result.resultUrl = buildResultUrl(token, origin);
   return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });
 }
