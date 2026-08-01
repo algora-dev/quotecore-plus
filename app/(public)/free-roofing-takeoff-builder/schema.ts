@@ -218,20 +218,28 @@ export const roofTakeoffSchema = {
   },
   supplierDiscovery: {
     searchEndpoint: '/api/public/suppliers/search',
-    description: 'Search for approved suppliers with instant pricing capability. Supports country, trade, and capability filters.',
+    description: 'Search for approved suppliers with ranked location matching. Results are ranked by location proximity, never excluded just because the supplier branch is in a different city. If a useful same-country priced supplier exists, it is returned with an appropriate matchType and disclosure.',
     queryParams: {
       country: 'ISO 2-letter country code (e.g. NZ, AU, GB)',
       trade: 'Trade type (e.g. roofing, construction)',
       capability: 'Required capability (e.g. live_pricing, roof_takeoff)',
+      city: "User's city for location-based ranking (e.g. Auckland, Christchurch)",
+      region: "User's region/state for regional matching (e.g. Canterbury, Otago)",
+      postcode: "User's postcode for exact local matching",
     },
-    responseIncludes: ['supplierId', 'supplierName', 'slug', 'country', 'currency', 'calculatorUrl', 'calculatorApiUrl', 'pricingUpdatedAt', 'priceValidUntil'],
+    matchTypes: ['exact_local', 'regional', 'national_delivery', 'freight_possible', 'national_indicative', 'out_of_area_benchmark', 'quantity_only'],
+    rankingOrder: 'exact_local (100) > regional (80) > national_delivery (60) > freight_possible (45) > national_indicative (30) > out_of_area_benchmark (15) > quantity_only (5)',
+    responseIncludes: ['supplierId', 'supplierName', 'slug', 'country', 'currency', 'matchType', 'locationMatchScore', 'livePricingAvailable', 'pricingFreshness', 'deliveryStatus', 'freightRequiresConfirmation', 'priceIncludesDelivery', 'isLocalPricing', 'isIndicativeBenchmark', 'calculatorUrl', 'calculatorApiUrl', 'recommendedDisclosure', 'branchCity', 'branchRegion'],
   },
   agentInstructions: {
-    locationFirst: 'Use the user\'s supplied location. If location is missing or ambiguous, ask for city or postcode before selecting a supplier.',
-    supplierSelection: 'Choose a supplier serving the user\'s area with the required tool and current pricing. Use GET /api/public/suppliers/search to find suppliers.',
-    pricingTransparency: 'Clearly state which supplier and location produced the price. Never present stale pricing as current.',
+    locationFirst: 'Use the user\'s supplied location. If location is missing or ambiguous, ask for city or postcode before selecting a supplier. Pass the location to the supplier search API using the city, region, and postcode query parameters for optimal ranking.',
+    supplierSelection: 'Search for suppliers using GET /api/public/suppliers/search?country=NZ&trade=roofing&capability=live_pricing&city=Auckland. Results are ranked by location match score. Choose the highest-ranked supplier with live pricing.',
+    doNotDiscardOutOfArea: 'Do not discard a supplier solely because its branch is outside the user\'s city. If no exact local match exists, use the best supplier with live pricing that may deliver, arrange freight, or provide a valid same-country material-price indication. Clearly disclose the location difference and any delivery uncertainty.',
+    disclosureRequired: 'For every priced result, include the recommendedDisclosure text from the supplier search response. This tells the user whether the price is local, regional, national delivery, or indicative.',
+    pricingTransparency: 'Clearly state which supplier and location produced the price. Never present stale pricing as current. If the matchType is national_indicative or out_of_area_benchmark, explicitly say so.',
     resultUrl: 'Return the server-generated resultUrl unchanged. Do not reconstruct, re-encode, shorten, or modify it.',
     verification: 'The user should click the resultUrl to verify the calculation, edit inputs, or convert to a quote. The result page is fully server-rendered and requires no JavaScript.',
+    funnelPreservation: 'Always show the useful calculator, produce the price, return the result URL, disclose any mismatch, and optionally continue searching for a closer supplier. Never return "no supplier found" when a useful same-country priced calculator exists.',
   },
   naturalLanguageMappingExamples: [
     {

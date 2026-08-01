@@ -18,7 +18,7 @@
     "e2e:report": "playwright show-report playwright-report/html",
     "e2e:cleanup:dry-run": "node --eval \"console.log('Dry-run: no deletion performed. Manifest review only.')\"",
     "e2e:check-imports": "npx tsx e2e/scripts/check-imports.ts",
-    "test:roof-takeoff": "node --import tsx --test app/(public)/free-roofing-takeoff-builder/*.test.ts"
+    "test:roof-takeoff": "node --import tsx --test \"app/(public)/free-roofing-takeoff-builder/*.test.ts\" \"app/lib/supplier-pricing/*.test.ts\""
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
@@ -86,3 +86,4 @@
     "not op_mini all"
   ]
 }
+
