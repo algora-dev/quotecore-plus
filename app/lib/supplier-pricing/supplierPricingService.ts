@@ -107,17 +107,19 @@ export async function getSupplierDefaultComponents(supplierId: string): Promise<
       name: comp.name,
       description: comp.notes,
       unit: comp.takeoff_slot === 'roof_area' || comp.takeoff_slot === 'underlay' || comp.takeoff_slot === 'fixings' ? 'm2' : 'm',
-      price_per_unit: comp.default_material_rate ?? 0,
+      price_per_unit: Number(comp.default_material_rate) || 0,
       pricing_strategy: comp.pricing_strategy || 'per_unit',
-      pack_size: comp.pack_size,
-      pack_price: comp.pack_price,
-      labour_rate: comp.default_labour_rate ?? 0,
+      pack_size: comp.pack_size ? Number(comp.pack_size) : null,
+      pack_price: comp.pack_price ? Number(comp.pack_price) : null,
+      labour_rate: Number(comp.default_labour_rate) || 0,
       labour_unit: 'per_unit',
-      suggested_waste_percent: comp.default_waste_percent ?? (comp.takeoff_slot === 'roof_area' ? 10 : 5),
+      suggested_waste_percent: Number(comp.default_waste_percent) ?? (comp.takeoff_slot === 'roof_area' ? 10 : 5),
       pitch_type: comp.default_pitch_type || 'none',
       is_active: comp.is_active,
       sort_order: comp.sort_order ?? 0,
-    } as RoofComponentDef);
+      takeoff_slot: comp.takeoff_slot,
+      sku: comp.sku,
+    } as any);
   }
 
   // Ensure every built-in slot has an entry in slotMap (null if no component)
