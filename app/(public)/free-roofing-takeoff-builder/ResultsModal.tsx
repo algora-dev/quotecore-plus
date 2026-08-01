@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import type { ComponentSection, RoofComponentDef } from './types';
-import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost, computeKnownPriceCost, isCustomFixed } from './calc';
+import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost, computeKnownPriceCost } from './calc';
 import { ComponentSymbol, componentLabel } from './helpers';
 
 interface ResultsModalProps {
@@ -13,13 +13,11 @@ interface ResultsModalProps {
   grandTotal: number;
   unitSystem: 'metric' | 'imperial' | 'squares';
   allKeys: string[];
-  currencySymbol: string;
-  currencyCode: string;
   onClose: () => void;
 }
 
-export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, currencySymbol, currencyCode, onClose }: ResultsModalProps) {
-  const cur = currencySymbol;
+export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose }: ResultsModalProps) {
+  const cur = '\u00A3';
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
   const areaUnit = unitSystem === 'metric' ? 'm\u00B2' : unitSystem === 'imperial' ? 'sq ft' : 'squares';
@@ -106,7 +104,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
         const rate = (matCost.cost + labCost) / (withWaste || 1);
         const entryLabel = entry.label || `${label} ${section.entries.indexOf(entry) + 1}`;
         const desc = entry.knownPrice != null && entry.knownPrice > 0
-          ? `${entryLabel} - Known price ${cur}${entry.knownPrice.toFixed(2)}/${isFixed ? 'pc' : unit}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
+          ? `${entryLabel} - Known price ${'\u00A3'}${entry.knownPrice.toFixed(2)}/${isFixed ? 'pc' : unit}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
           : comp
             ? `${entryLabel} - ${comp.name}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
             : `${entryLabel}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`;
@@ -117,19 +115,18 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
     params.set('amount', grandTotal.toFixed(2));
     if (lines.length > 0) params.set('lines', encodeURIComponent(JSON.stringify(lines)));
     params.set('ref', 'free-roofing-takeoff-builder');
-    params.set('currency', currencyCode);
     return `/free-quote-generator?${params.toString()}`;
   }
 
   return (
     <div id="print-root" className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-2 md:p-4 print:block print:static print:p-0 print:bg-white">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col print:shadow-none print:rounded-none print:max-h-none print:w-full print:max-w-none print:overflow-visible" id="takeoff-print">
+      <div role="dialog" aria-modal="true" aria-labelledby="takeoff-report-title" className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col print:shadow-none print:rounded-none print:max-h-none print:w-full print:max-w-none print:overflow-visible" id="takeoff-print">
         <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 border-b border-slate-100 print:border-slate-300">
           <div>
-            <h2 className="text-base md:text-lg font-semibold text-slate-900">Roof Takeoff Report</h2>
+            <h2 id="takeoff-report-title" className="text-base md:text-lg font-semibold text-slate-900">Roof Takeoff Report</h2>
             <p className="text-xs text-slate-400">Generated {new Date().toLocaleDateString('en-GB')}</p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 transition rounded-full hover:bg-slate-50 print:hidden min-h-[44px] min-w-[44px] flex items-center justify-center">
+          <button onClick={onClose} aria-label="Close roof takeoff report" className="p-2 text-slate-400 hover:text-slate-600 transition rounded-full hover:bg-slate-50 print:hidden min-h-[44px] min-w-[44px] flex items-center justify-center">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
@@ -179,7 +176,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                         <div className="min-w-0 flex-1">
                           <span className="text-slate-500">{entry.label || `Entry ${idx + 1}`}</span>
                           {isPitchCalc && <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}{'\u00b0'}</span>}
-                          {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#BD4A1A] font-medium">{cur}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
+                          {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#BD4A1A] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
                           {comp && <span className="ml-2 text-slate-400 truncate">{comp.name}</span>}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
@@ -228,10 +225,10 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
           </button>
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition min-h-[44px]">Close</button>
-            <a href={buildConvertToQuoteUrl()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)]">
+            <Link href={buildConvertToQuoteUrl()} className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)]">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               Convert to Quote
-            </a>
+            </Link>
             <Link href="/signup?ref=free-roofing-takeoff-builder" className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800">
               Save to QuoteCore+
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>

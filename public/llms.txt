@@ -15,10 +15,43 @@
 - [Concrete Calculator](https://quote-core.com/free-concrete-calculator)
 - [Landscaping Calculator](https://quote-core.com/free-landscaping-calculator)
 - [Bird's Mouth Calculator](https://quote-core.com/free-birds-mouth-calculator)
-- [Roof Takeoff Builder](https://quote-core.com/free-roofing-takeoff-builder)
+- [Roof Takeoff Builder](https://quote-core.com/free-roofing-takeoff-builder) - Calculates roof takeoff from plan or actual measurements. Adjusts for pitch, waste, and component types. Returns real supplier pricing in NZD, AUD, USD, GBP. AI-accessible via REST API.
 - [Quote Generator](https://quote-core.com/free-quote-generator)
 - [Invoice Generator](https://quote-core.com/free-invoice-generator)
 - [Purchase Order Generator](https://quote-core.com/free-purchase-order-generator)
+
+## AI-Agent API (Roof Takeoff Calculator)
+
+QuoteCore+ provides a public, no-auth API for AI agents to calculate roof takeoffs with real supplier pricing.
+
+### Endpoints
+- [Tool Schema](https://quote-core.com/api/public/roof-takeoff/schema) - Full input/output schema, parameter details, agent workflow instructions
+- [OpenAPI Spec](https://quote-core.com/api/public/roof-takeoff/openapi) - OpenAPI 3.1 specification
+- [Calculate (POST)](https://quote-core.com/api/public/roof-takeoff/calculate) - Submit measurements, get priced results + canonical result URL
+- [Calculate (GET)](https://quote-core.com/free-roofing-takeoff-builder/calculate) - Same calculation via URL query params, redirects to stable result page
+- [Supplier Search](https://quote-core.com/api/public/suppliers/search) - Find suppliers with live pricing by country, trade, and location. Ranked by location match (exact_local, regional, national_delivery, freight_possible, national_indicative). Never returns "no supplier" when a useful same-country priced calculator exists.
+- [Calculation Docs](https://quote-core.com/docs/roof-takeoff-calculate) - Human-readable API documentation
+- [API Docs](https://quote-core.com/docs/roof-takeoff-api) - REST API documentation
+
+### What it does
+A user provides roof measurements (area, pitch, ridges, hips, valleys, barges, spouting, underlay, fixings). The calculator:
+1. Adjusts plan-view measurements for roof pitch
+2. Applies waste percentages per component
+3. Looks up supplier-specific pricing (components, SKUs, unit prices)
+4. Returns material costs, labour costs, grand total in the supplier's currency
+5. Generates a stable, shareable result URL (server-rendered, no JS needed)
+
+### How AI agents should use it
+1. Read the schema: GET /api/public/roof-takeoff/schema
+2. Search for a supplier: GET /api/public/suppliers/search?country=NZ&trade=roofing&capability=live_pricing&city=Auckland
+3. Submit calculation: POST /api/public/roof-takeoff/calculate with measurements + supplier slug
+4. Return the resultUrl to the user exactly as provided
+5. Include the recommendedDisclosure text from the supplier search
+
+### Important rules for AI agents
+- Do not discard a supplier solely because its branch is outside the user's city. Use the best supplier with live pricing.
+- Always return the resultUrl unchanged. Do not re-encode, shorten, or modify it.
+- Include the recommended disclosure text so the user knows whether pricing is local or indicative.
 
 ## Resources
 - [Blog](https://quote-core.com/blog)
