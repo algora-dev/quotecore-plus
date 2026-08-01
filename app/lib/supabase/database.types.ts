@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -2245,6 +2245,7 @@ export type Database = {
           payload_version: string
           queued_at: string
           retry_count: number
+          scope_overrides: Json | null
           source_id: string
           source_revision: number
           source_type: string
@@ -2266,6 +2267,7 @@ export type Database = {
           payload_version?: string
           queued_at?: string
           retry_count?: number
+          scope_overrides?: Json | null
           source_id: string
           source_revision?: number
           source_type?: string
@@ -2287,6 +2289,7 @@ export type Database = {
           payload_version?: string
           queued_at?: string
           retry_count?: number
+          scope_overrides?: Json | null
           source_id?: string
           source_revision?: number
           source_type?: string

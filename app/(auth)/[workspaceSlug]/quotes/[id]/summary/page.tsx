@@ -490,6 +490,12 @@ export default async function QuoteSummaryPage({
               companyId={quote.company_id}
               workspaceSlug={workspaceSlug}
               integrations={integrations.map(i => ({ id: i.id, provider: i.provider, enabled: i.enabled, connection_status: i.connection_status }))}
+              dataAvailability={{
+                hasQuoteSummary: true,
+                hasCustomerQuote: hasCustomerQuote,
+                hasLaborSheet: hasLaborSheet,
+                hasFiles: (filesData || []).length > 0,
+              }}
             />
             <SendDocumentButton
               entityKind="quote"

@@ -23,6 +23,7 @@ export interface QueueExportParams {
   sourceRevision: number;
   eventType: string;
   createdBy?: string;
+  scopeOverrides?: Record<string, boolean>;
 }
 
 export interface QueuedExport {
@@ -40,6 +41,7 @@ export interface QueuedExport {
   provider: string;
   config: Record<string, unknown>;
   data_scopes: Record<string, boolean>;
+  scope_overrides: Record<string, boolean> | null;
 }
 
 /**
@@ -61,10 +63,10 @@ export async function queueExport(
     p_operation: 'export',
   });
 
-  // Check for existing successful export with same idempotency key
+  // Check for existing successful export with same idempotency key AND same scope overrides
   const { data: existing } = await supabase
     .from('integration_exports')
-    .select('id, status')
+    .select('id, status, scope_overrides')
     .eq('integration_id', params.integrationId)
     .eq('idempotency_key', idempotencyKey)
     .in('status', ['succeeded', 'running', 'queued'])
@@ -72,11 +74,18 @@ export async function queueExport(
     .limit(1)
     .maybeSingle();
 
-  if (existing && existing.status === 'succeeded') {
-    return { exportId: existing.id, status: 'succeeded', duplicate: true };
-  }
-  if (existing && (existing.status === 'running' || existing.status === 'queued')) {
-    return { exportId: existing.id, status: existing.status, duplicate: true };
+  // Check if scope overrides match (same scopes = duplicate, different scopes = new export)
+  const scopeKey = params.scopeOverrides ? JSON.stringify(params.scopeOverrides) : null;
+  if (existing) {
+    const existingScopeKey = existing.scope_overrides ? JSON.stringify(existing.scope_overrides) : null;
+    if (scopeKey === existingScopeKey) {
+      if (existing.status === 'succeeded') {
+        return { exportId: existing.id, status: 'succeeded', duplicate: true };
+      }
+      if (existing.status === 'running' || existing.status === 'queued') {
+        return { exportId: existing.id, status: existing.status, duplicate: true };
+      }
+    }
   }
 
   // Create new export record
@@ -93,6 +102,7 @@ export async function queueExport(
       idempotency_key: idempotencyKey,
       payload_version: '1.0',
       created_by: params.createdBy ?? null,
+      scope_overrides: params.scopeOverrides ?? null,
     })
     .select('id')
     .single();
@@ -123,7 +133,8 @@ export async function claimNextExport(): Promise<QueuedExport | null> {
       status,
       idempotency_key,
       payload_version,
-      retry_count
+      retry_count,
+      scope_overrides
     `)
     .eq('status', 'queued')
     .or('next_retry_at.is.null,next_retry_at.lte.' + new Date().toISOString())
@@ -162,6 +173,7 @@ export async function claimNextExport(): Promise<QueuedExport | null> {
     provider: integration.provider,
     config: integration.config ?? {},
     data_scopes: integration.data_scopes ?? {},
+    scope_overrides: data.scope_overrides ?? null,
   };
 }
 

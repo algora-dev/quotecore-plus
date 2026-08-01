@@ -85,8 +85,11 @@ async function processExport(queued: QueuedExport): Promise<void> {
     data: quoteData,
   };
 
-  // Build config
-  const dataScopes: DataScopes = { ...DEFAULT_DATA_SCOPES, ...queued.data_scopes };
+  // Build config - merge defaults with integration settings, then apply per-export overrides
+  const baseScopes: DataScopes = { ...DEFAULT_DATA_SCOPES, ...queued.data_scopes };
+  const dataScopes: DataScopes = queued.scope_overrides
+    ? { ...baseScopes, ...queued.scope_overrides }
+    : baseScopes;
   const config: IntegrationConfig = {
     provider: queued.provider,
     config: queued.config,
