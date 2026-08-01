@@ -64,6 +64,7 @@ export default function robots(): MetadataRoute.Robots {
           '/construction-quoting-software',
           '/services',
           '/about',
+          '/company',
           '/contact',
           '/free-trial',
           '/suppliers',

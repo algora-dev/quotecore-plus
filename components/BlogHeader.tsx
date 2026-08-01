@@ -14,6 +14,7 @@ function buildNavItems(app: string) {
     { label: "Pricing", href: "/#pricing" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
+    { label: "Company", href: "/company" },
     { label: "Documentation", href: `${app}/docs`, external: true },
     { label: "App", href: app || "/login", external: true },
     { label: "Contact us", href: "/contact" },

@@ -1,0 +1,171 @@
+import type { Metadata } from "next";
+import Script from "next/script";
+import BlogHeader from "@/components/BlogHeader";
+import SiteFooter from "@/components/SiteFooter";
+import { hreflangLanguages } from "@/lib/seo/hreflang";
+import { SITE_URL } from "@/lib/seo/site-url";
+import { ORG_NAME, ORG_LEGAL_NAME, ORG_EMAIL, ORG_LINKEDIN } from "@/app/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Company | QuoteCore+",
+  description:
+    "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by an ex-roofer with 12 years of trade experience. Learn about the company, product, and mission.",
+  alternates: {
+    canonical: "https://quote-core.com/company",
+    languages: hreflangLanguages("/company"),
+  },
+  openGraph: {
+    title: "Company | QuoteCore+",
+    description:
+      "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by an ex-roofer with 12 years of trade experience.",
+    url: "https://quote-core.com/company",
+    siteName: "QuoteCore+",
+    type: "website",
+  },
+};
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${SITE_URL}/#organization`,
+  name: ORG_NAME,
+  legalName: ORG_LEGAL_NAME,
+  url: `${SITE_URL}/`,
+  logo: `${SITE_URL}/MainQCP.png`,
+  founder: {
+    "@type": "Person",
+    name: "Shaun",
+    jobTitle: "Founder",
+    description: "12 years of roofing experience, now building QuoteCore+.",
+    url: `${SITE_URL}/about`,
+  },
+  email: ORG_EMAIL,
+  sameAs: [
+    ORG_LINKEDIN,
+    "https://www.youtube.com/@quotecoreplus",
+  ],
+  areaServed: [
+    { "@type": "Country", name: "United Kingdom" },
+    { "@type": "Country", name: "New Zealand" },
+    { "@type": "Country", name: "Australia" },
+    { "@type": "Country", name: "United States" },
+  ],
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+    { "@type": "ListItem", position: 2, name: "Company", item: `${SITE_URL}/company` },
+  ],
+};
+
+const facts = [
+  { label: "Product", value: "QuoteCore+" },
+  { label: "Legal entity", value: "T3 Play Limited" },
+  { label: "Category", value: "Roofing and construction quoting software" },
+  { label: "Founder", value: "Shaun - 12 years of roofing experience" },
+  { label: "Regions served", value: "United Kingdom, New Zealand, Australia, United States" },
+  { label: "Supported trades", value: "Roofing, cladding, flooring, fencing, landscaping, general construction" },
+  { label: "Pricing model", value: "Monthly subscription with 14-day free trial" },
+  { label: "Support", value: "Email and in-app support" },
+  { label: "Trial terms", value: "14 days, no credit card required" },
+];
+
+export default function CompanyPage() {
+  return (
+    <>
+      <Script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <Script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <main className="min-h-screen bg-white text-zinc-950">
+        <BlogHeader />
+
+        {/* Hero */}
+        <section className="relative overflow-hidden pb-12 pt-16">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
+          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+            <p className="text-sm font-medium text-[#FF6B35]">Company</p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+              QuoteCore+ is roofing and construction quoting software built around measurements.
+            </h1>
+            <p className="mt-4 text-lg text-zinc-600">
+              QuoteCore+ connects digital takeoffs, pricing, customer approval, material ordering, job management, and invoicing in one platform. Built by T3 Play Limited.
+            </p>
+          </div>
+        </section>
+
+        {/* Company facts */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Company facts</h2>
+          <div className="mt-6 overflow-hidden rounded-xl border border-slate-200">
+            <dl className="divide-y divide-slate-200">
+              {facts.map((fact) => (
+                <div key={fact.label} className="grid grid-cols-1 gap-1 px-4 py-3 sm:grid-cols-3 sm:gap-4">
+                  <dt className="text-sm font-medium text-slate-500">{fact.label}</dt>
+                  <dd className="text-sm text-slate-900 sm:col-span-2">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        {/* What we do */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">What QuoteCore+ does</h2>
+          <div className="mt-6 space-y-4 leading-7 text-zinc-600">
+            <p>
+              QuoteCore+ helps contractors measure jobs, build professional quotes, track customer approvals, order materials, manage jobs, and invoice clients. The workflow moves from measurement to invoice in one connected platform.
+            </p>
+            <p>
+              The software was built around roofing first, because roofing has some of the most complex measurement and pricing requirements in construction. Smart Components handle the angles, pitches, waste allowances, and material calculations that roofers deal with daily. That same engine adapts to other measured trades including cladding, flooring, fencing, and landscaping.
+            </p>
+          </div>
+        </section>
+
+        {/* Founder */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Founder</h2>
+          <div className="mt-6 flex items-center gap-6 rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-sm">
+            <img src="/shaun.jpg" alt="" className="h-20 w-20 rounded-full object-cover border-2 border-[#FF6B35]/20" />
+            <div>
+              <p className="text-xl font-semibold">Shaun</p>
+              <p className="text-sm text-zinc-500">Founder, QuoteCore+</p>
+              <p className="mt-1 text-sm font-medium text-[#FF6B35]">12 years on the tools</p>
+            </div>
+          </div>
+          <p className="mt-6 leading-7 text-zinc-600">
+            Shaun spent 12 years on the tools, quoting roofs the hard way. He built QuoteCore+ to solve the problems he lived with daily: manual measurements, repetitive pricing, slow quote turnaround, and disconnected tools. The product is shaped by real trade experience, not generic software design.
+          </p>
+          <p className="mt-4">
+            <a href="/about" className="text-sm font-semibold text-[#BD4A1A] hover:text-[#FF6B35]">
+              Read the full founder story
+            </a>
+          </p>
+        </section>
+
+        {/* CTA */}
+        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
+            <h2 className="text-2xl font-semibold tracking-tight">Try QuoteCore+ free for 14 days</h2>
+            <p className="mt-2 text-zinc-600">All features unlocked. No credit card required.</p>
+            <a
+              href="/free-trial"
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+            >
+              Start free trial
+            </a>
+          </div>
+        </section>
+
+        <SiteFooter />
+      </main>
+    </>
+  );
+}

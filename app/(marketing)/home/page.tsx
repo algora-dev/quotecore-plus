@@ -353,13 +353,13 @@ export default function HomePage() {
                   Built for roofing. Powerful enough for everything else.
                 </h1>
                 <p className="mt-4 text-xl font-semibold leading-tight text-zinc-700 sm:text-2xl">
-                  Roofing is one of the hardest trades to measure and quote. We built QuoteCore+ to master it. Now every trade is using it.
+                  Roofing is one of the hardest trades to measure and quote. We built QuoteCore+ to master it. Now contractors across roofing, cladding, flooring, fencing and landscaping use it.
                 </p>
                 <p className="mt-4 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
                   AI roof scans, digital takeoffs, and Smart Components™ that crunch the angles, pitches, and calculations roofers deal with daily. Metal, tile, shingle, membrane - every roof type, handled with ease.
                 </p>
                 <p className="mt-3 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
-                  When you build an engine powerful enough for roofing&apos;s complexity, everything else falls into place. Construction, concrete, landscaping, electrical, plumbing - QuoteCore+ adapts to any trade that measures and quotes. Free tools, calculators, material ordering, invoicing, job management. One platform. Every industry.
+                  When you build an engine powerful enough for roofing&apos;s complexity, everything else falls into place. Construction, concrete, landscaping - QuoteCore+ adapts to trades that measure and quote. Free tools, calculators, material ordering, invoicing, job management. One platform.
                 </p>
                 <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
                   <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]" onClick={() => trackEvent("free_trial_click", { location: "hero" })}>
@@ -382,7 +382,7 @@ export default function HomePage() {
               <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
                 <YouTubeLite
                   videoId="DziFjqnPdqQ"
-                  title="Create a complex roofing quote in under 3min for less than $1!"
+                  title="Create a complex roofing quote in under 3 minutes"
                   className="w-full"
                 />
               </div>
