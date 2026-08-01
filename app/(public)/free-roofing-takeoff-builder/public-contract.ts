@@ -24,6 +24,7 @@ export interface PublicRoofTakeoffInput {
   underlay?: number;
   fixings?: number;
   wastePercent?: Partial<Record<string, number>>;
+  supplier?: string;
 }
 
 export interface PublicValidationError {
@@ -52,6 +53,9 @@ export interface PublicTakeoffResult {
       materialCost: number;
       labourCost: number;
       totalCost: number;
+      componentName?: string;
+      componentSku?: string | null;
+      unitPrice?: number;
     }>;
     totalEntries: number;
     materialTotal: number;
@@ -60,6 +64,19 @@ export interface PublicTakeoffResult {
   };
   warnings: string[];
   resultUrl?: string;
+  pricing?: {
+    supplierId: string;
+    supplierName: string;
+    country: string | null;
+    currency: string;
+    taxTreatment: string;
+    priceType: string;
+    pricingUpdatedAt: string | null;
+    priceValidUntil: string | null;
+    deliveryAssumptions: string | null;
+    exclusions: string | null;
+    estimateStatus: string;
+  };
 }
 
 export interface PublicTakeoffFailure {
@@ -198,9 +215,14 @@ export function normalizePublicRoofTakeoff(supplied: PublicRoofTakeoffInput): No
   return { mode, units, pitchDegrees, values, sections, warnings };
 }
 
+export interface SupplierSlotMap {
+  [slot: string]: { componentId: string; componentName: string; componentSku: string | null; unitPrice: number } | null;
+}
+
 export function calculatePublicRoofTakeoff(
   supplied: PublicRoofTakeoffInput,
   components: RoofComponentDef[] = [],
+  slotMap?: SupplierSlotMap,
 ): PublicTakeoffResult | PublicTakeoffFailure {
   const errors = validatePublicInput(supplied);
   if (errors.length > 0) return { success: false, errors };
@@ -208,10 +230,23 @@ export function calculatePublicRoofTakeoff(
   const { mode, units, pitchDegrees, values, sections, warnings } = normalizePublicRoofTakeoff(supplied);
   if (components.length === 0) warnings.push('pricing_unavailable');
   const componentMap = new Map(components.map((component) => [component.id, component]));
+  // Auto-assign components from slot map when entries don't have one
+  if (slotMap) {
+    for (const kind of BUILT_IN_ORDER) {
+      const slot = slotMap[kind];
+      if (slot && sections[kind]) {
+        for (const entry of sections[kind].entries) {
+          if (!entry.selectedComponentId) entry.selectedComponentId = slot.componentId;
+        }
+      }
+    }
+  }
+
   const calculation = calculateTakeoffSections(sections, BUILT_IN_ORDER, (id) => id ? componentMap.get(id) ?? null : null);
   const resultComponents: PublicTakeoffResult['results']['components'] = {};
   for (const kind of BUILT_IN_ORDER) {
     const total = calculation.sections[kind];
+    const slot = slotMap?.[kind];
     resultComponents[kind] = {
       label: COMPONENT_DEFS[kind]?.label ?? kind,
       rawTotal: total.rawTotal,
@@ -222,6 +257,9 @@ export function calculatePublicRoofTakeoff(
       materialCost: total.materialCost,
       labourCost: total.labourCost,
       totalCost: total.totalCost,
+      componentName: slot?.componentName,
+      componentSku: slot?.componentSku,
+      unitPrice: slot?.unitPrice,
     };
   }
 
@@ -267,6 +305,8 @@ export function parseQueryInput(params: URLSearchParams): PublicRoofTakeoffInput
     const value = params.get(kind);
     if (value) input[kind] = Number(value);
   }
+  const supplier = params.get('supplier');
+  if (supplier) input.supplier = supplier;
   return input;
 }
 
@@ -285,5 +325,6 @@ export function toResultQuery(input: PublicRoofTakeoffInput): string {
   for (const [key, values] of arrays) if (values.length > 0) params.set(key, values.join(','));
   if (input.underlay != null) params.set('underlay', String(input.underlay));
   if (input.fixings != null) params.set('fixings', String(input.fixings));
+  if (input.supplier) params.set('supplier', input.supplier);
   return params.toString();
 }
