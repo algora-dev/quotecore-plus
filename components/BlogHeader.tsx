@@ -11,6 +11,7 @@ function buildNavItems(app: string) {
     { label: "Home", href: "/" },
     { label: "How it works", href: "/#how-it-works" },
     { label: "Services", href: "/services" },
+    { label: "Features", href: "/features" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
