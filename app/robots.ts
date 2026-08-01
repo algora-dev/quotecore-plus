@@ -70,6 +70,7 @@ export default function robots(): MetadataRoute.Robots {
           '/features/digital-roof-takeoff',
           '/features/smart-components',
           '/features/material-ordering',
+          '/resources/',
           '/contact',
           '/free-trial',
           '/suppliers',
