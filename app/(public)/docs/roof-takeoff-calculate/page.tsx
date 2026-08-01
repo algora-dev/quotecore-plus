@@ -232,9 +232,72 @@ export default function RoofTakeoffCalculateDocsPage() {
             <li>Warnings and notes</li>
             <li>A plain-language summary readable by screen readers and AI crawlers</li>
             <li>JSON-LD structured data embedded in the page containing all inputs, outputs, calculator name, units, calculation version, and canonical result URL</li>
+            <li>The canonical <code>resultUrl</code> displayed on the page for easy copying</li>
             <li>Links to edit the calculation in the builder or start a new one</li>
           </ul>
           <p className="mt-3 text-sm text-slate-600">The page is <code>noindex</code> (not indexed by search engines) but <code>follow</code> (links are followed). Result URLs are shareable and require no authentication.</p>
+          <p className="mt-3 text-sm text-slate-600">The GET <code>/calculate</code> route redirects to a stable result URL at <code>/free-roofing-takeoff-builder/result/[token]</code>. This stable URL is deterministic - the same inputs always produce the same token. AI agents should return this stable URL to users.</p>
+        </section>
+
+        <section className="mt-8" aria-labelledby="result-url-guidance">
+          <h2 id="result-url-guidance" className="text-xl font-semibold text-slate-900">Canonical result URL guidance</h2>
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Rule</p>
+            <p className="mt-1 text-sm text-slate-600">Return the exact <code>resultUrl</code> supplied by QuoteCore. Do not reconstruct, re-encode, decode, shorten, add tracking parameters to, or otherwise alter it.</p>
+          </div>
+          <p className="mt-3 text-sm text-slate-600">Every calculation response includes a canonical <code>resultUrl</code> field:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <li>In the JSON API response, <code>resultUrl</code> is a top-level field</li>
+            <li>On the HTML result page, the canonical URL is displayed in a visible box and in JSON-LD structured data</li>
+            <li>The URL points to <code>/free-roofing-takeoff-builder/result/[token]</code> - a stable, shareable page</li>
+            <li>The same inputs always produce the same token, so the URL is deterministic</li>
+          </ul>
+          <p className="mt-3 text-sm font-semibold text-slate-900">Preferred AI workflow:</p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-700">
+            <li>Submit calculation inputs via POST API or GET calculation URL</li>
+            <li>Receive the response containing <code>resultUrl</code></li>
+            <li>Return <code>resultUrl</code> to the user exactly as provided by the server</li>
+          </ol>
+          <p className="mt-3 text-sm text-slate-600">Do not build result URLs from scratch. The server generates them. Copy and return them unchanged.</p>
+        </section>
+
+        <section className="mt-8" aria-labelledby="url-encoding">
+          <h2 id="url-encoding" className="text-xl font-semibold text-slate-900">URL encoding rules</h2>
+          <p className="mt-2 text-sm text-slate-600">When constructing GET calculation URLs, only individual parameter <strong>values</strong> should be URL-encoded. The query-string separators must never be encoded.</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+              <p className="text-sm font-semibold text-green-800">Correct</p>
+              <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>?area=150&amp;hips=4%2C4%2C4%2C4&amp;pitch=35</code></pre>
+              <p className="mt-2 text-xs text-green-700">Separators (?, &amp;, =) are raw. Commas in values are encoded as %2C.</p>
+            </div>
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-semibold text-red-800">Incorrect</p>
+              <pre className="mt-2 overflow-x-auto rounded bg-slate-900 p-2 text-xs text-slate-100"><code>?area=150%26hips%3D4%2C4%2C4%2C4%26pitch%3D35</code></pre>
+              <p className="mt-2 text-xs text-red-700">Separators are encoded (%26 = &amp;, %3D = =). This will not work.</p>
+            </div>
+          </div>
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <li>Commas within values (e.g. <code>hips=5,5,5,5</code>) can be encoded as <code>%2C</code> in strict contexts, but raw commas also work in practice</li>
+            <li>The <code>?</code> that starts the query string must never be encoded</li>
+            <li>The <code>&amp;</code> that separates parameters must never be encoded</li>
+            <li>The <code>=</code> that separates key from value must never be encoded</li>
+            <li>Numerical values (<code>area=150</code>, <code>pitch=35</code>) need no encoding</li>
+          </ul>
+        </section>
+
+        <section className="mt-8" aria-labelledby="stable-result-route">
+          <h2 id="stable-result-route" className="text-xl font-semibold text-slate-900">Stable result route</h2>
+          <p className="mt-2 text-sm text-slate-600">Every calculation produces a stable result URL at:</p>
+          <pre className="mt-2 overflow-x-auto rounded-xl bg-slate-900 p-3 text-xs text-slate-100"><code>/free-roofing-takeoff-builder/result/[token]</code></pre>
+          <p className="mt-2 text-sm text-slate-600">The token is a signed, deterministic encoding of the calculation inputs. The same inputs always produce the same token, so the URL is stable and shareable. The result page:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <li>Displays the full server-rendered result (no JavaScript required)</li>
+            <li>Contains all normalized inputs and calculated outputs</li>
+            <li>Includes an "Edit this calculation" link with inputs prefilled</li>
+            <li>Contains JSON-LD structured data for machine consumption</li>
+            <li>Shows the canonical result URL for easy copying</li>
+            <li>Requires no login, cookies, or authentication</li>
+          </ul>
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">
