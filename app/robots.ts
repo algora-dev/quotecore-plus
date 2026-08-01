@@ -42,6 +42,7 @@ export default function robots(): MetadataRoute.Robots {
           '/free-invoice-generator',
           '/free-purchase-order-generator',
           '/free-roofing-takeoff-builder',
+          '/api/public/roof-takeoff/',
           // Allow all free-tool slug pages (42 SEO calculator pages)
           '/free-roof-',
           '/free-rafter-',

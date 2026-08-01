@@ -30,6 +30,7 @@ export type AccountTabKey =
   | 'security'
   | 'notifications'
   | 'billing'
+  | 'integrations'
   | 'support';
 
 /**
@@ -98,6 +99,15 @@ const TABS: Tab[] = [
     ),
   },
   {
+    key: 'integrations',
+    label: 'Integrations',
+    icon: (
+      <svg className="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg>
+    ),
+  },
+  {
     // Placeholder for multi-user support. Renders as a disabled row with a
     // "soon" pill so users know more is coming without us implying it ships
     // imminently. Restored after a brief disappearance during the tabs
@@ -120,6 +130,7 @@ function readTabFromUrl(value: string | null): AccountTabKey {
     case 'security':
     case 'notifications':
     case 'billing':
+    case 'integrations':
     case 'support':
       return value;
     case 'profile':

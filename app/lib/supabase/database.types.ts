@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -2134,6 +2134,288 @@ export type Database = {
           marketing_consent?: boolean | null
         }
         Relationships: []
+      }
+      integration_credentials: {
+        Row: {
+          created_at: string
+          credential_type: string
+          encrypted_payload: string
+          expires_at: string | null
+          id: string
+          integration_id: string
+          last_rotated_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credential_type: string
+          encrypted_payload: string
+          expires_at?: string | null
+          id?: string
+          integration_id: string
+          last_rotated_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credential_type?: string
+          encrypted_payload?: string
+          expires_at?: string | null
+          id?: string
+          integration_id?: string
+          last_rotated_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_credentials_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_export_attempts: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          duration_ms: number | null
+          error_class: string | null
+          error_summary: string | null
+          export_id: string
+          id: string
+          provider_request_id: string | null
+          request_summary: Json | null
+          response_status: number | null
+          response_summary: Json | null
+          step: string
+        }
+        Insert: {
+          attempt_number?: number
+          created_at?: string
+          duration_ms?: number | null
+          error_class?: string | null
+          error_summary?: string | null
+          export_id: string
+          id?: string
+          provider_request_id?: string | null
+          request_summary?: Json | null
+          response_status?: number | null
+          response_summary?: Json | null
+          step: string
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          duration_ms?: number | null
+          error_class?: string | null
+          error_summary?: string | null
+          export_id?: string
+          id?: string
+          provider_request_id?: string | null
+          request_summary?: Json | null
+          response_status?: number | null
+          response_summary?: Json | null
+          step?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_export_attempts_export_id_fkey"
+            columns: ["export_id"]
+            isOneToOne: false
+            referencedRelation: "integration_exports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_exports: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          created_by: string | null
+          error_code: string | null
+          error_summary: string | null
+          event_type: string
+          id: string
+          idempotency_key: string
+          integration_id: string
+          next_retry_at: string | null
+          payload: Json | null
+          payload_version: string
+          queued_at: string
+          retry_count: number
+          scope_overrides: Json | null
+          source_id: string
+          source_revision: number
+          source_type: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          created_by?: string | null
+          error_code?: string | null
+          error_summary?: string | null
+          event_type?: string
+          id?: string
+          idempotency_key: string
+          integration_id: string
+          next_retry_at?: string | null
+          payload?: Json | null
+          payload_version?: string
+          queued_at?: string
+          retry_count?: number
+          scope_overrides?: Json | null
+          source_id: string
+          source_revision?: number
+          source_type?: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          created_by?: string | null
+          error_code?: string | null
+          error_summary?: string | null
+          event_type?: string
+          id?: string
+          idempotency_key?: string
+          integration_id?: string
+          next_retry_at?: string | null
+          payload?: Json | null
+          payload_version?: string
+          queued_at?: string
+          retry_count?: number
+          scope_overrides?: Json | null
+          source_id?: string
+          source_revision?: number
+          source_type?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_exports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_exports_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_external_records: {
+        Row: {
+          company_id: string
+          created_at: string
+          external_id: string
+          external_type: string
+          external_url: string | null
+          id: string
+          integration_id: string
+          last_synced_revision: number | null
+          source_id: string
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          external_id: string
+          external_type: string
+          external_url?: string | null
+          id?: string
+          integration_id: string
+          last_synced_revision?: number | null
+          source_id: string
+          source_type?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          external_id?: string
+          external_type?: string
+          external_url?: string | null
+          id?: string
+          integration_id?: string
+          last_synced_revision?: number | null
+          source_id?: string
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_external_records_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_external_records_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          company_id: string
+          config: Json
+          connection_status: string
+          created_at: string
+          data_scopes: Json
+          enabled: boolean
+          id: string
+          last_validated_at: string | null
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          config?: Json
+          connection_status?: string
+          created_at?: string
+          data_scopes?: Json
+          enabled?: boolean
+          id?: string
+          last_validated_at?: string | null
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          config?: Json
+          connection_status?: string
+          created_at?: string
+          data_scopes?: Json
+          enabled?: boolean
+          id?: string
+          last_validated_at?: string | null
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoice_activity: {
         Row: {
@@ -4749,22 +5031,46 @@ export type Database = {
           allow_custom_pricing: boolean
           approved_at: string | null
           approved_by: string | null
+          branch_city: string | null
+          branch_country: string | null
+          branch_postcode: string | null
+          branch_region: string | null
           brands: string[] | null
           company_id: string | null
           contact_email: string | null
+          country: string | null
           created_at: string
+          currency: string
+          default_trade: string
+          delivery_assumptions: string | null
+          delivery_coverage: string | null
+          delivery_requires_confirmation: boolean | null
           description: string | null
+          excluded_delivery_regions: string[] | null
+          exclusions: string | null
+          freight_available: boolean | null
           id: string
+          instant_pricing_available: boolean
           keywords: string[] | null
+          local_service_areas: string[] | null
           logo_url: string | null
           master_email: string | null
+          national_coverage: boolean | null
+          out_of_area_pricing_allowed: boolean | null
           phone_number: string | null
+          pickup_available: boolean | null
+          price_type: string
+          price_valid_until: string | null
+          pricing_excludes_freight: boolean | null
+          pricing_updated_at: string | null
           product_categories: string[] | null
+          regional_coverage: string[] | null
           roofing_types: string[] | null
           service_areas: string[] | null
           slug: string
           status: string
           supplier_name: string
+          tax_treatment: string
           updated_at: string
           website_url: string | null
         }
@@ -4772,22 +5078,46 @@ export type Database = {
           allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
+          branch_city?: string | null
+          branch_country?: string | null
+          branch_postcode?: string | null
+          branch_region?: string | null
           brands?: string[] | null
           company_id?: string | null
           contact_email?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string
+          default_trade?: string
+          delivery_assumptions?: string | null
+          delivery_coverage?: string | null
+          delivery_requires_confirmation?: boolean | null
           description?: string | null
+          excluded_delivery_regions?: string[] | null
+          exclusions?: string | null
+          freight_available?: boolean | null
           id?: string
+          instant_pricing_available?: boolean
           keywords?: string[] | null
+          local_service_areas?: string[] | null
           logo_url?: string | null
           master_email?: string | null
+          national_coverage?: boolean | null
+          out_of_area_pricing_allowed?: boolean | null
           phone_number?: string | null
+          pickup_available?: boolean | null
+          price_type?: string
+          price_valid_until?: string | null
+          pricing_excludes_freight?: boolean | null
+          pricing_updated_at?: string | null
           product_categories?: string[] | null
+          regional_coverage?: string[] | null
           roofing_types?: string[] | null
           service_areas?: string[] | null
           slug: string
           status?: string
           supplier_name: string
+          tax_treatment?: string
           updated_at?: string
           website_url?: string | null
         }
@@ -4795,22 +5125,46 @@ export type Database = {
           allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
+          branch_city?: string | null
+          branch_country?: string | null
+          branch_postcode?: string | null
+          branch_region?: string | null
           brands?: string[] | null
           company_id?: string | null
           contact_email?: string | null
+          country?: string | null
           created_at?: string
+          currency?: string
+          default_trade?: string
+          delivery_assumptions?: string | null
+          delivery_coverage?: string | null
+          delivery_requires_confirmation?: boolean | null
           description?: string | null
+          excluded_delivery_regions?: string[] | null
+          exclusions?: string | null
+          freight_available?: boolean | null
           id?: string
+          instant_pricing_available?: boolean
           keywords?: string[] | null
+          local_service_areas?: string[] | null
           logo_url?: string | null
           master_email?: string | null
+          national_coverage?: boolean | null
+          out_of_area_pricing_allowed?: boolean | null
           phone_number?: string | null
+          pickup_available?: boolean | null
+          price_type?: string
+          price_valid_until?: string | null
+          pricing_excludes_freight?: boolean | null
+          pricing_updated_at?: string | null
           product_categories?: string[] | null
+          regional_coverage?: string[] | null
           roofing_types?: string[] | null
           service_areas?: string[] | null
           slug?: string
           status?: string
           supplier_name?: string
+          tax_treatment?: string
           updated_at?: string
           website_url?: string | null
         }
@@ -5602,6 +5956,17 @@ export type Database = {
         Args: { p_job_id: string; p_result: Json }
         Returns: boolean
       }
+      compute_idempotency_key: {
+        Args: {
+          p_company_id: string
+          p_operation?: string
+          p_provider: string
+          p_source_id: string
+          p_source_revision: number
+          p_source_type: string
+        }
+        Returns: string
+      }
       consume_rate_limit: {
         Args: { p_key: string; p_max: number; p_window_ms: number }
         Returns: boolean
@@ -5616,6 +5981,14 @@ export type Database = {
       }
       current_company_id: { Args: never; Returns: string }
       current_user_id: { Args: never; Returns: string }
+      decrypt_credential: {
+        Args: { p_ciphertext: string; p_key: string }
+        Returns: string
+      }
+      encrypt_credential: {
+        Args: { p_key: string; p_plaintext: string }
+        Returns: string
+      }
       ensure_ai_system_components: {
         Args: { p_company_id: string }
         Returns: undefined
@@ -5645,6 +6018,14 @@ export type Database = {
           remaining: number
           used: number
         }[]
+      }
+      get_integration_credential: {
+        Args: {
+          p_credential_type: string
+          p_encryption_key: string
+          p_integration_id: string
+        }
+        Returns: string
       }
       get_next_quote_number: { Args: { p_company_id: string }; Returns: number }
       import_catalog_rows_atomic: {
@@ -5733,6 +6114,10 @@ export type Database = {
         Returns: undefined
       }
       save_takeoff_atomic: {
+        Args: { p_payload: Json; p_quote_id: string }
+        Returns: undefined
+      }
+      save_takeoff_atomic_internal: {
         Args: { p_payload: Json; p_quote_id: string }
         Returns: undefined
       }

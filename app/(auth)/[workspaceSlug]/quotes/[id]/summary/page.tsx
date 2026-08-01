@@ -33,6 +33,8 @@ import { computeTaxLines } from '@/app/lib/taxes/types';
 import { getSignedUrls } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { ScrollIndicator } from '@/app/components/ui/ScrollIndicator';
+import { SendToAppButton } from './SendToAppButton';
+import { getIntegrations } from '@/app/(auth)/[workspaceSlug]/account/integrations/actions';
 
 export default async function QuoteSummaryPage({
   params,
@@ -164,6 +166,9 @@ export default async function QuoteSummaryPage({
     created_at: string;
     resolved_at: string | null;
   }>;
+
+  // Load integrations for Send to App button
+  const integrations = await getIntegrations(quote.company_id);
 
   // Load all files (plan + supporting)
   const { data: filesData } = await supabase
@@ -480,6 +485,18 @@ export default async function QuoteSummaryPage({
             ) : quote.withdrawn_at ? (
               <ReopenQuoteButton quoteId={id} state="withdrawn" />
             ) : null}
+            <SendToAppButton
+              quoteId={id}
+              companyId={quote.company_id}
+              workspaceSlug={workspaceSlug}
+              integrations={integrations.map(i => ({ id: i.id, provider: i.provider, enabled: i.enabled, connection_status: i.connection_status }))}
+              dataAvailability={{
+                hasQuoteSummary: true,
+                hasCustomerQuote: hasCustomerQuote,
+                hasLaborSheet: hasLaborSheet,
+                hasFiles: (filesData || []).length > 0,
+              }}
+            />
             <SendDocumentButton
               entityKind="quote"
               entityId={id}

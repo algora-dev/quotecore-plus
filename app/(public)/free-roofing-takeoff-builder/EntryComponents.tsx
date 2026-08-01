@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import type { Entry, RoofComponentDef, CustomComponentDef, PitchType } from './types';
-import { areaValueForUnit, COMPONENT_DEFS, computeEntry, makeId, isCustomFixed } from './calc';
+import { areaValueForUnit, COMPONENT_DEFS, computeEntry, makeId } from './calc';
 import { InfoIcon } from './helpers';
 
 type MeasureMode = 'actual' | 'plan';
@@ -19,11 +19,6 @@ function isAreaKind(kind: string, customDef?: CustomComponentDef): boolean {
   return false;
 }
 
-function isFixedKind(kind: string): boolean {
-  if (kind.startsWith('custom-')) return isCustomFixed(kind);
-  return false;
-}
-
 // ─── Entry List Item ─────────────────────────────────
 
 interface EntryListItemProps {
@@ -36,12 +31,11 @@ interface EntryListItemProps {
   areaLabel: string;
   wastePercent: number;
   isFixed?: boolean;
-  currencySymbol: string;
   getComponentById: (id: string | null) => RoofComponentDef | null;
   onRemove: () => void;
 }
 
-export function EntryListItem({ entry, index, kind, customDef, measureMode, lenLabel, areaLabel, wastePercent, isFixed, currencySymbol, getComponentById, onRemove }: EntryListItemProps) {
+export function EntryListItem({ entry, index, kind, customDef, measureMode, lenLabel, areaLabel, wastePercent, isFixed, getComponentById, onRemove }: EntryListItemProps) {
   const pitchType = getPitchType(kind, customDef);
   const isRoofArea = isAreaKind(kind, customDef);
   const usePitch = measureMode === 'plan' && pitchType !== 'none';
@@ -93,7 +87,7 @@ export function EntryListItem({ entry, index, kind, customDef, measureMode, lenL
             <span className="text-[10px] text-slate-400">+{wastePercent}% = {withWasteVal.toFixed(2)}</span>
           )}
           {entry.knownPrice != null && entry.knownPrice > 0 && (
-            <span className="text-[10px] text-[#BD4A1A] font-medium">{currencySymbol}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
+            <span className="text-[10px] text-[#BD4A1A] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
           )}
           {selectedComp && <span className="text-[10px] text-slate-400 truncate">{selectedComp.name}</span>}
         </div>
@@ -121,11 +115,10 @@ interface AddEntryFormProps {
   unitSystem: 'metric' | 'imperial' | 'squares';
   roofAreaTotal: number | null;
   isFixed?: boolean;
-  currencySymbol: string;
   onAdd: (entry: Entry) => void;
 }
 
-export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, unitSystem, roofAreaTotal, isFixed, currencySymbol, onAdd }: AddEntryFormProps) {
+export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel, availableComponents, componentsLoading, pitchDegrees, unitSystem, roofAreaTotal, isFixed, onAdd }: AddEntryFormProps) {
   const pitchType = getPitchType(kind, customDef);
   const isRoofArea = isAreaKind(kind, customDef);
   const usePitch = measureMode === 'plan' && pitchType !== 'none';
@@ -203,7 +196,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       : parseFloat(val1) > 0;
   const canAddWithPrice = canAdd && (pricingMode === 'component' || (pricingMode === 'known_price' && parseFloat(knownPrice) > 0));
 
-  const inputCls = "mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-base md:text-sm focus:border-slate-900 focus:outline-none";
+  const inputCls = "mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-base md:text-sm focus:border-orange-500 focus:outline-none";
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-3 space-y-2">
@@ -217,8 +210,8 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       {isRoofArea && (
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
-            <button onClick={() => setAreaMode('dimensions')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Width x Length</button>
-            <button onClick={() => setAreaMode('total')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Total Area</button>
+            <button onClick={() => setAreaMode('dimensions')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-[#FF6B35] text-white' : 'text-slate-500'}`}>Width x Length</button>
+            <button onClick={() => setAreaMode('total')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-[#FF6B35] text-white' : 'text-slate-500'}`}>Total Area</button>
           </div>
           <InfoIcon text="Enter width and length and the area is calculated, or enter a known total area." />
         </div>
@@ -227,7 +220,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       {isRoofArea && kind !== 'roof_area' && roofAreaTotal !== null && roofAreaTotal > 0 && (
         <button
           onClick={() => { setAreaMode('total'); setTotalVal(roofAreaTotal.toFixed(2)); }}
-          className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-slate-700"
+          className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#ff5722]"
         >
           Use Roof Area ({roofAreaTotal.toFixed(2)} {areaLabel})
         </button>
@@ -236,39 +229,39 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {isFixed ? (
           <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">Quantity</label>
-            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" placeholder="1" className={inputCls} />
+            <label htmlFor={`${kind}-fixed-quantity`} className="text-xs font-medium text-slate-600">Quantity</label>
+            <input id={`${kind}-fixed-quantity`} name={`${kind}Quantity`} type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="numeric" placeholder="1" className={inputCls} />
           </div>
         ) : isRoofArea && areaMode === 'dimensions' ? (
           <>
             <div>
-              <label className="text-xs font-medium text-slate-600">{planPrefix}Width ({lenLabel})</label>
-              <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+              <label htmlFor={`${kind}-width`} className="text-xs font-medium text-slate-600">{planPrefix}Width ({lenLabel})</label>
+              <input id={`${kind}-width`} name={`${kind}Width`} type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
-              <input type="number" value={val2} onChange={(e) => setVal2(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+              <label htmlFor={`${kind}-area-length`} className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
+              <input id={`${kind}-area-length`} name={`${kind}Length`} type="number" value={val2} onChange={(e) => setVal2(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
             </div>
           </>
         ) : isRoofArea && areaMode === 'total' ? (
           <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">{planPrefix}Area ({areaLabel})</label>
-            <input type="number" value={totalVal} onChange={(e) => setTotalVal(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+            <label htmlFor={`${kind}-total-area`} className="text-xs font-medium text-slate-600">{planPrefix}Area ({areaLabel})</label>
+            <input id={`${kind}-total-area`} name={`${kind}Area`} type="number" value={totalVal} onChange={(e) => setTotalVal(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
           </div>
         ) : (
           <div className="col-span-2">
-            <label className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
-            <input type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
+            <label htmlFor={`${kind}-length`} className="text-xs font-medium text-slate-600">{planPrefix}Length ({lenLabel})</label>
+            <input id={`${kind}-length`} name={`${kind}Length`} type="number" value={val1} onChange={(e) => setVal1(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0" className={inputCls} />
           </div>
         )}
 
         <div>
-          <label className="text-xs font-medium text-slate-600">Quantity</label>
-          <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="decimal" className={inputCls} />
+          <label htmlFor={`${kind}-quantity`} className="text-xs font-medium text-slate-600">Quantity</label>
+          <input id={`${kind}-quantity`} name={`${kind}Quantity`} type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min={1} step={1} inputMode="numeric" className={inputCls} />
         </div>
 
         <button onClick={handleAdd} disabled={!canAddWithPrice}
-          className={`cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAddWithPrice ? 'bg-slate-900 text-white hover:bg-slate-700' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
+          className={`cursor-pointer rounded-full px-4 py-2 text-xs font-semibold transition min-h-[44px] self-end ${canAddWithPrice ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
           <svg className="w-4 h-4 inline -mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           {' '}Add
         </button>
@@ -296,12 +289,12 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       {/* Component dropdown OR known price input */}
       {pricingMode === 'component' && availableComponents.length > 0 && (
         <div>
-          <label className="text-xs font-medium text-slate-600">Component</label>
-          <select value={selectedComponentId || ''} onChange={(e) => setSelectedComponentId(e.target.value || null)}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-700 focus:border-slate-900 focus:outline-none">
+          <label htmlFor={`${kind}-component`} className="text-xs font-medium text-slate-600">Component</label>
+          <select id={`${kind}-component`} name={`${kind}Component`} value={selectedComponentId || ''} onChange={(e) => setSelectedComponentId(e.target.value || null)}
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
             <option value="">- No component (lengths only) -</option>
             {availableComponents.map(comp => (
-              <option key={comp.id} value={comp.id}>{comp.name} ({currencySymbol}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
+              <option key={comp.id} value={comp.id}>{comp.name} ({'\u00A3'}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
             ))}
           </select>
         </div>
@@ -311,14 +304,15 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       )}
       {pricingMode === 'known_price' && (
         <div>
-          <label className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({currencySymbol})</label>
-          <input type="number" value={knownPrice} onChange={(e) => setKnownPrice(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0.00" className={inputCls} />
+          <label htmlFor={`${kind}-known-price`} className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({'\u00A3'})</label>
+          <input id={`${kind}-known-price`} name={`${kind}KnownPrice`} type="number" value={knownPrice} onChange={(e) => setKnownPrice(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0.00" className={inputCls} />
         </div>
       )}
       {pricingMode === 'component' && componentsLoading && <p className="text-xs text-slate-400">Loading component pricing...</p>}
 
-      <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
-        className="w-full rounded-lg border border-slate-200 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-600 focus:border-slate-900 focus:outline-none" />
+      <label htmlFor={`${kind}-entry-label`} className="sr-only">Optional entry label</label>
+      <input id={`${kind}-entry-label`} name={`${kind}Label`} type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Optional label (e.g. Front gable, Main roof)"
+        className="w-full rounded-lg border border-slate-200 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-600 focus:border-orange-500 focus:outline-none" />
     </div>
   );
 }
@@ -372,9 +366,9 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
       </div>
 
       <div>
-        <label className="text-xs font-medium text-slate-600">Name</label>
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Apron Flashing, Step Flashing"
-          className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-2 text-base md:text-sm focus:border-slate-900 focus:outline-none" />
+        <label htmlFor="custom-component-name" className="text-xs font-medium text-slate-600">Name</label>
+        <input id="custom-component-name" name="customComponentName" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Apron Flashing, Step Flashing"
+          className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-2 text-base md:text-sm focus:border-orange-500 focus:outline-none" />
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -387,18 +381,18 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
           </div>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600">Pitch calc</label>
-          <select value={measurementType === 'fixed' ? 'none' : pitchType} onChange={(e) => setPitchType(e.target.value as PitchType)} disabled={measurementType === 'fixed'}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-700 focus:border-slate-900 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400">
+          <label htmlFor="custom-component-pitch" className="text-xs font-medium text-slate-600">Pitch calc</label>
+          <select id="custom-component-pitch" name="customComponentPitch" value={measurementType === 'fixed' ? 'none' : pitchType} onChange={(e) => setPitchType(e.target.value as PitchType)} disabled={measurementType === 'fixed'}
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400">
             <option value="none">None</option>
             <option value="rafter">Rafter pitch</option>
             <option value="hip_valley">Hip/Valley pitch</option>
           </select>
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600">Waste %</label>
-          <input type="number" value={measurementType === 'fixed' ? '0' : wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1} disabled={measurementType === 'fixed'}
-            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm md:text-xs text-center focus:border-slate-900 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400" />
+          <label htmlFor="custom-component-waste" className="text-xs font-medium text-slate-600">Waste %</label>
+          <input id="custom-component-waste" name="customComponentWaste" type="number" value={measurementType === 'fixed' ? '0' : wastePercent} onChange={(e) => setWastePercent(e.target.value)} min={0} max={100} step={1} disabled={measurementType === 'fixed'}
+            className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm md:text-xs text-center focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400" />
         </div>
       </div>
 
@@ -407,7 +401,7 @@ export function CustomComponentCreator({ onCreate }: CustomComponentCreatorProps
       )}
 
       <button onClick={handleCreate} disabled={!name.trim()}
-        className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${name.trim() ? 'bg-slate-900 text-white hover:bg-slate-700' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
+        className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${name.trim() ? 'bg-[#FF6B35] text-white hover:bg-[#ff5722]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
         Create Component
       </button>
     </div>
