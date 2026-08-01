@@ -1,21 +1,29 @@
 /**
- * Connector registry - maps provider names to connector loaders.
- * Called by the dispatcher to find the right connector for a queued export.
+ * Connector registry.
+ *
+ * Each connector is lazy-loaded to keep the cron handler fast.
+ * ensureConnectorsRegistered() is called at the start of processNextExport().
  */
 
-import { registerConnector } from '../execution/dispatch';
-import { getZapierConnector } from '../connectors/zapier/connector';
+import type { Connector } from '../contracts/connector';
+import { getZapierConnector } from './zapier/connector';
+import { getJobNimbusConnector } from './jobnimbus/connector';
 
-let registered = false;
+const connectorRegistry = new Map<string, () => Promise<Connector>>();
 
-/**
- * Register all connectors. Safe to call multiple times.
- */
+export function registerConnector(provider: string, loader: () => Promise<Connector>) {
+  connectorRegistry.set(provider, loader);
+}
+
 export function ensureConnectorsRegistered() {
-  if (registered) return;
-  registered = true;
+  if (!connectorRegistry.has('zapier')) {
+    registerConnector('zapier', async () => getZapierConnector());
+  }
+  if (!connectorRegistry.has('jobnimbus')) {
+    registerConnector('jobnimbus', async () => getJobNimbusConnector());
+  }
+}
 
-  registerConnector('zapier', async () => getZapierConnector());
-  // Future: registerConnector('jobnimbus', async () => getJobNimbusConnector());
-  // Future: registerConnector('fergus', async () => getFergusConnector());
+export function getRegisteredProviders(): string[] {
+  return Array.from(connectorRegistry.keys());
 }

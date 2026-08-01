@@ -206,6 +206,7 @@ function ProviderConfigForm({
   onDelete: () => Promise<void>;
 }) {
   const [webhookUrl, setWebhookUrl] = useState((integration?.config?.webhookUrl as string) ?? '');
+  const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Data scopes
@@ -229,6 +230,8 @@ function ProviderConfigForm({
     try {
       if (provider === 'zapier') {
         await onSave({ webhookUrl }, scopes, { webhookUrl });
+      } else if (provider === 'jobnimbus') {
+        await onSave({}, scopes, apiKey ? { apiKey } : undefined);
       } else {
         await onSave({}, scopes);
       }
@@ -257,12 +260,29 @@ function ProviderConfigForm({
         </div>
       )}
 
-      {provider !== 'zapier' && (
+      {provider === 'jobnimbus' && (
+        <div>
+          <label className="block text-xs font-medium text-slate-700 mb-1">
+            JobNimbus API Key
+          </label>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Paste your JobNimbus API key"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+          />
+          <p className="mt-1 text-xs text-slate-400">
+            In JobNimbus: Settings &gt; API Keys &gt; Create API Key. Copy and paste it here.
+            {integration && <span className="block mt-1 text-green-600">API key saved. Enter a new key only to replace it.</span>}
+          </p>
+        </div>
+      )}
+
+      {provider === 'fergus' && (
         <div className="rounded-lg bg-slate-50 px-3 py-3">
           <p className="text-xs text-slate-500">
-            {provider === 'jobnimbus'
-              ? 'JobNimbus native connector coming soon. Use Zapier in the meantime to connect JobNimbus.'
-              : 'Fergus native connector coming soon. Use Zapier in the meantime to connect Fergus.'}
+            Fergus native connector coming soon. Use Zapier in the meantime to connect Fergus.
           </p>
         </div>
       )}
@@ -303,7 +323,7 @@ function ProviderConfigForm({
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving || (provider === 'zapier' && !webhookUrl)}
+          disabled={saving || (provider === 'zapier' && !webhookUrl) || (provider === 'jobnimbus' && !apiKey && !integration)}
           className="rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {saving ? 'Saving...' : integration ? 'Update' : 'Connect'}

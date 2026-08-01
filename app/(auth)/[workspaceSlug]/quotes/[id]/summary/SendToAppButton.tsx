@@ -197,7 +197,7 @@ export function SendToAppButton({
                           <p className="text-sm font-medium text-slate-900">{info.name}</p>
                           <p className="text-xs text-slate-400">{info.description}</p>
                         </div>
-                        {provider === 'zapier' ? (
+                        {provider === 'zapier' || provider === 'jobnimbus' ? (
                           <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">Available</span>
                         ) : (
                           <span className="rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-400">Soon</span>
