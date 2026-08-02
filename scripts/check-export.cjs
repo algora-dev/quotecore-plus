@@ -1,6 +1,5 @@
 const https = require('https');
 const token = process.argv[2];
-
 async function query(sql) {
   return new Promise((resolve) => {
     const body = JSON.stringify({ query: sql });
@@ -21,10 +20,12 @@ async function query(sql) {
 }
 
 (async () => {
-  const ra = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_roof_areas' ORDER BY ordinal_position;`);
-  console.log('quote_roof_areas:', ra);
-  const re = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_roof_area_entries' ORDER BY ordinal_position;`);
-  console.log('quote_roof_area_entries:', re);
-  const ce = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_component_entries' ORDER BY ordinal_position;`);
-  console.log('quote_component_entries:', ce);
+  const exportRow = await query(`SELECT ee.id, ee.status, ee.started_at, ee.completed_at, ee.error_summary, ee.error_code, ee.retry_count FROM integration_exports ee WHERE ee.id = '42d70258-01bd-4bcd-9937-37a3b871ba09';`);
+  console.log('Export:', exportRow);
+  
+  const attempts = await query(`SELECT step, attempt_number, error_summary, response_summary FROM integration_export_attempts WHERE export_id = '42d70258-01bd-4bcd-9937-37a3b871ba09' ORDER BY created_at;`);
+  console.log('Attempts:', attempts);
+  
+  const records = await query(`SELECT * FROM integration_external_records WHERE integration_id = 'b003d57d-3c86-4c22-9a22-bc130d31cc2f';`);
+  console.log('External records:', records);
 })();

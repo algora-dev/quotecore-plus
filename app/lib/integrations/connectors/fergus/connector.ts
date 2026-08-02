@@ -392,11 +392,13 @@ export class FergusConnector implements Connector {
             status: 'failed',
             errorSummary: `Failed to create quote: ${res.status} ${errText.slice(0, 200)}`,
           });
+          await context.logStep('create_or_update_quote', { errorSummary: `Failed: ${res.status} ${errText.slice(0, 500)}`, requestSummary: { quoteBody } });
           // Don't return failed - job was created, quote is secondary
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error';
         steps.push({ type: 'create_or_update_quote', status: 'failed', errorSummary: msg });
+        await context.logStep('create_or_update_quote', { errorSummary: msg });
       }
     }
 
@@ -420,7 +422,8 @@ export class FergusConnector implements Connector {
 
           const formData = new FormData();
           formData.append('file', new Blob([fileBuffer]), fileName);
-          formData.append('jobId', String(jobId));
+          formData.append('entityType', 'job');
+          formData.append('entityId', String(jobId));
 
           const uploadRes = await fetch(`${FERGUS_BASE}/attachments`, {
             method: 'POST',
@@ -444,15 +447,15 @@ export class FergusConnector implements Connector {
         status: failed === 0 ? 'succeeded' : (uploaded > 0 ? 'succeeded' : 'failed'),
         errorSummary: failed > 0 ? `${failed}/${data.files.length} files failed to upload` : undefined,
       });
-      await context.logStep('upload_files', { responseSummary: { uploaded, failed, total: data.files.length } });
+      await context.logStep('upload_files', { responseSummary: { uploaded, failed, total: data.files.length }, errorSummary: failed > 0 ? `${failed}/${data.files.length} files failed` : undefined });
     }
 
     // Step 5: Add note
     try {
       const noteBody = {
-        title: 'Quote exported from QuoteCore+',
-        body: `Quote ${data.source.quoteNumber} exported to Fergus on ${new Date().toISOString()}`,
-        relatedTo: { jobId },
+        text: `Quote ${data.source.quoteNumber} exported from QuoteCore+ on ${new Date().toISOString()}`,
+        entityName: 'job',
+        entityId: jobId,
       };
 
       await fetch(`${FERGUS_BASE}/notes`, {
@@ -551,19 +554,21 @@ function buildQuoteSections(
   lineItems: Array<{
     itemName: string;
     itemQuantity: number;
+    itemPrice: number;
     itemCost: number;
     sortOrder: number;
   }>;
 }> {
   const data = envelope.data;
-  const sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemCost: number; sortOrder: number }> }> = [];
+  const sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemPrice: number; itemCost: number; sortOrder: number }> }> = [];
 
   // Main quote lines
   if (data.customerLines && data.customerLines.length > 0) {
     const lineItems = data.customerLines.map((line, i) => ({
       itemName: line.description || 'Item',
       itemQuantity: line.quantity ? Number(line.quantity) : 1,
-      itemCost: line.unitPrice ? Number(line.unitPrice) : 0,
+      itemPrice: line.lineTotal ? Number(line.lineTotal) : (line.unitPrice ? Number(line.unitPrice) : 0),
+      itemCost: 0,
       sortOrder: i,
     }));
     sections.push({ name: 'Quote Items', lineItems });
@@ -574,7 +579,8 @@ function buildQuoteSections(
     const labourItems = data.labourLines.map((line, i) => ({
       itemName: line.description || 'Labour',
       itemQuantity: 1,
-      itemCost: line.amount != null ? Number(line.amount) : 0,
+      itemPrice: line.amount != null ? Number(line.amount) : 0,
+      itemCost: 0,
       sortOrder: i,
     }));
     sections.push({ name: 'Labour', lineItems: labourItems });
