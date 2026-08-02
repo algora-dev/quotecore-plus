@@ -392,11 +392,13 @@ export class FergusConnector implements Connector {
             status: 'failed',
             errorSummary: `Failed to create quote: ${res.status} ${errText.slice(0, 200)}`,
           });
+          await context.logStep('create_or_update_quote', { errorSummary: `Failed: ${res.status} ${errText.slice(0, 500)}`, requestSummary: { quoteBody } });
           // Don't return failed - job was created, quote is secondary
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error';
         steps.push({ type: 'create_or_update_quote', status: 'failed', errorSummary: msg });
+        await context.logStep('create_or_update_quote', { errorSummary: msg });
       }
     }
 
@@ -445,7 +447,7 @@ export class FergusConnector implements Connector {
         status: failed === 0 ? 'succeeded' : (uploaded > 0 ? 'succeeded' : 'failed'),
         errorSummary: failed > 0 ? `${failed}/${data.files.length} files failed to upload` : undefined,
       });
-      await context.logStep('upload_files', { responseSummary: { uploaded, failed, total: data.files.length } });
+      await context.logStep('upload_files', { responseSummary: { uploaded, failed, total: data.files.length }, errorSummary: failed > 0 ? `${failed}/${data.files.length} files failed` : undefined });
     }
 
     // Step 5: Add note
