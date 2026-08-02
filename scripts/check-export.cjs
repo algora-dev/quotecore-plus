@@ -1,17 +1,30 @@
 const https = require('https');
-const body = JSON.stringify({
-  query: `SELECT ee.id, ee.status, ee.started_at, ee.completed_at, ee.error_summary, ee.error_code, ee.retry_count FROM integration_exports ee WHERE ee.id = '42d70258-01bd-4bcd-9937-37a3b871ba09';`
-});
-const options = {
-  hostname: 'api.supabase.com',
-  path: '/v1/projects/aaavvfttkesdzblttmby/database/query',
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.SUPABASE_ACCESS_TOKEN }
-};
-const req = https.request(options, (res) => {
-  let data = '';
-  res.on('data', c => data += c);
-  res.on('end', () => console.log(data));
-});
-req.write(body);
-req.end();
+const token = process.argv[2];
+
+async function query(sql) {
+  return new Promise((resolve) => {
+    const body = JSON.stringify({ query: sql });
+    const options = {
+      hostname: 'api.supabase.com',
+      path: '/v1/projects/aaavvfttkesdzblttmby/database/query',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve(data));
+    });
+    req.write(body);
+    req.end();
+  });
+}
+
+(async () => {
+  const ra = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_roof_areas' ORDER BY ordinal_position;`);
+  console.log('quote_roof_areas:', ra);
+  const re = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_roof_area_entries' ORDER BY ordinal_position;`);
+  console.log('quote_roof_area_entries:', re);
+  const ce = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_component_entries' ORDER BY ordinal_position;`);
+  console.log('quote_component_entries:', ce);
+})();

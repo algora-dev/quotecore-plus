@@ -69,7 +69,7 @@ export async function buildQuoteExport(
 
   // Load customer lines
   const { data: customerLines } = await supabase
-    .from('quote_customer_lines')
+    .from('customer_quote_lines')
     .select('*')
     .eq('quote_id', quoteId)
     .order('sort_order', { ascending: true });
@@ -106,7 +106,7 @@ export async function buildQuoteExport(
 
   // Load labour sheet lines
   const { data: labourLines } = await supabase
-    .from('quote_labor_sheet_lines')
+    .from('labor_sheet_lines')
     .select('*')
     .eq('quote_id', quoteId)
     .order('sort_order', { ascending: true });
@@ -128,13 +128,13 @@ export async function buildQuoteExport(
   const exportedCustomerLines: CustomerLineExport[] = (customerLines ?? []).map((l) => ({
     id: l.id,
     type: l.line_type ?? 'custom',
-    description: l.description ?? '',
+    description: l.custom_text ?? '',
     quantity: l.quantity ?? null,
     quantityText: l.quantity_text ?? null,
-    unitPrice: l.unit_price != null ? money(l.unit_price) : null,
-    lineTotal: money(l.line_total),
-    visibleToCustomer: l.visible_to_customer ?? true,
-    includedInTotal: l.included_in_total ?? true,
+    unitPrice: l.unit_price != null ? money(l.unit_price) : (l.custom_amount != null ? money(l.custom_amount) : null),
+    lineTotal: l.custom_amount != null ? money(l.custom_amount) : '0',
+    visibleToCustomer: l.is_visible ?? true,
+    includedInTotal: l.include_in_total ?? true,
     sortOrder: l.sort_order ?? 0,
   }));
 
@@ -146,7 +146,7 @@ export async function buildQuoteExport(
       id: e.id,
       rawValue: e.raw_value?.toString() ?? null,
       pitchDegrees: e.pitch_degrees ?? null,
-      wasteAdjustedValue: e.value_after_waste != null ? money(e.value_after_waste) : null,
+      wasteAdjustedValue: e.value_after_waste != null ? Number(e.value_after_waste).toFixed(4) : null,
       originalInputs: e.entry_inputs ?? null,
       combinedFrom: e.combined_from ?? null,
     });
@@ -157,25 +157,25 @@ export async function buildQuoteExport(
   const exportedComponents: ComponentExport[] = (components ?? []).map((c) => ({
     id: c.id,
     name: c.name ?? '',
-    mainOrExtra: c.main_or_extra ?? null,
+    mainOrExtra: null,
     measurementType: c.measurement_type ?? null,
     inputMode: c.input_mode ?? null,
-    quantity: c.quantity ?? null,
-    pricedQuantity: c.priced_quantity ?? null,
+    quantity: c.final_quantity != null ? Number(c.final_quantity) : null,
+    pricedQuantity: c.priced_quantity != null ? Number(c.priced_quantity) : null,
     pricingUnit: c.pricing_unit ?? null,
     materialRate: c.material_rate != null ? money(c.material_rate) : null,
-    labourRate: c.labor_rate != null ? money(c.labor_rate) : null,
+    labourRate: c.labour_rate != null ? money(c.labour_rate) : null,
     materialCost: c.material_cost != null ? money(c.material_cost) : null,
-    labourCost: c.labor_cost != null ? money(c.labor_cost) : null,
+    labourCost: c.labour_cost != null ? money(c.labour_cost) : null,
     wastePercent: c.waste_percent != null ? c.waste_percent.toString() : null,
-    pitchDegrees: c.calc_pitch_degrees ?? c.pitch_degrees ?? null,
-    pricingStrategy: c.pricing_strategy ?? null,
-    packSize: c.pack_size ?? null,
-    customerVisible: c.customer_visible ?? true,
+    pitchDegrees: c.calc_pitch_degrees ?? c.custom_pitch_degrees ?? null,
+    pricingStrategy: null,
+    packSize: c.pack_size_snapshot ?? null,
+    customerVisible: c.is_customer_visible ?? true,
     sortOrder: c.sort_order ?? 0,
     libraryRef: c.component_library_id ?? null,
-    sku: c.sku ?? null,
-    overrideFlags: c.override_flags ?? null,
+    sku: null,
+    overrideFlags: null,
     entries: entriesByComponent.get(c.id) ?? [],
   }));
 
@@ -196,10 +196,10 @@ export async function buildQuoteExport(
       inputMode: r.input_mode ?? null,
       planWidth: entries[0]?.width_m ?? null,
       planLength: entries[0]?.length_m ?? null,
-      planArea: totalPlanArea || (r.plan_area ?? null),
-      pitchDegrees: r.pitch_degrees ?? null,
-      computedArea: r.computed_area ?? null,
-      finalArea: r.final_area ?? null,
+      planArea: totalPlanArea || (r.calc_plan_sqm ?? null),
+      pitchDegrees: r.calc_pitch_degrees ?? null,
+      computedArea: r.computed_sqm ?? null,
+      finalArea: r.final_value_sqm ?? null,
     };
   });
 
@@ -207,12 +207,12 @@ export async function buildQuoteExport(
   const exportedLabourLines: LabourLineExport[] | null = labourLines && labourLines.length > 0
     ? labourLines.map((l) => ({
         id: l.id,
-        description: l.description ?? '',
-        amount: money(l.amount),
-        componentRef: l.component_id ?? null,
-        visibleToCustomer: l.visible_to_customer ?? true,
-        includedInTotal: l.included_in_total ?? true,
-        showPricing: l.show_pricing ?? true,
+        description: l.custom_text ?? '',
+        amount: l.custom_amount != null ? money(l.custom_amount) : '0',
+        componentRef: l.quote_component_id ?? null,
+        visibleToCustomer: l.is_visible ?? true,
+        includedInTotal: l.include_in_total ?? true,
+        showPricing: l.show_price ?? true,
       }))
     : null;
 
@@ -222,9 +222,9 @@ export async function buildQuoteExport(
     fileType: f.file_type ?? 'supporting',
     fileName: f.file_name ?? 'unnamed',
     mimeType: f.mime_type ?? null,
-    sizeBytes: f.size_bytes ?? null,
-    checksum: f.checksum ?? null,
-    sourcePath: f.storage_path ?? f.file_path ?? '',
+    sizeBytes: f.file_size ?? null,
+    checksum: null,
+    sourcePath: f.storage_path ?? '',
   }));
 
   // Build documents manifest (quote PDFs, etc.)
@@ -274,7 +274,7 @@ export async function buildQuoteExport(
       name: quote.customer_name ?? '',
       email: quote.customer_email ?? null,
       phone: quote.customer_phone ?? null,
-      billingAddress: null,
+      billingAddress: toAddress(quote.site_address ?? null),
     },
     site: {
       name: quote.job_name ?? null,
