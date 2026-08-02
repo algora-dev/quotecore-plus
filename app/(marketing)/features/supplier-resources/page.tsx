@@ -9,7 +9,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Supplier Resources: Catalogs & Component Libraries | QuoteCore+",
   description:
-    "Search supplier pricing catalogs and component libraries by area or product type. Import ready-made components into your account. Convert supplier catalogs into Smart Components in bulk. Save hours of manual pricing setup.",
+    "Search supplier pricing catalogs and component libraries by area or product type. Import ready-made components into your account. Convert supplier catalogs into Smart Components™ in bulk. Save hours of manual pricing setup.",
   alternates: {
     canonical: "https://quote-core.com/features/supplier-resources",
     languages: hreflangLanguages("/features/supplier-resources"),
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Supplier Resources: Catalogs & Component Libraries | QuoteCore+",
     description:
-      "Search supplier pricing catalogs and component libraries. Import components, convert catalogs to Smart Components, and start quoting with real pricing.",
+      "Search supplier pricing catalogs and component libraries. Import components, convert catalogs to Smart Components™, and start quoting with real pricing.",
     url: "https://quote-core.com/features/supplier-resources",
     siteName: "QuoteCore+",
     type: "website",
@@ -51,7 +51,7 @@ const faqSchema = {
       name: "What is the difference between a catalog and a component library?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "A catalog is a CSV file of pricing from a supplier - product codes, names, and prices. A component library is a full set of Smart Components that a supplier has created, including measurement types, waste rules, labour rates, and pricing. Component libraries are ready to use immediately; catalogs can be converted into components.",
+        text: "A catalog is a CSV file of pricing from a supplier - product codes, names, and prices. A component library is a full set of Smart Components™ that a supplier has created, including measurement types, waste rules, labour rates, and pricing. Component libraries are ready to use immediately; catalogs can be converted into components.",
       },
     },
     {
@@ -75,14 +75,14 @@ const faqSchema = {
 
 const steps = [
   { num: 1, title: "Search for suppliers", text: "Search by your area, by product type, or by supplier name. Find suppliers who have published their pricing catalogs and component libraries publicly on QuoteCore+." },
-  { num: 2, title: "Browse catalogs and libraries", text: "Open a supplier's component library to see ready-made Smart Components with pricing, measurement types, and waste rules. Or open their catalog (CSV) to see raw pricing data - product codes, names, and prices." },
-  { num: 3, title: "Import or convert", text: "Import a supplier's component library directly into your account. Or use the catalog to component converter to turn a CSV catalog into Smart Components - map columns to fields, convert in bulk, then fine-tune individually." },
+  { num: 2, title: "Browse catalogs and libraries", text: "Open a supplier's component library to see ready-made Smart Components™ with pricing, measurement types, and waste rules. Or open their catalog (CSV) to see raw pricing data - product codes, names, and prices." },
+  { num: 3, title: "Import or convert", text: "Import a supplier's component library directly into your account. Or use the catalog to component converter to turn a CSV catalog into Smart Components™ - map columns to fields, convert in bulk, then fine-tune individually." },
   { num: 4, title: "Quote with real pricing", text: "Your imported components are ready to use in quotes immediately. Adjust prices to match your trade discount or markup. Every time you quote, these components calculate automatically." },
 ];
 
 const faqs = [
   { q: "What are supplier resources in QuoteCore+?", a: "Supplier resources are publicly available pricing catalogs and component libraries published by roofing and construction suppliers. Users can search by area or product type, find a supplier's catalog or library, and import components directly into their own account to use for quoting." },
-  { q: "What is the difference between a catalog and a component library?", a: "A catalog is a CSV file of pricing from a supplier - product codes, names, and prices. A component library is a full set of Smart Components that a supplier has created, including measurement types, waste rules, labour rates, and pricing. Component libraries are ready to use immediately; catalogs can be converted into components." },
+  { q: "What is the difference between a catalog and a component library?", a: "A catalog is a CSV file of pricing from a supplier - product codes, names, and prices. A component library is a full set of Smart Components™ that a supplier has created, including measurement types, waste rules, labour rates, and pricing. Component libraries are ready to use immediately; catalogs can be converted into components." },
   { q: "What is the catalog to component converter?", a: "The catalog to component converter lets you open a supplier catalog (CSV) and convert each row into a Smart Component. You select which columns map to which component fields - name, price, measurement type, product code - and the converter creates all the components at once. You can then fine-tune each component individually." },
   { q: "Can I use supplier pricing if I don't have my own prices yet?", a: "Yes. Supplier resources are designed for contractors who don't have established pricing yet. Search for a supplier in your area, import their component library or catalog, and start quoting with real pricing from day one. You can adjust the imported prices to match your trade discount or markup." },
 ];
@@ -132,14 +132,14 @@ export default function SupplierResourcesPage() {
                 <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
               </div>
               <h3 className="mt-3 font-semibold text-slate-900">Ready-made component libraries</h3>
-              <p className="mt-1 text-sm text-zinc-600">Suppliers publish full Smart Components with pricing, measurement types, and waste rules. Import and use immediately.</p>
+              <p className="mt-1 text-sm text-zinc-600">Suppliers publish full Smart Components™ with pricing, measurement types, and waste rules. Import and use immediately.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
                 <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
               </div>
               <h3 className="mt-3 font-semibold text-slate-900">Catalog to component converter</h3>
-              <p className="mt-1 text-sm text-zinc-600">Open a supplier CSV catalog, map columns to component fields, and convert rows into Smart Components in bulk.</p>
+              <p className="mt-1 text-sm text-zinc-600">Open a supplier CSV catalog, map columns to component fields, and convert rows into Smart Components™ in bulk.</p>
             </div>
           </div>
         </section>
@@ -151,10 +151,10 @@ export default function SupplierResourcesPage() {
             Supplier resources are publicly available pricing data published by roofing and construction suppliers on QuoteCore+. There are two types: catalogs and component libraries.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
-            A <strong>component library</strong> is a full set of Smart Components that a supplier has created. Each component has a name, product code, measurement type (area, linear length, per unit, fixed cost), price, and waste rules. When you import a component library, the components are ready to use in your quotes immediately.
+            A <strong>component library</strong> is a full set of Smart Components™ that a supplier has created. Each component has a name, product code, measurement type (area, linear length, per unit, fixed cost), price, and waste rules. When you import a component library, the components are ready to use in your quotes immediately.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
-            A <strong>catalog</strong> is a simpler CSV file of pricing data - typically product codes, product names, and prices. Catalogs are raw data that you can convert into Smart Components using the catalog to component converter.
+            A <strong>catalog</strong> is a simpler CSV file of pricing data - typically product codes, product names, and prices. Catalogs are raw data that you can convert into Smart Components™ using the catalog to component converter.
           </p>
         </section>
 
@@ -195,12 +195,12 @@ export default function SupplierResourcesPage() {
                 <h3 className="text-lg font-semibold">Ready-made components</h3>
               </div>
               <p className="mt-3 text-sm text-zinc-600">
-                A full set of Smart Components created by a supplier. Each component includes measurement type, pricing, waste rules, and labour rates. Import and use immediately - no conversion needed.
+                A full set of Smart Components™ created by a supplier. Each component includes measurement type, pricing, waste rules, and labour rates. Import and use immediately - no conversion needed.
               </p>
               <ul className="mt-4 space-y-2 text-sm text-zinc-600">
                 <li className="flex items-start gap-2">
                   <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                  Full Smart Components, ready to use
+                  Full Smart Components™, ready to use
                 </li>
                 <li className="flex items-start gap-2">
                   <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
@@ -223,7 +223,7 @@ export default function SupplierResourcesPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Catalog to component converter</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            The catalog to component converter is a bulk import tool. Open a supplier catalog (CSV) or one of your own uploaded catalogs, and the converter shows you each row. You select which columns map to which component fields - name, price, product code, measurement type - and the converter creates Smart Components from every row at once.
+            The catalog to component converter is a bulk import tool. Open a supplier catalog (CSV) or one of your own uploaded catalogs, and the converter shows you each row. You select which columns map to which component fields - name, price, product code, measurement type - and the converter creates Smart Components™ from every row at once.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
             This is a massive time saver when a supplier sends you a price list with dozens or hundreds of items. Instead of adding each component one by one, you convert the whole catalog in one pass, then fine-tune individual components as needed. Set the measurement type, adjust waste allowances, add labour rates - all after the initial bulk conversion.
@@ -253,7 +253,7 @@ export default function SupplierResourcesPage() {
             Contractors who need pricing data to quote accurately. If you&apos;re new to a market, working with a new supplier, or simply don&apos;t have your own pricing library built up yet, supplier resources give you real, current pricing to start quoting with immediately.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
-            Also for contractors who receive supplier price lists as PDFs or spreadsheets. Instead of manually entering each item, import the catalog and convert it to Smart Components in one pass.
+            Also for contractors who receive supplier price lists as PDFs or spreadsheets. Instead of manually entering each item, import the catalog and convert it to Smart Components™ in one pass.
           </p>
         </section>
 
@@ -298,8 +298,8 @@ export default function SupplierResourcesPage() {
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/smart-components" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <h3 className="font-semibold text-slate-900">Smart Components</h3>
-              <p className="mt-1 text-sm text-zinc-600">Imported supplier components become Smart Components in your account.</p>
+              <h3 className="font-semibold text-slate-900">Smart Components™</h3>
+              <p className="mt-1 text-sm text-zinc-600">Imported supplier components become Smart Components™ in your account.</p>
             </Link>
             <Link href="/suppliers" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">For suppliers</h3>

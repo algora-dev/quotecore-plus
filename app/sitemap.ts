@@ -34,6 +34,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/features/digital-roof-takeoff`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/features/smart-components`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/features/material-ordering`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/features/invoicing`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/features/supplier-resources`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     // Resource hubs
     { url: `${SITE_URL}/resources/roofing-estimating`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/resources/construction-quoting`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },

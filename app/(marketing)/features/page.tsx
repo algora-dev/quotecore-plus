@@ -8,7 +8,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Features | QuoteCore+",
   description:
-    "Digital roof takeoffs, Smart Components, material ordering, and invoicing. Explore the features that make QuoteCore+ the connected quoting platform for roofing and construction.",
+    "Digital roof takeoffs, Smart Components™, material ordering, and invoicing. Explore the features that make QuoteCore+ the connected quoting platform for roofing and construction.",
   alternates: {
     canonical: "https://quote-core.com/features",
     languages: hreflangLanguages("/features"),
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Features | QuoteCore+",
     description:
-      "Digital roof takeoffs, Smart Components, material ordering, quote approval tracking, and invoicing. Explore the features of QuoteCore+.",
+      "Digital roof takeoffs, Smart Components™, material ordering, quote approval tracking, and invoicing. Explore the features of QuoteCore+.",
     url: "https://quote-core.com/features",
     siteName: "QuoteCore+",
     type: "website",
@@ -33,7 +33,7 @@ const features = [
     steps: ["Upload a roof plan", "Measure sections digitally", "Generate a complete takeoff", "Send to quote builder"],
   },
   {
-    title: "Smart Components",
+    title: "Smart Components™",
     description:
       "Reusable quoting components that know their own measurements, waste allowances, and pricing rules. Build a roof quote in minutes, not hours.",
     href: "/features/smart-components",

@@ -67,7 +67,7 @@ const faqSchema = {
 
 const steps = [
   { num: 1, title: "Start from a quote or from scratch", text: "Generate an order from an accepted quote in QuoteCore+, import a quote from another tool, or start with a blank order. Three ways in, same result." },
-  { num: 2, title: "Review and adjust", text: "Quantities, product codes, and descriptions flow from the quote's Smart Components. Edit quantities, add items the quote didn't include (like fixings or consumables), or remove items you already have in stock." },
+  { num: 2, title: "Review and adjust", text: "Quantities, product codes, and descriptions flow from the quote's Smart Components™. Edit quantities, add items the quote didn't include (like fixings or consumables), or remove items you already have in stock." },
   { num: 3, title: "Supplier-ready format", text: "The order includes everything your supplier needs: quantities, cut lengths, product codes, delivery address, and contact details. Custom flashings include technical profile drawings with dimensions." },
   { num: 4, title: "Send and track", text: "Send the order directly from QuoteCore+. Every order is stored against the job, so you can see what was ordered, when, and for which quote." },
 ];
@@ -191,11 +191,11 @@ export default function MaterialOrderingPage() {
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Re-counting from the quote</h3>
-              <p className="mt-2 text-sm text-zinc-600">After acceptance, materials have to be counted and formatted for the supplier. The order builder does this automatically from the quote's Smart Components.</p>
+              <p className="mt-2 text-sm text-zinc-600">After acceptance, materials have to be counted and formatted for the supplier. The order builder does this automatically from the quote's Smart Components™.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Missing product codes</h3>
-              <p className="mt-2 text-sm text-zinc-600">Supplier orders without product codes lead to delays and wrong deliveries. Smart Components store product codes, so every order includes them.</p>
+              <p className="mt-2 text-sm text-zinc-600">Supplier orders without product codes lead to delays and wrong deliveries. Smart Components™ store product codes, so every order includes them.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">No order history</h3>
@@ -222,12 +222,12 @@ export default function MaterialOrderingPage() {
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/smart-components" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <h3 className="font-semibold text-slate-900">Smart Components</h3>
+              <h3 className="font-semibold text-slate-900">Smart Components™</h3>
               <p className="mt-1 text-sm text-zinc-600">Components store product codes and quantities. Orders pull from them.</p>
             </Link>
             <Link href="/features/digital-roof-takeoff" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Digital roof takeoff</h3>
-              <p className="mt-1 text-sm text-zinc-600">Measure the job. Smart Components price it. Material orders flow from it.</p>
+              <p className="mt-1 text-sm text-zinc-600">Measure the job. Smart Components™ price it. Material orders flow from it.</p>
             </Link>
             <Link href="/free-purchase-order-generator" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Free purchase order generator</h3>

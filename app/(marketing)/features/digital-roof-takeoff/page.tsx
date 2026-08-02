@@ -291,7 +291,7 @@ export default function DigitalRoofTakeoffPage() {
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/smart-components" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <h3 className="font-semibold text-slate-900">Smart Components</h3>
+              <h3 className="font-semibold text-slate-900">Smart Components™</h3>
               <p className="mt-1 text-sm text-zinc-600">Reusable quoting components that know their own pricing and waste rules.</p>
             </Link>
             <Link href="/roofing-quoting-software" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
