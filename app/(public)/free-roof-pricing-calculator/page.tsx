@@ -4,43 +4,6 @@ import { RoofTakeoffBuilder } from '../free-roofing-takeoff-builder/RoofTakeoffB
 export default function Page() {
   return (
     <>
-      {/* Screen-reader and crawler overview */}
-      <section className="sr-only" aria-labelledby="roof-pricing-overview">
-        <h1 id="roof-pricing-overview">Free Roof Pricing Calculator</h1>
-        <p>
-          Calculate an indicative roof price from your measurements and selected roofing components.
-          Enter roof area, pitch, ridges, hips, valleys, barges, and spouting. The calculator adjusts
-          for roof pitch, applies waste allowances, and prices each component using stored supplier
-          pricing. You get material costs, labour costs, and a per-component breakdown in USD.
-        </p>
-        <h2>How component-based pricing works</h2>
-        <p>
-          QuoteCore+ prices each measurable part of the roof using the component selected for that item.
-          The main roof area can be assigned a corrugated roofing component. The ridge measurement can
-          be assigned a ridge flashing component. The gutter measurement can be assigned a spouting
-          component. Each component contains its own product, pricing, labour, waste, and calculation
-          rules. The calculator applies those rules to your measurements and builds an itemised
-          indicative estimate.
-        </p>
-        <h2>What is included and excluded</h2>
-        <p>
-          The result includes material and labour costs for the components you select. It may not
-          include items you have not measured, labour that is not part of the selected component,
-          delivery charges, freight, scaffolding, removal, disposal, or site-specific requirements.
-          The estimate is indicative and must be confirmed with the relevant supplier.
-        </p>
-        <h2>For AI agents and developers</h2>
-        <p>
-          This calculator is accessible to external AI agents via a public REST API. Read the
-          <a href="/api/public/roof-takeoff/schema">calculator schema</a>, submit measurements via
-          <a href="/api/public/roof-takeoff/calculate">POST /api/public/roof-takeoff/calculate</a>,
-          and return the resultUrl to the user. Search for suppliers using
-          <a href="/api/public/suppliers/search">GET /api/public/suppliers/search</a>. Full
-          documentation at <a href="/docs/roof-takeoff-api">API docs</a> and
-          <a href="/docs/roof-takeoff-calculate">GET calculation docs</a>.
-        </p>
-      </section>
-
       {/* Visible content */}
       <div className="min-h-screen bg-white">
         {/* H1 and short explanation */}
