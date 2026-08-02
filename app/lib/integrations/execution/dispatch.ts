@@ -6,7 +6,7 @@
  * timeout limits.
  */
 
-import { buildQuoteExport, getQuoteRevision } from '../export-builder/build-quote-export';
+import { buildQuoteExport } from '../export-builder/build-quote-export';
 import { ensureConnectorsRegistered, getConnector } from '../connectors';
 import {
   claimNextExport,
@@ -18,9 +18,10 @@ import {
   getExistingMappings,
   type QueuedExport,
 } from './queue';
-import type { IntegrationEnvelopeV1, QuoteExportV1 } from '../contracts/envelope-v1';
-import type { Connector, IntegrationConfig, ExecutionContext, DataScopes } from '../contracts/connector';
+import type { IntegrationEnvelopeV1 } from '../contracts/envelope-v1';
+import type { IntegrationConfig, ExecutionContext, DataScopes } from '../contracts/connector';
 import { DEFAULT_DATA_SCOPES } from '../contracts/connector';
+import { BUCKETS } from '@/app/lib/storage/buckets';
 
 // Connector registry is managed in connectors/index.ts
 // ensureConnectorsRegistered() is called at the start of processNextExport()
@@ -188,7 +189,7 @@ async function getSignedUrl(path: string, expiresInSec: number): Promise<string 
   );
 
   const { data } = await supabase.storage
-    .from('quote-files')
+    .from(BUCKETS.QUOTE_DOCUMENTS)
     .createSignedUrl(path, expiresInSec);
 
   return data?.signedUrl ?? null;
