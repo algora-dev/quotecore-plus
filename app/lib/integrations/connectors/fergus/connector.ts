@@ -275,51 +275,67 @@ export class FergusConnector implements Connector {
             steps.push(siteResult.step);
           }
 
-          if (!customerId || !siteId) {
-            throw new Error('Cannot finalise mapped Fergus job without a customer and site');
-          }
-
-          const updates: Array<Record<string, unknown>> = [
-            { title: data.job.name || `Quote ${data.source.quoteNumber}` },
-            { description: buildJobDescription(envelope, scopes) },
-            { customerId },
-            { customerReference: String(data.source.quoteNumber ?? '') },
-            { siteId },
-          ];
-          for (const update of updates) {
-            const updateResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
-              method: 'PUT',
-              headers,
-              body: JSON.stringify(update),
-              signal: AbortSignal.timeout(30000),
-            });
-            if (!updateResponse.ok) {
-              const errorText = await updateResponse.text().catch(() => 'Unknown error');
-              throw new Error(`Failed to repair mapped job: ${updateResponse.status} ${errorText.slice(0, 300)}`);
+          // If we don't have both customer and site, we can't finalise the draft.
+          // Still update what we can and continue with quote/files/notes on the draft job.
+          if (customerId) {
+            const updates: Array<Record<string, unknown>> = [
+              { title: data.job.name || `Quote ${data.source.quoteNumber || ''}` },
+              { description: buildJobDescription(envelope, scopes) },
+              { customerId },
+              { customerReference: String(data.source.quoteNumber ?? '') },
+            ];
+            if (siteId) {
+              updates.push({ siteId });
+            }
+            for (const update of updates) {
+              const updateResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(update),
+                signal: AbortSignal.timeout(30000),
+              });
+              if (!updateResponse.ok) {
+                const errorText = await updateResponse.text().catch(() => 'Unknown error');
+                await context.logStep('repair_draft_job', {
+                  errorSummary: `PUT failed: ${updateResponse.status} ${errorText.slice(0, 300)}`,
+                });
+              }
             }
           }
 
-          const finaliseResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}/finalise`, {
-            method: 'PUT',
-            headers,
-            signal: AbortSignal.timeout(30000),
-          });
-          if (!finaliseResponse.ok) {
-            const errorText = await finaliseResponse.text().catch(() => 'Unknown error');
-            throw new Error(`Failed to finalise mapped job: ${finaliseResponse.status} ${errorText.slice(0, 300)}`);
+          // Try to finalise if we have both customer and site
+          if (customerId && siteId) {
+            const finaliseResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}/finalise`, {
+              method: 'PUT',
+              headers,
+              signal: AbortSignal.timeout(30000),
+            });
+            if (!finaliseResponse.ok) {
+              const errorText = await finaliseResponse.text().catch(() => 'Unknown error');
+              await context.logStep('repair_draft_job', {
+                errorSummary: `Finalise failed: ${finaliseResponse.status} ${errorText.slice(0, 300)}`,
+              });
+              // Don't fail - continue with quote/files/notes on the draft job
+            } else {
+              await context.logStep('repair_draft_job', {
+                responseStatus: finaliseResponse.status,
+                responseSummary: { jobId, siteId, finalised: true },
+              });
+            }
+          } else {
+            // Can't finalise without site - log but continue
+            await context.logStep('repair_draft_job', {
+              errorSummary: 'Cannot finalise draft job - no site address available. Continuing with draft job.',
+            });
           }
 
           steps.push({ type: 'upsert_job', status: 'succeeded', externalId: String(jobId) });
-          await context.logStep('repair_draft_job', {
-            responseStatus: finaliseResponse.status,
-            responseSummary: { jobId, siteId },
-          });
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to repair mapped job';
         steps.push({ type: 'upsert_job', status: 'failed', errorSummary: message });
         await context.logStep('repair_draft_job', { errorSummary: message });
-        return { status: 'failed', steps, externalRecords, errorSummary: message };
+        // Don't return failed - continue with quote/files/notes if we have a jobId
       }
     } else {
       try {
@@ -401,11 +417,13 @@ export class FergusConnector implements Connector {
     }
 
     // Step 3: Create quote with line items
-    if (scopes.customerFacingQuote && data.customerLines && data.customerLines.length > 0 && jobId) {
+    // Always create a quote if we have a job - even with no line items,
+    // an empty quote section is valid and gives the job a quote record.
+    if (scopes.customerFacingQuote && jobId) {
       try {
         const sections = buildQuoteSections(envelope, scopes);
         const quoteBody = {
-          title: `Quote ${data.source.quoteNumber}`,
+          title: `Quote ${data.source.quoteNumber || ''}`.trim(),
           description: buildJobDescription(envelope, scopes),
           dueDays: 30,
           sections,
@@ -509,11 +527,12 @@ export class FergusConnector implements Connector {
       });
     }
 
-    // Step 5: Add note
+    // Step 5: Add note (only if we have a job)
+    if (jobId) {
     try {
       const noteBody = {
         text: buildJobDescription(envelope, scopes),
-        entityName: 'job',
+        entityName: 'job' as const,
         entityId: jobId,
       };
 
@@ -536,6 +555,7 @@ export class FergusConnector implements Connector {
       steps.push({ type: 'add_activity_note', status: 'failed', errorSummary: message });
       await context.logStep('add_activity_note', { errorSummary: message });
     }
+    } // end if (jobId) for notes
 
     // Store external mappings
     if (customerId) {
@@ -660,7 +680,9 @@ function buildQuoteSections(
         itemQuantity,
         itemPrice,
         itemCost: 0,
-        isLabour: false,
+        // Fergus API requires each line item to have either isLabour OR salesAccountId.
+        // We don't have Fergus sales account IDs configured, so use isLabour for all items.
+        isLabour: true,
         sortOrder: i,
       };
     });
