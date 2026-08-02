@@ -140,6 +140,37 @@ export default function PricingPage() {
             ))}
           </div>
         </section>
+
+        {/* Related */}
+        <section className="mx-auto max-w-4xl px-6 pb-20 lg:px-8">
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Related</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Features</p>
+              <p className="mt-1 text-sm text-zinc-600">See what is included in each plan.</p>
+            </a>
+            <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Trust and security</p>
+              <p className="mt-1 text-sm text-zinc-600">Trial terms, cancellation, data ownership.</p>
+            </a>
+            <a href="/free-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free tools</p>
+              <p className="mt-1 text-sm text-zinc-600">Calculators and generators, no signup required.</p>
+            </a>
+            <a href="/roofing-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Roofing quoting software</p>
+              <p className="mt-1 text-sm text-zinc-600">The full roofing workflow.</p>
+            </a>
+            <a href="/construction-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Construction quoting software</p>
+              <p className="mt-1 text-sm text-zinc-600">The full construction workflow.</p>
+            </a>
+            <a href="/contact" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Contact us</p>
+              <p className="mt-1 text-sm text-zinc-600">Questions about plans or pricing.</p>
+            </a>
+          </div>
+        </section>
       </main>
       <SiteFooter />
     </>

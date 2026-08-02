@@ -544,6 +544,37 @@ export default function ConstructionQuotingSoftwarePage() {
           </div>
         </section>
 
+        {/* Related */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">All features</p>
+              <p className="mt-1 text-sm text-zinc-600">The full QuoteCore+ workflow from takeoff to invoice.</p>
+            </a>
+            <a href="/features/material-ordering" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Material ordering</p>
+              <p className="mt-1 text-sm text-zinc-600">Generate material orders from accepted quotes.</p>
+            </a>
+            <a href="/features/invoicing" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Invoicing</p>
+              <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into professional invoices.</p>
+            </a>
+            <a href="/free-construction-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free construction calculator</p>
+              <p className="mt-1 text-sm text-zinc-600">Areas, timber lengths, and building materials.</p>
+            </a>
+            <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free quote generator</p>
+              <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
+            </a>
+            <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Trust and security</p>
+              <p className="mt-1 text-sm text-zinc-600">How we protect your data and respect your business.</p>
+            </a>
+          </div>
+        </section>
+
         {/* Final CTA */}
         <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-5xl">
