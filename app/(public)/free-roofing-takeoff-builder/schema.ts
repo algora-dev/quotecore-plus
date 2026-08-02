@@ -214,7 +214,13 @@ export const roofTakeoffSchema = {
     queryParameter: 'supplier',
     description: 'Supplier slug to load supplier-specific pricing. Optional - when omitted, the calculator auto-selects the best available supplier with live pricing for the user country, so pricing is always returned when any supplier exists.',
     example: 'apex-roofing',
-    howToFind: 'Optional. If you want to select a specific supplier, use GET /api/public/suppliers/search?country=NZ&trade=roofing&capability=live_pricing to find available suppliers. Each result includes a slug for the supplier parameter. When omitted, the best supplier is auto-selected.',
+    howToFind: 'Optional. If you want to select a specific supplier, use GET /api/public/suppliers/search?country=NZ&trade=roofing&capability=live_pricing to find available suppliers. Each result includes a slug for the supplier parameter. When omitted, the best supplier is auto-selected based on the country parameter.',
+  },
+  countryParameter: {
+    queryParameter: 'country',
+    description: 'ISO 2-letter country code (e.g. NZ, US, GB, AU). Used to auto-select the best supplier with live pricing when no explicit supplier is specified. Recommended: always pass the user country so pricing is in the correct currency.',
+    example: 'NZ',
+    default: 'if omitted, the first available supplier is used regardless of country',
   },
   supplierDiscovery: {
     searchEndpoint: '/api/public/suppliers/search',
