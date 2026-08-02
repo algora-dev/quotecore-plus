@@ -1,6 +1,6 @@
 const https = require('https');
 const body = JSON.stringify({
-  query: `SELECT ee.id, ee.status, ee.queued_at, ee.started_at, ee.completed_at, ee.error_summary, ee.error_code, ee.retry_count FROM integration_exports ee WHERE ee.id = '42d70258-01bd-4bcd-9937-37a3b871ba09';`
+  query: `SELECT ee.id, ee.status, ee.started_at, ee.completed_at, ee.error_summary, ee.error_code, ee.retry_count FROM integration_exports ee WHERE ee.id = '42d70258-01bd-4bcd-9937-37a3b871ba09';`
 });
 const options = {
   hostname: 'api.supabase.com',

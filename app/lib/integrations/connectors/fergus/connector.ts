@@ -185,22 +185,35 @@ export class FergusConnector implements Connector {
         });
       } else {
         try {
+          // Build mainContact - Fergus requires firstName, contact details go in contactItems array
+          const contactItems: Array<{ contactType: string; contactValue: string }> = [];
+          if (data.customer.email) contactItems.push({ contactType: 'email', contactValue: data.customer.email });
+          if (data.customer.phone) contactItems.push({ contactType: 'phone', contactValue: data.customer.phone });
+
+          // Split customer name into first/last for Fergus
+          const nameParts = (data.customer.name || 'Unknown').trim().split(' ');
+          const firstName = nameParts[0] || 'Unknown';
+          const lastName = nameParts.slice(1).join(' ') || '';
+
           const customerBody: Record<string, unknown> = {
             customerFullName: data.customer.name,
             mainContact: {
-              email: data.customer.email || undefined,
-              phone: data.customer.phone || undefined,
+              firstName,
+              ...(lastName ? { lastName } : {}),
+              ...(contactItems.length > 0 ? { contactItems } : {}),
             },
           };
 
           if (data.customer.billingAddress) {
-            customerBody.physicalAddress = {
-              streetAddress: data.customer.billingAddress.line1 || undefined,
-              suburb: data.customer.billingAddress.city || undefined,
-              city: data.customer.billingAddress.city || undefined,
-              postcode: data.customer.billingAddress.postalCode || undefined,
-              country: data.customer.billingAddress.country || undefined,
-            };
+            const addr = data.customer.billingAddress;
+            const physicalAddress: Record<string, string> = {};
+            if (addr.line1) physicalAddress.address1 = addr.line1;
+            if (addr.city) physicalAddress.addressCity = addr.city;
+            if (addr.postalCode) physicalAddress.addressPostcode = addr.postalCode;
+            if (addr.country) physicalAddress.addressCountry = addr.country;
+            if (Object.keys(physicalAddress).length > 0) {
+              customerBody.physicalAddress = physicalAddress;
+            }
           }
 
           const res = await fetch(`${FERGUS_BASE}/customers`, {
@@ -242,7 +255,8 @@ export class FergusConnector implements Connector {
       }
     }
 
-    // Step 2: Create job
+    // Step 2: Create job (draft first, then we could finalise later)
+    // Fergus non-draft jobs require a siteId, so we create as draft
     if (existingJob) {
       jobId = Number(existingJob.externalId);
       steps.push({
@@ -254,6 +268,7 @@ export class FergusConnector implements Connector {
       try {
         const jobBody: Record<string, unknown> = {
           jobType: 'Quote',
+          isDraft: false,
           title: data.job.name || `Quote ${data.source.quoteNumber}`,
           description: buildJobDescription(envelope, scopes),
           customerReference: data.source.quoteNumber,
@@ -261,6 +276,48 @@ export class FergusConnector implements Connector {
 
         if (customerId) {
           jobBody.customerId = customerId;
+        }
+
+        // Create a site for the job (required for non-draft jobs)
+        let siteId: number | null = null;
+        if (customerId) {
+          try {
+            const siteBody: Record<string, unknown> = {
+              customerId,
+              siteName: data.customer?.name || 'Site',
+            };
+            if (data.customer?.billingAddress) {
+              const addr = data.customer.billingAddress;
+              const siteAddress: Record<string, string> = {};
+              if (addr.line1) siteAddress.address1 = addr.line1;
+              if (addr.city) siteAddress.addressCity = addr.city;
+              if (addr.postalCode) siteAddress.addressPostcode = addr.postalCode;
+              if (addr.country) siteAddress.addressCountry = addr.country;
+              if (Object.keys(siteAddress).length > 0) {
+                siteBody.siteAddress = siteAddress;
+              }
+            }
+            const siteRes = await fetch(`${FERGUS_BASE}/sites`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(siteBody),
+              signal: AbortSignal.timeout(30000),
+            });
+            if (siteRes.ok) {
+              const siteResult = await siteRes.json();
+              siteId = siteResult.data?.id ?? siteResult.id;
+            }
+          } catch {
+            // Site creation failed - will try draft job instead
+          }
+        }
+
+        if (siteId) {
+          jobBody.siteId = siteId;
+        } else {
+          // No site - create as draft instead
+          jobBody.isDraft = true;
+          delete (jobBody as Record<string, unknown>).siteId;
         }
 
         const res = await fetch(`${FERGUS_BASE}/jobs`, {
