@@ -69,6 +69,10 @@ const PUBLIC_PATHS = [
   '/contact',
   '/suppliers',
   '/blog',
+  '/pricing',
+  '/trust',
+  '/customer-stories',
+  '/company',
   '/coffee-terms',
   '/features',     // Feature pages (marketing)
   '/free-trial',
