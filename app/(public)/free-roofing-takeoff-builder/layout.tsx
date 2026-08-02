@@ -4,7 +4,7 @@ import { hreflangLanguages } from '@/lib/seo/hreflang';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'Free Roof Takeoff Builder - Calculate Roof Materials | QuoteCore+',
+  title: 'Free Roof Takeoff Builder | QuoteCore+',
   description:
     'Free roofing takeoff tool. Input roof areas, hips, valleys, ridges, barges and spouting with pitch calculations. Get total lengths and areas for your entire roof.',
   alternates: {
@@ -12,7 +12,7 @@ export const metadata = {
     languages: hreflangLanguages('/free-roofing-takeoff-builder'),
   },
   openGraph: {
-    title: 'Free Roof Takeoff Builder - Calculate Roof Materials',
+    title: 'Free Roof Takeoff Builder',
     description:
       'Free roofing takeoff tool. Input measurements with pitch calculations for all roof components. No signup required.',
     url: `${SITE_URL}/free-roofing-takeoff-builder`,
@@ -21,7 +21,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free Roof Takeoff Builder - Calculate Roof Materials',
+    title: 'Free Roof Takeoff Builder',
     description:
       'Free roofing takeoff tool. Input measurements with pitch calculations for all roof components. No signup required.',
     images: ['/logo.png'],

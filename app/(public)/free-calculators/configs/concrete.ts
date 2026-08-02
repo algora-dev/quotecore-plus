@@ -4,10 +4,10 @@ export const concreteConfig: TradeConfig = {
   slug: 'free-concrete-calculator',
   defaultCurrency: 'GBP',
   name: 'Concrete Calculator',
-  metaTitle: 'Free Concrete Calculator - Slabs, Footings & Volumes | QuoteCore+',
+  metaTitle: 'Concrete Calculator - Slabs & Volumes | QuoteCore+',
   metaDescription:
     'Free concrete calculator. Work out slab and footing volumes in m³ with depth presets, formwork areas, drainage falls, and ready-mix pricing. No signup required.',
-  ogTitle: 'Free Concrete Calculator - Slabs, Footings & Volumes',
+  ogTitle: 'Concrete Calculator - Slabs & Volumes',
   ogDescription:
     'Free concrete calculator. Slab and footing volumes, formwork areas, falls and gradients, and ready-mix quantities. No signup required.',
 
