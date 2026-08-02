@@ -59,9 +59,10 @@ const SESSION_KEY = 'qcp:frtb:session';
 
 interface RoofTakeoffBuilderProps {
   initialInput?: PublicRoofTakeoffInput;
+  embed?: boolean; // When true, skip header/footer/H1 (for embedding in other pages)
 }
 
-export function RoofTakeoffBuilder({ initialInput }: RoofTakeoffBuilderProps) {
+export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffBuilderProps) {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
 
@@ -373,18 +374,20 @@ export function RoofTakeoffBuilder({ initialInput }: RoofTakeoffBuilderProps) {
 
   return (
     <FreeToolsAuthProvider>
-      <main className="min-h-screen bg-white">
-        <BlogHeader />
-        <section className="relative overflow-hidden border-b border-slate-100">
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
-          <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-8 md:pt-12 pb-4 md:pb-6 text-center">
-            <h1 className="text-xl md:text-3xl font-semibold tracking-tight text-slate-900">Free Roof Takeoff Builder</h1>
-            <p className="mt-2 md:mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto px-2">
-              Input all your roof measurements in one place. Apply pitch, calculate lengths, and get a complete material takeoff for pricing. No signup required.
-            </p>
-          </div>
-        </section>
+      <main className={embed ? "min-h-screen bg-white" : "min-h-screen bg-white"}>
+        {!embed && <BlogHeader />}
+        {!embed && (
+          <section className="relative overflow-hidden border-b border-slate-100">
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
+            <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-8 md:pt-12 pb-4 md:pb-6 text-center">
+              <h1 className="text-xl md:text-3xl font-semibold tracking-tight text-slate-900">Free Roof Takeoff Builder</h1>
+              <p className="mt-2 md:mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto px-2">
+                Input all your roof measurements in one place. Apply pitch, calculate lengths, and get a complete material takeoff for pricing. No signup required.
+              </p>
+            </div>
+          </section>
+        )}
 
         <div className="mx-auto max-w-5xl px-2 md:px-6 py-6 md:py-10 pb-24 md:pb-10">
           {/* Step 1: Measurement Mode */}
@@ -673,7 +676,7 @@ export function RoofTakeoffBuilder({ initialInput }: RoofTakeoffBuilderProps) {
           </div>
         </section>
 
-        <SiteFooter />
+        {!embed && <SiteFooter />}
       </main>
     </FreeToolsAuthProvider>
   );

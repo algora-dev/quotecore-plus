@@ -69,7 +69,7 @@ export default function Page() {
         </div>
 
         {/* Calculator */}
-        <RoofTakeoffBuilder />
+        <RoofTakeoffBuilder embed />
 
         {/* Content sections below calculator */}
         <div className="border-t border-slate-200 bg-white px-4 py-8">
