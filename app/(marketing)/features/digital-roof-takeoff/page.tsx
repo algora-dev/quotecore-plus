@@ -132,7 +132,7 @@ export default function DigitalRoofTakeoffPage() {
               Upload a plan, draw what you see, and let the system handle the rest. Pitch, waste, and material quantities auto-calculate. Use AI Scan Assist or draw manually - both paths lead to a complete, priced takeoff.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
                 Start free trial
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
@@ -229,6 +229,82 @@ export default function DigitalRoofTakeoffPage() {
           </p>
         </section>
 
+        {/* Supported inputs and outputs */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Inputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Roof plan images (PNG, JPG, PDF)</li>
+                <li>- Drawings and sketches</li>
+                <li>- Site measurements (start from scratch)</li>
+                <li>- Component library items (any saved component)</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Outputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Roof area measurements (m2, sq ft, roofing squares)</li>
+                <li>- Linear measurements (ridges, hips, valleys, barges, eaves)</li>
+                <li>- Pitch and pitch type per section</li>
+                <li>- Material quantities with waste allowances</li>
+                <li>- Complete takeoff sent to quote builder</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Honest limitations */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No automatic 3D model generation</h3>
+              <p className="mt-2 text-sm text-zinc-600">The takeoff builder works from 2D plans and drawings. It does not create 3D roof models or import aerial imagery directly.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">AI Scan Assist covers core components only</h3>
+              <p className="mt-2 text-sm text-zinc-600">AI Scan Assist identifies roof areas, ridges, hips, valleys, and barges. It does not automatically detect flashings, gutters, or custom components - use manual drawing for those.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No direct supplier API integration</h3>
+              <p className="mt-2 text-sm text-zinc-600">Material prices come from your component library, not from live supplier feeds. You set and maintain the pricing. Supplier catalogs can be imported and converted to components.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Worked example */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Worked example: a 180 m2 gable roof</h2>
+          <div className="mt-6 rounded-xl border border-slate-200 p-6">
+            <p className="text-sm text-zinc-600">A contractor uploads a plan for a simple gable roof. Here is what happens at each step:</p>
+            <ol className="mt-4 space-y-3 text-sm text-zinc-600">
+              <li><strong>1. Upload:</strong> The plan image is loaded into the takeoff builder.</li>
+              <li><strong>2. Draw:</strong> The contractor traces the two roof planes. Pitch is auto-calculated at 30 degrees. The system records 90 m2 per plane (180 m2 total).</li>
+              <li><strong>3. Measure linear items:</strong> Ridge: 12 m. Eaves: 24 m. Barges: 2 x 8 m = 16 m.</li>
+              <li><strong>4. Attach components:</strong> A concrete tile component (priced at $12/m2 with 10% waste) is attached to both planes. A ridge component (priced at $8/m) is attached to the ridge line.</li>
+              <li><strong>5. Auto-calculate:</strong> Tile area: 180 m2 x 1.10 = 198 m2. Tile cost: 198 x $12 = $2,376. Ridge cost: 12 m x $8 = $96. Total materials: $2,472.</li>
+              <li><strong>6. Send to quote:</strong> All line items and quantities flow into the quote builder. Labour and additional costs are added there.</li>
+            </ol>
+          </div>
+        </section>
+
+        {/* Less suitable use */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">You need aerial or satellite measurement</h3>
+              <p className="mt-2 text-sm text-zinc-600">The takeoff builder works from plans you upload. It does not order aerial reports or pull satellite imagery. If you rely on aerial measurement services, you can still import those measurements manually.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">You only do flat commercial roofing</h3>
+              <p className="mt-2 text-sm text-zinc-600">The tool is optimised for pitched roofing with hips, valleys, and ridges. Flat roof work is supported but the AI Scan Assist value is reduced since flat roofs have fewer component types to detect.</p>
+            </div>
+          </div>
+        </section>
+
         {/* How it works */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
@@ -308,6 +384,18 @@ export default function DigitalRoofTakeoffPage() {
               <h3 className="font-semibold text-slate-900">Roofing calculator</h3>
               <p className="mt-1 text-sm text-zinc-600">Calculate roof areas, materials, and waste for any roof type.</p>
             </Link>
+            <Link href="/features/material-ordering" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Material ordering</h3>
+              <p className="mt-1 text-sm text-zinc-600">Turn an accepted quote into a material order in seconds.</p>
+            </Link>
+            <Link href="/features/invoicing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Invoicing</h3>
+              <p className="mt-1 text-sm text-zinc-600">Generate professional invoices from accepted quotes.</p>
+            </Link>
+            <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Pricing</h3>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+            </Link>
           </div>
         </section>
 
@@ -316,9 +404,12 @@ export default function DigitalRoofTakeoffPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try the takeoff builder free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Start free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
+            </p>
           </div>
         </section>
 
