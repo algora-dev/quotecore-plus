@@ -9,7 +9,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Smart Components: Reusable Quoting Components | QuoteCore+",
   description:
-    "Smart Components are reusable quoting components that know their own measurements, waste allowances, and pricing rules. Anything in your business can be a component. Build a roof quote in minutes, not hours.",
+    "Smart Components™ are reusable quoting components that know their own measurements, waste allowances, and pricing rules. Anything in your business can be a component. Build a roof quote in minutes, not hours.",
   alternates: {
     canonical: "https://quote-core.com/features/smart-components",
     languages: hreflangLanguages("/features/smart-components"),
@@ -43,7 +43,7 @@ const faqSchema = {
       name: "What are Smart Components in QuoteCore+?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Smart Components are reusable quoting components that store their own measurements, waste allowances, and pricing rules. Anything in your business - a product, a material, a service, a labour rate - can be a component. You create it once, then drop it into any quote. The component automatically calculates its own quantities and price.",
+        text: "Smart Components™ are reusable quoting components that store their own measurements, waste allowances, and pricing rules. Anything in your business - a product, a material, a service, a labour rate - can be a component. You create it once, then drop it into any quote. The component automatically calculates its own quantities and price.",
       },
     },
     {
@@ -51,7 +51,7 @@ const faqSchema = {
       name: "What measurement types do Smart Components support?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Smart Components support area-based measurements (square metres, square feet, roofing squares), linear measurements (metres, feet), volume, per-unit counts, and fixed-cost items. You choose the measurement type that fits the component, and it calculates accordingly.",
+        text: "Smart Components™ support area-based measurements (square metres, square feet, roofing squares), linear measurements (metres, feet), volume, per-unit counts, and fixed-cost items. You choose the measurement type that fits the component, and it calculates accordingly.",
       },
     },
     {
@@ -67,7 +67,7 @@ const faqSchema = {
       name: "Can I create my own Smart Components?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. You can create Smart Components for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component.",
+        text: "Yes. You can create Smart Components™ for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component.",
       },
     },
   ],
@@ -81,10 +81,10 @@ const steps = [
 ];
 
 const faqs = [
-  { q: "What are Smart Components in QuoteCore+?", a: "Smart Components are reusable quoting components that store their own measurements, waste allowances, and pricing rules. Anything in your business - a product, a material, a service, a labour rate - can be a component. You create it once, then drop it into any quote. The component automatically calculates its own quantities and price." },
-  { q: "What measurement types do Smart Components support?", a: "Smart Components support area-based measurements (square metres, square feet, roofing squares), linear measurements (metres, feet), volume, per-unit counts, and fixed-cost items. You choose the measurement type that fits the component, and it calculates accordingly." },
+  { q: "What are Smart Components™ in QuoteCore+?", a: "Smart Components™ are reusable quoting components that store their own measurements, waste allowances, and pricing rules. Anything in your business - a product, a material, a service, a labour rate - can be a component. You create it once, then drop it into any quote. The component automatically calculates its own quantities and price." },
+  { q: "What measurement types do Smart Components™ support?", a: "Smart Components™ support area-based measurements (square metres, square feet, roofing squares), linear measurements (metres, feet), volume, per-unit counts, and fixed-cost items. You choose the measurement type that fits the component, and it calculates accordingly." },
   { q: "Can I import components from my supplier's price list?", a: "Yes. You can import components from supplier catalogs and price lists. You can also search for supplier component libraries by area or product type and add them to your account. This gives you a baseline pricing source even if you don't have your own prices yet." },
-  { q: "Can I create my own Smart Components?", a: "Yes. You can create Smart Components for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component." },
+  { q: "Can I create my own Smart Components™?", a: "Yes. You can create Smart Components™ for any material, assembly, service, or workflow you use regularly. There is no limit to what can be a component - if it has a price and a measurement, it can be a Smart Component." },
 ];
 
 export default function SmartComponentsPage() {
@@ -101,7 +101,7 @@ export default function SmartComponentsPage() {
           <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Smart Components: build a roof quote in minutes.
+              Smart Components™: build a roof quote in minutes.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
               Reusable quoting components that know their own measurements, waste allowances, and pricing rules. Anything in your business - products, materials, services, labour - can be a component. Create once, use forever.
@@ -143,7 +143,7 @@ export default function SmartComponentsPage() {
               <div className="h-3 w-3 rounded-full bg-red-400/70" />
               <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
               <div className="h-3 w-3 rounded-full bg-green-400/70" />
-              <span className="ml-3 text-xs text-slate-500">QuoteCore+ - Smart Components Manager</span>
+              <span className="ml-3 text-xs text-slate-500">QuoteCore+ - Smart Components™ Manager</span>
             </div>
             <img
               src="/images/features/smart-components-admin.png"
@@ -180,9 +180,9 @@ export default function SmartComponentsPage() {
 
         {/* What they are */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
-          <h2 className="text-2xl font-semibold tracking-tight">What are Smart Components?</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">What are Smart Components™?</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Smart Components are the core building blocks of a QuoteCore+ quote. A Smart Component stores three things: what it is (a product, material, or service), how it is measured (area, linear length, volume, per unit, or fixed cost), and how it is priced. When you add a Smart Component to a roof section in a quote, it looks at the section&apos;s dimensions and calculates its own quantity and price automatically.
+            Smart Components™ are the core building blocks of a QuoteCore+ quote. A Smart Component stores three things: what it is (a product, material, or service), how it is measured (area, linear length, volume, per unit, or fixed cost), and how it is priced. When you add a Smart Component to a roof section in a quote, it looks at the section&apos;s dimensions and calculates its own quantity and price automatically.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
             There is no limit to what can be a component. A metal roofing sheet, a delivery fee, an hour of labour, a custom flashing - each one is a Smart Component that represents a piece of your business. Set it up once with its measurement type, pricing, and waste rules, and it calculates itself every time you quote.
@@ -196,7 +196,7 @@ export default function SmartComponentsPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Import from supplier catalogs</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Don&apos;t have your own pricing yet? Smart Components can be imported from supplier catalogs and component libraries. Search by your area or by product type, find a supplier&apos;s library, and add it to your account. You get baseline pricing to start quoting with immediately.
+            Don&apos;t have your own pricing yet? Smart Components™ can be imported from supplier catalogs and component libraries. Search by your area or by product type, find a supplier&apos;s library, and add it to your account. You get baseline pricing to start quoting with immediately.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
             Suppliers can publish their catalogs publicly, so contractors anywhere can find and use real pricing. This means you can quote jobs accurately even if you&apos;re new to a market or working with a new supplier. Adjust the imported prices to match your trade discount or markup, and you&apos;re ready to go.
@@ -228,7 +228,7 @@ export default function SmartComponentsPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Any contractor who quotes the same types of jobs repeatedly. If you find yourself looking up the same material prices, applying the same waste factors, and doing the same calculations for every quote, Smart Components eliminate that repetition.
+            Any contractor who quotes the same types of jobs repeatedly. If you find yourself looking up the same material prices, applying the same waste factors, and doing the same calculations for every quote, Smart Components™ eliminate that repetition.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
             Also for contractors who don&apos;t have established pricing yet. Import from a supplier catalog and start quoting with real prices from day one.
@@ -241,7 +241,7 @@ export default function SmartComponentsPage() {
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Repetitive calculations</h3>
-              <p className="mt-2 text-sm text-zinc-600">Every roofer knows the formula for their materials. Smart Components store that formula so you never have to calculate it by hand again.</p>
+              <p className="mt-2 text-sm text-zinc-600">Every roofer knows the formula for their materials. Smart Components™ store that formula so you never have to calculate it by hand again.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Inconsistent pricing</h3>
@@ -273,11 +273,11 @@ export default function SmartComponentsPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/digital-roof-takeoff" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Digital roof takeoff</h3>
-              <p className="mt-1 text-sm text-zinc-600">Upload plans and measure digitally. Smart Components drop into the takeoff.</p>
+              <p className="mt-1 text-sm text-zinc-600">Upload plans and measure digitally. Smart Components™ drop into the takeoff.</p>
             </Link>
             <Link href="/features/material-ordering" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Material ordering</h3>
-              <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into material orders. Smart Components know what to order.</p>
+              <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into material orders. Smart Components™ know what to order.</p>
             </Link>
             <Link href="/suppliers" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Supplier network</h3>
@@ -293,7 +293,7 @@ export default function SmartComponentsPage() {
         {/* CTA */}
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Start building Smart Components</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">Start building Smart Components™</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
               Start free trial

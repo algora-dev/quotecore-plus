@@ -67,7 +67,7 @@ const faqSchema = {
 
 const steps = [
   { num: 1, title: "Start from a quote or from scratch", text: "Generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. Three ways in, same professional result." },
-  { num: 2, title: "Line items flow automatically", text: "When starting from a quote, line items, descriptions, quantities, and pricing flow directly from the quote's Smart Components. No re-entry, no formatting." },
+  { num: 2, title: "Line items flow automatically", text: "When starting from a quote, line items, descriptions, quantities, and pricing flow directly from the quote's Smart Components™. No re-entry, no formatting." },
   { num: 3, title: "Payment instructions included", text: "Every invoice includes a payment instructions panel with amount due, payment reference, and due date. Customers copy details with one click." },
   { num: 4, title: "Send and track", text: "Send the invoice to your customer. They can mark payment as sent or dispute the invoice. You see the status of every invoice without chasing emails." },
 ];
@@ -226,7 +226,7 @@ export default function InvoicingPage() {
               <p className="mt-1 text-sm text-zinc-600">Measure the job. The takeoff flows into the quote, and the quote flows into the invoice.</p>
             </Link>
             <Link href="/features/smart-components" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <h3 className="font-semibold text-slate-900">Smart Components</h3>
+              <h3 className="font-semibold text-slate-900">Smart Components™</h3>
               <p className="mt-1 text-sm text-zinc-600">Components carry pricing through from takeoff to quote to invoice.</p>
             </Link>
             <Link href="/features/material-ordering" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
