@@ -232,6 +232,8 @@ function ProviderConfigForm({
         await onSave({ webhookUrl }, scopes, { webhookUrl });
       } else if (provider === 'jobnimbus') {
         await onSave({}, scopes, apiKey ? { apiKey } : undefined);
+      } else if (provider === 'fergus') {
+        await onSave({}, scopes, apiKey ? { apiKey } : undefined);
       } else {
         await onSave({}, scopes);
       }
@@ -280,9 +282,20 @@ function ProviderConfigForm({
       )}
 
       {provider === 'fergus' && (
-        <div className="rounded-lg bg-slate-50 px-3 py-3">
-          <p className="text-xs text-slate-500">
-            Fergus native connector coming soon. Use Zapier in the meantime to connect Fergus.
+        <div>
+          <label className="block text-xs font-medium text-slate-700 mb-1">
+            Fergus Personal Access Token (PAT)
+          </label>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Paste your Fergus PAT"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+          />
+          <p className="mt-1 text-xs text-slate-400">
+            In Fergus: Settings &gt; Personal Access Tokens &gt; Generate new token. Copy and paste it here.
+            {integration && <span className="block mt-1 text-green-600">PAT saved. Enter a new token only to replace it.</span>}
           </p>
         </div>
       )}

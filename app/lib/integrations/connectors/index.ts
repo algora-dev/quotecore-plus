@@ -8,6 +8,7 @@
 import type { Connector } from '../contracts/connector';
 import { getZapierConnector } from './zapier/connector';
 import { getJobNimbusConnector } from './jobnimbus/connector';
+import { getFergusConnector } from './fergus/connector';
 
 const connectorRegistry = new Map<string, () => Promise<Connector>>();
 
@@ -21,6 +22,9 @@ export function ensureConnectorsRegistered() {
   }
   if (!connectorRegistry.has('jobnimbus')) {
     registerConnector('jobnimbus', async () => getJobNimbusConnector());
+  }
+  if (!connectorRegistry.has('fergus')) {
+    registerConnector('fergus', async () => getFergusConnector());
   }
 }
 
