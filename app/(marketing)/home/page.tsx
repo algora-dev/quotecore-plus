@@ -50,12 +50,12 @@ const faqs = [
   {
     question: "What happens after the trial?",
     answer:
-      "You pick a plan that fits your business. Plans start from free and go up to $60 per month. Your Smart Components, quotes, and settings carry over seamlessly.",
+      "You pick a plan that fits your business. Plans start from free and go up to $59 per month. Your Smart Components, quotes, and settings carry over seamlessly.",
   },
   {
     question: "How much do plans cost?",
     answer:
-      "Plans range from free to $60 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
+      "Plans range from free to $59 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
   },
 ];
 
@@ -71,7 +71,7 @@ export default function HomePage() {
     {
       number: "01",
       title: "Measure",
-      body: "Upload a plan or use AI roof scanning to capture measurements. Digital takeoff tools handle angles, pitches, and complex roof geometry automatically.",
+      body: "Upload a plan and use AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges automatically. Digital takeoff tools handle angles, pitches, and complex roof geometry - no manual tracing required.",
       images: [
         { src: "/how-it-works/how-it-works-1-3.png", label: "Digital takeoff" },
       ],
@@ -104,7 +104,7 @@ export default function HomePage() {
     {
       number: "05",
       title: "Order",
-      body: "Turn an approved quote into a material order in one click. Edit quantities, add or remove items, and send it straight to your supplier.",
+      body: "Turn an approved quote into a material order in one click. Edit quantities, add or remove items, and send it straight to your supplier. You can also upload a supplier photo or PDF and AI converts it into line items automatically.",
       images: [
         { src: "/how-it-works-order-form.png", label: "Order form" },
         { src: "/how-it-works/how-it-works-4.png", label: "Material orders" },
@@ -121,7 +121,7 @@ export default function HomePage() {
     {
       number: "07",
       title: "Invoice",
-      body: "Create and send invoices from the same job data. No re-entering information - the quote, order, and invoice all stay connected.",
+      body: "Create and send invoices from the same job data. No re-entering information - the quote, order, and invoice all stay connected. Upload an existing invoice image and AI converts it into an editable QuoteCore+ invoice.",
       images: [
         { src: "/how-it-works/how-it-works-5-2.png", label: "Invoice view" },
       ],
@@ -222,13 +222,13 @@ export default function HomePage() {
                   Built for roofing. Powerful enough for every trade.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Turn measurements, materials, labour, pricing, and business rules into accurate professional quotes - then carry the same job data through approvals, orders, and invoices without entering anything twice.
+                  Turn measurements, materials, labour, pricing, and business rules into accurate professional quotes using Smart Components&#8482; - then carry the same job data through approvals, orders, and invoices without entering anything twice.
                 </p>
 
                 {/* Pricing reassurance line */}
                 <p className="mt-4 text-sm font-medium text-zinc-700">
-                  <a href="/pricing" className="text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]">
-                    Plans from free to $60/month
+                  <a href="/pricing" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">
+                    Plans from free to $59/month
                   </a>
                   {" "}- full-featured 14-day trial, no card required.
                 </p>
@@ -262,18 +262,12 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Scroll indicator */}
-            <div className="mt-16 flex flex-col items-center gap-1.5 font-sans text-zinc-500 pb-16">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em]">Scroll</p>
-              <svg className="h-5 w-5 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 5v14M5 12l7 7 7-7" />
-              </svg>
-            </div>
+
           </div>
         </section>
 
         {/* 2. Core Workflow */}
-        <section id="how-it-works" className="mx-auto w-full max-w-7xl px-6 py-14 lg:px-8 lg:py-24">
+        <section id="how-it-works" className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-8 lg:py-16">
           <div className="text-center mb-12">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
               One connected workflow
@@ -282,7 +276,7 @@ export default function HomePage() {
               From measurement to invoice, without the admin grind
             </h2>
             <p className="mt-4 mx-auto max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg">
-              Enter job information once and reuse it throughout the workflow. The same data carries from measurement through to quoting, approvals, ordering, and invoicing - reducing duplicated admin and inconsistent pricing.
+              Digital takeoff captures measurements from your plans. Smart Components&#8482; apply your pricing and business rules. The same job data carries through to quoting, approvals, ordering, and invoicing - reducing duplicated admin and inconsistent pricing.
             </p>
           </div>
 
@@ -457,9 +451,10 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { src: "/how-it-works-smart-components-list.png", label: "Smart Components library", desc: "All your pricing, labour, and rules in one place." },
+              { src: "/how-it-works-smart-components-list.png", label: "Smart Components library", desc: "Pricing, labour, and rules - reusable on every quote." },
+              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a plan, AI identifies roof areas and edges." },
               { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Drag, drop, and customise quotes in minutes." },
               { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry." },
             ].map((item) => (
@@ -484,12 +479,18 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <a
               href="/features"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40"
             >
               Explore all features
+            </a>
+            <a
+              href="/free-tools"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40"
+            >
+              Try our free tools
             </a>
           </div>
         </section>
@@ -586,7 +587,7 @@ export default function HomePage() {
                 </a>
               </div>
               <p className="mt-5 text-sm text-zinc-600">
-                Plans from free to $60/month. No card required. 14 days full access.
+                Plans from free to $59/month. No card required. 14 days full access.
               </p>
             </div>
           </div>
@@ -616,7 +617,7 @@ export default function HomePage() {
         <section className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
           <p className="text-center text-sm text-zinc-500">
             Are you a roofing supplier?{" "}
-            <a href="/suppliers" className="font-medium text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]">
+            <a href="/suppliers" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">
               We want to partner with you.
             </a>
           </p>
