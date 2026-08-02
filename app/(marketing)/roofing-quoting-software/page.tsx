@@ -373,6 +373,21 @@ export default function RoofingQuotingSoftwarePage() {
           </div>
         </section>
 
+        {/* Less suitable use */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">When QuoteCore+ may not be the right fit</h2>
+          <div className="mt-8 space-y-4">
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">You only need basic quote templates</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">If you create a few quotes a month from a simple Excel template and that works for you, QuoteCore+ may be more than you need. It adds the most value when you quote frequently and want a connected workflow from measurement to invoice.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">You need full project management</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">QuoteCore+ handles quoting, material ordering, and invoicing, not construction project management. If you need scheduling, Gantt charts, or resource allocation, use dedicated project management software.</p>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">

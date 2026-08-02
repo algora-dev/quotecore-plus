@@ -324,6 +324,31 @@ export default function SupplierResourcesPage() {
           </div>
         </section>
 
+        {/* Worked example */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Worked example: importing a supplier catalog</h2>
+          <div className="mt-6 rounded-xl border border-slate-200 p-6">
+            <p className="text-sm text-zinc-600">A roofing supplier publishes their 2026 catalog as a CSV with 240 products:</p>
+            <ol className="mt-4 space-y-3 text-sm text-zinc-600">
+              <li><strong>1. Upload CSV:</strong> The supplier uploads their catalog file (product code, name, price columns).</li>
+              <li><strong>2. Convert to components:</strong> The catalog-to-component converter creates Smart Components from each row, ready for contractors to import.</li>
+              <li><strong>3. Contractor imports:</strong> A contractor searching for suppliers in their area finds the catalog and imports the components they need.</li>
+              <li><strong>4. Quote with real prices:</strong> The contractor's quotes now use the supplier's actual product codes and prices.</li>
+            </ol>
+          </div>
+        </section>
+
+        {/* Less suitable use */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">You manufacture custom materials</h3>
+              <p className="mt-2 text-sm text-zinc-600">Supplier resources works best for standard catalog products with fixed SKUs and prices. If every job requires custom fabrication with varying specifications, a static catalog will not capture your offerings accurately.</p>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
