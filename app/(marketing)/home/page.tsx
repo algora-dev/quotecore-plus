@@ -71,7 +71,7 @@ export default function HomePage() {
     {
       number: "01",
       title: "Measure",
-      body: "Upload a plan or use AI roof scanning to capture measurements. Digital takeoff tools handle angles, pitches, and complex roof geometry automatically.",
+      body: "Upload a plan and use AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges automatically. Digital takeoff tools handle angles, pitches, and complex roof geometry - no manual tracing required.",
       images: [
         { src: "/how-it-works/how-it-works-1-3.png", label: "Digital takeoff" },
       ],
@@ -104,7 +104,7 @@ export default function HomePage() {
     {
       number: "05",
       title: "Order",
-      body: "Turn an approved quote into a material order in one click. Edit quantities, add or remove items, and send it straight to your supplier.",
+      body: "Turn an approved quote into a material order in one click. Edit quantities, add or remove items, and send it straight to your supplier. You can also upload a supplier photo or PDF and AI converts it into line items automatically.",
       images: [
         { src: "/how-it-works-order-form.png", label: "Order form" },
         { src: "/how-it-works/how-it-works-4.png", label: "Material orders" },
@@ -121,7 +121,7 @@ export default function HomePage() {
     {
       number: "07",
       title: "Invoice",
-      body: "Create and send invoices from the same job data. No re-entering information - the quote, order, and invoice all stay connected.",
+      body: "Create and send invoices from the same job data. No re-entering information - the quote, order, and invoice all stay connected. Upload an existing invoice image and AI converts it into an editable QuoteCore+ invoice.",
       images: [
         { src: "/how-it-works/how-it-works-5-2.png", label: "Invoice view" },
       ],
@@ -276,7 +276,7 @@ export default function HomePage() {
               From measurement to invoice, without the admin grind
             </h2>
             <p className="mt-4 mx-auto max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg">
-              Enter job information once and reuse it throughout the workflow. The same data carries from measurement through to quoting, approvals, ordering, and invoicing - reducing duplicated admin and inconsistent pricing.
+              Digital takeoff captures measurements from your plans. Smart Components&#8482; apply your pricing and business rules. The same job data carries through to quoting, approvals, ordering, and invoicing - reducing duplicated admin and inconsistent pricing.
             </p>
           </div>
 
@@ -451,9 +451,10 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { src: "/how-it-works-smart-components-list.png", label: "Smart Components library", desc: "All your pricing, labour, and rules in one place." },
+              { src: "/how-it-works-smart-components-list.png", label: "Smart Components library", desc: "Pricing, labour, and rules - reusable on every quote." },
+              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a plan, AI identifies roof areas and edges." },
               { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Drag, drop, and customise quotes in minutes." },
               { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry." },
             ].map((item) => (
@@ -478,12 +479,18 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <a
               href="/features"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40"
             >
               Explore all features
+            </a>
+            <a
+              href="/free-tools"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40"
+            >
+              Try our free tools
             </a>
           </div>
         </section>
