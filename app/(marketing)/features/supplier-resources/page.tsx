@@ -322,6 +322,7 @@ export default function SupplierResourcesPage() {
               <p className="mt-2 text-sm text-zinc-600">Supplier resources are only available for suppliers who have published their catalogs or component libraries on QuoteCore+. Coverage grows as more suppliers join.</p>
             </div>
           </div>
+          <p className="mt-4 text-xs text-slate-500">Pricing in supplier catalogues is indicative, sourced from publicly available supplier data at import time. Prices do not auto-update - re-import when a supplier publishes new pricing.</p>
         </section>
 
         {/* Worked example */}

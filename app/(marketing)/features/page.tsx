@@ -142,6 +142,33 @@ export default function FeaturesHubPage() {
         </section>
 
         {/* Comparisons */}
+        {/* Feature table */}
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+          <h2 className="text-center text-2xl font-semibold tracking-tight">What each feature does</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Five connected tools that take you from plan to payment.</p>
+          <div className="mt-8 overflow-hidden rounded-xl border border-slate-200">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-5 py-3 font-semibold">Feature</th>
+                  <th className="px-5 py-3 font-semibold">What it does</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Digital Roof Takeoff</td><td className="px-5 py-3 text-slate-600">Upload plans, measure roof geometry, and calculate areas automatically</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Smart Components™</td><td className="px-5 py-3 text-slate-600">Store reusable pricing and quantity rules so every quote is consistent</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Material Ordering</td><td className="px-5 py-3 text-slate-600">Turn quote line items into supplier-ready orders in one click</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Invoicing</td><td className="px-5 py-3 text-slate-600">Convert accepted quotes into invoices with payment instructions</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Supplier Resources</td><td className="px-5 py-3 text-slate-600">Import supplier catalogues and build component libraries from CSV</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-6 py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35] mb-2">Who it&apos;s for</p>
+            <p className="text-base text-slate-700">Roofers and roofing estimators come first. QuoteCore+ was built around the pitches, angles and measurements roofing demands. Construction, cladding, fencing, flooring and landscaping trades use it too - Smart Components™ adapt to any trade that measures and quotes.</p>
+          </div>
+        </section>
+
         <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-center text-2xl font-semibold tracking-tight">Why contractors switch from other tools</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Spreadsheets and standalone apps each solve part of the problem. QuoteCore+ connects the whole workflow.</p>
