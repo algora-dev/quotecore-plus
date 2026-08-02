@@ -14,7 +14,7 @@ export function buildPricingOffers(currency: "USD" | "GBP" = "USD") {
 
   return {
     "@type": "AggregateOffer",
-    url: `${siteUrl}/#pricing`,
+    url: `${siteUrl}/pricing`,
     priceCurrency: currency,
     lowPrice: String(Math.min(...prices)),
     highPrice: String(Math.max(...prices)),
@@ -24,7 +24,7 @@ export function buildPricingOffers(currency: "USD" | "GBP" = "USD") {
       name: plan.displayName,
       price: String(plan[priceKey]),
       priceCurrency: currency,
-      url: `${siteUrl}/#pricing`,
+      url: `${siteUrl}/pricing`,
       availability: "https://schema.org/InStock",
       category: plan.isFree ? "Free trial or free plan" : "Subscription",
       description: `${plan.subtitle}. ${plan.features.join(", ")}.`,

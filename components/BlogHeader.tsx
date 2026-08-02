@@ -19,7 +19,7 @@ function buildNavItems(app: string) {
     { label: "Supplier Resources", href: "/features/supplier-resources" },
     { label: "Roofing Software", href: "/roofing-quoting-software" },
     { label: "Construction Software", href: "/construction-quoting-software" },
-    { label: "Pricing", href: "/#pricing" },
+    { label: "Pricing", href: "/pricing" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
     { label: "Company", href: "/company" },

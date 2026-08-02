@@ -1162,10 +1162,7 @@ export default function HomePage() {
                 </div>
 
                 <p className="mt-8 text-center text-sm text-zinc-600">
-                  VAT calculated at checkout where applicable.
-                </p>
-                <p className="mt-3 text-center text-sm text-zinc-200">
-                  USD and GBP pricing available. UK visitors are shown GBP automatically.
+                  Taxes calculated at checkout where applicable. USD and GBP pricing available.
                 </p>
                 <p className="mt-3 text-center text-sm text-zinc-200">
                   Not sure which plan fits?{" "}

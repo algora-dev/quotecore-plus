@@ -25,6 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/blog`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${SITE_URL}/roofing-quoting-software`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/construction-quoting-software`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/services`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/about`, changeFrequency: 'yearly', priority: 0.5 },
     { url: `${SITE_URL}/company`, changeFrequency: 'monthly', priority: 0.6 },

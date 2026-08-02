@@ -31,6 +31,7 @@ export default function SiteFooter() {
             <div className="mt-4 flex flex-col gap-3">
               <Link href="/roofing-quoting-software" className={linkClass}>Roofing software</Link>
               <Link href="/construction-quoting-software" className={linkClass}>Construction software</Link>
+              <Link href="/pricing" className={linkClass}>Pricing</Link>
               <Link href="/free-tools" className={linkClass}>Free tools</Link>
               <Link href="/free-calculators" className={linkClass}>Free calculators</Link>
               <Link href="/blog" className={linkClass}>Resources and blog</Link>

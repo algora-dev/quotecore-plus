@@ -65,7 +65,7 @@ export default function Post() {
       <p>Once the quote is sent, acceptance tracking runs automatically. You get a notification when a customer views or accepts the quote. No more chasing phone calls asking whether they received it.</p>
       <p>From an accepted quote, you generate a materials order directly - including custom details for specific job requirements. The job then moves into workflow management: tracked from first measurement to job completion in one place.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ has monthly plans with a 14-day free trial and no credit card required. Pricing is in GBP or USD depending on location - NZD billing is not currently available, but the platform is fully accessible to NZ users. <a href="https://quote-core.com/#pricing">See current pricing</a>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ has NZD monthly plans for New Zealand businesses, with a 14-day free trial and no credit card required. <a href="https://www.quote-core.co.nz/pricing">See New Zealand pricing</a>.</p>
 
       <p><strong>Pros:</strong></p>
       <ul>
