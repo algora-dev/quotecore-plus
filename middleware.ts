@@ -70,6 +70,7 @@ const PUBLIC_PATHS = [
   '/suppliers',
   '/blog',
   '/coffee-terms',
+  '/features',     // Feature pages (marketing)
   '/free-trial',
   '/construction-quoting-software',
   '/roofing-quoting-software',
