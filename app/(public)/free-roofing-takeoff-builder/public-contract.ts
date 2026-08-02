@@ -25,6 +25,7 @@ export interface PublicRoofTakeoffInput {
   fixings?: number;
   wastePercent?: Partial<Record<string, number>>;
   supplier?: string;
+  country?: string; // ISO 2-letter country code for auto-supplier resolution
 }
 
 export interface PublicValidationError {
@@ -307,6 +308,8 @@ export function parseQueryInput(params: URLSearchParams): PublicRoofTakeoffInput
   }
   const supplier = params.get('supplier');
   if (supplier) input.supplier = supplier;
+  const country = params.get('country');
+  if (country) input.country = country.toUpperCase();
   return input;
 }
 
@@ -326,5 +329,6 @@ export function toResultQuery(input: PublicRoofTakeoffInput): string {
   if (input.underlay != null) params.set('underlay', String(input.underlay));
   if (input.fixings != null) params.set('fixings', String(input.fixings));
   if (input.supplier) params.set('supplier', input.supplier);
+  if (input.country) params.set('country', input.country);
   return params.toString();
 }

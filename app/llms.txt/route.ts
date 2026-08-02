@@ -15,7 +15,7 @@ Calculate (POST): https://quote-core.com/api/public/roof-takeoff/calculate
 OpenAPI: https://quote-core.com/api/public/roof-takeoff/openapi
 MCP: https://quote-core.com/mcp
 
-The Roof Takeoff Builder calculates roof area, hips, ridges, valleys, barges, spouting/gutters, underlay, fixings and custom measurements using actual final measurements or plan measurements adjusted for pitch. Metric, imperial and roofing-square units are supported.
+The Roof Takeoff Builder calculates roof area, hips, ridges, valleys, barges, spouting/gutters, underlay, fixings and custom measurements using actual final measurements or plan measurements adjusted for pitch. Metric, imperial and roofing-square units are supported. Pricing is auto-loaded from the best available supplier when no supplier is specified.
 
 ### GET calculation (server-rendered, no auth required)
 
