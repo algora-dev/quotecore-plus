@@ -67,6 +67,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/free-invoice-generator`, changeFrequency: 'monthly', priority: 0.9 },
     // Roof takeoff builder (standalone tool, not part of slug system)
     { url: `${SITE_URL}/free-roofing-takeoff-builder`, changeFrequency: 'monthly', priority: 0.9 },
+    // Roof pricing calculator (component-based pricing page)
+    { url: `${SITE_URL}/free-roof-pricing-calculator`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/docs/roof-takeoff-api`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/docs/roof-takeoff-calculate`, changeFrequency: 'monthly', priority: 0.6 },
   ];
