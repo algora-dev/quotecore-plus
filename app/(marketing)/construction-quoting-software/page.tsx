@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
@@ -191,6 +192,29 @@ const smartComponentItems = [
   "Pricing rules",
 ];
 
+const videoSchemas = [
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: "Create a Quote from Start to Finish with QuoteCore+",
+    description: "Full walkthrough showing how to create a quote from start to finish using QuoteCore+.",
+    thumbnailUrl: "https://i.ytimg.com/vi/pqIfx-rOcmo/maxresdefault.jpg",
+    uploadDate: "2026-07-28",
+    embedUrl: "https://www.youtube-nocookie.com/embed/pqIfx-rOcmo",
+    contentUrl: "https://www.youtube.com/watch?v=pqIfx-rOcmo",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: "How to Set Up Roofing Smart Components in QuoteCore+",
+    description: "Step-by-step tutorial showing how to set up roofing Smart Components in QuoteCore+.",
+    thumbnailUrl: "https://i.ytimg.com/vi/XZSTIfGUHAU/maxresdefault.jpg",
+    uploadDate: "2026-07-28",
+    embedUrl: "https://www.youtube-nocookie.com/embed/XZSTIfGUHAU",
+    contentUrl: "https://www.youtube.com/watch?v=XZSTIfGUHAU",
+  },
+];
+
 export default function ConstructionQuotingSoftwarePage() {
   return (
     <>
@@ -206,9 +230,13 @@ export default function ConstructionQuotingSoftwarePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
+      {videoSchemas.map((v) => (
+        <script key={v.contentUrl} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(v) }} />
+      ))}
 
       <main className="min-h-screen bg-white text-zinc-950">
-        <BlogHeader />
+       <BlogHeader />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Construction Quoting Software" }]} />
 
         {/* Hero */}
         <section className="relative overflow-hidden pb-16 pt-12">
@@ -239,7 +267,7 @@ export default function ConstructionQuotingSoftwarePage() {
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
                 href="/free-trial"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
                 Start free 14-day trial
               </a>
@@ -508,6 +536,71 @@ export default function ConstructionQuotingSoftwarePage() {
           </div>
         </section>
 
+        {/* Honest limitations */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">What QuoteCore+ does not do</h2>
+          <div className="mt-8 space-y-4">
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">No project management or scheduling</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">QuoteCore+ handles quoting, material ordering, and invoicing. It does not manage construction schedules, Gantt charts, or resource allocation.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">No accounting or tax returns</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">Invoices are created and tracked, but QuoteCore+ does not handle VAT/GST returns, profit and loss, or balance sheets.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">No payment processing</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">Invoices include payment instructions, but QuoteCore+ does not process card or bank payments directly.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Less suitable use */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">When QuoteCore+ may not be the right fit</h2>
+          <div className="mt-8 space-y-4">
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">You only need basic quote templates</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">If you create a few quotes a month from a simple template and that works, QuoteCore+ may be more than you need. It adds the most value when you quote frequently across multiple trades and want a connected workflow.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">You need full project management</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">QuoteCore+ handles quoting through invoicing, not construction project management. If you need scheduling, Gantt charts, or resource allocation, use dedicated PM software.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Related */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">All features</p>
+              <p className="mt-1 text-sm text-zinc-600">The full QuoteCore+ workflow from takeoff to invoice.</p>
+            </a>
+            <a href="/features/material-ordering" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Material ordering</p>
+              <p className="mt-1 text-sm text-zinc-600">Generate material orders from accepted quotes.</p>
+            </a>
+            <a href="/features/invoicing" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Invoicing</p>
+              <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into professional invoices.</p>
+            </a>
+            <a href="/free-construction-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free construction calculator</p>
+              <p className="mt-1 text-sm text-zinc-600">Areas, timber lengths, and building materials.</p>
+            </a>
+            <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free quote generator</p>
+              <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
+            </a>
+            <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Trust and security</p>
+              <p className="mt-1 text-sm text-zinc-600">How we protect your data and respect your business.</p>
+            </a>
+          </div>
+        </section>
+
         {/* Final CTA */}
         <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-5xl">
@@ -520,12 +613,12 @@ export default function ConstructionQuotingSoftwarePage() {
 
           <a
             href="/free-trial"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
+            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
             Start your free 14-day trial
           </a>
 
-          <p className="mt-4 text-sm text-zinc-400">No card required. 14 days free.</p>
+          <p className="mt-4 text-sm text-zinc-400">No card required. 14 days free. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />

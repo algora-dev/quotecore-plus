@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 const SITE_URL = 'https://quote-core.com';
 
@@ -6,7 +7,10 @@ export const metadata = {
   title: 'Free Roof Takeoff Builder - Calculate Roof Materials | QuoteCore+',
   description:
     'Free roofing takeoff tool. Input roof areas, hips, valleys, ridges, barges and spouting with pitch calculations. Get total lengths and areas for your entire roof.',
-  alternates: { canonical: `${SITE_URL}/free-roofing-takeoff-builder` },
+  alternates: {
+    canonical: `${SITE_URL}/free-roofing-takeoff-builder`,
+    languages: hreflangLanguages('/free-roofing-takeoff-builder'),
+  },
   openGraph: {
     title: 'Free Roof Takeoff Builder - Calculate Roof Materials',
     description:

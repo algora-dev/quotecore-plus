@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import React from "react";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
@@ -80,7 +82,8 @@ export default function FeaturesHubPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <main className="min-h-screen bg-white text-zinc-950">
-        <BlogHeader />
+       <BlogHeader />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Features" }]} />
 
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
@@ -93,6 +96,29 @@ export default function FeaturesHubPage() {
             <p className="mt-4 text-lg text-zinc-600">
               From the first measurement to the final invoice, QuoteCore+ keeps every step of the quoting process in one place. Explore the features that make it work.
             </p>
+          </div>
+        </section>
+
+        {/* Workflow overview */}
+        <section className="mx-auto max-w-5xl px-6 pb-12 lg:px-8">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-8 sm:p-10">
+            <h2 className="text-center text-2xl font-semibold tracking-tight">From measurement to invoice in one workflow</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Each feature connects to the next. No re-entering data, no switching between tools.</p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-sm font-medium sm:gap-3">
+              {[
+                { label: "Measure", href: "/features/digital-roof-takeoff" },
+                { label: "Calculate", href: "/features/smart-components" },
+                { label: "Quote", href: "/roofing-quoting-software" },
+                { label: "Approve", href: "/free-trial" },
+                { label: "Order", href: "/features/material-ordering" },
+                { label: "Invoice", href: "/features/invoicing" },
+              ].map((step, i, arr) => (
+                <React.Fragment key={step.label}>
+                  <Link href={step.href} className="rounded-full border border-slate-300 bg-white px-4 py-2 text-zinc-900 transition-colors hover:border-orange-200 hover:bg-orange-50/40">{step.label}</Link>
+                  {i < arr.length - 1 && <span className="text-zinc-400" aria-hidden="true">&rarr;</span>}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -115,6 +141,26 @@ export default function FeaturesHubPage() {
           </div>
         </section>
 
+        {/* Comparisons */}
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+          <h2 className="text-center text-2xl font-semibold tracking-tight">Why contractors switch from other tools</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Spreadsheets and standalone apps each solve part of the problem. QuoteCore+ connects the whole workflow.</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="font-semibold text-slate-900">vs. Spreadsheets</h3>
+              <p className="mt-2 text-sm text-slate-500">No more formula errors or version conflicts. Components store their own pricing and waste rules, and the quote total updates automatically.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="font-semibold text-slate-900">vs. Standalone Takeoff</h3>
+              <p className="mt-2 text-sm text-slate-500">Measurements flow straight into the quote. No exporting PDFs or re-entering numbers into a separate quoting tool.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="font-semibold text-slate-900">vs. Generic Invoice Apps</h3>
+              <p className="mt-2 text-sm text-slate-500">Invoices pull line items directly from the accepted quote. No copy-pasting between systems or double-handling quantities.</p>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
@@ -122,10 +168,13 @@ export default function FeaturesHubPage() {
             <p className="mt-2 text-zinc-600">No credit card required. Full access to every feature.</p>
             <a
               href="/free-trial"
-              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
               Start free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
+            </p>
           </div>
         </section>
 

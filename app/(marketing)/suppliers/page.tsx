@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { buildPageMetadata } from "@/app/lib/seo";
-import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "Partner with QuoteCore+ | Roofing Supplier Network",
@@ -10,7 +8,6 @@ export const metadata: Metadata = {
     "Get your roofing materials in front of contractors who quote, order, and buy every day. Join the QuoteCore+ supplier network to reach active buyers, upload your catalogue, and grow your business.",
   alternates: {
     canonical: "https://quote-core.com/suppliers",
-    languages: hreflangLanguages("/suppliers"),
   },
   openGraph: {
     title: "Partner with QuoteCore+ | Roofing Supplier Network",
@@ -316,6 +313,52 @@ export default function SuppliersPage() {
           </div>
         </section>
 
+        {/* Honest limitations */}
+        <section className="py-16 lg:py-20">
+          <div className="mx-auto max-w-3xl px-6 lg:px-8">
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">What supplier resources does not do</h2>
+            <div className="mt-8 space-y-4">
+              <div className="rounded-xl border border-slate-200 p-6">
+                <h3 className="font-semibold text-slate-900">No live price syncing</h3>
+                <p className="mt-2 text-sm text-zinc-600">Supplier catalogs are snapshots at upload time. Prices do not auto-update. Suppliers can re-upload when pricing changes.</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 p-6">
+                <h3 className="font-semibold text-slate-900">No direct e-commerce ordering</h3>
+                <p className="mt-2 text-sm text-zinc-600">Contractors import supplier pricing into their quotes and generate material orders as documents. QuoteCore+ does not place live orders into supplier e-commerce systems.</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 p-6">
+                <h3 className="font-semibold text-slate-900">No exclusive placement</h3>
+                <p className="mt-2 text-sm text-zinc-600">Multiple suppliers in the same area can publish catalogs. Contractors choose based on pricing and availability, not paid placement.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Related */}
+        <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
+          <div className="mx-auto max-w-3xl px-6 lg:px-8">
+            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Related</h2>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <a href="/features/supplier-resources" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+                <h3 className="font-semibold text-slate-900">Supplier resources feature</h3>
+                <p className="mt-1 text-sm text-zinc-600">How contractors import and use supplier catalogs in QuoteCore+.</p>
+              </a>
+              <a href="/features/material-ordering" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+                <h3 className="font-semibold text-slate-900">Material ordering</h3>
+                <p className="mt-1 text-sm text-zinc-600">How contractors generate material orders from accepted quotes.</p>
+              </a>
+              <a href="/features/smart-components" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+                <h3 className="font-semibold text-slate-900">Smart Components</h3>
+                <p className="mt-1 text-sm text-zinc-600">The component system that stores product codes and pricing from suppliers.</p>
+              </a>
+              <a href="/pricing" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+                <h3 className="font-semibold text-slate-900">Pricing</h3>
+                <p className="mt-1 text-sm text-zinc-600">Plans for contractors who use supplier catalogs.</p>
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="bg-zinc-950 py-16 lg:py-20">
           <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
@@ -328,7 +371,7 @@ export default function SuppliersPage() {
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
                 href="/contact"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
                 Get in touch
               </a>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_LINKEDIN } from "@/app/lib/seo";
@@ -62,7 +63,8 @@ export default function AboutPage() {
       <Script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
       <Script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <main className="min-h-screen bg-white text-zinc-950">
-        <BlogHeader />
+       <BlogHeader />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "About" }]} />
 
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
@@ -162,10 +164,13 @@ export default function AboutPage() {
             <p className="mt-2 text-zinc-500">Two weeks free. No card required. Start quoting in minutes.</p>
             <a
               href="/free-trial"
-              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
+              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
               Start your free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a> · <a href="/contact" className="underline hover:text-zinc-900">Contact us</a>
+            </p>
           </div>
         </section>
 

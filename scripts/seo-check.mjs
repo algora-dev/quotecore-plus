@@ -569,6 +569,86 @@ function checkOrphanToolPages() {
   }
 }
 
+// -- Check 17: Dual-domain regional contracts --------------------------------
+function checkDualDomainContracts() {
+  const globalHelper = join(ROOT, 'lib', 'seo', 'hreflang.ts');
+  if (existsSync(globalHelper)) {
+    const helper = readFileSync(globalHelper, 'utf-8');
+    if (!helper.includes('en:')) errors.push('Global hreflang helper must expose generic en');
+    if (helper.includes('"en-US"') || helper.includes('"en-GB"')) {
+      errors.push('Global hreflang helper must not map one URL as separate en-US and en-GB pages');
+    }
+  }
+
+  const nzCandidates = [
+    join(ROOT, '..', 'quotecore-nz-development'),
+    join(ROOT, '..', 'quotecore-nz'),
+  ];
+  const nzRoot = nzCandidates.find((candidate) => existsSync(join(candidate, 'app')));
+  if (!nzRoot) {
+    warnings.push('NZ sibling repo not found; skipped reciprocal dual-domain source checks');
+    return;
+  }
+
+  const nzHelper = join(nzRoot, 'lib', 'seo', 'hreflang.ts');
+  if (!existsSync(nzHelper)) {
+    errors.push('NZ site missing lib/seo/hreflang.ts');
+  } else {
+    const helper = readFileSync(nzHelper, 'utf-8');
+    if (!helper.includes('en:')) errors.push('NZ hreflang helper must expose generic en');
+    if (helper.includes('"en-US"') || helper.includes('"en-GB"')) {
+      errors.push('NZ hreflang helper must not expose duplicate en-US/en-GB alternates');
+    }
+  }
+
+  walkDir(join(nzRoot, 'app'), '.tsx', (file) => {
+    if (!file.endsWith('page.tsx') && !file.endsWith('layout.tsx')) return;
+    const content = readFileSync(file, 'utf-8');
+    if (/canonical:\s*["']https:\/\/quote-core\.com/.test(content)) {
+      errors.push(`NZ page canonicalises to global domain: ${file}`);
+    }
+    if (/priceCurrency:\s*["']USD["']/.test(content)) {
+      errors.push(`NZ public schema uses USD instead of NZD: ${file}`);
+    }
+  });
+
+  const reciprocal = [
+    'features',
+    'features/digital-roof-takeoff',
+    'features/smart-components',
+    'features/material-ordering',
+    'features/invoicing',
+    'features/supplier-resources',
+    'roofing-quoting-software',
+    'construction-quoting-software',
+    'about',
+    'contact',
+    'services',
+    'free-trial',
+  ];
+  for (const route of reciprocal) {
+    const globalCandidates = [
+      join(APP_DIR, '(marketing)', route, 'page.tsx'),
+      join(APP_DIR, '(marketing)', route, 'layout.tsx'),
+      join(APP_DIR, route, 'page.tsx'),
+      join(APP_DIR, route, 'layout.tsx'),
+    ];
+    const nzCandidatesForRoute = [
+      join(nzRoot, 'app', route, 'page.tsx'),
+      join(nzRoot, 'app', route, 'layout.tsx'),
+    ];
+    const globalFiles = globalCandidates.filter(existsSync);
+    const nzFiles = nzCandidatesForRoute.filter(existsSync);
+    if (!globalFiles.length || !nzFiles.length) continue;
+    if (!globalFiles.some((file) => readFileSync(file, 'utf-8').includes('hreflangLanguages'))) {
+      errors.push(`Global reciprocal route missing hreflang: /${route}`);
+    }
+    if (!nzFiles.some((file) => readFileSync(file, 'utf-8').includes('hreflangLanguages'))) {
+      errors.push(`NZ reciprocal route missing hreflang: /${route}`);
+    }
+  }
+}
+
 // ── Run all checks ─────────────────────────────────────────────────────────
 console.log('Running SEO checks...\n');
 checkMarketingCanonicals();
@@ -587,6 +667,7 @@ checkDuplicateTitleSuffixes();
 checkClientOnlyJsonLd();
 checkMissingH1();
 checkOrphanToolPages();
+checkDualDomainContracts();
 
 // Report
 if (warnings.length > 0) {

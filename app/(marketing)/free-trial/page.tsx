@@ -3,6 +3,7 @@ import Script from "next/script";
 import FreeTrialClient from "./client";
 import FreeTrialFaqPanel from "./FreeTrialFaqPanel";
 import SiteFooter from "@/components/SiteFooter";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import BlogHeader from "@/components/BlogHeader";
 import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
@@ -131,7 +132,8 @@ export default function FreeTrialPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
       />
       <main className="min-h-screen bg-white text-zinc-950">
-        <BlogHeader backLabel="Back to homepage" backHref="/" />
+       <BlogHeader backLabel="Back to homepage" backHref="/" />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Free Trial" }]} />
 
         <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fff_0%,#fff7f2_52%,#fff_100%)]">
           <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1fr_0.68fr] lg:px-8 lg:py-16 xl:grid-cols-[0.98fr_0.58fr_0.95fr] xl:gap-8">

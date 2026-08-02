@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { hreflangLanguages } from "@/lib/seo/hreflang";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_NAME, ORG_LEGAL_NAME, ORG_EMAIL, ORG_LINKEDIN } from "@/app/lib/seo";
 
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
     "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by an ex-roofer with 12 years of trade experience. Learn about the company, product, and mission.",
   alternates: {
     canonical: "https://quote-core.com/company",
-    languages: hreflangLanguages("/company"),
   },
   openGraph: {
     title: "Company | QuoteCore+",
@@ -86,6 +85,7 @@ export default function CompanyPage() {
       />
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Company" }]} />
 
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
@@ -150,6 +150,52 @@ export default function CompanyPage() {
           </p>
         </section>
 
+        {/* Regions */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Regions served</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">United Kingdom</h3>
+              <p className="mt-2 text-sm text-zinc-600">Primary market. Pricing in GBP. Metric measurements.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">New Zealand</h3>
+              <p className="mt-2 text-sm text-zinc-600">Dedicated NZ site at <a href="https://www.quote-core.co.nz" className="text-[#BD4A1A] hover:underline">quote-core.co.nz</a>. Pricing in NZD. GST included.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Australia</h3>
+              <p className="mt-2 text-sm text-zinc-600">Supported via the global site. Pricing in USD with metric measurements.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">United States</h3>
+              <p className="mt-2 text-sm text-zinc-600">Supported via the global site. Pricing in USD. Imperial measurements available.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Contact & Support */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Contact and support</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">General enquiries</h3>
+              <p className="mt-2 text-sm text-zinc-600">Email <a href="mailto:info@quote-core.com" className="text-[#BD4A1A] hover:underline">info@quote-core.com</a></p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Support</h3>
+              <p className="mt-2 text-sm text-zinc-600">Email support via the in-app help or contact form. Response during UK business hours.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Book a demo</h3>
+              <p className="mt-2 text-sm text-zinc-600"><a href="https://calendly.com/quote-core-info/15-minute-meeting" target="_blank" rel="noopener noreferrer" className="text-[#BD4A1A] hover:underline">Book a 15-minute call with Shaun</a></p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">YouTube</h3>
+              <p className="mt-2 text-sm text-zinc-600"><a href="https://www.youtube.com/@quotecoreplus" target="_blank" rel="noopener noreferrer" className="text-[#BD4A1A] hover:underline">Product demos and tutorials</a></p>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
@@ -157,10 +203,13 @@ export default function CompanyPage() {
             <p className="mt-2 text-zinc-600">All features unlocked. No credit card required.</p>
             <a
               href="/free-trial"
-              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
               Start free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>
+            </p>
           </div>
         </section>
 
