@@ -32,7 +32,7 @@ function createServiceClient() {
 function toAddress(fullAddress: string | null): Address | null {
   if (!fullAddress) return null;
   return {
-    line1: null,
+    line1: fullAddress,
     line2: null,
     city: null,
     region: null,

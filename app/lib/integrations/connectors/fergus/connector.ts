@@ -28,7 +28,12 @@ import type {
   CreatedExternalRecord,
   ExecutionContext,
 } from '../../contracts/connector';
-import type { IntegrationEnvelopeV1 } from '../../contracts/envelope-v1';
+import type {
+  Address,
+  DocumentManifestItem,
+  FileManifestItem,
+  IntegrationEnvelopeV1,
+} from '../../contracts/envelope-v1';
 
 const FERGUS_BASE = 'https://api.fergus.com';
 
@@ -100,6 +105,14 @@ export class FergusConnector implements Connector {
       });
     }
 
+    if (scopes.siteDetails && (data.site.address || data.customer?.billingAddress)) {
+      steps.push({
+        type: 'upsert_site',
+        description: `Create site for ${data.site.name || data.job.name || data.customer?.name || 'job'}`,
+        optional: false,
+      });
+    }
+
     // Step 2: Create job
     steps.push({
       type: 'upsert_job',
@@ -167,11 +180,13 @@ export class FergusConnector implements Connector {
     };
 
     let customerId: number | null = null;
+    let siteId: number | null = null;
     let jobId: number | null = null;
     let quoteId: number | null = null;
 
     // Check for existing mappings
     const existingCustomer = context.existingMappings.find((m) => m.externalType === 'contact');
+    const existingSite = context.existingMappings.find((m) => m.externalType === 'site');
     const existingJob = context.existingMappings.find((m) => m.externalType === 'job');
 
     // Step 1: Create customer
@@ -185,35 +200,14 @@ export class FergusConnector implements Connector {
         });
       } else {
         try {
-          // Build mainContact - Fergus requires firstName, contact details go in contactItems array
-          const contactItems: Array<{ contactType: string; contactValue: string }> = [];
-          if (data.customer.email) contactItems.push({ contactType: 'email', contactValue: data.customer.email });
-          if (data.customer.phone) contactItems.push({ contactType: 'phone', contactValue: data.customer.phone });
-
-          // Split customer name into first/last for Fergus
-          const nameParts = (data.customer.name || 'Unknown').trim().split(' ');
-          const firstName = nameParts[0] || 'Unknown';
-          const lastName = nameParts.slice(1).join(' ') || '';
-
           const customerBody: Record<string, unknown> = {
             customerFullName: data.customer.name,
-            mainContact: {
-              firstName,
-              ...(lastName ? { lastName } : {}),
-              ...(contactItems.length > 0 ? { contactItems } : {}),
-            },
+            mainContact: buildPersonPayload(data.customer.name, data.customer.email, data.customer.phone),
           };
 
-          if (data.customer.billingAddress) {
-            const addr = data.customer.billingAddress;
-            const physicalAddress: Record<string, string> = {};
-            if (addr.line1) physicalAddress.address1 = addr.line1;
-            if (addr.city) physicalAddress.addressCity = addr.city;
-            if (addr.postalCode) physicalAddress.addressPostcode = addr.postalCode;
-            if (addr.country) physicalAddress.addressCountry = addr.country;
-            if (Object.keys(physicalAddress).length > 0) {
-              customerBody.physicalAddress = physicalAddress;
-            }
+          const physicalAddress = buildAddressPayload(data.customer.billingAddress);
+          if (physicalAddress) {
+            customerBody.physicalAddress = physicalAddress;
           }
 
           const res = await fetch(`${FERGUS_BASE}/customers`, {
@@ -255,15 +249,94 @@ export class FergusConnector implements Connector {
       }
     }
 
-    // Step 2: Create job (draft first, then we could finalise later)
-    // Fergus non-draft jobs require a siteId, so we create as draft
+    // Step 2: Create or repair the job.
     if (existingJob) {
       jobId = Number(existingJob.externalId);
-      steps.push({
-        type: 'upsert_job',
-        status: 'skipped',
-        externalId: String(jobId),
-      });
+      try {
+        const existingResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
+          headers,
+          signal: AbortSignal.timeout(30000),
+        });
+        if (!existingResponse.ok) {
+          throw new Error(`Failed to load mapped job: ${existingResponse.status}`);
+        }
+
+        const existingPayload = await existingResponse.json();
+        const isDraftJob = !existingPayload.data?.jobNumber;
+        if (!isDraftJob) {
+          steps.push({ type: 'upsert_job', status: 'skipped', externalId: String(jobId) });
+        } else {
+          if (existingSite) {
+            siteId = Number(existingSite.externalId);
+            steps.push({ type: 'upsert_site', status: 'skipped', externalId: String(siteId) });
+          } else {
+            const siteResult = await createFergusSite(envelope, headers, context);
+            siteId = siteResult.siteId;
+            steps.push(siteResult.step);
+          }
+
+          // If we don't have both customer and site, we can't finalise the draft.
+          // Still update what we can and continue with quote/files/notes on the draft job.
+          if (customerId) {
+            const updates: Array<Record<string, unknown>> = [
+              { title: data.job.name || `Quote ${data.source.quoteNumber || ''}` },
+              { description: buildJobDescription(envelope, scopes) },
+              { customerId },
+              { customerReference: String(data.source.quoteNumber ?? '') },
+            ];
+            if (siteId) {
+              updates.push({ siteId });
+            }
+            for (const update of updates) {
+              const updateResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
+                method: 'PUT',
+                headers,
+                body: JSON.stringify(update),
+                signal: AbortSignal.timeout(30000),
+              });
+              if (!updateResponse.ok) {
+                const errorText = await updateResponse.text().catch(() => 'Unknown error');
+                await context.logStep('repair_draft_job', {
+                  errorSummary: `PUT failed: ${updateResponse.status} ${errorText.slice(0, 300)}`,
+                });
+              }
+            }
+          }
+
+          // Try to finalise if we have both customer and site
+          if (customerId && siteId) {
+            const finaliseResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}/finalise`, {
+              method: 'PUT',
+              headers,
+              signal: AbortSignal.timeout(30000),
+            });
+            if (!finaliseResponse.ok) {
+              const errorText = await finaliseResponse.text().catch(() => 'Unknown error');
+              await context.logStep('repair_draft_job', {
+                errorSummary: `Finalise failed: ${finaliseResponse.status} ${errorText.slice(0, 300)}`,
+              });
+              // Don't fail - continue with quote/files/notes on the draft job
+            } else {
+              await context.logStep('repair_draft_job', {
+                responseStatus: finaliseResponse.status,
+                responseSummary: { jobId, siteId, finalised: true },
+              });
+            }
+          } else {
+            // Can't finalise without site - log but continue
+            await context.logStep('repair_draft_job', {
+              errorSummary: 'Cannot finalise draft job - no site address available. Continuing with draft job.',
+            });
+          }
+
+          steps.push({ type: 'upsert_job', status: 'succeeded', externalId: String(jobId) });
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to repair mapped job';
+        steps.push({ type: 'upsert_job', status: 'failed', errorSummary: message });
+        await context.logStep('repair_draft_job', { errorSummary: message });
+        // Don't return failed - continue with quote/files/notes if we have a jobId
+      }
     } else {
       try {
         const jobBody: Record<string, unknown> = {
@@ -278,46 +351,31 @@ export class FergusConnector implements Connector {
           jobBody.customerId = customerId;
         }
 
-        // Create a site for the job (required for non-draft jobs)
-        let siteId: number | null = null;
-        if (customerId) {
-          try {
-            const siteBody: Record<string, unknown> = {
-              customerId,
-              siteName: data.customer?.name || 'Site',
-            };
-            if (data.customer?.billingAddress) {
-              const addr = data.customer.billingAddress;
-              const siteAddress: Record<string, string> = {};
-              if (addr.line1) siteAddress.address1 = addr.line1;
-              if (addr.city) siteAddress.addressCity = addr.city;
-              if (addr.postalCode) siteAddress.addressPostcode = addr.postalCode;
-              if (addr.country) siteAddress.addressCountry = addr.country;
-              if (Object.keys(siteAddress).length > 0) {
-                siteBody.siteAddress = siteAddress;
-              }
-            }
-            const siteRes = await fetch(`${FERGUS_BASE}/sites`, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(siteBody),
-              signal: AbortSignal.timeout(30000),
-            });
-            if (siteRes.ok) {
-              const siteResult = await siteRes.json();
-              siteId = siteResult.data?.id ?? siteResult.id;
-            }
-          } catch {
-            // Site creation failed - will try draft job instead
-          }
+        // Create a site for the job (required for non-draft jobs).
+        if (existingSite) {
+          siteId = Number(existingSite.externalId);
+          steps.push({ type: 'upsert_site', status: 'skipped', externalId: String(siteId) });
+        }
+        if (!siteId) {
+          const siteResult = await createFergusSite(envelope, headers, context);
+          siteId = siteResult.siteId;
+          steps.push(siteResult.step);
         }
 
         if (siteId) {
           jobBody.siteId = siteId;
         } else {
-          // No site - create as draft instead
+          // Without a valid site Fergus only permits a draft job. Marking the
+          // site step failed prevents this degraded export being shown as success.
           jobBody.isDraft = true;
           delete (jobBody as Record<string, unknown>).siteId;
+          if (!steps.some((step) => step.type === 'upsert_site' && step.status === 'failed')) {
+            steps.push({
+              type: 'upsert_site',
+              status: 'failed',
+              errorSummary: 'A site address is required to create an active Fergus job',
+            });
+          }
         }
 
         const res = await fetch(`${FERGUS_BASE}/jobs`, {
@@ -359,11 +417,14 @@ export class FergusConnector implements Connector {
     }
 
     // Step 3: Create quote with line items
-    if (scopes.customerFacingQuote && data.customerLines && data.customerLines.length > 0 && jobId) {
+    // Always create a quote if we have a job - even with no line items,
+    // an empty quote section is valid and gives the job a quote record.
+    if (scopes.customerFacingQuote && jobId) {
       try {
         const sections = buildQuoteSections(envelope, scopes);
         const quoteBody = {
-          title: `Quote ${data.source.quoteNumber}`,
+          title: `Quote ${data.source.quoteNumber || ''}`.trim(),
+          description: buildJobDescription(envelope, scopes),
           dueDays: 30,
           sections,
         };
@@ -403,11 +464,12 @@ export class FergusConnector implements Connector {
     }
 
     // Step 4: Upload files
-    if (scopes.filesAndPlans && data.files && data.files.length > 0 && jobId) {
+    const filesToUpload = getFilesToUpload(data.files, data.documents);
+    if (scopes.filesAndPlans && filesToUpload.length > 0 && jobId) {
       let uploaded = 0;
       let failed = 0;
 
-      for (const file of data.files) {
+      for (const file of filesToUpload) {
         try {
           const signedUrl = await context.getSignedUrl(file.sourcePath, 300);
           if (!signedUrl) { failed++; continue; }
@@ -418,10 +480,14 @@ export class FergusConnector implements Connector {
           }
 
           const fileBuffer = await fileRes.arrayBuffer();
-          const fileName = file.sourcePath.split('/').pop() || 'attachment';
+          const fileName = file.fileName || file.sourcePath.split('/').pop() || 'attachment';
 
           const formData = new FormData();
-          formData.append('file', new Blob([fileBuffer]), fileName);
+          formData.append(
+            'file',
+            new Blob([fileBuffer], { type: file.mimeType || 'application/octet-stream' }),
+            fileName
+          );
           formData.append('entityType', 'job');
           formData.append('entityId', String(jobId));
 
@@ -436,39 +502,60 @@ export class FergusConnector implements Connector {
             uploaded++;
           } else {
             failed++;
+            const errorText = await uploadRes.text().catch(() => 'Unknown error');
+            await context.logStep('upload_file_failed', {
+              responseStatus: uploadRes.status,
+              errorSummary: `${fileName}: ${uploadRes.status} ${errorText.slice(0, 300)}`,
+            });
           }
-        } catch {
+        } catch (error) {
           failed++;
+          await context.logStep('upload_file_failed', {
+            errorSummary: `${file.fileName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          });
         }
       }
 
       steps.push({
         type: 'upload_supporting_file',
         status: failed === 0 ? 'succeeded' : (uploaded > 0 ? 'succeeded' : 'failed'),
-        errorSummary: failed > 0 ? `${failed}/${data.files.length} files failed to upload` : undefined,
+        errorSummary: failed > 0 ? `${failed}/${filesToUpload.length} files failed to upload` : undefined,
       });
-      await context.logStep('upload_files', { responseSummary: { uploaded, failed, total: data.files.length }, errorSummary: failed > 0 ? `${failed}/${data.files.length} files failed` : undefined });
+      await context.logStep('upload_files', {
+        responseSummary: { uploaded, failed, total: filesToUpload.length },
+        errorSummary: failed > 0 ? `${failed}/${filesToUpload.length} files failed` : undefined,
+      });
     }
 
-    // Step 5: Add note
+    // Step 5: Add note (only if we have a job)
+    if (jobId) {
     try {
       const noteBody = {
-        text: `Quote ${data.source.quoteNumber} exported from QuoteCore+ on ${new Date().toISOString()}`,
-        entityName: 'job',
+        text: buildJobDescription(envelope, scopes),
+        entityName: 'job' as const,
         entityId: jobId,
       };
 
-      await fetch(`${FERGUS_BASE}/notes`, {
+      const noteResponse = await fetch(`${FERGUS_BASE}/notes`, {
         method: 'POST',
         headers,
         body: JSON.stringify(noteBody),
         signal: AbortSignal.timeout(15000),
       });
 
+      if (!noteResponse.ok) {
+        const errorText = await noteResponse.text().catch(() => 'Unknown error');
+        throw new Error(`${noteResponse.status} ${errorText.slice(0, 300)}`);
+      }
+
       steps.push({ type: 'add_activity_note', status: 'succeeded' });
-    } catch {
-      steps.push({ type: 'add_activity_note', status: 'failed', errorSummary: 'Failed to add note' });
+      await context.logStep('add_activity_note', { responseStatus: noteResponse.status });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add note';
+      steps.push({ type: 'add_activity_note', status: 'failed', errorSummary: message });
+      await context.logStep('add_activity_note', { errorSummary: message });
     }
+    } // end if (jobId) for notes
 
     // Store external mappings
     if (customerId) {
@@ -476,6 +563,13 @@ export class FergusConnector implements Connector {
         externalType: 'contact',
         externalId: String(customerId),
         externalUrl: `https://app.fergus.com/customers/${customerId}`,
+      });
+    }
+    if (siteId) {
+      externalRecords.push({
+        externalType: 'site',
+        externalId: String(siteId),
+        externalUrl: `https://app.fergus.com/sites/${siteId}`,
       });
     }
     if (jobId) {
@@ -523,9 +617,18 @@ function buildJobDescription(
   lines.push('');
 
   if (scopes.measurementsAndTakeoff && data.components && data.components.length > 0) {
-    lines.push('--- Components ---');
+    lines.push('--- Measurements & Takeoff ---');
     for (const comp of data.components) {
-      lines.push(`  ${comp.name}: ${comp.quantity ?? 'N/A'} ${comp.pricingUnit || ''}`);
+      lines.push(`  ${comp.name}: ${comp.quantity ?? comp.pricedQuantity ?? 'N/A'} ${comp.pricingUnit || ''}`.trimEnd());
+      for (const entry of comp.entries || []) {
+        const measuredValue = entry.wasteAdjustedValue || entry.rawValue || 'N/A';
+        const pitch = entry.pitchDegrees != null ? ` at ${entry.pitchDegrees}°` : '';
+        lines.push(`    - ${measuredValue}${pitch}`);
+      }
+    }
+    for (const area of data.roofAreas || []) {
+      const areaValue = area.finalArea ?? area.computedArea ?? area.planArea ?? 'N/A';
+      lines.push(`  ${area.label || 'Roof area'}: ${areaValue} m²`);
     }
     lines.push('');
   }
@@ -565,14 +668,24 @@ function buildQuoteSections(
 
   // Main quote lines (materials/services)
   if (data.customerLines && data.customerLines.length > 0) {
-    const lineItems = data.customerLines.map((line, i) => ({
-      itemName: line.description || 'Item',
-      itemQuantity: line.quantity ? Number(line.quantity) : 1,
-      itemPrice: line.lineTotal ? Number(line.lineTotal) : (line.unitPrice ? Number(line.unitPrice) : 0),
-      itemCost: 0,
-      isLabour: false,
-      sortOrder: i,
-    }));
+    const lineItems = data.customerLines.map((line, i) => {
+      const itemQuantity = toFiniteNumber(line.quantity, 1);
+      const lineTotal = toFiniteNumber(line.lineTotal, 0);
+      const itemPrice = line.unitPrice != null
+        ? toFiniteNumber(line.unitPrice, 0)
+        : itemQuantity !== 0 ? lineTotal / itemQuantity : lineTotal;
+
+      return {
+        itemName: line.description || 'Item',
+        itemQuantity,
+        itemPrice,
+        itemCost: 0,
+        // Fergus API requires each line item to have either isLabour OR salesAccountId.
+        // We don't have Fergus sales account IDs configured, so use isLabour for all items.
+        isLabour: true,
+        sortOrder: i,
+      };
+    });
     sections.push({ name: 'Quote Items', lineItems });
   }
 
@@ -595,6 +708,129 @@ function buildQuoteSections(
   }
 
   return sections;
+}
+
+function buildPersonPayload(name: string, email: string | null, phone: string | null) {
+  const nameParts = name.trim().split(/\s+/);
+  const firstName = nameParts.shift() || 'Unknown';
+  const lastName = nameParts.join(' ');
+  const contactItems: Array<{ contactType: 'email' | 'phone'; contactValue: string }> = [];
+  if (email) contactItems.push({ contactType: 'email', contactValue: email });
+  if (phone) contactItems.push({ contactType: 'phone', contactValue: phone });
+
+  return {
+    firstName,
+    ...(lastName ? { lastName } : {}),
+    ...(contactItems.length > 0 ? { contactItems } : {}),
+  };
+}
+
+async function createFergusSite(
+  envelope: IntegrationEnvelopeV1,
+  headers: Record<string, string>,
+  context: ExecutionContext
+): Promise<{ siteId: number | null; step: StepResult }> {
+  const data = envelope.data;
+  const siteAddress = buildAddressPayload(data.site.address || data.customer?.billingAddress || null);
+  if (!siteAddress) {
+    return {
+      siteId: null,
+      step: {
+        type: 'upsert_site',
+        status: 'failed',
+        errorSummary: 'A site address is required to create an active Fergus job',
+      },
+    };
+  }
+
+  const siteBody: Record<string, unknown> = {
+    name: data.site.name || data.job.name || data.customer?.name || 'Site',
+    defaultContact: buildPersonPayload(
+      data.customer?.name || 'Site contact',
+      data.customer?.email || null,
+      data.customer?.phone || null
+    ),
+    siteAddress,
+  };
+
+  try {
+    const response = await fetch(`${FERGUS_BASE}/sites`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(siteBody),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      await context.logStep('upsert_site', {
+        responseStatus: response.status,
+        errorSummary: `Failed: ${response.status} ${errorText.slice(0, 500)}`,
+        requestSummary: { siteBody },
+      });
+      return {
+        siteId: null,
+        step: {
+          type: 'upsert_site',
+          status: 'failed',
+          errorSummary: `Failed to create site: ${response.status}`,
+        },
+      };
+    }
+
+    const result = await response.json();
+    const siteId = Number(result.data?.id ?? result.id);
+    await context.logStep('upsert_site', {
+      responseStatus: response.status,
+      responseSummary: { siteId },
+    });
+    return {
+      siteId,
+      step: { type: 'upsert_site', status: 'succeeded', externalId: String(siteId) },
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown site error';
+    await context.logStep('upsert_site', { errorSummary: message });
+    return {
+      siteId: null,
+      step: { type: 'upsert_site', status: 'failed', errorSummary: message },
+    };
+  }
+}
+
+function buildAddressPayload(address: Address | null): Record<string, string> | null {
+  if (!address) return null;
+  const address1 = address.line1 || address.fullAddress;
+  if (!address1) return null;
+
+  return {
+    address1,
+    ...(address.line2 ? { address2: address.line2 } : {}),
+    ...(address.city ? { addressCity: address.city } : {}),
+    ...(address.region ? { addressRegion: address.region } : {}),
+    ...(address.postalCode ? { addressPostcode: address.postalCode } : {}),
+    ...(address.country ? { addressCountry: address.country } : {}),
+  };
+}
+
+function getFilesToUpload(
+  files: FileManifestItem[],
+  documents: DocumentManifestItem[]
+): Array<{ fileName: string; mimeType: string | null; sourcePath: string }> {
+  const uniqueFiles = new Map<string, { fileName: string; mimeType: string | null; sourcePath: string }>();
+  for (const file of [...files, ...documents]) {
+    if (!file.sourcePath || uniqueFiles.has(file.sourcePath)) continue;
+    uniqueFiles.set(file.sourcePath, {
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      sourcePath: file.sourcePath,
+    });
+  }
+  return [...uniqueFiles.values()];
+}
+
+function toFiniteNumber(value: string | number | null, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 // Singleton instance

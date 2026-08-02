@@ -21,17 +21,17 @@ type QuoteDataAvailability = {
 const PROVIDER_LABELS: Record<string, { name: string; logo: string; description: string }> = {
   zapier: {
     name: 'Zapier',
-    logo: '/logos/zapier.svg',
+    logo: '/logos/zapier.png',
     description: 'Send quotes to 6,000+ apps via Zapier webhooks.',
   },
   jobnimbus: {
     name: 'JobNimbus',
-    logo: '/logos/jobnimbus.svg',
+    logo: '/logos/jobnimbus.png',
     description: 'Create contacts and jobs directly in JobNimbus.',
   },
   fergus: {
     name: 'Fergus',
-    logo: '/logos/fergus.svg',
+    logo: '/logos/fergus.png',
     description: 'Send customers and quotes to Fergus job management.',
   },
 };
@@ -156,7 +156,7 @@ export function SendToAppButton({
               <div className="space-y-2">
                 <p className="text-xs text-slate-500 mb-3">Choose which app to send this quote to.</p>
                 {connectedIntegrations.map((integration) => {
-                  const info = PROVIDER_LABELS[integration.provider] ?? { name: integration.provider, logo: '/logos/zapier.svg', description: '' };
+                  const info = PROVIDER_LABELS[integration.provider] ?? { name: integration.provider, logo: '/logos/zapier.png', description: '' };
                   return (
                     <button
                       key={integration.id}
@@ -225,7 +225,7 @@ export function SendToAppButton({
               <div className="space-y-3">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50">
-                    <Image src={PROVIDER_LABELS[selectedIntegration.provider]?.logo ?? '/logos/zapier.svg'} alt="" width={20} height={20} />
+                    <Image src={PROVIDER_LABELS[selectedIntegration.provider]?.logo ?? '/logos/zapier.png'} alt="" width={20} height={20} />
                   </div>
                   <span className="text-sm font-medium text-slate-900">{PROVIDER_LABELS[selectedIntegration.provider]?.name}</span>
                 </div>
