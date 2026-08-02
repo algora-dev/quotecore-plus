@@ -4,7 +4,7 @@ import { SITE_URL } from '@/lib/seo/site-url';
 /**
  * robots.txt for https://quote-core.com.
  *
- * Production: allows crawling of all public pages.
+ * Production: allows crawling of all public pages, blocks only private/app routes.
  * Preview/staging: blocks all crawling (noindex everything).
  *
  * Sitemap points to the global sitemap only.
@@ -22,93 +22,35 @@ export default function robots(): MetadataRoute.Robots {
     };
   }
 
-  // Production: allow public pages, block private/app routes
+  // Production: allow everything EXCEPT private/auth/api routes
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: [
-          '/',
-          '/blog',
-          '/docs',
-          '/free-tools',
-          '/free-calculators',
-          '/free-roofing-calculator',
-          '/free-construction-calculator',
-          '/free-concrete-calculator',
-          '/free-landscaping-calculator',
-          '/free-birds-mouth-calculator',
-          '/free-quote-generator',
-          '/free-invoice-generator',
-          '/free-purchase-order-generator',
-          '/free-roofing-takeoff-builder',
-          '/api/public/roof-takeoff/',
-          // Allow all free-tool slug pages (42 SEO calculator pages)
-          '/free-roof-',
-          '/free-rafter-',
-          '/free-hip-',
-          '/free-concrete-',
-          '/free-footing-',
-          '/free-rebar-',
-          '/free-trench-',
-          '/free-wall-',
-          '/free-paint-',
-          '/free-tile-',
-          '/free-flooring-',
-          '/free-slope-',
-          '/free-pipe-',
-          '/free-shingle-',
-          '/free-skillion-',
-          '/free-gable-',
-          '/free-guttering-',
-          '/roofing-quoting-software',
-          '/construction-quoting-software',
-          '/services',
-          '/about',
-          '/company',
-          '/features',
-          '/features/digital-roof-takeoff',
-          '/features/smart-components',
-          '/features/material-ordering',
-          '/features/invoicing',
-          '/features/supplier-resources',
-          '/resources/',
-          '/contact',
-          '/free-trial',
-          '/pricing',
-          '/trust',
-          '/customer-stories',
-          '/suppliers',
-          '/privacy',
-          '/cookie-policy',
-          '/terms',
-        ],
-        disallow: [
-          '/api/',
-          '/auth/',
-          '/onboarding',
-          '/2fa',
-          '/accept/',
-          '/admin',
-          '/login',
-          '/signup',
-          // Workspace-scoped authed routes - gated by middleware
-          '/*/quotes',
-          '/*/customers',
-          '/*/settings',
-          '/*/resources',
-          '/*/templates',
-          '/*/material-orders',
-          '/*/jobs',
-          '/*/components',
-          '/*/drawings',
-          '/*/catalogs',
-          '/*/attachments',
-          '/*/inbox',
-          '/*/account',
-        ],
-      },
-    ],
+    rules: {
+      userAgent: '*',
+      disallow: [
+        '/api/',
+        '/auth/',
+        '/onboarding',
+        '/2fa',
+        '/accept/',
+        '/admin',
+        '/login',
+        '/signup',
+        // Workspace-scoped authed routes - gated by middleware
+        '/*/quotes',
+        '/*/customers',
+        '/*/settings',
+        '/*/resources',
+        '/*/templates',
+        '/*/material-orders',
+        '/*/jobs',
+        '/*/components',
+        '/*/drawings',
+        '/*/catalogs',
+        '/*/attachments',
+        '/*/inbox',
+        '/*/account',
+      ],
+    },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
   };

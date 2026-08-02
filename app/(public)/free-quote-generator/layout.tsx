@@ -4,7 +4,7 @@ import Link from 'next/link';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Quote Generator - Create Professional Quotes Online | QuoteCore+',
+  title: 'Free Quote Generator | QuoteCore+',
   description:
     'Free online quote generator for roofing and construction. Create professional quotes with line items, VAT, and terms. No signup required - download as PDF.',
   openGraph: {

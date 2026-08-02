@@ -4,7 +4,7 @@ import Link from 'next/link';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Invoice Generator - Create Professional Invoices | QuoteCore+',
+  title: 'Free Invoice Generator | QuoteCore+',
   description:
     'Free online invoice generator for trades. Create professional invoices with line items, VAT, and payment terms. No signup - download as PDF.',
   openGraph: {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Purchase Order Generator - Create Supplier POs | QuoteCore+',
+  title: 'Free Purchase Order Generator | QuoteCore+',
   description:
     'Free online purchase order generator for trades. Create professional POs for suppliers with line items and delivery dates. No signup - download as PDF.',
   openGraph: {

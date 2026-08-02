@@ -8,7 +8,7 @@ import { pricingPlans } from "@/lib/pricing";
 import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Roofing & Construction Quoting Software Pricing | QuoteCore+",
+  title: "Pricing | QuoteCore+",
   description:
     "Compare QuoteCore+ monthly plans in USD and GBP. Start with a 14-day full-feature trial with no credit card, then choose the limits that fit your trade business.",
   alternates: {

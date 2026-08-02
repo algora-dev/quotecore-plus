@@ -14,7 +14,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     <>
       {/* Screen-reader and crawler overview */}
       <section className="sr-only" aria-labelledby="roof-takeoff-capabilities">
-        <h1 id="roof-takeoff-capabilities">Free Roof Takeoff Builder</h1>
+        <h2 id="roof-takeoff-capabilities">Free Roof Takeoff Builder</h2>
         <p>Calculate a complete roof takeoff using actual final measurements or measurements taken from a roof plan. Use metric, imperial, or roofing-square units with pitch calculations where applicable.</p>
         <h2>Supported measurements</h2>
         <ul>

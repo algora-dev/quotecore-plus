@@ -42,7 +42,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'quotecore-plus-vs-quotesmith',
     category: 'comparisons',
-    title: 'QuoteCore+ vs QuoteSmith: Proposal Writer or Full Quote Workflow?',
+    title: 'QuoteCore+ vs QuoteSmith: Full Quote Workflow',
     description:
       'QuoteSmith and QuoteCore+ both help trades create better quotes, but they solve different problems. One focuses on proposal writing, the other on the workflow from measurement to quote, material orders, job management and invoicing.',
     date: '2026-05-23',
@@ -60,7 +60,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'roofing-quoting-software-vs-spreadsheets',
     category: 'comparisons',
-    title: 'Roofing Quoting Software vs Spreadsheets: What Actually Saves Time?',
+    title: 'Roofing Quoting Software vs Spreadsheets: What Saves Time?',
     description:
       'Spreadsheets can work for roofing quotes, but they start to slow businesses down when measurements, pricing, approvals, material orders, job details and invoicing need to stay connected.',
     date: '2026-05-11',
@@ -87,7 +87,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-get-more-work-as-a-contractor',
     category: 'contractor-business',
-    title: 'How to Get More Work as a Contractor: 7 Things to Fix Before You Spend Money on Ads',
+    title: 'Get More Work as a Contractor: 7 Things to Fix First',
     description:
       'Most contractors don\u2019t struggle because they\u2019re bad at the work - they struggle because getting work is left to chance. Here are 7 things to fix first, plus a free weekly checklist.',
     date: '2026-06-13',
@@ -96,7 +96,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'best-roofing-quoting-software-uk-2026',
     category: 'comparisons',
-    title: 'Best Roofing Quoting Software UK (2026): Compared for Contractors',
+    title: 'Best Roofing Quoting Software UK (2026)',
     description:
       'Comparing the best roofing quoting software available to UK contractors in 2026. Honest breakdown of QuoteCore+, Sleepless Tradesman, Tradify, Jobber, Powered Now, Fergus, and EasyEstimate - with a comparison table and recommendations by business type.',
     date: '2026-06-15',
@@ -105,7 +105,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-calculate-roof-pitch',
     category: 'roofing-estimating',
-    title: 'How to Calculate Roof Pitch (And Why It Matters for Your Quote)',
+    title: 'How to Calculate Roof Pitch for Your Quote',
     description:
       'Complete guide to roof pitch: what it is, the three ways it gets expressed (degrees, ratio, percentage), how to calculate it from measurements, common mistakes, and free tools that do the maths for you.',
     date: '2026-07-29',
@@ -123,7 +123,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-much-roofing-material',
     category: 'roofing-estimating',
-    title: 'How Much Roofing Material Do You Need? (Material Calculator Guide)',
+    title: 'How Much Roofing Material Do You Need? Guide',
     description:
       'How to calculate tile, underlay, batten, and fixing quantities for any roofing job. Real coverage rates, waste allowances by roof type, and free tools that do the calculation for you.',
     date: '2026-07-29',
@@ -204,7 +204,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'roof-replacement-cost-guide-uk',
     category: 'roofing-estimating',
-    title: 'Roof Replacement Cost Guide: How to Build an Accurate UK Estimate',
+    title: 'Roof Replacement Cost Guide: UK Estimate',
     description:
       'How to build an accurate roof replacement cost estimate in the UK: factors that drive cost, material price ranges, labour and access, stripping and disposal, and how to present a replacement quote professionally.',
     date: '2026-07-31',
@@ -213,7 +213,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'reusable-quoting-templates-smart-components',
     category: 'quotecore-guides',
-    title: 'Reusable Quoting Templates: A Practical Guide to Smart Components',
+    title: 'Reusable Quoting Templates: Smart Components',
     description:
       'How to build reusable quoting templates with Smart Components: choose repeatable work units, define inputs, add materials, build calculation logic, separate cost and price, and test against completed jobs.',
     date: '2026-07-31',
