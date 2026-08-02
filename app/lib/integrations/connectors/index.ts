@@ -31,3 +31,10 @@ export function ensureConnectorsRegistered() {
 export function getRegisteredProviders(): string[] {
   return Array.from(connectorRegistry.keys());
 }
+
+export async function getConnector(provider: string): Promise<Connector | null> {
+  ensureConnectorsRegistered();
+  const loader = connectorRegistry.get(provider);
+  if (!loader) return null;
+  return loader();
+}
