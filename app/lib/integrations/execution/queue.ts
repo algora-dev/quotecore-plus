@@ -6,6 +6,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'node:crypto';
 
 function createServiceClient() {
   return createClient(
@@ -63,28 +64,32 @@ export async function queueExport(
     p_operation: 'export',
   });
 
-  // Check for existing successful export with same idempotency key AND same scope overrides
+  const scopeKey = params.scopeOverrides
+    ? JSON.stringify(Object.entries(params.scopeOverrides).sort(([left], [right]) => left.localeCompare(right)))
+    : 'defaults';
+  const scopeFingerprint = createHash('sha256').update(scopeKey).digest('hex').slice(0, 16);
+  const effectiveIdempotencyKey = params.eventType === 'manual_export'
+    ? `${idempotencyKey}:manual:${crypto.randomUUID()}`
+    : `${idempotencyKey}:scope:${scopeFingerprint}`;
+
+  // Automated exports remain idempotent. A manual Send to App action is an
+  // explicit retry and must always create a fresh export operation.
   const { data: existing } = await supabase
     .from('integration_exports')
-    .select('id, status, scope_overrides')
+    .select('id, status')
     .eq('integration_id', params.integrationId)
-    .eq('idempotency_key', idempotencyKey)
+    .eq('idempotency_key', effectiveIdempotencyKey)
     .in('status', ['succeeded', 'running', 'queued'])
     .order('queued_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  // Check if scope overrides match (same scopes = duplicate, different scopes = new export)
-  const scopeKey = params.scopeOverrides ? JSON.stringify(params.scopeOverrides) : null;
   if (existing) {
-    const existingScopeKey = existing.scope_overrides ? JSON.stringify(existing.scope_overrides) : null;
-    if (scopeKey === existingScopeKey) {
-      if (existing.status === 'succeeded') {
-        return { exportId: existing.id, status: 'succeeded', duplicate: true };
-      }
-      if (existing.status === 'running' || existing.status === 'queued') {
-        return { exportId: existing.id, status: existing.status, duplicate: true };
-      }
+    if (existing.status === 'succeeded') {
+      return { exportId: existing.id, status: 'succeeded', duplicate: true };
+    }
+    if (existing.status === 'running' || existing.status === 'queued') {
+      return { exportId: existing.id, status: existing.status, duplicate: true };
     }
   }
 
@@ -99,7 +104,7 @@ export async function queueExport(
       source_revision: params.sourceRevision,
       event_type: params.eventType,
       status: 'queued',
-      idempotency_key: idempotencyKey,
+      idempotency_key: effectiveIdempotencyKey,
       payload_version: '1.0',
       created_by: params.createdBy ?? null,
       scope_overrides: params.scopeOverrides ?? null,
