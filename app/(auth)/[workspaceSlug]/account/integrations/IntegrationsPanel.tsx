@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import type { IntegrationRecord, ExportHistoryItem, IntegrationProvider } from './actions';
 import {
   saveIntegration,
@@ -9,21 +10,21 @@ import {
   queueQuoteExport,
 } from './actions';
 
-const PROVIDER_INFO: Record<IntegrationProvider, { name: string; description: string; icon: string }> = {
+const PROVIDER_INFO: Record<IntegrationProvider, { name: string; description: string; logo: string }> = {
   zapier: {
     name: 'Zapier',
     description: 'Send quotes to 6,000+ apps via Zapier webhooks. Fastest way to connect.',
-    icon: '⚡',
+    logo: '/logos/zapier.svg',
   },
   jobnimbus: {
     name: 'JobNimbus',
     description: 'Create contacts, jobs, and attach quotes directly in JobNimbus.',
-    icon: '🏠',
+    logo: '/logos/jobnimbus.svg',
   },
   fergus: {
     name: 'Fergus',
     description: 'Send customers, jobs, and quotes to Fergus job management.',
-    icon: '🔧',
+    logo: '/logos/fergus.svg',
   },
 };
 
@@ -71,7 +72,9 @@ export function IntegrationsPanel({
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">{info.icon}</span>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                    <Image src={info.logo} alt={`${info.name} logo`} width={28} height={28} />
+                  </div>
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900">{info.name}</h3>
                     <p className="mt-0.5 text-xs text-slate-500">{info.description}</p>
@@ -145,7 +148,9 @@ export function IntegrationsPanel({
                   className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{PROVIDER_INFO[item.provider as IntegrationProvider]?.icon ?? '🔌'}</span>
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-slate-50">
+                      <Image src={PROVIDER_INFO[item.provider as IntegrationProvider]?.logo ?? '/logos/zapier.svg'} alt="" width={18} height={18} />
+                    </div>
                     <div>
                       <p className="text-xs font-medium text-slate-700">
                         {item.provider} - {item.event_type.replace(/_/g, ' ')}
