@@ -33,12 +33,12 @@ const homepageFaqs = [
   {
     question: "What happens after the trial?",
     answer:
-      "You pick a plan that fits your business. Plans start from free and go up to $60 per month. Your Smart Components, quotes, and settings carry over seamlessly.",
+      "You pick a plan that fits your business. Plans start from free and go up to $59 per month. Your Smart Components, quotes, and settings carry over seamlessly.",
   },
   {
     question: "How much do plans cost?",
     answer:
-      "Plans range from free to $60 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
+      "Plans range from free to $59 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
   },
 ];
 
