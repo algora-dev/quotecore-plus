@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     }
   } else {
     // Auto-resolve best supplier with live pricing
-    const resolved = await autoResolveSupplier();
+    const resolved = await autoResolveSupplier(input.country);
     if (resolved) {
       supplierProfile = resolved.profile;
       components = resolved.components;
