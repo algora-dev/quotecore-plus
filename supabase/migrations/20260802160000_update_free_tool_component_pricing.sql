@@ -1,12 +1,15 @@
 -- Update free_tool_roof_components with realistic GBP pricing
 -- These are indicative material prices for the free takeoff builder on .com
--- Prices are per unit (m or m2) in GBP, excluding labour (free tool shows material cost)
+-- Prices are per unit (m or m2) in USD, excluding labour (free tool shows material cost)
 
 UPDATE public.free_tool_roof_components SET 
   price_per_unit = 12.50,
   description = 'Concrete interlocking roof tiles',
   suggested_waste_percent = 10
 WHERE tenant_id IS NULL AND component_kind = 'roof_area' AND name = 'Roof Area (default)';
+
+-- Switch all global components to USD (more universal for .com site)
+UPDATE public.free_tool_roof_components SET currency = 'USD' WHERE tenant_id IS NULL;
 
 UPDATE public.free_tool_roof_components SET 
   price_per_unit = 8.50,
