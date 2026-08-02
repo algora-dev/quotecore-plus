@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { queueQuoteExport } from '@/app/(auth)/[workspaceSlug]/account/integrations/actions';
 
 type Integration = {
@@ -17,20 +18,20 @@ type QuoteDataAvailability = {
   hasFiles: boolean;
 };
 
-const PROVIDER_LABELS: Record<string, { name: string; icon: string; description: string }> = {
+const PROVIDER_LABELS: Record<string, { name: string; logo: string; description: string }> = {
   zapier: {
     name: 'Zapier',
-    icon: '⚡',
+    logo: '/logos/zapier.svg',
     description: 'Send quotes to 6,000+ apps via Zapier webhooks.',
   },
   jobnimbus: {
     name: 'JobNimbus',
-    icon: '🏠',
+    logo: '/logos/jobnimbus.svg',
     description: 'Create contacts and jobs directly in JobNimbus.',
   },
   fergus: {
     name: 'Fergus',
-    icon: '🔧',
+    logo: '/logos/fergus.svg',
     description: 'Send customers and quotes to Fergus job management.',
   },
 };
@@ -155,7 +156,7 @@ export function SendToAppButton({
               <div className="space-y-2">
                 <p className="text-xs text-slate-500 mb-3">Choose which app to send this quote to.</p>
                 {connectedIntegrations.map((integration) => {
-                  const info = PROVIDER_LABELS[integration.provider] ?? { name: integration.provider, icon: '🔌', description: '' };
+                  const info = PROVIDER_LABELS[integration.provider] ?? { name: integration.provider, logo: '/logos/zapier.svg', description: '' };
                   return (
                     <button
                       key={integration.id}
@@ -163,7 +164,9 @@ export function SendToAppButton({
                       onClick={() => handleSelectApp(integration)}
                       className="w-full flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-orange-300 hover:bg-orange-50/40 transition"
                     >
-                      <span className="text-xl">{info.icon}</span>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                        <Image src={info.logo} alt={`${info.name} logo`} width={22} height={22} />
+                      </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-slate-900">{info.name}</p>
                         <p className="text-xs text-slate-400">Click to continue</p>
@@ -192,7 +195,9 @@ export function SendToAppButton({
                     const info = PROVIDER_LABELS[provider];
                     return (
                       <div key={provider} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
-                        <span className="text-xl">{info.icon}</span>
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                          <Image src={info.logo} alt={`${info.name} logo`} width={22} height={22} />
+                        </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium text-slate-900">{info.name}</p>
                           <p className="text-xs text-slate-400">{info.description}</p>
@@ -219,7 +224,9 @@ export function SendToAppButton({
             {step === 'pick-data' && selectedIntegration && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">{PROVIDER_LABELS[selectedIntegration.provider]?.icon}</span>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                    <Image src={PROVIDER_LABELS[selectedIntegration.provider]?.logo ?? '/logos/zapier.svg'} alt="" width={20} height={20} />
+                  </div>
                   <span className="text-sm font-medium text-slate-900">{PROVIDER_LABELS[selectedIntegration.provider]?.name}</span>
                 </div>
                 <p className="text-xs text-slate-500 mb-3">Select what to include in this export.</p>
