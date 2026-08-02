@@ -132,7 +132,9 @@ function isStaticAsset(pathname: string): boolean {
     // breaks crawlers + sitemap generators.
     pathname === '/robots.txt' ||
     pathname === '/sitemap.xml' ||
-    /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|vtt|mp4|webm|ogg|mp3|wav|pdf)$/.test(pathname)
+    // IndexNow key verification file
+    pathname.startsWith('/22ffbce37a69481c9841bddef9028097.txt') ||
+    /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|vtt|mp4|webm|ogg|mp3|wav|pdf|txt)$/.test(pathname)
   );
 }
 
