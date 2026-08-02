@@ -7,7 +7,7 @@
  */
 
 import { buildQuoteExport, getQuoteRevision } from '../export-builder/build-quote-export';
-import { ensureConnectorsRegistered } from '../connectors';
+import { ensureConnectorsRegistered, getConnector } from '../connectors';
 import {
   claimNextExport,
   markExportSucceeded,
@@ -22,12 +22,8 @@ import type { IntegrationEnvelopeV1, QuoteExportV1 } from '../contracts/envelope
 import type { Connector, IntegrationConfig, ExecutionContext, DataScopes } from '../contracts/connector';
 import { DEFAULT_DATA_SCOPES } from '../contracts/connector';
 
-// Connector registry - lazy loaded
-const connectorRegistry = new Map<string, () => Promise<Connector>>();
-
-export function registerConnector(provider: string, loader: () => Promise<Connector>) {
-  connectorRegistry.set(provider, loader);
-}
+// Connector registry is managed in connectors/index.ts
+// ensureConnectorsRegistered() is called at the start of processNextExport()
 
 /**
  * Process the next queued export. Called by the cron route.
@@ -54,13 +50,11 @@ export async function processNextExport(): Promise<boolean> {
 
 async function processExport(queued: QueuedExport): Promise<void> {
   // Load connector
-  const loader = connectorRegistry.get(queued.provider);
-  if (!loader) {
+  const connector = await getConnector(queued.provider);
+  if (!connector) {
     await markExportFailed(queued.id, 'unknown_provider', `No connector registered for provider: ${queued.provider}`);
     return;
   }
-
-  const connector = await loader();
 
   // Build canonical export from quote data
   const quoteData = await buildQuoteExport(queued.source_id, queued.company_id);
