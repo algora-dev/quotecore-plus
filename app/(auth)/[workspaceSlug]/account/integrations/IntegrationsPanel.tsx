@@ -14,17 +14,17 @@ const PROVIDER_INFO: Record<IntegrationProvider, { name: string; description: st
   zapier: {
     name: 'Zapier',
     description: 'Send quotes to 6,000+ apps via Zapier webhooks. Fastest way to connect.',
-    logo: '/logos/zapier.svg',
+    logo: '/logos/zapier.png',
   },
   jobnimbus: {
     name: 'JobNimbus',
     description: 'Create contacts, jobs, and attach quotes directly in JobNimbus.',
-    logo: '/logos/jobnimbus.svg',
+    logo: '/logos/jobnimbus.png',
   },
   fergus: {
     name: 'Fergus',
     description: 'Send customers, jobs, and quotes to Fergus job management.',
-    logo: '/logos/fergus-official.png',
+    logo: '/logos/fergus.png',
   },
 };
 
@@ -149,7 +149,7 @@ export function IntegrationsPanel({
                 >
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-slate-50">
-                      <Image src={PROVIDER_INFO[item.provider as IntegrationProvider]?.logo ?? '/logos/zapier.svg'} alt="" width={18} height={18} className="object-contain" />
+                      <Image src={PROVIDER_INFO[item.provider as IntegrationProvider]?.logo ?? '/logos/zapier.png'} alt="" width={18} height={18} className="object-contain" />
                     </div>
                     <div>
                       <p className="text-xs font-medium text-slate-700">
