@@ -164,10 +164,13 @@ export default function AboutPage() {
             <p className="mt-2 text-zinc-500">Two weeks free. No card required. Start quoting in minutes.</p>
             <a
               href="/free-trial"
-              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
+              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
               Start your free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a> · <a href="/contact" className="underline hover:text-zinc-900">Contact us</a>
+            </p>
           </div>
         </section>
 
