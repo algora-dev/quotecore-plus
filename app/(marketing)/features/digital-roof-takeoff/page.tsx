@@ -122,6 +122,49 @@ export default function DigitalRoofTakeoffPage() {
           </div>
         </section>
 
+        {/* Screenshot showcase */}
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
+            {/* Top bar dots */}
+            <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">
+              <div className="h-3 w-3 rounded-full bg-red-400/70" />
+              <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
+              <div className="h-3 w-3 rounded-full bg-green-400/70" />
+              <span className="ml-3 text-xs text-slate-500">QuoteCore+ - Digital Takeoff</span>
+            </div>
+            <img
+              src="/images/features/digital-roof-takeoff.png"
+              alt="QuoteCore+ digital roof takeoff showing color-coded measurement lines on a roof plan with component list"
+              className="w-full"
+              loading="lazy"
+            />
+          </div>
+          {/* Feature callouts */}
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
+                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" /></svg>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">Plan upload</h3>
+              <p className="mt-1 text-sm text-zinc-600">Upload roof plans and measure directly on top. Zoom, pan, and calibrate to scale.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
+                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">Colour-coded measurements</h3>
+              <p className="mt-1 text-sm text-zinc-600">Areas, ridges, valleys, and flashings each get their own colour. See the whole roof at a glance.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
+                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" /></svg>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">Auto-calculated components</h3>
+              <p className="mt-1 text-sm text-zinc-600">Measure once - areas, lengths, and component counts update automatically.</p>
+            </div>
+          </div>
+        </section>
+
         {/* What it is */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What is digital roof takeoff?</h2>

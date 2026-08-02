@@ -8,7 +8,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Features | QuoteCore+",
   description:
-    "Digital roof takeoffs, Smart Components, material ordering, quote approval tracking, and invoicing. Explore the features that make QuoteCore+ the connected quoting platform for roofing and construction.",
+    "Digital roof takeoffs, Smart Components, material ordering, and invoicing. Explore the features that make QuoteCore+ the connected quoting platform for roofing and construction.",
   alternates: {
     canonical: "https://quote-core.com/features",
     languages: hreflangLanguages("/features"),
@@ -43,10 +43,18 @@ const features = [
   {
     title: "Material Ordering",
     description:
-      "Turn a accepted quote into a material order in seconds. Quantities, codes, and supplier details flow straight from the quote.",
+      "Turn an accepted quote into a material order in seconds. Quantities, codes, and supplier details flow straight from the quote.",
     href: "/features/material-ordering",
     keyword: "material ordering software",
     steps: ["Accept a quote", "Generate a material order", "Send to your supplier", "Track the order"],
+  },
+  {
+    title: "Invoicing",
+    description:
+      "Turn accepted quotes into professional invoices with line items, payment instructions, and online payment tracking.",
+    href: "/features/invoicing",
+    keyword: "contractor invoicing software",
+    steps: ["Accept a quote", "Generate an invoice", "Customer pays", "Track status"],
   },
 ];
 

@@ -108,6 +108,48 @@ export default function MaterialOrderingPage() {
           </div>
         </section>
 
+        {/* Screenshot showcase */}
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+          <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
+            <div className="flex items-center gap-2 border-b border-slate-800 px-4 py-3">
+              <div className="h-3 w-3 rounded-full bg-red-400/70" />
+              <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
+              <div className="h-3 w-3 rounded-full bg-green-400/70" />
+              <span className="ml-3 text-xs text-slate-500">QuoteCore+ - Material Order</span>
+            </div>
+            <img
+              src="/images/features/material-ordering.png"
+              alt="QuoteCore+ material order showing roofing materials with quantities, lengths, supplier details, and delivery information"
+              className="w-full"
+              loading="lazy"
+            />
+          </div>
+          {/* Feature callouts */}
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 p-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
+                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375V21M6 18h2.25c.621 0 1.125-.504 1.125-1.125V13.5c0-.621-.504-1.125-1.125-1.125H6m0 0V9.75M6 4.5h2.25c.621 0 1.125.504 1.125 1.125V9c0 .621-.504 1.125-1.125 1.125H6m0 0V4.5" /></svg>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">One-click order generation</h3>
+              <p className="mt-1 text-sm text-zinc-600">Turn an accepted quote into a material order instantly. Quantities and codes flow straight from the quote.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
+                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0 0V14.25M9.75 9.75h3.375c.621 0 1.125.504 1.125 1.125v3.375M9.75 9.75v3.375m0-3.375h-3.375a1.125 1.125 0 00-1.125 1.125v3.375m6-9.75h6m-6 0V3.375A1.125 1.125 0 0014.25 2.25H5.625A1.125 1.125 0 004.5 3.375v6.75m6-9.75H4.5" /></svg>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">Supplier-ready format</h3>
+              <p className="mt-1 text-sm text-zinc-600">Orders include product codes, cut lengths, delivery address, and contact details. Suppliers get exactly what they need.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
+                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+              </div>
+              <h3 className="mt-3 font-semibold text-slate-900">Profile drawings included</h3>
+              <p className="mt-1 text-sm text-zinc-600">Custom flashings include technical profile drawings with dimensions, so suppliers know exactly what to fabricate.</p>
+            </div>
+          </div>
+        </section>
+
         {/* What it is */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What is material ordering in QuoteCore+?</h2>
