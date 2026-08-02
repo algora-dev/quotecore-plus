@@ -100,7 +100,7 @@ export default function MaterialOrderingPage() {
               Create a material order from an accepted quote, import a quote from another tool, or start from scratch. Quantities, product codes, and profile drawings included. No re-counting, no spreadsheets, no phone calls with missing details.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
                 Start free trial
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
@@ -206,6 +206,72 @@ export default function MaterialOrderingPage() {
           </div>
         </section>
 
+        {/* Supported inputs and outputs */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Inputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Accepted quote with Smart Components</li>
+                <li>- Product codes and quantities from components</li>
+                <li>- Supplier details (name, contact)</li>
+                <li>- Custom line items (add manually)</li>
+                <li>- Blank order (start from scratch)</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Outputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Material order with quantities and product codes</li>
+                <li>- Supplier delivery details</li>
+                <li>- Order stored against the job</li>
+                <li>- Printable order document</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Worked example */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Worked example: ordering tiles and ridge</h2>
+          <div className="mt-6 rounded-xl border border-slate-200 p-6">
+            <p className="text-sm text-zinc-600">A contractor accepts a quote for a 180 m2 gable roof:</p>
+            <ol className="mt-4 space-y-3 text-sm text-zinc-600">
+              <li><strong>1. Open the accepted quote:</strong> The quote has 198 m2 of concrete tiles (with waste) and 12 m of ridge.</li>
+              <li><strong>2. Generate order:</strong> Click "Create material order". All line items pull through automatically with product codes and quantities.</li>
+              <li><strong>3. Add extras:</strong> The contractor adds 2 rolls of underlay and 1 box of nails manually.</li>
+              <li><strong>4. Send to supplier:</strong> The order is emailed or printed for the supplier with all details.</li>
+            </ol>
+          </div>
+        </section>
+
+        {/* Honest limitations */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No direct supplier API ordering</h3>
+              <p className="mt-2 text-sm text-zinc-600">Material orders are generated as documents (printable or emailable). The system does not place live orders into supplier e-commerce systems.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No delivery tracking</h3>
+              <p className="mt-2 text-sm text-zinc-600">Orders are stored against the job, but delivery status tracking is not included. You track delivery through your supplier as normal.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Less suitable use */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">You order from a single supplier with a fixed list</h3>
+              <p className="mt-2 text-sm text-zinc-600">If you always order the same materials from the same supplier with no variation, a phone call or email may be simpler. The order builder adds the most value when quotes vary in scope and materials.</p>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
@@ -239,6 +305,10 @@ export default function MaterialOrderingPage() {
               <h3 className="font-semibold text-slate-900">Supplier network</h3>
               <p className="mt-1 text-sm text-zinc-600">Get your materials in front of contractors who order every day.</p>
             </Link>
+            <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Pricing</h3>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+            </Link>
           </div>
         </section>
 
@@ -247,9 +317,12 @@ export default function MaterialOrderingPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try material ordering free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Start free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
+            </p>
           </div>
         </section>
 

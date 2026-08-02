@@ -109,7 +109,7 @@ export default function SupplierResourcesPage() {
               Search for suppliers in your area, browse their pricing catalogs and component libraries, and import ready-made components directly into your account. No more calling around for price lists. No more manual data entry. Real pricing, ready to quote with.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
                 Start free trial
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
@@ -282,6 +282,48 @@ export default function SupplierResourcesPage() {
           </div>
         </section>
 
+        {/* Supported inputs and outputs */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Inputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Supplier CSV catalogs (product code, name, price)</li>
+                <li>- Supplier component libraries (full Smart Components)</li>
+                <li>- Search by area or product type</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Outputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Imported Smart Components in your account</li>
+                <li>- Converted components from CSV catalog rows</li>
+                <li>- Searchable supplier directory</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Honest limitations */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No live price syncing</h3>
+              <p className="mt-2 text-sm text-zinc-600">Supplier catalogs are snapshots at import time. Prices do not auto-update. You can re-import when a supplier publishes updated data.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No direct supplier ordering</h3>
+              <p className="mt-2 text-sm text-zinc-600">You import supplier pricing into your components, but orders are generated as documents. QuoteCore+ does not place live orders into supplier systems.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Catalog coverage depends on suppliers</h3>
+              <p className="mt-2 text-sm text-zinc-600">Supplier resources are only available for suppliers who have published their catalogs or component libraries on QuoteCore+. Coverage grows as more suppliers join.</p>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
@@ -315,6 +357,10 @@ export default function SupplierResourcesPage() {
               <h3 className="font-semibold text-slate-900">Material ordering</h3>
               <p className="mt-1 text-sm text-zinc-600">Order materials from the same suppliers whose components you imported.</p>
             </Link>
+            <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Pricing</h3>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+            </Link>
           </div>
         </section>
 
@@ -323,9 +369,12 @@ export default function SupplierResourcesPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try supplier resources free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Start free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
+            </p>
           </div>
         </section>
 

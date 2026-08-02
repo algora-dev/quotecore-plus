@@ -109,7 +109,7 @@ export default function SmartComponentsPage() {
               Reusable quoting components that know their own measurements, waste allowances, and pricing rules. Anything in your business - products, materials, services, labour - can be a component. Create once, use forever.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
                 Start free trial
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
@@ -256,6 +256,76 @@ export default function SmartComponentsPage() {
           </div>
         </section>
 
+        {/* Supported inputs and outputs */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Inputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Component name and description</li>
+                <li>- Measurement type (area, linear, volume, per unit, fixed cost)</li>
+                <li>- Price per unit (in your chosen currency)</li>
+                <li>- Waste allowance (percentage or fixed)</li>
+                <li>- Labour rates (optional)</li>
+                <li>- Product codes and supplier references</li>
+                <li>- CSV catalogs from suppliers (bulk import)</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Outputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Priced line items in quotes</li>
+                <li>- Material quantities with waste applied</li>
+                <li>- Labour cost estimates</li>
+                <li>- Material order line items</li>
+                <li>- Invoice line items from accepted quotes</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Worked example */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Worked example: pricing a concrete tile roof</h2>
+          <div className="mt-6 rounded-xl border border-slate-200 p-6">
+            <p className="text-sm text-zinc-600">A contractor creates a Smart Component for a concrete interlocking tile:</p>
+            <ol className="mt-4 space-y-3 text-sm text-zinc-600">
+              <li><strong>1. Create:</strong> Name: "Concrete Tile (Marley Modern)". Measurement type: area. Price: $12/m2. Waste: 10%.</li>
+              <li><strong>2. Attach to takeoff:</strong> The takeoff measures 180 m2 of roof area at 30-degree pitch.</li>
+              <li><strong>3. Auto-calculate:</strong> Area with waste: 180 m2 x 1.10 = 198 m2. Material cost: 198 x $12 = $2,376.</li>
+              <li><strong>4. Reuse:</strong> Next week, a different job has 95 m2 of roof. The same component is dropped in. No re-pricing, no re-calculating waste. The quote updates instantly.</li>
+              <li><strong>5. Update pricing:</strong> Supplier raises the price to $13/m2. Update the component once. All new quotes use $13. Existing quotes keep $12.</li>
+            </ol>
+          </div>
+        </section>
+
+        {/* Honest limitations */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No live supplier price syncing</h3>
+              <p className="mt-2 text-sm text-zinc-600">Component prices are set by you. They do not auto-update from supplier systems. You can import supplier catalogs via CSV, but ongoing price changes require manual updates or re-importing.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No multi-currency within a single quote</h3>
+              <p className="mt-2 text-sm text-zinc-600">Each quote uses one currency. You can set your default currency, but quotes do not mix USD and GBP line items.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Less suitable use */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">You do the same quote every time</h3>
+              <p className="mt-2 text-sm text-zinc-600">If you quote the same product with the same pricing on every job, a simple spreadsheet may be enough. Smart Components add the most value when you quote varied roof types, materials, and suppliers.</p>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
@@ -289,6 +359,10 @@ export default function SmartComponentsPage() {
               <h3 className="font-semibold text-slate-900">Roofing quoting software</h3>
               <p className="mt-1 text-sm text-zinc-600">The full roofing quote workflow, from measurement to invoice.</p>
             </Link>
+            <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Pricing</h3>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+            </Link>
           </div>
         </section>
 
@@ -297,9 +371,12 @@ export default function SmartComponentsPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Start building Smart Components™</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Start free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
+            </p>
           </div>
         </section>
 

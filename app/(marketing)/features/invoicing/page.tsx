@@ -100,7 +100,7 @@ export default function InvoicingPage() {
               Create a branded, professional invoice from an accepted quote, import a quote from another tool, or start from scratch. Line items, pricing, and payment instructions flow automatically. No formatting, no spreadsheets.
             </p>
             <div className="mt-6 flex gap-3">
-              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+              <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
                 Start free trial
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
@@ -206,6 +206,72 @@ export default function InvoicingPage() {
           </div>
         </section>
 
+        {/* Supported inputs and outputs */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Inputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Accepted quote with line items</li>
+                <li>- Customer and business details</li>
+                <li>- Payment instructions (bank details, terms)</li>
+                <li>- Custom line items (add manually)</li>
+                <li>- Blank invoice (start from scratch)</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">Outputs</h3>
+              <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <li>- Professional invoice with line items</li>
+                <li>- Payment panel with bank details</li>
+                <li>- Invoice status tracking (sent, viewed, paid)</li>
+                <li>- Printable invoice document</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Worked example */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">Worked example: invoicing an accepted quote</h2>
+          <div className="mt-6 rounded-xl border border-slate-200 p-6">
+            <p className="text-sm text-zinc-600">A contractor accepts a $4,850 roofing quote:</p>
+            <ol className="mt-4 space-y-3 text-sm text-zinc-600">
+              <li><strong>1. Open the accepted quote:</strong> The quote has 6 line items - tiles, ridge, underlay, nails, labour, and scaffold hire.</li>
+              <li><strong>2. Generate invoice:</strong> Click "Create invoice". All line items, quantities, and prices pull through automatically.</li>
+              <li><strong>3. Add payment details:</strong> Bank account and payment terms (14 days) are added to the invoice.</li>
+              <li><strong>4. Send:</strong> The customer receives the invoice by email. The system tracks when they view it.</li>
+            </ol>
+          </div>
+        </section>
+
+        {/* Honest limitations */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No payment processing</h3>
+              <p className="mt-2 text-sm text-zinc-600">The invoice includes payment instructions, but QuoteCore+ does not process card or bank payments. Customers pay via bank transfer using the details on the invoice.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">No accounting software integration</h3>
+              <p className="mt-2 text-sm text-zinc-600">Invoices are stored in QuoteCore+ but do not sync to Xero, QuickBooks, or other accounting platforms. Export invoice data manually if needed.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Less suitable use */}
+        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+          <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl border border-slate-200 p-6">
+              <h3 className="font-semibold text-slate-900">You need full accounting software</h3>
+              <p className="mt-2 text-sm text-zinc-600">If you need VAT/GST returns, profit and loss reports, or balance sheets, use dedicated accounting software. QuoteCore+ handles the invoice creation and tracking, not the full accounting cycle.</p>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
@@ -239,6 +305,10 @@ export default function InvoicingPage() {
               <h3 className="font-semibold text-slate-900">Free invoice generator</h3>
               <p className="mt-1 text-sm text-zinc-600">Create a professional invoice for free, no signup required.</p>
             </Link>
+            <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <h3 className="font-semibold text-slate-900">Pricing</h3>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+            </Link>
           </div>
         </section>
 
@@ -247,9 +317,12 @@ export default function InvoicingPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try invoicing free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Start free trial
             </a>
+            <p className="mt-4 text-sm text-zinc-500">
+              <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
+            </p>
           </div>
         </section>
 
