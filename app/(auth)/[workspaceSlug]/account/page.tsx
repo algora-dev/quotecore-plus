@@ -10,6 +10,8 @@ import { MfaSection, RecoveryCodesPanel } from '@/app/(auth)/[workspaceSlug]/set
 import { SecurityQuestionsSection } from '@/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection';
 import { AssistantSection } from '@/app/(auth)/[workspaceSlug]/settings/AssistantSection';
 import { SupportSection } from './support/SupportSection';
+import { IntegrationsPanel } from './integrations/IntegrationsPanel';
+import { getIntegrations } from './integrations/actions';
 
 
 import { loadCompanyTaxes } from '@/app/lib/taxes/actions';
@@ -53,6 +55,7 @@ export default async function AccountPage() {
     securityQuestions,
     supportTickets,
     entitlements,
+    integrations,
     plansRes,
   ] = await Promise.all([
     supabase
@@ -81,6 +84,7 @@ export default async function AccountPage() {
     listSecurityQuestions(),
     listMySupportTickets(),
     loadCompanyEntitlements(profile.company_id),
+    getIntegrations(profile.company_id),
     createAdminClient()
       .from('subscription_plans')
       .select('code, display_name, price_cents_monthly, price_cents_monthly_original, monthly_quote_limit, storage_limit_bytes, component_limit, flashing_limit, monthly_material_order_limit, monthly_invoice_limit, monthly_ai_tokens, ai_assist_points_limit, monthly_ai_parse_limit, included_seats, feat_digital_takeoff, feat_flashings, feat_material_orders, feat_followups, feat_email_send, feat_activity_card, feat_invoices, feat_message_center, tagline, feature_blurbs, coming_soon, stripe_price_id_live, stripe_price_id_test, sort_order, active')
@@ -327,6 +331,18 @@ export default async function AccountPage() {
         </section>
       );
     })(),
+
+    integrations: (
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-lg md:text-xl font-semibold text-slate-900">Integrations</h2>
+          <p className="text-sm text-slate-500 mt-1">Send completed quotes to the platforms you already use.</p>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
+          <IntegrationsPanel companyId={profile.company_id} initialIntegrations={integrations} />
+        </div>
+      </section>
+    ),
 
     support: <SupportSection initialTickets={supportTickets} />,
   };

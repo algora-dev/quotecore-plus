@@ -18,6 +18,10 @@ export default function SiteFooter() {
         {" · "}
         <a href="/blog" className="hover:text-zinc-800">Blog</a>
         {" · "}
+        <a href="/company" className="hover:text-zinc-800">Company</a>
+        {" · "}
+        <a href="/about" className="hover:text-zinc-800">About</a>
+        {" · "}
         <a href={"/docs"} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-800">Documentation</a>
         {" · "}
         <a href="/contact" className="hover:text-zinc-800">Contact</a>

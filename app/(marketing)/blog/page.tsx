@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import BlogHeader from '@/components/BlogHeader';
 import { buildPageMetadata, breadcrumbSchema, siteGraphSchema, blogPostingSchema, blogIndexSchema } from '@/app/lib/seo';
-import { getPublishedPosts } from '@/app/lib/blog-posts';
+import { getPublishedPosts, BLOG_CATEGORIES } from '@/app/lib/blog-posts';
 
 export const metadata: Metadata = buildPageMetadata({
   title: 'Roofing, Construction and Quoting Guides | QuoteCore+',
@@ -69,6 +69,20 @@ export default function BlogIndexPage() {
           <p className="mt-4 text-lg text-zinc-500">
             Roofing business tips, quoting advice, and industry insights for contractors.
           </p>
+
+          {/* Topic hubs */}
+          <div className="mt-10 grid gap-3 sm:grid-cols-2">
+            {BLOG_CATEGORIES.map((cat) => (
+              <a
+                key={cat.slug}
+                href={`/resources/${cat.slug}`}
+                className="block rounded-xl border border-slate-200 bg-white p-4 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+              >
+                <h3 className="text-sm font-semibold text-slate-900">{cat.title}</h3>
+                <p className="mt-1 text-xs text-zinc-500">{cat.description}</p>
+              </a>
+            ))}
+          </div>
 
           <div className="mt-14 space-y-6">
             {posts.map((post) => (

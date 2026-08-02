@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import { SITE_URL } from "@/lib/seo/site-url";
+import { ORG_LINKEDIN } from "@/app/lib/seo";
 
 export const metadata: Metadata = {
   title: "About QuoteCore+ | Construction Quoting Software Built From the Industry",
@@ -16,9 +19,48 @@ export const metadata: Metadata = {
   },
 };
 
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Shaun",
+  jobTitle: "Founder, QuoteCore+",
+  description: "12 years of roofing experience. Founded QuoteCore+ to solve the quoting and job management problems he lived with as a working roofer.",
+  url: `${SITE_URL}/about`,
+  image: `${SITE_URL}/shaun.jpg`,
+  worksFor: {
+    "@type": "Organization",
+    name: "QuoteCore+",
+    legalName: "T3 Play Limited",
+    url: `${SITE_URL}/`,
+  },
+  knowsAbout: [
+    "Roofing estimation",
+    "Construction quoting",
+    "Digital takeoff",
+    "Material pricing",
+    "Roof measurement",
+    "Trade business management",
+  ],
+  sameAs: [
+    ORG_LINKEDIN,
+    "https://www.youtube.com/@quotecoreplus",
+  ],
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+    { "@type": "ListItem", position: 2, name: "About", item: `${SITE_URL}/about` },
+  ],
+};
+
 export default function AboutPage() {
   return (
     <>
+      <Script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
+      <Script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 
@@ -95,6 +137,23 @@ export default function AboutPage() {
               </div>
             </div>
 
+          </div>
+
+          {/* Expertise */}
+          <div className="mt-12 rounded-xl border border-slate-200 bg-white p-8">
+            <h2 className="text-xl font-semibold">Areas of expertise</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {["Roofing estimation", "Construction quoting", "Digital takeoff", "Material pricing", "Roof measurement", "Trade business management"].map((area) => (
+                <span key={area} className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{area}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Company link */}
+          <div className="mt-6">
+            <a href="/company" className="text-sm font-semibold text-[#BD4A1A] hover:text-[#FF6B35]">
+              View company information
+            </a>
           </div>
 
           {/* CTA */}
