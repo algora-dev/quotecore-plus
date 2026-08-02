@@ -74,6 +74,7 @@ const PUBLIC_PATHS = [
   '/customer-stories',
   '/company',
   '/coffee-terms',
+  '/tutorials',
   '/features',     // Feature pages (marketing)
   '/free-trial',
   '/construction-quoting-software',
