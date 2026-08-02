@@ -7,7 +7,7 @@ import {
 import { createResultToken, buildResultUrl } from '@/app/(public)/free-roofing-takeoff-builder/result-token';
 import { ROOF_TAKEOFF_CALCULATION_VERSION } from '@/app/(public)/free-roofing-takeoff-builder/public-contract';
 import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
-import { getSupplierBySlug, getSupplierDefaultComponents } from '@/app/lib/supplier-pricing/supplierPricingService';
+import { getSupplierBySlug, getSupplierDefaultComponents, autoResolveSupplier } from '@/app/lib/supplier-pricing/supplierPricingService';
 
 const MAX_BODY_BYTES = 32_000;
 
@@ -30,17 +30,36 @@ export async function POST(request: Request) {
     return Response.json({ success: false, errors: [{ field: 'body', message: 'Request body must be valid JSON.' }] }, { status: 400 });
   }
 
-  // Load supplier pricing if requested
+  // Load supplier pricing - auto-resolve best supplier if none specified
   let components: Awaited<ReturnType<typeof getSupplierDefaultComponents>>['components'] = [];
   let slotMap: SupplierSlotMap = {};
   let supplierProfile: Awaited<ReturnType<typeof getSupplierBySlug>> = null;
+  let autoResolved = false;
 
   if (input.supplier) {
     supplierProfile = await getSupplierBySlug(input.supplier);
     if (supplierProfile) {
       const result = await getSupplierDefaultComponents(supplierProfile.id);
       components = result.components;
-      // Build slotMap from components
+      for (const comp of components) {
+        const slot = (comp as any).takeoff_slot;
+        if (slot) {
+          slotMap[slot] = {
+            componentId: comp.id,
+            componentName: comp.name,
+            componentSku: (comp as any).sku ?? null,
+            unitPrice: comp.price_per_unit,
+          };
+        }
+      }
+    }
+  } else {
+    // Auto-resolve best supplier with live pricing
+    const resolved = await autoResolveSupplier();
+    if (resolved) {
+      supplierProfile = resolved.profile;
+      components = resolved.components;
+      autoResolved = true;
       for (const comp of components) {
         const slot = (comp as any).takeoff_slot;
         if (slot) {

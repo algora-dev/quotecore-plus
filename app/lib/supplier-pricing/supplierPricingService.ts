@@ -234,6 +234,49 @@ export async function getSupplierBySlug(slug: string): Promise<SupplierProfile |
 }
 
 /**
+ * Auto-resolve the best available supplier with live pricing.
+ * Used when no supplier is explicitly requested - ensures the calculator
+ * always returns pricing when any supplier exists.
+ * Returns the supplier profile + its components + slot map, or null.
+ */
+export async function autoResolveSupplier(country?: string): Promise<{
+  profile: SupplierProfile;
+  components: RoofComponentDef[];
+  slotMap: Record<string, string | null>;
+} | null> {
+  const results = await searchSuppliersRanked({
+    country: country || undefined,
+    trade: 'roofing',
+    capability: 'live_pricing',
+  });
+
+  if (results.length === 0) return null;
+
+  // Pick the highest-ranked supplier (results are already sorted by score)
+  const best = results[0];
+  const profile = await getSupplierBySlug(best.slug);
+  if (!profile) return null;
+
+  const { components, slotMap } = await getSupplierDefaultComponents(profile.id);
+  return { profile, components, slotMap };
+}
+
+/**
+ * Load supplier data by slug and return profile + components + slot map.
+ * Convenience function to avoid repeating the same 3-step lookup.
+ */
+export async function loadSupplierData(slug: string): Promise<{
+  profile: SupplierProfile;
+  components: RoofComponentDef[];
+  slotMap: Record<string, string | null>;
+} | null> {
+  const profile = await getSupplierBySlug(slug);
+  if (!profile) return null;
+  const { components, slotMap } = await getSupplierDefaultComponents(profile.id);
+  return { profile, components, slotMap };
+}
+
+/**
  * Get the default component for each takeoff slot for a given supplier.
  */
 export async function getSupplierDefaultComponents(supplierId: string): Promise<{

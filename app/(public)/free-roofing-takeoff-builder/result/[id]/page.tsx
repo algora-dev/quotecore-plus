@@ -4,7 +4,7 @@ import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery, type Public
 import { verifyResultToken, buildResultUrl } from '../../result-token';
 import { BUILT_IN_ORDER, COMPONENT_DEFS } from '../../calc';
 import { ROOF_TAKEOFF_CALCULATION_VERSION } from '../../public-contract';
-import { getSupplierBySlug, getSupplierDefaultComponents } from '@/app/lib/supplier-pricing/supplierPricingService';
+import { getSupplierBySlug, getSupplierDefaultComponents, autoResolveSupplier } from '@/app/lib/supplier-pricing/supplierPricingService';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,16 +52,36 @@ export default async function StableResultPage({ params }: ResultPageProps) {
   const searchParams = new URLSearchParams(payload.q);
   const input = parseQueryInput(searchParams);
 
-  // Load supplier pricing if a supplier slug is in the query
+  // Load supplier pricing - auto-resolve best supplier if none specified
   let components: Awaited<ReturnType<typeof getSupplierDefaultComponents>>['components'] = [];
   let slotMap: SupplierSlotMap = {};
   let supplierProfile: Awaited<ReturnType<typeof getSupplierBySlug>> = null;
+  let autoResolved = false;
 
   if (input.supplier) {
     supplierProfile = await getSupplierBySlug(input.supplier);
     if (supplierProfile) {
       const result = await getSupplierDefaultComponents(supplierProfile.id);
       components = result.components;
+      for (const comp of components) {
+        const slot = (comp as any).takeoff_slot;
+        if (slot) {
+          slotMap[slot] = {
+            componentId: comp.id,
+            componentName: comp.name,
+            componentSku: (comp as any).sku ?? null,
+            unitPrice: comp.price_per_unit,
+          };
+        }
+      }
+    }
+  } else {
+    // Auto-resolve best supplier with live pricing
+    const resolved = await autoResolveSupplier();
+    if (resolved) {
+      supplierProfile = resolved.profile;
+      components = resolved.components;
+      autoResolved = true;
       for (const comp of components) {
         const slot = (comp as any).takeoff_slot;
         if (slot) {
