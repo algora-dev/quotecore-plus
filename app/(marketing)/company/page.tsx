@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { hreflangLanguages } from "@/lib/seo/hreflang";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_NAME, ORG_LEGAL_NAME, ORG_EMAIL, ORG_LINKEDIN } from "@/app/lib/seo";
 
@@ -12,7 +11,6 @@ export const metadata: Metadata = {
     "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by an ex-roofer with 12 years of trade experience. Learn about the company, product, and mission.",
   alternates: {
     canonical: "https://quote-core.com/company",
-    languages: hreflangLanguages("/company"),
   },
   openGraph: {
     title: "Company | QuoteCore+",

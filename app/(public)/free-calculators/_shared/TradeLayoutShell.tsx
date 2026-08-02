@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { TradeConfig } from './types';
+import { hreflangLanguages } from '@/lib/seo/hreflang';
 import { signupHref } from './types';
 import { FreeToolsAuthProvider } from '../../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../../_components/FreeToolsAuthButton';
@@ -13,7 +14,10 @@ export function buildTradeMetadata(config: TradeConfig) {
   return {
     title: config.metaTitle,
     description: config.metaDescription,
-    alternates: { canonical: `${SITE_URL}/${config.slug}` },
+    alternates: {
+      canonical: `${SITE_URL}/${config.slug}`,
+      languages: hreflangLanguages(`/${config.slug}`),
+    },
     openGraph: {
       title: config.ogTitle,
       description: config.ogDescription,

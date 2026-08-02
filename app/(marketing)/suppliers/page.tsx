@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { buildPageMetadata } from "@/app/lib/seo";
-import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "Partner with QuoteCore+ | Roofing Supplier Network",
@@ -10,7 +8,6 @@ export const metadata: Metadata = {
     "Get your roofing materials in front of contractors who quote, order, and buy every day. Join the QuoteCore+ supplier network to reach active buyers, upload your catalogue, and grow your business.",
   alternates: {
     canonical: "https://quote-core.com/suppliers",
-    languages: hreflangLanguages("/suppliers"),
   },
   openGraph: {
     title: "Partner with QuoteCore+ | Roofing Supplier Network",

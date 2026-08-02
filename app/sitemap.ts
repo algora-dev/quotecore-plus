@@ -20,56 +20,54 @@ import { SITE_URL } from '@/lib/seo/site-url';
  */
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
-
   const staticEntries: MetadataRoute.Sitemap = [
-    { url: SITE_URL, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${SITE_URL}/roofing-quoting-software`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/construction-quoting-software`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/services`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: 'yearly', priority: 0.5 },
-    { url: `${SITE_URL}/company`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${SITE_URL}/features`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/features/digital-roof-takeoff`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/features/smart-components`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/features/material-ordering`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/features/invoicing`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/features/supplier-resources`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: SITE_URL, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${SITE_URL}/blog`, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${SITE_URL}/roofing-quoting-software`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/construction-quoting-software`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/services`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/about`, changeFrequency: 'yearly', priority: 0.5 },
+    { url: `${SITE_URL}/company`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_URL}/features`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/features/digital-roof-takeoff`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/features/smart-components`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/features/material-ordering`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/features/invoicing`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/features/supplier-resources`, changeFrequency: 'monthly', priority: 0.8 },
     // Resource hubs
-    { url: `${SITE_URL}/resources/roofing-estimating`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE_URL}/resources/construction-quoting`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE_URL}/resources/digital-takeoffs`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE_URL}/resources/contractor-business`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE_URL}/resources/quotecore-guides`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE_URL}/resources/comparisons`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE_URL}/resources/ai`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${SITE_URL}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.5 },
-    { url: `${SITE_URL}/free-trial`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/suppliers`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${SITE_URL}/cookie-policy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/resources/roofing-estimating`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/resources/construction-quoting`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/resources/digital-takeoffs`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/resources/contractor-business`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/resources/quotecore-guides`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/resources/comparisons`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/resources/ai`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/contact`, changeFrequency: 'yearly', priority: 0.5 },
+    { url: `${SITE_URL}/free-trial`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/suppliers`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/cookie-policy`, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.3 },
     // Docs
-    { url: `${SITE_URL}/docs`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/docs`, changeFrequency: 'weekly', priority: 0.7 },
     // Free tools hub
-    { url: `${SITE_URL}/free-tools`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${SITE_URL}/free-tools`, changeFrequency: 'weekly', priority: 0.9 },
     // Free calculators hub (category page)
-    { url: `${SITE_URL}/free-calculators`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${SITE_URL}/free-calculators`, changeFrequency: 'weekly', priority: 0.8 },
     // Main trade calculators
-    { url: `${SITE_URL}/free-roofing-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/free-construction-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/free-concrete-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/free-landscaping-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/free-birds-mouth-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-roofing-calculator`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-construction-calculator`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-concrete-calculator`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-landscaping-calculator`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-birds-mouth-calculator`, changeFrequency: 'monthly', priority: 0.9 },
     // Free document generators
-    { url: `${SITE_URL}/free-quote-generator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/free-purchase-order-generator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/free-invoice-generator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-quote-generator`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-purchase-order-generator`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-invoice-generator`, changeFrequency: 'monthly', priority: 0.9 },
     // Roof takeoff builder (standalone tool, not part of slug system)
-    { url: `${SITE_URL}/free-roofing-takeoff-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/docs/roof-takeoff-api`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${SITE_URL}/docs/roof-takeoff-calculate`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_URL}/free-roofing-takeoff-builder`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/docs/roof-takeoff-api`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_URL}/docs/roof-takeoff-calculate`, changeFrequency: 'monthly', priority: 0.6 },
   ];
 
   // Blog posts (from shared source, excludes drafts)
@@ -84,25 +82,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const slugEntries: MetadataRoute.Sitemap = [
     ...ROOFING_SLUGS.map((slug) => ({
       url: `${SITE_URL}/${slug}`,
-      lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
     ...CONCRETE_SLUGS.map((slug) => ({
       url: `${SITE_URL}/${slug.slug}`,
-      lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
     ...CONSTRUCTION_SLUGS.map((slug) => ({
       url: `${SITE_URL}/${slug.slug}`,
-      lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
     ...SLOPE_SLUGS.map((slug) => ({
       url: `${SITE_URL}/${slug.slug}`,
-      lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
     })),
@@ -113,7 +107,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     .filter((s) => s !== '')
     .map((slug) => ({
       url: `${SITE_URL}/docs/${slug}`,
-      lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.5,
     }));
