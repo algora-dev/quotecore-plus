@@ -420,7 +420,8 @@ export class FergusConnector implements Connector {
 
           const formData = new FormData();
           formData.append('file', new Blob([fileBuffer]), fileName);
-          formData.append('jobId', String(jobId));
+          formData.append('entityType', 'job');
+          formData.append('entityId', String(jobId));
 
           const uploadRes = await fetch(`${FERGUS_BASE}/attachments`, {
             method: 'POST',
@@ -450,9 +451,9 @@ export class FergusConnector implements Connector {
     // Step 5: Add note
     try {
       const noteBody = {
-        title: 'Quote exported from QuoteCore+',
-        body: `Quote ${data.source.quoteNumber} exported to Fergus on ${new Date().toISOString()}`,
-        relatedTo: { jobId },
+        text: `Quote ${data.source.quoteNumber} exported from QuoteCore+ on ${new Date().toISOString()}`,
+        entityName: 'job',
+        entityId: jobId,
       };
 
       await fetch(`${FERGUS_BASE}/notes`, {
@@ -551,19 +552,21 @@ function buildQuoteSections(
   lineItems: Array<{
     itemName: string;
     itemQuantity: number;
+    itemPrice: number;
     itemCost: number;
     sortOrder: number;
   }>;
 }> {
   const data = envelope.data;
-  const sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemCost: number; sortOrder: number }> }> = [];
+  const sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemPrice: number; itemCost: number; sortOrder: number }> }> = [];
 
   // Main quote lines
   if (data.customerLines && data.customerLines.length > 0) {
     const lineItems = data.customerLines.map((line, i) => ({
       itemName: line.description || 'Item',
       itemQuantity: line.quantity ? Number(line.quantity) : 1,
-      itemCost: line.unitPrice ? Number(line.unitPrice) : 0,
+      itemPrice: line.lineTotal ? Number(line.lineTotal) : (line.unitPrice ? Number(line.unitPrice) : 0),
+      itemCost: 0,
       sortOrder: i,
     }));
     sections.push({ name: 'Quote Items', lineItems });
@@ -574,7 +577,8 @@ function buildQuoteSections(
     const labourItems = data.labourLines.map((line, i) => ({
       itemName: line.description || 'Labour',
       itemQuantity: 1,
-      itemCost: line.amount != null ? Number(line.amount) : 0,
+      itemPrice: line.amount != null ? Number(line.amount) : 0,
+      itemCost: 0,
       sortOrder: i,
     }));
     sections.push({ name: 'Labour', lineItems: labourItems });

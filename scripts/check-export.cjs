@@ -1,30 +1,19 @@
 const https = require('https');
-const token = process.argv[2];
-
-async function query(sql) {
-  return new Promise((resolve) => {
-    const body = JSON.stringify({ query: sql });
-    const options = {
-      hostname: 'api.supabase.com',
-      path: '/v1/projects/aaavvfttkesdzblttmby/database/query',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
-    };
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => resolve(data));
-    });
-    req.write(body);
-    req.end();
+https.get('https://api.fergus.com/docs/json', (res) => {
+  let data = '';
+  res.on('data', c => data += c);
+  res.on('end', () => {
+    const spec = JSON.parse(data);
+    // Get the full quote creation schema
+    const quotePath = spec.paths['/jobs/{jobId}/quotes']?.post?.requestBody?.content['application/json']?.schema;
+    if (quotePath?.properties?.sections?.items) {
+      console.log('Section schema:', JSON.stringify(quotePath.properties.sections.items, null, 2));
+    }
+    // Check CreateNotePayload
+    const notePayload = spec.components?.schemas?.CreateNotePayload;
+    console.log('CreateNotePayload:', JSON.stringify(notePayload, null, 2));
+    // Check attachment schema more closely
+    const attPath = spec.paths['/attachments']?.post?.requestBody;
+    console.log('Attachment requestBody:', JSON.stringify(attPath, null, 2));
   });
-}
-
-(async () => {
-  const ra = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_roof_areas' ORDER BY ordinal_position;`);
-  console.log('quote_roof_areas:', ra);
-  const re = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_roof_area_entries' ORDER BY ordinal_position;`);
-  console.log('quote_roof_area_entries:', re);
-  const ce = await query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'quote_component_entries' ORDER BY ordinal_position;`);
-  console.log('quote_component_entries:', ce);
-})();
+});
