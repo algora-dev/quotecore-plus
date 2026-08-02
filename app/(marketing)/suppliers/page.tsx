@@ -293,6 +293,7 @@ export default function SuppliersPage() {
                 ))}
               </ul>
             </div>
+            <p className="mt-4 text-xs text-slate-500">Pricing in supplier catalogues is indicative, sourced from publicly available supplier data at upload time. Prices do not auto-update - suppliers can re-upload when pricing changes.</p>
           </div>
         </section>
 
