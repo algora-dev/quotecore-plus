@@ -6,10 +6,10 @@ export const constructionConfig: TradeConfig = {
   slug: 'free-construction-calculator',
   defaultCurrency: 'GBP',
   name: 'Construction Calculator',
-  metaTitle: 'Free Construction Calculator - Areas, Materials & Angles | QuoteCore+',
+  metaTitle: 'Construction Calculator - Areas & Angles | QuoteCore+',
   metaDescription:
     'Free construction calculator for builders. Work out floor and wall areas, timber and stud lengths, material quantities with waste, and cutting angles. No signup required.',
-  ogTitle: 'Free Construction Calculator - Areas, Materials & Angles',
+  ogTitle: 'Construction Calculator - Areas & Angles',
   ogDescription:
     'Free construction calculator. Floor and wall areas, timber and stud lengths, material quantities and cutting angles for builders. No signup required.',
 

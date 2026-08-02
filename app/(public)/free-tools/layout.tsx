@@ -5,7 +5,7 @@ import { hreflangLanguages } from '@/lib/seo/hreflang';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'Free Tools for Trades - Quote Generator, Calculators, PO & Invoice | QuoteCore+',
+  title: 'Free Trade Tools - Calculators & Generators | QuoteCore+',
   description:
     'Free professional trade tools: quote generator, construction calculators, roof takeoff builder, purchase order generator, and invoice generator. No signup required. Built by trades, for trades.',
   alternates: {
@@ -13,7 +13,7 @@ export const metadata = {
     languages: hreflangLanguages('/free-tools'),
   },
   openGraph: {
-    title: 'Free Tools for Trades - Quote Generator, Calculators, PO & Invoice',
+    title: 'Free Trade Tools - Calculators & Generators',
     description:
       'Free professional trade tools: quote generator, construction calculators, roof takeoff builder, purchase order generator, and invoice generator. No signup required.',
     url: `${SITE_URL}/free-tools`,
