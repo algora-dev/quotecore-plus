@@ -8,25 +8,13 @@ import SocialIcons from "./SocialIcons";
 
 function buildNavItems(app: string) {
   return [
-    { label: "Home", href: "/" },
-    { label: "How it works", href: "/#how-it-works" },
-    { label: "Services", href: "/services" },
     { label: "Features", href: "/features" },
-    { label: "Digital Roof Takeoff", href: "/features/digital-roof-takeoff" },
-    { label: "Smart Components", href: "/features/smart-components" },
-    { label: "Material Ordering", href: "/features/material-ordering" },
-    { label: "Invoicing", href: "/features/invoicing" },
-    { label: "Supplier Resources", href: "/features/supplier-resources" },
     { label: "Roofing Software", href: "/roofing-quoting-software" },
     { label: "Construction Software", href: "/construction-quoting-software" },
     { label: "Pricing", href: "/pricing" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
-    { label: "Company", href: "/company" },
-    { label: "Documentation", href: `${app}/docs`, external: true },
-    { label: "App", href: app || "/login", external: true },
     { label: "Contact us", href: "/contact" },
-    { label: "Free trial", href: "/free-trial" },
   ];
 }
 
