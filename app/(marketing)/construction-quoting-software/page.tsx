@@ -241,7 +241,7 @@ export default function ConstructionQuotingSoftwarePage() {
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
                 href="/free-trial"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-8 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
                 Start free 14-day trial
               </a>
@@ -510,6 +510,25 @@ export default function ConstructionQuotingSoftwarePage() {
           </div>
         </section>
 
+        {/* Honest limitations */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">What QuoteCore+ does not do</h2>
+          <div className="mt-8 space-y-4">
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">No project management or scheduling</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">QuoteCore+ handles quoting, material ordering, and invoicing. It does not manage construction schedules, Gantt charts, or resource allocation.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">No accounting or tax returns</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">Invoices are created and tracked, but QuoteCore+ does not handle VAT/GST returns, profit and loss, or balance sheets.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">No payment processing</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">Invoices include payment instructions, but QuoteCore+ does not process card or bank payments directly.</p>
+            </div>
+          </div>
+        </section>
+
         {/* Final CTA */}
         <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-5xl">
@@ -522,12 +541,12 @@ export default function ConstructionQuotingSoftwarePage() {
 
           <a
             href="/free-trial"
-            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-[#FF6B35] px-10 py-3 text-base font-semibold text-white transition-colors hover:bg-[#E55A28]"
+            className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
             Start your free 14-day trial
           </a>
 
-          <p className="mt-4 text-sm text-zinc-400">No card required. 14 days free.</p>
+          <p className="mt-4 text-sm text-zinc-400">No card required. 14 days free. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />
