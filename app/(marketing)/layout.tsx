@@ -46,6 +46,7 @@ const combinedSchema = {
       },
       sameAs: [
         "https://www.linkedin.com/company/quotecore/",
+        "https://www.youtube.com/@quotecoreplus",
         "https://www.trustpilot.com/review/quote-core.com",
         "https://www.capterra.com/p/10023337/QuoteCore/",
       ],

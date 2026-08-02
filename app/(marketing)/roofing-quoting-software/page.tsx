@@ -127,6 +127,29 @@ const faqs = [
   },
 ];
 
+const videoSchemas = [
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: "How to Set Up Roofing Smart Components in QuoteCore+",
+    description: "Step-by-step tutorial showing how to set up roofing Smart Components in QuoteCore+.",
+    thumbnailUrl: "https://i.ytimg.com/vi/XZSTIfGUHAU/maxresdefault.jpg",
+    uploadDate: "2026-07-28",
+    embedUrl: "https://www.youtube-nocookie.com/embed/XZSTIfGUHAU",
+    contentUrl: "https://www.youtube.com/watch?v=XZSTIfGUHAU",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: "Create a Quote from Start to Finish with QuoteCore+",
+    description: "Full walkthrough showing how to create a quote from start to finish using QuoteCore+.",
+    thumbnailUrl: "https://i.ytimg.com/vi/pqIfx-rOcmo/maxresdefault.jpg",
+    uploadDate: "2026-07-28",
+    embedUrl: "https://www.youtube-nocookie.com/embed/pqIfx-rOcmo",
+    contentUrl: "https://www.youtube.com/watch?v=pqIfx-rOcmo",
+  },
+];
+
 export default function RoofingQuotingSoftwarePage() {
   return (
     <>
@@ -138,6 +161,9 @@ export default function RoofingQuotingSoftwarePage() {
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
     />
+    {videoSchemas.map((v) => (
+      <script key={v.contentUrl} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(v) }} />
+    ))}
 
     <main className="min-h-screen bg-white text-zinc-950">
        <BlogHeader />
