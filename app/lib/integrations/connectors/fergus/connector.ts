@@ -249,15 +249,78 @@ export class FergusConnector implements Connector {
       }
     }
 
-    // Step 2: Create job (draft first, then we could finalise later)
-    // Fergus non-draft jobs require a siteId, so we create as draft
+    // Step 2: Create or repair the job.
     if (existingJob) {
       jobId = Number(existingJob.externalId);
-      steps.push({
-        type: 'upsert_job',
-        status: 'skipped',
-        externalId: String(jobId),
-      });
+      try {
+        const existingResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
+          headers,
+          signal: AbortSignal.timeout(30000),
+        });
+        if (!existingResponse.ok) {
+          throw new Error(`Failed to load mapped job: ${existingResponse.status}`);
+        }
+
+        const existingPayload = await existingResponse.json();
+        const isDraftJob = !existingPayload.data?.jobNumber;
+        if (!isDraftJob) {
+          steps.push({ type: 'upsert_job', status: 'skipped', externalId: String(jobId) });
+        } else {
+          if (existingSite) {
+            siteId = Number(existingSite.externalId);
+            steps.push({ type: 'upsert_site', status: 'skipped', externalId: String(siteId) });
+          } else {
+            const siteResult = await createFergusSite(envelope, headers, context);
+            siteId = siteResult.siteId;
+            steps.push(siteResult.step);
+          }
+
+          if (!customerId || !siteId) {
+            throw new Error('Cannot finalise mapped Fergus job without a customer and site');
+          }
+
+          const updates: Array<Record<string, unknown>> = [
+            { title: data.job.name || `Quote ${data.source.quoteNumber}` },
+            { description: buildJobDescription(envelope, scopes) },
+            { customerId },
+            { customerReference: String(data.source.quoteNumber ?? '') },
+            { siteId },
+          ];
+          for (const update of updates) {
+            const updateResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
+              method: 'PUT',
+              headers,
+              body: JSON.stringify(update),
+              signal: AbortSignal.timeout(30000),
+            });
+            if (!updateResponse.ok) {
+              const errorText = await updateResponse.text().catch(() => 'Unknown error');
+              throw new Error(`Failed to repair mapped job: ${updateResponse.status} ${errorText.slice(0, 300)}`);
+            }
+          }
+
+          const finaliseResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}/finalise`, {
+            method: 'PUT',
+            headers,
+            signal: AbortSignal.timeout(30000),
+          });
+          if (!finaliseResponse.ok) {
+            const errorText = await finaliseResponse.text().catch(() => 'Unknown error');
+            throw new Error(`Failed to finalise mapped job: ${finaliseResponse.status} ${errorText.slice(0, 300)}`);
+          }
+
+          steps.push({ type: 'upsert_job', status: 'succeeded', externalId: String(jobId) });
+          await context.logStep('repair_draft_job', {
+            responseStatus: finaliseResponse.status,
+            responseSummary: { jobId, siteId },
+          });
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to repair mapped job';
+        steps.push({ type: 'upsert_job', status: 'failed', errorSummary: message });
+        await context.logStep('repair_draft_job', { errorSummary: message });
+        return { status: 'failed', steps, externalRecords, errorSummary: message };
+      }
     } else {
       try {
         const jobBody: Record<string, unknown> = {
@@ -277,50 +340,10 @@ export class FergusConnector implements Connector {
           siteId = Number(existingSite.externalId);
           steps.push({ type: 'upsert_site', status: 'skipped', externalId: String(siteId) });
         }
-        const siteAddress = buildAddressPayload(data.site.address || data.customer?.billingAddress || null);
-        if (!siteId && siteAddress) {
-          try {
-            const siteBody: Record<string, unknown> = {
-              name: data.site.name || data.job.name || data.customer?.name || 'Site',
-              defaultContact: buildPersonPayload(
-                data.customer?.name || 'Site contact',
-                data.customer?.email || null,
-                data.customer?.phone || null
-              ),
-              siteAddress,
-            };
-            const siteRes = await fetch(`${FERGUS_BASE}/sites`, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify(siteBody),
-              signal: AbortSignal.timeout(30000),
-            });
-            if (siteRes.ok) {
-              const siteResult = await siteRes.json();
-              siteId = siteResult.data?.id ?? siteResult.id;
-              steps.push({ type: 'upsert_site', status: 'succeeded', externalId: String(siteId) });
-              await context.logStep('upsert_site', {
-                responseStatus: siteRes.status,
-                responseSummary: { siteId },
-              });
-            } else {
-              const errorText = await siteRes.text().catch(() => 'Unknown error');
-              steps.push({
-                type: 'upsert_site',
-                status: 'failed',
-                errorSummary: `Failed to create site: ${siteRes.status}`,
-              });
-              await context.logStep('upsert_site', {
-                responseStatus: siteRes.status,
-                errorSummary: `Failed: ${siteRes.status} ${errorText.slice(0, 500)}`,
-                requestSummary: { siteBody },
-              });
-            }
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown site error';
-            steps.push({ type: 'upsert_site', status: 'failed', errorSummary: message });
-            await context.logStep('upsert_site', { errorSummary: message });
-          }
+        if (!siteId) {
+          const siteResult = await createFergusSite(envelope, headers, context);
+          siteId = siteResult.siteId;
+          steps.push(siteResult.step);
         }
 
         if (siteId) {
@@ -678,6 +701,78 @@ function buildPersonPayload(name: string, email: string | null, phone: string | 
     ...(lastName ? { lastName } : {}),
     ...(contactItems.length > 0 ? { contactItems } : {}),
   };
+}
+
+async function createFergusSite(
+  envelope: IntegrationEnvelopeV1,
+  headers: Record<string, string>,
+  context: ExecutionContext
+): Promise<{ siteId: number | null; step: StepResult }> {
+  const data = envelope.data;
+  const siteAddress = buildAddressPayload(data.site.address || data.customer?.billingAddress || null);
+  if (!siteAddress) {
+    return {
+      siteId: null,
+      step: {
+        type: 'upsert_site',
+        status: 'failed',
+        errorSummary: 'A site address is required to create an active Fergus job',
+      },
+    };
+  }
+
+  const siteBody: Record<string, unknown> = {
+    name: data.site.name || data.job.name || data.customer?.name || 'Site',
+    defaultContact: buildPersonPayload(
+      data.customer?.name || 'Site contact',
+      data.customer?.email || null,
+      data.customer?.phone || null
+    ),
+    siteAddress,
+  };
+
+  try {
+    const response = await fetch(`${FERGUS_BASE}/sites`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(siteBody),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      await context.logStep('upsert_site', {
+        responseStatus: response.status,
+        errorSummary: `Failed: ${response.status} ${errorText.slice(0, 500)}`,
+        requestSummary: { siteBody },
+      });
+      return {
+        siteId: null,
+        step: {
+          type: 'upsert_site',
+          status: 'failed',
+          errorSummary: `Failed to create site: ${response.status}`,
+        },
+      };
+    }
+
+    const result = await response.json();
+    const siteId = Number(result.data?.id ?? result.id);
+    await context.logStep('upsert_site', {
+      responseStatus: response.status,
+      responseSummary: { siteId },
+    });
+    return {
+      siteId,
+      step: { type: 'upsert_site', status: 'succeeded', externalId: String(siteId) },
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown site error';
+    await context.logStep('upsert_site', { errorSummary: message });
+    return {
+      siteId: null,
+      step: { type: 'upsert_site', status: 'failed', errorSummary: message },
+    };
+  }
 }
 
 function buildAddressPayload(address: Address | null): Record<string, string> | null {

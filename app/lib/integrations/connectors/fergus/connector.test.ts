@@ -82,6 +82,61 @@ test('exports a complete quote into an active Fergus job', async () => {
   }
 });
 
+test('repairs and finalises a previously mapped draft job', async () => {
+  const requests: Array<{ url: string; method: string; body?: unknown }> = [];
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = (async (input, init) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    const method = init?.method || 'GET';
+    const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
+    requests.push({ url, method, body });
+
+    if (url.startsWith('https://files.test/')) return new Response(new Uint8Array([1]), { status: 200 });
+    if (url.endsWith('/jobs/303') && method === 'GET') {
+      return Response.json({ data: { id: 303, jobNumber: null } });
+    }
+    if (url.endsWith('/sites')) return Response.json({ data: { id: 202 } }, { status: 201 });
+    if (url.endsWith('/jobs/303') && method === 'PUT') return Response.json({ data: { id: 303 } }, { status: 201 });
+    if (url.endsWith('/jobs/303/finalise')) return Response.json({ data: { id: 303, jobNumber: 'J-303' } });
+    if (url.endsWith('/jobs/303/quotes')) return Response.json({ data: { id: 404 } }, { status: 201 });
+    if (url.endsWith('/attachments')) return Response.json({ data: { id: 505 } }, { status: 201 });
+    if (url.endsWith('/notes')) return Response.json({ data: { id: 606 } }, { status: 201 });
+    return Response.json({ message: 'Unexpected request' }, { status: 500 });
+  }) as typeof fetch;
+
+  try {
+    const connector = new FergusConnector();
+    const envelope = createEnvelope();
+    const config: IntegrationConfig = {
+      provider: 'fergus',
+      config: {},
+      dataScopes: { ...DEFAULT_DATA_SCOPES, measurementsAndTakeoff: true, filesAndPlans: true },
+    };
+    const context: ExecutionContext = {
+      integrationId: 'integration-id',
+      companyId: 'company-id',
+      exportId: 'export-id',
+      attemptNumber: 1,
+      getCredential: async () => 'test-token',
+      getSignedUrl: async (path) => `https://files.test/${encodeURIComponent(path)}`,
+      logStep: async () => undefined,
+      existingMappings: [
+        { externalType: 'contact', externalId: '101', externalUrl: null, lastSyncedRevision: 1 },
+        { externalType: 'job', externalId: '303', externalUrl: null, lastSyncedRevision: 1 },
+      ],
+    };
+    const plan = await connector.plan(envelope, config, context);
+    const result = await connector.execute(plan, envelope, config, context);
+
+    assert.equal(result.status, 'succeeded');
+    assert.ok(requests.some((request) => request.url.endsWith('/jobs/303/finalise') && request.method === 'PUT'));
+    assert.ok(requests.some((request) => request.url.endsWith('/jobs/303') && request.method === 'PUT' && (request.body as { siteId?: number }).siteId === 202));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 function createEnvelope(): IntegrationEnvelopeV1 {
   return {
     schemaVersion: '1.0',
