@@ -32,6 +32,20 @@ export default function FreeToolsPage() {
           </div>
         </section>
 
+        {/* What do you need to do? routing */}
+        <section className="mx-auto max-w-5xl px-2 md:px-6 py-8 md:py-12">
+          <h2 className="text-lg md:text-2xl font-semibold text-slate-900 mb-4">What do you need to do?</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <Link href="/free-roof-pricing-calculator" prefetch={false} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all">Price a roof</Link>
+            <Link href="/free-roofing-takeoff-builder" prefetch={false} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all">Measure a roof</Link>
+            <Link href="/free-roofing-calculator" prefetch={false} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all">Calculate materials</Link>
+            <Link href="/free-quote-generator" prefetch={false} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all">Create a quote</Link>
+            <Link href="/free-invoice-generator" prefetch={false} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all">Create an invoice</Link>
+            <Link href="/free-purchase-order-generator" prefetch={false} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:border-[#FF6B35] hover:bg-orange-50/40 transition-all">Create a purchase order</Link>
+          </div>
+          <p className="mt-4 text-sm text-slate-500">Not sure where to begin? Start with the <Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline">Roof Takeoff Builder</Link>.</p>
+        </section>
+
         {/* Tool sections */}
         <div className="mx-auto max-w-5xl px-2 md:px-6 pb-12 md:pb-20 space-y-12 md:space-y-20">
           <QuoteGeneratorSection />

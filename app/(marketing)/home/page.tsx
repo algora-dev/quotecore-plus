@@ -385,6 +385,7 @@ export default function HomePage() {
                   title="Create a complex roofing quote in under 3 minutes"
                   className="w-full"
                 />
+                <p className="mt-2 text-center text-xs text-zinc-500">Once components are configured, the result is repeatable.</p>
               </div>
             </div>
             {/* Scroll indicator */}
@@ -424,7 +425,7 @@ export default function HomePage() {
               </p>
               <div className="mt-5 rounded-xl border border-white/10 bg-white/5 px-5 py-3 sm:mt-6 sm:py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35] mb-2">Who&apos;s it for?</p>
-                <p className="text-base leading-7 text-zinc-200">QuoteCore+ is built for any business that needs to quote, manage work and get paid. From roofers and builders to electricians, landscapers, manufacturers and service businesses, Smart Components™ adapt to the way you already work - giving you one connected workflow from your first quote to your final invoice.</p>
+                <p className="text-base leading-7 text-zinc-200">QuoteCore+ is built for roofers first. From residential re-roofs to commercial cladding, Smart Components™ handle the pitches, angles and measurements roofing demands daily. Construction, cladding, fencing, flooring and landscaping trades use it too - Smart Components™ adapt to the way you already work, giving you one connected workflow from your first quote to your final invoice.</p>
               </div>
             </div>
             <div className="relative mt-5 flex flex-wrap gap-4 sm:mt-8">
@@ -754,10 +755,10 @@ export default function HomePage() {
                 <div className="max-w-2xl">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">Supplier Network</p>
                   <h2 className="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">
-                    Building the largest roofing supplier network in the world.
+                    Our goal is to build the largest roofing supplier network in the world.
                   </h2>
                   <p className="mt-5 text-base leading-7 text-zinc-300 sm:text-lg sm:leading-8">
-                    We&apos;re partnering with high-quality roofing suppliers to connect them with people who quote, order, and buy materials every day. If you supply quality roofing materials to your area, and you want to grow, we want to work with you.
+                    We have a very unique way to do it. We connect quality roofing suppliers with contractors who quote, order, and buy materials every day. If you supply roofing materials and want to grow, we want to work with you.
                   </p>
                 </div>
                 <a
