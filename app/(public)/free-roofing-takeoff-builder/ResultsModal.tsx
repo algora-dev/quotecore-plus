@@ -17,7 +17,7 @@ interface ResultsModalProps {
 }
 
 export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose }: ResultsModalProps) {
-  const cur = '\u00A3';
+  const cur = '$';
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
   const areaUnit = unitSystem === 'metric' ? 'm\u00B2' : unitSystem === 'imperial' ? 'sq ft' : 'squares';
@@ -104,7 +104,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
         const rate = (matCost.cost + labCost) / (withWaste || 1);
         const entryLabel = entry.label || `${label} ${section.entries.indexOf(entry) + 1}`;
         const desc = entry.knownPrice != null && entry.knownPrice > 0
-          ? `${entryLabel} - Known price ${'\u00A3'}${entry.knownPrice.toFixed(2)}/${isFixed ? 'pc' : unit}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
+          ? `${entryLabel} - Known price ${'$'}${entry.knownPrice.toFixed(2)}/${isFixed ? 'pc' : unit}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
           : comp
             ? `${entryLabel} - ${comp.name}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`
             : `${entryLabel}${section.wastePercent > 0 && !isFixed ? ` (+${section.wastePercent}% waste)` : ''}`;
@@ -176,7 +176,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                         <div className="min-w-0 flex-1">
                           <span className="text-slate-500">{entry.label || `Entry ${idx + 1}`}</span>
                           {isPitchCalc && <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}{'\u00b0'}</span>}
-                          {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#BD4A1A] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
+                          {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#BD4A1A] font-medium">{'$'}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
                           {comp && <span className="ml-2 text-slate-400 truncate">{comp.name}</span>}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">

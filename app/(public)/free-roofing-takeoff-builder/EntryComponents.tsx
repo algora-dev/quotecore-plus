@@ -87,7 +87,7 @@ export function EntryListItem({ entry, index, kind, customDef, measureMode, lenL
             <span className="text-[10px] text-slate-400">+{wastePercent}% = {withWasteVal.toFixed(2)}</span>
           )}
           {entry.knownPrice != null && entry.knownPrice > 0 && (
-            <span className="text-[10px] text-[#BD4A1A] font-medium">{'\u00A3'}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
+            <span className="text-[10px] text-[#BD4A1A] font-medium">{'$'}{entry.knownPrice.toFixed(2)}/{isRoofArea ? areaLabel : isFixed ? 'pc' : lenLabel}</span>
           )}
           {selectedComp && <span className="text-[10px] text-slate-400 truncate">{selectedComp.name}</span>}
         </div>
@@ -294,7 +294,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
             className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 md:px-3 py-1.5 text-sm md:text-xs text-slate-700 focus:border-orange-500 focus:outline-none">
             <option value="">- No component (lengths only) -</option>
             {availableComponents.map(comp => (
-              <option key={comp.id} value={comp.id}>{comp.name} ({'\u00A3'}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
+              <option key={comp.id} value={comp.id}>{comp.name} ({'$'}{comp.price_per_unit.toFixed(2)}/{comp.unit}){comp.description ? ` - ${comp.description}` : ''}</option>
             ))}
           </select>
         </div>
@@ -304,7 +304,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       )}
       {pricingMode === 'known_price' && (
         <div>
-          <label htmlFor={`${kind}-known-price`} className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({'\u00A3'})</label>
+          <label htmlFor={`${kind}-known-price`} className="text-xs font-medium text-slate-600">Price per {isFixed ? 'piece' : isRoofArea ? areaLabel : lenLabel} ({'$'})</label>
           <input id={`${kind}-known-price`} name={`${kind}KnownPrice`} type="number" value={knownPrice} onChange={(e) => setKnownPrice(e.target.value)} min={0} step="any" inputMode="decimal" placeholder="0.00" className={inputCls} />
         </div>
       )}

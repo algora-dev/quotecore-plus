@@ -291,7 +291,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffB
     setMeasureMode(null);
     setUnitSystem(null);
   };
-  const cur = '\u00A3';
+  const cur = '$';
 
   const u = unitSystem || 'metric';
   const lenLbl = unitLabel(u);
