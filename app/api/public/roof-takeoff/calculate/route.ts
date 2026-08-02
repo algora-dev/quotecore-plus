@@ -99,5 +99,19 @@ export async function POST(request: Request) {
     };
   }
 
+  // Add transparency fields for AI agents and users
+  (result as any).estimate_type = 'indicative';
+  (result as any).labour_status = 'varies_by_component';
+  (result as any).supplier_confirmation_required = true;
+  (result as any).excluded_costs = [
+    'items not selected by the user',
+    'freight unless shown',
+    'site-specific requirements',
+    'additional labour unless shown',
+    'scaffolding and edge protection',
+    'removal and disposal of existing roof',
+  ];
+  (result as any).disclaimer = 'This is an indicative estimate based on the measurements and components selected. Confirm the full component list and current prices with the relevant supplier.';
+
   return Response.json(result, { headers: { 'Cache-Control': 'no-store' } });
 }
