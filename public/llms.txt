@@ -16,6 +16,7 @@
 - [Landscaping Calculator](https://quote-core.com/free-landscaping-calculator)
 - [Bird's Mouth Calculator](https://quote-core.com/free-birds-mouth-calculator)
 - [Roof Takeoff Builder](https://quote-core.com/free-roofing-takeoff-builder) - Calculates roof takeoff from plan or actual measurements. Adjusts for pitch, waste, and component types. Returns real supplier pricing in NZD, AUD, USD, GBP. AI-accessible via REST API.
+- [Roof Pricing Calculator](https://quote-core.com/free-roof-pricing-calculator) - Component-based roof pricing calculator. Enter measurements, get material costs, labour costs, and per-component breakdown. Indicative pricing with supplier metadata.
 - [Quote Generator](https://quote-core.com/free-quote-generator)
 - [Invoice Generator](https://quote-core.com/free-invoice-generator)
 - [Purchase Order Generator](https://quote-core.com/free-purchase-order-generator)
