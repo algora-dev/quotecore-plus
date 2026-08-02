@@ -124,6 +124,25 @@ export const birdsmouthConfig: TradeConfig = {
         a: "The best free bird's mouth calculator shows seat cut and plumb cut angles, heel height, notch depth, and a pass/fail check against the ⅓-depth rule - with a clear diagram labelling every measurement. This calculator does all of that, free and with no signup.",
       },
     ],
+    workedExample: {
+      title: "Worked example: 35 degree pitch, 200mm rafter depth",
+      steps: [
+        'Rafter depth = 200mm',
+        'Maximum birdsmouth notch depth = 200/3 = 66.7mm',
+        'Seat cut angle = 35 degrees (matches roof pitch)',
+        'Plumb cut angle = 90 - 35 = 55 degrees',
+        'Heel height = rafter depth / cos(35) = 200 / 0.8192 = 244mm',
+        'If calculated notch exceeds 66.7mm: FAIL - reduce birdsmouth depth or use a deeper rafter',
+      ],
+    },
+    assumptions: [
+      'The 1/3-depth rule is a general guideline. Local building codes may have stricter requirements.',
+      'Calculations assume a single birdsmouth cut per rafter. Multiple notches require individual checks.',
+      'Rafter depth must be the actual measured depth, not the nominal timber size (e.g. 47x220mm timber has a 220mm depth).',
+      'Seat cut and plumb cut angles are determined by roof pitch. These cannot be adjusted independently.',
+      'All measurements are estimates. Verify against building regulations before construction.',
+    ],
+    whenToAskPro: 'This calculator provides estimates for planning purposes only. Birdsmouth cuts affect structural integrity of rafters. For roof design, span tables, load calculations, or building regulations compliance, consult a qualified structural engineer or carpenter. Incorrect birdsmouth depth can weaken rafters and cause roof failure.',
     related: [
       {
         href: '/free-roofing-calculator',

@@ -127,6 +127,29 @@ const faqs = [
   },
 ];
 
+const videoSchemas = [
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: "How to Set Up Roofing Smart Components in QuoteCore+",
+    description: "Step-by-step tutorial showing how to set up roofing Smart Components in QuoteCore+.",
+    thumbnailUrl: "https://i.ytimg.com/vi/XZSTIfGUHAU/maxresdefault.jpg",
+    uploadDate: "2026-07-28",
+    embedUrl: "https://www.youtube-nocookie.com/embed/XZSTIfGUHAU",
+    contentUrl: "https://www.youtube.com/watch?v=XZSTIfGUHAU",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: "Create a Quote from Start to Finish with QuoteCore+",
+    description: "Full walkthrough showing how to create a quote from start to finish using QuoteCore+.",
+    thumbnailUrl: "https://i.ytimg.com/vi/pqIfx-rOcmo/maxresdefault.jpg",
+    uploadDate: "2026-07-28",
+    embedUrl: "https://www.youtube-nocookie.com/embed/pqIfx-rOcmo",
+    contentUrl: "https://www.youtube.com/watch?v=pqIfx-rOcmo",
+  },
+];
+
 export default function RoofingQuotingSoftwarePage() {
   return (
     <>
@@ -138,6 +161,9 @@ export default function RoofingQuotingSoftwarePage() {
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", ...buildSoftwareApplicationSchema() }) }}
     />
+    {videoSchemas.map((v) => (
+      <script key={v.contentUrl} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(v) }} />
+    ))}
 
     <main className="min-h-screen bg-white text-zinc-950">
        <BlogHeader />
@@ -401,6 +427,37 @@ export default function RoofingQuotingSoftwarePage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Related */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <a href="/features/digital-roof-takeoff" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Digital roof takeoff</p>
+              <p className="mt-1 text-sm text-zinc-600">Measure roof plans digitally with AI-assisted scanning.</p>
+            </a>
+            <a href="/features/smart-components" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Smart Components</p>
+              <p className="mt-1 text-sm text-zinc-600">Reusable components that store pricing, product codes, and quantities.</p>
+            </a>
+            <a href="/features/invoicing" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Invoicing</p>
+              <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into professional invoices in one click.</p>
+            </a>
+            <a href="/free-roofing-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free roofing calculator</p>
+              <p className="mt-1 text-sm text-zinc-600">Pitch, rafter lengths, areas, and material quantities.</p>
+            </a>
+            <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free quote generator</p>
+              <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
+            </a>
+            <a href="/customer-stories" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Customer stories</p>
+              <p className="mt-1 text-sm text-zinc-600">Real contractors using QuoteCore+ in their workflow.</p>
+            </a>
           </div>
         </section>
 
