@@ -556,19 +556,21 @@ function buildQuoteSections(
     itemQuantity: number;
     itemPrice: number;
     itemCost: number;
+    isLabour: boolean;
     sortOrder: number;
   }>;
 }> {
   const data = envelope.data;
-  const sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemPrice: number; itemCost: number; sortOrder: number }> }> = [];
+  const sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemPrice: number; itemCost: number; isLabour: boolean; sortOrder: number }> }> = [];
 
-  // Main quote lines
+  // Main quote lines (materials/services)
   if (data.customerLines && data.customerLines.length > 0) {
     const lineItems = data.customerLines.map((line, i) => ({
       itemName: line.description || 'Item',
       itemQuantity: line.quantity ? Number(line.quantity) : 1,
       itemPrice: line.lineTotal ? Number(line.lineTotal) : (line.unitPrice ? Number(line.unitPrice) : 0),
       itemCost: 0,
+      isLabour: false,
       sortOrder: i,
     }));
     sections.push({ name: 'Quote Items', lineItems });
@@ -581,6 +583,7 @@ function buildQuoteSections(
       itemQuantity: 1,
       itemPrice: line.amount != null ? Number(line.amount) : 0,
       itemCost: 0,
+      isLabour: true,
       sortOrder: i,
     }));
     sections.push({ name: 'Labour', lineItems: labourItems });
