@@ -6,10 +6,10 @@ export const constructionConfig: TradeConfig = {
   slug: 'free-construction-calculator',
   defaultCurrency: 'GBP',
   name: 'Construction Calculator',
-  metaTitle: 'Free Construction Calculator - Areas, Materials & Angles | QuoteCore+',
+  metaTitle: 'Construction Calculator - Areas & Angles | QuoteCore+',
   metaDescription:
     'Free construction calculator for builders. Work out floor and wall areas, timber and stud lengths, material quantities with waste, and cutting angles. No signup required.',
-  ogTitle: 'Free Construction Calculator - Areas, Materials & Angles',
+  ogTitle: 'Construction Calculator - Areas & Angles',
   ogDescription:
     'Free construction calculator. Floor and wall areas, timber and stud lengths, material quantities and cutting angles for builders. No signup required.',
 
@@ -165,6 +165,25 @@ export const constructionConfig: TradeConfig = {
         a: 'The best free construction calculator covers areas, sloped surfaces, angled member lengths, material quantities with waste, and pricing in one tool - which is exactly what this calculator does. It is completely free, runs in your browser, and requires no signup.',
       },
     ],
+    workedExample: {
+      title: 'Worked example: 6m x 4m stud wall with 400mm centres',
+      steps: [
+        'Wall length = 6m, height = 2.4m',
+        'Studs at 400mm centres: 6 / 0.4 = 15 studs + 1 closing stud = 16 studs',
+        'Top and bottom plates: 2 x 6m = 12m of timber',
+        'Noggins: 1 row at mid-height = 6m of timber',
+        'Wall area (for cladding): 6m x 2.4m = 14.4 m2',
+        'With 10% waste: 14.4 x 1.10 = 15.84 m2 of cladding needed',
+      ],
+    },
+    assumptions: [
+      'Stud counts use standard 400mm or 600mm centres. Custom spacing requires manual calculation.',
+      'Plate lengths assume straight runs with no openings. Add extra plates around doors and windows.',
+      'Slope factor uses 1/cos for simple single-slope surfaces. Compound slopes need additional calculation.',
+      'Material quantities are estimates based on net area. Deduct openings (doors, windows) before ordering.',
+      'All measurements are estimates. Verify on-site before ordering materials.',
+    ],
+    whenToAskPro: 'This calculator provides estimates for planning purposes only. For structural design, load-bearing calculations, building regulations compliance, or complex multi-storey construction, consult a qualified structural engineer or building professional. Building control approval may be required for structural modifications.',
     related: [
       {
         href: '/free-roofing-calculator',

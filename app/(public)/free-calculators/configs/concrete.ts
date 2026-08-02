@@ -4,10 +4,10 @@ export const concreteConfig: TradeConfig = {
   slug: 'free-concrete-calculator',
   defaultCurrency: 'GBP',
   name: 'Concrete Calculator',
-  metaTitle: 'Free Concrete Calculator - Slabs, Footings & Volumes | QuoteCore+',
+  metaTitle: 'Concrete Calculator - Slabs & Volumes | QuoteCore+',
   metaDescription:
     'Free concrete calculator. Work out slab and footing volumes in m³ with depth presets, formwork areas, drainage falls, and ready-mix pricing. No signup required.',
-  ogTitle: 'Free Concrete Calculator - Slabs, Footings & Volumes',
+  ogTitle: 'Concrete Calculator - Slabs & Volumes',
   ogDescription:
     'Free concrete calculator. Slab and footing volumes, formwork areas, falls and gradients, and ready-mix quantities. No signup required.',
 
@@ -129,6 +129,25 @@ export const concreteConfig: TradeConfig = {
         a: 'The best free concrete calculator gives you slab and footing volumes with depth presets, waste allowance, weight, drainage falls, and ready-mix pricing in one tool - exactly what this calculator does. It is completely free, browser-based, and needs no signup.',
       },
     ],
+    workedExample: {
+      title: 'Worked example: 5m x 4m driveway slab, 150mm deep',
+      steps: [
+        'Slab volume = length x width x depth = 5m x 4m x 0.15m = 3.0 m3',
+        'With 5% waste: 3.0 x 1.05 = 3.15 m3 of concrete needed',
+        'Weight estimate: 3.15 m3 x 2,400 kg/m3 = 7,560 kg (~7.6 tonnes)',
+        'Ready-mix bags (40kg each): 7,560 / 40 = 189 bags',
+        'At £80/m3 for ready-mix delivery: 3.15 x £80 = £252',
+      ],
+    },
+    assumptions: [
+      'Volume calculations assume rectangular slabs. Circular or irregular shapes require manual decomposition.',
+      'Depth presets are typical values. Actual slab depth must match structural requirements.',
+      'Weight uses 2,400 kg/m3 as standard concrete density. Lightweight mixes will weigh less.',
+      'Waste percentage accounts for spillage, uneven subgrade, and formwork variation. 5% is typical for flat work.',
+      'Pricing is indicative only. Actual ready-mix prices vary by location and order size.',
+      'All measurements are estimates. Verify on-site before ordering.',
+    ],
+    whenToAskPro: 'This calculator provides estimates for planning purposes only. For structural concrete (foundations, retaining walls, suspended slabs), reinforcement design, or building regulations compliance, consult a qualified structural engineer. Concrete strength, reinforcement, and subgrade preparation must be designed by a professional for load-bearing applications.',
     related: [
       {
         href: '/free-landscaping-calculator',

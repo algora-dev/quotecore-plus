@@ -58,7 +58,19 @@ A user provides roof measurements (area, pitch, ridges, hips, valleys, barges, s
 - [Blog](https://quote-core.com/blog)
 - [Documentation](https://quote-core.com/docs)
 - [About](https://quote-core.com/about)
+- [Company](https://quote-core.com/company)
+- [Trust and Security](https://quote-core.com/trust)
+- [Customer Stories](https://quote-core.com/customer-stories)
+- [For Suppliers](https://quote-core.com/suppliers)
 - [Contact](https://quote-core.com/contact)
+
+## Features
+- [All Features](https://quote-core.com/features)
+- [Digital Roof Takeoff](https://quote-core.com/features/digital-roof-takeoff)
+- [Smart Components](https://quote-core.com/features/smart-components)
+- [Material Ordering](https://quote-core.com/features/material-ordering)
+- [Invoicing](https://quote-core.com/features/invoicing)
+- [Supplier Resources](https://quote-core.com/features/supplier-resources)
 
 ## Pricing
 - [Free Trial](https://quote-core.com/free-trial) - 14 days, no card required

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'Free Roof Pricing Calculator - Materials, Components and Labour | QuoteCore+',
+  title: 'Roof Pricing Calculator - Materials & Labour | QuoteCore+',
   description:
     'Calculate an indicative roof price from your measurements and selected roofing components. See materials, component costs and whether labour is included. Free to use.',
   alternates: {
@@ -15,7 +15,7 @@ export const metadata = {
     },
   },
   openGraph: {
-    title: 'Free Roof Pricing Calculator - Materials, Components and Labour',
+    title: 'Roof Pricing Calculator - Materials & Labour',
     description:
       'Calculate an indicative roof price from your measurements and selected roofing components. See material costs, labour costs, and per-component breakdown.',
     url: `${SITE_URL}/free-roof-pricing-calculator`,
@@ -24,7 +24,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free Roof Pricing Calculator - Materials, Components and Labour',
+    title: 'Roof Pricing Calculator - Materials & Labour',
     description:
       'Calculate an indicative roof price from your measurements and selected roofing components. Free to use.',
     images: ['/logo.png'],

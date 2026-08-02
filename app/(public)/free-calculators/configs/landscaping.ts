@@ -4,10 +4,10 @@ export const landscapingConfig: TradeConfig = {
   slug: 'free-landscaping-calculator',
   defaultCurrency: 'GBP',
   name: 'Landscaping Calculator',
-  metaTitle: 'Free Landscaping Calculator - Turf, Topsoil & Slopes | QuoteCore+',
+  metaTitle: 'Landscaping Calculator - Turf & Topsoil | QuoteCore+',
   metaDescription:
     'Free landscaping calculator. Work out garden and lawn areas, turf and topsoil quantities, slopes and gradients, and material pricing. No signup required.',
-  ogTitle: 'Free Landscaping Calculator - Turf, Topsoil & Slopes',
+  ogTitle: 'Landscaping Calculator - Turf & Topsoil',
   ogDescription:
     'Free landscaping calculator. Garden and lawn areas, turf and topsoil quantities, slopes, gradients and falls. No signup required.',
 
@@ -132,6 +132,25 @@ export const landscapingConfig: TradeConfig = {
         a: 'The best free landscaping calculator handles lawn and plot areas, sloped banks, gradients and falls, volumes for topsoil and mulch, and material pricing in one place - exactly what this tool does, free and with no signup. Everything runs in your browser.',
       },
     ],
+    workedExample: {
+      title: 'Worked example: 8m x 5m lawn with 100mm topsoil',
+      steps: [
+        'Lawn area = 8m x 5m = 40 m2',
+        'Topsoil depth = 100mm = 0.1m',
+        'Topsoil volume = 40 m2 x 0.1m = 4.0 m3',
+        'With 10% allowance for settlement: 4.0 x 1.10 = 4.4 m3',
+        'In bulk bags (0.75 m3 each): 4.4 / 0.75 = 6 bags',
+        'Turf needed: 40 m2 + 5% waste = 42 m2 of turf',
+      ],
+    },
+    assumptions: [
+      'Area calculations assume rectangular or simple composite shapes. Irregular garden borders need manual decomposition.',
+      'Topsoil and mulch depths are typical values. Actual depth depends on ground conditions and intended use.',
+      'Slope factor uses 1/cos for simple slopes. Terraced or multi-level gardens need separate calculations per level.',
+      'Gravel and aggregate volumes include a compaction allowance. Actual coverage varies by stone size and sub-base.',
+      'All measurements are estimates. Verify on-site before ordering materials.',
+    ],
+    whenToAskPro: 'This calculator provides estimates for planning purposes only. For retaining walls over 1m, drainage design, structural landscaping, or work near boundaries and public services, consult a qualified landscaper or structural engineer. Planning permission may be required for significant ground level changes.',
     related: [
       {
         href: '/free-concrete-calculator',
