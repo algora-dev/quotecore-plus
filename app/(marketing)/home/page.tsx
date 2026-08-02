@@ -737,6 +737,13 @@ export default function HomePage() {
               </button>
             </div>
           </div>
+
+          {/* Explore features link */}
+          <div className="mt-10 text-center">
+            <a href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
+              Explore all features
+            </a>
+          </div>
         </section>
 
         <section id="suppliers" className="bg-zinc-950 py-16 lg:py-20">

@@ -9,7 +9,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Material Ordering Software for Contractors | QuoteCore+",
   description:
-    "Turn an accepted quote into a material order in seconds. Quantities, codes, and supplier details flow straight from the quote. Material ordering built for roofing and construction.",
+    "Create material orders from accepted quotes, imported quotes, or from scratch. Quantities, codes, and supplier details included. Standalone material ordering built for roofing and construction.",
   alternates: {
     canonical: "https://quote-core.com/features/material-ordering",
     languages: hreflangLanguages("/features/material-ordering"),
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Material Ordering Software for Contractors | QuoteCore+",
     description:
-      "Turn an accepted quote into a material order in seconds. Material ordering built for roofing and construction.",
+      "Create material orders from quotes or from scratch. Material ordering built for roofing and construction.",
     url: "https://quote-core.com/features/material-ordering",
     siteName: "QuoteCore+",
     type: "website",
@@ -40,10 +40,10 @@ const faqSchema = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "How does material ordering work in QuoteCore+?",
+      name: "Do I need a quote to create a material order?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "When a quote is accepted, you can generate a material order from it with one click. The order pulls quantities, product codes, and descriptions directly from the quote's Smart Components. No re-entry required.",
+        text: "No. You can create a material order from an accepted quote, import a quote from elsewhere, or start a blank order from scratch. The material ordering tool works standalone.",
       },
     },
     {
@@ -51,7 +51,7 @@ const faqSchema = {
       name: "Can I send material orders to my supplier?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Material orders can be sent directly from QuoteCore+. The order includes quantities, product codes, and delivery information your supplier needs.",
+        text: "Yes. Material orders can be sent directly from QuoteCore+. The order includes quantities, product codes, cut lengths, delivery details, and profile drawings for custom components.",
       },
     },
     {
@@ -66,15 +66,15 @@ const faqSchema = {
 };
 
 const steps = [
-  { num: 1, title: "Accept the quote", text: "When a customer accepts a quote, the quote's materials and quantities are ready to become an order. No re-measuring or re-counting." },
-  { num: 2, title: "Generate the order", text: "Create a material order from the accepted quote. Quantities, product codes, and descriptions flow from the Smart Components directly into the order." },
-  { num: 3, title: "Review and adjust", text: "Edit quantities, add items the quote didn't include (like fixings or consumables), or remove items you already have in stock." },
-  { num: 4, title: "Send to your supplier", text: "Send the order directly from QuoteCore+. The order includes everything your supplier needs: quantities, codes, delivery details." },
+  { num: 1, title: "Start from a quote or from scratch", text: "Generate an order from an accepted quote in QuoteCore+, import a quote from another tool, or start with a blank order. Three ways in, same result." },
+  { num: 2, title: "Review and adjust", text: "Quantities, product codes, and descriptions flow from the quote's Smart Components. Edit quantities, add items the quote didn't include (like fixings or consumables), or remove items you already have in stock." },
+  { num: 3, title: "Supplier-ready format", text: "The order includes everything your supplier needs: quantities, cut lengths, product codes, delivery address, and contact details. Custom flashings include technical profile drawings with dimensions." },
+  { num: 4, title: "Send and track", text: "Send the order directly from QuoteCore+. Every order is stored against the job, so you can see what was ordered, when, and for which quote." },
 ];
 
 const faqs = [
-  { q: "How does material ordering work in QuoteCore+?", a: "When a quote is accepted, you can generate a material order from it with one click. The order pulls quantities, product codes, and descriptions directly from the quote's Smart Components. No re-entry required." },
-  { q: "Can I send material orders to my supplier?", a: "Yes. Material orders can be sent directly from QuoteCore+. The order includes quantities, product codes, and delivery information your supplier needs." },
+  { q: "Do I need a quote to create a material order?", a: "No. You can create a material order from an accepted quote in QuoteCore+, import a quote from another tool, or start with a blank order from scratch. The material ordering tool works standalone." },
+  { q: "Can I send material orders to my supplier?", a: "Yes. Material orders can be sent directly from QuoteCore+. The order includes quantities, product codes, cut lengths, delivery details, and profile drawings for custom components." },
   { q: "Can I edit a material order before sending it?", a: "Yes. You can adjust quantities, add or remove items, and edit delivery details before sending the order to your supplier." },
 ];
 
@@ -92,10 +92,10 @@ export default function MaterialOrderingPage() {
           <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Material ordering, straight from the quote.
+              Material ordering, standalone or from a quote.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              When a quote is accepted, generate a material order in seconds. Quantities, product codes, and descriptions flow from the quote&apos;s Smart Components. No re-counting, no spreadsheets, no phone calls with missing details.
+              Create a material order from an accepted quote, import a quote from another tool, or start from scratch. Quantities, product codes, and profile drawings included. No re-counting, no spreadsheets, no phone calls with missing details.
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
@@ -119,7 +119,7 @@ export default function MaterialOrderingPage() {
             </div>
             <img
               src="/images/features/material-ordering.png"
-              alt="QuoteCore+ material order showing roofing materials with quantities, lengths, supplier details, and delivery information"
+              alt="QuoteCore+ material order showing roofing materials with quantities, cut lengths, supplier details, and profile drawings"
               className="w-full"
               loading="lazy"
             />
@@ -130,8 +130,8 @@ export default function MaterialOrderingPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
                 <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375V21M6 18h2.25c.621 0 1.125-.504 1.125-1.125V13.5c0-.621-.504-1.125-1.125-1.125H6m0 0V9.75M6 4.5h2.25c.621 0 1.125.504 1.125 1.125V9c0 .621-.504 1.125-1.125 1.125H6m0 0V4.5" /></svg>
               </div>
-              <h3 className="mt-3 font-semibold text-slate-900">One-click order generation</h3>
-              <p className="mt-1 text-sm text-zinc-600">Turn an accepted quote into a material order instantly. Quantities and codes flow straight from the quote.</p>
+              <h3 className="mt-3 font-semibold text-slate-900">Three ways to start</h3>
+              <p className="mt-1 text-sm text-zinc-600">From an accepted quote, import a quote from elsewhere, or start a blank order from scratch. The tool works standalone.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
@@ -154,10 +154,10 @@ export default function MaterialOrderingPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What is material ordering in QuoteCore+?</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Material ordering is the step between an accepted quote and a supplier order. When a customer accepts a quote, every Smart Component in that quote already knows what material it is, what quantity is needed, and what product code it uses. The material order builder takes that information and turns it into an order you can review, adjust, and send.
+            Material ordering is a standalone tool. You can generate an order from an accepted quote in QuoteCore+, import a quote from another tool, or start with a blank order from scratch. However you start, the order builder gives you a supplier-ready document with quantities, product codes, cut lengths, and delivery details.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
-            This eliminates the most common bottleneck after quote acceptance: re-counting materials from the quote, formatting them into a supplier order, and sending it. What used to take 20-30 minutes takes seconds.
+            When you do start from a QuoteCore+ quote, every Smart Component already knows what material it is, what quantity is needed, and what product code it uses. The material order takes that information and turns it into an order in seconds.
           </p>
         </section>
 
@@ -181,7 +181,7 @@ export default function MaterialOrderingPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Contractors who order materials from suppliers after a quote is accepted. If you&apos;re re-counting materials from a quote document, typing them into a supplier order form, or calling in orders with missing product codes, this feature eliminates that work.
+            Contractors who order materials from suppliers. Whether you quote in QuoteCore+ or elsewhere, the material ordering tool gives you a clean, supplier-ready document without re-counting or re-formatting.
           </p>
         </section>
 

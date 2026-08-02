@@ -9,7 +9,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Professional Invoicing for Contractors | QuoteCore+",
   description:
-    "Turn accepted quotes into professional invoices with line items, payment instructions, and online payment tracking. Invoicing built for roofing and construction contractors.",
+    "Create professional invoices from accepted quotes, imported quotes, or from scratch. Line items, payment instructions, and online payment tracking. Standalone invoicing built for contractors.",
   alternates: {
     canonical: "https://quote-core.com/features/invoicing",
     languages: hreflangLanguages("/features/invoicing"),
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Professional Invoicing for Contractors | QuoteCore+",
     description:
-      "Turn accepted quotes into professional invoices with line items, payment instructions, and online payment tracking.",
+      "Create professional invoices from quotes or from scratch. Line items, payment instructions, and online payment tracking.",
     url: "https://quote-core.com/features/invoicing",
     siteName: "QuoteCore+",
     type: "website",
@@ -40,10 +40,10 @@ const faqSchema = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Can QuoteCore+ generate invoices from quotes?",
+      name: "Do I need a quote to create an invoice?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. When a quote is accepted, you can generate a professional invoice from it. Line items, quantities, and pricing flow directly from the quote into the invoice.",
+        text: "No. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. The invoicing tool works standalone.",
       },
     },
     {
@@ -66,14 +66,14 @@ const faqSchema = {
 };
 
 const steps = [
-  { num: 1, title: "Accept the quote", text: "When a customer accepts a quote, all line items, quantities, and pricing are ready to become an invoice. No re-entry." },
-  { num: 2, title: "Generate the invoice", text: "Create a professional invoice from the accepted quote. Line items, descriptions, and totals flow directly from the quote's Smart Components." },
-  { num: 3, title: "Add payment details", text: "The invoice includes a payment instructions panel with amount due, payment reference, and due date. Customers copy details with one click." },
-  { num: 4, title: "Send and track", text: "Send the invoice to your customer. They can mark payment as sent or dispute the invoice. You see the status of every invoice." },
+  { num: 1, title: "Start from a quote or from scratch", text: "Generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. Three ways in, same professional result." },
+  { num: 2, title: "Line items flow automatically", text: "When starting from a quote, line items, descriptions, quantities, and pricing flow directly from the quote's Smart Components. No re-entry, no formatting." },
+  { num: 3, title: "Payment instructions included", text: "Every invoice includes a payment instructions panel with amount due, payment reference, and due date. Customers copy details with one click." },
+  { num: 4, title: "Send and track", text: "Send the invoice to your customer. They can mark payment as sent or dispute the invoice. You see the status of every invoice without chasing emails." },
 ];
 
 const faqs = [
-  { q: "Can QuoteCore+ generate invoices from quotes?", a: "Yes. When a quote is accepted, you can generate a professional invoice from it. Line items, quantities, and pricing flow directly from the quote into the invoice." },
+  { q: "Do I need a quote to create an invoice?", a: "No. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. The invoicing tool works standalone." },
   { q: "Do invoices include payment instructions?", a: "Yes. Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click." },
   { q: "Can customers pay or dispute invoices online?", a: "Yes. Invoices include action buttons for customers to mark payment as sent or dispute the invoice. This gives both parties a clear record of invoice status." },
 ];
@@ -92,10 +92,10 @@ export default function InvoicingPage() {
           <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-              Professional invoices, straight from the quote.
+              Professional invoices, standalone or from a quote.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              Turn an accepted quote into a branded, professional invoice in seconds. Line items, pricing, and payment instructions flow automatically. No formatting, no spreadsheets, no missing details.
+              Create a branded, professional invoice from an accepted quote, import a quote from another tool, or start from scratch. Line items, pricing, and payment instructions flow automatically. No formatting, no spreadsheets.
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
@@ -128,10 +128,10 @@ export default function InvoicingPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-200 p-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
-                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" /></svg>
+                <svg className="h-5 w-5 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>
               </div>
-              <h3 className="mt-3 font-semibold text-slate-900">Branded invoice documents</h3>
-              <p className="mt-1 text-sm text-zinc-600">Professional invoices with your company branding, line items, and itemised totals. Ready to send.</p>
+              <h3 className="mt-3 font-semibold text-slate-900">Three ways to start</h3>
+              <p className="mt-1 text-sm text-zinc-600">From an accepted quote, import a quote from elsewhere, or create a blank invoice from scratch. The tool works standalone.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#FF6B35]/10">
@@ -154,7 +154,7 @@ export default function InvoicingPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What is invoicing in QuoteCore+?</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Invoicing is the final step in the QuoteCore+ workflow. When a quote is accepted, you can generate a professional invoice from it. Line items, descriptions, quantities, and pricing flow directly from the quote&apos;s Smart Components into a branded invoice document.
+            Invoicing is a standalone tool. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. However you start, the result is a branded, professional invoice document with line items, totals, and payment instructions.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
             Every invoice includes a payment instructions panel with the amount due, payment reference, and due date. Customers can copy payment details with one click, mark payment as sent, or dispute the invoice. You see the status of every invoice without chasing emails.
@@ -181,7 +181,7 @@ export default function InvoicingPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Contractors who want to send professional invoices without manually formatting them from quote data. If you&apos;re creating invoices in Word or Excel by copying numbers from a quote, this feature eliminates that work.
+            Contractors who want to send professional invoices without manually formatting them. Whether you quote in QuoteCore+ or elsewhere, the invoicing tool gives you a clean, branded document with payment tracking.
           </p>
         </section>
 
@@ -231,7 +231,7 @@ export default function InvoicingPage() {
             </Link>
             <Link href="/features/material-ordering" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Material ordering</h3>
-              <p className="mt-1 text-sm text-zinc-600">Order materials from suppliers and invoice customers from the same quote data.</p>
+              <p className="mt-1 text-sm text-zinc-600">Order materials from suppliers and invoice customers from the same data.</p>
             </Link>
             <Link href="/free-invoice-generator" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Free invoice generator</h3>
