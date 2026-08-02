@@ -1,49 +1,67 @@
+import Link from "next/link";
 import SocialIcons from "@/components/SocialIcons";
+
+const linkClass = "text-sm text-zinc-500 transition-colors hover:text-zinc-900";
 
 export default function SiteFooter() {
   return (
-    <footer className="border-t border-zinc-200 py-10 text-center text-sm text-zinc-500">
-      <p className="mb-4 text-xs text-zinc-600">
-        <span className="brand-wordmark">
-          QuoteCore<span className="brand-plus">+</span>
-        </span>{" "}
-        is quoting software for contractors and trade businesses.
-      </p>
-      <p>
-        <a href="/" className="hover:text-zinc-800">Home</a>
-        {" · "}
-        <a href="/services" className="hover:text-zinc-800">Services</a>
-        {" · "}
-        <a href="/#pricing" className="hover:text-zinc-800">Pricing</a>
-        {" · "}
-        <a href="/blog" className="hover:text-zinc-800">Blog</a>
-        {" · "}
-        <a href="/company" className="hover:text-zinc-800">Company</a>
-        {" · "}
-        <a href="/about" className="hover:text-zinc-800">About</a>
-        {" · "}
-        <a href={"/docs"} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-800">Documentation</a>
-        {" · "}
-        <a href="/contact" className="hover:text-zinc-800">Contact</a>
-        {" · "}
-        <a href="/free-trial" className="hover:text-zinc-800">Free Trial</a>
-        {" · "}
-        <a href="/privacy" className="hover:text-zinc-800">Privacy Policy</a>
-        {" · "}
-        <a href="/terms" className="hover:text-zinc-800">Terms &amp; Conditions</a>
-        {" · "}
-        <a href="/cookie-policy" className="hover:text-zinc-800">Cookie Policy</a>
-      </p>
-      <p className="mt-3">
-        © 2026{" "}
-        <span className="brand-wordmark">
-          QuoteCore<span className="brand-plus">+</span>
-        </span>
-      </p>
-      <p className="mt-1">
-        Built by <a href="https://t3labs.tech" className="hover:text-zinc-800">T3 Labs</a>
-      </p>
-      <SocialIcons />
+    <footer className="border-t border-zinc-200 bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Link href="/" className="inline-flex items-center" aria-label="QuoteCore+ home">
+              <span className="brand-wordmark text-lg font-semibold text-zinc-950">QuoteCore<span className="brand-plus">+</span></span>
+            </Link>
+            <p className="mt-3 max-w-xs text-sm leading-6 text-zinc-500">Roofing and construction quoting software built around measurements.</p>
+            <SocialIcons className="mt-5 justify-start" />
+          </div>
+          <nav aria-label="Product">
+            <h2 className="text-sm font-semibold text-zinc-950">Product</h2>
+            <div className="mt-4 flex flex-col gap-3">
+              <Link href="/features" className={linkClass}>All features</Link>
+              <Link href="/features/digital-roof-takeoff" className={linkClass}>Digital roof takeoff</Link>
+              <Link href="/features/smart-components" className={linkClass}>Smart Components</Link>
+              <Link href="/features/material-ordering" className={linkClass}>Material ordering</Link>
+              <Link href="/features/invoicing" className={linkClass}>Invoicing</Link>
+              <Link href="/features/supplier-resources" className={linkClass}>Supplier resources</Link>
+            </div>
+          </nav>
+          <nav aria-label="Industries and resources">
+            <h2 className="text-sm font-semibold text-zinc-950">Explore</h2>
+            <div className="mt-4 flex flex-col gap-3">
+              <Link href="/roofing-quoting-software" className={linkClass}>Roofing software</Link>
+              <Link href="/construction-quoting-software" className={linkClass}>Construction software</Link>
+              <Link href="/free-tools" className={linkClass}>Free tools</Link>
+              <Link href="/free-calculators" className={linkClass}>Free calculators</Link>
+              <Link href="/blog" className={linkClass}>Resources and blog</Link>
+              <Link href="/docs" className={linkClass}>Documentation</Link>
+            </div>
+          </nav>
+          <nav aria-label="Company">
+            <h2 className="text-sm font-semibold text-zinc-950">Company</h2>
+            <div className="mt-4 flex flex-col gap-3">
+              <Link href="/company" className={linkClass}>Company</Link>
+              <Link href="/about" className={linkClass}>About</Link>
+              <Link href="/services" className={linkClass}>Services</Link>
+              <Link href="/contact" className={linkClass}>Contact</Link>
+              <Link href="/free-trial" className={linkClass}>Start free trial</Link>
+            </div>
+          </nav>
+          <nav aria-label="Legal and region">
+            <h2 className="text-sm font-semibold text-zinc-950">Legal</h2>
+            <div className="mt-4 flex flex-col gap-3">
+              <Link href="/privacy" className={linkClass}>Privacy</Link>
+              <Link href="/terms" className={linkClass}>Terms</Link>
+              <Link href="/cookie-policy" className={linkClass}>Cookie policy</Link>
+            </div>
+            <a href="https://www.quote-core.co.nz" className="mt-6 inline-flex min-h-11 items-center rounded-full border border-zinc-300 px-4 text-sm font-medium text-zinc-800 transition-colors hover:border-[#FF6B35]/50 hover:text-zinc-950">New Zealand site</a>
+          </nav>
+        </div>
+        <div className="mt-10 flex flex-col gap-2 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>? 2026 QuoteCore+. Built by <a href="https://t3labs.tech" className="hover:text-zinc-800">T3 Labs</a>.</p>
+          <p>Global website</p>
+        </div>
+      </div>
     </footer>
   );
 }

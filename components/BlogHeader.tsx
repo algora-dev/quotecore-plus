@@ -12,6 +12,13 @@ function buildNavItems(app: string) {
     { label: "How it works", href: "/#how-it-works" },
     { label: "Services", href: "/services" },
     { label: "Features", href: "/features" },
+    { label: "Digital Roof Takeoff", href: "/features/digital-roof-takeoff" },
+    { label: "Smart Components", href: "/features/smart-components" },
+    { label: "Material Ordering", href: "/features/material-ordering" },
+    { label: "Invoicing", href: "/features/invoicing" },
+    { label: "Supplier Resources", href: "/features/supplier-resources" },
+    { label: "Roofing Software", href: "/roofing-quoting-software" },
+    { label: "Construction Software", href: "/construction-quoting-software" },
     { label: "Pricing", href: "/#pricing" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
@@ -66,8 +73,6 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
             )}
             <a
               href="/free-tools"
-              target="_blank"
-              rel="noopener noreferrer"
               className={freeToolsButton}
               onClick={() => trackEvent("free_tools_click", { location: "nav" })}
             >
@@ -163,6 +168,13 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
             <div className="mt-5">
               <SocialIcons className="justify-start" />
             </div>
+            <a
+              href="https://www.quote-core.co.nz"
+              className="mt-5 inline-flex min-h-11 items-center rounded-full border border-zinc-300 px-4 text-sm font-medium text-zinc-800 transition-colors hover:border-[#FF6B35]/50"
+              onClick={() => setMenuOpen(false)}
+            >
+              Switch to New Zealand
+            </a>
           </div>
         </div>
       )}
