@@ -43,6 +43,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/resources/quotecore-guides`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/resources/comparisons`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/resources/ai`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/tutorials`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/contact`, changeFrequency: 'yearly', priority: 0.5 },
     { url: `${SITE_URL}/free-trial`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/suppliers`, changeFrequency: 'monthly', priority: 0.8 },

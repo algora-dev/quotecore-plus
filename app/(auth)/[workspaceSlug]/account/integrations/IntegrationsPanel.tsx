@@ -24,7 +24,7 @@ const PROVIDER_INFO: Record<IntegrationProvider, { name: string; description: st
   fergus: {
     name: 'Fergus',
     description: 'Send customers, jobs, and quotes to Fergus job management.',
-    logo: '/logos/fergus.svg',
+    logo: '/logos/fergus-official.png',
   },
 };
 
@@ -73,7 +73,7 @@ export function IntegrationsPanel({
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50">
-                    <Image src={info.logo} alt={`${info.name} logo`} width={28} height={28} />
+                    <Image src={info.logo} alt={`${info.name} logo`} width={28} height={28} className="object-contain" />
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900">{info.name}</h3>
@@ -149,7 +149,7 @@ export function IntegrationsPanel({
                 >
                   <div className="flex items-center gap-2">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-slate-50">
-                      <Image src={PROVIDER_INFO[item.provider as IntegrationProvider]?.logo ?? '/logos/zapier.svg'} alt="" width={18} height={18} />
+                      <Image src={PROVIDER_INFO[item.provider as IntegrationProvider]?.logo ?? '/logos/zapier.svg'} alt="" width={18} height={18} className="object-contain" />
                     </div>
                     <div>
                       <p className="text-xs font-medium text-slate-700">
