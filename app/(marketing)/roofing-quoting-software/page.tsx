@@ -24,7 +24,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Measure the job",
-      text: "Upload a roof plan, measure digitally, or build from site details. Keep roof sections, lengths, areas, flashings, drawings and job information connected from the start.",
+      text: "Upload a roof plan and use AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges automatically. Digital takeoff tools handle angles, pitches, and complex roof geometry, then feed straight into Smart Components for pricing.",
     },
     {
       "@type": "HowToStep",
@@ -58,7 +58,7 @@ const steps = [
   {
     number: "01",
     title: "Measure the job",
-    body: "Upload a roof plan, measure digitally, or build from site details. Keep roof sections, lengths, areas, flashings, drawings and job information connected from the start.",
+    body: "Upload a roof plan and use AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges automatically. Digital takeoff tools handle angles, pitches, and complex roof geometry - then feed straight into your quote via Smart Components\u2122.",
   },
   {
     number: "02",
@@ -107,7 +107,7 @@ const faqs = [
   },
   {
     q: "Can QuoteCore+ help with roofing measurements?",
-    a: "Yes. QuoteCore+ supports digital takeoffs and measurement-based quoting, so roof sections, lengths, areas, flashings and other job details can feed directly into the quote workflow.",
+    a: "Yes. QuoteCore+ combines digital takeoff tools with AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges from an uploaded plan. Measurements feed directly into Smart Components\u2122, which apply your stored pricing, labour, waste, and business rules - so the takeoff becomes a priced quote without manual re-entry.",
   },
   {
     q: "Does QuoteCore+ handle materials ordering?",
@@ -186,7 +186,7 @@ export default function RoofingQuotingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure the roof, build the quote, send it to the customer, order materials, manage the job, invoice and get paid - all in one workflow.
+              Measure the roof with AI Scan Assist, build the quote with Smart Components\u2122, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow.
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">

@@ -33,7 +33,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Measure or add the job details",
-      text: "Start with site details, manual measurements, saved components or a plan upload. Keep the job information connected from the beginning.",
+      text: "Start with site details, manual measurements, saved Smart Components™, or upload a plan and use AI Scan Assist to identify areas and components automatically. Keep the job information connected from the beginning.",
     },
     {
       "@type": "HowToStep",
@@ -106,7 +106,7 @@ const steps = [
   {
     number: "01",
     title: "Choose how you want to quote",
-    body: "Start from a blank quote, use saved Smart Components™, or measure from a plan. QuoteCore+ gives you different ways to build the job depending on how you work.",
+    body: "Start from a blank quote, use saved Smart Components™, or upload a plan and measure digitally. AI Scan Assist identifies roof areas and components from an uploaded plan automatically. QuoteCore+ gives you different ways to build the job depending on how you work.",
   },
   {
     number: "02",
@@ -252,7 +252,7 @@ export default function ConstructionQuotingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure jobs, build priced quotes, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow.
+              Measure jobs with digital takeoff and AI Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow.
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
@@ -574,9 +574,13 @@ export default function ConstructionQuotingSoftwarePage() {
         <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
-              <p className="font-semibold text-zinc-950">All features</p>
-              <p className="mt-1 text-sm text-zinc-600">The full QuoteCore+ workflow from takeoff to invoice.</p>
+            <a href="/features/digital-roof-takeoff" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Digital roof takeoff</p>
+              <p className="mt-1 text-sm text-zinc-600">Upload plans, measure digitally, and use AI Scan Assist.</p>
+            </a>
+            <a href="/features/smart-components" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Smart Components™</p>
+              <p className="mt-1 text-sm text-zinc-600">Reusable pricing, labour, waste, and business rules.</p>
             </a>
             <a href="/features/material-ordering" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Material ordering</p>
@@ -593,6 +597,10 @@ export default function ConstructionQuotingSoftwarePage() {
             <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Free quote generator</p>
               <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
+            </a>
+            <a href="/free-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free tools</p>
+              <p className="mt-1 text-sm text-zinc-600">Calculators, quote generator, invoice generator - no signup required.</p>
             </a>
             <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Trust and security</p>
