@@ -50,12 +50,12 @@ const faqs = [
   {
     question: "What happens after the trial?",
     answer:
-      "You pick a plan that fits your business. Plans start from free and go up to $60 per month. Your Smart Components, quotes, and settings carry over seamlessly.",
+      "You pick a plan that fits your business. Plans start from free and go up to $59 per month. Your Smart Components, quotes, and settings carry over seamlessly.",
   },
   {
     question: "How much do plans cost?",
     answer:
-      "Plans range from free to $60 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
+      "Plans range from free to $59 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
   },
 ];
 
@@ -222,13 +222,13 @@ export default function HomePage() {
                   Built for roofing. Powerful enough for every trade.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Turn measurements, materials, labour, pricing, and business rules into accurate professional quotes - then carry the same job data through approvals, orders, and invoices without entering anything twice.
+                  Turn measurements, materials, labour, pricing, and business rules into accurate professional quotes using Smart Components&#8482; - then carry the same job data through approvals, orders, and invoices without entering anything twice.
                 </p>
 
                 {/* Pricing reassurance line */}
                 <p className="mt-4 text-sm font-medium text-zinc-700">
-                  <a href="/pricing" className="text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]">
-                    Plans from free to $60/month
+                  <a href="/pricing" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">
+                    Plans from free to $59/month
                   </a>
                   {" "}- full-featured 14-day trial, no card required.
                 </p>
@@ -262,18 +262,12 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Scroll indicator */}
-            <div className="mt-16 flex flex-col items-center gap-1.5 font-sans text-zinc-500 pb-16">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em]">Scroll</p>
-              <svg className="h-5 w-5 animate-bounce" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M12 5v14M5 12l7 7 7-7" />
-              </svg>
-            </div>
+
           </div>
         </section>
 
         {/* 2. Core Workflow */}
-        <section id="how-it-works" className="mx-auto w-full max-w-7xl px-6 py-14 lg:px-8 lg:py-24">
+        <section id="how-it-works" className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-8 lg:py-16">
           <div className="text-center mb-12">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
               One connected workflow
@@ -586,7 +580,7 @@ export default function HomePage() {
                 </a>
               </div>
               <p className="mt-5 text-sm text-zinc-600">
-                Plans from free to $60/month. No card required. 14 days full access.
+                Plans from free to $59/month. No card required. 14 days full access.
               </p>
             </div>
           </div>
@@ -616,7 +610,7 @@ export default function HomePage() {
         <section className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
           <p className="text-center text-sm text-zinc-500">
             Are you a roofing supplier?{" "}
-            <a href="/suppliers" className="font-medium text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]">
+            <a href="/suppliers" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">
               We want to partner with you.
             </a>
           </p>
