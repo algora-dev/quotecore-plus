@@ -93,7 +93,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [supplierLibrariesLoading, setSupplierLibrariesLoading] = useState(false);
   const [supplierSkip, setSupplierSkip] = useState(false);
 
-  // History management so browser back steps through: builder -> units -> mode -> exit
+  // History management so browser back steps through: builder -> units -> supplier -> mode -> exit
   useEffect(() => {
     const handlePopState = () => {
       // On back: step through builder -> units -> supplier -> mode -> exit
@@ -111,7 +111,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [measureMode, unitSystem]);
+  }, [measureMode, unitSystem, selectedSupplier, supplierSkip]);
 
   // Push history state when entering supplier selection
   useEffect(() => {
@@ -684,9 +684,9 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           {measureMode && (selectedSupplier || supplierSkip) && !unitSystem && (
             <div className="space-y-4">
               {/* Breadcrumb */}
-              <button onClick={() => setMeasureMode(null)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition">
+              <button onClick={() => { setSelectedSupplier(null); setSupplierSkip(false); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                Back to measurement mode
+                Back to supplier selection
               </button>
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
@@ -727,6 +727,12 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 Back to unit selection
               </button>
+              {selectedSupplier && (
+                <button onClick={() => { setSelectedSupplier(null); setSupplierSkip(false); setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition mb-3 ml-3">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.582m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Change supplier
+                </button>
+              )}
               {/* Setup bar */}
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-4 mb-5 flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-3 flex-wrap">
