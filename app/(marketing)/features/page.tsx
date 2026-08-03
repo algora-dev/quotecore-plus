@@ -109,7 +109,7 @@ export default function FeaturesHubPage() {
                 { label: "Measure", href: "/features/digital-roof-takeoff" },
                 { label: "Calculate", href: "/features/smart-components" },
                 { label: "Quote", href: "/roofing-quoting-software" },
-                { label: "Approve", href: "/free-trial" },
+                { label: "Send", href: "/features/sending-and-tracking" },
                 { label: "Order", href: "/features/material-ordering" },
                 { label: "Invoice", href: "/features/invoicing" },
               ].map((step, i, arr) => (
@@ -141,11 +141,43 @@ export default function FeaturesHubPage() {
           </div>
         </section>
 
+        {/* Four ways to quote */}
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
+          <h2 className="text-center text-2xl font-semibold tracking-tight">Four ways to quote</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Not every job starts the same way. Pick the path that fits the work.</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="text-base font-semibold text-slate-900">1. Plan + AI Scan Assist</h3>
+              <p className="mt-2 text-sm text-slate-500">Best for full reroofs and plan work. Upload a roof plan, AI identifies areas and elements, you verify and Smart Components calculate the rest.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="text-base font-semibold text-slate-900">2. Plan + manual takeoff</h3>
+              <p className="mt-2 text-sm text-slate-500">Best for complex or unusual plans. Upload a plan and draw everything digitally. Smart Components apply pricing as you go.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="text-base font-semibold text-slate-900">3. Site measurements + Smart Components</h3>
+              <p className="mt-2 text-sm text-slate-500">Best for site-measured and repeat jobs. Enter measurements from site and saved rules generate quantities, labour and price.</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-6">
+              <h3 className="text-base font-semibold text-slate-900">4. Custom / line-by-line quote</h3>
+              <p className="mt-2 text-sm text-slate-500">Best for repairs, variations and one-offs. Start blank, use CSV catalogues, supplier catalogues or saved items. Includes AI line-item import.</p>
+            </div>
+          </div>
+          <div className="mt-6 rounded-xl border border-dashed border-slate-200 px-6 py-5">
+            <p className="text-sm font-medium text-slate-900">Shared accelerators across all paths:</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["CSV catalogue import", "Searchable supplier catalogues", "Supplier component libraries", "Saved catalogue items", "AI line-item import"].map((item) => (
+                <span key={item} className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">{item}</span>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Comparisons */}
         {/* Feature table */}
         <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-center text-2xl font-semibold tracking-tight">What each feature does</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Five connected tools that take you from plan to payment.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-zinc-600">Seven connected features that take you from plan to payment.</p>
           <div className="mt-8 overflow-hidden rounded-xl border border-slate-200">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -155,8 +187,10 @@ export default function FeaturesHubPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Digital Roof Takeoff</td><td className="px-5 py-3 text-slate-600">Upload plans, measure roof geometry, and calculate areas automatically</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Digital Roof Takeoff</td><td className="px-5 py-3 text-slate-600">Upload plans, measure roof areas, lengths and pitch digitally</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">AI Scan Assist</td><td className="px-5 py-3 text-slate-600">AI identifies roof areas, ridges, hips, valleys, barges and spouts from your plan</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Smart Components™</td><td className="px-5 py-3 text-slate-600">Store reusable pricing and quantity rules so every quote is consistent</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Sending & Tracking</td><td className="px-5 py-3 text-slate-600">Send documents, track opens/reads, automate follow-ups with cancellation conditions</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Material Ordering</td><td className="px-5 py-3 text-slate-600">Create orders from saved quotes with three display formats and supplier-ready details</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Invoicing</td><td className="px-5 py-3 text-slate-600">Create invoices from accepted quotes with configurable payment methods (bank, Stripe, PayPal)</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Supplier Resources</td><td className="px-5 py-3 text-slate-600">Import supplier catalogues and build component libraries from CSV</td></tr>
