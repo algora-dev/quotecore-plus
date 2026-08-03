@@ -439,45 +439,6 @@ export default async function QuoteSummaryPage({
         }
         summaryActions={
           <>
-            {quote.status === 'draft' && (
-              <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />
-            )}
-            {/*
-              "Edit Quote" goes back to whichever screen IS the master source
-              for this quote's mode. For manual/digital that's the quote
-              builder route (which itself routes digital onward to /build);
-              for blank quotes the customer quote editor IS the master source
-              of line items, so we route there directly.
-            */}
-            <Link
-              href={
-                quote.entry_mode === 'blank'
-                  ? `/${workspaceSlug}/quotes/${id}/blank-build`
-                  : `/${workspaceSlug}/quotes/${id}`
-              }
-              title="Edit Quote"
-              className="icon-btn border-slate-300 bg-white"
-            >
-              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-            </Link>
-            <form action={async () => {
-              'use server';
-              const { cloneQuote } = await import('../../actions');
-              const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
-              redirect(`/${workspaceSlug}/quotes/${newId}`);
-            }}>
-              <button type="submit" title="Clone Quote" className="icon-btn border-slate-300 bg-white">
-                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-              </button>
-            </form>
-            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
-            <WithdrawQuoteButton
-              quoteId={id}
-              hasActiveToken={!!quote.acceptance_token && !quote.withdrawn_at}
-              isAlreadyWithdrawn={!!quote.withdrawn_at}
-              acceptedAt={quote.accepted_at ?? null}
-              declinedAt={quote.declined_at ?? null}
-            />
             {quote.accepted_at ? (
               <ReopenQuoteButton quoteId={id} state="accepted" />
             ) : quote.declined_at ? (
@@ -543,6 +504,46 @@ export default async function QuoteSummaryPage({
               existingExpiresAt={(quote as { acceptance_token_expires_at?: string | null }).acceptance_token_expires_at ?? null}
               showMarginWarning={!!(quote as { show_margin_in_preview?: boolean | null }).show_margin_in_preview}
               hasCustomerQuote={hasCustomerQuote}
+            />
+            {/* Utility icon buttons at the end so main action buttons stretch across */}
+            {quote.status === 'draft' && (
+              <CurrencySelector quoteId={id} currentCurrency={quote.currency} companyDefaultCurrency={companyDefaultCurrency} workspaceSlug={workspaceSlug} />
+            )}
+            {/*
+              "Edit Quote" goes back to whichever screen IS the master source
+              for this quote's mode. For manual/digital that's the quote
+              builder route (which itself routes digital onward to /build);
+              for blank quotes the customer quote editor IS the master source
+              of line items, so we route there directly.
+            */}
+            <Link
+              href={
+                quote.entry_mode === 'blank'
+                  ? `/${workspaceSlug}/quotes/${id}/blank-build`
+                  : `/${workspaceSlug}/quotes/${id}`
+              }
+              title="Edit Quote"
+              className="icon-btn border-slate-300 bg-white"
+            >
+              <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </Link>
+            <form action={async () => {
+              'use server';
+              const { cloneQuote } = await import('../../actions');
+              const newId = await cloneQuote(id, quote.customer_name + ' (Copy)');
+              redirect(`/${workspaceSlug}/quotes/${newId}`);
+            }}>
+              <button type="submit" title="Clone Quote" className="icon-btn border-slate-300 bg-white">
+                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              </button>
+            </form>
+            <DownloadSummaryPDFButton quoteNumber={quote.quote_number} customerName={quote.customer_name} />
+            <WithdrawQuoteButton
+              quoteId={id}
+              hasActiveToken={!!quote.acceptance_token && !quote.withdrawn_at}
+              isAlreadyWithdrawn={!!quote.withdrawn_at}
+              acceptedAt={quote.accepted_at ?? null}
+              declinedAt={quote.declined_at ?? null}
             />
           </>
         }
