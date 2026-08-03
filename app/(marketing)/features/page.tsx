@@ -53,10 +53,10 @@ const features = [
   {
     title: "Invoicing",
     description:
-      "Turn accepted quotes into professional invoices with line items and configurable payment methods. QuoteCore+ presents bank details, Stripe links or PayPal links - recipients pay externally and can mark the invoice paid or dispute it.",
+      "Turn accepted quotes into professional invoices with line items and configurable payment methods. QuoteCore+ presents bank details, Stripe links or PayPal links - recipients pay using the provided details and can mark the invoice paid or dispute it.",
     href: "/features/invoicing",
     keyword: "contractor invoicing software",
-    steps: ["Accept a quote", "Create an invoice from the quote", "Configure payment methods", "Customer pays or disputes"],
+    steps: ["Accept a quote", "Create an invoice from the quote", "Configure payment methods", "Customer marks paid or disputes"],
   },
   {
     title: "Supplier Resources",
