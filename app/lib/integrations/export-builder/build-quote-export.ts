@@ -22,6 +22,7 @@ import type {
   ExportArtifactRole,
   Address,
 } from '../contracts/envelope-v1';
+import { computeTaxLines } from '@/app/lib/taxes/types';
 
 function createServiceClient() {
   return createClient(
@@ -124,11 +125,16 @@ export async function buildQuoteExport(
     .eq('quote_id', quoteId)
     .order('sort_order', { ascending: true });
 
-  // Load tax settings
-  const { data: taxSettings } = await supabase
-    .from('company_taxes')
+  // Load the quote's tax snapshot, not mutable company defaults.
+  const { data: quoteTaxes, error: quoteTaxesError } = await supabase
+    .from('quote_taxes')
     .select('*')
-    .eq('company_id', companyId);
+    .eq('quote_id', quoteId)
+    .order('sort_order', { ascending: true });
+
+  if (quoteTaxesError) {
+    throw new Error(`Failed to load quote taxes for export: ${quoteTaxesError.message}`);
+  }
 
   // Load files
   const { data: files, error: filesError } = await supabase
@@ -170,11 +176,18 @@ export async function buildQuoteExport(
     entriesByComponent.set(e.quote_component_id, list);
   }
 
+  const roofAreaLabelById = new Map((roofAreas ?? []).map((area) => [area.id, area.label ?? 'Roof area']));
+  const materialMarginPercent = Number(quote.material_margin_percent ?? 0);
+  const labourMarginPercent = Number(quote.labor_margin_percent ?? 0);
+
   // Build components export
   const exportedComponents: ComponentExport[] = (components ?? []).map((c) => ({
     id: c.id,
     name: c.name ?? '',
-    mainOrExtra: null,
+    mainOrExtra: c.component_type === 'main' || c.component_type === 'extra' ? c.component_type : null,
+    sectionName: c.quote_roof_area_id
+      ? roofAreaLabelById.get(c.quote_roof_area_id) ?? 'Roof area'
+      : ((roofAreas ?? []).length > 0 ? 'Extras' : 'Quote Items'),
     measurementType: c.measurement_type ?? null,
     inputMode: c.input_mode ?? null,
     quantity: c.final_quantity != null ? Number(c.final_quantity) : null,
@@ -184,6 +197,10 @@ export async function buildQuoteExport(
     labourRate: c.labour_rate != null ? money(c.labour_rate) : null,
     materialCost: c.material_cost != null ? money(c.material_cost) : null,
     labourCost: c.labour_cost != null ? money(c.labour_cost) : null,
+    sellTotal: money(
+      Number(c.material_cost ?? 0) * (1 + materialMarginPercent / 100)
+      + Number(c.labour_cost ?? 0) * (1 + labourMarginPercent / 100)
+    ),
     wastePercent: c.waste_percent != null ? c.waste_percent.toString() : null,
     pitchDegrees: c.calc_pitch_degrees ?? c.custom_pitch_degrees ?? null,
     pricingStrategy: null,
@@ -295,26 +312,27 @@ export async function buildQuoteExport(
     })),
   ];
 
-  // Compute totals from customer lines
-  const visibleLines = exportedCustomerLines.filter((l) => l.includedInTotal);
-  const subtotal = visibleLines.reduce((sum, l) => sum + parseFloat(l.lineTotal), 0);
-  const taxRate = quote.tax_rate ?? 0;
-  const taxTotal = subtotal * (taxRate / 100);
+  const customLinesTotal = exportedCustomerLines
+    .filter((line) => line.type === 'custom' && line.includedInTotal)
+    .reduce((sum, line) => sum + parseFloat(line.lineTotal), 0);
+  const materialCost = exportedComponents.reduce(
+    (sum, component) => sum + (component.materialCost ? parseFloat(component.materialCost) : 0),
+    0
+  );
+  const labourCost = exportedComponents.reduce(
+    (sum, component) => sum + (component.labourCost ? parseFloat(component.labourCost) : 0),
+    0
+  );
+  const materialMargin = materialCost * (materialMarginPercent / 100);
+  const labourMargin = labourCost * (labourMarginPercent / 100);
+  const subtotal = materialCost + labourCost + materialMargin + labourMargin + customLinesTotal;
+  const computedTaxes = computeTaxLines(quoteTaxes ?? [], subtotal, 'quote');
+  const taxTotal = computedTaxes.total;
   const totalIncludingTax = subtotal + taxTotal;
 
   // Determine tax mode
   const taxMode: 'inclusive' | 'exclusive' | 'unknown' =
-    taxRate > 0 ? 'exclusive' : 'unknown';
-
-  // Build totals
-  const materialCost = exportedComponents.reduce(
-    (sum, c) => sum + (c.materialCost ? parseFloat(c.materialCost) : 0),
-    0
-  );
-  const labourCost = exportedComponents.reduce(
-    (sum, c) => sum + (c.labourCost ? parseFloat(c.labourCost) : 0),
-    0
-  );
+    computedTaxes.lines.length > 0 ? 'exclusive' : 'unknown';
 
   // Build the export
   const exportData: QuoteExportV1 = {
@@ -383,18 +401,16 @@ export async function buildQuoteExport(
         totalCost: money(materialCost + labourCost),
       },
       marginTotals: {
-        materialMargin: money(subtotal - materialCost - labourCost),
-        labourMargin: '0.0000',
-        grossProfit: money(subtotal - materialCost - labourCost),
-      },
-      taxBreakdown: taxSettings
-        ? taxSettings.map((t) => ({
-            name: t.tax_name ?? 'Tax',
-            ratePercent: (t.tax_rate ?? 0).toString(),
-            amount: money(subtotal * ((t.tax_rate ?? 0) / 100)),
-            externalTaxCode: t.external_tax_code ?? null,
-          }))
-        : [],
+          materialMargin: money(materialMargin),
+          labourMargin: money(labourMargin),
+          grossProfit: money(materialMargin + labourMargin + customLinesTotal),
+        },
+      taxBreakdown: computedTaxes.lines.map((tax) => ({
+        name: tax.name,
+        ratePercent: tax.rate_percent.toString(),
+        amount: money(tax.amount),
+        externalTaxCode: null,
+      })),
     },
     files: exportedFiles,
     documents: exportedDocuments,

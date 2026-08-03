@@ -158,6 +158,7 @@ export interface ComponentExport {
   id: string;
   name: string;
   mainOrExtra: 'main' | 'extra' | null;
+  sectionName: string;
   measurementType: string | null;
   inputMode: string | null;
   quantity: number | null;
@@ -167,6 +168,7 @@ export interface ComponentExport {
   labourRate: string | null;
   materialCost: string | null;
   labourCost: string | null;
+  sellTotal: string;
   wastePercent: string | null;
   pitchDegrees: number | null;
   pricingStrategy: string | null;

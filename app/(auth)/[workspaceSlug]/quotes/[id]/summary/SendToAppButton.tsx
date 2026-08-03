@@ -95,10 +95,11 @@ export function SendToAppButton({
         existingArtifacts: existingGeneratedArtifacts,
       });
       const artifactIds = [...new Set([...selectedArtifactIds, ...generatedArtifactIds])];
+      const hasAnyExport = scopes.quoteSummary || scopes.customerQuote || scopes.laborSheet || artifactIds.length > 0;
       const scopeOverrides: Record<string, boolean> = {
-        customerDetails: scopes.quoteSummary || scopes.customerQuote,
-        siteDetails: scopes.quoteSummary,
-        customerFacingQuote: scopes.customerQuote,
+        customerDetails: hasAnyExport,
+        siteDetails: hasAnyExport,
+        customerFacingQuote: scopes.quoteSummary,
         filesAndPlans: artifactIds.length > 0,
         internalCosts: scopes.internalCosts,
         marginInformation: scopes.marginInformation,
@@ -260,21 +261,21 @@ export function SendToAppButton({
                 <div className="space-y-2">
                   <ScopeCheckbox
                     label="Quote summary"
-                    description="Full quote details, components, measurements, totals"
+                    description="Native app quote plus takeoff PDF and JSON"
                     checked={scopes.quoteSummary}
                     available={dataAvailability.hasQuoteSummary}
                     onChange={(v) => setScopes({ ...scopes, quoteSummary: v })}
                   />
                   <ScopeCheckbox
                     label="Customer quote"
-                    description="Customer-facing quote lines and pricing"
+                    description="Exact customer-facing quote as a PDF attachment"
                     checked={scopes.customerQuote}
                     available={dataAvailability.hasCustomerQuote}
                     onChange={(v) => setScopes({ ...scopes, customerQuote: v })}
                   />
                   <ScopeCheckbox
                     label="Labour sheet"
-                    description="Labour breakdown and costs"
+                    description="Labour breakdown as a PDF attachment"
                     checked={scopes.laborSheet}
                     available={dataAvailability.hasLaborSheet}
                     onChange={(v) => setScopes({ ...scopes, laborSheet: v })}

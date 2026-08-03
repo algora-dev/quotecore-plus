@@ -122,10 +122,12 @@ export class FergusConnector implements Connector {
     });
 
     // Step 3: Create quote with line items
-    if (scopes.customerFacingQuote && data.customerLines && data.customerLines.length > 0) {
+    const hasSummaryLines = data.components.length > 0
+      || data.customerLines.some((line) => line.type === 'custom' && line.includedInTotal);
+    if (scopes.customerFacingQuote && hasSummaryLines) {
       steps.push({
         type: 'create_or_update_quote',
-        description: `Create quote with ${data.customerLines.length} line item(s)`,
+        description: 'Create or update the master quote summary',
         optional: false,
       });
     }
@@ -189,6 +191,7 @@ export class FergusConnector implements Connector {
     const existingCustomer = context.existingMappings.find((m) => m.externalType === 'contact');
     const existingSite = context.existingMappings.find((m) => m.externalType === 'site');
     const existingJob = context.existingMappings.find((m) => m.externalType === 'job');
+    const existingQuote = context.existingMappings.find((m) => m.externalType === 'quote');
 
     // Step 1: Create customer
     if (scopes.customerDetails && data.customer?.name) {
@@ -429,30 +432,59 @@ export class FergusConnector implements Connector {
           dueDays: 30,
           sections,
         };
-
-        const res = await fetch(`${FERGUS_BASE}/jobs/${jobId}/quotes`, {
-          method: 'POST',
+        quoteId = existingQuote ? Number(existingQuote.externalId) : null;
+        if (quoteId != null && !Number.isFinite(quoteId)) quoteId = null;
+        let updating = quoteId != null;
+        let res = await fetch(
+          updating
+            ? `${FERGUS_BASE}/jobs/${jobId}/quotes/${quoteId}`
+            : `${FERGUS_BASE}/jobs/${jobId}/quotes`,
+          {
+          method: updating ? 'PUT' : 'POST',
           headers,
-          body: JSON.stringify(quoteBody),
+          body: JSON.stringify(updating
+            ? { title: quoteBody.title, description: quoteBody.description, sections }
+            : quoteBody),
           signal: AbortSignal.timeout(30000),
-        });
+          },
+        );
+
+        if (updating && res.status === 404) {
+          quoteId = null;
+          updating = false;
+          res = await fetch(`${FERGUS_BASE}/jobs/${jobId}/quotes`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(quoteBody),
+            signal: AbortSignal.timeout(30000),
+          });
+        }
 
         if (res.ok) {
           const result = await res.json();
-          quoteId = result.data?.id ?? result.id;
+          quoteId = result.data?.id ?? result.id ?? quoteId;
           steps.push({
             type: 'create_or_update_quote',
             status: 'succeeded',
             externalId: String(quoteId),
             externalUrl: `https://app.fergus.com/jobs/${jobId}/quotes/${quoteId}`,
           });
-          await context.logStep('create_or_update_quote', { responseSummary: { quoteId, sections: sections.length } });
+          await context.logStep('create_or_update_quote', {
+            responseSummary: { quoteId, sections: sections.length, operation: updating ? 'updated' : 'created' },
+          });
+          if (data.components.length > 0) {
+            await context.logStep('quote_line_classification_warning', {
+              errorClass: 'fergus_sales_account_unmapped',
+              errorSummary: 'Fergus sales-account IDs are unavailable; quote lines were classified as labour.',
+            });
+          }
         } else {
           const errText = await res.text().catch(() => 'Unknown error');
+          const operation = updating ? 'update' : 'create';
           steps.push({
             type: 'create_or_update_quote',
             status: 'failed',
-            errorSummary: `Failed to create quote: ${res.status} ${errText.slice(0, 200)}`,
+            errorSummary: `Failed to ${operation} quote: ${res.status} ${errText.slice(0, 200)}`,
           });
           await context.logStep('create_or_update_quote', { errorSummary: `Failed: ${res.status} ${errText.slice(0, 500)}`, requestSummary: { quoteBody } });
           // Don't return failed - job was created, quote is secondary
@@ -661,7 +693,7 @@ function buildJobDescription(
   lines.push(`Currency: ${data.quote.currency}`);
   lines.push('');
 
-  if (scopes.measurementsAndTakeoff && data.components && data.components.length > 0) {
+  if (scopes.measurementsAndTakeoff && data.components.length > 0 && data.artifacts?.length === 0) {
     lines.push('--- Measurements & Takeoff ---');
     for (const comp of data.components) {
       lines.push(`  ${comp.name}: ${comp.quantity ?? comp.pricedQuantity ?? 'N/A'} ${comp.pricingUnit || ''}`.trimEnd());
@@ -691,12 +723,10 @@ function buildJobDescription(
   return lines.join('\n');
 }
 
-/**
- * Build Fergus quote sections from the envelope's customer-facing lines.
- */
+/** Build Fergus quote sections from the master QuoteCore+ summary. */
 function buildQuoteSections(
   envelope: IntegrationEnvelopeV1,
-  scopes: { customerFacingQuote?: boolean; labourBreakdown?: boolean }
+  scopes: { internalCosts?: boolean }
 ): Array<{
   name: string;
   lineItems: Array<{
@@ -709,50 +739,48 @@ function buildQuoteSections(
   }>;
 }> {
   const data = envelope.data;
-  const sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemPrice: number; itemCost: number; isLabour: boolean; sortOrder: number }> }> = [];
+  const sections = new Map<string, Array<{ itemName: string; itemQuantity: number; itemPrice: number; itemCost: number; isLabour: boolean; sortOrder: number }>>();
 
-  // Main quote lines (materials/services)
-  if (data.customerLines && data.customerLines.length > 0) {
-    const lineItems = data.customerLines.map((line, i) => {
-      const itemQuantity = toFiniteNumber(line.quantity, 1);
-      const lineTotal = toFiniteNumber(line.lineTotal, 0);
-      const itemPrice = line.unitPrice != null
-        ? toFiniteNumber(line.unitPrice, 0)
-        : itemQuantity !== 0 ? lineTotal / itemQuantity : lineTotal;
-
-      return {
-        itemName: line.description || 'Item',
-        itemQuantity,
-        itemPrice,
-        itemCost: 0,
-        // Fergus API requires each line item to have either isLabour OR salesAccountId.
-        // We don't have Fergus sales account IDs configured, so use isLabour for all items.
-        isLabour: true,
-        sortOrder: i,
-      };
-    });
-    sections.push({ name: 'Quote Items', lineItems });
-  }
-
-  // Labour lines as separate section
-  if (scopes.labourBreakdown && data.labourLines && data.labourLines.length > 0) {
-    const labourItems = data.labourLines.map((line, i) => ({
-      itemName: line.description || 'Labour',
-      itemQuantity: 1,
-      itemPrice: line.amount != null ? Number(line.amount) : 0,
-      itemCost: 0,
+  for (const component of data.components.filter((item) => item.customerVisible)) {
+    const sectionName = component.sectionName || 'Quote Items';
+    const lineItems = sections.get(sectionName) ?? [];
+    const quantity = toFiniteNumber(component.pricedQuantity ?? component.quantity, 1) || 1;
+    const sellTotal = toFiniteNumber(component.sellTotal, 0);
+    const costTotal = toFiniteNumber(component.materialCost, 0) + toFiniteNumber(component.labourCost, 0);
+    lineItems.push({
+      itemName: component.name || 'Item',
+      itemQuantity: quantity,
+      itemPrice: sellTotal / quantity,
+      itemCost: scopes.internalCosts ? costTotal / quantity : 0,
       isLabour: true,
-      sortOrder: i,
-    }));
-    sections.push({ name: 'Labour', lineItems: labourItems });
+      sortOrder: lineItems.length,
+    });
+    sections.set(sectionName, lineItems);
   }
 
-  // If no sections, create an empty one (Fergus requires at least one section)
-  if (sections.length === 0) {
-    sections.push({ name: 'Quote Items', lineItems: [] });
+  const customLines = data.customerLines.filter(
+    (line) => line.type === 'custom' && line.includedInTotal && line.visibleToCustomer,
+  );
+  if (customLines.length > 0) {
+    const lineItems = sections.get('Extras') ?? [];
+    for (const line of customLines) {
+      const quantity = toFiniteNumber(line.quantity, 1) || 1;
+      const lineTotal = toFiniteNumber(line.lineTotal, 0);
+      lineItems.push({
+        itemName: line.description || 'Item',
+        itemQuantity: quantity,
+        itemPrice: line.unitPrice != null ? toFiniteNumber(line.unitPrice, 0) : lineTotal / quantity,
+        itemCost: 0,
+        isLabour: true,
+        sortOrder: lineItems.length,
+      });
+    }
+    sections.set('Extras', lineItems);
   }
 
-  return sections;
+  return sections.size > 0
+    ? [...sections.entries()].map(([name, lineItems]) => ({ name, lineItems }))
+    : [{ name: 'Quote Items', lineItems: [] }];
 }
 
 function buildPersonPayload(name: string, email: string | null, phone: string | null) {
