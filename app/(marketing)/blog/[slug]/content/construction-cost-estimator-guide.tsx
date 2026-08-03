@@ -186,7 +186,7 @@ export default function Post() {
       <h2>From estimate to quote, order, and invoice</h2>
       <p>An estimate is most useful when it remains connected to delivery.</p>
       <p>Use the <a href="/free-quote-generator">free quote generator</a> to present the customer scope and price, the <a href="/free-purchase-order-generator">free purchase order generator</a> to order materials, and the <a href="/free-invoice-generator">free invoice generator</a> to request payment.</p>
-      <p>QuoteCore+ connects these stages with Smart Components?, customer acceptance, material orders, invoices, and activity tracking. Explore <a href="/construction-quoting-software">construction quoting software</a> or watch <a href="https://www.youtube.com/watch?v=ntyS1giH5p0">A Better Way to Measure, Quote and Invoice</a>.</p>
+      <p>QuoteCore+ connects these stages with Smart Components™, customer acceptance, material orders, invoices, and activity tracking. Explore <a href="/construction-quoting-software">construction quoting software</a> or watch <a href="https://www.youtube.com/watch?v=ntyS1giH5p0">A Better Way to Measure, Quote and Invoice</a>.</p>
       <h2>Frequently asked questions</h2>
       <h3>What is a construction cost estimate?</h3>
       <p>It is a structured forecast of the resources and money required to deliver a defined scope. It may be an early budget, developed estimate, tender, or live cost forecast.</p>

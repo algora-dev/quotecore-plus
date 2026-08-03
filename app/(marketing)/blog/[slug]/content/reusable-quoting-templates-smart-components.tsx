@@ -4,7 +4,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>A reusable quoting template should do more than copy wording and prices from an old job. It should capture the logic behind the work: materials, labour, measurements, calculations, waste, pricing, drawings, images, and what the customer needs to see.</p>
-      <p>QuoteCore+ calls these building blocks Smart Components?. You build them once, then reuse and adjust them across future quotes, orders, and invoices.</p>
+      <p>QuoteCore+ calls these building blocks Smart Components™. You build them once, then reuse and adjust them across future quotes, orders, and invoices.</p>
       <p>Try the <a href="/free-smart-component-creator">free Smart Component Creator</a> to map out a component before adding it to your workflow.</p>
       <h2>Why ordinary quote templates break down</h2>
       <p>A document template is useful for branding and standard terms. It becomes less useful when every job has different measurements and quantities.</p>
@@ -23,7 +23,7 @@ export default function Post() {
       <p>A Smart Component is a reusable building block that captures how your business prices and delivers a piece of work.</p>
       <p>It can contain products, materials, labour, measurements, calculations, waste, costs, selling prices, drawings, images, internal notes, customer descriptions, and custom rules.</p>
       <p>A roofer might create components for a roof plane, ridge system, valley, flashing, gutter, or rooflight. A concrete contractor might create slab, footing, or formwork components. A service business might create a repeatable package with labour, travel, and deliverables.</p>
-      <p>Watch <a href="https://www.youtube.com/watch?v=aFXJwOiliPI">What are Smart Components??</a> for the product overview.</p>
+      <p>Watch <a href="https://www.youtube.com/watch?v=aFXJwOiliPI">What are Smart Components</a> for the product overview.</p>
       <h2>Step 1: choose a repeatable unit of work</h2>
       <p>Start with something you quote often and understand well.</p>
       <p>Good first components have a clear scope, repeatable inputs, known materials or services, a calculation you already use, and a customer description you regularly rewrite.</p>
@@ -108,7 +108,7 @@ export default function Post() {
       <p>Yes. Components can be added and adjusted manually. Digital takeoff is one quoting method, not a requirement for using reusable components.</p>
       <h3>How often should components be reviewed?</h3>
       <p>Review them when supplier costs, labour rates, products, specifications, or business methods change. Also review any component that repeatedly differs from actual job results.</p>
-      <h3>Can different trades use Smart Components?</h3>
+      <h3>Can different trades use Smart Components™</h3>
       <p>Yes. Any repeatable product, service, measurement, or calculation can become a component. The structure adapts to roofing, construction, concrete, landscaping, electrical, plumbing, and service work.</p>
       <p>Build a draft component with the <a href="/free-smart-component-creator">free Smart Component Creator</a>, then start a <a href="/free-trial">free QuoteCore+ trial</a> to use reusable components throughout your quoting workflow.</p>
     </div>

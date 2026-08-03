@@ -134,7 +134,7 @@ export default function Post() {
       </p>
       <p>
         <strong>Who it is for:</strong> Any contractor who needs to produce professional quotes
-        quickly. Works for roofing, construction, landscaping, and any trade.
+        quickly. Works for roofing, construction, landscaping, and other measured trades.
       </p>
       <p>
         <strong>Why it saves time:</strong> No more Word documents or spreadsheet templates. Enter

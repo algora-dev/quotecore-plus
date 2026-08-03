@@ -152,7 +152,7 @@ export default function Post() {
         <li>Follow-up</li>
         <li>Job records</li>
       </ul>
-      <p>QuoteCore+ was built from roofing experience to connect measurement, Smart Components?, quotes, customer acceptance, orders, invoices, and activity tracking. Watch <a href="https://www.youtube.com/watch?v=ntyS1giH5p0">A Better Way to Measure, Quote and Invoice</a> for an overview.</p>
+      <p>QuoteCore+ was built from roofing experience to connect measurement, Smart Components™, quotes, customer acceptance, orders, invoices, and activity tracking. Watch <a href="https://www.youtube.com/watch?v=ntyS1giH5p0">A Better Way to Measure, Quote and Invoice</a> for an overview.</p>
       <h2>A simple first-year scorecard</h2>
       <p>Track a small set of numbers every month:</p>
       <ul>

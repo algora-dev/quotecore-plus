@@ -123,7 +123,7 @@ export default function Post() {
       </ul>
       <h2>From estimate to professional quote</h2>
       <p>The <a href="/free-roofing-quote-calculator">free roofing quote calculator</a> and <a href="/free-quote-generator">free quote generator</a> help turn costs into a customer-facing document.</p>
-      <p>QuoteCore+ connects measurement, Smart Components?, pricing, quotes, acceptance, material orders, and invoices. Watch <a href="https://www.youtube.com/watch?v=QyYa1VbQkbQ">Roofing Quoting Software That Actually Works</a> for an overview.</p>
+      <p>QuoteCore+ connects measurement, Smart Components™, pricing, quotes, acceptance, material orders, and invoices. Watch <a href="https://www.youtube.com/watch?v=QyYa1VbQkbQ">Roofing Quoting Software That Actually Works</a> for an overview.</p>
       <h2>Frequently asked questions</h2>
       <h3>How much does a new roof cost in the UK?</h3>
       <p>There is no reliable single figure without roof area, pitch, shape, specification, access, and condition. Use a measured estimate and current local supplier and labour rates rather than a national average alone.</p>

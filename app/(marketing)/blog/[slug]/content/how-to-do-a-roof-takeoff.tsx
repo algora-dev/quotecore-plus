@@ -136,7 +136,7 @@ export default function Post() {
         <li>Failing to record assumptions</li>
       </ul>
       <h2>A faster connected workflow</h2>
-      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ connects digital measurement, Smart Components?, pricing, customer quotes, material orders, and invoices in one workflow.</p>
+      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ connects digital measurement, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
       <p>Watch <a href="https://www.youtube.com/watch?v=pqIfx-rOcmo">Create a Quote from Start to Finish with QuoteCore+</a> to see how the stages connect, or see a <a href="https://www.youtube.com/watch?v=DziFjqnPdqQ">complex roofing quote created in under three minutes</a>.</p>
       <h2>Frequently asked questions</h2>
       <h3>What is the difference between a roof measurement and a roof takeoff?</h3>
