@@ -106,22 +106,31 @@ export function SupplierEnquiryModal({
           const def = COMPONENT_DEFS[key];
           const label = componentLabel(key, section?.customDef);
           const unit = def?.unit || (section?.customDef?.measurementType === 'linear' ? 'm' : section?.customDef?.measurementType === 'area' ? 'm\u00B2' : 'ea');
-          // Get component name from first entry
-          let componentName = label;
-          if (section?.entries?.[0]?.selectedComponentId && getComponentById) {
-            const comp = getComponentById(section.entries[0].selectedComponentId);
-            if (comp?.name) componentName = comp.name;
-          }
+          // Build per-entry details with component info
+          const entryDetails = (section?.entries || []).map((entry: any, idx: number) => {
+            const comp = entry.selectedComponentId && getComponentById ? getComponentById(entry.selectedComponentId) : null;
+            return {
+              index: idx + 1,
+              componentName: comp?.name || 'Custom / no component',
+              componentSku: (comp as any)?.sku || undefined,
+              pricePerUnit: comp?.price_per_unit ?? entry.knownPrice ?? undefined,
+              labourRate: comp?.labour_rate ?? undefined,
+              quantity: entry.quantity ?? 1,
+              rawValue: Number((entry.computedValue ?? 0).toFixed(2)),
+              knownPrice: entry.knownPrice ?? undefined,
+            };
+          });
           enrichedTotals[key] = {
-            label: componentName,
+            label,
+            unit,
             rawTotal: Number(t.rawTotal?.toFixed(2) ?? 0),
             withWaste: Number(t.withWaste?.toFixed(2) ?? 0),
             count: t.count,
-            unit: unit,
             materialCost: Number(t.materialCost?.toFixed(2) ?? 0),
             labourCost: Number(t.labourCost?.toFixed(2) ?? 0),
             totalCost: Number(t.totalCost?.toFixed(2) ?? 0),
             wastePercent: section?.wastePercent ?? 0,
+            entries: entryDetails,
           };
         }
       }

@@ -178,11 +178,17 @@ export async function submitSupplierEnquiry(
           const labour = v.labourCost != null ? Number(v.labourCost).toFixed(2) : '0.00';
           const total = v.totalCost != null ? Number(v.totalCost).toFixed(2) : '0.00';
           const cur = input.currency || '';
+          // Build per-entry component details
+          const entriesHtml = (v.entries || []).map((entry: any) => {
+            const priceStr = entry.pricePerUnit != null ? `${cur}${Number(entry.pricePerUnit).toFixed(2)}/${unit}` : '';
+            const skuStr = entry.componentSku ? ` SKU: ${escapeHtml(entry.componentSku)}` : '';
+            return `<div style="font-size:11px;color:#64748b;padding:2px 0 2px 16px;border-left:2px solid #e2e8f0;margin-left:4px;">${escapeHtml(entry.componentName)}${skuStr}${priceStr ? ` &middot; ${priceStr}` : ''} &middot; Qty: ${entry.quantity} &middot; ${entry.rawValue} ${unit}</div>`;
+          }).join('');
           return `<tr>
-            <td style="padding:8px 12px 8px 0;font-weight:600;color:#1e293b;border-bottom:1px solid #f1f5f9;">${escapeHtml(label)}</td>
-            <td style="padding:8px 12px 8px 0;color:#64748b;border-bottom:1px solid #f1f5f9;text-align:right;">${raw} ${unit}</td>
-            <td style="padding:8px 12px 8px 0;color:#64748b;border-bottom:1px solid #f1f5f9;text-align:right;">+${wastePct}% = ${waste} ${unit}</td>
-            <td style="padding:8px 0;color:#1e293b;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:500;">${cur}${material}</td>
+            <td style="padding:8px 12px 8px 0;font-weight:600;color:#1e293b;border-bottom:1px solid #f1f5f9;vertical-align:top;">${escapeHtml(label)}${entriesHtml ? `<div style="margin-top:4px;">${entriesHtml}</div>` : ''}</td>
+            <td style="padding:8px 12px 8px 0;color:#64748b;border-bottom:1px solid #f1f5f9;text-align:right;vertical-align:top;">${raw} ${unit}</td>
+            <td style="padding:8px 12px 8px 0;color:#64748b;border-bottom:1px solid #f1f5f9;text-align:right;vertical-align:top;">+${wastePct}% = ${waste} ${unit}</td>
+            <td style="padding:8px 0;color:#1e293b;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:500;vertical-align:top;">${cur}${material}</td>
           </tr>`;
         })
         .join('')
@@ -303,7 +309,12 @@ export async function submitSupplierEnquiry(
           const raw = v.rawTotal != null ? Number(v.rawTotal).toFixed(2) : '-';
           const waste = v.withWaste != null ? Number(v.withWaste).toFixed(2) : '-';
           const material = v.materialCost != null ? Number(v.materialCost).toFixed(2) : '0.00';
-          return `${label}: ${raw} ${unit} (+${v.wastePercent || 0}% waste = ${waste} ${unit}) - Material: ${cur}${material}`;
+          const entriesText = (v.entries || []).map((entry: any) => {
+            const priceStr = entry.pricePerUnit != null ? ` @ ${cur}${Number(entry.pricePerUnit).toFixed(2)}/${unit}` : '';
+            const skuStr = entry.componentSku ? ` (SKU: ${entry.componentSku})` : '';
+            return `  - ${entry.componentName}${skuStr}${priceStr} [Qty ${entry.quantity}, ${entry.rawValue} ${unit}]`;
+          }).join('\n');
+          return `${label}: ${raw} ${unit} (+${v.wastePercent || 0}% waste = ${waste} ${unit}) - Material: ${cur}${material}${entriesText ? '\n' + entriesText : ''}`;
         })
         .join('\n')
     : '';

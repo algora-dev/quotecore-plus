@@ -21,8 +21,6 @@ import { calculateTakeoffSections } from './engine';
 import {
   normalizePublicRoofTakeoff,
   validatePublicInput,
-  toResultQuery,
-  ROOF_TAKEOFF_CALCULATION_VERSION,
   type PublicRoofTakeoffInput,
 } from './public-contract';
 import { EntryListItem, AddEntryForm } from './EntryComponents';
@@ -36,7 +34,6 @@ import {
   ratioToDegrees,
   degreesToRatio,
 } from './helpers';
-import { createResultToken, buildResultUrl } from './result-token';
 import dynamic from 'next/dynamic';
 
 // Lazy-load modals and conditional UI to reduce initial bundle
@@ -361,33 +358,40 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const hasData = totalEntries > 0;
   const grandTotal = calculation.grandTotal;
 
-  // Generate result token + URL for sharing
-  const resultUrl = useMemo(() => {
-    if (!hasData) return null;
-    try {
-      const publicInput: PublicRoofTakeoffInput = {
+  // Generate result URL via API (Node crypto not available in browser)
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!hasData) { setResultUrl(null); return; }
+    const controller = new AbortController();
+    fetch('/api/free-tools/generate-result-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         mode: measureMode ?? 'actual',
         units: unitSystem || 'metric',
         pitchDegrees: parseFloat(masterPitch) || 25,
         area: totals['roof_area']?.rawTotal || undefined,
-        ridge: allSections['ridge']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
-        hips: allSections['hip']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
-        valleys: allSections['valley']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
-        barges: allSections['barge']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
-        spouting: allSections['spouting']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
+        ridge: allSections['ridge']?.entries.map((e: any) => e.computedValue).filter(Boolean) || undefined,
+        hips: allSections['hip']?.entries.map((e: any) => e.computedValue).filter(Boolean) || undefined,
+        valleys: allSections['valley']?.entries.map((e: any) => e.computedValue).filter(Boolean) || undefined,
+        barges: allSections['barge']?.entries.map((e: any) => e.computedValue).filter(Boolean) || undefined,
+        spouting: allSections['spouting']?.entries.map((e: any) => e.computedValue).filter(Boolean) || undefined,
         supplier: selectedSupplier?.supplierSlug || undefined,
         country: selectedSupplier?.country || undefined,
-      };
-      const query = toResultQuery(publicInput);
-      const token = createResultToken(query, ROOF_TAKEOFF_CALCULATION_VERSION);
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://quote-core.com';
-      const url = buildResultUrl(token, origin);
-      console.log('[resultUrl] Generated:', url);
-      return url;
-    } catch (err) {
-      console.error('[resultUrl] Failed to generate:', err);
-      return null;
-    }
+      }),
+      signal: controller.signal,
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.resultUrl) {
+          console.log('[resultUrl] Generated:', data.resultUrl);
+          setResultUrl(data.resultUrl);
+        }
+      })
+      .catch(err => {
+        if (err.name !== 'AbortError') console.error('[resultUrl] Failed:', err);
+      });
+    return () => controller.abort();
   }, [hasData, totals, allSections, measureMode, unitSystem, masterPitch, selectedSupplier]);
   const clearTakeoff = () => {
     setSections(makeInitialSections());
