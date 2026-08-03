@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import FAQAccordion from "./FAQAccordion";
@@ -9,10 +9,6 @@ export const metadata: Metadata = {
     "Use your own products and base pricing to provide fast preliminary estimates, capture better-qualified enquiries, and reduce back-and-forth. Free supplier listing available.",
   alternates: {
     canonical: "https://quote-core.com/supplier-partnership",
-  },
-  robots: {
-    index: false,
-    follow: true,
   },
   openGraph: {
     title: "Supplier Partnership - Give Customers Useful Roofing Prices Instantly | QuoteCore+",
@@ -27,6 +23,76 @@ export const metadata: Metadata = {
     description:
       "Use your own products and base pricing to provide fast preliminary estimates, capture better-qualified enquiries, and reduce back-and-forth. Free supplier listing available.",
   },
+};
+
+const faqSchemaData = [
+  {
+    q: "What is a supplier partnership with QuoteCore+?",
+    a: "We add your roofing products, service area, and base pricing to QuoteCore+ so contractors can generate preliminary prices using your materials. You control what is shown, how visible pricing is, and how detailed the estimates are. Contractors get a useful starting point, and you get better-qualified enquiries.",
+  },
+  {
+    q: "How much does it cost to list our business?",
+    a: "The basic supplier listing is free. We add your business, service area, products, and base pricing at no cost. If you want a branded pricing tool, website integration, or a full supplier quoting system, those are custom projects scoped based on complexity.",
+  },
+  {
+    q: "Do we need to replace our current quoting process?",
+    a: "No. QuoteCore+ does not replace your existing workflow. Contractors use the tool to get a preliminary price before they contact you. When they do get in touch, they arrive with a clearer idea of what they need, which reduces back-and-forth and makes the conversation more productive.",
+  },
+  {
+    q: "Who controls the pricing shown in the tool?",
+    a: "You do. You provide the base pricing and you decide how visible it is. You can show full pricing, indicative ranges, or hide pricing entirely and just show product selection. You can update pricing whenever you want.",
+  },
+  {
+    q: "What types of roofing suppliers is this for?",
+    a: "Any supplier of roofing materials - tiles, slates, shingles, metal sheets, membranes, insulation, battens, fixings, flashings, gutters, rooflights, or accessories. If contractors buy it for roofs, it belongs in the tool.",
+  },
+  {
+    q: "How long does setup take?",
+    a: "For a free supplier listing, we can have your business, products, and base pricing added within a few days of receiving your catalogue. Custom and branded systems take longer depending on scope.",
+  },
+  {
+    q: "Can we update our products and pricing after launch?",
+    a: "Yes. You can update product codes, names, prices, and specifications at any time. Keeping your catalogue current means contractors always quote with accurate information.",
+  },
+  {
+    q: "Do contractors order through QuoteCore+ or directly from us?",
+    a: "Contractors contact you directly. QuoteCore+ connects the contractor to your business - we do not hold stock, take a cut, or insert ourselves between you and the customer. You keep the relationship and the pricing.",
+  },
+  {
+    q: "What if we only supply a specific region?",
+    a: "That is fine. We set your service area so you only appear in searches where you can actually deliver. Local and regional suppliers are prioritised over national ones where relevant.",
+  },
+  {
+    q: "What does the supplier dashboard show?",
+    a: "The dashboard shows which products are being selected, how often the tool is used, what roof types and materials are being priced, the regions where activity is happening, and how many enquiries are being generated. You get a clear picture of demand without picking up the phone.",
+  },
+  {
+    q: "Can we get a branded version of the pricing tool?",
+    a: "Yes. A branded pricing tool featuring your logo, colours, and product range is available as a custom project. This can be embedded on your website or hosted on a dedicated page. Contact us to discuss scope and pricing.",
+  },
+  {
+    q: "What happens if a contractor gets a preliminary price and then contacts us?",
+    a: "That is the goal. The contractor arrives with a rough idea of cost based on your actual products, which means the conversation is more productive. You can refine the price, adjust the spec, and move toward a formal quote. The tool reduces the repetitive early-stage conversations that eat up your team's time.",
+  },
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqSchemaData.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Home", item: "https://quote-core.com/" },
+    { "@type": "ListItem", position: 2, name: "Supplier Partnership", item: "https://quote-core.com/supplier-partnership" },
+  ],
 };
 
 const beforeSteps = [
@@ -143,6 +209,15 @@ const customOptions = [
 export default function SupplierPartnershipPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 
@@ -161,18 +236,12 @@ export default function SupplierPartnershipPage() {
                 <p className="mt-6 text-lg text-zinc-600">
                   Add your products and base pricing to QuoteCore+ so contractors can generate preliminary prices without picking up the phone. Better-qualified enquiries, less back-and-forth.
                 </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
                   <a
-                    href="https://calendly.com/quote-core-info/15-minute-meeting"
+                    href="#walkthrough"
                     className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
                   >
-                    Book a call
-                  </a>
-                  <a
-                    href="/contact"
-                    className="inline-flex items-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                  >
-                    Send a message
+                    Show me what this could look like
                   </a>
                   <a
                     href="#free-integration"
@@ -182,7 +251,7 @@ export default function SupplierPartnershipPage() {
                   </a>
                 </div>
                 <p className="mt-5 text-sm text-slate-500">
-                  No obligation. No need to replace your current quoting process. Or simply reply to the email you received.
+                  No obligation. No need to replace your current quoting process.
                 </p>
               </div>
               <div>
@@ -319,14 +388,13 @@ export default function SupplierPartnershipPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="mt-8">
                 <a
                   href="/contact"
                   className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
                 >
                   Add our business for free
                 </a>
-                <span className="text-sm text-slate-500">Or simply reply to the email you received.</span>
               </div>
               <p className="mt-4 text-sm text-slate-500">
                 Your pricing remains under your control.
@@ -426,14 +494,13 @@ export default function SupplierPartnershipPage() {
                 </div>
               ))}
             </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-8">
               <a
                 href="/contact"
                 className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 Request a tailored example
               </a>
-              <span className="text-sm text-slate-500">Or simply reply to the email you received.</span>
             </div>
           </div>
         </section>
@@ -499,29 +566,23 @@ export default function SupplierPartnershipPage() {
             <p className="mx-auto mt-4 max-w-xl text-lg text-zinc-400">
               We can build a tailored example using your products and pricing. No obligation, no pressure.
             </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <a
                 href="/contact"
                 className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Send a message
+                Show me a tailored example
               </a>
               <a
-                href="https://calendly.com/quote-core-info/15-minute-meeting"
-                className="inline-flex items-center rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                Book a call
-              </a>
-              <a
-                href="#free-integration"
+                href="/contact"
                 className="px-4 py-2 text-sm font-medium rounded-full border border-zinc-700 text-zinc-300 hover:bg-zinc-900 transition"
               >
-                List our business for free
+                Book a short call
               </a>
             </div>
-            <p className="mt-5 text-sm text-zinc-500">
-              Or simply reply to the email you received.
-            </p>
+            <a href="#free-integration" className="mt-4 inline-block text-sm text-zinc-500 hover:text-zinc-300 transition">
+              List our business for free
+            </a>
           </div>
         </section>
 
