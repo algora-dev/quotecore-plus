@@ -1,7 +1,9 @@
 import { RoofTakeoffBuilder } from '../RoofTakeoffBuilder';
-import { listReadyTakeoffLibraries } from '@/app/lib/supplier-pricing/publishedTakeoffLibrary';
+import { listReadyTakeoffLibraries, loadPublishedTakeoffLibraryBySlug } from '@/app/lib/supplier-pricing/publishedTakeoffLibrary';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * /free-roofing-takeoff-builder/[supplierSlug]
@@ -9,10 +11,7 @@ import type { Metadata } from 'next';
  * Supplier-specific takeoff builder page.
  * Pre-selects the supplier's library and shows their branding/name.
  */
-export async function generateStaticParams() {
-  const libraries = await listReadyTakeoffLibraries();
-  return libraries.map((lib) => ({ supplierSlug: lib.supplierSlug }));
-}
+
 
 export async function generateMetadata({
   params,

@@ -247,7 +247,7 @@ export async function listReadyTakeoffLibraries(): Promise<{
     .select(`
       id, name, public_slug, currency,
       supplier_profile_id,
-      supplier_profiles!inner(
+      supplier_profiles!component_collections_supplier_profile_id_fkey!inner(
         id, supplier_name, slug, status, country, currency,
         branch_city, branch_region, branch_country,
         national_coverage, delivery_coverage,
