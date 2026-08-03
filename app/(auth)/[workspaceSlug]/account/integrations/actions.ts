@@ -165,7 +165,8 @@ export async function queueQuoteExport(
   integrationId: string,
   quoteId: string,
   eventType: string = 'manual_export',
-  scopeOverrides?: Record<string, boolean>
+  scopeOverrides?: Record<string, boolean>,
+  selection?: { artifactIds: string[] }
 ): Promise<{ success: boolean; error?: string; exportId?: string; status?: string; duplicate?: boolean }> {
   const revision = await getQuoteRevision(quoteId, companyId);
   if (revision === 0) {
@@ -180,6 +181,7 @@ export async function queueQuoteExport(
     sourceRevision: revision,
     eventType,
     scopeOverrides,
+    selection,
   });
 
   return {

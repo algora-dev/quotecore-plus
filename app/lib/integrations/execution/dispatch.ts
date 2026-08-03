@@ -64,6 +64,13 @@ async function processExport(queued: QueuedExport): Promise<void> {
     return;
   }
 
+  const selectedArtifactIds = queued.payload?.selection?.artifactIds;
+  if (selectedArtifactIds) {
+    const selected = new Set(selectedArtifactIds);
+    quoteData.files = quoteData.files.filter((file) => selected.has(file.id));
+    quoteData.documents = quoteData.documents.filter((document) => selected.has(document.id));
+  }
+
   // Build envelope
   const envelope: IntegrationEnvelopeV1 = {
     schemaVersion: '1.0',
