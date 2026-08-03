@@ -67,16 +67,17 @@ test('exports a complete quote into an active Fergus job', async () => {
 
     const quoteRequest = requests.find((request) => request.url.endsWith('/jobs/303/quotes'));
     const quoteBody = quoteRequest?.body as {
-      sections: Array<{ lineItems: Array<{ itemQuantity: number; itemPrice: number }> }>;
+      sections: Array<{ name: string; lineItems: Array<{ itemName: string; itemQuantity: number; itemPrice: number }> }>;
     };
-    assert.equal(quoteBody.sections[0].lineItems[0].itemQuantity, 2);
-    assert.equal(quoteBody.sections[0].lineItems[0].itemPrice, 50);
+    assert.equal(quoteBody.sections[0].name, 'Main roof');
+    assert.equal(quoteBody.sections[0].lineItems[0].itemName, 'Tiles');
+    assert.equal(quoteBody.sections[0].lineItems[0].itemQuantity, 42);
+    assert.equal(quoteBody.sections[0].lineItems[0].itemPrice, 20);
 
-    assert.equal(requests.filter((request) => request.url.endsWith('/attachments')).length, 2);
+    assert.equal(requests.filter((request) => request.url.endsWith('/attachments')).length, 3);
     const noteRequest = requests.find((request) => request.url.endsWith('/notes'));
     const noteText = (noteRequest?.body as { text: string }).text;
-    assert.match(noteText, /Measurements & Takeoff/);
-    assert.match(noteText, /Main roof: 42 m²/);
+    assert.doesNotMatch(noteText, /Measurements & Takeoff/);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -99,7 +100,7 @@ test('repairs and finalises a previously mapped draft job', async () => {
     if (url.endsWith('/sites')) return Response.json({ data: { id: 202 } }, { status: 201 });
     if (url.endsWith('/jobs/303') && method === 'PUT') return Response.json({ data: { id: 303 } }, { status: 201 });
     if (url.endsWith('/jobs/303/finalise')) return Response.json({ data: { id: 303, jobNumber: 'J-303' } });
-    if (url.endsWith('/jobs/303/quotes')) return Response.json({ data: { id: 404 } }, { status: 201 });
+    if (url.endsWith('/jobs/303/quotes/404') && method === 'PUT') return Response.json({ data: { id: 404 } });
     if (url.endsWith('/attachments')) return Response.json({ data: { id: 505 } }, { status: 201 });
     if (url.endsWith('/notes')) return Response.json({ data: { id: 606 } }, { status: 201 });
     return Response.json({ message: 'Unexpected request' }, { status: 500 });
@@ -124,6 +125,8 @@ test('repairs and finalises a previously mapped draft job', async () => {
       existingMappings: [
         { externalType: 'contact', externalId: '101', externalUrl: null, lastSyncedRevision: 1 },
         { externalType: 'job', externalId: '303', externalUrl: null, lastSyncedRevision: 1 },
+        { externalType: 'quote', externalId: '404', externalUrl: null, lastSyncedRevision: 1 },
+        { externalType: 'attachment:file-1', externalId: '505', externalUrl: null, lastSyncedRevision: 1 },
       ],
     };
     const plan = await connector.plan(envelope, config, context);
@@ -132,6 +135,9 @@ test('repairs and finalises a previously mapped draft job', async () => {
     assert.equal(result.status, 'succeeded');
     assert.ok(requests.some((request) => request.url.endsWith('/jobs/303/finalise') && request.method === 'PUT'));
     assert.ok(requests.some((request) => request.url.endsWith('/jobs/303') && request.method === 'PUT' && (request.body as { siteId?: number }).siteId === 202));
+    assert.ok(requests.some((request) => request.url.endsWith('/jobs/303/quotes/404') && request.method === 'PUT'));
+    assert.ok(!requests.some((request) => request.url.endsWith('/jobs/303/quotes') && request.method === 'POST'));
+    assert.equal(requests.filter((request) => request.url.endsWith('/attachments')).length, 2);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -165,12 +171,21 @@ function createEnvelope(): IntegrationEnvelopeV1 {
       quote: { currency: 'GBP', createdAt: '2026-08-02T17:00:00.000Z', updatedAt: '2026-08-02T17:00:00.000Z', acceptedAt: null, validUntil: null, customerFacingNotes: null, internalNotes: null, assumptions: null },
       company: { name: 'QuoteCore Test', address: null, phone: null, email: null, logoUrl: null, footerText: null },
       customerLines: [{ id: 'line-1', type: 'custom', description: 'Roofing work', quantity: 2, quantityText: null, unitPrice: null, lineTotal: '100', visibleToCustomer: true, includedInTotal: true, sortOrder: 0 }],
-      components: [{ id: 'component-1', name: 'Tiles', mainOrExtra: null, measurementType: 'area', inputMode: 'calculated', quantity: 42, pricedQuantity: 42, pricingUnit: 'm²', materialRate: null, labourRate: null, materialCost: null, labourCost: null, wastePercent: '10', pitchDegrees: 30, pricingStrategy: null, packSize: null, customerVisible: true, sortOrder: 0, libraryRef: null, sku: null, overrideFlags: null, entries: [{ id: 'entry-1', rawValue: '40', pitchDegrees: 30, wasteAdjustedValue: '42', originalInputs: null, combinedFrom: null }] }],
+      components: [{ id: 'component-1', name: 'Tiles', mainOrExtra: 'main', sectionName: 'Main roof', measurementType: 'area', inputMode: 'calculated', quantity: 42, pricedQuantity: 42, pricingUnit: 'm²', materialRate: null, labourRate: null, materialCost: null, labourCost: null, sellTotal: '840', wastePercent: '10', pitchDegrees: 30, pricingStrategy: null, packSize: null, customerVisible: true, sortOrder: 0, libraryRef: null, sku: null, overrideFlags: null, entries: [{ id: 'entry-1', rawValue: '40', pitchDegrees: 30, wasteAdjustedValue: '42', originalInputs: null, combinedFrom: null }] }],
       roofAreas: [{ id: 'area-1', label: 'Main roof', inputMode: 'calculated', planWidth: null, planLength: null, planArea: 40, pitchDegrees: 30, computedArea: 42, finalArea: 42 }],
       labourLines: null,
       totals: { currency: 'GBP', taxMode: 'exclusive', customerTotals: { subtotalExcludingTax: '100', discountTotal: '0', taxTotal: '20', totalIncludingTax: '120', roundingAdjustment: '0' }, costTotals: { materialCost: '0', labourCost: '0', totalCost: '0' }, marginTotals: { materialMargin: '0', labourMargin: '0', grossProfit: '0' }, taxBreakdown: [] },
       files: [{ id: 'file-1', fileType: 'plan', fileName: 'plan.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/plan.png' }],
-      documents: [{ id: 'document-1', documentType: 'summary', fileName: 'plan-copy.png', mimeType: 'image/png', sourcePath: 'quote/plan.png' }, { id: 'document-2', documentType: 'summary', fileName: 'takeoff.png', mimeType: 'image/png', sourcePath: 'quote/takeoff.png' }],
+      documents: [
+        { id: 'document-1', documentType: 'summary', fileName: 'plan-copy.png', mimeType: 'image/png', sourcePath: 'quote/plan.png' },
+        { id: 'document-2', documentType: 'summary', fileName: 'takeoff.png', mimeType: 'image/png', sourcePath: 'quote/takeoff.png' },
+        { id: 'document-3', documentType: 'summary', fileName: 'takeoff-lines.png', mimeType: 'image/png', sourcePath: 'quote/takeoff-lines.png' },
+      ],
+      artifacts: [
+        { id: 'file-1', role: 'plan', origin: 'uploaded', fileName: 'plan.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/plan.png', sourceRevision: '1' },
+        { id: 'document-2', role: 'takeoff_canvas', origin: 'generated', fileName: 'takeoff.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/takeoff.png', sourceRevision: '1' },
+        { id: 'document-3', role: 'takeoff_lines', origin: 'generated', fileName: 'takeoff-lines.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/takeoff-lines.png', sourceRevision: '1' },
+      ],
       acceptance: { status: 'draft', acceptedAt: null, acceptedBy: null },
     },
   };

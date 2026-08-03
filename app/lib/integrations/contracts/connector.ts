@@ -18,6 +18,16 @@ export interface ConnectorCapabilities {
   supportsUpdate: boolean;
   supportsWebhooks: boolean;
   supportsAutomaticSync: boolean;
+  nativeActions?: {
+    quotes: 'create_update' | 'create_only' | 'unsupported';
+    invoices: 'create_update' | 'read_only' | 'unsupported';
+    materialOrders: 'create_update' | 'read_only' | 'unsupported';
+  };
+  artifactFallbacks?: {
+    invoices: 'attachment' | 'unsupported';
+    materialOrders: 'attachment' | 'unsupported';
+    measurements: 'attachment' | 'native' | 'unsupported';
+  };
 }
 
 export type ExportEvent = 'quote_confirmed' | 'quote_sent' | 'quote_accepted' | 'manual_export';

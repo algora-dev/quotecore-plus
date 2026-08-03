@@ -35,6 +35,41 @@ export function sanitizeFilename(input: string): string {
     .slice(0, 80) || 'Quote';
 }
 
+export async function renderCustomerQuotePdfBuffer(b: QuoteBundleData): Promise<ArrayBuffer> {
+  const p = b.preview;
+  return renderComponentToPdfBuffer(
+    <QuotePreview
+      quote={p.quote as unknown as QuoteRow}
+      lines={p.lines}
+      subtotal={p.subtotal}
+      taxLines={p.taxLines}
+      taxTotal={p.taxTotal}
+      total={p.total}
+      companyName={p.companyName}
+      companyAddress={p.companyAddress}
+      companyPhone={p.companyPhone}
+      companyEmail={p.companyEmail}
+      companyLogoUrl={p.companyLogoUrl}
+      footerText={p.footerText}
+      showEditButtons={false}
+      currency={p.currency}
+    />,
+  );
+}
+
+export async function renderLabourSheetPdfBuffer(b: QuoteBundleData): Promise<ArrayBuffer | null> {
+  const labor = b.preview.labor;
+  if (!labor) return null;
+  return renderComponentToPdfBuffer(
+    <LaborSheetDocument
+      quote={labor.quote as unknown as QuoteRow}
+      components={labor.components as never}
+      savedLines={labor.savedLines as never}
+      quoteTaxes={labor.quoteTaxes as never}
+    />,
+  );
+}
+
 /**
  * Add a single quote's contents to a JSZip folder.
  * Returns the folder name used (so callers can keep a manifest).
@@ -54,24 +89,7 @@ export async function addQuoteToZip(zip: JSZip, b: QuoteBundleData): Promise<str
   //    strips the inline edit pencils so the capture matches the clean
   //    customer-facing view. onEdit* handlers are omitted (read-only render).
   try {
-    const buf = await renderComponentToPdfBuffer(
-      <QuotePreview
-        quote={p.quote as unknown as QuoteRow}
-        lines={p.lines}
-        subtotal={p.subtotal}
-        taxLines={p.taxLines}
-        taxTotal={p.taxTotal}
-        total={p.total}
-        companyName={p.companyName}
-        companyAddress={p.companyAddress}
-        companyPhone={p.companyPhone}
-        companyEmail={p.companyEmail}
-        companyLogoUrl={p.companyLogoUrl}
-        footerText={p.footerText}
-        showEditButtons={false}
-        currency={p.currency}
-      />,
-    );
+    const buf = await renderCustomerQuotePdfBuffer(b);
     folder.file('01-Customer-Quote.pdf', buf);
   } catch (err) {
     console.warn('[addQuoteToZip] customer quote render failed for', folderName, err);
@@ -82,15 +100,8 @@ export async function addQuoteToZip(zip: JSZip, b: QuoteBundleData): Promise<str
   //    on-screen labour page shows under [data-pdf-content].
   if (p.labor) {
     try {
-      const buf = await renderComponentToPdfBuffer(
-        <LaborSheetDocument
-          quote={p.labor.quote as unknown as QuoteRow}
-          components={p.labor.components as never}
-          savedLines={p.labor.savedLines as never}
-          quoteTaxes={p.labor.quoteTaxes as never}
-        />,
-      );
-      folder.file('02-Labour-Sheet.pdf', buf);
+      const buf = await renderLabourSheetPdfBuffer(b);
+      if (buf) folder.file('02-Labour-Sheet.pdf', buf);
     } catch (err) {
       console.warn('[addQuoteToZip] labour sheet render failed for', folderName, err);
     }

@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { queueQuoteExport } from '@/app/(auth)/[workspaceSlug]/account/integrations/actions';
+import { AttachmentSendPicker } from '@/app/components/attachments/AttachmentSendPicker';
+import { prepareIntegrationArtifacts } from '@/app/lib/integrations/export-builder/integration-artifacts';
 
 type Integration = {
   id: string;
@@ -42,17 +44,22 @@ export function SendToAppButton({
   integrations,
   workspaceSlug,
   dataAvailability,
+  quoteFiles,
+  existingGeneratedArtifacts,
 }: {
   quoteId: string;
   companyId: string;
   integrations: Integration[];
   workspaceSlug: string;
   dataAvailability: QuoteDataAvailability;
+  quoteFiles: Array<{ id: string; name: string; fileSize: number }>;
+  existingGeneratedArtifacts: Array<{ id: string; fileType: string; fileName: string }>;
 }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'select-app' | 'pick-data' | 'sending' | 'result'>('select-app');
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [scopes, setScopes] = useState<Record<string, boolean>>({});
+  const [selectedArtifactIds, setSelectedArtifactIds] = useState<string[]>([]);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
   const connectedIntegrations = integrations.filter(
@@ -62,12 +69,13 @@ export function SendToAppButton({
 
   const handleSelectApp = (integration: Integration) => {
     setSelectedIntegration(integration);
-    // Default: everything off, user picks what they want
+    const defaultArtifactIds = quoteFiles.map((file) => file.id);
+    setSelectedArtifactIds(defaultArtifactIds);
     setScopes({
       quoteSummary: false,
       customerQuote: false,
       laborSheet: false,
-      files: false,
+      files: defaultArtifactIds.length > 0,
       internalCosts: false,
       marginInformation: false,
     });
@@ -76,31 +84,49 @@ export function SendToAppButton({
 
   const handleSend = async () => {
     if (!selectedIntegration) return;
-    // Map UI scopes to data scope keys
-    const scopeOverrides: Record<string, boolean> = {
-      customerDetails: scopes.quoteSummary || scopes.customerQuote,
-      siteDetails: scopes.quoteSummary,
-      customerFacingQuote: scopes.customerQuote,
-      filesAndPlans: scopes.files,
-      internalCosts: scopes.internalCosts,
-      marginInformation: scopes.marginInformation,
-      labourBreakdown: scopes.laborSheet,
-      measurementsAndTakeoff: scopes.quoteSummary,
-      internalNotes: false,
-      acceptanceDetails: scopes.quoteSummary,
-    };
-
     setStep('sending');
     try {
-      const res = await queueQuoteExport(companyId, selectedIntegration.id, quoteId, 'manual_export', scopeOverrides);
+      const generatedArtifactIds = await prepareIntegrationArtifacts({
+        quoteId,
+        companyId,
+        includeCustomerQuote: scopes.customerQuote,
+        includeTakeoff: scopes.quoteSummary,
+        includeLabourSheet: scopes.laborSheet,
+        existingArtifacts: existingGeneratedArtifacts,
+      });
+      const artifactIds = [...new Set([...selectedArtifactIds, ...generatedArtifactIds])];
+      const hasAnyExport = scopes.quoteSummary || scopes.customerQuote || scopes.laborSheet || artifactIds.length > 0;
+      const scopeOverrides: Record<string, boolean> = {
+        customerDetails: hasAnyExport,
+        siteDetails: hasAnyExport,
+        customerFacingQuote: scopes.quoteSummary,
+        filesAndPlans: artifactIds.length > 0,
+        internalCosts: scopes.internalCosts,
+        marginInformation: scopes.marginInformation,
+        labourBreakdown: scopes.laborSheet,
+        measurementsAndTakeoff: scopes.quoteSummary,
+        internalNotes: false,
+        acceptanceDetails: scopes.quoteSummary,
+      };
+      const res = await queueQuoteExport(
+        companyId,
+        selectedIntegration.id,
+        quoteId,
+        'manual_export',
+        scopeOverrides,
+        { artifactIds }
+      );
       setResult({
         success: res.success,
         message: res.success
           ? 'Queued - will be delivered within 1-2 minutes.'
           : res.error || 'Failed to queue export.',
       });
-    } catch {
-      setResult({ success: false, message: 'Unexpected error. Please try again.' });
+    } catch (error) {
+      setResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Unexpected error. Please try again.',
+      });
     }
     setStep('result');
   };
@@ -109,6 +135,7 @@ export function SendToAppButton({
     setOpen(false);
     setStep('select-app');
     setSelectedIntegration(null);
+    setSelectedArtifactIds([]);
     setScopes({});
     setResult(null);
   };
@@ -121,7 +148,7 @@ export function SendToAppButton({
         type="button"
         onClick={() => setOpen(true)}
         title="Send to App"
-        className="inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-50/60 px-3 py-2 text-xs font-medium text-orange-700 hover:bg-orange-100 hover:border-orange-400 transition"
+        className="inline-flex items-center gap-1.5 rounded-full border border-black bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -234,32 +261,44 @@ export function SendToAppButton({
                 <div className="space-y-2">
                   <ScopeCheckbox
                     label="Quote summary"
-                    description="Full quote details, components, measurements, totals"
+                    description="Native app quote plus takeoff PDF and JSON"
                     checked={scopes.quoteSummary}
                     available={dataAvailability.hasQuoteSummary}
                     onChange={(v) => setScopes({ ...scopes, quoteSummary: v })}
                   />
                   <ScopeCheckbox
                     label="Customer quote"
-                    description="Customer-facing quote lines and pricing"
+                    description="Exact customer-facing quote as a PDF attachment"
                     checked={scopes.customerQuote}
                     available={dataAvailability.hasCustomerQuote}
                     onChange={(v) => setScopes({ ...scopes, customerQuote: v })}
                   />
                   <ScopeCheckbox
                     label="Labour sheet"
-                    description="Labour breakdown and costs"
+                    description="Labour breakdown as a PDF attachment"
                     checked={scopes.laborSheet}
                     available={dataAvailability.hasLaborSheet}
                     onChange={(v) => setScopes({ ...scopes, laborSheet: v })}
                   />
-                  <ScopeCheckbox
-                    label="Files & plans"
-                    description="Uploaded plans, supporting docs, canvas snapshots"
-                    checked={scopes.files}
-                    available={dataAvailability.hasFiles}
-                    onChange={(v) => setScopes({ ...scopes, files: v })}
-                  />
+                  {dataAvailability.hasFiles ? (
+                    <AttachmentSendPicker
+                      libraryFiles={[]}
+                      quoteFiles={quoteFiles}
+                      selection={{ libraryAttachmentIds: [], quoteFileIds: selectedArtifactIds }}
+                      onChange={(selection) => {
+                        setSelectedArtifactIds(selection.quoteFileIds);
+                        setScopes({ ...scopes, files: selection.quoteFileIds.length > 0 });
+                      }}
+                    />
+                  ) : (
+                    <ScopeCheckbox
+                      label="Files & plans"
+                      description="Uploaded plans, supporting docs, canvas snapshots"
+                      checked={false}
+                      available={false}
+                      onChange={() => undefined}
+                    />
+                  )}
                   <ScopeCheckbox
                     label="Internal costs & margins"
                     description="Material costs, labour costs, profit margins (sensitive)"
