@@ -635,7 +635,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                       const loc = supplierLocationFilter.toLowerCase();
                       const locText = [lib.branchCity, lib.branchRegion, lib.country, lib.deliveryCoverage]
                         .filter(Boolean).join(' ').toLowerCase();
-                      if (!locText.includes(loc) && !lib.nationalCoverage) return false;
+                      if (!locText.includes(loc)) return false;
                     }
                     // Roof type filter
                     if (supplierRoofTypeFilter) {
