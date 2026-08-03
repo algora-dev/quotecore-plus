@@ -2,7 +2,7 @@
 
 import { createClient } from '@/app/lib/supabase/client';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
-import { saveFileMetadata } from '@/app/lib/files/storage-actions';
+import { saveGeneratedQuoteFileMetadata } from '@/app/lib/files/storage-actions';
 import { renderComponentToPdfBuffer } from '@/app/lib/pdf/renderComponentToPdf';
 import { loadQuoteBundleData } from '@/app/(auth)/[workspaceSlug]/quotes/actions-bulk';
 import {
@@ -154,7 +154,7 @@ async function uploadArtifact(
     .uploadToSignedUrl(mint.storagePath, mint.token, file, { contentType: spec.mimeType });
   if (error) throw new Error(error.message);
 
-  const saved = await saveFileMetadata({
+  const saved = await saveGeneratedQuoteFileMetadata({
     companyId,
     quoteId,
     fileType: spec.fileType,
@@ -163,6 +163,13 @@ async function uploadArtifact(
     mimeType: spec.mimeType,
     storagePath: mint.storagePath,
   });
+  if (!saved.ok) {
+    const { error: cleanupError } = await supabase.storage.from(mint.bucket).remove([mint.storagePath]);
+    if (cleanupError) {
+      console.error('[uploadArtifact] failed to remove unregistered object:', cleanupError.message);
+    }
+    throw new Error(saved.message);
+  }
   return saved.id;
 }
 
