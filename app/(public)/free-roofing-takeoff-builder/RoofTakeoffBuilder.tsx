@@ -93,51 +93,10 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [supplierLibrariesLoading, setSupplierLibrariesLoading] = useState(false);
   const [supplierSkip, setSupplierSkip] = useState(false);
 
-  // Track whether user is actively in the wizard (restored from sessionStorage or selected)
-  const isInWizard = measureMode !== null;
-
-  // History management so browser back steps through: builder -> units -> supplier -> mode -> exit
-  // Only active when the wizard is in progress - prevents corrupting history on fresh page load
-  useEffect(() => {
-    if (!isInWizard) return;
-
-    const handlePopState = (e: PopStateEvent) => {
-      // Only handle popstate if we're actively in the wizard
-      if (!measureMode) return;
-
-      if (measureMode && unitSystem) {
-        setUnitSystem(null);
-      } else if (measureMode && (selectedSupplier || supplierSkip) && !unitSystem) {
-        setSelectedSupplier(null);
-        setSupplierSkip(false);
-      } else if (measureMode && !selectedSupplier && !supplierSkip) {
-        setMeasureMode(null);
-      }
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [isInWizard, measureMode, unitSystem, selectedSupplier, supplierSkip]);
-
-  // Push history state when entering supplier selection
-  useEffect(() => {
-    if (measureMode && !selectedSupplier && !supplierSkip && !unitSystem) {
-      window.history.pushState({ step: 'supplier' }, '', window.location.href);
-    }
-  }, [measureMode, selectedSupplier, supplierSkip, unitSystem]);
-
-  // Push history state when entering units
-  useEffect(() => {
-    if (measureMode && (selectedSupplier || supplierSkip) && !unitSystem) {
-      window.history.pushState({ step: 'units' }, '', window.location.href);
-    }
-  }, [measureMode, selectedSupplier, supplierSkip, unitSystem]);
-
-  // Push history state when entering builder
-  useEffect(() => {
-    if (measureMode && unitSystem) {
-      window.history.pushState({ step: 'builder' }, '', window.location.href);
-    }
-  }, [measureMode, unitSystem]);
+  // History management: simple beforeunload warning when user has data.
+  // No pushState/popstate tricks - on refresh or back navigation, the wizard resets cleanly.
+  // This is intentional: sessionStorage restore was causing blank pages and history traps.
+  // (beforeunload listener is added after state declarations below)
   const [experience, setExperience] = useState<ExperienceLevel>('fast');
   const [pitchMode, setPitchMode] = useState<'degrees' | 'ratio'>('degrees');
   const [sections, setSections] = useState<Record<string, ComponentSection>>(makeInitialSections);
@@ -149,7 +108,23 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [components, setComponents] = useState<RoofComponentDef[]>([]);
   const [componentsLoading, setComponentsLoading] = useState(true);
 
-  // Restore from sessionStorage on mount - synchronous to prevent flash of empty state
+  // beforeunload warning: if user has entered data, warn before leaving/refreshing
+  useEffect(() => {
+    if (!measureMode) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const hasData = Object.values(sections).some(s => s.entries.length > 0);
+      if (hasData) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [measureMode, sections]);
+
+  // On mount: if URL params have a complete takeoff input (shared link), load it directly.
+  // Otherwise, start fresh - no sessionStorage restore. On refresh, the user starts over.
+  // This is intentional: sessionStorage restore was causing blank-page bugs on refresh.
   useEffect(() => {
     if (initialInput && validatePublicInput(initialInput).length === 0) {
       const normalized = normalizePublicRoofTakeoff(initialInput);
@@ -160,39 +135,12 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
       setSections(normalized.sections);
       setCustomSections({});
       setExpandedSection('roof_area');
-      return;
     }
-    const saved = sessionStorage.getItem(SESSION_KEY);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved) as PersistedTakeoffState;
-        if (data.measureMode) setMeasureMode(data.measureMode);
-        if (data.unitSystem) setUnitSystem(data.unitSystem);
-        if (data.experience) setExperience(data.experience);
-        if (data.masterPitch) setMasterPitch(data.masterPitch);
-        if (data.masterRatio) setMasterRatio(data.masterRatio);
-        if (data.sections) {
-          // Re-register custom kinds
-          for (const [key, section] of Object.entries(data.sections)) {
-            if (key.startsWith('custom-') && section.customDef) {
-              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area', section.customDef.measurementType === 'fixed');
-            }
-          }
-          setSections(data.sections);
-        }
-        if (data.customSections) {
-          for (const section of Object.values(data.customSections)) {
-            if (section.customDef) {
-              registerCustomKind(section.customDef.id, section.customDef.measurementType === 'area', section.customDef.measurementType === 'fixed');
-            }
-          }
-          setCustomSections(data.customSections);
-        }
-      } catch {}
-    }
+    // Clean up any stale sessionStorage from previous versions
+    try { sessionStorage.removeItem(SESSION_KEY); } catch {}
   }, [initialInput]);
 
-  // Save to sessionStorage on change
+  // Save to sessionStorage on change (for potential future use, but we don't restore from it)
   useEffect(() => {
     if (measureMode && unitSystem) {
       try {
@@ -676,8 +624,11 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                   onClick={() => setSupplierSkip(true)}
                   className="text-sm font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-4 py-2 hover:bg-slate-100"
                 >
-                  Skip - I&apos;ll enter measurements without a supplier
+                  Skip - I&apos;ll use QuoteCore+ default components
                 </button>
+                <p className="mt-1 text-xs text-slate-400">
+                  Example pricing only - not a real supplier&apos;s prices
+                </p>
               </div>
             </div>
           )}
