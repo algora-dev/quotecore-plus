@@ -473,7 +473,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
             {isGuided && <ComponentGuideBox componentKey={key} />}
             <div className="flex items-center gap-2">
               <label htmlFor={`${key}-waste`} className="text-xs font-medium text-slate-600">Waste</label>
-              <InfoIcon text="Waste adds extra material to account for cuts, breaks, and overlaps." />
+              <InfoIcon text="Waste percentage is added to the raw quantity at the end. The raw total shown does NOT include waste - the final total with waste is shown in the results." />
               <div className="relative">
                 <input id={`${key}-waste`} name={`${key}WastePercent`} type="number" value={section.wastePercent} onChange={(e) => updateWaste(key, parseFloat(e.target.value) || 0)} min={0} max={100} step={1} className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-base md:text-sm text-center focus:border-orange-500 focus:outline-none" />
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>

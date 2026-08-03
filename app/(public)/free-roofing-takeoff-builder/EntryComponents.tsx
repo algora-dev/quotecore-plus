@@ -221,8 +221,9 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
         <button
           onClick={() => { setAreaMode('total'); setTotalVal(roofAreaTotal.toFixed(2)); }}
           className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#ff5722]"
+          title="Uses the plan area (before pitch). Pitch and waste are applied automatically during calculation."
         >
-          Use Roof Area ({roofAreaTotal.toFixed(2)} {areaLabel})
+          Use Roof Area ({roofAreaTotal.toFixed(2)} {areaLabel}){measureMode === 'plan' ? ' plan' : ''}
         </button>
       )}
 
