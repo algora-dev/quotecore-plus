@@ -156,7 +156,6 @@ export function SuppliersPanel() {
         description: description.trim() || undefined,
         enquiry_email: enquiryEmail.trim() || undefined,
         enquiries_enabled: enquiriesEnabled,
-        takeoff_enabled: takeoffEnabled,
         country: country || undefined,
         currency: currency,
         branch_city: branchCity.trim() || undefined,
@@ -199,7 +198,6 @@ export function SuppliersPanel() {
         description: description.trim() || null,
         enquiry_email: enquiryEmail.trim() || null,
         enquiries_enabled: enquiriesEnabled,
-        takeoff_enabled: takeoffEnabled,
         country: country || null,
         currency: currency,
         branch_city: branchCity.trim() || null,
@@ -237,7 +235,6 @@ export function SuppliersPanel() {
     // Takeoff fields
     setEnquiryEmail(s.enquiry_email || '');
     setEnquiriesEnabled(s.enquiries_enabled ?? false);
-    setTakeoffEnabled(s.takeoff_enabled ?? false);
     setCountry(s.country || '');
     setCurrency(s.currency || 'NZD');
     setBranchCity(s.branch_city || '');
@@ -284,7 +281,7 @@ export function SuppliersPanel() {
   }
 
   const builderUrl = (s: SupplierProfile) => {
-    const slug = s.public_slug || s.slug;
+    const slug = s.slug;
     return `quote-core.com/free-roofing-takeoff-builder/${slug}`;
   };
 
@@ -332,7 +329,7 @@ export function SuppliersPanel() {
                           <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
                           {s.status}
                         </span>
-                        {s.takeoff_enabled && (
+                        {s.default_takeoff_collection_id && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 border border-blue-200">
                             Takeoff ON
                           </span>
@@ -371,7 +368,7 @@ export function SuppliersPanel() {
                           <span key={a} className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{a}</span>
                         ))}
                       </div>
-                      {s.takeoff_enabled && (
+                      {s.default_takeoff_collection_id && (
                         <div className="mt-2 flex items-center gap-2">
                           <span className="text-xs text-slate-400">Builder URL:</span>
                           <code className="text-xs text-[#BD4A1A] bg-orange-50/50 px-2 py-0.5 rounded">{builderUrl(s)}</code>

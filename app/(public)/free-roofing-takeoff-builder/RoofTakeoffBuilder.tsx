@@ -549,7 +549,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               <div className="text-center">
                 <h2 className="text-xl font-bold text-slate-900">Select a Supplier</h2>
                 <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto">
-                  Choose a supplier to use their component pricing, or pick QuoteCore+ to use example prices and enter your own costs.
+                  Pick a supplier to use their real component pricing, or select QuoteCore+ to continue with test prices. You can adjust any cost later.
                 </p>
               </div>
 
@@ -603,7 +603,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                         <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#BD4A1A] transition">QuoteCore+</h3>
                         <span className="rounded-full bg-[#FF6B35] px-2 py-0.5 text-xs font-medium text-white">Default</span>
                       </div>
-                      <p className="mt-0.5 text-xs text-slate-500">Example pricing - you can adjust all costs and add your own prices</p>
+                      <p className="mt-0.5 text-xs text-slate-500">Test pricing only - use this to continue, or pick a real supplier below</p>
                       <div className="mt-1 flex items-center gap-2 flex-wrap">
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">All countries</span>
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">USD</span>

@@ -151,14 +151,41 @@ export async function submitSupplierEnquiry(
 
   const totalsText = input.totals
     ? Object.entries(input.totals)
-        .map(([key, val]) => {
+        .filter(([_, val]) => {
           if (typeof val === 'object' && val !== null) {
-            return `<tr><td style="padding:4px 12px 4px 0;color:#64748b;">${key}</td><td style="padding:4px 0;font-weight:500;">${(val as any).rawTotal ?? '-'} ${(val as any).unit ?? ''}</td></tr>`;
+            return (val as any).count > 0;
           }
-          return '';
+          return false;
+        })
+        .map(([key, val]) => {
+          const v = val as any;
+          const label = v.label || key;
+          const unit = v.unit || '';
+          const raw = v.rawTotal != null ? Number(v.rawTotal).toFixed(2) : '-';
+          const waste = v.withWaste != null ? Number(v.withWaste).toFixed(2) : '-';
+          const wastePct = v.wastePercent || 0;
+          const material = v.materialCost != null ? Number(v.materialCost).toFixed(2) : '0.00';
+          const labour = v.labourCost != null ? Number(v.labourCost).toFixed(2) : '0.00';
+          const total = v.totalCost != null ? Number(v.totalCost).toFixed(2) : '0.00';
+          const cur = input.currency || '';
+          return `<tr>
+            <td style="padding:8px 12px 8px 0;font-weight:600;color:#1e293b;border-bottom:1px solid #f1f5f9;">${escapeHtml(label)}</td>
+            <td style="padding:8px 12px 8px 0;color:#64748b;border-bottom:1px solid #f1f5f9;text-align:right;">${raw} ${unit}</td>
+            <td style="padding:8px 12px 8px 0;color:#64748b;border-bottom:1px solid #f1f5f9;text-align:right;">+${wastePct}% = ${waste} ${unit}</td>
+            <td style="padding:8px 0;color:#1e293b;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:500;">${cur}${material}</td>
+          </tr>`;
         })
         .join('')
     : '';
+
+  const grandMaterial = input.totals
+    ? Object.values(input.totals).reduce((s, v: any) => s + (v.materialCost || 0), 0)
+    : 0;
+  const grandLabour = input.totals
+    ? Object.values(input.totals).reduce((s, v: any) => s + (v.labourCost || 0), 0)
+    : 0;
+  const grandTotal = grandMaterial + grandLabour;
+  const cur = input.currency || '';
 
   const html = `
 <!DOCTYPE html>
@@ -193,9 +220,30 @@ export async function submitSupplierEnquiry(
 
         ${totalsText && input.includeQuantities ? `
         <div style="margin:20px 0;">
-          <h3 style="margin:0 0 8px;font-size:14px;color:#475569;">Takeoff Quantities:</h3>
+          <h3 style="margin:0 0 8px;font-size:14px;color:#475569;">Takeoff Breakdown:</h3>
           <table style="width:100%;border-collapse:collapse;font-size:13px;">
-            ${totalsText}
+            <thead>
+              <tr style="border-bottom:2px solid #e2e8f0;">
+                <th style="padding:6px 12px 6px 0;text-align:left;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">Component</th>
+                <th style="padding:6px 12px 6px 0;text-align:right;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">Raw Qty</th>
+                <th style="padding:6px 12px 6px 0;text-align:right;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">With Waste</th>
+                <th style="padding:6px 0;text-align:right;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;">Material</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${totalsText}
+            </tbody>
+            <tfoot>
+              <tr style="border-top:2px solid #e2e8f0;">
+                <td colspan="3" style="padding:8px 12px 8px 0;font-weight:600;color:#1e293b;text-align:right;">Total Materials:</td>
+                <td style="padding:8px 0;font-weight:700;color:#1e293b;text-align:right;">${cur}${grandMaterial.toFixed(2)}</td>
+              </tr>
+              ${grandLabour > 0 ? `<tr><td colspan="3" style="padding:4px 12px 4px 0;font-weight:600;color:#1e293b;text-align:right;">Total Labour:</td><td style="padding:4px 0;font-weight:700;color:#1e293b;text-align:right;">${cur}${grandLabour.toFixed(2)}</td></tr>` : ''}
+              <tr>
+                <td colspan="3" style="padding:8px 12px 8px 0;font-weight:700;color:#0f172a;text-align:right;font-size:14px;">Grand Total:</td>
+                <td style="padding:8px 0;font-weight:700;color:#0f172a;text-align:right;font-size:14px;">${cur}${grandTotal.toFixed(2)}</td>
+              </tr>
+            </tfoot>
           </table>
         </div>
         ` : ''}
@@ -230,6 +278,26 @@ export async function submitSupplierEnquiry(
 </html>
   `.trim();
 
+  const textTotals = input.totals
+    ? Object.entries(input.totals)
+        .filter(([_, val]) => {
+          if (typeof val === 'object' && val !== null) {
+            return (val as any).count > 0;
+          }
+          return false;
+        })
+        .map(([key, val]) => {
+          const v = val as any;
+          const label = v.label || key;
+          const unit = v.unit || '';
+          const raw = v.rawTotal != null ? Number(v.rawTotal).toFixed(2) : '-';
+          const waste = v.withWaste != null ? Number(v.withWaste).toFixed(2) : '-';
+          const material = v.materialCost != null ? Number(v.materialCost).toFixed(2) : '0.00';
+          return `${label}: ${raw} ${unit} (+${v.wastePercent || 0}% waste = ${waste} ${unit}) - Material: ${cur}${material}`;
+        })
+        .join('\n')
+    : '';
+
   const text = `
 New enquiry from QuoteCore+
 
@@ -240,7 +308,7 @@ ${input.currency ? `Currency: ${input.currency}\n` : ''}
 Message:
 ${input.message || '(no message)'}
 
-${input.includeResultLink && input.resultUrl ? `Takeoff Result: ${input.resultUrl}\n` : ''}${attachments.length > 0 ? `Attachments: ${attachments.length} file(s)\n` : ''}
+${totalsText && input.includeQuantities ? `Takeoff Breakdown:\n${textTotals}\n\nTotal Materials: ${cur}${grandMaterial.toFixed(2)}\n${grandLabour > 0 ? `Total Labour: ${cur}${grandLabour.toFixed(2)}\n` : ''}Grand Total: ${cur}${grandTotal.toFixed(2)}\n` : ''}${input.includeResultLink && input.resultUrl ? `Takeoff Result: ${input.resultUrl}\n` : ''}${attachments.length > 0 ? `Attachments: ${attachments.length} file(s)\n` : ''}
 ---
 This enquiry was submitted via QuoteCore+ free roof takeoff builder.
 Reply directly to this email to respond to ${input.senderName} at ${input.senderEmail}.
