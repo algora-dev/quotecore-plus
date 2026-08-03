@@ -29,7 +29,6 @@ export type SupplierProfile = {
   // Takeoff builder fields
   enquiry_email: string | null;
   enquiries_enabled: boolean;
-  takeoff_enabled: boolean;
   country: string | null;
   currency: string;
   branch_city: string | null;
@@ -39,7 +38,6 @@ export type SupplierProfile = {
   delivery_coverage: string;
   instant_pricing_available: boolean;
   default_takeoff_collection_id: string | null;
-  public_slug: string | null;
 };
 
 export type SupplierCollection = {
@@ -257,7 +255,6 @@ export async function createSupplier(input: {
   description?: string;
   enquiry_email?: string;
   enquiries_enabled?: boolean;
-  takeoff_enabled?: boolean;
   country?: string;
   currency?: string;
   branch_city?: string;
@@ -276,15 +273,12 @@ export async function createSupplier(input: {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  const public_slug = slug;
-
   const { data, error } = await admin
     .from('supplier_profiles')
     .insert({
       company_id: input.company_id || null,
       supplier_name: input.supplier_name,
       slug,
-      public_slug,
       status: 'approved',
       master_email: input.master_email || null,
       contact_email: input.contact_email || null,
@@ -298,7 +292,6 @@ export async function createSupplier(input: {
       description: input.description || null,
       enquiry_email: input.enquiry_email || null,
       enquiries_enabled: input.enquiries_enabled ?? false,
-      takeoff_enabled: input.takeoff_enabled ?? false,
       country: input.country || null,
       currency: input.currency || 'NZD',
       branch_city: input.branch_city || null,
@@ -342,7 +335,6 @@ export async function updateSupplier(
     description: string | null;
     enquiry_email: string | null;
     enquiries_enabled: boolean;
-    takeoff_enabled: boolean;
     country: string | null;
     currency: string;
     branch_city: string | null;
@@ -364,7 +356,6 @@ export async function updateSupplier(
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
-    update.public_slug = update.slug;
   }
   if (input.master_email !== undefined) update.master_email = input.master_email || null;
   if (input.contact_email !== undefined) update.contact_email = input.contact_email || null;
@@ -378,7 +369,6 @@ export async function updateSupplier(
   if (input.description !== undefined) update.description = input.description;
   if (input.enquiry_email !== undefined) update.enquiry_email = input.enquiry_email || null;
   if (input.enquiries_enabled !== undefined) update.enquiries_enabled = input.enquiries_enabled;
-  if (input.takeoff_enabled !== undefined) update.takeoff_enabled = input.takeoff_enabled;
   if (input.country !== undefined) update.country = input.country || null;
   if (input.currency !== undefined) update.currency = input.currency;
   if (input.branch_city !== undefined) update.branch_city = input.branch_city || null;
