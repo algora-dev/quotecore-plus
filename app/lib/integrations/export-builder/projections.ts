@@ -87,6 +87,7 @@ export function applyDataScopes(
   if (!scopes.filesAndPlans) {
     projected.files = [];
     projected.documents = [];
+    projected.artifacts = [];
   }
 
   // Strip acceptance details if not enabled

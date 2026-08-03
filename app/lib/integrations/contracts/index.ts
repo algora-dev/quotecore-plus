@@ -1,3 +1,3 @@
-export type { IntegrationEnvelopeV1, QuoteExportV1, Address, CustomerLineExport, ComponentExport, ComponentEntryExport, RoofAreaExport, LabourLineExport, FileManifestItem, DocumentManifestItem, ExportEventType, ResourceType } from './envelope-v1';
+export type { IntegrationEnvelopeV1, QuoteExportV1, Address, CustomerLineExport, ComponentExport, ComponentEntryExport, RoofAreaExport, LabourLineExport, FileManifestItem, DocumentManifestItem, ExportArtifactManifestItem, ExportArtifactRole, ExportEventType, ResourceType } from './envelope-v1';
 export type { Connector, ConnectorCapabilities, ExportEvent, IntegrationConfig, DataScopes, ValidationResult, ConnectorContext, ExecutionContext, StepSummary, ExternalMapping, PlanStepType, PlanStep, IntegrationPlan, ConnectorExecutionResult, StepResult, CreatedExternalRecord } from './connector';
 export { DEFAULT_DATA_SCOPES } from './connector';

@@ -211,7 +211,7 @@ export default async function QuoteSummaryPage({
       : (quote.takeoff_canvas_url ?? '');
     if (canvasUrl) {
       allFiles.push({
-        id: 'canvas-image',
+        id: `canvas-${id}`,
         file_type: 'takeoff_canvas' as any,
         file_name: 'Digital Takeoff Canvas',
         file_size: 0,
@@ -227,7 +227,7 @@ export default async function QuoteSummaryPage({
       : (quote.takeoff_lines_url ?? '');
     if (linesUrl) {
       allFiles.push({
-        id: 'canvas-lines',
+        id: `takeoff-lines-${id}`,
         file_type: 'takeoff_lines' as any,
         file_name: 'Takeoff Lines Only (Print Ready)',
         file_size: 0,
@@ -494,8 +494,28 @@ export default async function QuoteSummaryPage({
                 hasQuoteSummary: true,
                 hasCustomerQuote: hasCustomerQuote,
                 hasLaborSheet: hasLaborSheet,
-                hasFiles: (filesData || []).length > 0,
+                hasFiles: allFiles.length > 0,
               }}
+              quoteFiles={allFiles.filter((file) => ![
+                'customer_quote_pdf',
+                'takeoff_report_pdf',
+                'takeoff_data_json',
+                'labour_sheet_pdf',
+              ].includes(file.file_type)).map((file) => ({
+                id: file.id,
+                name: file.file_name,
+                fileSize: file.file_size ?? 0,
+              }))}
+              existingGeneratedArtifacts={(filesData || []).filter((file) => [
+                'customer_quote_pdf',
+                'takeoff_report_pdf',
+                'takeoff_data_json',
+                'labour_sheet_pdf',
+              ].includes(file.file_type)).map((file) => ({
+                id: file.id,
+                fileType: file.file_type,
+                fileName: file.file_name,
+              }))}
             />
             <SendDocumentButton
               entityKind="quote"

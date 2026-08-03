@@ -48,7 +48,7 @@ import type { MintUploadInput, MintUploadResult } from './signed-upload-types';
 const MAX_SINGLE_FILE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 /** Allowed MIME prefixes for QUOTE-DOCUMENTS. Mirrors UI accept attrs. */
-const ALLOWED_MIME_PREFIXES = ['image/', 'application/pdf', 'application/zip'];
+const ALLOWED_MIME_PREFIXES = ['image/', 'application/pdf', 'application/zip', 'application/json'];
 
 function safeExt(filename: string): string {
   const dot = filename.lastIndexOf('.');
@@ -99,7 +99,7 @@ export async function mintQuoteDocumentUploadUrl(
     return {
       ok: false,
       code: 'unsupported_type',
-      message: 'File type not supported. Use PDF, image, or ZIP.',
+      message: 'File type not supported. Use PDF, image, JSON, or ZIP.',
     };
   }
 
