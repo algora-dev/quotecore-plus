@@ -30,7 +30,10 @@ QuoteCore+ provides a public, no-auth API for AI agents to calculate roof takeof
 - [OpenAPI Spec](https://quote-core.com/api/public/roof-takeoff/openapi) - OpenAPI 3.1 specification
 - [Calculate (POST)](https://quote-core.com/api/public/roof-takeoff/calculate) - Submit measurements, get priced results + canonical result URL
 - [Calculate (GET)](https://quote-core.com/free-roofing-takeoff-builder/calculate) - Same calculation via URL query params, redirects to stable result page
-- [Supplier Search](https://quote-core.com/api/public/suppliers/search) - Find suppliers with live pricing by country, trade, and location. Ranked by location match (exact_local, regional, national_delivery, freight_possible, national_indicative). Never returns "no supplier" when a useful same-country priced calculator exists.
+- [Supplier Search](https://quote-core.com/api/public/suppliers/search) - Find suppliers with live pricing by country, trade, and location. Ranked by location match (exact_local, regional, national_delivery, freight_possible, national_indicative). Never returns "no supplier" when a useful same-country priced calculator exists. Supports free-text search (q), roofingType, productCategory, brand filters.
+- [Supplier Libraries](https://quote-core.com/api/free-tools/supplier-libraries) - List all published takeoff-ready supplier libraries with component pricing
+- [Supplier Library Detail](https://quote-core.com/api/free-tools/supplier-library/[slug]) - Full component library for a specific supplier (e.g. /api/free-tools/supplier-library/apex-roofing)
+- [Supplier Takeoff Pages](https://quote-core.com/free-roofing-takeoff-builder/[supplierSlug]) - Supplier-specific takeoff builder pages (e.g. /free-roofing-takeoff-builder/apex-roofing)
 - [Calculation Docs](https://quote-core.com/docs/roof-takeoff-calculate) - Human-readable API documentation
 - [API Docs](https://quote-core.com/docs/roof-takeoff-api) - REST API documentation
 

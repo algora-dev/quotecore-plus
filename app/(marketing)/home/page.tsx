@@ -45,12 +45,12 @@ const faqs = [
   {
     question: "Can I import my own pricing?",
     answer:
-      "Yes. Upload supplier price catalogs via CSV, build Smart Components with your own labour rates, waste allowances, formulas, and business rules, and reuse them on every future quote.",
+      "Yes. Upload supplier price catalogs via CSV, build Smart Components™ with your own labour rates, waste allowances, formulas, and business rules, and reuse them on every future quote.",
   },
   {
     question: "What happens after the trial?",
     answer:
-      "You pick a plan that fits your business. Plans start from free and go up to $59 per month. Your Smart Components, quotes, and settings carry over seamlessly.",
+      "You pick a plan that fits your business. Plans start from free and go up to $59 per month. Your Smart Components™, quotes, and settings carry over seamlessly.",
   },
   {
     question: "How much do plans cost?",
@@ -71,7 +71,7 @@ export default function HomePage() {
     {
       number: "01",
       title: "Measure",
-      body: "Upload a plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouts automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - no manual tracing required.",
+      body: "Upload a plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - no pen and paper required.",
       images: [
         { src: "/how-it-works/how-it-works-1-3.png", label: "Digital takeoff" },
       ],
@@ -79,7 +79,7 @@ export default function HomePage() {
     {
       number: "02",
       title: "Price",
-      body: "Smart Components apply your stored materials, labour rates, waste allowances, and pricing rules. No rebuilding from scratch - the logic is already there.",
+      body: "Smart Components™ apply your stored materials, labour rates, waste allowances, and pricing rules. No rebuilding from scratch - the logic is already there.",
       images: [
         { src: "/how-it-works-smart-components-editor.png", label: "Component editor" },
       ],
@@ -104,7 +104,7 @@ export default function HomePage() {
     {
       number: "05",
       title: "Order",
-      body: "From a saved quote, create a material order with all quantities and supplier details carried over. Edit quantities, add or remove items, choose from three display formats, and send it straight to your supplier. You can also upload a supplier photo or PDF and AI converts it into editable line items.",
+      body: "Create a material order from a saved quote with all quantities and supplier details carried over, or start from scratch with a line-by-line order. Edit quantities, add or remove items, choose from three display formats, and send it straight to your supplier. You can also upload a supplier photo or PDF and AI converts it into editable line items.",
       images: [
         { src: "/how-it-works-order-form.png", label: "Order form" },
         { src: "/how-it-works/how-it-works-4.png", label: "Material orders" },
@@ -113,7 +113,7 @@ export default function HomePage() {
     {
       number: "06",
       title: "Invoice",
-      body: "Create an invoice from the same saved quote. No re-entering information - the quote, order, and invoice all stay connected. Configure payment methods per invoice - bank details, Stripe links or PayPal links - and recipients can mark paid or dispute directly. You can also upload an existing invoice image and AI converts it into editable line items.",
+      body: "Create and edit an invoice from the same saved quote, or start from scratch with a line-by-line invoice. No re-entering information - the quote, order, and invoice all stay connected. Configure payment methods per invoice - bank details, Stripe links or PayPal links - and recipients can mark paid or dispute directly. You can also upload an existing invoice image and AI converts it into editable line items.",
       images: [
         { src: "/how-it-works/how-it-works-5-2.png", label: "Invoice view" },
       ],
@@ -202,7 +202,7 @@ export default function HomePage() {
         <BlogHeader />
 
         {/* 1. Hero */}
-        <section id="hero-section" className="relative overflow-hidden bg-white">
+        <section id="hero-section" className="relative overflow-hidden bg-white pb-10">
           <div className="relative mx-auto max-w-7xl px-6 pt-12 lg:px-8 lg:pt-16">
             <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-10 xl:gap-12">
               {/* Left: text */}
@@ -241,7 +241,7 @@ export default function HomePage() {
                     See how it works
                   </a>
                 </div>
-                <p className="mt-3 text-sm text-zinc-600">All features for 14 days, no card required, risk free</p>
+
               </div>
 
               {/* Right: hero video */}
@@ -284,7 +284,7 @@ export default function HomePage() {
                   <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 6v6l4 2" /></svg>
                 </div>
                 <h3 className="mt-4 text-base font-semibold text-zinc-950">AI Scan Assist</h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">Optional AI identifies roof areas, ridges, hips, valleys, barges and spouts. You verify, adjust and add anything else.</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">Optional AI identifies roof areas, ridges, hips, valleys, barges and spouting. You verify, adjust and add anything else.</p>
               </div>
               <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
@@ -392,7 +392,7 @@ export default function HomePage() {
                   Smart Components&#8482;
                 </h2>
                 <p className="mt-5 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Smart Components store the materials, labour, waste allowances, pricing, formulas, and business rules behind the work you quote regularly. Build the logic once, then reuse it across every future job.
+                  Smart Components™ store the materials, labour, waste allowances, pricing, formulas, and business rules behind the work you quote regularly. Build the logic once, then reuse it across every future job.
                 </p>
                 <p className="mt-4 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
                   Most software remembers what you charged. QuoteCore+ remembers how you work - so every quote starts from your own proven logic, not a blank page.
@@ -447,7 +447,7 @@ export default function HomePage() {
                       width={1200}
                       height={750}
                       src="/smart-components-laptop-1.png"
-                      alt="Smart Components - component list"
+                      alt="Smart Components™ - component list"
                       className="w-full h-auto"
                     />
                   </div>
@@ -461,7 +461,7 @@ export default function HomePage() {
                       width={1200}
                       height={750}
                       src="/smart-components-laptop-2.png"
-                      alt="Smart Components - component editor"
+                      alt="Smart Components™ - component editor"
                       className="w-full h-auto"
                     />
                   </div>
@@ -493,10 +493,10 @@ export default function HomePage() {
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Measure roof from plan</td><td className="px-5 py-3 text-sm text-zinc-500">Manual scaling, calculator, re-entering</td><td className="px-5 py-3 text-sm text-zinc-700">Digital takeoff + optional AI, feeds straight into pricing</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Price materials and labour</td><td className="px-5 py-3 text-sm text-zinc-500">Rebuild formulas every quote</td><td className="px-5 py-3 text-sm text-zinc-700">Smart Components apply stored rules automatically</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Price materials and labour</td><td className="px-5 py-3 text-sm text-zinc-500">Rebuild formulas every quote</td><td className="px-5 py-3 text-sm text-zinc-700">Smart Components™ apply stored rules automatically</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Send quote to customer</td><td className="px-5 py-3 text-sm text-zinc-500">PDF + email, no tracking</td><td className="px-5 py-3 text-sm text-zinc-700">Send from app, track opens/reads, auto follow-ups</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Order materials</td><td className="px-5 py-3 text-sm text-zinc-500">Re-type from accepted quote</td><td className="px-5 py-3 text-sm text-zinc-700">Create order from saved quote, three formats, send to supplier</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Invoice the job</td><td className="px-5 py-3 text-sm text-zinc-500">Start from scratch in accounting software</td><td className="px-5 py-3 text-sm text-zinc-700">Create invoice from same quote, configure payment methods</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Order materials</td><td className="px-5 py-3 text-sm text-zinc-500">Re-type from accepted quote</td><td className="px-5 py-3 text-sm text-zinc-700">Create and edit orders from a saved quote or from scratch, three formats, send to supplier</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Invoice the job</td><td className="px-5 py-3 text-sm text-zinc-500">Start from scratch in accounting software</td><td className="px-5 py-3 text-sm text-zinc-700">Create and edit invoices from a saved quote or from scratch, configure payment methods</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Keep job data connected</td><td className="px-5 py-3 text-sm text-zinc-500">Multiple files, folders and systems</td><td className="px-5 py-3 text-sm text-zinc-700">One connected job from measurement to invoice</td></tr>
               </tbody>
             </table>
@@ -516,7 +516,7 @@ export default function HomePage() {
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { src: "/how-it-works-smart-components-list.png", label: "Smart Components library", desc: "Roofing pricing, labour and rules - reusable on every quote." },
+              { src: "/how-it-works-smart-components-list.png", label: "Smart Components™ library", desc: "Roofing pricing, labour and rules - reusable on every quote." },
               { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan, AI identifies areas and components." },
               { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Build, customise and send roofing quotes in minutes." },
               { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry." },

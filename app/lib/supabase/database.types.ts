@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -1260,12 +1260,15 @@ export type Database = {
           brands: string[] | null
           company_id: string
           created_at: string
+          currency: string | null
           id: string
           is_bootstrap: boolean
+          is_default_takeoff_library: boolean
           keywords: string[] | null
           name: string
           product_categories: string[] | null
           public_description: string | null
+          public_slug: string | null
           public_title: string | null
           publication_status: string
           published_at: string | null
@@ -1273,6 +1276,7 @@ export type Database = {
           roofing_types: string[] | null
           search_tsv: unknown
           supplier_profile_id: string | null
+          takeoff_enabled: boolean
           updated_at: string
           visibility: string
         }
@@ -1280,12 +1284,15 @@ export type Database = {
           brands?: string[] | null
           company_id: string
           created_at?: string
+          currency?: string | null
           id?: string
           is_bootstrap?: boolean
+          is_default_takeoff_library?: boolean
           keywords?: string[] | null
           name: string
           product_categories?: string[] | null
           public_description?: string | null
+          public_slug?: string | null
           public_title?: string | null
           publication_status?: string
           published_at?: string | null
@@ -1293,6 +1300,7 @@ export type Database = {
           roofing_types?: string[] | null
           search_tsv?: unknown
           supplier_profile_id?: string | null
+          takeoff_enabled?: boolean
           updated_at?: string
           visibility?: string
         }
@@ -1300,12 +1308,15 @@ export type Database = {
           brands?: string[] | null
           company_id?: string
           created_at?: string
+          currency?: string | null
           id?: string
           is_bootstrap?: boolean
+          is_default_takeoff_library?: boolean
           keywords?: string[] | null
           name?: string
           product_categories?: string[] | null
           public_description?: string | null
+          public_slug?: string | null
           public_title?: string | null
           publication_status?: string
           published_at?: string | null
@@ -1313,6 +1324,7 @@ export type Database = {
           roofing_types?: string[] | null
           search_tsv?: unknown
           supplier_profile_id?: string | null
+          takeoff_enabled?: boolean
           updated_at?: string
           visibility?: string
         }
@@ -1353,6 +1365,7 @@ export type Database = {
           imported_at: string | null
           is_active: boolean
           is_system: boolean
+          is_takeoff_default: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
           notes: string | null
@@ -1391,6 +1404,7 @@ export type Database = {
           imported_at?: string | null
           is_active?: boolean
           is_system?: boolean
+          is_takeoff_default?: boolean
           measurement_type: Database["public"]["Enums"]["measurement_type"]
           name: string
           notes?: string | null
@@ -1429,6 +1443,7 @@ export type Database = {
           imported_at?: string | null
           is_active?: boolean
           is_system?: boolean
+          is_takeoff_default?: boolean
           measurement_type?: Database["public"]["Enums"]["measurement_type"]
           name?: string
           notes?: string | null
@@ -5035,17 +5050,23 @@ export type Database = {
           branch_country: string | null
           branch_postcode: string | null
           branch_region: string | null
+          brand_accent_color: string | null
+          brand_primary_color: string | null
           brands: string[] | null
           company_id: string | null
           contact_email: string | null
           country: string | null
           created_at: string
           currency: string
+          default_takeoff_collection_id: string | null
           default_trade: string
           delivery_assumptions: string | null
           delivery_coverage: string | null
           delivery_requires_confirmation: boolean | null
           description: string | null
+          enquiries_enabled: boolean
+          enquiry_cc_emails: string[] | null
+          enquiry_email: string | null
           excluded_delivery_regions: string[] | null
           exclusions: string | null
           freight_available: boolean | null
@@ -5082,17 +5103,23 @@ export type Database = {
           branch_country?: string | null
           branch_postcode?: string | null
           branch_region?: string | null
+          brand_accent_color?: string | null
+          brand_primary_color?: string | null
           brands?: string[] | null
           company_id?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
           currency?: string
+          default_takeoff_collection_id?: string | null
           default_trade?: string
           delivery_assumptions?: string | null
           delivery_coverage?: string | null
           delivery_requires_confirmation?: boolean | null
           description?: string | null
+          enquiries_enabled?: boolean
+          enquiry_cc_emails?: string[] | null
+          enquiry_email?: string | null
           excluded_delivery_regions?: string[] | null
           exclusions?: string | null
           freight_available?: boolean | null
@@ -5129,17 +5156,23 @@ export type Database = {
           branch_country?: string | null
           branch_postcode?: string | null
           branch_region?: string | null
+          brand_accent_color?: string | null
+          brand_primary_color?: string | null
           brands?: string[] | null
           company_id?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
           currency?: string
+          default_takeoff_collection_id?: string | null
           default_trade?: string
           delivery_assumptions?: string | null
           delivery_coverage?: string | null
           delivery_requires_confirmation?: boolean | null
           description?: string | null
+          enquiries_enabled?: boolean
+          enquiry_cc_emails?: string[] | null
+          enquiry_email?: string | null
           excluded_delivery_regions?: string[] | null
           exclusions?: string | null
           freight_available?: boolean | null
@@ -5174,6 +5207,248 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_profiles_default_takeoff_collection_fk"
+            columns: ["default_takeoff_collection_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_takeoff_enquiries: {
+        Row: {
+          attribution: Json | null
+          canonical_url: string | null
+          collection_id: string | null
+          consent_version: string
+          created_at: string
+          currency: string | null
+          delivery_status: string
+          id: string
+          include_files: boolean
+          include_pricing: boolean
+          include_quantities: boolean
+          include_result_link: boolean
+          intent: string
+          marketing_consent: boolean
+          message: string
+          next_retry_at: string | null
+          provider_error: string | null
+          provider_id: string | null
+          published_version: number | null
+          result_snapshot: Json | null
+          result_token: string | null
+          retry_count: number
+          sender_email: string
+          sender_name: string
+          sender_phone: string | null
+          sent_at: string | null
+          supplier_profile_id: string
+          totals: Json | null
+          updated_at: string
+        }
+        Insert: {
+          attribution?: Json | null
+          canonical_url?: string | null
+          collection_id?: string | null
+          consent_version?: string
+          created_at?: string
+          currency?: string | null
+          delivery_status?: string
+          id?: string
+          include_files?: boolean
+          include_pricing?: boolean
+          include_quantities?: boolean
+          include_result_link?: boolean
+          intent?: string
+          marketing_consent?: boolean
+          message?: string
+          next_retry_at?: string | null
+          provider_error?: string | null
+          provider_id?: string | null
+          published_version?: number | null
+          result_snapshot?: Json | null
+          result_token?: string | null
+          retry_count?: number
+          sender_email: string
+          sender_name: string
+          sender_phone?: string | null
+          sent_at?: string | null
+          supplier_profile_id: string
+          totals?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          attribution?: Json | null
+          canonical_url?: string | null
+          collection_id?: string | null
+          consent_version?: string
+          created_at?: string
+          currency?: string | null
+          delivery_status?: string
+          id?: string
+          include_files?: boolean
+          include_pricing?: boolean
+          include_quantities?: boolean
+          include_result_link?: boolean
+          intent?: string
+          marketing_consent?: boolean
+          message?: string
+          next_retry_at?: string | null
+          provider_error?: string | null
+          provider_id?: string | null
+          published_version?: number | null
+          result_snapshot?: Json | null
+          result_token?: string | null
+          retry_count?: number
+          sender_email?: string
+          sender_name?: string
+          sender_phone?: string | null
+          sent_at?: string | null
+          supplier_profile_id?: string
+          totals?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_takeoff_enquiries_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_takeoff_enquiries_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_takeoff_enquiry_attempts: {
+        Row: {
+          attempt_number: number
+          attempted_at: string
+          enquiry_id: string
+          error: string | null
+          id: string
+          provider_id: string | null
+          status: string
+        }
+        Insert: {
+          attempt_number: number
+          attempted_at?: string
+          enquiry_id: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          status: string
+        }
+        Update: {
+          attempt_number?: number
+          attempted_at?: string
+          enquiry_id?: string
+          error?: string | null
+          id?: string
+          provider_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_takeoff_enquiry_attempts_enquiry_id_fkey"
+            columns: ["enquiry_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_takeoff_enquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_takeoff_enquiry_files: {
+        Row: {
+          content_type: string
+          created_at: string
+          enquiry_id: string
+          expires_at: string
+          filename: string
+          id: string
+          size_bytes: number
+          storage_path: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          enquiry_id: string
+          expires_at?: string
+          filename: string
+          id?: string
+          size_bytes: number
+          storage_path: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          enquiry_id?: string
+          expires_at?: string
+          filename?: string
+          id?: string
+          size_bytes?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_takeoff_enquiry_files_enquiry_id_fkey"
+            columns: ["enquiry_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_takeoff_enquiries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_takeoff_library_snapshots: {
+        Row: {
+          collection_id: string
+          components_json: Json
+          created_at: string
+          currency: string
+          id: string
+          published_version: number
+          supplier_profile_id: string
+        }
+        Insert: {
+          collection_id: string
+          components_json: Json
+          created_at?: string
+          currency: string
+          id?: string
+          published_version: number
+          supplier_profile_id: string
+        }
+        Update: {
+          collection_id?: string
+          components_json?: Json
+          created_at?: string
+          currency?: string
+          id?: string
+          published_version?: number
+          supplier_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_takeoff_library_snapshots_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_takeoff_library_snapshots_supplier_profile_id_fkey"
+            columns: ["supplier_profile_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -6189,6 +6464,13 @@ export type Database = {
       user_belongs_to_company: {
         Args: { target_company_id: string }
         Returns: boolean
+      }
+      validate_takeoff_library_readiness: {
+        Args: { p_collection_id: string; p_supplier_id: string }
+        Returns: {
+          is_ready: boolean
+          issues: string[]
+        }[]
       }
     }
     Enums: {

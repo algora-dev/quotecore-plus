@@ -206,12 +206,12 @@ const videoSchemas = [
   {
     "@context": "https://schema.org",
     "@type": "VideoObject",
-    name: "How to Set Up Roofing Smart Components in QuoteCore+",
-    description: "Step-by-step tutorial showing how to set up roofing Smart Components in QuoteCore+.",
-    thumbnailUrl: "https://i.ytimg.com/vi/XZSTIfGUHAU/maxresdefault.jpg",
+    name: "What are Smart Components in QuoteCore+",
+    description: "A short overview of Smart Components in QuoteCore+ - reusable pricing, labour, waste and measurement rules.",
+    thumbnailUrl: "https://i.ytimg.com/vi/aFXJwOiliPI/maxresdefault.jpg",
     uploadDate: "2026-07-28",
-    embedUrl: "https://www.youtube-nocookie.com/embed/XZSTIfGUHAU",
-    contentUrl: "https://www.youtube.com/watch?v=XZSTIfGUHAU",
+    embedUrl: "https://www.youtube-nocookie.com/embed/aFXJwOiliPI",
+    contentUrl: "https://www.youtube.com/watch?v=aFXJwOiliPI",
   },
 ];
 
@@ -399,8 +399,8 @@ export default function ConstructionQuotingSoftwarePage() {
 
               <div className="mt-6">
                 <YouTubeLite
-                  videoId="XZSTIfGUHAU"
-                  title="How to set up Smart Components in QuoteCore+"
+                  videoId="aFXJwOiliPI"
+                  title="What are Smart Components in QuoteCore+"
                   start={3}
                   className="w-full"
                 />

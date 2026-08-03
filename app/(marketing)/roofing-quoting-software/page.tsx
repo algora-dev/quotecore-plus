@@ -24,7 +24,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Measure the job",
-      text: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouts automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into Smart Components for pricing.",
+      text: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into Smart Components for pricing.",
     },
     {
       "@type": "HowToStep",
@@ -58,7 +58,7 @@ const steps = [
   {
     number: "01",
     title: "Measure the job",
-    body: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouts automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into your quote via Smart Components\u2122.",
+    body: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into your quote via Smart Components™.",
   },
   {
     number: "02",
@@ -89,7 +89,7 @@ const steps = [
 
 const bullets = [
   "Digital takeoffs and measurement workflows built around roofing",
-  "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouts",
+  "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting",
   "Smart Components™ with materials, labour, waste, measurements, drawings, calculations and pricing rules",
   "Professional quotes that are clear for customers and easy to approve",
   "Materials ordering connected to accepted quotes",
@@ -108,7 +108,7 @@ const faqs = [
   },
   {
     q: "Can QuoteCore+ help with roofing measurements?",
-    a: "Yes. QuoteCore+ combines digital takeoff tools with AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges from an uploaded plan. Measurements feed directly into Smart Components\u2122, which apply your stored pricing, labour, waste, and business rules - so the takeoff becomes a priced quote without manual re-entry.",
+    a: "Yes. QuoteCore+ combines digital takeoff tools with AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges from an uploaded plan. Measurements feed directly into Smart Components™, which apply your stored pricing, labour, waste, and business rules - so the takeoff becomes a priced quote without manual re-entry.",
   },
   {
     q: "Does QuoteCore+ handle materials ordering?",
@@ -187,7 +187,7 @@ export default function RoofingQuotingSoftwarePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure the roof with AI Scan Assist, build the quote with Smart Components\u2122, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow.
+              Measure the roof with AI Scan Assist, build the quote with Smart Components™, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow.
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">

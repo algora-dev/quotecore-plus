@@ -69,6 +69,7 @@ const PUBLIC_PATHS = [
   '/contact',
   '/suppliers',
   '/blog',
+  '/resources',     // Resource hub pages (blog category hubs)
   '/pricing',
   '/trust',
   '/customer-stories',

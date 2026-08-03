@@ -188,7 +188,7 @@ export default function FeaturesHubPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Digital Roof Takeoff</td><td className="px-5 py-3 text-slate-600">Upload plans, measure roof areas, lengths and pitch digitally</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">AI Scan Assist</td><td className="px-5 py-3 text-slate-600">AI identifies roof areas, ridges, hips, valleys, barges and spouts from your plan</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">AI Scan Assist</td><td className="px-5 py-3 text-slate-600">AI identifies roof areas, ridges, hips, valleys, barges and spouting from your plan</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Smart Components™</td><td className="px-5 py-3 text-slate-600">Store reusable pricing and quantity rules so every quote is consistent</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Sending & Tracking</td><td className="px-5 py-3 text-slate-600">Send documents, track opens/reads, automate follow-ups with cancellation conditions</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Material Ordering</td><td className="px-5 py-3 text-slate-600">Create orders from saved quotes with three display formats and supplier-ready details</td></tr>
