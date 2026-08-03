@@ -51,7 +51,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how.*work|system work|workflow|process|walkthrough|what does quotecore|what is quotecore|what.*quotecore.*do|tell me about)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ is quoting and job management software built for roofing and trade contractors. Upload a roof plan, AI traces it, you verify the measurements, and the system calculates material quantities and builds a professional quote. From complex plan to quote in under 3 minutes for less than a dollar.",
+      text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan, AI Scan Assist identifies multiple roof areas plus ridges, hips, valleys, barges and spouts, you verify and adjust, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
       links: [
         trialCTA,
@@ -187,7 +187,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(ai|ai takeoff|plan takeoff|upload.*plan|trace.*plan|ai.*scan|ai assist|ai scan)/.test(message)) {
     return {
       sender: "assistant",
-      text: "AI plan takeoff is QuoteCore+'s core feature. Upload a roof plan image and the AI traces the geometry, detects lines, and classifies them using industry-leading vision models. You verify everything on an interactive canvas, then the system calculates measurements and material quantities. It takes the most tedious part of quoting and does it in seconds. Available in the paid app and the 14-day free trial (20 AI scan points included).",
+      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a roof plan and AI identifies multiple roof outlines/areas - you can name each area and assign different pitch, material and component systems. AI detects ridges/ridge capping, hips, valleys, barges and spouts within each area. Each detected element is a placeholder you can swap to any saved Smart Component via dropdown - quantities, labour, waste and pricing recalculate automatically. You review, correct and confirm everything, then add any components AI doesn't detect (flashings, downpipes, etc). Available in the 14-day free trial with 20 AI scan points included.",
       links: [
         trialCTA,
         { label: "See how it works", href: "/#how-it-works" },
@@ -257,7 +257,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(follow up|follow-up|reminder|reminders)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ sends automated follow-up reminders on quotes you've sent, so nothing falls through the cracks. You can see quote status at a glance.",
+      text: "QuoteCore+ sends automated follow-up emails on quotes, orders and invoices you've sent. Set up time-based triggers (e.g. send a follow-up 5 days after a quote is opened with no decision) or event-based triggers (e.g. when a quote is accepted, send a thank-you with deposit details after a 10-minute delay). You can add attachments, use saved email templates, and set cancellation conditions - so if a quote is accepted or declined, pending follow-ups cancel automatically.",
       link: trialCTA,
     };
   }
@@ -266,7 +266,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(trade|contractor|roofer|roofing|construction|builder|plumber|electrician|business|who.*for|who.*use)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ is built for roofing and trade contractors who quote regularly. It works for roofers, builders, and any trade that needs to go from plan measurements to a professional quote quickly. If you're still quoting in Word or Excel, this will change how fast you get quotes out.",
+      text: "QuoteCore+ is built for roofing contractors - roofers, roofing estimators and roofing business owners. It handles the pitches, angles and measurements roofing demands. It also works for construction, cladding, fencing, flooring and landscaping - any trade that measures and quotes jobs. If you're still quoting in spreadsheets, this will change how fast you get quotes out.",
       links: [
         trialCTA,
         freeToolsCTA,

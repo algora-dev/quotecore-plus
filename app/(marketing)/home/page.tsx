@@ -38,9 +38,9 @@ const faqs = [
       "No. You get full access to every feature for 14 days with no card required. If you decide to continue, you choose a plan that fits your business.",
   },
   {
-    question: "Can I use it for roofing and construction?",
+    question: "Can I use it for construction and other trades?",
     answer:
-      "Yes. QuoteCore+ was built for roofing first - the hardest trade to measure and quote. That same engine handles construction, cladding, fencing, flooring, landscaping, and any trade that measures and quotes jobs.",
+      "Yes. QuoteCore+ was built for roofing first - the hardest trade to measure and quote. That same engine handles construction, cladding, fencing, flooring, landscaping and any trade that measures and quotes jobs.",
   },
   {
     question: "Can I import my own pricing?",
@@ -71,7 +71,7 @@ export default function HomePage() {
     {
       number: "01",
       title: "Measure",
-      body: "Upload a plan and use AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges automatically. Digital takeoff tools handle angles, pitches, and complex roof geometry - no manual tracing required.",
+      body: "Upload a plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouts automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - no manual tracing required.",
       images: [
         { src: "/how-it-works/how-it-works-1-3.png", label: "Digital takeoff" },
       ],
@@ -95,8 +95,8 @@ export default function HomePage() {
     },
     {
       number: "04",
-      title: "Approve",
-      body: "Customers approve quotes online. Auto-follow-ups chase outstanding quotes for you, so you stop wasting time calling and emailing.",
+      title: "Send",
+      body: "Send quotes, orders and invoices directly from QuoteCore+ with attachments. Track when recipients open and read them. Automatic follow-ups chase outstanding quotes for you - and cancel themselves when a quote is accepted or declined.",
       images: [
         { src: "/how-it-works/how-it-works-3.png", label: "Message centre" },
       ],
@@ -104,7 +104,7 @@ export default function HomePage() {
     {
       number: "05",
       title: "Order",
-      body: "Turn an approved quote into a material order in one click. Edit quantities, add or remove items, and send it straight to your supplier. You can also upload a supplier photo or PDF and AI converts it into line items automatically.",
+      body: "From a saved quote, create a material order with all quantities and supplier details carried over. Edit quantities, add or remove items, choose from three display formats, and send it straight to your supplier. You can also upload a supplier photo or PDF and AI converts it into editable line items.",
       images: [
         { src: "/how-it-works-order-form.png", label: "Order form" },
         { src: "/how-it-works/how-it-works-4.png", label: "Material orders" },
@@ -112,16 +112,8 @@ export default function HomePage() {
     },
     {
       number: "06",
-      title: "Complete",
-      body: "Track job status, keep quote and order data connected, and maintain full visibility over every job from one dashboard.",
-      images: [
-        { src: "/how-it-works/how-it-works-6.png", label: "Notifications" },
-      ],
-    },
-    {
-      number: "07",
       title: "Invoice",
-      body: "Create and send invoices from the same job data. No re-entering information - the quote, order, and invoice all stay connected. Upload an existing invoice image and AI converts it into an editable QuoteCore+ invoice.",
+      body: "Create an invoice from the same saved quote. No re-entering information - the quote, order, and invoice all stay connected. Configure payment methods per invoice - bank details, Stripe links or PayPal links - and recipients can mark paid or dispute directly. You can also upload an existing invoice image and AI converts it into editable line items.",
       images: [
         { src: "/how-it-works/how-it-works-5-2.png", label: "Invoice view" },
       ],
@@ -216,13 +208,13 @@ export default function HomePage() {
               {/* Left: text */}
               <div className="relative z-20 flex-1 text-center lg:flex-[1.12] lg:text-left">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
-                  Quoting and job software for trades
+                  Roofing quoting, takeoff and job workflow software
                 </p>
                 <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-6xl">
                   Built for roofing. Powerful enough for every trade.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Turn measurements, materials, labour, pricing, and business rules into accurate professional quotes using Smart Components&#8482; - then carry the same job data through approvals, orders, and invoices without entering anything twice.
+                  Use digital takeoff, AI Scan Assist and Smart Components&#8482; to turn roof measurements into materials, labour and accurate pricing - then create, send and track the quote, order and invoice from the same connected job.
                 </p>
 
                 {/* Pricing reassurance line */}
@@ -282,12 +274,12 @@ export default function HomePage() {
 
           {/* Workflow flow line */}
           <div className="mb-10 hidden flex-wrap items-center justify-center gap-2 lg:flex">
-            {["Measure", "Price", "Quote", "Approve", "Order", "Complete", "Invoice"].map((label, i) => (
+            {["Measure", "Price", "Quote", "Send", "Order", "Invoice"].map((label, i) => (
               <React.Fragment key={label}>
                 <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium ${i === activeStep ? "bg-[#FF6B35] text-white" : "bg-zinc-100 text-zinc-600"}`}>
                   {label}
                 </span>
-                {i < 6 && <span className="text-zinc-300">-</span>}
+                {i < 5 && <span className="text-zinc-300">-</span>}
               </React.Fragment>
             ))}
           </div>
