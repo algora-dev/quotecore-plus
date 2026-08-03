@@ -260,6 +260,9 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
             resultToken={resultToken}
             resultUrl={resultUrl}
             totals={totals}
+            sections={sections}
+            allKeys={allKeys}
+            getComponentById={getComponentById}
             currency={currency}
             onClose={() => setShowEnquiry(false)}
           />

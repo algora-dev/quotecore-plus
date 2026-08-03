@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { trackEvent } from '@/lib/analytics';
+import { COMPONENT_DEFS } from './calc';
+import { componentLabel } from './helpers';
 
 interface SupplierEnquiryModalProps {
   supplierName: string;
@@ -9,6 +11,9 @@ interface SupplierEnquiryModalProps {
   resultToken?: string;
   resultUrl?: string;
   totals?: Record<string, any>;
+  sections?: Record<string, any>;
+  allKeys?: string[];
+  getComponentById?: (id: string | null) => any;
   currency?: string;
   onClose: () => void;
 }
@@ -28,6 +33,9 @@ export function SupplierEnquiryModal({
   resultToken,
   resultUrl,
   totals,
+  sections,
+  allKeys,
+  getComponentById,
   currency,
   onClose,
 }: SupplierEnquiryModalProps) {
@@ -87,6 +95,36 @@ export function SupplierEnquiryModal({
         }
       }
 
+      // Build enriched totals with component details
+      const enrichedTotals: Record<string, any> = {};
+      if (totals && allKeys) {
+        for (const key of allKeys) {
+          const t = totals[key];
+          if (!t || t.count === 0) continue;
+          const section = sections?.[key];
+          const def = COMPONENT_DEFS[key];
+          const label = componentLabel(key, section?.customDef);
+          const unit = def?.unit || (section?.customDef?.measurementType === 'linear' ? 'm' : section?.customDef?.measurementType === 'area' ? 'm\u00B2' : 'ea');
+          // Get component name from first entry
+          let componentName = label;
+          if (section?.entries?.[0]?.selectedComponentId && getComponentById) {
+            const comp = getComponentById(section.entries[0].selectedComponentId);
+            if (comp?.name) componentName = comp.name;
+          }
+          enrichedTotals[key] = {
+            label: componentName,
+            rawTotal: Number(t.rawTotal?.toFixed(2) ?? 0),
+            withWaste: Number(t.withWaste?.toFixed(2) ?? 0),
+            count: t.count,
+            unit: unit,
+            materialCost: Number(t.materialCost?.toFixed(2) ?? 0),
+            labourCost: Number(t.labourCost?.toFixed(2) ?? 0),
+            totalCost: Number(t.totalCost?.toFixed(2) ?? 0),
+            wastePercent: section?.wastePercent ?? 0,
+          };
+        }
+      }
+
       // Submit enquiry
       const res = await fetch('/api/free-tools/supplier-enquiry', {
         method: 'POST',
@@ -103,7 +141,7 @@ export function SupplierEnquiryModal({
           includeResultLink,
           resultToken,
           resultUrl,
-          totals,
+          totals: enrichedTotals,
           currency,
           marketingConsent,
           attachmentIds: attachmentIds.length > 0 ? attachmentIds : undefined,
