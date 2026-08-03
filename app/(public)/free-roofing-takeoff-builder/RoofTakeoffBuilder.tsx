@@ -84,6 +84,7 @@ interface RoofTakeoffBuilderProps {
 
 export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplierSlug }: RoofTakeoffBuilderProps) {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
+  const [showLeaveWarning, setShowLeaveWarning] = useState(false);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierInfo | null>(null);
   const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
@@ -108,18 +109,40 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [components, setComponents] = useState<RoofComponentDef[]>([]);
   const [componentsLoading, setComponentsLoading] = useState(true);
 
-  // beforeunload warning: if user has entered data, warn before leaving/refreshing
+  // beforeunload warning: if user has entered data, warn before refresh/close.
+  // Also intercept browser back button with a branded QuoteCore+ modal.
   useEffect(() => {
     if (!measureMode) return;
+
+    // Push a dummy state so we can detect back navigation
+    window.history.pushState({ wizard: true }, '', window.location.href);
+
+    const hasEnteredData = () => Object.values(sections).some(s => s.entries.length > 0);
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (hasEnteredData()) {
+        // Re-push state so we stay on the page, show our modal instead
+        window.history.pushState({ wizard: true }, '', window.location.href);
+        setShowLeaveWarning(true);
+      } else {
+        // No data entered, let them leave freely
+        setMeasureMode(null);
+      }
+    };
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      const hasData = Object.values(sections).some(s => s.entries.length > 0);
-      if (hasData) {
+      if (hasEnteredData()) {
         e.preventDefault();
         e.returnValue = '';
       }
     };
+
+    window.addEventListener('popstate', handlePopState);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, [measureMode, sections]);
 
   // On mount: if URL params have a complete takeoff input (shared link), load it directly.
@@ -622,12 +645,13 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               <div className="text-center pt-2">
                 <button
                   onClick={() => setSupplierSkip(true)}
-                  className="text-sm font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-4 py-2 hover:bg-slate-100"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(0,0,0,0.15)]"
                 >
-                  Skip - I&apos;ll use QuoteCore+ default components
+                  Skip & use test prices
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                 </button>
-                <p className="mt-1 text-xs text-slate-400">
-                  Example pricing only - not a real supplier&apos;s prices
+                <p className="mt-1.5 text-xs text-slate-400">
+                  QuoteCore+ example pricing - not a real supplier&apos;s prices
                 </p>
               </div>
             </div>
@@ -890,6 +914,44 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
         </section>
 
         {!embed && <SiteFooter />}
+
+        {/* Leave warning modal - shows when user tries to go back with data entered */}
+        {showLeaveWarning && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-base font-semibold text-slate-900">Leave the takeoff builder?</h3>
+              <p className="mt-2 text-sm text-slate-500">
+                You&apos;ll lose your current measurements and progress. This can&apos;t be undone.
+              </p>
+              <div className="mt-5 flex gap-2">
+                <button
+                  onClick={() => setShowLeaveWarning(false)}
+                  className="flex-1 rounded-full bg-black text-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-800 transition"
+                >
+                  Stay on page
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLeaveWarning(false);
+                    clearTakeoff();
+                    setMeasureMode(null);
+                    setUnitSystem(null);
+                    setSelectedSupplier(null);
+                    setSupplierSkip(false);
+                  }}
+                  className="flex-1 rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Leave & reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </FreeToolsAuthProvider>
   );
