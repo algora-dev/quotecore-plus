@@ -121,7 +121,7 @@ export function SummaryTabs({
         </div>
 
         {/* Contextual actions per tab */}
-        <div className="flex items-center gap-2 flex-wrap -mx-2 px-2 md:mx-0 md:px-0 pb-2 md:pb-0">
+        <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0 pb-2 md:pb-0 shrink min-w-0">
           {activeTab === 'summary' && summaryActions}
           {activeTab === 'customer' && hasCustomerQuote && (
             <>

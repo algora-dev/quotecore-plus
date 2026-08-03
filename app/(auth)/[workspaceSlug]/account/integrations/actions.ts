@@ -30,9 +30,18 @@ export async function loadIntegrationArtifactData(
   companyId: string,
   quoteId: string
 ): Promise<QuoteExportV1 | null> {
-  const profile = await requireCompanyContext();
-  if (profile.company_id !== companyId) throw new Error('Unauthorized');
-  return buildQuoteExport(quoteId, companyId);
+  try {
+    const profile = await requireCompanyContext();
+    if (profile.company_id !== companyId) throw new Error('Unauthorized');
+    return await buildQuoteExport(quoteId, companyId);
+  } catch (err) {
+    console.error('[loadIntegrationArtifactData] error:', err);
+    throw new Error(
+      err instanceof Error && !err.message.includes('Server Components')
+        ? `Failed to load quote data: ${err.message}`
+        : 'Failed to load quote data for export'
+    );
+  }
 }
 
 export interface IntegrationRecord {
@@ -179,34 +188,42 @@ export async function queueQuoteExport(
   scopeOverrides?: Record<string, boolean>,
   selection?: { artifactIds: string[] }
 ): Promise<{ success: boolean; error?: string; exportId?: string; status?: string; duplicate?: boolean }> {
-  const revision = await getQuoteRevision(quoteId, companyId);
-  if (revision === 0) {
-    return { success: false, error: 'Quote not found' };
+  try {
+    const revision = await getQuoteRevision(quoteId, companyId);
+    if (revision === 0) {
+      return { success: false, error: 'Quote not found' };
+    }
+
+    const quoteData = await buildQuoteExport(quoteId, companyId);
+    if (!quoteData) {
+      return { success: false, error: 'Quote data could not be loaded' };
+    }
+
+    const result = await queueExport({
+      companyId,
+      integrationId,
+      sourceType: 'quote',
+      sourceId: quoteId,
+      sourceRevision: revision,
+      eventType,
+      scopeOverrides,
+      selection,
+      quoteData,
+    });
+
+    return {
+      success: true,
+      exportId: result.exportId,
+      status: result.status,
+      duplicate: result.duplicate,
+    };
+  } catch (err) {
+    // Catch and return the actual error message so the client can display it
+    // instead of getting a generic "Server Components render" error.
+    console.error('[queueQuoteExport] error:', err);
+    const msg = err instanceof Error ? err.message : 'Unknown error during export queue';
+    return { success: false, error: msg };
   }
-
-  const quoteData = await buildQuoteExport(quoteId, companyId);
-  if (!quoteData) {
-    return { success: false, error: 'Quote data could not be loaded' };
-  }
-
-  const result = await queueExport({
-    companyId,
-    integrationId,
-    sourceType: 'quote',
-    sourceId: quoteId,
-    sourceRevision: revision,
-    eventType,
-    scopeOverrides,
-    selection,
-    quoteData,
-  });
-
-  return {
-    success: true,
-    exportId: result.exportId,
-    status: result.status,
-    duplicate: result.duplicate,
-  };
 }
 
 export interface ExportHistoryItem {

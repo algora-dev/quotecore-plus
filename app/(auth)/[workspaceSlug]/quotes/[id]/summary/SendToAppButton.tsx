@@ -86,14 +86,26 @@ export function SendToAppButton({
     if (!selectedIntegration) return;
     setStep('sending');
     try {
-      const generatedArtifactIds = await prepareIntegrationArtifacts({
-        quoteId,
-        companyId,
-        includeCustomerQuote: scopes.customerQuote,
-        includeTakeoff: scopes.quoteSummary,
-        includeLabourSheet: scopes.laborSheet,
-        existingArtifacts: existingGeneratedArtifacts,
-      });
+      let generatedArtifactIds: string[] = [];
+      try {
+        generatedArtifactIds = await prepareIntegrationArtifacts({
+          quoteId,
+          companyId,
+          includeCustomerQuote: scopes.customerQuote,
+          includeTakeoff: scopes.quoteSummary,
+          includeLabourSheet: scopes.laborSheet,
+          existingArtifacts: existingGeneratedArtifacts,
+        });
+      } catch (artifactErr) {
+        // Server actions throw generic errors in production. Surface a
+        // actionable message so the user knows what went wrong.
+        const msg = artifactErr instanceof Error ? artifactErr.message : String(artifactErr);
+        throw new Error(
+          msg.includes('Server Components')
+            ? 'Failed to generate quote documents for export. Please try again or contact support.'
+            : `Document generation failed: ${msg}`
+        );
+      }
       const artifactIds = [...new Set([...selectedArtifactIds, ...generatedArtifactIds])];
       const hasAnyExport = scopes.quoteSummary || scopes.customerQuote || scopes.laborSheet || artifactIds.length > 0;
       const scopeOverrides: Record<string, boolean> = {
@@ -108,14 +120,24 @@ export function SendToAppButton({
         internalNotes: false,
         acceptanceDetails: scopes.quoteSummary,
       };
-      const res = await queueQuoteExport(
-        companyId,
-        selectedIntegration.id,
-        quoteId,
-        'manual_export',
-        scopeOverrides,
-        { artifactIds }
-      );
+      let res;
+      try {
+        res = await queueQuoteExport(
+          companyId,
+          selectedIntegration.id,
+          quoteId,
+          'manual_export',
+          scopeOverrides,
+          { artifactIds }
+        );
+      } catch (queueErr) {
+        const msg = queueErr instanceof Error ? queueErr.message : String(queueErr);
+        throw new Error(
+          msg.includes('Server Components')
+            ? 'Failed to queue the export to Fergus. The integration may need to be reconnected. Try going to Settings > Integrations, or contact support.'
+            : `Queue failed: ${msg}`
+        );
+      }
       setResult({
         success: res.success,
         message: res.success
