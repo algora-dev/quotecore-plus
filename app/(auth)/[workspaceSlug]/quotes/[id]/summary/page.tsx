@@ -34,7 +34,6 @@ import { getSignedUrls } from '@/app/lib/storage/helpers';
 import { BUCKETS } from '@/app/lib/storage/buckets';
 import { ScrollIndicator } from '@/app/components/ui/ScrollIndicator';
 import { SendToAppButton } from './SendToAppButton';
-import { getIntegrations } from '@/app/(auth)/[workspaceSlug]/account/integrations/actions';
 
 export default async function QuoteSummaryPage({
   params,
@@ -167,8 +166,6 @@ export default async function QuoteSummaryPage({
     resolved_at: string | null;
   }>;
 
-  // Load integrations for Send to App button
-  const integrations = await getIntegrations(quote.company_id);
 
   // Load all files (plan + supporting)
   const { data: filesData } = await supabase
@@ -446,38 +443,7 @@ export default async function QuoteSummaryPage({
             ) : quote.withdrawn_at ? (
               <ReopenQuoteButton quoteId={id} state="withdrawn" />
             ) : null}
-            <SendToAppButton
-              quoteId={id}
-              companyId={quote.company_id}
-              workspaceSlug={workspaceSlug}
-              integrations={integrations.map(i => ({ id: i.id, provider: i.provider, enabled: i.enabled, connection_status: i.connection_status }))}
-              dataAvailability={{
-                hasQuoteSummary: true,
-                hasCustomerQuote: hasCustomerQuote,
-                hasLaborSheet: hasLaborSheet,
-                hasFiles: allFiles.length > 0,
-              }}
-              quoteFiles={allFiles.filter((file) => ![
-                'customer_quote_pdf',
-                'takeoff_report_pdf',
-                'takeoff_data_json',
-                'labour_sheet_pdf',
-              ].includes(file.file_type)).map((file) => ({
-                id: file.id,
-                name: file.file_name,
-                fileSize: file.file_size ?? 0,
-              }))}
-              existingGeneratedArtifacts={(filesData || []).filter((file) => [
-                'customer_quote_pdf',
-                'takeoff_report_pdf',
-                'takeoff_data_json',
-                'labour_sheet_pdf',
-              ].includes(file.file_type)).map((file) => ({
-                id: file.id,
-                fileType: file.file_type,
-                fileName: file.file_name,
-              }))}
-            />
+            <SendToAppButton />
             <SendDocumentButton
               entityKind="quote"
               entityId={id}
