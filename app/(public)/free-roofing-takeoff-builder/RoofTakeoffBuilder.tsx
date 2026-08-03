@@ -57,23 +57,47 @@ interface PersistedTakeoffState {
 
 const SESSION_KEY = 'qcp:frtb:session';
 
+interface SupplierInfo {
+  supplierId: string;
+  supplierName: string;
+  supplierSlug: string;
+  country: string | null;
+  currency: string;
+  collectionId: string;
+  collectionName: string;
+  branchCity: string | null;
+  branchRegion: string | null;
+  enquiriesEnabled: boolean;
+  description: string | null;
+}
+
 interface RoofTakeoffBuilderProps {
   initialInput?: PublicRoofTakeoffInput;
   embed?: boolean; // When true, skip header/footer/H1 (for embedding in other pages)
+  initialSupplierSlug?: string; // Pre-select supplier (from URL route)
 }
 
-export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffBuilderProps) {
+export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplierSlug }: RoofTakeoffBuilderProps) {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierInfo | null>(null);
+  const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
+  const [supplierLibraries, setSupplierLibraries] = useState<SupplierInfo[]>([]);
+  const [supplierLibrariesLoading, setSupplierLibrariesLoading] = useState(false);
+  const [supplierSkip, setSupplierSkip] = useState(false);
 
   // History management so browser back steps through: builder -> units -> mode -> exit
   useEffect(() => {
     const handlePopState = () => {
-      // On back: if in builder, go to units; if in units, go to mode; if in mode, let browser navigate away
+      // On back: step through builder -> units -> supplier -> mode -> exit
       if (measureMode && unitSystem) {
         setUnitSystem(null);
         window.history.pushState(null, '', window.location.href);
-      } else if (measureMode && !unitSystem) {
+      } else if (measureMode && (selectedSupplier || supplierSkip) && !unitSystem) {
+        setSelectedSupplier(null);
+        setSupplierSkip(false);
+        window.history.pushState(null, '', window.location.href);
+      } else if (measureMode && !selectedSupplier && !supplierSkip) {
         setMeasureMode(null);
         window.history.pushState(null, '', window.location.href);
       }
@@ -82,12 +106,19 @@ export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffB
     return () => window.removeEventListener('popstate', handlePopState);
   }, [measureMode, unitSystem]);
 
-  // Push history state when entering mode selection
+  // Push history state when entering supplier selection
   useEffect(() => {
-    if (measureMode && !unitSystem) {
+    if (measureMode && !selectedSupplier && !supplierSkip && !unitSystem) {
+      window.history.pushState({ step: 'supplier' }, '', window.location.href);
+    }
+  }, [measureMode, selectedSupplier, supplierSkip]);
+
+  // Push history state when entering units
+  useEffect(() => {
+    if (measureMode && (selectedSupplier || supplierSkip) && !unitSystem) {
       window.history.pushState({ step: 'units' }, '', window.location.href);
     }
-  }, [measureMode]);
+  }, [measureMode, selectedSupplier, supplierSkip]);
 
   // Push history state when entering builder
   useEffect(() => {
@@ -163,13 +194,85 @@ export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffB
     }
   }, [measureMode, unitSystem, experience, masterPitch, masterRatio, sections, customSections]);
 
+  // Load supplier libraries list (for selection UI)
   useEffect(() => {
-    fetch('/api/free-tools/roof-components')
-      .then(r => r.json())
-      .then(data => { if (data.components) setComponents(data.components); })
-      .catch(() => {})
-      .finally(() => setComponentsLoading(false));
-  }, []);
+    if (!initialSupplierSlug) {
+      setSupplierLibrariesLoading(true);
+      fetch('/api/free-tools/supplier-libraries')
+        .then(r => r.json())
+        .then(data => { if (data.libraries) setSupplierLibraries(data.libraries); })
+        .catch(() => {})
+        .finally(() => setSupplierLibrariesLoading(false));
+    }
+  }, [initialSupplierSlug]);
+
+  // Auto-load supplier if slug provided via URL
+  useEffect(() => {
+    if (initialSupplierSlug) {
+      setSupplierLibrariesLoading(true);
+      fetch(`/api/free-tools/supplier-library/${initialSupplierSlug}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.library) {
+            const lib = data.library;
+            setSelectedSupplier({
+              supplierId: lib.supplierId,
+              supplierName: lib.supplierName,
+              supplierSlug: lib.supplierSlug,
+              country: lib.supplierCountry,
+              currency: lib.currency,
+              collectionId: lib.collectionId,
+              collectionName: lib.collectionName,
+              branchCity: null,
+              branchRegion: null,
+              enquiriesEnabled: false,
+              description: null,
+            });
+          }
+        })
+        .catch(() => {})
+        .finally(() => setSupplierLibrariesLoading(false));
+    }
+  }, [initialSupplierSlug]);
+
+  // Load components - supplier library if selected, otherwise generic
+  useEffect(() => {
+    if (selectedSupplier) {
+      fetch(`/api/free-tools/supplier-library/${selectedSupplier.supplierSlug}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.library?.components) {
+            // Map published takeoff components to RoofComponentDef format
+            const mapped: RoofComponentDef[] = data.library.components.map((c: any) => ({
+              id: c.id,
+              component_kind: c.component_kind,
+              name: c.name,
+              description: c.description,
+              unit: c.unit,
+              price_per_unit: c.price_per_unit,
+              pricing_strategy: c.pricing_strategy,
+              pack_size: c.pack_size,
+              pack_price: c.pack_price,
+              labour_rate: c.labour_rate,
+              labour_unit: c.labour_unit,
+              suggested_waste_percent: c.suggested_waste_percent,
+              pitch_type: c.pitch_type,
+              is_active: c.is_active,
+              sort_order: c.sort_order,
+            }));
+            setComponents(mapped);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setComponentsLoading(false));
+    } else {
+      fetch('/api/free-tools/roof-components')
+        .then(r => r.json())
+        .then(data => { if (data.components) setComponents(data.components); })
+        .catch(() => {})
+        .finally(() => setComponentsLoading(false));
+    }
+  }, [selectedSupplier]);
 
   const componentsByKind = useMemo(() => {
     const map: Record<string, RoofComponentDef[]> = {};
@@ -290,8 +393,15 @@ export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffB
     clearTakeoff();
     setMeasureMode(null);
     setUnitSystem(null);
+    setSelectedSupplier(null);
+    setSupplierSkip(false);
   };
-  const cur = '$';
+  // Currency symbol based on supplier currency or default
+  const currencySymbol = selectedSupplier?.currency === 'NZD' ? 'NZ$' :
+    selectedSupplier?.currency === 'USD' ? '$' :
+    selectedSupplier?.currency === 'AUD' ? 'A$' :
+    selectedSupplier?.currency === 'GBP' ? '\u00a3' : '$';
+  const cur = currencySymbol;
 
   const u = unitSystem || 'metric';
   const lenLbl = unitLabel(u);
@@ -432,8 +542,95 @@ export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffB
             </div>
           )}
 
-          {/* Step 2: Units */}
-          {measureMode && !unitSystem && (
+          {/* Step 2: Supplier Selection */}
+          {measureMode && !selectedSupplier && !supplierSkip && !unitSystem && (
+            <div className="space-y-4">
+              {/* Breadcrumb */}
+              <button onClick={() => setMeasureMode(null)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Back to measurement mode
+              </button>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-4 mb-2 flex items-center justify-between">
+                <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
+                <button onClick={() => setMeasureMode(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change mode</button>
+              </div>
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-slate-900">Choose a roofing supplier</h2>
+                <p className="mt-1 text-sm text-slate-500">Select a supplier to use their component pricing, or skip to enter your own.</p>
+              </div>
+
+              {/* Search */}
+              <div className="max-w-md mx-auto relative">
+                <input
+                  type="text"
+                  value={supplierSearchQuery}
+                  onChange={(e) => setSupplierSearchQuery(e.target.value)}
+                  placeholder="Search by name, location, or product..."
+                  className="w-full rounded-full border border-slate-300 px-4 py-2 pl-10 text-sm focus:border-orange-500 focus:outline-none"
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              {/* Supplier list */}
+              <div className="space-y-2 mt-4">
+                {supplierLibrariesLoading && (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-[#FF6B35]" />
+                    <p className="mt-2 text-xs text-slate-400">Loading suppliers...</p>
+                  </div>
+                )}
+                {!supplierLibrariesLoading && supplierLibraries.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-slate-200 px-6 py-8 text-center">
+                    <p className="text-sm text-slate-500">No suppliers found. You can still proceed without one.</p>
+                  </div>
+                )}
+                {!supplierLibrariesLoading && supplierLibraries
+                  .filter((lib) => {
+                    if (!supplierSearchQuery) return true;
+                    const q = supplierSearchQuery.toLowerCase();
+                    return [lib.supplierName, lib.collectionName, lib.branchCity, lib.branchRegion, lib.country]
+                      .filter(Boolean).join(' ').toLowerCase().includes(q);
+                  })
+                  .map((lib) => (
+                    <button
+                      key={lib.supplierId}
+                      onClick={() => setSelectedSupplier(lib)}
+                      className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-slate-900 group-hover:text-[#BD4A1A] transition truncate">{lib.supplierName}</h3>
+                          <p className="mt-0.5 text-xs text-slate-500 truncate">{lib.collectionName}</p>
+                          <div className="mt-1 flex items-center gap-2 flex-wrap">
+                            {lib.branchCity && <span className="text-xs text-slate-400">{lib.branchCity}{lib.branchRegion ? `, ${lib.branchRegion}` : ''}</span>}
+                            {lib.country && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{lib.country}</span>}
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{lib.currency}</span>
+                            {lib.enquiriesEnabled && <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-600">Enquiries open</span>}
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-slate-300 group-hover:text-[#FF6B35] transition flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </div>
+                    </button>
+                  ))
+                }
+              </div>
+
+              {/* Skip button */}
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setSupplierSkip(true)}
+                  className="text-sm font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-4 py-2 hover:bg-slate-100"
+                >
+                  Skip - I&apos;ll enter measurements without a supplier
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Units */}
+          {measureMode && (selectedSupplier || supplierSkip) && !unitSystem && (
             <div className="space-y-4">
               {/* Breadcrumb */}
               <button onClick={() => setMeasureMode(null)} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition">
@@ -471,8 +668,8 @@ export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffB
             </div>
           )}
 
-          {/* Step 3: Builder */}
-          {measureMode && unitSystem && (
+          {/* Step 4: Builder */}
+          {measureMode && (selectedSupplier || supplierSkip) && unitSystem && (
             <>
               {/* Breadcrumb */}
               <button onClick={() => { setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition mb-3">
@@ -485,6 +682,12 @@ export function RoofTakeoffBuilder({ initialInput, embed = false }: RoofTakeoffB
                   <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements' : 'Plan + Pitch Calculation'}</span>
                   <div className="w-px h-4 bg-slate-200" />
                   <span className="text-sm font-medium text-slate-500">{u === 'metric' ? 'Metric (m / m²)' : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</span>
+                  {selectedSupplier && (
+                    <>
+                      <div className="w-px h-4 bg-slate-200" />
+                      <span className="text-sm font-medium text-slate-500">{selectedSupplier.supplierName}</span>
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Experience toggle */}
