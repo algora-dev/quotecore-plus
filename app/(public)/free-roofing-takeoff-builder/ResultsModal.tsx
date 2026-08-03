@@ -24,6 +24,7 @@ interface ResultsModalProps {
 
 export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose, supplier, resultToken, resultUrl, currency }: ResultsModalProps) {
   const [showEnquiry, setShowEnquiry] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const cur = currency === 'NZD' ? 'NZ$' : currency === 'USD' ? '$' : currency === 'AUD' ? 'A$' : currency === 'GBP' ? '\u00a3' : '$';
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
@@ -225,30 +226,52 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 print:hidden">
-          <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition min-h-[44px]">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-            Print / PDF
-          </button>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            <button onClick={onClose} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition min-h-[44px]">Close</button>
-            {supplier?.enquiriesEnabled && (
-              <button
-                onClick={() => setShowEnquiry(true)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6B35] px-4 py-2 text-sm font-semibold text-[#FF6B35] transition-all hover:bg-orange-50 hover:shadow-[0_0_12px_rgba(255,107,53,0.15)]"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                Send to {supplier.name}
-              </button>
+        <div className="flex items-center justify-end gap-2 px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 print:hidden">
+          <div className="relative">
+            <button
+              onClick={() => setShowActions(v => !v)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 min-h-[44px]"
+            >
+              Actions
+              <svg className={`w-4 h-4 transition-transform ${showActions ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            {showActions && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 bottom-full mb-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
+                  <button
+                    onClick={() => { setShowActions(false); window.print(); }}
+                    className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
+                  >
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    Print / Save as PDF
+                  </button>
+                  {supplier?.enquiriesEnabled && (
+                    <button
+                      onClick={() => { setShowActions(false); setShowEnquiry(true); }}
+                      className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
+                    >
+                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                      Send to {supplier.name}
+                    </button>
+                  )}
+                  <Link
+                    href={buildConvertToQuoteUrl()}
+                    className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition"
+                  >
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Convert to Quote
+                  </Link>
+                  <Link
+                    href="/signup?ref=free-roofing-takeoff-builder"
+                    className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition"
+                  >
+                    <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" /></svg>
+                    Save to QuoteCore+
+                  </Link>
+                </div>
+              </>
             )}
-            <Link href={buildConvertToQuoteUrl()} className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)]">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              Convert to Quote
-            </Link>
-            <Link href="/signup?ref=free-roofing-takeoff-builder" className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800">
-              Save to QuoteCore+
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-            </Link>
           </div>
         </div>
 
