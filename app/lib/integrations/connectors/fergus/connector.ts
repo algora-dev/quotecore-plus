@@ -731,18 +731,96 @@ async function createFergusSite(
   context: ExecutionContext
 ): Promise<{ siteId: number | null; step: StepResult }> {
   const data = envelope.data;
+  // Try site address, then customer billing address, then fall back to the
+  // job/site name as address1 (common when users put the address in the job name)
   const siteAddress = buildAddressPayload(data.site.address || data.customer?.billingAddress || null);
   if (!siteAddress) {
-    return {
-      siteId: null,
-      step: {
-        type: 'upsert_site',
-        status: 'failed',
-        errorSummary: 'A site address is required to create an active Fergus job',
-      },
+    // Last resort: use the site/job name as address1 so we can still create
+    // a non-draft job in Fergus. Better than creating a draft job that hides data.
+    const fallbackAddress = data.site.name || data.job.name;
+    if (!fallbackAddress) {
+      return {
+        siteId: null,
+        step: {
+          type: 'upsert_site',
+          status: 'failed',
+          errorSummary: 'A site address is required to create an active Fergus job',
+        },
+      };
+    }
+    const fallbackSiteAddress = buildAddressPayload({
+      line1: fallbackAddress,
+      line2: null,
+      city: null,
+      region: null,
+      postalCode: null,
+      country: null,
+      fullAddress: fallbackAddress,
+    });
+    if (!fallbackSiteAddress) {
+      return {
+        siteId: null,
+        step: {
+          type: 'upsert_site',
+          status: 'failed',
+          errorSummary: 'A site address is required to create an active Fergus job',
+        },
+      };
+    }
+    // Use the fallback address
+    const siteBody: Record<string, unknown> = {
+      name: data.site.name || data.job.name || data.customer?.name || 'Site',
+      defaultContact: buildPersonPayload(
+        data.customer?.name || 'Site contact',
+        data.customer?.email || null,
+        data.customer?.phone || null
+      ),
+      siteAddress: fallbackSiteAddress,
     };
+    try {
+      const response = await fetch(`${FERGUS_BASE}/sites`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(siteBody),
+        signal: AbortSignal.timeout(30000),
+      });
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        await context.logStep('upsert_site', {
+          responseStatus: response.status,
+          errorSummary: `Failed: ${response.status} ${errorText.slice(0, 500)}`,
+          requestSummary: { siteBody },
+        });
+        return {
+          siteId: null,
+          step: {
+            type: 'upsert_site',
+            status: 'failed',
+            errorSummary: `Failed to create site: ${response.status}`,
+          },
+        };
+      }
+      const result = await response.json();
+      const siteId = Number(result.data?.id ?? result.id);
+      await context.logStep('upsert_site', {
+        responseStatus: response.status,
+        responseSummary: { siteId, fallbackAddress: true },
+      });
+      return {
+        siteId,
+        step: { type: 'upsert_site', status: 'succeeded', externalId: String(siteId) },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown site error';
+      await context.logStep('upsert_site', { errorSummary: message });
+      return {
+        siteId: null,
+        step: { type: 'upsert_site', status: 'failed', errorSummary: message },
+      };
+    }
   }
 
+  // We have a real site address - use it
   const siteBody: Record<string, unknown> = {
     name: data.site.name || data.job.name || data.customer?.name || 'Site',
     defaultContact: buildPersonPayload(
