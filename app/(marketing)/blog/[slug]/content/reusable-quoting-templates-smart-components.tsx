@@ -95,7 +95,7 @@ export default function Post() {
         <li>Leaving old products active</li>
         <li>Building logic only one person understands</li>
       </ul>
-      <h2>Smart Components and the full workflow</h2>
+      <h2>Smart Components™ and the full workflow</h2>
       <p>The value is not only a faster quote. A well-built component can support consistent measurement, pricing, customer presentation, material ordering, and invoicing.</p>
       <p>Watch <a href="https://www.youtube.com/watch?v=XZSTIfGUHAU">How to Set Up Roofing Smart Components in QuoteCore+</a>, then see a <a href="https://www.youtube.com/watch?v=1MOvQX-Lf_c">roofing component quote created without the digital measurement tool</a>.</p>
       <p>For the wider process, explore <a href="/roofing-quoting-software">roofing quoting software</a> or <a href="/construction-quoting-software">construction quoting software</a>.</p>
@@ -104,7 +104,7 @@ export default function Post() {
       <p>No. A quote template mainly controls document structure and presentation. A Smart Component stores a reusable unit of business logic, including products, labour, measurements, calculations, pricing, and content.</p>
       <h3>How many components should I create first?</h3>
       <p>Start with the small group that covers most routine work. Test them in real quotes, then add specialist details. A focused library is easier to maintain than hundreds of untested components.</p>
-      <h3>Can Smart Components work without digital measurement?</h3>
+      <h3>Can Smart Components™ work without digital measurement?</h3>
       <p>Yes. Components can be added and adjusted manually. Digital takeoff is one quoting method, not a requirement for using reusable components.</p>
       <h3>How often should components be reviewed?</h3>
       <p>Review them when supplier costs, labour rates, products, specifications, or business methods change. Also review any component that repeatedly differs from actual job results.</p>
