@@ -539,9 +539,18 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 <span className="text-sm font-medium text-slate-700">{measureMode === 'actual' ? 'Actual Measurements Mode' : 'Plan + Pitch Calculation Mode'}</span>
                 <button onClick={() => setMeasureMode(null)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition rounded-full px-3 py-1 hover:bg-slate-100">Change mode</button>
               </div>
+
+              {/* Step indicator */}
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-bold text-white">2</span>
+                <span className="text-xs font-medium text-slate-400">Step 2 of 3</span>
+              </div>
+
               <div className="text-center">
-                <h2 className="text-lg font-semibold text-slate-900">Choose a roofing supplier</h2>
-                <p className="mt-1 text-sm text-slate-500">Select a supplier to use their component pricing, or skip to enter your own.</p>
+                <h2 className="text-xl font-bold text-slate-900">Select a Supplier</h2>
+                <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto">
+                  Choose a supplier to use their component pricing, or pick QuoteCore+ to use example prices and enter your own costs.
+                </p>
               </div>
 
               {/* Search filters */}
@@ -583,6 +592,27 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
 
               {/* Supplier list */}
               <div className="space-y-2 mt-4">
+                {/* QuoteCore+ virtual supplier - always at top, ignores filters */}
+                <button
+                  onClick={() => setSupplierSkip(true)}
+                  className="w-full rounded-xl border-2 border-[#FF6B35] bg-orange-50/30 p-4 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_12px_rgba(255,107,53,0.15)] hover:bg-orange-50/50 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#BD4A1A] transition">QuoteCore+</h3>
+                        <span className="rounded-full bg-[#FF6B35] px-2 py-0.5 text-xs font-medium text-white">Default</span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">Example pricing - you can adjust all costs and add your own prices</p>
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">All countries</span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">USD</span>
+                      </div>
+                    </div>
+                    <svg className="w-4 h-4 text-[#FF6B35] group-hover:text-[#BD4A1A] transition flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </div>
+                </button>
+
                 {supplierLibrariesLoading && (
                   <div className="text-center py-8">
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-slate-300 border-t-[#FF6B35]" />
@@ -591,7 +621,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 )}
                 {!supplierLibrariesLoading && supplierLibraries.length === 0 && (
                   <div className="rounded-xl border border-dashed border-slate-200 px-6 py-8 text-center">
-                    <p className="text-sm text-slate-500">No suppliers found. You can still proceed without one.</p>
+                    <p className="text-sm text-slate-500">No external suppliers found. Use QuoteCore+ above to get started.</p>
                   </div>
                 )}
                 {!supplierLibrariesLoading && supplierLibraries
@@ -641,19 +671,9 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 }
               </div>
 
-              {/* Skip button */}
-              <div className="text-center pt-2">
-                <button
-                  onClick={() => setSupplierSkip(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(0,0,0,0.15)]"
-                >
-                  Skip & use test prices
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
-                </button>
-                <p className="mt-1.5 text-xs text-slate-400">
-                  QuoteCore+ example pricing - not a real supplier&apos;s prices
-                </p>
-              </div>
+              <p className="text-center text-xs text-slate-400 pt-1">
+                You can adjust any price after selecting a supplier. No commitment.
+              </p>
             </div>
           )}
 
@@ -704,7 +724,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
                 Back to unit selection
               </button>
-              {selectedSupplier && (
+              {(selectedSupplier || supplierSkip) && (
                 <button onClick={() => { setSelectedSupplier(null); setSupplierSkip(false); setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition mb-3 ml-3">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.582m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                   Change supplier
@@ -720,6 +740,12 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     <>
                       <div className="w-px h-4 bg-slate-200" />
                       <span className="text-sm font-medium text-slate-500">{selectedSupplier.supplierName}</span>
+                    </>
+                  )}
+                  {supplierSkip && (
+                    <>
+                      <div className="w-px h-4 bg-slate-200" />
+                      <span className="text-sm font-medium text-slate-500">QuoteCore+</span>
                     </>
                   )}
                 </div>
@@ -838,7 +864,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           )}
         </div>
 
-        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} supplier={selectedSupplier ? { name: selectedSupplier.supplierName, slug: selectedSupplier.supplierSlug, enquiriesEnabled: selectedSupplier.enquiriesEnabled } : null} currency={selectedSupplier?.currency} />}
+        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} supplier={selectedSupplier ? { name: selectedSupplier.supplierName, slug: selectedSupplier.supplierSlug, enquiriesEnabled: selectedSupplier.enquiriesEnabled } : supplierSkip ? { name: 'QuoteCore+', slug: '', enquiriesEnabled: false } : null} currency={selectedSupplier?.currency ?? (supplierSkip ? 'USD' : undefined)} />}
 
         {/* Related Tools */}
         <section className="border-t border-slate-200 bg-slate-50">
