@@ -57,7 +57,7 @@ const videoSchema = {
   "@type": "VideoObject",
   name: "Create a complex roofing quote in under 3min for less than $1!",
   description:
-    "See how QuoteCore+ lets you create a complex roofing quote in under 3 minutes for less than a dollar per quote.",
+    "See how QuoteCore+ lets you create a complex roofing quote in under 3 minutes using preconfigured Smart Components - for less than a dollar per quote.",
   thumbnailUrl: "https://i.ytimg.com/vi/DziFjqnPdqQ/maxresdefault.jpg",
   uploadDate: "2026-07-28",
   embedUrl: "https://www.youtube-nocookie.com/embed/DziFjqnPdqQ",

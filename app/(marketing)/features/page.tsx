@@ -64,7 +64,7 @@ const features = [
       "Search supplier pricing catalogs and component libraries by area or product type. Import ready-made components or convert catalogs in bulk.",
     href: "/features/supplier-resources",
     keyword: "supplier pricing catalogs",
-    steps: ["Search suppliers", "Browse catalogs and libraries", "Import or convert", "Quote with real pricing"],
+    steps: ["Search suppliers", "Browse catalogs and libraries", "Import or convert", "Quote with indicative pricing"],
   },
 ];
 

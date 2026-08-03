@@ -252,7 +252,7 @@ export default function SupplierResourcesPage() {
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
-            Contractors who need pricing data to quote accurately. If you&apos;re new to a market, working with a new supplier, or simply don&apos;t have your own pricing library built up yet, supplier resources give you real, current pricing to start quoting with immediately.
+            Contractors who need pricing data to quote accurately. If you&apos;re new to a market, working with a new supplier, or simply don&apos;t have your own pricing library built up yet, supplier resources give you indicative supplier pricing to start quoting with immediately.
           </p>
           <p className="mt-4 leading-7 text-zinc-600">
             Also for contractors who receive supplier price lists as PDFs or spreadsheets. Instead of manually entering each item, import the catalog and convert it to Smart Components™ in one pass.
@@ -265,7 +265,7 @@ export default function SupplierResourcesPage() {
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">No baseline pricing</h3>
-              <p className="mt-2 text-sm text-zinc-600">New contractors or contractors entering a new market don&apos;t have pricing data. Supplier resources provide real, current pricing to start quoting from day one.</p>
+              <p className="mt-2 text-sm text-zinc-600">New contractors or contractors entering a new market don&apos;t have pricing data. Supplier resources provide indicative supplier pricing to start quoting from.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Manual price list entry</h3>
@@ -334,7 +334,7 @@ export default function SupplierResourcesPage() {
               <li><strong>1. Upload CSV:</strong> The supplier uploads their catalog file (product code, name, price columns).</li>
               <li><strong>2. Convert to components:</strong> The catalog-to-component converter creates Smart Components from each row, ready for contractors to import.</li>
               <li><strong>3. Contractor imports:</strong> A contractor searching for suppliers in their area finds the catalog and imports the components they need.</li>
-              <li><strong>4. Quote with real prices:</strong> The contractor's quotes now use the supplier's actual product codes and prices.</li>
+              <li><strong>4. Quote with supplier pricing:</strong> The contractor's quotes now use the supplier's actual product codes and prices.</li>
             </ol>
           </div>
         </section>

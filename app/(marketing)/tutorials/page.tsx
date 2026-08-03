@@ -28,7 +28,7 @@ const tutorials = [
     videoId: "DziFjqnPdqQ",
     title: "Create a complex roofing quote in under 3 minutes",
     description:
-      "See how QuoteCore+ lets you build a complete roofing quote from a plan in under 3 minutes, using Smart Components and digital takeoff.",
+      "See how QuoteCore+ lets you build a complete roofing quote from a plan in under 3 minutes using preconfigured Smart Components and digital takeoff.",
     category: "Getting Started",
   },
   {
