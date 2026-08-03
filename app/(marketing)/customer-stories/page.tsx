@@ -97,7 +97,7 @@ export default function CustomerStoriesPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <a href="/about" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">About QuoteCore+</h3>
-              <p className="mt-1 text-sm text-zinc-600">Built by an ex-roofer with 12 years on the tools.</p>
+              <p className="mt-1 text-sm text-zinc-600">Built by Shaun, who spent 20 years in the trade.</p>
             </a>
             <a href="/features" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Features</h3>

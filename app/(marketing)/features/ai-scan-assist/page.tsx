@@ -10,7 +10,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "AI Scan Assist for Roof Plans | QuoteCore+",
   description:
-    "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouts from your uploaded plan. Verify, adjust and swap components - then carry everything into your quote.",
+    "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components - then carry everything into your quote.",
   alternates: {
     canonical: "https://quote-core.com/features/ai-scan-assist",
     languages: hreflangLanguages("/features/ai-scan-assist"),
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "AI Scan Assist for Roof Plans | QuoteCore+",
     description:
-      "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouts from your uploaded plan. Verify, adjust and swap components.",
+      "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components.",
     url: "https://quote-core.com/features/ai-scan-assist",
     siteName: "QuoteCore+",
     type: "website",
@@ -32,7 +32,7 @@ const softwareSchema = {
   applicationCategory: "BusinessApplication",
   applicationSubCategory: "AI roof plan scanning",
   operatingSystem: "Web",
-  description: "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouts from uploaded roof plans. Users verify, adjust, swap Smart Components and carry everything into a priced quote.",
+  description: "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouting from uploaded roof plans. Users verify, adjust, swap Smart Components and carry everything into a priced quote.",
   url: `${SITE_URL}/features/ai-scan-assist`,
   publisher: { "@id": `${SITE_URL}/#organization` },
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "14-day free trial with 20 AI scan points included, no credit card required" },
@@ -57,7 +57,7 @@ const faqSchema = {
       name: "What does AI Scan Assist detect on a roof plan?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "AI Scan Assist identifies multiple roof outlines/areas (which you can name and assign different pitches, materials and components to), plus ridges/ridge capping, hips, valleys, barges and spouts. Each detected element is a placeholder you can swap to any saved Smart Component.",
+        text: "AI Scan Assist identifies multiple roof outlines/areas (which you can name and assign different pitches, materials and components to), plus ridges/ridge capping, hips, valleys, barges and spouting. Each detected element is a placeholder you can swap to any saved Smart Component.",
       },
     },
     {
@@ -88,7 +88,7 @@ const faqSchema = {
 };
 
 const faqs = [
-  { q: "What does AI Scan Assist detect on a roof plan?", a: "AI Scan Assist identifies multiple roof outlines/areas (which you can name and assign different pitches, materials and components to), plus ridges/ridge capping, hips, valleys, barges and spouts. Each detected element is a placeholder you can swap to any saved Smart Component." },
+  { q: "What does AI Scan Assist detect on a roof plan?", a: "AI Scan Assist identifies multiple roof outlines/areas (which you can name and assign different pitches, materials and components to), plus ridges/ridge capping, hips, valleys, barges and spouting. Each detected element is a placeholder you can swap to any saved Smart Component." },
   { q: "Can I correct what AI Scan Assist finds?", a: "Yes. Every detected element is a placeholder. You can adjust measurements, swap any placeholder to a different Smart Component via dropdown (quantities, labour, waste and pricing recalculate automatically), and add any components AI does not detect such as flashings, downpipes, parapet caps or change-of-pitch flashings." },
   { q: "Is AI Scan Assist required?", a: "No. AI Scan Assist is an optional accelerator. You can skip it entirely and use manual digital takeoff to draw everything yourself. Both paths produce the same result - a complete, priced roof takeoff." },
   { q: "How many AI scan points do I get?", a: "The 14-day free trial includes 20 AI scan points. Paid plans include 50 (Pro) or 100 (Pro Plus) AI scan points. Additional scan points can be purchased if needed." },
@@ -113,7 +113,7 @@ export default function AIScanAssistPage() {
               AI Scan Assist: from plan to priced takeoff in seconds.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              Upload a roof plan and AI identifies multiple roof areas, ridges, hips, valleys, barges and spouts automatically. Name each area, assign different pitches and materials, then verify and adjust everything manually. Each detected element is a placeholder you can swap to any saved Smart Component.
+              Upload a roof plan and AI identifies multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each area, assign different pitches and materials, then verify and adjust everything manually. Each detected element is a placeholder you can swap to any saved Smart Component.
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
@@ -141,7 +141,7 @@ export default function AIScanAssistPage() {
               { name: "Hips", desc: "Detects hip lines. Swap to any hip component - quantities, labour, waste and pricing recalculate." },
               { name: "Valleys", desc: "Detects valley lines. Swap component, adjust measurements as needed." },
               { name: "Barges", desc: "Detects barge edges. Placeholder for any barge component." },
-              { name: "Spouts", desc: "Detects spout positions. Swap to any spout component." },
+              { name: "Spouting", desc: "Detects spouting positions. Swap to any spouting component." },
             ].map((item) => (
               <div key={item.name} className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition-all">
                 <h3 className="text-base font-semibold text-zinc-950">{item.name}</h3>
@@ -168,7 +168,7 @@ export default function AIScanAssistPage() {
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { num: "1", title: "Upload plan", text: "Upload a roof plan PDF or image. AI Scan Assist starts from the same upload as manual takeoff." },
-                { num: "2", title: "AI identifies elements", text: "AI detects roof areas, ridges, hips, valleys, barges and spouts. Each is a placeholder." },
+                { num: "2", title: "AI identifies elements", text: "AI detects roof areas, ridges, hips, valleys, barges and spouting. Each is a placeholder." },
                 { num: "3", title: "Verify and swap", text: "Adjust measurements, swap any placeholder to a saved Smart Component. Quantities, labour, waste and pricing recalculate automatically." },
                 { num: "4", title: "Add and carry to quote", text: "Add any non-detected components. Everything carries directly into your quote - no copy-pasting." },
               ].map((step) => (

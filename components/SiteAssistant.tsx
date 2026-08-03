@@ -51,7 +51,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how.*work|system work|workflow|process|walkthrough|what does quotecore|what is quotecore|what.*quotecore.*do|tell me about)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan, AI Scan Assist identifies multiple roof areas plus ridges, hips, valleys, barges and spouts, you verify and adjust, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
+      text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan, AI Scan Assist identifies multiple roof areas plus ridges, hips, valleys, barges and spouting, you verify and adjust, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
       links: [
         trialCTA,
@@ -187,7 +187,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(ai|ai takeoff|plan takeoff|upload.*plan|trace.*plan|ai.*scan|ai assist|ai scan)/.test(message)) {
     return {
       sender: "assistant",
-      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a roof plan and AI identifies multiple roof outlines/areas - you can name each area and assign different pitch, material and component systems. AI detects ridges/ridge capping, hips, valleys, barges and spouts within each area. Each detected element is a placeholder you can swap to any saved Smart Component via dropdown - quantities, labour, waste and pricing recalculate automatically. You review, correct and confirm everything, then add any components AI doesn't detect (flashings, downpipes, etc). Available in the 14-day free trial with 20 AI scan points included.",
+      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a roof plan and AI identifies multiple roof outlines/areas - you can name each area and assign different pitch, material and component systems. AI detects ridges/ridge capping, hips, valleys, barges and spouting within each area. Each detected element is a placeholder you can swap to any saved Smart Component via dropdown - quantities, labour, waste and pricing recalculate automatically. You review, correct and confirm everything, then add any components AI doesn't detect (flashings, downpipes, etc). Available in the 14-day free trial with 20 AI scan points included.",
       links: [
         trialCTA,
         { label: "See how it works", href: "/#how-it-works" },
