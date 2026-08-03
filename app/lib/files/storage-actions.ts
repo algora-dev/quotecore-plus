@@ -89,7 +89,7 @@ export async function checkStorageQuota(companyId: string, fileSize: number): Pr
  * Idempotent on `storage_path` (PK conflict) so retrying after a transient
  * failure produces no duplicates.
  */
-export async function saveFileMetadata(data: {
+type SaveFileMetadataInput = {
   companyId: string;
   fileType:
     | 'logo'
@@ -106,7 +106,9 @@ export async function saveFileMetadata(data: {
   mimeType?: string;
   storagePath: string;
   quoteId?: string;
-}): Promise<{ id: string }> {
+};
+
+export async function saveFileMetadata(data: SaveFileMetadataInput): Promise<{ id: string }> {
   const profile = await requireCompanyContext();
 
   // 1. Caller's claimed company id must match their authenticated company.
@@ -227,6 +229,37 @@ export async function saveFileMetadata(data: {
     }
     revalidatePath('/account');
     return { id: saved.id };
+  }
+}
+
+/**
+ * Server-action-safe wrapper for generated integration artifacts.
+ *
+ * Next.js intentionally replaces thrown Server Action errors with an opaque
+ * production message. Returning a serializable result keeps the UI useful
+ * while the full failure remains in server logs.
+ */
+export async function saveGeneratedQuoteFileMetadata(
+  data: SaveFileMetadataInput,
+): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
+  try {
+    const saved = await saveFileMetadata(data);
+    return { ok: true, id: saved.id };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown metadata error';
+    console.error('[saveGeneratedQuoteFileMetadata] failed:', error);
+
+    if (message.includes('quote_files_file_type_check')) {
+      return { ok: false, message: 'Generated quote documents are not enabled in the database.' };
+    }
+    if (message === 'Uploaded file not found in storage') {
+      return { ok: false, message: 'The generated document upload could not be verified.' };
+    }
+    if (message === 'Unauthorized') {
+      return { ok: false, message: 'Your session no longer has access to this quote. Refresh and try again.' };
+    }
+
+    return { ok: false, message: 'The generated document could not be registered.' };
   }
 }
 
