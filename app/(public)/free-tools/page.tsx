@@ -25,9 +25,9 @@ export default function FreeToolsPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
           <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-10 md:pt-14 pb-6 md:pb-8 text-center">
-            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Tools for Trades</h1>
+            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing Tools & Calculators</h1>
             <p className="mt-3 md:mt-4 text-sm md:text-lg text-slate-500 max-w-2xl mx-auto px-2">
-              Professional calculators and document generators so good, other apps charge you for them. Built by trades, for trades.
+              Professional roofing calculators and document generators so good, other apps charge you for them. Built by a roofer, for roofers - and every trade that measures and quotes.
             </p>
           </div>
         </section>
@@ -138,7 +138,7 @@ export default function FreeToolsPage() {
         <section className="mx-auto max-w-3xl px-2 md:px-6 py-10 md:py-16 text-center">
           <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Why are these free?</h2>
           <p className="mt-3 text-xs md:text-sm text-slate-500 leading-relaxed">
-            We build tools for trades. These calculators and generators are the same ones powering QuoteCore+ - our full quoting and job management platform. We give them away because they should be free. If you want the full system - takeoffs, components, quotes, orders, invoices, scheduling - that is where QuoteCore+ comes in.
+            We build tools for roofers. These calculators and generators are the same ones powering QuoteCore+ - our full quoting and job management platform. We give them away because they should be free. If you want the full system - AI Scan Assist, Smart Components, sending and tracking, orders, invoices, automated follow-ups - that is where QuoteCore+ comes in.
           </p>
           <Link href="/signup" className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E55A2B] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
             Explore QuoteCore+
