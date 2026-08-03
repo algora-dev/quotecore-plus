@@ -203,7 +203,7 @@ export async function loadPublishedTakeoffLibraryBySlug(
   const { data: supplier, error: supError } = await sb
     .from('supplier_profiles')
     .select('id, default_takeoff_collection_id')
-    .eq('slug', supplierSlug)
+    .or(`slug.eq.${supplierSlug},public_slug.eq.${supplierSlug}`)
     .eq('status', 'approved')
     .single();
 

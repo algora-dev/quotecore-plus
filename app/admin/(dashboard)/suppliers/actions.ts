@@ -26,6 +26,28 @@ export type SupplierProfile = {
   created_at: string;
   updated_at: string;
   company_name?: string;
+  // Takeoff builder fields
+  enquiry_email: string | null;
+  enquiries_enabled: boolean;
+  takeoff_enabled: boolean;
+  country: string | null;
+  currency: string;
+  branch_city: string | null;
+  branch_region: string | null;
+  branch_country: string | null;
+  national_coverage: boolean;
+  delivery_coverage: string;
+  instant_pricing_available: boolean;
+  default_takeoff_collection_id: string | null;
+  public_slug: string | null;
+};
+
+export type SupplierCollection = {
+  id: string;
+  name: string;
+  status: string;
+  is_takeoff_default: boolean;
+  component_count: number;
 };
 
 export interface SupplierSearchResult {
@@ -151,8 +173,73 @@ export async function getSuppliers(): Promise<SupplierProfile[]> {
     return {
       ...row,
       company_name: companies?.name,
-    } as SupplierProfile;
+    } as unknown as SupplierProfile;
   });
+}
+
+export async function getSupplierCollections(supplierId: string): Promise<SupplierCollection[]> {
+  await requireAdmin();
+  const admin = createAdminClient();
+
+  // Get supplier's id directly (supplier_profile_id on collections)
+  const { data: supplier } = await admin
+    .from('supplier_profiles')
+    .select('id')
+    .eq('id', supplierId)
+    .single();
+
+  if (!supplier?.id) return [];
+
+  const { data, error } = await admin
+    .from('component_collections')
+    .select(`
+      id,
+      name,
+      publication_status,
+      is_default_takeoff_library,
+      component_library ( count )
+    `)
+    .eq('supplier_profile_id', supplierId)
+    .order('created_at', { ascending: false });
+
+  if (error) return [];
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    status: row.publication_status || 'draft',
+    is_takeoff_default: row.is_default_takeoff_library ?? false,
+    component_count: (row.component_library as unknown as { count: number }[])?.[0]?.count ?? 0,
+  }));
+}
+
+export async function setDefaultTakeoffCollection(supplierId: string, collectionId: string | null): Promise<void> {
+  await requireAdmin();
+  const admin = createAdminClient();
+
+  // Clear any existing default on collections for this supplier
+  await admin
+    .from('component_collections')
+    .update({ is_default_takeoff_library: false })
+    .eq('supplier_profile_id', supplierId)
+    .eq('is_default_takeoff_library', true);
+
+  // Set new default on collection if specified
+  if (collectionId) {
+    await admin
+      .from('component_collections')
+      .update({ is_default_takeoff_library: true })
+      .eq('id', collectionId)
+      .eq('supplier_profile_id', supplierId);
+  }
+
+  // Update supplier profile
+  await admin
+    .from('supplier_profiles')
+    .update({ default_takeoff_collection_id: collectionId })
+    .eq('id', supplierId);
+
+  revalidatePath('/admin/suppliers');
 }
 
 export async function createSupplier(input: {
@@ -168,6 +255,17 @@ export async function createSupplier(input: {
   brands?: string[];
   keywords?: string[];
   description?: string;
+  enquiry_email?: string;
+  enquiries_enabled?: boolean;
+  takeoff_enabled?: boolean;
+  country?: string;
+  currency?: string;
+  branch_city?: string;
+  branch_region?: string;
+  branch_country?: string;
+  national_coverage?: boolean;
+  delivery_coverage?: string;
+  instant_pricing_available?: boolean;
 }): Promise<SupplierProfile> {
   await requireAdmin();
   const admin = createAdminClient();
@@ -178,12 +276,15 @@ export async function createSupplier(input: {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+  const public_slug = slug;
+
   const { data, error } = await admin
     .from('supplier_profiles')
     .insert({
       company_id: input.company_id || null,
       supplier_name: input.supplier_name,
       slug,
+      public_slug,
       status: 'approved',
       master_email: input.master_email || null,
       contact_email: input.contact_email || null,
@@ -195,6 +296,17 @@ export async function createSupplier(input: {
       brands: input.brands || [],
       keywords: input.keywords || [],
       description: input.description || null,
+      enquiry_email: input.enquiry_email || null,
+      enquiries_enabled: input.enquiries_enabled ?? false,
+      takeoff_enabled: input.takeoff_enabled ?? false,
+      country: input.country || null,
+      currency: input.currency || 'NZD',
+      branch_city: input.branch_city || null,
+      branch_region: input.branch_region || null,
+      branch_country: input.branch_country || null,
+      national_coverage: input.national_coverage ?? false,
+      delivery_coverage: input.delivery_coverage || 'local',
+      instant_pricing_available: input.instant_pricing_available ?? false,
       approved_at: new Date().toISOString(),
       approved_by: 'admin',
     })
@@ -211,7 +323,7 @@ export async function createSupplier(input: {
   }
 
   revalidatePath('/admin/suppliers');
-  return data as SupplierProfile;
+  return data as unknown as SupplierProfile;
 }
 
 export async function updateSupplier(
@@ -228,6 +340,17 @@ export async function updateSupplier(
     brands: string[];
     keywords: string[];
     description: string | null;
+    enquiry_email: string | null;
+    enquiries_enabled: boolean;
+    takeoff_enabled: boolean;
+    country: string | null;
+    currency: string;
+    branch_city: string | null;
+    branch_region: string | null;
+    branch_country: string | null;
+    national_coverage: boolean;
+    delivery_coverage: string;
+    instant_pricing_available: boolean;
   }>
 ): Promise<SupplierProfile> {
   await requireAdmin();
@@ -241,6 +364,7 @@ export async function updateSupplier(
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
+    update.public_slug = update.slug;
   }
   if (input.master_email !== undefined) update.master_email = input.master_email || null;
   if (input.contact_email !== undefined) update.contact_email = input.contact_email || null;
@@ -252,6 +376,17 @@ export async function updateSupplier(
   if (input.brands !== undefined) update.brands = input.brands;
   if (input.keywords !== undefined) update.keywords = input.keywords;
   if (input.description !== undefined) update.description = input.description;
+  if (input.enquiry_email !== undefined) update.enquiry_email = input.enquiry_email || null;
+  if (input.enquiries_enabled !== undefined) update.enquiries_enabled = input.enquiries_enabled;
+  if (input.takeoff_enabled !== undefined) update.takeoff_enabled = input.takeoff_enabled;
+  if (input.country !== undefined) update.country = input.country || null;
+  if (input.currency !== undefined) update.currency = input.currency;
+  if (input.branch_city !== undefined) update.branch_city = input.branch_city || null;
+  if (input.branch_region !== undefined) update.branch_region = input.branch_region || null;
+  if (input.branch_country !== undefined) update.branch_country = input.branch_country || null;
+  if (input.national_coverage !== undefined) update.national_coverage = input.national_coverage;
+  if (input.delivery_coverage !== undefined) update.delivery_coverage = input.delivery_coverage;
+  if (input.instant_pricing_available !== undefined) update.instant_pricing_available = input.instant_pricing_available;
 
   const { data, error } = await admin
     .from('supplier_profiles')
@@ -263,7 +398,7 @@ export async function updateSupplier(
   if (error) throw new Error(error.message);
 
   revalidatePath('/admin/suppliers');
-  return data as SupplierProfile;
+  return data as unknown as SupplierProfile;
 }
 
 export async function setSupplierStatus(
