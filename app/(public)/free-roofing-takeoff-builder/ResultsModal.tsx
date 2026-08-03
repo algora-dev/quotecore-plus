@@ -230,8 +230,17 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
             Print / PDF
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <button onClick={onClose} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition min-h-[44px]">Close</button>
+            {supplier?.enquiriesEnabled && (
+              <button
+                onClick={() => setShowEnquiry(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#FF6B35] px-4 py-2 text-sm font-semibold text-[#FF6B35] transition-all hover:bg-orange-50 hover:shadow-[0_0_12px_rgba(255,107,53,0.15)]"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                Send to {supplier.name}
+              </button>
+            )}
             <Link href={buildConvertToQuoteUrl()} className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)]">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               Convert to Quote
@@ -242,6 +251,19 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
             </Link>
           </div>
         </div>
+
+        {/* Supplier enquiry modal */}
+        {showEnquiry && supplier && (
+          <SupplierEnquiryModal
+            supplierName={supplier.name}
+            supplierSlug={supplier.slug}
+            resultToken={resultToken}
+            resultUrl={resultUrl}
+            totals={totals}
+            currency={currency}
+            onClose={() => setShowEnquiry(false)}
+          />
+        )}
       </div>
 
       <style jsx global>{`

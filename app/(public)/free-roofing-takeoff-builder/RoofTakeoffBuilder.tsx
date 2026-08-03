@@ -863,7 +863,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           )}
         </div>
 
-        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} />}
+        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} supplier={selectedSupplier ? { name: selectedSupplier.supplierName, slug: selectedSupplier.supplierSlug, enquiriesEnabled: selectedSupplier.enquiriesEnabled } : null} currency={selectedSupplier?.currency} />}
 
         {/* Related Tools */}
         <section className="border-t border-slate-200 bg-slate-50">
