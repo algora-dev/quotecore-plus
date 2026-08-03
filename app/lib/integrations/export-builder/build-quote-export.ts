@@ -53,6 +53,10 @@ function fileRole(fileType: string): ExportArtifactRole {
   if (fileType === 'plan') return 'plan';
   if (fileType === 'takeoff_canvas' || fileType === 'canvas') return 'takeoff_canvas';
   if (fileType === 'takeoff_lines') return 'takeoff_lines';
+  if (fileType === 'customer_quote_pdf') return 'customer_quote_pdf';
+  if (fileType === 'takeoff_report_pdf') return 'takeoff_report_pdf';
+  if (fileType === 'takeoff_data_json') return 'takeoff_data_json';
+  if (fileType === 'labour_sheet_pdf') return 'labour_sheet_pdf';
   return 'supporting_file';
 }
 

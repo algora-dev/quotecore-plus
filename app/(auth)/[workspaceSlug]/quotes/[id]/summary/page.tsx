@@ -496,10 +496,25 @@ export default async function QuoteSummaryPage({
                 hasLaborSheet: hasLaborSheet,
                 hasFiles: allFiles.length > 0,
               }}
-              quoteFiles={allFiles.map((file) => ({
+              quoteFiles={allFiles.filter((file) => ![
+                'customer_quote_pdf',
+                'takeoff_report_pdf',
+                'takeoff_data_json',
+                'labour_sheet_pdf',
+              ].includes(file.file_type)).map((file) => ({
                 id: file.id,
                 name: file.file_name,
                 fileSize: file.file_size ?? 0,
+              }))}
+              existingGeneratedArtifacts={(filesData || []).filter((file) => [
+                'customer_quote_pdf',
+                'takeoff_report_pdf',
+                'takeoff_data_json',
+                'labour_sheet_pdf',
+              ].includes(file.file_type)).map((file) => ({
+                id: file.id,
+                fileType: file.file_type,
+                fileName: file.file_name,
               }))}
             />
             <SendDocumentButton

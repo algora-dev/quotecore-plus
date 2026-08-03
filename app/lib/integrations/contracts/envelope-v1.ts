@@ -212,7 +212,16 @@ export interface LabourLineExport {
 
 export interface FileManifestItem {
   id: string;
-  fileType: 'plan' | 'supporting' | 'canvas';
+  fileType:
+    | 'plan'
+    | 'supporting'
+    | 'canvas'
+    | 'takeoff_canvas'
+    | 'takeoff_lines'
+    | 'customer_quote_pdf'
+    | 'takeoff_report_pdf'
+    | 'takeoff_data_json'
+    | 'labour_sheet_pdf';
   fileName: string;
   mimeType: string | null;
   sizeBytes: number | null;

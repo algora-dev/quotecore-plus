@@ -13,6 +13,8 @@ import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { queueExport } from '@/app/lib/integrations/execution/queue';
 import { buildQuoteExport, getQuoteRevision } from '@/app/lib/integrations/export-builder/build-quote-export';
+import { requireCompanyContext } from '@/app/lib/supabase/server';
+import type { QuoteExportV1 } from '@/app/lib/integrations/contracts/envelope-v1';
 
 function createServiceClient() {
   return createClient(
@@ -23,6 +25,15 @@ function createServiceClient() {
 }
 
 export type IntegrationProvider = 'zapier' | 'jobnimbus' | 'fergus';
+
+export async function loadIntegrationArtifactData(
+  companyId: string,
+  quoteId: string
+): Promise<QuoteExportV1 | null> {
+  const profile = await requireCompanyContext();
+  if (profile.company_id !== companyId) throw new Error('Unauthorized');
+  return buildQuoteExport(quoteId, companyId);
+}
 
 export interface IntegrationRecord {
   id: string;

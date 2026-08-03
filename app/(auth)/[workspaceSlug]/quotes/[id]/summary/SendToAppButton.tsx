@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { queueQuoteExport } from '@/app/(auth)/[workspaceSlug]/account/integrations/actions';
 import { AttachmentSendPicker } from '@/app/components/attachments/AttachmentSendPicker';
+import { prepareIntegrationArtifacts } from '@/app/lib/integrations/export-builder/integration-artifacts';
 
 type Integration = {
   id: string;
@@ -44,6 +45,7 @@ export function SendToAppButton({
   workspaceSlug,
   dataAvailability,
   quoteFiles,
+  existingGeneratedArtifacts,
 }: {
   quoteId: string;
   companyId: string;
@@ -51,6 +53,7 @@ export function SendToAppButton({
   workspaceSlug: string;
   dataAvailability: QuoteDataAvailability;
   quoteFiles: Array<{ id: string; name: string; fileSize: number }>;
+  existingGeneratedArtifacts: Array<{ id: string; fileType: string; fileName: string }>;
 }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<'select-app' | 'pick-data' | 'sending' | 'result'>('select-app');
@@ -81,29 +84,36 @@ export function SendToAppButton({
 
   const handleSend = async () => {
     if (!selectedIntegration) return;
-    // Map UI scopes to data scope keys
-    const scopeOverrides: Record<string, boolean> = {
-      customerDetails: scopes.quoteSummary || scopes.customerQuote,
-      siteDetails: scopes.quoteSummary,
-      customerFacingQuote: scopes.customerQuote,
-      filesAndPlans: scopes.files,
-      internalCosts: scopes.internalCosts,
-      marginInformation: scopes.marginInformation,
-      labourBreakdown: scopes.laborSheet,
-      measurementsAndTakeoff: scopes.quoteSummary,
-      internalNotes: false,
-      acceptanceDetails: scopes.quoteSummary,
-    };
-
     setStep('sending');
     try {
+      const generatedArtifactIds = await prepareIntegrationArtifacts({
+        quoteId,
+        companyId,
+        includeCustomerQuote: scopes.customerQuote,
+        includeTakeoff: scopes.quoteSummary,
+        includeLabourSheet: scopes.laborSheet,
+        existingArtifacts: existingGeneratedArtifacts,
+      });
+      const artifactIds = [...new Set([...selectedArtifactIds, ...generatedArtifactIds])];
+      const scopeOverrides: Record<string, boolean> = {
+        customerDetails: scopes.quoteSummary || scopes.customerQuote,
+        siteDetails: scopes.quoteSummary,
+        customerFacingQuote: scopes.customerQuote,
+        filesAndPlans: artifactIds.length > 0,
+        internalCosts: scopes.internalCosts,
+        marginInformation: scopes.marginInformation,
+        labourBreakdown: scopes.laborSheet,
+        measurementsAndTakeoff: scopes.quoteSummary,
+        internalNotes: false,
+        acceptanceDetails: scopes.quoteSummary,
+      };
       const res = await queueQuoteExport(
         companyId,
         selectedIntegration.id,
         quoteId,
         'manual_export',
         scopeOverrides,
-        { artifactIds: selectedArtifactIds }
+        { artifactIds }
       );
       setResult({
         success: res.success,
@@ -111,8 +121,11 @@ export function SendToAppButton({
           ? 'Queued - will be delivered within 1-2 minutes.'
           : res.error || 'Failed to queue export.',
       });
-    } catch {
-      setResult({ success: false, message: 'Unexpected error. Please try again.' });
+    } catch (error) {
+      setResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Unexpected error. Please try again.',
+      });
     }
     setStep('result');
   };
