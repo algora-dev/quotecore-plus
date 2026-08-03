@@ -69,6 +69,11 @@ interface SupplierInfo {
   branchRegion: string | null;
   enquiriesEnabled: boolean;
   description: string | null;
+  roofingTypes: string[];
+  productCategories: string[];
+  brands: string[];
+  nationalCoverage: boolean;
+  deliveryCoverage: string;
 }
 
 interface RoofTakeoffBuilderProps {
@@ -82,6 +87,8 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [unitSystem, setUnitSystem] = useState<UnitSystem | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState<SupplierInfo | null>(null);
   const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
+  const [supplierLocationFilter, setSupplierLocationFilter] = useState('');
+  const [supplierRoofTypeFilter, setSupplierRoofTypeFilter] = useState('');
   const [supplierLibraries, setSupplierLibraries] = useState<SupplierInfo[]>([]);
   const [supplierLibrariesLoading, setSupplierLibrariesLoading] = useState(false);
   const [supplierSkip, setSupplierSkip] = useState(false);
@@ -227,6 +234,11 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               branchRegion: null,
               enquiriesEnabled: false,
               description: null,
+              roofingTypes: [],
+              productCategories: [],
+              brands: [],
+              nationalCoverage: false,
+              deliveryCoverage: '',
             });
           }
         })
@@ -559,18 +571,41 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 <p className="mt-1 text-sm text-slate-500">Select a supplier to use their component pricing, or skip to enter your own.</p>
               </div>
 
-              {/* Search */}
-              <div className="max-w-md mx-auto relative">
+              {/* Search filters */}
+              <div className="max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={supplierSearchQuery}
+                    onChange={(e) => setSupplierSearchQuery(e.target.value)}
+                    placeholder="Search supplier or product..."
+                    className="w-full rounded-full border border-slate-300 px-4 py-2 pl-9 text-sm focus:border-orange-500 focus:outline-none"
+                  />
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
                 <input
                   type="text"
-                  value={supplierSearchQuery}
-                  onChange={(e) => setSupplierSearchQuery(e.target.value)}
-                  placeholder="Search by name, location, or product..."
-                  className="w-full rounded-full border border-slate-300 px-4 py-2 pl-10 text-sm focus:border-orange-500 focus:outline-none"
+                  value={supplierLocationFilter}
+                  onChange={(e) => setSupplierLocationFilter(e.target.value)}
+                  placeholder="Location (city, region, country)..."
+                  className="w-full rounded-full border border-slate-300 px-4 py-2 text-sm focus:border-orange-500 focus:outline-none"
                 />
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <select
+                  value={supplierRoofTypeFilter}
+                  onChange={(e) => setSupplierRoofTypeFilter(e.target.value)}
+                  className="w-full rounded-full border border-slate-300 px-4 py-2 text-sm focus:border-orange-500 focus:outline-none bg-white"
+                >
+                  <option value="">All roof types</option>
+                  <option value="metal">Metal / Corrugated</option>
+                  <option value="tile">Tile</option>
+                  <option value="membrane">Membrane</option>
+                  <option value="shingle">Shingle</option>
+                  <option value="asphalt">Asphalt</option>
+                  <option value="concrete">Concrete</option>
+                  <option value="steel">Steel</option>
+                </select>
               </div>
 
               {/* Supplier list */}
@@ -588,10 +623,26 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 )}
                 {!supplierLibrariesLoading && supplierLibraries
                   .filter((lib) => {
-                    if (!supplierSearchQuery) return true;
-                    const q = supplierSearchQuery.toLowerCase();
-                    return [lib.supplierName, lib.collectionName, lib.branchCity, lib.branchRegion, lib.country]
-                      .filter(Boolean).join(' ').toLowerCase().includes(q);
+                    // Text search: name, collection, products, brands
+                    if (supplierSearchQuery) {
+                      const q = supplierSearchQuery.toLowerCase();
+                      const searchText = [lib.supplierName, lib.collectionName, lib.collectionName, ...(lib.productCategories || []), ...(lib.brands || []), ...(lib.roofingTypes || [])]
+                        .filter(Boolean).join(' ').toLowerCase();
+                      if (!searchText.includes(q)) return false;
+                    }
+                    // Location filter
+                    if (supplierLocationFilter) {
+                      const loc = supplierLocationFilter.toLowerCase();
+                      const locText = [lib.branchCity, lib.branchRegion, lib.country, lib.deliveryCoverage]
+                        .filter(Boolean).join(' ').toLowerCase();
+                      if (!locText.includes(loc) && !lib.nationalCoverage) return false;
+                    }
+                    // Roof type filter
+                    if (supplierRoofTypeFilter) {
+                      const rt = lib.roofingTypes || [];
+                      if (!rt.some(t => t.toLowerCase().includes(supplierRoofTypeFilter))) return false;
+                    }
+                    return true;
                   })
                   .map((lib) => (
                     <button
