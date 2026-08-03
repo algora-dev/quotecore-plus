@@ -120,7 +120,7 @@ const faqs = [
   },
   {
     q: "Is QuoteCore+ only for roofers?",
-    a: "QuoteCore+ is built for roofing first - the hardest trade to measure and quote. That same engine handles construction, cladding, fencing, flooring, landscaping and any trade that measures and quotes jobs.",
+    a: "QuoteCore+ is built for roofing first - the hardest trade to measure and quote. That same engine also handles construction and other measured trades.",
   },
   {
     q: "Is there a free trial?",

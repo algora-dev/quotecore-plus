@@ -101,7 +101,7 @@ export default function AboutPage() {
               So he built QuoteCore+ - the software he would have wanted back when he was doing this work. One platform that takes you from measurement to quote to order to invoice, without re-entering a single number.
             </p>
             <p className="font-medium text-zinc-800">
-              QuoteCore+ started in roofing because that was the hardest problem to solve. The same engine now handles construction, cladding, flooring, fencing, landscaping, and any trade that measures and quotes jobs.
+              QuoteCore+ started in roofing because that was the hardest problem to solve. The same engine also handles construction and other measured trades.
             </p>
           </div>
 

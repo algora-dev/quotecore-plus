@@ -23,7 +23,7 @@ const homepageFaqs = [
   {
     question: "Can I use it for roofing and construction?",
     answer:
-      "Yes. QuoteCore+ was built for roofing first - the hardest trade to measure and quote. That same engine handles construction, cladding, fencing, flooring, landscaping, and any trade that measures and quotes jobs.",
+      "Yes. QuoteCore+ was built for roofing first - the hardest trade to measure and quote. That same engine also handles construction and other measured trades.",
   },
   {
     question: "Can I import my own pricing?",

@@ -199,7 +199,7 @@ export default function FeaturesHubPage() {
           </div>
           <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 px-6 py-5">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35] mb-2">Who it&apos;s for</p>
-            <p className="text-base text-slate-700">Roofers and roofing estimators come first. QuoteCore+ was built around the pitches, angles and measurements roofing demands. Construction, cladding, fencing, flooring and landscaping trades use it too - Smart Components™ adapt to any trade that measures and quotes.</p>
+            <p className="text-base text-slate-700">Roofers and roofing estimators come first. QuoteCore+ was built around the pitches, angles and measurements roofing demands. Construction and other measured trades use it too - Smart Components™ adapt to how you work.</p>
           </div>
         </section>
 

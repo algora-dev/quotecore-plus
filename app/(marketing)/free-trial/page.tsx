@@ -49,7 +49,7 @@ const faqs = [
   },
   {
     question: "Who is QuoteCore+ for?",
-    answer: "QuoteCore+ is built for roofing contractors - roofers, roofing estimators and roofing business owners. It handles the pitches, angles and measurements roofing demands. It also works for construction, cladding, fencing, flooring, landscaping and any trade that measures and quotes jobs. If your quoting process involves a spreadsheet, a notepad, and a Sunday evening, QuoteCore+ was built for you.",
+    answer: "QuoteCore+ is built for roofing contractors - roofers, roofing estimators and roofing business owners. It handles the pitches, angles and measurements roofing demands. It also works for construction and other measured trades. If your quoting process involves a spreadsheet, a notepad, and a Sunday evening, QuoteCore+ was built for you.",
   },
   {
     question: "What are Smart Components™?",

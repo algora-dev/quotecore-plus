@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 const supplierBenefits = [
   {
     title: "Reach active buyers",
-    body: "Every contractor using QuoteCore+ is actively quoting, ordering materials, and buying. Your products appear where purchasing decisions are made - not on a passive directory page.",
+    body: "Contractors using QuoteCore+ are actively quoting, ordering materials, and buying. Your products appear where purchasing decisions are made - not on a passive directory page.",
   },
   {
     title: "Upload your catalogue",
@@ -167,7 +167,7 @@ export default function SuppliersPage() {
               Supplier Network
             </p>
             <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Get your materials in front of every contractor who quotes online.
+              Get your materials in front of contractors who quote online.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
               QuoteCore+ connects roofing suppliers with contractors who are actively quoting, ordering, and buying materials every day. No directory listing. No middleman. Just your products in the workflow where purchasing decisions happen.

@@ -68,7 +68,7 @@ const freeOfferings = [
   {
     number: "01",
     title: "Supplier integration in QuoteCore+",
-    description: "We add your business as a partner supplier inside the QuoteCore+ app. You get a supplier dashboard where you can upload pricing catalogues and build component libraries. Any contractor using QuoteCore+ worldwide can search, find your products, and use your pricing in their quotes.",
+    description: "We add your business as a partner supplier inside the QuoteCore+ app. You get a supplier dashboard where you can upload pricing catalogues and build component libraries. Contractors using QuoteCore+ can search, find your products, and use your pricing in their quotes.",
     bullets: [
       "Your business listed as a partner supplier inside QuoteCore+",
       "Dashboard to manage your pricing catalogues and component libraries",
