@@ -91,7 +91,14 @@ export async function checkStorageQuota(companyId: string, fileSize: number): Pr
  */
 export async function saveFileMetadata(data: {
   companyId: string;
-  fileType: 'logo' | 'plan' | 'supporting';
+  fileType:
+    | 'logo'
+    | 'plan'
+    | 'supporting'
+    | 'customer_quote_pdf'
+    | 'takeoff_report_pdf'
+    | 'takeoff_data_json'
+    | 'labour_sheet_pdf';
   fileName: string;
   /** Ignored. Kept in signature for back-compat; real size is read from Storage. */
   fileSize?: number;
@@ -99,7 +106,7 @@ export async function saveFileMetadata(data: {
   mimeType?: string;
   storagePath: string;
   quoteId?: string;
-}): Promise<void> {
+}): Promise<{ id: string }> {
   const profile = await requireCompanyContext();
 
   // 1. Caller's claimed company id must match their authenticated company.
@@ -197,27 +204,30 @@ export async function saveFileMetadata(data: {
   if (data.fileType === 'logo') {
     const { createAdminClient } = await import('@/app/lib/supabase/admin');
     const supabaseAdmin = createAdminClient();
-    const { error } = await supabaseAdmin
+    const { data: saved, error } = await supabaseAdmin
       .from('quote_files')
-      .upsert(row, { onConflict: 'storage_path' });
+      .upsert(row, { onConflict: 'storage_path' })
+      .select('id')
+      .single();
     if (error) {
       console.error('[saveFileMetadata] logo upsert failed:', error);
       throw new Error(error.message);
     }
+    revalidatePath('/account');
+    return { id: saved.id };
   } else {
-    const { error } = await supabase
+    const { data: saved, error } = await supabase
       .from('quote_files')
-      .upsert(row, { onConflict: 'storage_path' });
+      .upsert(row, { onConflict: 'storage_path' })
+      .select('id')
+      .single();
     if (error) {
       console.error('[saveFileMetadata] upsert failed:', error);
       throw new Error(error.message);
     }
+    revalidatePath('/account');
+    return { id: saved.id };
   }
-
-  // Bust the previously-named "/account" cache key for now. Once the new
-  // /account settings refactor lands, the file pages will revalidate
-  // explicitly via their own paths instead of relying on this stale key.
-  revalidatePath('/account');
 }
 
 /**

@@ -45,18 +45,18 @@ const features = [
   {
     title: "Material Ordering",
     description:
-      "Turn an accepted quote into a material order in seconds. Quantities, codes, and supplier details flow straight from the quote.",
+      "From a saved quote, create a material order with quantities and supplier details carried over. Choose from three display formats and send it straight to your supplier.",
     href: "/features/material-ordering",
     keyword: "material ordering software",
-    steps: ["Accept a quote", "Generate a material order", "Send to your supplier", "Track the order"],
+    steps: ["Save a quote", "Create order from quote", "Edit and format", "Send to supplier"],
   },
   {
     title: "Invoicing",
     description:
-      "Turn accepted quotes into professional invoices with line items, payment instructions, and online payment tracking.",
+      "Turn accepted quotes into professional invoices with line items and configurable payment methods. QuoteCore+ presents bank details, Stripe links or PayPal links - recipients pay externally and can mark the invoice paid or dispute it.",
     href: "/features/invoicing",
     keyword: "contractor invoicing software",
-    steps: ["Accept a quote", "Generate an invoice", "Customer pays", "Track status"],
+    steps: ["Accept a quote", "Create an invoice from the quote", "Configure payment methods", "Customer pays or disputes"],
   },
   {
     title: "Supplier Resources",
@@ -157,8 +157,8 @@ export default function FeaturesHubPage() {
               <tbody className="divide-y divide-slate-100">
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Digital Roof Takeoff</td><td className="px-5 py-3 text-slate-600">Upload plans, measure roof geometry, and calculate areas automatically</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Smart Components™</td><td className="px-5 py-3 text-slate-600">Store reusable pricing and quantity rules so every quote is consistent</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Material Ordering</td><td className="px-5 py-3 text-slate-600">Turn quote line items into supplier-ready orders in one click</td></tr>
-                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Invoicing</td><td className="px-5 py-3 text-slate-600">Convert accepted quotes into invoices with payment instructions</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Material Ordering</td><td className="px-5 py-3 text-slate-600">Create orders from saved quotes with three display formats and supplier-ready details</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Invoicing</td><td className="px-5 py-3 text-slate-600">Create invoices from accepted quotes with configurable payment methods (bank, Stripe, PayPal)</td></tr>
                 <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 font-medium text-slate-900">Supplier Resources</td><td className="px-5 py-3 text-slate-600">Import supplier catalogues and build component libraries from CSV</td></tr>
               </tbody>
             </table>

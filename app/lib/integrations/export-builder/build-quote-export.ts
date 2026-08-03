@@ -18,8 +18,11 @@ import type {
   LabourLineExport,
   FileManifestItem,
   DocumentManifestItem,
+  ExportArtifactManifestItem,
+  ExportArtifactRole,
   Address,
 } from '../contracts/envelope-v1';
+import { computeTaxLines } from '@/app/lib/taxes/types';
 
 function createServiceClient() {
   return createClient(
@@ -45,6 +48,17 @@ function toAddress(fullAddress: string | null): Address | null {
 function money(n: number | null | undefined): string {
   if (n === null || n === undefined) return '0';
   return n.toFixed(4);
+}
+
+function fileRole(fileType: string): ExportArtifactRole {
+  if (fileType === 'plan') return 'plan';
+  if (fileType === 'takeoff_canvas' || fileType === 'canvas') return 'takeoff_canvas';
+  if (fileType === 'takeoff_lines') return 'takeoff_lines';
+  if (fileType === 'customer_quote_pdf') return 'customer_quote_pdf';
+  if (fileType === 'takeoff_report_pdf') return 'takeoff_report_pdf';
+  if (fileType === 'takeoff_data_json') return 'takeoff_data_json';
+  if (fileType === 'labour_sheet_pdf') return 'labour_sheet_pdf';
+  return 'supporting_file';
 }
 
 /**
@@ -111,18 +125,27 @@ export async function buildQuoteExport(
     .eq('quote_id', quoteId)
     .order('sort_order', { ascending: true });
 
-  // Load tax settings
-  const { data: taxSettings } = await supabase
-    .from('company_taxes')
+  // Load the quote's tax snapshot, not mutable company defaults.
+  const { data: quoteTaxes, error: quoteTaxesError } = await supabase
+    .from('quote_taxes')
     .select('*')
-    .eq('company_id', companyId);
+    .eq('quote_id', quoteId)
+    .order('sort_order', { ascending: true });
+
+  if (quoteTaxesError) {
+    throw new Error(`Failed to load quote taxes for export: ${quoteTaxesError.message}`);
+  }
 
   // Load files
-  const { data: files } = await supabase
+  const { data: files, error: filesError } = await supabase
     .from('quote_files')
     .select('*')
     .eq('quote_id', quoteId)
-    .order('created_at', { ascending: true });
+    .order('uploaded_at', { ascending: true });
+
+  if (filesError) {
+    throw new Error(`Failed to load quote files for export: ${filesError.message}`);
+  }
 
   // Build customer lines export
   const exportedCustomerLines: CustomerLineExport[] = (customerLines ?? []).map((l) => ({
@@ -153,11 +176,18 @@ export async function buildQuoteExport(
     entriesByComponent.set(e.quote_component_id, list);
   }
 
+  const roofAreaLabelById = new Map((roofAreas ?? []).map((area) => [area.id, area.label ?? 'Roof area']));
+  const materialMarginPercent = Number(quote.material_margin_percent ?? 0);
+  const labourMarginPercent = Number(quote.labor_margin_percent ?? 0);
+
   // Build components export
   const exportedComponents: ComponentExport[] = (components ?? []).map((c) => ({
     id: c.id,
     name: c.name ?? '',
-    mainOrExtra: null,
+    mainOrExtra: c.component_type === 'main' || c.component_type === 'extra' ? c.component_type : null,
+    sectionName: c.quote_roof_area_id
+      ? roofAreaLabelById.get(c.quote_roof_area_id) ?? 'Roof area'
+      : ((roofAreas ?? []).length > 0 ? 'Extras' : 'Quote Items'),
     measurementType: c.measurement_type ?? null,
     inputMode: c.input_mode ?? null,
     quantity: c.final_quantity != null ? Number(c.final_quantity) : null,
@@ -167,6 +197,10 @@ export async function buildQuoteExport(
     labourRate: c.labour_rate != null ? money(c.labour_rate) : null,
     materialCost: c.material_cost != null ? money(c.material_cost) : null,
     labourCost: c.labour_cost != null ? money(c.labour_cost) : null,
+    sellTotal: money(
+      Number(c.material_cost ?? 0) * (1 + materialMarginPercent / 100)
+      + Number(c.labour_cost ?? 0) * (1 + labourMarginPercent / 100)
+    ),
     wastePercent: c.waste_percent != null ? c.waste_percent.toString() : null,
     pitchDegrees: c.calc_pitch_degrees ?? c.custom_pitch_degrees ?? null,
     pricingStrategy: null,
@@ -227,9 +261,11 @@ export async function buildQuoteExport(
     sourcePath: f.storage_path ?? '',
   }));
 
-  // Build documents manifest (quote PDFs, etc.)
+  // Legacy takeoff snapshots pre-date quote_files records. Only add these
+  // fallbacks when the same storage object is not already in the file manifest.
   const exportedDocuments: DocumentManifestItem[] = [];
-  if (quote.takeoff_canvas_path) {
+  const exportedSourcePaths = new Set(exportedFiles.map((file) => file.sourcePath));
+  if (quote.takeoff_canvas_path && !exportedSourcePaths.has(quote.takeoff_canvas_path)) {
     exportedDocuments.push({
       id: `canvas-${quote.id}`,
       documentType: 'summary',
@@ -238,27 +274,65 @@ export async function buildQuoteExport(
       sourcePath: quote.takeoff_canvas_path,
     });
   }
+  if (quote.takeoff_lines_path && !exportedSourcePaths.has(quote.takeoff_lines_path)) {
+    exportedDocuments.push({
+      id: `takeoff-lines-${quote.id}`,
+      documentType: 'summary',
+      fileName: 'takeoff-lines.png',
+      mimeType: 'image/png',
+      sourcePath: quote.takeoff_lines_path,
+    });
+  }
 
-  // Compute totals from customer lines
-  const visibleLines = exportedCustomerLines.filter((l) => l.includedInTotal);
-  const subtotal = visibleLines.reduce((sum, l) => sum + parseFloat(l.lineTotal), 0);
-  const taxRate = quote.tax_rate ?? 0;
-  const taxTotal = subtotal * (taxRate / 100);
+  const sourceRevision = quote.updated_at ?? quote.created_at ?? new Date().toISOString();
+  const artifacts: ExportArtifactManifestItem[] = [
+    ...exportedFiles.map((file) => ({
+      id: file.id,
+      role: fileRole(file.fileType),
+      origin: 'uploaded' as const,
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      checksum: file.checksum,
+      sourcePath: file.sourcePath,
+      sourceRevision,
+    })),
+    ...exportedDocuments.map((document) => ({
+      id: document.id,
+      role: document.id.startsWith('takeoff-lines-')
+        ? 'takeoff_lines' as const
+        : 'takeoff_canvas' as const,
+      origin: 'legacy' as const,
+      fileName: document.fileName,
+      mimeType: document.mimeType,
+      sizeBytes: null,
+      checksum: null,
+      sourcePath: document.sourcePath,
+      sourceRevision,
+    })),
+  ];
+
+  const customLinesTotal = exportedCustomerLines
+    .filter((line) => line.type === 'custom' && line.includedInTotal)
+    .reduce((sum, line) => sum + parseFloat(line.lineTotal), 0);
+  const materialCost = exportedComponents.reduce(
+    (sum, component) => sum + (component.materialCost ? parseFloat(component.materialCost) : 0),
+    0
+  );
+  const labourCost = exportedComponents.reduce(
+    (sum, component) => sum + (component.labourCost ? parseFloat(component.labourCost) : 0),
+    0
+  );
+  const materialMargin = materialCost * (materialMarginPercent / 100);
+  const labourMargin = labourCost * (labourMarginPercent / 100);
+  const subtotal = materialCost + labourCost + materialMargin + labourMargin + customLinesTotal;
+  const computedTaxes = computeTaxLines(quoteTaxes ?? [], subtotal, 'quote');
+  const taxTotal = computedTaxes.total;
   const totalIncludingTax = subtotal + taxTotal;
 
   // Determine tax mode
   const taxMode: 'inclusive' | 'exclusive' | 'unknown' =
-    taxRate > 0 ? 'exclusive' : 'unknown';
-
-  // Build totals
-  const materialCost = exportedComponents.reduce(
-    (sum, c) => sum + (c.materialCost ? parseFloat(c.materialCost) : 0),
-    0
-  );
-  const labourCost = exportedComponents.reduce(
-    (sum, c) => sum + (c.labourCost ? parseFloat(c.labourCost) : 0),
-    0
-  );
+    computedTaxes.lines.length > 0 ? 'exclusive' : 'unknown';
 
   // Build the export
   const exportData: QuoteExportV1 = {
@@ -327,21 +401,20 @@ export async function buildQuoteExport(
         totalCost: money(materialCost + labourCost),
       },
       marginTotals: {
-        materialMargin: money(subtotal - materialCost - labourCost),
-        labourMargin: '0.0000',
-        grossProfit: money(subtotal - materialCost - labourCost),
-      },
-      taxBreakdown: taxSettings
-        ? taxSettings.map((t) => ({
-            name: t.tax_name ?? 'Tax',
-            ratePercent: (t.tax_rate ?? 0).toString(),
-            amount: money(subtotal * ((t.tax_rate ?? 0) / 100)),
-            externalTaxCode: t.external_tax_code ?? null,
-          }))
-        : [],
+          materialMargin: money(materialMargin),
+          labourMargin: money(labourMargin),
+          grossProfit: money(materialMargin + labourMargin + customLinesTotal),
+        },
+      taxBreakdown: computedTaxes.lines.map((tax) => ({
+        name: tax.name,
+        ratePercent: tax.rate_percent.toString(),
+        amount: money(tax.amount),
+        externalTaxCode: null,
+      })),
     },
     files: exportedFiles,
     documents: exportedDocuments,
+    artifacts,
     acceptance: {
       status: quote.status ?? 'draft',
       acceptedAt: quote.accepted_at ?? null,

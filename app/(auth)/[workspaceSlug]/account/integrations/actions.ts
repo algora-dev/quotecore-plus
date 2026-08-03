@@ -12,7 +12,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { queueExport } from '@/app/lib/integrations/execution/queue';
-import { getQuoteRevision } from '@/app/lib/integrations/export-builder/build-quote-export';
+import { buildQuoteExport, getQuoteRevision } from '@/app/lib/integrations/export-builder/build-quote-export';
+import { requireCompanyContext } from '@/app/lib/supabase/server';
+import type { QuoteExportV1 } from '@/app/lib/integrations/contracts/envelope-v1';
 
 function createServiceClient() {
   return createClient(
@@ -23,6 +25,15 @@ function createServiceClient() {
 }
 
 export type IntegrationProvider = 'zapier' | 'jobnimbus' | 'fergus';
+
+export async function loadIntegrationArtifactData(
+  companyId: string,
+  quoteId: string
+): Promise<QuoteExportV1 | null> {
+  const profile = await requireCompanyContext();
+  if (profile.company_id !== companyId) throw new Error('Unauthorized');
+  return buildQuoteExport(quoteId, companyId);
+}
 
 export interface IntegrationRecord {
   id: string;
@@ -165,11 +176,17 @@ export async function queueQuoteExport(
   integrationId: string,
   quoteId: string,
   eventType: string = 'manual_export',
-  scopeOverrides?: Record<string, boolean>
+  scopeOverrides?: Record<string, boolean>,
+  selection?: { artifactIds: string[] }
 ): Promise<{ success: boolean; error?: string; exportId?: string; status?: string; duplicate?: boolean }> {
   const revision = await getQuoteRevision(quoteId, companyId);
   if (revision === 0) {
     return { success: false, error: 'Quote not found' };
+  }
+
+  const quoteData = await buildQuoteExport(quoteId, companyId);
+  if (!quoteData) {
+    return { success: false, error: 'Quote data could not be loaded' };
   }
 
   const result = await queueExport({
@@ -180,6 +197,8 @@ export async function queueQuoteExport(
     sourceRevision: revision,
     eventType,
     scopeOverrides,
+    selection,
+    quoteData,
   });
 
   return {

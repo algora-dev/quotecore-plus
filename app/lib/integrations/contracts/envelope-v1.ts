@@ -132,6 +132,7 @@ export interface QuoteExportV1 {
 
   files: FileManifestItem[];
   documents: DocumentManifestItem[];
+  artifacts: ExportArtifactManifestItem[];
 
   acceptance: {
     status: string;
@@ -157,6 +158,7 @@ export interface ComponentExport {
   id: string;
   name: string;
   mainOrExtra: 'main' | 'extra' | null;
+  sectionName: string;
   measurementType: string | null;
   inputMode: string | null;
   quantity: number | null;
@@ -166,6 +168,7 @@ export interface ComponentExport {
   labourRate: string | null;
   materialCost: string | null;
   labourCost: string | null;
+  sellTotal: string;
   wastePercent: string | null;
   pitchDegrees: number | null;
   pricingStrategy: string | null;
@@ -211,7 +214,16 @@ export interface LabourLineExport {
 
 export interface FileManifestItem {
   id: string;
-  fileType: 'plan' | 'supporting' | 'canvas';
+  fileType:
+    | 'plan'
+    | 'supporting'
+    | 'canvas'
+    | 'takeoff_canvas'
+    | 'takeoff_lines'
+    | 'customer_quote_pdf'
+    | 'takeoff_report_pdf'
+    | 'takeoff_data_json'
+    | 'labour_sheet_pdf';
   fileName: string;
   mimeType: string | null;
   sizeBytes: number | null;
@@ -225,4 +237,29 @@ export interface DocumentManifestItem {
   fileName: string;
   mimeType: string | null;
   sourcePath: string;
+}
+
+export type ExportArtifactRole =
+  | 'plan'
+  | 'supporting_file'
+  | 'takeoff_canvas'
+  | 'takeoff_lines'
+  | 'customer_quote_pdf'
+  | 'takeoff_report_pdf'
+  | 'takeoff_data_json'
+  | 'labour_sheet_pdf'
+  | 'material_order_pdf'
+  | 'invoice_pdf'
+  | 'quote_summary_pdf';
+
+export interface ExportArtifactManifestItem {
+  id: string;
+  role: ExportArtifactRole;
+  origin: 'uploaded' | 'generated' | 'legacy';
+  fileName: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  checksum: string | null;
+  sourcePath: string;
+  sourceRevision: string;
 }

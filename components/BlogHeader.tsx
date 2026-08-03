@@ -10,10 +10,11 @@ function buildNavItems(app: string) {
   return [
     { label: "Features", href: "/features" },
     { label: "Roofing Software", href: "/roofing-quoting-software" },
-    { label: "Construction Software", href: "/construction-quoting-software" },
+    { label: "Suppliers", href: "/suppliers" },
     { label: "Pricing", href: "/pricing" },
     { label: "Free Tools", href: "/free-tools" },
     { label: "Blog", href: "/blog" },
+    { label: "Tutorials", href: "/tutorials" },
     { label: "Contact us", href: "/contact" },
   ];
 }
