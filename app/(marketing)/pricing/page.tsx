@@ -42,7 +42,7 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 const faqs = [
   {
     question: "How long is the free trial?",
-    answer: "The Full trial runs for 14 days and unlocks all features within the trial limits shown on this page.",
+    answer: "The Full trial runs for 14 days and unlocks all features within the trial limits shown on this page. You get 20 AI Scan Assist points to try AI roof plan scanning.",
   },
   {
     question: "Is a credit card required for the trial?",
@@ -72,10 +72,10 @@ export default function PricingPage() {
         <section className="mx-auto max-w-7xl px-6 pb-14 pt-12 text-center lg:px-8 lg:pb-20">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Simple monthly plans</p>
           <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-            QuoteCore+ pricing for every stage of a trade business.
+            QuoteCore+ pricing for every stage of a roofing business.
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-zinc-600">
-            Start with the complete product for 14 days, no card required. Compare each plan by its real quote, storage and AI Assist limits before you choose.
+            Start with the complete product for 14 days, no card required. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">

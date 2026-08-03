@@ -24,7 +24,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Measure the job",
-      text: "Upload a roof plan and use AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges automatically. Digital takeoff tools handle angles, pitches, and complex roof geometry, then feed straight into Smart Components for pricing.",
+      text: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouts automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into Smart Components for pricing.",
     },
     {
       "@type": "HowToStep",
@@ -34,12 +34,12 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Send and track the quote",
-      text: "Send the quote to the customer and track whether it has been accepted or declined.",
+      text: "Send the quote to the customer with attachments. Track when they open and read it. Set up automatic follow-up emails with configurable delays and cancellation conditions.",
     },
     {
       "@type": "HowToStep",
       name: "Order materials",
-      text: "Use the accepted quote to create materials orders without rebuilding the job from scratch.",
+      text: "From the saved quote, create a material order with quantities and supplier details carried over. Choose from three display formats, edit as needed, and send it to your supplier.",
     },
     {
       "@type": "HowToStep",
@@ -49,7 +49,7 @@ const howToSchema = {
     {
       "@type": "HowToStep",
       name: "Invoice and get paid",
-      text: "Move from accepted quote to invoice and payment without starting again.",
+      text: "Create an invoice from the same saved quote. Configure payment methods - bank details, Stripe links or PayPal links. Recipients can mark the invoice paid or dispute it. QuoteCore+ does not process payments directly.",
     },
   ],
 };
@@ -58,7 +58,7 @@ const steps = [
   {
     number: "01",
     title: "Measure the job",
-    body: "Upload a roof plan and use AI Scan Assist to identify roof areas, ridges, hips, valleys, and barges automatically. Digital takeoff tools handle angles, pitches, and complex roof geometry - then feed straight into your quote via Smart Components\u2122.",
+    body: "Upload a roof plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouts automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - then feed straight into your quote via Smart Components\u2122.",
   },
   {
     number: "02",
@@ -68,12 +68,12 @@ const steps = [
   {
     number: "03",
     title: "Send and track",
-    body: "Send the quote to the customer, then track whether it has been accepted or declined. No guessing, no lost email threads, no manual chasing list.",
+    body: "Send the quote to the customer with attachments. Track when they open and read it. Set up automatic follow-up emails with configurable delays - and they cancel themselves when the quote is accepted or declined.",
   },
   {
     number: "04",
     title: "Order materials",
-    body: "Use the accepted quote to create materials orders without rebuilding the job from scratch. Keep custom lengths, drawings and component details attached to the work.",
+    body: "From the saved quote, create a material order with quantities and supplier details carried over. Choose from three display formats, edit as needed, and send it to your supplier.",
   },
   {
     number: "05",
@@ -83,12 +83,13 @@ const steps = [
   {
     number: "06",
     title: "Invoice and get paid",
-    body: "Move from accepted quote to invoice without starting again. Keep the workflow connected from first measurement through to payment.",
+    body: "Create an invoice from the same saved quote. Configure payment methods - bank details, Stripe links or PayPal links. Recipients can mark the invoice paid or dispute it. The quote, order and invoice all stay connected.",
   },
 ];
 
 const bullets = [
   "Digital takeoffs and measurement workflows built around roofing",
+  "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouts",
   "Smart Components™ with materials, labour, waste, measurements, drawings, calculations and pricing rules",
   "Professional quotes that are clear for customers and easy to approve",
   "Materials ordering connected to accepted quotes",
@@ -111,15 +112,15 @@ const faqs = [
   },
   {
     q: "Does QuoteCore+ handle materials ordering?",
-    a: "Yes. Accepted quotes can be used to support materials ordering, so you do not need to rebuild the same job details manually after the customer approves the quote.",
+    a: "Yes. From a saved quote, you can create a material order with quantities and supplier details carried over. Choose from three display formats (line-by-line, single-column with images/drawings, or double-column), edit as needed, and send it to your supplier.",
   },
   {
     q: "Does QuoteCore+ include invoicing?",
-    a: "Yes. QuoteCore+ is designed to keep the job connected through to invoicing and payment, so the workflow does not stop once the quote is accepted.",
+    a: "Yes. Create an invoice from the same saved quote. Configure payment methods per invoice - bank details, Stripe links or PayPal links. Recipients can mark the invoice paid or dispute it. QuoteCore+ presents the payment options but does not process payments directly.",
   },
   {
     q: "Is QuoteCore+ only for roofers?",
-    a: "No. QuoteCore+ started with roofing because that is where the original workflow problem came from, but it is built for trade and construction businesses that quote from measurements and need to manage the job through to invoice and payment.",
+    a: "QuoteCore+ is built for roofing first - the hardest trade to measure and quote. That same engine handles construction, cladding, fencing, flooring, landscaping and any trade that measures and quotes jobs.",
   },
   {
     q: "Is there a free trial?",

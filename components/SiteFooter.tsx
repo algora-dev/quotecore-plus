@@ -12,7 +12,7 @@ export default function SiteFooter() {
             <Link href="/" className="inline-flex items-center" aria-label="QuoteCore+ home">
               <span className="brand-wordmark text-lg font-semibold text-zinc-950">QuoteCore<span className="brand-plus">+</span></span>
             </Link>
-            <p className="mt-3 max-w-xs text-sm leading-6 text-zinc-500">Roofing and construction quoting software built around measurements.</p>
+            <p className="mt-3 max-w-xs text-sm leading-6 text-zinc-500">Roofing quoting, takeoff and job workflow software. Built for roofing first, flexible enough for every trade.</p>
             <SocialIcons className="mt-5 justify-start" />
           </div>
           <nav aria-label="Product">
@@ -30,7 +30,7 @@ export default function SiteFooter() {
             <h2 className="text-sm font-semibold text-zinc-950">Explore</h2>
             <div className="mt-4 flex flex-col gap-3">
               <Link href="/roofing-quoting-software" className={linkClass}>Roofing software</Link>
-              <Link href="/construction-quoting-software" className={linkClass}>Construction software</Link>
+              <Link href="/construction-quoting-software" className={linkClass}>Other trades</Link>
               <Link href="/pricing" className={linkClass}>Pricing</Link>
               <Link href="/free-tools" className={linkClass}>Free tools</Link>
               <Link href="/free-calculators" className={linkClass}>Free calculators</Link>

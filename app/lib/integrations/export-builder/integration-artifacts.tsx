@@ -81,7 +81,7 @@ function TakeoffReport({ data }: { data: QuoteExportV1 }) {
       <header className="border-b border-slate-200 pb-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-orange-600">QuoteCore+ Takeoff Report</p>
         <h1 className="mt-1 text-2xl font-semibold">Quote {data.source.quoteNumber ?? 'Draft'}</h1>
-        <p className="mt-1 text-sm text-slate-500">{data.customer.name}{data.site.name ? ` ? ${data.site.name}` : ''}</p>
+        <p className="mt-1 text-sm text-slate-500">{data.customer.name}{data.site.name ? ` - ${data.site.name}` : ''}</p>
         <p className="mt-1 text-xs text-slate-400">Measurement system: {data.job.measurementSystem}</p>
       </header>
 
@@ -92,9 +92,9 @@ function TakeoffReport({ data }: { data: QuoteExportV1 }) {
             <div key={area.id} className="grid grid-cols-[1fr_auto] gap-4 border-b border-slate-100 px-4 py-3 last:border-b-0">
               <div>
                 <p className="text-sm font-medium">{area.label || 'Roof area'}</p>
-                <p className="text-xs text-slate-500">Pitch: {area.pitchDegrees ?? '?'}?</p>
+                <p className="text-xs text-slate-500">Pitch: {area.pitchDegrees ?? '-'}°</p>
               </div>
-              <p className="text-sm font-semibold">{area.finalArea ?? area.computedArea ?? area.planArea ?? '?'} m?</p>
+              <p className="text-sm font-semibold">{area.finalArea ?? area.computedArea ?? area.planArea ?? '-'} m²</p>
             </div>
           ))}
         </div>
@@ -109,11 +109,11 @@ function TakeoffReport({ data }: { data: QuoteExportV1 }) {
                 <div>
                   <h3 className="text-sm font-semibold">{component.name}</h3>
                   <p className="text-xs text-slate-500">
-                    {component.measurementType ?? 'Measurement'} ? Waste {component.wastePercent ?? '0'}% ? Pitch {component.pitchDegrees ?? '?'}?
+                    {component.measurementType ?? 'Measurement'} - Waste {component.wastePercent ?? '0'}% - Pitch {component.pitchDegrees ?? '-'}°
                   </p>
                 </div>
                 <p className="text-sm font-semibold">
-                  {component.quantity ?? component.pricedQuantity ?? '?'} {component.pricingUnit ?? ''}
+                  {component.quantity ?? component.pricedQuantity ?? '-'} {component.pricingUnit ?? ''}
                 </p>
               </div>
               {component.entries.length > 0 ? (
@@ -121,7 +121,7 @@ function TakeoffReport({ data }: { data: QuoteExportV1 }) {
                   {component.entries.map((entry, index) => (
                     <div key={entry.id} className="flex justify-between gap-2">
                       <span>Entry {index + 1}</span>
-                      <span>{entry.wasteAdjustedValue ?? entry.rawValue ?? '?'}</span>
+                      <span>{entry.wasteAdjustedValue ?? entry.rawValue ?? '-'}</span>
                     </div>
                   ))}
                 </div>
@@ -169,10 +169,16 @@ async function uploadArtifact(
 export async function prepareIntegrationArtifacts(options: PrepareOptions): Promise<string[]> {
   if (!options.includeCustomerQuote && !options.includeTakeoff && !options.includeLabourSheet) return [];
 
-  const [bundle, exportData] = await Promise.all([
-    loadQuoteBundleData(options.quoteId),
-    loadIntegrationArtifactData(options.companyId, options.quoteId),
-  ]);
+  let bundle, exportData;
+  try {
+    [bundle, exportData] = await Promise.all([
+      loadQuoteBundleData(options.quoteId),
+      loadIntegrationArtifactData(options.companyId, options.quoteId),
+    ]);
+  } catch (err) {
+    console.error('[prepareIntegrationArtifacts] data loading failed:', err);
+    throw new Error('Failed to load quote data for export. Please try again.');
+  }
   if (!bundle || !exportData) throw new Error('Quote data could not be prepared for export');
 
   const quoteNumber = exportData.source.quoteNumber ?? 'DRAFT';
@@ -182,20 +188,30 @@ export async function prepareIntegrationArtifacts(options: PrepareOptions): Prom
   const specs: GeneratedArtifactSpec[] = [];
 
   if (options.includeCustomerQuote) {
-    specs.push({
-      fileType: 'customer_quote_pdf',
-      fileName: `${prefix}-Customer-Quote-r${revision}.pdf`,
-      mimeType: 'application/pdf',
-      content: await renderCustomerQuotePdfBuffer(bundle),
-    });
+    try {
+      specs.push({
+        fileType: 'customer_quote_pdf',
+        fileName: `${prefix}-Customer-Quote-r${revision}.pdf`,
+        mimeType: 'application/pdf',
+        content: await renderCustomerQuotePdfBuffer(bundle),
+      });
+    } catch (err) {
+      console.error('[prepareIntegrationArtifacts] customer quote PDF failed:', err);
+      throw new Error('Failed to generate customer quote PDF.');
+    }
   }
   if (options.includeTakeoff) {
-    specs.push({
-      fileType: 'takeoff_report_pdf',
-      fileName: `${prefix}-Takeoff-Report-r${revision}.pdf`,
-      mimeType: 'application/pdf',
-      content: await renderComponentToPdfBuffer(<TakeoffReport data={exportData} />),
-    });
+    try {
+      specs.push({
+        fileType: 'takeoff_report_pdf',
+        fileName: `${prefix}-Takeoff-Report-r${revision}.pdf`,
+        mimeType: 'application/pdf',
+        content: await renderComponentToPdfBuffer(<TakeoffReport data={exportData} />),
+      });
+    } catch (err) {
+      console.error('[prepareIntegrationArtifacts] takeoff PDF failed:', err);
+      throw new Error('Failed to generate takeoff report PDF.');
+    }
     specs.push({
       fileType: 'takeoff_data_json',
       fileName: `${prefix}-Takeoff-Data-r${revision}.json`,
@@ -204,14 +220,19 @@ export async function prepareIntegrationArtifacts(options: PrepareOptions): Prom
     });
   }
   if (options.includeLabourSheet) {
-    const labourSheet = await renderLabourSheetPdfBuffer(bundle);
-    if (labourSheet) {
-      specs.push({
-        fileType: 'labour_sheet_pdf',
-        fileName: `${prefix}-Labour-Sheet-r${revision}.pdf`,
-        mimeType: 'application/pdf',
-        content: labourSheet,
-      });
+    try {
+      const labourSheet = await renderLabourSheetPdfBuffer(bundle);
+      if (labourSheet) {
+        specs.push({
+          fileType: 'labour_sheet_pdf',
+          fileName: `${prefix}-Labour-Sheet-r${revision}.pdf`,
+          mimeType: 'application/pdf',
+          content: labourSheet,
+        });
+      }
+    } catch (err) {
+      console.error('[prepareIntegrationArtifacts] labour sheet PDF failed:', err);
+      throw new Error('Failed to generate labour sheet PDF.');
     }
   }
 
@@ -220,7 +241,17 @@ export async function prepareIntegrationArtifacts(options: PrepareOptions): Prom
     const existing = options.existingArtifacts.find(
       (artifact) => artifact.fileType === spec.fileType && artifact.fileName === spec.fileName,
     );
-    artifactIds.push(existing?.id ?? await uploadArtifact(options.quoteId, options.companyId, spec));
+    if (existing) {
+      artifactIds.push(existing.id);
+    } else {
+      try {
+        const id = await uploadArtifact(options.quoteId, options.companyId, spec);
+        artifactIds.push(id);
+      } catch (err) {
+        console.error('[prepareIntegrationArtifacts] upload failed for', spec.fileType, ':', err);
+        throw new Error(`Failed to upload ${spec.fileType}. ${err instanceof Error ? err.message : ''}`);
+      }
+    }
   }
   return artifactIds;
 }

@@ -41,7 +41,7 @@ const faqs = [
   },
   {
     question: "What is included in the free trial?",
-    answer: "Your 14-day free trial gives you full access to every QuoteCore+ feature. That includes the digital takeoff tool, quote builder, Smart Components, order, invoices, and all the AI Assist features. You can send real quotes/orders/invoices to real customers from day one and save everything to your account - nothing is locked.",
+    answer: "Your 14-day free trial gives you full access to every QuoteCore+ feature. That includes digital roof takeoff, AI Scan Assist (20 scan points), Smart Components, quote builder, sending and tracking with automated follow-ups, material ordering and invoicing. You can send real quotes, orders and invoices to real customers from day one and save everything to your account - nothing is locked.",
   },
   {
     question: "How do I get started?",
@@ -49,7 +49,7 @@ const faqs = [
   },
   {
     question: "Who is QuoteCore+ for?",
-    answer: "QuoteCore+ is built for construction businesses that measure and quote jobs regularly - roofing, plumbing, electrical, cladding, flooring, fencing, landscaping, decking, general building, exterior works, and renovation trades. If your quoting process involves a spreadsheet, a notepad, and a Sunday evening, QuoteCore+ was built for you.",
+    answer: "QuoteCore+ is built for roofing contractors - roofers, roofing estimators and roofing business owners. It handles the pitches, angles and measurements roofing demands. It also works for construction, cladding, fencing, flooring, landscaping and any trade that measures and quotes jobs. If your quoting process involves a spreadsheet, a notepad, and a Sunday evening, QuoteCore+ was built for you.",
   },
   {
     question: "What are Smart Components™?",
@@ -153,7 +153,7 @@ export default function FreeTrialPage() {
               </p>
 
               <p className="mt-4 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
-                See how fast you can go from measurement to customer-ready quote before you spend a penny.
+                See how fast you can go from roof plan to customer-ready quote before you spend a penny.
               </p>
 
               <div className="mt-10 max-w-xl space-y-6 text-zinc-600 hidden" aria-hidden="true">
