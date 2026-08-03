@@ -21,6 +21,8 @@ import { calculateTakeoffSections } from './engine';
 import {
   normalizePublicRoofTakeoff,
   validatePublicInput,
+  toResultQuery,
+  ROOF_TAKEOFF_CALCULATION_VERSION,
   type PublicRoofTakeoffInput,
 } from './public-contract';
 import { EntryListItem, AddEntryForm } from './EntryComponents';
@@ -34,6 +36,7 @@ import {
   ratioToDegrees,
   degreesToRatio,
 } from './helpers';
+import { createResultToken, buildResultUrl } from './result-token';
 import dynamic from 'next/dynamic';
 
 // Lazy-load modals and conditional UI to reduce initial bundle
@@ -357,6 +360,32 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const totalEntries = calculation.totalEntries;
   const hasData = totalEntries > 0;
   const grandTotal = calculation.grandTotal;
+
+  // Generate result token + URL for sharing
+  const resultUrl = useMemo(() => {
+    if (!hasData) return null;
+    try {
+      const publicInput: PublicRoofTakeoffInput = {
+        mode: measureMode ?? 'actual',
+        units: unitSystem || 'metric',
+        pitchDegrees: parseFloat(masterPitch) || 25,
+        area: totals['roof_area']?.rawTotal || undefined,
+        ridge: allSections['ridge']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
+        hips: allSections['hip']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
+        valleys: allSections['valley']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
+        barges: allSections['barge']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
+        spouting: allSections['spouting']?.entries.map(e => e.computedValue).filter(Boolean) || undefined,
+        supplier: selectedSupplier?.supplierSlug || undefined,
+        country: selectedSupplier?.country || undefined,
+      };
+      const query = toResultQuery(publicInput);
+      const token = createResultToken(query, ROOF_TAKEOFF_CALCULATION_VERSION);
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://quote-core.com';
+      return buildResultUrl(token, origin);
+    } catch {
+      return null;
+    }
+  }, [hasData, totals, allSections, measureMode, unitSystem, masterPitch, selectedSupplier]);
   const clearTakeoff = () => {
     setSections(makeInitialSections());
     setCustomSections({});
@@ -864,7 +893,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           )}
         </div>
 
-        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} supplier={selectedSupplier ? { name: selectedSupplier.supplierName, slug: selectedSupplier.supplierSlug, enquiriesEnabled: selectedSupplier.enquiriesEnabled } : supplierSkip ? { name: 'QuoteCore+', slug: '', enquiriesEnabled: false } : null} currency={selectedSupplier?.currency ?? (supplierSkip ? 'USD' : undefined)} />}
+        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} supplier={selectedSupplier ? { name: selectedSupplier.supplierName, slug: selectedSupplier.supplierSlug, enquiriesEnabled: selectedSupplier.enquiriesEnabled } : supplierSkip ? { name: 'QuoteCore+', slug: '', enquiriesEnabled: false } : null} currency={selectedSupplier?.currency ?? (supplierSkip ? 'USD' : undefined)} resultUrl={resultUrl ?? undefined} />}
 
         {/* Related Tools */}
         <section className="border-t border-slate-200 bg-slate-50">

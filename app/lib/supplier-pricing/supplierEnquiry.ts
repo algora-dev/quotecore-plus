@@ -109,14 +109,19 @@ export async function submitSupplierEnquiry(
 
   const enquiryId = enquiry.id;
 
-  // 4. Load attachments if any
+  // 4. Link uploaded files to this enquiry + load attachments
   let attachments: EmailAttachment[] = [];
   if (input.attachmentIds && input.attachmentIds.length > 0) {
+    // Update file records with the real enquiry ID
+    await sb
+      .from('supplier_takeoff_enquiry_files')
+      .update({ enquiry_id: enquiryId })
+      .in('id', input.attachmentIds);
+
     const { data: files } = await sb
       .from('supplier_takeoff_enquiry_files')
       .select('filename, storage_path, content_type, size_bytes')
-      .in('id', input.attachmentIds)
-      .eq('enquiry_id', enquiryId);
+      .in('id', input.attachmentIds);
 
     if (files && files.length > 0) {
       for (const file of files) {
