@@ -381,8 +381,11 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
       const query = toResultQuery(publicInput);
       const token = createResultToken(query, ROOF_TAKEOFF_CALCULATION_VERSION);
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://quote-core.com';
-      return buildResultUrl(token, origin);
-    } catch {
+      const url = buildResultUrl(token, origin);
+      console.log('[resultUrl] Generated:', url);
+      return url;
+    } catch (err) {
+      console.error('[resultUrl] Failed to generate:', err);
       return null;
     }
   }, [hasData, totals, allSections, measureMode, unitSystem, masterPitch, selectedSupplier]);

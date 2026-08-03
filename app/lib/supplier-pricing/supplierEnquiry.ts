@@ -426,7 +426,7 @@ export async function uploadEnquiryFile(
   const { data: fileRecord, error: dbError } = await sb
     .from('supplier_takeoff_enquiry_files')
     .insert({
-      enquiry_id: '00000000-0000-0000-0000-000000000000', // placeholder, updated when enquiry is created
+      enquiry_id: null, // linked to enquiry after enquiry is created
       filename: fileName,
       storage_path: storagePath,
       content_type: contentType,
