@@ -209,6 +209,31 @@ test('baseline: result URL builds without origin (relative)', () => {
   assert.equal(url, '/free-roofing-takeoff-builder/result/abc123.def456');
 });
 
+test('baseline: supplier lib + version provenance params parse', () => {
+  const input = parseQueryInput(new URLSearchParams('mode=actual&units=metric&area=100&supplier=apex-roofing&supplierLib=abc-123&supplierVer=2'));
+  assert.equal(input.supplier, 'apex-roofing');
+  assert.equal(input.supplierLib, 'abc-123');
+  assert.equal(input.supplierVer, 2);
+});
+
+test('baseline: result token round-trip preserves supplier provenance', () => {
+  const input: PublicRoofTakeoffInput = {
+    mode: 'actual', units: 'metric', pitchDegrees: 25, area: 100, ridges: [10],
+    supplier: 'apex-roofing',
+    supplierLib: 'a1e00000-0000-0000-0000-000000000001',
+    supplierVer: 1,
+  };
+  const query = toResultQuery(input);
+  assert.ok(query.includes('supplierLib='));
+  assert.ok(query.includes('supplierVer=1'));
+  const token = createResultToken(query, ROOF_TAKEOFF_CALCULATION_VERSION);
+  const payload = verifyResultToken(token);
+  assert.ok(payload, 'Token must verify');
+  const restored = parseQueryInput(new URLSearchParams(payload!.q));
+  assert.equal(restored.supplierLib, 'a1e00000-0000-0000-0000-000000000001');
+  assert.equal(restored.supplierVer, 1);
+});
+
 test('baseline: tampered token fails verification', () => {
   const token = createResultToken('mode=actual&area=100', ROOF_TAKEOFF_CALCULATION_VERSION);
   const tampered = token.slice(0, -4) + 'XXXX';
