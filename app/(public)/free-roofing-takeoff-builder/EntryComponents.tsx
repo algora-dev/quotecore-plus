@@ -125,7 +125,6 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
   const planPrefix = measureMode === 'plan' ? 'Plan ' : '';
 
   const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>(isRoofArea ? 'dimensions' : 'total');
-  const [usedRoofArea, setUsedRoofArea] = useState(false);
   const [val1, setVal1] = useState('');
   const [val2, setVal2] = useState('');
   const [totalVal, setTotalVal] = useState('');
@@ -135,7 +134,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
   const [pricingMode, setPricingMode] = useState<'component' | 'known_price'>('component');
   const [knownPrice, setKnownPrice] = useState('');
 
-  const resetForm = () => { setVal1(''); setVal2(''); setTotalVal(''); setQuantity('1'); setLabel(''); setKnownPrice(''); setUsedRoofArea(false); };
+  const resetForm = () => { setVal1(''); setVal2(''); setTotalVal(''); setQuantity('1'); setLabel(''); setKnownPrice(''); };
 
   const handleAdd = () => {
     let entry: Entry;
@@ -166,9 +165,9 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
         const t = parseFloat(totalVal);
         if (!t || t <= 0) return;
         entry = {
-          id: makeId(), label, inputMode: (usePitch && !usedRoofArea) ? 'pitch_calculated' : 'actual',
+          id: makeId(), label, inputMode: usePitch ? 'pitch_calculated' : 'actual',
           pitchDegrees, actualValue: t, computedValue: 0,
-          selectedComponentId, quantity: qty, isTotalInput: !usedRoofArea,
+          selectedComponentId, quantity: qty, isTotalInput: true,
           knownPrice: kp,
         };
       }
@@ -220,7 +219,7 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
 
       {isRoofArea && kind !== 'roof_area' && roofAreaTotal !== null && roofAreaTotal > 0 && (
         <button
-          onClick={() => { setAreaMode('total'); setTotalVal(roofAreaTotal.toFixed(2)); setUsedRoofArea(true); }}
+          onClick={() => { setAreaMode('total'); setTotalVal(roofAreaTotal.toFixed(2)); }}
           className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#ff5722]"
         >
           Use Roof Area ({roofAreaTotal.toFixed(2)} {areaLabel})

@@ -497,7 +497,30 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
     );
   };
 
-  const roofAreaTotal = (totals.roof_area?.rawTotal ?? 0) > 0 ? totals.roof_area.rawTotal : null;
+  // Compute the pre-pitch roof area for "Use Roof Area" button on underlay/fixings
+  // In plan mode, rawTotal includes pitch. We want the original plan area so pitch
+  // gets applied once by the engine when underlay/fixings compute their values.
+  const roofAreaPrePitch = useMemo(() => {
+    const section = allSections['roof_area'];
+    if (!section || section.entries.length === 0) return null;
+    let total = 0;
+    for (const entry of section.entries) {
+      const qty = entry.quantity ?? 1;
+      if (entry.inputMode === 'actual') {
+        // Actual mode: no pitch applied, value is already final
+        total += (entry.actualValue ?? 0) * qty;
+      } else if (entry.isTotalInput) {
+        // Total input in plan mode: actualValue is the plan area, pitch applied by computeEntry
+        total += (entry.actualValue ?? 0) * qty;
+      } else {
+        // Dimensions in plan mode: planWidth * planLength is the pre-pitch area
+        total += ((entry.planWidth ?? 0) * (entry.planLengthVal ?? 0)) * qty;
+      }
+    }
+    return total > 0 ? total : null;
+  }, [allSections]);
+
+  const roofAreaTotal = roofAreaPrePitch;
 
   return (
     <FreeToolsAuthProvider>
