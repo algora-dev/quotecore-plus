@@ -33,24 +33,29 @@ const testimonials = [
 
 const faqs = [
   {
+    question: "Who is QuoteCore+ built for?",
+    answer:
+      "QuoteCore+ is built first for roofing contractors and estimators who need a faster, more accurate way to measure, price, quote and manage work. Smart Components™ can also support construction, cladding and other measured trades that use repeatable materials, labour and pricing rules.",
+  },
+  {
+    question: "How fast can I create a quote?",
+    answer:
+      "Once your Smart Components™ and pricing are configured, a complex roofing quote can be created and sent in just a few minutes. The exact time depends on the job, the quality of the plan or measurements, and the quoting method you choose - AI-assisted roof scans, manual digital takeoffs, direct measurements with Smart Components, or custom line-by-line quotes.",
+  },
+  {
+    question: "Does QuoteCore+ create quotes automatically?",
+    answer:
+      "QuoteCore+ automates significant parts of the quoting process - measurement assistance, quantities, pricing, waste, labour and reusable quote items. AI-assisted results should always be reviewed before sending. Users remain in control and can correct measurements, change components, adjust pricing and add or remove items before finalising the quote.",
+  },
+  {
+    question: "Why do contractors switch to QuoteCore+?",
+    answer:
+      "It replaces disconnected spreadsheets, documents and separate quoting tools with one connected workflow. Contractors can measure and quote more accurately, reuse proven pricing and component rules, create professional quotes faster, send material orders from accepted work, convert approved work into invoices, and keep quote, job and customer information together.",
+  },
+  {
     question: "Is a card required to start?",
     answer:
       "No. You get full access to every feature for 14 days with no card required. If you decide to continue, you choose a plan that fits your business.",
-  },
-  {
-    question: "Can I use it for construction and other trades?",
-    answer:
-      "Yes. QuoteCore+ was built for roofing first - the hardest trade to measure and quote. That same engine also handles construction and other measured trades.",
-  },
-  {
-    question: "Can I import my own pricing?",
-    answer:
-      "Yes. Upload supplier price catalogs via CSV, build Smart Components™ with your own labour rates, waste allowances, formulas, and business rules, and reuse them on every future quote.",
-  },
-  {
-    question: "What happens after the trial?",
-    answer:
-      "You pick a plan that fits your business. Plans start from free and go up to $59 per month. Your Smart Components™, quotes, and settings carry over seamlessly.",
   },
   {
     question: "How much do plans cost?",
