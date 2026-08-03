@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import Link from 'next/link';
 import type { ComponentSection, RoofComponentDef } from './types';
 import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost, computeKnownPriceCost } from './calc';
 import { ComponentSymbol, componentLabel } from './helpers';
+
+const SupplierEnquiryModal = lazy(() => import('./SupplierEnquiryModal').then(m => ({ default: m.SupplierEnquiryModal })));
 
 interface ResultsModalProps {
   sections: Record<string, ComponentSection>;
@@ -14,10 +16,15 @@ interface ResultsModalProps {
   unitSystem: 'metric' | 'imperial' | 'squares';
   allKeys: string[];
   onClose: () => void;
+  supplier?: { name: string; slug: string; enquiriesEnabled: boolean } | null;
+  resultToken?: string;
+  resultUrl?: string;
+  currency?: string;
 }
 
-export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose }: ResultsModalProps) {
-  const cur = '$';
+export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose, supplier, resultToken, resultUrl, currency }: ResultsModalProps) {
+  const [showEnquiry, setShowEnquiry] = useState(false);
+  const cur = currency === 'NZD' ? 'NZ$' : currency === 'USD' ? '$' : currency === 'AUD' ? 'A$' : currency === 'GBP' ? '\u00a3' : '$';
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
   const areaUnit = unitSystem === 'metric' ? 'm\u00B2' : unitSystem === 'imperial' ? 'sq ft' : 'squares';
