@@ -118,11 +118,15 @@ export async function buildQuoteExport(
     .eq('company_id', companyId);
 
   // Load files
-  const { data: files } = await supabase
+  const { data: files, error: filesError } = await supabase
     .from('quote_files')
     .select('*')
     .eq('quote_id', quoteId)
-    .order('created_at', { ascending: true });
+    .order('uploaded_at', { ascending: true });
+
+  if (filesError) {
+    throw new Error(`Failed to load quote files for export: ${filesError.message}`);
+  }
 
   // Build customer lines export
   const exportedCustomerLines: CustomerLineExport[] = (customerLines ?? []).map((l) => ({
@@ -227,15 +231,26 @@ export async function buildQuoteExport(
     sourcePath: f.storage_path ?? '',
   }));
 
-  // Build documents manifest (quote PDFs, etc.)
+  // Legacy takeoff snapshots pre-date quote_files records. Only add these
+  // fallbacks when the same storage object is not already in the file manifest.
   const exportedDocuments: DocumentManifestItem[] = [];
-  if (quote.takeoff_canvas_path) {
+  const exportedSourcePaths = new Set(exportedFiles.map((file) => file.sourcePath));
+  if (quote.takeoff_canvas_path && !exportedSourcePaths.has(quote.takeoff_canvas_path)) {
     exportedDocuments.push({
       id: `canvas-${quote.id}`,
       documentType: 'summary',
       fileName: 'takeoff-canvas.png',
       mimeType: 'image/png',
       sourcePath: quote.takeoff_canvas_path,
+    });
+  }
+  if (quote.takeoff_lines_path && !exportedSourcePaths.has(quote.takeoff_lines_path)) {
+    exportedDocuments.push({
+      id: `takeoff-lines-${quote.id}`,
+      documentType: 'summary',
+      fileName: 'takeoff-lines.png',
+      mimeType: 'image/png',
+      sourcePath: quote.takeoff_lines_path,
     });
   }
 

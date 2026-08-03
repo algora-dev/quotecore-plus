@@ -36,6 +36,7 @@ import type {
 } from '../../contracts/envelope-v1';
 
 const FERGUS_BASE = 'https://api.fergus.com';
+const FERGUS_MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 
 const CAPABILITIES: ConnectorCapabilities = {
   supportsContacts: true,
@@ -470,17 +471,50 @@ export class FergusConnector implements Connector {
       let failed = 0;
 
       for (const file of filesToUpload) {
+        const fileName = file.fileName || file.sourcePath.split('/').pop() || 'attachment';
         try {
+          if (file.sizeBytes != null && file.sizeBytes > FERGUS_MAX_ATTACHMENT_BYTES) {
+            failed++;
+            await context.logStep('upload_file_failed', {
+              errorClass: 'file_too_large',
+              errorSummary: `${fileName}: exceeds Fergus's 20 MB attachment limit`,
+              requestSummary: { fileName, sizeBytes: file.sizeBytes },
+            });
+            continue;
+          }
+
           const signedUrl = await context.getSignedUrl(file.sourcePath, 300);
-          if (!signedUrl) { failed++; continue; }
+          if (!signedUrl) {
+            failed++;
+            await context.logStep('upload_file_failed', {
+              errorClass: 'signed_url_failed',
+              errorSummary: `${fileName}: could not create a signed download URL`,
+              requestSummary: { fileName },
+            });
+            continue;
+          }
           const fileRes = await fetch(signedUrl, { signal: AbortSignal.timeout(30000) });
           if (!fileRes.ok) {
             failed++;
+            await context.logStep('upload_file_failed', {
+              responseStatus: fileRes.status,
+              errorClass: 'source_download_failed',
+              errorSummary: `${fileName}: source download returned ${fileRes.status}`,
+              requestSummary: { fileName },
+            });
             continue;
           }
 
           const fileBuffer = await fileRes.arrayBuffer();
-          const fileName = file.fileName || file.sourcePath.split('/').pop() || 'attachment';
+          if (fileBuffer.byteLength > FERGUS_MAX_ATTACHMENT_BYTES) {
+            failed++;
+            await context.logStep('upload_file_failed', {
+              errorClass: 'file_too_large',
+              errorSummary: `${fileName}: exceeds Fergus's 20 MB attachment limit`,
+              requestSummary: { fileName, sizeBytes: fileBuffer.byteLength },
+            });
+            continue;
+          }
 
           const formData = new FormData();
           formData.append(
@@ -500,6 +534,10 @@ export class FergusConnector implements Connector {
 
           if (uploadRes.ok) {
             uploaded++;
+            await context.logStep('upload_file_succeeded', {
+              responseStatus: uploadRes.status,
+              responseSummary: { fileName, sizeBytes: fileBuffer.byteLength },
+            });
           } else {
             failed++;
             const errorText = await uploadRes.text().catch(() => 'Unknown error');
@@ -893,13 +931,14 @@ function buildAddressPayload(address: Address | null): Record<string, string> | 
 function getFilesToUpload(
   files: FileManifestItem[],
   documents: DocumentManifestItem[]
-): Array<{ fileName: string; mimeType: string | null; sourcePath: string }> {
-  const uniqueFiles = new Map<string, { fileName: string; mimeType: string | null; sourcePath: string }>();
+): Array<{ fileName: string; mimeType: string | null; sizeBytes: number | null; sourcePath: string }> {
+  const uniqueFiles = new Map<string, { fileName: string; mimeType: string | null; sizeBytes: number | null; sourcePath: string }>();
   for (const file of [...files, ...documents]) {
     if (!file.sourcePath || uniqueFiles.has(file.sourcePath)) continue;
     uniqueFiles.set(file.sourcePath, {
       fileName: file.fileName,
       mimeType: file.mimeType,
+      sizeBytes: 'sizeBytes' in file ? file.sizeBytes : null,
       sourcePath: file.sourcePath,
     });
   }

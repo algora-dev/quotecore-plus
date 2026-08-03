@@ -72,7 +72,7 @@ test('exports a complete quote into an active Fergus job', async () => {
     assert.equal(quoteBody.sections[0].lineItems[0].itemQuantity, 2);
     assert.equal(quoteBody.sections[0].lineItems[0].itemPrice, 50);
 
-    assert.equal(requests.filter((request) => request.url.endsWith('/attachments')).length, 2);
+    assert.equal(requests.filter((request) => request.url.endsWith('/attachments')).length, 3);
     const noteRequest = requests.find((request) => request.url.endsWith('/notes'));
     const noteText = (noteRequest?.body as { text: string }).text;
     assert.match(noteText, /Measurements & Takeoff/);
@@ -170,7 +170,11 @@ function createEnvelope(): IntegrationEnvelopeV1 {
       labourLines: null,
       totals: { currency: 'GBP', taxMode: 'exclusive', customerTotals: { subtotalExcludingTax: '100', discountTotal: '0', taxTotal: '20', totalIncludingTax: '120', roundingAdjustment: '0' }, costTotals: { materialCost: '0', labourCost: '0', totalCost: '0' }, marginTotals: { materialMargin: '0', labourMargin: '0', grossProfit: '0' }, taxBreakdown: [] },
       files: [{ id: 'file-1', fileType: 'plan', fileName: 'plan.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/plan.png' }],
-      documents: [{ id: 'document-1', documentType: 'summary', fileName: 'plan-copy.png', mimeType: 'image/png', sourcePath: 'quote/plan.png' }, { id: 'document-2', documentType: 'summary', fileName: 'takeoff.png', mimeType: 'image/png', sourcePath: 'quote/takeoff.png' }],
+      documents: [
+        { id: 'document-1', documentType: 'summary', fileName: 'plan-copy.png', mimeType: 'image/png', sourcePath: 'quote/plan.png' },
+        { id: 'document-2', documentType: 'summary', fileName: 'takeoff.png', mimeType: 'image/png', sourcePath: 'quote/takeoff.png' },
+        { id: 'document-3', documentType: 'summary', fileName: 'takeoff-lines.png', mimeType: 'image/png', sourcePath: 'quote/takeoff-lines.png' },
+      ],
       acceptance: { status: 'draft', acceptedAt: null, acceptedBy: null },
     },
   };
