@@ -93,46 +93,51 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [supplierLibrariesLoading, setSupplierLibrariesLoading] = useState(false);
   const [supplierSkip, setSupplierSkip] = useState(false);
 
+  // Track whether user is actively in the wizard (restored from sessionStorage or selected)
+  const isInWizard = measureMode !== null;
+
   // History management so browser back steps through: builder -> units -> supplier -> mode -> exit
+  // Only active when the wizard is in progress - prevents corrupting history on fresh page load
   useEffect(() => {
-    const handlePopState = () => {
-      // On back: step through builder -> units -> supplier -> mode -> exit
+    if (!isInWizard) return;
+
+    const handlePopState = (e: PopStateEvent) => {
+      // Only handle popstate if we're actively in the wizard
+      if (!measureMode) return;
+
       if (measureMode && unitSystem) {
         setUnitSystem(null);
-        window.history.pushState(null, '', window.location.href);
       } else if (measureMode && (selectedSupplier || supplierSkip) && !unitSystem) {
         setSelectedSupplier(null);
         setSupplierSkip(false);
-        window.history.pushState(null, '', window.location.href);
       } else if (measureMode && !selectedSupplier && !supplierSkip) {
         setMeasureMode(null);
-        window.history.pushState(null, '', window.location.href);
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [measureMode, unitSystem, selectedSupplier, supplierSkip]);
+  }, [isInWizard, measureMode, unitSystem, selectedSupplier, supplierSkip]);
 
   // Push history state when entering supplier selection
   useEffect(() => {
     if (measureMode && !selectedSupplier && !supplierSkip && !unitSystem) {
       window.history.pushState({ step: 'supplier' }, '', window.location.href);
     }
-  }, [measureMode, selectedSupplier, supplierSkip]);
+  }, [measureMode, selectedSupplier, supplierSkip, unitSystem]);
 
   // Push history state when entering units
   useEffect(() => {
     if (measureMode && (selectedSupplier || supplierSkip) && !unitSystem) {
       window.history.pushState({ step: 'units' }, '', window.location.href);
     }
-  }, [measureMode, selectedSupplier, supplierSkip]);
+  }, [measureMode, selectedSupplier, supplierSkip, unitSystem]);
 
   // Push history state when entering builder
   useEffect(() => {
     if (measureMode && unitSystem) {
       window.history.pushState({ step: 'builder' }, '', window.location.href);
     }
-  }, [unitSystem]);
+  }, [measureMode, unitSystem]);
   const [experience, setExperience] = useState<ExperienceLevel>('fast');
   const [pitchMode, setPitchMode] = useState<'degrees' | 'ratio'>('degrees');
   const [sections, setSections] = useState<Record<string, ComponentSection>>(makeInitialSections);
@@ -144,23 +149,22 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [components, setComponents] = useState<RoofComponentDef[]>([]);
   const [componentsLoading, setComponentsLoading] = useState(true);
 
-  // Restore from sessionStorage on mount
+  // Restore from sessionStorage on mount - synchronous to prevent flash of empty state
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      if (initialInput && validatePublicInput(initialInput).length === 0) {
-        const normalized = normalizePublicRoofTakeoff(initialInput);
-        setMeasureMode(normalized.mode);
-        setUnitSystem(normalized.units);
-        setMasterPitch(String(normalized.pitchDegrees));
-        setMasterRatio(degreesToRatio(normalized.pitchDegrees, normalized.units));
-        setSections(normalized.sections);
-        setCustomSections({});
-        setExpandedSection('roof_area');
-        return;
-      }
-      const saved = sessionStorage.getItem(SESSION_KEY);
-      if (saved) {
-        try {
+    if (initialInput && validatePublicInput(initialInput).length === 0) {
+      const normalized = normalizePublicRoofTakeoff(initialInput);
+      setMeasureMode(normalized.mode);
+      setUnitSystem(normalized.units);
+      setMasterPitch(String(normalized.pitchDegrees));
+      setMasterRatio(degreesToRatio(normalized.pitchDegrees, normalized.units));
+      setSections(normalized.sections);
+      setCustomSections({});
+      setExpandedSection('roof_area');
+      return;
+    }
+    const saved = sessionStorage.getItem(SESSION_KEY);
+    if (saved) {
+      try {
         const data = JSON.parse(saved) as PersistedTakeoffState;
         if (data.measureMode) setMeasureMode(data.measureMode);
         if (data.unitSystem) setUnitSystem(data.unitSystem);
@@ -184,10 +188,8 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           }
           setCustomSections(data.customSections);
         }
-        } catch {}
-      }
-    }, 0);
-    return () => window.clearTimeout(timeoutId);
+      } catch {}
+    }
   }, [initialInput]);
 
   // Save to sessionStorage on change
