@@ -26,6 +26,19 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
+      allow: [
+        '/free-tools',
+        '/free-calculators',
+        '/free-roofing-calculator',
+        '/free-construction-calculator',
+        '/free-concrete-calculator',
+        '/free-landscaping-calculator',
+        '/free-birds-mouth-calculator',
+        '/free-quote-generator',
+        '/free-invoice-generator',
+        '/free-purchase-order-generator',
+        '/free-roofing-takeoff-builder',
+      ],
       disallow: [
         '/api/',
         '/auth/',

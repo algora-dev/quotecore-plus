@@ -445,7 +445,7 @@ export default function RoofingQuotingSoftwarePage() {
             </a>
             <a href="/features/invoicing" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Invoicing</p>
-              <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into professional invoices in one click.</p>
+              <p className="mt-1 text-sm text-zinc-600">Create professional invoices from accepted quotes with payment details attached.</p>
             </a>
             <a href="/free-roofing-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Free roofing calculator</p>
