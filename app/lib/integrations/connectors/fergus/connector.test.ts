@@ -126,6 +126,7 @@ test('repairs and finalises a previously mapped draft job', async () => {
         { externalType: 'contact', externalId: '101', externalUrl: null, lastSyncedRevision: 1 },
         { externalType: 'job', externalId: '303', externalUrl: null, lastSyncedRevision: 1 },
         { externalType: 'quote', externalId: '404', externalUrl: null, lastSyncedRevision: 1 },
+        { externalType: 'attachment:file-1', externalId: '505', externalUrl: null, lastSyncedRevision: 1 },
       ],
     };
     const plan = await connector.plan(envelope, config, context);
@@ -136,6 +137,7 @@ test('repairs and finalises a previously mapped draft job', async () => {
     assert.ok(requests.some((request) => request.url.endsWith('/jobs/303') && request.method === 'PUT' && (request.body as { siteId?: number }).siteId === 202));
     assert.ok(requests.some((request) => request.url.endsWith('/jobs/303/quotes/404') && request.method === 'PUT'));
     assert.ok(!requests.some((request) => request.url.endsWith('/jobs/303/quotes') && request.method === 'POST'));
+    assert.equal(requests.filter((request) => request.url.endsWith('/attachments')).length, 2);
   } finally {
     globalThis.fetch = originalFetch;
   }

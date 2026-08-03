@@ -38,6 +38,18 @@ import type {
 const FERGUS_BASE = 'https://api.fergus.com';
 const FERGUS_MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 
+async function fergusFetch(url: string, init: RequestInit): Promise<Response> {
+  let response: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(url, init);
+    if (response.status !== 429 || attempt === 2) return response;
+    const retryAfterSeconds = Number(response.headers.get('retry-after') ?? 1);
+    const delayMs = Math.min(Math.max(retryAfterSeconds, 1) * 1000, 5000);
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  return response!;
+}
+
 const CAPABILITIES: ConnectorCapabilities = {
   supportsContacts: true,
   supportsSites: true,
@@ -49,6 +61,16 @@ const CAPABILITIES: ConnectorCapabilities = {
   supportsUpdate: true,
   supportsWebhooks: false,
   supportsAutomaticSync: false,
+  nativeActions: {
+    quotes: 'create_update',
+    invoices: 'read_only',
+    materialOrders: 'unsupported',
+  },
+  artifactFallbacks: {
+    invoices: 'attachment',
+    materialOrders: 'attachment',
+    measurements: 'attachment',
+  },
 };
 
 const SUPPORTED_EVENTS: ExportEvent[] = [
@@ -214,7 +236,7 @@ export class FergusConnector implements Connector {
             customerBody.physicalAddress = physicalAddress;
           }
 
-          const res = await fetch(`${FERGUS_BASE}/customers`, {
+          const res = await fergusFetch(`${FERGUS_BASE}/customers`, {
             method: 'POST',
             headers,
             body: JSON.stringify(customerBody),
@@ -257,7 +279,7 @@ export class FergusConnector implements Connector {
     if (existingJob) {
       jobId = Number(existingJob.externalId);
       try {
-        const existingResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
+        const existingResponse = await fergusFetch(`${FERGUS_BASE}/jobs/${jobId}`, {
           headers,
           signal: AbortSignal.timeout(30000),
         });
@@ -292,7 +314,7 @@ export class FergusConnector implements Connector {
               updates.push({ siteId });
             }
             for (const update of updates) {
-              const updateResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}`, {
+              const updateResponse = await fergusFetch(`${FERGUS_BASE}/jobs/${jobId}`, {
                 method: 'PUT',
                 headers,
                 body: JSON.stringify(update),
@@ -309,7 +331,7 @@ export class FergusConnector implements Connector {
 
           // Try to finalise if we have both customer and site
           if (customerId && siteId) {
-            const finaliseResponse = await fetch(`${FERGUS_BASE}/jobs/${jobId}/finalise`, {
+            const finaliseResponse = await fergusFetch(`${FERGUS_BASE}/jobs/${jobId}/finalise`, {
               method: 'PUT',
               headers,
               signal: AbortSignal.timeout(30000),
@@ -382,7 +404,7 @@ export class FergusConnector implements Connector {
           }
         }
 
-        const res = await fetch(`${FERGUS_BASE}/jobs`, {
+        const res = await fergusFetch(`${FERGUS_BASE}/jobs`, {
           method: 'POST',
           headers,
           body: JSON.stringify(jobBody),
@@ -435,7 +457,7 @@ export class FergusConnector implements Connector {
         quoteId = existingQuote ? Number(existingQuote.externalId) : null;
         if (quoteId != null && !Number.isFinite(quoteId)) quoteId = null;
         let updating = quoteId != null;
-        let res = await fetch(
+        let res = await fergusFetch(
           updating
             ? `${FERGUS_BASE}/jobs/${jobId}/quotes/${quoteId}`
             : `${FERGUS_BASE}/jobs/${jobId}/quotes`,
@@ -452,7 +474,7 @@ export class FergusConnector implements Connector {
         if (updating && res.status === 404) {
           quoteId = null;
           updating = false;
-          res = await fetch(`${FERGUS_BASE}/jobs/${jobId}/quotes`, {
+          res = await fergusFetch(`${FERGUS_BASE}/jobs/${jobId}/quotes`, {
             method: 'POST',
             headers,
             body: JSON.stringify(quoteBody),
@@ -499,6 +521,7 @@ export class FergusConnector implements Connector {
     // Step 4: Upload files
     const filesToUpload = data.artifacts?.length
       ? data.artifacts.map((artifact) => ({
+          artifactId: artifact.id,
           fileName: artifact.fileName,
           mimeType: artifact.mimeType,
           sizeBytes: artifact.sizeBytes,
@@ -507,11 +530,20 @@ export class FergusConnector implements Connector {
       : getFilesToUpload(data.files, data.documents);
     if (scopes.filesAndPlans && filesToUpload.length > 0 && jobId) {
       let uploaded = 0;
+      let skipped = 0;
       let failed = 0;
 
       for (const file of filesToUpload) {
         const fileName = file.fileName || file.sourcePath.split('/').pop() || 'attachment';
         try {
+          const attachmentMappingType = `attachment:${file.artifactId}`;
+          const existingAttachment = context.existingMappings.find(
+            (mapping) => mapping.externalType === attachmentMappingType,
+          );
+          if (existingAttachment) {
+            skipped++;
+            continue;
+          }
           if (file.sizeBytes != null && file.sizeBytes > FERGUS_MAX_ATTACHMENT_BYTES) {
             failed++;
             await context.logStep('upload_file_failed', {
@@ -564,7 +596,7 @@ export class FergusConnector implements Connector {
           formData.append('entityType', 'job');
           formData.append('entityId', String(jobId));
 
-          const uploadRes = await fetch(`${FERGUS_BASE}/attachments`, {
+          const uploadRes = await fergusFetch(`${FERGUS_BASE}/attachments`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${pat}` },
             body: formData,
@@ -573,9 +605,18 @@ export class FergusConnector implements Connector {
 
           if (uploadRes.ok) {
             uploaded++;
+            const uploadPayload = await uploadRes.json().catch(() => null);
+            const attachmentId = uploadPayload?.data?.id ?? uploadPayload?.id;
+            if (attachmentId != null) {
+              externalRecords.push({
+                externalType: attachmentMappingType,
+                externalId: String(attachmentId),
+                externalUrl: null,
+              });
+            }
             await context.logStep('upload_file_succeeded', {
               responseStatus: uploadRes.status,
-              responseSummary: { fileName, sizeBytes: fileBuffer.byteLength },
+              responseSummary: { fileName, sizeBytes: fileBuffer.byteLength, attachmentId },
             });
           } else {
             failed++;
@@ -595,11 +636,11 @@ export class FergusConnector implements Connector {
 
       steps.push({
         type: 'upload_supporting_file',
-        status: failed === 0 ? 'succeeded' : (uploaded > 0 ? 'succeeded' : 'failed'),
+        status: failed === 0 ? 'succeeded' : (uploaded + skipped > 0 ? 'succeeded' : 'failed'),
         errorSummary: failed > 0 ? `${failed}/${filesToUpload.length} files failed to upload` : undefined,
       });
       await context.logStep('upload_files', {
-        responseSummary: { uploaded, failed, total: filesToUpload.length },
+        responseSummary: { uploaded, skipped, failed, total: filesToUpload.length },
         errorSummary: failed > 0 ? `${failed}/${filesToUpload.length} files failed` : undefined,
       });
     }
@@ -613,7 +654,7 @@ export class FergusConnector implements Connector {
         entityId: jobId,
       };
 
-      const noteResponse = await fetch(`${FERGUS_BASE}/notes`, {
+      const noteResponse = await fergusFetch(`${FERGUS_BASE}/notes`, {
         method: 'POST',
         headers,
         body: JSON.stringify(noteBody),
@@ -851,7 +892,7 @@ async function createFergusSite(
       siteAddress: fallbackSiteAddress,
     };
     try {
-      const response = await fetch(`${FERGUS_BASE}/sites`, {
+      const response = await fergusFetch(`${FERGUS_BASE}/sites`, {
         method: 'POST',
         headers,
         body: JSON.stringify(siteBody),
@@ -905,7 +946,7 @@ async function createFergusSite(
   };
 
   try {
-    const response = await fetch(`${FERGUS_BASE}/sites`, {
+    const response = await fergusFetch(`${FERGUS_BASE}/sites`, {
       method: 'POST',
       headers,
       body: JSON.stringify(siteBody),
@@ -966,11 +1007,12 @@ function buildAddressPayload(address: Address | null): Record<string, string> | 
 function getFilesToUpload(
   files: FileManifestItem[],
   documents: DocumentManifestItem[]
-): Array<{ fileName: string; mimeType: string | null; sizeBytes: number | null; sourcePath: string }> {
-  const uniqueFiles = new Map<string, { fileName: string; mimeType: string | null; sizeBytes: number | null; sourcePath: string }>();
+): Array<{ artifactId: string; fileName: string; mimeType: string | null; sizeBytes: number | null; sourcePath: string }> {
+  const uniqueFiles = new Map<string, { artifactId: string; fileName: string; mimeType: string | null; sizeBytes: number | null; sourcePath: string }>();
   for (const file of [...files, ...documents]) {
     if (!file.sourcePath || uniqueFiles.has(file.sourcePath)) continue;
     uniqueFiles.set(file.sourcePath, {
+      artifactId: file.id,
       fileName: file.fileName,
       mimeType: file.mimeType,
       sizeBytes: 'sizeBytes' in file ? file.sizeBytes : null,
