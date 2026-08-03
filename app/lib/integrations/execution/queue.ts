@@ -7,6 +7,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'node:crypto';
+import type { QuoteExportV1 } from '../contracts/envelope-v1';
 
 function createServiceClient() {
   return createClient(
@@ -26,6 +27,7 @@ export interface QueueExportParams {
   createdBy?: string;
   scopeOverrides?: Record<string, boolean>;
   selection?: ExportSelectionSnapshot;
+  quoteData?: QuoteExportV1;
 }
 
 export interface ExportSelectionSnapshot {
@@ -48,7 +50,7 @@ export interface QueuedExport {
   config: Record<string, unknown>;
   data_scopes: Record<string, boolean>;
   scope_overrides: Record<string, boolean> | null;
-  payload: { selection?: ExportSelectionSnapshot } | null;
+  payload: { selection?: ExportSelectionSnapshot; quoteData?: QuoteExportV1 } | null;
 }
 
 /**
@@ -111,10 +113,12 @@ export async function queueExport(
       event_type: params.eventType,
       status: 'queued',
       idempotency_key: effectiveIdempotencyKey,
-      payload_version: '1.0',
+      payload_version: params.quoteData ? '1.1' : '1.0',
       created_by: params.createdBy ?? null,
       scope_overrides: params.scopeOverrides ?? null,
-      payload: params.selection ? { selection: params.selection } : null,
+      payload: params.selection || params.quoteData
+        ? { selection: params.selection, quoteData: params.quoteData }
+        : null,
     })
     .select('id')
     .single();

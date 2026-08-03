@@ -132,6 +132,7 @@ export interface QuoteExportV1 {
 
   files: FileManifestItem[];
   documents: DocumentManifestItem[];
+  artifacts: ExportArtifactManifestItem[];
 
   acceptance: {
     status: string;
@@ -225,4 +226,29 @@ export interface DocumentManifestItem {
   fileName: string;
   mimeType: string | null;
   sourcePath: string;
+}
+
+export type ExportArtifactRole =
+  | 'plan'
+  | 'supporting_file'
+  | 'takeoff_canvas'
+  | 'takeoff_lines'
+  | 'customer_quote_pdf'
+  | 'takeoff_report_pdf'
+  | 'takeoff_data_json'
+  | 'labour_sheet_pdf'
+  | 'material_order_pdf'
+  | 'invoice_pdf'
+  | 'quote_summary_pdf';
+
+export interface ExportArtifactManifestItem {
+  id: string;
+  role: ExportArtifactRole;
+  origin: 'uploaded' | 'generated' | 'legacy';
+  fileName: string;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  checksum: string | null;
+  sourcePath: string;
+  sourceRevision: string;
 }

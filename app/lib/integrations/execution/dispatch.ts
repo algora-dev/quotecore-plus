@@ -58,7 +58,8 @@ async function processExport(queued: QueuedExport): Promise<void> {
   }
 
   // Build canonical export from quote data
-  const quoteData = await buildQuoteExport(queued.source_id, queued.company_id);
+  const quoteData = queued.payload?.quoteData
+    ?? await buildQuoteExport(queued.source_id, queued.company_id);
   if (!quoteData) {
     await markExportFailed(queued.id, 'quote_not_found', 'Quote data could not be loaded');
     return;
@@ -69,6 +70,7 @@ async function processExport(queued: QueuedExport): Promise<void> {
     const selected = new Set(selectedArtifactIds);
     quoteData.files = quoteData.files.filter((file) => selected.has(file.id));
     quoteData.documents = quoteData.documents.filter((document) => selected.has(document.id));
+    quoteData.artifacts = quoteData.artifacts.filter((artifact) => selected.has(artifact.id));
   }
 
   // Build envelope

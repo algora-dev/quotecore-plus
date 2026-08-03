@@ -465,7 +465,14 @@ export class FergusConnector implements Connector {
     }
 
     // Step 4: Upload files
-    const filesToUpload = getFilesToUpload(data.files, data.documents);
+    const filesToUpload = data.artifacts?.length
+      ? data.artifacts.map((artifact) => ({
+          fileName: artifact.fileName,
+          mimeType: artifact.mimeType,
+          sizeBytes: artifact.sizeBytes,
+          sourcePath: artifact.sourcePath,
+        }))
+      : getFilesToUpload(data.files, data.documents);
     if (scopes.filesAndPlans && filesToUpload.length > 0 && jobId) {
       let uploaded = 0;
       let failed = 0;

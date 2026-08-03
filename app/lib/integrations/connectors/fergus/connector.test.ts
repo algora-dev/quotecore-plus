@@ -175,6 +175,11 @@ function createEnvelope(): IntegrationEnvelopeV1 {
         { id: 'document-2', documentType: 'summary', fileName: 'takeoff.png', mimeType: 'image/png', sourcePath: 'quote/takeoff.png' },
         { id: 'document-3', documentType: 'summary', fileName: 'takeoff-lines.png', mimeType: 'image/png', sourcePath: 'quote/takeoff-lines.png' },
       ],
+      artifacts: [
+        { id: 'file-1', role: 'plan', origin: 'uploaded', fileName: 'plan.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/plan.png', sourceRevision: '1' },
+        { id: 'document-2', role: 'takeoff_canvas', origin: 'generated', fileName: 'takeoff.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/takeoff.png', sourceRevision: '1' },
+        { id: 'document-3', role: 'takeoff_lines', origin: 'generated', fileName: 'takeoff-lines.png', mimeType: 'image/png', sizeBytes: 3, checksum: null, sourcePath: 'quote/takeoff-lines.png', sourceRevision: '1' },
+      ],
       acceptance: { status: 'draft', acceptedAt: null, acceptedBy: null },
     },
   };

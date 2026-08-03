@@ -12,7 +12,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
 import { queueExport } from '@/app/lib/integrations/execution/queue';
-import { getQuoteRevision } from '@/app/lib/integrations/export-builder/build-quote-export';
+import { buildQuoteExport, getQuoteRevision } from '@/app/lib/integrations/export-builder/build-quote-export';
 
 function createServiceClient() {
   return createClient(
@@ -173,6 +173,11 @@ export async function queueQuoteExport(
     return { success: false, error: 'Quote not found' };
   }
 
+  const quoteData = await buildQuoteExport(quoteId, companyId);
+  if (!quoteData) {
+    return { success: false, error: 'Quote data could not be loaded' };
+  }
+
   const result = await queueExport({
     companyId,
     integrationId,
@@ -182,6 +187,7 @@ export async function queueQuoteExport(
     eventType,
     scopeOverrides,
     selection,
+    quoteData,
   });
 
   return {

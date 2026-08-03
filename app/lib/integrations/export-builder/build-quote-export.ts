@@ -18,6 +18,8 @@ import type {
   LabourLineExport,
   FileManifestItem,
   DocumentManifestItem,
+  ExportArtifactManifestItem,
+  ExportArtifactRole,
   Address,
 } from '../contracts/envelope-v1';
 
@@ -45,6 +47,13 @@ function toAddress(fullAddress: string | null): Address | null {
 function money(n: number | null | undefined): string {
   if (n === null || n === undefined) return '0';
   return n.toFixed(4);
+}
+
+function fileRole(fileType: string): ExportArtifactRole {
+  if (fileType === 'plan') return 'plan';
+  if (fileType === 'takeoff_canvas' || fileType === 'canvas') return 'takeoff_canvas';
+  if (fileType === 'takeoff_lines') return 'takeoff_lines';
+  return 'supporting_file';
 }
 
 /**
@@ -254,6 +263,34 @@ export async function buildQuoteExport(
     });
   }
 
+  const sourceRevision = quote.updated_at ?? quote.created_at ?? new Date().toISOString();
+  const artifacts: ExportArtifactManifestItem[] = [
+    ...exportedFiles.map((file) => ({
+      id: file.id,
+      role: fileRole(file.fileType),
+      origin: 'uploaded' as const,
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      checksum: file.checksum,
+      sourcePath: file.sourcePath,
+      sourceRevision,
+    })),
+    ...exportedDocuments.map((document) => ({
+      id: document.id,
+      role: document.id.startsWith('takeoff-lines-')
+        ? 'takeoff_lines' as const
+        : 'takeoff_canvas' as const,
+      origin: 'legacy' as const,
+      fileName: document.fileName,
+      mimeType: document.mimeType,
+      sizeBytes: null,
+      checksum: null,
+      sourcePath: document.sourcePath,
+      sourceRevision,
+    })),
+  ];
+
   // Compute totals from customer lines
   const visibleLines = exportedCustomerLines.filter((l) => l.includedInTotal);
   const subtotal = visibleLines.reduce((sum, l) => sum + parseFloat(l.lineTotal), 0);
@@ -357,6 +394,7 @@ export async function buildQuoteExport(
     },
     files: exportedFiles,
     documents: exportedDocuments,
+    artifacts,
     acceptance: {
       status: quote.status ?? 'draft',
       acceptedAt: quote.accepted_at ?? null,
