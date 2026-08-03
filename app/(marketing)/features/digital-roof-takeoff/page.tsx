@@ -65,7 +65,7 @@ const faqSchema = {
       name: "Does QuoteCore+ have AI takeoff scanning?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. AI Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouts. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually.",
+        text: "Yes. AI Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouting. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually.",
       },
     },
     {
@@ -104,7 +104,7 @@ const steps = [
 
 const faqs = [
   { q: "What is a digital roof takeoff?", a: "A digital roof takeoff is the process of measuring a roof from digital plans or drawings using software, instead of measuring manually on site or with paper plans. It calculates areas, lengths, and material quantities from the measurements you input." },
-  { q: "Does QuoteCore+ have AI takeoff scanning?", a: "Yes. AI Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouts. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually." },
+  { q: "Does QuoteCore+ have AI takeoff scanning?", a: "Yes. AI Scan Assist can scan an uploaded roof plan and automatically identify multiple roof areas, ridges, hips, valleys, barges and spouting. You can name each roof area, assign different pitches and materials, then review and adjust everything before generating the takeoff. You can also skip AI entirely and draw everything manually." },
   { q: "Can I use QuoteCore+ takeoff without AI?", a: "Yes. The manual drawing tool lets you upload a plan and draw all areas, lines, and points yourself. You have full control over every measurement. AI Scan Assist is optional." },
   { q: "Does the takeoff calculate pitch automatically?", a: "Yes. When you draw a roof section, the pitch and pitch type are auto-calculated. Areas, waste allowances, and material quantities all update automatically based on the pitch. You just draw what you see and the system handles the calculations." },
   { q: "What roof types does the takeoff support?", a: "The takeoff builder supports hips, valleys, ridges, eaves, flashings, and custom components. It works with metal, tile, shingle, and membrane roof types." },
@@ -281,7 +281,7 @@ export default function DigitalRoofTakeoffPage() {
             <p className="text-sm text-zinc-600">A contractor uploads a plan for a simple gable roof. Here is what happens at each step:</p>
             <ol className="mt-4 space-y-3 text-sm text-zinc-600">
               <li><strong>1. Upload:</strong> The plan image is loaded into the takeoff builder.</li>
-              <li><strong>2. Draw:</strong> The contractor traces the two roof planes. Pitch is auto-calculated at 30 degrees. The system records 90 m2 per plane (180 m2 total).</li>
+              <li><strong>2. Draw:</strong> The contractor outlines the roof area. Pitch is auto-calculated at 30 degrees. The system records 180 m2 total.</li>
               <li><strong>3. Measure linear items:</strong> Ridge: 12 m. Eaves: 24 m. Barges: 2 x 8 m = 16 m.</li>
               <li><strong>4. Attach components:</strong> A concrete tile component (priced at $12/m2 with 10% waste) is attached to both planes. A ridge component (priced at $8/m) is attached to the ridge line.</li>
               <li><strong>5. Auto-calculate:</strong> Tile area: 180 m2 x 1.10 = 198 m2. Tile cost: 198 x $12 = $2,376. Ridge cost: 12 m x $8 = $96. Total materials: $2,472.</li>

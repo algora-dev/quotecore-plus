@@ -9,14 +9,14 @@ import { ORG_NAME, ORG_LEGAL_NAME, ORG_EMAIL, ORG_LINKEDIN } from "@/app/lib/seo
 export const metadata: Metadata = {
   title: "Company | QuoteCore+",
   description:
-    "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by an ex-roofer with 12 years of trade experience. Learn about the company, product, and mission.",
+    "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by Shaun, who spent 20 years across the tools and the office quoting jobs. Learn about the company, product, and mission.",
   alternates: {
     canonical: "https://quote-core.com/company",
   },
   openGraph: {
     title: "Company | QuoteCore+",
     description:
-      "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by an ex-roofer with 12 years of trade experience.",
+      "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by Shaun, who spent 20 years across the tools and the office quoting jobs.",
     url: "https://quote-core.com/company",
     siteName: "QuoteCore+",
     type: "website",
@@ -35,7 +35,7 @@ const organizationSchema = {
     "@type": "Person",
     name: "Shaun",
     jobTitle: "Founder",
-    description: "12 years of roofing experience, now building QuoteCore+.",
+    description: "20 years of trade experience across the tools and the office. Founded QuoteCore+ to solve the quoting problems he lived with.",
     url: `${SITE_URL}/about`,
   },
   email: ORG_EMAIL,
@@ -64,7 +64,7 @@ const facts = [
   { label: "Product", value: "QuoteCore+" },
   { label: "Legal entity", value: "T3 Play Limited" },
   { label: "Category", value: "Roofing and construction quoting software" },
-  { label: "Founder", value: "Shaun - 12 years of roofing experience" },
+  { label: "Founder", value: "Shaun - 20 years of trade experience" },
   { label: "Regions served", value: "United Kingdom, New Zealand, Australia, United States" },
   { label: "Supported trades", value: "Roofing, cladding, flooring, fencing, landscaping, general construction" },
   { label: "Pricing model", value: "Monthly subscription with 14-day free trial" },
@@ -137,11 +137,11 @@ export default function CompanyPage() {
             <div>
               <p className="text-xl font-semibold">Shaun</p>
               <p className="text-sm text-zinc-500">Founder, QuoteCore+</p>
-              <p className="mt-1 text-sm font-medium text-[#FF6B35]">12 years on the tools</p>
+              <p className="mt-1 text-sm font-medium text-[#FF6B35]">20 years in the trade</p>
             </div>
           </div>
           <p className="mt-6 leading-7 text-zinc-600">
-            Shaun spent 12 years on the tools, quoting roofs the hard way. He built QuoteCore+ to solve the problems he lived with daily: manual measurements, repetitive pricing, slow quote turnaround, and disconnected tools. The product is shaped by real trade experience, not generic software design.
+            Shaun spent 20 years splitting his time between the tools and the office - quoting jobs, managing projects, and trying every method available to keep the paperwork under control. The process was always partially paper, partially digital, and numbers kept getting lost between apps. He built QuoteCore+ to be the software he wished he had: one connected platform from measurement to invoice.
           </p>
           <p className="mt-4">
             <a href="/about" className="text-sm font-semibold text-[#BD4A1A] hover:text-[#FF6B35]">
