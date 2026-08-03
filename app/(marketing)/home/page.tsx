@@ -198,6 +198,20 @@ export default function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: faqs.map((f) => ({
+              "@type": "Question",
+              name: f.question,
+              acceptedAnswer: { "@type": "Answer", text: f.answer },
+            })),
+          }),
+        }}
+      />
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 
@@ -258,6 +272,45 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Trust band */}
+        <section className="border-y border-zinc-100 bg-white">
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-6 py-4 text-sm text-zinc-600 lg:px-8">
+            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>No card required</span>
+            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>14-day full-access trial</span>
+            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>Plans from free to $59/month</span>
+            <span className="flex items-center gap-2"><svg viewBox="0 0 24 24" className="h-4 w-4 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>Built for roofing first</span>
+          </div>
+        </section>
+
+        {/* 1b. Three Engines Band */}
+        <section className="border-y border-zinc-100 bg-zinc-50/60">
+          <div className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-8">
+            <div className="grid gap-6 sm:grid-cols-3">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 3h18v18H3z" /><path d="M9 3v18M3 9h18" /></svg>
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-zinc-950">Digital Roof Takeoff</h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">Upload plans, measure roof areas, lengths and pitch digitally. Manual takeoff is a first-class workflow - not a fallback.</p>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 6v6l4 2" /></svg>
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-zinc-950">AI Scan Assist</h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">Optional AI identifies roof areas, ridges, hips, valleys, barges and spouts. You verify, adjust and add anything else.</p>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-zinc-950">Smart Components&#8482;</h3>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">Reusable rules for materials, labour, waste, pricing and drawings. Build the logic once, reuse it on every job.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* 2. Core Workflow */}
         <section id="how-it-works" className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-8 lg:py-16">
           <div className="text-center mb-12">
@@ -268,7 +321,7 @@ export default function HomePage() {
               From measurement to invoice, without the admin grind
             </h2>
             <p className="mt-4 mx-auto max-w-2xl text-base leading-7 text-zinc-600 sm:text-lg">
-              Digital takeoff captures measurements from your plans. Smart Components&#8482; apply your pricing and business rules. The same job data carries through to quoting, approvals, ordering, and invoicing - reducing duplicated admin and inconsistent pricing.
+              Three engines work together: Digital Takeoff captures measurements from your plans, AI Scan Assist accelerates the process, and Smart Components&#8482; apply your pricing and business rules. The same job data carries through to quoting, sending, ordering, and invoicing - no duplicated admin, no inconsistent pricing.
             </p>
           </div>
 
@@ -432,6 +485,38 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* 3b. What it replaces */}
+        <section className="mx-auto w-full max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
+          <div className="text-center mb-10">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
+              The difference
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
+              What QuoteCore+ replaces
+            </h2>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-zinc-200">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-zinc-200 bg-zinc-50">
+                  <th className="px-5 py-4 text-sm font-semibold text-zinc-900">Task</th>
+                  <th className="px-5 py-4 text-sm font-semibold text-zinc-500">Spreadsheets + email</th>
+                  <th className="px-5 py-4 text-sm font-semibold text-[#FF6B35]">QuoteCore+</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Measure roof from plan</td><td className="px-5 py-3 text-sm text-zinc-500">Manual scaling, calculator, re-entering</td><td className="px-5 py-3 text-sm text-zinc-700">Digital takeoff + optional AI, feeds straight into pricing</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Price materials and labour</td><td className="px-5 py-3 text-sm text-zinc-500">Rebuild formulas every quote</td><td className="px-5 py-3 text-sm text-zinc-700">Smart Components apply stored rules automatically</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Send quote to customer</td><td className="px-5 py-3 text-sm text-zinc-500">PDF + email, no tracking</td><td className="px-5 py-3 text-sm text-zinc-700">Send from app, track opens/reads, auto follow-ups</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Order materials</td><td className="px-5 py-3 text-sm text-zinc-500">Re-type from accepted quote</td><td className="px-5 py-3 text-sm text-zinc-700">Create order from saved quote, three formats, send to supplier</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Invoice the job</td><td className="px-5 py-3 text-sm text-zinc-500">Start from scratch in accounting software</td><td className="px-5 py-3 text-sm text-zinc-700">Create invoice from same quote, configure payment methods</td></tr>
+                <tr className="hover:bg-orange-50/40"><td className="px-5 py-3 text-sm text-zinc-900">Keep job data connected</td><td className="px-5 py-3 text-sm text-zinc-500">Multiple files, folders and systems</td><td className="px-5 py-3 text-sm text-zinc-700">One connected job from measurement to invoice</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         {/* 4. Product Proof - compact screenshots */}
         <section id="product-proof" className="mx-auto w-full max-w-7xl px-6 py-14 lg:px-8 lg:py-20">
           <div className="text-center mb-10">
@@ -439,15 +524,15 @@ export default function HomePage() {
               See the product
             </p>
             <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-              Built for how trades actually work
+              Built for how roofers actually work
             </h2>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { src: "/how-it-works-smart-components-list.png", label: "Smart Components library", desc: "Pricing, labour, and rules - reusable on every quote." },
-              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a plan, AI identifies roof areas and components." },
-              { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Drag, drop, and customise quotes in minutes." },
+              { src: "/how-it-works-smart-components-list.png", label: "Smart Components library", desc: "Roofing pricing, labour and rules - reusable on every quote." },
+              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan, AI identifies areas and components." },
+              { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Build, customise and send roofing quotes in minutes." },
               { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry." },
             ].map((item) => (
               <div
@@ -497,6 +582,7 @@ export default function HomePage() {
               <h2 className="mt-3 text-3xl font-semibold text-zinc-950 sm:text-4xl">
                 What users say
               </h2>
+              <p className="mt-3 text-sm text-zinc-500">From trades already using QuoteCore+. Roofing case studies coming soon.</p>
             </div>
 
             {/* Crawler-readable testimonials */}
@@ -553,10 +639,10 @@ export default function HomePage() {
                 Start quoting smarter
               </p>
               <h2 className="mt-5 text-4xl font-semibold leading-tight tracking-tight text-zinc-950 sm:text-5xl">
-                Build your next quote in QuoteCore+.
+                Build your next roofing quote in QuoteCore+.
               </h2>
               <p className="mt-5 text-base leading-7 text-zinc-500 sm:text-lg sm:leading-8">
-                Start with full access for 14 days. No card required.
+                Start with full access for 14 days. No card required. From first measurement to final invoice - all in one connected workflow.
               </p>
 
               <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -605,14 +691,18 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Supplier short link */}
+        {/* Roofing tools + supplier links */}
         <section className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
-          <p className="text-center text-sm text-zinc-500">
-            Are you a roofing supplier?{" "}
-            <a href="/suppliers" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">
-              We want to partner with you.
-            </a>
-          </p>
+          <div className="flex flex-col items-center gap-3 text-center text-sm text-zinc-500">
+            <p>
+              Looking for free roofing tools?{" "}
+              <a href="/free-tools" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Try our calculators and generators.</a>
+            </p>
+            <p>
+              Are you a roofing supplier?{" "}
+              <a href="/suppliers" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">We want to partner with you.</a>
+            </p>
+          </div>
         </section>
 
         <SiteFooter />
