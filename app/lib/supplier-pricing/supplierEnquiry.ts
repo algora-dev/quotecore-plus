@@ -104,8 +104,11 @@ export async function submitSupplierEnquiry(
     .single();
 
   if (enquiryError || !enquiry) {
+    console.error('[supplier-enquiry] Failed to create enquiry:', enquiryError);
     return { ok: false, error: 'Failed to create enquiry record' };
   }
+
+  console.log('[supplier-enquiry] Enquiry created:', enquiry.id, 'resultUrl:', input.resultUrl, 'attachmentIds:', input.attachmentIds);
 
   const enquiryId = enquiry.id;
 
@@ -118,10 +121,12 @@ export async function submitSupplierEnquiry(
       .update({ enquiry_id: enquiryId })
       .in('id', input.attachmentIds);
 
-    const { data: files } = await sb
+    const { data: files, error: fileError } = await sb
       .from('supplier_takeoff_enquiry_files')
       .select('filename, storage_path, content_type, size_bytes')
       .in('id', input.attachmentIds);
+
+    console.log('[supplier-enquiry] Files query:', { count: files?.length, error: fileError?.message, ids: input.attachmentIds });
 
     if (files && files.length > 0) {
       for (const file of files) {
@@ -320,6 +325,8 @@ Reply directly to this email to respond to ${input.senderName} at ${input.sender
   `.trim();
 
   // 6. Send email
+  console.log('[supplier-enquiry] Sending email:', { resultUrl: input.resultUrl, includeResultLink: input.includeResultLink, attachmentCount: attachments.length, totalsKeys: Object.keys(input.totals || {}) });
+
   const emailResult = await sendEmail({
     to: supplier.enquiry_email,
     subject,
