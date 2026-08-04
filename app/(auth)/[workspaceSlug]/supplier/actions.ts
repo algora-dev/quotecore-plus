@@ -24,6 +24,17 @@ export type SupplierProfileData = {
   logo_url: string | null;
   approved_at: string | null;
   allow_custom_pricing: boolean;
+  takeoff_builder_enabled: boolean;
+  default_takeoff_collection_id: string | null;
+  enquiry_email: string | null;
+  enquiries_enabled: boolean;
+  currency: string;
+  branch_city: string | null;
+  branch_region: string | null;
+  branch_country: string | null;
+  national_coverage: boolean;
+  delivery_coverage: string | null;
+  instant_pricing_available: boolean;
 };
 
 export type SupplierLibraryData = {
@@ -40,6 +51,7 @@ export type SupplierLibraryData = {
   roofing_types: string[] | null;
   product_categories: string[] | null;
   brands: string[] | null;
+  is_default_takeoff_library: boolean | null;
 };
 
 /**
@@ -52,7 +64,7 @@ export async function loadSupplierProfile(): Promise<SupplierProfileData | null>
 
   const { data, error } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing')
+    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, national_coverage, delivery_coverage, instant_pricing_available')
     .eq('company_id', profile.company_id)
     .maybeSingle();
 
@@ -81,7 +93,8 @@ export async function loadSupplierLibraries(): Promise<SupplierLibraryData[]> {
       public_description,
       roofing_types,
       product_categories,
-      brands
+      brands,
+      is_default_takeoff_library
     `)
     .eq('company_id', profile.company_id)
     .order('is_bootstrap', { ascending: false })
@@ -125,6 +138,11 @@ export async function updateSupplierProfile(
     brands: string[];
     keywords: string[];
     allow_custom_pricing: boolean;
+    takeoff_builder_enabled: boolean;
+    default_takeoff_collection_id: string | null;
+    enquiry_email: string | null;
+    enquiries_enabled: boolean;
+    instant_pricing_available: boolean;
   }>
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
@@ -150,6 +168,11 @@ export async function updateSupplierProfile(
     if (input.brands !== undefined) update.brands = input.brands;
     if (input.keywords !== undefined) update.keywords = input.keywords;
     if (input.allow_custom_pricing !== undefined) update.allow_custom_pricing = input.allow_custom_pricing;
+    if (input.takeoff_builder_enabled !== undefined) update.takeoff_builder_enabled = input.takeoff_builder_enabled;
+    if (input.default_takeoff_collection_id !== undefined) update.default_takeoff_collection_id = input.default_takeoff_collection_id;
+    if (input.enquiry_email !== undefined) update.enquiry_email = input.enquiry_email || null;
+    if (input.enquiries_enabled !== undefined) update.enquiries_enabled = input.enquiries_enabled;
+    if (input.instant_pricing_available !== undefined) update.instant_pricing_available = input.instant_pricing_available;
 
     const { error } = await supabase
       .from('supplier_profiles')
@@ -343,6 +366,81 @@ export async function publishCatalogUpdate(
 
     revalidatePath('/[workspaceSlug]/supplier', 'page');
     return { ok: true, newVersion };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Update takeoff builder settings from the supplier dashboard.
+ * Lets the supplier opt in/out, choose their component library, and configure enquiry settings.
+ */
+export async function updateTakeoffBuilderSettings(input: {
+  takeoff_builder_enabled: boolean;
+  default_takeoff_collection_id: string | null;
+  enquiry_email: string | null;
+  enquiries_enabled: boolean;
+  instant_pricing_available: boolean;
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    const { data: supplier } = await supabase
+      .from('supplier_profiles')
+      .select('id, status')
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!supplier) return { ok: false, message: 'No supplier profile found for this company.' };
+    if (supplier.status !== 'approved') return { ok: false, message: 'Only approved suppliers can configure the takeoff builder.' };
+
+    // If enabling, verify the selected collection belongs to this company
+    if (input.takeoff_builder_enabled && input.default_takeoff_collection_id) {
+      const { data: coll } = await supabase
+        .from('component_collections')
+        .select('id')
+        .eq('id', input.default_takeoff_collection_id)
+        .eq('company_id', profile.company_id)
+        .maybeSingle();
+
+      if (!coll) return { ok: false, message: 'Selected component library not found.' };
+    }
+
+    // Update supplier profile
+    const { error: profileErr } = await supabase
+      .from('supplier_profiles')
+      .update({
+        takeoff_builder_enabled: input.takeoff_builder_enabled,
+        default_takeoff_collection_id: input.default_takeoff_collection_id,
+        enquiry_email: input.enquiry_email,
+        enquiries_enabled: input.enquiries_enabled,
+        instant_pricing_available: input.instant_pricing_available,
+      })
+      .eq('id', supplier.id);
+
+    if (profileErr) return { ok: false, message: profileErr.message };
+
+    // Update is_default_takeoff_library flag on collections
+    // Clear all defaults for this supplier first
+    const admin = createAdminClient() as AdminAny;
+    await admin
+      .from('component_collections')
+      .update({ is_default_takeoff_library: false })
+      .eq('supplier_profile_id', supplier.id)
+      .eq('is_default_takeoff_library', true);
+
+    // Set new default if specified
+    if (input.default_takeoff_collection_id) {
+      await admin
+        .from('component_collections')
+        .update({ is_default_takeoff_library: true })
+        .eq('id', input.default_takeoff_collection_id)
+        .eq('company_id', profile.company_id);
+    }
+
+    revalidatePath('/[workspaceSlug]/supplier', 'page');
+    return { ok: true };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
   }
