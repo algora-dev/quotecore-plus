@@ -691,7 +691,7 @@ export default function HomePage() {
             </p>
             <p>
               Are you a roofing supplier?{" "}
-              <a href="/suppliers" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">We want to partner with you.</a>
+              <a href="/suppliers-info" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">We want to partner with you.</a>
             </p>
           </div>
         </section>

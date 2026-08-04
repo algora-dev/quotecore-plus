@@ -6,6 +6,7 @@ import { CONSTRUCTION_SLUGS } from '@/app/(public)/free-calculators/configs/cons
 import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs';
 import { getSitemapPosts } from '@/app/lib/blog-posts';
 import { SITE_URL } from '@/lib/seo/site-url';
+import { getSupplierDirectory } from '@/lib/supplier-directory';
 
 /**
  * Public sitemap for https://quote-core.com.
@@ -19,7 +20,7 @@ import { SITE_URL } from '@/lib/seo/site-url';
  * which is also used by the blog page itself - single source of truth.
  */
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${SITE_URL}/blog`, changeFrequency: 'weekly', priority: 0.8 },
@@ -48,7 +49,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/tutorials`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/contact`, changeFrequency: 'yearly', priority: 0.5 },
     { url: `${SITE_URL}/free-trial`, changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${SITE_URL}/suppliers`, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${SITE_URL}/suppliers`, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${SITE_URL}/suppliers-info`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/trust`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/customer-stories`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
@@ -127,5 +129,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     }));
 
-  return [...staticEntries, ...blogEntries, ...slugEntries, ...docEntries];
+  // Supplier pages (dynamic, from public_supplier_directory RPC)
+  const suppliers = await getSupplierDirectory();
+  const supplierEntries: MetadataRoute.Sitemap = suppliers
+    .filter((s) => s.slug)
+    .map((s) => ({
+      url: `${SITE_URL}/suppliers/${s.slug}`,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    }));
+
+  return [...staticEntries, ...blogEntries, ...slugEntries, ...docEntries, ...supplierEntries];
 }

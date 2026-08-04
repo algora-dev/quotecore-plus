@@ -1,5 +1,7 @@
 # Supplier-Powered Free Roof Takeoff Platform
 
+> This remains the detailed supplier-library and enquiry implementation plan. The newer cross-owner discovery-to-result roadmap and phase gates are defined in `docs/SUPPLIER_AI_DISCOVERY_PHASE_PLAN.md`; Gavin's backend handoff is in `docs/GAVIN_SUPPLIER_AI_PLATFORM_HANDOFF.md`.
+
 Status: Planning draft for Shaun approval  
 Planning model: GPT-5.6  
 Implementation model: GLM 5.2, one phase at a time  

@@ -371,7 +371,7 @@ export default function SupplierResourcesPage() {
               <h3 className="font-semibold text-slate-900">Smart Components™</h3>
               <p className="mt-1 text-sm text-zinc-600">Imported supplier components become Smart Components™ in your account.</p>
             </Link>
-            <Link href="/suppliers" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+            <Link href="/suppliers-info" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">For suppliers</h3>
               <p className="mt-1 text-sm text-zinc-600">Are you a supplier? Publish your catalog and reach contractors who order every day.</p>
             </Link>

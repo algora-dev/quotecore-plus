@@ -68,6 +68,7 @@ const PUBLIC_PATHS = [
   '/services',
   '/contact',
   '/suppliers',
+  '/suppliers-info',
   '/supplier-partnership', // Hidden supplier partnership page (email outreach, not in nav)
   '/blog',
   '/resources',     // Resource hub pages (blog category hubs)

@@ -64,7 +64,8 @@ A user provides roof measurements (area, pitch, ridges, hips, valleys, barges, s
 - [Company](https://quote-core.com/company)
 - [Trust and Security](https://quote-core.com/trust)
 - [Customer Stories](https://quote-core.com/customer-stories)
-- [For Suppliers](https://quote-core.com/suppliers)
+- [Supplier Directory](https://quote-core.com/suppliers)
+- [For Suppliers](https://quote-core.com/suppliers-info)
 - [Contact](https://quote-core.com/contact)
 
 ## Features

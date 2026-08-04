@@ -204,7 +204,7 @@ export default function SmartComponentsPage() {
             Suppliers can publish their catalogs publicly, so contractors anywhere can find and use real pricing. This means you can quote jobs accurately even if you&apos;re new to a market or working with a new supplier. Adjust the imported prices to match your trade discount or markup, and you&apos;re ready to go.
           </p>
           <div className="mt-6">
-            <Link href="/suppliers" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
+            <Link href="/suppliers-info" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
               Learn about suppliers
             </Link>
           </div>
@@ -351,7 +351,7 @@ export default function SmartComponentsPage() {
               <h3 className="font-semibold text-slate-900">Material ordering</h3>
               <p className="mt-1 text-sm text-zinc-600">Turn accepted quotes into material orders. Smart Components™ know what to order.</p>
             </Link>
-            <Link href="/suppliers" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+            <Link href="/suppliers-info" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Supplier network</h3>
               <p className="mt-1 text-sm text-zinc-600">Suppliers publish catalogs. Contractors import pricing. Everyone wins.</p>
             </Link>

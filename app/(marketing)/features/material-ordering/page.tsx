@@ -301,7 +301,7 @@ export default function MaterialOrderingPage() {
               <h3 className="font-semibold text-slate-900">Free purchase order generator</h3>
               <p className="mt-1 text-sm text-zinc-600">Create a purchase order for free, no signup required.</p>
             </Link>
-            <Link href="/suppliers" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+            <Link href="/suppliers-info" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Supplier network</h3>
               <p className="mt-1 text-sm text-zinc-600">Get your materials in front of contractors who order every day.</p>
             </Link>
