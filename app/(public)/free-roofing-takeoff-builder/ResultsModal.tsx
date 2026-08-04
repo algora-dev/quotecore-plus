@@ -311,7 +311,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                     if (action === 'print') window.print();
                     else if (action === 'send') setShowEnquiry(true);
                     else if (action === 'quote') window.location.href = buildConvertToQuoteUrl();
-                    else if (action === 'signup') window.location.href = '/signup?ref=free-roofing-takeoff-builder';
+                    else if (action === 'signup') window.open('/signup?ref=free-roofing-takeoff-builder', '_blank');
                   }}
                   className="flex-1 rounded-full bg-black text-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-800 transition"
                 >
