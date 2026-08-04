@@ -197,7 +197,22 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
       setSupplierLibrariesLoading(true);
       fetch('/api/free-tools/supplier-libraries')
         .then(r => r.json())
-        .then(data => { if (data.libraries) setSupplierLibraries(data.libraries); })
+        .then(data => {
+          if (data.libraries) {
+            // On .co.nz, sort NZ suppliers first
+            const isNz = window.location.hostname.endsWith('.co.nz');
+            const sorted = isNz
+              ? [...data.libraries].sort((a: any, b: any) => {
+                  const aNz = a.country === 'NZ' || a.country === 'New Zealand';
+                  const bNz = b.country === 'NZ' || b.country === 'New Zealand';
+                  if (aNz && !bNz) return -1;
+                  if (!aNz && bNz) return 1;
+                  return 0;
+                })
+              : data.libraries;
+            setSupplierLibraries(sorted);
+          }
+        })
         .catch(() => {})
         .finally(() => setSupplierLibrariesLoading(false));
     }

@@ -167,10 +167,10 @@ export async function middleware(request: NextRequest) {
     const url = new URL(pathname + (request.nextUrl.search || ''), CANONICAL_PUBLIC_ORIGIN);
     return NextResponse.redirect(url, 308);
   }
+  // app.quote-core.com still redirects /free-* to the canonical public origin.
+  // .co.nz NO LONGER redirects - free tools render on both domains for SEO.
   if (
-    (hostname === 'quote-core.co.nz' ||
-      hostname === 'www.quote-core.co.nz' ||
-      hostname === 'app.quote-core.com') &&
+    hostname === 'app.quote-core.com' &&
     pathname.startsWith('/free-')
   ) {
     const url = new URL(pathname + (request.nextUrl.search || ''), CANONICAL_PUBLIC_ORIGIN);
@@ -179,8 +179,9 @@ export async function middleware(request: NextRequest) {
 
   // -- Domain-based routing ------------------------------
   // Production:
-  //   quote-core.com (and www, .co.nz) = public-facing marketing site.
-  //   app.quote-core.com               = full application.
+  //   quote-core.com / www / .co.nz / www.co.nz = public-facing marketing site.
+  //   Free tools render on ALL marketing domains (no redirect) for SEO.
+  //   app.quote-core.com = full application only.
   //   When on a marketing domain, only public routes are allowed;
   //   everything else redirects to app.quote-core.com.
   //

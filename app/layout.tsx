@@ -4,6 +4,8 @@ import "./globals.css";
 import { CookieBanner } from "./components/CookieBanner";
 import { PillShimmerScript } from "./components/PillShimmerScript";
 import { SITE_URL } from "@/lib/seo/site-url";
+import { htmlLang } from "@/lib/seo/dual-domain";
+import { headers } from "next/headers";
 
 /**
  * Explicit viewport config.
@@ -84,14 +86,18 @@ export const metadata: Metadata = {
   colorScheme: 'light',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerSet = await headers();
+  const host = headerSet.get('host') || '';
+  const lang = htmlLang(host);
+
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

@@ -1,24 +1,28 @@
 import type { MetadataRoute } from 'next';
+import { headers } from 'next/headers';
 import { SITE_URL } from '@/lib/seo/site-url';
+import { isNzHost, canonicalOrigin } from '@/lib/seo/dual-domain';
 
 /**
- * robots.txt for https://quote-core.com.
+ * robots.txt - domain-aware.
  *
- * Production: allows crawling of all public pages, blocks only private/app routes.
+ * quote-core.com: allows crawling of all public pages, blocks private/app routes.
+ * quote-core.co.nz: same rules, but sitemap + host point to .co.nz.
  * Preview/staging: blocks all crawling (noindex everything).
- *
- * Sitemap points to the global sitemap only.
- * The NZ site (quote-core.co.nz) has its own robots.txt + sitemap.
  */
 
 const isProduction = process.env.VERCEL_ENV === 'production' || !process.env.VERCEL_ENV;
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const h = await headers();
+  const host = h.get('host') || '';
+  const origin = canonicalOrigin(host);
+
   // Preview/staging: block everything
   if (!isProduction) {
     return {
       rules: { userAgent: '*', disallow: '/' },
-      sitemap: `${SITE_URL}/sitemap.xml`,
+      sitemap: `${origin}/sitemap.xml`,
     };
   }
 
@@ -64,7 +68,7 @@ export default function robots(): MetadataRoute.Robots {
         '/*/account',
       ],
     },
-    sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
+    sitemap: `${origin}/sitemap.xml`,
+    host: origin,
   };
 }
