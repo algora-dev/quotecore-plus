@@ -134,7 +134,7 @@ export async function searchSupplierLibraries(params: {
       product_categories,
       brands,
       supplier_profile_id,
-      supplier_profiles!inner (
+      supplier_profiles!component_collections_supplier_profile_id_fkey!inner (
         id,
         supplier_name,
         slug,
@@ -155,8 +155,6 @@ export async function searchSupplierLibraries(params: {
     return [];
   }
 
-  console.log('[searchSupplierLibraries] Found collections:', collections?.length ?? 0, collections?.map(c => ({ id: c.id, name: c.name, visibility: c.visibility, sp: (c as any).supplier_profiles?.supplier_name })) ?? []);
-
   if (!collections || collections.length === 0) return [];
 
   // Get component counts for these collections
@@ -166,8 +164,6 @@ export async function searchSupplierLibraries(params: {
     .select('collection_id')
     .in('collection_id', collectionIds)
     .eq('is_active', true);
-
-  console.log('[searchSupplierLibraries] Component counts:', { collectionIds, counts: counts?.length ?? 0, countError: countError?.message });
 
   const countMap = new Map<string, number>();
   for (const row of counts ?? []) {
@@ -261,16 +257,7 @@ export async function searchSupplierLibraries(params: {
   }
 
   // Filter out libraries with 0 components (nothing to import)
-  const filtered = results.filter(l => l.component_count > 0);
-  (globalThis as any).__supplierLibDebug = {
-    collectionsFound: collections?.length ?? 0,
-    componentCounts: countMap,
-    resultsBeforeFilter: results.length,
-    resultsAfterFilter: filtered.length,
-    error: error?.message,
-    countError: countError?.message,
-  };
-  return filtered;
+  return results.filter(l => l.component_count > 0);
 }
 
 /**
@@ -447,7 +434,7 @@ export async function getLibraryComponents(libraryId: string): Promise<{
   // First verify the library is published and from an approved supplier
   const { data: lib } = await supabase
     .from('component_collections')
-    .select('id, visibility, published_version, supplier_profiles!inner(id, status)')
+    .select('id, visibility, published_version, supplier_profiles!component_collections_supplier_profile_id_fkey!inner(id, status)')
     .eq('id', libraryId)
     .maybeSingle();
 
@@ -518,7 +505,7 @@ export async function importSupplierComponents(params: {
   // 1. Verify source library is published and from approved supplier
   const { data: sourceLib } = await supabase
     .from('component_collections')
-    .select('id, visibility, published_version, supplier_profiles!inner(id, status)')
+    .select('id, visibility, published_version, supplier_profiles!component_collections_supplier_profile_id_fkey!inner(id, status)')
     .eq('id', sourceLibraryId)
     .maybeSingle();
 
@@ -816,7 +803,7 @@ export async function publishLibraryUpdate(libraryId: string): Promise<{
         // Get library name + supplier name for the alert text
         const { data: libInfo } = await supabase
           .from('component_collections')
-          .select('name, supplier_profiles!inner(supplier_name)')
+          .select('name, supplier_profiles!component_collections_supplier_profile_id_fkey!inner(supplier_name)')
           .eq('id', libraryId)
           .single();
 
@@ -951,7 +938,7 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
         // Get supplier + library names
         const { data: libInfo } = await supabase
           .from('component_collections')
-          .select('id, name, supplier_profiles!inner(supplier_name)')
+          .select('id, name, supplier_profiles!component_collections_supplier_profile_id_fkey!inner(supplier_name)')
           .in('id', sourceLibraryIds);
 
         const libMap = new Map((libInfo ?? []).map(l => [l.id, {
@@ -1020,7 +1007,7 @@ export async function getPendingSupplierUpdates(): Promise<PendingUpdate[]> {
   // 3. Get library + supplier info for relevant libraries (batched)
   const { data: libs } = await supabase
     .from('component_collections')
-    .select('id, name, supplier_profiles!inner(supplier_name)')
+    .select('id, name, supplier_profiles!component_collections_supplier_profile_id_fkey!inner(supplier_name)')
     .in('id', sourceLibraryIds);
 
   const libMap = new Map<string, { name: string; supplier_name: string }>();
@@ -1531,7 +1518,7 @@ export async function getSupplierSubscriptions(): Promise<Array<{
   const libIds = subs.map(s => s.source_library_id);
   const { data: libs } = await supabase
     .from('component_collections')
-    .select('id, name, supplier_profiles!inner(supplier_name)')
+    .select('id, name, supplier_profiles!component_collections_supplier_profile_id_fkey!inner(supplier_name)')
     .in('id', libIds);
 
   const libMap = new Map<string, { name: string; supplier_name: string }>();
@@ -1597,7 +1584,7 @@ export async function searchSupplierCatalogs(params: {
       published_at, published_version, row_count, original_filename,
       roofing_types, brands, keywords, service_areas,
       supplier_profile_id,
-      supplier_profiles!inner (
+      supplier_profiles!component_collections_supplier_profile_id_fkey!inner (
         id, supplier_name, slug, logo_url, status, service_areas
       )
     `)
