@@ -1,153 +1,52 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import FAQAccordion from "./FAQAccordion";
+import SupplierCTA from "./SupplierCTA";
+import SupplierJourney from "./SupplierJourney";
+import {
+  CatalogueOutcomeVisual,
+  DashboardVisual,
+  PublicPricingToolVisual,
+  QuoteCoreIntegrationVisual,
+  VideoPlaceholder,
+} from "./SupplierPartnershipVisuals";
+import {
+  customerExperienceSteps,
+  customServices,
+  freeOfferings,
+  supplierBenefits,
+  trustPoints,
+} from "./content";
 
 export const metadata: Metadata = {
-  title: "Supplier Partnership - Give Customers Useful Roofing Prices Instantly | QuoteCore+",
-  description:
-    "Use your own products and base pricing to provide fast preliminary estimates, capture better-qualified enquiries, and reduce back-and-forth. Free supplier listing available.",
-  alternates: {
-    canonical: "https://quote-core.com/supplier-partnership",
-  },
-  robots: {
-    index: false,
-    follow: true,
-  },
+  title: "Supplier Partnership | QuoteCore+",
+  description: "Put your roofing products into the tools contractors use to price jobs. Start with free supplier integrations, then explore custom branded and growth services.",
+  alternates: { canonical: "https://quote-core.com/supplier-partnership" },
   openGraph: {
-    title: "Supplier Partnership - Give Customers Useful Roofing Prices Instantly | QuoteCore+",
-    description:
-      "Use your own products and base pricing to provide fast preliminary estimates, capture better-qualified enquiries, and reduce back-and-forth. Free supplier listing available.",
+    title: "A free way to put your roofing products in front of buyers | QuoteCore+",
+    description: "Give contractors a useful preliminary price using your products, capture better-qualified enquiries and keep the customer relationship.",
     url: "https://quote-core.com/supplier-partnership",
+    siteName: "QuoteCore+",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Supplier Partnership - Give Customers Useful Roofing Prices Instantly | QuoteCore+",
-    description:
-      "Use your own products and base pricing to provide fast preliminary estimates, capture better-qualified enquiries, and reduce back-and-forth. Free supplier listing available.",
   },
 };
 
-const beforeSteps = [
-  "Customer contacts you for a rough price",
-  "You explain you need to check current pricing and get back to them",
-  "Customer waits, may contact another supplier in the meantime",
-  "You do a manual calculation and get back to them",
-  "Half the time, they have already moved on",
-];
+function CheckIcon({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  );
+}
 
-const afterSteps = [
-  "Customer visits the pricing tool on your website or QuoteCore+",
-  "They select a roofing system and enter their measurements",
-  "They receive a useful preliminary price based on your products",
-  "They contact you with a clear idea of what they want",
-  "You spend time on the quote, not on chasing tyre-kickers",
-];
-
-const walkthroughSteps = [
-  {
-    caption: "Select the roofing system",
-    description: "The customer picks from the roofing products you have made available.",
-  },
-  {
-    caption: "Enter the measurements",
-    description: "They enter their roof area, pitch, and other basic details.",
-  },
-  {
-    caption: "Receive a useful starting price",
-    description: "The tool generates a preliminary price using your base pricing.",
-  },
-  {
-    caption: "Send an enquiry",
-    description: "The customer sends an email directly from the tool with the details they want you to see.",
-  },
-];
-
-const freeOfferings = [
-  {
-    number: "01",
-    title: "Supplier integration in QuoteCore+",
-    description: "We add your business as a partner supplier inside the QuoteCore+ app. You get a supplier dashboard where you can upload pricing catalogues and build component libraries. Contractors using QuoteCore+ can search, find your products, and use your pricing in their quotes.",
-    bullets: [
-      "Your business listed as a partner supplier inside QuoteCore+",
-      "Dashboard to manage your pricing catalogues and component libraries",
-      "We help you build your component library and upload your pricing",
-      "Contractors worldwide can search and use your products in their quotes",
-      "The goal: users price jobs with your materials, then order from you",
-    ],
-    link: { label: "See the app", href: "https://app.quote-core.com" },
-  },
-  {
-    number: "02",
-    title: "Free roofing pricing tool",
-    description: "We connect your supplier pricing into a free public roofing takeoff and pricing tool. Customers searching for roofing prices online can find your tool, or you can link to it from your website. It uses the same component library from the main app, so everything stays in sync.",
-    bullets: [
-      "A free tool hosted on quote-core.com using your products and pricing",
-      "Customers find it through search or via a link from your website",
-      "Uses the same component library as your QuoteCore+ integration",
-      "Customers get a useful preliminary price and can contact you directly",
-      "You can give customers a direct link to your specific tool",
-    ],
-    link: { label: "See the tool", href: "https://quote-core.com/free-roofing-takeoff-builder" },
-  },
-];
-
-const supplierExamples = [
-  { label: "Roof tile supplier - estimate tool", href: "#walkthrough" },
-  { label: "Metal roofing supplier - product calculator", href: "#walkthrough" },
-  { label: "Membrane supplier - preliminary quote tool", href: "#walkthrough" },
-];
-
-const dashboardDataPoints = [
-  "How many times the tool has been used",
-  "Which products are being selected most often",
-  "What roof types and systems are being priced",
-  "Which regions are generating the most activity",
-  "How many enquiries have been generated through the tool",
-  "Average estimate value being produced",
-  "Which products are selected but rarely convert to enquiries",
-  "Time of day and day of week usage patterns",
-];
-
-const customOptions = [
-  {
-    title: "Branded Pricing Tool",
-    items: [
-      "Your logo, brand colours, and product names",
-      "Hosted on a dedicated page or embedded on your website",
-      "Your products and base pricing only",
-      "Enquiries come directly to you",
-    ],
-  },
-  {
-    title: "Website Integration",
-    items: [
-      "Embed the pricing tool on your existing website",
-      "Match your site's look and feel",
-      "Works on mobile and desktop",
-      "No need to rebuild your current site",
-    ],
-  },
-  {
-    title: "Full Supplier Quoting System",
-    items: [
-      "Complete quoting workflow from measurement to formal quote",
-      "Product catalogue management with pricing tiers",
-      "Dashboard with enquiry tracking and reporting",
-      "Integration with your existing systems where needed",
-    ],
-  },
-  {
-    title: "Growth and Discovery Support",
-    items: [
-      "Supplier page on QuoteCore+ with your brand and products",
-      "Content and worked examples to attract search traffic",
-      "Ongoing optimisation of product listings and pricing",
-      "Regular reporting on tool usage and enquiry volume",
-    ],
-  },
-];
+function ArrowIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
+    </svg>
+  );
+}
 
 export default function SupplierPartnershipPage() {
   return (
@@ -155,381 +54,169 @@ export default function SupplierPartnershipPage() {
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
 
-        {/* 1. Hero */}
-        <section className="relative overflow-hidden py-16 lg:py-20">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
-          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
-                  Supplier Partnership
-                </p>
-                <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-                  Give customers useful roofing prices instantly
-                </h1>
-                <p className="mt-6 text-lg text-zinc-600">
-                  Add your products and base pricing to QuoteCore+ so contractors can generate preliminary prices without picking up the phone. Better-qualified enquiries, less back-and-forth.
-                </p>
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                  <a
-                    href="https://calendly.com/quote-core-info/15-minute-meeting"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
-                  >
-                    Book a call
-                  </a>
-                  <a
-                    href="/contact"
-                    className="inline-flex items-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                  >
-                    Send a message
-                  </a>
-                  <a
-                    href="#free-integration"
-                    className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
-                  >
-                    List our business for free
-                  </a>
-                </div>
-                <p className="mt-5 text-sm text-slate-500">
-                  No obligation. No need to replace your current quoting process. Or simply reply to the email you received.
-                </p>
+        <section className="relative overflow-hidden py-14 sm:py-16 lg:py-24">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,107,53,0.13),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(15,23,42,0.06),transparent_28%)]" />
+          <div className="relative mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:px-8">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-[#BD4A1A]">
+                <span className="h-2 w-2 rounded-full bg-[#FF6B35]" />
+                Free supplier partnership
               </div>
-              <div>
-                <div className="aspect-video w-full rounded-2xl border border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center">
-                    <svg className="w-7 h-7 text-white ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm text-slate-500">Short supplier overview video</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 2. Problem / Solution */}
-        <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Instead of "Thanks, we&apos;ll be in touch," give them something useful now.
-            </h2>
-            <p className="mt-4 text-lg text-zinc-600 max-w-3xl">
-              The usual supplier process ends with the customer waiting. A pricing tool gives them a useful first result immediately - and gives you a better-qualified enquiry when they do get in touch.
-            </p>
-            <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* Before card */}
-              <div className="rounded-xl border border-slate-300 bg-slate-100 p-6 lg:p-8">
-                <h3 className="text-base font-semibold text-slate-500">The usual supplier process</h3>
-                <ol className="mt-6 space-y-4">
-                  {beforeSteps.map((step, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-300 text-xs font-semibold text-slate-600">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm text-slate-600">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              {/* After card */}
-              <div className="rounded-xl border border-orange-200 bg-white p-6 lg:p-8 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition">
-                <h3 className="text-base font-semibold text-[#FF6B35]">A better first result</h3>
-                <ol className="mt-6 space-y-4">
-                  {afterSteps.map((step, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-semibold text-white">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm text-slate-700">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 3. Product Walkthrough */}
-        <section id="walkthrough" className="py-16 lg:py-20">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              How the pricing tool works
-            </h2>
-            <p className="mt-4 text-lg text-zinc-600 max-w-3xl">
-              The supplier controls which products are shown, which prices are visible, and how detailed the estimate should be.
-            </p>
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {walkthroughSteps.map((step, i) => (
-                <div
-                  key={i}
-                  className="rounded-xl border border-slate-200 bg-white p-6 transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
-                >
-                  <div className="aspect-video w-full rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center mb-4">
-                    <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-semibold text-[#FF6B35]">Step {i + 1}</p>
-                  <h3 className="mt-1 text-base font-semibold text-slate-900">{step.caption}</h3>
-                  <p className="mt-2 text-sm text-slate-600">{step.description}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-8 text-sm text-slate-500">
-              The supplier controls which products are shown, which prices are visible, and how detailed the estimate should be.
-            </p>
-          </div>
-        </section>
-
-        {/* 4. What you get for free */}
-        <section id="free-integration" className="py-16 lg:py-20">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
-                Two things, both free
+              <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-[3.55rem] lg:leading-[1.05]">
+                Get your products into the tools contractors use to price roofing jobs — free.
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-600">
+                We help turn your catalogue into usable product and pricing data inside QuoteCore+ and a public roofing pricing tool. Contractors get a useful starting price. You get a better-informed enquiry sent directly to your business.
               </p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                What you get when you partner with us
-              </h2>
-              <p className="mt-4 text-lg text-zinc-600">
-                We give suppliers two products at no cost. Both work together - your pricing and components live in one place and sync across both.
-              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <SupplierCTA href="/contact" intent="free_setup" location="hero">
+                  Start my free supplier setup <ArrowIcon />
+                </SupplierCTA>
+                <SupplierCTA href="#how-it-works" intent="learn_more" location="hero" variant="secondary">
+                  See how it works
+                </SupplierCTA>
+              </div>
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {trustPoints.map((point) => (
+                  <div key={point} className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 text-[#BD4A1A]"><CheckIcon className="h-3.5 w-3.5" /></span>
+                    {point}
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mt-12 space-y-8">
-              {freeOfferings.map((offering) => (
-                <div
-                  key={offering.number}
-                  className="rounded-2xl border-2 border-[#FF6B35]/20 bg-orange-50/20 p-8 lg:p-10"
-                >
-                  <div className="flex items-start gap-6">
-                    <span className="text-2xl font-bold text-[#FF6B35] shrink-0">{offering.number}</span>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold text-slate-900">{offering.title}</h3>
-                      <p className="mt-3 text-base text-zinc-600">{offering.description}</p>
-                      <ul className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {offering.bullets.map((bullet) => (
-                          <li key={bullet} className="flex items-start gap-2">
-                            <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                            <span className="text-sm text-slate-700">{bullet}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <a href={offering.link.href} className="mt-6 inline-block text-sm font-medium text-[#FF6B35] hover:underline">
-                        {offering.link.label} &rarr;
-                      </a>
+            <div>
+              <VideoPlaceholder
+                eyebrow="Short overview video"
+                title="The free supplier opportunity in under a minute"
+                description="This placeholder is ready for the short video explaining the offer, the customer journey and what the supplier receives."
+                duration="45–60 sec"
+              />
+              <p className="mt-3 text-center text-xs text-slate-600">Video placeholder — final footage can drop into this frame without changing the layout.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="free-partnership" className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">Start here — no strings attached</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Two free ways to put your products in front of buyers</h2>
+              <p className="mt-5 text-lg leading-8 text-zinc-600">We build the useful foundation first. You keep control of your products, pricing and customer relationships, and there is no obligation to buy anything else.</p>
+            </div>
+
+            <div className="mt-12 grid gap-6 lg:grid-cols-2">
+              {freeOfferings.map((offering, index) => (
+                <article key={offering.number} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.06)] transition hover:border-orange-200 hover:shadow-[0_20px_65px_rgba(255,107,53,0.10)] sm:p-7">
+                  {index === 0 ? <QuoteCoreIntegrationVisual /> : <PublicPricingToolVisual />}
+                  <div className="mt-7 flex items-start gap-4">
+                    <span className="text-sm font-semibold text-[#BD4A1A]">{offering.number}</span>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">{offering.eyebrow}</p>
+                      <h3 className="mt-2 text-xl font-semibold text-slate-900">{offering.title}</h3>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a
-                href="https://calendly.com/quote-core-info/15-minute-meeting"
-                className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
-              >
-                Book a call to get started
-              </a>
-              <span className="text-sm text-slate-500">Or simply reply to the email you received.</span>
-            </div>
-            <p className="mt-4 text-sm text-slate-500">
-              Your pricing remains under your control at all times.
-            </p>
-          </div>
-        </section>
-
-        {/* 6. Supplier Examples */}
-        <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Examples of supplier pricing tools
-            </h2>
-            <p className="mt-4 text-lg text-zinc-600 max-w-3xl">
-              Each supplier can configure the tool differently based on their products and preferences.
-            </p>
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
-              {supplierExamples.map((example) => (
-                <div
-                  key={example.label}
-                  className="rounded-xl border border-slate-200 bg-white overflow-hidden transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
-                >
-                  <div className="aspect-[4/3] w-full bg-slate-50 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5z" />
-                    </svg>
-                  </div>
-                  <div className="p-5">
-                    <p className="text-sm font-semibold text-slate-900">{example.label}</p>
-                    <a href={example.href} className="mt-2 inline-block text-sm font-medium text-[#FF6B35] hover:underline">
-                      View example
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 6. Supplier Dashboard (custom/branded) */}
-        <section className="py-16 lg:py-20">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
-              With a custom setup
-            </p>
-            <div className="mt-4 grid grid-cols-1 gap-12 lg:grid-cols-2 lg:items-center">
-              <div>
-                <div className="aspect-[4/3] w-full rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Know who is using the tool and what they are pricing
-                </h2>
-                <ul className="mt-6 space-y-3">
-                  {dashboardDataPoints.map((point) => (
-                    <li key={point} className="flex items-start gap-3">
-                      <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                      <span className="text-sm text-slate-700">{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 8. Custom / Branded Options */}
-        <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Custom and branded options
-            </h2>
-            <p className="mt-4 text-lg text-zinc-600 max-w-3xl">
-              Beyond the free listing, there are several ways to make the tool work harder for your business.
-            </p>
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {customOptions.map((option) => (
-                <div
-                  key={option.title}
-                  className="rounded-xl border border-slate-200 bg-white p-6 transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
-                >
-                  <h3 className="text-base font-semibold text-slate-900">{option.title}</h3>
-                  <ul className="mt-4 space-y-2">
-                    {option.items.map((item) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
-                        <span className="text-sm text-slate-600">{item}</span>
-                      </li>
+                  <p className="mt-5 text-sm leading-7 text-slate-600">{offering.description}</p>
+                  <ul className="mt-6 space-y-3">
+                    {offering.bullets.map((bullet) => (
+                      <li key={bullet} className="flex items-start gap-3 text-sm leading-6 text-slate-700"><CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#BD4A1A]" />{bullet}</li>
                     ))}
                   </ul>
-                </div>
+                </article>
               ))}
             </div>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a
-                href="/contact"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                Request a tailored example
-              </a>
-              <span className="text-sm text-slate-500">Or simply reply to the email you received.</span>
+
+            <div className="mt-10 flex flex-col items-start justify-between gap-5 rounded-2xl border border-orange-200 bg-orange-50/70 p-6 sm:flex-row sm:items-center sm:p-8">
+              <div><p className="text-lg font-semibold text-slate-900">You supply the catalogue. We help build the first experience.</p><p className="mt-2 text-sm leading-6 text-slate-600">Start with a conversation or send us the basics by email. We will show you what the free setup could look like before anything goes live.</p></div>
+              <SupplierCTA href="/contact" intent="free_setup" location="free_offer" className="shrink-0">Start the free setup <ArrowIcon /></SupplierCTA>
             </div>
           </div>
         </section>
 
-        {/* 9. Search / AI Discovery */}
-        <section className="py-16 lg:py-20">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Help new customers find your pricing tools
-            </h2>
-            <div className="mt-8 aspect-[16/5] w-full rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center">
-              <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-            </div>
-            <p className="mt-6 text-lg text-zinc-600">
-              When your pricing tool is live, search engines and AI systems can find it, index it, and surface it when people search for roofing prices in your area. The more useful the tool, the more likely it is to be recommended.
-            </p>
-            <p className="mt-4 text-sm text-slate-500">
-              Search visibility builds over time and can be supported with supplier pages, worked examples, useful content, and ongoing optimisation.
-            </p>
+        <section className="bg-zinc-950 py-10 text-white">
+          <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">Want to go further later?</p><h2 className="mt-3 text-2xl font-semibold">The free integrations are the starting point, not the limit.</h2><p className="mt-3 text-sm leading-6 text-zinc-400">We also build branded calculators, website integrations, supplier quoting systems, catalogue workflows and growth packages — only when there is a clear fit for your business.</p></div>
+            <SupplierCTA href="#custom-services" intent="custom_package" location="early_custom_teaser" variant="darkSecondary" className="shrink-0">Preview custom options <ArrowIcon /></SupplierCTA>
           </div>
         </section>
 
-        {/* 10. Long Video Section */}
-        <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              See the full supplier walkthrough
-            </h2>
-            <p className="mt-4 text-lg text-zinc-600 max-w-3xl">
-              A detailed walkthrough showing how to configure products, set pricing visibility, and manage enquiries through the supplier dashboard.
-            </p>
-            <div className="mt-8 aspect-video w-full rounded-2xl border border-slate-200 bg-slate-100 flex flex-col items-center justify-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center">
-                <svg className="w-7 h-7 text-white ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-                </svg>
+        <section id="supplier-problem" className="py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
+            <div className="max-w-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">The problem we solve</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">The enquiry is not the problem. The dead time around it is.</h2>
+              <p className="mt-5 text-lg leading-8 text-zinc-600">Early pricing questions can consume real staff time before you know whether the customer is serious. The goal is not to remove your sales team — it is to let the tool do the repetitive preparation so your team enters the conversation at the useful part.</p>
+            </div>
+            <SupplierJourney />
+          </div>
+        </section>
+
+        <section id="how-it-works" className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
+            <div className="grid gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">The customer experience</p>
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">From rough question to useful enquiry in four clear steps</h2>
+                <p className="mt-5 text-lg leading-8 text-zinc-600">The experience stays deliberately simple. It gives the buyer enough information to move forward without pretending a preliminary estimate is your final commercial quote.</p>
+                <div className="mt-8 space-y-5">
+                  {customerExperienceSteps.map(([title, description], index) => (
+                    <div key={title} className="flex gap-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-semibold text-white">0{index + 1}</span><div><h3 className="text-sm font-semibold text-slate-900">{title}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{description}</p></div></div>
+                  ))}
+                </div>
               </div>
-              <p className="text-sm text-slate-500">5-10 minute walkthrough video</p>
+              <div><CatalogueOutcomeVisual /><p className="mt-3 text-center text-xs text-slate-600">Illustrative flow — real product screenshots can replace or support this visual.</p></div>
             </div>
           </div>
         </section>
 
-        {/* 11. FAQ */}
-        <section className="py-16 lg:py-20">
-          <div className="mx-auto max-w-3xl px-6 lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Frequently asked questions
-            </h2>
-            <div className="mt-8">
-              <FAQAccordion />
+        <section className="py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
+            <div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">What changes for the supplier</p><h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">A better first interaction creates benefits across the whole sale</h2></div>
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {supplierBenefits.map(([title, description], index) => (
+                <article key={title} className="rounded-xl border border-slate-200 bg-white p-6 transition hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-sm font-semibold text-[#BD4A1A]">0{index + 1}</div><h3 className="mt-5 text-base font-semibold text-slate-900">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></article>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* 12. Final CTA */}
-        <section className="bg-zinc-950 py-16 lg:py-20">
-          <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
-            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              See what this could look like for your business
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-zinc-400">
-              We can build a tailored example using your products and pricing. No obligation, no pressure.
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
-              <a
-                href="/contact"
-                className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
-              >
-                Send a message
-              </a>
-              <a
-                href="https://calendly.com/quote-core-info/15-minute-meeting"
-                className="inline-flex items-center rounded-full bg-[#FF6B35] px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                Book a call
-              </a>
-              <a
-                href="#free-integration"
-                className="px-4 py-2 text-sm font-medium rounded-full border border-zinc-700 text-zinc-300 hover:bg-zinc-900 transition"
-              >
-                List our business for free
-              </a>
+        <section id="custom-services" className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-24">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">When you want to go further</p><h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Build a custom growth layer around what works</h2><p className="mt-5 text-lg leading-8 text-zinc-600">The free partnership gives us a practical starting point. If it suits your business, we can then scope a package around your brand, sales process and growth priorities.</p></div>
+              <SupplierCTA href="/contact" intent="custom_package" location="custom_services" variant="accent" className="shrink-0">Discuss a custom package <ArrowIcon /></SupplierCTA>
             </div>
-            <p className="mt-5 text-sm text-zinc-500">
-              Or simply reply to the email you received.
-            </p>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">
+              {customServices.map((service) => (
+                <article key={service.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-orange-200 hover:shadow-[0_18px_50px_rgba(255,107,53,0.08)]"><span className="text-sm font-semibold text-[#BD4A1A]">{service.number}</span><h3 className="mt-4 text-xl font-semibold text-slate-900">{service.title}</h3><p className="mt-3 text-sm leading-6 text-slate-600">{service.description}</p><ul className="mt-6 space-y-3">{service.items.map((item) => <li key={item} className="flex items-center gap-2 text-sm text-slate-700"><CheckIcon className="h-4 w-4 shrink-0 text-[#BD4A1A]" />{item}</li>)}</ul></article>
+              ))}
+            </div>
+            <div className="mt-14 grid gap-8 lg:grid-cols-2 lg:items-center">
+              <VideoPlaceholder eyebrow="Full supplier walkthrough" title="See the wider platform and service possibilities" description="This frame is ready for the longer video covering branded tools, website integration, reporting and custom supplier systems." duration="4–6 min" compact />
+              <div><DashboardVisual /><div className="mt-6 rounded-xl border border-slate-200 bg-white p-5"><p className="text-sm font-semibold text-slate-900">Reporting belongs to the optional growth layer</p><p className="mt-2 text-sm leading-6 text-slate-600">This example makes the distinction clear: the free integrations create value and enquiries; custom reporting can then reveal demand patterns, product interest and conversion opportunities. Figures shown are illustrative only.</p></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 lg:py-24">
+          <div className="mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-8">
+            <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">Questions suppliers usually ask</p><h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Straight answers before we start</h2><p className="mt-5 text-base leading-7 text-zinc-600">The free offer should feel simple because it is simple. These are the practical points most suppliers want confirmed before opening a conversation.</p></div>
+            <FAQAccordion />
+          </div>
+        </section>
+
+        <section className="relative overflow-hidden bg-zinc-950 py-16 text-white lg:py-24">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,107,53,0.20),transparent_38%)]" />
+          <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">The next step is deliberately easy</p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">Start free, or talk through the bigger opportunity.</h2>
+            <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-zinc-400">Send us your company details and catalogue, book a short call, or email us directly. We will show you the proposed free setup and only discuss custom work if it is genuinely useful.</p>
+            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
+              <SupplierCTA href="/contact" intent="free_setup" location="final_cta" variant="light">Start my free supplier setup <ArrowIcon /></SupplierCTA>
+              <SupplierCTA href="https://calendly.com/quote-core-info/15-minute-meeting" intent="book_call" location="final_cta" variant="accent">Book a 15-minute call</SupplierCTA>
+              <SupplierCTA href="mailto:info@quote-core.com?subject=Supplier%20partnership" intent="email" location="final_cta" variant="darkSecondary">Email info@quote-core.com</SupplierCTA>
+            </div>
+            <p className="mt-6 text-sm text-zinc-500">No obligation. No pressure to replace your current process.</p>
           </div>
         </section>
 

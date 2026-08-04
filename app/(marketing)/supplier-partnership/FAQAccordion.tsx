@@ -4,52 +4,32 @@ import { useState } from "react";
 
 const faqs = [
   {
-    q: "What is a supplier partnership with QuoteCore+?",
-    a: "We add your roofing products, service area, and base pricing to QuoteCore+ so contractors can generate preliminary prices using your materials. You control what is shown, how visible pricing is, and how detailed the estimates are. Contractors get a useful starting point, and you get better-qualified enquiries.",
+    question: "What exactly do we receive for free?",
+    answer: "We can add your business and products to the QuoteCore+ supplier experience, help structure your catalogue into usable component data, and connect that data to a public roofing pricing tool. The aim is simple: contractors can price with your materials and contact you directly when they are ready to take the next step.",
   },
   {
-    q: "How much does it cost to list our business?",
-    a: "The basic supplier listing is free. We add your business, service area, products, and base pricing at no cost. If you want a branded pricing tool, website integration, or a full supplier quoting system, those are custom projects scoped based on complexity.",
+    question: "Do you take commission or own the customer relationship?",
+    answer: "No. QuoteCore+ does not buy or resell your stock and does not insert itself into the sale. Enquiries go directly to your business, and you keep control of the commercial relationship, final pricing and fulfilment.",
   },
   {
-    q: "Do we need to replace our current quoting process?",
-    a: "No. QuoteCore+ does not replace your existing workflow. Contractors use the tool to get a preliminary price before they contact you. When they do get in touch, they arrive with a clearer idea of what they need, which reduces back-and-forth and makes the conversation more productive.",
+    question: "Who controls the products and pricing shown?",
+    answer: "You do. You decide which products are available and whether the experience shows base prices, indicative ranges or product selection without public pricing. Your data can be updated as your catalogue changes.",
   },
   {
-    q: "Who controls the pricing shown in the tool?",
-    a: "You do. You provide the base pricing and you decide how visible it is. You can show full pricing, indicative ranges, or hide pricing entirely and just show product selection. You can update pricing whenever you want.",
+    question: "Does this replace our existing quoting process?",
+    answer: "No. The free integration is designed to improve the early stage of an enquiry, not replace your formal quotation workflow. It gives the customer a useful preliminary result and gives your team better context when the conversation begins.",
   },
   {
-    q: "What types of roofing suppliers is this for?",
-    a: "Any supplier of roofing materials - tiles, slates, shingles, metal sheets, membranes, insulation, battens, fixings, flashings, gutters, rooflights, or accessories. If contractors buy it for roofs, it belongs in the tool.",
+    question: "How much work is involved for our team?",
+    answer: "We do the heavy lifting with the initial setup. You provide the catalogue, service area, preferred contact details and any pricing rules you want us to follow. We then structure the first experience with you and confirm it before it goes live.",
   },
   {
-    q: "How long does setup take?",
-    a: "For a free supplier listing, we can have your business, products, and base pricing added within a few days of receiving your catalogue. Custom and branded systems take longer depending on scope.",
+    question: "What can be added as a custom package later?",
+    answer: "Custom work can include a fully branded calculator, an embedded website experience, catalogue automation, a complete supplier quotation workflow, enquiry management, reporting, content and targeted growth support. We scope these separately around the outcome your business wants.",
   },
   {
-    q: "Can we update our products and pricing after launch?",
-    a: "Yes. You can update product codes, names, prices, and specifications at any time. Keeping your catalogue current means contractors always quote with accurate information.",
-  },
-  {
-    q: "Do contractors order through QuoteCore+ or directly from us?",
-    a: "Contractors contact you directly. QuoteCore+ connects the contractor to your business - we do not hold stock, take a cut, or insert ourselves between you and the customer. You keep the relationship and the pricing.",
-  },
-  {
-    q: "What if we only supply a specific region?",
-    a: "That is fine. We set your service area so you only appear in searches where you can actually deliver. Local and regional suppliers are prioritised over national ones where relevant.",
-  },
-  {
-    q: "What does the supplier dashboard show?",
-    a: "The dashboard shows which products are being selected, how often the tool is used, what roof types and materials are being priced, the regions where activity is happening, and how many enquiries are being generated. You get a clear picture of demand without picking up the phone.",
-  },
-  {
-    q: "Can we get a branded version of the pricing tool?",
-    a: "Yes. A branded pricing tool featuring your logo, colours, and product range is available as a custom project. This can be embedded on your website or hosted on a dedicated page. Contact us to discuss scope and pricing.",
-  },
-  {
-    q: "What happens if a contractor gets a preliminary price and then contacts us?",
-    a: "That is the goal. The contractor arrives with a rough idea of cost based on your actual products, which means the conversation is more productive. You can refine the price, adjust the spec, and move toward a formal quote. The tool reduces the repetitive early-stage conversations that eat up your team's time.",
+    question: "What is the easiest way to get started?",
+    answer: "Send us your company name, website and catalogue, or book a short call if you would rather talk it through first. We will confirm what can be included in the free setup and show you the proposed customer journey before anything goes live.",
   },
 ];
 
@@ -57,35 +37,23 @@ export default function FAQAccordion() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {faqs.map((faq, index) => {
         const isOpen = openIndex === index;
         return (
-          <div
-            key={faq.q}
-            className="rounded-xl border border-slate-200 bg-white overflow-hidden transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
-          >
+          <div key={faq.question} className="overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]">
             <button
+              type="button"
               onClick={() => setOpenIndex(isOpen ? null : index)}
-              className="flex w-full items-center justify-between px-6 py-4 text-left"
+              className="flex min-h-14 w-full items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FF6B35] sm:px-6"
               aria-expanded={isOpen}
             >
-              <span className="text-base font-semibold text-slate-900 pr-4">{faq.q}</span>
-              <svg
-                className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              <span className="text-sm font-semibold text-slate-900 sm:text-base">{faq.question}</span>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-transform ${isOpen ? "rotate-45 border-orange-200 bg-orange-50 text-[#BD4A1A]" : "border-slate-200 text-slate-500"}`} aria-hidden="true">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M12 5v14M5 12h14" /></svg>
+              </span>
             </button>
-            {isOpen && (
-              <div className="px-6 pb-5">
-                <p className="text-sm text-slate-600 leading-relaxed">{faq.a}</p>
-              </div>
-            )}
+            {isOpen && <div className="px-5 pb-5 sm:px-6"><p className="max-w-3xl text-sm leading-6 text-slate-600">{faq.answer}</p></div>}
           </div>
         );
       })}
