@@ -5088,8 +5088,16 @@ export type Database = {
           pricing_excludes_freight: boolean | null
           pricing_updated_at: string | null
           product_categories: string[] | null
+          public_catalogue_enabled: boolean
+          public_contact_visibility: string
+          public_page_enabled: boolean
+          public_price_visibility: string
+          publication_state: string
+          publication_updated_at: string | null
+          publication_updated_by: string | null
           regional_coverage: string[] | null
           roofing_types: string[] | null
+          search_indexing_enabled: boolean
           service_areas: string[] | null
           slug: string
           status: string
@@ -5142,8 +5150,16 @@ export type Database = {
           pricing_excludes_freight?: boolean | null
           pricing_updated_at?: string | null
           product_categories?: string[] | null
+          public_catalogue_enabled?: boolean
+          public_contact_visibility?: string
+          public_page_enabled?: boolean
+          public_price_visibility?: string
+          publication_state?: string
+          publication_updated_at?: string | null
+          publication_updated_by?: string | null
           regional_coverage?: string[] | null
           roofing_types?: string[] | null
+          search_indexing_enabled?: boolean
           service_areas?: string[] | null
           slug: string
           status?: string
@@ -5196,8 +5212,16 @@ export type Database = {
           pricing_excludes_freight?: boolean | null
           pricing_updated_at?: string | null
           product_categories?: string[] | null
+          public_catalogue_enabled?: boolean
+          public_contact_visibility?: string
+          public_page_enabled?: boolean
+          public_price_visibility?: string
+          publication_state?: string
+          publication_updated_at?: string | null
+          publication_updated_by?: string | null
           regional_coverage?: string[] | null
           roofing_types?: string[] | null
+          search_indexing_enabled?: boolean
           service_areas?: string[] | null
           slug?: string
           status?: string
@@ -6353,6 +6377,8 @@ export type Database = {
         }[]
       }
       prune_rate_limits: { Args: never; Returns: number }
+      public_supplier_directory: { Args: never; Returns: Json }
+      public_supplier_read: { Args: { p_slug: string }; Returns: Json }
       reclaim_stale_dispatching_messages: {
         Args: { p_stale_minutes?: number }
         Returns: number

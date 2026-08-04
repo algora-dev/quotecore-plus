@@ -35,6 +35,14 @@ export type SupplierProfileData = {
   national_coverage: boolean;
   delivery_coverage: string | null;
   instant_pricing_available: boolean;
+  // G1 visibility/publication fields
+  public_page_enabled: boolean;
+  search_indexing_enabled: boolean;
+  public_catalogue_enabled: boolean;
+  public_price_visibility: 'hidden' | 'web_only' | 'full';
+  public_contact_visibility: 'hidden' | 'page_only' | 'full';
+  publication_state: 'unready' | 'ready' | 'published' | 'unlisted' | 'suspended';
+  publication_updated_at: string | null;
 };
 
 export type SupplierLibraryData = {
@@ -64,7 +72,7 @@ export async function loadSupplierProfile(): Promise<SupplierProfileData | null>
 
   const { data, error } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, national_coverage, delivery_coverage, instant_pricing_available')
+    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, national_coverage, delivery_coverage, instant_pricing_available, public_page_enabled, search_indexing_enabled, public_catalogue_enabled, public_price_visibility, public_contact_visibility, publication_state, publication_updated_at')
     .eq('company_id', profile.company_id)
     .maybeSingle();
 
@@ -441,6 +449,135 @@ export async function updateTakeoffBuilderSettings(input: {
 
     revalidatePath('/[workspaceSlug]/supplier', 'page');
     return { ok: true };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Check if a supplier profile is ready for publication.
+ * Returns a checklist with pass/fail for each requirement.
+ */
+export async function checkPublicationReadiness(): Promise<{
+  ready: boolean;
+  checks: { label: string; passed: boolean; detail?: string }[];
+}> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    const { data: supplier } = await supabase
+      .from('supplier_profiles')
+      .select('*')
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!supplier) return { ready: false, checks: [{ label: 'Supplier profile exists', passed: false }] };
+
+    const checks = [
+      { label: 'Admin approved', passed: supplier.status === 'approved', detail: supplier.status !== 'approved' ? `Current status: ${supplier.status}` : undefined },
+      { label: 'Supplier name set', passed: !!supplier.supplier_name?.trim() },
+      { label: 'Description set', passed: !!supplier.description?.trim() },
+      { label: 'Contact email set', passed: !!supplier.contact_email?.trim() },
+      { label: 'At least one service area', passed: (supplier.service_areas?.length ?? 0) > 0 },
+      { label: 'At least one roofing type', passed: (supplier.roofing_types?.length ?? 0) > 0 },
+      { label: 'Branch location set', passed: !!supplier.branch_city?.trim() },
+      { label: 'Default takeoff collection selected', passed: !!supplier.default_takeoff_collection_id, detail: !supplier.default_takeoff_collection_id ? 'Select a component library in the Takeoff Builder tab' : undefined },
+      { label: 'Takeoff builder enabled', passed: supplier.takeoff_builder_enabled === true },
+    ];
+
+    return { ready: checks.every(c => c.passed), checks };
+  } catch (err) {
+    return { ready: false, checks: [{ label: 'Error checking readiness', passed: false, detail: err instanceof Error ? err.message : 'Unknown error' }] };
+  }
+}
+
+/**
+ * Update supplier visibility/publication settings.
+ * Only the supplier themselves can change these (after admin approval).
+ */
+export async function updateSupplierVisibility(input: {
+  public_page_enabled: boolean;
+  search_indexing_enabled: boolean;
+  public_catalogue_enabled: boolean;
+  public_price_visibility: 'hidden' | 'web_only' | 'full';
+  public_contact_visibility: 'hidden' | 'page_only' | 'full';
+  publication_state: 'unready' | 'ready' | 'published' | 'unlisted';
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    const { data: supplier } = await supabase
+      .from('supplier_profiles')
+      .select('id, status, publication_state')
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!supplier) return { ok: false, message: 'No supplier profile found.' };
+    if (supplier.status !== 'approved') return { ok: false, message: 'Only approved suppliers can manage visibility.' };
+    if (supplier.publication_state === 'suspended') return { ok: false, message: 'Publication is admin-suspended. Contact support.' };
+
+    // If trying to publish, verify readiness
+    if (input.publication_state === 'published') {
+      const readiness = await checkPublicationReadiness();
+      if (!readiness.ready) {
+        const failed = readiness.checks.filter(c => !c.passed).map(c => c.label).join(', ');
+        return { ok: false, message: `Not ready to publish. Missing: ${failed}` };
+      }
+    }
+
+    const { error } = await supabase
+      .from('supplier_profiles')
+      .update({
+        public_page_enabled: input.public_page_enabled,
+        search_indexing_enabled: input.search_indexing_enabled,
+        public_catalogue_enabled: input.public_catalogue_enabled,
+        public_price_visibility: input.public_price_visibility,
+        public_contact_visibility: input.public_contact_visibility,
+        publication_state: input.publication_state,
+        publication_updated_by: profile.id,
+      })
+      .eq('id', supplier.id);
+
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath('/[workspaceSlug]/supplier', 'page');
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Get the public supplier read model for preview.
+ * Lets the supplier see exactly what the public will see before publishing.
+ */
+export async function previewPublicProfile(): Promise<{
+  ok: true;
+  data: unknown;
+} | {
+  ok: false;
+  message: string;
+}> {
+  try {
+    const profile = await requireCompanyContext();
+    const supabase = await createSupabaseServerClient();
+
+    const { data: supplier } = await supabase
+      .from('supplier_profiles')
+      .select('slug')
+      .eq('company_id', profile.company_id)
+      .maybeSingle();
+
+    if (!supplier) return { ok: false, message: 'No supplier profile found.' };
+
+    const admin = createAdminClient() as AdminAny;
+    const { data, error } = await admin.rpc('public_supplier_read', { p_slug: supplier.slug });
+
+    if (error) return { ok: false, message: error.message };
+
+    return { ok: true, data };
   } catch (err) {
     return { ok: false, message: err instanceof Error ? err.message : 'Unknown error' };
   }

@@ -6,6 +6,9 @@ import {
   updateSupplierProfile,
   updateTakeoffBuilderSettings,
   publishCatalogUpdate,
+  checkPublicationReadiness,
+  updateSupplierVisibility,
+  previewPublicProfile,
   type SupplierProfileData,
   type SupplierLibraryData,
   type SupplierCatalogData,
@@ -31,7 +34,7 @@ const VISIBILITY_STYLES: Record<string, string> = {
 
 const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'Membrane', 'EPDM/TPO', 'Slate'];
 
-type Tab = 'libraries' | 'catalogues' | 'takeoff-builder';
+type Tab = 'libraries' | 'catalogues' | 'takeoff-builder' | 'public-presence';
 
 export function SupplierDashboard({
   workspaceSlug,
@@ -84,6 +87,20 @@ export function SupplierDashboard({
   const [takeoffSaved, setTakeoffSaved] = useState(false);
   const [takeoffError, setTakeoffError] = useState<string | null>(null);
 
+  // Public presence state
+  const [pubPageEnabled, setPubPageEnabled] = useState(profile?.public_page_enabled ?? false);
+  const [pubIndexingEnabled, setPubIndexingEnabled] = useState(profile?.search_indexing_enabled ?? false);
+  const [pubCatalogueEnabled, setPubCatalogueEnabled] = useState(profile?.public_catalogue_enabled ?? false);
+  const [pubPriceVisibility, setPubPriceVisibility] = useState<'hidden' | 'web_only' | 'full'>(profile?.public_price_visibility ?? 'hidden');
+  const [pubContactVisibility, setPubContactVisibility] = useState<'hidden' | 'page_only' | 'full'>(profile?.public_contact_visibility ?? 'hidden');
+  const [pubState, setPubState] = useState(profile?.publication_state ?? 'unready');
+  const [readinessChecks, setReadinessChecks] = useState<{ label: string; passed: boolean; detail?: string }[] | null>(null);
+  const [pubSaving, setPubSaving] = useState(false);
+  const [pubSaved, setPubSaved] = useState(false);
+  const [pubError, setPubError] = useState<string | null>(null);
+  const [previewData, setPreviewData] = useState<Record<string, unknown> | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+
   async function handleSaveProfile() {
     setSaving(true);
     setError(null);
@@ -131,6 +148,55 @@ export function SupplierDashboard({
       setTakeoffError(e instanceof Error ? e.message : 'Failed to save');
     } finally {
       setTakeoffSaving(false);
+    }
+  }
+
+  async function handleCheckReadiness() {
+    try {
+      const result = await checkPublicationReadiness();
+      setReadinessChecks(result.checks);
+    } catch (e) {
+      setPubError(e instanceof Error ? e.message : 'Failed to check readiness');
+    }
+  }
+
+  async function handleSaveVisibility() {
+    setPubSaving(true);
+    setPubError(null);
+    setPubSaved(false);
+    try {
+      const result = await updateSupplierVisibility({
+        public_page_enabled: pubPageEnabled,
+        search_indexing_enabled: pubIndexingEnabled,
+        public_catalogue_enabled: pubCatalogueEnabled,
+        public_price_visibility: pubPriceVisibility,
+        public_contact_visibility: pubContactVisibility,
+        publication_state: pubState as 'unready' | 'ready' | 'published' | 'unlisted',
+      });
+      if (!result.ok) {
+        setPubError(result.message);
+      } else {
+        setPubSaved(true);
+        setTimeout(() => setPubSaved(false), 3000);
+      }
+    } catch (e) {
+      setPubError(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setPubSaving(false);
+    }
+  }
+
+  async function handlePreview() {
+    try {
+      const result = await previewPublicProfile();
+      if (result.ok) {
+        setPreviewData(result.data as Record<string, unknown>);
+        setShowPreview(true);
+      } else {
+        setPubError(result.message);
+      }
+    } catch (e) {
+      setPubError(e instanceof Error ? e.message : 'Failed to preview');
     }
   }
 
@@ -421,6 +487,10 @@ export function SupplierDashboard({
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'takeoff-builder' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
             Takeoff Builder
           </button>
+          <button onClick={() => { setActiveTab('public-presence'); handleCheckReadiness(); }}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'public-presence' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+            Public Presence
+          </button>
         </div>
 
         {/* Libraries Tab */}
@@ -696,6 +766,217 @@ export function SupplierDashboard({
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Public Presence Tab */}
+        {activeTab === 'public-presence' && (
+          <div className="space-y-4">
+            {/* Publication status banner */}
+            <div className={`rounded-xl border px-4 py-3 ${
+              pubState === 'published' ? 'border-emerald-200 bg-emerald-50' :
+              pubState === 'unlisted' ? 'border-blue-200 bg-blue-50' :
+              pubState === 'ready' ? 'border-amber-200 bg-amber-50' :
+              'border-slate-200 bg-slate-50'
+            }`}>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-slate-900">Publication status: {pubState}</span>
+                {pubState === 'published' && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Live</span>}
+                {pubState === 'unlisted' && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Direct-link only</span>}
+                {pubState === 'unready' && <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Not ready</span>}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {pubState === 'published' ? 'Your supplier page is live and visible in the directory.' :
+                 pubState === 'unlisted' ? 'Your page is accessible via direct link but not in the directory.' :
+                 pubState === 'ready' ? 'You\'re ready to publish. Click Publish below.' :
+                 'Complete the readiness checklist below to enable publishing.'}
+              </p>
+            </div>
+
+            {/* Readiness checklist */}
+            {readinessChecks && (
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3">Publication Readiness Checklist</h3>
+                <div className="space-y-2">
+                  {readinessChecks.map((check, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      {check.passed ? (
+                        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                      <span className={`text-sm ${check.passed ? 'text-slate-700' : 'text-slate-500'}`}>{check.label}</span>
+                      {check.detail && <span className="text-xs text-slate-400">- {check.detail}</span>}
+                    </div>
+                  ))}
+                </div>
+                <button onClick={handleCheckReadiness} className="mt-3 text-xs text-[#2563EB] hover:underline">Re-check</button>
+              </div>
+            )}
+
+            {/* Visibility controls */}
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-slate-900">Visibility Controls</h3>
+              <p className="text-xs text-slate-400 mt-1">Control what the public can see about your supplier business.</p>
+
+              {/* Page toggle */}
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-medium text-slate-700">Public supplier page</label>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Your profile page at /suppliers/{profile?.slug || 'your-slug'}</p>
+                  </div>
+                  <button type="button" onClick={() => setPubPageEnabled(!pubPageEnabled)}
+                    className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubPageEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${pubPageEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Indexing toggle */}
+              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-medium text-slate-700">Search engine indexing</label>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Allow Google and other search engines to index your page.</p>
+                  </div>
+                  <button type="button" onClick={() => setPubIndexingEnabled(!pubIndexingEnabled)}
+                    className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubIndexingEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${pubIndexingEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Catalogue toggle */}
+              <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-medium text-slate-700">Public catalogue</label>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Show your product categories and brands publicly.</p>
+                  </div>
+                  <button type="button" onClick={() => setPubCatalogueEnabled(!pubCatalogueEnabled)}
+                    className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${pubCatalogueEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${pubCatalogueEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Price visibility */}
+              <div className="mt-4">
+                <label className="text-xs font-medium text-slate-600">Price visibility</label>
+                <p className="text-[11px] text-slate-400 mt-0.5">Control where your pricing is shown.</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'hidden', label: 'Hidden', desc: 'No prices anywhere' },
+                    { value: 'web_only', label: 'Web only', desc: 'Prices on your page, not via API' },
+                    { value: 'full', label: 'Full', desc: 'Prices on page and API/agents' },
+                  ] as const).map((opt) => (
+                    <button key={opt.value} type="button" onClick={() => setPubPriceVisibility(opt.value)}
+                      className={`rounded-lg border px-3 py-2 text-left transition ${pubPriceVisibility === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <span className="text-xs font-medium text-slate-900">{opt.label}</span>
+                      <span className="block text-[11px] text-slate-400 mt-0.5">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Contact visibility */}
+              <div className="mt-4">
+                <label className="text-xs font-medium text-slate-600">Contact visibility</label>
+                <p className="text-[11px] text-slate-400 mt-0.5">Control where your contact details are shown.</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'hidden', label: 'Hidden', desc: 'No contacts shown' },
+                    { value: 'page_only', label: 'Page only', desc: 'On your supplier page' },
+                    { value: 'full', label: 'Full', desc: 'Page, calculator, and results' },
+                  ] as const).map((opt) => (
+                    <button key={opt.value} type="button" onClick={() => setPubContactVisibility(opt.value)}
+                      className={`rounded-lg border px-3 py-2 text-left transition ${pubContactVisibility === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <span className="text-xs font-medium text-slate-900">{opt.label}</span>
+                      <span className="block text-[11px] text-slate-400 mt-0.5">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Publication state selector */}
+              <div className="mt-4">
+                <label className="text-xs font-medium text-slate-600">Publication state</label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'unready', label: 'Not ready', desc: 'Hidden from public' },
+                    { value: 'unlisted', label: 'Unlisted', desc: 'Direct link only' },
+                    { value: 'published', label: 'Published', desc: 'Visible in directory' },
+                  ] as const).map((opt) => (
+                    <button key={opt.value} type="button" onClick={() => setPubState(opt.value)}
+                      className={`rounded-lg border px-3 py-2 text-left transition ${pubState === opt.value ? 'border-[#FF6B35] bg-orange-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <span className="text-xs font-medium text-slate-900">{opt.label}</span>
+                      <span className="block text-[11px] text-slate-400 mt-0.5">{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* URLs */}
+              {profile?.slug && pubPageEnabled && (
+                <div className="mt-4 space-y-2">
+                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-2">
+                    <p className="text-xs font-semibold text-emerald-800">Supplier Page URL</p>
+                    <code className="text-xs text-[#BD4A1A]">https://quote-core.com/suppliers/{profile.slug}</code>
+                  </div>
+                  {takeoffEnabled && (
+                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-2">
+                      <p className="text-xs font-semibold text-emerald-800">Calculator URL</p>
+                      <code className="text-xs text-[#BD4A1A]">https://quote-core.com/free-roofing-takeoff-builder/{profile.slug}</code>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Error / success */}
+              {pubError && (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{pubError}</div>
+              )}
+              {pubSaved && (
+                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-600">Visibility settings saved.</div>
+              )}
+
+              {/* Action buttons */}
+              <div className="mt-4 flex items-center gap-2">
+                <button onClick={handleSaveVisibility} disabled={pubSaving}
+                  className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">
+                  {pubSaving ? 'Saving...' : 'Save Visibility Settings'}
+                </button>
+                <button onClick={handlePreview}
+                  className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition">
+                  Preview Public Profile
+                </button>
+              </div>
+            </div>
+
+            {/* Preview modal */}
+            {showPreview && previewData && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                  <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+                    <h3 className="text-sm font-semibold text-slate-900">Public Profile Preview</h3>
+                    <button onClick={() => setShowPreview(false)} className="text-slate-400 hover:text-slate-600 transition">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="p-5">
+                    <pre className="text-xs text-slate-600 bg-slate-50 rounded-lg p-3 overflow-x-auto">{JSON.stringify(previewData, null, 2)}</pre>
+                    <p className="text-xs text-slate-400 mt-3">This is exactly what the public will see when they view your supplier page. Fields you haven\'t permitted are stripped out server-side.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
