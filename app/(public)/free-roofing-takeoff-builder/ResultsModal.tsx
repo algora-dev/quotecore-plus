@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, lazy, Suspense } from 'react';
-import Link from 'next/link';
+import { useEffect, useState, lazy } from 'react';
 import type { ComponentSection, RoofComponentDef } from './types';
 import { COMPONENT_DEFS, computeMaterialCost, computeLabourCost, computeKnownPriceCost } from './calc';
 import { ComponentSymbol, componentLabel } from './helpers';
@@ -25,7 +24,6 @@ interface ResultsModalProps {
 export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose, supplier, resultToken, resultUrl, currency }: ResultsModalProps) {
   const [showEnquiry, setShowEnquiry] = useState(false);
   const [showActions, setShowActions] = useState(false);
-  const [pendingAction, setPendingAction] = useState<null | 'print' | 'send' | 'quote' | 'signup'>(null);
   const cur = currency === 'NZD' ? 'NZ$' : currency === 'USD' ? '$' : currency === 'AUD' ? 'A$' : currency === 'GBP' ? '\u00a3' : '$';
   const hasPricing = grandTotal > 0;
   const lenUnit = unitSystem === 'metric' ? 'm' : 'ft';
@@ -240,31 +238,50 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowActions(false)} />
                 <div className="absolute right-0 bottom-full mb-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg z-50 overflow-hidden">
-                  {supplier?.enquiriesEnabled && (
+                  {supplier?.enquiriesEnabled ? (
                     <button
-                      onClick={() => { setShowActions(false); setPendingAction('send'); }}
-                      className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
+                      onClick={() => { setShowActions(false); setShowEnquiry(true); }}
+                      className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left border-b border-slate-100"
                     >
-                      <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                      Send to {supplier.name}
+                      <svg className="w-4 h-4 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                      Send to Supplier
                     </button>
+                  ) : (
+                    <div className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-300 cursor-not-allowed border-b border-slate-100" title={supplier ? 'This supplier does not accept enquiries' : 'No supplier selected'}>
+                      <svg className="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                      Send to Supplier
+                    </div>
                   )}
                   <button
-                    onClick={() => { setShowActions(false); setPendingAction('print'); }}
+                    onClick={() => {
+                      setShowActions(false);
+                      const printUrl = resultUrl || window.location.href;
+                      const win = window.open(printUrl, '_blank', 'noopener,noreferrer');
+                      if (win) { onClose(); }
+                    }}
                     className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
                   >
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                     Print / Save as PDF
                   </button>
                   <button
-                    onClick={() => { setShowActions(false); setPendingAction('quote'); }}
+                    onClick={() => {
+                      setShowActions(false);
+                      const quoteUrl = buildConvertToQuoteUrl();
+                      const win = window.open(quoteUrl, '_blank', 'noopener,noreferrer');
+                      if (win) { onClose(); }
+                    }}
                     className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
                   >
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                     Convert to Quote
                   </button>
                   <button
-                    onClick={() => { setShowActions(false); setPendingAction('signup'); }}
+                    onClick={() => {
+                      setShowActions(false);
+                      const win = window.open('/signup?ref=free-roofing-takeoff-builder', '_blank', 'noopener,noreferrer');
+                      if (win) { onClose(); }
+                    }}
                     className="flex items-center gap-2.5 w-full px-4 py-3 text-sm font-medium text-slate-700 hover:bg-orange-50/40 transition text-left"
                   >
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" /></svg>
@@ -275,55 +292,6 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
             )}
           </div>
         </div>
-
-        {/* Action confirmation modal */}
-        {pendingAction && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-              <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-[#FF6B35]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <h3 className="text-base font-semibold text-slate-900">
-                {pendingAction === 'send' ? `Send to ${supplier?.name}?` :
-                 pendingAction === 'print' ? 'Print / Save as PDF?' :
-                 pendingAction === 'quote' ? 'Convert to Quote?' :
-                 'Open QuoteCore+?'}
-              </h3>
-              <p className="mt-2 text-sm text-slate-500">
-                {pendingAction === 'send' ? `This will open the supplier enquiry form to send your takeoff to ${supplier?.name}.` :
-                 pendingAction === 'print' ? 'This will open your browser print dialog. Make sure to save as PDF for your records.' :
-                 pendingAction === 'quote' ? 'This will take you to the free quote generator with your takeoff data pre-filled.' :
-                 'Sign up for a free 14-day trial of QuoteCore+ to access advanced versions of this tool and more. Save and edit your takeoffs, add custom components, and unlock powerful quoting features - all free during your trial.'}
-              </p>
-              <div className="mt-5 flex gap-2">
-                <button
-                  onClick={() => setPendingAction(null)}
-                  className="flex-1 rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    const action = pendingAction;
-                    setPendingAction(null);
-                    if (action === 'print') window.print();
-                    else if (action === 'send') setShowEnquiry(true);
-                    else if (action === 'quote') window.location.href = buildConvertToQuoteUrl();
-                    else if (action === 'signup') window.open('/signup?ref=free-roofing-takeoff-builder', '_blank');
-                  }}
-                  className="flex-1 rounded-full bg-black text-white px-4 py-2.5 text-sm font-semibold hover:bg-slate-800 transition"
-                >
-                  {pendingAction === 'send' ? 'Send' :
-                   pendingAction === 'print' ? 'Print' :
-                   pendingAction === 'quote' ? 'Continue' :
-                   'Continue'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Supplier enquiry modal */}
         {showEnquiry && supplier && (

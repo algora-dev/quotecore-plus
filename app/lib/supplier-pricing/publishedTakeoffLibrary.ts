@@ -36,6 +36,8 @@ export interface PublishedTakeoffLibrary {
   supplierName: string;
   supplierSlug: string;
   supplierCountry: string | null;
+  enquiriesEnabled: boolean;
+  enquiryEmail: string | null;
   components: PublishedTakeoffComponent[];
   slotMap: Record<string, string | null>; // slot -> default component ID
   slotOptions: Record<string, PublishedTakeoffComponent[]>; // slot -> all options
@@ -68,7 +70,7 @@ export async function loadPublishedTakeoffLibrary(
   // Load supplier
   const { data: supplier, error: supError } = await sb
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, country, currency')
+    .select('id, supplier_name, slug, status, country, currency, enquiries_enabled, enquiry_email')
     .eq('id', collection.supplier_profile_id)
     .eq('status', 'approved')
     .single();
@@ -185,6 +187,8 @@ export async function loadPublishedTakeoffLibrary(
     supplierName: supplier.supplier_name,
     supplierSlug: supplier.slug,
     supplierCountry: supplier.country,
+    enquiriesEnabled: supplier.enquiries_enabled ?? false,
+    enquiryEmail: supplier.enquiry_email ?? null,
     components,
     slotMap,
     slotOptions,

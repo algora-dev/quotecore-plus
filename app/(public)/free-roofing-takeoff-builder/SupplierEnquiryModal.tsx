@@ -39,7 +39,6 @@ export function SupplierEnquiryModal({
   currency,
   onClose,
 }: SupplierEnquiryModalProps) {
-  console.log('[SupplierEnquiryModal] resultUrl:', resultUrl, 'resultToken:', resultToken);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
