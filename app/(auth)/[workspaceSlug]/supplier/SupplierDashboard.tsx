@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import {
   updateSupplierProfile,
-  updateCatalogVisibility,
+  updateTakeoffBuilderSettings,
   publishCatalogUpdate,
   type SupplierProfileData,
   type SupplierLibraryData,
@@ -31,7 +31,7 @@ const VISIBILITY_STYLES: Record<string, string> = {
 
 const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'Membrane', 'EPDM/TPO', 'Slate'];
 
-type Tab = 'libraries' | 'catalogues';
+type Tab = 'libraries' | 'catalogues' | 'takeoff-builder';
 
 export function SupplierDashboard({
   workspaceSlug,
@@ -74,6 +74,16 @@ export function SupplierDashboard({
   const [roofingTypes, setRoofingTypes] = useState(profile?.roofing_types ?? []);
   const [allowCustomPricing, setAllowCustomPricing] = useState(profile?.allow_custom_pricing ?? false);
 
+  // Takeoff builder state
+  const [takeoffEnabled, setTakeoffEnabled] = useState(profile?.takeoff_builder_enabled ?? false);
+  const [takeoffCollectionId, setTakeoffCollectionId] = useState<string | null>(profile?.default_takeoff_collection_id ?? null);
+  const [takeoffEnquiryEmail, setTakeoffEnquiryEmail] = useState(profile?.enquiry_email ?? '');
+  const [takeoffEnquiriesEnabled, setTakeoffEnquiriesEnabled] = useState(profile?.enquiries_enabled ?? false);
+  const [takeoffInstantPricing, setTakeoffInstantPricing] = useState(profile?.instant_pricing_available ?? false);
+  const [takeoffSaving, setTakeoffSaving] = useState(false);
+  const [takeoffSaved, setTakeoffSaved] = useState(false);
+  const [takeoffError, setTakeoffError] = useState<string | null>(null);
+
   async function handleSaveProfile() {
     setSaving(true);
     setError(null);
@@ -96,6 +106,31 @@ export function SupplierDashboard({
       setError(e instanceof Error ? e.message : 'Failed to save');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSaveTakeoffSettings() {
+    setTakeoffSaving(true);
+    setTakeoffError(null);
+    setTakeoffSaved(false);
+    try {
+      const result = await updateTakeoffBuilderSettings({
+        takeoff_builder_enabled: takeoffEnabled,
+        default_takeoff_collection_id: takeoffCollectionId,
+        enquiry_email: takeoffEnquiryEmail.trim() || null,
+        enquiries_enabled: takeoffEnquiriesEnabled,
+        instant_pricing_available: takeoffInstantPricing,
+      });
+      if (!result.ok) {
+        setTakeoffError(result.message);
+      } else {
+        setTakeoffSaved(true);
+        setTimeout(() => setTakeoffSaved(false), 3000);
+      }
+    } catch (e) {
+      setTakeoffError(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setTakeoffSaving(false);
     }
   }
 
@@ -382,6 +417,10 @@ export function SupplierDashboard({
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'catalogues' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
             Catalogues
           </button>
+          <button onClick={() => setActiveTab('takeoff-builder')}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'takeoff-builder' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+            Takeoff Builder
+          </button>
         </div>
 
         {/* Libraries Tab */}
@@ -512,6 +551,151 @@ export function SupplierDashboard({
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {/* Takeoff Builder Tab */}
+        {activeTab === 'takeoff-builder' && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-5">
+              <h3 className="text-sm font-semibold text-slate-900">Free Roofing Takeoff Builder</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Opt in to make your components available in the free roofing takeoff builder. You will get a branded URL that you can share with customers or embed on your website.
+              </p>
+
+              {/* Enable toggle */}
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-medium text-slate-700">Takeoff Builder enabled</label>
+                    <p className="text-[11px] text-slate-400 mt-0.5">When enabled, your branded builder URL is active and your components are available.</p>
+                  </div>
+                  <button type="button" onClick={() => setTakeoffEnabled(!takeoffEnabled)}
+                    className={`relative inline-flex h-6 w-11 cursor-pointer rounded-full transition flex-shrink-0 ${takeoffEnabled ? 'bg-[#FF6B35]' : 'bg-slate-300'}`}>
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition mt-0.5 ${takeoffEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Builder URL */}
+              {takeoffEnabled && profile?.slug && (
+                <div className="mt-4 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3">
+                  <p className="text-xs font-semibold text-emerald-800 mb-1">Your Builder URL</p>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs text-[#BD4A1A] flex-1 break-all">
+                      https://quote-core.com/free-roofing-takeoff-builder/{profile.slug}
+                    </code>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(`https://quote-core.com/free-roofing-takeoff-builder/${profile.slug}`)}
+                      className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition"
+                      title="Copy URL"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10a2 2 0 00-2 2v3a2 2 0 002 2h10a2 2 0 002-2v-3a2 2 0 00-2-2z" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-emerald-700 mt-2">Share this URL with customers or embed it as a button on your website. It will use your selected component library for pricing.</p>
+                </div>
+              )}
+
+              {/* Component library selector */}
+              <div className="mt-4">
+                <label className="text-xs font-medium text-slate-600">Component Library for Takeoff Builder</label>
+                <p className="text-[11px] text-slate-400 mt-0.5">Select which library powers your branded takeoff builder. Users will see prices from this library.</p>
+                {localLibraries.length === 0 ? (
+                  <div className="mt-2 rounded-lg border border-dashed border-slate-200 px-4 py-6 text-center">
+                    <p className="text-sm text-slate-500">No component libraries found.</p>
+                    <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Create a library first</Link>
+                  </div>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="takeoff-collection"
+                        checked={takeoffCollectionId === null}
+                        onChange={() => setTakeoffCollectionId(null)}
+                        className="border-slate-300 text-orange-500 focus:ring-orange-500"
+                      />
+                      <span className="text-sm text-slate-500">No library (uses generic components)</span>
+                    </label>
+                    {localLibraries.map((lib) => (
+                      <label key={lib.id} className="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 px-3 py-2 hover:bg-orange-50/40 transition">
+                        <input
+                          type="radio"
+                          name="takeoff-collection"
+                          checked={takeoffCollectionId === lib.id}
+                          onChange={() => setTakeoffCollectionId(lib.id)}
+                          className="border-slate-300 text-orange-500 focus:ring-orange-500"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-slate-900">{lib.name}</span>
+                          <span className="ml-2 text-xs text-slate-400">{lib.component_count} components</span>
+                          {lib.is_default_takeoff_library && (
+                            <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">Current default</span>
+                          )}
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${lib.visibility === 'published' ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                          {lib.visibility ?? 'private'}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Enquiry settings */}
+              <div className="mt-4 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Enquiry Email</label>
+                    <input
+                      type="email"
+                      value={takeoffEnquiryEmail}
+                      onChange={(e) => setTakeoffEnquiryEmail(e.target.value)}
+                      placeholder="sales@yourcompany.com"
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Email that receives customer enquiries from the builder.</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={takeoffEnquiriesEnabled} onChange={(e) => setTakeoffEnquiriesEnabled(e.target.checked)}
+                      className="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
+                    <span className="text-sm text-slate-700">Enquiries enabled</span>
+                    <span className="text-xs text-slate-400">(customers can send enquiries to your email)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={takeoffInstantPricing} onChange={(e) => setTakeoffInstantPricing(e.target.checked)}
+                      className="rounded border-slate-300 text-orange-500 focus:ring-orange-500" />
+                    <span className="text-sm text-slate-700">Instant pricing available</span>
+                    <span className="text-xs text-slate-400">(shows real-time prices in the builder)</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Error / success messages */}
+              {takeoffError && (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{takeoffError}</div>
+              )}
+              {takeoffSaved && (
+                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-600">Settings saved. Your builder URL is {takeoffEnabled ? 'active.' : 'disabled.'}</div>
+              )}
+
+              {/* Save button */}
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  onClick={handleSaveTakeoffSettings}
+                  disabled={takeoffSaving}
+                  className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40"
+                >
+                  {takeoffSaving ? 'Saving...' : 'Save Takeoff Builder Settings'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
