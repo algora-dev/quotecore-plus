@@ -48,6 +48,5 @@ export default async function SupplierDirectoryPage(props: {
       initialType={searchParams.type ?? ''}
       initialLocation={searchParams.location ?? ''}
     />
-    </>
   );
 }
