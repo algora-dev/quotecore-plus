@@ -51,6 +51,7 @@ export async function GET(request: Request) {
         supplierSlug: lib.supplierSlug,
         country: lib.country,
         currency: lib.currency,
+        unitSystem: lib.unitSystem,
         collectionId: lib.collectionId,
         collectionName: lib.collectionName,
         publicSlug: lib.publicSlug,

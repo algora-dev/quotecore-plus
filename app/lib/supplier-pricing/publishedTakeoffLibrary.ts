@@ -32,6 +32,7 @@ export interface PublishedTakeoffLibrary {
   publicSlug: string;
   publishedVersion: number;
   currency: string;
+  unitSystem: 'metric' | 'imperial' | 'squares';
   supplierId: string;
   supplierName: string;
   supplierSlug: string;
@@ -57,7 +58,7 @@ export async function loadPublishedTakeoffLibrary(
   const { data: collection, error: colError } = await sb
     .from('component_collections')
     .select(`
-      id, name, public_slug, published_version, currency,
+      id, name, public_slug, published_version, currency, unit_system,
       supplier_profile_id, takeoff_enabled, publication_status
     `)
     .eq('id', collectionId)
@@ -95,7 +96,9 @@ export async function loadPublishedTakeoffLibrary(
       component_kind: raw.takeoff_slot,
       name: raw.name,
       description: null,
-      unit: raw.takeoff_slot === 'roof_area' || raw.takeoff_slot === 'underlay' || raw.takeoff_slot === 'fixings' ? 'm2' : 'm',
+      unit: (raw.takeoff_slot === 'roof_area' || raw.takeoff_slot === 'underlay' || raw.takeoff_slot === 'fixings')
+        ? (collection.unit_system === 'imperial' ? 'sqft' : collection.unit_system === 'squares' ? 'squares' : 'm2')
+        : (collection.unit_system === 'imperial' ? 'ft' : 'm'),
       price_per_unit: Number(raw.default_material_rate) || 0,
       pricing_strategy: raw.pricing_strategy || 'per_unit',
       pack_size: raw.pack_size ? Number(raw.pack_size) : null,
@@ -127,7 +130,9 @@ export async function loadPublishedTakeoffLibrary(
       component_kind: comp.takeoff_slot,
       name: comp.name,
       description: comp.notes,
-      unit: comp.takeoff_slot === 'roof_area' || comp.takeoff_slot === 'underlay' || comp.takeoff_slot === 'fixings' ? 'm2' : 'm',
+      unit: (comp.takeoff_slot === 'roof_area' || comp.takeoff_slot === 'underlay' || comp.takeoff_slot === 'fixings')
+        ? (collection.unit_system === 'imperial' ? 'sqft' : collection.unit_system === 'squares' ? 'squares' : 'm2')
+        : (collection.unit_system === 'imperial' ? 'ft' : 'm'),
       price_per_unit: Number(comp.default_material_rate) || 0,
       pricing_strategy: comp.pricing_strategy || 'per_unit',
       pack_size: comp.pack_size ? Number(comp.pack_size) : null,
@@ -183,6 +188,7 @@ export async function loadPublishedTakeoffLibrary(
     publicSlug: collection.public_slug,
     publishedVersion: collection.published_version,
     currency: collection.currency || supplier.currency,
+    unitSystem: (collection.unit_system as 'metric' | 'imperial' | 'squares') || 'metric',
     supplierId: supplier.id,
     supplierName: supplier.supplier_name,
     supplierSlug: supplier.slug,
@@ -226,6 +232,7 @@ export async function listReadyTakeoffLibraries(): Promise<{
   supplierSlug: string;
   country: string | null;
   currency: string;
+  unitSystem: 'metric' | 'imperial' | 'squares';
   collectionId: string;
   collectionName: string;
   publicSlug: string;
@@ -249,7 +256,7 @@ export async function listReadyTakeoffLibraries(): Promise<{
   const { data, error } = await sb
     .from('component_collections')
     .select(`
-      id, name, public_slug, currency,
+      id, name, public_slug, currency, unit_system,
       supplier_profile_id,
       supplier_profiles!component_collections_supplier_profile_id_fkey!inner(
         id, supplier_name, slug, status, country, currency,
@@ -274,6 +281,7 @@ export async function listReadyTakeoffLibraries(): Promise<{
     supplierSlug: col.supplier_profiles.slug,
     country: col.supplier_profiles.country,
     currency: col.currency || col.supplier_profiles.currency,
+    unitSystem: (col.unit_system as 'metric' | 'imperial' | 'squares') || 'metric',
     collectionId: col.id,
     collectionName: col.public_title || col.name,
     publicSlug: col.public_slug,

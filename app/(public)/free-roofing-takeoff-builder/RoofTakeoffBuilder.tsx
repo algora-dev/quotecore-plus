@@ -63,6 +63,7 @@ interface SupplierInfo {
   supplierSlug: string;
   country: string | null;
   currency: string;
+  unitSystem: 'metric' | 'imperial' | 'squares';
   collectionId: string;
   collectionName: string;
   branchCity: string | null;
@@ -223,6 +224,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               branchRegion: lib.branchRegion ?? null,
               enquiriesEnabled: lib.enquiriesEnabled ?? false,
               enquiryEmail: lib.enquiryEmail ?? null,
+              unitSystem: lib.unitSystem || 'metric',
               description: lib.description ?? null,
               roofingTypes: lib.roofingTypes ?? [],
               productCategories: lib.productCategories ?? [],
@@ -230,8 +232,8 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               nationalCoverage: lib.nationalCoverage ?? false,
               deliveryCoverage: lib.deliveryCoverage ?? '',
             });
-            // Supplier components are always metric - auto-set unit
-            setUnitSystem('metric');
+            // Auto-set unit from supplier's collection
+            setUnitSystem(lib.unitSystem || 'metric');
           }
         })
         .catch(() => {})
@@ -729,8 +731,8 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                       key={lib.supplierId}
                       onClick={() => {
                         setSelectedSupplier(lib);
-                        // Supplier components are always metric - auto-set unit
-                        setUnitSystem('metric');
+                        // Auto-set unit from supplier's collection
+                        setUnitSystem(lib.unitSystem || 'metric');
                       }}
                       className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 group"
                     >
@@ -813,7 +815,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     <span className="text-sm font-bold text-[#FF6B35] truncate">{selectedSupplier ? selectedSupplier.supplierName : 'QuoteCore+'}</span>
                     {selectedSupplier && (
                       <span className="text-xs font-medium text-slate-400 flex-shrink-0">
-                        {selectedSupplier.currency}
+                        {selectedSupplier.currency === 'NZD' ? 'NZ$' : selectedSupplier.currency === 'AUD' ? 'A$' : selectedSupplier.currency === 'GBP' ? '\u00a3' : '$'} {selectedSupplier.currency}
                         <span className="relative inline-flex ml-1 group">
                           <svg className="w-3.5 h-3.5 text-slate-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-48 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">This is the supplier's local currency. If you need totals in a different currency, you'll need to convert them yourself.</span>
@@ -822,7 +824,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     )}
                     {!selectedSupplier && supplierSkip && (
                       <span className="text-xs font-medium text-slate-400 flex-shrink-0">
-                        USD
+                        $ USD
                         <span className="relative inline-flex ml-1 group">
                           <svg className="w-3.5 h-3.5 text-slate-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-48 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Default currency is USD. These are test prices for planning purposes only.</span>
