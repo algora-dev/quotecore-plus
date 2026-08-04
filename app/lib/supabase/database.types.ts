@@ -4516,6 +4516,57 @@ export type Database = {
         }
         Relationships: []
       }
+      result_snapshots: {
+        Row: {
+          calculation_version: string
+          collection_id: string | null
+          contains_pii: boolean
+          created_at: string
+          id: string
+          published_version: number | null
+          result: Json
+          supplier_id: string | null
+          token: string
+        }
+        Insert: {
+          calculation_version: string
+          collection_id?: string | null
+          contains_pii?: boolean
+          created_at?: string
+          id?: string
+          published_version?: number | null
+          result: Json
+          supplier_id?: string | null
+          token: string
+        }
+        Update: {
+          calculation_version?: string
+          collection_id?: string | null
+          contains_pii?: boolean
+          created_at?: string
+          id?: string
+          published_version?: number | null
+          result?: Json
+          supplier_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "result_snapshots_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "component_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "result_snapshots_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roof_components: {
         Row: {
           component_kind: string

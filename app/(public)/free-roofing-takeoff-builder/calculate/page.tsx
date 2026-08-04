@@ -51,7 +51,11 @@ export default async function CalculatePage({ searchParams }: CalculatePageProps
   }
   const input = parseQueryInput(params);
   const result = calculatePublicRoofTakeoff(input);
-  if (!result.success) notFound();
+  if (!result.success || result.status !== 'complete') {
+    // For clarification or validation errors, don't redirect to result page
+    // The API endpoint handles these - the calculate page is only for valid calculations
+    notFound();
+  }
 
   // Build canonical query and redirect to the stable result URL
   const populatedQuery = toResultQuery({ ...input, mode: result.mode, units: result.units });
