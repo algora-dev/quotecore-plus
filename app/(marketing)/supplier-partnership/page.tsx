@@ -3,6 +3,7 @@ import Image from "next/image";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import SupplierCTA from "./SupplierCTA";
+import SupplierImageCarousel from "./SupplierImageCarousel";
 import { VideoPlaceholder } from "./SupplierPartnershipVisuals";
 
 export const metadata: Metadata = {
@@ -91,14 +92,15 @@ function ScreenshotFrame({
 
 const trustPoints = [
   "No setup fee",
-  "No sales commission",
   "You control pricing",
   "Enquiries go directly to you",
+  "No strings attached",
 ];
 
 const customServices = [
   "Branded calculators and website embeds",
   "Supplier quoting systems and catalogue workflows",
+  "Custom admin dashboards",
   "Usage reporting and demand analysis",
 ];
 
@@ -174,20 +176,7 @@ export default function SupplierPartnershipPage() {
             <div className="mt-12 grid gap-6 lg:grid-cols-2">
               {/* Integration 01: Inside QuoteCore+ */}
               <article className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.06)] transition hover:border-orange-200 hover:shadow-[0_20px_65px_rgba(255,107,53,0.10)] sm:p-7">
-                <div className="space-y-3">
-                  <ScreenshotFrame
-                    src="/images/supplier-partnership/supplier-directory-1.png"
-                    alt="QuoteCore+ supplier directory showing component libraries that contractors can browse and import"
-                    label="Component Libraries"
-                  />
-                  <ScreenshotFrame
-                    src="/images/supplier-partnership/supplier-directory-2.png"
-                    alt="QuoteCore+ supplier directory showing catalogues with search filtered to New Zealand suppliers"
-                    label="Catalogues"
-                  />
-                </div>
-
-                <div className="mt-6 flex items-start gap-4">
+                <div className="flex items-start gap-4">
                   <span className="text-sm font-semibold text-[#BD4A1A]">01</span>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
@@ -215,18 +204,15 @@ export default function SupplierPartnershipPage() {
                     Control over what products and pricing are visible
                   </li>
                 </ul>
+
+                <div className="mt-6">
+                  <SupplierImageCarousel />
+                </div>
               </article>
 
               {/* Integration 02: Public customer tool */}
               <article className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.06)] transition hover:border-orange-200 hover:shadow-[0_20px_65px_rgba(255,107,53,0.10)] sm:p-7">
-                <ScreenshotFrame
-                  src="/images/supplier-partnership/takeoff-builder.jpg"
-                  alt="Free roofing takeoff builder showing roof area input with supplier pricing applied"
-                  label="quote-core.com/free-roofing-takeoff-builder"
-                  href="https://quote-core.com/free-roofing-takeoff-builder"
-                />
-
-                <div className="mt-6 flex items-start gap-4">
+                <div className="flex items-start gap-4">
                   <span className="text-sm font-semibold text-[#BD4A1A]">02</span>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
@@ -262,6 +248,15 @@ export default function SupplierPartnershipPage() {
                 >
                   Try the live tool <ExternalLinkIcon />
                 </a>
+
+                <div className="mt-6">
+                  <ScreenshotFrame
+                    src="/images/supplier-partnership/takeoff-builder.jpg"
+                    alt="Free roofing takeoff builder showing roof area input with supplier pricing applied"
+                    label="quote-core.com/free-roofing-takeoff-builder"
+                    href="https://quote-core.com/free-roofing-takeoff-builder"
+                  />
+                </div>
               </article>
             </div>
 
