@@ -295,7 +295,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                 {pendingAction === 'send' ? `This will open the supplier enquiry form to send your takeoff to ${supplier?.name}.` :
                  pendingAction === 'print' ? 'This will open your browser print dialog. Make sure to save as PDF for your records.' :
                  pendingAction === 'quote' ? 'This will take you to the free quote generator with your takeoff data pre-filled.' :
-                 'This will take you to the QuoteCore+ sign up page. Your takeoff data will be lost.'}
+                 'Sign up for a free 14-day trial of QuoteCore+ to access advanced versions of this tool and more. Save and edit your takeoffs, add custom components, and unlock powerful quoting features - all free during your trial.'}
               </p>
               <div className="mt-5 flex gap-2">
                 <button
