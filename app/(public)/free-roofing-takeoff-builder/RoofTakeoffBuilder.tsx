@@ -230,6 +230,8 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               nationalCoverage: lib.nationalCoverage ?? false,
               deliveryCoverage: lib.deliveryCoverage ?? '',
             });
+            // Supplier components are always metric - auto-set unit
+            setUnitSystem('metric');
           }
         })
         .catch(() => {})
@@ -618,7 +620,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               {/* Step indicator */}
               <div className="flex items-center justify-center gap-2 mb-1">
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#FF6B35] text-xs font-bold text-white">2</span>
-                <span className="text-xs font-medium text-slate-400">Step 2 of 3</span>
+                <span className="text-xs font-medium text-slate-400">Step 2 - select a supplier</span>
               </div>
 
               <div className="text-center">
@@ -725,7 +727,11 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                   .map((lib) => (
                     <button
                       key={lib.supplierId}
-                      onClick={() => setSelectedSupplier(lib)}
+                      onClick={() => {
+                        setSelectedSupplier(lib);
+                        // Supplier components are always metric - auto-set unit
+                        setUnitSystem('metric');
+                      }}
                       className="w-full rounded-xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 group"
                     >
                       <div className="flex items-center justify-between">
@@ -797,7 +803,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               {/* Breadcrumb */}
               <button onClick={() => { setUnitSystem(null); }} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#BD4A1A] transition mb-3">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-                Back to unit selection
+                {selectedSupplier ? 'Back to supplier selection' : 'Back to unit selection'}
               </button>
               {/* Compact supplier strip + expandable settings */}
               <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-2 md:p-3 mb-5">
@@ -805,6 +811,24 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span className="text-xs font-medium text-slate-500 flex-shrink-0">Pricing from</span>
                     <span className="text-sm font-bold text-[#FF6B35] truncate">{selectedSupplier ? selectedSupplier.supplierName : 'QuoteCore+'}</span>
+                    {selectedSupplier && (
+                      <span className="text-xs font-medium text-slate-400 flex-shrink-0">
+                        {selectedSupplier.currency}
+                        <span className="relative inline-flex ml-1 group">
+                          <svg className="w-3.5 h-3.5 text-slate-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-48 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">This is the supplier's local currency. If you need totals in a different currency, you'll need to convert them yourself.</span>
+                        </span>
+                      </span>
+                    )}
+                    {!selectedSupplier && supplierSkip && (
+                      <span className="text-xs font-medium text-slate-400 flex-shrink-0">
+                        USD
+                        <span className="relative inline-flex ml-1 group">
+                          <svg className="w-3.5 h-3.5 text-slate-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-48 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">Default currency is USD. These are test prices for planning purposes only.</span>
+                        </span>
+                      </span>
+                    )}
                     <button onClick={() => { setSelectedSupplier(null); setSupplierSkip(false); setUnitSystem(null); }} className="text-xs font-medium text-slate-400 hover:text-[#BD4A1A] transition rounded-full px-2 py-0.5 hover:bg-slate-100 flex-shrink-0">
                       Change supplier
                     </button>
@@ -838,9 +862,13 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
                       <div>
                         <span className="text-xs font-medium text-slate-600">Units</span>
-                        <p className="text-xs text-slate-400">{u === 'metric' ? 'Metric (m / m²)' : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}</p>
+                        <p className="text-xs text-slate-400">{u === 'metric' ? 'Metric (m / m²)' : u === 'imperial' ? 'Imperial (ft / sq ft)' : 'Roofing Squares'}{selectedSupplier && <span className="text-slate-300 ml-1">- locked by supplier</span>}</p>
                       </div>
-                      <button onClick={changeUnits} className="text-xs font-medium text-slate-400 hover:text-[#BD4A1A] transition rounded-full px-2 py-0.5 hover:bg-slate-100">Change units</button>
+                      {selectedSupplier ? (
+                        <span className="text-xs text-slate-300">Locked</span>
+                      ) : (
+                        <button onClick={changeUnits} className="text-xs font-medium text-slate-400 hover:text-[#BD4A1A] transition rounded-full px-2 py-0.5 hover:bg-slate-100">Change units</button>
+                      )}
                     </div>
                     {selectedSupplier && (
                       <div className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
