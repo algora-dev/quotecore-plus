@@ -151,19 +151,23 @@ export async function searchSupplierLibraries(params: {
   const { data: collections, error } = await dbQuery;
 
   if (error) {
-    console.error('[searchSupplierLibraries] Error:', error.message);
+    console.error('[searchSupplierLibraries] Error:', error.message, error.code, error.details);
     return [];
   }
+
+  console.log('[searchSupplierLibraries] Found collections:', collections?.length ?? 0, collections?.map(c => ({ id: c.id, name: c.name, visibility: c.visibility, sp: (c as any).supplier_profiles?.supplier_name })) ?? []);
 
   if (!collections || collections.length === 0) return [];
 
   // Get component counts for these collections
   const collectionIds = collections.map(c => c.id);
-  const { data: counts } = await supabase
+  const { data: counts, error: countError } = await supabase
     .from('component_library')
     .select('collection_id')
     .in('collection_id', collectionIds)
     .eq('is_active', true);
+
+  console.log('[searchSupplierLibraries] Component counts:', { collectionIds, counts: counts?.length ?? 0, countError: countError?.message });
 
   const countMap = new Map<string, number>();
   for (const row of counts ?? []) {
@@ -257,7 +261,9 @@ export async function searchSupplierLibraries(params: {
   }
 
   // Filter out libraries with 0 components (nothing to import)
-  return results.filter(l => l.component_count > 0);
+  const filtered = results.filter(l => l.component_count > 0);
+  console.log('[searchSupplierLibraries] Final results:', { beforeFilter: results.length, afterFilter: filtered.length, counts: results.map(r => ({ id: r.id, name: r.name, count: r.component_count })) });
+  return filtered;
 }
 
 /**
