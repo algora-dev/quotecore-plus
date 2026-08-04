@@ -5,6 +5,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getPublicSupplier, type SupplierDetail } from "@/lib/supplier-directory";
 import { getSupplierDirectory } from "@/lib/supplier-directory";
+import { SupplierPageTracker, SupplierCalculatorClickTracker } from "@/components/SupplierAnalytics";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -252,6 +253,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                 </div>
                 <Link
                   href={calculatorUrl}
+                  data-track="supplier-calculator-cta"
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
                 >
                   Open calculator
@@ -415,6 +417,8 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
         <SiteFooter />
       </main>
+      <SupplierPageTracker supplierSlug={s.slug} supplierName={s.supplier_name} hasCalculator={!!calculatorUrl} pageType="supplier_detail" />
+      {calculatorUrl && <SupplierCalculatorClickTracker supplierSlug={s.slug} supplierName={s.supplier_name} />}
     </>
   );
 }

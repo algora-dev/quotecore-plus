@@ -6,6 +6,7 @@ import { RoofTakeoffBuilder } from "../RoofTakeoffBuilder";
 import { parseQueryInput } from "../public-contract";
 import { getPublicSupplier, type SupplierDetail } from "@/lib/supplier-directory";
 import { ROOF_TAKEOFF_CALCULATION_VERSION } from "../public-contract";
+import { SupplierPageTracker } from "@/components/SupplierAnalytics";
 
 interface PageProps {
   params: Promise<{ supplierSlug: string }>;
@@ -395,6 +396,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
           </div>
         </div>
       </section>
+      <SupplierPageTracker supplierSlug={s.slug} supplierName={s.supplier_name} hasCalculator={true} pageType="supplier_calculator" />
     </>
   );
 }
