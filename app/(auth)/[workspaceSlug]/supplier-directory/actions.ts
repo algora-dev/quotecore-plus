@@ -262,7 +262,14 @@ export async function searchSupplierLibraries(params: {
 
   // Filter out libraries with 0 components (nothing to import)
   const filtered = results.filter(l => l.component_count > 0);
-  console.log('[searchSupplierLibraries] Final results:', { beforeFilter: results.length, afterFilter: filtered.length, counts: results.map(r => ({ id: r.id, name: r.name, count: r.component_count })) });
+  (globalThis as any).__supplierLibDebug = {
+    collectionsFound: collections?.length ?? 0,
+    componentCounts: countMap,
+    resultsBeforeFilter: results.length,
+    resultsAfterFilter: filtered.length,
+    error: error?.message,
+    countError: countError?.message,
+  };
   return filtered;
 }
 

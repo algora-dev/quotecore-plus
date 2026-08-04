@@ -36,8 +36,19 @@ export default async function SupplierDirectoryPage(props: {
     (cat.brands ?? []).forEach(b => allBrands.add(b));
   }
 
+  const debugInfo = (globalThis as any).__supplierLibDebug;
+
   return (
-    <SupplierDirectory
+    <>
+      {debugInfo && (
+        <div className="mx-auto max-w-4xl px-4 py-2 text-xs bg-yellow-50 border-b border-yellow-200">
+          <details>
+            <summary className="cursor-pointer font-medium text-yellow-800">Supplier Libraries Debug Info</summary>
+            <pre className="mt-2 whitespace-pre-wrap text-yellow-900">{JSON.stringify(debugInfo, null, 2)}</pre>
+          </details>
+        </div>
+      )}
+      <SupplierDirectory
       workspaceSlug={workspaceSlug}
       suppliers={suppliers}
       libraries={libraries}
