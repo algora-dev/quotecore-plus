@@ -77,6 +77,11 @@ export async function POST(request: Request) {
   const result = calculatePublicRoofTakeoff(input, components, slotMap);
   if (!result.success) return Response.json(result, { status: 422 });
 
+  // Handle clarification responses
+  if (result.status === 'needs_clarification') {
+    return Response.json(result, { status: 200, headers: { 'Cache-Control': 'no-store' } });
+  }
+
   const origin = new URL(request.url).origin;
   const populatedQuery = toResultQuery({ ...input, mode: result.mode, units: result.units });
   const token = createResultToken(populatedQuery, ROOF_TAKEOFF_CALCULATION_VERSION);

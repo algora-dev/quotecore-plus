@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery, type PublicTakeoffResult, type SupplierSlotMap } from '../../public-contract';
+import { calculatePublicRoofTakeoff, parseQueryInput, toResultQuery, type PublicTakeoffResult, type PublicTakeoffResponse, type SupplierSlotMap } from '../../public-contract';
 import { verifyResultToken, buildResultUrl } from '../../result-token';
 import { BUILT_IN_ORDER, COMPONENT_DEFS } from '../../calc';
 import { ROOF_TAKEOFF_CALCULATION_VERSION } from '../../public-contract';
 import { getSupplierBySlug, getSupplierDefaultComponents, autoResolveSupplier } from '@/app/lib/supplier-pricing/supplierPricingService';
+import { storeResultSnapshot, getResultSnapshot, checkNewerVersion } from '../../snapshot';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,68 +53,100 @@ export default async function StableResultPage({ params }: ResultPageProps) {
   const searchParams = new URLSearchParams(payload.q);
   const input = parseQueryInput(searchParams);
 
-  // Load supplier pricing - auto-resolve best supplier if none specified
-  let components: Awaited<ReturnType<typeof getSupplierDefaultComponents>>['components'] = [];
-  let slotMap: SupplierSlotMap = {};
+  // G3: Try to load an immutable snapshot first
+  const snapshot = await getResultSnapshot(token);
+
+  let result: PublicTakeoffResult;
   let supplierProfile: Awaited<ReturnType<typeof getSupplierBySlug>> = null;
   let autoResolved = false;
+  let isFromSnapshot = false;
+  let staleInfo: { hasNewer: boolean; latestVersion: number | null } = { hasNewer: false, latestVersion: null };
 
-  if (input.supplier) {
-    supplierProfile = await getSupplierBySlug(input.supplier);
-    if (supplierProfile) {
-      const result = await getSupplierDefaultComponents(supplierProfile.id);
-      components = result.components;
-      for (const comp of components) {
-        const slot = (comp as any).takeoff_slot;
-        if (slot) {
-          slotMap[slot] = {
-            componentId: comp.id,
-            componentName: comp.name,
-            componentSku: (comp as any).sku ?? null,
-            unitPrice: comp.price_per_unit,
-          };
-        }
-      }
+  if (snapshot) {
+    // Use immutable snapshot - prices are pinned to the version at calculation time
+    result = snapshot.result as unknown as PublicTakeoffResult;
+    isFromSnapshot = true;
+
+    // Check if a newer version exists for stale disclosure
+    staleInfo = await checkNewerVersion(snapshot.collection_id, snapshot.published_version);
+
+    // Load supplier profile for display
+    if (result.pricing?.supplierId) {
+      supplierProfile = await getSupplierBySlug(result.pricing.supplierName);
     }
   } else {
-    // Auto-resolve best supplier with live pricing
-    const resolved = await autoResolveSupplier(input.country);
-    if (resolved) {
-      supplierProfile = resolved.profile;
-      components = resolved.components;
-      autoResolved = true;
-      for (const comp of components) {
-        const slot = (comp as any).takeoff_slot;
-        if (slot) {
-          slotMap[slot] = {
-            componentId: comp.id,
-            componentName: comp.name,
-            componentSku: (comp as any).sku ?? null,
-            unitPrice: comp.price_per_unit,
-          };
+    // No snapshot - calculate fresh and store
+    let components: Awaited<ReturnType<typeof getSupplierDefaultComponents>>['components'] = [];
+    let slotMap: SupplierSlotMap = {};
+
+    if (input.supplier) {
+      supplierProfile = await getSupplierBySlug(input.supplier);
+      if (supplierProfile) {
+        const supplierResult = await getSupplierDefaultComponents(supplierProfile.id);
+        components = supplierResult.components;
+        for (const comp of components) {
+          const slot = (comp as any).takeoff_slot;
+          if (slot) {
+            slotMap[slot] = {
+              componentId: comp.id,
+              componentName: comp.name,
+              componentSku: (comp as any).sku ?? null,
+              unitPrice: comp.price_per_unit,
+            };
+          }
+        }
+      }
+    } else {
+      // Auto-resolve best supplier with live pricing
+      const resolved = await autoResolveSupplier(input.country);
+      if (resolved) {
+        supplierProfile = resolved.profile;
+        components = resolved.components;
+        autoResolved = true;
+        for (const comp of components) {
+          const slot = (comp as any).takeoff_slot;
+          if (slot) {
+            slotMap[slot] = {
+              componentId: comp.id,
+              componentName: comp.name,
+              componentSku: (comp as any).sku ?? null,
+              unitPrice: comp.price_per_unit,
+            };
+          }
         }
       }
     }
-  }
 
-  const result = calculatePublicRoofTakeoff(input, components, slotMap);
-  if (!result.success) notFound();
+    const calcResponse = calculatePublicRoofTakeoff(input, components, slotMap);
+    if (!calcResponse.success || calcResponse.status !== 'complete') notFound();
+    result = calcResponse;
 
-  // Attach pricing provenance to result for display
-  if (supplierProfile) {
-    result.pricing = {
-      supplierId: supplierProfile.id,
-      supplierName: supplierProfile.supplier_name,
-      country: supplierProfile.country,
-      currency: supplierProfile.currency,
-      taxTreatment: supplierProfile.tax_treatment,
-      priceType: supplierProfile.price_type,
-      pricingUpdatedAt: supplierProfile.pricing_updated_at,
-      priceValidUntil: supplierProfile.price_valid_until,
-      deliveryAssumptions: supplierProfile.delivery_assumptions,
-      exclusions: supplierProfile.exclusions,
-      estimateStatus: supplierProfile.instant_pricing_available ? 'indicative' : 'unavailable',
-    };
+    // Attach pricing provenance
+    if (supplierProfile) {
+      result.pricing = {
+        supplierId: supplierProfile.id,
+        supplierName: supplierProfile.supplier_name,
+        country: supplierProfile.country,
+        currency: supplierProfile.currency,
+        taxTreatment: supplierProfile.tax_treatment,
+        priceType: supplierProfile.price_type,
+        pricingUpdatedAt: supplierProfile.pricing_updated_at,
+        priceValidUntil: supplierProfile.price_valid_until,
+        deliveryAssumptions: supplierProfile.delivery_assumptions,
+        exclusions: supplierProfile.exclusions,
+        estimateStatus: supplierProfile.instant_pricing_available ? 'indicative' : 'unavailable',
+      };
+    }
+
+    // Store immutable snapshot for future visits
+    await storeResultSnapshot(
+      token,
+      result as unknown as Record<string, unknown>,
+      ROOF_TAKEOFF_CALCULATION_VERSION,
+      supplierProfile?.id,
+      null, // collection_id - not available on SupplierProfile type
+      null, // published_version
+    );
   }
 
   const populatedQuery = toResultQuery({ ...input, mode: result.mode, units: result.units });
@@ -343,6 +376,32 @@ export default async function StableResultPage({ params }: ResultPageProps) {
             </dl>
             <p className="mt-2 text-xs text-blue-600">
               This is an {result.pricing.estimateStatus} price based on current supplier catalogue data. Verify with the supplier before ordering.
+            </p>
+          </section>
+        )}
+
+        {/* Stale version disclosure */}
+        {isFromSnapshot && staleInfo.hasNewer && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <h2 className="text-sm font-semibold text-amber-800">Pricing update available</h2>
+            <p className="mt-1 text-xs text-amber-700">
+              This result was calculated using published library version {snapshot?.published_version ?? 'unknown'}.
+              A newer version ({staleInfo.latestVersion}) is now available.
+              Prices shown here are from the original calculation and have not changed.
+            </p>
+            <Link href={`/free-roofing-takeoff-builder/calculate?${populatedQuery}`}
+              className="mt-2 inline-block text-xs font-medium text-amber-800 hover:underline">
+              Recalculate with latest pricing
+            </Link>
+          </section>
+        )}
+
+        {/* Snapshot provenance */}
+        {isFromSnapshot && (
+          <section className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2">
+            <p className="text-xs text-slate-500">
+              This result was calculated on {new Date(snapshot?.created_at ?? result.timestamp).toLocaleString()} and pinned to the library version at that time.
+              Prices are immutable and will not change even if the supplier updates their catalogue.
             </p>
           </section>
         )}

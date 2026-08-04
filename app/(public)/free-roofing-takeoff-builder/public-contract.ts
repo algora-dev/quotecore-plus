@@ -28,6 +28,12 @@ export interface PublicRoofTakeoffInput {
   country?: string; // ISO 2-letter country code for auto-supplier resolution
   supplierLib?: string; // Collection ID for provenance
   supplierVer?: number; // Published version for provenance
+  /**
+   * G2: Per-component measurement basis. Overrides global `mode` for specific components.
+   * Each value can be 'plan', 'actual', or 'unknown'.
+   * When 'unknown' and the component has measurements, the API returns needs_clarification.
+   */
+  measurementBasis?: Partial<Record<string, 'plan' | 'actual' | 'unknown'>>;
 }
 
 export interface PublicValidationError {
@@ -37,12 +43,15 @@ export interface PublicValidationError {
 
 export interface PublicTakeoffResult {
   success: true;
+  status: 'complete';
+  authoritative: true;
   calculator: 'QuoteCore+ Free Roof Takeoff Builder';
   calculationVersion: string;
   timestamp: string;
   mode: PublicMode;
   units: UnitSystem;
   pitchDegrees: number;
+  measurementBasis: Record<string, 'plan' | 'actual'>;
   inputs: PublicRoofTakeoffInput;
   normalizedInputs: Record<string, unknown>;
   results: {
@@ -67,6 +76,13 @@ export interface PublicTakeoffResult {
   };
   warnings: string[];
   resultUrl?: string;
+  nextAction: null;
+  locationMatch?: {
+    requestedLocation: string | null;
+    matchedLocation: string | null;
+    matchType: string;
+    warning: string | null;
+  };
   pricing?: {
     supplierId: string;
     supplierName: string;
@@ -82,6 +98,20 @@ export interface PublicTakeoffResult {
   };
 }
 
+export interface PublicTakeoffClarification {
+  success: true;
+  status: 'needs_clarification';
+  authoritative: false;
+  calculator: 'QuoteCore+ Free Roof Takeoff Builder';
+  calculationVersion: string;
+  question: string;
+  requiredField: string;
+  nextAction: { type: 'ask_user' };
+  partialResults?: Record<string, unknown>;
+}
+
+export type PublicTakeoffResponse = PublicTakeoffResult | PublicTakeoffClarification | PublicTakeoffFailure;
+
 export interface PublicTakeoffFailure {
   success: false;
   errors: PublicValidationError[];
@@ -94,6 +124,8 @@ export interface NormalizedPublicTakeoff {
   values: Record<string, number[]>;
   sections: Record<string, ComponentSection>;
   warnings: string[];
+  basisMap: Record<string, 'plan' | 'actual'>;
+  clarificationNeeded: { field: string; question: string }[];
 }
 
 const ARRAY_ALIASES: Record<string, keyof PublicRoofTakeoffInput> = {
@@ -165,6 +197,18 @@ export function validatePublicInput(input: PublicRoofTakeoffInput): PublicValida
   if (input.pitchDegrees != null && (!Number.isFinite(input.pitchDegrees) || input.pitchDegrees < 0 || input.pitchDegrees > 89)) {
     errors.push({ field: 'pitchDegrees', message: 'Pitch must be between 0 and 89 degrees.' });
   }
+  // Validate measurementBasis keys
+  if (input.measurementBasis) {
+    const validKinds = [...BUILT_IN_ORDER, 'area', 'roof_area', 'hips', 'ridges', 'ridge', 'valleys', 'barges', 'spouting', 'underlay', 'fixings'];
+    for (const [key, value] of Object.entries(input.measurementBasis)) {
+      if (!validKinds.includes(key)) {
+        errors.push({ field: `measurementBasis.${key}`, message: `Unknown component: ${key}` });
+      }
+      if (!value || !['plan', 'actual', 'unknown'].includes(value)) {
+        errors.push({ field: `measurementBasis.${key}`, message: 'Basis must be plan, actual, or unknown.' });
+      }
+    }
+  }
 
   const values: Array<[string, unknown]> = [
     ['area', input.area ?? input.roofArea], ['underlay', input.underlay], ['fixings', input.fixings],
@@ -184,11 +228,49 @@ export function validatePublicInput(input: PublicRoofTakeoffInput): PublicValida
 }
 
 export function normalizePublicRoofTakeoff(supplied: PublicRoofTakeoffInput): NormalizedPublicTakeoff {
-  const mode = supplied.mode ?? 'actual';
+  const globalMode = supplied.mode ?? 'actual';
   const units = supplied.units ?? 'metric';
   const pitchDegrees = supplied.pitchDegrees ?? 0;
   const warnings: string[] = [];
   if (supplied.mode == null) warnings.push('mode_defaulted_to_actual');
+
+  // Resolve per-component basis from measurementBasis overrides + global mode
+  const basisMap: Record<string, 'plan' | 'actual'> = {};
+  const clarificationNeeded: { field: string; question: string }[] = [];
+
+  for (const kind of BUILT_IN_ORDER) {
+    const aliasMap: Record<string, string> = {
+      roof_area: 'area',
+      hip: 'hips',
+      ridge: 'ridges',
+      valley: 'valleys',
+      barge: 'barges',
+      spouting: 'spouting',
+      underlay: 'underlay',
+      fixings: 'fixings',
+    };
+    const alias = aliasMap[kind] ?? kind;
+    const explicit = supplied.measurementBasis?.[kind] ?? supplied.measurementBasis?.[alias];
+    if (explicit === 'unknown') {
+      // Check if this component actually has measurements
+      const hasMeasurements = (supplied as Record<string, unknown>)[alias] != null
+        || (kind === 'roof_area' && (supplied.area ?? supplied.roofArea) != null);
+      if (hasMeasurements) {
+        clarificationNeeded.push({
+          field: `measurementBasis.${alias}`,
+          question: `Are the ${COMPONENT_DEFS[kind]?.label ?? kind} measurements actual sloping lengths/areas or horizontal plan-view lengths/areas?`,
+        });
+      }
+      basisMap[kind] = globalMode as 'plan' | 'actual';
+    } else if (explicit === 'plan' || explicit === 'actual') {
+      basisMap[kind] = explicit;
+    } else {
+      basisMap[kind] = globalMode as 'plan' | 'actual';
+    }
+  }
+
+  // Store clarification info on the normalized result for the calculator to use
+  (warnings as string[]).push(...clarificationNeeded.map(c => `clarification_needed:${c.field}`));
 
   const values: Record<string, number[]> = {
     roof_area: numberArray(supplied.area ?? supplied.roofArea),
@@ -204,7 +286,8 @@ export function normalizePublicRoofTakeoff(supplied: PublicRoofTakeoffInput): No
   const sections: Record<string, ComponentSection> = {};
   for (const kind of BUILT_IN_ORDER) {
     const pitchType = COMPONENT_DEFS[kind]?.pitchType ?? 'none';
-    const entries = values[kind].map((value) => makeEntry(value, mode, pitchDegrees, kind, pitchType));
+    const componentMode = basisMap[kind];
+    const entries = values[kind].map((value) => makeEntry(value, componentMode, pitchDegrees, kind, pitchType));
     if (units === 'squares' && (kind === 'roof_area' || kind === 'underlay' || kind === 'fixings')) {
       for (const entry of entries) entry.computedValue = areaValueForUnit(entry.computedValue, units, false);
     }
@@ -215,7 +298,7 @@ export function normalizePublicRoofTakeoff(supplied: PublicRoofTakeoffInput): No
     };
   }
 
-  return { mode, units, pitchDegrees, values, sections, warnings };
+  return { mode: globalMode, units, pitchDegrees, values, sections, warnings, basisMap, clarificationNeeded };
 }
 
 export interface SupplierSlotMap {
@@ -226,11 +309,27 @@ export function calculatePublicRoofTakeoff(
   supplied: PublicRoofTakeoffInput,
   components: RoofComponentDef[] = [],
   slotMap?: SupplierSlotMap,
-): PublicTakeoffResult | PublicTakeoffFailure {
+): PublicTakeoffResponse {
   const errors = validatePublicInput(supplied);
   if (errors.length > 0) return { success: false, errors };
 
-  const { mode, units, pitchDegrees, values, sections, warnings } = normalizePublicRoofTakeoff(supplied);
+  const { mode, units, pitchDegrees, values, sections, warnings, basisMap, clarificationNeeded } = normalizePublicRoofTakeoff(supplied);
+
+  // If any measurements have unknown basis, return clarification
+  if (clarificationNeeded.length > 0) {
+    const first = clarificationNeeded[0];
+    return {
+      success: true,
+      status: 'needs_clarification',
+      authoritative: false,
+      calculator: 'QuoteCore+ Free Roof Takeoff Builder',
+      calculationVersion: ROOF_TAKEOFF_CALCULATION_VERSION,
+      question: first.question,
+      requiredField: first.field,
+      nextAction: { type: 'ask_user' },
+    };
+  }
+
   if (components.length === 0) warnings.push('pricing_unavailable');
   const componentMap = new Map(components.map((component) => [component.id, component]));
   // Auto-assign components from slot map when entries don't have one
@@ -268,14 +367,17 @@ export function calculatePublicRoofTakeoff(
 
   return {
     success: true,
+    status: 'complete',
+    authoritative: true,
     calculator: 'QuoteCore+ Free Roof Takeoff Builder',
     calculationVersion: ROOF_TAKEOFF_CALCULATION_VERSION,
     timestamp: new Date().toISOString(),
     mode,
     units,
     pitchDegrees,
+    measurementBasis: basisMap,
     inputs: supplied,
-    normalizedInputs: { mode, units, pitchDegrees, values, wastePercent: Object.fromEntries(BUILT_IN_ORDER.map((kind) => [kind, sections[kind].wastePercent])) },
+    normalizedInputs: { mode, units, pitchDegrees, values, wastePercent: Object.fromEntries(BUILT_IN_ORDER.map((kind) => [kind, sections[kind].wastePercent])), basisMap },
     results: {
       components: resultComponents,
       totalEntries: calculation.totalEntries,
@@ -284,6 +386,7 @@ export function calculatePublicRoofTakeoff(
       grandTotal: calculation.grandTotal,
     },
     warnings,
+    nextAction: null,
   };
 }
 
@@ -316,6 +419,26 @@ export function parseQueryInput(params: URLSearchParams): PublicRoofTakeoffInput
   if (supplierLib) input.supplierLib = supplierLib;
   const supplierVer = params.get('supplierVer');
   if (supplierVer) input.supplierVer = Number(supplierVer);
+  // Parse per-component measurement basis
+  const basis = params.get('measurementBasis');
+  if (basis) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(basis));
+      if (typeof parsed === 'object' && parsed !== null) {
+        input.measurementBasis = parsed as Partial<Record<string, 'plan' | 'actual' | 'unknown'>>;
+      }
+    } catch {
+      // Ignore malformed basis
+    }
+  }
+  // Also support individual basis params: basis.area=plan, basis.hips=actual
+  for (const key of ['area', 'roof_area', 'hips', 'ridges', 'ridge', 'valleys', 'barges', 'spouting', 'underlay', 'fixings']) {
+    const val = params.get(`basis.${key}`);
+    if (val && ['plan', 'actual', 'unknown'].includes(val)) {
+      if (!input.measurementBasis) input.measurementBasis = {};
+      (input.measurementBasis as Record<string, 'plan' | 'actual' | 'unknown'>)[key] = val as 'plan' | 'actual' | 'unknown';
+    }
+  }
   return input;
 }
 
@@ -338,5 +461,8 @@ export function toResultQuery(input: PublicRoofTakeoffInput): string {
   if (input.country) params.set('country', input.country);
   if (input.supplierLib) params.set('supplierLib', input.supplierLib);
   if (input.supplierVer != null) params.set('supplierVer', String(input.supplierVer));
+  if (input.measurementBasis) {
+    params.set('measurementBasis', encodeURIComponent(JSON.stringify(input.measurementBasis)));
+  }
   return params.toString();
 }

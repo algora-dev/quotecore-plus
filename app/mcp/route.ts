@@ -54,6 +54,9 @@ function createServer(origin: string) {
       if (!result.success) {
         return { isError: true, structuredContent: { ...result }, content: [{ type: 'text', text: result.errors.map((error) => `${error.field}: ${error.message}`).join('\n') }] };
       }
+      if (result.status === 'needs_clarification') {
+        return { isError: false, structuredContent: { ...result }, content: [{ type: 'text', text: `Clarification needed: ${result.question} (required field: ${result.requiredField})` }] };
+      }
       result.resultUrl = `${origin}/free-roofing-takeoff-builder/calculate?${toResultQuery(input)}`;
       return {
         structuredContent: { ...result },
@@ -77,7 +80,7 @@ function createServer(origin: string) {
       }
       const input = parseQueryInput(url.searchParams);
       const result = calculatePublicRoofTakeoff(input);
-      if (result.success) result.resultUrl = resultUrl;
+      if (result.success && result.status === 'complete') result.resultUrl = resultUrl;
       return { structuredContent: { ...result }, content: [{ type: 'text', text: `Retrieved roof takeoff result from ${resultUrl}` }] };
     },
   );
