@@ -38,10 +38,11 @@ function buildSeoTitle(s: SupplierDetail['supplier']): string {
 
   // Location
   if (s.branch_city) {
-    parts.push('in', s.branch_city);
     if (s.branch_country) {
       const code = COUNTRY_CODES[s.branch_country] || s.branch_country;
-      parts.push(',', code);
+      parts.push(`in ${s.branch_city}, ${code}`);
+    } else {
+      parts.push('in', s.branch_city);
     }
   } else if (s.branch_country) {
     const code = COUNTRY_CODES[s.branch_country] || s.branch_country;

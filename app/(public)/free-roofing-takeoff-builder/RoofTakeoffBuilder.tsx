@@ -621,7 +621,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
             <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
             <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-8 md:pt-12 pb-4 md:pb-6 text-center">
-              <h1 className="text-xl md:text-3xl font-semibold tracking-tight text-slate-900">Free Roof Takeoff Builder</h1>
+              <h2 className="text-xl md:text-3xl font-semibold tracking-tight text-slate-900">Free Roof Takeoff Builder</h2>
               <p className="mt-2 md:mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto px-2">
                 Input all your roof measurements in one place. Apply pitch, calculate lengths, and get a complete material takeoff for pricing. No signup required.
               </p>
