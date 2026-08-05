@@ -290,11 +290,24 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                   <TagList label="Roofing types" items={s.roofing_types} />
                   <TagList label="Product categories" items={s.product_categories} />
                   <TagList label="Brands" items={s.brands} />
-                  {/* Only show delivery/tax if supplier has explicitly set them */}
-                  {s.delivery_coverage && s.delivery_coverage !== "local" && <InfoRow label="Delivery coverage" value={s.delivery_coverage} />}
+                  {/* Delivery coverage badges */}
+                  {s.delivery_coverage && Array.isArray(s.delivery_coverage) && s.delivery_coverage.length > 0 && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <dt className="text-slate-500 font-medium flex-shrink-0">Delivery</dt>
+                      <dd className="flex flex-wrap gap-1.5">
+                        {s.delivery_coverage.map((d: string) => (
+                          <span key={d} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-600">
+                            {d === 'nationwide' ? 'Nationwide delivery' : d === 'regional' ? 'State/Province delivery' : d === 'local' ? 'City-wide delivery' : d === 'pickup_only' ? 'Pickup only' : d}
+                          </span>
+                        ))}
+                      </dd>
+                    </div>
+                  )}
                   {s.delivery_assumptions && <InfoRow label="Delivery assumptions" value={s.delivery_assumptions} />}
                   {s.exclusions && <InfoRow label="Exclusions" value={s.exclusions} />}
-                  {s.tax_treatment && s.tax_treatment !== "exclusive" && <InfoRow label="Tax treatment" value={s.tax_treatment} />}
+                  {s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                    <InfoRow label="Tax treatment" value={s.tax_treatment === 'inclusive' ? `Prices include ${s.tax_name ?? 'tax'}${s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}` : 'Prices exclude tax'} />
+                  )}
                   {s.currency && <InfoRow label="Currency" value={s.currency} />}
                 </dl>
 

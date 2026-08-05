@@ -34,7 +34,10 @@ export type SupplierProfileData = {
   branch_country: string | null;
   branch_postcode: string | null;
   national_coverage: boolean;
-  delivery_coverage: string | null;
+  delivery_coverage: string[] | null;
+  tax_treatment: string;
+  tax_name: string | null;
+  tax_rate: number | null;
   instant_pricing_available: boolean;
   banner_url: string | null;
   price_list_url: string | null;
@@ -78,7 +81,7 @@ export async function loadSupplierProfile(): Promise<SupplierProfileData | null>
 
   const { data, error } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, branch_postcode, national_coverage, delivery_coverage, instant_pricing_available, banner_url, price_list_url, price_list_filename, price_list_uploaded_at, price_list_content_type, public_page_enabled, search_indexing_enabled, public_catalogue_enabled, public_price_visibility, public_contact_visibility, publication_state, publication_updated_at')
+    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, branch_postcode, national_coverage, delivery_coverage, tax_treatment, tax_name, tax_rate, instant_pricing_available, banner_url, price_list_url, price_list_filename, price_list_uploaded_at, price_list_content_type, public_page_enabled, search_indexing_enabled, public_catalogue_enabled, public_price_visibility, public_contact_visibility, publication_state, publication_updated_at')
     .eq('company_id', profile.company_id)
     .maybeSingle();
 
@@ -167,6 +170,10 @@ export async function updateSupplierProfile(
     price_list_filename: string | null;
     price_list_uploaded_at: string | null;
     price_list_content_type: string | null;
+    tax_treatment: string;
+    tax_name: string | null;
+    tax_rate: number | null;
+    delivery_coverage: string[] | null;
   }>
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
@@ -207,6 +214,10 @@ export async function updateSupplierProfile(
     if (input.price_list_filename !== undefined) update.price_list_filename = input.price_list_filename;
     if (input.price_list_uploaded_at !== undefined) update.price_list_uploaded_at = input.price_list_uploaded_at;
     if (input.price_list_content_type !== undefined) update.price_list_content_type = input.price_list_content_type;
+    if (input.tax_treatment !== undefined) update.tax_treatment = input.tax_treatment;
+    if (input.tax_name !== undefined) update.tax_name = input.tax_name || null;
+    if (input.tax_rate !== undefined) update.tax_rate = input.tax_rate;
+    if (input.delivery_coverage !== undefined) update.delivery_coverage = input.delivery_coverage;
 
     const { error } = await supabase
       .from('supplier_profiles')

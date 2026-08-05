@@ -262,7 +262,12 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
           {s.branch_city && <li>Location: {s.branch_city}{s.branch_region ? `, ${s.branch_region}` : ""}{s.branch_country ? `, ${s.branch_country}` : ""}</li>}
           {s.service_areas?.length && <li>Service areas: {s.service_areas.join(", ")}</li>}
           {s.currency && <li>Currency: {s.currency}</li>}
-          {s.tax_treatment && <li>Tax treatment: {s.tax_treatment}</li>}
+          {s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+            <li>Tax: {s.tax_treatment === 'inclusive'
+              ? `Prices include ${s.tax_name ?? 'tax'}${s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}`
+              : 'Prices exclude tax'}
+            </li>
+          )}
           {s.pricing_updated_at && <li>Pricing updated: {s.pricing_updated_at}</li>}
           {s.price_valid_until && <li>Pricing valid until: {s.price_valid_until}</li>}
           {s.delivery_assumptions && <li>Delivery assumptions: {s.delivery_assumptions}</li>}
