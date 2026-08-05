@@ -87,6 +87,7 @@ export interface SupplierDetail {
     price_list_filename: string | null;
     price_list_uploaded_at: string | null;
     price_list_content_type: string | null;
+    price_list_includes_tax: boolean | null;
     publication_state: string;
     public_price_visibility: string;
     public_contact_visibility: string;

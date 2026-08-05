@@ -79,6 +79,7 @@ interface SupplierInfo {
   taxTreatment: string | null;
   taxName: string | null;
   taxRate: number | null;
+  takeoffLibraryIncludesTax: boolean | null;
 }
 
 interface RoofTakeoffBuilderProps {
@@ -254,6 +255,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               taxTreatment: lib.taxTreatment ?? null,
               taxName: lib.taxName ?? null,
               taxRate: lib.taxRate ?? null,
+              takeoffLibraryIncludesTax: lib.takeoffLibraryIncludesTax ?? null,
             });
             // Auto-set unit from supplier's collection
             setUnitSystem(lib.unitSystem || 'metric');
@@ -886,7 +888,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                         </span>
                       </span>
                     )}
-                    {selectedSupplier && selectedSupplier.taxTreatment === 'exclusive' && (
+                    {selectedSupplier && selectedSupplier.takeoffLibraryIncludesTax === false && (
                       <span className="text-xs font-medium text-amber-600 flex-shrink-0">
                         Prices exclude tax
                         <span className="relative inline-flex ml-1 group">
@@ -895,7 +897,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                         </span>
                       </span>
                     )}
-                    {selectedSupplier && selectedSupplier.taxTreatment === 'inclusive' && selectedSupplier.taxName && (
+                    {selectedSupplier && selectedSupplier.takeoffLibraryIncludesTax === true && selectedSupplier.taxName && (
                       <span className="text-xs font-medium text-emerald-600 flex-shrink-0">
                         Includes {selectedSupplier.taxName}{selectedSupplier.taxRate != null ? ` (${selectedSupplier.taxRate}%)` : ''}
                       </span>

@@ -383,6 +383,12 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                         {s.price_list_uploaded_at && (
                           <p className="text-xs text-slate-500 mt-1">Uploaded {new Date(s.price_list_uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
                         )}
+                        {s.price_list_includes_tax === true && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                          <p className="text-xs text-emerald-600 mt-1">Prices include {s.tax_name ?? 'tax'}{s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}</p>
+                        )}
+                        {s.price_list_includes_tax === false && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                          <p className="text-xs text-amber-600 mt-1">Prices exclude tax</p>
+                        )}
                       </div>
                       <a
                         href={s.price_list_url}

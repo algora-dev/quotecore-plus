@@ -130,6 +130,8 @@ export function SupplierDashboard({
   const [priceListUrl, setPriceListUrl] = useState(profile?.price_list_url ?? '');
   const [priceListFilename, setPriceListFilename] = useState(profile?.price_list_filename ?? '');
   const [priceListUploadedAt, setPriceListUploadedAt] = useState(profile?.price_list_uploaded_at ?? '');
+  const [priceListIncludesTax, setPriceListIncludesTax] = useState<boolean | null>(profile?.price_list_includes_tax ?? null);
+  const [takeoffLibraryIncludesTax, setTakeoffLibraryIncludesTax] = useState<boolean | null>(profile?.takeoff_library_includes_tax ?? null);
 
   // Tax treatment
   const [taxTreatment, setTaxTreatment] = useState<string>(profile?.tax_treatment ?? 'exclusive');
@@ -203,6 +205,7 @@ export function SupplierDashboard({
         logo_url: logoUrl || null, banner_url: bannerUrl || null,
         price_list_url: priceListUrl || null, price_list_filename: priceListFilename || null,
         price_list_uploaded_at: priceListUploadedAt || null, price_list_content_type: null,
+        price_list_includes_tax: priceListIncludesTax,
         tax_treatment: taxTreatment,
         tax_name: taxTreatment === 'inclusive' ? (taxName.trim() || null) : null,
         tax_rate: taxTreatment === 'inclusive' ? (parseFloat(taxRate) || null) : null,
@@ -220,6 +223,7 @@ export function SupplierDashboard({
         takeoff_builder_enabled: takeoffEnabled, default_takeoff_collection_id: takeoffCollectionId,
         enquiry_email: takeoffEnquiryEmail.trim() || null, enquiries_enabled: takeoffEnquiriesEnabled,
         instant_pricing_available: takeoffInstantPricing,
+        takeoff_library_includes_tax: takeoffLibraryIncludesTax,
       });
       if (!result.ok) setTakeoffError(result.message);
       else { setTakeoffSaved(true); setTimeout(() => setTakeoffSaved(false), 3000); }
@@ -534,6 +538,16 @@ export function SupplierDashboard({
                           className="mt-2 text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200" />
                       )}
                       {uploading === 'price-list' && <span className="text-xs text-slate-400 ml-2">Uploading...</span>}
+
+                      {/* Tax inclusion checkbox for price list */}
+                      {priceListUrl && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <input type="checkbox" id="pricelist-tax" checked={priceListIncludesTax === true} onChange={e => setPriceListIncludesTax(e.target.checked)} className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <label htmlFor="pricelist-tax" className="text-xs text-slate-600 cursor-pointer">
+                            This catalogue includes tax{taxTreatment === 'inclusive' && taxName ? ` (${taxName}${taxRate ? ` ${taxRate}%` : ''})` : ''}
+                          </label>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 pt-2">
                       <button onClick={handleSaveProfile} disabled={saving} className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">{saving ? 'Saving...' : 'Save Profile'}</button>
@@ -839,6 +853,16 @@ export function SupplierDashboard({
                         <span className={`text-xs px-2 py-0.5 rounded-full ${lib.visibility === 'published' ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>{lib.visibility ?? 'private'}</span>
                       </label>
                     ))}
+                  </div>
+                )}
+
+                {/* Tax inclusion checkbox for takeoff library */}
+                {takeoffCollectionId && (
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2">
+                    <input type="checkbox" id="takeoff-tax" checked={takeoffLibraryIncludesTax === true} onChange={e => setTakeoffLibraryIncludesTax(e.target.checked)} className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                    <label htmlFor="takeoff-tax" className="text-xs text-slate-600 cursor-pointer">
+                      Prices in this library include tax{taxTreatment === 'inclusive' && taxName ? ` (${taxName}${taxRate ? ` ${taxRate}%` : ''})` : ''}
+                    </label>
                   </div>
                 )}
               </div>
