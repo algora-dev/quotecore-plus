@@ -104,6 +104,34 @@ export default function POLayout({ children }: { children: React.ReactNode }) {
           Add line items with quantities and unit prices, include supplier and delivery details, apply your branding, and download as PDF.
           No signup required. Built by trades, for trades.
         </p>
+
+        {/* How it works */}
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">How it works</h3>
+          <ol className="space-y-2.5 text-sm text-slate-600">
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">1</span>
+              <span>Enter your business name, address, and contact details (saved for next time in your browser).</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">2</span>
+              <span>Add supplier name and delivery address — or select a saved supplier.</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">3</span>
+              <span>Add line items: material description, quantity, unit, and unit price. The PO calculates totals automatically.</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">4</span>
+              <span>Set delivery date, job reference, and any notes for the supplier.</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">5</span>
+              <span>Download as PDF and email to your supplier. Done.</span>
+            </li>
+          </ol>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div>
             <h3 className="text-sm font-semibold text-slate-900 mb-2">What you can do</h3>
@@ -127,6 +155,18 @@ export default function POLayout({ children }: { children: React.ReactNode }) {
             </ul>
           </div>
         </div>
+
+        {/* Why use a PO */}
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold text-slate-900 mb-2">Why use a purchase order?</h3>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            A purchase order (PO) is a formal document sent to a supplier that confirms quantities, prices, and delivery details for materials you are ordering.
+            For trades contractors, a PO creates a paper trail that protects both you and the supplier — if there is a dispute about pricing, quantities, or delivery,
+            the PO is the reference point. Many suppliers require a PO number before they will dispatch materials.
+            A professional PO also speeds up the ordering process — the supplier has everything they need in one document, rather than a phone call followed by a text with half the details.
+          </p>
+        </div>
+
         <div>
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Frequently Asked Questions</h3>
           <div className="space-y-3">
