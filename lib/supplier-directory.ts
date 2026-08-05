@@ -66,11 +66,13 @@ export interface SupplierDetail {
     branch_region: string | null;
     branch_country: string | null;
     national_coverage: boolean | null;
-    delivery_coverage: string | null;
+    delivery_coverage: string[] | null;
     freight_available: boolean | null;
     pickup_available: boolean | null;
     currency: string | null;
     tax_treatment: string | null;
+    tax_name: string | null;
+    tax_rate: number | null;
     delivery_assumptions: string | null;
     exclusions: string | null;
     instant_pricing_available: boolean | null;

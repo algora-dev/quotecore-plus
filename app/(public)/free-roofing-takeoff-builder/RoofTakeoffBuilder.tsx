@@ -76,6 +76,9 @@ interface SupplierInfo {
   brands: string[];
   nationalCoverage: boolean;
   deliveryCoverage: string;
+  taxTreatment: string | null;
+  taxName: string | null;
+  taxRate: number | null;
 }
 
 interface RoofTakeoffBuilderProps {
@@ -248,6 +251,9 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               brands: lib.brands ?? [],
               nationalCoverage: lib.nationalCoverage ?? false,
               deliveryCoverage: lib.deliveryCoverage ?? '',
+              taxTreatment: lib.taxTreatment ?? null,
+              taxName: lib.taxName ?? null,
+              taxRate: lib.taxRate ?? null,
             });
             // Auto-set unit from supplier's collection
             setUnitSystem(lib.unitSystem || 'metric');
@@ -878,6 +884,20 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                           <svg className="w-3.5 h-3.5 text-slate-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-48 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">This is the supplier's local currency. If you need totals in a different currency, you'll need to convert them yourself.</span>
                         </span>
+                      </span>
+                    )}
+                    {selectedSupplier && selectedSupplier.taxTreatment === 'exclusive' && (
+                      <span className="text-xs font-medium text-amber-600 flex-shrink-0">
+                        Prices exclude tax
+                        <span className="relative inline-flex ml-1 group">
+                          <svg className="w-3.5 h-3.5 text-amber-500 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-56 rounded-lg bg-slate-900 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">These prices do not include tax. Contact {selectedSupplier.supplierName} for tax-inclusive pricing.</span>
+                        </span>
+                      </span>
+                    )}
+                    {selectedSupplier && selectedSupplier.taxTreatment === 'inclusive' && selectedSupplier.taxName && (
+                      <span className="text-xs font-medium text-emerald-600 flex-shrink-0">
+                        Includes {selectedSupplier.taxName}{selectedSupplier.taxRate != null ? ` (${selectedSupplier.taxRate}%)` : ''}
                       </span>
                     )}
                     {!selectedSupplier && supplierSkip && (
