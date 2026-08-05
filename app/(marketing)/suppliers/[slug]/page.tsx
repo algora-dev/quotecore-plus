@@ -364,6 +364,12 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                       {lib.roofing_types && lib.roofing_types.length > 0 && <TagList label="Roofing types" items={lib.roofing_types} />}
                       {lib.product_categories && lib.product_categories.length > 0 && <TagList label="Product categories" items={lib.product_categories} />}
                       {lib.brands && lib.brands.length > 0 && <TagList label="Brands" items={lib.brands} />}
+                      {s.takeoff_library_includes_tax === true && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                        <p className="mt-3 text-xs text-emerald-600">Library prices include {s.tax_name ?? 'tax'}{s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}</p>
+                      )}
+                      {s.takeoff_library_includes_tax === false && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                        <p className="mt-3 text-xs text-amber-600">Library prices exclude tax</p>
+                      )}
                     </div>
                   </div>
                 )}
