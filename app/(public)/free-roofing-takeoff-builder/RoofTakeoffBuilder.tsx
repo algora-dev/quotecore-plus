@@ -318,10 +318,13 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
       if (!def) { map[kind] = []; continue; }
       const sectionIsArea = isAreaUnit(def.unit);
       const sectionPitchType = def.pitchType;
+      // Normalise pitch_type mismatch: DB uses "valley_hip", COMPONENT_DEFS uses "hip_valley"
+      const normalisePitch = (p: string) => p === 'valley_hip' ? 'hip_valley' : p;
+      const sectionPitch = normalisePitch(sectionPitchType);
       // Match components by pitch_type and unit type (area vs linear)
       const matches = components.filter(c => {
         const cIsArea = isAreaUnit(c.unit);
-        return c.pitch_type === sectionPitchType && cIsArea === sectionIsArea;
+        return normalisePitch(c.pitch_type) === sectionPitch && cIsArea === sectionIsArea;
       });
       // Sort: native component_kind first, then by sort_order, then name
       matches.sort((a, b) => {
