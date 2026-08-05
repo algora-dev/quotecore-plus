@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const s = data.supplier;
-  const title = `${s.supplier_name} ÔÇö Roofing Supplier | QuoteCore+`;
+  const title = `${s.supplier_name} — Roofing Supplier | QuoteCore+`;
   const description = s.description
     ? `${s.description.slice(0, 155)}`
     : `Roofing supplier ${s.supplier_name} on QuoteCore+. Calculate roof takeoffs using authorised pricing.`;
@@ -290,10 +290,11 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                   <TagList label="Roofing types" items={s.roofing_types} />
                   <TagList label="Product categories" items={s.product_categories} />
                   <TagList label="Brands" items={s.brands} />
-                  {s.delivery_coverage && <InfoRow label="Delivery coverage" value={s.delivery_coverage} />}
+                  {/* Only show delivery/tax if supplier has explicitly set them */}
+                  {s.delivery_coverage && s.delivery_coverage !== "local" && <InfoRow label="Delivery coverage" value={s.delivery_coverage} />}
                   {s.delivery_assumptions && <InfoRow label="Delivery assumptions" value={s.delivery_assumptions} />}
                   {s.exclusions && <InfoRow label="Exclusions" value={s.exclusions} />}
-                  {s.tax_treatment && <InfoRow label="Tax treatment" value={s.tax_treatment} />}
+                  {s.tax_treatment && s.tax_treatment !== "exclusive" && <InfoRow label="Tax treatment" value={s.tax_treatment} />}
                   {s.currency && <InfoRow label="Currency" value={s.currency} />}
                 </dl>
 
@@ -312,7 +313,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     </p>
                     {s.price_type && (
                       <p className="mt-2 text-xs text-slate-500">
-                        Pricing type: {s.price_type === "indicative" ? "Indicative ÔÇö sourced from publicly available supplier data" : s.price_type}
+                        Pricing type: {s.price_type === "indicative" ? "Indicative — sourced from publicly available supplier data" : s.price_type}
                       </p>
                     )}
                     <p className="mt-3 text-xs text-slate-500">
@@ -342,9 +343,9 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                           </span>
                         )}
                       </div>
-                      {lib.roofing_types?.length && <TagList label="Roofing types" items={lib.roofing_types} />}
-                      {lib.product_categories?.length && <TagList label="Product categories" items={lib.product_categories} />}
-                      {lib.brands?.length && <TagList label="Brands" items={lib.brands} />}
+                      {lib.roofing_types && lib.roofing_types.length > 0 && <TagList label="Roofing types" items={lib.roofing_types} />}
+                      {lib.product_categories && lib.product_categories.length > 0 && <TagList label="Product categories" items={lib.product_categories} />}
+                      {lib.brands && lib.brands.length > 0 && <TagList label="Brands" items={lib.brands} />}
                     </div>
                   </div>
                 )}
@@ -424,14 +425,9 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     <p className="mt-2 text-sm text-slate-500">Contact details not publicly available.</p>
                   )}
 
-                  {/* Meta */}
+                  {/* Meta — single date to avoid confusion */}
                   <div className="mt-6 border-t border-slate-200 pt-4 space-y-1.5 text-xs text-slate-500">
-                    {s.publication_updated_at && (
-                      <p>Last updated: {new Date(s.publication_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
-                    )}
-                    {s.pricing_updated_at && (
-                      <p>Pricing updated: {new Date(s.pricing_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
-                    )}
+                    <p>Last updated: {new Date(s.publication_updated_at || s.pricing_updated_at || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
                     <p>Platform: QuoteCore+</p>
                   </div>
                 </div>
