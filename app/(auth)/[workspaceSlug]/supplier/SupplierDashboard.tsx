@@ -131,6 +131,20 @@ export function SupplierDashboard({
   const [priceListFilename, setPriceListFilename] = useState(profile?.price_list_filename ?? '');
   const [priceListUploadedAt, setPriceListUploadedAt] = useState(profile?.price_list_uploaded_at ?? '');
 
+  // Tax treatment
+  const [taxTreatment, setTaxTreatment] = useState<string>(profile?.tax_treatment ?? 'exclusive');
+  const [taxName, setTaxName] = useState(profile?.tax_name ?? '');
+  const [taxRate, setTaxRate] = useState<string>(profile?.tax_rate != null ? String(profile.tax_rate) : '');
+
+  // Delivery coverage
+  const DELIVERY_OPTIONS = [
+    { value: 'nationwide', label: 'Nationwide delivery' },
+    { value: 'regional', label: 'State/Province-wide delivery' },
+    { value: 'local', label: 'City-wide delivery' },
+    { value: 'pickup_only', label: 'Pickup only (no delivery)' },
+  ] as const;
+  const [deliveryCoverage, setDeliveryCoverage] = useState<string[]>(profile?.delivery_coverage ?? []);
+
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [takeoffEnabled, setTakeoffEnabled] = useState(profile?.takeoff_builder_enabled ?? false);
@@ -189,6 +203,10 @@ export function SupplierDashboard({
         logo_url: logoUrl || null, banner_url: bannerUrl || null,
         price_list_url: priceListUrl || null, price_list_filename: priceListFilename || null,
         price_list_uploaded_at: priceListUploadedAt || null, price_list_content_type: null,
+        tax_treatment: taxTreatment,
+        tax_name: taxTreatment === 'inclusive' ? (taxName.trim() || null) : null,
+        tax_rate: taxTreatment === 'inclusive' ? (parseFloat(taxRate) || null) : null,
+        delivery_coverage: deliveryCoverage.length > 0 ? deliveryCoverage : null,
       });
       if (!result.ok) setError(result.message); else setEditingProfile(false);
     } catch (e) { setError(e instanceof Error ? e.message : 'Failed to save'); }
@@ -444,6 +462,59 @@ export function SupplierDashboard({
                         <input type="text" value={branchPostcode} onChange={e => setBranchPostcode(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="8011" />
                       </div>
                     </div>
+
+                    {/* Tax Treatment */}
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                      <label className="text-xs font-medium text-slate-700">Tax Treatment</label>
+                      <Hint>How tax applies to your published prices. Users will see this information when using your takeoff builder.</Hint>
+                      <div className="mt-2 space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="tax-treatment" value="inclusive" checked={taxTreatment === 'inclusive'} onChange={() => setTaxTreatment('inclusive')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <span className="text-sm text-slate-700">Prices <strong>include</strong> tax</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="tax-treatment" value="exclusive" checked={taxTreatment === 'exclusive'} onChange={() => setTaxTreatment('exclusive')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <span className="text-sm text-slate-700">Prices <strong>exclude</strong> tax</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="tax-treatment" value="not_applicable" checked={taxTreatment === 'not_applicable'} onChange={() => setTaxTreatment('not_applicable')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <span className="text-sm text-slate-700">Tax not applicable</span>
+                        </label>
+                      </div>
+                      {taxTreatment === 'inclusive' && (
+                        <div className="mt-3 grid grid-cols-2 gap-2 pl-6">
+                          <div>
+                            <label className="text-xs font-medium text-slate-600">Tax Name</label>
+                            <input type="text" value={taxName} onChange={e => setTaxName(e.target.value)}
+                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. GST, VAT" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-slate-600">Rate (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" value={taxRate} onChange={e => setTaxRate(e.target.value)}
+                              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. 15" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Delivery Coverage */}
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                      <label className="text-xs font-medium text-slate-700">Delivery Coverage</label>
+                      <Hint>Select all areas you can deliver to. This shows on your supplier page.</Hint>
+                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {DELIVERY_OPTIONS.map(opt => {
+                          const selected = deliveryCoverage.includes(opt.value);
+                          return (
+                            <label key={opt.value} className={`flex items-center gap-2 cursor-pointer rounded-lg border px-3 py-2 text-sm transition ${selected ? 'border-[#FF6B35] bg-orange-50/50 text-slate-900' : 'border-slate-200 text-slate-600 hover:border-slate-300'}`}>
+                              <input type="checkbox" checked={selected} onChange={() => setDeliveryCoverage(selected ? deliveryCoverage.filter(v => v !== opt.value) : [...deliveryCoverage, opt.value])}
+                                className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                              {opt.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
                       <label className="text-xs font-medium text-slate-700">Price List File (PDF or CSV)</label>
                       <Hint>Upload your full price list for customers to download from your supplier page. Max 10MB.</Hint>
@@ -493,6 +564,22 @@ export function SupplierDashboard({
                     </div>
                     {(profile.branch_city || profile.branch_region || profile.branch_country) && (
                       <div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Location</span><span className="text-slate-600">{[profile.branch_city, profile.branch_region, profile.branch_country].filter(Boolean).join(', ')}</span></div>
+                    )}
+                    {profile.delivery_coverage && profile.delivery_coverage.length > 0 && (
+                      <div className="flex items-start gap-2 text-xs"><span className="text-slate-400 w-20">Delivery</span>
+                        <div className="flex flex-wrap gap-1">
+                          {profile.delivery_coverage.map(d => <span key={d} className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-600">{d === 'nationwide' ? 'Nationwide' : d === 'regional' ? 'State/Province' : d === 'local' ? 'City-wide' : d === 'pickup_only' ? 'Pickup only' : d}</span>)}
+                        </div>
+                      </div>
+                    )}
+                    {profile.tax_treatment && profile.tax_treatment !== 'not_applicable' && (
+                      <div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Tax</span>
+                        <span className="text-slate-600">
+                          {profile.tax_treatment === 'inclusive'
+                            ? `Prices include ${profile.tax_name ?? 'tax'}${profile.tax_rate != null ? ` (${profile.tax_rate}%)` : ''}`
+                            : 'Prices exclude tax'}
+                        </span>
+                      </div>
                     )}
                     {(priceListUrl || profile.price_list_url) && (
                       <div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Price List</span><span className="text-slate-600 truncate max-w-xs">{priceListFilename || profile.price_list_filename}</span></div>
