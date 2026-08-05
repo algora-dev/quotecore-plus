@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Sending, Tracking & Automated Follow-ups | QuoteCore+",
+  title: "Sending, Tracking & Automated Follow-ups",
   description:
     "Send quotes, orders and invoices directly from QuoteCore+. Track opens and reads. Set up time-based and event-based follow-ups that cancel themselves when a quote is accepted or declined.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features/sending-and-tracking"),
   },
   openGraph: {
-    title: "Sending, Tracking & Automated Follow-ups | QuoteCore+",
+    title: "Sending, Tracking & Automated Follow-ups",
     description:
       "Send quotes, orders and invoices. Track opens, reads and status. Automate follow-ups with configurable delays and cancellation conditions.",
     url: "https://quote-core.com/features/sending-and-tracking",

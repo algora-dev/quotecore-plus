@@ -6,7 +6,7 @@ import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Construction Quoting Software for Trades | QuoteCore+",
+  title: "Construction Quoting Software for Trades",
   description:
     "Construction quoting software for trades that quote from measurements. Measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid in one connected workflow.",
   alternates: {

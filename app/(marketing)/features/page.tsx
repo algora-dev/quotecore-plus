@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Features | QuoteCore+",
+  title: "Features",
   description:
     "Digital roof takeoffs, Smart Components™, material ordering, and invoicing. Explore the features that make QuoteCore+ the connected quoting platform for roofing and construction.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features"),
   },
   openGraph: {
-    title: "Features | QuoteCore+",
+    title: "Features",
     description:
       "Digital roof takeoffs, Smart Components™, material ordering, quote approval tracking, and invoicing. Explore the features of QuoteCore+.",
     url: "https://quote-core.com/features",

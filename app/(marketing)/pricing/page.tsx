@@ -8,14 +8,14 @@ import { pricingPlans } from "@/lib/pricing";
 import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Pricing | QuoteCore+",
+  title: "Pricing",
   description:
     "Compare QuoteCore+ monthly plans in USD and GBP. Start with a 14-day full-feature trial with no credit card, then choose the limits that fit your trade business.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
   },
   openGraph: {
-    title: "QuoteCore+ Pricing",
+    title: "Pricing",
     description: "Compare monthly QuoteCore+ plans, limits and included features in USD and GBP.",
     url: "https://quote-core.com/pricing",
     siteName: "QuoteCore+",

@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Supplier Resources - Catalogs & Libraries | QuoteCore+",
+  title: "Supplier Resources - Catalogs & Libraries",
   description:
     "Search supplier pricing catalogs and component libraries by area or product type. Import ready-made components into your account. Convert supplier catalogs into Smart Components™ in bulk. Save hours of manual pricing setup.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features/supplier-resources"),
   },
   openGraph: {
-    title: "Supplier Resources - Catalogs & Libraries | QuoteCore+",
+    title: "Supplier Resources - Catalogs & Libraries",
     description:
       "Search supplier pricing catalogs and component libraries. Import components, convert catalogs to Smart Components™, and start quoting with real pricing.",
     url: "https://quote-core.com/features/supplier-resources",

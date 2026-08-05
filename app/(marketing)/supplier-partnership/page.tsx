@@ -7,12 +7,12 @@ import SupplierImageCarousel from "./SupplierImageCarousel";
 import { VideoPlaceholder } from "./SupplierPartnershipVisuals";
 
 export const metadata: Metadata = {
-  title: "Supplier Partnership | QuoteCore+",
+  title: "Supplier Partnership",
   description:
     "Put your roofing products into the tools contractors use to price jobs. Free supplier integrations - no setup fee, no commission, no strings attached.",
   alternates: { canonical: "https://quote-core.com/supplier-partnership" },
   openGraph: {
-    title: "A free way to put your roofing products in front of buyers | QuoteCore+",
+    title: "A free way to put your roofing products in front of buyers",
     description:
       "Give contractors a useful preliminary price using your products, capture better-qualified enquiries and keep the customer relationship.",
     url: "https://quote-core.com/supplier-partnership",

@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_LINKEDIN } from "@/app/lib/seo";
 
 export const metadata: Metadata = {
-  title: "About QuoteCore+ | Built From the Industry",
+  title: "About | Built From the Industry",
   description: "QuoteCore+ was built by Shaun, who spent 20 years on the tools and in the office quoting jobs. The software he wished he had back then.",
   alternates: { canonical: "https://quote-core.com/about", languages: hreflangLanguages("/about") },
   openGraph: {

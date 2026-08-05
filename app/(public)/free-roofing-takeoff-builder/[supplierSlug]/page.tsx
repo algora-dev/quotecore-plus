@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data || !data.eligibility.page_visible) {
     return {
-      title: "Roof Takeoff Builder | QuoteCore+",
+      title: "Roof Takeoff Builder ",
       robots: { index: false, follow: true },
     };
   }

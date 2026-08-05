@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return {};
 
   const metadata = buildPageMetadata({
-    title: `${post.title} | QuoteCore+`,
+    title: post.title,
     description: post.description,
     path: `/blog/${slug}`,
     type: 'article',

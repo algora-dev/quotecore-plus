@@ -1,27 +1,59 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import { isNzHost, canonicalOrigin, dualDomainHreflang } from '@/lib/seo/dual-domain';
 
-const SITE_URL = 'https://quote-core.com';
+const GLOBAL_URL = 'https://quote-core.com';
 
-export const metadata: Metadata = {
-  title: 'Free Quote Generator | QuoteCore+',
-  description:
-    'Free online quote generator for roofing and construction. Create professional quotes with line items, VAT, and terms. No signup required - download as PDF.',
-  openGraph: {
-    title: 'Free Quote Generator - Create Professional Quotes Online',
-    description: 'Create professional roofing and construction quotes in minutes. No signup required.',
-    url: `${SITE_URL}/free-quote-generator`,
-    type: 'website',
-    images: [{ url: '/og-image.png', alt: 'Free Quote Generator' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Free Quote Generator - Create Professional Quotes Online',
-    description: 'Create professional roofing and construction quotes in minutes. No signup required.',
-    images: ['/og-image.png'],
-  },
-  alternates: { canonical: `${SITE_URL}/free-quote-generator` },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const host = h.get('host') || '';
+  const isNz = isNzHost(host);
+  const origin = canonicalOrigin(host);
+  const path = '/free-quote-generator';
+
+  if (isNz) {
+    return {
+      title: 'Free Quote Generator for NZ Trades',
+      description:
+        'Free online quote generator for NZ trades. Create professional quotes with GST, line items, and terms. No signup required - download as PDF.',
+      alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
+      openGraph: {
+        title: 'Free Quote Generator for NZ Trades',
+        description: 'Create professional quotes with GST in minutes. No signup required.',
+        url: `${origin}${path}`,
+        type: 'website',
+        images: [{ url: '/og-image.png', alt: 'Free Quote Generator' }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Free Quote Generator for NZ Trades',
+        description: 'Create professional quotes with GST in minutes. No signup required.',
+        images: ['/og-image.png'],
+      },
+    };
+  }
+
+  return {
+    title: 'Free Quote Generator',
+    description:
+      'Free online quote generator for roofing and construction. Create professional quotes with line items, VAT, and terms. No signup required - download as PDF.',
+    alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
+    openGraph: {
+      title: 'Free Quote Generator - Create Professional Quotes Online',
+      description: 'Create professional roofing and construction quotes in minutes. No signup required.',
+      url: `${origin}${path}`,
+      type: 'website',
+      images: [{ url: '/og-image.png', alt: 'Free Quote Generator' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Free Quote Generator - Create Professional Quotes Online',
+      description: 'Create professional roofing and construction quotes in minutes. No signup required.',
+      images: ['/og-image.png'],
+    },
+  };
+}
 
 const webAppLd = {
   '@context': 'https://schema.org',
@@ -31,16 +63,16 @@ const webAppLd = {
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  url: `${SITE_URL}/free-quote-generator`,
-  publisher: { '@id': `${SITE_URL}/#organization` },
+  url: `${GLOBAL_URL}/free-quote-generator`,
+  publisher: { '@id': `${GLOBAL_URL}/#organization` },
 };
 
 const breadcrumbLd = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Free Tools', item: `${SITE_URL}/free-tools` },
-    { '@type': 'ListItem', position: 2, name: 'Quote Generator', item: `${SITE_URL}/free-quote-generator` },
+    { '@type': 'ListItem', position: 1, name: 'Free Tools', item: `${GLOBAL_URL}/free-tools` },
+    { '@type': 'ListItem', position: 2, name: 'Quote Generator', item: `${GLOBAL_URL}/free-quote-generator` },
   ],
 };
 

@@ -22,10 +22,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const slugStr = (slug ?? []).join('/');
   const doc = await loadDoc(slugStr);
-  if (!doc) return { title: 'Not found - QuoteCore+ docs' };
+  if (!doc) return { title: 'Not found in docs' };
   const path = slugStr ? `/docs/${slugStr}` : '/docs';
   return {
-    title: `${doc.frontmatter.title} - QuoteCore+ docs`,
+    title: `${doc.frontmatter.title} docs`,
     description: doc.frontmatter.description,
     alternates: { canonical: canonicalUrl(path) },
   };

@@ -71,7 +71,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!data || !data.eligibility.page_visible) {
     return {
-      title: "Supplier Not Found | QuoteCore+",
+      title: "Supplier Not Found ",
       robots: { index: false, follow: false },
     };
   }

@@ -65,7 +65,12 @@ function POGeneratorForm() {
   // Settings
   const [measurementSystem, setMeasurementSystem] = useState<MeasurementSystem>('metric');
   const [measurementType, setMeasurementType] = useState<MeasurementType>('unit');
-  const [currency, setCurrency] = useState(CURRENCIES[0]);
+  const [currency, setCurrency] = useState(() => {
+    if (typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz')) {
+      return CURRENCIES.find(c => c.code === 'NZD') || CURRENCIES[0];
+    }
+    return CURRENCIES[0];
+  });
   const [logo, setLogo] = useState<string | null>(null);
   const defaultUnit = unitForSystem(measurementType, measurementSystem);
 
@@ -84,8 +89,9 @@ function POGeneratorForm() {
   const [footer, setFooter] = useState('');
   const [footerItalic, setFooterItalic] = useState(false);
   const [taxEnabled, setTaxEnabled] = useState(true);
-  const [taxRate, setTaxRate] = useState(20);
-  const [taxName, setTaxName] = useState('Tax');
+  const isNzDomain = typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz');
+  const [taxRate, setTaxRate] = useState(isNzDomain ? 15 : 20);
+  const [taxName, setTaxName] = useState(isNzDomain ? 'GST' : 'Tax');
   const [hideAllPrices, setHideAllPrices] = useState(false);
   const [hideTotals, setHideTotals] = useState(false);
 
@@ -178,14 +184,15 @@ function POGeneratorForm() {
     sessionStorage.removeItem(SESSION_KEY);
     setMeasurementSystem('metric');
     setMeasurementType('unit');
-    setCurrency(CURRENCIES[0]);
+    const isNz = typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz');
+    setCurrency(isNz ? (CURRENCIES.find(c => c.code === 'NZD') || CURRENCIES[0]) : CURRENCIES[0]);
     setLogo(null);
     setCompanyName(''); setFromName(''); setFromPhone(''); setFromEmail('');
     setSupplierName(''); setSupplierEmail(''); setSupplierAddress('');
     setPODate(new Date().toISOString().slice(0, 10));
     setPONumber('PO-001'); setDeliveryDate(''); setDeliveryAddress('');
     setNotes(''); setFooter(''); setFooterItalic(false);
-    setTaxEnabled(true); setTaxRate(20); setTaxName('Tax');
+    setTaxEnabled(true); setTaxRate(isNz ? 15 : 20); setTaxName(isNz ? 'GST' : 'Tax');
     setHideAllPrices(false); setHideTotals(false);
     setLines([{ id: '1', description: '', qty: 0, unit: 'pcs', rate: 0, lineHidden: false }]);
     setGenerated(false); setPopupTrigger(false);

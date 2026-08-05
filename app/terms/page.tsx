@@ -3,7 +3,7 @@ import { LegalPageShell } from '@/app/components/LegalPageShell';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 export const metadata = {
-  title: 'Terms of Service - QuoteCore+',
+  title: 'Terms of Service',
   description: 'The terms under which QuoteCore+ is provided.',
   alternates: { canonical: 'https://quote-core.com/terms', languages: hreflangLanguages('/terms') },
 };
