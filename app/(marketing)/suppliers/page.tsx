@@ -133,14 +133,14 @@ export default async function SupplierDirectoryPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-12">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
-          <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <div className="relative mx-auto max-w-4xl px-4 text-center md:px-6 lg:px-8">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
               Supplier Directory
             </p>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
               Roofing suppliers with authorised pricing
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
+            <p className="mx-auto mt-6 max-w-2xl text-base text-zinc-600 sm:text-lg md:text-xl">
               Browse suppliers publishing their roofing material catalogues on QuoteCore+. Calculate roof takeoffs using real supplier pricing — then contact the supplier directly.
             </p>
           </div>
@@ -148,7 +148,7 @@ export default async function SupplierDirectoryPage() {
 
         {/* Directory */}
         <section className="pb-20">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
             {suppliers.length === 0 ? (
               <div className="rounded-xl border-2 border-dashed border-slate-200 px-6 py-16 text-center">
                 <h2 className="text-lg font-semibold text-zinc-950">No suppliers published yet</h2>
@@ -185,7 +185,7 @@ export default async function SupplierDirectoryPage() {
 
         {/* CTA */}
         <section className="border-t border-zinc-200 bg-zinc-50 py-16">
-          <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <div className="mx-auto max-w-4xl px-4 text-center md:px-6 lg:px-8">
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               Are you a roofing supplier?
             </h2>

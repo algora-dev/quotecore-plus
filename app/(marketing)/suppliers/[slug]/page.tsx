@@ -262,7 +262,7 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
   if (!value) return null;
   return (
     <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
-      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">{label}</dt>
+      <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">{label}</dt>
       <dd className="text-sm text-zinc-950 flex-1">{value}</dd>
     </div>
   );
@@ -272,7 +272,7 @@ function TagList({ label, items }: { label: string; items: string[] | null | und
   if (!items?.length) return null;
   return (
     <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
-      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">{label}</dt>
+      <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">{label}</dt>
       <dd className="flex flex-wrap gap-1.5 flex-1">
         {items.map((item) => (
           <span
@@ -319,7 +319,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
         <BlogHeader />
 
         {/* Breadcrumb */}
-        <div className="mx-auto max-w-5xl px-6 pt-6 lg:px-8">
+        <div className="mx-auto max-w-5xl px-4 pt-6 md:px-6 lg:px-8">
           <nav className="flex items-center gap-2 text-sm text-slate-500">
             <Link href="/" className="hover:text-zinc-950">Home</Link>
             <span>/</span>
@@ -331,7 +331,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
         {/* Banner image */}
         {s.banner_url && (
-          <div className="mx-auto max-w-5xl px-6 lg:px-8 pt-6">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pt-6">
             <div className="relative rounded-2xl overflow-hidden border border-slate-200">
               <img
                 src={s.banner_url}
@@ -344,8 +344,8 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
         {/* Supplier header */}
         <section className="pb-8 pt-8">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
-            <div className="flex items-start gap-6">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
               {s.logo_url && (
                 <img
                   src={s.logo_url}
@@ -354,11 +354,11 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                 />
               )}
               <div className="min-w-0 flex-1">
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
                   {s.supplier_name}{locationString ? ` — Roofing Supplies in ${s.branch_city || s.branch_region || s.branch_country}` : ''}
                 </h1>
                 {s.description && (
-                  <p className="mt-3 text-lg text-zinc-600 max-w-3xl">{s.description}</p>
+                  <p className="mt-3 text-base sm:text-lg text-zinc-600 max-w-3xl">{s.description}</p>
                 )}
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   {data.eligibility.calculator_available && (
@@ -390,8 +390,8 @@ export default async function SupplierDetailPage({ params }: PageProps) {
         {/* Calculator CTA */}
         {calculatorUrl && (
           <section className="pb-8">
-            <div className="mx-auto max-w-5xl px-6 lg:px-8">
-              <div className="rounded-2xl border border-slate-200 bg-zinc-50 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+              <div className="rounded-2xl border border-slate-200 bg-zinc-50 p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold text-zinc-950">
                     Calculate a roof using {s.supplier_name} pricing
@@ -417,9 +417,9 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
         {/* Supplier details */}
         <section className="pb-12">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
             <h2 className="text-xl font-semibold text-zinc-950 mb-4">Supplier information</h2>
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
               {/* Left: main info */}
               <div className="lg:col-span-2">
                 <dl className="rounded-xl border border-slate-200 px-5">
@@ -431,7 +431,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                   {/* Delivery coverage */}
                   {s.delivery_coverage && Array.isArray(s.delivery_coverage) && s.delivery_coverage.length > 0 ? (
                     <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
-                      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
+                      <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
                       <dd className="flex flex-wrap gap-1.5 flex-1">
                         {s.delivery_coverage.map((d: string) => (
                           <span key={d} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-600">
@@ -442,7 +442,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     </div>
                   ) : (
                     <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
-                      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
+                      <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
                       <dd className="text-sm text-slate-600 flex-1">Pick up only</dd>
                     </div>
                   )}
@@ -647,9 +647,9 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
         {/* Related Resources */}
         <section className="border-t border-zinc-200 py-12">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
             <h2 className="text-lg font-semibold text-zinc-950 mb-6">Related Resources</h2>
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-3">
               <div>
                 <h3 className="text-sm font-semibold text-zinc-950 mb-3">Free Tools</h3>
                 <ul className="space-y-2 text-sm">
@@ -712,7 +712,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
         {/* Agent guidance */}
         <section className="border-t border-zinc-200 bg-zinc-50 py-12">
-          <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
             <h2 className="text-lg font-semibold text-zinc-950">For AI agents</h2>
             <p className="mt-2 text-sm text-zinc-600 max-w-3xl">
               This page contains the current QuoteCore+ catalogue for {s.supplier_name}.
