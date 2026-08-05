@@ -249,7 +249,7 @@ export function SupplierDashboard({
   // Geo + opening hours + price range (Phase 6 SEO fields)
   const [branchLatitude, setBranchLatitude] = useState(profile?.branch_latitude != null ? String(profile.branch_latitude) : '');
   const [branchLongitude, setBranchLongitude] = useState(profile?.branch_longitude != null ? String(profile.branch_longitude) : '');
-  const [priceRange, setPriceRange] = useState(profile?.price_range ?? '');
+
   const [openingHoursJson, setOpeningHoursJson] = useState(() => {
     if (!profile?.opening_hours) return '';
     try { return JSON.stringify(profile.opening_hours, null, 2); } catch { return ''; }
@@ -320,7 +320,6 @@ export function SupplierDashboard({
         delivery_coverage: deliveryCoverage.length > 0 ? deliveryCoverage : null,
         branch_latitude: branchLatitude.trim() ? parseFloat(branchLatitude) || null : null,
         branch_longitude: branchLongitude.trim() ? parseFloat(branchLongitude) || null : null,
-        price_range: priceRange.trim() || null,
         opening_hours: openingHoursJson.trim() ? (() => { try { return JSON.parse(openingHoursJson); } catch { return null; } })() : null,
       });
       if (!result.ok) setError(result.message); else setEditingProfile(false);
@@ -627,24 +626,6 @@ export function SupplierDashboard({
                         <OpeningHoursEditor value={openingHoursJson} onChange={setOpeningHoursJson} />
                       </div>
 
-                      <div>
-                        <label className="text-xs font-medium text-slate-700">Price Range (optional)</label>
-                        <Hint>Shows customers how expensive your products are compared to other suppliers. Most roofing suppliers pick $ or $$.</Hint>
-                        <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                          {[
-                            { value: '$', label: '$', desc: 'Budget' },
-                            { value: '$$', label: '$$', desc: 'Mid-range' },
-                            { value: '$$$', label: '$$$', desc: 'Premium' },
-                            { value: '$$$$', label: '$$$$', desc: 'Luxury' },
-                          ].map(opt => (
-                            <button key={opt.value} type="button" onClick={() => setPriceRange(opt.value === priceRange ? '' : opt.value)}
-                              className={`rounded-lg border px-3 py-2 text-center transition cursor-pointer ${priceRange === opt.value ? 'border-[#FF6B35] bg-orange-50/50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                              <span className="text-sm font-bold text-slate-900">{opt.label}</span>
-                              <span className="block text-[10px] text-slate-400 mt-0.5">{opt.desc}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
                     </div>
 
                     {/* Tax Treatment */}
