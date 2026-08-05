@@ -149,6 +149,15 @@ export function SupplierDashboard({
   ] as const;
   const [deliveryCoverage, setDeliveryCoverage] = useState<string[]>(profile?.delivery_coverage ?? []);
 
+  // Geo + opening hours + price range (Phase 6 SEO fields)
+  const [branchLatitude, setBranchLatitude] = useState(profile?.branch_latitude != null ? String(profile.branch_latitude) : '');
+  const [branchLongitude, setBranchLongitude] = useState(profile?.branch_longitude != null ? String(profile.branch_longitude) : '');
+  const [priceRange, setPriceRange] = useState(profile?.price_range ?? '');
+  const [openingHoursJson, setOpeningHoursJson] = useState(() => {
+    if (!profile?.opening_hours) return '';
+    try { return JSON.stringify(profile.opening_hours, null, 2); } catch { return ''; }
+  });
+
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [takeoffEnabled, setTakeoffEnabled] = useState(profile?.takeoff_builder_enabled ?? false);
@@ -212,6 +221,10 @@ export function SupplierDashboard({
         tax_name: taxTreatment === 'inclusive' ? (taxName.trim() || null) : null,
         tax_rate: taxTreatment === 'inclusive' ? (parseFloat(taxRate) || null) : null,
         delivery_coverage: deliveryCoverage.length > 0 ? deliveryCoverage : null,
+        branch_latitude: branchLatitude.trim() ? parseFloat(branchLatitude) || null : null,
+        branch_longitude: branchLongitude.trim() ? parseFloat(branchLongitude) || null : null,
+        price_range: priceRange.trim() || null,
+        opening_hours: openingHoursJson.trim() ? (() => { try { return JSON.parse(openingHoursJson); } catch { return null; } })() : null,
       });
       if (!result.ok) setError(result.message); else setEditingProfile(false);
     } catch (e) { setError(e instanceof Error ? e.message : 'Failed to save'); }
@@ -465,6 +478,32 @@ export function SupplierDashboard({
                       <div>
                         <label className="text-xs font-medium text-slate-600">Postcode (optional)</label>
                         <input type="text" value={branchPostcode} onChange={e => setBranchPostcode(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="8011" />
+                      </div>
+                    </div>
+
+                    {/* Geo coordinates + opening hours + price range (SEO fields) */}
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-3">
+                      <label className="text-xs font-medium text-slate-700">SEO & Location Enrichment (optional)</label>
+                      <Hint>These fields improve your supplier page's visibility in Google search results and maps.</Hint>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-slate-600">Latitude</label>
+                          <input type="text" inputMode="decimal" value={branchLatitude} onChange={e => setBranchLatitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="-43.5320" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-slate-600">Longitude</label>
+                          <input type="text" inputMode="decimal" value={branchLongitude} onChange={e => setBranchLongitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="172.6362" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Price Range (optional)</label>
+                        <input type="text" value={priceRange} onChange={e => setPriceRange(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="$$" maxLength={5} />
+                        <p className="mt-1 text-xs text-slate-400">Use $ to $$$$ to indicate price level (Schema.org priceRange).</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Opening Hours (optional, JSON)</label>
+                        <textarea value={openingHoursJson} onChange={e => setOpeningHoursJson(e.target.value)} rows={4} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-mono focus:border-orange-500 focus:outline-none" placeholder={'[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday"],"opens":"08:00","closes":"17:00"}]'} />
+                        <p className="mt-1 text-xs text-slate-400">Schema.org OpeningHoursSpecification JSON array. Leave blank if not applicable.</p>
                       </div>
                     </div>
 

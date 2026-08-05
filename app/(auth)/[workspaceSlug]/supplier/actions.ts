@@ -46,6 +46,10 @@ export type SupplierProfileData = {
   price_list_content_type: string | null;
   price_list_includes_tax: boolean | null;
   takeoff_library_includes_tax: boolean | null;
+  branch_latitude: number | null;
+  branch_longitude: number | null;
+  opening_hours: unknown | null;
+  price_range: string | null;
   // G1 visibility/publication fields
   public_page_enabled: boolean;
   search_indexing_enabled: boolean;
@@ -83,7 +87,7 @@ export async function loadSupplierProfile(): Promise<SupplierProfileData | null>
 
   const { data, error } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, branch_postcode, national_coverage, delivery_coverage, tax_treatment, tax_name, tax_rate, instant_pricing_available, banner_url, price_list_url, price_list_filename, price_list_uploaded_at, price_list_content_type, price_list_includes_tax, takeoff_library_includes_tax, public_page_enabled, search_indexing_enabled, public_catalogue_enabled, public_price_visibility, public_contact_visibility, publication_state, publication_updated_at')
+    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, branch_postcode, national_coverage, delivery_coverage, tax_treatment, tax_name, tax_rate, instant_pricing_available, banner_url, price_list_url, price_list_filename, price_list_uploaded_at, price_list_content_type, price_list_includes_tax, takeoff_library_includes_tax, branch_latitude, branch_longitude, opening_hours, price_range, public_page_enabled, search_indexing_enabled, public_catalogue_enabled, public_price_visibility, public_contact_visibility, publication_state, publication_updated_at')
     .eq('company_id', profile.company_id)
     .maybeSingle();
 
@@ -174,6 +178,10 @@ export async function updateSupplierProfile(
     price_list_content_type: string | null;
     price_list_includes_tax: boolean | null;
     takeoff_library_includes_tax: boolean | null;
+    branch_latitude: number | null;
+    branch_longitude: number | null;
+    opening_hours: unknown | null;
+    price_range: string | null;
     tax_treatment: string;
     tax_name: string | null;
     tax_rate: number | null;
@@ -224,6 +232,10 @@ export async function updateSupplierProfile(
     if (input.tax_name !== undefined) update.tax_name = input.tax_name || null;
     if (input.tax_rate !== undefined) update.tax_rate = input.tax_rate;
     if (input.delivery_coverage !== undefined) update.delivery_coverage = input.delivery_coverage;
+    if (input.branch_latitude !== undefined) update.branch_latitude = input.branch_latitude;
+    if (input.branch_longitude !== undefined) update.branch_longitude = input.branch_longitude;
+    if (input.price_range !== undefined) update.price_range = input.price_range;
+    if (input.opening_hours !== undefined) update.opening_hours = input.opening_hours as never;
 
     const { error } = await supabase
       .from('supplier_profiles')

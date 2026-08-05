@@ -90,6 +90,10 @@ export interface SupplierDetail {
     price_list_content_type: string | null;
     price_list_includes_tax: boolean | null;
     takeoff_library_includes_tax: boolean | null;
+    branch_latitude: number | null;
+    branch_longitude: number | null;
+    opening_hours: unknown | null;
+    price_range: string | null;
     publication_state: string;
     public_price_visibility: string;
     public_contact_visibility: string;
