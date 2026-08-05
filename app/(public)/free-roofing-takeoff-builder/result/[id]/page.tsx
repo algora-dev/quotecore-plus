@@ -14,7 +14,7 @@ interface ResultPageProps {
 }
 
 export const metadata = {
-  title: 'Roof Takeoff Result | QuoteCore+',
+  title: 'Roof Takeoff Result ',
   robots: { index: false, follow: true },
 };
 

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'GET Calculation API - Roof Takeoff Builder | QuoteCore+',
+  title: 'GET Calculation API - Roof Takeoff Builder',
   description: 'Server-rendered roof takeoff calculation via URL query parameters. No authentication, cookies, or JavaScript required.',
   robots: { index: true, follow: true },
 };

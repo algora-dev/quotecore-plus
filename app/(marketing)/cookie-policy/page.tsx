@@ -6,7 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy | QuoteCore+",
+  title: "Cookie Policy",
   description: "How QuoteCore+ uses cookies and similar technologies on our website.",
   alternates: {
     canonical: "https://quote-core.com/cookie-policy",

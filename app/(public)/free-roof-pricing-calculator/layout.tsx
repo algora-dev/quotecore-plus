@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'Roof Pricing Calculator - Materials & Labour | QuoteCore+',
+  title: 'Roof Pricing Calculator - Materials & Labour',
   description:
     'Calculate an indicative roof price from your measurements and selected roofing components. See materials, component costs and whether labour is included. Free to use.',
   alternates: {

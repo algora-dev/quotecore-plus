@@ -57,7 +57,7 @@ export const SLOPE_SLUGS: SlopeSlugDef[] = [
   {
     slug: 'free-slope-calculator',
     name: 'Slope Calculator',
-    mTitle: 'Free Slope Calculator - Gradient, Angle & Ratio | QuoteCore+',
+    mTitle: 'Free Slope Calculator - Gradient, Angle & Ratio',
     mDesc: 'Calculate slope, gradient, and angle for landscaping, drainage, and construction. Convert between degrees, percentage, and ratio. No signup.',
     ogTitle: 'Free Slope Calculator',
     ogDesc: 'Calculate slope gradient, angle, and ratio for any project. Free, no signup.',
@@ -102,7 +102,7 @@ export const SLOPE_SLUGS: SlopeSlugDef[] = [
   {
     slug: 'free-pipe-slope-calculator',
     name: 'Pipe Slope Calculator',
-    mTitle: 'Free Pipe Slope Calculator - Drainage Fall & Gradient | QuoteCore+',
+    mTitle: 'Free Pipe Slope Calculator - Drainage Fall & Gradient',
     mDesc: 'Calculate pipe slope, fall, and gradient for drainage systems. Enter pipe length and required fall for instant results. No signup required.',
     ogTitle: 'Free Pipe Slope Calculator',
     ogDesc: 'Calculate drainage pipe slope, fall, and gradient. Free, no signup.',

@@ -7,7 +7,7 @@ import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Roofing Quoting Software for Contractors | QuoteCore+",
+  title: "Roofing Quoting Software for Contractors",
   description:
     "QuoteCore+ helps roofing contractors measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid - all in one connected workflow.",
   alternates: {

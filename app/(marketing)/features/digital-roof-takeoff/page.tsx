@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Digital Roof Takeoff Software | QuoteCore+",
+  title: "Digital Roof Takeoff Software",
   description:
     "Upload roof plans and measure digitally with AI Scan Assist or manual drawing. Pitch, waste, and material quantities auto-calculated. A faster, simpler alternative to expensive takeoff software.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features/digital-roof-takeoff"),
   },
   openGraph: {
-    title: "Digital Roof Takeoff Software | QuoteCore+",
+    title: "Digital Roof Takeoff Software",
     description:
       "Upload roof plans, measure digitally, and build a complete roof takeoff. AI Scan Assist or manual drawing. Auto-calculated pitch, waste, and quantities.",
     url: "https://quote-core.com/features/digital-roof-takeoff",

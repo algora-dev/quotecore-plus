@@ -79,6 +79,10 @@ function QuoteGeneratorForm() {
       const found = CURRENCIES.find(c => c.code === currencyParam);
       if (found) return found;
     }
+    // Default to NZD on NZ domain
+    if (typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz')) {
+      return CURRENCIES.find(c => c.code === 'NZD') || CURRENCIES[0];
+    }
     return CURRENCIES[0];
   });
   const [logo, setLogo] = useState<string | null>(null);
@@ -98,8 +102,9 @@ function QuoteGeneratorForm() {
   const [footer, setFooter] = useState('');
   const [footerItalic, setFooterItalic] = useState(false);
   const [taxEnabled, setTaxEnabled] = useState(true);
-  const [taxRate, setTaxRate] = useState(20);
-  const [taxName, setTaxName] = useState('Tax');
+  const isNzDomain = typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz');
+  const [taxRate, setTaxRate] = useState(isNzDomain ? 15 : 20);
+  const [taxName, setTaxName] = useState(isNzDomain ? 'GST' : 'Tax');
 
   const [lines, setLines] = useState<QuoteLine[]>(() => {
     if (convertedLines && convertedLines.length > 0) {
@@ -210,14 +215,15 @@ function QuoteGeneratorForm() {
     sessionStorage.removeItem(SESSION_KEY);
     setMeasurementSystem('metric');
     setMeasurementType('unit');
-    setCurrency(CURRENCIES[0]);
+    const isNz = typeof window !== 'undefined' && window.location.hostname.includes('quote-core.co.nz');
+    setCurrency(isNz ? (CURRENCIES.find(c => c.code === 'NZD') || CURRENCIES[0]) : CURRENCIES[0]);
     setLogo(null);
     setCompanyName(''); setFromName(''); setFromPhone(''); setFromEmail('');
     setClientName(''); setClientEmail(''); setClientAddress('');
     setQuoteDate(new Date().toISOString().slice(0, 10));
     setQuoteNumber('Q-001'); setValidDays('30');
     setNotes(''); setFooter(''); setFooterItalic(false);
-    setTaxEnabled(true); setTaxRate(20); setTaxName('Tax');
+    setTaxEnabled(true); setTaxRate(isNz ? 15 : 20); setTaxName(isNz ? 'GST' : 'Tax');
     setHideAllPrices(false); setHideTotals(false);
     setLines([{ id: '1', description: '', qty: 0, unit: 'pcs', rate: 0, lineHidden: false }]);
     setGenerated(false); setPopupTrigger(false);

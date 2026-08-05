@@ -6,7 +6,7 @@ import { hreflangLanguages } from '@/lib/seo/hreflang';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'Free Trade Calculators - Roofing & Construction | QuoteCore+',
+  title: 'Free Trade Calculators - Roofing & Construction',
   description:
     'Free online calculators for trades: roofing, construction, concrete, and landscaping. Areas, volumes, angles, material quantities and pricing. No signup required.',
   alternates: {

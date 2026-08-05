@@ -78,10 +78,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/free-roofing-takeoff-builder/apex-roofing`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/free-roofing-takeoff-builder/prime-roofing`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/free-roofing-takeoff-builder/prime-roofing-nz`, changeFrequency: 'monthly', priority: 0.8 },
-    // NZ domain equivalents (for Google NZ indexing)
-    { url: 'https://www.quote-core.co.nz/free-roofing-takeoff-builder', changeFrequency: 'monthly', priority: 0.9 },
-    { url: 'https://www.quote-core.co.nz/free-roofing-takeoff-builder/apex-roofing', changeFrequency: 'monthly', priority: 0.8 },
-    { url: 'https://www.quote-core.co.nz/free-roofing-takeoff-builder/prime-roofing-nz', changeFrequency: 'monthly', priority: 0.8 },
     // Roof pricing calculator (component-based pricing page)
     { url: `${SITE_URL}/free-roof-pricing-calculator`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/docs/roof-takeoff-api`, changeFrequency: 'monthly', priority: 0.6 },

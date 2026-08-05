@@ -7,7 +7,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 import { SITE_URL } from "@/lib/seo/site-url";
 
 export const metadata: Metadata = {
-  title: "Trust and Security | QuoteCore+",
+  title: "Trust and Security",
   description:
     "How QuoteCore+ protects your data: encrypted storage, row-level security, 14-day free trial with no card, cancel anytime, and export your data anytime.",
   alternates: {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/trust"),
   },
   openGraph: {
-    title: "Trust and Security | QuoteCore+",
+    title: "Trust and Security",
     description:
       "How QuoteCore+ protects your data: encrypted storage, row-level security, 14-day free trial, cancel anytime, and export your data.",
     url: "https://quote-core.com/trust",

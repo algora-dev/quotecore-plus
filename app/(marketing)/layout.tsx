@@ -12,7 +12,7 @@ const AttributionTracker = dynamic(() => import("@/components/AttributionTracker
 const SiteAssistant = dynamic(() => import("@/components/SiteAssistant"));
 
 export const metadata: Metadata = {
-  title: "QuoteCore+ | Quoting Software for Contractors",
+  title: "Quoting Software for Contractors",
   description:
     "QuoteCore+ helps contractors and trade businesses measure from plans, price jobs, send professional quotes, track approvals, create materials orders, and manage quote information in one workflow.",
   metadataBase: new URL("https://quote-core.com"),

@@ -1,27 +1,59 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import { isNzHost, canonicalOrigin, dualDomainHreflang } from '@/lib/seo/dual-domain';
 
-const SITE_URL = 'https://quote-core.com';
+const GLOBAL_URL = 'https://quote-core.com';
 
-export const metadata: Metadata = {
-  title: 'Free Invoice Generator | QuoteCore+',
-  description:
-    'Free online invoice generator for trades. Create professional invoices with line items, VAT, and payment terms. No signup - download as PDF.',
-  openGraph: {
-    title: 'Free Invoice Generator - Create Professional Invoices',
-    description: 'Create professional invoices in minutes. No signup required.',
-    url: `${SITE_URL}/free-invoice-generator`,
-    type: 'website',
-    images: [{ url: '/og-image.png', alt: 'Free Invoice Generator' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Free Invoice Generator - Create Professional Invoices',
-    description: 'Create professional invoices in minutes. No signup required.',
-    images: ['/og-image.png'],
-  },
-  alternates: { canonical: `${SITE_URL}/free-invoice-generator` },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const host = h.get('host') || '';
+  const isNz = isNzHost(host);
+  const origin = canonicalOrigin(host);
+  const path = '/free-invoice-generator';
+
+  if (isNz) {
+    return {
+      title: 'Free Invoice Generator with GST',
+      description:
+        'Free online invoice generator for NZ trades. Create professional invoices with GST, line items, and payment terms. No signup - download as PDF.',
+      alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
+      openGraph: {
+        title: 'Free Invoice Generator with GST',
+        description: 'Create professional invoices with GST in minutes. No signup required.',
+        url: `${origin}${path}`,
+        type: 'website',
+        images: [{ url: '/og-image.png', alt: 'Free Invoice Generator' }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Free Invoice Generator with GST',
+        description: 'Create professional invoices with GST in minutes. No signup required.',
+        images: ['/og-image.png'],
+      },
+    };
+  }
+
+  return {
+    title: 'Free Invoice Generator',
+    description:
+      'Free online invoice generator for trades. Create professional invoices with line items, VAT, and payment terms. No signup - download as PDF.',
+    alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
+    openGraph: {
+      title: 'Free Invoice Generator - Create Professional Invoices',
+      description: 'Create professional invoices in minutes. No signup required.',
+      url: `${origin}${path}`,
+      type: 'website',
+      images: [{ url: '/og-image.png', alt: 'Free Invoice Generator' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Free Invoice Generator - Create Professional Invoices',
+      description: 'Create professional invoices in minutes. No signup required.',
+      images: ['/og-image.png'],
+    },
+  };
+}
 
 const webAppLd = {
   '@context': 'https://schema.org',
@@ -31,16 +63,16 @@ const webAppLd = {
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  url: `${SITE_URL}/free-invoice-generator`,
-  publisher: { '@id': `${SITE_URL}/#organization` },
+  url: `${GLOBAL_URL}/free-invoice-generator`,
+  publisher: { '@id': `${GLOBAL_URL}/#organization` },
 };
 
 const breadcrumbLd = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Free Tools', item: `${SITE_URL}/free-tools` },
-    { '@type': 'ListItem', position: 2, name: 'Invoice Generator', item: `${SITE_URL}/free-invoice-generator` },
+    { '@type': 'ListItem', position: 1, name: 'Free Tools', item: `${GLOBAL_URL}/free-tools` },
+    { '@type': 'ListItem', position: 2, name: 'Invoice Generator', item: `${GLOBAL_URL}/free-invoice-generator` },
   ],
 };
 

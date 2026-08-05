@@ -3,7 +3,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Partner with QuoteCore+ | Roofing Supplier Network",
+  title: "Supplier Partnership | Roofing Supplier Network",
   description:
     "Get your roofing materials in front of contractors who quote, order, and buy every day. Join the QuoteCore+ supplier network to reach active buyers, upload your catalogue, and grow your business.",
   alternates: {

@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "AI Scan Assist for Roof Plans | QuoteCore+",
+  title: "AI Scan Assist for Roof Plans",
   description:
     "AI Scan Assist identifies multiple roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components - then carry everything into your quote.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features/ai-scan-assist"),
   },
   openGraph: {
-    title: "AI Scan Assist for Roof Plans | QuoteCore+",
+    title: "AI Scan Assist for Roof Plans",
     description:
       "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting from your uploaded plan. Verify, adjust and swap components.",
     url: "https://quote-core.com/features/ai-scan-assist",

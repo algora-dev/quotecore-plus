@@ -4,7 +4,7 @@ export const landscapingConfig: TradeConfig = {
   slug: 'free-landscaping-calculator',
   defaultCurrency: 'GBP',
   name: 'Landscaping Calculator',
-  metaTitle: 'Landscaping Calculator - Turf & Topsoil | QuoteCore+',
+  metaTitle: 'Landscaping Calculator - Turf & Topsoil',
   metaDescription:
     'Free landscaping calculator. Work out garden and lawn areas, turf and topsoil quantities, slopes and gradients, and material pricing. No signup required.',
   ogTitle: 'Landscaping Calculator - Turf & Topsoil',

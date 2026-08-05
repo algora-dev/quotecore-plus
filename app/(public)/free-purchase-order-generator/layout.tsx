@@ -1,27 +1,59 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { headers } from 'next/headers';
+import { isNzHost, canonicalOrigin, dualDomainHreflang } from '@/lib/seo/dual-domain';
 
-const SITE_URL = 'https://quote-core.com';
+const GLOBAL_URL = 'https://quote-core.com';
 
-export const metadata: Metadata = {
-  title: 'Free Purchase Order Generator | QuoteCore+',
-  description:
-    'Free online purchase order generator for trades. Create professional POs for suppliers with line items and delivery dates. No signup - download as PDF.',
-  openGraph: {
-    title: 'Free Purchase Order Generator - Create Supplier POs',
-    description: 'Create professional purchase orders in minutes. No signup required.',
-    url: `${SITE_URL}/free-purchase-order-generator`,
-    type: 'website',
-    images: [{ url: '/og-image.png', alt: 'Free Purchase Order Generator' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Free Purchase Order Generator - Create Supplier POs',
-    description: 'Create professional purchase orders in minutes. No signup required.',
-    images: ['/og-image.png'],
-  },
-  alternates: { canonical: `${SITE_URL}/free-purchase-order-generator` },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const h = await headers();
+  const host = h.get('host') || '';
+  const isNz = isNzHost(host);
+  const origin = canonicalOrigin(host);
+  const path = '/free-purchase-order-generator';
+
+  if (isNz) {
+    return {
+      title: 'Free Purchase Order Generator for NZ Suppliers',
+      description:
+        'Free online purchase order generator for NZ trades. Create professional POs for suppliers with line items and delivery dates. No signup - download as PDF.',
+      alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
+      openGraph: {
+        title: 'Free Purchase Order Generator for NZ Suppliers',
+        description: 'Create professional POs for NZ suppliers in minutes. No signup required.',
+        url: `${origin}${path}`,
+        type: 'website',
+        images: [{ url: '/og-image.png', alt: 'Free Purchase Order Generator' }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'Free Purchase Order Generator for NZ Suppliers',
+        description: 'Create professional POs for NZ suppliers in minutes. No signup required.',
+        images: ['/og-image.png'],
+      },
+    };
+  }
+
+  return {
+    title: 'Free Purchase Order Generator',
+    description:
+      'Free online purchase order generator for trades. Create professional POs for suppliers with line items and delivery dates. No signup - download as PDF.',
+    alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
+    openGraph: {
+      title: 'Free Purchase Order Generator - Create Supplier POs',
+      description: 'Create professional purchase orders in minutes. No signup required.',
+      url: `${origin}${path}`,
+      type: 'website',
+      images: [{ url: '/og-image.png', alt: 'Free Purchase Order Generator' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Free Purchase Order Generator - Create Supplier POs',
+      description: 'Create professional purchase orders in minutes. No signup required.',
+      images: ['/og-image.png'],
+    },
+  };
+}
 
 const webAppLd = {
   '@context': 'https://schema.org',
@@ -31,16 +63,16 @@ const webAppLd = {
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Web',
   offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-  url: `${SITE_URL}/free-purchase-order-generator`,
-  publisher: { '@id': `${SITE_URL}/#organization` },
+  url: `${GLOBAL_URL}/free-purchase-order-generator`,
+  publisher: { '@id': `${GLOBAL_URL}/#organization` },
 };
 
 const breadcrumbLd = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Free Tools', item: `${SITE_URL}/free-tools` },
-    { '@type': 'ListItem', position: 2, name: 'Purchase Order Generator', item: `${SITE_URL}/free-purchase-order-generator` },
+    { '@type': 'ListItem', position: 1, name: 'Free Tools', item: `${GLOBAL_URL}/free-tools` },
+    { '@type': 'ListItem', position: 2, name: 'Purchase Order Generator', item: `${GLOBAL_URL}/free-purchase-order-generator` },
   ],
 };
 

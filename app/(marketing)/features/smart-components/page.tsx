@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Smart Components: Reusable Quoting Components | QuoteCore+",
+  title: "Smart Components: Reusable Quoting Components",
   description:
     "Smart Components™ are reusable quoting components that know their own measurements, waste allowances, and pricing rules. Anything in your business can be a component. Build a roof quote in minutes, not hours.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features/smart-components"),
   },
   openGraph: {
-    title: "Smart Components: Reusable Quoting Components | QuoteCore+",
+    title: "Smart Components: Reusable Quoting Components",
     description:
       "Reusable quoting components that know their own measurements, waste allowances, and pricing rules. Build a roof quote in minutes.",
     url: "https://quote-core.com/features/smart-components",

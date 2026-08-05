@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Professional Invoicing for Contractors | QuoteCore+",
+  title: "Professional Invoicing for Contractors",
   description:
     "Create professional invoices from accepted quotes, imported quotes, or from scratch. Line items, payment instructions, and online payment tracking. Standalone invoicing built for contractors.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features/invoicing"),
   },
   openGraph: {
-    title: "Professional Invoicing for Contractors | QuoteCore+",
+    title: "Professional Invoicing for Contractors",
     description:
       "Create professional invoices from quotes or from scratch. Line items, payment instructions, and online payment tracking.",
     url: "https://quote-core.com/features/invoicing",

@@ -17,11 +17,11 @@ export async function generateMetadata({ params }: { params: Promise<{ topic: st
   if (!category) return {};
 
   return {
-    title: `${category.title} | QuoteCore+`,
+    title: `${category.title} `,
     description: category.description,
     alternates: { canonical: `https://quote-core.com/resources/${category.slug}` },
     openGraph: {
-      title: `${category.title} | QuoteCore+`,
+      title: `${category.title} `,
       description: category.description,
       url: `https://quote-core.com/resources/${category.slug}`,
       siteName: "QuoteCore+",

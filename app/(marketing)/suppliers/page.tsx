@@ -5,14 +5,14 @@ import SiteFooter from "@/components/SiteFooter";
 import { getSupplierDirectory, type SupplierDirectoryEntry } from "@/lib/supplier-directory";
 
 export const metadata: Metadata = {
-  title: "Roofing Supplier Directory | QuoteCore+",
+  title: "Roofing Supplier Directory",
   description:
     "Browse roofing suppliers with authorised pricing on QuoteCore+. Compare service areas, product categories, and catalogue coverage. Calculate roof takeoffs using real supplier pricing.",
   alternates: {
     canonical: "https://quote-core.com/suppliers",
   },
   openGraph: {
-    title: "Roofing Supplier Directory | QuoteCore+",
+    title: "Roofing Supplier Directory",
     description:
       "Browse roofing suppliers with authorised pricing on QuoteCore+. Compare service areas, product categories, and catalogue coverage.",
     url: "https://quote-core.com/suppliers",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Roofing Supplier Directory | QuoteCore+",
+    title: "Roofing Supplier Directory",
     description:
       "Browse roofing suppliers with authorised pricing on QuoteCore+. Compare service areas and product categories.",
   },

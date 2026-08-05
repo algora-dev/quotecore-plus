@@ -8,7 +8,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Material Ordering Software for Contractors | QuoteCore+",
+  title: "Material Ordering Software for Contractors",
   description:
     "Create material orders from accepted quotes, imported quotes, or from scratch. Quantities, codes, and supplier details included. Standalone material ordering built for roofing and construction.",
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages("/features/material-ordering"),
   },
   openGraph: {
-    title: "Material Ordering Software for Contractors | QuoteCore+",
+    title: "Material Ordering Software for Contractors",
     description:
       "Create material orders from quotes or from scratch. Material ordering built for roofing and construction.",
     url: "https://quote-core.com/features/material-ordering",

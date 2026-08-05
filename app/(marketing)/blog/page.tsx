@@ -5,7 +5,7 @@ import { buildPageMetadata, breadcrumbSchema, siteGraphSchema, blogPostingSchema
 import { getPublishedPosts, BLOG_CATEGORIES } from '@/app/lib/blog-posts';
 
 export const metadata: Metadata = buildPageMetadata({
-  title: 'Roofing, Construction and Quoting Guides | QuoteCore+',
+  title: 'Roofing, Construction and Quoting Guides',
   description:
     'Practical guides for roofing and construction contractors on quoting, pricing, material ordering, job management, and getting more work. From the QuoteCore+ team.',
   path: '/blog',

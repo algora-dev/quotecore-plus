@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (isNz) {
     return {
-      title: 'Free Roof Takeoff Builder NZ | QuoteCore+',
+      title: 'Free Roof Takeoff Builder NZ',
       description:
         'Free NZ roofing takeoff tool. Measure roof areas, hips, valleys, ridges and spouting with pitch calculations. Get material quantities and pricing from NZ suppliers. No signup required.',
       alternates: {
@@ -42,7 +42,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: 'Free Roof Takeoff Builder | QuoteCore+',
+    title: 'Free Roof Takeoff Builder',
     description:
       'Free roofing takeoff tool. Input roof areas, hips, valleys, ridges, barges and spouting with pitch calculations. Get total lengths and areas for your entire roof.',
     alternates: {

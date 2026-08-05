@@ -15,14 +15,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (isMarketingDomain) {
     return {
-      title: 'Roofing & Construction Quoting Software | QuoteCore+',
+      title: 'Roofing & Construction Quoting Software',
       description: 'Measure jobs, create accurate quotes, track approvals, order materials and invoice in one platform. Built for roofing and construction contractors.',
       alternates: {
         canonical: 'https://quote-core.com/',
         languages: hreflangLanguages('/'),
       },
       openGraph: {
-        title: 'Roofing & Construction Quoting Software | QuoteCore+',
+        title: 'Roofing & Construction Quoting Software',
         description: 'Measure jobs, create accurate quotes, track approvals, order materials and invoice in one platform. Built for roofing and construction contractors.',
         url: 'https://quote-core.com/',
         siteName: 'QuoteCore+',
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
       },
       twitter: {
         card: 'summary_large_image',
-        title: 'Roofing & Construction Quoting Software | QuoteCore+',
+        title: 'Roofing & Construction Quoting Software',
         description: 'Measure jobs, create accurate quotes, track approvals, order materials and invoice in one platform.',
         images: ['/og-image.png'],
       },
