@@ -95,6 +95,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [supplierLibraries, setSupplierLibraries] = useState<SupplierInfo[]>([]);
   const [supplierLibrariesLoading, setSupplierLibrariesLoading] = useState(false);
   const [supplierSkip, setSupplierSkip] = useState(false);
+  const [supplierAutoLoadDone, setSupplierAutoLoadDone] = useState(false);
 
   // History management: simple beforeunload warning when user has data.
   // No pushState/popstate tricks - on refresh or back navigation, the wizard resets cleanly.
@@ -253,11 +254,17 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           }
         })
         .catch(() => {})
-        .finally(() => setSupplierLibrariesLoading(false));
+        .finally(() => {
+          setSupplierLibrariesLoading(false);
+          setSupplierAutoLoadDone(true);
+        });
     }
   }, [initialSupplierSlug]);
 
   // Load components - supplier library if selected, otherwise generic
+  // When initialSupplierSlug is provided, wait for supplier auto-load to complete
+  // before falling back to generic components (prevents race condition where
+  // generic components load first and get overwritten or overwrite supplier data)
   useEffect(() => {
     if (selectedSupplier) {
       fetch(`/api/free-tools/supplier-library/${selectedSupplier.supplierSlug}`)
@@ -287,14 +294,18 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
         })
         .catch(() => {})
         .finally(() => setComponentsLoading(false));
-    } else {
+    } else if (!initialSupplierSlug || supplierAutoLoadDone) {
+      // Only fetch generic components if:
+      // - No supplier slug was provided via URL (user is on generic builder), OR
+      // - Supplier slug was provided but auto-load already completed without finding a supplier
       fetch('/api/free-tools/roof-components')
         .then(r => r.json())
         .then(data => { if (data.components) setComponents(data.components); })
         .catch(() => {})
         .finally(() => setComponentsLoading(false));
     }
-  }, [selectedSupplier]);
+    // If initialSupplierSlug is provided and auto-load hasn't completed yet, do nothing (wait)
+  }, [selectedSupplier, initialSupplierSlug, supplierAutoLoadDone]);
 
   const componentsByKind = useMemo(() => {
     const map: Record<string, RoofComponentDef[]> = {};
