@@ -187,9 +187,9 @@ function buildStructuredData(data: SupplierDetail) {
 function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
   if (!value) return null;
   return (
-    <div className="flex items-start gap-3 py-2 border-b border-slate-100 last:border-0">
-      <dt className="w-40 shrink-0 text-sm font-medium text-slate-500">{label}</dt>
-      <dd className="text-sm text-zinc-950">{value}</dd>
+    <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
+      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">{label}</dt>
+      <dd className="text-sm text-zinc-950 flex-1">{value}</dd>
     </div>
   );
 }
@@ -197,9 +197,9 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
 function TagList({ label, items }: { label: string; items: string[] | null | undefined }) {
   if (!items?.length) return null;
   return (
-    <div className="py-2 border-b border-slate-100 last:border-0">
-      <dt className="text-sm font-medium text-slate-500 mb-1.5">{label}</dt>
-      <dd className="flex flex-wrap gap-1.5">
+    <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
+      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">{label}</dt>
+      <dd className="flex flex-wrap gap-1.5 flex-1">
         {items.map((item) => (
           <span
             key={item}
@@ -348,28 +348,28 @@ export default async function SupplierDetailPage({ params }: PageProps) {
               {/* Left: main info */}
               <div className="lg:col-span-2">
                 <h2 className="text-xl font-semibold text-zinc-950 mb-4">Supplier information</h2>
-                <dl>
+                <dl className="rounded-xl border border-slate-200 px-5">
                   {locationString && <InfoRow label="Location" value={locationString} />}
                   <TagList label="Service areas" items={s.service_areas} />
                   <TagList label="Roofing types" items={s.roofing_types} />
                   <TagList label="Product categories" items={s.product_categories} />
                   <TagList label="Brands" items={s.brands} />
-                  {/* Delivery coverage badges */}
+                  {/* Delivery coverage */}
                   {s.delivery_coverage && Array.isArray(s.delivery_coverage) && s.delivery_coverage.length > 0 ? (
-                    <div className="flex items-start gap-2 text-sm">
-                      <dt className="text-slate-500 font-medium flex-shrink-0">Delivery</dt>
-                      <dd className="flex flex-wrap gap-1.5">
+                    <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
+                      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
+                      <dd className="flex flex-wrap gap-1.5 flex-1">
                         {s.delivery_coverage.map((d: string) => (
-                          <span key={d} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-600">
+                          <span key={d} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-600">
                             {d === 'nationwide' ? 'Nationwide delivery' : d === 'regional' ? 'State/Province delivery' : d === 'local' ? 'City-wide delivery' : d === 'pickup_only' ? 'Pick up' : d}
                           </span>
                         ))}
                       </dd>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2 text-sm">
-                      <dt className="text-slate-500 font-medium flex-shrink-0">Delivery</dt>
-                      <dd><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">Pick up only</span></dd>
+                    <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
+                      <dt className="w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
+                      <dd className="text-sm text-slate-600 flex-1">Pick up only</dd>
                     </div>
                   )}
                   {s.delivery_assumptions && <InfoRow label="Delivery assumptions" value={s.delivery_assumptions} />}
