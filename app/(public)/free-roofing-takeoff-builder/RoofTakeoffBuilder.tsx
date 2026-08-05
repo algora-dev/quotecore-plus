@@ -972,8 +972,13 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                 )}
               </div>
 
-              {/* Pitch input (plan mode only) */}
+              {/* Step 1 (plan mode): Roof Pitch */}
               {measureMode === 'plan' && (
+                <>
+                <div className="mb-3">
+                  <h2 className="text-base md:text-lg font-bold text-slate-900">Step 1: Roof Pitch</h2>
+                  <p className="mt-0.5 text-xs md:text-sm text-slate-400">Add the known roof pitch in degrees or ratio before continuing to Step 2.</p>
+                </div>
                 <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 md:p-5 mb-6">
                   <div className="flex flex-col md:flex-row md:items-center gap-3">
                     <div className="flex items-center gap-2">
@@ -1005,29 +1010,35 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     )}
                   </div>
                 </div>
+                </>
               )}
 
-              {/* Roof Area section (primary) */}
-              {isGuided && <h2 className="text-sm font-semibold text-slate-900 mb-2">Step 1: Roof Area</h2>}
+              {/* Step (plan mode): Step 2 Roof Area / (actual mode): Step 1 Roof Area */}
+              <div className="mb-3">
+                <h2 className="text-base md:text-lg font-bold text-slate-900">{measureMode === 'plan' ? 'Step 2' : 'Step 1'}: Roof Area</h2>
+                <p className="mt-0.5 text-xs md:text-sm text-slate-400">Enter the width and length, or add the known total area. You can add a different roof covering based on the components available from the supplier.</p>
+              </div>
               {renderSection('roof_area')}
 
-              {/* Divider */}
-              <div className="my-5 flex items-center gap-3">
-                <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-xs font-medium text-slate-400">Additional Components</span>
-                <div className="flex-1 h-px bg-slate-200" />
+              {/* Step: Components */}
+              <div className="mt-6 mb-3">
+                <h2 className="text-base md:text-lg font-bold text-slate-900">{measureMode === 'plan' ? 'Step 3' : 'Step 2'}: Components</h2>
+                <p className="mt-0.5 text-xs md:text-sm text-slate-400">Add quantities for ridges, hips, valleys, barges, spouting, underlay and any other components you need.</p>
               </div>
-
-              {/* Additional components */}
               <div className="space-y-3">
                 {BUILT_IN_ORDER.filter(k => k !== 'roof_area').map(k => renderSection(k))}
                 {Object.keys(customSections).map(k => renderSection(k))}
                 <CustomComponentCreator onCreate={addCustomComponent} />
               </div>
 
+              {/* Step: Generate */}
+              <div className="mt-6 mb-3">
+                <h2 className="text-base md:text-lg font-bold text-slate-900">{measureMode === 'plan' ? 'Step 4' : 'Step 3'}: Generate</h2>
+                <p className="mt-0.5 text-xs md:text-sm text-slate-400">Review your summary and generate your takeoff report.</p>
+              </div>
               {/* Summary */}
               {hasData ? (
-                <div className="mt-6 rounded-xl bg-slate-900 text-white p-4 md:p-5">
+                <div className="rounded-xl bg-slate-900 text-white p-4 md:p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold">Summary</h3>
                     <span className="text-xs text-slate-400">{totalEntries} {totalEntries === 1 ? 'entry' : 'entries'} total</span>
