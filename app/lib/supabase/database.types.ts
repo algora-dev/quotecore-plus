@@ -5100,6 +5100,7 @@ export type Database = {
           allow_custom_pricing: boolean
           approved_at: string | null
           approved_by: string | null
+          banner_url: string | null
           branch_city: string | null
           branch_country: string | null
           branch_postcode: string | null
@@ -5134,6 +5135,10 @@ export type Database = {
           out_of_area_pricing_allowed: boolean | null
           phone_number: string | null
           pickup_available: boolean | null
+          price_list_content_type: string | null
+          price_list_filename: string | null
+          price_list_uploaded_at: string | null
+          price_list_url: string | null
           price_type: string
           price_valid_until: string | null
           pricing_excludes_freight: boolean | null
@@ -5162,6 +5167,7 @@ export type Database = {
           allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
+          banner_url?: string | null
           branch_city?: string | null
           branch_country?: string | null
           branch_postcode?: string | null
@@ -5196,6 +5202,10 @@ export type Database = {
           out_of_area_pricing_allowed?: boolean | null
           phone_number?: string | null
           pickup_available?: boolean | null
+          price_list_content_type?: string | null
+          price_list_filename?: string | null
+          price_list_uploaded_at?: string | null
+          price_list_url?: string | null
           price_type?: string
           price_valid_until?: string | null
           pricing_excludes_freight?: boolean | null
@@ -5224,6 +5234,7 @@ export type Database = {
           allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
+          banner_url?: string | null
           branch_city?: string | null
           branch_country?: string | null
           branch_postcode?: string | null
@@ -5258,6 +5269,10 @@ export type Database = {
           out_of_area_pricing_allowed?: boolean | null
           phone_number?: string | null
           pickup_available?: boolean | null
+          price_list_content_type?: string | null
+          price_list_filename?: string | null
+          price_list_uploaded_at?: string | null
+          price_list_url?: string | null
           price_type?: string
           price_valid_until?: string | null
           pricing_excludes_freight?: boolean | null
