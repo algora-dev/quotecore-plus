@@ -45,7 +45,7 @@ export interface SupplierProfile {
   local_service_areas: string[];
   regional_coverage: string[];
   national_coverage: boolean;
-  delivery_coverage: string;
+  delivery_coverage: string[] | null;
   freight_available: boolean;
   pickup_available: boolean;
   excluded_delivery_regions: string[];
@@ -95,7 +95,7 @@ export interface SupplierSearchResult {
   branchCity: string | null;
   branchRegion: string | null;
   branchCountry: string | null;
-  deliveryCoverage: string;
+  deliveryCoverage: string[] | null;
   freightAvailable: boolean;
   pickupAvailable: boolean;
   deliveryRequiresConfirmation: boolean;
@@ -168,7 +168,7 @@ export function determineMatchType(
 
   // 3. National delivery: supplier has national delivery coverage and same country
   if (userCountry && supCountry && userCountry === supCountry) {
-    if (supplier.delivery_coverage === 'national' || supplier.national_coverage) {
+    if ((Array.isArray(supplier.delivery_coverage) && supplier.delivery_coverage.includes('nationwide')) || supplier.national_coverage) {
       return 'national_delivery';
     }
     // 4. Freight possible: freight available but needs confirmation

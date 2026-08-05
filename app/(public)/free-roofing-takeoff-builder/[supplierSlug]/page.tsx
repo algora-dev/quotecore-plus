@@ -106,7 +106,7 @@ function buildAgentPayload(data: SupplierDetail, origin: string) {
       branchCountry: s.branch_country,
       nationalCoverage: s.national_coverage,
       serviceAreas: s.service_areas,
-      deliveryCoverage: s.delivery_coverage,
+      deliveryCoverage: Array.isArray(s.delivery_coverage) ? s.delivery_coverage.join(', ') : (s.delivery_coverage ?? ''),
       freightAvailable: s.freight_available,
       pickupAvailable: s.pickup_available,
     },

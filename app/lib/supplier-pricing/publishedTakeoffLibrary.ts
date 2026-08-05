@@ -246,7 +246,7 @@ export async function listReadyTakeoffLibraries(): Promise<{
   branchRegion: string | null;
   branchCountry: string | null;
   nationalCoverage: boolean;
-  deliveryCoverage: string;
+  deliveryCoverage: string[] | null;
   instantPricingAvailable: boolean;
   enquiriesEnabled: boolean;
   enquiryEmail: string | null;
