@@ -14,6 +14,56 @@ interface PageProps {
 // so we always SSR rather than serving stale static pages.
 export const dynamic = 'force-dynamic';
 
+// Country code mapping for short display in titles
+const COUNTRY_CODES: Record<string, string> = {
+  NZ: 'NZ', AU: 'AU', GB: 'UK', US: 'US', CA: 'CA', IE: 'IE',
+};
+
+/** Build an SEO-optimised title: [Name] — [Types] in [City], [Country] | QuoteCore+ */
+function buildSeoTitle(s: SupplierDetail['supplier']): string {
+  const parts: string[] = [s.supplier_name, '—'];
+
+  // Roofing types (first 2-3, joined with &)
+  if (s.roofing_types?.length) {
+    const types = s.roofing_types.slice(0, 3).map(t =>
+      t.replace(/ Roofing$/i, '').replace(/All Roofing/i, 'Roofing')
+    );
+    parts.push(types.length > 1
+      ? `${types.slice(0, -1).join(', ')} & ${types[types.length - 1]} Roofing Supplies`
+      : `${types[0]} Roofing Supplies`
+    );
+  } else {
+    parts.push('Roofing Supplies');
+  }
+
+  // Location
+  if (s.branch_city) {
+    parts.push('in', s.branch_city);
+    if (s.branch_country) {
+      const code = COUNTRY_CODES[s.branch_country] || s.branch_country;
+      parts.push(',', code);
+    }
+  } else if (s.branch_country) {
+    const code = COUNTRY_CODES[s.branch_country] || s.branch_country;
+    parts.push('in', code);
+  }
+
+  parts.push('| QuoteCore+');
+  return parts.join(' ');
+}
+
+/** Build a search-intent meta description */
+function buildMetaDescription(s: SupplierDetail['supplier']): string {
+  const locationParts = [s.branch_city, s.branch_region].filter(Boolean);
+  const location = locationParts.length ? locationParts.join(', ') : (s.branch_country || 'your area');
+
+  const types = s.roofing_types?.length
+    ? s.roofing_types.slice(0, 3).map(t => t.toLowerCase()).join(', ')
+    : 'roofing';
+
+  return `Roofing supplies in ${location}. Browse ${s.supplier_name}'s ${types} catalogue and calculate material costs free with the QuoteCore+ takeoff builder.`;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const data = await getPublicSupplier(slug);
@@ -26,10 +76,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const s = data.supplier;
-  const title = `${s.supplier_name} — Roofing Supplier | QuoteCore+`;
-  const description = s.description
-    ? `${s.description.slice(0, 155)}`
-    : `Roofing supplier ${s.supplier_name} on QuoteCore+. Calculate roof takeoffs using authorised pricing.`;
+  const title = buildSeoTitle(s);
+  const description = buildMetaDescription(s);
 
   const robots = data.eligibility.indexable
     ? { index: true, follow: true }
@@ -75,21 +123,22 @@ function buildStructuredData(data: SupplierDetail) {
   const org: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
+    "@id": `https://quote-core.com/suppliers/${s.slug}#business`,
     name: s.supplier_name,
     url: `https://quote-core.com/suppliers/${s.slug}`,
   };
 
   if (s.description) org.description = s.description;
   if (s.logo_url) org.logo = s.logo_url;
-  if (s.logo_url) org.image = s.logo_url;
+  org.image = s.banner_url || s.logo_url || undefined;
 
   if (s.branch_city || s.branch_region || s.branch_country) {
-    org.address = {
-      "@type": "PostalAddress",
-      addressLocality: s.branch_city || undefined,
-      addressRegion: s.branch_region || undefined,
-      addressCountry: s.branch_country || undefined,
-    };
+    const addr: Record<string, unknown> = { "@type": "PostalAddress" };
+    if (s.branch_city) addr.addressLocality = s.branch_city;
+    if (s.branch_region) addr.addressRegion = s.branch_region;
+    if (s.branch_postcode) addr.postalCode = s.branch_postcode;
+    if (s.branch_country) addr.addressCountry = s.branch_country;
+    org.address = addr;
   }
 
   if (data.eligibility.contacts_visible) {
@@ -106,6 +155,21 @@ function buildStructuredData(data: SupplierDetail) {
       "@type": "Place",
       name: area,
     }));
+  }
+
+  if (s.currency) org.currenciesAccepted = s.currency;
+
+  // OfferCatalog from roofing types
+  if (s.roofing_types?.length) {
+    org.hasOfferCatalog = {
+      "@type": "OfferCatalog",
+      name: "Roofing Materials",
+      itemListElement: s.roofing_types.map((rt: string) => ({
+        "@type": "Offer",
+        itemOffered: { "@type": "Product", name: rt },
+        seller: { "@type": "Organization", name: s.supplier_name },
+      })),
+    };
   }
 
   // QuoteCore+ as the platform
@@ -267,7 +331,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                   data-track="supplier-calculator-cta"
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
                 >
-                  Open calculator
+                  Calculate roof costs with {s.supplier_name} pricing
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
