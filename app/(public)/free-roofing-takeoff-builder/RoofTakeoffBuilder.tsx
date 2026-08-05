@@ -95,6 +95,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   const [supplierLibraries, setSupplierLibraries] = useState<SupplierInfo[]>([]);
   const [supplierLibrariesLoading, setSupplierLibrariesLoading] = useState(false);
   const [supplierSkip, setSupplierSkip] = useState(false);
+  const [supplierAutoLoadDone, setSupplierAutoLoadDone] = useState(false);
 
   // History management: simple beforeunload warning when user has data.
   // No pushState/popstate tricks - on refresh or back navigation, the wizard resets cleanly.
@@ -253,11 +254,17 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           }
         })
         .catch(() => {})
-        .finally(() => setSupplierLibrariesLoading(false));
+        .finally(() => {
+          setSupplierLibrariesLoading(false);
+          setSupplierAutoLoadDone(true);
+        });
     }
   }, [initialSupplierSlug]);
 
   // Load components - supplier library if selected, otherwise generic
+  // When initialSupplierSlug is provided, wait for supplier auto-load to complete
+  // before falling back to generic components (prevents race condition where
+  // generic components load first and get overwritten or overwrite supplier data)
   useEffect(() => {
     if (selectedSupplier) {
       fetch(`/api/free-tools/supplier-library/${selectedSupplier.supplierSlug}`)
@@ -287,18 +294,48 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
         })
         .catch(() => {})
         .finally(() => setComponentsLoading(false));
-    } else {
+    } else if (!initialSupplierSlug || supplierAutoLoadDone) {
+      // Only fetch generic components if:
+      // - No supplier slug was provided via URL (user is on generic builder), OR
+      // - Supplier slug was provided but auto-load already completed without finding a supplier
       fetch('/api/free-tools/roof-components')
         .then(r => r.json())
         .then(data => { if (data.components) setComponents(data.components); })
         .catch(() => {})
         .finally(() => setComponentsLoading(false));
     }
-  }, [selectedSupplier]);
+    // If initialSupplierSlug is provided and auto-load hasn't completed yet, do nothing (wait)
+  }, [selectedSupplier, initialSupplierSlug, supplierAutoLoadDone]);
 
+  // Group components by their measurement characteristics (pitch_type + unit type)
+  // so all eligible components appear in each section's dropdown.
+  // Components whose native component_kind matches the section are sorted first.
   const componentsByKind = useMemo(() => {
     const map: Record<string, RoofComponentDef[]> = {};
-    for (const kind of BUILT_IN_ORDER) map[kind] = components.filter(component => component.component_kind === kind);
+    const isAreaUnit = (unit: string) => /^m[²2]/i.test(unit);
+    for (const kind of BUILT_IN_ORDER) {
+      const def = COMPONENT_DEFS[kind];
+      if (!def) { map[kind] = []; continue; }
+      const sectionIsArea = isAreaUnit(def.unit);
+      const sectionPitchType = def.pitchType;
+      // Normalise pitch_type mismatch: DB uses "valley_hip", COMPONENT_DEFS uses "hip_valley"
+      const normalisePitch = (p: string) => p === 'valley_hip' ? 'hip_valley' : p;
+      const sectionPitch = normalisePitch(sectionPitchType);
+      // Match components by pitch_type and unit type (area vs linear)
+      const matches = components.filter(c => {
+        const cIsArea = isAreaUnit(c.unit);
+        return normalisePitch(c.pitch_type) === sectionPitch && cIsArea === sectionIsArea;
+      });
+      // Sort: native component_kind first, then by sort_order, then name
+      matches.sort((a, b) => {
+        const aNative = a.component_kind === kind ? 0 : 1;
+        const bNative = b.component_kind === kind ? 0 : 1;
+        if (aNative !== bNative) return aNative - bNative;
+        if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+        return a.name.localeCompare(b.name);
+      });
+      map[kind] = matches;
+    }
     return map;
   }, [components]);
 
