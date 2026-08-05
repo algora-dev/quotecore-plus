@@ -12,16 +12,16 @@ const AttributionTracker = dynamic(() => import("@/components/AttributionTracker
 const SiteAssistant = dynamic(() => import("@/components/SiteAssistant"));
 
 export const metadata: Metadata = {
-  title: "QuoteCore+ | Quoting Software for Contractors",
+  title: "QuoteCore+ | Roofing Quoting & Takeoff Software",
   description:
-    "QuoteCore+ helps contractors and trade businesses measure from plans, price jobs, send professional quotes, track approvals, create materials orders, and manage quote information in one workflow.",
+    "Turn roof measurements into accurate quotes in minutes. Digital takeoff, AI Scan Assist, and Smart Components. Plans from free to $59/month.",
   metadataBase: new URL("https://quote-core.com"),
   alternates: {
     canonical: "https://quote-core.com/",
   },
   openGraph: {
-    title: "QuoteCore+ | Quoting Software for Contractors",
-    description: "Measure, price, send, approve, and manage quotes in one connected workflow.",
+    title: "QuoteCore+ | Roofing Quoting & Takeoff Software",
+    description: "Turn roof measurements into accurate quotes in minutes. Digital takeoff, AI Scan Assist, and Smart Components.",
     url: "https://quote-core.com/",
     siteName: "QuoteCore+",
     type: "website",
