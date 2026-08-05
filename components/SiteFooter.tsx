@@ -46,7 +46,7 @@ export default function SiteFooter() {
               <Link href="/about" className={linkClass}>About</Link>
               <Link href="/customer-stories" className={linkClass}>Customer stories</Link>
               <Link href="/trust" className={linkClass}>Trust and security</Link>
-              <Link href="/suppliers" className={linkClass}>For suppliers</Link>
+              <Link href="/suppliers-info" className={linkClass}>For suppliers</Link>
               <Link href="/services" className={linkClass}>Services</Link>
               <Link href="/contact" className={linkClass}>Contact</Link>
               <Link href="/free-trial" className={linkClass}>Start free trial</Link>

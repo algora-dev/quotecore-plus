@@ -195,6 +195,16 @@ export default async function StableResultPage({ params }: ResultPageProps) {
 
   const summary = plainLanguageSummary(result);
 
+  // Measurement basis display
+  const basisMap = result.measurementBasis as Record<string, 'plan' | 'actual'> | undefined;
+  const hasMixedBasis = basisMap && Object.values(basisMap).some(v => v !== result.mode);
+
+  // Location match disclosure
+  const locationMatch = result.locationMatch;
+
+  // Supplier page link
+  const supplierPagePath = supplierProfile?.slug ? `/suppliers/${supplierProfile.slug}` : null;
+
   // JSON-LD structured data
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -245,6 +255,10 @@ export default async function StableResultPage({ params }: ResultPageProps) {
     calculator: 'QuoteCore+ Free Roof Takeoff Builder',
     calculationTimestamp: result.timestamp,
     pricing: result.pricing ?? null,
+    measurementBasis: basisMap ?? null,
+    locationMatch: locationMatch ?? null,
+    authoritative: true,
+    status: 'complete',
   };
 
   return (
@@ -333,6 +347,56 @@ export default async function StableResultPage({ params }: ResultPageProps) {
           )}
         </section>
 
+        {/* Measurement basis disclosure */}
+        {hasMixedBasis && basisMap && (
+          <section className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <h2 className="text-sm font-semibold text-slate-700">Measurement basis</h2>
+            <p className="mt-1 text-xs text-slate-500">Each component was calculated using its own measurement basis:</p>
+            <dl className="mt-2 space-y-1">
+              {Object.entries(basisMap).map(([kind, basis]) => {
+                const def = COMPONENT_DEFS[kind];
+                if (!def) return null;
+                return (
+                  <div key={kind} className="flex justify-between text-xs">
+                    <dt className="text-slate-600">{def.label}</dt>
+                    <dd className="font-medium text-slate-900">
+                      {basis === 'plan' ? 'Plan (pitch-adjusted)' : 'Actual (no adjustment)'}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </section>
+        )}
+
+        {/* Location match disclosure */}
+        {locationMatch && locationMatch.matchType && locationMatch.matchType !== 'exact_local' && (
+          <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <h2 className="text-sm font-semibold text-amber-800">Pricing location</h2>
+            <dl className="mt-2 space-y-1">
+              {locationMatch.requestedLocation && (
+                <div className="flex justify-between text-xs">
+                  <dt className="text-amber-700">Requested</dt>
+                  <dd className="text-amber-900">{locationMatch.requestedLocation}</dd>
+                </div>
+              )}
+              {locationMatch.matchedLocation && (
+                <div className="flex justify-between text-xs">
+                  <dt className="text-amber-700">Matched</dt>
+                  <dd className="text-amber-900">{locationMatch.matchedLocation}</dd>
+                </div>
+              )}
+              <div className="flex justify-between text-xs">
+                <dt className="text-amber-700">Match type</dt>
+                <dd className="text-amber-900">{locationMatch.matchType.replaceAll('_', ' ')}</dd>
+              </div>
+            </dl>
+            {locationMatch.warning && (
+              <p className="mt-2 text-xs text-amber-700">{locationMatch.warning}</p>
+            )}
+          </section>
+        )}
+
         {/* Pricing provenance */}
         {result.pricing && (
           <section aria-labelledby="pricing-provenance" className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4">
@@ -378,6 +442,11 @@ export default async function StableResultPage({ params }: ResultPageProps) {
             <p className="mt-2 text-xs text-blue-600">
               This is an {result.pricing.estimateStatus} price based on current supplier catalogue data. Verify with the supplier before ordering.
             </p>
+            {supplierPagePath && (
+              <Link href={supplierPagePath} className="mt-2 inline-block text-xs font-medium text-[#BD4A1A] hover:underline">
+                View {result.pricing.supplierName} supplier page →
+              </Link>
+            )}
           </section>
         )}
 
