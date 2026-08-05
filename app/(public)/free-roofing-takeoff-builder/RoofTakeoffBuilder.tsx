@@ -857,18 +857,10 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     </button>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <label className="flex items-center gap-1.5 cursor-pointer select-none" title="Include or exclude labour costs from component pricing">
-                      <input
-                        type="checkbox"
-                        checked={includeLabour}
-                        onChange={(e) => setIncludeLabour(e.target.checked)}
-                        className="sr-only"
-                      />
-                      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${includeLabour ? 'border-[#FF6B35] bg-orange-50/50 text-[#BD4A1A]' : 'border-slate-200 bg-white text-slate-400'}`}>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        Labour
-                      </span>
-                    </label>
+                    <div className="flex items-center gap-0.5 rounded-full border border-[#FF6B35]/30 bg-white p-0.5">
+                      <button onClick={() => setIncludeLabour(true)} className={`rounded-full px-2.5 md:px-3 py-1 text-xs font-medium transition ${includeLabour ? 'bg-[#FF6B35] text-white' : 'text-slate-500'}`}>Materials + Labour</button>
+                      <button onClick={() => setIncludeLabour(false)} className={`rounded-full px-2.5 md:px-3 py-1 text-xs font-medium transition ${!includeLabour ? 'bg-[#FF6B35] text-white' : 'text-slate-500'}`}>Materials Only</button>
+                    </div>
                     <div className="flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5">
                       <button onClick={() => setExperience('guided')} className={`rounded-full px-2.5 md:px-3 py-1 text-xs font-medium transition ${isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Guided</button>
                       <button onClick={() => setExperience('fast')} className={`rounded-full px-2.5 md:px-3 py-1 text-xs font-medium transition ${!isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Fast</button>
