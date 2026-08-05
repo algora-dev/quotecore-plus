@@ -133,11 +133,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const suppliers = await getSupplierDirectory();
   const supplierEntries: MetadataRoute.Sitemap = suppliers
     .filter((s) => s.slug)
-    .map((s) => ({
-      url: `${SITE_URL}/suppliers/${s.slug}`,
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }));
+    .flatMap((s) => {
+      const entries: MetadataRoute.Sitemap = [{
+        url: `${SITE_URL}/suppliers/${s.slug}`,
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      }];
+      // Add calculator URL if supplier has one available
+      if (s.calculator_available) {
+        entries.push({
+          url: `${SITE_URL}/free-roofing-takeoff-builder/${s.slug}`,
+          changeFrequency: 'monthly' as const,
+          priority: 0.8,
+        });
+      }
+      return entries;
+    });
 
   return [...staticEntries, ...blogEntries, ...slugEntries, ...docEntries, ...supplierEntries];
 }

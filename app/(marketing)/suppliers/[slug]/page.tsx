@@ -659,6 +659,38 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </div>
         </section>
 
+        {/* Compact agent payload for AI crawlers */}
+        <script
+          type="application/json"
+          id="agent-payload"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            schemaVersion: '1.0',
+            supplier: {
+              slug: s.slug,
+              name: s.supplier_name,
+              supplierPageUrl: `https://quote-core.com/suppliers/${s.slug}`,
+              calculatorUrl: calculatorUrl ? `https://quote-core.com${calculatorUrl}` : null,
+            },
+            location: {
+              city: s.branch_city,
+              region: s.branch_region,
+              country: s.branch_country,
+              serviceAreas: s.service_areas,
+            },
+            products: {
+              roofingTypes: s.roofing_types,
+              currency: s.currency,
+              pricingType: s.price_type,
+              pricingUpdatedAt: s.pricing_updated_at,
+              priceValidUntil: s.price_valid_until,
+            },
+            workflow: {
+              step1: 'This supplier has a calculator at the calculatorUrl above',
+              step2: 'Visit the calculator page for full AI workflow instructions and API endpoints',
+            },
+          }) }}
+        />
+
         {/* Agent guidance */}
         <section className="border-t border-zinc-200 bg-zinc-50 py-12">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
