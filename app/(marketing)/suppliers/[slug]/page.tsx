@@ -291,7 +291,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                   <TagList label="Product categories" items={s.product_categories} />
                   <TagList label="Brands" items={s.brands} />
                   {/* Only show delivery/tax if supplier has explicitly set them */}
-                  {s.delivery_coverage && s.delivery_coverage !== "local" && <InfoRow label="Delivery coverage" value={s.delivery_coverage} />}
+                  {s.delivery_coverage && s.delivery_coverage.length > 0 && !(s.delivery_coverage.length === 1 && s.delivery_coverage[0] === 'local') && <InfoRow label="Delivery coverage" value={s.delivery_coverage.join(', ')} />}
                   {s.delivery_assumptions && <InfoRow label="Delivery assumptions" value={s.delivery_assumptions} />}
                   {s.exclusions && <InfoRow label="Exclusions" value={s.exclusions} />}
                   {s.tax_treatment && s.tax_treatment !== "exclusive" && <InfoRow label="Tax treatment" value={s.tax_treatment} />}

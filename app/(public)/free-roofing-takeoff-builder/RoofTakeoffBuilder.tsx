@@ -75,7 +75,7 @@ interface SupplierInfo {
   productCategories: string[];
   brands: string[];
   nationalCoverage: boolean;
-  deliveryCoverage: string;
+  deliveryCoverage: string[] | null;
   taxTreatment: string | null;
   taxName: string | null;
   taxRate: number | null;
@@ -250,7 +250,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
               productCategories: lib.productCategories ?? [],
               brands: lib.brands ?? [],
               nationalCoverage: lib.nationalCoverage ?? false,
-              deliveryCoverage: lib.deliveryCoverage ?? '',
+              deliveryCoverage: lib.deliveryCoverage ?? [],
               taxTreatment: lib.taxTreatment ?? null,
               taxName: lib.taxName ?? null,
               taxRate: lib.taxRate ?? null,
@@ -779,7 +779,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     // Location filter
                     if (supplierLocationFilter) {
                       const loc = supplierLocationFilter.toLowerCase();
-                      const locText = [lib.branchCity, lib.branchRegion, lib.country, lib.deliveryCoverage]
+                      const locText = [lib.branchCity, lib.branchRegion, lib.country, Array.isArray(lib.deliveryCoverage) ? lib.deliveryCoverage.join(' ') : null]
                         .filter(Boolean).join(' ').toLowerCase();
                       if (!locText.includes(loc)) return false;
                     }
