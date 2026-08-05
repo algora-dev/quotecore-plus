@@ -1,88 +1,74 @@
-# QuoteCore Documentation Index
+# QuoteCore+ Documentation Index
 
-**Type:** Monolith web application
-**Primary Language:** TypeScript
-**Architecture:** Next.js App Router + Supabase-backed server actions
-**Last Updated:** 2026-03-30
+**Last updated:** 2026-08-05
 
-## Project Overview
+> Start with `docs/current/CURRENT_TRUTH.md` - it is the canonical source of truth for the entire project. Everything else is either a living reference, an active plan, or archived history.
 
-QuoteCore is a brownfield SaaS roofing measurement and quoting application. The current implementation is strongest in its tenant-aware schema, pricing foundations, and template/extras configuration flows. It is weaker in final UX polish, quote creation flow completeness, and the future AI-assisted roof measurement experience.
+## Status Legend
+- **CURRENT** - Canonical, actively maintained
+- **REFERENCE** - Living reference doc, keep updated
+- **ACTIVE** - In use, may need review
+- **ARCHIVED** - Historical, kept for decision history. In `docs/archive/`
+- **AUDIT** - Audit evidence and briefs. In `docs/audits/`
 
-## Quick Reference
+## Canonical
+| File | Description |
+|---|---|
+| `current/CURRENT_TRUTH.md` | The single source of truth. Product, business, architecture, deployment, billing, capabilities, open issues. |
 
-- **Tech Stack:** Next.js 16, React 19, TypeScript, Supabase, Postgres SQL, Tailwind 4
-- **Entry Point:** `app/layout.tsx`
-- **Architecture Pattern:** Monolithic web app with route-local server actions and SQL-first domain model
-- **Database:** Supabase / Postgres
-- **Deployment:** Not yet documented in a mature form
+## Architecture
+| File | Description |
+|---|---|
+| `architecture/DOMAIN_AUTHORITIES.md` | Authoritative location for each business-critical calculation. Stub - being built out. |
 
-## Generated Documentation
+## Reference Docs
+| File | Description |
+|---|---|
+| `DESIGN_SYSTEM.md` | UI/design patterns. Read before building any UI. |
+| `smoke-tests/CHECKLIST.md` | Living smoke test checklist. Update when shipping. |
+| `api-contracts.md` | API contract reference. |
+| `data-models.md` | Data model reference. |
+| `development-guide.md` | Development setup and workflow. |
+| `trade-docs-variants/trade-docs-reference.md` | Trade document variant reference. |
 
-### Core Documentation
+## Active Plans
+| File | Description |
+|---|---|
+| `plans/ADMIN-EXPANSION-BUILD-PLAN.md` | Admin expansion plan. |
+| `plans/ADMIN-USER-MANAGEMENT-BUILD-PLAN.md` | Admin user management plan. |
+| `plans/e2e-test-expansion-revised-2026-07-29.md` | E2E test expansion plan. |
 
-- [Project Overview](./project-overview.md) - Executive summary and product/current-state context
-- [Source Tree Analysis](./source-tree-analysis.md) - Annotated repository structure
-- [Architecture](./architecture.md) - Technical architecture and current risks
-- [Component Inventory](./component-inventory.md) - Route/feature inventory and UI maturity assessment
-- [Development Guide](./development-guide.md) - Local setup and BMAD-oriented workflow guidance
-- [API Contracts](./api-contracts.md) - Current server-action and mutation surface
-- [Data Models](./data-models.md) - Domain schema overview
-- [Shared Measurement Canvas Spec](../{output_folder}/planning-artifacts/measurement-canvas-spec.md) - Manual digital takeoff + future AI measurement shared framework
+## Operations
+| File | Description |
+|---|---|
+| `support/email-recovery-runbook.md` | Email recovery runbook. |
+| `pricing/TIER_SPEC_v2.md` | Pricing tier specification. |
+| `TEAM_GIT_WORKFLOW.md` | Git workflow for the team. |
 
-### Existing Documentation
+## SEO and Marketing
+| File | Description |
+|---|---|
+| `CONTENT_STRATEGY.md` | Content strategy. |
+| `INTERNAL_LINKING.md` | Internal linking strategy. |
+| `INTEGRATION_STRATEGY.md` | Integration strategy. |
+| `technical-seo-audit.md` | Technical SEO audit. |
+| `technical-seo-completion-report.md` | SEO completion report. |
+| `SEO_BASELINE_2026-07-29.md` | SEO baseline July 2026. |
+| `seo-page-authoring-guide.md` | SEO page authoring guide. |
 
-- [Implementation Notes - Backend](../documentation/active/implementation/backend-notes.md) - prior backend-oriented implementation note
-- [Implementation Notes - Dashboard Shell](../documentation/active/implementation/dashboard-shell.md) - prior dashboard shell note
-- [Implementation Notes - RLS/Auth](../documentation/active/implementation/rls-auth.md) - prior auth/policy note
-- [Implementation Notes - Signup Flow](../documentation/active/implementation/signup-flow.md) - prior signup implementation note
+## Legal
+| File | Description |
+|---|---|
+| `legal/Terms_of_Service_v2.md` | Terms of Service. |
+| `legal/Data_Processing_Addendum_v1.md` | Data Processing Addendum. |
+| `legal/PLACEHOLDERS.md` | Legal placeholder notes. |
 
-## Getting Started
+## Other
+| File | Description |
+|---|---|
+| `index.md` | This file. |
+| `DOCS_INVENTORY.md` | Full documentation inventory with status labels. |
+| `TODO.md` | Task list. |
 
-### Prerequisites
-
-- Node.js
-- npm
-- Supabase project access
-- local `.env.local`
-
-### Setup
-
-```bash
-npm install
-```
-
-### Run Locally
-
-```bash
-npm run dev
-```
-
-### Run Lint
-
-```bash
-npm run lint
-```
-
-## For AI-Assisted Development
-
-This documentation exists to make the current brownfield codebase understandable enough for BMAD planning and story-driven implementation.
-
-### Best use from here
-
-1. Start from [project-overview.md](./project-overview.md)
-2. Use [architecture.md](./architecture.md) and [data-models.md](./data-models.md) for structural planning
-3. Use [component-inventory.md](./component-inventory.md) for UX/UI and route-level feature work
-4. Convert product intent into:
-   - PRD
-   - architecture decisions
-   - epics
-   - implementation stories
-
-### Important working rule
-
-For this project, work should be translated from vague tasks into **story-driven implementation units**. The burden should sit primarily on the developer workflow (Jimmy + BMAD), not on Shaun manually rewriting every prompt into perfect story format.
-
----
-
-_Documentation generated by BMAD Method `document-project` workflow_
+## Archive
+All historical docs (plans, audits, progress notes, old overviews) are in `docs/archive/`. All audit evidence and briefs are in `docs/audits/`. These are kept for decision history and should not be treated as current.
