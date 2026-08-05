@@ -4,17 +4,15 @@ import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getPublicSupplier, type SupplierDetail } from "@/lib/supplier-directory";
-import { getSupplierDirectory } from "@/lib/supplier-directory";
 import { SupplierPageTracker, SupplierCalculatorClickTracker } from "@/components/SupplierAnalytics";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
-  const suppliers = await getSupplierDirectory();
-  return suppliers.map((s) => ({ slug: s.slug }));
-}
+// Force dynamic rendering — supplier publication state can change at any time,
+// so we always SSR rather than serving stale static pages.
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
