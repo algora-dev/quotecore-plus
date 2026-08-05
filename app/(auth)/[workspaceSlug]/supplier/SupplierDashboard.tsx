@@ -141,7 +141,7 @@ export function SupplierDashboard({
     { value: 'nationwide', label: 'Nationwide delivery' },
     { value: 'regional', label: 'State/Province-wide delivery' },
     { value: 'local', label: 'City-wide delivery' },
-    { value: 'pickup_only', label: 'Pickup only (no delivery)' },
+    { value: 'pickup_only', label: 'Pick Up' },
   ] as const;
   const [deliveryCoverage, setDeliveryCoverage] = useState<string[]>(profile?.delivery_coverage ?? []);
 
@@ -500,7 +500,7 @@ export function SupplierDashboard({
                     {/* Delivery Coverage */}
                     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
                       <label className="text-xs font-medium text-slate-700">Delivery Coverage</label>
-                      <Hint>Select all areas you can deliver to. This shows on your supplier page.</Hint>
+                      <Hint>Select all areas you can deliver to. If none are selected, your page will show "Pick up only".</Hint>
                       <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {DELIVERY_OPTIONS.map(opt => {
                           const selected = deliveryCoverage.includes(opt.value);
@@ -565,12 +565,14 @@ export function SupplierDashboard({
                     {(profile.branch_city || profile.branch_region || profile.branch_country) && (
                       <div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Location</span><span className="text-slate-600">{[profile.branch_city, profile.branch_region, profile.branch_country].filter(Boolean).join(', ')}</span></div>
                     )}
-                    {profile.delivery_coverage && profile.delivery_coverage.length > 0 && (
+                    {profile.delivery_coverage && profile.delivery_coverage.length > 0 ? (
                       <div className="flex items-start gap-2 text-xs"><span className="text-slate-400 w-20">Delivery</span>
                         <div className="flex flex-wrap gap-1">
-                          {profile.delivery_coverage.map(d => <span key={d} className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-600">{d === 'nationwide' ? 'Nationwide' : d === 'regional' ? 'State/Province' : d === 'local' ? 'City-wide' : d === 'pickup_only' ? 'Pickup only' : d}</span>)}
+                          {profile.delivery_coverage.map(d => <span key={d} className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-600">{d === 'nationwide' ? 'Nationwide' : d === 'regional' ? 'State/Province' : d === 'local' ? 'City-wide' : d === 'pickup_only' ? 'Pick up' : d}</span>)}
                         </div>
                       </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Delivery</span><span className="text-slate-600">Pick up only</span></div>
                     )}
                     {profile.tax_treatment && profile.tax_treatment !== 'not_applicable' && (
                       <div className="flex items-center gap-2 text-xs"><span className="text-slate-400 w-20">Tax</span>

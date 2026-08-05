@@ -291,16 +291,21 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                   <TagList label="Product categories" items={s.product_categories} />
                   <TagList label="Brands" items={s.brands} />
                   {/* Delivery coverage badges */}
-                  {s.delivery_coverage && Array.isArray(s.delivery_coverage) && s.delivery_coverage.length > 0 && (
+                  {s.delivery_coverage && Array.isArray(s.delivery_coverage) && s.delivery_coverage.length > 0 ? (
                     <div className="flex items-start gap-2 text-sm">
                       <dt className="text-slate-500 font-medium flex-shrink-0">Delivery</dt>
                       <dd className="flex flex-wrap gap-1.5">
                         {s.delivery_coverage.map((d: string) => (
                           <span key={d} className="rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-600">
-                            {d === 'nationwide' ? 'Nationwide delivery' : d === 'regional' ? 'State/Province delivery' : d === 'local' ? 'City-wide delivery' : d === 'pickup_only' ? 'Pickup only' : d}
+                            {d === 'nationwide' ? 'Nationwide delivery' : d === 'regional' ? 'State/Province delivery' : d === 'local' ? 'City-wide delivery' : d === 'pickup_only' ? 'Pick up' : d}
                           </span>
                         ))}
                       </dd>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2 text-sm">
+                      <dt className="text-slate-500 font-medium flex-shrink-0">Delivery</dt>
+                      <dd><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">Pick up only</span></dd>
                     </div>
                   )}
                   {s.delivery_assumptions && <InfoRow label="Delivery assumptions" value={s.delivery_assumptions} />}
