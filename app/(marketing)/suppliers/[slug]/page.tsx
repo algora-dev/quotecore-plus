@@ -399,10 +399,10 @@ export default async function SupplierDetailPage({ params }: PageProps) {
         {/* Supplier details */}
         <section className="pb-12">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
+            <h2 className="text-xl font-semibold text-zinc-950 mb-4">Supplier information</h2>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* Left: main info */}
               <div className="lg:col-span-2">
-                <h2 className="text-xl font-semibold text-zinc-950 mb-4">Supplier information</h2>
                 <dl className="rounded-xl border border-slate-200 px-5">
                   {locationString && <InfoRow label="Location" value={locationString} />}
                   <TagList label="Service areas" items={s.service_areas} />
@@ -574,7 +574,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
               {/* Right: contact + meta */}
               <div className="lg:col-span-1">
-                <div className="rounded-xl border border-slate-200 bg-zinc-50 p-5 lg:mt-8 sticky top-6">
+                <div className="rounded-xl border border-slate-200 bg-zinc-50 p-5 sticky top-6">
                   <h3 className="text-sm font-semibold text-zinc-950">Contact</h3>
                   {data.eligibility.contacts_visible ? (
                     <div className="mt-3 space-y-2 text-sm">
