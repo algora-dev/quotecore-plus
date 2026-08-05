@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -33,6 +33,16 @@ const VISIBILITY_STYLES: Record<string, string> = {
 };
 
 const ROOFING_TYPES = ['All Roofing', 'Metal Roofing', 'Tile Roofing', 'Flat Roofing', 'Shingle Roofing', 'Membrane', 'EPDM/TPO', 'Slate'];
+
+const COUNTRIES = [
+  { code: '', name: 'Select country...' },
+  { code: 'NZ', name: 'New Zealand' },
+  { code: 'AU', name: 'Australia' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'US', name: 'United States' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'IE', name: 'Ireland' },
+];
 
 type Tab = 'libraries' | 'catalogues' | 'takeoff-builder' | 'public-presence';
 
@@ -77,6 +87,26 @@ export function SupplierDashboard({
   const [roofingTypes, setRoofingTypes] = useState(profile?.roofing_types ?? []);
   const [allowCustomPricing, setAllowCustomPricing] = useState(profile?.allow_custom_pricing ?? false);
 
+  // Location + asset fields
+  const [branchCity, setBranchCity] = useState(profile?.branch_city ?? '');
+  const [branchRegion, setBranchRegion] = useState(profile?.branch_region ?? '');
+  const [branchCountry, setBranchCountry] = useState(profile?.branch_country ?? '');
+  const [branchPostcode, setBranchPostcode] = useState(profile?.branch_postcode ?? '');
+  const [logoUrl, setLogoUrl] = useState(profile?.logo_url ?? '');
+  const [bannerUrl, setBannerUrl] = useState(profile?.banner_url ?? '');
+
+  // Upload state
+  const [uploading, setUploading] = useState<'logo' | 'banner' | 'price-list' | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Price list state
+  const [priceListUrl, setPriceListUrl] = useState(profile?.price_list_url ?? '');
+  const [priceListFilename, setPriceListFilename] = useState(profile?.price_list_filename ?? '');
+  const [priceListUploadedAt, setPriceListUploadedAt] = useState(profile?.price_list_uploaded_at ?? '');
+
+  // Copy link feedback
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   // Takeoff builder state
   const [takeoffEnabled, setTakeoffEnabled] = useState(profile?.takeoff_builder_enabled ?? false);
   const [takeoffCollectionId, setTakeoffCollectionId] = useState<string | null>(profile?.default_takeoff_collection_id ?? null);
@@ -101,6 +131,45 @@ export function SupplierDashboard({
   const [previewData, setPreviewData] = useState<Record<string, unknown> | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
+  async function handleUpload(file: File, kind: 'logo' | 'banner' | 'price-list') {
+    setUploading(kind);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('kind', kind);
+
+      const res = await fetch('/api/supplier-upload', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUploadError(data.error || 'Upload failed');
+        return;
+      }
+
+      if (kind === 'logo') {
+        setLogoUrl(data.url);
+      } else if (kind === 'banner') {
+        setBannerUrl(data.url);
+      } else {
+        setPriceListUrl(data.url);
+        setPriceListFilename(data.filename);
+        setPriceListUploadedAt(new Date().toISOString());
+      }
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  function handleCopyLink(url: string, field: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
+  }
+
   async function handleSaveProfile() {
     setSaving(true);
     setError(null);
@@ -113,6 +182,16 @@ export function SupplierDashboard({
         service_areas: serviceAreas.split(',').map(s => s.trim()).filter(Boolean),
         roofing_types: roofingTypes,
         allow_custom_pricing: allowCustomPricing,
+        branch_city: branchCity.trim() || null,
+        branch_region: branchRegion.trim() || null,
+        branch_country: branchCountry || null,
+        branch_postcode: branchPostcode.trim() || null,
+        logo_url: logoUrl || null,
+        banner_url: bannerUrl || null,
+        price_list_url: priceListUrl || null,
+        price_list_filename: priceListFilename || null,
+        price_list_uploaded_at: priceListUploadedAt || null,
+        price_list_content_type: null,
       });
       if (!result.ok) {
         setError(result.message);
@@ -319,6 +398,59 @@ export function SupplierDashboard({
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{error}</div>
         )}
 
+        {uploadError && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">{uploadError}</div>
+        )}
+
+        {/* Your Links */}
+        {profile?.slug && (
+          <div className="rounded-xl border border-slate-200 bg-white p-5 mb-6">
+            <h2 className="text-sm font-semibold text-slate-900 mb-3">Your Links</h2>
+            <p className="text-xs text-slate-400 mb-3">Copy these URLs to share your supplier page and takeoff builder with customers.</p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-slate-500 block">Supplier Page</span>
+                  <code className="text-xs text-[#BD4A1A] break-all">https://quote-core.com/suppliers/{profile.slug}</code>
+                </div>
+                <button
+                  onClick={() => handleCopyLink(`https://quote-core.com/suppliers/${profile.slug}`, 'supplier-page')}
+                  className="flex-shrink-0 rounded-full p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                  title="Copy URL"
+                >
+                  {copiedField === 'supplier-page' ? (
+                    <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10a2 2 0 00-2 2v3a2 2 0 002 2h10a2 2 0 002-2v-3a2 2 0 00-2-2z" /></svg>
+                  )}
+                </button>
+              </div>
+              {profile.takeoff_builder_enabled && (
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-medium text-slate-500 block">Takeoff Builder</span>
+                    <code className="text-xs text-[#BD4A1A] break-all">https://quote-core.com/free-roofing-takeoff-builder/{profile.slug}</code>
+                  </div>
+                  <button
+                    onClick={() => handleCopyLink(`https://quote-core.com/free-roofing-takeoff-builder/${profile.slug}`, 'takeoff-builder')}
+                    className="flex-shrink-0 rounded-full p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                    title="Copy URL"
+                  >
+                    {copiedField === 'takeoff-builder' ? (
+                      <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10a2 2 0 00-2 2v3a2 2 0 002 2h10a2 2 0 002-2v-3a2 2 0 00-2-2z" /></svg>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+            {profile.publication_state !== 'published' && profile.publication_state !== 'unlisted' && (
+              <p className="text-xs text-amber-600 mt-2">Page is not yet published ÔÇö URL will work when you publish in the Public Presence tab.</p>
+            )}
+          </div>
+        )}
+
         {/* Profile Card */}
         {profile ? (
           <div className="rounded-xl border border-slate-200 bg-white p-5 mb-6">
@@ -341,6 +473,56 @@ export function SupplierDashboard({
 
             {editingProfile ? (
               <div className="space-y-3 pt-3 border-t border-slate-100">
+                {/* Logo upload */}
+                <div>
+                  <label className="text-xs font-medium text-slate-600">Logo</label>
+                  <div className="flex items-center gap-3 mt-1">
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="Logo" className="h-12 w-12 rounded-lg border border-slate-200 object-contain" />
+                    ) : (
+                      <div className="h-12 w-12 rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'logo'); }}
+                        disabled={uploading !== null}
+                        className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                      />
+                      {uploading === 'logo' && <span className="text-xs text-slate-400 ml-2">Uploading...</span>}
+                      {logoUrl && (
+                        <button type="button" onClick={() => setLogoUrl('')} className="text-xs text-red-400 hover:text-red-600 ml-2">Remove</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Banner upload */}
+                <div>
+                  <label className="text-xs font-medium text-slate-600">Banner Image</label>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Recommended: 1600├ù400px (4:1 ratio). Max 5MB. JPG, PNG, or WebP.</p>
+                  {bannerUrl ? (
+                    <div className="mt-1 relative rounded-lg overflow-hidden border border-slate-200">
+                      <img src={bannerUrl} alt="Banner" className="w-full h-24 object-cover" />
+                      <button type="button" onClick={() => setBannerUrl('')} className="absolute top-1 right-1 rounded-full bg-black/50 text-white p-1 hover:bg-black/70">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'banner'); }}
+                      disabled={uploading !== null}
+                      className="mt-1 text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                    />
+                  )}
+                  {uploading === 'banner' && <span className="text-xs text-slate-400 ml-2">Uploading...</span>}
+                </div>
+
                 <div>
                   <label className="text-xs font-medium text-slate-600">Website URL</label>
                   <input type="text" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)}
@@ -395,6 +577,63 @@ export function SupplierDashboard({
                     </button>
                   </div>
                 </div>
+
+                {/* Location fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Country</label>
+                    <select value={branchCountry} onChange={e => setBranchCountry(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none">
+                      {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">City</label>
+                    <input type="text" value={branchCity} onChange={e => setBranchCity(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Christchurch" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Region / State</label>
+                    <input type="text" value={branchRegion} onChange={e => setBranchRegion(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="Canterbury" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-600">Postcode (optional)</label>
+                    <input type="text" value={branchPostcode} onChange={e => setBranchPostcode(e.target.value)}
+                      className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="8011" />
+                  </div>
+                </div>
+
+                {/* Price list upload */}
+                <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                  <label className="text-xs font-medium text-slate-700">Price List File (PDF or CSV)</label>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Upload your full price list for customers to download from your supplier page. Max 10MB.</p>
+                  {priceListUrl ? (
+                    <div className="mt-2 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                          <span className="text-sm text-slate-700 truncate">{priceListFilename}</span>
+                        </div>
+                        {priceListUploadedAt && (
+                          <span className="text-xs text-slate-400">Uploaded {new Date(priceListUploadedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        )}
+                      </div>
+                      <button type="button" onClick={() => { setPriceListUrl(''); setPriceListFilename(''); setPriceListUploadedAt(''); }}
+                        className="text-xs text-red-400 hover:text-red-600">Remove</button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      accept=".pdf,.csv,application/pdf,text/csv"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f, 'price-list'); }}
+                      disabled={uploading !== null}
+                      className="mt-2 text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                    />
+                  )}
+                  {uploading === 'price-list' && <span className="text-xs text-slate-400 ml-2">Uploading...</span>}
+                </div>
+
                 <div className="flex items-center gap-2 pt-2">
                   <button onClick={handleSaveProfile} disabled={saving}
                     className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">
@@ -408,6 +647,18 @@ export function SupplierDashboard({
               </div>
             ) : (
               <div className="space-y-2 pt-3 border-t border-slate-100">
+                {(logoUrl || profile.logo_url) && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-400 w-20">Logo</span>
+                    <img src={(logoUrl || profile.logo_url) ?? ''} alt="Logo" className="h-8 w-8 rounded border border-slate-200 object-contain" />
+                  </div>
+                )}
+                {(bannerUrl || profile.banner_url) && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-400 w-20">Banner</span>
+                    <img src={(bannerUrl || profile.banner_url) ?? ''} alt="Banner" className="h-10 w-24 rounded border border-slate-200 object-cover" />
+                  </div>
+                )}
                 {profile.website_url && (
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-slate-400 w-20">Website</span>
@@ -439,6 +690,18 @@ export function SupplierDashboard({
                   <span className="text-slate-400 w-20">Custom Price</span>
                   <span className={`rounded-full px-2 py-0.5 ${profile.allow_custom_pricing ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>{profile.allow_custom_pricing ? 'Enabled' : 'Disabled'}</span>
                 </div>
+                {(profile.branch_city || profile.branch_region || profile.branch_country) && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-400 w-20">Location</span>
+                    <span className="text-slate-600">{[profile.branch_city, profile.branch_region, profile.branch_country].filter(Boolean).join(', ')}</span>
+                  </div>
+                )}
+                {(priceListUrl || profile.price_list_url) && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-slate-400 w-20">Price List</span>
+                    <span className="text-slate-600 truncate max-w-xs">{priceListFilename || profile.price_list_filename}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -498,7 +761,7 @@ export function SupplierDashboard({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-900">Libraries</h3>
-              <Link href={`/${workspaceSlug}/components`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Manage in Components →</Link>
+              <Link href={`/${workspaceSlug}/components`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Manage in Components ÔåÆ</Link>
             </div>
             {localLibraries.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
@@ -576,7 +839,7 @@ export function SupplierDashboard({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-900">Catalogues</h3>
-              <Link href={`/${workspaceSlug}/catalogs`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Upload in Catalogs →</Link>
+              <Link href={`/${workspaceSlug}/catalogs`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Upload in Catalogs ÔåÆ</Link>
             </div>
             {localCatalogs.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">

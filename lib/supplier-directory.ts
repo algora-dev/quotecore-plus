@@ -1,9 +1,9 @@
-import { supabase } from "@/lib/supabase";
+﻿import { supabase } from "@/lib/supabase";
 
 /**
  * Public supplier data layer.
  * Uses the SECURITY DEFINER RPCs created in migration 20260804203000.
- * These functions strip disallowed fields server-side — hidden prices
+ * These functions strip disallowed fields server-side ÔÇö hidden prices
  * and contacts cannot leak through this layer.
  */
 
@@ -80,6 +80,11 @@ export interface SupplierDetail {
     takeoff_builder_enabled: boolean | null;
     brand_primary_color: string | null;
     brand_accent_color: string | null;
+    banner_url: string | null;
+    price_list_url: string | null;
+    price_list_filename: string | null;
+    price_list_uploaded_at: string | null;
+    price_list_content_type: string | null;
     publication_state: string;
     public_price_visibility: string;
     public_contact_visibility: string;

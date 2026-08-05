@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
@@ -32,9 +32,15 @@ export type SupplierProfileData = {
   branch_city: string | null;
   branch_region: string | null;
   branch_country: string | null;
+  branch_postcode: string | null;
   national_coverage: boolean;
   delivery_coverage: string | null;
   instant_pricing_available: boolean;
+  banner_url: string | null;
+  price_list_url: string | null;
+  price_list_filename: string | null;
+  price_list_uploaded_at: string | null;
+  price_list_content_type: string | null;
   // G1 visibility/publication fields
   public_page_enabled: boolean;
   search_indexing_enabled: boolean;
@@ -72,7 +78,7 @@ export async function loadSupplierProfile(): Promise<SupplierProfileData | null>
 
   const { data, error } = await supabase
     .from('supplier_profiles')
-    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, national_coverage, delivery_coverage, instant_pricing_available, public_page_enabled, search_indexing_enabled, public_catalogue_enabled, public_price_visibility, public_contact_visibility, publication_state, publication_updated_at')
+    .select('id, supplier_name, slug, status, website_url, contact_email, phone_number, description, service_areas, roofing_types, product_categories, brands, keywords, logo_url, approved_at, allow_custom_pricing, takeoff_builder_enabled, default_takeoff_collection_id, enquiry_email, enquiries_enabled, currency, branch_city, branch_region, branch_country, branch_postcode, national_coverage, delivery_coverage, instant_pricing_available, banner_url, price_list_url, price_list_filename, price_list_uploaded_at, price_list_content_type, public_page_enabled, search_indexing_enabled, public_catalogue_enabled, public_price_visibility, public_contact_visibility, publication_state, publication_updated_at')
     .eq('company_id', profile.company_id)
     .maybeSingle();
 
@@ -151,6 +157,16 @@ export async function updateSupplierProfile(
     enquiry_email: string | null;
     enquiries_enabled: boolean;
     instant_pricing_available: boolean;
+    logo_url: string | null;
+    banner_url: string | null;
+    branch_city: string | null;
+    branch_region: string | null;
+    branch_country: string | null;
+    branch_postcode: string | null;
+    price_list_url: string | null;
+    price_list_filename: string | null;
+    price_list_uploaded_at: string | null;
+    price_list_content_type: string | null;
   }>
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
@@ -181,6 +197,16 @@ export async function updateSupplierProfile(
     if (input.enquiry_email !== undefined) update.enquiry_email = input.enquiry_email || null;
     if (input.enquiries_enabled !== undefined) update.enquiries_enabled = input.enquiries_enabled;
     if (input.instant_pricing_available !== undefined) update.instant_pricing_available = input.instant_pricing_available;
+    if (input.logo_url !== undefined) update.logo_url = input.logo_url;
+    if (input.banner_url !== undefined) update.banner_url = input.banner_url;
+    if (input.branch_city !== undefined) update.branch_city = input.branch_city || null;
+    if (input.branch_region !== undefined) update.branch_region = input.branch_region || null;
+    if (input.branch_country !== undefined) update.branch_country = input.branch_country || null;
+    if (input.branch_postcode !== undefined) update.branch_postcode = input.branch_postcode || null;
+    if (input.price_list_url !== undefined) update.price_list_url = input.price_list_url;
+    if (input.price_list_filename !== undefined) update.price_list_filename = input.price_list_filename;
+    if (input.price_list_uploaded_at !== undefined) update.price_list_uploaded_at = input.price_list_uploaded_at;
+    if (input.price_list_content_type !== undefined) update.price_list_content_type = input.price_list_content_type;
 
     const { error } = await supabase
       .from('supplier_profiles')

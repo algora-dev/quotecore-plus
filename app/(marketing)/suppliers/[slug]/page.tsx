@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const s = data.supplier;
-  const title = `${s.supplier_name} — Roofing Supplier | QuoteCore+`;
+  const title = `${s.supplier_name} ÔÇö Roofing Supplier | QuoteCore+`;
   const description = s.description
     ? `${s.description.slice(0, 155)}`
     : `Roofing supplier ${s.supplier_name} on QuoteCore+. Calculate roof takeoffs using authorised pricing.`;
@@ -193,6 +193,19 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </nav>
         </div>
 
+        {/* Banner image */}
+        {s.banner_url && (
+          <div className="mx-auto max-w-5xl px-6 lg:px-8 pt-6">
+            <div className="relative rounded-2xl overflow-hidden border border-slate-200">
+              <img
+                src={s.banner_url}
+                alt={`${s.supplier_name} banner`}
+                className="w-full h-48 sm:h-64 object-cover"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Supplier header */}
         <section className="pb-8 pt-8">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
@@ -301,7 +314,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     </p>
                     {s.price_type && (
                       <p className="mt-2 text-xs text-slate-500">
-                        Pricing type: {s.price_type === "indicative" ? "Indicative — sourced from publicly available supplier data" : s.price_type}
+                        Pricing type: {s.price_type === "indicative" ? "Indicative ÔÇö sourced from publicly available supplier data" : s.price_type}
                       </p>
                     )}
                     <p className="mt-3 text-xs text-slate-500">
@@ -334,6 +347,37 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                       {lib.roofing_types?.length && <TagList label="Roofing types" items={lib.roofing_types} />}
                       {lib.product_categories?.length && <TagList label="Product categories" items={lib.product_categories} />}
                       {lib.brands?.length && <TagList label="Brands" items={lib.brands} />}
+                    </div>
+                  </div>
+                )}
+
+                {/* Price list download */}
+                {s.price_list_url && (
+                  <div className="mt-8">
+                    <h2 className="text-xl font-semibold text-zinc-950 mb-4">Price List</h2>
+                    <div className="rounded-xl border border-slate-200 p-5 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-sm font-medium text-zinc-950 truncate">{s.price_list_filename || "Price list"}</span>
+                        </div>
+                        {s.price_list_uploaded_at && (
+                          <p className="text-xs text-slate-500 mt-1">Uploaded {new Date(s.price_list_uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
+                        )}
+                      </div>
+                      <a
+                        href={s.price_list_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download
+                      </a>
                     </div>
                   </div>
                 )}
