@@ -71,6 +71,103 @@ function TipBanner({ children }: { children: React.ReactNode }) {
   );
 }
 
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
+
+function parseOpeningHours(json: string): Record<string, { open: string; close: string } | null> {
+  const result: Record<string, { open: string; close: string } | null> = {};
+  for (const day of DAYS) result[day] = null;
+  if (!json) return result;
+  try {
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed)) return result;
+    for (const spec of parsed) {
+      const days: string[] = Array.isArray(spec.dayOfWeek) ? spec.dayOfWeek : [spec.dayOfWeek];
+      for (const day of days) {
+        const cleanDay = day.replace(/^https?:\/\/schema\.org\//, '');
+        if (DAYS.includes(cleanDay as typeof DAYS[number])) {
+          result[cleanDay] = { open: spec.opens || '09:00', close: spec.closes || '17:00' };
+        }
+      }
+    }
+  } catch {}
+  return result;
+}
+
+function buildOpeningHoursJson(hours: Record<string, { open: string; close: string } | null>): string {
+  const activeDays = DAYS.filter(d => hours[d]);
+  if (activeDays.length === 0) return '';
+  // Group consecutive days with the same hours
+  const groups: { days: string[]; open: string; close: string }[] = [];
+  for (const day of activeDays) {
+    const h = hours[day]!;
+    const lastGroup = groups[groups.length - 1];
+    if (lastGroup && lastGroup.open === h.open && lastGroup.close === h.close) {
+      lastGroup.days.push(day);
+    } else {
+      groups.push({ days: [day], open: h.open, close: h.close });
+    }
+  }
+  const specs = groups.map(g => ({
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: g.days.length === 1 ? g.days[0] : g.days,
+    opens: g.open,
+    closes: g.close,
+  }));
+  return JSON.stringify(specs);
+}
+
+function OpeningHoursEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [hours, setHours] = useState(() => parseOpeningHours(value));
+
+  const updateDay = (day: string, field: 'open' | 'close', time: string) => {
+    const current = hours[day];
+    const updated = { ...(current || { open: '09:00', close: '17:00' }), [field]: time };
+    const newHours = { ...hours, [day]: updated };
+    setHours(newHours);
+    onChange(buildOpeningHoursJson(newHours));
+  };
+
+  const toggleDay = (day: string) => {
+    const newHours = { ...hours };
+    if (newHours[day]) {
+      newHours[day] = null;
+    } else {
+      newHours[day] = { open: '09:00', close: '17:00' };
+    }
+    setHours(newHours);
+    onChange(buildOpeningHoursJson(newHours));
+  };
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      {DAYS.map(day => {
+        const h = hours[day];
+        const isOpen = !!h;
+        return (
+          <div key={day} className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer w-28 sm:w-32 flex-shrink-0">
+              <input type="checkbox" checked={isOpen} onChange={() => toggleDay(day)}
+                className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+              <span className="text-xs font-medium text-slate-600">{day.slice(0, 3)}</span>
+            </label>
+            {isOpen ? (
+              <div className="flex items-center gap-1.5 flex-1">
+                <input type="time" value={h!.open} onChange={e => updateDay(day, 'open', e.target.value)}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none" />
+                <span className="text-xs text-slate-400">to</span>
+                <input type="time" value={h!.close} onChange={e => updateDay(day, 'close', e.target.value)}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs focus:border-orange-500 focus:outline-none" />
+              </div>
+            ) : (
+              <span className="text-xs text-slate-400 italic">Closed</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SupplierDashboard({
   workspaceSlug,
   profile,
@@ -482,28 +579,71 @@ export function SupplierDashboard({
                     </div>
 
                     {/* Geo coordinates + opening hours + price range (SEO fields) */}
-                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-3">
-                      <label className="text-xs font-medium text-slate-700">SEO & Location Enrichment (optional)</label>
-                      <Hint>These fields improve your supplier page's visibility in Google search results and maps.</Hint>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-slate-600">Latitude</label>
-                          <input type="text" inputMode="decimal" value={branchLatitude} onChange={e => setBranchLatitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="-43.5320" />
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-4">
+                      <div>
+                        <label className="text-xs font-medium text-slate-700">Location & Map Coordinates (optional)</label>
+                        <Hint>Helps your supplier page appear in Google Maps and local search results. Use the buttons below to set your coordinates automatically.</Hint>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button type="button" onClick={() => {
+                            if (!navigator.geolocation) { alert('Geolocation is not supported by your browser.'); return; }
+                            navigator.geolocation.getCurrentPosition(
+                              (pos) => { setBranchLatitude(pos.coords.latitude.toFixed(6)); setBranchLongitude(pos.coords.longitude.toFixed(6)); },
+                              () => { alert('Could not get your location. Please check browser permissions or enter coordinates manually.'); },
+                              { enableHighAccuracy: true, timeout: 10000 }
+                            );
+                          }} className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:bg-orange-50/40 transition cursor-pointer">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            Use my current location
+                          </button>
+                          <button type="button" onClick={async () => {
+                            const parts = [branchCity, branchRegion, branchCountry].filter(Boolean).join(',');
+                            if (!parts) { alert('Enter your city, region and country above first, then use this button.'); return; }
+                            try {
+                              const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(parts)}&limit=1`);
+                              const data = await res.json();
+                              if (data && data[0]) { setBranchLatitude(parseFloat(data[0].lat).toFixed(6)); setBranchLongitude(parseFloat(data[0].lon).toFixed(6)); }
+                              else { alert('Could not find coordinates for that address. Try entering them manually.'); }
+                            } catch { alert('Could not look up coordinates. Please enter them manually.'); }
+                          }} className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-[#FF6B35] hover:bg-orange-50/40 transition cursor-pointer">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            Suggest from my address
+                          </button>
                         </div>
-                        <div>
-                          <label className="text-xs font-medium text-slate-600">Longitude</label>
-                          <input type="text" inputMode="decimal" value={branchLongitude} onChange={e => setBranchLongitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="172.6362" />
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                          <div>
+                            <label className="text-xs font-medium text-slate-600">Latitude</label>
+                            <input type="text" inputMode="decimal" value={branchLatitude} onChange={e => setBranchLatitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="-43.5320" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-slate-600">Longitude</label>
+                            <input type="text" inputMode="decimal" value={branchLongitude} onChange={e => setBranchLongitude(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="172.6362" />
+                          </div>
                         </div>
                       </div>
+
                       <div>
-                        <label className="text-xs font-medium text-slate-600">Price Range (optional)</label>
-                        <input type="text" value={priceRange} onChange={e => setPriceRange(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="$$" maxLength={5} />
-                        <p className="mt-1 text-xs text-slate-400">Use $ to $$$$ to indicate price level (Schema.org priceRange).</p>
+                        <label className="text-xs font-medium text-slate-700">Opening Hours (optional)</label>
+                        <Hint>Set when your business is open. This appears on your supplier page and helps Google show your hours in search results.</Hint>
+                        <OpeningHoursEditor value={openingHoursJson} onChange={setOpeningHoursJson} />
                       </div>
+
                       <div>
-                        <label className="text-xs font-medium text-slate-600">Opening Hours (optional, JSON)</label>
-                        <textarea value={openingHoursJson} onChange={e => setOpeningHoursJson(e.target.value)} rows={4} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-mono focus:border-orange-500 focus:outline-none" placeholder={'[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday"],"opens":"08:00","closes":"17:00"}]'} />
-                        <p className="mt-1 text-xs text-slate-400">Schema.org OpeningHoursSpecification JSON array. Leave blank if not applicable.</p>
+                        <label className="text-xs font-medium text-slate-700">Price Range (optional)</label>
+                        <Hint>Shows customers how expensive your products are compared to other suppliers. Most roofing suppliers pick $ or $$.</Hint>
+                        <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          {[
+                            { value: '$', label: '$', desc: 'Budget' },
+                            { value: '$$', label: '$$', desc: 'Mid-range' },
+                            { value: '$$$', label: '$$$', desc: 'Premium' },
+                            { value: '$$$$', label: '$$$$', desc: 'Luxury' },
+                          ].map(opt => (
+                            <button key={opt.value} type="button" onClick={() => setPriceRange(opt.value === priceRange ? '' : opt.value)}
+                              className={`rounded-lg border px-3 py-2 text-center transition cursor-pointer ${priceRange === opt.value ? 'border-[#FF6B35] bg-orange-50/50' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                              <span className="text-sm font-bold text-slate-900">{opt.label}</span>
+                              <span className="block text-[10px] text-slate-400 mt-0.5">{opt.desc}</span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
