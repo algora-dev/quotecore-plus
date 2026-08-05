@@ -34,8 +34,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const s = data.supplier;
-  const title = `${s.supplier_name} Roof Takeoff Builder | QuoteCore+`;
-  const description = `Calculate a roof takeoff using ${s.supplier_name}'s authorised pricing. ${s.description ?? ""}`.slice(0, 160);
+  const title = `Free Roof Takeoff Calculator — ${s.supplier_name} Pricing${s.branch_city ? ` | ${s.branch_city}` : ''} | QuoteCore+`;
+  const description = `Calculate roof materials and costs using ${s.supplier_name}'s pricing catalogue${s.branch_city ? ` in ${s.branch_city}` : ''}. Enter roof measurements and get instant material quantities and indicative pricing — no signup required.`;
   const robots = data.eligibility.indexable
     ? { index: true, follow: true }
     : { index: false, follow: true };
@@ -159,8 +159,8 @@ function buildStructuredData(data: SupplierDetail, origin: string) {
   const webApp: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: `${s.supplier_name} Roof Takeoff Builder`,
-    description: `Calculate a roof takeoff using ${s.supplier_name}'s authorised pricing on QuoteCore+.`,
+    name: `Free Roof Takeoff Calculator — ${s.supplier_name} Pricing`,
+    description: `Calculate roof materials and costs using ${s.supplier_name}'s authorised pricing catalogue${s.branch_city ? ` in ${s.branch_city}, ${s.branch_region || ''}` : ''}.`,
     applicationCategory: "CalculatorApplication",
     operatingSystem: "Web",
     offers: { "@type": "Offer", price: "0", priceCurrency: s.currency || "USD" },
@@ -169,6 +169,11 @@ function buildStructuredData(data: SupplierDetail, origin: string) {
       "@type": "Organization",
       name: "QuoteCore+",
       url: origin,
+    },
+    about: {
+      "@type": "LocalBusiness",
+      name: s.supplier_name,
+      "@id": `${origin}/suppliers/${s.slug}#business`,
     },
   };
 
@@ -309,9 +314,62 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
         </ul>
       </section>
 
+      {/* Server-rendered SEO content — wraps the interactive calculator */}
+      <section className="mx-auto max-w-5xl px-4 pt-6 pb-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          Free Roof Takeoff Calculator — {s.supplier_name} Pricing
+        </h1>
+        <p className="mt-2 text-sm text-slate-600 max-w-3xl">
+          Calculate roof materials and costs using {s.supplier_name}'s pricing catalogue.
+          Enter your roof measurements and get instant material quantities and indicative pricing — no signup required.
+        </p>
+      </section>
+
       <RoofTakeoffBuilder initialInput={initialInput} initialSupplierSlug={supplierSlug} />
 
-      {/* Supplier context bar */}
+      {/* How it works */}
+      <section className="border-t border-slate-200 bg-white px-4 py-8">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-lg font-semibold text-slate-900">How It Works</h2>
+          <ol className="mt-4 space-y-3 text-sm text-slate-600">
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">1</span>
+              <span>Enter your roof area, pitch, and measurements (hips, valleys, ridges, barges, gutter).</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">2</span>
+              <span>The calculator applies {s.supplier_name}'s material pricing from their published catalogue{lib ? ` (version ${lib.published_version ?? "current"})` : ""}.</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">3</span>
+              <span>Get total material quantities and indicative costs{s.currency ? ` in ${s.currency}` : ""}.</span>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">4</span>
+              <span>Contact {s.supplier_name} directly to order materials.</span>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      {/* About supplier pricing */}
+      <section className="border-t border-slate-200 bg-slate-50 px-4 py-8">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-lg font-semibold text-slate-900">About {s.supplier_name} Pricing</h2>
+          <p className="mt-2 text-sm text-slate-600 max-w-3xl">
+            {s.supplier_name} is based in {[s.branch_city, s.branch_region].filter(Boolean).join(', ') || 'their region'}{s.branch_country ? `, ${s.branch_country}` : ''}.
+            {s.roofing_types?.length ? ` Their catalogue includes ${s.roofing_types.map(t => t.toLowerCase()).join(', ')}.` : ''}
+            {s.price_type ? ` Pricing is ${s.price_type === 'indicative' ? 'indicative, sourced from publicly available supplier data' : s.price_type}.` : ''}
+            {s.pricing_updated_at ? ` Last updated ${new Date(s.pricing_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.` : ''}
+          </p>
+          <Link href={supplierPagePath} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#BD4A1A] hover:underline">
+            View {s.supplier_name} supplier page
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </Link>
+        </div>
+      </section>
       <section className="border-t border-slate-200 bg-slate-50 px-4 py-6" aria-labelledby="supplier-context">
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -364,6 +422,45 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
               Products cannot be purchased directly from QuoteCore+. Contact {s.supplier_name} directly after completing a takeoff.
             </p>
           )}
+        </div>
+      </section>
+
+      {/* Visible FAQ */}
+      <section className="border-t border-slate-200 bg-white px-4 py-8">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-lg font-semibold text-slate-900">Frequently Asked Questions</h2>
+          <div className="mt-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-slate-900">How do I calculate a roof takeoff with {s.supplier_name} pricing?</h3>
+              <p className="mt-1 text-sm text-slate-600">Use the free QuoteCore+ roof takeoff builder above. It's pre-configured with {s.supplier_name}'s published catalogue. Enter your roof measurements and get instant material quantities and indicative pricing — no signup required.</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-slate-900">Is the roof takeoff calculator free?</h3>
+              <p className="mt-1 text-sm text-slate-600">Yes. The QuoteCore+ roof takeoff builder is completely free to use. You can calculate as many roofs as you need using {s.supplier_name}'s pricing catalogue.</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-slate-900">Are the prices from {s.supplier_name} accurate?</h3>
+              <p className="mt-1 text-sm text-slate-600">{s.price_type === 'indicative' ? 'Prices are indicative, sourced from publicly available supplier data. ' : ''}For exact pricing and to order materials, contact {s.supplier_name} directly{s.contact_email ? ` at ${s.contact_email}` : ''}.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Related tools */}
+      <section className="border-t border-slate-200 bg-slate-50 px-4 py-8">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-lg font-semibold text-slate-900">Related Tools</h2>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href="/free-roof-pitch-calculator" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 transition">
+              Roof Pitch Calculator
+            </Link>
+            <Link href="/free-roofing-calculator" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 transition">
+              Roofing Calculator
+            </Link>
+            <Link href="/free-tools" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-orange-200 hover:bg-orange-50/40 transition">
+              All Free Tools
+            </Link>
+          </div>
         </div>
       </section>
 
