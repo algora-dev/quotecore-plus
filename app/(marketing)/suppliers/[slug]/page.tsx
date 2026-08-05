@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
@@ -178,6 +178,25 @@ function buildStructuredData(data: SupplierDetail) {
     name: "QuoteCore+",
     url: "https://quote-core.com/",
   };
+
+  // Geo coordinates
+  if (s.branch_latitude != null && s.branch_longitude != null) {
+    org.geo = {
+      "@type": "GeoCoordinates",
+      latitude: s.branch_latitude,
+      longitude: s.branch_longitude,
+    };
+  }
+
+  // Opening hours
+  if (s.opening_hours && Array.isArray(s.opening_hours) && (s.opening_hours as unknown[]).length > 0) {
+    org.openingHoursSpecification = s.opening_hours;
+  }
+
+  // Price range
+  if (s.price_range) {
+    org.priceRange = s.price_range;
+  }
 
   schemas.push(org);
 
