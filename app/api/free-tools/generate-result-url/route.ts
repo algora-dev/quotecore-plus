@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       spouting: body.spouting,
       supplier: body.supplier,
       country: body.country,
+      includeLabour: body.includeLabour,
     };
 
     const query = toResultQuery(publicInput);

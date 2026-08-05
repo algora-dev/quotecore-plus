@@ -28,6 +28,7 @@ export interface PublicRoofTakeoffInput {
   country?: string; // ISO 2-letter country code for auto-supplier resolution
   supplierLib?: string; // Collection ID for provenance
   supplierVer?: number; // Published version for provenance
+  includeLabour?: boolean; // Whether to include labour in pricing (default true)
   /**
    * G2: Per-component measurement basis. Overrides global `mode` for specific components.
    * Each value can be 'plan', 'actual', or 'unknown'.
@@ -344,7 +345,8 @@ export function calculatePublicRoofTakeoff(
     }
   }
 
-  const calculation = calculateTakeoffSections(sections, BUILT_IN_ORDER, (id) => id ? componentMap.get(id) ?? null : null);
+  const includeLabour = supplied.includeLabour !== false; // default true
+  const calculation = calculateTakeoffSections(sections, BUILT_IN_ORDER, (id) => id ? componentMap.get(id) ?? null : null, includeLabour);
   const resultComponents: PublicTakeoffResult['results']['components'] = {};
   for (const kind of BUILT_IN_ORDER) {
     const total = calculation.sections[kind];
@@ -439,6 +441,9 @@ export function parseQueryInput(params: URLSearchParams): PublicRoofTakeoffInput
       (input.measurementBasis as Record<string, 'plan' | 'actual' | 'unknown'>)[key] = val as 'plan' | 'actual' | 'unknown';
     }
   }
+  // Parse includeLabour flag (default true, only set to false when labour=0)
+  const labour = params.get('labour');
+  if (labour === '0') input.includeLabour = false;
   return input;
 }
 
@@ -464,5 +469,6 @@ export function toResultQuery(input: PublicRoofTakeoffInput): string {
   if (input.measurementBasis) {
     params.set('measurementBasis', encodeURIComponent(JSON.stringify(input.measurementBasis)));
   }
+  if (input.includeLabour === false) params.set('labour', '0');
   return params.toString();
 }

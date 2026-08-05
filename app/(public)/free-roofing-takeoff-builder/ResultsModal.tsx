@@ -19,9 +19,10 @@ interface ResultsModalProps {
   resultToken?: string;
   resultUrl?: string;
   currency?: string;
+  includeLabour?: boolean;
 }
 
-export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose, supplier, resultToken, resultUrl, currency }: ResultsModalProps) {
+export function ResultsModal({ sections, totals, getComponentById, grandTotal, unitSystem, allKeys, onClose, supplier, resultToken, resultUrl, currency, includeLabour = true }: ResultsModalProps) {
   const [showEnquiry, setShowEnquiry] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const cur = currency === 'NZD' ? 'NZ$' : currency === 'USD' ? '$' : currency === 'AUD' ? 'A$' : currency === 'GBP' ? '\u00a3' : '$';
@@ -184,7 +185,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                           <span className="text-slate-500">{entry.label || `Entry ${idx + 1}`}</span>
                           {isPitchCalc && <span className="ml-2 text-slate-400">@ {entry.pitchDegrees}{'\u00b0'}</span>}
                           {entry.knownPrice != null && entry.knownPrice > 0 && <span className="ml-2 text-[#BD4A1A] font-medium">{'$'}{entry.knownPrice.toFixed(2)}/{isFixed ? 'pc' : isArea ? areaUnit : lenUnit}</span>}
-                          {comp && <span className="ml-2 text-slate-400 truncate">{comp.name}</span>}
+                          {comp && <span className="ml-2 text-slate-400 truncate">{comp.name}{comp.labour_rate > 0 && <span className="ml-1 italic text-slate-400">({includeLabour ? 'materials + labour' : 'materials only'})</span>}</span>}
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0">
                           {isPitchCalc && originalValue !== null && originalValue > 0 && (
@@ -204,7 +205,7 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
                   <div className="text-right">
                     <span className="text-sm font-semibold text-slate-900">{t.withWaste.toFixed(2)} {unitFor(key)}</span>
                     {section.wastePercent > 0 && <span className="ml-2 text-xs text-slate-400">(raw: {t.rawTotal.toFixed(2)})</span>}
-                    {t.totalCost > 0 && <div className="text-xs text-[#BD4A1A] font-medium">Material: {cur}{t.materialCost.toFixed(2)}{t.labourCost > 0 ? ` + Labour: ${cur}${t.labourCost.toFixed(2)}` : ''} = {cur}{t.totalCost.toFixed(2)}</div>}
+                    {t.totalCost > 0 && <div className="text-xs text-[#BD4A1A] font-medium">{cur}{t.totalCost.toFixed(2)}</div>}
                   </div>
                 </div>
               </div>
@@ -212,10 +213,8 @@ export function ResultsModal({ sections, totals, getComponentById, grandTotal, u
           })}
 
           {hasPricing && (
-            <div className="rounded-xl bg-slate-900 text-white p-4 space-y-2 print:break-inside-avoid">
-              <div className="flex items-center justify-between"><span className="text-sm font-semibold">Total Materials</span><span className="text-lg font-bold">{cur}{allKeys.reduce((s, k) => s + (totals[k]?.materialCost ?? 0), 0).toFixed(2)}</span></div>
-              <div className="flex items-center justify-between"><span className="text-sm font-semibold">Total Labour</span><span className="text-lg font-bold">{cur}{allKeys.reduce((s, k) => s + (totals[k]?.labourCost ?? 0), 0).toFixed(2)}</span></div>
-              <div className="flex items-center justify-between pt-2 border-t border-white/10"><span className="text-sm font-semibold">Grand Total</span><span className="text-xl font-bold">{cur}{grandTotal.toFixed(2)}</span></div>
+            <div className="rounded-xl bg-slate-900 text-white p-4 print:break-inside-avoid">
+              <div className="flex items-center justify-between"><span className="text-sm font-semibold">Estimated Total</span><span className="text-xl font-bold">{cur}{grandTotal.toFixed(2)}</span></div>
             </div>
           )}
           {!hasPricing && totals['roof_area']?.count > 0 && (

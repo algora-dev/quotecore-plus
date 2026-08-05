@@ -38,7 +38,7 @@ function plainLanguageSummary(result: PublicTakeoffResult): string {
   if (result.warnings.includes('pricing_unavailable')) {
     parts.push('No published catalogue pricing was available, so material and labour costs are not shown.');
   } else if (result.results.grandTotal > 0) {
-    parts.push(`Estimated total cost: ${result.results.grandTotal.toFixed(2)} (materials ${result.results.materialTotal.toFixed(2)}, labour ${result.results.labourTotal.toFixed(2)}).`);
+    parts.push(`Estimated total: ${result.results.grandTotal.toFixed(2)} (currency: ${result.pricing?.currency ?? 'unknown'}).`);
   }
 
   return parts.join(' ');
@@ -307,13 +307,16 @@ export default async function StableResultPage({ params }: ResultPageProps) {
                   {component.componentName && (
                     <span className="block text-xs text-slate-400">{component.componentName}{component.componentSku ? ` - SKU: ${component.componentSku}` : ''}</span>
                   )}
+                  {component.labourCost > 0 && (
+                    <span className="block text-[10px] italic text-slate-400">{input.includeLabour === false ? '(materials only)' : '(materials + labour)'}</span>
+                  )}
                 </dt>
                 <dd className="text-right text-sm font-semibold text-slate-900">
                   {component.rawTotal.toFixed(2)} {component.unit}
                   {component.wastePercent > 0 && <span className="block text-xs font-normal text-slate-400">With {component.wastePercent}% waste: {component.withWaste.toFixed(2)} {component.unit}</span>}
-                  {component.materialCost > 0 && (
+                  {component.totalCost > 0 && component.componentName && (
                     <span className="block text-xs font-normal text-slate-500">
-                      {component.componentName ? `${component.materialCost.toFixed(2)} ${result.pricing?.currency ?? ''}` : ''}
+                      {component.totalCost.toFixed(2)} {result.pricing?.currency ?? ''}
                     </span>
                   )}
                 </dd>
@@ -322,9 +325,7 @@ export default async function StableResultPage({ params }: ResultPageProps) {
           </dl>
           {result.results.grandTotal > 0 && (
             <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-              <p className="text-sm text-slate-600">Materials: {result.results.materialTotal.toFixed(2)} {result.pricing?.currency}</p>
-              <p className="text-sm text-slate-600">Labour: {result.results.labourTotal.toFixed(2)} {result.pricing?.currency}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">Total: {result.results.grandTotal.toFixed(2)} {result.pricing?.currency}</p>
+              <p className="text-sm font-semibold text-slate-900">Total: {result.results.grandTotal.toFixed(2)} {result.pricing?.currency}</p>
               {result.pricing?.taxTreatment && (
                 <p className="mt-1 text-xs text-slate-400">Prices are {result.pricing.taxTreatment} of tax</p>
               )}

@@ -32,6 +32,7 @@ export function calculateTakeoffSections(
   sections: Record<string, ComponentSection>,
   keys: string[],
   getComponentById: (id: string | null) => RoofComponentDef | null,
+  includeLabour = true,
 ): TakeoffCalculation {
   const totals: Record<string, SectionTotal> = {};
 
@@ -59,7 +60,9 @@ export function calculateTakeoffSections(
 
       const component = getComponentById(entry.selectedComponentId);
       materialCost += computeMaterialCost(costQuantity, component).cost;
-      labourCost += computeLabourCost(costQuantity, component);
+      if (includeLabour) {
+        labourCost += computeLabourCost(costQuantity, component);
+      }
     }
 
     totals[key] = {

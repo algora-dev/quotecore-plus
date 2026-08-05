@@ -101,6 +101,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   // This is intentional: sessionStorage restore was causing blank pages and history traps.
   // (beforeunload listener is added after state declarations below)
   const [experience, setExperience] = useState<ExperienceLevel>('fast');
+  const [includeLabour, setIncludeLabour] = useState(true);
   const [pitchMode, setPitchMode] = useState<'degrees' | 'ratio'>('degrees');
   const [sections, setSections] = useState<Record<string, ComponentSection>>(makeInitialSections);
   const [customSections, setCustomSections] = useState<Record<string, ComponentSection>>({});
@@ -385,8 +386,8 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   };
 
   const calculation = useMemo(
-    () => calculateTakeoffSections(allSections, allKeys, getComponentById),
-    [allSections, allKeys, getComponentById],
+    () => calculateTakeoffSections(allSections, allKeys, getComponentById, includeLabour),
+    [allSections, allKeys, getComponentById, includeLabour],
   );
   const totals = calculation.sections;
 
@@ -414,6 +415,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
         spouting: allSections['spouting']?.entries.map((e: any) => e.computedValue).filter(Boolean) || undefined,
         supplier: selectedSupplier?.supplierSlug || undefined,
         country: selectedSupplier?.country || undefined,
+        includeLabour,
       }),
       signal: controller.signal,
     })
@@ -427,7 +429,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
         if (err.name !== 'AbortError') console.error('[resultUrl] Failed:', err);
       });
     return () => controller.abort();
-  }, [hasData, totals, allSections, measureMode, unitSystem, masterPitch, selectedSupplier]);
+  }, [hasData, totals, allSections, measureMode, unitSystem, masterPitch, selectedSupplier, includeLabour]);
   const clearTakeoff = () => {
     setSections(makeInitialSections());
     setCustomSections({});
@@ -476,6 +478,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
     const hasEntries = section.entries.length > 0;
     const displayUnit = isFixed ? 'pcs' : (isRoofArea || (isCustom && section.customDef?.measurementType === 'area') ? areaLbl : lenLbl);
     const availableComponents = isCustom ? components : (componentsByKind[key] || []);
+    const sectionHasLabour = availableComponents.some(c => c.labour_rate > 0);
 
     return (
       <div key={key} className={`rounded-xl border bg-white transition ${isExpanded ? 'border-slate-300 shadow-sm' : 'border-slate-200'}`}>
@@ -483,6 +486,9 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           <button onClick={() => setExpandedSection(isExpanded ? null : key)} className="flex items-center gap-2.5 cursor-pointer hover:text-[#BD4A1A] transition flex-1 min-w-0">
             <ComponentSymbol kind={key} customDef={section.customDef} className="w-4 h-4 text-slate-500 flex-shrink-0" />
             <span className="text-sm font-semibold text-slate-900 truncate">{label}</span>
+            {sectionHasLabour && (
+              <span className="text-[10px] italic text-slate-400 flex-shrink-0">{includeLabour ? '(materials + labour)' : '(materials only)'}</span>
+            )}
             {hasEntries && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 flex-shrink-0">{section.entries.length} {section.entries.length === 1 ? 'entry' : 'entries'}</span>}
             {isGuided && !hasEntries && <span className="text-xs text-slate-400 truncate hidden md:inline">{desc}</span>}
           </button>
@@ -851,6 +857,18 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                     </button>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    <label className="flex items-center gap-1.5 cursor-pointer select-none" title="Include or exclude labour costs from component pricing">
+                      <input
+                        type="checkbox"
+                        checked={includeLabour}
+                        onChange={(e) => setIncludeLabour(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${includeLabour ? 'border-[#FF6B35] bg-orange-50/50 text-[#BD4A1A]' : 'border-slate-200 bg-white text-slate-400'}`}>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        Labour
+                      </span>
+                    </label>
                     <div className="flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5">
                       <button onClick={() => setExperience('guided')} className={`rounded-full px-2.5 md:px-3 py-1 text-xs font-medium transition ${isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Guided</button>
                       <button onClick={() => setExperience('fast')} className={`rounded-full px-2.5 md:px-3 py-1 text-xs font-medium transition ${!isGuided ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Fast</button>
@@ -1007,7 +1025,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
           )}
         </div>
 
-        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} supplier={selectedSupplier ? { name: selectedSupplier.supplierName, slug: selectedSupplier.supplierSlug, enquiriesEnabled: selectedSupplier.enquiriesEnabled } : supplierSkip ? { name: 'QuoteCore+', slug: '', enquiriesEnabled: false } : null} currency={selectedSupplier?.currency ?? (supplierSkip ? 'USD' : undefined)} resultUrl={resultUrl ?? undefined} />}
+        {showResults && <ResultsModal sections={allSections} totals={totals} getComponentById={getComponentById} grandTotal={grandTotal} unitSystem={u} allKeys={allKeys} onClose={() => setShowResults(false)} supplier={selectedSupplier ? { name: selectedSupplier.supplierName, slug: selectedSupplier.supplierSlug, enquiriesEnabled: selectedSupplier.enquiriesEnabled } : supplierSkip ? { name: 'QuoteCore+', slug: '', enquiriesEnabled: false } : null} currency={selectedSupplier?.currency ?? (supplierSkip ? 'USD' : undefined)} resultUrl={resultUrl ?? undefined} includeLabour={includeLabour} />}
 
         {/* Related Tools */}
         <section className="border-t border-slate-200 bg-slate-50">

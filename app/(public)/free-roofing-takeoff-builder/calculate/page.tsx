@@ -36,7 +36,7 @@ function plainLanguageSummary(result: PublicTakeoffResult): string {
   if (result.warnings.includes('pricing_unavailable')) {
     parts.push('No published catalogue pricing was available, so material and labour costs are not shown.');
   } else if (result.results.grandTotal > 0) {
-    parts.push(`Estimated total cost: ${result.results.grandTotal.toFixed(2)} (materials ${result.results.materialTotal.toFixed(2)}, labour ${result.results.labourTotal.toFixed(2)}).`);
+    parts.push(`Estimated total: ${result.results.grandTotal.toFixed(2)} (currency: ${result.pricing?.currency ?? 'unknown'}).`);
   }
 
   return parts.join(' ');
