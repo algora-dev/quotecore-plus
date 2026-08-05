@@ -181,6 +181,61 @@ function buildStructuredData(data: SupplierDetail) {
 
   schemas.push(org);
 
+  // FAQPage — dynamic from supplier data
+  const faqs: { q: string; a: string }[] = [];
+  if (s.roofing_types?.length) {
+    faqs.push({
+      q: `What roofing materials does ${s.supplier_name} supply?`,
+      a: `${s.supplier_name} supplies ${s.roofing_types.map(t => t.toLowerCase()).join(', ')}${s.branch_city ? ` in ${s.branch_city}` : ''}${s.branch_region ? `, ${s.branch_region}` : ''}.`,
+    });
+  }
+  const locParts = [s.branch_city, s.branch_region, s.branch_country].filter(Boolean);
+  if (locParts.length) {
+    const locStr = locParts.join(', ');
+    const serveStr = s.service_areas?.length ? ` They serve ${s.service_areas.join(', ')}.` : '';
+    faqs.push({
+      q: `Where is ${s.supplier_name} located?`,
+      a: `${s.supplier_name} is based in ${locStr}.${serveStr}`,
+    });
+  }
+  faqs.push({
+    q: `Can I see ${s.supplier_name}'s pricing online?`,
+    a: `Yes. ${s.supplier_name} publishes an indicative pricing catalogue on QuoteCore+. You can browse their material prices and calculate roof takeoffs using their pricing — free, no signup required.`,
+  });
+  if (data.eligibility.calculator_available) {
+    faqs.push({
+      q: `Can I calculate a roof estimate using ${s.supplier_name}'s prices?`,
+      a: `Yes. Use the free QuoteCore+ roof takeoff builder pre-configured with ${s.supplier_name}'s catalogue. Enter your roof measurements and get instant material quantities and indicative pricing.`,
+    });
+  }
+  if (s.delivery_coverage?.length) {
+    const deliveryDesc = s.delivery_coverage.includes('nationwide')
+      ? `${s.supplier_name} provides nationwide delivery${s.branch_country ? ` across ${s.branch_country}` : ''}.`
+      : `${s.supplier_name} provides ${s.delivery_coverage.map(d => d === 'local' ? 'local delivery' : d === 'regional' ? 'regional delivery' : d).join(' and ')}${s.service_areas?.length ? ` in ${s.service_areas.join(', ')}` : ''}.`;
+    faqs.push({ q: `Does ${s.supplier_name} deliver?`, a: deliveryDesc });
+  }
+  if (data.eligibility.contacts_visible && (s.phone_number || s.contact_email)) {
+    const contactParts: string[] = [];
+    if (s.phone_number) contactParts.push(`by phone at ${s.phone_number}`);
+    if (s.contact_email) contactParts.push(`by email at ${s.contact_email}`);
+    if (s.website_url) contactParts.push(`via their website at ${s.website_url}`);
+    faqs.push({
+      q: `How do I contact ${s.supplier_name}?`,
+      a: `You can reach ${s.supplier_name} ${contactParts.join(', ')}.`,
+    });
+  }
+  if (faqs.length > 0) {
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map(f => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    });
+  }
+
   return schemas;
 }
 
@@ -281,7 +336,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
               )}
               <div className="min-w-0 flex-1">
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  {s.supplier_name}
+                  {s.supplier_name}{locationString ? ` — Roofing Supplies in ${s.branch_city || s.branch_region || s.branch_country}` : ''}
                 </h1>
                 {s.description && (
                   <p className="mt-3 text-lg text-zinc-600 max-w-3xl">{s.description}</p>
@@ -344,10 +399,10 @@ export default async function SupplierDetailPage({ params }: PageProps) {
         {/* Supplier details */}
         <section className="pb-12">
           <div className="mx-auto max-w-5xl px-6 lg:px-8">
+            <h2 className="text-xl font-semibold text-zinc-950 mb-4">Supplier information</h2>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* Left: main info */}
               <div className="lg:col-span-2">
-                <h2 className="text-xl font-semibold text-zinc-950 mb-4">Supplier information</h2>
                 <dl className="rounded-xl border border-slate-200 px-5">
                   {locationString && <InfoRow label="Location" value={locationString} />}
                   <TagList label="Service areas" items={s.service_areas} />
@@ -474,6 +529,47 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     </div>
                   </div>
                 )}
+
+                {/* Frequently Asked Questions */}
+                <div className="mt-8">
+                  <h2 className="text-xl font-semibold text-zinc-950 mb-4">Frequently Asked Questions</h2>
+                  <div className="space-y-4">
+                    {s.roofing_types?.length ? (
+                      <div>
+                        <h3 className="text-sm font-medium text-zinc-950">What roofing materials does {s.supplier_name} supply?</h3>
+                        <p className="mt-1 text-sm text-zinc-600">{s.supplier_name} supplies {s.roofing_types.map(t => t.toLowerCase()).join(', ')}{s.branch_city ? ` in ${s.branch_city}` : ''}{s.branch_region ? `, ${s.branch_region}` : ''}.</p>
+                      </div>
+                    ) : null}
+                    {locationString && (
+                      <div>
+                        <h3 className="text-sm font-medium text-zinc-950">Where is {s.supplier_name} located?</h3>
+                        <p className="mt-1 text-sm text-zinc-600">{s.supplier_name} is based in {locationString}.{s.service_areas?.length ? ` They serve ${s.service_areas.join(', ')}.` : ''}</p>
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-sm font-medium text-zinc-950">Can I see {s.supplier_name}'s pricing online?</h3>
+                      <p className="mt-1 text-sm text-zinc-600">Yes. {s.supplier_name} publishes an indicative pricing catalogue on QuoteCore+. You can browse their material prices and calculate roof takeoffs using their pricing — free, no signup required.</p>
+                    </div>
+                    {data.eligibility.calculator_available && (
+                      <div>
+                        <h3 className="text-sm font-medium text-zinc-950">Can I calculate a roof estimate using {s.supplier_name}'s prices?</h3>
+                        <p className="mt-1 text-sm text-zinc-600">Yes. Use the free QuoteCore+ roof takeoff builder pre-configured with {s.supplier_name}'s catalogue. Enter your roof measurements and get instant material quantities and indicative pricing.</p>
+                      </div>
+                    )}
+                    {s.delivery_coverage?.length ? (
+                      <div>
+                        <h3 className="text-sm font-medium text-zinc-950">Does {s.supplier_name} deliver?</h3>
+                        <p className="mt-1 text-sm text-zinc-600">{s.delivery_coverage.includes('nationwide') ? `${s.supplier_name} provides nationwide delivery${s.branch_country ? ` across ${s.branch_country}` : ''}.` : `${s.supplier_name} provides ${s.delivery_coverage.map(d => d === 'local' ? 'local delivery' : d === 'regional' ? 'regional delivery' : d).join(' and ')}${s.service_areas?.length ? ` in ${s.service_areas.join(', ')}` : ''}.`}</p>
+                      </div>
+                    ) : null}
+                    {data.eligibility.contacts_visible && (s.phone_number || s.contact_email) ? (
+                      <div>
+                        <h3 className="text-sm font-medium text-zinc-950">How do I contact {s.supplier_name}?</h3>
+                        <p className="mt-1 text-sm text-zinc-600">You can reach {s.supplier_name} {[s.phone_number ? `by phone at ${s.phone_number}` : null, s.contact_email ? `by email at ${s.contact_email}` : null, s.website_url ? `via their website at ${s.website_url}` : null].filter(Boolean).join(', ')}.</p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
               </div>
 
               {/* Right: contact + meta */}
@@ -529,6 +625,71 @@ export default async function SupplierDetailPage({ params }: PageProps) {
             </div>
           </div>
         </section>
+
+        {/* Related Resources */}
+        <section className="border-t border-zinc-200 py-12">
+          <div className="mx-auto max-w-5xl px-6 lg:px-8">
+            <h2 className="text-lg font-semibold text-zinc-950 mb-6">Related Resources</h2>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-950 mb-3">Free Tools</h3>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/free-roof-pitch-calculator" className="text-[#BD4A1A] hover:underline">Roof Pitch Calculator</Link></li>
+                  <li><Link href="/free-roofing-calculator" className="text-[#BD4A1A] hover:underline">Roofing Calculator</Link></li>
+                  <li><Link href="/free-tools" className="text-[#BD4A1A] hover:underline">All Free Tools</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-950 mb-3">Guides</h3>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/blog/how-to-measure-a-roof" className="text-[#BD4A1A] hover:underline">How to Measure a Roof</Link></li>
+                  <li><Link href="/blog/how-to-price-a-roofing-job" className="text-[#BD4A1A] hover:underline">How to Price a Roofing Job</Link></li>
+                  <li><Link href="/blog/best-free-tools-for-roofers" className="text-[#BD4A1A] hover:underline">Best Free Tools for Roofers</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-950 mb-3">QuoteCore+</h3>
+                <ul className="space-y-2 text-sm">
+                  <li><Link href="/roofing-quoting-software" className="text-[#BD4A1A] hover:underline">Roofing Quoting Software</Link></li>
+                  <li><Link href="/free-trial" className="text-[#BD4A1A] hover:underline">Start Free Trial</Link></li>
+                  <li><Link href="/suppliers" className="text-[#BD4A1A] hover:underline">Browse All Suppliers</Link></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Compact agent payload for AI crawlers */}
+        <script
+          type="application/json"
+          id="agent-payload"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            schemaVersion: '1.0',
+            supplier: {
+              slug: s.slug,
+              name: s.supplier_name,
+              supplierPageUrl: `https://quote-core.com/suppliers/${s.slug}`,
+              calculatorUrl: calculatorUrl ? `https://quote-core.com${calculatorUrl}` : null,
+            },
+            location: {
+              city: s.branch_city,
+              region: s.branch_region,
+              country: s.branch_country,
+              serviceAreas: s.service_areas,
+            },
+            products: {
+              roofingTypes: s.roofing_types,
+              currency: s.currency,
+              pricingType: s.price_type,
+              pricingUpdatedAt: s.pricing_updated_at,
+              priceValidUntil: s.price_valid_until,
+            },
+            workflow: {
+              step1: 'This supplier has a calculator at the calculatorUrl above',
+              step2: 'Visit the calculator page for full AI workflow instructions and API endpoints',
+            },
+          }) }}
+        />
 
         {/* Agent guidance */}
         <section className="border-t border-zinc-200 bg-zinc-50 py-12">
