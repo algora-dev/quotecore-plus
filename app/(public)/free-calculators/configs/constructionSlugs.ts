@@ -57,7 +57,7 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
   {
     slug: 'free-wall-area-calculator',
     name: 'Wall Area Calculator',
-    mTitle: 'Free Wall Area Calculator - Paint, Plaster & Render | QuoteCore+',
+    mTitle: 'Free Wall Area Calculator - Paint, Plaster & Render',
     mDesc: 'Calculate wall area for painting, plastering, rendering, and tiling. Subtract windows and doors automatically. No signup required.',
     ogTitle: 'Free Wall Area Calculator',
     ogDesc: 'Calculate wall surface area for paint, plaster, render, and tiles. Free, no signup.',
@@ -103,7 +103,7 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
   {
     slug: 'free-paint-calculator',
     name: 'Paint Calculator',
-    mTitle: 'Free Paint Calculator - How Much Paint Do I Need? | QuoteCore+',
+    mTitle: 'Free Paint Calculator - How Much Paint Do I Need?',
     mDesc: 'Calculate how much paint you need for walls, ceilings, and rooms. Enter dimensions, get litres needed and cost. No signup required.',
     ogTitle: 'Free Paint Calculator',
     ogDesc: 'Work out paint quantities for any room. Litres, coats, and cost. Free, no signup.',
@@ -152,7 +152,7 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
   {
     slug: 'free-tile-calculator',
     name: 'Tile Calculator',
-    mTitle: 'Free Tile Calculator - How Many Tiles Do I Need? | QuoteCore+',
+    mTitle: 'Free Tile Calculator - How Many Tiles Do I Need?',
     mDesc: 'Calculate how many tiles you need for floors and walls. Enter dimensions and tile size, get quantity, waste, and cost. No signup.',
     ogTitle: 'Free Tile Calculator',
     ogDesc: 'Work out tile quantities for any surface. Includes waste, cost, and pattern allowances. Free, no signup.',
@@ -199,7 +199,7 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
   {
     slug: 'free-flooring-calculator',
     name: 'Flooring Calculator',
-    mTitle: 'Free Flooring Calculator - Laminate, Wood & Vinyl | QuoteCore+',
+    mTitle: 'Free Flooring Calculator - Laminate, Wood & Vinyl',
     mDesc: 'Calculate how much laminate, wood, or vinyl flooring you need. Enter room dimensions and pack size for accurate quantities. No signup.',
     ogTitle: 'Free Flooring Calculator',
     ogDesc: 'Work out flooring quantities for any room. Includes waste, packs needed, and cost. Free, no signup.',

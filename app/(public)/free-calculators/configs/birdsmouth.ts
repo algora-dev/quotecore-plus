@@ -4,7 +4,7 @@ export const birdsmouthConfig: TradeConfig = {
   slug: 'free-birds-mouth-calculator',
   defaultCurrency: 'GBP',
   name: "Bird's Mouth Calculator",
-  metaTitle: "Bird's Mouth Calculator - Seat Cuts | QuoteCore+",
+  metaTitle: "Bird's Mouth Calculator - Seat Cuts",
   metaDescription:
     "Free bird's mouth calculator. Work out seat cut and plumb cut angles, heel height, and notch depth for rafters and stair stringers. Includes the ⅓-depth structural check.",
   ogTitle: "Bird's Mouth Calculator - Seat Cuts",

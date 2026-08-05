@@ -6,7 +6,7 @@ export const roofingConfig: TradeConfig = {
   slug: 'free-roofing-calculator',
   defaultCurrency: 'GBP',
   name: 'Roofing Calculator',
-  metaTitle: 'Roofing Calculator - Pitch & Area | QuoteCore+',
+  metaTitle: 'Roofing Calculator - Pitch & Area',
   metaDescription:
     'Free roofing calculator. Calculate roof pitch, rafter length, roof surface area, quantities and complex pricing. No signup required - works on mobile and desktop.',
   ogTitle: 'Roofing Calculator - Pitch & Area',

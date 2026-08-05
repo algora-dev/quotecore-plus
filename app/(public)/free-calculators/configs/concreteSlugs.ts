@@ -58,7 +58,7 @@ export const CONCRETE_SLUGS: ConcreteSlugDef[] = [
   {
     slug: 'free-concrete-slab-calculator',
     name: 'Concrete Slab Calculator',
-    mTitle: 'Free Concrete Slab Calculator - Volume & Cost | QuoteCore+',
+    mTitle: 'Free Concrete Slab Calculator - Volume & Cost',
     mDesc: 'Calculate concrete slab volume in m³ or yd³ from length × width × depth. Includes waste, cost per m³, and bag count. No signup required.',
     ogTitle: 'Free Concrete Slab Calculator - Volume & Cost',
     ogDesc: 'Calculate concrete slab volume, cost, and bag count from dimensions. Free, no signup.',
@@ -104,7 +104,7 @@ export const CONCRETE_SLUGS: ConcreteSlugDef[] = [
   {
     slug: 'free-concrete-bag-calculator',
     name: 'Concrete Bag Calculator',
-    mTitle: 'Free Concrete Bag Calculator - How Many Bags? | QuoteCore+',
+    mTitle: 'Free Concrete Bag Calculator - How Many Bags?',
     mDesc: 'Calculate how many bags of concrete you need from slab dimensions and bag size. Supports 25kg and 40kg bags. No signup required.',
     ogTitle: 'Free Concrete Bag Calculator',
     ogDesc: 'Work out how many bags of concrete to buy from your slab dimensions. Free, no signup.',
@@ -149,7 +149,7 @@ export const CONCRETE_SLUGS: ConcreteSlugDef[] = [
   {
     slug: 'free-footing-calculator',
     name: 'Footing Calculator',
-    mTitle: 'Free Footing Calculator - Trench & Strip Footing Volume | QuoteCore+',
+    mTitle: 'Free Footing Calculator - Trench & Strip Footing Volume',
     mDesc: 'Calculate concrete volume for strip footings, trench fill, and pad footings. Enter dimensions and get volume, cost, and excavation quantities. No signup.',
     ogTitle: 'Free Footing Calculator',
     ogDesc: 'Calculate concrete volume for strip footings and pad footings. Free, no signup.',
@@ -195,7 +195,7 @@ export const CONCRETE_SLUGS: ConcreteSlugDef[] = [
   {
     slug: 'free-rebar-calculator',
     name: 'Rebar Calculator',
-    mTitle: 'Free Rebar Calculator - Reinforcement Weight & Spacing | QuoteCore+',
+    mTitle: 'Free Rebar Calculator - Reinforcement Weight & Spacing',
     mDesc: 'Calculate rebar quantities, spacing, and weight for concrete slabs and footings. Supports metric and imperial. No signup required.',
     ogTitle: 'Free Rebar Calculator',
     ogDesc: 'Work out rebar quantities, spacing, and weight for slabs and footings. Free, no signup.',
@@ -242,7 +242,7 @@ export const CONCRETE_SLUGS: ConcreteSlugDef[] = [
   {
     slug: 'free-trench-calculator',
     name: 'Trench Calculator',
-    mTitle: 'Free Trench Calculator - Excavation Volume & Backfill | QuoteCore+',
+    mTitle: 'Free Trench Calculator - Excavation Volume & Backfill',
     mDesc: 'Calculate trench excavation volume, backfill quantities, and concrete fill. Enter trench dimensions and get instant results. No signup required.',
     ogTitle: 'Free Trench Calculator',
     ogDesc: 'Calculate trench excavation, backfill, and concrete volumes. Free, no signup.',
