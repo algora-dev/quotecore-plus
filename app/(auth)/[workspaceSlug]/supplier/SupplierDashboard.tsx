@@ -44,7 +44,7 @@ const COUNTRIES = [
   { code: 'IE', name: 'Ireland' },
 ];
 
-type Tab = 'libraries' | 'catalogues' | 'takeoff-builder' | 'public-presence';
+type Tab = 'libraries' | 'catalogues';
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -89,6 +89,8 @@ export function SupplierDashboard({
   // Collapsible sections
   const [profileExpanded, setProfileExpanded] = useState(true);
   const [urlsExpanded, setUrlsExpanded] = useState(false);
+  const [calculatorExpanded, setCalculatorExpanded] = useState(false);
+  const [visibilityExpanded, setVisibilityExpanded] = useState(false);
 
   const [editingProfile, setEditingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -670,138 +672,24 @@ export function SupplierDashboard({
           </div>
         )}
 
-        {/* === TABS === */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <button onClick={() => setActiveTab('libraries')} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'libraries' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Component Libraries</button>
-          <button onClick={() => setActiveTab('catalogues')} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'catalogues' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Price Catalogues</button>
-          <button onClick={() => setActiveTab('takeoff-builder')} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'takeoff-builder' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Roofing Calculator</button>
-          <button onClick={() => { setActiveTab('public-presence'); handleCheckReadiness(); }} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'public-presence' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Visibility & Publishing</button>
-        </div>
-
-        {/* === LIBRARIES TAB === */}
-        {activeTab === 'libraries' && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-400">Groups of roofing components with pricing that customers can use in the calculator. Publish a library to make it available to the public.</p>
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900">Libraries</h3>
-              <Link href={`/${workspaceSlug}/components`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Manage in Components →</Link>
+        {/* === ROOFING CALCULATOR (collapsible) === */}
+        <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
+          <button onClick={() => setCalculatorExpanded(!calculatorExpanded)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/50 transition">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Chevron open={calculatorExpanded} />
+              <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                <h2 className="text-sm font-semibold text-slate-900 whitespace-nowrap">Roofing Calculator</h2>
+                <span className="text-slate-300">/</span>
+                <span className="text-xs text-slate-500 truncate">Branded calculator for customers to get instant quotes</span>
+                {takeoffEnabled && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-600 flex-shrink-0">Enabled</span>}
+              </div>
             </div>
-            {localLibraries.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-                <p className="text-sm text-slate-400">No libraries yet.</p>
-                <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Components to create one</Link>
-              </div>
-            ) : (
-              localLibraries.map(lib => (
-                <div key={lib.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      {renamingId === lib.id ? (
-                        <div className="flex items-center gap-2">
-                          <input type="text" value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleRename(lib.id); } if (e.key === 'Escape') { setRenamingId(null); setRenameValue(''); } }} maxLength={80} className="px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none" autoFocus />
-                          <button type="button" onClick={() => void handleRename(lib.id)} disabled={renaming || !renameValue.trim()} className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">{renaming ? 'Saving...' : 'Save'}</button>
-                          <button type="button" onClick={() => { setRenamingId(null); setRenameValue(''); }} className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-slate-900">{lib.name}</span>
-                          {lib.is_bootstrap && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Default</span>}
-                          <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${VISIBILITY_STYLES[lib.visibility ?? 'private'] || VISIBILITY_STYLES.private}`}>{lib.visibility ?? 'private'}</span>
-                        </div>
-                      )}
-                      {lib.public_title && lib.visibility !== 'private' && <p className="text-xs text-slate-500 mt-1">Public title: {lib.public_title}</p>}
-                      {lib.public_description && lib.visibility !== 'private' && <p className="text-xs text-slate-400 mt-0.5">{lib.public_description}</p>}
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
-                        <span>{lib.component_count} component{lib.component_count !== 1 ? 's' : ''}</span>
-                        {lib.published_at && <span>Published: {new Date(lib.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
-                      </div>
-                      {lib.roofing_types && lib.roofing_types.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">{lib.roofing_types.map(rt => <span key={rt} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{rt}</span>)}</div>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1.5 items-end shrink-0">
-                      <button type="button" onClick={() => setShowPublishModal(lib.id)} className="text-xs px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition font-medium">{(lib.visibility ?? 'private') === 'private' ? 'Publish' : 'Settings'}</button>
-                      {renamingId !== lib.id && !lib.is_bootstrap && (<button type="button" title="Rename" onClick={() => { setRenamingId(lib.id); setRenameValue(lib.name); }} className="text-xs text-slate-400 hover:text-orange-500 transition">Rename</button>)}
-                      {!lib.is_bootstrap && deletingId !== lib.id && (<button type="button" title="Delete" onClick={() => setDeletingId(lib.id)} className="text-xs text-slate-400 hover:text-red-500 transition">Delete</button>)}
-                      {deletingId === lib.id && (
-                        <div className="flex items-center gap-1">
-                          <button type="button" onClick={() => void handleDelete(lib.id)} disabled={deleteLoading} className="text-xs px-2 py-1 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">{deleteLoading ? 'Deleting...' : 'Confirm'}</button>
-                          <button type="button" onClick={() => setDeletingId(null)} className="text-xs px-2 py-1 rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
-                        </div>
-                      )}
-                      {lib.visibility === 'published' && (
-                        <button onClick={() => handlePublishUpdate(lib.id)} disabled={publishing === lib.id} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-50 font-medium">{publishing === lib.id ? 'Publishing...' : 'Push Update'}</button>
-                      )}
-                      {publishResult[lib.id] && <span className={`text-xs ${publishResult[lib.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[lib.id].message}</span>}
-                      {lib.published_version != null && lib.published_version > 0 && lib.visibility === 'published' && <span className="text-xs text-slate-400">v{lib.published_version}</span>}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* === CATALOGUES TAB === */}
-        {activeTab === 'catalogues' && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-400">Upload CSV or PDF price lists from your suppliers. Convert them into component libraries using the converter below.</p>
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900">Catalogues</h3>
-              <Link href={`/${workspaceSlug}/catalogs`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Upload in Catalogs →</Link>
-            </div>
-            {localCatalogs.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-                <p className="text-sm text-slate-400">No catalogues yet.</p>
-                <Link href={`/${workspaceSlug}/catalogs`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Catalogs to upload one</Link>
-              </div>
-            ) : (
-              localCatalogs.map(cat => (
-                <div key={cat.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-slate-900">{cat.name}</span>
-                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${VISIBILITY_STYLES[cat.visibility] || VISIBILITY_STYLES.private}`}>{cat.visibility}</span>
-                        {cat.status === 'archived' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Archived</span>}
-                      </div>
-                      {cat.public_title && cat.visibility !== 'private' && <p className="text-xs text-slate-500 mt-1">Public title: {cat.public_title}</p>}
-                      {cat.public_description && cat.visibility !== 'private' && <p className="text-xs text-slate-400 mt-0.5">{cat.public_description}</p>}
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
-                        <span>{cat.row_count} row{cat.row_count !== 1 ? 's' : ''}</span>
-                        {cat.original_filename && <span>File: {cat.original_filename}</span>}
-                        {cat.published_at && <span>Published: {new Date(cat.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
-                      </div>
-                      {cat.roofing_types && cat.roofing_types.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">{cat.roofing_types.map(rt => <span key={rt} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{rt}</span>)}</div>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1.5 items-end shrink-0">
-                      <button type="button" onClick={() => setShowCatalogPublishModal(cat.id)} className="text-xs px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition font-medium">{cat.visibility === 'private' ? 'Publish' : 'Settings'}</button>
-                      {cat.visibility === 'published' && (<Link href={`/${workspaceSlug}/catalogs?replace=${cat.id}`} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">Upload New Version</Link>)}
-                      {publishResult[cat.id] && <span className={`text-xs ${publishResult[cat.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[cat.id].message}</span>}
-                      {cat.published_version > 0 && cat.visibility === 'published' && <span className="text-xs text-slate-400">v{cat.published_version}</span>}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-
-            {/* Catalogue Converter - inside the tab */}
-            {profile?.status === 'approved' && (
-              <div className="mt-4">
-                <CatalogueConverter workspaceSlug={workspaceSlug} collections={collections} catalogs={catalogs.map(c => ({ id: c.id, name: c.name, row_count: c.row_count, source_catalog_id: null }))} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* === TAKEOFF BUILDER TAB === */}
-        {activeTab === 'takeoff-builder' && (
-          <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="text-sm font-semibold text-slate-900">Roofing Calculator</h3>
-              <p className="text-xs text-slate-400 mt-1">Your branded roofing calculator that customers can use to get instant quotes. Turn this on to get a custom URL you can share with customers or add to your website.</p>
+            {!calculatorExpanded && <span className="text-xs text-slate-400 flex-shrink-0 ml-2">Click to expand</span>}
+          </button>
+          {calculatorExpanded && (
+            <div className="px-5 pb-5 border-t border-slate-100">
+              <div className="space-y-4 pt-4">
+              <p className="text-xs text-slate-400">Your branded roofing calculator that customers can use to get instant quotes. Turn this on to get a custom URL you can share with customers or add to your website.</p>
 
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
                 <div className="flex items-center justify-between">
@@ -894,13 +782,30 @@ export function SupplierDashboard({
               <div className="mt-4 flex items-center gap-2">
                 <button onClick={handleSaveTakeoffSettings} disabled={takeoffSaving} className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition disabled:opacity-40">{takeoffSaving ? 'Saving...' : 'Save Calculator Settings'}</button>
               </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* === VISIBILITY & PUBLISHING TAB === */}
-        {activeTab === 'public-presence' && (
-          <div className="space-y-4">
+        {/* === VISIBILITY & PUBLISHING (collapsible) === */}
+        <div className="rounded-xl border border-slate-200 bg-white mb-4 overflow-hidden">
+          <button onClick={() => { setVisibilityExpanded(!visibilityExpanded); if (!visibilityExpanded) handleCheckReadiness(); }} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/50 transition">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Chevron open={visibilityExpanded} />
+              <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                <h2 className="text-sm font-semibold text-slate-900 whitespace-nowrap">Visibility & Publishing</h2>
+                <span className="text-slate-300">/</span>
+                <span className="text-xs text-slate-500 truncate">Control how visible your business is to customers</span>
+                {pubState === 'published' && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-600 flex-shrink-0">Live</span>}
+                {pubState === 'unlisted' && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs text-blue-600 flex-shrink-0">Direct link</span>}
+                {pubState === 'unready' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500 flex-shrink-0">Not ready</span>}
+              </div>
+            </div>
+            {!visibilityExpanded && <span className="text-xs text-slate-400 flex-shrink-0 ml-2">Click to expand</span>}
+          </button>
+          {visibilityExpanded && (
+            <div className="px-5 pb-5 border-t border-slate-100">
+              <div className="space-y-4 pt-4">
             <TipBanner>The more visible your business, the more likely customers will find and contact you. We recommend enabling all options below unless you have a specific reason to keep something private.</TipBanner>
 
             {/* Page status banner */}
@@ -1084,6 +989,132 @@ export function SupplierDashboard({
                     <p className="text-xs text-slate-400 mt-3">This is what the public will see when they view your supplier page. Details you have not shared are removed automatically.</p>
                   </div>
                 </div>
+              </div>
+            )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* === TABS (Libraries & Catalogues) === */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <button onClick={() => setActiveTab('libraries')} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'libraries' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Component Libraries</button>
+          <button onClick={() => setActiveTab('catalogues')} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeTab === 'catalogues' ? 'bg-slate-900 text-white' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'}`}>Price Catalogues</button>
+        </div>
+
+        {/* === LIBRARIES TAB === */}
+        {activeTab === 'libraries' && (
+          <div className="space-y-3">
+            <p className="text-xs text-slate-400">Groups of roofing components with pricing that customers can use in the calculator. Publish a library to make it available to the public.</p>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">Libraries</h3>
+              <Link href={`/${workspaceSlug}/components`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Manage in Components →</Link>
+            </div>
+            {localLibraries.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                <p className="text-sm text-slate-400">No libraries yet.</p>
+                <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Components to create one</Link>
+              </div>
+            ) : (
+              localLibraries.map(lib => (
+                <div key={lib.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      {renamingId === lib.id ? (
+                        <div className="flex items-center gap-2">
+                          <input type="text" value={renameValue} onChange={e => setRenameValue(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void handleRename(lib.id); } if (e.key === 'Escape') { setRenamingId(null); setRenameValue(''); } }} maxLength={80} className="px-2 py-1 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-none" autoFocus />
+                          <button type="button" onClick={() => void handleRename(lib.id)} disabled={renaming || !renameValue.trim()} className="px-3 py-1 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 disabled:opacity-50">{renaming ? 'Saving...' : 'Save'}</button>
+                          <button type="button" onClick={() => { setRenamingId(null); setRenameValue(''); }} className="px-3 py-1 text-xs rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-slate-900">{lib.name}</span>
+                          {lib.is_bootstrap && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Default</span>}
+                          <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${VISIBILITY_STYLES[lib.visibility ?? 'private'] || VISIBILITY_STYLES.private}`}>{lib.visibility ?? 'private'}</span>
+                        </div>
+                      )}
+                      {lib.public_title && lib.visibility !== 'private' && <p className="text-xs text-slate-500 mt-1">Public title: {lib.public_title}</p>}
+                      {lib.public_description && lib.visibility !== 'private' && <p className="text-xs text-slate-400 mt-0.5">{lib.public_description}</p>}
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
+                        <span>{lib.component_count} component{lib.component_count !== 1 ? 's' : ''}</span>
+                        {lib.published_at && <span>Published: {new Date(lib.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+                      </div>
+                      {lib.roofing_types && lib.roofing_types.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">{lib.roofing_types.map(rt => <span key={rt} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{rt}</span>)}</div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5 items-end shrink-0">
+                      <button type="button" onClick={() => setShowPublishModal(lib.id)} className="text-xs px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition font-medium">{(lib.visibility ?? 'private') === 'private' ? 'Publish' : 'Settings'}</button>
+                      {renamingId !== lib.id && !lib.is_bootstrap && (<button type="button" title="Rename" onClick={() => { setRenamingId(lib.id); setRenameValue(lib.name); }} className="text-xs text-slate-400 hover:text-orange-500 transition">Rename</button>)}
+                      {!lib.is_bootstrap && deletingId !== lib.id && (<button type="button" title="Delete" onClick={() => setDeletingId(lib.id)} className="text-xs text-slate-400 hover:text-red-500 transition">Delete</button>)}
+                      {deletingId === lib.id && (
+                        <div className="flex items-center gap-1">
+                          <button type="button" onClick={() => void handleDelete(lib.id)} disabled={deleteLoading} className="text-xs px-2 py-1 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">{deleteLoading ? 'Deleting...' : 'Confirm'}</button>
+                          <button type="button" onClick={() => setDeletingId(null)} className="text-xs px-2 py-1 rounded-full border border-slate-300 hover:bg-slate-50">Cancel</button>
+                        </div>
+                      )}
+                      {lib.visibility === 'published' && (
+                        <button onClick={() => handlePublishUpdate(lib.id)} disabled={publishing === lib.id} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-50 font-medium">{publishing === lib.id ? 'Publishing...' : 'Push Update'}</button>
+                      )}
+                      {publishResult[lib.id] && <span className={`text-xs ${publishResult[lib.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[lib.id].message}</span>}
+                      {lib.published_version != null && lib.published_version > 0 && lib.visibility === 'published' && <span className="text-xs text-slate-400">v{lib.published_version}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* === CATALOGUES TAB === */}
+        {activeTab === 'catalogues' && (
+          <div className="space-y-3">
+            <p className="text-xs text-slate-400">Upload CSV or PDF price lists from your suppliers. Convert them into component libraries using the converter below.</p>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-900">Catalogues</h3>
+              <Link href={`/${workspaceSlug}/catalogs`} className="text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Upload in Catalogs →</Link>
+            </div>
+            {localCatalogs.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
+                <p className="text-sm text-slate-400">No catalogues yet.</p>
+                <Link href={`/${workspaceSlug}/catalogs`} className="mt-2 inline-block text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8]">Go to Catalogs to upload one</Link>
+              </div>
+            ) : (
+              localCatalogs.map(cat => (
+                <div key={cat.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-slate-900">{cat.name}</span>
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${VISIBILITY_STYLES[cat.visibility] || VISIBILITY_STYLES.private}`}>{cat.visibility}</span>
+                        {cat.status === 'archived' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">Archived</span>}
+                      </div>
+                      {cat.public_title && cat.visibility !== 'private' && <p className="text-xs text-slate-500 mt-1">Public title: {cat.public_title}</p>}
+                      {cat.public_description && cat.visibility !== 'private' && <p className="text-xs text-slate-400 mt-0.5">{cat.public_description}</p>}
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
+                        <span>{cat.row_count} row{cat.row_count !== 1 ? 's' : ''}</span>
+                        {cat.original_filename && <span>File: {cat.original_filename}</span>}
+                        {cat.published_at && <span>Published: {new Date(cat.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+                      </div>
+                      {cat.roofing_types && cat.roofing_types.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">{cat.roofing_types.map(rt => <span key={rt} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">{rt}</span>)}</div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5 items-end shrink-0">
+                      <button type="button" onClick={() => setShowCatalogPublishModal(cat.id)} className="text-xs px-3 py-1.5 rounded-full border border-slate-300 hover:bg-slate-50 hover:border-orange-300 text-slate-600 transition font-medium">{cat.visibility === 'private' ? 'Publish' : 'Settings'}</button>
+                      {cat.visibility === 'published' && (<Link href={`/${workspaceSlug}/catalogs?replace=${cat.id}`} className="text-xs px-3 py-1 rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition font-medium text-center">Upload New Version</Link>)}
+                      {publishResult[cat.id] && <span className={`text-xs ${publishResult[cat.id].ok ? 'text-emerald-600' : 'text-red-600'}`}>{publishResult[cat.id].message}</span>}
+                      {cat.published_version > 0 && cat.visibility === 'published' && <span className="text-xs text-slate-400">v{cat.published_version}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+
+            {/* Catalogue Converter - inside the tab */}
+            {profile?.status === 'approved' && (
+              <div className="mt-4">
+                <CatalogueConverter workspaceSlug={workspaceSlug} collections={collections} catalogs={catalogs.map(c => ({ id: c.id, name: c.name, row_count: c.row_count, source_catalog_id: null }))} />
               </div>
             )}
           </div>
