@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import { appUrl } from "@/lib/app-url";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -46,6 +47,9 @@ export default function SupplierApplicationModal({
         }
         setStatus("success");
         trackEvent("supplier_application_submit", { has_account: String(hasAccount) });
+        // Open signup page in a new tab so they can create an account while we review their application
+        const signupUrl = `${appUrl()}/signup?ref=supplier-partnership`;
+        window.open(signupUrl, "_blank", "noopener,noreferrer");
       })
       .catch((err) => {
         setStatus("error");
@@ -82,12 +86,28 @@ export default function SupplierApplicationModal({
             <p className="mt-2 text-sm text-slate-600">
               Thanks for your interest in becoming a QuoteCore+ supplier partner. We&apos;ll review your details and get back to you within 1–2 business days.
             </p>
-            <button
-              onClick={handleClose}
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition"
-            >
-              Close
-            </button>
+            <div className="mt-4 rounded-xl border border-orange-200 bg-orange-50/50 px-4 py-3 text-left">
+              <p className="text-sm font-medium text-slate-900">Create your free account now</p>
+              <p className="mt-1 text-xs text-slate-600">
+                We&apos;ve opened the signup page in a new tab. Creating your account now means we can grant supplier dashboard access as soon as your application is approved — no waiting around.
+              </p>
+            </div>
+            <div className="mt-6 flex flex-col gap-2">
+              <a
+                href={`${appUrl()}/signup?ref=supplier-partnership`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-full bg-[#BD4A1A] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#9E3E16] transition"
+              >
+                Open signup page
+              </a>
+              <button
+                onClick={handleClose}
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         ) : (
           <>
