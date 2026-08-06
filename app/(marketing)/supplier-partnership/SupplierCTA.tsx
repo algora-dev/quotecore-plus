@@ -21,7 +21,7 @@ const variantClasses: Record<SupplierCTAVariant, string> = {
   primary:
     "bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30",
   accent:
-    "bg-[#BD4A1A] text-white hover:bg-[#9E3E16] hover:shadow-[0_0_14px_rgba(255,107,53,0.36)]",
+    "bg-[#FF6B35] text-white hover:bg-[#E55A2B] hover:shadow-[0_0_14px_rgba(255,107,53,0.36)]",
   secondary:
     "border border-slate-300 bg-white text-slate-900 hover:border-[#FF6B35]/50 hover:bg-orange-50/40",
   light:
