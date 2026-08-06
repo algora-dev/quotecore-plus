@@ -320,7 +320,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
   // Components whose native component_kind matches the section are sorted first.
   const componentsByKind = useMemo(() => {
     const map: Record<string, RoofComponentDef[]> = {};
-    const isAreaUnit = (unit: string) => /^m[²2]/i.test(unit);
+    const isAreaUnit = (unit: string) => /^(m[²2]|sq\s*ft|sqft|squares)/i.test(unit);
     for (const kind of BUILT_IN_ORDER) {
       const def = COMPONENT_DEFS[kind];
       if (!def) { map[kind] = []; continue; }
