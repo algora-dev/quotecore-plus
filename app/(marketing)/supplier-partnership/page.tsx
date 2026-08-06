@@ -233,7 +233,7 @@ export default function SupplierPartnershipPage() {
           <div className="mx-auto max-w-6xl px-6 lg:px-8">
             <div className="max-w-3xl">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
-                No strings attached
+                Included free
               </p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
                 Three free ways to get your products in front of buyers
@@ -339,6 +339,12 @@ export default function SupplierPartnershipPage() {
               <p className="text-sm leading-6 text-slate-600">
                 We will provide educational documents, tutorials, and videos to help you get set up, and we can jump on a call if needed.
               </p>
+            </div>
+
+            <div className="mt-8 flex justify-center">
+              <SupplierCTA href="/contact" intent="free_setup" location="how_it_works">
+                Start my free supplier setup <ArrowIcon />
+              </SupplierCTA>
             </div>
           </div>
         </section>
