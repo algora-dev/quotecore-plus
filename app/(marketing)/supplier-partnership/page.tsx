@@ -158,7 +158,7 @@ const howItWorksSteps = [
   {
     number: "03",
     heading: "Set everything up and go live when ready",
-    copy: "Create your profile, products, pricing, and service areas, then publish everything when you are happy. We will send you everything you need to get set up \u2014 guides, tutorials, and video walkthroughs \u2014 and we can jump on a call to help if needed.",
+    copy: "Create your profile, products, pricing, and service areas, then publish everything when you are happy.",
   },
 ];
 
@@ -286,7 +286,7 @@ export default function SupplierPartnershipPage() {
             <div className="mt-10 flex flex-col items-start justify-between gap-5 rounded-2xl border border-orange-200 bg-orange-50/70 p-6 sm:flex-row sm:items-center sm:p-8">
               <div>
                 <p className="text-lg font-semibold text-slate-900">
-                  You supply the catalogue and pricing \u2014 we help it get seen.
+                  You supply the catalogue and pricing - we help it get seen.
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Send us your company details or book a short call. We will show you the proposed setup before anything goes live.

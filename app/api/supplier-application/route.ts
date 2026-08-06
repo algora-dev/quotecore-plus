@@ -24,7 +24,11 @@ export async function POST(req: NextRequest) {
   const hasAccount = body.has_account === true;
   const accountEmail = clean(body.account_email, 320).toLowerCase();
   const businessName = clean(body.business_name, 200);
-  const website = clean(body.website, 500);
+  let website = clean(body.website, 500);
+  // Normalize URL: prepend https:// if missing
+  if (website && !/^https?:\/\//i.test(website)) {
+    website = `https://${website}`;
+  }
   const contactPerson = clean(body.contact_person, 200);
   const contactEmail = clean(body.contact_email, 320).toLowerCase();
   const location = clean(body.location, 200);
