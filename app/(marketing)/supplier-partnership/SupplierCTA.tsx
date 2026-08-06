@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { trackEvent } from "@/lib/analytics";
+import SupplierApplicationModal from "./SupplierApplicationModal";
 
 type SupplierCTAIntent = "free_setup" | "custom_package" | "learn_more" | "book_call" | "email";
 type SupplierCTAVariant = "primary" | "accent" | "secondary" | "light" | "darkSecondary";
@@ -36,6 +38,29 @@ export default function SupplierCTA({
   variant = "primary",
   className = "",
 }: SupplierCTAProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  // CTAs with intent "free_setup" or "custom_package" open the modal
+  const opensModal = intent === "free_setup" || intent === "custom_package";
+
+  if (opensModal) {
+    return (
+      <>
+        <button
+          type="button"
+          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2 ${variantClasses[variant]} ${className}`}
+          onClick={() => {
+            setModalOpen(true);
+            trackEvent("supplier_partnership_cta_click", { intent, location });
+          }}
+        >
+          {children}
+        </button>
+        <SupplierApplicationModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      </>
+    );
+  }
+
   return (
     <a
       href={href}
