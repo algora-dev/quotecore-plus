@@ -79,7 +79,7 @@ function SignupForm() {
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
           <h1 className="text-2xl font-semibold text-slate-900 mb-2 text-center">Create your account</h1>
-          <p className="text-slate-500 text-sm mb-6 text-center">Get started with QuoteCore in seconds</p>
+          <p className="text-slate-500 text-sm mb-6 text-center">Free 14-day trial · No card needed · Cancel anytime</p>
 
           {/* Draft context banner */}
           {refLabel && draftId && (
