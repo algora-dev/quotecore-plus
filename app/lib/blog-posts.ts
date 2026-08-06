@@ -94,6 +94,33 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     lastModified: '2026-06-13',
   },
   {
+    slug: 'best-quoting-software-nz',
+    category: 'comparisons',
+    title: 'Best Quoting Software for NZ Builders & Tradies (2026)',
+    description:
+      'Compare the best quoting software for New Zealand builders and trades. Features, pricing in NZD, GST support, and NZ-specific tools for roofers, builders, and contractors.',
+    date: '2026-07-15',
+    lastModified: '2026-08-05',
+  },
+  {
+    slug: 'best-quoting-software-au',
+    category: 'comparisons',
+    title: 'Best Quoting Software for Australian Tradies (2026)',
+    description:
+      'Compare the best quoting software for Australian builders and trades. Features, pricing in AUD, GST support, and AU-specific tools for roofers, builders, and contractors.',
+    date: '2026-08-05',
+    lastModified: '2026-08-05',
+  },
+  {
+    slug: 'best-quoting-software-us',
+    category: 'comparisons',
+    title: 'Best Quoting Software for US Contractors (2026)',
+    description:
+      'Compare the best quoting software for US contractors. Features, pricing in USD, and trade-specific tools for roofers, builders, and home service businesses.',
+    date: '2026-08-05',
+    lastModified: '2026-08-05',
+  },
+  {
     slug: 'best-roofing-quoting-software-uk-2026',
     category: 'comparisons',
     title: 'Best Roofing Quoting Software UK (2026)',

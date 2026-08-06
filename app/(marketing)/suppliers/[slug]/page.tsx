@@ -38,10 +38,11 @@ function buildSeoTitle(s: SupplierDetail['supplier']): string {
 
   // Location
   if (s.branch_city) {
-    parts.push('in', s.branch_city);
     if (s.branch_country) {
       const code = COUNTRY_CODES[s.branch_country] || s.branch_country;
-      parts.push(',', code);
+      parts.push(`in ${s.branch_city}, ${code}`);
+    } else {
+      parts.push('in', s.branch_city);
     }
   } else if (s.branch_country) {
     const code = COUNTRY_CODES[s.branch_country] || s.branch_country;
@@ -593,7 +594,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
 
               {/* Right: contact + meta */}
               <div className="lg:col-span-1">
-                <div className="rounded-xl border border-slate-200 bg-zinc-50 p-5 sticky top-6">
+                <div className="rounded-xl border border-slate-200 bg-zinc-50 p-5 lg:mt-8 sticky top-6">
                   <h3 className="text-sm font-semibold text-zinc-950">Contact</h3>
                   {data.eligibility.contacts_visible ? (
                     <div className="mt-3 space-y-2 text-sm">

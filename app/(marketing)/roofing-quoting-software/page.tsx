@@ -9,7 +9,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Roofing Quoting Software for Contractors",
   description:
-    "QuoteCore+ helps roofing contractors measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid - all in one connected workflow.",
+    "Roofing quoting software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, build quotes, order materials, invoice. Plans from free to $59/month.",
   alternates: {
     canonical: "https://quote-core.com/roofing-quoting-software",
     languages: hreflangLanguages("/roofing-quoting-software"),
@@ -128,6 +128,16 @@ const faqs = [
   },
 ];
 
+const faqPageSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+
 const videoSchemas = [
   {
     "@context": "https://schema.org",
@@ -165,6 +175,7 @@ export default function RoofingQuotingSoftwarePage() {
     {videoSchemas.map((v) => (
       <script key={v.contentUrl} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(v) }} />
     ))}
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPageSchema) }} />
 
     <main className="min-h-screen bg-white text-zinc-950">
        <BlogHeader />
