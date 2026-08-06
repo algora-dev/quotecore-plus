@@ -109,6 +109,8 @@ const freeWays = [
       "Control over what products and pricing are shown",
       "More enquiries sent to your business",
     ],
+    exampleHref: "https://quote-core.com",
+    exampleLabel: "View QuoteCore+",
   },
   {
     number: "02",
@@ -122,6 +124,8 @@ const freeWays = [
       "Links to your website and tools",
       "Supports search and AI discoverability",
     ],
+    exampleHref: "https://quote-core.com/suppliers/rs-roofing",
+    exampleLabel: "View live example",
   },
   {
     number: "03",
@@ -135,6 +139,8 @@ const freeWays = [
       "Sends the full enquiry directly to the supplier",
       "Unique link you can share or add to your website",
     ],
+    exampleHref: "https://quote-core.com/free-roofing-takeoff-builder/rs-roofing",
+    exampleLabel: "Try the calculator",
   },
 ];
 
@@ -152,7 +158,7 @@ const howItWorksSteps = [
   {
     number: "03",
     heading: "Set everything up and go live when ready",
-    copy: "Create your profile, products, pricing, and service areas, then publish everything when you are happy.",
+    copy: "Create your profile, products, pricing, and service areas, then publish everything when you are happy. We will send you everything you need to get set up \u2014 guides, tutorials, and video walkthroughs \u2014 and we can jump on a call to help if needed.",
   },
 ];
 
@@ -166,29 +172,7 @@ const tailoredOptions = [
   "Usage reporting and demand analysis",
 ];
 
-const liveExamples = [
-  {
-    src: "/images/supplier-partnership/supplier-directory-1.png",
-    alt: "QuoteCore+ supplier directory showing component libraries that contractors can browse and import",
-    label: "QuoteCore+ App",
-    href: "https://quote-core.com/suppliers",
-    linkText: "Browse supplier directory",
-  },
-  {
-    src: "/images/supplier-partnership/supplier-selection.jpg",
-    alt: "Example supplier landing page showing business profile, products, and contact details",
-    label: "Supplier Landing Page",
-    href: "https://quote-core.com/suppliers",
-    linkText: "View a supplier page",
-  },
-  {
-    src: "/images/supplier-partnership/takeoff-builder.jpg",
-    alt: "Free roofing takeoff builder showing roof area input with supplier pricing applied",
-    label: "Roofing Calculator",
-    href: "https://quote-core.com/free-roofing-takeoff-builder",
-    linkText: "Try the calculator",
-  },
-];
+
 
 export default function SupplierPartnershipPage() {
   return (
@@ -287,6 +271,14 @@ export default function SupplierPartnershipPage() {
                       </li>
                     ))}
                   </ul>
+                  <a
+                    href={way.exampleHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                  >
+                    {way.exampleLabel} <ExternalLinkIcon />
+                  </a>
                 </article>
               ))}
             </div>
@@ -294,7 +286,7 @@ export default function SupplierPartnershipPage() {
             <div className="mt-10 flex flex-col items-start justify-between gap-5 rounded-2xl border border-orange-200 bg-orange-50/70 p-6 sm:flex-row sm:items-center sm:p-8">
               <div>
                 <p className="text-lg font-semibold text-slate-900">
-                  You supply the catalogue. We build the rest.
+                  You supply the catalogue and pricing \u2014 we help it get seen.
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
                   Send us your company details or book a short call. We will show you the proposed setup before anything goes live.
@@ -373,41 +365,15 @@ export default function SupplierPartnershipPage() {
           </div>
         </section>
 
-        {/* 5. Live Examples */}
-        <section className="py-16 lg:py-20">
-          <div className="mx-auto max-w-6xl px-6 lg:px-8">
-            <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
-                See it in action
-              </p>
-              <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                See live examples
-              </h2>
-              <p className="mt-5 text-lg leading-8 text-zinc-600">
-                These are live on quote-core.com right now. Click through to explore each one.
-              </p>
-            </div>
-
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {liveExamples.map((example) => (
-                <div key={example.label} className="flex flex-col">
-                  <ScreenshotFrame
-                    src={example.src}
-                    alt={example.alt}
-                    label={example.label}
-                    href={example.href}
-                  />
-                  <a
-                    href={example.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#BD4A1A] hover:text-[#9E3E16]"
-                  >
-                    {example.linkText} <ExternalLinkIcon />
-                  </a>
-                </div>
-              ))}
-            </div>
+        {/* 5. Brand spacer */}
+        <section className="py-12 lg:py-16">
+          <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">
+              QuoteCore+
+            </p>
+            <p className="mt-3 text-lg text-slate-500">
+              Built for contractors, suppliers, and anyone who needs a useful roofing price.
+            </p>
           </div>
         </section>
 
@@ -425,14 +391,14 @@ export default function SupplierPartnershipPage() {
                 <p className="mt-4 text-sm leading-7 text-zinc-400">
                   If you want something more custom later, we can help with that too. These options are completely optional and only relevant if you want to go further.
                 </p>
-                <ul className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
+                <div className="mt-5 grid gap-x-8 gap-y-2 sm:grid-cols-2">
                   {tailoredOptions.map((option) => (
-                    <li key={option} className="flex items-center gap-2 text-sm text-zinc-300">
+                    <li key={option} className="flex items-center gap-2 text-sm text-zinc-300 list-none">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#FF6B35]" />
                       {option}
                     </li>
                   ))}
-                </ul>
+                </div>
               </div>
               <SupplierCTA
                 href="/contact"
