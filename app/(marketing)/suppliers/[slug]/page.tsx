@@ -330,18 +330,25 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </nav>
         </div>
 
-        {/* Banner image */}
-        {s.banner_url && (
-          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pt-6">
-            <div className="relative rounded-2xl overflow-hidden border border-slate-200">
-              <img
-                src={s.banner_url}
-                alt={`${s.supplier_name} banner`}
-                className="w-full h-48 sm:h-64 object-cover"
-              />
+        {/* Banner image — static override for demo suppliers, DB URL otherwise */}
+        {(() => {
+          const staticBanners: Record<string, string> = {
+            'rs-roofing': '/images/suppliers/rs-roofing-banner-v2.png',
+          };
+          const bannerSrc = staticBanners[s.slug] || s.banner_url;
+          if (!bannerSrc) return null;
+          return (
+            <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pt-6">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200">
+                <img
+                  src={bannerSrc}
+                  alt={`${s.supplier_name} banner`}
+                  className="w-full h-48 sm:h-64 object-cover"
+                />
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Supplier header */}
         <section className="pb-8 pt-8">
