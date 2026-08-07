@@ -333,7 +333,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
         {/* Banner image — static override for demo suppliers, DB URL otherwise */}
         {(() => {
           const staticBanners: Record<string, string> = {
-            'rs-roofing': '/images/suppliers/rs-roofing-banner-v3.png',
+            'rs-roofing': '/images/suppliers/rs-roofing-banner-v2.png',
           };
           const bannerSrc = staticBanners[s.slug] || s.banner_url;
           if (!bannerSrc) return null;
@@ -343,7 +343,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                 <img
                   src={bannerSrc}
                   alt={`${s.supplier_name} banner`}
-                  className="w-full h-auto block object-cover"
+                  className="w-full aspect-[4/1] object-cover object-center"
                 />
               </div>
             </div>
