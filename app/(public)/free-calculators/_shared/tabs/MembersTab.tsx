@@ -104,7 +104,9 @@ export function MembersTab() {
     setShared({
       popupTrigger: {
         resultLabel: `${rl.toFixed(2)} ${lengthUnit} rafter length`,
-        resultDetails: `${cfg?.showHipValley ? `Hip/valley: ${hl.toFixed(2)} ${lengthUnit} · ` : ''}Pitch: ${d}° · Factor: ${rf.toFixed(4)}`,
+        resultDetails: subTab === 'hip-valley'
+          ? `Hip/valley: ${hl.toFixed(2)} ${lengthUnit} · Pitch: ${d}° · Factor: ${hf.toFixed(4)}`
+          : `Pitch: ${d}° · Factor: ${rf.toFixed(4)}`,
         stage: 'calc-to-quote',
       },
     });
@@ -396,12 +398,6 @@ export function MembersTab() {
                   <p className="text-xs text-slate-500">{cfg.memberLabel} factor</p>
                   <p className="text-base font-semibold text-slate-900">{result.rafterFactor.toFixed(4)}</p>
                 </div>
-                {cfg.showHipValley && (
-                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                    <p className="text-xs text-slate-500">Hip/valley factor</p>
-                    <p className="text-base font-semibold text-slate-900">{result.hipFactor.toFixed(4)}</p>
-                  </div>
-                )}
                 <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
                   <p className="text-xs text-slate-500">{cfg.memberLabel} length ({lengthUnit})</p>
                   <p className="text-lg font-bold text-slate-900">{result.rafterLen.toFixed(3)}</p>
@@ -442,10 +438,6 @@ export function MembersTab() {
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                  <p className="text-xs text-slate-500">{cfg.memberLabel} factor</p>
-                  <p className="text-base font-semibold text-slate-900">{result.rafterFactor.toFixed(4)}</p>
-                </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
                   <p className="text-xs text-slate-500">Hip/valley factor</p>
                   <p className="text-base font-semibold text-slate-900">{result.hipFactor.toFixed(4)}</p>

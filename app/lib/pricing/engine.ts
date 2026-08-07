@@ -52,13 +52,14 @@ export function rafterPitchFactor(degrees: number): number {
   return 1 / Math.cos(degrees * RAD);
 }
 
-/** Hip/Valley pitch factor: compound angle assuming 45° hip/valley
- *  actual = plan × √(tan²(pitch) + 2) simplified from compound angle formula
- *  More precisely: hip_factor = √(rafter_factor² + 1) for 45° hip */
+/** Hip/Valley pitch factor: compound angle for 45° hip/valley
+ *  hip_angle = arctan(tan(pitch) × cos(45°))
+ *  hip_factor = 1 / cos(hip_angle)
+ *  This is equivalent to sqrt(1 + tan²(pitch)/2) — a standard roofing formula. */
 export function hipValleyPitchFactor(degrees: number): number {
   if (!degrees || degrees <= 0 || degrees >= 90) return 1;
-  const rf = rafterPitchFactor(degrees);
-  return Math.sqrt(rf * rf + 1);
+  const tangent = Math.tan(degrees * RAD);
+  return Math.sqrt(1 + (tangent * tangent) / 2);
 }
 
 /** Get pitch factor based on pitch type */

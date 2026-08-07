@@ -9,6 +9,11 @@ type MeasureMode = 'plan' | 'actual';
 type InputMode = 'dims' | 'direct' | 'volume';
 type VolumeMode = 'calc' | 'direct';
 
+// Check if the trade config includes a volume tab
+function hasVolumeTab(config: ReturnType<typeof useTradeConfig>): boolean {
+  return config.tabs.some((t) => t.kind === 'volume');
+}
+
 export function AreaTab() {
   const { areaUnit, lengthUnit, volumeUnit } = useUnitSystem();
   const { setShared } = useSharedState();
@@ -73,26 +78,34 @@ export function AreaTab() {
       return;
     }
 
-    const d = cfg!.useSlopeFactor ? parseFloat(pitchDeg) || 0 : 0;
-    const factor = cfg!.useSlopeFactor ? rafterPitchFactor(d) : 1;
-
-    if (measureMode === 'plan' || !cfg!.useSlopeFactor) {
-      let planArea = 0;
+    // Actual mode: no pitch factor at all — just width × length or direct area
+    if (measureMode === 'actual') {
+      let actualArea = 0;
       if (inputMode === 'dims') {
         const w = parseFloat(width) || 0;
         const l = parseFloat(length) || 0;
-        planArea = w * l;
+        actualArea = w * l;
       } else {
-        planArea = parseFloat(directArea) || 0;
+        actualArea = parseFloat(directArea) || 0;
       }
-      const actualArea = planArea * factor;
-      setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'plan' });
-    } else {
-      // Actual mode - user enters the actual surface area directly
-      const actualArea = parseFloat(directArea) || 0;
-      const planArea = factor > 0 ? actualArea / factor : actualArea;
-      setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'actual' });
+      setResult({ kind: 'area', planArea: actualArea, factor: 1, actualArea, deg: 0, mode: 'actual' });
+      return;
     }
+
+    // Plan mode: apply pitch factor if the trade uses slope factors
+    const d = cfg!.useSlopeFactor ? parseFloat(pitchDeg) || 0 : 0;
+    const factor = cfg!.useSlopeFactor ? rafterPitchFactor(d) : 1;
+
+    let planArea = 0;
+    if (inputMode === 'dims') {
+      const w = parseFloat(width) || 0;
+      const l = parseFloat(length) || 0;
+      planArea = w * l;
+    } else {
+      planArea = parseFloat(directArea) || 0;
+    }
+    const actualArea = planArea * factor;
+    setResult({ kind: 'area', planArea, factor, actualArea, deg: d, mode: 'plan' });
   }
 
   function useForPricing() {
@@ -118,6 +131,7 @@ export function AreaTab() {
     });
   }
 
+  const showVolumeOption = hasVolumeTab(config);
   const showModeToggle = cfg.useSlopeFactor && inputMode !== 'volume';
   const showPitch = cfg.useSlopeFactor && measureMode === 'plan' && inputMode !== 'volume';
 
@@ -257,14 +271,16 @@ export function AreaTab() {
           >
             Area ({areaUnit})
           </button>
-          <button
-            onClick={() => setInputMode('volume')}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              inputMode === 'volume' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            Volume ({volumeUnit})
-          </button>
+          {showVolumeOption && (
+            <button
+              onClick={() => setInputMode('volume')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                inputMode === 'volume' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Volume ({volumeUnit})
+            </button>
+          )}
         </div>
       </div>
 
@@ -351,7 +367,7 @@ export function AreaTab() {
             )}
           </div>
         ) : inputMode === 'dims' ? (
-          (measureMode === 'plan' || !cfg.useSlopeFactor) && (
+          (
             <>
               <div>
                 <label className="text-sm font-medium text-slate-700">Width ({lengthUnit})</label>
@@ -396,11 +412,6 @@ export function AreaTab() {
           </div>
         )}
       </div>
-
-      {/* In actual mode with dims, show a note */}
-      {cfg.useSlopeFactor && measureMode === 'actual' && inputMode === 'dims' && (
-        <p className="text-xs text-slate-400">{cfg.actualDimsNote}</p>
-      )}
 
       {/* Calculate button */}
       <button
@@ -451,18 +462,7 @@ export function AreaTab() {
                 <p className="mt-1 text-xs text-slate-400">1 / cos({result.deg}°)</p>
               </div>
             )}
-            {cfg.useSlopeFactor && result.mode === 'actual' && (
-              <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                <p className="text-xs text-slate-500">{cfg.planLabel} (derived)</p>
-                <p className="text-lg font-semibold text-slate-900">{result.planArea.toFixed(2)} {areaUnit}</p>
-              </div>
-            )}
-            {cfg.useSlopeFactor && result.mode === 'actual' && (
-              <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
-                <p className="text-xs text-slate-500">{slope} factor</p>
-                <p className="text-lg font-semibold text-slate-900">{result.factor.toFixed(4)}</p>
-              </div>
-            )}
+            {/* In actual mode, just show the area — no pitch factor, no derived plan area */}
             <div className="rounded-xl bg-orange-50/50 border border-orange-100 p-4">
               <p className="text-xs text-slate-500">{cfg.actualLabel}</p>
               <p className="text-2xl font-bold text-slate-900">{result.actualArea.toFixed(2)} {areaUnit}</p>
@@ -485,7 +485,9 @@ export function AreaTab() {
                     ? `${cfg.planLabel} = width × length = ${width} × ${length} = ${result.planArea.toFixed(2)} ${areaUnit}\n${slope} factor = 1 / cos(${result.deg}°) = ${result.factor.toFixed(4)}\n${cfg.actualLabel} = ${result.planArea.toFixed(2)} × ${result.factor.toFixed(4)} = ${result.actualArea.toFixed(2)} ${areaUnit}`
                     : `${cfg.planLabel} = ${result.planArea.toFixed(2)} ${areaUnit}\n${slope} factor = 1 / cos(${result.deg}°) = ${result.factor.toFixed(4)}\n${cfg.actualLabel} = ${result.planArea.toFixed(2)} × ${result.factor.toFixed(4)} = ${result.actualArea.toFixed(2)} ${areaUnit}`
                 ) : (
-                  `${cfg.actualLabel} = ${result.actualArea.toFixed(2)} ${areaUnit} (entered directly)\n${slope} factor = ${result.factor.toFixed(4)}\n${cfg.planLabel} = ${result.actualArea.toFixed(2)} / ${result.factor.toFixed(4)} = ${result.planArea.toFixed(2)} ${areaUnit}`
+                  inputMode === 'dims'
+                    ? `${cfg.actualLabel} = width × length = ${width} × ${length} = ${result.actualArea.toFixed(2)} ${areaUnit}`
+                    : `${cfg.actualLabel} = ${result.actualArea.toFixed(2)} ${areaUnit} (entered directly)`
                 )).split('\n').map((line, i) => (
                   <span key={i}>{line}<br /></span>
                 ))}
