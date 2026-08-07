@@ -69,11 +69,9 @@ export default function SupplierApplicationModal({
   return (
     <div
       className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto"
-      onClick={handleClose}
     >
       <div
         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 my-8"
-        onClick={(e) => e.stopPropagation()}
       >
         {status === "success" ? (
           <div className="p-8 text-center">
@@ -200,10 +198,10 @@ export default function SupplierApplicationModal({
                 <input
                   id="website"
                   name="website"
-                  type="url"
+                  type="text"
                   required
                   className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-orange-500 focus:outline-none transition"
-                  placeholder="https://www.acmeroofing.com"
+                  placeholder="www.acmeroofing.com"
                 />
               </div>
 
