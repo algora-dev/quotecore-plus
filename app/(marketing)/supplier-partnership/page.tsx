@@ -4,7 +4,7 @@ import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import SupplierCTA from "./SupplierCTA";
 import SupplierImageCarousel from "./SupplierImageCarousel";
-import { VideoPlaceholder } from "./SupplierPartnershipVisuals";
+import YouTubeLite from "@/components/YouTubeLite";
 
 export const metadata: Metadata = {
   title: "Supplier Partnership",
@@ -215,15 +215,11 @@ export default function SupplierPartnershipPage() {
               </div>
             </div>
             <div>
-              <VideoPlaceholder
-                eyebrow="Short overview video"
-                title="The free supplier opportunity in under a minute"
-                description="This placeholder is ready for your short video explaining the offer and what the supplier receives."
-                duration="45-60 sec"
+              <YouTubeLite
+                videoId="47RtZiN2buY"
+                title="QuoteCore+ Supplier Partnership"
+                className="w-full"
               />
-              <p className="mt-3 text-center text-xs text-slate-600">
-                Video placeholder - final footage drops into this frame without layout changes.
-              </p>
             </div>
           </div>
         </section>

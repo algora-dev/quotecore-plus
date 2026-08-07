@@ -252,7 +252,7 @@ export default function HomePage() {
               {/* Right: hero video */}
               <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
                 <YouTubeLite
-                  videoId="DziFjqnPdqQ"
+                  videoId="X379HDoDE_o"
                   title="Create a complex roofing quote in under 3 minutes"
                   className="w-full"
                 />
