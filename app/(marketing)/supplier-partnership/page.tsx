@@ -185,7 +185,7 @@ export default function SupplierPartnershipPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,107,53,0.13),transparent_34%),radial-gradient(circle_at_88%_20%,rgba(15,23,42,0.06),transparent_28%)]" />
           <div className="relative mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:px-8">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-[#BD4A1A]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-[#E85D2B]">
                 <span className="h-2 w-2 rounded-full bg-[#FF6B35]" />
                 Free supplier partnership
               </div>
@@ -206,7 +206,7 @@ export default function SupplierPartnershipPage() {
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {trustPoints.map((point) => (
                   <div key={point} className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 text-[#BD4A1A]">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-50 text-[#E85D2B]">
                       <CheckIcon className="h-3.5 w-3.5" />
                     </span>
                     {point}
@@ -232,7 +232,7 @@ export default function SupplierPartnershipPage() {
         <section id="free-ways" className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
           <div className="mx-auto max-w-6xl px-6 lg:px-8">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E85D2B]">
                 Included free
               </p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -250,7 +250,7 @@ export default function SupplierPartnershipPage() {
                   className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.06)] transition hover:border-orange-200 hover:shadow-[0_20px_65px_rgba(255,107,53,0.10)] sm:p-7"
                 >
                   <div className="flex items-start gap-4">
-                    <span className="text-sm font-semibold text-[#BD4A1A]">{way.number}</span>
+                    <span className="text-sm font-semibold text-[#E85D2B]">{way.number}</span>
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
                         {way.eyebrow}
@@ -266,7 +266,7 @@ export default function SupplierPartnershipPage() {
                   <ul className="mt-5 space-y-2.5">
                     {way.bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-3 text-sm leading-6 text-slate-700">
-                        <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#BD4A1A]" />
+                        <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#E85D2B]" />
                         {bullet}
                       </li>
                     ))}
@@ -303,7 +303,7 @@ export default function SupplierPartnershipPage() {
         <section className="py-16 lg:py-20">
           <div className="mx-auto max-w-6xl px-6 lg:px-8">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E85D2B]">
                 Simple process
               </p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -333,7 +333,7 @@ export default function SupplierPartnershipPage() {
             </div>
 
             <div className="mt-8 flex items-start gap-3 rounded-xl bg-slate-50 p-5">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#BD4A1A]">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-50 text-[#E85D2B]">
                 <CheckIcon className="h-3.5 w-3.5" />
               </span>
               <p className="text-sm leading-6 text-slate-600">
@@ -353,7 +353,7 @@ export default function SupplierPartnershipPage() {
         <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
             <div className="max-w-3xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E85D2B]">
                 Genuinely free
               </p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
