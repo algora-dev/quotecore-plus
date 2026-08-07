@@ -46,7 +46,7 @@ export const roofingConfig: TradeConfig = {
     showHipValley: true,
     hipPlanLabel: 'Plan length',
     hipPlanHint: 'Plan-view diagonal from corner to ridge',
-    showBirdsmouth: true,
+    showBirdsmouth: false,
     birdsmouthMemberWord: 'Rafter',
     commonSlopes: COMMON_PITCHES,
     defaultSlope: '25',
@@ -121,7 +121,7 @@ export const roofingConfig: TradeConfig = {
     formulas: [
       { name: 'Rafter length', formula: 'rafter = span / cos(pitch°)' },
       { name: 'Rafter pitch factor', formula: 'factor = 1 / cos(pitch°)' },
-      { name: 'Hip/valley factor', formula: 'factor = sqrt((1/cos(pitch°))² + 1)' },
+      { name: 'Hip/valley factor', formula: 'factor = √(1 + tan²(pitch)/2)' },
       { name: 'Roof surface area', formula: 'area = plan_area × pitch_factor' },
       { name: 'Material quantity', formula: 'quantity = (area × (1 + waste%)) / coverage_per_unit' },
     ],
