@@ -335,16 +335,33 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           const staticBanners: Record<string, string> = {
             'rs-roofing': '/images/suppliers/rs-roofing-banner-v2.png',
           };
+          const staticBannerContent: Record<string, { bullets: string[] }> = {
+            'rs-roofing': { bullets: ['Long-run Roofing', 'Tile Roofing', 'Membrane Roofing'] },
+          };
           const bannerSrc = staticBanners[s.slug] || s.banner_url;
           if (!bannerSrc) return null;
+          const content = staticBannerContent[s.slug];
           return (
             <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pt-6">
               <div className="relative rounded-2xl overflow-hidden border border-slate-200">
                 <img
                   src={bannerSrc}
                   alt={`${s.supplier_name} banner`}
-                  className="w-full h-48 sm:h-64 object-cover"
+                  className="w-full h-40 sm:h-56 md:h-64 object-cover"
                 />
+                {/* Overlay bullet points for demo suppliers with static banners */}
+                {content && (
+                  <div className="absolute inset-0 flex items-end justify-end p-4 sm:p-6 md:p-8">
+                    <ul className="flex flex-col gap-1 sm:gap-1.5">
+                      {content.bullets.map((bullet) => (
+                        <li key={bullet} className="flex items-center gap-2 text-sm sm:text-base font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#2563EB] shrink-0" />
+                          {bullet}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           );
