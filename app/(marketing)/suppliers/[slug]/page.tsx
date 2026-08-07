@@ -343,7 +343,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                 <img
                   src={bannerSrc}
                   alt={`${s.supplier_name} banner`}
-                  className="w-full h-48 sm:h-64 object-cover"
+                  className="w-full h-auto block object-contain"
                 />
               </div>
             </div>
