@@ -11,14 +11,14 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Compare QuoteCore+ monthly plans in USD and GBP. Start with a 14-day full-feature trial with no credit card, then choose the limits that fit your trade business.",
+    "Compare QuoteCore+ monthly plans in USD. Start with a 14-day full-feature trial with no credit card, then choose the limits that fit your trade business.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
     languages: hreflangLanguages("/pricing"),
   },
   openGraph: {
     title: "Pricing",
-    description: "Compare monthly QuoteCore+ plans, limits and included features in USD and GBP.",
+    description: "Compare monthly QuoteCore+ plans, limits and included features in USD.",
     url: "https://quote-core.com/pricing",
     siteName: "QuoteCore+",
     type: "website",
@@ -33,7 +33,7 @@ const pricingSchema = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
   url: "https://quote-core.com/pricing",
-  offers: [buildPricingOffers("USD"), buildPricingOffers("GBP")],
+  offers: [buildPricingOffers("USD")],
 };
 
 const breadcrumbSchema = buildBreadcrumbSchema([
@@ -56,7 +56,7 @@ const faqs = [
   },
   {
     question: "Which currencies are shown?",
-    answer: "This global pricing page shows current monthly prices in US dollars and British pounds. Taxes are calculated where applicable.",
+    answer: "This global pricing page shows current monthly prices in US dollars. Taxes are calculated where applicable.",
   },
 ];
 
@@ -96,20 +96,15 @@ export default function PricingPage() {
                 {plan.featured && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
                 <h2 className="text-xl font-semibold">{plan.displayName}</h2>
                 <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-zinc-200 p-4">
+                <div className="mt-6">
+                  <div className="rounded-xl border border-zinc-200 p-4 inline-block">
                     <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
                     <p className="mt-1 text-2xl font-semibold">{plan.usd}</p>
                     {!plan.isFree && !plan.contactUs && <p className="text-xs text-zinc-500">per month</p>}
                   </div>
-                  <div className="rounded-xl border border-zinc-200 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">GBP</p>
-                    <p className="mt-1 text-2xl font-semibold">{plan.gbp}</p>
-                    {!plan.isFree && !plan.contactUs && <p className="text-xs text-zinc-500">per month</p>}
-                  </div>
                 </div>
                 {plan.originalUsd && (
-                  <p className="mt-3 text-xs text-zinc-500">Regular monthly price: <s>{plan.originalUsd} USD / {plan.originalGbp} GBP</s></p>
+                  <p className="mt-3 text-xs text-zinc-500">Regular monthly price: <s>{plan.originalUsd} USD</s></p>
                 )}
                 <ul className="mt-6 flex-1 space-y-3">
                   {plan.features.map((feature) => (
@@ -125,7 +120,7 @@ export default function PricingPage() {
               </article>
             ))}
           </div>
-          <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">Monthly prices are shown in USD and GBP. Taxes are calculated at checkout where applicable.</p>
+          <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">Monthly prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
         </section>
 
         <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
