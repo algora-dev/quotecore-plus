@@ -141,6 +141,22 @@ const faqSchema = {
         text: "Yes. Subcontractors who quote from plans or site measurements can use QuoteCore+ to build priced quotes, track customer approval, order materials, and invoice — all from the same job data. Smart Components are especially useful for subcontractors who repeat similar work across multiple jobs.",
       },
     },
+    {
+      "@type": "Question",
+      name: "Can QuoteCore+ handle materials ordering?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Accepted quotes can be used to support materials ordering, so you do not have to copy the same job details from one place to another after the customer says yes.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does QuoteCore+ include invoicing?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. QuoteCore+ is designed to keep the job connected through to invoicing and payment, instead of stopping once the quote is accepted.",
+      },
+    },
   ],
 };
 

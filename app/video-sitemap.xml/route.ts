@@ -1,6 +1,6 @@
 import { VIDEOS, PAGE_VIDEOS } from "@/lib/videos";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://quote-core.com";
+const SITE_URL = "https://quote-core.com";
 
 export async function GET() {
   const entries = PAGE_VIDEOS.map(({ pagePath, videoKey }) => {
