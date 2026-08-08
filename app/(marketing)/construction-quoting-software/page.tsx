@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   title: "Construction Quoting Software",
   description:
     "Construction quoting software for trades that quote from measurements. Measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid in one connected workflow.",
+  openGraph: {
+    title: "Construction Quoting Software | QuoteCore+",
+    description:
+      "Construction quoting software for trades that quote from measurements. Measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid in one connected workflow.",
+    url: "/construction-quoting-software",
+    siteName: "QuoteCore+",
+    type: "website",
+  },
   alternates: {
     canonical: "https://quote-core.com/construction-quoting-software",
     languages: hreflangLanguages("/construction-quoting-software"),
@@ -21,6 +29,8 @@ const softwareSchema = {
   name: "QuoteCore+",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
+  keywords:
+    "contractor quoting software, roofing quoting software, construction quoting software, digital takeoff, quote builder, material orders, Smart Components",
   description:
     "QuoteCore+ is construction quoting software for trades that work from measurements. It helps businesses measure jobs, build priced quotes, track customer approval, order materials, manage work, invoice and get paid in one connected workflow.",
 };

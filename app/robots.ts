@@ -68,7 +68,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         '/*/account',
       ],
     },
-    sitemap: `${origin}/sitemap.xml`,
+    sitemap: [`${origin}/sitemap.xml`, `${origin}/video-sitemap.xml`],
     host: origin,
   };
 }

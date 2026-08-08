@@ -10,6 +10,14 @@ export const metadata: Metadata = {
   title: "Roofing Quoting Software",
   description:
     "Roofing quoting software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, build quotes, order materials, invoice. Plans from free to $59/month.",
+  openGraph: {
+    title: "Roofing Quoting Software | QuoteCore+",
+    description:
+      "Roofing quoting software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, build quotes, order materials, invoice. Plans from free to $59/month.",
+    url: "/roofing-quoting-software",
+    siteName: "QuoteCore+",
+    type: "website",
+  },
   alternates: {
     canonical: "https://quote-core.com/roofing-quoting-software",
     languages: hreflangLanguages("/roofing-quoting-software"),

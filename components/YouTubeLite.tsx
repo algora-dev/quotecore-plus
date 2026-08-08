@@ -15,6 +15,8 @@ interface YouTubeLiteProps {
   showTitle?: boolean;
   /** Rounded corners style - matches the existing video containers */
   rounded?: boolean;
+  /** Upload date for schema.org microdata (ISO format: YYYY-MM-DD) */
+  uploadDate?: string;
 }
 
 /**
@@ -32,6 +34,7 @@ export default function YouTubeLite({
   className = "",
   showTitle = false,
   rounded = true,
+  uploadDate = "2026-07-28",
 }: YouTubeLiteProps) {
   const [activated, setActivated] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -92,7 +95,7 @@ export default function YouTubeLite({
       <meta itemProp="thumbnailUrl" content={thumbSrc} />
       <meta itemProp="embedUrl" content={`https://www.youtube-nocookie.com/embed/${videoId}`} />
       <meta itemProp="contentUrl" content={`https://www.youtube.com/watch?v=${videoId}`} />
-      <meta itemProp="uploadDate" content="2026-07-28" />
+      <meta itemProp="uploadDate" content={uploadDate} />
       {/* Dark gradient overlay for contrast */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
       {/* Play button */}
