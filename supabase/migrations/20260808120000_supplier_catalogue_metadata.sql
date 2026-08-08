@@ -14,8 +14,8 @@ ALTER TABLE catalogs
 
 -- 2. Add address_visibility to supplier_profiles
 ALTER TABLE public.supplier_profiles
-  ADD COLUMN IF NOT EXISTS address_visibility TEXT NOT NULL DEFAULT 'public'
-    CHECK (address_visibility IN ('public', 'service_area', 'hidden'));
+  ADD COLUMN IF NOT EXISTS address_visibility TEXT NOT NULL DEFAULT 'show'
+    CHECK (address_visibility IN ('show', 'city_only', 'hidden'));
 
 -- 3. Add business_registration_number and verification_link to supplier_profiles
 ALTER TABLE public.supplier_profiles
@@ -73,12 +73,14 @@ AS $function$
           'row_index', cr.row_index,
           'raw_row', cr.raw_row
         )
-        ORDER BY cr.row_index
+      )
+      FROM (
+        SELECT row_index, raw_row FROM catalog_rows
+        WHERE catalog_id = c.id
+        ORDER BY row_index
         LIMIT p_limit
         OFFSET p_offset
-      )
-      FROM catalog_rows cr
-      WHERE cr.catalog_id = c.id
+      ) cr
     ), '[]'::jsonb)
   )
   FROM supplier_profiles sp

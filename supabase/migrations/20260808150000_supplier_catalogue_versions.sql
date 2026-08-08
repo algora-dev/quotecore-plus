@@ -56,7 +56,7 @@ CREATE OR REPLACE FUNCTION public_supplier_catalogue_by_version(
   p_offset INT DEFAULT 0
 )
 RETURNS JSON
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
@@ -128,12 +128,14 @@ BEGIN
             'row_index', cr.row_index,
             'raw_row', cr.raw_row
           )
-          ORDER BY cr.row_index
+        )
+        FROM (
+          SELECT row_index, raw_row FROM public.catalog_rows
+          WHERE catalog_id = v_catalogue_id
+          ORDER BY row_index
           LIMIT p_limit
           OFFSET p_offset
-        )
-        FROM public.catalog_rows cr
-        WHERE cr.catalog_id = v_catalogue_id
+        ) cr
       ),
       '[]'::json
     )
