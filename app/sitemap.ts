@@ -143,6 +143,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           priority: 0.8,
         });
       }
+      // Add catalogue routes (HTML, CSV, JSON)
+      entries.push({
+        url: `${SITE_URL}/suppliers/${s.slug}/catalogue`,
+        changeFrequency: 'monthly' as const,
+        priority: 0.6,
+      });
+      entries.push({
+        url: `${SITE_URL}/suppliers/${s.slug}/catalogue.csv`,
+        changeFrequency: 'monthly' as const,
+        priority: 0.5,
+      });
+      entries.push({
+        url: `${SITE_URL}/suppliers/${s.slug}/catalogue.json`,
+        changeFrequency: 'monthly' as const,
+        priority: 0.5,
+      });
       return entries;
     });
 
