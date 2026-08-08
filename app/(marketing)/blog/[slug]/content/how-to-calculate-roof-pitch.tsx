@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -11,7 +13,7 @@ export default function Post() {
       </p>
       <p>
         The good news is that calculating roof pitch is straightforward once you know the three
-        ways it gets expressed, and there is a free tool that handles the conversion once you enter
+        ways it gets expressed, and there is a free <Link href="/free-roof-pitch-calculator">roof pitch calculator</Link> that handles the conversion once you enter
         the measurements.
       </p>
 

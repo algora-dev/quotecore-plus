@@ -1,12 +1,14 @@
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
 
+      <p>The best quoting software for New Zealand tradies in 2026 depends on what part of your quoting process is costing you the most time. If it is turning measurements into a professional quote, you need a platform built around structured pricing and digital takeoffs. If it is managing jobs after the quote is accepted, you need something with strong workflow management. Most tools claim to do both - but they are rarely equal at both.</p>
+
       <p><em>Last checked: June 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing.</em></p>
 
       <p><em>Editorial note: This guide is published by QuoteCore+, so our own product appears in the comparison. We have listed where other tools may be a better fit, including for trade job scheduling, high-volume service work, detailed construction cost estimating, and businesses already embedded in Xero.</em></p>
-
-      <p>The best quoting software for New Zealand tradies in 2026 depends on what part of your quoting process is costing you the most time. If it is turning measurements into a professional quote, you need a platform built around structured pricing and digital takeoffs. If it is managing jobs after the quote is accepted, you need something with strong workflow management. Most tools claim to do both - but they are rarely equal at both.</p>
       <p>This guide compares six quoting platforms available to NZ tradies in 2026, with honest assessments of where each one works well and where it falls short.</p>
 
       <hr />
@@ -58,14 +60,14 @@ export default function Post() {
 
       <h3>1. QuoteCore+</h3>
       <p><em>Best for: NZ tradespeople and construction contractors who quote from plans and need a complete workflow from measurement to job.</em></p>
-      <p>QuoteCore+ is a construction quoting platform built specifically for tradespeople. Shaun, who leads the product, spent over 12 years on the tools in roofing before heading up the build of the platform - designed around the actual process a NZ tradesperson goes through from first measurement to completed job. <a href="/blog/built-by-a-roofer">Read the full story behind QuoteCore+</a>.</p>
+      <p>QuoteCore+ is a <Link href="/construction-quoting-software">construction quoting software</Link> platform built specifically for tradespeople. Shaun, who leads the product, spent over 12 years on the tools in roofing before heading up the build of the platform - designed around the actual process a NZ tradesperson goes through from first measurement to completed job. <a href="/blog/built-by-a-roofer">Read the full story behind QuoteCore+</a>.</p>
       <p>That origin matters. QuoteCore+ was not designed in a tech office by a generalist product team. It was built by people who lived the problem - and that shows in how the workflow is structured.</p>
       <p>The workflow starts with digital takeoff. You upload a set of plans - architectural drawings, council documents, or a PDF from a site manager - and measure directly from them in the platform. No printing. No transferring numbers between tools. Roof sections, floor areas, linear metres - measured once, used throughout.</p>
       <p>From the takeoff, you build the quote. QuoteCore+ gives you full control over what the customer sees: line items, pricing, scope of work, and any specific conditions. Quotes are formatted professionally and ready to send. For tradies who have been emailing Word documents, the difference in how a quote lands is immediate.</p>
       <p>Once the quote is sent, acceptance tracking runs automatically. You get a notification when a customer views or accepts the quote. No more chasing phone calls asking whether they received it.</p>
       <p>From an accepted quote, you generate a materials order directly - including custom details for specific job requirements. The job then moves into workflow management: tracked from first measurement to job completion in one place.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ has NZD monthly plans for New Zealand businesses, with a 14-day free trial and no credit card required. <a href="https://www.quote-core.co.nz/pricing">See New Zealand pricing</a>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ has NZD monthly plans for New Zealand businesses, with a 14-day free trial and no credit card required. <Link href="/pricing">See pricing</Link>.</p>
 
       <p><strong>Pros:</strong></p>
       <ul>

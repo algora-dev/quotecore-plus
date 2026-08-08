@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -231,7 +233,7 @@ export default function Post() {
           calculation in imperial units
         </li>
         <li>
-          <a href="/free-roofing-calculator">Full Roofing Calculator</a> - pitch, area, rafter
+          <Link href="/free-roofing-calculator">Full Roofing Calculator</Link> - pitch, area, rafter
           lengths, and material quantities in one tool
         </li>
       </ul>
@@ -250,7 +252,7 @@ export default function Post() {
       </p>
       <p>
         If you want to go further and connect the takeoff, quote, material orders, and job
-        management in one workflow, <a href="/free-trial">QuoteCore+ does all of that</a>. From
+        management in one workflow, <Link href="/roofing-quoting-software">QuoteCore+ roofing quoting software</Link> does all of that. From
         complex plan to quote in under 3 minutes for less than a dollar.
       </p>
       <p>

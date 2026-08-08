@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>The best roofing material list is built from the roof system, measured geometry, and manufacturer specification. A generic list can remind you what to check, but it cannot decide the exact tile, sheet, membrane, fixing pattern, lap, ventilation detail, or waste allowance for a real job.</p>
-      <p>Use this guide as a practical checklist for pitched and flat roofs. Then use the <a href="/free-roofing-material-calculator">free roofing material calculator</a> to turn measurements into quantities.</p>
+      <p>Use this guide as a practical checklist for pitched and flat roofs. Then use the <Link href="/free-roofing-material-calculator">free roofing material calculator</Link> to turn measurements into quantities.</p>
       <h2>Start with five material groups</h2>
       <p>Most complete roof material schedules contain five groups:</p>
       <ol>

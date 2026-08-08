@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -136,7 +138,7 @@ export default function Post() {
         <li>Failing to record assumptions</li>
       </ul>
       <h2>A faster connected workflow</h2>
-      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ connects digital measurement, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
+      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ connects <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link>, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
       <p>Watch <a href="https://www.youtube.com/watch?v=pqIfx-rOcmo">Create a Quote from Start to Finish with QuoteCore+</a> to see how the stages connect, or see a <a href="https://www.youtube.com/watch?v=DziFjqnPdqQ">complex roofing quote created in under three minutes</a>.</p>
       <h2>Frequently asked questions</h2>
       <h3>What is the difference between a roof measurement and a roof takeoff?</h3>
@@ -149,7 +151,7 @@ export default function Post() {
       <p>It should be accurate enough to support the commercial decision being made. Early budgets can use stated allowances. A final order needs confirmed dimensions, product data, details, and quantities.</p>
       <h3>What is the fastest way to check a manual takeoff?</h3>
       <p>Recalculate area by roof plane, total linear components independently, compare the result with the roof footprint, and review the material schedule against the specification. A second-person check is valuable on complex work.</p>
-      <p>Ready to build a takeoff? Try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a>, then explore <a href="/roofing-quoting-software">roofing quoting software</a> when you want the whole process connected.</p>
+      <p>Ready to build a takeoff? Try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a>, then explore <Link href="/roofing-quoting-software">roofing quoting software</Link> when you want the whole process connected.</p>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Roofing Quoting Software for Contractors",
+  title: "Roofing Quoting Software",
   description:
     "Roofing quoting software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, build quotes, order materials, invoice. Plans from free to $59/month.",
   alternates: {
@@ -126,16 +126,31 @@ const faqs = [
     q: "Is there a free trial?",
     a: "Yes. QuoteCore+ offers a 14-day free trial with no credit card required.",
   },
+  {
+    q: "What is the best roofing quoting software?",
+    a: "best-roofing-link",
+  },
+  {
+    q: "Does QuoteCore+ support metal roofing?",
+    a: "metal-roofing-link",
+  },
 ];
 
 const faqPageSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: faqs.map((f) => ({
-    "@type": "Question",
-    name: f.q,
-    acceptedAnswer: { "@type": "Answer", text: f.a },
-  })),
+  mainEntity: faqs.map((f) => {
+    const text = f.a === "best-roofing-link"
+      ? "The best roofing quoting software depends on your workflow. If you quote from plans and measurements, need digital takeoff, want AI-assisted plan reading, and want to connect quoting to material ordering and invoicing, QuoteCore+ is built for that workflow. See our comparison of UK roofing quoting software for a detailed breakdown."
+      : f.a === "metal-roofing-link"
+      ? "Yes. Smart Components can store metal roofing materials, pricing, waste allowances, screw counts, and custom lengths. The free metal roofing calculator gives quick material estimates without signing up."
+      : f.a;
+    return {
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text },
+    };
+  }),
 };
 
 const videoSchemas = [
@@ -435,9 +450,45 @@ export default function RoofingQuotingSoftwarePage() {
               {faqs.map((f) => (
                 <div key={f.q} className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
                   <p className="font-semibold text-zinc-950">{f.q}</p>
-                  <p className="mt-3 text-sm leading-7 text-zinc-600">{f.a}</p>
+                  <p className="mt-3 text-sm leading-7 text-zinc-600">
+                    {f.a === "best-roofing-link" ? (
+                      <>
+                        The best roofing quoting software depends on your workflow. If you quote from plans and measurements, need digital takeoff, want AI-assisted plan reading, and want to connect quoting to material ordering and invoicing, QuoteCore+ is built for that workflow. See our{" "}
+                        <a href="/blog/best-roofing-quoting-software-uk-2026" className="text-[#FF6B35] hover:underline">comparison of UK roofing quoting software</a>{" "}
+                        for a detailed breakdown.
+                      </>
+                    ) : f.a === "metal-roofing-link" ? (
+                      <>
+                        Yes. Smart Components can store metal roofing materials, pricing, waste allowances, screw counts, and custom lengths. The{" "}
+                        <a href="/free-metal-roofing-calculator" className="text-[#FF6B35] hover:underline">free metal roofing calculator</a>{" "}
+                        gives quick material estimates without signing up.
+                      </>
+                    ) : (
+                      f.a
+                    )}
+                  </p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonial */}
+        <section className="bg-zinc-50 py-16">
+          <div className="mx-auto max-w-4xl px-6 lg:px-8">
+            <div className="rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] text-white font-semibold">
+                  TH
+                </div>
+                <div>
+                  <p className="font-semibold text-zinc-950">Tom Harris</p>
+                  <p className="text-sm text-[#FF6B35]">Harris Flooring Ltd</p>
+                </div>
+              </div>
+              <p className="mt-6 text-lg leading-8 text-zinc-600">
+                &ldquo;QuoteCore+ paid for itself from the first quote. The biggest difference for us has been how much faster we go from measuring, quoting to getting the customer approval. No more chasing people, auto follow ups make that so easy for us while we&apos;re on the tools! It makes the whole quoting process feel more professional and saves us a lot of time.&rdquo;
+              </p>
             </div>
           </div>
         </section>
@@ -461,6 +512,14 @@ export default function RoofingQuotingSoftwarePage() {
             <a href="/free-roofing-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Free roofing calculator</p>
               <p className="mt-1 text-sm text-zinc-600">Pitch, rafter lengths, areas, and material quantities.</p>
+            </a>
+            <a href="/free-metal-roofing-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free metal roofing calculator</p>
+              <p className="mt-1 text-sm text-zinc-600">Estimate metal roofing materials and costs.</p>
+            </a>
+            <a href="/free-roof-pitch-calculator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free roof pitch calculator</p>
+              <p className="mt-1 text-sm text-zinc-600">Calculate pitch from rise and run or convert degrees.</p>
             </a>
             <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Free quote generator</p>

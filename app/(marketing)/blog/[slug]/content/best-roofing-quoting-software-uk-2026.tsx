@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -6,7 +8,7 @@ export default function Post() {
 
       <p><em>Editorial note: This guide is published by QuoteCore+, so our own product appears in the comparison. We have listed where other tools are a better fit, including for reactive repair work, mobile-first teams, compliance documentation, scheduling-heavy contractors, and businesses that need live UK merchant pricing built in.</em></p>
 
-      <p>The best roofing quoting software for UK contractors in 2026 depends on what stage of the quoting process is slowing you down most. If it is turning measurements into a professional quote, software with structured pricing and digital takeoffs will have the biggest impact. If it is managing jobs after the quote is accepted, a platform with strong workflow management matters more.</p>
+      <p>The best <Link href="/roofing-quoting-software">roofing quoting software</Link> for UK contractors in 2026 depends on what stage of the quoting process is slowing you down most. If it is turning measurements into a professional quote, software with structured pricing and digital takeoffs will have the biggest impact. If it is managing jobs after the quote is accepted, a platform with strong workflow management matters more.</p>
       <p>This guide compares seven options that UK roofers are actually using in 2026. Each is assessed on the criteria that matter for roofing specifically - not generic trades.</p>
 
       <hr />
@@ -67,7 +69,7 @@ export default function Post() {
       <p>Once the quote goes out, acceptance tracking runs automatically. You receive an alert by email and in your QuoteCore+ account when a quote is accepted or declined. Nothing gets lost in a pile of emails.</p>
       <p>From an accepted quote, you create material orders directly - including custom flashing details you can draw and store in the flashings drawer. The job then stays connected through job management and invoicing.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ has monthly plans and a 14-day free trial with no card required. <a href="https://quote-core.com/pricing">See current pricing</a>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ has monthly plans and a 14-day free trial with no card required. <Link href="/pricing">See current pricing</Link>.</p>
 
       <p><strong>Pros:</strong></p>
       <ul>

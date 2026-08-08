@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -286,7 +288,7 @@ export default function Post() {
         handoff creates another place to re-enter or miss information.
       </p>
       <p>
-        <a href="/free-trial">QuoteCore+</a> connects measurements, pitch calculations, saved
+        <Link href="/roofing-quoting-software">QuoteCore+ roofing quoting software</Link> connects measurements, pitch calculations, saved
         pricing rules, labour, quotes, material orders, and invoices in one workflow. The estimator
         remains responsible for checking every measurement, rate, allowance, and output.
       </p>

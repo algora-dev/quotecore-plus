@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>Roofing waste is the extra material needed beyond the net measured area or length. It covers unavoidable cuts, laps, breakage, pattern alignment, unusable offcuts, and practical ordering units. The right allowance depends on the roof and material. Applying one percentage to every job is quick, but it is not reliable.</p>
-      <p>Use the <a href="/free-roofing-waste-calculator">free roofing waste calculator</a> to test an allowance. This guide explains how to choose that allowance and where a percentage is not enough.</p>
+      <p>Use the <Link href="/free-roofing-waste-calculator">free roofing waste calculator</Link> to test an allowance. This guide explains how to choose that allowance and where a percentage is not enough.</p>
       <h2>Net quantity, gross quantity, and order quantity</h2>
       <p>Keep three figures separate:</p>
       <ol>

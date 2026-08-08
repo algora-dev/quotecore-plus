@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -111,7 +113,7 @@ export default function Post() {
       <p>A lot of contractors think getting more work means getting more leads. Sometimes it does. But often, the quickest win is converting more of the enquiries and quotes you already have.</p>
       <p>If you send ten quotes and win five, the other five are not just &quot;lost&quot;. Some may have gone elsewhere, but some may have needed a follow-up. Some may have wanted more detail. Some may have trusted another contractor more because their quote looked clearer and more professional.</p>
       <p>That is why your quoting process matters so much. Speed matters. Detail matters. Follow-up matters. If a customer contacts three contractors and you are the first to send a clear, professional quote, you have already made their decision easier. If you then follow up properly, you give yourself another chance to win the job.</p>
-      <p>This is exactly the kind of workflow <a href="/free-trial">QuoteCore+</a> was built for. It helps trades businesses keep the quoting process organised, from measuring and pricing through to sending the quote, tracking what happens next, creating material orders, managing the job and invoicing. Instead of jobs getting lost across emails, notes, spreadsheets, quote documents and messages, everything stays in one place. For a full list of free tools that can help speed up your workflow, see <a href="/blog/best-free-tools-for-roofers">Best Free Tools for Roofers and Contractors (2026)</a>.</p>
+      <p>This is exactly the kind of workflow <Link href="/construction-quoting-software">QuoteCore+ construction quoting software</Link> was built for. It helps trades businesses keep the quoting process organised, from measuring and pricing through to sending the quote, tracking what happens next, creating material orders, managing the job and invoicing. Instead of jobs getting lost across emails, notes, spreadsheets, quote documents and messages, everything stays in one place. For a full list of free tools that can help speed up your workflow, see <a href="/blog/best-free-tools-for-roofers">Best Free Tools for Roofers and Contractors (2026)</a>.</p>
 
       <hr />
 

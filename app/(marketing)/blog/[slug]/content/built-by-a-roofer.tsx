@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -8,7 +10,7 @@ export default function Post() {
       <p>That was the gap Shaun wanted QuoteCore+ to solve.</p>
       <p>The shift from manual to digital quoting is exactly what QuoteCore+ was built to make possible - <a href="/blog/roofing-quoting-software-uk">here is how UK roofers are already using it to win more jobs</a>.</p>
       <p>Shaun brought the industry experience and the understanding of how these workflows actually happen day to day. The QuoteCore+ team built around that direction, with the aim of creating something practical for construction businesses that measure, price, quote, follow up, create material orders, manage the job and invoice once the work is accepted.</p>
-      <p>QuoteCore+ started with roofing because that was the world Shaun knew best. Roofing has all the moving parts that make quoting difficult: measurements, plans, material calculations, labour, pricing, customer approvals, follow-ups and job details that need to stay organised.</p>
+      <p>QuoteCore+ started with roofing because that was the world Shaun knew best, and it has since grown into a broader <Link href="/roofing-quoting-software">roofing quoting software</Link> platform. Roofing has all the moving parts that make quoting difficult: measurements, plans, material calculations, labour, pricing, customer approvals, follow-ups and job details that need to stay organised.</p>
       <p>But the problem is much wider than roofing.</p>
       <p>The same quoting and admin problems show up across construction, not just roofing. QuoteCore+ is built for trades and construction businesses that need to turn measurements, materials, labour and pricing into professional quotes, material orders, managed jobs and invoices.</p>
       <p>That includes:</p>

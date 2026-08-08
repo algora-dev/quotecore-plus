@@ -8,6 +8,9 @@ import {
 } from "@/lib/schema";
 
 export const metadata: Metadata = {
+  title: {
+    absolute: "QuoteCore+ — Roofing & Construction Quoting Software",
+  },
   alternates: {
     canonical: "https://quote-core.com/",
     languages: hreflangLanguages("/"),

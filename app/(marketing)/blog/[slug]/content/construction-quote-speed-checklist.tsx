@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -51,7 +53,7 @@ export default function Post() {
       <hr />
 
       <h2>How QuoteCore+ fits in</h2>
-      <p>QuoteCore+ is built around this checklist. Upload a plan, measure from it, apply pricing, generate a professional quote and send it to the client. When accepted, the same job information can support material orders, job management and invoicing.</p>
+      <p><Link href="/construction-quoting-software">QuoteCore+ construction quoting software</Link> is built around this checklist. Upload a plan, measure from it, apply pricing, generate a professional quote and send it to the client. When accepted, the same job information can support material orders, job management and invoicing.</p>
       <p>No re-entry. No reformatting. Quote to client, same day.</p>
       <h2>See the quote speed workflow in practice</h2>
       <p>
@@ -68,7 +70,7 @@ export default function Post() {
         />
       </div>
       <p>Getting quotes out faster solves one part of the problem - if you want the broader picture on growing a contracting business without spending money on ads first, <a href="/blog/how-to-get-more-work-as-a-contractor">here are the basics worth fixing</a>.</p>
-      <p><a href="/free-trial" className="text-[#FF6B35] font-medium hover:underline">Start your free 14-day trial</a> - no card required. From complex plan to quote in under 3 minutes for less than a dollar.</p>
+      <p><Link href="/free-trial" className="text-[#FF6B35] font-medium hover:underline">Start your free 14-day trial</Link> - no card required. From complex plan to quote in under 3 minutes for less than a dollar.</p>
 
       <hr />
 

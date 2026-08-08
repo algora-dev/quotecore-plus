@@ -98,7 +98,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'comparisons',
     title: 'Best Quoting Software for NZ Builders & Tradies (2026)',
     description:
-      'Compare the best quoting software for New Zealand builders and trades. Features, pricing in NZD, GST support, and NZ-specific tools for roofers, builders, and contractors.',
+      'Looking for quoting software in NZ? We compared 6 platforms on pricing, features, GST support, and NZ-specific tools. See which fits your trade.',
     date: '2026-07-15',
     lastModified: '2026-08-05',
   },
