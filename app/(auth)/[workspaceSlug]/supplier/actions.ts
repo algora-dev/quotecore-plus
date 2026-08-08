@@ -36,6 +36,9 @@ export type SupplierProfileData = {
   branch_postcode: string | null;
   national_coverage: boolean;
   delivery_coverage: string[] | null;
+  delivery_assumptions: string | null;
+  exclusions: string | null;
+  address_visibility: string | null;
   tax_treatment: string;
   tax_name: string | null;
   tax_rate: number | null;
@@ -187,6 +190,10 @@ export async function updateSupplierProfile(
     tax_name: string | null;
     tax_rate: number | null;
     delivery_coverage: string[] | null;
+    delivery_assumptions: string | null;
+    exclusions: string | null;
+    national_coverage: boolean | null;
+    address_visibility: string | null;
   }>
 ): Promise<{ ok: true } | { ok: false; message: string }> {
   try {
@@ -233,6 +240,10 @@ export async function updateSupplierProfile(
     if (input.tax_name !== undefined) update.tax_name = input.tax_name || null;
     if (input.tax_rate !== undefined) update.tax_rate = input.tax_rate;
     if (input.delivery_coverage !== undefined) update.delivery_coverage = input.delivery_coverage;
+    if (input.delivery_assumptions !== undefined) update.delivery_assumptions = input.delivery_assumptions;
+    if (input.exclusions !== undefined) update.exclusions = input.exclusions;
+    if (input.national_coverage !== undefined) update.national_coverage = input.national_coverage;
+    if (input.address_visibility !== undefined) update.address_visibility = input.address_visibility;
     if (input.branch_latitude !== undefined) update.branch_latitude = input.branch_latitude;
     if (input.branch_longitude !== undefined) update.branch_longitude = input.branch_longitude;
     if (input.price_range !== undefined) update.price_range = input.price_range;

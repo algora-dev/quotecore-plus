@@ -133,11 +133,15 @@ function buildStructuredData(data: SupplierDetail) {
   if (s.logo_url) org.logo = s.logo_url;
   org.image = s.banner_url || s.logo_url || undefined;
 
-  if (s.branch_city || s.branch_region || s.branch_country) {
+  // Address in schema respects address_visibility setting
+  const schemaAddrVisibility = s.address_visibility ?? 'show';
+  if (schemaAddrVisibility !== 'hidden' && (s.branch_city || s.branch_region || s.branch_country)) {
     const addr: Record<string, unknown> = { "@type": "PostalAddress" };
     if (s.branch_city) addr.addressLocality = s.branch_city;
-    if (s.branch_region) addr.addressRegion = s.branch_region;
-    if (s.branch_postcode) addr.postalCode = s.branch_postcode;
+    if (schemaAddrVisibility === 'show') {
+      if (s.branch_region) addr.addressRegion = s.branch_region;
+      if (s.branch_postcode) addr.postalCode = s.branch_postcode;
+    }
     if (s.branch_country) addr.addressCountry = s.branch_country;
     org.address = addr;
   }
@@ -336,6 +340,18 @@ export default async function SupplierDetailPage({ params }: PageProps) {
   const locationParts = [s.branch_city, s.branch_region, s.branch_country].filter(Boolean);
   const locationString = locationParts.join(", ");
 
+  // Address visibility logic
+  const addrVisibility = s.address_visibility ?? 'show';
+  const showFullAddress = addrVisibility === 'show';
+  const showCityOnly = addrVisibility === 'city_only';
+  // For header location display: show city + country for 'show' and 'city_only', hide for 'hidden'
+  const headerLocationParts = addrVisibility === 'hidden'
+    ? []
+    : showCityOnly
+      ? [s.branch_city, s.branch_country].filter(Boolean)
+      : locationParts;
+  const headerLocation = headerLocationParts.join(", ");
+
   return (
     <>
       {schemas.map((schema, i) => (
@@ -410,8 +426,8 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     Verified supplier
                   </span>
                 </div>
-                {locationString && (
-                  <p className="mt-2 text-sm text-slate-500">{locationString}</p>
+                {headerLocation && (
+                  <p className="mt-2 text-sm text-slate-500">{headerLocation}</p>
                 )}
               </div>
             </div>
@@ -705,13 +721,21 @@ export default async function SupplierDetailPage({ params }: PageProps) {
               {/* Address */}
               <div>
                 <h2 className="text-xl font-semibold text-zinc-950 mb-4">Address</h2>
-                {locationString ? (
+                {showFullAddress && locationString ? (
                   <div className="rounded-xl border border-slate-200 p-5">
                     <dl className="space-y-1">
                       {s.supplier_name && <InfoRow label="Business" value={s.supplier_name} />}
                       {s.branch_city && <InfoRow label="City" value={s.branch_city} />}
                       {s.branch_region && <InfoRow label="Region" value={s.branch_region} />}
                       {s.branch_postcode && <InfoRow label="Postal code" value={s.branch_postcode} />}
+                      {s.branch_country && <InfoRow label="Country" value={s.branch_country} />}
+                    </dl>
+                  </div>
+                ) : showCityOnly && (s.branch_city || s.branch_country) ? (
+                  <div className="rounded-xl border border-slate-200 p-5">
+                    <dl className="space-y-1">
+                      {s.supplier_name && <InfoRow label="Business" value={s.supplier_name} />}
+                      {s.branch_city && <InfoRow label="City" value={s.branch_city} />}
                       {s.branch_country && <InfoRow label="Country" value={s.branch_country} />}
                     </dl>
                   </div>

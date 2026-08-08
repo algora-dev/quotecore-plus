@@ -66,6 +66,7 @@ export interface SupplierDetail {
     branch_region: string | null;
     branch_country: string | null;
     branch_postcode: string | null;
+    address_visibility: string | null;
     national_coverage: boolean | null;
     delivery_coverage: string[] | null;
     freight_available: boolean | null;

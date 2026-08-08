@@ -245,6 +245,10 @@ export function SupplierDashboard({
     { value: 'pickup_only', label: 'Pick Up' },
   ] as const;
   const [deliveryCoverage, setDeliveryCoverage] = useState<string[]>(profile?.delivery_coverage ?? []);
+  const [deliveryAssumptions, setDeliveryAssumptions] = useState(profile?.delivery_assumptions ?? '');
+  const [exclusions, setExclusions] = useState(profile?.exclusions ?? '');
+  const [nationalCoverage, setNationalCoverage] = useState(profile?.national_coverage ?? false);
+  const [addressVisibility, setAddressVisibility] = useState(profile?.address_visibility ?? 'show');
 
   // Geo + opening hours + price range (Phase 6 SEO fields)
   const [branchLatitude, setBranchLatitude] = useState(profile?.branch_latitude != null ? String(profile.branch_latitude) : '');
@@ -318,6 +322,10 @@ export function SupplierDashboard({
         tax_name: taxTreatment === 'inclusive' ? (taxName.trim() || null) : null,
         tax_rate: taxTreatment === 'inclusive' ? (parseFloat(taxRate) || null) : null,
         delivery_coverage: deliveryCoverage.length > 0 ? deliveryCoverage : null,
+        delivery_assumptions: deliveryAssumptions.trim() || null,
+        exclusions: exclusions.trim() || null,
+        national_coverage: nationalCoverage,
+        address_visibility: addressVisibility,
         branch_latitude: branchLatitude.trim() ? parseFloat(branchLatitude) || null : null,
         branch_longitude: branchLongitude.trim() ? parseFloat(branchLongitude) || null : null,
         opening_hours: openingHoursJson.trim() ? (() => { try { return JSON.parse(openingHoursJson); } catch { return null; } })() : null,
@@ -678,6 +686,41 @@ export function SupplierDashboard({
                           );
                         })}
                       </div>
+                      {/* Delivery notes */}
+                      <div className="mt-3">
+                        <label className="text-xs font-medium text-slate-600">Delivery notes (optional)</label>
+                        <input type="text" value={deliveryAssumptions} onChange={e => setDeliveryAssumptions(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. Free delivery on orders over $500" />
+                      </div>
+                      {/* Exclusions */}
+                      <div className="mt-2">
+                        <label className="text-xs font-medium text-slate-600">Exclusions (optional)</label>
+                        <input type="text" value={exclusions} onChange={e => setExclusions(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-orange-500 focus:outline-none" placeholder="e.g. No deliveries to offshore islands" />
+                      </div>
+                      {/* National coverage */}
+                      <div className="mt-2 flex items-center gap-2">
+                        <input type="checkbox" id="national-coverage" checked={nationalCoverage} onChange={e => setNationalCoverage(e.target.checked)} className="rounded text-[#FF6B35] focus:ring-[#FF6B35]" />
+                        <label htmlFor="national-coverage" className="text-xs text-slate-600 cursor-pointer">We provide national coverage across the entire country</label>
+                      </div>
+                    </div>
+
+                    {/* Address visibility */}
+                    <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                      <label className="text-xs font-medium text-slate-700">Address Visibility</label>
+                      <Hint>Control whether your physical address is shown on your public supplier page. Service-area businesses may prefer to hide their address.</Hint>
+                      <div className="mt-2 space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="address-visibility" value="show" checked={addressVisibility === 'show'} onChange={() => setAddressVisibility('show')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <span className="text-sm text-slate-700">Show full address (city, region, postcode, country)</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="address-visibility" value="city_only" checked={addressVisibility === 'city_only'} onChange={() => setAddressVisibility('city_only')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <span className="text-sm text-slate-700">Show city and country only</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="address-visibility" value="hidden" checked={addressVisibility === 'hidden'} onChange={() => setAddressVisibility('hidden')} className="text-[#FF6B35] focus:ring-[#FF6B35]" />
+                          <span className="text-sm text-slate-700">Hide address (service-area business)</span>
+                        </label>
+                      </div>
                     </div>
 
                     <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
@@ -996,14 +1039,16 @@ export function SupplierDashboard({
                 <p className="text-xs text-slate-400 mb-3">Make sure these items are complete so your page looks professional.</p>
                 <div className="space-y-2">
                   {readinessChecks.map((check, i) => (
-                    <div key={i} className="flex items-center gap-2">
+                    <div key={i} className="flex items-start gap-2">
                       {check.passed ? (
-                        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       ) : (
-                        <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                       )}
-                      <span className={`text-sm ${check.passed ? 'text-slate-700' : 'text-slate-500'}`}>{check.label}</span>
-                      {check.detail && <span className="text-xs text-slate-400">- {check.detail}</span>}
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-sm ${check.passed ? 'text-slate-700' : 'text-slate-600'}`}>{check.label}</span>
+                        {check.detail && <p className={`text-xs mt-0.5 ${check.passed ? 'text-amber-600' : 'text-slate-400'}`}>{check.detail}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>
