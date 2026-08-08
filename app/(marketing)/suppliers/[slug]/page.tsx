@@ -256,6 +256,36 @@ function buildStructuredData(data: SupplierDetail) {
     });
   }
 
+  // WebApplication — free roof takeoff calculator
+  if (data.eligibility.calculator_available) {
+    const calcSlug = s.slug;
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": `${s.supplier_name} Roof Takeoff Builder`,
+      "url": `https://quote-core.com/free-roofing-takeoff-builder/${calcSlug}`,
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript. Requires a modern web browser.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": s.currency || "USD",
+        "description": "Free roof takeoff calculator using supplier catalogue pricing",
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "QuoteCore+",
+        "url": "https://quote-core.com/",
+      },
+      "about": {
+        "@type": "Thing",
+        "name": "Roofing material takeoff and estimation",
+      },
+      "isAccessibleForFree": true,
+    });
+  }
+
   return schemas;
 }
 

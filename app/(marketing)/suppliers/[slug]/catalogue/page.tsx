@@ -85,7 +85,15 @@ function filterByQuery(items: CatalogueItem[], query: string): CatalogueItem[] {
   );
 }
 
-function buildStructuredData(supplierName: string, slug: string, catalogueVersion: number | null, currency: string | null, validFrom: string | null, validUntil: string | null) {
+function buildStructuredData(
+  supplierName: string,
+  slug: string,
+  catalogueVersion: number | null,
+  currency: string | null,
+  validFrom: string | null,
+  validUntil: string | null,
+  items: CatalogueItem[],
+) {
   const baseUrl = `https://quote-core.com/suppliers/${slug}`;
   const schemas: Record<string, unknown>[] = [];
 
@@ -135,6 +143,59 @@ function buildStructuredData(supplierName: string, slug: string, catalogueVersio
   }
 
   schemas.push(dataset);
+
+  // Product + Offer schema for catalogue items (cap at 20 to avoid huge JSON-LD)
+  const productLimit = Math.min(items.length, 20);
+  if (productLimit > 0) {
+    const offers: Record<string, unknown>[] = [];
+    for (let i = 0; i < productLimit; i++) {
+      const item = items[i];
+      const row = item.raw_row;
+      const productCode = row.supplier_product_code || row.sku || row.code || null;
+      const productName = row.product_name || row.name || row.description || 'Product';
+      const price = row.price != null ? String(row.price) : null;
+      const productUrl = productCode
+        ? `${baseUrl}/catalogue?product=${encodeURIComponent(String(productCode))}`
+        : undefined;
+
+      const offer: Record<string, unknown> = {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Product",
+          "name": String(productName),
+        },
+        "seller": { "@type": "Organization", "name": supplierName },
+      };
+      if (productCode) {
+        (offer.itemOffered as Record<string, unknown>).sku = String(productCode);
+      }
+      if (productUrl) {
+        (offer.itemOffered as Record<string, unknown>).url = productUrl;
+      }
+      if (price && currency) {
+        offer.price = price;
+        offer.priceCurrency = currency;
+        offer.availability = "https://schema.org/InStock";
+      } else if (price) {
+        offer.price = price;
+        offer.priceCurrency = currency || "USD";
+      }
+      offers.push(offer);
+    }
+
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      name: `${supplierName} Catalogue Items`,
+      url: `${baseUrl}/catalogue`,
+      numberOfItems: items.length,
+      itemListElement: offers.map((offer, idx) => ({
+        "@type": "ListItem",
+        position: idx + 1,
+        item: offer,
+      })),
+    });
+  }
 
   return schemas;
 }
@@ -219,6 +280,7 @@ export default async function CataloguePage({ params, searchParams }: PageProps)
     cat.currency,
     cat.valid_from,
     cat.valid_until,
+    items,
   );
 
   // Column visibility: hide columns that have no data in the current page

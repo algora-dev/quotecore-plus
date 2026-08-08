@@ -3,6 +3,7 @@
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { validateSupplierContacts, validateCatalogueRows } from '@/lib/supplier-validation';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AdminAny = any;
@@ -542,6 +543,91 @@ export async function checkPublicationReadiness(): Promise<{
       { label: 'Default takeoff collection selected', passed: !!supplier.default_takeoff_collection_id, detail: !supplier.default_takeoff_collection_id ? 'Select a component library in the Takeoff Builder tab' : undefined },
       { label: 'Takeoff builder enabled', passed: supplier.takeoff_builder_enabled === true },
     ];
+
+    // Placeholder contact validation
+    const contactValidation = validateSupplierContacts({
+      supplier_name: supplier.supplier_name,
+      contact_email: supplier.contact_email,
+      enquiry_email: supplier.enquiry_email,
+      phone_number: supplier.phone_number,
+      website_url: supplier.website_url,
+      description: supplier.description,
+    });
+    for (const issue of contactValidation.issues) {
+      checks.push({
+        label: `Valid ${issue.field.replace(/_/g, ' ')}`,
+        passed: false,
+        detail: issue.message,
+      });
+    }
+
+    // Catalogue validation
+    const { data: publishedCatalogRaw } = await supabase
+      .from('catalogs')
+      .select('id, published_version, published_at, catalogue_status, valid_from, valid_until')
+      .eq('supplier_profile_id', supplier.id)
+      .eq('visibility', 'published')
+      .eq('publication_status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const publishedCatalog = publishedCatalogRaw as { id: string; published_version: number | null; published_at: string | null; catalogue_status: string | null; valid_from: string | null; valid_until: string | null } | null;
+
+    if (publishedCatalog) {
+      checks.push({ label: 'Catalogue published', passed: true });
+
+      // Expired catalogue warning
+      if (publishedCatalog.valid_until) {
+        const expiry = new Date(publishedCatalog.valid_until);
+        const now = new Date();
+        if (expiry < now) {
+          checks.push({
+            label: 'Catalogue not expired',
+            passed: false,
+            detail: `Catalogue expired on ${expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. Please upload an updated price list.`,
+          });
+        } else {
+          const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysUntilExpiry <= 30) {
+            checks.push({
+              label: 'Catalogue not expiring soon',
+              passed: true,
+              detail: `Catalogue valid for ${daysUntilExpiry} more days (until ${expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}).`,
+            });
+          } else {
+            checks.push({ label: 'Catalogue not expiring soon', passed: true });
+          }
+        }
+      }
+
+      // Row-level validation
+      const { data: catalogRows } = await supabase
+        .from('catalog_rows')
+        .select('raw_row')
+        .eq('catalog_id', publishedCatalog.id)
+        .order('row_index', { ascending: true });
+
+      if (catalogRows && catalogRows.length > 0) {
+        const rowValidation = validateCatalogueRows(catalogRows as { raw_row: Record<string, unknown> }[]);
+        for (const issue of rowValidation.issues) {
+          checks.push({
+            label: `Catalogue ${issue.field.replace(/_/g, ' ')}`,
+            passed: false,
+            detail: issue.message,
+          });
+        }
+        checks.push({ label: 'Catalogue has product rows', passed: true });
+      } else {
+        checks.push({ label: 'Catalogue has product rows', passed: false, detail: 'No rows found in published catalogue.' });
+      }
+    } else {
+      checks.push({
+        label: 'Catalogue published',
+        passed: false,
+        detail: 'No published catalogue found. Upload and publish a product catalogue.',
+      });
+    }
 
     return { ready: checks.every(c => c.passed), checks };
   } catch (err) {
