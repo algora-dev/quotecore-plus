@@ -350,8 +350,8 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           );
         })()}
 
-        {/* Supplier header */}
-        <section className="pb-8 pt-8">
+        {/* 1. Supplier header — logo, name, location, verification badge */}
+        <section className="pb-6 pt-8">
           <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
               {(() => {
@@ -369,40 +369,65 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                 );
               })()}
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
-                  {s.supplier_name}{locationString ? ` — Roofing Supplies in ${s.branch_city || s.branch_region || s.branch_country}` : ''}
-                </h1>
-                {s.description && (
-                  <p className="mt-3 text-base sm:text-lg text-zinc-600 max-w-3xl">{s.description}</p>
-                )}
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  {data.eligibility.calculator_available && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#FF6B35]/10 px-2.5 py-1 text-xs font-medium text-[#BD4A1A]">
-                      Calculator available
-                    </span>
-                  )}
-                  {s.national_coverage && (
-                    <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
-                      National coverage
-                    </span>
-                  )}
-                  {s.freight_available && (
-                    <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
-                      Freight available
-                    </span>
-                  )}
-                  {s.pickup_available && (
-                    <span className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
-                      Pickup available
-                    </span>
-                  )}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
+                    {s.supplier_name}
+                  </h1>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Verified supplier
+                  </span>
                 </div>
+                {locationString && (
+                  <p className="mt-2 text-sm text-slate-500">{locationString}</p>
+                )}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Calculator CTA */}
+        {/* 2. Supplier-managed page trust panel */}
+        <section className="pb-6">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+            <div className="rounded-xl border border-slate-200 bg-zinc-50 px-5 py-4">
+              <div className="flex items-start gap-2">
+                <svg className="h-5 w-5 text-slate-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-zinc-950">Supplier-managed page</p>
+                  <p className="mt-1 text-sm text-zinc-600">
+                    This page is managed by {s.supplier_name} through its verified QuoteCore+ supplier account. The business has provided or linked all company information, catalogue data, service areas, delivery details, contact information, branding, and pricing shown on this page.
+                  </p>
+                </div>
+              </div>
+              {/* Catalogue metadata row */}
+              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
+                <span>Verification: <span className="text-emerald-600">Verified</span></span>
+                {lib?.published_version != null && (
+                  <span>Catalogue version: {lib.published_version}</span>
+                )}
+                {s.pricing_updated_at && (
+                  <span>Catalogue uploaded: {new Date(s.pricing_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                )}
+                {s.price_valid_until && (
+                  <span>Valid until: {new Date(s.price_valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                )}
+                {s.publication_updated_at && (
+                  <span>Last updated: {new Date(s.publication_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                )}
+              </div>
+              {/* Pricing notice */}
+              <p className="mt-3 text-xs text-slate-500 border-t border-slate-200 pt-2">
+                Published prices are provided by the supplier and may remain subject to stock availability, delivery charges, order acceptance, and final supplier confirmation.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Main calculator action */}
         {calculatorUrl && (
           <section className="pb-8">
             <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
@@ -430,188 +455,249 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </section>
         )}
 
-        {/* Supplier details */}
-        <section className="pb-12">
+        {/* 4. Catalogue status and validity information */}
+        <section className="pb-8">
           <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
-            <h2 className="text-xl font-semibold text-zinc-950 mb-4">Supplier information</h2>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-              {/* Left: main info */}
-              <div className="lg:col-span-2">
-                <dl className="rounded-xl border border-slate-200 px-5">
-                  {locationString && <InfoRow label="Location" value={locationString} />}
-                  <TagList label="Service areas" items={s.service_areas} />
-                  <TagList label="Roofing types" items={s.roofing_types} />
-                  <TagList label="Product categories" items={s.product_categories} />
-                  <TagList label="Brands" items={s.brands} />
-                  {/* Delivery coverage */}
-                  {s.delivery_coverage && Array.isArray(s.delivery_coverage) && s.delivery_coverage.length > 0 ? (
-                    <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
-                      <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
-                      <dd className="flex flex-wrap gap-1.5 flex-1">
-                        {s.delivery_coverage.map((d: string) => (
-                          <span key={d} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-600">
-                            {d === 'nationwide' ? 'Nationwide delivery' : d === 'regional' ? 'State/Province delivery' : d === 'local' ? 'City-wide delivery' : d === 'pickup_only' ? 'Pick up' : d}
-                          </span>
-                        ))}
-                      </dd>
-                    </div>
-                  ) : (
-                    <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
-                      <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
-                      <dd className="text-sm text-slate-600 flex-1">Pick up only</dd>
-                    </div>
+            {data.eligibility.prices_on_page ? (
+              <div className="rounded-xl border border-slate-200 px-5 py-4">
+                <h2 className="text-base font-semibold text-zinc-950">Catalogue status</h2>
+                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-sm text-slate-600">
+                  {lib?.published_version != null && (
+                    <span>Version: <span className="font-medium text-zinc-950">{lib.published_version}</span></span>
                   )}
-                  {s.delivery_assumptions && <InfoRow label="Delivery assumptions" value={s.delivery_assumptions} />}
-                  {s.exclusions && <InfoRow label="Exclusions" value={s.exclusions} />}
-                  {s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
-                    <InfoRow label="Tax treatment" value={s.tax_treatment === 'inclusive' ? `Prices include ${s.tax_name ?? 'tax'}${s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}` : 'Prices exclude tax'} />
+                  {s.currency && (
+                    <span>Currency: <span className="font-medium text-zinc-950">{s.currency}</span></span>
                   )}
-                  {s.currency && <InfoRow label="Currency" value={s.currency} />}
-                </dl>
+                  {s.pricing_updated_at && (
+                    <span>Uploaded: <span className="font-medium text-zinc-950">{new Date(s.pricing_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span></span>
+                  )}
+                  {s.price_valid_until && (
+                    <span>Valid until: <span className="font-medium text-zinc-950">{new Date(s.price_valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</span></span>
+                  )}
+                  {s.price_type && (
+                    <span>Type: <span className="font-medium text-zinc-950">{s.price_type === "indicative" ? "Indicative supplier pricing" : s.price_type}</span></span>
+                  )}
+                </div>
+                {s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                  <p className="mt-2 text-xs text-slate-500">
+                    {s.tax_treatment === 'inclusive'
+                      ? `Prices include ${s.tax_name ?? 'tax'}${s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}`
+                      : 'Prices exclude tax'}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-slate-200 px-5 py-4">
+                <p className="text-sm text-slate-500">Pricing catalogue is not publicly visible for this supplier.</p>
+              </div>
+            )}
+          </div>
+        </section>
 
-                {/* Pricing info */}
-                {data.eligibility.prices_on_page && (
-                  <div className="mt-8">
-                    <h2 className="text-xl font-semibold text-zinc-950 mb-4">Pricing</h2>
-                    <p className="text-sm text-zinc-600">
-                      QuoteCore+ hosts {s.supplier_name}'s authorised pricing catalogue.
-                      {s.pricing_updated_at && (
-                        <> Last updated {new Date(s.pricing_updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.</>
-                      )}
-                      {s.price_valid_until && (
-                        <> Valid until {new Date(s.price_valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}.</>
-                      )}
+        {/* 5. Business description */}
+        {s.description && (
+          <section className="pb-8">
+            <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+              <h2 className="text-xl font-semibold text-zinc-950 mb-3">About {s.supplier_name}</h2>
+              <p className="text-base text-zinc-600 max-w-3xl">{s.description}</p>
+            </div>
+          </section>
+        )}
+
+        {/* 6. Product types */}
+        {(s.roofing_types?.length || s.product_categories?.length || s.brands?.length) ? (
+          <section className="pb-8">
+            <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+              <h2 className="text-xl font-semibold text-zinc-950 mb-4">Products</h2>
+              <dl className="rounded-xl border border-slate-200 px-5">
+                <TagList label="Roofing types" items={s.roofing_types} />
+                <TagList label="Product categories" items={s.product_categories} />
+                <TagList label="Brands" items={s.brands} />
+              </dl>
+            </div>
+          </section>
+        ) : null}
+
+        {/* 7. Searchable catalogue table (link) + 8. CSV/JSON downloads */}
+        {data.eligibility.prices_on_page && (
+          <section className="pb-8">
+            <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+              <div className="rounded-xl border border-slate-200 p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-zinc-950">Product catalogue</h2>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      Browse {s.supplier_name}'s full product catalogue with pricing. Search, sort, and download.
                     </p>
-                    {s.price_type && (
-                      <p className="mt-2 text-xs text-slate-500">
-                        Pricing type: {s.price_type === "indicative" ? "Indicative — sourced from publicly available supplier data" : s.price_type}
-                      </p>
-                    )}
-                    <p className="mt-3 text-xs text-slate-500">
-                      Products cannot be purchased directly from QuoteCore+. Contact {s.supplier_name} directly after completing a takeoff.
-                    </p>
                   </div>
-                )}
-
-                {/* Library info */}
-                {lib && (
-                  <div className="mt-8">
-                    <h2 className="text-xl font-semibold text-zinc-950 mb-4">Takeoff library</h2>
-                    <div className="rounded-xl border border-slate-200 p-5">
-                      <p className="text-sm font-medium text-zinc-950">{lib.name || "Published library"}</p>
-                      {lib.description && (
-                        <p className="mt-1 text-sm text-zinc-600">{lib.description}</p>
-                      )}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {lib.published_version !== null && (
-                          <span className="rounded-full border border-slate-200 px-2.5 py-0.5 text-xs text-slate-500">
-                            Version {lib.published_version}
-                          </span>
-                        )}
-                        {lib.published_at && (
-                          <span className="rounded-full border border-slate-200 px-2.5 py-0.5 text-xs text-slate-500">
-                            Published {new Date(lib.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                          </span>
-                        )}
-                      </div>
-                      {lib.roofing_types && lib.roofing_types.length > 0 && <TagList label="Roofing types" items={lib.roofing_types} />}
-                      {lib.product_categories && lib.product_categories.length > 0 && <TagList label="Product categories" items={lib.product_categories} />}
-                      {lib.brands && lib.brands.length > 0 && <TagList label="Brands" items={lib.brands} />}
-                      {s.takeoff_library_includes_tax === true && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
-                        <p className="mt-3 text-xs text-emerald-600">Library prices include {s.tax_name ?? 'tax'}{s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}</p>
-                      )}
-                      {s.takeoff_library_includes_tax === false && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
-                        <p className="mt-3 text-xs text-amber-600">Library prices exclude tax</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Price list download */}
-                {s.price_list_url && (
-                  <div className="mt-8">
-                    <h2 className="text-xl font-semibold text-zinc-950 mb-4">Price List</h2>
-                    <div className="rounded-xl border border-slate-200 p-5 flex items-center justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-sm font-medium text-zinc-950 truncate">{s.price_list_filename || "Price list"}</span>
-                        </div>
-                        {s.price_list_uploaded_at && (
-                          <p className="text-xs text-slate-500 mt-1">Uploaded {new Date(s.price_list_uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
-                        )}
-                        {s.price_list_includes_tax === true && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
-                          <p className="text-xs text-emerald-600 mt-1">Prices include {s.tax_name ?? 'tax'}{s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}</p>
-                        )}
-                        {s.price_list_includes_tax === false && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
-                          <p className="text-xs text-amber-600 mt-1">Prices exclude tax</p>
-                        )}
-                      </div>
-                      <a
-                        href={s.price_list_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {/* Frequently Asked Questions */}
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-zinc-950 mb-4">Frequently Asked Questions</h2>
-                  <div className="space-y-4">
-                    {s.roofing_types?.length ? (
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-950">What roofing materials does {s.supplier_name} supply?</h3>
-                        <p className="mt-1 text-sm text-zinc-600">{s.supplier_name} supplies {s.roofing_types.map(t => t.toLowerCase()).join(', ')}{s.branch_city ? ` in ${s.branch_city}` : ''}{s.branch_region ? `, ${s.branch_region}` : ''}.</p>
-                      </div>
-                    ) : null}
-                    {locationString && (
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-950">Where is {s.supplier_name} located?</h3>
-                        <p className="mt-1 text-sm text-zinc-600">{s.supplier_name} is based in {locationString}.{s.service_areas?.length ? ` They serve ${s.service_areas.join(', ')}.` : ''}</p>
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="text-sm font-medium text-zinc-950">Can I see {s.supplier_name}'s pricing online?</h3>
-                      <p className="mt-1 text-sm text-zinc-600">Yes. {s.supplier_name} publishes an indicative pricing catalogue on QuoteCore+. You can browse their material prices and calculate roof takeoffs using their pricing — free, no signup required.</p>
-                    </div>
-                    {data.eligibility.calculator_available && (
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-950">Can I calculate a roof estimate using {s.supplier_name}'s prices?</h3>
-                        <p className="mt-1 text-sm text-zinc-600">Yes. Use the free QuoteCore+ roof takeoff builder pre-configured with {s.supplier_name}'s catalogue. Enter your roof measurements and get instant material quantities and indicative pricing.</p>
-                      </div>
-                    )}
-                    {s.delivery_coverage?.length ? (
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-950">Does {s.supplier_name} deliver?</h3>
-                        <p className="mt-1 text-sm text-zinc-600">{s.delivery_coverage.includes('nationwide') ? `${s.supplier_name} provides nationwide delivery${s.branch_country ? ` across ${s.branch_country}` : ''}.` : `${s.supplier_name} provides ${s.delivery_coverage.map(d => d === 'local' ? 'local delivery' : d === 'regional' ? 'regional delivery' : d).join(' and ')}${s.service_areas?.length ? ` in ${s.service_areas.join(', ')}` : ''}.`}</p>
-                      </div>
-                    ) : null}
-                    {data.eligibility.contacts_visible && (s.phone_number || s.contact_email) ? (
-                      <div>
-                        <h3 className="text-sm font-medium text-zinc-950">How do I contact {s.supplier_name}?</h3>
-                        <p className="mt-1 text-sm text-zinc-600">You can reach {s.supplier_name} {[s.phone_number ? `by phone at ${s.phone_number}` : null, s.contact_email ? `by email at ${s.contact_email}` : null, s.website_url ? `via their website at ${s.website_url}` : null].filter(Boolean).join(', ')}.</p>
-                      </div>
-                    ) : null}
-                  </div>
+                  <Link
+                    href={`/suppliers/${s.slug}/catalogue`}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                  >
+                    View catalogue
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </Link>
+                </div>
+                {/* Download links */}
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <a
+                    href={`/suppliers/${s.slug}/catalogue.csv`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download CSV
+                  </a>
+                  <a
+                    href={`/suppliers/${s.slug}/catalogue.json`}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download JSON
+                  </a>
                 </div>
               </div>
+            </div>
+          </section>
+        )}
 
-              {/* Right: contact + meta */}
-              <div className="lg:col-span-1">
-                <div className="rounded-xl border border-slate-200 bg-zinc-50 p-5 lg:mt-8 sticky top-6">
-                  <h3 className="text-sm font-semibold text-zinc-950">Contact</h3>
+        {/* Takeoff library info (kept — relevant to calculator) */}
+        {lib && (
+          <section className="pb-8">
+            <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+              <div className="rounded-xl border border-slate-200 p-5">
+                <h2 className="text-base font-semibold text-zinc-950">Takeoff library</h2>
+                <p className="mt-1 text-sm font-medium text-zinc-950">{lib.name || "Published library"}</p>
+                {lib.description && (
+                  <p className="mt-1 text-sm text-zinc-600">{lib.description}</p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {lib.published_version !== null && (
+                    <span className="rounded-full border border-slate-200 px-2.5 py-0.5 text-xs text-slate-500">
+                      Version {lib.published_version}
+                    </span>
+                  )}
+                  {lib.published_at && (
+                    <span className="rounded-full border border-slate-200 px-2.5 py-0.5 text-xs text-slate-500">
+                      Published {new Date(lib.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  )}
+                </div>
+                {lib.roofing_types && lib.roofing_types.length > 0 && <TagList label="Roofing types" items={lib.roofing_types} />}
+                {lib.product_categories && lib.product_categories.length > 0 && <TagList label="Product categories" items={lib.product_categories} />}
+                {lib.brands && lib.brands.length > 0 && <TagList label="Brands" items={lib.brands} />}
+                {s.takeoff_library_includes_tax === true && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                  <p className="mt-3 text-xs text-emerald-600">Library prices include {s.tax_name ?? 'tax'}{s.tax_rate != null ? ` (${s.tax_rate}%)` : ''}</p>
+                )}
+                {s.takeoff_library_includes_tax === false && s.tax_treatment && s.tax_treatment !== 'not_applicable' && (
+                  <p className="mt-3 text-xs text-amber-600">Library prices exclude tax</p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Price list download (legacy upload — kept if supplier has one) */}
+        {s.price_list_url && (
+          <section className="pb-8">
+            <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+              <div className="rounded-xl border border-slate-200 p-5 flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm font-medium text-zinc-950 truncate">{s.price_list_filename || "Price list"}</span>
+                  </div>
+                  {s.price_list_uploaded_at && (
+                    <p className="text-xs text-slate-500 mt-1">Uploaded {new Date(s.price_list_uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
+                  )}
+                </div>
+                <a
+                  href={s.price_list_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 9. Service areas and delivery areas */}
+        <section className="pb-8">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+            <h2 className="text-xl font-semibold text-zinc-950 mb-4">Service &amp; delivery areas</h2>
+            <dl className="rounded-xl border border-slate-200 px-5">
+              <TagList label="Service areas" items={s.service_areas} />
+              {s.delivery_coverage && Array.isArray(s.delivery_coverage) && s.delivery_coverage.length > 0 ? (
+                <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
+                  <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
+                  <dd className="flex flex-wrap gap-1.5 flex-1">
+                    {s.delivery_coverage.map((d: string) => (
+                      <span key={d} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs text-blue-600">
+                        {d === 'nationwide' ? 'Nationwide delivery' : d === 'regional' ? 'State/Province delivery' : d === 'local' ? 'City-wide delivery' : d === 'pickup_only' ? 'Pick up' : d}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-4 py-3 border-b border-slate-100 last:border-0">
+                  <dt className="w-28 sm:w-36 shrink-0 text-sm font-medium text-slate-500">Delivery</dt>
+                  <dd className="text-sm text-slate-600 flex-1">Pick up only</dd>
+                </div>
+              )}
+              {s.delivery_assumptions && <InfoRow label="Delivery notes" value={s.delivery_assumptions} />}
+              {s.exclusions && <InfoRow label="Exclusions" value={s.exclusions} />}
+              {s.national_coverage && (
+                <div className="py-3 border-b border-slate-100 last:border-0">
+                  <span className="rounded-full border border-slate-200 px-2.5 py-0.5 text-xs text-slate-600">National coverage</span>
+                </div>
+              )}
+            </dl>
+          </div>
+        </section>
+
+        {/* 10. Physical address and contact information */}
+        <section className="pb-12">
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+              {/* Address */}
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-950 mb-4">Address</h2>
+                {locationString ? (
+                  <div className="rounded-xl border border-slate-200 p-5">
+                    <dl className="space-y-1">
+                      {s.supplier_name && <InfoRow label="Business" value={s.supplier_name} />}
+                      {s.branch_city && <InfoRow label="City" value={s.branch_city} />}
+                      {s.branch_region && <InfoRow label="Region" value={s.branch_region} />}
+                      {s.branch_postcode && <InfoRow label="Postal code" value={s.branch_postcode} />}
+                      {s.branch_country && <InfoRow label="Country" value={s.branch_country} />}
+                    </dl>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-slate-200 p-5">
+                    <p className="text-sm text-slate-500">Address not publicly available. This supplier may be a service-area business.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Contact */}
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-950 mb-4">Contact</h2>
+                <div className="rounded-xl border border-slate-200 bg-zinc-50 p-5">
                   {data.eligibility.contacts_visible ? (
-                    <div className="mt-3 space-y-2 text-sm">
+                    <div className="space-y-3 text-sm">
                       {s.phone_number && (
                         <div className="flex items-center gap-2">
                           <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -646,10 +732,8 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                       )}
                     </div>
                   ) : (
-                    <p className="mt-2 text-sm text-slate-500">Contact details not publicly available.</p>
+                    <p className="text-sm text-slate-500">Contact details not publicly available.</p>
                   )}
-
-                  {/* Meta — single date to avoid confusion */}
                   <div className="mt-6 border-t border-slate-200 pt-4 space-y-1.5 text-xs text-slate-500">
                     <p>Last updated: {new Date(s.publication_updated_at || s.pricing_updated_at || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
                     <p>Platform: QuoteCore+</p>
