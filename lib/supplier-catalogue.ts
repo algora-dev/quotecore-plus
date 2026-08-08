@@ -206,3 +206,74 @@ export function columnLabel(key: string): string {
   };
   return labels[norm] ?? key;
 }
+
+// =============================================================
+// Version history + version-specific fetch
+// =============================================================
+
+export interface CatalogueVersionSummary {
+  catalogue_id: string;
+  version: number;
+  status: string;
+  currency: string | null;
+  uploaded_at: string | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  original_filename: string | null;
+  public_title: string | null;
+  total_items: number;
+}
+
+/**
+ * Fetch all published catalogue versions for a supplier.
+ */
+export async function getCatalogueVersionHistory(slug: string): Promise<CatalogueVersionSummary[]> {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase.rpc("public_supplier_catalogue_versions", {
+    p_slug: slug,
+  });
+
+  if (error || !data) {
+    console.error(`[supplier-catalogue] Failed to fetch version history for "${slug}":`, error?.message);
+    return [];
+  }
+
+  return data as unknown as CatalogueVersionSummary[];
+}
+
+/**
+ * Fetch a specific version of a supplier's catalogue.
+ */
+export async function getPublicSupplierCatalogueByVersion(
+  slug: string,
+  version: number,
+  limit = 50,
+  offset = 0,
+): Promise<SupplierCatalogueData | null> {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase.rpc("public_supplier_catalogue_by_version", {
+    p_slug: slug,
+    p_version: version,
+    p_limit: limit,
+    p_offset: offset,
+  });
+
+  if (error || !data) {
+    console.error(`[supplier-catalogue] Failed to fetch version ${version} for "${slug}":`, error?.message);
+    return null;
+  }
+
+  return data as unknown as SupplierCatalogueData;
+}
+
+/**
+ * Fetch ALL items for a specific catalogue version (for CSV/JSON export).
+ */
+export async function getAllPublicSupplierCatalogueItemsByVersion(
+  slug: string,
+  version: number,
+): Promise<SupplierCatalogueData | null> {
+  return getPublicSupplierCatalogueByVersion(slug, version, 100000, 0);
+}

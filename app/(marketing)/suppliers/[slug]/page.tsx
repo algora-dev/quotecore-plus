@@ -4,6 +4,7 @@ import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { getPublicSupplier, type SupplierDetail } from "@/lib/supplier-directory";
+import { getCatalogueVersionHistory } from "@/lib/supplier-catalogue";
 import { SupplierPageTracker, SupplierCalculatorClickTracker } from "@/components/SupplierAnalytics";
 
 interface PageProps {
@@ -798,6 +799,9 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           </div>
         </section>
 
+        {/* 11. Version history */}
+        <VersionHistorySection slug={s.slug} supplierName={s.supplier_name} />
+
         {/* Related Resources */}
         <section className="border-t border-zinc-200 py-12">
           <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
@@ -885,5 +889,56 @@ export default async function SupplierDetailPage({ params }: PageProps) {
       <SupplierPageTracker supplierSlug={s.slug} supplierName={s.supplier_name} hasCalculator={!!calculatorUrl} pageType="supplier_detail" />
       {calculatorUrl && <SupplierCalculatorClickTracker supplierSlug={s.slug} supplierName={s.supplier_name} />}
     </>
+  );
+}
+
+// Version history section (Section 11) — server component
+async function VersionHistorySection({ slug, supplierName }: { slug: string; supplierName: string }) {
+  const history = await getCatalogueVersionHistory(slug);
+  if (history.length <= 1) return null; // Don't show if only one version
+
+  return (
+    <section className="pb-12">
+      <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
+        <h2 className="text-xl font-semibold text-zinc-950 mb-4">Catalogue version history</h2>
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Version</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Published</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Items</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Valid until</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">Links</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {history.map((v) => (
+                <tr key={v.catalogue_id} className="hover:bg-orange-50/40">
+                  <td className="whitespace-nowrap px-4 py-2 text-sm font-medium text-zinc-950">v{v.version}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-sm text-slate-600">
+                    {v.uploaded_at ? new Date(v.uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2 text-sm text-slate-600">{v.total_items}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-sm text-slate-600">
+                    {v.valid_until ? new Date(v.valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2 text-sm">
+                    <Link href={`/suppliers/${slug}/catalogues/${v.version}`} className="text-[#BD4A1A] hover:underline">View</Link>
+                    <span className="mx-1.5 text-slate-300">|</span>
+                    <a href={`/suppliers/${slug}/catalogues/${v.version}/catalogue.csv`} className="text-[#BD4A1A] hover:underline">CSV</a>
+                    <span className="mx-1.5 text-slate-300">|</span>
+                    <a href={`/suppliers/${slug}/catalogues/${v.version}/catalogue.json`} className="text-[#BD4A1A] hover:underline">JSON</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-slate-400">
+          Historical versions are preserved for reference. Always check the <Link href={`/suppliers/${slug}/catalogue`} className="text-[#BD4A1A] hover:underline">latest catalogue</Link> for current pricing.
+        </p>
+      </div>
+    </section>
   );
 }

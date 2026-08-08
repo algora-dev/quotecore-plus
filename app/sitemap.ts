@@ -7,6 +7,7 @@ import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs'
 import { getSitemapPosts } from '@/app/lib/blog-posts';
 import { SITE_URL } from '@/lib/seo/site-url';
 import { getSupplierDirectory } from '@/lib/supplier-directory';
+import { getCatalogueVersionHistory } from '@/lib/supplier-catalogue';
 
 /**
  * Public sitemap for https://quote-core.com.
@@ -127,10 +128,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Supplier pages (dynamic, from public_supplier_directory RPC)
   const suppliers = await getSupplierDirectory();
-  const supplierEntries: MetadataRoute.Sitemap = suppliers
-    .filter((s) => s.slug)
-    .flatMap((s) => {
-      const entries: MetadataRoute.Sitemap = [{
+  const supplierEntries: MetadataRoute.Sitemap = [];
+  for (const s of suppliers) {
+    if (!s.slug) continue;
+    const entries: MetadataRoute.Sitemap = [{
         url: `${SITE_URL}/suppliers/${s.slug}`,
         changeFrequency: 'monthly' as const,
         priority: 0.7,
@@ -159,8 +160,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: 'monthly' as const,
         priority: 0.5,
       });
-      return entries;
-    });
+      // Add versioned catalogue routes (historical versions)
+      try {
+        const history = await getCatalogueVersionHistory(s.slug);
+        for (const v of history) {
+          entries.push({
+            url: `${SITE_URL}/suppliers/${s.slug}/catalogues/${v.version}`,
+            changeFrequency: 'yearly' as const,
+            priority: 0.3,
+          });
+          entries.push({
+            url: `${SITE_URL}/suppliers/${s.slug}/catalogues/${v.version}/catalogue.csv`,
+            changeFrequency: 'yearly' as const,
+            priority: 0.2,
+          });
+          entries.push({
+            url: `${SITE_URL}/suppliers/${s.slug}/catalogues/${v.version}/catalogue.json`,
+            changeFrequency: 'yearly' as const,
+            priority: 0.2,
+          });
+        }
+      } catch {
+        // Version history RPC may not exist yet — skip silently
+      }
+      supplierEntries.push(...entries);
+    }
 
   return [...staticEntries, ...blogEntries, ...slugEntries, ...docEntries, ...supplierEntries];
 }

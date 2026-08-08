@@ -6,12 +6,15 @@ import { useState } from "react";
 interface CatalogueSearchBarProps {
   supplierSlug: string;
   initialQuery: string;
+  versionedPath?: string;
 }
 
-export function CatalogueSearchBar({ supplierSlug, initialQuery }: CatalogueSearchBarProps) {
+export function CatalogueSearchBar({ supplierSlug, initialQuery, versionedPath }: CatalogueSearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(initialQuery);
+
+  const basePath = versionedPath ?? `/suppliers/${supplierSlug}/catalogue`;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +25,7 @@ export function CatalogueSearchBar({ supplierSlug, initialQuery }: CatalogueSear
       params.delete("q");
     }
     params.delete("page");
-    router.push(`/suppliers/${supplierSlug}/catalogue?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   };
 
   return (
@@ -43,7 +46,7 @@ export function CatalogueSearchBar({ supplierSlug, initialQuery }: CatalogueSear
       </button>
       {initialQuery && (
         <a
-          href={`/suppliers/${supplierSlug}/catalogue`}
+          href={basePath}
           className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
         >
           Clear
@@ -56,25 +59,38 @@ export function CatalogueSearchBar({ supplierSlug, initialQuery }: CatalogueSear
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  supplierSlug: string;
+  supplierSlug?: string;
+  basePath?: string;
+  search?: string;
+  sort?: string;
+  dir?: string;
 }
 
 export function CataloguePagination({
   currentPage,
   totalPages,
   supplierSlug,
+  basePath,
+  search,
+  sort,
+  dir,
 }: PaginationProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const base = basePath ?? `/suppliers/${supplierSlug}/catalogue`;
+
   const goToPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
+    if (search) params.set("q", search);
+    if (sort) params.set("sort", sort);
+    if (dir) params.set("dir", dir);
     if (page > 1) {
       params.set("page", String(page));
     } else {
       params.delete("page");
     }
-    router.push(`/suppliers/${supplierSlug}/catalogue?${params.toString()}`);
+    router.push(`${base}?${params.toString()}`);
   };
 
   if (totalPages <= 1) return null;
