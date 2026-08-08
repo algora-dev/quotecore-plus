@@ -12,9 +12,8 @@ export async function GET() {
       <video:thumbnail_loc>${v.thumbnail}</video:thumbnail_loc>
       <video:title><![CDATA[${v.title}]]></video:title>
       <video:description><![CDATA[${v.description}]]></video:description>
-      <video:content_loc>https://www.youtube.com/watch?v=${v.id}</video:content_loc>
       <video:player_loc>https://www.youtube-nocookie.com/embed/${v.id}</video:player_loc>
-      <video:upload_date>${v.uploadDate.replace(/-/g, "")}</video:upload_date>
+      <video:upload_date>${v.uploadDate}</video:upload_date>
     </video:video>
   </url>`;
   }).join("\n");

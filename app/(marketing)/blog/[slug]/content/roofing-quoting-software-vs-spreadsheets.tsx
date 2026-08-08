@@ -65,6 +65,7 @@ export default function Post() {
         <li>invoices can be created without starting again</li>
         <li>job details stay connected after the quote is won</li>
       </ul>
+      <p>Spreadsheets can't read a roof plan. QuoteCore+ can — <a href="/features/ai-scan-assist">AI Scan Assist</a> identifies roof areas and flashings from an uploaded plan, then Smart Components price them. That's a workflow no spreadsheet can replicate.</p>
       <p>The point is not that every roofing business must stop using spreadsheets immediately. The point is that once the spreadsheet becomes the thing holding the entire job together, it may be time for a better system.</p>
       <p>If speed is the main issue - not just accuracy - <a href="/blog/construction-quote-speed-checklist">the Construction Quote Speed Checklist</a> shows how to build a process that gets quotes out the same day as a site visit, regardless of what tool you are using.</p>
       <h2>See how reusable pricing replaces spreadsheet workarounds</h2>

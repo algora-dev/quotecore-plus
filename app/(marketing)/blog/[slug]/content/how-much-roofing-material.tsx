@@ -179,6 +179,9 @@ export default function Post() {
           Enter plan dimensions, set pitch, and it calculates every component with correct
           quantities, waste, and pitch factors. You can also add material pricing and labour rates.
         </li>
+        <li>
+          <a href="/free-roof-pricing-calculator">Roof Pricing Calculator</a> - turn these quantities into a costed estimate with material and labour breakdown
+        </li>
       </ul>
 
       <hr />

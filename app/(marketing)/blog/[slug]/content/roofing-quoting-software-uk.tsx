@@ -135,6 +135,7 @@ export default function Post() {
         <li><strong>Job management and invoicing</strong> - does the workflow extend past the quote to the actual job and invoice?</li>
         <li><strong>UK-specific support</strong> - does it handle UK roofing materials, measurements, and VAT correctly?</li>
       </ul>
+      <p>QuoteCore+ includes <a href="/features/ai-scan-assist">AI Scan Assist</a>, which scans uploaded roof plans and identifies areas, ridges, hips, valleys, and barges — a feature absent from most roofing quoting tools in the UK market.</p>
       <p>For a comparison of the main options, see <a href="/blog/best-roofing-quoting-software-uk-2026">Best Roofing Quoting Software UK (2026): Compared for Contractors</a>.</p>
     </div>
   );

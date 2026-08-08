@@ -78,6 +78,7 @@ export default function Post() {
         <strong>Pros:</strong> fastest method, repeatable, and you can save and review the takeoff
         later. No maths errors. No missed sections.
       </p>
+      <p>If you have a roof plan, QuoteCore+'s <a href="/features/ai-scan-assist">AI Scan Assist</a> can identify roof areas, ridges, hips, valleys, and barges automatically — you review and adjust before committing. It's designed for roofers who want a head start on takeoffs without losing control of the measurements.</p>
       <p>
         <strong>Cons:</strong> you need a digital copy of the plan, and you still need to verify
         the AI measurements on complex or unusual roof shapes.

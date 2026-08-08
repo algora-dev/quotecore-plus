@@ -30,6 +30,7 @@ export default function Post() {
       <h2>Step 2: choose the right measurement source</h2>
       <p>You can build a takeoff from a scaled architectural plan, a roof plan with written dimensions, site measurements, aerial imagery, a digital measurement file, or an AI-assisted roof scan.</p>
       <p>Plans are efficient, but verify the scale. Site measurements are direct, but access and safety matter. Aerial and AI-assisted methods are useful for early pricing and difficult access, but poor imagery, hidden roof sections, and later additions can affect the result.</p>
+      <p>For a faster start, QuoteCore+ offers <a href="/features/ai-scan-assist">AI Scan Assist</a> — upload a plan and AI identifies roof areas and flashings for you. You verify each result, adjust anything that needs tweaking, and carry everything straight into a priced takeoff. It's not perfect, but it gives a novice a strong starting point while keeping full editing control.</p>
       <p>For a detailed comparison, read <a href="/blog/how-to-measure-a-roof">how to measure a roof for materials</a>. If you are considering automated measurement, see the guide to <a href="/blog/ai-roof-measuring">AI roof measuring</a>.</p>
       <h2>Step 3: break the roof into simple planes</h2>
       <p>Do not try to calculate a complex roof as one shape. Divide it into rectangles, triangles, trapezoids, and other simple roof planes.</p>

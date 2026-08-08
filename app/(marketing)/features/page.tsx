@@ -35,6 +35,14 @@ const features = [
     steps: ["Upload a roof plan", "Measure sections digitally", "Generate a complete takeoff", "Send to quote builder"],
   },
   {
+    title: "AI Scan Assist",
+    description:
+      "Upload a roof plan and AI identifies roof areas, ridges, hips, valleys, barges and spouting. Review, adjust, and carry everything into your quote.",
+    href: "/features/ai-scan-assist",
+    keyword: "AI roof plan scanner",
+    steps: ["Upload a roof plan", "AI identifies areas and flashings", "Review and adjust", "Carry into takeoff"],
+  },
+  {
     title: "Smart Components™",
     description:
       "Reusable quoting components that know their own measurements, waste allowances, and pricing rules. Build a roof quote in minutes, not hours.",

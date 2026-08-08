@@ -34,8 +34,9 @@ export default function Post() {
       <p>
         If you have not calculated your material quantities yet, see <a href="/blog/how-much-roofing-material">How
         Much Roofing Material Do You Need? (Material Calculator Guide)</a> before you go any
-        further.
+        further. Try the <Link href="/free-roof-pricing-calculator">free roof pricing calculator</Link> to estimate material, labour, and total costs.
       </p>
+      <p>Once you've measured the roof — whether manually or with <Link href="/features/ai-scan-assist">AI Scan Assist</Link> — Smart Components apply your stored pricing rules to generate quantities, labour, and totals automatically.</p>
 
       <h3>2. Labour</h3>
       <p>

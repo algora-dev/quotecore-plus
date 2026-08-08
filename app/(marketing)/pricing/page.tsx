@@ -6,6 +6,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import SiteFooter from "@/components/SiteFooter";
 import { pricingPlans } from "@/lib/pricing";
 import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from "@/lib/schema";
+import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
     "Compare QuoteCore+ monthly plans in USD and GBP. Start with a 14-day full-feature trial with no credit card, then choose the limits that fit your trade business.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
+    languages: hreflangLanguages("/pricing"),
   },
   openGraph: {
     title: "Pricing",

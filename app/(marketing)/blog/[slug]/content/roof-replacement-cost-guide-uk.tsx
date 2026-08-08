@@ -135,7 +135,7 @@ export default function Post() {
       <p>The quote should explain whether repairs are included, provisional, or charged at an agreed unit rate. Document and approve additional work before proceeding where practical.</p>
       <h3>How can a contractor quote roof replacement more accurately?</h3>
       <p>Use a checked takeoff, product-specific schedule, activity-based labour estimate, current supplier prices, named access costs, and clear allowances for unknown conditions.</p>
-      <p>Start with the <a href="/free-roof-replacement-cost-calculator">free roof replacement cost calculator</a>, then use <a href="/roofing-quoting-software">roofing quoting software</a> when you want the complete workflow connected.</p>
+      <p>Start with the <a href="/free-roof-replacement-cost-calculator">free roof replacement cost calculator</a>, or estimate your own costs with the <a href="/free-roof-pricing-calculator">free roof pricing calculator</a>, then use <a href="/roofing-quoting-software">roofing quoting software</a> when you want the complete workflow connected.</p>
     </div>
   );
 }

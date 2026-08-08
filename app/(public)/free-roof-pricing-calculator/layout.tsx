@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 
 const SITE_URL = 'https://quote-core.com';
 
@@ -123,6 +124,14 @@ export default function RoofPricingCalculatorLayout({ children }: { children: Re
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
       {children}
+      <section className="mx-auto max-w-3xl px-4 py-12 md:py-16">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Related guides</h2>
+        <ul className="space-y-2 text-sm">
+          <li><Link href="/blog/how-to-price-a-roofing-job" className="text-[#BD4A1A] hover:underline">How to Price a Roofing Job</Link> — step-by-step pricing method with material, labour, and waste calculations</li>
+          <li><Link href="/blog/how-much-roofing-material" className="text-[#BD4A1A] hover:underline">How Much Roofing Material Do I Need?</Link> — material quantity guide with coverage rates</li>
+          <li><Link href="/blog/roof-replacement-cost-guide-uk" className="text-[#BD4A1A] hover:underline">Roof Replacement Cost Guide (UK)</Link> — cost breakdown by roof type and size</li>
+        </ul>
+      </section>
     </>
   );
 }
