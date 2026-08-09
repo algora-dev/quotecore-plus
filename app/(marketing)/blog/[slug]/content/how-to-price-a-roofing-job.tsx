@@ -289,7 +289,7 @@ export default function Post() {
         handoff creates another place to re-enter or miss information.
       </p>
       <p>
-        <Link href="/roofing-quoting-software">QuoteCore+ roofing quoting software</Link> connects measurements, pitch calculations, saved
+        <Link href="/roofing-quoting-software">QuoteCore+ roofing quoting software</Link> and <Link href="/roofing-estimating-software">roofing estimating software</Link> connect measurements, pitch calculations, saved
         pricing rules, labour, quotes, material orders, and invoices in one workflow. The estimator
         remains responsible for checking every measurement, rate, allowance, and output.
       </p>

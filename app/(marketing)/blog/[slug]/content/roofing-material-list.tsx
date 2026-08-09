@@ -141,7 +141,7 @@ export default function Post() {
       </ul>
       <p>If you still need the measurements, start with <a href="/blog/how-to-do-a-roof-takeoff">how to do a roof takeoff</a> and <a href="/blog/how-to-measure-a-roof">how to measure a roof for materials</a>. For quantity principles, read <a href="/blog/how-much-roofing-material">how much roofing material do you need</a>. Calculate quantities for your material list with the <a href="/free-roofing-takeoff-calculator">free roofing takeoff calculator</a>.</p>
       <h2>From material list to quote and order</h2>
-      <p>A spreadsheet can hold a list, but it often separates measurement, pricing, quoting, and ordering. QuoteCore+ uses Smart Components™ to connect repeatable material and labour logic with the quote workflow.</p>
+      <p>A spreadsheet can hold a list, but it often separates measurement, pricing, quoting, and ordering. QuoteCore+ uses <Link href="/features/smart-components">Smart Components™</Link> to connect repeatable material and labour logic with the quote workflow. See the <Link href="/roofing-estimating-software">roofing estimating software</Link> page for more on how estimates are built from measurements and pricing rules.</p>
       <p>A Smart Component can carry materials, calculations, waste rules, prices, drawings, and images your business uses repeatedly. Watch <a href="https://www.youtube.com/watch?v=aFXJwOiliPI">What are Smart Components</a> and <a href="https://www.youtube.com/watch?v=XZSTIfGUHAU">How to Set Up Roofing Smart Components™</a> for a practical overview.</p>
       <h2>Frequently asked questions</h2>
       <h3>What materials do I need for a roof?</h3>

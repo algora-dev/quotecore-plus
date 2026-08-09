@@ -522,12 +522,13 @@ export default function HomePage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { src: "/how-it-works-smart-components-list.png", label: "Smart Components™ library", desc: "Roofing pricing, labour and rules - reusable on every quote." },
-              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan, AI identifies areas and components." },
-              { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Build, customise and send roofing quotes in minutes." },
-              { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry." },
+              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan, AI identifies areas and components.", href: "/features/ai-scan-assist" },
+              { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Build, customise and send roofing quotes in minutes.", href: "/features/digital-roof-takeoff" },
+              { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry.", href: "/features/invoicing" },
             ].map((item) => (
-              <div
+              <a
                 key={item.src}
+                href={item.href}
                 className="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-[#FF6B35]/35 hover:shadow-[0_18px_45px_rgba(15,23,42,0.10)]"
               >
                 <div className="overflow-hidden border-b border-zinc-100 bg-zinc-50">
@@ -543,7 +544,7 @@ export default function HomePage() {
                   <h3 className="text-base font-semibold text-zinc-950">{item.label}</h3>
                   <p className="mt-1 text-sm leading-6 text-zinc-600">{item.desc}</p>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
 

@@ -30,11 +30,19 @@ export default function SiteFooter() {
             <h2 className="text-sm font-semibold text-zinc-950">Explore</h2>
             <div className="mt-4 flex flex-col gap-3">
               <Link href="/roofing-quoting-software" className={linkClass}>Roofing software</Link>
+              <Link href="/roofing-estimating-software" className={linkClass}>Roofing estimating</Link>
+              <Link href="/roofing-takeoff-software" className={linkClass}>Roofing takeoff</Link>
               <Link href="/construction-quoting-software" className={linkClass}>Other trades</Link>
               <Link href="/pricing" className={linkClass}>Pricing</Link>
               <Link href="/free-tools" className={linkClass}>Free tools</Link>
               <Link href="/free-calculators" className={linkClass}>Free calculators</Link>
               <Link href="/blog" className={linkClass}>Resources and blog</Link>
+              <Link href="/resources/roofing-estimating" className={linkClass}>Roofing estimating hub</Link>
+              <Link href="/resources/digital-takeoffs" className={linkClass}>Digital takeoffs hub</Link>
+              <Link href="/resources/construction-quoting" className={linkClass}>Construction quoting hub</Link>
+              <Link href="/resources/contractor-business" className={linkClass}>Contractor business hub</Link>
+              <Link href="/resources/ai" className={linkClass}>AI in roofing hub</Link>
+              <Link href="/resources/comparisons" className={linkClass}>Software comparisons</Link>
               <Link href="/tutorials" className={linkClass}>Video tutorials</Link>
               <Link href="/docs" className={linkClass}>Documentation</Link>
             </div>

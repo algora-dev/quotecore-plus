@@ -119,7 +119,7 @@ export default function Post() {
 
       <h2>Which one should you choose?</h2>
       <p>If your process already works and your main issue is that your quotes need to look or read better, QuoteSmith may be a good option.</p>
-      <p>If your issue is that the job information is scattered across measurements, spreadsheets, notes, quote documents, emails, material orders, job folders and invoices, QuoteCore+ is likely a better fit. That applies across many trades, including roofers, builders, plumbers, electricians, carpenters, landscapers, fencing contractors and flooring teams.</p>
+      <p>If your issue is that the job information is scattered across measurements, spreadsheets, notes, quote documents, emails, material orders, job folders and invoices, QuoteCore+ is likely a better fit. That applies across many trades, including roofers, builders, plumbers, electricians, carpenters, landscapers, fencing contractors and flooring teams. See <a href="/roofing-quoting-software">roofing quoting software</a> and <a href="/pricing">pricing plans</a> for more detail.</p>
       <p>The choice comes down to the real bottleneck.</p>
       <p>If you are still quoting in a spreadsheet rather than choosing between dedicated platforms, <a href="/blog/roofing-quoting-software-vs-spreadsheets">here is how roofing quoting software and spreadsheets actually compare</a> - including where spreadsheets hold up and where they start costing you jobs. For the full pricing process, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
       <p>If the bottleneck is writing, choose the tool that helps with writing.</p>
