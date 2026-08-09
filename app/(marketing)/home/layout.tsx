@@ -4,15 +4,17 @@ import {
   buildBreadcrumbSchema,
   buildFaqSchema,
   buildSoftwareApplicationSchema,
+  buildOrganizationSchema,
+  buildWebsiteSchema,
   siteUrl,
 } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "QuoteCore+ — Roofing & Construction Quoting Software",
+    absolute: "QuoteCore+ — Roofing Estimating, Takeoff & Quoting Software",
   },
   openGraph: {
-    title: "QuoteCore+ — Roofing & Construction Quoting Software",
+    title: "QuoteCore+ — Roofing Estimating, Takeoff & Quoting Software",
     description: "Measure, quote, send, and track jobs in one place. Digital takeoff, AI Scan Assist, and Smart Components for roofing and construction contractors.",
     url: "/",
     siteName: "QuoteCore+",
@@ -73,6 +75,8 @@ const softwareSchema = {
   "@context": "https://schema.org",
   ...buildSoftwareApplicationSchema(),
 };
+const organizationSchema = buildOrganizationSchema();
+const websiteSchema = buildWebsiteSchema();
 
 // Hero demo video schema
 const videoSchema = {
@@ -101,6 +105,14 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
       <script
         type="application/ld+json"

@@ -505,6 +505,10 @@ export default function RoofingQuotingSoftwarePage() {
         <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <a href="/roofing-estimating-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Roofing estimating software</p>
+              <p className="mt-1 text-sm text-zinc-600">Measure roofs, calculate materials and labour, and build accurate estimates.</p>
+            </a>
             <a href="/features/digital-roof-takeoff" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Digital roof takeoff</p>
               <p className="mt-1 text-sm text-zinc-600">Measure roof plans digitally with AI-assisted scanning.</p>

@@ -32,6 +32,39 @@ export function buildPricingOffers(currency: "USD" | "GBP" = "USD") {
   };
 }
 
+export function buildOrganizationSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": organizationId,
+    name: "QuoteCore+",
+    legalName: "T3 Play Limited",
+    url: siteUrl,
+    logo: {
+      "@type": "ImageObject",
+      url: `${siteUrl}/logo.png`,
+    },
+    email: "hello@quote-core.com",
+    sameAs: [
+      "https://www.linkedin.com/company/quotecore-plus",
+      "https://www.youtube.com/@quotecoreplus",
+    ],
+  };
+}
+
+export function buildWebsiteSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": websiteId,
+    name: "QuoteCore+",
+    url: siteUrl,
+    publisher: {
+      "@id": organizationId,
+    },
+  };
+}
+
 export function buildSoftwareApplicationSchema() {
   return {
     "@type": "SoftwareApplication",
