@@ -84,46 +84,14 @@ export default async function BlogPostPage({ params }: Props) {
   if (!contentLoader) notFound();
   const { default: Content } = await contentLoader();
 
-  const faqSchema = slug === 'best-roofing-quoting-software-uk-2026' ? {
+  const faqSchema = post.faqs && post.faqs.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'What is roofing quoting software?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Roofing quoting software helps contractors turn measurements and job specifications into professional, priced quotes without spreadsheets or manual calculation. The best tools for roofers include workflows specific to roofing: digital takeoffs, component-level pricing, material calculations, and structured output that customers can read and act on.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'What is the best roofing quoting software for UK contractors in 2026?',
-        acceptedAnswer: { '@type': 'Answer', text: 'The best option depends on your workflow. QuoteCore+ is the strongest for contractors quoting from plans who need a full workflow from measurement to quote, material orders, job management and invoicing. Sleepless Tradesman is a strong choice for sole traders doing high volumes of repair work who want AI-assisted quoting from customer photos. Tradify works well for small teams that need job management alongside quoting.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'How long does it take to send a roofing quote with software?',
-        acceptedAnswer: { '@type': 'Answer', text: 'With a platform like QuoteCore+, most contractors send their first quote within minutes of entering their measurements. The goal is to quote the same day as the site visit - ideally before leaving. The delay in most quoting processes is not measurement but the admin that comes after it.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Do I need to be technical to use roofing quoting software?',
-        acceptedAnswer: { '@type': 'Answer', text: 'No. Modern quoting software is designed to be usable from day one. If you can use email and a computer, you can use most platforms on this list. The best ones require no setup beyond entering your pricing templates.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Is there free roofing quoting software for UK roofers?',
-        acceptedAnswer: { '@type': 'Answer', text: 'QuoteCore+ offers a 14-day free trial with no credit card required. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'What should a professional roofing quote include?',
-        acceptedAnswer: { '@type': 'Answer', text: 'A professional roofing quote should include: a clear scope of work, itemised materials and labour, scaffold costs as a separate line item, your company details and accreditations, a validity period, and a way for the customer to accept or decline.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Can roofing quoting software help me win more jobs?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Yes - indirectly. Research suggests the first contractor to respond wins a significant proportion of competitive quote situations. Software that helps you quote faster, and that produces a more professional output, improves your position in both dimensions.' },
-      },
-    ],
+    mainEntity: post.faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+    })),
   } : null;
 
   const blogSchema = {

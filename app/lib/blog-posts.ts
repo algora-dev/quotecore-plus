@@ -19,6 +19,11 @@ export type BlogCategory =
   | 'comparisons'
   | 'ai';
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface BlogPostMeta {
   slug: string;
   title: string;
@@ -27,6 +32,7 @@ export interface BlogPostMeta {
   lastModified: string; // ISO date for sitemap
   draft?: boolean;     // if true, hidden from index, noindex, excluded from sitemap
   category?: BlogCategory; // primary topic for resource hubs
+  faqs?: FaqItem[];    // FAQ questions for FAQPage schema
 }
 
 export const BLOG_POSTS: BlogPostMeta[] = [
@@ -128,6 +134,15 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Comparing the best roofing quoting software available to UK contractors in 2026. Honest breakdown of QuoteCore+, Sleepless Tradesman, Tradify, Jobber, Powered Now, Fergus, and EasyEstimate - with a comparison table and recommendations by business type.',
     date: '2026-06-15',
     lastModified: '2026-06-15',
+    faqs: [
+      { question: 'What is roofing quoting software?', answer: 'Roofing quoting software helps contractors turn measurements and job specifications into professional, priced quotes without spreadsheets or manual calculation. The best tools for roofers include workflows specific to roofing: digital takeoffs, component-level pricing, material calculations, and structured output that customers can read and act on.' },
+      { question: 'What is the best roofing quoting software for UK contractors in 2026?', answer: 'The best option depends on your workflow. QuoteCore+ is the strongest for contractors quoting from plans who need a full workflow from measurement to quote, material orders, job management and invoicing. Sleepless Tradesman is a strong choice for sole traders doing high volumes of repair work who want AI-assisted quoting from customer photos. Tradify works well for small teams that need job management alongside quoting.' },
+      { question: 'How long does it take to send a roofing quote with software?', answer: 'With a platform like QuoteCore+, most contractors send their first quote within minutes of entering their measurements. The goal is to quote the same day as the site visit - ideally before leaving. The delay in most quoting processes is not measurement but the admin that comes after it.' },
+      { question: 'Do I need to be technical to use roofing quoting software?', answer: 'No. Modern quoting software is designed to be usable from day one. If you can use email and a computer, you can use most platforms on this list. The best ones require no setup beyond entering your pricing templates.' },
+      { question: 'Is there free roofing quoting software for UK roofers?', answer: 'QuoteCore+ offers a 14-day free trial with no credit card required. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.' },
+      { question: 'What should a professional roofing quote include?', answer: 'A professional roofing quote should include: a clear scope of work, itemised materials and labour, scaffold costs as a separate line item, your company details and accreditations, a validity period, and a way for the customer to accept or decline.' },
+      { question: 'Can roofing quoting software help me win more jobs?', answer: 'Yes - indirectly. Research suggests the first contractor to respond wins a significant proportion of competitive quote situations. Software that helps you quote faster, and that produces a more professional output, improves your position in both dimensions.' },
+    ],
   },
   {
     slug: 'how-to-calculate-roof-pitch',
@@ -292,6 +307,12 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Estimating and quoting are often confused but serve different purposes in roofing. Learn what each involves, how they connect, and why combining them in one workflow saves time.',
     date: '2026-08-09',
     lastModified: '2026-08-09',
+    faqs: [
+      { question: 'Is estimating the same as quoting?', answer: 'No. Estimating calculates the true cost of delivering the job. Quoting presents a price to the customer. They are connected stages, but they serve different purposes and produce different outputs.' },
+      { question: 'Can I estimate without creating a quote?', answer: 'Yes. Estimating is an internal exercise. You can estimate a job to decide whether to tender, what margin to target, or whether the work fits your schedule. You only create a quote when you are ready to present a price to the customer.' },
+      { question: 'Do I need separate software for estimating and quoting?', answer: 'Not necessarily. QuoteCore+ handles both in one workflow — the estimate is built from takeoff measurements and Smart Components, and the quote is generated from the same data.' },
+      { question: 'What\'s included in a roofing estimate vs a quote?', answer: 'An estimate typically includes material quantities, waste allowances, labour hours, rates, and a total cost. A quote includes the price the customer pays, scope of work, terms, payment schedule, and validity period. The quote may simplify or group the estimate\'s line items for presentation.' },
+    ],
   },
   {
     slug: 'how-to-estimate-roofing-materials',
@@ -301,6 +322,12 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Learn how to estimate roofing materials with accuracy. Covers roof measurement, material quantities, waste allowances, and how digital takeoff tools reduce errors.',
     date: '2026-08-09',
     lastModified: '2026-08-09',
+    faqs: [
+      { question: 'How do I calculate how many roofing sheets I need?', answer: 'Divide the roof width by the sheet cover width to get the number of sheets. For length, use the roof slope length (not the plan length). Round up to full sheets and add the waste allowance. Include flashings, screws, and closures separately.' },
+      { question: 'What waste percentage should I add for roofing materials?', answer: 'It depends on the material and roof complexity. Metal roofing typically needs 5-10%, tiles 5-12%, shingles 10-15%, and slate 15-20%. Complex roofs with hips, valleys, and dormers generate more waste than simple gables.' },
+      { question: 'Do I need to measure the roof myself or can I use plans?', answer: 'You can use plans if they are current, accurately scaled, and detailed enough. Verify key dimensions on site if possible. QuoteCore+ lets you measure directly from PDF plans using digital takeoff tools, and AI Scan Assist can auto-detect roof geometry from a plan.' },
+      { question: 'Can software estimate roofing materials automatically?', answer: 'Yes. QuoteCore+ Smart Components™ store material calculations, waste rules, and pricing for each roof element. When you measure a roof area or length in the takeoff, the component applies the correct materials and quantities automatically.' },
+    ],
   },
   {
     slug: 'manual-vs-digital-roof-takeoff',
@@ -310,6 +337,12 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Manual roof takeoff with a scale rule vs digital takeoff with software. Compare time per job, accuracy, material waste, and cost to decide which method wins.',
     date: '2026-08-09',
     lastModified: '2026-08-09',
+    faqs: [
+      { question: 'Is digital roof takeoff accurate?', answer: 'Yes, when the plan is accurately scaled and the software uses the embedded scale correctly. Digital takeoff eliminates the measurement error of a physical scale ruler and the transcription error of moving numbers from paper to spreadsheet. Always verify key dimensions, especially if the plan may have been re-scaled.' },
+      { question: 'Do I need special hardware for digital takeoff?', answer: 'No. QuoteCore+ runs in a web browser on any laptop or desktop. You upload a PDF plan and measure on screen. No drawing tablet, large monitor, or specialised hardware is required.' },
+      { question: 'Can AI really measure a roof from a plan?', answer: 'AI Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection — you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.' },
+      { question: 'How long does digital takeoff take compared to manual?', answer: 'For a standard residential roof, digital takeoff typically takes 10-20 minutes compared to 45-90 minutes for manual. With AI Scan Assist, the initial detection can take as little as 5-10 minutes, with additional time for review and adjustment. The exact time depends on roof complexity and plan quality.' },
+    ],
   },
   {
     slug: 'how-to-reduce-roofing-waste',
@@ -319,6 +352,12 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       'Roofing waste eats your profit margins. Learn 7 practical strategies to reduce waste in your estimates, from accurate takeoffs to Smart Components that apply the right waste factor automatically.',
     date: '2026-08-09',
     lastModified: '2026-08-09',
+    faqs: [
+      { question: 'What is a typical waste percentage for roofing?', answer: 'It depends on the material. Metal roofing typically needs 5-10%, concrete tiles 5-8%, clay tiles 7-12%, asphalt shingles 10-15%, and slate 15-20%. Roof complexity, crew experience, and site conditions also affect the actual waste generated.' },
+      { question: 'How do I calculate roofing waste?', answer: 'Calculate the net quantity (measured area or length), apply the waste percentage for the material type, and round up to the nearest supplier pack size. For example: 120 m² net area at 8% waste = 129.6 m² gross. If packs cover 2.4 m², order 54 packs.' },
+      { question: 'Does roof pitch affect waste?', answer: 'Pitch itself does not directly increase waste, but steeper roofs can be harder to work on, which may increase breakage and cutting errors. Pitch does affect the total surface area — a steeper roof has more covering area than the plan area, which must be calculated correctly before applying waste.' },
+      { question: 'Can software calculate waste automatically?', answer: 'Yes. QuoteCore+ Smart Components™ store waste rules by material type. When you measure a roof area or length, the component applies the correct waste percentage and produces the gross quantity automatically. This eliminates manual calculation errors and ensures consistent allowances across jobs.' },
+    ],
   },
   {
     slug: 'ai-quoting-software',
