@@ -11,10 +11,10 @@ import {
 
 export const metadata: Metadata = {
   title: {
-    absolute: "QuoteCore+ — Roofing Estimating, Takeoff & Quoting Software",
+    absolute: "QuoteCore+ — Roofing Estimating & Quoting Software",
   },
   openGraph: {
-    title: "QuoteCore+ — Roofing Estimating, Takeoff & Quoting Software",
+    title: "QuoteCore+ — Roofing Estimating & Quoting Software",
     description: "Measure, quote, send, and track jobs in one place. Digital takeoff, AI Scan Assist, and Smart Components for roofing and construction contractors.",
     url: "/",
     siteName: "QuoteCore+",

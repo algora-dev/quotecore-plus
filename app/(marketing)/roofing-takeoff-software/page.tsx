@@ -10,52 +10,52 @@ import {
 } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Roofing Estimating Software | QuoteCore+",
+  title: "Roofing Takeoff Software | QuoteCore+",
   description:
-    "Roofing estimating software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Plans from free to $59/month.",
+    "Roofing takeoff software with digital plan measurement, AI Scan Assist, and automatic material quantities. Measure roof areas, lengths, and pitch from PDF plans. Plans from free to $59/month.",
   openGraph: {
-    title: "Roofing Estimating Software | QuoteCore+",
+    title: "Roofing Takeoff Software | QuoteCore+",
     description:
-      "Roofing estimating software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, calculate materials and labour, and build accurate estimates. Plans from free to $59/month.",
-    url: "/roofing-estimating-software",
+      "Roofing takeoff software with digital plan measurement, AI Scan Assist, and automatic material quantities. Measure roof areas, lengths, and pitch from PDF plans. Plans from free to $59/month.",
+    url: "/roofing-takeoff-software",
     siteName: "QuoteCore+",
     type: "website",
   },
   alternates: {
-    canonical: "https://quote-core.com/roofing-estimating-software",
+    canonical: "https://quote-core.com/roofing-takeoff-software",
   },
 };
 
 const faqs = [
   {
-    question: "Can QuoteCore+ estimate roofing materials from a plan?",
+    question: "Can QuoteCore+ do roofing takeoffs from PDF plans?",
     answer:
-      "Yes. Upload a roof plan and use digital takeoff tools or AI Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting. Measurements feed directly into Smart Components, which apply your stored materials, quantities, waste allowances and pricing rules to produce a material estimate automatically.",
+      "Yes. Upload a PDF plan, satellite image or drawing and use the digital takeoff tools to measure roof areas, ridge, hip, valley, eave and barge lengths, and pitch. Measurements are calculated automatically and feed directly into Smart Components for pricing.",
   },
   {
-    question: "How accurate is AI Scan Assist for estimating?",
+    question: "How does AI Scan Assist work for roof takeoffs?",
     answer:
-      "AI Scan Assist identifies roof areas, ridges, hips, valleys, barges and spouting from an uploaded plan. It speeds up the measuring process significantly, but results should always be reviewed and adjusted manually before finalising an estimate. QuoteCore+ gives you full control to correct any measurement before it becomes part of a quote.",
+      "AI Scan Assist analyses an uploaded plan and automatically identifies roof areas, ridges, hips, valleys, barges and spouting. You review and adjust the detected measurements before they become part of the estimate. It significantly speeds up the takeoff process, especially for complex roofs with multiple sections.",
   },
   {
-    question: "Can I reuse estimating rules across jobs?",
+    question: "Can I measure ridge, hip, and valley lengths, not just roof areas?",
     answer:
-      "Yes. Smart Components let you save materials, labour, waste allowances, pitch calculations, drawings and pricing rules as reusable building blocks. Once configured, the same components can be dropped into any future estimate, so you are not rebuilding pricing logic from scratch for every job.",
+      "Yes. The digital takeoff tools measure both roof surface areas and linear lengths — ridges, hips, valleys, barges, eaves, flashings and spouting. All measurements can be named, grouped by roof section, and assigned different materials and pitch values.",
   },
   {
-    question: "Does QuoteCore+ handle waste allowances?",
+    question: "Does QuoteCore+ calculate material quantities from takeoff measurements?",
     answer:
-      "Yes. Waste allowances can be built into Smart Components as a percentage or fixed quantity. When a component is used in an estimate, the waste is calculated automatically and included in the material quantities and pricing.",
+      "Yes. Smart Components apply your stored materials, labour, waste allowances and pricing rules to takeoff measurements automatically. When you measure a roof area, the corresponding material quantities, screws, flashings and labour are calculated without manual entry.",
   },
   {
-    question: "Can I estimate labour costs, not just materials?",
+    question: "What plan formats does QuoteCore+ support for takeoff?",
     answer:
-      "Yes. Smart Components can store labour rules alongside materials. Labour rates, time estimates and crew sizing can all be configured per component, so labour costs are calculated automatically as part of the estimate.",
+      "QuoteCore+ supports uploaded images and PDF plans. AI Scan Assist works on the uploaded plan image to identify roof geometry. You can also use the free roof takeoff builder without uploading a plan if you already have measurements.",
   },
   {
-    question: "How is estimating different from quoting in QuoteCore+?",
+    question: "Can I export takeoff measurements without creating a quote?",
     answer:
-      "Estimating is the process of measuring, calculating quantities and pricing a job. Quoting is turning that estimate into a professional document you send to a customer for approval. In QuoteCore+, both happen in one connected workflow: your measurements and pricing become a quote without manual re-entry, and the same data carries through to material orders and invoices.",
+      "Yes. Measurements can be reviewed and adjusted before you decide to create a quote. The takeoff feeds into the estimate and quote only when you choose to proceed. The free roof takeoff builder also lets you generate measurements without any commitment.",
   },
 ];
 
@@ -63,7 +63,7 @@ const faqSchema = buildFaqSchema(faqs);
 
 const breadcrumbSchema = buildBreadcrumbSchema([
   { name: "Home", url: `${siteUrl}/` },
-  { name: "Roofing Estimating Software", url: `${siteUrl}/roofing-estimating-software` },
+  { name: "Roofing Takeoff Software", url: `${siteUrl}/roofing-takeoff-software` },
 ]);
 
 const softwareSchema = {
@@ -71,65 +71,54 @@ const softwareSchema = {
   ...buildSoftwareApplicationSchema(),
 };
 
-const estimatingSteps = [
+const takeoffSteps = [
   {
     number: "01",
-    title: "Upload plans or use AI scan",
-    body: "Upload a roof plan, satellite image or drawing. Use AI Scan Assist to identify roof areas, ridges, hips, valleys, barges and spouting automatically, or measure manually with digital takeoff tools.",
+    title: "Upload PDF plans or use AI Scan Assist",
+    body: "Upload a roof plan, satellite image or drawing. Use AI Scan Assist to auto-detect roof areas, ridges, hips, valleys, barges and spouting, or measure manually with digital takeoff tools.",
   },
   {
     number: "02",
-    title: "Measure roof areas, lengths and pitch",
-    body: "Name each roof area, assign pitch and material type. Digital takeoff handles angles, pitches and complex roof geometry. Adjust any measurement manually before moving to pricing.",
+    title: "Measure roof areas, lengths and pitch digitally",
+    body: "Name each roof area, assign pitch and material type. Digital takeoff handles angles, pitches and complex roof geometry. Measure ridges, hips, valleys, eaves, barges, flashings and spouting lengths.",
   },
   {
     number: "03",
-    title: "Smart Components apply materials, labour, waste and pricing",
-    body: "Measurements feed directly into Smart Components, which apply your saved materials, labour rates, waste allowances and pricing rules automatically. No manual re-entry, no spreadsheet formulas.",
+    title: "Smart Components apply material quantities, waste and labour",
+    body: "Measurements feed directly into Smart Components, which apply your stored materials, waste allowances, labour rates and pricing rules automatically. No spreadsheet formulas, no manual re-entry.",
   },
   {
     number: "04",
     title: "Review, adjust and send as a quote",
-    body: "Check the estimate, adjust quantities or pricing, then send it to the customer as a professional quote. The same data carries through to material orders and invoices if the quote is accepted.",
+    body: "Check the takeoff and pricing, adjust any measurement or quantity, then send it to the customer as a professional quote. The same data carries through to material orders and invoices.",
   },
 ];
 
-const whatItEstimates = [
-  "Roof areas (m², sq ft, roofing squares)",
-  "Ridge, hip, valley and barge lengths",
-  "Spouting and guttering lengths",
-  "Material quantities with waste allowances",
-  "Labour costs based on your rates",
-  "Pitch-adjusted surface areas",
+const whatItMeasures = [
+  "Roof surface areas (by pitch)",
+  "Ridge, hip, valley, eave and barge lengths",
+  "Flashing and trim lengths",
+  "Spouting and downpipe quantities",
+  "Pitch and slope calculations",
+  "Material quantities with waste allowances applied",
 ];
 
 const limitations = [
   {
-    title: "No CRM or lead generation",
-    body: "QuoteCore+ handles the estimating-to-invoice workflow. It does not manage sales pipelines, marketing campaigns, or customer acquisition.",
+    title: "No 3D modelling",
+    body: "QuoteCore+ measures roof geometry in 2D from plans and images. It does not generate 3D roof models or visualisations.",
   },
   {
-    title: "No accounting or tax returns",
-    body: "Estimates and invoices are created and tracked, but QuoteCore+ does not handle VAT/GST returns, profit and loss, or balance sheets. Use accounting software for that.",
+    title: "No cutting lists",
+    body: "QuoteCore+ calculates material quantities and pricing, not individual cutting schedules for each piece of material on site.",
   },
   {
-    title: "No payment processing",
-    body: "Invoices include payment instructions, but QuoteCore+ does not process card or bank payments directly. Customers pay via bank transfer, Stripe links or PayPal links configured per invoice.",
+    title: "No accounting integration",
+    body: "Takeoffs, estimates and invoices are created within QuoteCore+, but it does not sync with Xero, QuickBooks or other accounting software.",
   },
 ];
 
-const notRightFit = [
-  {
-    title: "You only need a basic material calculator",
-    body: "If you estimate a few jobs a month with a simple spreadsheet or calculator and that works for you, QuoteCore+ may be more than you need. It adds the most value when you estimate frequently and want a connected workflow from measurement to invoice.",
-  },
-  {
-    title: "You need full project management",
-    body: "QuoteCore+ handles estimating, quoting, material ordering and invoicing, not construction project management. If you need scheduling, Gantt charts, or resource allocation, use dedicated project management software.",
-  },
-];
-
-export default function RoofingEstimatingSoftwarePage() {
+export default function RoofingTakeoffSoftwarePage() {
   return (
     <>
       <script
@@ -147,7 +136,7 @@ export default function RoofingEstimatingSoftwarePage() {
 
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Roofing Estimating Software" }]} />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Roofing Takeoff Software" }]} />
 
         {/* Cross-trade notice */}
         <div className="border-b border-zinc-200 bg-zinc-50 px-6 py-3 text-center text-sm text-zinc-600">
@@ -162,11 +151,11 @@ export default function RoofingEstimatingSoftwarePage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
           <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Roofing estimating software that measures, calculates, and prices in one workflow.
+              Roofing takeoff software that measures plans digitally and calculates materials automatically.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure roofs digitally with AI Scan Assist, calculate materials and labour automatically with Smart Components&#8482;, and turn estimates into quotes without re-entering data. Plans from free to $59/month.
+              Upload plans and measure roof areas, lengths and pitch digitally. AI Scan Assist detects roof geometry automatically. Smart Components&#8482; turn measurements into material quantities and priced estimates. Plans from free to $59/month.
             </p>
 
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -182,31 +171,31 @@ export default function RoofingEstimatingSoftwarePage() {
           </div>
         </section>
 
-        {/* What is roofing estimating software? */}
+        {/* What is roofing takeoff software? */}
         <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">
-            What is roofing estimating software?
+            What is roofing takeoff software?
           </h2>
 
           <p className="mt-6 text-lg leading-8 text-zinc-700">
-            Roofing estimating software helps contractors measure roof areas, calculate material quantities, apply labour costs, and produce accurate pricing for a job before a quote is sent.
+            Roofing takeoff software helps contractors measure roof areas, lengths and pitch from plans or images, and calculate material quantities from those measurements.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
-            Traditional estimating often means scaling rulers on paper plans, entering numbers into spreadsheets, and manually calculating waste, pitch adjustments and material counts. Every step is a chance for an error, and the same calculations get repeated on every job.
+            Manual takeoff means printing plans, using a scaling ruler to measure dimensions, counting features by hand, and entering everything into a spreadsheet. It works, but it is slow, error-prone, and has to be repeated from scratch on every job.
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
-            QuoteCore+ replaces that process with a connected estimating workflow. Digital takeoff tools measure the roof. Smart Components&#8482; apply your stored materials, labour, waste and pricing rules automatically. The estimate becomes a quote without manual re-entry, and the same data carries through to material orders and invoices.
+            QuoteCore+ replaces that with digital takeoff tools and AI Scan Assist. Upload a plan, measure digitally or let AI detect roof geometry, and Smart Components&#8482; automatically apply materials, labour, waste and pricing. The takeoff becomes an estimate, and the estimate becomes a quote — all in one connected workflow.
           </p>
         </section>
 
-        {/* Key estimating features */}
+        {/* Key takeoff features */}
         <section className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">
-              Key estimating features
+              Key takeoff features
             </h2>
             <p className="mt-4 text-lg leading-8 text-zinc-600">
-              The tools that make estimating faster and more accurate in QuoteCore+.
+              The tools that make takeoff faster and more accurate in QuoteCore+.
             </p>
 
             <div className="mt-12 grid gap-6 sm:grid-cols-2">
@@ -225,7 +214,7 @@ export default function RoofingEstimatingSoftwarePage() {
               >
                 <h3 className="text-xl font-semibold">AI Scan Assist</h3>
                 <p className="mt-3 text-zinc-600">
-                  Automatically identifies roof areas, ridges, hips, valleys, barges and spouting from an uploaded plan. Review and adjust before pricing.
+                  Automatically identifies roof areas, ridges, hips, valleys, barges and spouting from an uploaded plan.
                 </p>
               </a>
               <a
@@ -234,7 +223,7 @@ export default function RoofingEstimatingSoftwarePage() {
               >
                 <h3 className="text-xl font-semibold">Smart Components&#8482;</h3>
                 <p className="mt-3 text-zinc-600">
-                  Save materials, labour, waste, pitch calculations and pricing rules as reusable components. Drop them into any estimate.
+                  Automatically apply materials, labour, waste and pricing to takeoff measurements. No manual quantity calculation.
                 </p>
               </a>
               <a
@@ -243,24 +232,24 @@ export default function RoofingEstimatingSoftwarePage() {
               >
                 <h3 className="text-xl font-semibold">Material ordering</h3>
                 <p className="mt-3 text-zinc-600">
-                  Turn estimate quantities into a material order with supplier details carried over. No re-keying from the quote.
+                  Turn takeoff quantities into a material order with supplier details carried over. No re-keying.
                 </p>
               </a>
             </div>
           </div>
         </section>
 
-        {/* How estimating works */}
+        {/* How takeoff works */}
         <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">
-            How estimating works in QuoteCore+
+            How takeoff works in QuoteCore+
           </h2>
           <p className="mt-4 text-lg leading-8 text-zinc-600">
-            From plan upload to priced estimate in four steps.
+            From plan upload to material quantities in four steps.
           </p>
 
           <div className="mt-12 flex flex-col gap-5">
-            {estimatingSteps.map((s) => (
+            {takeoffSteps.map((s) => (
               <div
                 key={s.number}
                 className="rounded-[2rem] border border-zinc-200 bg-white px-7 py-6 shadow-sm"
@@ -279,18 +268,18 @@ export default function RoofingEstimatingSoftwarePage() {
           </div>
         </section>
 
-        {/* What QuoteCore+ estimates */}
+        {/* What QuoteCore+ measures in takeoff */}
         <section className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">
-              What QuoteCore+ estimates
+              What QuoteCore+ measures in takeoff
             </h2>
             <p className="mt-4 text-lg leading-8 text-zinc-600">
-              Roofing-specific measurement types handled by the estimating workflow.
+              Roofing-specific measurement types handled by the digital takeoff workflow.
             </p>
 
             <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {whatItEstimates.map((item) => (
+              {whatItMeasures.map((item) => (
                 <li
                   key={item}
                   className="flex items-start gap-3 rounded-[1.5rem] border border-zinc-200 bg-white px-5 py-4 text-zinc-700"
@@ -303,6 +292,27 @@ export default function RoofingEstimatingSoftwarePage() {
               ))}
             </ul>
           </div>
+        </section>
+
+        {/* Takeoff vs estimating */}
+        <section className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">
+            Takeoff vs estimating — what&apos;s the difference?
+          </h2>
+
+          <p className="mt-6 text-lg leading-8 text-zinc-700">
+            Takeoff is the measurement step — measuring roof areas, lengths and pitch from a plan. Estimating adds pricing, labour, waste and material quantities to those measurements.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            Many contractors do takeoff in one tool, then re-enter the measurements into a spreadsheet to estimate. QuoteCore+ does both in one workflow: takeoff measurements feed directly into Smart Components&#8482;, which apply materials, labour, waste and pricing automatically.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            See the{" "}
+            <a href="/roofing-estimating-software" className="font-medium text-[#FF6B35] hover:underline">
+              roofing estimating software
+            </a>{" "}
+            page for more on the estimating side.
+          </p>
         </section>
 
         {/* Honest limitations */}
@@ -318,24 +328,6 @@ export default function RoofingEstimatingSoftwarePage() {
               >
                 <p className="font-semibold text-zinc-950">{l.title}</p>
                 <p className="mt-2 text-sm leading-7 text-zinc-600">{l.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* When it may not fit */}
-        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <h2 className="text-3xl font-semibold sm:text-4xl">
-            When QuoteCore+ may not be the right fit
-          </h2>
-          <div className="mt-8 space-y-4">
-            {notRightFit.map((n) => (
-              <div
-                key={n.title}
-                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5"
-              >
-                <p className="font-semibold text-zinc-950">{n.title}</p>
-                <p className="mt-2 text-sm leading-7 text-zinc-600">{n.body}</p>
               </div>
             ))}
           </div>
@@ -367,12 +359,12 @@ export default function RoofingEstimatingSoftwarePage() {
           <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <a
-              href="/roofing-takeoff-software"
+              href="/roofing-estimating-software"
               className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
             >
-              <p className="font-semibold text-zinc-950">Roofing takeoff software</p>
+              <p className="font-semibold text-zinc-950">Roofing estimating software</p>
               <p className="mt-1 text-sm text-zinc-600">
-                Measure roof plans digitally and calculate material quantities.
+                Turn takeoff measurements into priced estimates with Smart Components.
               </p>
             </a>
             <a
@@ -382,15 +374,6 @@ export default function RoofingEstimatingSoftwarePage() {
               <p className="font-semibold text-zinc-950">Roofing quoting software</p>
               <p className="mt-1 text-sm text-zinc-600">
                 The full quote-to-invoice workflow for roofing contractors.
-              </p>
-            </a>
-            <a
-              href="/construction-quoting-software"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Construction quoting software</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Quoting tools for construction and other measured trades.
               </p>
             </a>
             <a
@@ -417,16 +400,25 @@ export default function RoofingEstimatingSoftwarePage() {
             >
               <p className="font-semibold text-zinc-950">Smart Components&#8482;</p>
               <p className="mt-1 text-sm text-zinc-600">
-                Reusable components that store pricing, labour, waste and quantities.
+                Reusable components that auto-apply materials and pricing to takeoff.
               </p>
             </a>
             <a
-              href="/free-tools"
+              href="/free-roofing-takeoff-builder"
               className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
             >
-              <p className="font-semibold text-zinc-950">Free tools</p>
+              <p className="font-semibold text-zinc-950">Free takeoff builder</p>
               <p className="mt-1 text-sm text-zinc-600">
-                Roofing calculators, quote and invoice generators - free, no signup.
+                Try the roof takeoff builder free, no signup required.
+              </p>
+            </a>
+            <a
+              href="/free-roofing-takeoff-calculator"
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+            >
+              <p className="font-semibold text-zinc-950">Free takeoff calculator</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                Quick roof takeoff calculations, free to use.
               </p>
             </a>
             <a
@@ -447,35 +439,17 @@ export default function RoofingEstimatingSoftwarePage() {
                 Methods and tools for accurate roof measurement.
               </p>
             </a>
-            <a
-              href="/blog/how-much-roofing-material"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">How much roofing material</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                Calculating material quantities for a roofing job.
-              </p>
-            </a>
-            <a
-              href="/blog/roofing-waste-calculation"
-              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
-            >
-              <p className="font-semibold text-zinc-950">Roofing waste calculation</p>
-              <p className="mt-1 text-sm text-zinc-600">
-                How to calculate and apply waste allowances in estimates.
-              </p>
-            </a>
           </div>
         </section>
 
         {/* Final CTA */}
         <section className="mx-auto max-w-4xl px-6 py-24 text-center lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-5xl">
-            Estimate. Quote. Build.
+            Measure. Price. Quote.
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">
-            Stop estimating in spreadsheets and re-entering the same data into a quote. QuoteCore+ gives you one connected workflow from measurement to final payment.
+            Stop doing takeoff in one tool and re-entering measurements into another. QuoteCore+ gives you one workflow from plan upload to final payment.
           </p>
 
           <a

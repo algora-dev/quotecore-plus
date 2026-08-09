@@ -83,6 +83,7 @@ const PUBLIC_PATHS = [
   '/construction-quoting-software',
   '/roofing-quoting-software',
   '/roofing-estimating-software',
+  '/roofing-takeoff-software',
   '/free-construction-calculator', // Free public calculator (no auth)
   '/free-roofing-calculator',     // Free roofing calculator (no auth)
   '/free-quote-generator',        // Free AI quote generator (future)
