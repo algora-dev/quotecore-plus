@@ -41,6 +41,10 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'reusable-quoting-templates-smart-components': () => import('./content/reusable-quoting-templates-smart-components'),
   'how-to-follow-up-on-a-quote': () => import('./content/how-to-follow-up-on-a-quote'),
   'how-to-start-a-roofing-business-uk': () => import('./content/how-to-start-a-roofing-business-uk'),
+  'roofing-estimating-vs-quoting': () => import('./content/roofing-estimating-vs-quoting'),
+  'how-to-estimate-roofing-materials': () => import('./content/how-to-estimate-roofing-materials'),
+  'manual-vs-digital-roof-takeoff': () => import('./content/manual-vs-digital-roof-takeoff'),
+  'how-to-reduce-roofing-waste': () => import('./content/how-to-reduce-roofing-waste'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

@@ -285,6 +285,42 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     draft: true,
   },
   {
+    slug: 'roofing-estimating-vs-quoting',
+    category: 'roofing-estimating',
+    title: 'Roofing Estimating vs Quoting: What\'s the Difference?',
+    description:
+      'Estimating and quoting are often confused but serve different purposes in roofing. Learn what each involves, how they connect, and why combining them in one workflow saves time.',
+    date: '2026-08-09',
+    lastModified: '2026-08-09',
+  },
+  {
+    slug: 'how-to-estimate-roofing-materials',
+    category: 'roofing-estimating',
+    title: 'How to Estimate Roofing Materials Accurately: A Complete Guide',
+    description:
+      'Learn how to estimate roofing materials with accuracy. Covers roof measurement, material quantities, waste allowances, and how digital takeoff tools reduce errors.',
+    date: '2026-08-09',
+    lastModified: '2026-08-09',
+  },
+  {
+    slug: 'manual-vs-digital-roof-takeoff',
+    category: 'digital-takeoffs',
+    title: 'Manual vs Digital Roof Takeoff: Time, Cost and Accuracy Compared',
+    description:
+      'Manual roof takeoff with a scale rule vs digital takeoff with software. Compare time per job, accuracy, material waste, and cost to decide which method wins.',
+    date: '2026-08-09',
+    lastModified: '2026-08-09',
+  },
+  {
+    slug: 'how-to-reduce-roofing-waste',
+    category: 'roofing-estimating',
+    title: 'How to Reduce Roofing Waste in Estimates: 7 Practical Strategies',
+    description:
+      'Roofing waste eats your profit margins. Learn 7 practical strategies to reduce waste in your estimates, from accurate takeoffs to Smart Components that apply the right waste factor automatically.',
+    date: '2026-08-09',
+    lastModified: '2026-08-09',
+  },
+  {
     slug: 'ai-quoting-software',
     category: 'ai',
     title: 'AI Quoting Software: Can AI Write Quotes for Contractors?',
