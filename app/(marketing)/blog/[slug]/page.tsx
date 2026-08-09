@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Script from 'next/script';
 import BlogHeader from '@/components/BlogHeader';
 import {
   buildPageMetadata,
@@ -114,14 +113,12 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
-      <Script
-        id={`blog-schema-${slug}`}
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
       />
       {faqSchema && (
-        <Script
-          id={`faq-schema-${slug}`}
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
