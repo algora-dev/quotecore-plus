@@ -479,7 +479,9 @@ export async function saveTakeoffMeasurements(
     }
   }
 
-  revalidatePath(`/[workspaceSlug]/quotes/${quoteId}`);
+  // revalidatePath removed: TakeoffWorkstation manages all state client-side.
+  // Server re-render was causing the canvas/panels to reset during auto-save
+  // on area/page switches.
   return { success: true as const };
 }
 

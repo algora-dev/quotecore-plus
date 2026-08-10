@@ -787,7 +787,8 @@ export async function toggleAreaLock(id: string, locked: boolean) {
   await verifyRoofAreaOwnership(supabase, id, profile.company_id);
   const { error } = await supabase.from('quote_roof_areas').update({ is_locked: locked }).eq('id', id);
   if (error) throw new Error(error.message);
-  revalidatePath('/quotes');
+  // revalidatePath removed: local state in QuoteBuilder handles the UI
+  // update. Server re-render was causing expanded components to collapse.
 }
 
 export async function removeQuoteRoofArea(id: string) {
@@ -895,7 +896,9 @@ export async function updateComponentSettings(id: string, updates: { input_mode?
 
   const { error } = await supabase.from('quote_components').update(updates).eq('id', id);
   if (error) throw new Error(error.message);
-  revalidatePath('/quotes');
+  // revalidatePath removed: the QuoteBuilder updates local state immediately
+  // after this action resolves, so the server re-render is redundant and
+  // causes expanded components to collapse (useState resets on remount).
 }
 
 export async function addComponentEntry(quoteComponentId: string, rawValue: number, areaPitch: number | null, options?: { bypassHeightMultiplier?: boolean; bypassDepthMultiplier?: boolean; entryHeightM?: number | null; entryDepthM?: number | null }) {
@@ -2123,5 +2126,7 @@ export async function updateQuoteMargins(
 
 
 
-  revalidatePath(`/`);
+  // revalidatePath removed: QuoteBuilder.handleSaveMargins updates local
+  // quote state immediately after this action resolves. The server
+  // re-render was redundant and caused margin checkboxes to reset.
 }

@@ -77,8 +77,8 @@ export default async function WorkspaceHome({
       ),
     },
     {
-      title: 'Smart ComponentsTM',
-      description: 'Build and manage Smart ComponentsTM for your quotes',
+      title: 'Smart Components™',
+      description: 'Build and manage Smart Components™ for your quotes',
       href: `/${workspaceSlug}/components`,
       icon: (
         <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
