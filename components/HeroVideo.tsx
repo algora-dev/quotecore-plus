@@ -78,7 +78,7 @@ export default function HeroVideo() {
           }
         });
       },
-      { threshold: 0.2, rootMargin: "0px 0px -40% 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -60% 0px" }
     );
     lines.forEach((line) => observer.observe(line));
     return () => observer.disconnect();
