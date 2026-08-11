@@ -1,29 +1,43 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import BlogHeader from "./BlogHeader";
 
 /**
- * Full-screen hero video section rendered above the existing homepage.
+ * Hero video experience for the homepage.
  *
- * - Autoplays muted + playsinline on load
- * - Plays once (no loop), holds last frame on end
- * - Custom mute/unmute + play/pause controls (QuoteCore orange)
- * - Hides site nav on load; reveals on scroll past threshold (stays revealed)
- * - Transition message section directly below video
- * - Mobile video crop/aspect treatment is deferred — structured for later
+ * Layout:
+ * - BlogHeader (normal, visible) at the very top
+ * - Full-screen video directly below the header
+ * - Transition message section below the video
+ * - Then the existing homepage continues
+ *
+ * Behaviour:
+ * - Header scrolls naturally with the page over the video, then sticks at top-0
+ * - Once user scrolls past the video section, it collapses (height 0) so
+ *   they can't scroll back up to it. Refresh resets the experience.
+ * - Video autoplays muted + playsinline, plays once, holds last frame
+ * - Custom mute/unmute + play/pause controls
  */
-
-const SCROLL_REVEAL_THRESHOLD = 150; // px
 
 export default function HeroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const transitionRef = useRef<HTMLElement>(null);
+  const videoSectionRef = useRef<HTMLElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [videoEnded, setVideoEnded] = useState(false);
-  const [navRevealed, setNavRevealed] = useState(false);
+  const [videoCollapsed, setVideoCollapsed] = useState(false);
 
-  // Nav reveal on scroll
+  // Mark body so MarketingHome knows to hide its own BlogHeader
+  useEffect(() => {
+    document.body.classList.add("hero-video-active");
+    return () => {
+      document.body.classList.remove("hero-video-active");
+    };
+  }, []);
+
+  // Collapse video section once user has scrolled past it
   useEffect(() => {
     let ticking = false;
 
@@ -31,9 +45,16 @@ export default function HeroVideo() {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        if (window.scrollY > SCROLL_REVEAL_THRESHOLD && !navRevealed) {
-          setNavRevealed(true);
-          document.body.classList.add("nav-revealed");
+        const section = videoSectionRef.current;
+        if (!section || videoCollapsed) {
+          ticking = false;
+          return;
+        }
+        const rect = section.getBoundingClientRect();
+        // Once the bottom of the video section is above the viewport top,
+        // the user has fully scrolled past it — collapse it.
+        if (rect.bottom < 0) {
+          setVideoCollapsed(true);
         }
         ticking = false;
       });
@@ -41,15 +62,7 @@ export default function HeroVideo() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [navRevealed]);
-
-  // Ensure nav is hidden on mount, reset on unmount
-  useEffect(() => {
-    document.body.classList.remove("nav-revealed");
-    return () => {
-      document.body.classList.add("nav-revealed");
-    };
-  }, []);
+  }, [videoCollapsed]);
 
   // Slide-in animation for transition text lines
   useEffect(() => {
@@ -97,10 +110,16 @@ export default function HeroVideo() {
 
   return (
     <>
+      {/* ── Header (normal, visible from start) ── */}
+      <BlogHeader />
+
       {/* ── Hero video section ── */}
       <section
-        className="relative h-screen w-full overflow-hidden bg-black"
+        ref={videoSectionRef}
+        className="relative w-full overflow-hidden bg-black transition-[height] duration-500"
+        style={{ height: videoCollapsed ? "0" : "100vh" }}
         aria-label="QuoteCore+ product video"
+        aria-hidden={videoCollapsed}
       >
         <video
           ref={videoRef}
@@ -211,17 +230,9 @@ export default function HeroVideo() {
       </section>
 
       <style>{`
-        /* Nav hide/reveal — driven by body.nav-revealed class */
-        .hero-nav-transition {
-          transform: translateY(-100%);
-          opacity: 0;
-          pointer-events: none;
-          transition: transform 0.5s ease-out, opacity 0.5s ease-out;
-        }
-        body.nav-revealed .hero-nav-transition {
-          transform: translateY(0);
-          opacity: 1;
-          pointer-events: auto;
+        /* Hide MarketingHome's duplicate BlogHeader when hero video is active */
+        body.hero-video-active .hero-duplicate-header {
+          display: none !important;
         }
 
         /* Transition text — slide in from left on scroll */
