@@ -88,8 +88,8 @@ export default async function CreateOrderPage(props: Props) {
       <OrderCreateForm
         templates={templates}
         flashings={flashings}
-        components={(components ?? []).map((c) => ({ id: c.id as string, name: c.name as string, collection_id: (c.collection_id as string | null) ?? null }))}
-        componentLibrary={(components ?? []).map((c) => ({ id: c.id as string, name: c.name as string, collection_id: (c.collection_id as string | null) ?? null }))}
+        components={(components ?? []).filter(c => c.is_active !== false).map((c) => ({ id: c.id as string, name: c.name as string, collection_id: (c.collection_id as string | null) ?? null }))}
+        componentLibrary={(components ?? []).filter(c => c.is_active !== false).map((c) => ({ id: c.id as string, name: c.name as string, collection_id: (c.collection_id as string | null) ?? null }))}
         collections={(collections ?? []).map((c) => ({ id: c.id as string, name: c.name as string }))}
         companyTaxes={(companyTaxes ?? []).map((t) => ({ id: t.id, name: t.name, rate_percent: Number(t.rate_percent) }))}
         workspaceSlug={_workspaceSlug}

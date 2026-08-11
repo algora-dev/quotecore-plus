@@ -246,31 +246,19 @@ export async function convertCatalogRowsToComponents(params: {
     }
   }
 
-  // Check tier limit
+  // The DB trigger (tg_enforce_component_cap) handles the cap per-row:
+  // rows up to the cap land active, overflow lands inactive. No pre-check
+  // needed - imports never fail solely because the cap is full.
+  // We only need to verify the subscription is active.
   try {
-    const { loadCompanyEntitlements, requireComponentSlot, ComponentLimitReachedError, SubscriptionInactiveError, isBillingError } = await import('@/app/lib/billing/entitlements');
-    await requireComponentSlot(profile.company_id);
-    if (selectedRows.length > 1) {
-      const ent = await loadCompanyEntitlements(profile.company_id);
-      if (ent.componentLimit !== null && ent.componentCount + selectedRows.length > ent.componentLimit) {
-        return {
-          ok: false,
-          errors: [`Importing ${selectedRows.length} components would exceed your plan limit (${ent.componentCount}/${ent.componentLimit} on ${ent.effectivePlanCode} plan).`],
-        };
-      }
-    }
-  } catch (err) {
-    const { ComponentLimitReachedError, SubscriptionInactiveError, isBillingError } = await import('@/app/lib/billing/entitlements');
-    if (err instanceof ComponentLimitReachedError) {
-      return { ok: false, errors: [`Component limit reached (${err.used}/${err.limit} on ${err.planCode} plan).`] };
-    }
-    if (err instanceof SubscriptionInactiveError) {
+    const { loadCompanyEntitlements, SubscriptionInactiveError } = await import('@/app/lib/billing/entitlements');
+    const ent = await loadCompanyEntitlements(profile.company_id);
+    if (ent.subscriptionStatus === 'suspended' || ent.subscriptionStatus === 'canceled') {
       return { ok: false, errors: ['Subscription inactive.'] };
     }
-    if (isBillingError(err)) {
-      return { ok: false, errors: [err.message] };
-    }
-    throw err;
+  } catch (err) {
+    // If entitlement load fails, let the DB trigger handle it.
+    console.error('[convertCatalogRowsToComponents] entitlement check failed (non-fatal):', err);
   }
 
   // Get current max sort_order

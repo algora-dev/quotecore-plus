@@ -204,7 +204,9 @@ export default function HomePage() {
   return (
     <>
       <main className="min-h-screen bg-white text-zinc-950">
-        <BlogHeader />
+        <div className="hero-duplicate-header">
+          <BlogHeader />
+        </div>
 
         {/* 1. Hero */}
         <section id="hero-section" className="relative overflow-hidden bg-white pb-10">

@@ -75,7 +75,7 @@ export default async function CustomerQuoteEditPage({
       }))}
       taxAudience="quote"
       collections={(collections ?? []).map((c) => ({ id: c.id, name: c.name }))}
-      componentLibrary={(companyComponents ?? []).map((c) => ({
+      componentLibrary={(companyComponents ?? []).filter(c => c.is_active !== false).map((c) => ({
         id: c.id as string,
         name: c.name as string,
         collection_id: (c.collection_id as string | null) ?? null,

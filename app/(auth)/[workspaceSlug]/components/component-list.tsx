@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility } from './actions';
+import { createComponent, updateComponent, deleteComponent, createComponentCollection, renameComponentCollection, deleteComponentCollection, dismissComponentEditWarning, updateLibraryVisibility, setComponentActive } from './actions';
 import { AddFromCatalogModal } from './components/AddFromCatalogModal';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
 import type {
@@ -125,15 +125,12 @@ export function ComponentList({
   // the same pattern in QuotesList.
   const [subBlockedOpen, setSubBlockedOpen] = useState(false);
 
-  // Live cap calculation. We track the active count locally so cap
-  // enforcement reflects deletes/toggles done in this session without a
-  // round-trip. Soft-delete is excluded server-side; we mirror that here
-  // by counting is_active !== false (treat undefined as active).
-  const activeCount = components.filter((c) => c.is_active !== false).length;
-  // Initial server count vs local can differ if rows were added concurrently
-  // in another tab; we take the larger so we don't undershoot the cap.
-  const effectiveCount = Math.max(componentCount, activeCount);
-  const atCap = componentLimit !== null && effectiveCount >= componentLimit;
+  // Active component allowance tracking. `componentCount` is the server-provided
+  // authoritative count; `activeCount` tracks local state for immediate UI feedback.
+  // We use the server count as the source of truth and update it after each action.
+  const [activeCountState, setActiveCountState] = useState(componentCount);
+  const atCap = componentLimit !== null && activeCountState >= componentLimit;
+  const [activatingId, setActivatingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | ComponentType>('all');
   const [measurementFilter, setMeasurementFilter] = useState<'all' | MeasurementType | 'rafter' | 'valley_hip'>('all');
@@ -326,6 +323,14 @@ export function ComponentList({
     filtered = filtered.filter(c => c.name.toLowerCase().includes(s));
   }
 
+  // Sort: active components first, then by name.
+  filtered = [...filtered].sort((a, b) => {
+    const aActive = a.is_active !== false ? 0 : 1;
+    const bActive = b.is_active !== false ? 0 : 1;
+    if (aActive !== bActive) return aActive - bActive;
+    return a.name.localeCompare(b.name);
+  });
+
   function startEdit(comp: ComponentLibraryRow) {
     setEditingId(comp.id);
     setFormError(null);
@@ -362,6 +367,28 @@ export function ComponentList({
     setAssignedFlashings([]);
     setSelectedFlashingId('');
     setFormNotes('');
+  }
+
+  async function handleToggleActive(compId: string, nextActive: boolean) {
+    setActivatingId(compId);
+    try {
+      const result = await setComponentActive(compId, nextActive);
+      if (result.ok) {
+        // Update local component state
+        setComponents(prev => prev.map(c =>
+          c.id === compId ? { ...c, is_active: nextActive } : c
+        ));
+        // Update authoritative count
+        setActiveCountState(result.activeCount);
+      } else if (result.code === 'component_limit_reached') {
+        // At cap - open upgrade modal
+        setUpgradeOpen(true);
+      }
+    } catch (err) {
+      console.error('[toggleActive] failed:', err);
+    } finally {
+      setActivatingId(null);
+    }
   }
 
   function addFlashing() {
@@ -520,15 +547,22 @@ export function ComponentList({
     try {
       const result = await createComponent(inputWithGenericTrades);
       if (!result.ok) {
-        if (result.code === 'component_limit_reached') {
-          setShowForm(false);
-          setUpgradeOpen(true);
+        if (result.code === 'subscription_inactive') {
+          setSubBlockedOpen(true);
         } else {
           setFormError(result.code === 'internal_error' ? result.message : 'Could not create component.');
         }
         return;
       }
       setComponents((prev) => [...prev, result.data]);
+      // Update authoritative active count from the server response.
+      setActiveCountState(result.activeCount);
+      // If the component was created as inactive (at cap), show a brief message.
+      if (result.activeStatus === 'inactive') {
+        // Could use a toast here; for now, the inactive badge on the row
+        // plus the counter updating is sufficient feedback.
+        console.log('[createComponent] Component created as inactive (at cap).');
+      }
       setShowForm(false);
       setFormWasteType('none');
       setFormMeasurementType('area');
@@ -696,8 +730,14 @@ export function ComponentList({
     if (!deleteCompId) return;
     setDeleteLoading(true);
     try {
+      // Check if the component being deleted was active (to update count).
+      const comp = components.find(c => c.id === deleteCompId);
+      const wasActive = comp ? comp.is_active !== false : false;
       await deleteComponent(deleteCompId);
       setComponents((prev) => prev.filter((c) => c.id !== deleteCompId));
+      if (wasActive) {
+        setActiveCountState(prev => Math.max(0, prev - 1));
+      }
       setDeleteCompId(null);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to delete');
@@ -900,21 +940,14 @@ export function ComponentList({
                 setSubBlockedOpen(true);
                 return;
               }
-              if (atCap) {
-                setUpgradeOpen(true);
-                return;
-              }
+              // No cap block here - the DB trigger handles it.
+              // Components created at cap land as inactive.
               setShowForm(true);
             }}
             data-copilot="add-component"
             className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             + Add Smart Component™
-            {componentLimit !== null && (
-              <span className="ml-2 text-xs font-medium text-white/80">
-                {effectiveCount}/{componentLimit}
-              </span>
-            )}
           </button>
           <button
             onClick={() => {
@@ -1305,6 +1338,37 @@ export function ComponentList({
         </div>
       )}
 
+      {/* Active component allowance counter */}
+      <div className="flex items-center justify-between mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
+        <div className="flex items-center gap-3">
+          <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold ${atCap ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+            {componentLimit !== null
+              ? `${activeCountState} / ${componentLimit} active`
+              : `${activeCountState} active`}
+          </span>
+          <span className="text-xs text-slate-500">
+            {componentLimit !== null
+              ? `Smart Components on your ${effectivePlanCode === 'trial' ? 'trial' : effectivePlanCode} plan`
+              : 'Smart Components - unlimited on your plan'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {!atCap && componentLimit !== null && (
+            <span className="text-xs text-slate-400">
+              {componentLimit - activeCountState} slot{(componentLimit - activeCountState) !== 1 ? 's' : ''} free
+            </span>
+          )}
+          {atCap && (
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="shrink-0 inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition"
+            >
+              Upgrade
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="space-y-2">
         {filtered.map((comp) => (
           <div key={comp.id}>
@@ -1556,12 +1620,25 @@ export function ComponentList({
                 className={`flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${
                   highlightId === comp.id
                     ? 'border-orange-300 bg-orange-50 shadow-[0_0_12px_rgba(255,107,53,0.25)]'
-                    : 'border-slate-200 bg-white'
+                    : comp.is_active === false
+                      ? 'border-slate-200 bg-slate-50/50'
+                      : 'border-slate-200 bg-white'
                 }`}
               >
+                {/* Active/Inactive status badge */}
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium shrink-0 ${
+                    comp.is_active === false
+                      ? 'bg-slate-100 text-slate-400 border border-slate-200'
+                      : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${comp.is_active === false ? 'bg-slate-300' : 'bg-emerald-500'}`} />
+                  {comp.is_active === false ? 'Inactive' : 'Active'}
+                </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-slate-900">{comp.name}</h3>
+                    <h3 className={`font-medium ${comp.is_active === false ? 'text-slate-500' : 'text-slate-900'}`}>{comp.name}</h3>
                     {comp.sku && (
                       <span className="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-mono">{comp.sku}</span>
                     )}
@@ -1583,6 +1660,37 @@ export function ComponentList({
                     </p>
                   )}
                 </div>
+                {/* Activate/Deactivate toggle (hover) */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!activatingId || activatingId !== comp.id) {
+                      void handleToggleActive(comp.id, comp.is_active === false);
+                    }
+                  }}
+                  disabled={activatingId === comp.id}
+                  title={comp.is_active === false ? 'Activate component' : 'Deactivate component'}
+                  aria-pressed={comp.is_active !== false}
+                  className={`p-1.5 rounded-full transition opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
+                    comp.is_active === false
+                      ? 'text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-[0_0_10px_rgba(16,185,129,0.35)]'
+                      : 'text-slate-300 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
+                  }`}
+                >
+                  {activatingId === comp.id ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ) : comp.is_active === false ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                  )}
+                </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); startEdit(comp); }}
                   title="Click to edit"
@@ -1655,8 +1763,8 @@ export function ComponentList({
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`Smart Components™ library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
-        description={`You’ve reached your ${componentLimit ?? 0} Smart Component™ limit. Upgrade your plan to add more Smart Components™ to your library.`}
+        title={`Active Smart Component limit reached on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        description={`You can store unlimited Smart Components, but only ${componentLimit ?? 0} can be active at once. Deactivate components you don't need, or upgrade to activate more.`}
         recommendedPlan="growth"
       />
 

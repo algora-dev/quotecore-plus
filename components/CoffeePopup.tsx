@@ -7,7 +7,7 @@ export default function CoffeePopup() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setVisible(true), 15000);
+    const timer = setTimeout(() => setVisible(true), 50000);
     return () => clearTimeout(timer);
   }, []);
 
