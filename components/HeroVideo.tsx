@@ -78,7 +78,7 @@ export default function HeroVideo() {
           }
         });
       },
-      { threshold: 0.3, rootMargin: "0px 0px -10% 0px" }
+      { threshold: 0.2, rootMargin: "0px 0px -40% 0px" }
     );
     lines.forEach((line) => observer.observe(line));
     return () => observer.disconnect();
@@ -240,12 +240,20 @@ export default function HeroVideo() {
           display: none !important;
         }
 
+        /* Make header more transparent over video when hero is active */
+        body.hero-video-active .hero-header-transparent {
+          background: rgba(255, 255, 255, 0.35) !important;
+          backdrop-blur: 8px !important;
+          border-color: rgba(255, 255, 255, 0.3) !important;
+          box-shadow: none !important;
+        }
+
         /* Transition text — slide in from left on scroll */
         .hero-slide-in {
           opacity: 0;
           transform: translateX(-60px);
-          transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-          transition-delay: calc(var(--hero-slide-index) * 0.12s);
+          transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+          transition-delay: calc(var(--hero-slide-index) * 0.24s);
         }
         .hero-slide-in.is-visible {
           opacity: 1;
@@ -266,6 +274,11 @@ export default function HeroVideo() {
           .hero-video-element {
             position: relative !important;
             object-fit: contain !important;
+          }
+          /* Smaller transition text on mobile */
+          .hero-slide-in {
+            font-size: 1.125rem;
+            line-height: 1.75rem;
           }
         }
       `}</style>

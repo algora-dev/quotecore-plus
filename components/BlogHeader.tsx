@@ -47,7 +47,7 @@ export default function BlogHeader({ backLabel, backHref = "/" }: { backLabel?: 
     "pill-shimmer inline-flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-zinc-900 shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-colors duration-200 hover:border-[#FF6B35]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/60 bg-white/72 shadow-[0_8px_30px_rgba(255,255,255,0.25)_inset,0_12px_40px_rgba(0,0,0,0.05)] backdrop-blur-[24px]">
+    <header className="hero-header-transparent sticky top-0 z-50 border-b border-white/60 bg-white/72 shadow-[0_8px_30px_rgba(255,255,255,0.25)_inset,0_12px_40px_rgba(0,0,0,0.05)] backdrop-blur-[24px]">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
         <a href="/" className="flex items-center gap-3" aria-label="QuoteCore+ home">
           <img src="/MainQCP.png" alt="QuoteCore+" width={160} height={44} loading="eager" decoding="async" fetchPriority="high" className="h-10 w-auto sm:h-11" />
