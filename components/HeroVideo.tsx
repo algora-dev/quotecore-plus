@@ -78,7 +78,7 @@ export default function HeroVideo() {
           }
         });
       },
-      { threshold: 0.1, rootMargin: "0px 0px -60% 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -20% 0px" }
     );
     lines.forEach((line) => observer.observe(line));
     return () => observer.disconnect();
@@ -202,7 +202,7 @@ export default function HeroVideo() {
         </section>
 
         {/* ── Transition message section ── */}
-        <section ref={transitionRef} className="bg-white py-20 sm:py-28 lg:py-36">
+        <section ref={transitionRef} className="hero-transition-section bg-white py-32 sm:py-40 lg:py-52">
           <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
             <div className="space-y-4">
               <p
@@ -252,8 +252,8 @@ export default function HeroVideo() {
         .hero-slide-in {
           opacity: 0;
           transform: translateX(-60px);
-          transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-          transition-delay: calc(var(--hero-slide-index) * 0.35s);
+          transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+          transition-delay: calc(var(--hero-slide-index) * 0.15s);
         }
         .hero-slide-in.is-visible {
           opacity: 1;
