@@ -88,6 +88,13 @@ export async function GET(request: Request) {
       to_status: 'active',
       notes: `Trial expired without conversion at ${row.trial_ends_at}; rolled into Free tier`,
     });
+    // Reconcile component allowance: trial had 10 active, Free has 5.
+    // Deactivate overflow deterministically (no data loss).
+    const { error: reconcileErr } = await admin.rpc('reconcile_company_component_limit', { p_company_id: row.id });
+    if (reconcileErr) {
+      console.error(`[cron/expire-trials] reconcile failed for ${row.id}:`, reconcileErr.message);
+      // Non-fatal: the entitlement loader also reconciles lazily.
+    }
   }
 
   return NextResponse.json({ ok: true, expired: updated, scanned: rows.length });

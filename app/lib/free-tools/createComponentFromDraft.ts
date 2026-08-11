@@ -11,17 +11,13 @@
  *     goes through the same route, so clicking it CREATES the component
  *     instead of opening a pre-filled form.
  *
- * Field mapping mirrors the free SmartComponentTab spec 1:1. Quota and
- * subscription gates are enforced via requireComponentSlot before insert.
+ * Field mapping mirrors the free SmartComponentTab spec 1:1. The DB trigger
+ * (tg_enforce_component_cap) enforces the active allowance: below cap lands
+ * active, at cap lands inactive. No pre-check needed.
  */
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
-import {
-  requireComponentSlot,
-  ComponentLimitReachedError,
-  SubscriptionInactiveError,
-} from '@/app/lib/billing/entitlements';
 
 type CalcDraftSpec = {
   name?: string;
@@ -79,19 +75,9 @@ export async function createComponentFromCalcDraft(
     return { ok: false, code: 'not_found' };
   }
 
-  // 2. Tier gate - same errors createComponent surfaces.
-  try {
-    await requireComponentSlot(companyId);
-  } catch (err) {
-    if (err instanceof ComponentLimitReachedError) {
-      return { ok: false, code: 'limit' };
-    }
-    if (err instanceof SubscriptionInactiveError) {
-      return { ok: false, code: 'inactive' };
-    }
-    console.error('[createComponentFromCalcDraft] quota check failed:', err);
-    return { ok: false, code: 'error', message: err instanceof Error ? err.message : 'quota check failed' };
-  }
+  // 2. The DB trigger handles the cap: below cap = active, at cap = inactive.
+  // No pre-check needed here. Subscription-inactive companies are blocked by
+  // the trigger (P0001) which surfaces as an insert error below.
 
   // 3. Map the free-form spec onto component_library columns. Identical
   // semantics to the app's Add Component form submit (component-list.tsx):

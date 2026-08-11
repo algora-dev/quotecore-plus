@@ -781,10 +781,12 @@ export type Database = {
       catalogs: {
         Row: {
           brands: string[] | null
+          catalogue_status: string
           column_mapping: Json
           company_id: string
           created_at: string
           data_bytes: number
+          default_currency: string | null
           headers: Json
           id: string
           imported_at: string | null
@@ -806,14 +808,19 @@ export type Database = {
           status: string
           supplier_profile_id: string | null
           updated_at: string
+          uploaded_by: string | null
+          valid_from: string | null
+          valid_until: string | null
           visibility: string
         }
         Insert: {
           brands?: string[] | null
+          catalogue_status?: string
           column_mapping?: Json
           company_id: string
           created_at?: string
           data_bytes?: number
+          default_currency?: string | null
           headers?: Json
           id?: string
           imported_at?: string | null
@@ -835,14 +842,19 @@ export type Database = {
           status?: string
           supplier_profile_id?: string | null
           updated_at?: string
+          uploaded_by?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
           visibility?: string
         }
         Update: {
           brands?: string[] | null
+          catalogue_status?: string
           column_mapping?: Json
           company_id?: string
           created_at?: string
           data_bytes?: number
+          default_currency?: string | null
           headers?: Json
           id?: string
           imported_at?: string | null
@@ -864,6 +876,9 @@ export type Database = {
           status?: string
           supplier_profile_id?: string | null
           updated_at?: string
+          uploaded_by?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
           visibility?: string
         }
         Relationships: [
@@ -4964,6 +4979,51 @@ export type Database = {
         }
         Relationships: []
       }
+      supplier_applications: {
+        Row: {
+          account_email: string
+          business_name: string
+          contact_email: string
+          contact_person: string
+          created_at: string
+          has_account: boolean
+          id: number
+          location: string
+          message: string | null
+          status: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          account_email: string
+          business_name: string
+          contact_email: string
+          contact_person: string
+          created_at?: string
+          has_account?: boolean
+          id?: never
+          location: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          account_email?: string
+          business_name?: string
+          contact_email?: string
+          contact_person?: string
+          created_at?: string
+          has_account?: boolean
+          id?: never
+          location?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       supplier_change_notifications: {
         Row: {
           change_type: string
@@ -5097,6 +5157,7 @@ export type Database = {
       }
       supplier_profiles: {
         Row: {
+          address_visibility: string
           allow_custom_pricing: boolean
           approved_at: string | null
           approved_by: string | null
@@ -5110,6 +5171,7 @@ export type Database = {
           brand_accent_color: string | null
           brand_primary_color: string | null
           brands: string[] | null
+          business_registration_number: string | null
           company_id: string | null
           contact_email: string | null
           country: string | null
@@ -5169,9 +5231,11 @@ export type Database = {
           tax_rate: number | null
           tax_treatment: string
           updated_at: string
+          verification_link: string | null
           website_url: string | null
         }
         Insert: {
+          address_visibility?: string
           allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
@@ -5185,6 +5249,7 @@ export type Database = {
           brand_accent_color?: string | null
           brand_primary_color?: string | null
           brands?: string[] | null
+          business_registration_number?: string | null
           company_id?: string | null
           contact_email?: string | null
           country?: string | null
@@ -5244,9 +5309,11 @@ export type Database = {
           tax_rate?: number | null
           tax_treatment?: string
           updated_at?: string
+          verification_link?: string | null
           website_url?: string | null
         }
         Update: {
+          address_visibility?: string
           allow_custom_pricing?: boolean
           approved_at?: string | null
           approved_by?: string | null
@@ -5260,6 +5327,7 @@ export type Database = {
           brand_accent_color?: string | null
           brand_primary_color?: string | null
           brands?: string[] | null
+          business_registration_number?: string | null
           company_id?: string | null
           contact_email?: string | null
           country?: string | null
@@ -5319,6 +5387,7 @@ export type Database = {
           tax_rate?: number | null
           tax_treatment?: string
           updated_at?: string
+          verification_link?: string | null
           website_url?: string | null
         }
         Relationships: [
@@ -6467,11 +6536,49 @@ export type Database = {
         }[]
       }
       prune_rate_limits: { Args: never; Returns: number }
+      public_supplier_catalogue: {
+        Args: { p_limit?: number; p_offset?: number; p_slug: string }
+        Returns: Json
+      }
+      public_supplier_catalogue_by_version: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+          p_slug: string
+          p_version: number
+        }
+        Returns: Json
+      }
+      public_supplier_catalogue_count: {
+        Args: { p_slug: string }
+        Returns: number
+      }
+      public_supplier_catalogue_versions: {
+        Args: { p_slug: string }
+        Returns: {
+          catalogue_id: string
+          currency: string
+          original_filename: string
+          public_title: string
+          status: string
+          total_items: number
+          uploaded_at: string
+          valid_from: string
+          valid_until: string
+          version: number
+        }[]
+      }
       public_supplier_directory: { Args: never; Returns: Json }
       public_supplier_read: { Args: { p_slug: string }; Returns: Json }
       reclaim_stale_dispatching_messages: {
         Args: { p_stale_minutes?: number }
         Returns: number
+      }
+      reconcile_company_component_limit: {
+        Args: { p_company_id: string }
+        Returns: {
+          deactivated_count: number
+        }[]
       }
       refund_ai_scan_points: { Args: { p_job_id: string }; Returns: boolean }
       replace_customer_quote_lines: {

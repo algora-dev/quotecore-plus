@@ -22,7 +22,7 @@ export default async function EditTemplatePage({
     <TemplateEditor
       workspaceSlug={workspaceSlug}
       template={template}
-      componentLibrary={componentLibrary}
+      componentLibrary={componentLibrary.filter(c => c.is_active !== false)}
       customerTemplates={customerTemplates}
     />
   );

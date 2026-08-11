@@ -162,7 +162,7 @@ export default async function QuoteBuilderV2Page({
       initialRoofAreaEntries={roofAreaEntries}
       initialComponents={components}
       initialEntries={entries}
-      libraryComponents={libraryComponents}
+      libraryComponents={libraryComponents.filter(c => c.is_active !== false)}
       workspaceSlug={workspaceSlug}
       companyDefaultCurrency={company?.default_currency || 'GBP'}
       companyMeasurementSystem={(company as { default_measurement_system?: string })?.default_measurement_system as any || 'metric'}
