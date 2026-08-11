@@ -140,7 +140,16 @@ export default function Post() {
       </ul>
       <h2>A faster connected workflow</h2>
       <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ connects <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link>, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
-      <p>Watch <a href="https://www.youtube.com/watch?v=pqIfx-rOcmo">Create a Quote from Start to Finish with QuoteCore+</a> to see how the stages connect, or see a <a href="https://www.youtube.com/watch?v=DziFjqnPdqQ">complex roofing quote created in under three minutes</a>.</p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/B--YAux8Bqo"
+          title="How to Use the Free Roofing Takeoff Builder"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+      <p>Watch <a href="https://www.youtube.com/watch?v=pqIfx-rOcmo">Create a Quote from Start to Finish with QuoteCore+</a> to see how the stages connect, or see a <a href="https://www.youtube.com/watch?v=X379HDoDE_o">complex roofing quote created in under three minutes</a>.</p>
       <h2>Frequently asked questions</h2>
       <h3>What is the difference between a roof measurement and a roof takeoff?</h3>
       <p>A roof measurement records dimensions, areas, and lengths. A roof takeoff converts those measurements into the materials, components, labour items, and allowances needed to price or order the work.</p>

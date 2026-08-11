@@ -33,6 +33,15 @@ export default function Post() {
       <p>
         <a href="/free-roofing-takeoff-builder">Try the Roof Takeoff Builder (free)</a>
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/B--YAux8Bqo"
+          title="How to Use the Free Roofing Takeoff Builder"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
 
       <hr />
 
@@ -144,6 +153,15 @@ export default function Post() {
       <p>
         <a href="/free-quote-generator">Try the Free Quote Generator</a>
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/5ifiryxMBDQ"
+          title="How to Use the Free Quote Generator"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       <p>
         Learn more: <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job:
         Step-by-Step Pricing Guide</a>
@@ -179,6 +197,15 @@ export default function Post() {
       <p>
         <a href="/free-purchase-order-generator">Try the Free Purchase Order Generator</a>
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/pXBJguUw_-I"
+          title="How to Use the Free Purchase Order Generator"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
 
       <hr />
 
@@ -190,6 +217,15 @@ export default function Post() {
       <p>
         <a href="/free-roofing-calculator">Try the Full Roofing Calculator (free)</a>
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/0oJLKTAcOnc"
+          title="How to Use the Free Roofing Calculator"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
 
       <hr />
 

@@ -69,6 +69,16 @@ export default function Post() {
           allowFullScreen
         />
       </div>
+      <p>Prefer to start with a free tool? The <a href="/free-quote-generator">free quote generator</a> handles the document side without a signup:</p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/5ifiryxMBDQ"
+          title="How to Use the Free Quote Generator"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       <p>Getting quotes out faster solves one part of the problem - if you want the broader picture on growing a contracting business without spending money on ads first, <a href="/blog/how-to-get-more-work-as-a-contractor">here are the basics worth fixing</a>.</p>
       <p><Link href="/free-trial" className="text-[#FF6B35] font-medium hover:underline">Start your free 14-day trial</Link> - no card required. From complex plan to quote in under 3 minutes for less than a dollar.</p>
 
@@ -76,6 +86,16 @@ export default function Post() {
 
       <h2>The four stages of a fast quote</h2>
       <p>Speed is not about rushing. It is about having a repeatable process that removes dead time between stages. Every quote should move through four stages without stalling.</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/fObCC5bL4Dg"
+          title="Another Friday Night Stolen by Quotes? Not with QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
 
       <h3>1. Capture (on site)</h3>
       <p>Take measurements, photos, and notes in a way that does not need to be re-entered later. The more structured the capture, the less work the next stage becomes. If you can measure from a plan digitally, the capture stage can happen before you even visit.</p>
