@@ -17,6 +17,7 @@ const SCROLL_REVEAL_THRESHOLD = 150; // px
 
 export default function HeroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const transitionRef = useRef<HTMLElement>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
   const [videoEnded, setVideoEnded] = useState(false);
@@ -48,6 +49,25 @@ export default function HeroVideo() {
     return () => {
       document.body.classList.add("nav-revealed");
     };
+  }, []);
+
+  // Slide-in animation for transition text lines
+  useEffect(() => {
+    const section = transitionRef.current;
+    if (!section) return;
+    const lines = section.querySelectorAll(".hero-slide-in");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+          }
+        });
+      },
+      { threshold: 0.3, rootMargin: "0px 0px -10% 0px" }
+    );
+    lines.forEach((line) => observer.observe(line));
+    return () => observer.disconnect();
   }, []);
 
   const toggleMute = () => {
@@ -159,19 +179,31 @@ export default function HeroVideo() {
       </section>
 
       {/* ── Transition message section ── */}
-      <section className="bg-white py-20 sm:py-28 lg:py-36">
+      <section ref={transitionRef} className="bg-white py-20 sm:py-28 lg:py-36">
         <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
           <div className="space-y-4">
-            <p className="text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl">
+            <p
+              className="hero-slide-in text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl"
+              style={{ "--hero-slide-index": 0 } as React.CSSProperties}
+            >
               Add your components.
             </p>
-            <p className="text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl">
+            <p
+              className="hero-slide-in text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl"
+              style={{ "--hero-slide-index": 1 } as React.CSSProperties}
+            >
               Measure with AI or manually.
             </p>
-            <p className="text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl">
+            <p
+              className="hero-slide-in text-xl font-semibold text-zinc-900 sm:text-2xl lg:text-3xl"
+              style={{ "--hero-slide-index": 2 } as React.CSSProperties}
+            >
               Send the quote to your customer.
             </p>
-            <p className="text-xl font-semibold text-[#FF6B35] sm:text-2xl lg:text-3xl">
+            <p
+              className="hero-slide-in text-xl font-semibold text-[#FF6B35] sm:text-2xl lg:text-3xl"
+              style={{ "--hero-slide-index": 3 } as React.CSSProperties}
+            >
               Done.
             </p>
           </div>
@@ -190,6 +222,18 @@ export default function HeroVideo() {
           transform: translateY(0);
           opacity: 1;
           pointer-events: auto;
+        }
+
+        /* Transition text — slide in from left on scroll */
+        .hero-slide-in {
+          opacity: 0;
+          transform: translateX(-60px);
+          transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+          transition-delay: calc(var(--hero-slide-index) * 0.12s);
+        }
+        .hero-slide-in.is-visible {
+          opacity: 1;
+          transform: translateX(0);
         }
       `}</style>
     </>
