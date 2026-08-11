@@ -252,8 +252,8 @@ export default function HeroVideo() {
         .hero-slide-in {
           opacity: 0;
           transform: translateX(-60px);
-          transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-          transition-delay: calc(var(--hero-slide-index) * 0.24s);
+          transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+          transition-delay: calc(var(--hero-slide-index) * 0.35s);
         }
         .hero-slide-in.is-visible {
           opacity: 1;
