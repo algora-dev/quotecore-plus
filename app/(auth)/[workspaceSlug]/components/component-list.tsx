@@ -1339,21 +1339,34 @@ export function ComponentList({
       )}
 
       {/* Active component allowance counter */}
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-slate-500">
-          {componentLimit !== null
-            ? `${activeCountState} of ${componentLimit} active Smart Components`
-            : `${activeCountState} active Smart Components - Unlimited`}
-          <span className="text-slate-400 ml-1">- Active components can be used across QuoteCore+. Inactive components stay saved and editable.</span>
-        </p>
-        {atCap && (
-          <button
-            onClick={() => setUpgradeOpen(true)}
-            className="shrink-0 inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition"
-          >
-            Upgrade
-          </button>
-        )}
+      <div className="flex items-center justify-between mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5">
+        <div className="flex items-center gap-3">
+          <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-semibold ${atCap ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+            {componentLimit !== null
+              ? `${activeCountState} / ${componentLimit} active`
+              : `${activeCountState} active`}
+          </span>
+          <span className="text-xs text-slate-500">
+            {componentLimit !== null
+              ? `Smart Components on your ${effectivePlanCode === 'trial' ? 'trial' : effectivePlanCode} plan`
+              : 'Smart Components - unlimited on your plan'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {!atCap && componentLimit !== null && (
+            <span className="text-xs text-slate-400">
+              {componentLimit - activeCountState} slot{(componentLimit - activeCountState) !== 1 ? 's' : ''} free
+            </span>
+          )}
+          {atCap && (
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="shrink-0 inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition"
+            >
+              Upgrade
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
