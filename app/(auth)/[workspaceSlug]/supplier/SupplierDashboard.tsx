@@ -174,12 +174,18 @@ export function SupplierDashboard({
   libraries,
   catalogs,
   collections,
+  componentLimit,
+  companyActiveCount,
+  effectivePlanCode,
 }: {
   workspaceSlug: string;
   profile: SupplierProfileData | null;
   libraries: SupplierLibraryData[];
   catalogs: SupplierCatalogData[];
   collections: UserCollection[];
+  componentLimit: number | null;
+  companyActiveCount: number;
+  effectivePlanCode: string;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>('libraries');
 
@@ -929,21 +935,82 @@ export function SupplierDashboard({
                   </div>
                 ) : (
                   <div className="mt-2 space-y-2">
+                    {/* Active component allowance summary */}
+                    {componentLimit !== null && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 mb-1">
+                        <span className="text-xs text-slate-600">
+                          Your plan allows <span className="font-semibold text-slate-900">{componentLimit} active components</span> across all libraries.
+                          You currently have <span className={`font-semibold ${companyActiveCount >= componentLimit ? 'text-red-600' : 'text-slate-900'}`}>{companyActiveCount} active</span>.
+                        </span>
+                      </div>
+                    )}
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input type="radio" name="takeoff-collection" checked={takeoffCollectionId === null} onChange={() => setTakeoffCollectionId(null)} className="border-slate-300 text-orange-500 focus:ring-orange-500" />
                       <span className="text-sm text-slate-500">No library (uses generic components)</span>
                     </label>
-                    {localLibraries.map((lib) => (
+                    {localLibraries.map((lib) => {
+                      return (
                       <label key={lib.id} className="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-200 px-3 py-2 hover:bg-orange-50/40 transition">
                         <input type="radio" name="takeoff-collection" checked={takeoffCollectionId === lib.id} onChange={() => setTakeoffCollectionId(lib.id)} className="border-slate-300 text-orange-500 focus:ring-orange-500" />
                         <div className="flex-1">
                           <span className="text-sm font-medium text-slate-900">{lib.name}</span>
-                          <span className="ml-2 text-xs text-slate-400">{lib.component_count} components</span>
+                          <span className="ml-2 text-xs text-slate-400">
+                            {lib.component_count} active{lib.total_component_count !== lib.component_count ? ` / ${lib.total_component_count} total` : ''} components
+                          </span>
                           {lib.is_default_takeoff_library && (<span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">Current default</span>)}
                         </div>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${lib.visibility === 'published' ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>{lib.visibility ?? 'private'}</span>
                       </label>
-                    ))}
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Warning: selected library has more total components than active allowance */}
+                {takeoffCollectionId && componentLimit !== null && (() => {
+                  const selectedLib = localLibraries.find(l => l.id === takeoffCollectionId);
+                  if (!selectedLib || selectedLib.total_component_count <= componentLimit) return null;
+                  return (
+                    <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                      <div className="flex items-start gap-2">
+                        <svg className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="flex-1">
+                          <p className="text-xs font-medium text-amber-900">
+                            This library has {selectedLib.total_component_count} components, but your {effectivePlanCode} plan allows only {componentLimit} active at once.
+                          </p>
+                          <p className="text-xs text-amber-700 mt-1">
+                            Only {selectedLib.component_count} active components will appear in your takeoff builder. {selectedLib.total_component_count - selectedLib.component_count} are inactive and hidden from customers.
+                          </p>
+                          <Link href={`/${workspaceSlug}/components`} className="mt-2 inline-block text-xs font-medium text-[#BD4A1A] hover:underline">
+                            Manage active components →
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Warning: at or over active component cap */}
+                {takeoffCollectionId && componentLimit !== null && companyActiveCount >= componentLimit && (
+                  <div className="mt-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
+                    <div className="flex items-start gap-2">
+                      <svg className="h-4 w-4 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-slate-900">
+                          You have reached your active component limit ({companyActiveCount}/{componentLimit}).
+                        </p>
+                        <p className="text-xs text-slate-600 mt-1">
+                          Deactivate components you don't need, or upgrade to activate more. New components you create will be stored as inactive.
+                        </p>
+                        <Link href={`/${workspaceSlug}/settings/billing`} className="mt-2 inline-block text-xs font-medium text-[#BD4A1A] hover:underline">
+                          Upgrade plan →
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1241,7 +1308,7 @@ export function SupplierDashboard({
                       {lib.public_title && lib.visibility !== 'private' && <p className="text-xs text-slate-500 mt-1">Public title: {lib.public_title}</p>}
                       {lib.public_description && lib.visibility !== 'private' && <p className="text-xs text-slate-400 mt-0.5">{lib.public_description}</p>}
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
-                        <span>{lib.component_count} component{lib.component_count !== 1 ? 's' : ''}</span>
+                        <span>{lib.component_count} active{lib.total_component_count !== lib.component_count ? ` / ${lib.total_component_count} total` : ''} component{lib.total_component_count !== 1 ? 's' : ''}</span>
                         {lib.published_at && <span>Published: {new Date(lib.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
                       </div>
                       {lib.roofing_types && lib.roofing_types.length > 0 && (
