@@ -28,7 +28,6 @@ import type {
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { getUnitLabel } from '@/app/lib/measurements/displayHelpers';
 import { getTradeLabels } from '@/app/lib/trades/labels';
-import { UpgradeModal } from '@/app/components/UpgradeModal';
 
 // ---------------------------------------------------------------------------
 // Constants / helpers (mirrors component-list.tsx exactly)
@@ -207,7 +206,6 @@ export function CreateSmartComponentModal({
 
   // ------- form state -------
   const [saving, setSaving] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [formMeasurementType, setFormMeasurementType] = useState<MeasurementType>('area');
   const [formWasteType, setFormWasteType] = useState<WasteType>('none');
   const [formPitchEnabled, setFormPitchEnabled] = useState(false);
@@ -693,14 +691,6 @@ export function CreateSmartComponentModal({
         </div>
       </div>
 
-      {/* Upgrade modal for component limit */}
-      <UpgradeModal
-        open={upgradeOpen}
-        onClose={() => { setUpgradeOpen(false); onClose(); }}
-        title="Smart Components™ library full"
-        description="You've reached your component limit. Upgrade your plan to add more Smart Components™."
-        recommendedPlan="growth"
-      />
     </>
   );
 }

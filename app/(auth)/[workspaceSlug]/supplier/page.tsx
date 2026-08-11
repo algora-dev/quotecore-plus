@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { loadSupplierProfile, loadSupplierLibraries, loadSupplierCatalogs } from './actions';
 import { getUserCollections } from '../supplier-directory/actions';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { SupplierDashboard } from './SupplierDashboard';
 
 export default async function SupplierPage(props: {
@@ -15,11 +16,12 @@ export default async function SupplierPage(props: {
     redirect(`/${workspaceSlug}/components`);
   }
 
-  const [profileResult, librariesResult, catalogsResult, collections] = await Promise.all([
+  const [profileResult, librariesResult, catalogsResult, collections, entitlements] = await Promise.all([
     loadSupplierProfile().then(p => ({ data: p, error: null as string | null })).catch(e => ({ data: null, error: e instanceof Error ? e.message : String(e) })),
     loadSupplierLibraries().then(p => ({ data: p, error: null as string | null })).catch(e => ({ data: null, error: e instanceof Error ? e.message : String(e) })),
     loadSupplierCatalogs().then(p => ({ data: p, error: null as string | null })).catch(e => ({ data: null, error: e instanceof Error ? e.message : String(e) })),
     getUserCollections().catch(() => []),
+    loadCompanyEntitlements(company.id).catch(() => null),
   ]);
 
   const profile = profileResult.data;
@@ -55,6 +57,9 @@ export default async function SupplierPage(props: {
       libraries={libraries}
       catalogs={catalogs}
       collections={collections}
+      componentLimit={entitlements?.componentLimit ?? null}
+      companyActiveCount={entitlements?.componentCount ?? 0}
+      effectivePlanCode={entitlements?.effectivePlanCode ?? 'free'}
     />
   );
 }

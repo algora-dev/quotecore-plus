@@ -1660,7 +1660,7 @@ export function ComponentList({
                     </p>
                   )}
                 </div>
-                {/* Activate/Deactivate toggle */}
+                {/* Activate/Deactivate toggle (hover) */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1671,13 +1671,25 @@ export function ComponentList({
                   disabled={activatingId === comp.id}
                   title={comp.is_active === false ? 'Activate component' : 'Deactivate component'}
                   aria-pressed={comp.is_active !== false}
-                  className={`shrink-0 inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full border transition min-h-[44px] ${
+                  className={`p-1.5 rounded-full transition opacity-0 group-hover:opacity-100 disabled:opacity-0 ${
                     comp.is_active === false
-                      ? 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-                      : 'border-slate-300 text-slate-500 hover:bg-slate-50'
-                  } disabled:opacity-50`}
+                      ? 'text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-[0_0_10px_rgba(16,185,129,0.35)]'
+                      : 'text-slate-300 hover:text-red-500 hover:bg-red-50 hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]'
+                  }`}
                 >
-                  {activatingId === comp.id ? '...' : comp.is_active === false ? 'Activate' : 'Deactivate'}
+                  {activatingId === comp.id ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ) : comp.is_active === false ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                  )}
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); startEdit(comp); }}

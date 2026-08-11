@@ -75,6 +75,7 @@ export type SupplierLibraryData = {
   public_title: string | null;
   public_description: string | null;
   component_count: number;
+  total_component_count: number;
   roofing_types: string[] | null;
   product_categories: string[] | null;
   brands: string[] | null;
@@ -129,24 +130,41 @@ export async function loadSupplierLibraries(): Promise<SupplierLibraryData[]> {
 
   if (error) throw new Error(error.message);
 
-  // Get component counts per collection
-  const { data: counts, error: countError } = await supabase
+  // Get active component counts per collection
+  const { data: activeCounts, error: activeError } = await supabase
     .from('component_library')
     .select('collection_id')
     .eq('company_id', profile.company_id)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .not('is_system', 'eq', true);
 
-  if (countError) throw new Error(countError.message);
+  if (activeError) throw new Error(activeError.message);
 
-  const countMap = new Map<string, number>();
-  for (const row of counts ?? []) {
+  const activeCountMap = new Map<string, number>();
+  for (const row of activeCounts ?? []) {
     const cid = row.collection_id as string;
-    countMap.set(cid, (countMap.get(cid) ?? 0) + 1);
+    activeCountMap.set(cid, (activeCountMap.get(cid) ?? 0) + 1);
+  }
+
+  // Get total component counts per collection (active + inactive, excluding system)
+  const { data: allCounts, error: totalError } = await supabase
+    .from('component_library')
+    .select('collection_id')
+    .eq('company_id', profile.company_id)
+    .not('is_system', 'eq', true);
+
+  if (totalError) throw new Error(totalError.message);
+
+  const totalCountMap = new Map<string, number>();
+  for (const row of allCounts ?? []) {
+    const cid = row.collection_id as string;
+    totalCountMap.set(cid, (totalCountMap.get(cid) ?? 0) + 1);
   }
 
   return (collections ?? []).map(c => ({
     ...c,
-    component_count: countMap.get(c.id) ?? 0,
+    component_count: activeCountMap.get(c.id) ?? 0,
+    total_component_count: totalCountMap.get(c.id) ?? 0,
   })) as SupplierLibraryData[];
 }
 

@@ -76,15 +76,15 @@ export default function HomePage() {
     {
       number: "01",
       title: "Measure",
-      body: "Upload a plan and use AI Scan Assist to identify multiple roof areas, ridges, hips, valleys, barges and spouting automatically. Name each roof area, assign different pitches and materials, then verify and adjust everything manually. Digital takeoff tools handle angles, pitches and complex roof geometry - no pen and paper required.",
+      body: "Upload your plan, let AI identify roof area and components for you to confirm, or easily add them yourself. Our digital canvas removes the need to print out plans, and is very easy to use. (Desktop only)",
       images: [
         { src: "/how-it-works/how-it-works-1-3.png", label: "Digital takeoff" },
       ],
     },
     {
       number: "02",
-      title: "Price",
-      body: "Smart Components™ apply your stored materials, labour rates, waste allowances, and pricing rules. No rebuilding from scratch - the logic is already there.",
+      title: "Pricing",
+      body: "Smart Components allow you to store all your material, labour, waste, and pricing logic. Build them once, use them in every quote! Smart components let you digitally configure how you already work!",
       images: [
         { src: "/how-it-works-smart-components-editor.png", label: "Component editor" },
       ],
@@ -92,7 +92,7 @@ export default function HomePage() {
     {
       number: "03",
       title: "Quote",
-      body: "Build a professional, customisable quote in minutes. Preview what the customer sees, add terms, and send it directly from the platform.",
+      body: "Build professional, fully editable quotes within a few clicks of adding your measurements, build multiple header/footer templates to suit different clients.",
       images: [
         { src: "/how-it-works/how-it-works-2-2.png", label: "Quote editor" },
         { src: "/how-it-works/how-it-works-2-3.png", label: "Customer preview" },
@@ -101,7 +101,7 @@ export default function HomePage() {
     {
       number: "04",
       title: "Send",
-      body: "Send quotes, orders and invoices directly from QuoteCore+ with attachments. Track when recipients open and read them. Automatic follow-ups chase outstanding quotes for you - and cancel themselves when a quote is accepted or declined.",
+      body: "Send customers your quotes, orders, invoices directly from the QuoteCore+ app. Know when they have opened the document, schedule automatic follow ups that send from custom triggers you can easily set.",
       images: [
         { src: "/how-it-works/how-it-works-3.png", label: "Message centre" },
       ],
@@ -109,7 +109,7 @@ export default function HomePage() {
     {
       number: "05",
       title: "Order",
-      body: "Create a material order from a saved quote with all quantities and supplier details carried over, or start from scratch with a line-by-line order. Edit quantities, add or remove items, choose from three display formats, and send it straight to your supplier. You can also upload a supplier photo or PDF and AI converts it into editable line items.",
+      body: "Create material orders from scratch, or within a couple of clicks from a saved quote. Multiple order form layout options, header/footer templates for multiple suppliers, ability to add images and drawings to orders.",
       images: [
         { src: "/how-it-works-order-form.png", label: "Order form" },
         { src: "/how-it-works/how-it-works-4.png", label: "Material orders" },
@@ -118,7 +118,7 @@ export default function HomePage() {
     {
       number: "06",
       title: "Invoice",
-      body: "Create and edit an invoice from the same saved quote, or start from scratch with a line-by-line invoice. No re-entering information - the quote, order, and invoice all stay connected. Configure payment methods per invoice - bank details, Stripe links or PayPal links - and recipients can mark paid or dispute directly. You can also upload an existing invoice image and AI converts it into editable line items.",
+      body: "Create custom invoices from scratch, or within a couple of clicks from a saved quote. Header/footer templates for multiple suppliers, ability to add images and drawings to orders.",
       images: [
         { src: "/how-it-works/how-it-works-5-2.png", label: "Invoice view" },
       ],
@@ -204,7 +204,9 @@ export default function HomePage() {
   return (
     <>
       <main className="min-h-screen bg-white text-zinc-950">
-        <BlogHeader />
+        <div className="hero-duplicate-header">
+          <BlogHeader />
+        </div>
 
         {/* 1. Hero */}
         <section id="hero-section" className="relative overflow-hidden bg-white pb-10">
@@ -318,7 +320,7 @@ export default function HomePage() {
 
           {/* Workflow flow line */}
           <div className="mb-10 hidden flex-wrap items-center justify-center gap-2 lg:flex">
-            {["Measure", "Price", "Quote", "Send", "Order", "Invoice"].map((label, i) => (
+            {["Measure", "Pricing", "Quote", "Send", "Order", "Invoice"].map((label, i) => (
               <React.Fragment key={label}>
                 <span className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium ${i === activeStep ? "bg-[#FF6B35] text-white" : "bg-zinc-100 text-zinc-600"}`}>
                   {label}
