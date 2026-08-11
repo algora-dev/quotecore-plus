@@ -86,10 +86,13 @@ export default async function Page({
   // Load components from component library (includes is_system rows so
   // TakeoffWorkstation can render AI placeholder groups; the manual
   // add-component selector filters them out client-side).
+  // Active filter: only active components are available for new selection.
+  // System rows are always included (AI takeoff placeholders, not customer-facing).
   const { data: components } = await supabase
     .from('component_library')
-    .select('id, name, measurement_type, collection_id, is_system')
+    .select('id, name, measurement_type, collection_id, is_system, is_active')
     .eq('company_id', profile.company_id)
+    .or('is_active.eq.true,is_system.eq.true')
     .order('name');
 
   // Named component libraries

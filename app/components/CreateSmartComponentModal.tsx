@@ -329,8 +329,8 @@ export function CreateSmartComponentModal({
     try {
       const result = await createComponent(fullInput);
       if (!result.ok) {
-        if (result.code === 'component_limit_reached') {
-          setUpgradeOpen(true);
+        if (result.code === 'subscription_inactive') {
+          alert('Your subscription is inactive. Please choose a plan to continue.');
         } else {
           alert(result.code === 'internal_error' ? result.message : 'Could not create Smart Component™.');
         }

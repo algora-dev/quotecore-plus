@@ -19,7 +19,7 @@ export default async function CreateTemplatePage({
   return (
     <TemplateBuilder
       workspaceSlug={workspaceSlug}
-      componentLibrary={componentLibrary}
+      componentLibrary={componentLibrary.filter(c => c.is_active !== false)}
       customerTemplates={customerTemplates}
     />
   );

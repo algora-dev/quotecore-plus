@@ -345,6 +345,20 @@ export const loadCompanyEntitlements = cache(
 
     const plan = planRowData as PlanRowRaw;
 
+    const componentCount = (compCountResult.data as number | null) ?? 0;
+    const componentLimit = plan.component_limit;
+
+    // Lazy reconciliation: if the company has more active components than
+    // their plan allows (e.g. trial just expired, or cron hasn't run yet),
+    // reconcile immediately so enforcement is consistent.
+    if (componentLimit !== null && componentCount > componentLimit) {
+      try {
+        await admin.rpc('reconcile_company_component_limit', { p_company_id: companyId });
+      } catch {
+        // Non-fatal: the count may be stale by one cycle.
+      }
+    }
+
     return {
       companyId,
       purchasedPlanCode: company.plan_code,
@@ -353,8 +367,8 @@ export const loadCompanyEntitlements = cache(
       isActive,
       monthlyQuoteLimit: plan.monthly_quote_limit,
       monthlyQuoteUsed: (usageResult.data?.quotes_created as number | undefined) ?? 0,
-      componentLimit: plan.component_limit,
-      componentCount: (compCountResult.data as number | null) ?? 0,
+      componentLimit: componentLimit,
+      componentCount: componentCount,
       flashingLimit:  plan.flashing_limit,
       flashingCount:  (flashCountResult.data as number | null) ?? 0,
       catalogLimit:   plan.catalog_limit,
