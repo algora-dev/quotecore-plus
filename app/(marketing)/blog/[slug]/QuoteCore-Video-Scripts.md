@@ -96,7 +96,7 @@ Follow us:
 
 **Link:** https://youtu.be/B--YAux8Bqo
 
-**Referenced in:** /blog/best-free-tools-for-roofers, /blog/how-to-do-a-roof-takeoff, /blog/manual-vs-digital-roof-takeoff
+**Referenced in:** /blog/best-free-tools-for-roofers, /blog/how-to-do-a-roof-takeoff, /blog/manual-vs-digital-roof-takeoff, /blog/how-to-measure-a-roof, /blog/how-to-estimate-roofing-materials
 **Date added:** See YouTube publish date
 **Status:** Script complete
 
@@ -506,7 +506,7 @@ Follow us:
 
 **Link:** https://youtu.be/QyYa1VbQkbQ
 
-**Referenced in:** /blog/roof-replacement-cost-guide-uk, /blog/roofing-quoting-software-vs-spreadsheets, /blog/best-roofing-quoting-software-uk-2026
+**Referenced in:** /blog/roof-replacement-cost-guide-uk, /blog/roofing-quoting-software-vs-spreadsheets, /blog/best-roofing-quoting-software-uk-2026, /blog/best-quoting-software-au, /blog/best-quoting-software-us
 **Date added:** See YouTube publish date
 **Status:** Script complete
 
@@ -1152,7 +1152,7 @@ Follow us:
 
 **Link:** https://youtu.be/1MOvQX-Lf_c
 
-**Referenced in:** /blog/reusable-quoting-templates-smart-components, /blog/roofing-waste-calculation
+**Referenced in:** /blog/reusable-quoting-templates-smart-components, /blog/roofing-waste-calculation, /blog/roofing-estimating-vs-quoting, /blog/how-to-reduce-roofing-waste
 **Date added:** See YouTube publish date
 **Status:** Script complete
 
@@ -1327,7 +1327,7 @@ Follow us:
 
 **Link:** https://youtu.be/pqIfx-rOcmo
 
-**Referenced in:** /blog/quotecore-plus-reviews, /blog/quotecore-plus-vs-quotesmith, /blog/roofing-quoting-software-uk, /blog/built-by-a-roofer, /blog/construction-quote-speed-checklist, /blog/how-to-get-more-work-as-a-contractor, /blog/best-roofing-quoting-software-uk-2026, /blog/how-to-follow-up-on-a-quote, /blog/how-to-start-a-roofing-business-uk
+**Referenced in:** /blog/quotecore-plus-reviews, /blog/quotecore-plus-vs-quotesmith, /blog/roofing-quoting-software-uk, /blog/built-by-a-roofer, /blog/construction-quote-speed-checklist, /blog/how-to-get-more-work-as-a-contractor, /blog/best-roofing-quoting-software-uk-2026, /blog/how-to-follow-up-on-a-quote, /blog/how-to-start-a-roofing-business-uk, /blog/best-quoting-software-au, /blog/best-quoting-software-us, /blog/best-quoting-software-nz, /blog/how-much-roofing-material
 **Date added:** See YouTube publish date
 **Status:** Script complete
 

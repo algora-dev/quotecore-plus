@@ -62,6 +62,28 @@ export default function Post() {
       <p><strong>Where it falls short:</strong> QuoteCore+ is built for measured trades - roofing, cladding, concrete, landscaping. If you need job scheduling, dispatch, and reactive service workflows, a trade management platform will serve you better.</p>
       <p><strong>Best for:</strong> Roofers, cladding installers, and trades that measure from plans and need accurate material quantities.</p>
 
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/pqIfx-rOcmo?start=3"
+          title="Create a quote from start to finish with QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
+      <p>Not sure if it is worth switching? This 45-second overview shows the difference:</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/QyYa1VbQkbQ"
+          title="Roofing Quoting Software That Actually Works"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
       <h3>2. Jobber — Best for home service businesses</h3>
       <p><strong>Pricing:</strong> From $49/month (USD). 14-day free trial.</p>
       <p>Jobber is a field service management platform popular with US home service businesses - landscaping, cleaning, HVAC, plumbing, and general contracting. It handles quoting, scheduling, dispatch, invoicing, and client communication in one system.</p>

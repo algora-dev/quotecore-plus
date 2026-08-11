@@ -91,6 +91,15 @@ export default function Post() {
         AI-assisted component scanning available in the app, <a href="/free-trial">try QuoteCore+
         free</a>.
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/B--YAux8Bqo"
+          title="How to Use the Free Roofing Takeoff Builder"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
 
       <hr />
 
