@@ -9,25 +9,25 @@ import { trackEvent } from "@/lib/analytics";
 
 const testimonials = [
   {
-    name: "Tony Edwards",
-    business: "NZ Audio Visual",
+    name: "Greg Kepp",
+    business: "Sky High Roofing",
     quote:
-      "As an AV company offering a wide range of services and products, finding one app that can handle everything has always been difficult. QuoteCore+ has made it easy to streamline our quoting with smart components and catalogue uploads covering everything we provide. It does 90% of what we need perfectly, and the flexibility of the app lets us make the other 10% work too - all in one place. It saves us serious time, admin, and money.",
+      "We haven't had to print out a roof plan since we started using QuoteCore+. I was sceptical at first, but once you get used to measuring everything on screen it's hard to imagine going back, not to mention its at least 4x faster than our old process. We're still only using a fraction of what the app offers but very happy so far",
+    initials: "GK",
+  },
+  {
+    name: "Tony Edwards",
+    business: "NZAV",
+    quote:
+      "We offer a really diverse range of AV products and services, and most quoting software we tried just wasn't flexible enough for us. With QuoteCore+, Smart Components combined with catalogue uploads let us do everything that used to need three different apps. Having everything in one place is so handy. We've just started using the digital takeoff system too, which is very cool!",
     initials: "TE",
   },
   {
-    name: "Tom Harris",
-    business: "Harris Flooring Ltd",
+    name: "Rob Mander",
+    business: "FMR Solutions",
     quote:
-      "QuoteCore+ paid for itself from the first quote. The biggest difference for us has been how much faster we go from measuring, quoting to getting the customer approval. No more chasing people, auto follow ups make that so easy for us while we're on the tools! It makes the whole quoting process feel more professional and saves us a lot of time.",
-    initials: "TH",
-  },
-  {
-    name: "Adam Westbrook",
-    business: "Westbrook Fencing Co.",
-    quote:
-      "QuoteCore+ gave us our weekends back. We used to spend Sundays catching up on quotes, but now we get them finished on Friday and can actually switch off. It has made the whole quoting process quicker, easier, and a lot less stressful.",
-    initials: "AW",
+      "We'd tried other options and just couldn't get their systems working the way we needed. QuoteCore+ nailed it with their Smart Components system, they're so simple, and allow us to price everything the way we already have for years. If it existed earlier, I might be retired by now!",
+    initials: "RM",
   },
 ];
 
@@ -576,7 +576,7 @@ export default function HomePage() {
               <h2 className="mt-3 text-3xl font-semibold text-zinc-950 sm:text-4xl">
                 What users say
               </h2>
-              <p className="mt-3 text-sm text-zinc-500">From trades already using QuoteCore+. Roofing case studies coming soon.</p>
+
             </div>
 
             {/* Crawler-readable testimonials */}

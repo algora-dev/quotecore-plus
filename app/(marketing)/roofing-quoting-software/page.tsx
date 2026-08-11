@@ -487,15 +487,15 @@ export default function RoofingQuotingSoftwarePage() {
             <div className="rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] text-white font-semibold">
-                  TH
+                  GK
                 </div>
                 <div>
-                  <p className="font-semibold text-zinc-950">Tom Harris</p>
-                  <p className="text-sm text-[#FF6B35]">Harris Flooring Ltd</p>
+                  <p className="font-semibold text-zinc-950">Greg Kepp</p>
+                  <p className="text-sm text-[#FF6B35]">Sky High Roofing</p>
                 </div>
               </div>
               <p className="mt-6 text-lg leading-8 text-zinc-600">
-                &ldquo;QuoteCore+ paid for itself from the first quote. The biggest difference for us has been how much faster we go from measuring, quoting to getting the customer approval. No more chasing people, auto follow ups make that so easy for us while we&apos;re on the tools! It makes the whole quoting process feel more professional and saves us a lot of time.&rdquo;
+                &ldquo;We haven&rsquo;t had to print out a roof plan since we started using QuoteCore+. I was sceptical at first, but once you get used to measuring everything on screen it&rsquo;s hard to imagine going back, not to mention its at least 4x faster than our old process. We&rsquo;re still only using a fraction of what the app offers but very happy so far&rdquo;
               </p>
             </div>
           </div>
