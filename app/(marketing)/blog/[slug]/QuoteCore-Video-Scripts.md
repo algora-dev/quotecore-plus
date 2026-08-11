@@ -27,6 +27,56 @@ You can download or print it. You can convert this to an order, or you can conve
 
 **[01:44-01:50] Outro**
 
+### YouTube Description
+
+**TITLE:**
+How to Use the QuoteCore+ Free Quote Generator (Step by Step)
+
+**DESCRIPTION:**
+Turn a photo of your hand-written quote into a clean, professional document in seconds - free. In this tutorial, I'll walk you through the QuoteCore+ free quote generator, from signing up to generating your first quote.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- How to access the free quote generator
+- Sign up vs. using it without an account
+- Setting up your business details, logo, currency and tax
+- Using AI assist (prompt assist and image upload)
+- Turning a photo of your hand-written quote into a digital one
+- Editing, generating, downloading and printing your quote
+- Converting a quote to an order or invoice in one click
+
+**CHAPTERS**
+00:00 - Intro
+00:16 - Accessing the free quote generator
+00:42 - AI assist (prompt or image upload)
+01:09 - Auto-filling your quote from an image
+01:29 - Editing and generating your quote
+01:44 - Saving, printing and converting to order or invoice
+
+**RELATED BLOGS**
+- How to Price a Roofing Job: https://quote-core.com/blog/how-to-price-a-roofing-job
+- Roofing Estimating vs Quoting: https://quote-core.com/blog/roofing-estimating-vs-quoting
+- How to Create an Invoice for Contractors: https://quote-core.com/blog/how-to-create-an-invoice-for-contractors
+
+**RELATED VIDEOS**
+- How to Use the Free Purchase Order Generator: https://youtu.be/pXBJguUw_-I
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingSoftware #QuoteGenerator #FreeQuote #ConstructionSoftware #RoofingContractor #QuotingSoftware #QuoteCore
+
 ---
 
 ## 2. How to Use the Free Roofing Takeoff Builder
@@ -53,6 +103,59 @@ You can also easily add a custom component, anything that's area or lineal measu
 
 **[01:59-02:19]**
 You can add or hide details, attach a plan for them to quote from or check against your takeoff, and they'll receive an email like this one. That's how to use our free roofing takeoff builder. Be sure to check out our other free tools and tutorials.
+
+### YouTube Description
+
+**TITLE:**
+How to Use the QuoteCore+ Free Roofing Takeoff Builder (Step by Step)
+
+**DESCRIPTION:**
+Build a detailed roofing takeoff from actual or plan measurements - with accurate supplier pricing - in minutes. In this tutorial, I'll walk you through the QuoteCore+ free roofing takeoff builder, from setting your pitch to generating a takeoff you can send straight to your supplier.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- How to access the free roofing takeoff builder
+- Actual vs. plan measurements (auto pitch calculation)
+- Choosing a supplier or entering your own pricing
+- Adding roof areas and connecting them to supplier components
+- Adding ridge, hips, valleys and barges/rakes
+- Auto-adding components from an existing roof area
+- Adding custom components (area or lineal)
+- Generating, saving, printing and converting your takeoff
+- Sending a detailed inquiry to your chosen supplier
+
+**CHAPTERS**
+00:00 - Intro
+00:18 - Accessing the takeoff builder and choosing measurements
+00:42 - Selecting a supplier and adding your roof area
+00:59 - Adding components to your roof
+01:21 - Auto-add components from your roof area
+01:39 - Adding custom components and generating the takeoff
+02:19 - Sending the takeoff to your supplier
+
+**RELATED BLOGS**
+- How to Do a Roof Takeoff: https://quote-core.com/blog/how-to-do-a-roof-takeoff
+- Manual vs Digital Roof Takeoff: https://quote-core.com/blog/manual-vs-digital-roof-takeoff
+- How to Estimate Roofing Materials: https://quote-core.com/blog/how-to-estimate-roofing-materials
+
+**RELATED VIDEOS**
+- How to Use the Free Quote Generator: https://youtu.be/5ifiryxMBDQ
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingTakeoff #TakeoffBuilder #RoofingSoftware #FreeTool #QuantitySurveying #RoofingContractor #QuoteCore #ConstructionSoftware
 
 ---
 
@@ -90,7 +193,59 @@ So nice and easy. Maybe you've got an upstand that's running onto a roof, so may
 **[03:24-03:39]**
 Loads of options. This works on mobile and you'll get a lot of other tools and how to measure everything down a bit lower, including worked examples. And that's how to use it. No sign up needed, totally free to use. But make sure to check out our other industry-leading in-app roof measuring tools too.
 
-**[03:39-03:45] Outro**
+**[03:24-03:45] Outro**
+
+### YouTube Description
+
+**TITLE:**
+How to Use the QuoteCore+ Free Roofing Calculator (Step by Step)
+
+**DESCRIPTION:**
+Calculate roof area, rafter lengths, hip and valley angles, battens and flashing angles - all in one free tool. In this tutorial, I'll walk you through the QuoteCore+ free roofing calculator, covering every calculator inside it so you know exactly what each one does.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- How to access the free roofing calculator
+- Roof area calculator (plan vs actual, pitch multiplier)
+- Switching between metric and imperial
+- Rafter, hip and valley angle calculations
+- Batten calculator (spacing, waste)
+- Smart components (calculate multiple things at once)
+- Angle finder (combined angles, flashing folds)
+- Calculating angles where two roof pitches meet
+
+**CHAPTERS**
+00:00 - Intro
+00:21 - Accessing the roofing calculator and roof area
+00:37 - Rafter and hip/valley angles
+01:22 - Batten calculator
+02:08 - Smart components and angle finder
+02:39 - Calculating combined roof pitch angles
+03:24 - More options and mobile use
+
+**RELATED BLOGS**
+- How to Calculate Roof Pitch: https://quote-core.com/blog/how-to-calculate-roof-pitch
+- How to Measure a Roof: https://quote-core.com/blog/how-to-measure-a-roof
+- How to Estimate Roofing Materials: https://quote-core.com/blog/how-to-estimate-roofing-materials
+
+**RELATED VIDEOS**
+- How to Use the Free Quote Generator: https://youtu.be/5ifiryxMBDQ
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingCalculator #RoofCalculations #RafterAngle #HipValley #RoofingSoftware #FreeTool #RoofingContractor #QuoteCore
 
 ---
 
@@ -115,6 +270,56 @@ Can add notes. You can add a footer. By the way, this works really well on mobil
 
 **[01:36-01:51]**
 This is how to use the QuoteCore+ free purchase order generator. Make sure you look at all our other free tools and tutorials.
+
+### YouTube Description
+
+**TITLE:**
+How to Use the QuoteCore+ Free Purchase Order Generator (Step by Step)
+
+**DESCRIPTION:**
+Turn a photo of a hand-written order into a clean, professional purchase order - and send it straight to your supplier - in seconds. In this tutorial, I'll walk you through the QuoteCore+ free purchase order generator, from signing up to generating your first order.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- How to access the free purchase order generator
+- Sign up vs. using it without an account
+- Setting up your business details, logo, currency and tax
+- Using AI assist (prompt assist and image upload)
+- Turning a photo of a hand-written order into a professional purchase order
+- Editing, generating, downloading and printing your order
+- Converting a purchase order to an invoice in one click
+
+**CHAPTERS**
+00:00 - Intro
+00:20 - Accessing the free purchase order generator
+00:38 - Set up your details (measurement, currency, tax, logo)
+00:56 - AI assist: upload a photo of your order
+01:19 - Auto-filling your purchase order from an image
+01:36 - Saving, printing and converting to invoice
+
+**RELATED BLOGS**
+- How to Send a Purchase Order: https://quote-core.com/blog/how-to-send-a-purchase-order
+- How to Create an Invoice for Contractors: https://quote-core.com/blog/how-to-create-an-invoice-for-contractors
+- Best Free Tools for Roofers: https://quote-core.com/blog/best-free-tools-for-roofers
+
+**RELATED VIDEOS**
+- How to Use the Free Quote Generator: https://youtu.be/5ifiryxMBDQ
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingSoftware #PurchaseOrder #FreeTool #ConstructionSoftware #RoofingContractor #QuotingSoftware #QuoteCore #MaterialsOrdering
 
 ---
 
@@ -157,6 +362,52 @@ It then cuts back to the worksite. Macca and Tama are sitting together on some t
 **Boiled down, the story is:**
 5 PM Friday -> everyone is knocking off -> customer chases a quote -> Macca realises he's facing another 40 minutes of admin -> Tama tells him to use QuoteCore+ -> measure, price and send the quote quickly -> job done -> Macca gets his Friday evening back. That makes the "On our way fellas!" line work particularly well - it completes the story from the opening.
 
+### YouTube Description
+
+**TITLE:**
+Another Friday Night Stolen by Quotes? Not with QuoteCore+
+
+**DESCRIPTION:**
+It's 5 PM on a Friday. Tools are down. Everyone's heading to the pub. Then one customer message changes everything: "Any update on that roof quote?"
+
+Macca is staring at another chunk of admin while every other tradie knocks off. Then Tama hands him one word of advice: "Just use QuoteCore+." Add your components, measure with AI (or manually), send to the customer, job done.
+
+QuoteCore+ turns a Friday-night quoting panic into a job done in minutes - so you can get your weekend back. Quote, manage, grow.
+
+**WHAT MAKES IT DIFFERENT**
+- Measure with AI or manually - never forced into one way of working
+- Add your components and build a quote fast
+- Send quotes to customers in a few clicks
+- Get notified when they read, accept or decline
+- Built by a roofer who lived the Friday-night quote problem himself
+
+**CHAPTERS**
+00:01 - Tools down, 5 PM Friday
+00:27 - Just use QuoteCore+ - job done
+
+**RELATED BLOGS**
+- How to Get More Work as a Contractor: https://quote-core.com/blog/how-to-get-more-work-as-a-contractor
+- Roofing Quoting Software vs Spreadsheets: https://quote-core.com/blog/roofing-quoting-software-vs-spreadsheets
+- Construction Quote Speed Checklist: https://quote-core.com/blog/construction-quote-speed-checklist
+
+**RELATED VIDEOS**
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+- Create a Complex Roofing Quote in Under 3 Min for Less Than $1: https://youtu.be/X379HDoDE_o
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingLife #KnockOffTime #QuoteSoftware #ConstructionSoftware #RoofingBusiness #QuoteCore #FridayVibes
+
 ---
 
 ## 6. A Better Way to Measure, Quote and Invoice with QuoteCore+
@@ -168,6 +419,55 @@ What if you had multiple ways to create quotes? Digitally measure from plans. Ad
 
 **[00:25-00:29]**
 You can. QuoteCore+. Do it your way.
+
+### YouTube Description
+
+**TITLE:**
+A Better Way to Measure, Quote and Invoice with QuoteCore+
+
+**DESCRIPTION:**
+What if you had multiple ways to create quotes? Digitally measure from plans, add and edit components, completely customise quotes, and send them to customers - with alerts when they read, accept or decline. Create custom images and flashings, order them from saved quote measurements, edit absolutely everything, then invoice straight from your quotes.
+
+You can. QuoteCore+. Do it your way.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- Multiple ways to create quotes (Digital Measure, Component Quote)
+- Measuring from plans and adding components
+- Customising and sending quotes to customers
+- Alerts when a customer reads, accepts or declines
+- Creating custom images and flashings
+- Ordering materials from saved quote measurements
+- Editing everything at every stage
+- Invoicing customers straight from your quotes
+
+**CHAPTERS**
+00:02 - Multiple ways to create quotes
+00:25 - Measure, customise, send, get notified, order, invoice
+
+**RELATED BLOGS**
+- Roofing Estimating vs Quoting: https://quote-core.com/blog/roofing-estimating-vs-quoting
+- How to Create an Invoice for Contractors: https://quote-core.com/blog/how-to-create-an-invoice-for-contractors
+- Roofing Quoting Software UK: https://quote-core.com/blog/roofing-quoting-software-uk
+
+**RELATED VIDEOS**
+- Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #QuotingSoftware #RoofingSoftware #RoofingContractor #DigitalMeasure #Invoice #QuoteCore
 
 ---
 
@@ -183,6 +483,54 @@ When your quote's accepted, you need to find where you stored it. Next, you need
 
 **[00:35-00:44]**
 QuoteCore+, at least 25% faster or it's free. One app, every step. Try it now.
+
+### YouTube Description
+
+**TITLE:**
+Roofing Quoting Software That Actually Works | QuoteCore+
+
+**DESCRIPTION:**
+Still quoting jobs by hand? Printing plans, measuring components manually, transferring everything into a spreadsheet, then sending quotes with a separate program - it's messy, disjointed and time-consuming. Then when a quote's accepted, you're hunting for where you stored it before ordering materials, organising install and tracking the job.
+
+Not anymore. QuoteCore+ lets you measure, price, quote and send - then manage the whole job from acceptance to invoice - all in one app. At least 25% faster, or it's free. One app, every step.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT MAKES IT DIFFERENT**
+- Measure with AI or manually - never forced into one way of working
+- Turn photos of hand-written quotes into clean, professional documents
+- Send quotes to customers in a few clicks
+- Order materials from an accepted quote
+- Convert a quote to an order or invoice in one tap
+- Built by a roofer who lived the problem himself
+
+**CHAPTERS**
+00:00 - The old, disjointed way of quoting
+00:16 - What happens when a quote gets accepted
+00:35 - QuoteCore+ - one app, every step
+
+**RELATED BLOGS**
+- Best Roofing Quoting Software UK 2026: https://quote-core.com/blog/best-roofing-quoting-software-uk-2026
+- Roofing Quoting Software vs Spreadsheets: https://quote-core.com/blog/roofing-quoting-software-vs-spreadsheets
+- Roofing Quoting Software UK: https://quote-core.com/blog/roofing-quoting-software-uk
+
+**RELATED VIDEOS**
+- Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
+- Create a Complex Roofing Quote in Under 3 Min for Less Than $1: https://youtu.be/X379HDoDE_o
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingSoftware #QuotingSoftware #RoofingContractor #FreeQuote #ConstructionSoftware #QuoteCore
 
 ---
 
@@ -225,6 +573,59 @@ The difference is most businesses keep that knowledge in people's heads or burie
 
 **[04:06-04:19]**
 QuoteCore+ helps businesses digitize the way they operate. Smart Components are the simple, repeatable way to make that happen.
+
+### YouTube Description
+
+**TITLE:**
+What are Smart Components? | QuoteCore+
+
+**DESCRIPTION:**
+Smart Components are a repeatable digital version of the way your business works. Build your products, services and jobs once - define exactly how they should be measured and priced - then reuse them forever.
+
+Whether you build 5 or 500, they become a digital library of your business that grows more valuable every time you use it. The goal isn't to force your business to adapt to our software. It's for QuoteCore+ to adapt to the way your business already works.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- How Smart Components digitise how your business operates
+- Area, linear, volume, fixed, quantity and hours measurement types
+- Setting unit cost, labour rate, waste and pitch/angle calculations
+- Applying component types across different industries
+- Building a reusable library that speeds up every future quote
+
+**CHAPTERS**
+00:01 - What Smart Components are
+00:23 - Building a digital library of your business
+00:53 - Measurement types (area, volume, linear, fixed, quantity, hours)
+01:13 - Area squared measurement in practice
+01:38 - Volume measurement (slabs, foundations)
+02:11 - Linear measurement (spouting, plumbing)
+02:32 - Fixed, quantity and hours measurement types
+03:48 - Why it matters for speed and profit
+04:06 - Digitise the way you operate
+
+**RELATED BLOGS**
+- Reusable Quoting Templates & Smart Components: https://quote-core.com/blog/reusable-quoting-templates-smart-components
+- How to Price a Roofing Job: https://quote-core.com/blog/how-to-price-a-roofing-job
+- Construction Cost Estimator Guide: https://quote-core.com/blog/construction-cost-estimator-guide
+
+**RELATED VIDEOS**
+- How to Set Up Roofing Smart Components in QuoteCore+: https://youtu.be/XZSTIfGUHAU
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #SmartComponents #QuotingSoftware #RoofingSoftware #ConstructionSoftware #RoofingContractor #QuoteCore
 
 ---
 
@@ -328,6 +729,63 @@ You charge an item cost or a labor rate. Let's say it's 30 dollars per hour. Mak
 **[12:23-12:36]**
 That's it for the Roofing Smart Components. Hopefully, this helps you. Like I said, the goal is to create a system that allows you to build whatever you need.
 
+### YouTube Description
+
+**TITLE:**
+How to Set Up Roofing Smart Components in QuoteCore+ (Step by Step)
+
+**DESCRIPTION:**
+Set up your roofing Smart Components once and reuse them on every job. In this tutorial, I'll walk you through creating the key roofing component types - area squared, linear, hip and valley flashings, downpipes and labour - with the pitch calculations that matter for roofing.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- Setting Roofing as your industry default
+- Creating area-squared components (roof area, underlay, membranes)
+- Setting labour rates, item cost and waste types
+- Applying rafter pitch and hip/valley pitch calculations
+- Creating linear components (barge caps, flashings)
+- Rounding up to full rolls, packs and boxes
+- Adding images, notes and saving to a library
+- Creating an hourly labour component
+
+**CHAPTERS**
+00:01 - Set Roofing as your industry default
+00:24 - Open Smart Components and your default library
+01:11 - Area squared components (underlay, membranes)
+01:48 - Labour rate and item cost (per unit vs fixed quantity)
+03:34 - Waste type and pitch calculation
+04:29 - How plan vs actual length works with pitch
+05:32 - Barge cap flashing (linear component)
+08:31 - Hip flashing with hip/valley pitch calculation
+09:23 - Downpipe (fixed flexible component)
+10:39 - Main components vs extras
+11:24 - Hours/labour component
+12:23 - Wrap up
+
+**RELATED BLOGS**
+- Reusable Quoting Templates & Smart Components: https://quote-core.com/blog/reusable-quoting-templates-smart-components
+- How to Calculate Roof Pitch: https://quote-core.com/blog/how-to-calculate-roof-pitch
+- Roofing Material List: https://quote-core.com/blog/roofing-material-list
+
+**RELATED VIDEOS**
+- What are Smart Components?: https://youtu.be/aFXJwOiliPI
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #SmartComponents #QuotingSoftware #RoofingSoftware #RafterPitch #RoofCalculations #RoofingContractor #QuoteCore
+
 ---
 
 ## 10. Create a complex roofing quote in under 3min for less than $1!
@@ -358,6 +816,59 @@ We'll add tax here too, GST 15 percent. Save that, and now let's send the quote 
 **[02:35-02:52]**
 And that's it. One complex roof quote start to finish in less than 3 minutes for less than a dollar. And from here, a custom order form or invoice for this job is just a few clicks away. Only with QuoteCore+.
 
+### YouTube Description
+
+**TITLE:**
+Create a Complex Roofing Quote in Under 3 Min for Less Than $1!
+
+**DESCRIPTION:**
+A complex roofing quote, start to finish, in under 3 minutes - for less than a dollar. In this video, I'll walk you through the whole flow: upload a plan, calibrate, use AI Assist to find the roof line and components, swap in your saved Smart Components, add your margin, build the customer quote, and send it for a quick accept or decline.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- Upload a plan and calibrate to a known measurement
+- Use AI Assist to auto-detect the roof line and components
+- Add pitch and apply your roof outline to the canvas
+- Swap AI placeholders for your saved Smart Components
+- Add materials (underlay, corrugate long run) with one click
+- Add extras and set your profit margin
+- Review, add tax and build the customer quote
+- Send and let the customer accept or decline - you get notified
+
+**CHAPTERS**
+00:02 - Start: upload and calibrate your plan
+00:23 - AI Assist finds the roof line and components
+00:49 - Swap in your Smart Components
+01:08 - Add materials to your components
+01:32 - Add extras and set your margin
+01:47 - Review and build the customer quote
+02:08 - Add tax and send to the client
+02:35 - Done - under 3 minutes, less than a dollar
+
+**RELATED BLOGS**
+- How to Do a Roof Takeoff: https://quote-core.com/blog/how-to-do-a-roof-takeoff
+- Reusable Quoting Templates & Smart Components: https://quote-core.com/blog/reusable-quoting-templates-smart-components
+- AI Roof Measuring: https://quote-core.com/blog/ai-roof-measuring
+
+**RELATED VIDEOS**
+- Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingSoftware #AIBusiness #SmartComponents #QuotingSoftware #RoofingContractor #DigitalMeasure #QuoteCore
+
 ---
 
 ## 11. Get Found by Customers and AI as a QuoteCore+ Roofing Supplier
@@ -377,6 +888,56 @@ As a supplier partner, you'll gain product and pricing visibility inside our mai
 The goal is simple. Your customers and AI find you more easily, they get what they want faster, you receive better quality inquiries, saving your team time on low value back and forth. I'm Sean. I'm the founder of QuoteCall+. Apply now as a supplier partner or get in touch, and I'll personally help you set everything up so you can stay ahead of the game.
 
 **[01:37-01:38] Outro**
+
+### YouTube Description
+
+**TITLE:**
+Get Found by Customers and AI as a QuoteCore+ Roofing Supplier
+
+**DESCRIPTION:**
+Most roofing businesses still ask customers to submit a quote form and wait for a price - often without enough information to quote properly. Customers now expect useful answers immediately, and AI is changing how they search for products, suppliers and pricing. But AI and customers can't find or use your products and pricing unless that information is available in the right places and the right tools.
+
+As a QuoteCore+ supplier partner, you'll gain product and pricing visibility inside the QuoteCore+ app, an official supplier landing page on our website, and your own high-quality roofing calculator using your products and your pricing. You control all the products, pricing, service areas and information shown from your supplier dashboard - while we handle the tech setup.
+
+The goal is simple: your customers and AI find you more easily, they get what they want faster, and you receive better-quality inquiries instead of low-value back and forth.
+
+**WHAT'S COVERED**
+- Why AI and customers can't find supplier pricing today
+- Becoming a QuoteCore+ supplier partner
+- Product and pricing visibility inside the QuoteCore+ app
+- Your official supplier landing page on our website
+- Your own roofing calculator with your products and pricing
+- Full control from your supplier dashboard
+- Sending detailed inquiries straight to your team
+
+**CHAPTERS**
+00:01 - The problem: customers and AI can't find your pricing
+00:29 - How QuoteCore+ helps suppliers get found
+00:47 - What you gain as a supplier partner
+01:16 - The goal and how to apply
+
+**RELATED BLOGS**
+- Best Roofing Quoting Software UK 2026: https://quote-core.com/blog/best-roofing-quoting-software-uk-2026
+- AI Quoting Software: https://quote-core.com/blog/ai-quoting-software
+- Best Free Tools for Roofers: https://quote-core.com/blog/best-free-tools-for-roofers
+
+**RELATED VIDEOS**
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+- Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #RoofingSupplier #SupplierPartnership #AI #RoofingSoftware #QuotingSoftware #RoofingContractor #QuoteCore
 
 ---
 
@@ -470,6 +1031,65 @@ You've got your header. You've got everything that we created in a printable way
 
 **[11:22-11:33]**
 But this is how you can create a roofing materials order with custom-made flashings from a quote.
+
+### YouTube Description
+
+**TITLE:**
+How to Order Materials from an Accepted Quote in QuoteCore+ (Step by Step)
+
+**DESCRIPTION:**
+Turn an accepted quote into a supplier order in minutes - no re-typing everything. In this tutorial, I'll walk you through ordering materials straight from your quote, customising lengths and angles for flashings, and sending the order to your supplier.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- Creating an order from an existing quote
+- Choosing an order layout (line by line, single or double column)
+- Selecting which lines to include or exclude
+- Building header templates per supplier
+- Pre-populated components and attached drawings
+- Adding custom lengths and variables to flashings
+- Using the hip/valley and rafter angle calculators
+- Converting area-based items to order quantities (rolls, packs, lengths)
+- Sending the order to your supplier via URL link
+
+**CHAPTERS**
+00:01 - Start an order from quote
+00:31 - Choose layout and select your quote
+00:51 - Select or deselect lines to order
+01:10 - Order editor and header templates
+01:53 - Fill in delivery details and logo
+02:26 - Pre-populated components and attached images
+03:10 - Adjust quantities (underlay rolls, shingles, TPO)
+05:02 - Ordering standing seam per length or coil
+06:07 - Custom flashing angles with variables
+07:42 - Calculate and apply bend angles (hip, ridge)
+09:02 - Parapet cap with multiple variables
+10:47 - Save, print, download and send the order
+11:22 - What the supplier sees
+
+**RELATED BLOGS**
+- How to Send a Purchase Order: https://quote-core.com/blog/how-to-send-a-purchase-order
+- Roofing Material List: https://quote-core.com/blog/roofing-material-list
+- How to Calculate Roof Pitch: https://quote-core.com/blog/how-to-calculate-roof-pitch
+
+**RELATED VIDEOS**
+- Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #PurchaseOrder #MaterialsOrdering #RoofingSoftware #QuotingSoftware #RoofingContractor #QuoteCore
 
 ---
 
@@ -579,6 +1199,69 @@ We've already done this in another tutorial, so I won't go through the whole flo
 **[12:47-13:01]**
 That wouldn't be ideal. Lucky the system warns you. That is how to create a component quote using roofing components.
 
+### YouTube Description
+
+**TITLE:**
+Roofing Component Quote Tutorial in QuoteCore+ (No Digital Measure)
+
+**DESCRIPTION:**
+Already measured the roof on site or off the plans? Then the Component Quote entry mode is the fastest way to build your quote. In this tutorial, I'll walk you through creating a full roofing quote from your saved Smart Components - with pitch allowance, waste, pricing and labour applied automatically.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- Choosing Component Quote vs Digital Measure
+- Setting Roofing as your industry default
+- Adding multiple roof areas (main, lean-to, garage) with pitches
+- Adding components to each roof area
+- Plan vs actual measurements (and when each applies)
+- How pitch and waste are auto-calculated
+- Rounding up to rolls, packs and boxes
+- Creating a Smart Component on the fly
+- Adding extras (delivery, site measure)
+- Setting profit margin and confirming the quote
+- Creating and sending the customer quote
+
+**CHAPTERS**
+00:01 - Set Roofing industry default
+00:30 - Create a new quote
+01:03 - Choose measurement system
+01:27 - Component Quote entry mode
+01:51 - Add your roof areas with pitches
+03:28 - Open the Components page
+04:23 - Add components to each roof area
+05:41 - Plan vs actual measurement (underlay)
+06:33 - Shingles, hip flashing and pitch
+08:07 - Ridge flashings and spouting
+08:32 - Lean-to and garage roofs
+10:00 - Create a component on the fly
+10:26 - Add extras (delivery fee)
+10:48 - Review, margin and confirm quote
+11:54 - Edit, customer quote, send
+
+**RELATED BLOGS**
+- How to Price a Roofing Job: https://quote-core.com/blog/how-to-price-a-roofing-job
+- Roofing Estimating vs Quoting: https://quote-core.com/blog/roofing-estimating-vs-quoting
+- Reusable Quoting Templates & Smart Components: https://quote-core.com/blog/reusable-quoting-templates-smart-components
+
+**RELATED VIDEOS**
+- How to Set Up Roofing Smart Components in QuoteCore+: https://youtu.be/XZSTIfGUHAU
+- Roofing Quoting Software That Actually Works: https://www.youtube.com/watch?v=QyYa1VbQkbQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #ComponentQuote #QuotingSoftware #RoofingSoftware #SmartComponents #RafterPitch #RoofingContractor #QuoteCore
+
 ---
 
 ## 14. Create a Quote from Start to Finish with QuoteCore+
@@ -673,6 +1356,68 @@ For the payment instructions, there's a template system where you can add your o
 They can, if they want, obviously copy and paste all your bank account details, whatever you've specified as payment instructions. They can also dispute the invoice, or they can confirm that they've paid it, and then that'll show up on the invoices page. The status will update here in this column.
 
 **[10:37-10:43] Outro**
+
+### YouTube Description
+
+**TITLE:**
+Create a Quote from Start to Finish with QuoteCore+ (Full Walkthrough)
+
+**DESCRIPTION:**
+Follow a complete roofing quote from start to finish with QuoteCore+. From building Smart Components and measuring a plan to quoting, sending, drawing flashings, ordering materials and invoicing - I'll show you the whole workflow in one video.
+
+QuoteCore+ is the all-in-one quoting and job management software built by a roofer, for roofers. Quote, manage, grow.
+
+**WHAT'S COVERED**
+- Building Smart Components (corrugate long run, hip flashings)
+- Creating a quote with Digital Measure and calibrating a plan
+- Measuring roof areas, hips, valleys, skylights and barges
+- Adding underlay and materials from your roof area
+- Creating components on the fly (ridge flashings)
+- Adding extras (delivery, site measure)
+- Setting profit margin and creating the customer quote
+- Sending the quote and handling accept/decline
+- Drawing flashing images (barge, valley)
+- Ordering materials from the accepted quote
+- Creating an invoice with payment instructions
+
+**CHAPTERS**
+00:01 - Build Smart Components (corrugate long run)
+00:49 - Hip flashing component
+01:26 - Create the quote and choose Digital Measure
+01:46 - Calibrate your plan
+02:36 - Measure hips, valleys, skylight, barges
+03:07 - Add underlay and corrugate from the roof area
+03:54 - Create ridge flashings
+04:43 - Review, margin and save
+05:28 - Create and edit the customer quote
+06:10 - Send the quote to the customer
+06:52 - Customer accepts (notifications)
+07:16 - Draw flashing images
+08:34 - Order materials from the quote
+09:18 - Create the invoice with payment details
+
+**RELATED BLOGS**
+- How to Price a Roofing Job: https://quote-core.com/blog/how-to-price-a-roofing-job
+- Reusable Quoting Templates & Smart Components: https://quote-core.com/blog/reusable-quoting-templates-smart-components
+- How to Create an Invoice for Contractors: https://quote-core.com/blog/how-to-create-an-invoice-for-contractors
+
+**RELATED VIDEOS**
+- Create a Complex Roofing Quote in Under 3 Min for Less Than $1: https://youtu.be/X379HDoDE_o
+- How to Order Materials from an Accepted Quote: https://youtu.be/kOkQuUy8MWQ
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #QuotingSoftware #RoofingSoftware #SmartComponents #DigitalMeasure #RoofingContractor #Invoice #QuoteCore
 
 ---
 
