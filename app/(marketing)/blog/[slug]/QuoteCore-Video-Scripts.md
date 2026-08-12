@@ -1554,6 +1554,157 @@ What? How? QuoteCore+. Finished it while you were looking for the long weight, b
 **Date added:** See YouTube publish date
 **Status:** Script needed (YouTube Short — scripts not tracked for Shorts per Shaun's direction)
 
+---
+
+## 21. Full QuoteCore+ Demo: Quote a Roof from Start to Finish
+
+**Link:** (video not yet uploaded to YouTube - link to be added once live)
+
+**Referenced in:** Not currently embedded in any blog post
+**Date added:** 2026-08-12
+**Status:** Script complete
+
+**[00:00-00:32]**
+Everyone, I'm Shaun. I'm the founder of QuoteCore+. Today, I wanna personally demonstrate what we've built and why I think it's so good. Uh, the app was built to replace a very disjointed process that I had back when I was quoting around 50 jobs a week. I know a lot of other roofing businesses still use some of these processes too. For me, that process was we would receive a quote rep-- a quote request, print off the relevant plans to scale. I would measure everything I could find on the plan, and I don't even wanna say how many times I'd miss measurements in areas.
+
+**[00:32-00:57]**
+Uh, but from there, we'd transfer all those measurements and items into a basic custom software that we had made, which would convert the pitch. It would then apply material and labor pricing as well as waste. Um, that software would give us a, a very simple output that gave us our price. And from there, we'd need to build a professional quote in Xero, then email that quote to the customer, file all that paperwork away, and then just wait and hope that someone would respond.
+
+**[00:57-01:22]**
+Sometimes they would never respond, as everyone knows with quoting. Um, I know this might be a similar process for a lot of you watching now, and if it is, then keep watching. Uh, what I've built solves all these issues I had, and it actually makes quoting roofs an enjoyable task. Definitely much faster and more accurate. Uh, it used to take me on average around 20 to 30 minutes to manually quote, um, and get to a customer quote for a medium complex roof.
+
+**[01:22-01:47]**
+Uh, we're gonna do that in less than ten minutes today, uh, or I'm gonna try to anyway. All right, so I'm now on the main dashboard page of the app. If you sign up and do the free trial, so 14-day free trial, you don't need a card, you'll get access to all of these features. Um, before we start, I'll just explain that I've already created, um, my smart component library.
+
+**[01:47-02:16]**
+So this is where you would add everything that you would do on a roof or in your business, whether it's a service or it's a product that you sell or you supply and i-install. So for example, here you've got a barge flashing. You can open these up, edit them, um, but basically, you got the, the cost, the labor that you, that you add, that you install for, your waste. If it's got a rafter pitch, um, got down here, you got hip and valley pitch, it may have no pitch.
+
+**[02:16-02:45]**
+Um, so that's a ridge cap. Um, your waste, you can do percentage, or you can do per length, an extra three hundred mil or anything that you want, basically. Full flexibility. You can make absolutely anything in here a component. It could be hourly based, it could be, day, um, anything at all. But yeah, it might take you half an hour to an hour to add everything that you would, you would install or, um, that you would price for or you quote for.
+
+**[02:45-03:03]**
+Um, and then the other thing I've created is a quote template or a customer quote template header, which just puts your business details in, and you can, like, switch it out for a different template. Um, but that maybe takes 5 minutes at best.
+
+**[03:03-03:25]**
+So first thing we wanna do, though, is go to Quotes, and then we'll click New Quote. Uh, you'd select a component library that you wanna use, um, name the customer. John Smith will do for now. You can edit all this later. I'll just do Lot 2, 12 3, Quote Lane.
+
+**[03:25-03:46]**
+We've got 3 different measurement systems, so Metric, Imperial, and Imperial Roofing Squares. Select the one that works for you. Um, the entry mode, we'll ignore quote template. This basically just loads a bunch of templates and is useful for component quotes, so you don't have to go and select each one. I'll show you, um, in the quote.
+
+**[03:46-04:10]**
+But basically, component qu-quote is where you've already got the measurements, whether you've measured off a plan or whether you've gone and done a site measure, and you just need to transfer those measurements into your components, and then that works out all the pricing. Um, digital measure, which we will do, I'll show you. Standard quote, which most people have probably seen, is just you edit each line for each item in the quote manually, just type it in.
+
+**[04:10-04:45]**
+Uh, but we'll do digital measure. Make sure that you have a, a roof plan that is clear, you can see all the lines, all the components on it, and it also has at least one reliable measurement that you can calibrate with, or a scale, or something that you trust as being correct. Um, I'll show you why. This is now the digital canvas, and you can see here what we'll do is we'll-- We've got one measurement here, which I've put in, and you need to obviously trust that this is 13.7 meters.
+
+**[04:45-05:08]**
+So yeah, point to point, you'd want this to be out-- accurate. This is what's gonna determine what each of your measurements actually is. Um, you can do up to 3. Uh, I'm just gonna do one, but if you did 3, it would just take the average and be a little bit more accurate, especially if you've only got 2 or 3 short lengths. I would suggest doing more than one.
+
+**[05:08-05:32]**
+Ideally, you can do the longest measurement on the plan, though. So we'll confirm that, and then another popup will show, and this is basically the next step. We can either draw a polygon, so we can trace around a roof outline and do point by point, um, clicking at each corner, or we can do a rectangle, which is just a drag and drop, um, rectangle or square. It's for a simple roof or a garage or something.
+
+**[05:32-05:56]**
+Then we've got AI Assist, which a plan like this, it'll easily do and get the entire outline, and it'll draw all of the components if you've actually got components for them, and it creates, um, like, placeholder components for, uh, roof area, hips, ridging, barges, valleys, spouting, I think, as well. And you basically can swap that out later.
+
+**[05:56-06:14]**
+Um, anything getting a bit more complex, it'll take longer, and it might get a few things wrong, but you can easily change that, um, in the next step. So I'll show you now. We'll do polygon. So we'll click around the entire roof outline. I'll just do this quickly. You can obviously be as accurate as you want.
+
+**[06:14-06:37]**
+But all of this really comes from you having a reliable calibration where you've, you've got that known measurement on the plan, that 13.7 for us. So you have to finish on the first point. So wherever your first point was, the last point needs to finish on that, and it'll close the loop.
+
+**[06:37-06:56]**
+And then we name, let's just call it main roof. Then you set the pitch. We'll say it's a 25 degree roof pitch. It's given us a hundred and 88 square meters of the plan view, which is before the-- it, it adds the pitch, and now you can see the outline of each point. Um, you've got your main roof up here.
+
+**[06:56-07:13]**
+There's that area before pitch. You could add a new area. Maybe you've got a small garage, uh, or you could upload another plan. So let's say maybe the garage is on another page and you want to upload that, you can measure everything, keep them separate, keep them all in the same quote.
+
+**[07:13-07:30]**
+Uh, you might want to do something like cladding. Maybe you've got to do some walls in roofing material, and you can upload some elevation plans, and then you would just simply create a cladding component, and you would just measure all your walls in the same way we just measured that roof.
+
+**[07:30-07:59]**
+Um, but let's move on to the components. And you've got all of our components here on the left side. You could have hundreds of components if you wanted, and you can search. Um, but we'll start here with barge flashings, and this is a line item. So rather than doing the area like we just did, we would just do point to point like this. So we find the barge or the rake, so 2.2 7 meters. Again, that's before pitch calculation, and we'll do it again. That one there to there.
+
+**[07:59-08:20]**
+If you wanted, you can obviously zoom in and then just move around the plan. But I'll just for simplicity, do it like this. So we've got 2 barges there. Uh, you can hover over each one, and it'll highlight it. You can hide, you can delete, obviously you can draw more, uh, but we'll do the hip flashings next. So same deal, but yeah.
+
+**[08:20-08:57]**
+I'll just quickly go around and do these. Um, each of these as well are set up exactly how you want it. So like the hips, I think I'm getting these obviously get calculated at different, um, pitch angle to the, the barges. They also have, I think, 0.3 meters of waste per length. So each one of these lengths that I'm drawing, we've got a broken hip as well, is getting an extra three hundred mil or 0.3 meters of waste added, and obviously you can go through and look at all those again.
+
+**[08:57-09:21]**
+Uh, we'll do valleys, and these will be at, calculated at the same pitch angle as the hips. And you could do ten percent waste per length. You could do like what I've done, 0.3 or 0.2 5 per length in waste.
+
+**[09:21-09:44]**
+That's the ridge. Click. So obviously, the ridge doesn't have pitch calculation, but it will get waste added. And this is important, too. I think a lot of people measure tight when they're doing quotes. At least if you get the job, you know you've allowed for all your waste.
+
+**[09:44-10:04]**
+Um, right. So I think that's everything. You could add the spouting. Maybe there's metal fascia as well. There's downpipes if you wanted, which you could do, like let's say, uh, let's say you had downpipes. It would be a, a point. So you've got the point tool, and you just add a point for each downpipe.
+
+**[10:04-10:22]**
+So the line items and then the area items as we saw. So I'm pretty happy with what we've measured so far. Could add skylights, chimneys, anything you want. Absolutely anything. But you can come back in here again if you missed something. We'll save that and move to the next step.
+
+**[10:22-10:41]**
+Um, and here we are on the main roof area, which now has the pitch added to it, and there's our area. You could add another roof area if you wanted. I'm pretty happy with that for now, just for this tutorial.
+
+**[10:42-11:14]**
+We'll go to the components, and here's all these components that we added. And you probably noticed we've got no proper roof covering yet, or underlay or anything like that. I've done that on purpose because we could go and measure around the entire roof for each of those, or we can easily just go find what we've got, and here we'll use corrugate. Add that. And then we what we do is open this up, and you can see here, we could add the area if we wanted, but I'm gonna use that roof area that mea- we measured 'cause it's just one click, and it adds it.
+
+**[11:14-11:35]**
+And we'll do the same for the underlay, roofing underlay. You could do screws. You could anything that's area-based and you know needs to cover that entire roof area, it's just much faster to do it like this. You could add anything else you want here. Um, you could, you can delete, you can edit, you can combine all the lengths if you want. Um, but we'll go to extras.
+
+**[11:35-12:05]**
+Extras could be anything, um, delivery fee, site measure, um, but we'll go to review. Okay. And this is where you can add your profit, which is kind of why a lot of us do roofing, is to make money. So you can add that there. Just click what you, you could add just, um, margin to your cost, or you can add it to your labor as well. Let's add, I don't know, 30 percent, 30 percent. You can make it whatever you want, and there's the breakdown.
+
+**[12:05-12:27]**
+And then we go confirm quote, and the next page is our quote summary, which just has everything on it. You can do a lot from here. You can go back and edit everything we just did from this. We can send the quote. We can clone the quote, download everything. And down here is all of our files, so we could add more files.
+
+**[12:27-12:53]**
+We could add notes. Um, but we are going to create a custom quote from one click. So you've seen all the information we've added, and this literally just puts it into a quote that we can edit absolutely everything in this. So, you know, all you gotta do is click the pencil if you wanted to change the name, the area, the price, the margin per line, whether you wanna show the price or not.
+
+**[12:53-13:17]**
+Up here is the, what I mentioned at the start of this video, we'll use our main template, and it just loads all your information. You could have 3 or 4 different templates that get sent to different people. Um, obviously, you've got all the job details here. And on the left side is sort of the quick edit section. So you could hide all the line item prices, or you could hide the total if you wanted.
+
+**[13:17-13:38]**
+Not gonna be useful for sending the quote for, though. Um, the units, so obviously I'll go there. I'll remove all this. You might like just a clean quote. You may just want one line saying, "Here's the price." You can delete each line and just type that line. Type out what you want on that line and just use the, the price.
+
+**[13:38-14:00]**
+Uh, I'll leave it like that because at least then the customer knows you've taken into account the barge flashing. You might have a delivery fee and, and then maybe sundries or fixings and just little things. You could add anything you want. Um, tax, you might add tax. You can have a default tax that you add to every single quote, so you don't have to add, add it each time.
+
+**[14:00-14:30]**
+Um, but yeah, pretty happy with that. Can always come back and edit it later. And from there, you just gotta send it to the customer. So next step is click Send Customer. You can create your own URL link, and it'll give you a copy and paste link that you could create an email that you wanna send from your own email address to the customer, or you can do the same thing, but it sends from our QuoteCore+ database.
+
+**[14:30-14:54]**
+Uh, you'll see, like, there's a lot of options for sending. I'm just gonna do the fast version, basically, um, but you can add follow-ups and things like that which automatically send. But I'm just gonna get this quote to the customer as quickly as possible just to show you how this works. But there, now it's sent, and I'll also show you what that looks like for the customer.
+
+**[14:54-15:18]**
+So they'll end up seeing your email. They'll open it, and obviously it has your details or whatever your details will look like, the message that you decided to send, and then they can click and look at the quote, and they'll see exactly what you created in that customer quote. And you can add anything else, obviously, different for the, uh, accept quote, request changes, decline quote.
+
+**[15:18-15:51]**
+They can print it. If you attached other images or other files, they would sit below this, and the user can download those. Maybe, um, you, you've got your terms and conditions or deposit details, things like that, whatever you want. Uh, but we'll accept this. And I mentioned you could have, uh, automatic follow-ups, so maybe when the customer accepts or declines, an email automatically gets sent, and it could be relevant to that action. So maybe they've accepted it, and that's when you send the terms and conditions and the deposit details.
+
+**[15:51-16:21]**
+You know, "Thanks for accepting our quote. Here's our full terms and conditions." Um, and then a similar thing for if they decline it could be, "Hey, thanks for letting us quote your job. What would've turned our quote into a yes so that we can get your work next time?" Whatever you want, just- simple things like that, they make a big difference, and it's automatic. Um, but we'll come back into the app and show you this is a pretty important feature, is you now get told when your quote's accepted or declined, or they've requested more info.
+
+**[16:22-16:47]**
+It also shows you, uh, when it's been opened. So now, rather than sending quotes to a customer and not knowing if they've seen it 'cause you haven't heard from them, you can see when they've opened it. And I know it's a bit cheeky, but it's a pretty good feature because, say someone opens it and then a week later you still haven't heard from them, you can follow them up and say, you know, you know they've opened it. Um, but you can say, "Look, did- were you gonna accept that?"
+
+**[16:47-17:09]**
+"Could you give us an answer?" Just all they've gotta do is click the accepted, uh, accept or decline buttons like we just saw on that other screen, and that's job done for them. Um, but you can click on this, and then it'll open the, the message center, and you can open it. You can put this on your to-do list for the day, um, or you can mark it as done.
+
+**[17:09-17:30]**
+So that's basically it. I've shown you a few extra steps, probably taken a bit longer than ten minutes because of that. However, that is roughly how it goes. And you, you can add more components. You can add, like, you can use the AI Assist, which would've sped that process up. Um, I did a lot of talking and explaining, which made it slow.
+
+**[17:30-17:58]**
+But you get the, the idea, and this is a repeatable process, and once you get the hang of it, honestly, you could do ten quotes in an hour quite easily, depending on the, the complexity. Um, and maybe that's your whole week of quotes done, and you know it's accurate. You know that you've, you've got it stored everywhere in one place, and you can come back, you can edit things, you can track things.
+
+**[17:58-18:28]**
+And the cool thing is, is that literally you wanna, um, turn this into an in- an order. So you wanna order all this gear. Maybe the quote got accepted. It's 2 or 3 clicks, and now you've got an order form. Maybe you wanna send an invoice for this job. There's 2 or 3 clicks. You got a professional invoice you can send, and, and it's all done the same way. So, um, a lot of cool features, and yeah, if you, you wanna try this out, sign up, 14-day free trial with all of these features I've just showed you and more.
+
+**[18:28-18:46]**
+And, um, yeah, this is a, a process that I, I've built in a way to replace what I used to do when I was measuring and quoting jobs, and yeah, I, I, I love it, and I hope, uh, a lot of you do too. But if you, if you try this and you've got some suggestions, I'd love to hear from you.
+
+**[18:46-19:04]**
+Uh, we wanna make this the best roofing app in the world, um, and to help a lot of businesses like yours. So have a go. Try it for free, risk-free. And if, uh, you wanna get in touch and, you know, help us improve the app, please do. And thanks for watching.
+
 ## Full QuoteCore+ Channel Video Inventory
 
 | # | Title | YouTube ID | Script | Blog Embeds |
@@ -1578,11 +1729,12 @@ What? How? QuoteCore+. Finished it while you were looking for the long weight, b
 | 18 | You Still Doing Quotes While Everyone Else Is at the Pub? | [eMLnBCcujNw](https://youtu.be/eMLnBCcujNw) | No | None |
 | 19 | Still looking for the long wait? | [rqmEtartkYw](https://youtu.be/rqmEtartkYw) | No | None |
 | 20 | Short: Roofers quote smarter not harder! | [JQi6lkaf0jE](https://youtu.be/JQi6lkaf0jE) | No | None |
+| 21 | Full QuoteCore+ Demo: Quote a Roof from Start to Finish | (pending - video not yet uploaded) | Yes | None |
 
 ## Blog Coverage Summary
 
-**Videos embedded in blog posts: 7 of 20**
-**Videos not embedded in any blog: 13 of 20**
+**Videos embedded in blog posts: 7 of 21**
+**Videos not embedded in any blog: 14 of 21**
 **Total blog posts: 29** (14 have video embeds, 15 do not)
 
 ### Videos with blog embeds
