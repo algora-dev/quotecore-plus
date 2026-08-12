@@ -6,15 +6,11 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        Measuring a roof correctly is the foundation of every quote, every material order, and
-        every job estimate. Get the measurements wrong and you either order too little material
-        (and lose time waiting for deliveries) or too much (and eat the cost of returns). Either
-        way, your profit takes a hit.
+        <strong>Quick answer:</strong> There are three main ways to measure a roof: manual measurement (site visit with tape measure), digital measurement from PDF plans, and AI-assisted measurement using satellite or aerial imagery. For most roofing contractors, digital measurement from plans is the fastest and most accurate method. You can <Link href="/free-roofing-takeoff-builder">try the free roof takeoff builder</Link> to calculate roof areas, material quantities, and indicative pricing from your measurements — no signup required.
       </p>
       <p>
         This guide covers the three main ways to measure a roof, how to turn those measurements
-        into material quantities, and the checks that prevent common errors. There is also a free tool
-        that handles the maths for you.
+        into material quantities, and the checks that prevent common errors.
       </p>
 
       <hr />
@@ -298,8 +294,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.
-        No card needed. From complex plan to quote in under 3 minutes for less than a dollar.
+        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements — no signup required. Or <a href="/free-trial">start your free QuoteCore+ trial</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. No card needed.
       </p>
     </div>
   );

@@ -18,6 +18,7 @@ interface ConstrSlugDef {
   workedExample: string[];
   assumptions: string[];
   whenToAskPro: string;
+  commercialBridge?: { text: string; href: string; linkText: string };
 }
 
 function toConfig(d: ConstrSlugDef): TradeConfig {
@@ -49,6 +50,7 @@ function toConfig(d: ConstrSlugDef): TradeConfig {
         { href: '/free-roofing-calculator', title: 'Free Roofing Calculator', desc: 'Roof area, rafters, and materials' },
         { href: '/free-quote-generator', title: 'Free Quote Generator', desc: 'Turn measurements into a quote' },
       ],
+      commercialBridge: d.commercialBridge,
     },
   };
 }
@@ -148,6 +150,11 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
       'Ceiling paint calculated separately if using a different paint type.',
     ],
     whenToAskPro: 'For lead paint removal (pre-1970s properties), specialist encapsulation or removal is required by law. For high-rise exterior painting, use a qualified contractor with appropriate access equipment and insurance.',
+    commercialBridge: {
+      text: 'Need to turn paint quantities into a quoted job for your client?',
+      href: '/construction-quoting-software',
+      linkText: 'See how QuoteCore+ handles construction quotes from measurement to invoice',
+    },
   },
   {
     slug: 'free-tile-calculator',
@@ -242,6 +249,11 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
       'Subfloor must be flat (max 3mm deviation over 2m) before installation.',
     ],
     whenToAskPro: 'For solid wood flooring (not engineered), installation over underfloor heating requires specialist advice. For concrete subfloors with high moisture content, a damp-proof membrane is essential. Uneven subfloors (deviation >3mm over 2m) need self-levelling compound before installation.',
+    commercialBridge: {
+      text: 'Need to turn flooring quantities into a quoted job for your client?',
+      href: '/construction-quoting-software',
+      linkText: 'See how QuoteCore+ handles construction quotes from measurement to invoice',
+    },
   },
 ];
 

@@ -185,6 +185,8 @@ export interface TradeContent {
   whenToAskPro?: string;
   /** Sibling calculators + free generators. Signup card is added automatically. */
   related: RelatedLink[];
+  /** Contextual link to a relevant commercial page */
+  commercialBridge?: { text: string; href: string; linkText: string };
 }
 
 // ─── Master config ───────────────────────────────────

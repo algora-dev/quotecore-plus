@@ -186,6 +186,18 @@ export function TradePage({ config }: { config: TradeConfig }) {
           ))}
         </div>
       </section>
+
+      {/* Commercial bridge */}
+      {c.commercialBridge && (
+        <section className="mt-8 mb-8 rounded-xl border border-slate-200 bg-white p-5">
+          <p className="text-sm text-slate-600">
+            {c.commercialBridge.text}{' '}
+            <Link href={c.commercialBridge.href} className="font-medium text-[#BD4A1A] hover:underline">
+              {c.commercialBridge.linkText}
+            </Link>
+          </p>
+        </section>
+      )}
     </div>
   );
 }

@@ -17,6 +17,8 @@ export interface SlugDef {
   faqs: [string, string][];
   /** Tab id to show on page load. Defaults to tabs[0]. */
   defaultTab?: string;
+  /** Contextual link to a relevant commercial page */
+  commercialBridge?: { text: string; href: string; linkText: string };
 }
 
 const REL: RelatedLink[] = [
@@ -44,6 +46,7 @@ export function toConfig(d: SlugDef): TradeConfig {
       formulas: d.formulas.map(([name, formula]) => ({ name, formula })),
       faqs: d.faqs.map(([q, a]) => ({ q, a })),
       related: REL,
+      commercialBridge: d.commercialBridge,
     },
   };
 }
@@ -78,6 +81,11 @@ export const SLUGS_1: SlugDef[] = [
       ['What pitch factor should I use?', '1 ÷ cos(pitch°). At 25° = 1.103, at 35° = 1.221, at 45° = 1.414. Multiply plan area by this factor for actual roof surface area.'],
       ['What is the best free roof pitch calculator?', 'One that converts between degrees, ratios, and percentages, and shows the pitch factor. This tool does all of that, free with no signup.'],
     ],
+    commercialBridge: {
+      text: 'Need to turn roof pitch into a full quoted job?',
+      href: '/roofing-quoting-software',
+      linkText: 'See how QuoteCore+ handles roofing quotes from takeoff to invoice',
+    },
   },
   {
     slug: 'free-roof-pitch-converter',

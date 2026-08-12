@@ -4,7 +4,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
 
-      <p>The best quoting software for New Zealand tradies in 2026 depends on what part of your quoting process is costing you the most time. If it is turning measurements into a professional quote, you need a platform built around structured pricing and digital takeoffs. If it is managing jobs after the quote is accepted, you need something with strong workflow management. Most tools claim to do both - but they are rarely equal at both.</p>
+      <p><strong>Quick answer:</strong> The best quoting software for NZ tradies in 2026 is the one that eliminates your biggest quoting bottleneck. For most trades, that is turning measurements into a priced, professional quote quickly. QuoteCore+ is built specifically for roofing and construction contractors who want digital takeoff, reusable Smart Components, and material ordering in one platform. Buildxact, Fergus, and ServiceM8 each have strengths in different areas — job management, service work, or estimating. This guide compares all six options on pricing, features, and NZ-specific fit.</p>
 
       <p><em>Last checked: June 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing.</em></p>
 
@@ -229,6 +229,11 @@ export default function Post() {
 
       <h3>Also looking at the UK market?</h3>
       <p>See our guide to the <a href="/blog/best-roofing-quoting-software-uk-2026">best roofing quoting software for UK contractors in 2026</a> for a comparable breakdown of the UK options.</p>
+
+      <hr />
+
+      <h2>Try the free tools before you decide</h2>
+      <p>Not ready to commit to a platform yet? Start with the <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> — enter your roof measurements and get instant material quantities and indicative pricing. No signup, no card, no download. Then when you are ready for the full quoting workflow, <Link href="/free-trial">start a 14-day free trial of QuoteCore+</Link>.</p>
 
     </div>
   );

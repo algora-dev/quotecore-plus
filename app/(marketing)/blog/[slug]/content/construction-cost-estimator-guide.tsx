@@ -5,8 +5,7 @@ import Link from "next/link";
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
-      <p>A construction cost estimate converts a defined scope into quantities, labour, materials, plant, subcontractor work, overheads, risk, and margin. The quality of the estimate depends less on a single rate and more on whether the scope and quantities are complete.</p>
-      <p>Use the <a href="/free-construction-calculator">free construction calculator</a> for floor area, wall area, timber, quantities, and common geometry. Then follow this process to turn measurements into a budget or quote.</p>
+      <p><strong>Quick answer:</strong> A construction cost estimate converts a defined scope into quantities, labour, materials, plant, subcontractor work, overheads, risk, and margin. The quality of the estimate depends less on a single rate and more on whether the scope and quantities are complete. Use the <a href="/free-construction-calculator">free construction calculator</a> for floor area, wall area, timber, quantities, and common geometry, or try the <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> for roofing-specific measurements. Then follow this process to turn measurements into a budget or quote.</p>
       <h2>Estimate type comes first</h2>
       <p>Not every estimate has the same purpose.</p>
       <h3>Early budget</h3>
