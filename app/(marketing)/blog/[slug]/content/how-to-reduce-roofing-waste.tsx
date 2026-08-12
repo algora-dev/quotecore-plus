@@ -63,6 +63,15 @@ export default function Post() {
         <li>The waste calculation is auditable — you can see exactly how the gross quantity was derived</li>
       </ul>
       <p>Try the <a href="/free-smart-component-creator">free Smart Component Creator</a> to see how it works.</p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/1MOvQX-Lf_c"
+          title="Roofing Component Quote Tutorial in QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       <h2>Strategy 6: Track actual waste vs estimated</h2>
       <p>The best waste allowance is not a guess — it is based on real data from past jobs. After each job, compare:</p>
       <ul>

@@ -106,6 +106,30 @@ export default function Post() {
           allowFullScreen
         />
       </div>
+
+      <p>A quick look at why it works:</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/QyYa1VbQkbQ"
+          title="Roofing Quoting Software That Actually Works"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
+      <p>QuoteCore+ also includes a <a href="/suppliers">supplier directory</a> where roofing suppliers can publish their catalogues and get found by contractors and AI search. Here is how it works for suppliers:</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/47RtZiN2buY"
+          title="Get Found by Customers and AI as a QuoteCore+ Roofing Supplier"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       
       <p><a href="/free-trial">Start a free 14-day trial</a>. From complex plan to quote in under 3 minutes for less than a dollar.</p>
 

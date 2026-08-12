@@ -7,6 +7,16 @@ export default function Post() {
       <p>The delay is not always on site. Quite often, the delay happens afterwards, when the job information has to be turned into something professional enough to send to the customer.</p>
       <p>For UK roofing contractors, that gap matters. Customers often get more than one quote, and the business that responds clearly and quickly can make a better first impression before the job has even started.</p>
 
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/fObCC5bL4Dg"
+          title="Another Friday Night Stolen by Quotes? Not with QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
       <hr />
 
       <h2>Why speed matters, but accuracy still matters more</h2>
@@ -66,6 +76,18 @@ export default function Post() {
         <iframe
           src="https://www.youtube.com/embed/pqIfx-rOcmo?start=3"
           title="Create a roofing quote from start to finish in QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
+      <p>Want to see how fast a complex quote can be? Here is a full roofing quote created in under three minutes:</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/X379HDoDE_o"
+          title="Create a complex roofing quote in under 3min for less than $1!"
           className="h-full w-full"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen

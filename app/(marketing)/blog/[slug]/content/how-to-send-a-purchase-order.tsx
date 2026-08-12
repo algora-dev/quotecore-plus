@@ -130,7 +130,18 @@ export default function Post() {
       </ul>
       <h2>Purchase orders and QuoteCore+</h2>
       <p>The <a href="/free-purchase-order-generator">free purchase order generator</a> creates a professional PO for one-off use. QuoteCore+ goes further by allowing material orders to be created from an accepted quote, edited, and sent within the connected job workflow.</p>
-      <p>Watch <a href="https://www.youtube.com/watch?v=kOkQuUy8MWQ">How to Order Materials from an Accepted Quote</a> to see the process.</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/pXBJguUw_-I"
+          title="How to Use the Free Purchase Order Generator"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
+      <p>For the full workflow, watch <a href="https://www.youtube.com/watch?v=kOkQuUy8MWQ">How to Order Materials from an Accepted Quote</a> to see the process inside QuoteCore+.</p>
       <p>This is also why a strong supplier network matters. Contractors need accurate product information, dependable availability, clear service areas, and suppliers who can support how materials are actually specified and ordered.</p>
       <h2>Frequently asked questions</h2>
       <h3>Is a purchase order the same as a supplier invoice?</h3>

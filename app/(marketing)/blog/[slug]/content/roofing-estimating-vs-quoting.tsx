@@ -81,6 +81,15 @@ export default function Post() {
       <p>QuoteCore+ connects both stages in one workflow. You measure the roof using <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link>, and <Link href="/features/smart-components">Smart Components&#8482;</Link> automatically apply materials, labour, waste, and pricing to the measurements. The estimate is built behind the quote, and when you are ready to send, the quote document is generated from the same data.</p>
       <p>No re-keying. No separate spreadsheet. When the customer asks for a change, you update the measurement or rate once, and both the estimate and the quote reflect the change.</p>
       <p>See the <Link href="/roofing-estimating-software">roofing estimating software</Link> and <Link href="/roofing-quoting-software">roofing quoting software</Link> pages for more detail on how each stage works.</p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/1MOvQX-Lf_c"
+          title="Roofing Component Quote Tutorial in QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       <h2>When to use each</h2>
       <p>Estimating is for internal pricing decisions. You estimate to decide whether a job is worth taking on, what margin to apply, and whether the numbers work for your business.</p>
       <p>Quoting is for customer communication. You quote to present a price the customer can accept or decline. The quote may not show every line item from the estimate — you may group costs, round figures, or present a fixed price rather than a breakdown.</p>

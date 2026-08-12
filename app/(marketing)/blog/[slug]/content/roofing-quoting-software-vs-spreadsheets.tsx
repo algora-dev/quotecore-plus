@@ -83,6 +83,18 @@ export default function Post() {
         />
       </div>
 
+      <p>Not sure if it is worth switching? This 45-second overview shows the difference:</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/QyYa1VbQkbQ"
+          title="Roofing Quoting Software That Actually Works"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
       
       <hr />
 
