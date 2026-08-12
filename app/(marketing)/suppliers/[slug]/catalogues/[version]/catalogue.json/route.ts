@@ -95,6 +95,7 @@ export async function GET(
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "public, max-age=300, s-maxage=600",
+      "X-Robots-Tag": "noindex",
     },
   });
 }

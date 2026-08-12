@@ -7,7 +7,6 @@ import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs'
 import { getSitemapPosts } from '@/app/lib/blog-posts';
 import { SITE_URL } from '@/lib/seo/site-url';
 import { getSupplierDirectory } from '@/lib/supplier-directory';
-import { getCatalogueVersionHistory } from '@/lib/supplier-catalogue';
 
 /**
  * Public sitemap for https://quote-core.com.
@@ -77,10 +76,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/free-invoice-generator`, changeFrequency: 'monthly', priority: 0.9 },
     // Roof takeoff builder (standalone tool, not part of slug system)
     { url: `${SITE_URL}/free-roofing-takeoff-builder`, changeFrequency: 'monthly', priority: 0.9 },
-    // Supplier-specific takeoff builder pages
-    { url: `${SITE_URL}/free-roofing-takeoff-builder/apex-roofing`, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/free-roofing-takeoff-builder/prime-roofing`, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${SITE_URL}/free-roofing-takeoff-builder/prime-roofing-nz`, changeFrequency: 'monthly', priority: 0.8 },
+    // Supplier-specific takeoff builder pages are noindex — excluded from sitemap
     // Roof pricing calculator (component-based pricing page)
     { url: `${SITE_URL}/free-roof-pricing-calculator`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/docs/roof-takeoff-api`, changeFrequency: 'monthly', priority: 0.6 },
@@ -129,64 +125,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   // Supplier pages (dynamic, from public_supplier_directory RPC)
+  // Only HTML profile and catalogue pages are included — CSV/JSON data
+  // exports and versioned catalogue routes are excluded (non-indexable).
   const suppliers = await getSupplierDirectory();
   const supplierEntries: MetadataRoute.Sitemap = [];
   for (const s of suppliers) {
     if (!s.slug) continue;
-    const entries: MetadataRoute.Sitemap = [{
-        url: `${SITE_URL}/suppliers/${s.slug}`,
-        changeFrequency: 'monthly' as const,
-        priority: 0.7,
-      }];
-      // Add calculator URL if supplier has one available
-      if (s.calculator_available) {
-        entries.push({
-          url: `${SITE_URL}/free-roofing-takeoff-builder/${s.slug}`,
-          changeFrequency: 'monthly' as const,
-          priority: 0.8,
-        });
-      }
-      // Add catalogue routes (HTML, CSV, JSON)
-      entries.push({
-        url: `${SITE_URL}/suppliers/${s.slug}/catalogue`,
-        changeFrequency: 'monthly' as const,
-        priority: 0.6,
-      });
-      entries.push({
-        url: `${SITE_URL}/suppliers/${s.slug}/catalogue.csv`,
-        changeFrequency: 'monthly' as const,
-        priority: 0.5,
-      });
-      entries.push({
-        url: `${SITE_URL}/suppliers/${s.slug}/catalogue.json`,
-        changeFrequency: 'monthly' as const,
-        priority: 0.5,
-      });
-      // Add versioned catalogue routes (historical versions)
-      try {
-        const history = await getCatalogueVersionHistory(s.slug);
-        for (const v of history) {
-          entries.push({
-            url: `${SITE_URL}/suppliers/${s.slug}/catalogues/${v.version}`,
-            changeFrequency: 'yearly' as const,
-            priority: 0.3,
-          });
-          entries.push({
-            url: `${SITE_URL}/suppliers/${s.slug}/catalogues/${v.version}/catalogue.csv`,
-            changeFrequency: 'yearly' as const,
-            priority: 0.2,
-          });
-          entries.push({
-            url: `${SITE_URL}/suppliers/${s.slug}/catalogues/${v.version}/catalogue.json`,
-            changeFrequency: 'yearly' as const,
-            priority: 0.2,
-          });
-        }
-      } catch {
-        // Version history RPC may not exist yet — skip silently
-      }
-      supplierEntries.push(...entries);
-    }
+    supplierEntries.push({
+      url: `${SITE_URL}/suppliers/${s.slug}`,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    });
+    // HTML catalogue page (indexable)
+    supplierEntries.push({
+      url: `${SITE_URL}/suppliers/${s.slug}/catalogue`,
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    });
+  }
 
   return [...staticEntries, ...blogEntries, ...slugEntries, ...docEntries, ...supplierEntries];
 }

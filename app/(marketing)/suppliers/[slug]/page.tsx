@@ -11,6 +11,17 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Test supplier slugs — demo profiles that showcase the supplier system.
+// Real partners will eventually replace these. Kept visible so users can
+// see how supplier search works, but clearly marked as test data.
+const TEST_SUPPLIER_SLUGS = new Set([
+  'rs-roofing',
+  'thames-slate-tile',
+  'pacific-roofing-supplies',
+  'empire-roofing-materials',
+  'harbour-metal-roofing',
+]);
+
 // Force dynamic rendering — supplier publication state can change at any time,
 // so we always SSR rather than serving stale static pages.
 export const dynamic = 'force-dynamic';
@@ -337,6 +348,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
   const calculatorUrl = data.eligibility.calculator_available
     ? `/free-roofing-takeoff-builder/${s.slug}`
     : null;
+  const isTestSupplier = TEST_SUPPLIER_SLUGS.has(s.slug);
 
   const locationParts = [s.branch_city, s.branch_region, s.branch_country].filter(Boolean);
   const locationString = locationParts.join(", ");
@@ -397,6 +409,27 @@ export default async function SupplierDetailPage({ params }: PageProps) {
           );
         })()}
 
+        {/* Test supplier notice — shown for demo profiles */}
+        {isTestSupplier && (
+          <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8 pt-6">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3">
+              <div className="flex items-start gap-2">
+                <svg className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">Test supplier profile</p>
+                  <p className="mt-0.5 text-sm text-amber-800">
+                    This is a demonstration profile showing how QuoteCore+ supplier pages work.
+                    Prices and business details are illustrative and not for real ordering.
+                    Real partner suppliers receive the same verified badge and page features.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* 1. Supplier header — logo, name, location, verification badge */}
         <section className="pb-6 pt-8">
           <div className="mx-auto max-w-5xl px-4 md:px-6 lg:px-8">
@@ -426,6 +459,14 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     </svg>
                     Verified supplier
                   </span>
+                  {isTestSupplier && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-medium text-amber-700">
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Test profile
+                    </span>
+                  )}
                 </div>
                 {headerLocation && (
                   <p className="mt-2 text-sm text-slate-500">{headerLocation}</p>
@@ -446,13 +487,18 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-zinc-950">Supplier-managed page</p>
                   <p className="mt-1 text-sm text-zinc-600">
-                    This page is managed by {s.supplier_name} through its verified QuoteCore+ supplier account. The business has provided or linked all company information, catalogue data, service areas, delivery details, contact information, branding, and pricing shown on this page.
+                    {isTestSupplier
+                      ? `This is a test supplier profile for demonstration purposes. It showcases the features real partner suppliers receive — including the verified badge, catalogue management, service areas, and pricing display. Prices and business details shown here are illustrative and not for real ordering.`
+                      : `This page is managed by ${s.supplier_name} through its verified QuoteCore+ supplier account. The business has provided or linked all company information, catalogue data, service areas, delivery details, contact information, branding, and pricing shown on this page.`}
                   </p>
                 </div>
               </div>
               {/* Catalogue metadata row */}
               <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
                 <span>Verification: <span className="text-emerald-600">Verified</span></span>
+                {isTestSupplier && (
+                  <span>Profile type: <span className="text-amber-600">Test (demo)</span></span>
+                )}
                 {lib?.published_version != null && (
                   <span>Catalogue version: {lib.published_version}</span>
                 )}

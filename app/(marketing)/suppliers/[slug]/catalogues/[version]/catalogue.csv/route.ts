@@ -51,6 +51,7 @@ export async function GET(
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "public, max-age=300, s-maxage=600",
+      "X-Robots-Tag": "noindex",
     },
   });
 }
