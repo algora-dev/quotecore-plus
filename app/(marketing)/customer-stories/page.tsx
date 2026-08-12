@@ -7,17 +7,17 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Customer Stories",
+  title: "Customer Stories | QuoteCore+ Reviews & Results",
   description:
-    "Real stories from contractors using QuoteCore+ to quote faster, order materials, and get paid. See how roofing and construction businesses use the platform.",
+    "Real contractor outcomes with QuoteCore+ — faster quoting, accurate takeoffs, material ordering, and quicker payment. See how roofing and construction businesses use the platform.",
   alternates: {
     canonical: "https://quote-core.com/customer-stories",
     languages: hreflangLanguages("/customer-stories"),
   },
   openGraph: {
-    title: "Customer Stories",
+    title: "Customer Stories | QuoteCore+ Reviews & Results",
     description:
-      "Real stories from contractors using QuoteCore+ to quote faster, order materials, and get paid.",
+      "Real contractor outcomes with QuoteCore+ — faster quoting, accurate takeoffs, material ordering, and quicker payment.",
     url: "https://quote-core.com/customer-stories",
     siteName: "QuoteCore+",
     type: "website",

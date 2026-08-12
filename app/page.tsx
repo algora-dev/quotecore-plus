@@ -24,15 +24,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (isMarketingDomain) {
     return {
-      title: 'QuoteCore+ — Roofing Estimating & Quoting Software',
-      description: 'Measure jobs, create accurate quotes, track approvals, order materials and invoice in one platform. Built for roofing and construction contractors.',
+      title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
+      description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and 14-day trial for roofing and construction contractors.',
       alternates: {
         canonical: 'https://quote-core.com/',
         languages: hreflangLanguages('/'),
       },
       openGraph: {
-        title: 'QuoteCore+ — Roofing Estimating & Quoting Software',
-        description: 'Measure jobs, create accurate quotes, track approvals, order materials and invoice in one platform. Built for roofing and construction contractors.',
+        title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
+        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform. Free tools and 14-day trial for roofing and construction contractors.',
         url: 'https://quote-core.com/',
         siteName: 'QuoteCore+',
         type: 'website',
@@ -40,8 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
       },
       twitter: {
         card: 'summary_large_image',
-        title: 'QuoteCore+ — Roofing Estimating & Quoting Software',
-        description: 'Measure jobs, create accurate quotes, track approvals, order materials and invoice in one platform.',
+        title: 'Construction Quoting & Roofing Estimating Software | QuoteCore+',
+        description: 'Measure roofs, estimate costs, send quotes, track approvals, order materials and invoice — all in one platform.',
         images: ['/og-image.png'],
       },
     };

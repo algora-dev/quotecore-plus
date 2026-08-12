@@ -10,13 +10,13 @@ import {
 } from "@/lib/schema";
 
 export const metadata: Metadata = {
-  title: "Roofing Takeoff Software | QuoteCore+",
+  title: "Roofing Takeoff Software for PDF Plans | QuoteCore+",
   description:
-    "Roofing takeoff software with digital plan measurement, AI Scan Assist, and automatic material quantities. Measure roof areas, lengths, and pitch from PDF plans. Plans from free to $59/month.",
+    "Measure roof areas, lengths and pitch from PDF plans with AI Scan Assist and digital takeoff. Get automatic material quantities and pricing. Free roof takeoff builder — no signup required.",
   openGraph: {
-    title: "Roofing Takeoff Software | QuoteCore+",
+    title: "Roofing Takeoff Software for PDF Plans | QuoteCore+",
     description:
-      "Roofing takeoff software with digital plan measurement, AI Scan Assist, and automatic material quantities. Measure roof areas, lengths, and pitch from PDF plans. Plans from free to $59/month.",
+      "Measure roof areas, lengths and pitch from PDF plans with AI Scan Assist and digital takeoff. Get automatic material quantities and pricing. Free roof takeoff builder — no signup required.",
     url: "/roofing-takeoff-software",
     siteName: "QuoteCore+",
     type: "website",

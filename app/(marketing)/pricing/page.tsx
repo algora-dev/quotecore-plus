@@ -9,16 +9,16 @@ import { buildBreadcrumbSchema, buildFaqSchema, buildPricingOffers } from "@/lib
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Pricing",
+  title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
   description:
-    "Compare QuoteCore+ monthly plans in USD. Start with a 14-day full-feature trial with no credit card, then choose the limits that fit your trade business.",
+    "Compare QuoteCore+ plans from free to premium. 14-day full-feature trial, no credit card required. Takeoff, Smart Components, invoicing, and material ordering included.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
     languages: hreflangLanguages("/pricing"),
   },
   openGraph: {
-    title: "Pricing",
-    description: "Compare monthly QuoteCore+ plans, limits and included features in USD.",
+    title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
+    description: "Compare QuoteCore+ plans from free to premium. 14-day full-feature trial, no credit card required.",
     url: "https://quote-core.com/pricing",
     siteName: "QuoteCore+",
     type: "website",

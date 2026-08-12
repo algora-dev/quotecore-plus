@@ -4,6 +4,7 @@ import { roofTakeoffSchema } from '../../free-roofing-takeoff-builder/schema';
 export const metadata = {
   title: 'Roof Takeoff API and MCP Documentation',
   description: 'Use the QuoteCore+ Roof Takeoff Builder through REST, server-rendered result URLs, OpenAPI, or MCP.',
+  alternates: { canonical: 'https://quote-core.com/docs/roof-takeoff-api' },
 };
 
 export default function RoofTakeoffApiDocsPage() {

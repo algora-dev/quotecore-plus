@@ -4,6 +4,7 @@ export const metadata = {
   title: 'GET Calculation API - Roof Takeoff Builder',
   description: 'Server-rendered roof takeoff calculation via URL query parameters. No authentication, cookies, or JavaScript required.',
   robots: { index: true, follow: true },
+  alternates: { canonical: 'https://quote-core.com/docs/roof-takeoff-calculate' },
 };
 
 export default function RoofTakeoffCalculateDocsPage() {

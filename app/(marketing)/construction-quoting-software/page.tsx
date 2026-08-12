@@ -6,13 +6,13 @@ import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Construction Quoting Software",
+  title: "Construction Quoting Software for Contractors | QuoteCore+",
   description:
-    "Construction quoting software for trades that quote from measurements. Measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid in one connected workflow.",
+    "Multi-trade construction quoting software with Smart Components, digital takeoff, material ordering, invoicing and purchase orders. Measure, quote, and get paid in one platform. Free trial.",
   openGraph: {
-    title: "Construction Quoting Software | QuoteCore+",
+    title: "Construction Quoting Software for Contractors | QuoteCore+",
     description:
-      "Construction quoting software for trades that quote from measurements. Measure jobs, build professional quotes, order materials, manage work, invoice clients and get paid in one connected workflow.",
+      "Multi-trade construction quoting software with Smart Components, digital takeoff, material ordering, invoicing and purchase orders. Measure, quote, and get paid in one platform. Free trial.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",

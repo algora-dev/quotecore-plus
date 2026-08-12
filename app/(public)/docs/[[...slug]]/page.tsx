@@ -77,9 +77,8 @@ export default async function DocPage({ params }: Props) {
         ) : null}
 
         <header className="mb-8 border-b border-slate-200 pb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">{doc.frontmatter.title}</h1>
           {doc.frontmatter.description ? (
-            <p className="mt-2 text-lg text-slate-600">{doc.frontmatter.description}</p>
+            <p className="text-lg text-slate-600">{doc.frontmatter.description}</p>
           ) : null}
         </header>
 

@@ -7,13 +7,13 @@ import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Roofing Quoting Software",
+  title: "Roofing Quoting Software for Contractors | QuoteCore+",
   description:
-    "Roofing quoting software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, build quotes, order materials, invoice. Plans from free to $59/month.",
+    "Measure roofs, build quotes with Smart Components, send and track approvals, order materials and invoice — all in one roofing quoting platform. Free trial, no card required.",
   openGraph: {
-    title: "Roofing Quoting Software | QuoteCore+",
+    title: "Roofing Quoting Software for Contractors | QuoteCore+",
     description:
-      "Roofing quoting software with digital takeoff, AI Scan Assist, and Smart Components. Measure roofs, build quotes, order materials, invoice. Plans from free to $59/month.",
+      "Measure roofs, build quotes with Smart Components, send and track approvals, order materials and invoice — all in one roofing quoting platform. Free trial, no card required.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",

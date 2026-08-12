@@ -6,17 +6,17 @@ import { siteUrl } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Tutorials & Videos",
+  title: "Video Tutorials & Walkthroughs | QuoteCore+",
   description:
-    "Watch step-by-step QuoteCore+ tutorials. Learn how to create Smart Components, build quotes, order materials, invoice clients, and get the most out of the platform.",
+    "Learn QuoteCore+ with step-by-step video tutorials. Smart Components, digital takeoff, quoting, invoicing, and tool tips. No signup required to watch.",
   alternates: {
     canonical: "https://quote-core.com/tutorials",
     languages: hreflangLanguages("/tutorials"),
   },
   openGraph: {
-    title: "Tutorials & Videos",
+    title: "Video Tutorials & Walkthroughs | QuoteCore+",
     description:
-      "Watch step-by-step QuoteCore+ tutorials. Learn how to create Smart Components, build quotes, order materials, invoice clients, and get the most out of the platform.",
+      "Learn QuoteCore+ with step-by-step video tutorials. Smart Components, digital takeoff, quoting, invoicing, and tool tips. No signup required to watch.",
     url: "https://quote-core.com/tutorials",
     siteName: "QuoteCore+",
     type: "website",

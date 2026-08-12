@@ -7,16 +7,16 @@ import { SITE_URL } from "@/lib/seo/site-url";
 import { ORG_NAME, ORG_LEGAL_NAME, ORG_EMAIL, ORG_LINKEDIN } from "@/app/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Company",
+  title: "About QuoteCore+ | Construction Quoting Software Company",
   description:
-    "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by Shaun, who spent 20 years across the tools and the office quoting jobs. Learn about the company, product, and mission.",
+    "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Learn about the company, who built it, and why trades contractors choose QuoteCore+.",
   alternates: {
     canonical: "https://quote-core.com/company",
   },
   openGraph: {
-    title: "Company",
+    title: "About QuoteCore+ | Construction Quoting Software Company",
     description:
-      "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Built by Shaun, who spent 20 years across the tools and the office quoting jobs.",
+      "QuoteCore+ is roofing and construction quoting software by T3 Play Limited. Learn about the company, who built it, and why trades contractors choose QuoteCore+.",
     url: "https://quote-core.com/company",
     siteName: "QuoteCore+",
     type: "website",
