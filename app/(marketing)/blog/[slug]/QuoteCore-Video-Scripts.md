@@ -1558,10 +1558,10 @@ What? How? QuoteCore+. Finished it while you were looking for the long weight, b
 
 ## 21. Full QuoteCore+ Demo: Quote a Roof from Start to Finish
 
-**Link:** (video not yet uploaded to YouTube - link to be added once live)
+**Link:** https://youtu.be/AHXhlOuRAvw
 
 **Referenced in:** Not currently embedded in any blog post
-**Date added:** 2026-08-12
+**Date added:** 2026-08-12 (YouTube ID added 2026-08-13)
 **Status:** Script complete
 
 **[00:00-00:32]**
@@ -1705,6 +1705,63 @@ And, um, yeah, this is a, a process that I, I've built in a way to replace what 
 **[18:46-19:04]**
 Uh, we wanna make this the best roofing app in the world, um, and to help a lot of businesses like yours. So have a go. Try it for free, risk-free. And if, uh, you wanna get in touch and, you know, help us improve the app, please do. And thanks for watching.
 
+### YouTube Description
+
+I'm Shaun, founder of QuoteCore+. Watch me quote a complete roof from scratch to a sent customer quote, live, in the app. Back when I was quoting around 50 jobs a week as a roofer, this process was a mess: print plans, measure everything by hand (and miss things), transfer measurements into custom software, build a professional quote in Xero, email it, file the paperwork, then sit and hope the customer responded. QuoteCore+ replaces all of that. I built it to make quoting roofs faster, more accurate, and actually enjoyable.
+
+In this full demo you'll see me:
+- Set up a quote from the dashboard
+- Measure a roof plan with Digital Measure, tracing the outline and adding every component
+- Use the pitch calculator, sizing every roof area automatically
+- Add line items and area items from my Smart Component library
+- Apply my profit margin and review the full breakdown
+- Generate a professional customer quote in one click
+- Send it to the customer and track whether they've opened, accepted or declined it
+
+By the end, you'll see exactly why a medium-complex roof that used to take me 20-30 minutes can now be quoted in under ten. It's a fully repeatable process. Once you've set up your components, you can realistically knock out ten quotes in an hour, accurately, with everything stored in one place.
+
+**CHAPTERS**
+00:00 - Why I built QuoteCore+
+00:57 - The problem with manual quoting
+01:22 - Today's goal: quote in under 10 mins
+01:47 - Your Smart Component library
+03:03 - Starting a new quote
+04:10 - Digital Measure: calibrating the plan
+05:32 - Tracing the roof (polygon, rectangle, AI Assist)
+07:30 - Adding components: barges, hips, valleys, ridge
+10:41 - Roof area, covering and underlay
+11:35 - Extras, margin and review
+12:05 - Generating the customer quote
+14:30 - Sending to the customer
+14:54 - What the customer sees
+16:21 - Tracking opens, accepts and declines
+17:30 - Quote to order to invoice in a few clicks
+
+**RELATED BLOGS**
+- How to Price a Roofing Job: https://quote-core.com/blog/how-to-price-a-roofing-job
+- Manual vs Digital Roof Takeoff: https://quote-core.com/blog/manual-vs-digital-roof-takeoff
+- Reusable Quoting Templates & Smart Components: https://quote-core.com/blog/reusable-quoting-templates-smart-components
+
+**RELATED VIDEOS**
+- Create a Quote from Start to Finish with QuoteCore+: https://youtu.be/pqIfx-rOcmo
+- Create a Complex Roofing Quote in Under 3 Min for Less Than $1: https://youtu.be/X379HDoDE_o
+
+🌐 Visit the website: https://quote-core.com
+🛠 Done-for-you estimating: https://quote-core.com/services
+📚 The QuoteCore+ blog: https://quote-core.com/blog
+
+Follow us:
+📸 Instagram: https://www.instagram.com/quotecore_plus/
+🎵 TikTok: https://www.tiktok.com/@quotecoreplus
+💼 LinkedIn: https://www.linkedin.com/company/quotecore/
+📘 Facebook: https://www.facebook.com/people/QuoteCore/61590048782970/
+🐦 X: https://x.com/quotecoreplus
+
+**HASHTAGS**
+#Roofing #QuotingSoftware #RoofingSoftware #SmartComponents #DigitalMeasure #RoofingContractor #Invoice #QuoteCore
+
+---
+
 ## Full QuoteCore+ Channel Video Inventory
 
 | # | Title | YouTube ID | Script | Blog Embeds |
@@ -1729,7 +1786,7 @@ Uh, we wanna make this the best roofing app in the world, um, and to help a lot 
 | 18 | You Still Doing Quotes While Everyone Else Is at the Pub? | [eMLnBCcujNw](https://youtu.be/eMLnBCcujNw) | No | None |
 | 19 | Still looking for the long wait? | [rqmEtartkYw](https://youtu.be/rqmEtartkYw) | No | None |
 | 20 | Short: Roofers quote smarter not harder! | [JQi6lkaf0jE](https://youtu.be/JQi6lkaf0jE) | No | None |
-| 21 | Full QuoteCore+ Demo: Quote a Roof from Start to Finish | (pending - video not yet uploaded) | Yes | None |
+| 21 | Full QuoteCore+ Demo: Quote a Roof from Start to Finish | [AHXhlOuRAvw](https://youtu.be/AHXhlOuRAvw) | Yes | None |
 
 ## Blog Coverage Summary
 
