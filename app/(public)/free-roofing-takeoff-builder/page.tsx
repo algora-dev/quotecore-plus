@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { RoofTakeoffBuilder } from './RoofTakeoffBuilder';
+import { TakeoffBuilderSwitcher } from './TakeoffBuilderSwitcher';
 import { parseQueryInput } from './public-contract';
 
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
@@ -61,7 +61,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           Calculate a complete roof takeoff using actual or plan-view measurements. Enter roof area, pitch, hips, ridges, valleys, barges, and gutters to get material quantities and indicative pricing — no signup required.
         </p>
       </section>
-      <RoofTakeoffBuilder initialInput={initialInput} />
+      <TakeoffBuilderSwitcher initialInput={initialInput} />
       {/* Visible developer and AI access section */}
       <section className="border-t border-slate-200 bg-slate-50 px-4 py-8" aria-labelledby="machine-access">
         <div className="mx-auto max-w-5xl">
