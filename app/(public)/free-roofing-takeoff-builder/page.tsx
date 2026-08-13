@@ -1,15 +1,7 @@
 import Link from 'next/link';
-import { TakeoffBuilderSwitcher } from './TakeoffBuilderSwitcher';
-import { parseQueryInput } from './public-contract';
+import { SharedTakeoffBuilder } from './SharedTakeoffBuilder';
 
-export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const supplied = await searchParams;
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(supplied)) {
-    if (typeof value === 'string') params.set(key, value);
-    else if (Array.isArray(value)) params.set(key, value.join(','));
-  }
-  const initialInput = params.size > 0 ? parseQueryInput(params) : undefined;
+export default async function Page() {
   return (
     <>
       {/* Screen-reader and crawler overview */}
@@ -52,16 +44,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           <li><a href="/llms.txt">llms.txt</a> - machine-readable site summary</li>
         </ul>
       </section>
-      {/* Visible H1 for SEO and accessibility */}
-      <section className="mx-auto max-w-5xl px-4 pt-6 pb-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-          Free Roof Takeoff Builder
-        </h1>
-        <p className="mt-2 text-sm text-slate-600 max-w-3xl">
-          Calculate a complete roof takeoff using actual or plan-view measurements. Enter roof area, pitch, hips, ridges, valleys, barges, and gutters to get material quantities and indicative pricing — no signup required.
-        </p>
-      </section>
-      <TakeoffBuilderSwitcher initialInput={initialInput} />
+      <SharedTakeoffBuilder />
       {/* Visible developer and AI access section */}
       <section className="border-t border-slate-200 bg-slate-50 px-4 py-8" aria-labelledby="machine-access">
         <div className="mx-auto max-w-5xl">
