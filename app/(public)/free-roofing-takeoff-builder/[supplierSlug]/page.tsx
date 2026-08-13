@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { isNzHost, canonicalOrigin, dualDomainHreflang } from "@/lib/seo/dual-domain";
-import { TakeoffBuilderSwitcher } from "../TakeoffBuilderSwitcher";
+import { SharedTakeoffBuilder } from "../SharedTakeoffBuilder";
 import { parseQueryInput } from "../public-contract";
 import { getPublicSupplier, type SupplierDetail } from "@/lib/supplier-directory";
 import { ROOF_TAKEOFF_CALCULATION_VERSION } from "../public-contract";
@@ -214,7 +214,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
 
     return (
       <>
-        <TakeoffBuilderSwitcher initialInput={initialInput} initialSupplierSlug={supplierSlug} />
+        <SharedTakeoffBuilder initialSupplierSlug={supplierSlug} />
       </>
     );
   }
@@ -325,7 +325,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
         </p>
       </section>
 
-      <TakeoffBuilderSwitcher initialInput={initialInput} initialSupplierSlug={supplierSlug} />
+      <SharedTakeoffBuilder initialSupplierSlug={supplierSlug} />
 
       {/* How it works */}
       <section className="border-t border-slate-200 bg-white px-4 py-8">
