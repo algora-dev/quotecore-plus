@@ -4,12 +4,10 @@
  * QuoteCore+ wrapper around the shared TakeoffFlow.
  *
  * This component:
- * 1. Builds a ThemeConfig from QuoteCore+ branding (not from a supplier)
+ * 1. Renders the QuoteCore+ BlogHeader (same as all free tools)
  * 2. Passes the supplier/enquiry/result adapters
  * 3. Enables QuoteCore+ capabilities (known-price, fixed-qty, supplier selection)
- * 4. Keeps QuoteCore+ page chrome (BlogHeader, SiteFooter) outside this wrapper
- *
- * Feature-flagged via SUPPLIER_TAKEOFF_V2 - when disabled, the old RoofTakeoffBuilder is used.
+ * 4. Hides the shared package's own header (QuoteCore+ uses BlogHeader)
  */
 
 import type {
@@ -19,7 +17,7 @@ import type {
 } from '@quote-core/roof-takeoff';
 import { TakeoffFlow } from '@quote-core/roof-takeoff';
 import { quoteCoreSupplierAdapter, quoteCoreEnquiryAdapter, quoteCoreResultAdapter } from './shared-adapters';
-import type { PublicRoofTakeoffInput } from './public-contract';
+import BlogHeader from '@/components/BlogHeader';
 
 // QuoteCore+ brand theme - supplier overrides come at runtime via the adapter
 const QUOTECORE_THEME: ThemeConfig = {
@@ -77,19 +75,22 @@ const DEFAULT_COMPONENTS: RoofComponentDef[] = [
 
 interface SharedTakeoffBuilderProps {
   initialSupplierSlug?: string;
-  initialInput?: PublicRoofTakeoffInput;
 }
 
 export function SharedTakeoffBuilder({ initialSupplierSlug }: SharedTakeoffBuilderProps) {
   return (
-    <TakeoffFlow
-      theme={QUOTECORE_THEME}
-      components={DEFAULT_COMPONENTS}
-      capabilities={QUOTECORE_CAPABILITIES}
-      supplierAdapter={quoteCoreSupplierAdapter}
-      enquiryAdapter={quoteCoreEnquiryAdapter}
-      resultAdapter={quoteCoreResultAdapter}
-      initialSupplierSlug={initialSupplierSlug}
-    />
+    <>
+      <BlogHeader />
+      <TakeoffFlow
+        theme={QUOTECORE_THEME}
+        components={DEFAULT_COMPONENTS}
+        capabilities={QUOTECORE_CAPABILITIES}
+        supplierAdapter={quoteCoreSupplierAdapter}
+        enquiryAdapter={quoteCoreEnquiryAdapter}
+        resultAdapter={quoteCoreResultAdapter}
+        initialSupplierSlug={initialSupplierSlug}
+        hideHeader
+      />
+    </>
   );
 }
