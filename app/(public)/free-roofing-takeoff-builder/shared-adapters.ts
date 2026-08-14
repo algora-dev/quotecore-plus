@@ -88,6 +88,7 @@ export const quoteCoreSupplierAdapter: SupplierAdapter = {
     return {
       slug,
       supplierName: lib.supplierName || 'Unknown Supplier',
+      supplierEmail: lib.enquiryEmail ?? null,
       currency: lib.currency || 'USD',
       currencySymbol: getCurrencySymbol(lib.currency || 'USD'),
       unitSystem,
