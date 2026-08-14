@@ -204,6 +204,15 @@ export default function Post() {
       <p>
         All three are free, work on mobile, and need no signup.
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/0oJLKTAcOnc"
+          title="How to Use the Free Roofing Calculator"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
 
       <hr />
 

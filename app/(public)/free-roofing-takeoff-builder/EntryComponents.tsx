@@ -218,13 +218,18 @@ export function AddEntryForm({ kind, customDef, measureMode, lenLabel, areaLabel
       )}
 
       {isRoofArea && kind !== 'roof_area' && roofAreaTotal !== null && roofAreaTotal > 0 && (
-        <button
-          onClick={() => { setAreaMode('total'); setTotalVal(roofAreaTotal.toFixed(2)); }}
-          className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#ff5722]"
-          title="Uses the plan area (before pitch). Pitch and waste are applied automatically during calculation."
-        >
-          Use Roof Area ({roofAreaTotal.toFixed(2)} {areaLabel}){measureMode === 'plan' ? ' plan' : ''}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => { setAreaMode('total'); setTotalVal(roofAreaTotal.toFixed(2)); }}
+            className="cursor-pointer rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#ff5722]"
+          >
+            Use Roof Area ({roofAreaTotal.toFixed(2)} {areaLabel}){measureMode === 'plan' ? ' plan' : ''}
+          </button>
+          <div className="relative group flex-shrink-0">
+            <span className="cursor-help inline-flex items-center justify-center w-4 h-4 rounded-full border border-slate-300 text-slate-400 text-[10px] font-bold">?</span>
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-48 rounded-lg bg-slate-800 text-white text-xs px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">This automatically applies the total roof area you added in step 1</div>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">

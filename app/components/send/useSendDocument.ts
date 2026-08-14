@@ -77,6 +77,13 @@ export function useSendDocument(props: SendDocumentProps) {
   const [token, setToken] = useState<string | null>(props.existingToken ?? null);
   const [tokenLoading, setTokenLoading] = useState(false);
 
+  // Sync token state when the prop changes externally (e.g. after reopenQuote
+  // clears the token via router.refresh()). Without this, the stale old token
+  // stays in state and the URL mode shows an invalid link.
+  useEffect(() => {
+    setToken(props.existingToken ?? null);
+  }, [props.existingToken]);
+
   // Copy state
   const [copied, setCopied] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);

@@ -232,6 +232,15 @@ export default function Post() {
         printable quote with these fields. Enter your line items and rates, add your
         logo, and print to PDF. No signup needed.
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/5ifiryxMBDQ"
+          title="How to Use the Free Quote Generator"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       <p>
         For more free tools that speed up quoting and measurement, see <a href="/blog/best-free-tools-for-roofers">Best
         Free Tools for Roofers (2026 Guide)</a>. And if you need to calculate pitch for your quote,

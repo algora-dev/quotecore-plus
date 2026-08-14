@@ -95,7 +95,26 @@ export default function Post() {
         <li>You need to produce professional quotes quickly</li>
       </ul>
       <p>QuoteCore+ handles digital takeoff and connects it directly to estimating, quoting, material ordering, and invoicing. See the <Link href="/roofing-takeoff-software">roofing takeoff software</Link> page for the full workflow.</p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/B--YAux8Bqo"
+          title="How to Use the Free Roofing Takeoff Builder"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       <p>You can also try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> for a one-off job, or read <a href="/blog/how-to-do-a-roof-takeoff">how to do a roof takeoff</a> for the complete process guide.</p>
+      <p>See how fast a full roofing quote can be once measurements flow directly into pricing:</p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/X379HDoDE_o"
+          title="Create a complex roofing quote in under 3min for less than $1!"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
       <h2>Frequently asked questions</h2>
       <h3>Is digital roof takeoff accurate?</h3>
       <p>Yes, when the plan is accurately scaled and the software uses the embedded scale correctly. Digital takeoff eliminates the measurement error of a physical scale ruler and the transcription error of moving numbers from paper to spreadsheet. Always verify key dimensions, especially if the plan may have been re-scaled.</p>

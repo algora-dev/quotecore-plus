@@ -204,6 +204,15 @@ export default function Post() {
         <a href="/free-trial">try QuoteCore+ free for 14 days</a>. From complex plan to quote in
         under 3 minutes for less than a dollar.
       </p>
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/pqIfx-rOcmo?start=3"
+          title="Create a quote from start to finish with QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
 
       <hr />
 

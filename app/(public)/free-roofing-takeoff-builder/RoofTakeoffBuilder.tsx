@@ -1009,6 +1009,12 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                       </div>
                     )}
                   </div>
+                  <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3">
+                    <p className="text-xs text-slate-500">
+                      Common pitches: 15 deg (low pitch), 25 deg (standard UK), 35 deg (steep), 45 deg (very steep).
+                      {u === 'metric' ? ' Ratio format is rise:10 (e.g. 4.7:10).' : ' Ratio format is rise:12 (e.g. 5:12).'}
+                    </p>
+                  </div>
                 </div>
                 </>
               )}

@@ -62,6 +62,28 @@ export default function Post() {
       <p><strong>Where it falls short:</strong> QuoteCore+ is built for measured trades - roofing, cladding, concrete, landscaping. If you need job scheduling, dispatch, and reactive maintenance workflows, a trade management platform like SimPRO or AroFlo will serve you better.</p>
       <p><strong>Best for:</strong> Roofers, cladding installers, and trades that measure from plans and need accurate material quantities.</p>
 
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/pqIfx-rOcmo?start=3"
+          title="Create a quote from start to finish with QuoteCore+"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
+      <p>Not sure if it is worth switching? This 45-second overview shows the difference:</p>
+
+      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
+        <iframe
+          src="https://www.youtube.com/embed/QyYa1VbQkbQ"
+          title="Roofing Quoting Software That Actually Works"
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+
       <h3>2. SimPRO — Best for electrical, plumbing, and service trades</h3>
       <p><strong>Pricing:</strong> From ~$150/month (quoted on enquiry). Enterprise pricing for multi-site operations.</p>
       <p>SimPRO is a trade management platform built for Australian electrical, plumbing, HVAC, and security contractors. It handles quoting, job scheduling, dispatch, invoicing, and reporting in one system. For trades that run multiple concurrent jobs with field technicians, SimPRO is one of the strongest options in the Australian market.</p>
