@@ -3,12 +3,79 @@ title: Changelog
 description: What changed and when.
 order: 4
 status: published
-updated: 2026-07-30
+updated: 2026-08-14
 ---
 
 # Changelog
 
 A running log of features added and significant changes.
+
+## 2026-08-14 - Roof Takeoff Builder rewrite, supplier integration, integrations, SEO, Smart Components
+
+### Free Roof Takeoff Builder (complete rewrite)
+
+The Free Roof Takeoff Builder has been rebuilt with a shared calculation engine, supplier integration, and two entry modes:
+
+- **Guided and Fast modes** - Guided walks through each measurement step by step with explanations. Fast puts all inputs on one page for experienced users.
+- **Supplier integration** - select a supplier to load their real component library, pricing, and unit system. Results show actual supplier prices.
+- **Send to Supplier** - email a supplier your full takeoff as a detailed quote request, order request, pricing question, or general enquiry. Includes quantities, pricing, and a link to the result page.
+- **Convert to Quote** - import the takeoff into QuoteCore+ as a new quote.
+- **Print and PDF** - print results or save as PDF directly from the browser.
+- **Currency display** - supplier-driven currency (USD, NZD, etc.) with proper symbol display.
+- **AI agent access** - the builder is accessible to external AI agents via GET calculation URLs, REST API, MCP server, and OpenAPI spec. Fully server-rendered results - no JavaScript required.
+- **Roof pricing calculator** - new `/free-roof-pricing-calculator` page with an embedded calculator.
+
+### Supplier system expansion
+
+- **Supplier dashboard overhaul** - logo, banner, and price list upload. Location fields, SEO and enrichment fields, collapsible sections with plain-English labels and tips.
+- **Supplier landing pages** - dynamic titles, meta descriptions, enriched JSON-LD (LocalBusiness with geo coordinates, opening hours, price range), FAQPage schema, internal links. Dynamic FAQs per supplier location.
+- **Supplier catalogue routes** - versioned HTML, CSV, and JSON endpoints for supplier price lists. Version history with metadata.
+- **Tax and delivery** - per-upload tax inclusion flags for price lists and takeoff builder. Delivery coverage areas. Tax name and rate display on supplier pages.
+- **Supplier partnership page** - conversion-focused landing page at `/supplier-partnership` with real screenshots, feature highlights, and application form.
+- **4 test suppliers** - dummy suppliers in London, LA, NY, and Sydney with component libraries and published collections for testing.
+- **Supplier application form** - modal form with admin viewer for reviewing applications.
+
+### Active Smart Components model
+
+Component allowances are now based on active components, not a hard creation cap:
+- **Tier limits:** Trial=10, Free=5, Starter=20, Pro=50, Pro Plus=200 active components.
+- Users can store unlimited components; only active count is restricted.
+- Insert at cap creates the component as inactive. Activation triggers the cap check.
+- Counting is company-wide across all libraries.
+
+### Integration framework
+
+- **Send to App** button on quote summary - export quotes to external systems.
+- **Fergus connector** - native integration for Fergus job management (quotes, line items, attachments, notes).
+- **JobNimbus connector** - native integration for JobNimbus.
+- **Zapier connector** - connect QuoteCore+ to thousands of apps via Zapier.
+
+### SEO overhaul
+
+- **Commercial pages** - new dedicated pages for roofing takeoff software, roofing estimating software, roofing quoting software, and free roofing takeoff builder.
+- **Blog expansion** - 10+ new blog posts with video embeds, topic hubs, and internal linking.
+- **Video SEO** - video sitemap, VideoObject microdata, YouTube lite embeds with noscript fallbacks.
+- **Dual-domain SEO** - `.com` and `.co.nz` domain-aware signals, hreflang, currency and tax defaults.
+- **IndexNow** - instant search engine notification on content changes.
+- **Structured data** - Organization, WebSite, BlogPosting, FAQPage, BreadcrumbList, WebApplication, ItemList, LocalBusiness schemas.
+- **llms.txt** - machine-readable site summary for AI crawlers.
+- **Sitemap cleanup** - calculator URLs, supplier pages, feature pages, blog topic hubs added.
+
+### Homepage rework
+
+- Full-screen hero video with sticky header that hides/reveals on scroll.
+- Slide-in animation for transition text lines.
+- 7 focused conversion sections (down from more).
+- Real customer testimonials (Greg Kepp, Tony Edwards, Rob Mander).
+- Smart Components and AI Scan Assist emphasis.
+
+### Other improvements
+
+- **Smart Components trademark** - consistent `Smart Components(TM)` rendering across blog posts and marketing pages.
+- **Roofing calculator fixes** - removed pitch factor from Actual mode, fixed hipValleyPitchFactor formula.
+- **Stale acceptance URL fix** - quotes no longer show old acceptance URL after reopening.
+- **Quote builder state reset** - fixed state reset bugs when creating new quotes.
+- **Imperial unit matching** - fixed isAreaUnit matching for imperial (sqft) and squares unit systems so US supplier components show in dropdowns.
 
 ## 2026-07-30 — Supplier component system, AI takeoff V3, catalogue converter, Smart Component Creator, SEO overhaul
 

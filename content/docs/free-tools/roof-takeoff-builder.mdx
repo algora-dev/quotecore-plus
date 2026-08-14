@@ -1,0 +1,88 @@
+---
+title: Free Roof Takeoff Builder
+description: Calculate a complete roof takeoff from measurements - with supplier pricing, enquiries, and PDF export.
+order: 1
+status: published
+updated: 2026-08-14
+---
+
+# Free Roof Takeoff Builder
+
+The Free Roof Takeoff Builder at [/free-roofing-takeoff-builder](/free-roofing-takeoff-builder) lets you calculate a complete roof takeoff from your measurements without signing up. It covers roof areas, ridges, hips, valleys, barges, spouting, underlay, fixings, and custom components - with waste allowances and pitch calculations applied automatically.
+
+## Getting started
+
+1. Go to the [Roof Takeoff Builder](/free-roofing-takeoff-builder).
+2. Choose **Guided** (step by step with explanations) or **Fast** (all measurements on one page).
+3. Select a supplier to load their component library and pricing, or use the QuoteCore+ default components.
+4. Enter your measurements - roof area, pitch, and linear measurements (hips, ridges, valleys, barges, gutters).
+5. The engine calculates quantities with waste applied, pitch adjustments, and pack sizes.
+6. Review the full results breakdown.
+
+## What it calculates
+
+- **Roof area components** - underlay, iron, tiles, membrane (area-based, with pitch adjustment when measuring from a plan)
+- **Linear components** - ridges, hips, valleys, barges, spouting, flashings (length-based)
+- **Quantity components** - fixings, vents, downpipes (count-based)
+- **Custom components** - any material type with your own units and waste
+
+Each component shows quantity, pack size, number of packs, unit price, and total cost (if supplier pricing is available).
+
+## Measurement modes
+
+- **Plan** - measurements taken from a 2D roof plan. The engine applies pitch adjustment to calculate true roof surface area and lengths.
+- **Actual** - measurements already reflect true roof surface values. No pitch adjustment is applied.
+
+## Supplier integration
+
+When a supplier has published a component library on QuoteCore+, their components and pricing are available in the builder:
+
+1. **Select a supplier** from the supplier picker (or use the QuoteCore+ default).
+2. The builder loads that supplier's components, pricing, and unit system (metric or imperial).
+3. Results show real prices from the supplier's price list.
+4. Click **Send to Supplier** to email the supplier your full takeoff.
+
+### Send to Supplier enquiry
+
+The enquiry modal lets you choose an intent:
+
+- **Detailed Quote** - ask the supplier for a full formal quote
+- **Order Request** - place an order for the listed materials
+- **Pricing Question** - ask about pricing or better rates
+- **General Enquiry** - something else
+
+You can include or exclude quantities, pricing, and a link to the result page. The supplier receives the full takeoff breakdown by email.
+
+## Print and PDF
+
+Results can be printed or saved as PDF directly from the browser. The print layout includes all components, quantities, and totals.
+
+## Convert to Quote
+
+If you have a QuoteCore+ account, click **Convert to Quote** to import the takeoff into your workspace as a new quote. You can then edit it, add labor rates, generate customer quotes, and send it to your client.
+
+## Units
+
+The builder supports metric (m, m2), imperial (ft, ft2), and roofing squares (RS, linear ft). The unit system is determined by the selected supplier's configuration.
+
+## AI agent and developer access
+
+The takeoff builder is accessible to external AI agents and developers:
+
+- **Calculator schema** - read the [JSON schema](/api/public/roof-takeoff/schema) to understand supported inputs
+- **GET calculation** - construct a URL with query parameters, the server redirects to a stable result page
+- **REST API** - POST a JSON body for programmatic access
+- **MCP server** - Model Context Protocol endpoint for AI tools
+- **OpenAPI spec** - machine-readable API specification
+
+All interfaces use the same shared calculation engine. No authentication, cookies, or JavaScript required for GET calculations.
+
+See:
+- [GET calculation docs](/docs/roof-takeoff-calculate)
+- [API and MCP docs](/docs/roof-takeoff-api)
+
+## Related
+
+- [Free trade calculators and tools](/docs/help/free-tools)
+- [Smart Component Creator](/docs/help/smart-component-creator)
+- [Trial](/docs/account/trial) - start a 14-day free trial

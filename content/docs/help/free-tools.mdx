@@ -3,7 +3,7 @@ title: Free trade calculators and tools
 description: Free online calculators and document generators for trades.
 order: 5
 status: published
-updated: 2026-07-30
+updated: 2026-08-14
 ---
 
 # Free trade calculators and tools
@@ -46,15 +46,17 @@ All three support pre-filling from URL parameters, so you can link to a pre-fill
 
 ## Account tiers and usage limits
 
-The free tools have generous usage limits that scale with your account status:
+The free tools have usage limits that scale with your account status:
 
-| Tier | Who | Image parses/day | Text parses/day |
-|------|-----|-------------------|-----------------|
-| **Anonymous** | No account (IP-based) | 3 | 5 |
-| **Registered** | Signed up, not onboarded | 10 | 20 |
-| **Full access** | Onboarded company | 25 | 50 |
+| Tier | Who | AI parses/day | Document generations/day |
+|------|-----|---------------|---------------------------|
+| **Anonymous** | No account (IP-based) | 1 | 3 |
+| **Registered** | Signed up, not onboarded | 3 | 10 |
+| **Full access** | Onboarded company | 10 | Unlimited |
 
-Image parsing lets you upload a plan photo or screenshot and the AI extracts measurements. Text parsing accepts typed descriptions of a job.
+AI parses are a combined daily limit across image and text parsing. Image parsing lets you upload a plan photo or screenshot and the AI extracts measurements. Text parsing accepts typed descriptions of a job.
+
+Document generations are a combined daily limit across quotes, invoices, and purchase orders.
 
 ## Saving documents to your QuoteCore+ account
 
@@ -67,6 +69,32 @@ If you have a QuoteCore+ account with an active subscription, you can **save fre
 5. On success, you're redirected to the app with the document ready to edit.
 
 This works for all three document generators. Saved documents behave exactly like ones created inside the app — full editing, sending, and tracking capabilities.
+
+## Free Roof Takeoff Builder
+
+The [Roof Takeoff Builder](/free-roofing-takeoff-builder) is a free tool that calculates a complete roof takeoff from your measurements - areas, ridges, hips, valleys, barges, spouting, underlay, fixings, and custom components.
+
+### What it does
+
+- Enter roof area, pitch, and linear measurements (hips, ridges, valleys, barges, gutters)
+- The engine calculates quantities with waste applied, pitch adjustments, and pack sizes
+- Pick a supplier to pre-load their component library and pricing
+- Send the full takeoff to a supplier as an enquiry (detailed quote, order request, pricing question, or general)
+- Print or download the results as PDF
+- Convert the takeoff into a QuoteCore+ quote when you sign up
+
+### Guided and Fast modes
+
+- **Guided** walks you through each measurement step by step with explanations
+- **Fast** lets you enter all measurements on one page if you know your numbers
+
+### Supplier integration
+
+If suppliers have published component libraries on QuoteCore+, their components and pricing appear in the builder. Select a supplier to see real prices, then click **Send to Supplier** to email them your takeoff for a formal quote or order.
+
+### AI agent access
+
+The takeoff builder is accessible to AI agents and developers. Read the [calculator schema](/api/public/roof-takeoff/schema), construct a GET calculation URL, and the server returns a fully rendered result page - no JavaScript or authentication required. See the [GET calculation docs](/docs/roof-takeoff-calculate) and [API/MCP docs](/docs/roof-takeoff-api).
 
 ## Converting to QuoteCore+
 
