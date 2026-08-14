@@ -24,6 +24,22 @@ export interface FaqItem {
   answer: string;
 }
 
+export interface VideoClipMeta {
+  name: string;
+  startOffset: number;
+  endOffset?: number;
+}
+
+export interface BlogVideoMeta {
+  videoId: string;
+  title: string;
+  description: string;
+  uploadDate: string;
+  duration: string;
+  start?: number;
+  clips?: VideoClipMeta[];
+}
+
 export interface BlogPostMeta {
   slug: string;
   title: string;
@@ -33,6 +49,7 @@ export interface BlogPostMeta {
   draft?: boolean;     // if true, hidden from index, noindex, excluded from sitemap
   category?: BlogCategory; // primary topic for resource hubs
   faqs?: FaqItem[];    // FAQ questions for FAQPage schema
+  video?: BlogVideoMeta; // primary embedded video for VideoObject schema
 }
 
 export const BLOG_POSTS: BlogPostMeta[] = [
@@ -190,6 +207,89 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     lastModified: '2026-07-29',
   },
   {
+    slug: 'roofing-quote-example',
+    category: 'roofing-estimating',
+    title: 'Roofing Quote Example: Free Template and What to Include',
+    description:
+      'See a complete roofing quote example, learn what to include, avoid common omissions, and create your own professional roofing quotation with a free template.',
+    date: '2026-08-14',
+    lastModified: '2026-08-14',
+    video: {
+      videoId: '5ifiryxMBDQ',
+      title: 'How to Use the QuoteCore+ Free Quote Generator',
+      description:
+        'Create a professional contractor quote step by step with the free QuoteCore+ quote generator.',
+      uploadDate: '2026-08-11',
+      duration: 'PT1M51S',
+      clips: [
+        { name: 'Add customer and business details', startOffset: 0, endOffset: 34 },
+        { name: 'Build quote line items and pricing', startOffset: 34, endOffset: 78 },
+        { name: 'Review and download the finished quote', startOffset: 78 },
+      ],
+    },
+    faqs: [
+      {
+        question: 'What should a roofing quote include?',
+        answer:
+          'A roofing quote should identify both parties, define the roof and scope, list materials and labour, show the total and applicable tax, state exclusions and assumptions, set a validity period, explain payment terms, and provide a clear acceptance method.',
+      },
+      {
+        question: 'Should a roofing quote itemise every material?',
+        answer:
+          'The customer-facing quote should be detailed enough to define the scope without exposing every internal cost. Grouping related materials and labour is often clearer, while the estimator keeps the full quantity and cost breakdown internally.',
+      },
+      {
+        question: 'How long should a roofing quote remain valid?',
+        answer:
+          'The validity period should reflect supplier price stability, workload and project timing. Many contractors use a defined period such as 14 or 30 days, but the correct period depends on the job and local market.',
+      },
+    ],
+  },
+  {
+    slug: 'how-to-quote-a-roof-from-plans',
+    category: 'digital-takeoffs',
+    title: 'How to Quote a Roof From Plans: Complete Workflow',
+    description:
+      'Learn how to quote a roof from plans: verify scale, complete the takeoff, apply pitch and waste, price the job, build the customer quote, send it and track the result.',
+    date: '2026-08-14',
+    lastModified: '2026-08-14',
+    video: {
+      videoId: 'AHXhlOuRAvw',
+      title: 'Quote a Roof From Start to Finish with QuoteCore+',
+      description:
+        'Watch a complete roof move from plan calibration and digital takeoff to pricing, customer quote, sending, tracking, material order and invoice.',
+      uploadDate: '2026-08-13',
+      duration: 'PT19M11S',
+      clips: [
+        { name: 'Why the old roofing quote process breaks down', startOffset: 0, endOffset: 82 },
+        { name: 'Set up Smart Components', startOffset: 107, endOffset: 183 },
+        { name: 'Start the roof quote', startOffset: 183, endOffset: 250 },
+        { name: 'Calibrate and measure the roof plan', startOffset: 250, endOffset: 641 },
+        { name: 'Review pricing and margin', startOffset: 641, endOffset: 725 },
+        { name: 'Create and send the customer quote', startOffset: 725, endOffset: 918 },
+        { name: 'Track opens, acceptance and follow-ups', startOffset: 918, endOffset: 1029 },
+        { name: 'Turn the quote into an order and invoice', startOffset: 1078 },
+      ],
+    },
+    faqs: [
+      {
+        question: 'Can you quote a roof accurately from plans?',
+        answer:
+          'Yes, when the plans are current, clearly scaled and detailed enough for the required scope. Confirm uncertain dimensions, site conditions and hidden work before treating plan quantities as final.',
+      },
+      {
+        question: 'What measurements are needed to quote a roof?',
+        answer:
+          'Typical measurements include roof areas, pitch, ridges, hips, valleys, barges or verges, eaves, penetrations, flashings and rainwater goods. The exact list depends on the roof system and quoted scope.',
+      },
+      {
+        question: 'How long does it take to quote a roof from plans?',
+        answer:
+          'Time varies with roof complexity, plan quality and how much pricing logic is already configured. A repeatable digital workflow is generally faster than printing plans and rebuilding measurements in separate spreadsheets and quote documents.',
+      },
+    ],
+  },
+  {
     slug: 'how-to-do-a-roof-takeoff',
     category: 'digital-takeoffs',
     title: 'How to Do a Roof Takeoff: Complete Step-by-Step Guide',
@@ -214,7 +314,15 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Step-by-step invoice guide for contractors: what to include, how to number invoices, describe work clearly, calculate tax, set payment terms, handle variations, and avoid common mistakes. With free invoice generator.',
     date: '2026-07-31',
-    lastModified: '2026-07-31',
+    lastModified: '2026-08-14',
+    video: {
+      videoId: 'ntyS1giH5p0',
+      title: 'A Better Way to Measure, Quote and Invoice with QuoteCore+',
+      description:
+        'See how QuoteCore+ connects measurement, quoting and invoicing in one contractor workflow.',
+      uploadDate: '2026-06-29',
+      duration: 'PT29S',
+    },
   },
   {
     slug: 'how-to-send-a-purchase-order',
@@ -259,7 +367,20 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'How to build reusable quoting templates with Smart Components: choose repeatable work units, define inputs, add materials, build calculation logic, separate cost and price, and test against completed jobs.',
     date: '2026-07-31',
-    lastModified: '2026-07-31',
+    lastModified: '2026-08-14',
+    video: {
+      videoId: 'aFXJwOiliPI',
+      title: 'What Are Smart Components?',
+      description:
+        'Learn how QuoteCore+ Smart Components store repeatable materials, labour, waste, measurements and pricing logic for faster contractor quotes.',
+      uploadDate: '2026-07-07',
+      duration: 'PT4M19S',
+      clips: [
+        { name: 'What a Smart Component stores', startOffset: 0, endOffset: 76 },
+        { name: 'How components speed up quoting', startOffset: 76, endOffset: 181 },
+        { name: 'Using components across the workflow', startOffset: 181 },
+      ],
+    },
   },
   {
     slug: 'how-to-follow-up-on-a-quote',
@@ -268,7 +389,20 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     description:
       'Practical guide to following up on quotes: when to follow up, what to say, how many times, handling objections, and using automated follow-ups to win more jobs without chasing.',
     date: '2026-07-31',
-    lastModified: '2026-07-31',
+    lastModified: '2026-08-14',
+    video: {
+      videoId: 'AHXhlOuRAvw',
+      title: 'Automatic Quote Follow-Ups and Customer Tracking in QuoteCore+',
+      description:
+        'Watch QuoteCore+ send a customer quote, trigger automatic messages, track opens and record accepted or declined outcomes.',
+      uploadDate: '2026-08-13',
+      duration: 'PT19M11S',
+      start: 918,
+      clips: [
+        { name: 'Automatic quote follow-ups', startOffset: 918, endOffset: 981 },
+        { name: 'Track quote opens and customer decisions', startOffset: 982, endOffset: 1029 },
+      ],
+    },
   },
   {
     slug: 'how-to-start-a-roofing-business-uk',

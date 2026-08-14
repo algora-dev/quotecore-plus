@@ -1,5 +1,7 @@
 "use client";
 
+import YouTubeLite from "@/components/YouTubeLite";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -23,7 +25,14 @@ export default function Post() {
       <p>A Smart Component is a reusable building block that captures how your business prices and delivers a piece of work.</p>
       <p>It can contain products, materials, labour, measurements, calculations, waste, costs, selling prices, drawings, images, internal notes, customer descriptions, and custom rules.</p>
       <p>A roofer might create components for a roof plane, ridge system, valley, flashing, gutter, or rooflight. A concrete contractor might create slab, footing, or formwork components. A service business might create a repeatable package with labour, travel, and deliverables.</p>
-      <p>Watch <a href="https://www.youtube.com/watch?v=aFXJwOiliPI">What are Smart Components</a> for the product overview.</p>
+      <p>Watch how Smart Components turn repeatable materials, labour, waste and pricing rules into reusable building blocks for future quotes.</p>
+      <div className="not-prose my-8">
+        <YouTubeLite
+          videoId="aFXJwOiliPI"
+          title="What are Smart Components?"
+          uploadDate="2026-07-07"
+        />
+      </div>
       <h2>Step 1: choose a repeatable unit of work</h2>
       <p>Start with something you quote often and understand well.</p>
       <p>Good first components have a clear scope, repeatable inputs, known materials or services, a calculation you already use, and a customer description you regularly rewrite.</p>

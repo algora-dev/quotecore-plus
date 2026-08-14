@@ -1788,64 +1788,40 @@ Follow us:
 | 20 | Short: Roofers quote smarter not harder! | [JQi6lkaf0jE](https://youtu.be/JQi6lkaf0jE) | No | None |
 | 21 | Full QuoteCore+ Demo: Quote a Roof from Start to Finish | [AHXhlOuRAvw](https://youtu.be/AHXhlOuRAvw) | Yes | None |
 
-## Blog Coverage Summary
+## Blog Coverage Summary (verified 2026-08-14)
 
-**Videos embedded in blog posts: 7 of 21**
-**Videos not embedded in any blog: 14 of 21**
-**Total blog posts: 29** (14 have video embeds, 15 do not)
+This section reflects the current `development` code rather than the older `Referenced in` notes above.
 
-### Videos with blog embeds
-- **Video 6** (A Better Way to Measure, Quote and Invoice) `ntyS1giH5p0`: /blog/how-to-create-an-invoice-for-contractors, /blog/construction-cost-estimator-guide, /blog/how-to-start-a-roofing-business-uk
-- **Video 7** (Roofing Quoting Software That Actually Works) `QyYa1VbQkbQ`: /blog/roof-replacement-cost-guide-uk
-- **Video 8** (What are Smart Components?) `aFXJwOiliPI`: /blog/reusable-quoting-templates-smart-components, /blog/roofing-material-list
-- **Video 9** (How to Set Up Roofing Smart Components) `XZSTIfGUHAU`: /blog/reusable-quoting-templates-smart-components, /blog/roofing-quoting-software-vs-spreadsheets, /blog/roofing-material-list
-- **Video 12** (How to Order Materials) `kOkQuUy8MWQ`: /blog/how-to-send-a-purchase-order
-- **Video 13** (Roofing Component Quote Tutorial) `1MOvQX-Lf_c`: /blog/reusable-quoting-templates-smart-components, /blog/roofing-waste-calculation
-- **Video 14** (Create a Quote from Start to Finish) `pqIfx-rOcmo`: 9 blog posts (most-widely embedded video)
+### Primary video SEO support
+- Blog metadata now supports one primary video per article.
+- The blog page adds `VideoObject`, `SeekToAction`, and optional `Clip` key-moment schema.
+- Blog embeds should use `YouTubeLite` so YouTube JavaScript loads only after a visitor clicks play.
 
-### Dead embed found
-- `/blog/how-to-do-a-roof-takeoff` embeds video `DziFjqnPdqQ` which has been **removed by the uploader**. This needs to be replaced with a live video (recommend Video 10 `X379HDoDE_o` or Video 14 `pqIfx-rOcmo`).
+### New integrations
+- **Video 21** (`AHXhlOuRAvw`): embedded in `/blog/how-to-follow-up-on-a-quote` from 15:18 and used as the primary demonstration in `/blog/how-to-quote-a-roof-from-plans`.
+- **Video 8** (`aFXJwOiliPI`): embedded under ?What is a Smart Component?? in `/blog/reusable-quoting-templates-smart-components`.
+- **Video 6** (`ntyS1giH5p0`): embedded in `/blog/how-to-create-an-invoice-for-contractors`.
+- **Video 1** (`5ifiryxMBDQ`): embedded in the new `/blog/roofing-quote-example` guide.
 
-### High-priority embed gaps
-These videos have strong blog-relevant content but are not currently embedded in any blog post:
-- **Video 1** (Free Quote Generator `5ifiryxMBDQ`): Should be in /blog/best-free-tools-for-roofers, /blog/construction-quote-speed-checklist, /blog/how-to-price-a-roofing-job
-- **Video 2** (Free Roofing Takeoff Builder `B--YAux8Bqo`): Should be in /blog/how-to-do-a-roof-takeoff, /blog/best-free-tools-for-roofers, /blog/manual-vs-digital-roof-takeoff
-- **Video 3** (Free Roofing Calculator `0oJLKTAcOnc`): Should be in /blog/how-to-calculate-roof-pitch, /blog/best-free-tools-for-roofers
-- **Video 4** (Free Purchase Order Generator `pXBJguUw_-I`): Should be in /blog/how-to-send-a-purchase-order, /blog/best-free-tools-for-roofers
-- **Video 5** (Friday Night `fObCC5bL4Dg`): Should be in /blog/roofing-quoting-software-uk, /blog/construction-quote-speed-checklist
-- **Video 10** (Complex Quote Under 3 Min `X379HDoDE_o`): Should be in /blog/roofing-quoting-software-uk, /blog/how-to-do-a-roof-takeoff, /blog/manual-vs-digital-roof-takeoff
-- **Video 11** (Supplier Partner `47RtZiN2buY`): Should be in /blog/best-roofing-quoting-software-uk-2026, /blog/best-quoting-software-nz
+### New search-focused articles
+- `/blog/roofing-quote-example` targets roofing quote example, roofing quotation example, roofing quote template, and free roofing quote template intent.
+- `/blog/how-to-quote-a-roof-from-plans` targets how to quote a roof, how to quote a roofing job, and plan-to-customer-quote workflow intent.
 
-### Blog posts with no video embed (15 of 29)
-These blog posts would benefit from a relevant video embed:
-- /blog/best-quoting-software-nz
-- /blog/best-quoting-software-au
-- /blog/best-quoting-software-us
-- /blog/how-to-calculate-roof-pitch
-- /blog/how-to-measure-a-roof
-- /blog/how-much-roofing-material
-- /blog/how-to-price-a-roofing-job
-- /blog/best-free-tools-for-roofers
-- /blog/roofing-estimating-vs-quoting
-- /blog/how-to-estimate-roofing-materials
-- /blog/manual-vs-digital-roof-takeoff
-- /blog/how-to-reduce-roofing-waste
-- /blog/construction-quote-speed-checklist (already has Video 14, but could add Video 5)
+### Existing embedded-video coverage
+- **Free Quote Generator** (`5ifiryxMBDQ`): best-free-tools-for-roofers, construction-quote-speed-checklist, how-to-price-a-roofing-job, roofing-quote-example.
+- **Free Roofing Takeoff Builder** (`B--YAux8Bqo`): best-free-tools-for-roofers, how-to-do-a-roof-takeoff, how-to-estimate-roofing-materials, how-to-measure-a-roof, manual-vs-digital-roof-takeoff.
+- **Free Roofing Calculator** (`0oJLKTAcOnc`): best-free-tools-for-roofers, how-to-calculate-roof-pitch.
+- **Free Purchase Order Generator** (`pXBJguUw_-I`): best-free-tools-for-roofers, how-to-send-a-purchase-order.
+- **Friday Night** (`fObCC5bL4Dg`): construction-quote-speed-checklist, roofing-quoting-software-uk.
+- **Roofing Quoting Software** (`QyYa1VbQkbQ`): best-quoting-software-au, best-quoting-software-us, best-roofing-quoting-software-uk-2026, roofing-quoting-software-vs-spreadsheets.
+- **Complex Quote Under 3 Minutes** (`X379HDoDE_o`): manual-vs-digital-roof-takeoff, roofing-quoting-software-uk.
+- **Roofing Smart Components Setup** (`XZSTIfGUHAU`): roofing-quoting-software-vs-spreadsheets.
+- **Create a Quote From Start to Finish** (`pqIfx-rOcmo`): embedded across regional comparisons and workflow articles; avoid adding it to more pages unless it is the strongest intent match.
 
-### Videos needing scripts
-- **Video 18** (You Still Doing Quotes While Everyone Else Is at the Pub?) `eMLnBCcujNw`: No script in file. Shaun to chase up from team.
-- **Video 19** (Still looking for the long wait?) `rqmEtartkYw`: No script in file. Shaun to chase up from team.
-- **Video 20** (Roofers quote smarter not harder!) `JQi6lkaf0jE`: YouTube Short — scripts not tracked for Shorts per Shaun's direction.
-These videos have strong blog-relevant content but are not currently embedded in any blog post:
-- **Video 1** (Free Quote Generator): Should be in /blog/best-free-tools-for-roofers, /blog/construction-quote-speed-checklist, /blog/how-to-price-a-roofing-job
-- **Video 2** (Free Roofing Takeoff Builder): Should be in /blog/how-to-do-a-roof-takeoff, /blog/best-free-tools-for-roofers
-- **Video 3** (Free Roofing Calculator): Should be in /blog/how-to-calculate-roof-pitch, /blog/best-free-tools-for-roofers
-- **Video 5** (Friday Night): Should be in /blog/roofing-quoting-software-uk, /blog/construction-quote-speed-checklist
-- **Video 7** (Roofing Quoting Software): Should be in /blog/roofing-quoting-software-uk, /blog/best-roofing-quoting-software-uk-2026, /blog/roofing-quoting-software-vs-spreadsheets
-- **Video 10** (Complex Quote Under 3 Min): Should be in /blog/roofing-quoting-software-uk, /blog/how-to-do-a-roof-takeoff
-- **Video 11** (Supplier Partner): Should be in /blog/best-roofing-quoting-software-uk-2026
-- **Video 12** (Order Materials): Should be in /blog/how-to-do-a-roof-takeoff
+### Text links that are intentionally not extra embeds
+- **Order Materials From an Accepted Quote** (`kOkQuUy8MWQ`) remains a supporting link in the purchase-order guide because that page already has a primary free-generator video.
+- Additional Smart Components tutorials remain supporting links where another primary video is already prominent.
 
-### Videos needing scripts
-- **Video 18** (You Still Doing Quotes While Everyone Else Is at the Pub?) `eMLnBCcujNw`: No script in file. Please provide if available.
-- **Video 19** (Still looking for the long wait?) `rqmEtartkYw`: No script in file. Please provide if available.
+### Videos not suited to standalone SEO articles
+- **Videos 18 and 19** are conversion creatives and still need scripts if transcript coverage is required.
+- **Videos 15?17 and 20** are Shorts. Use them for social distribution or selective conversion modules, not thin search articles.

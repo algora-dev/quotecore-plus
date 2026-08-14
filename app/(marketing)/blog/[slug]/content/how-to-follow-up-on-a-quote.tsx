@@ -1,5 +1,7 @@
 "use client";
 
+import YouTubeLite from "@/components/YouTubeLite";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -124,7 +126,15 @@ export default function Post() {
       <h2>Automate reminders without becoming robotic</h2>
       <p>Automation should make sure follow-up happens. It should not remove judgement.</p>
       <p>Use different messages for confirmation, clarification, useful comparison, and closure. Pause automation when the customer replies. Do not continue sending generic reminders while a real conversation is active.</p>
-      <p>QuoteCore+ can send quotes, track activity, and support automatic follow-ups within the connected workflow. Watch <a href="https://www.youtube.com/watch?v=pqIfx-rOcmo">Create a Quote from Start to Finish</a> to see the wider process.</p>
+      <p>QuoteCore+ can send quotes, track opens and customer decisions, and support automatic messages within the connected workflow. The segment below shows the follow-up and tracking stage rather than making you search through the full demonstration.</p>
+      <div className="not-prose my-8">
+        <YouTubeLite
+          videoId="AHXhlOuRAvw"
+          title="Automatic quote follow-ups and customer tracking in QuoteCore+"
+          start={918}
+          uploadDate="2026-08-13"
+        />
+      </div>
       <h2>Common follow-up mistakes</h2>
       <ul>
         <li>Waiting weeks before first contact</li>
