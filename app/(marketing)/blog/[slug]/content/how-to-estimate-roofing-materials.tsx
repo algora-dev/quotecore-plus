@@ -67,7 +67,7 @@ export default function Post() {
       <h3>Do I need to measure the roof myself or can I use plans?</h3>
       <p>You can use plans if they are current, accurately scaled, and detailed enough. Verify key dimensions on site if possible. QuoteCore+ lets you measure directly from PDF plans using <Link href="/features/digital-roof-takeoff">digital takeoff</Link> tools, and <Link href="/features/ai-scan-assist">AI Scan Assist</Link> can auto-detect roof geometry from a plan.</p>
       <h3>Can software estimate roofing materials automatically?</h3>
-      <p>Yes. QuoteCore+ Smart Components&#8482; store material calculations, waste rules, and pricing for each roof element. When you measure a roof area or length in the takeoff, the component applies the correct materials and quantities automatically. Try it with the <a href="/free-roofing-material-calculator">free roofing material calculator</a> or <a href="/free-trial">start a free trial</a>.</p>
+      <p>Yes. QuoteCore+ Smart Components&#8482; store material calculations, waste rules, and pricing for each roof element. When you measure a roof area or length in the takeoff, the component applies the correct materials and quantities automatically. Try it with the <a href="/free-roofing-material-calculator">free roofing material calculator</a>, <a href="/roofing-quoting-software">explore the quoting software for contractors</a>, or <a href="/free-trial">start a free trial</a>.</p>
     </div>
   );
 }
