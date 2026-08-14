@@ -32,6 +32,7 @@ const QUOTECORE_THEME: ThemeConfig = {
   defaultUnits: 'metric',
   supplierName: null, // resolved at runtime
   supplierEmail: null, // resolved server-side from slug
+  supplierSlug: null, // resolved at runtime
   features: {
     sendToSupplier: true,
     convertToQuote: false, // QuoteCore+ handles this separately
