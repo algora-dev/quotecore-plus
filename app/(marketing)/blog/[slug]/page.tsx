@@ -5,7 +5,7 @@ import {
   buildPageMetadata,
   breadcrumbSchema,
   blogPostingSchema,
-  SITE_URL,
+  videoObjectSchema,
 } from '@/app/lib/seo';
 import { BLOG_POST_MAP } from '@/app/lib/blog-posts';
 
@@ -26,6 +26,8 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'how-to-measure-a-roof': () => import('./content/how-to-measure-a-roof'),
   'how-much-roofing-material': () => import('./content/how-much-roofing-material'),
   'how-to-price-a-roofing-job': () => import('./content/how-to-price-a-roofing-job'),
+  'roofing-quote-example': () => import('./content/roofing-quote-example'),
+  'how-to-quote-a-roof-from-plans': () => import('./content/how-to-quote-a-roof-from-plans'),
   'best-free-tools-for-roofers': () => import('./content/best-free-tools-for-roofers'),
   'ai-roof-measuring': () => import('./content/ai-roof-measuring'),
   'ai-roofing-tools-guide': () => import('./content/ai-roofing-tools-guide'),
@@ -108,6 +110,7 @@ export default async function BlogPostPage({ params }: Props) {
         { name: 'Blog', path: '/blog' },
         { name: post.title, path: `/blog/${slug}` },
       ]),
+      ...(post.video ? [videoObjectSchema(post.video)] : []),
     ],
   };
 

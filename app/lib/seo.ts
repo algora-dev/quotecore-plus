@@ -206,6 +206,52 @@ export function blogPostingSchema({
   };
 }
 
+export function videoObjectSchema({
+  videoId,
+  title,
+  description,
+  uploadDate,
+  duration,
+  clips = [],
+}: {
+  videoId: string;
+  title: string;
+  description: string;
+  uploadDate: string;
+  duration: string;
+  clips?: { name: string; startOffset: number; endOffset?: number }[];
+}) {
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+  return {
+    '@type': 'VideoObject',
+    '@id': `${watchUrl}#video`,
+    name: title,
+    description,
+    thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+    uploadDate,
+    duration,
+    contentUrl: watchUrl,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}`,
+    potentialAction: {
+      '@type': 'SeekToAction',
+      target: `${watchUrl}&t={seek_to_second_number}s`,
+      'startOffset-input': 'required name=seek_to_second_number',
+    },
+    ...(clips.length > 0
+      ? {
+          hasPart: clips.map((clip) => ({
+            '@type': 'Clip',
+            name: clip.name,
+            startOffset: clip.startOffset,
+            ...(clip.endOffset ? { endOffset: clip.endOffset } : {}),
+            url: `${watchUrl}&t=${clip.startOffset}s`,
+          })),
+        }
+      : {}),
+  };
+}
+
 /** Blog schema for the blog index page. */
 export function blogIndexSchema() {
   return {

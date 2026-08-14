@@ -1,5 +1,7 @@
 "use client";
 
+import YouTubeLite from "@/components/YouTubeLite";
+
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
@@ -153,7 +155,14 @@ export default function Post() {
       <h2>A connected quote-to-invoice workflow</h2>
       <p>The <a href="/free-invoice-generator">free invoice generator</a> is ideal when you need a professional invoice quickly. If you create invoices regularly, the bigger improvement is removing repeated entry.</p>
       <p>QuoteCore+ connects customer quotes, acceptance, material orders, invoices, and activity tracking. That helps the invoice start from work already agreed rather than rebuilding it from another document.</p>
-      <p>Watch <a href="https://www.youtube.com/watch?v=ntyS1giH5p0">A Better Way to Measure, Quote and Invoice with QuoteCore+</a> for an overview of the connected process.</p>
+      <p>Watch how measurement, quoting and invoicing stay connected instead of being rebuilt in separate tools.</p>
+      <div className="not-prose my-8">
+        <YouTubeLite
+          videoId="ntyS1giH5p0"
+          title="A better way to measure, quote and invoice with QuoteCore+"
+          uploadDate="2026-06-29"
+        />
+      </div>
       <h2>Frequently asked questions</h2>
       <h3>What is the difference between a quote and an invoice?</h3>
       <p>A quote sets out proposed scope and price before work is accepted. An invoice requests payment for goods or services supplied, usually after acceptance and according to the agreed payment schedule.</p>
