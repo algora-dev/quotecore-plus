@@ -224,7 +224,6 @@ export async function submitSupplierEnquiry(
           <tr><td style="padding:4px 12px 4px 0;color:#64748b;">Email:</td><td style="padding:4px 0;"><a href="mailto:${input.senderEmail}" style="color:#FF6B35;text-decoration:none;">${input.senderEmail}</a></td></tr>
           ${input.senderPhone ? `<tr><td style="padding:4px 12px 4px 0;color:#64748b;">Phone:</td><td style="padding:4px 0;">${input.senderPhone}</td></tr>` : ''}
           <tr><td style="padding:4px 12px 4px 0;color:#64748b;">Intent:</td><td style="padding:4px 0;">${intentLabels[input.intent] || input.intent}</td></tr>
-          ${input.currency ? `<tr><td style="padding:4px 12px 4px 0;color:#64748b;">Currency:</td><td style="padding:4px 0;">${input.currency}</td></tr>` : ''}
         </table>
 
         ${input.message ? `
@@ -325,7 +324,6 @@ New enquiry from QuoteCore+
 Supplier: ${supplier.supplier_name}
 From: ${input.senderName} <${input.senderEmail}>
 ${input.senderPhone ? `Phone: ${input.senderPhone}\n` : ''}Intent: ${intentLabels[input.intent] || input.intent}
-${input.currency ? `Currency: ${input.currency}\n` : ''}
 Message:
 ${input.message || '(no message)'}
 
