@@ -8,7 +8,7 @@ export default function Post() {
 
       <p><em>Editorial note: This guide is published by QuoteCore+, so our own product appears in the comparison. We have listed where other tools are a better fit, including for reactive repair work, mobile-first teams, compliance documentation, scheduling-heavy contractors, and businesses that need live UK merchant pricing built in.</em></p>
 
-      <p>The best <Link href="/roofing-quoting-software">roofing quoting software</Link> for UK contractors in 2026 depends on what stage of the quoting process is slowing you down most. If it is turning measurements into a professional quote, software with structured pricing and digital takeoffs will have the biggest impact. If it is managing jobs after the quote is accepted, a platform with strong workflow management matters more.</p>
+      <p>The best <Link href="/roofing-quoting-software">quoting software for contractors</Link> in the UK in 2026 depends on what stage of the quoting process is slowing you down most. If it is turning measurements into a professional quote, software with structured pricing and digital takeoffs will have the biggest impact. If it is managing jobs after the quote is accepted, a platform with strong workflow management matters more.</p>
       <p>This guide compares seven options that UK roofers are actually using in 2026. Each is assessed on the criteria that matter for roofing specifically - not generic trades.</p>
 
       <hr />

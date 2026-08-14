@@ -162,7 +162,7 @@ export default function Post() {
       <p>Thank them for the response and ask one optional question about the deciding factor. Do not argue. Record the reason and leave the relationship professional.</p>
       <h3>Can quote follow-up be automated?</h3>
       <p>Yes, but automation should stop when the customer responds and should use helpful, varied messages. Review timing and tone regularly.</p>
-      <p>Want the process handled consistently? Explore <a href="/roofing-quoting-software">roofing quoting software</a> or start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
+      <p>Want the process handled consistently? Explore <a href="/roofing-quoting-software">quoting software for contractors</a> or start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
     </div>
   );
 }

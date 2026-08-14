@@ -7,13 +7,13 @@ import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Roofing Quoting Software for Contractors | QuoteCore+",
+  title: "Quoting Software for Contractors | QuoteCore+",
   description:
-    "Measure roofs, build quotes with Smart Components, send and track approvals, order materials and invoice — all in one roofing quoting platform. Free trial, no card required.",
+    "Quoting software for contractors and roofers. Digital takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
   openGraph: {
-    title: "Roofing Quoting Software for Contractors | QuoteCore+",
+    title: "Quoting Software for Contractors | QuoteCore+",
     description:
-      "Measure roofs, build quotes with Smart Components, send and track approvals, order materials and invoice — all in one roofing quoting platform. Free trial, no card required.",
+      "Quoting software for contractors and roofers. Digital takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -202,7 +202,7 @@ export default function RoofingQuotingSoftwarePage() {
 
     <main className="min-h-screen bg-white text-zinc-950">
        <BlogHeader />
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Roofing Quoting Software" }]} />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Quoting Software for Contractors" }]} />
 
         {/* Cross-trade notice */}
         <div className="border-b border-zinc-200 bg-zinc-50 px-6 py-3 text-center text-sm text-zinc-600">
@@ -217,7 +217,7 @@ export default function RoofingQuotingSoftwarePage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
           <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Roofing quoting software that keeps the whole job connected.
+              Quoting software for contractors that keeps the whole job connected.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
@@ -229,7 +229,7 @@ export default function RoofingQuotingSoftwarePage() {
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
-                QuoteCore+ is roofing quoting software for contractors who want more than a quote template. It helps you move from measurements and pricing to customer approval, materials ordering, job management, invoicing and payment without rebuilding the same job information across spreadsheets, emails and documents.
+                QuoteCore+ is quoting software for contractors who want more than a quote template. It helps you move from measurements and pricing to customer approval, materials ordering, job management, invoicing and payment without rebuilding the same job information across spreadsheets, emails and documents.
               </p>
               <p className="mt-4 text-sm text-zinc-500">
                 Built from roofing experience, but no longer limited to quoting only. QuoteCore+ supports the wider workflow from quote to payment.
@@ -375,7 +375,7 @@ export default function RoofingQuotingSoftwarePage() {
         <section className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">
-              For roofers who want quoting to connect to the rest of the job.
+              For contractors who want quoting to connect to the rest of the job.
             </h2>
 
             <div className="mt-12 grid gap-6 sm:grid-cols-2">
@@ -445,6 +445,35 @@ export default function RoofingQuotingSoftwarePage() {
             <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
               <p className="font-semibold text-zinc-950">You need full project management</p>
               <p className="mt-2 text-sm leading-7 text-zinc-600">QuoteCore+ handles quoting, material ordering, and invoicing, not construction project management. If you need scheduling, Gantt charts, or resource allocation, use dedicated project management software.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Built for contractors */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">
+            Built for contractors who quote from measurements.
+          </h2>
+          <p className="mt-6 text-lg leading-8 text-zinc-600">
+            Whether you quote roofing, cladding, fencing, or wider construction work, the workflow is the same: measure the job, price it, send the quote, order materials, and invoice when it is done. QuoteCore+ keeps all of that in one place.
+          </p>
+
+          <div className="mt-10 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">Stop rebuilding the same job</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">Measurements, materials, labour, waste, and pricing go in once. The quote, material order, and invoice all pull from the same saved data.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">Quote faster with Smart Components™</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">Save your roofing sections, flashings, labour rules, waste allowances, and pricing logic once. Reuse them on every future quote without starting from scratch.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">Track quotes and follow up automatically</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">See when customers open your quote. Set up automatic follow-up emails that cancel themselves when the quote is accepted or declined.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5">
+              <p className="font-semibold text-zinc-950">From quote to invoice in one workflow</p>
+              <p className="mt-2 text-sm leading-7 text-zinc-600">Create a material order from the saved quote. Create an invoice from the same data. Configure payment methods per invoice. The job stays connected from start to finish.</p>
             </div>
           </div>
         </section>
