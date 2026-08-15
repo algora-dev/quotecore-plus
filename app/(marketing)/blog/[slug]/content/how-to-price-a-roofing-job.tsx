@@ -285,6 +285,14 @@ export default function Post() {
           quick estimate of replacement costs based on roof size and type
         </li>
         <li>
+          <a href="/blog/roof-replacement-cost-guide-uk">Roof replacement cost guide (UK)</a> -
+          typical replacement costs by roof size and type
+        </li>
+        <li>
+          <a href="/blog/construction-cost-estimator-guide">Construction cost estimator guide</a> -
+          full walkthrough of building up construction cost estimates
+        </li>
+        <li>
           <a href="/free-roofing-quote-calculator">Roofing Quote Calculator</a> - combines
           measurement and pricing in one tool
         </li>

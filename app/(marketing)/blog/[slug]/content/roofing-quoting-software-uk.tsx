@@ -33,7 +33,7 @@ export default function Post() {
         <li>making follow-up easier</li>
         <li>helping the accepted quote become the job</li>
       </ul>
-      <p>This is where roofing businesses can gain time without losing control over the details.</p>
+      <p>This is where <a href="/roofing-quoting-software">roofing quoting software</a> helps roofing businesses gain time without losing control over the details.</p>
 
       <hr />
 

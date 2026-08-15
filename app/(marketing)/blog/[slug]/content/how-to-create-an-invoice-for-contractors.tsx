@@ -36,7 +36,7 @@ export default function Post() {
       </ul>
       <p>Requirements vary by country and business type. For UK businesses, check the current <a href="https://www.gov.uk/invoicing-and-taking-payment-from-customers/invoices-what-they-must-include">GOV.UK invoicing guidance</a> and the separate rules for VAT invoices if registered.</p>
       <h2>Step 1: start from the accepted quote</h2>
-      <p>The accepted quote is the cleanest starting point because the customer has already seen the scope and price.</p>
+      <p>The accepted quote is the cleanest starting point because the customer has already seen the scope and price. <a href="/construction-quoting-software">Construction quoting software</a> keeps the quote and invoice connected, so scope, prices and payment terms stay in sync from acceptance through to final payment.</p>
       <p>Check that customer and billing details are correct, the job reference matches, the original scope was completed, variations were approved, deposits were recorded, and any staged payment or retention rules apply.</p>
       <p>Do not quietly fold a variation into a vague line. Show it separately with the date, reference, and agreed value where possible.</p>
       <p>If you do not yet have a consistent quote format, use the <a href="/free-quote-generator">free quote generator</a>. For guidance on structuring the quote itself, see <a href="/blog/how-to-price-a-roofing-job">how to price a roofing job</a>. Once the invoice is ready, a <a href="/blog/how-to-send-a-purchase-order">purchase order</a> helps the customer approve material costs separately.</p>

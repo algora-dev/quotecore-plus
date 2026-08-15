@@ -60,7 +60,8 @@ export default function Post() {
         <strong>Key step:</strong> the dimensions on a plan are horizontal (plan view). The actual
         roof surface is tilted, so it is always larger than the plan area. You must apply the pitch
         factor to get the true surface area. At 30 degrees, the factor is 1.155 - so 100 sqm on
-        plan becomes 115.5 sqm of roof surface.
+        plan becomes 115.5 sqm of roof surface. For the complete workflow that follows, see
+        <a href="/blog/how-to-quote-a-roof-from-plans">how to quote a roof from plans</a>.
       </p>
 
       <h3>3. Digital takeoff from plans</h3>

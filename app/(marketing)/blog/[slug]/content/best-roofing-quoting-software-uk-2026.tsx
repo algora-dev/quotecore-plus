@@ -392,7 +392,7 @@ export default function Post() {
       <h3>Can roofing quoting software help me win more jobs?</h3>
       <p>Yes - indirectly. Research suggests the first contractor to respond wins a significant proportion of competitive quote situations. Software that helps you quote faster, and that produces a more professional output, improves your position in both dimensions. A quote that arrives the same day as the site visit, formatted clearly and easy to accept, signals that the business is organised - before a single tile has been laid. For broader advice on winning more work, see <a href="/blog/how-to-get-more-work-as-a-contractor">how to get more work as a contractor</a>.</p>
 
-      <p>For a closer look at how digital quoting is already changing things for UK roofers, see <a href="/blog/roofing-quoting-software-uk">how UK roofing contractors are winning more jobs with digital quotes</a>.</p>
+      <p>For a closer look at how digital quoting is already changing things for UK roofers, see <a href="/blog/roofing-quoting-software-uk">how UK roofing contractors are winning more jobs with digital quotes</a>. For the equivalent comparison in another market, see <a href="/blog/best-quoting-software-us">quoting software in the US</a>.</p>
 
     </div>
   );

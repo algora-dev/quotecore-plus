@@ -1,0 +1,35 @@
+# how-to-quote-a-roof-from-plans
+
+Source: `app/(marketing)/blog/[slug]/content/how-to-quote-a-roof-from-plans.tsx`
+
+## Outbound internal links (6)
+
+### Money pages (1)
+
+| Destination | Anchor |
+|---|---|
+| /roofing-takeoff-software | roof takeoff software |
+
+### Blog articles (4)
+
+| Destination | Anchor |
+|---|---|
+| /blog/how-to-do-a-roof-takeoff | complete roof takeoff guide |
+| /blog/how-to-price-a-roofing-job | step-by-step roofing pricing guide |
+| /blog/roofing-quote-example | roofing quote example and free template |
+| /blog/how-to-follow-up-on-a-quote | quote follow-up guide |
+
+### Free tools (1)
+
+| Destination | Anchor |
+|---|---|
+| /free-trial | Start a free 14-day trial |
+
+## Inbound in-article links (2)
+
+| From | Anchor used |
+|---|---|
+| /blog/how-to-measure-a-roof | how to quote a roof from plans |
+| /blog/roofing-quote-example | plan-to-quote workflow |
+
+External links in source: 0

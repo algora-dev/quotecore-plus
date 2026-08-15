@@ -8,7 +8,7 @@ export default function Post() {
       <p>Estimating and quoting are often used interchangeably in roofing, but they are different stages of the same job. Confusing them leads to vague numbers, slow turnaround, and quotes that do not match the actual work.</p>
       <p>This guide explains the difference, why most contractors treat them as one task, and how combining them in a single workflow saves time without sacrificing accuracy.</p>
       <h2>What is roofing estimating?</h2>
-      <p>Estimating is the numbers work. You measure the roof, calculate material quantities, apply waste allowances, add labour, and arrive at a cost. The output is an internal figure: what the job costs you to deliver.</p>
+      <p>Estimating is the numbers work. You measure the roof, calculate material quantities, apply waste allowances, add labour, and arrive at a cost. The output is an internal figure: what the job costs you to deliver. For the full worked process, see <Link href="/blog/how-to-price-a-roofing-job">how to price a roofing job</Link>.</p>
       <p>Estimating involves:</p>
       <ul>
         <li>Measuring roof areas, lengths, and pitch</li>
@@ -20,7 +20,7 @@ export default function Post() {
       </ul>
       <p>The estimate answers a single question: what will this job cost me to deliver?</p>
       <h2>What is roofing quoting?</h2>
-      <p>Quoting is the communication work. You take the estimate and present it as a professional document the customer can review, understand, and accept. The output is a customer-facing price with terms, scope, and conditions.</p>
+      <p>Quoting is the communication work. You take the estimate and present it as a professional document the customer can review, understand, and accept. The output is a customer-facing price with terms, scope, and conditions. To see what that looks like in practice, here is a complete <Link href="/blog/roofing-quote-example">roofing quote example</Link>.</p>
       <p>Quoting involves:</p>
       <ul>
         <li>Structuring the price into clear line items</li>
