@@ -2,6 +2,16 @@
 
 ## Status: `main` at `13776b8` = `development` at `13776b8` (synced, 2026-07-14)
 
+### Pending verification (test on quotecore-plus-testing git-development preview URL, 2026-08-15)
+
+**SHARED TAKEOFF RESTORE. Fixed-quantity UI + Fast-mode Known Price + URL prefill (development `80900867`, 2026-08-15)**
+- [ ] URL prefill lands directly in builder: `/free-roofing-takeoff-builder?mode=plan&area=126&pitch=25&ridge=8&valleys=4,4&gutter=18` -> builder shows 5 entries (area 126 @ 25 deg, ridge 8, 2 valleys, gutter 18)
+- [ ] Garbage/invalid URL params still start the wizard fresh (no blank builder)
+- [ ] Fast mode: Add Custom Component -> type Fixed -> entry form is quantity-only, unit pcs, waste locked at 0
+- [ ] Fast mode: Known Price toggle (Select Product / Known Price) shows on entry forms and prices correctly
+- [ ] Guided mode regression: normal entry flow unchanged (dimensions, total area, product dropdown)
+- [ ] Results report: known-price entries show their price (not $0.00); fixed components price per piece
+
 ### Pending verification (test on feature/ai-takeoff preview URL)
 
 **AI-TAKEOFF. Phase A — DB foundation (feature/ai-takeoff `4406af4`, 2026-07-17)**
