@@ -214,7 +214,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
 
     return (
       <>
-        <SharedTakeoffBuilder initialSupplierSlug={supplierSlug} />
+        <SharedTakeoffBuilder initialSupplierSlug={supplierSlug} initialInput={initialInput} />
       </>
     );
   }
@@ -325,7 +325,7 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
         </p>
       </section>
 
-      <SharedTakeoffBuilder initialSupplierSlug={supplierSlug} />
+      <SharedTakeoffBuilder initialSupplierSlug={supplierSlug} initialInput={initialInput} />
 
       {/* How it works */}
       <section className="border-t border-slate-200 bg-white px-4 py-8">
