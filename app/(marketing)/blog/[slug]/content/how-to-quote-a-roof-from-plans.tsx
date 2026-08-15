@@ -46,7 +46,7 @@ export default function Post() {
 
       <h2>2. Calibrate the roof plan</h2>
       <p>
-        Digital takeoff software needs at least one known dimension. Select two clear points, enter the stated
+        Digital <Link href="/roofing-takeoff-software">roof takeoff software</Link> needs at least one known dimension. Select two clear points, enter the stated
         distance and verify a second dimension where possible. Longer reference dimensions usually reduce the
         effect of small clicking errors.
       </p>

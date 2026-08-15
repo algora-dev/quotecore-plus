@@ -42,7 +42,7 @@ export default function Post() {
       <h2>Step 1: calculate accurate net quantities</h2>
       <p>Waste cannot fix a poor measurement. Start with true sloping roof area and separate linear components.</p>
       <p>For each roof plane, calculate plan area, apply the correct pitch factor, handle openings appropriately, add the plane areas, and measure ridges, hips, valleys, verges, eaves, and flashings separately.</p>
-      <p>Use <a href="/blog/how-to-do-a-roof-takeoff">how to do a roof takeoff</a> if you need the complete process, or the <a href="/free-roof-area-calculator">free roof area calculator</a> for a quick area check.</p>
+      <p>Use <a href="/blog/how-to-do-a-roof-takeoff">how to do a roof takeoff</a> if you need the complete process, or the <a href="/free-roof-area-calculator">free roof area calculator</a> for a quick area check. To cut the allowance itself, see <Link href="/blog/how-to-reduce-roofing-waste">how to reduce roofing waste</Link>.</p>
       <h2>Step 2: review roof complexity</h2>
       <p>Complexity often drives waste more than total area.</p>
       <p>Lower-waste characteristics include large rectangular planes, repeating dimensions, long uninterrupted runs, few penetrations, simple gable geometry, and offcuts that can be reused elsewhere.</p>

@@ -55,7 +55,7 @@ export default function Post() {
 
       <h3>1. QuoteCore+ — Best for roofers and measured-trade quoting</h3>
       <p><strong>Pricing:</strong> Free trial (20 AI scan points), Lite (free), Starter ($29/month), Pro ($59/month), Pro Plus ($99/month). All plans include digital takeoff and quoting.</p>
-      <p>QuoteCore+ is built specifically for roofing and construction trades that measure from plans or site. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
+      <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
       <p>The standout feature is <strong>Smart Components</strong> - reusable material assemblies that automatically calculate quantities from measurements. A metal roof component might include Colorbond sheets, screws, ridge flashing, barge flashings, underlay, and insulation - all calculated from one roof area entry with pitch applied. You build the component once, use it on every quote, and the maths is always consistent.</p>
       <p>QuoteCore+ includes <a href="/features/ai-scan-assist">AI Scan Assist</a>, which identifies roof areas and flashings from an uploaded plan — useful for Australian roofers who want to speed up takeoffs without sacrificing accuracy.</p>
       <p>For Australian roofers, QuoteCore+ handles metal roofing (Colorbond, Zincalume), concrete and terracotta tiles, and flat roofing systems. The free <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> let you try the measurement and pricing engine before signing up.</p>
@@ -100,7 +100,7 @@ export default function Post() {
 
       <h3>4. Tradify — Best for solo tradies and small teams</h3>
       <p><strong>Pricing:</strong> ~$45/month (AUD). No per-user pricing - one flat fee.</p>
-      <p>Tradify is a job management tool popular with New Zealand and Australian tradies. It handles quoting, job scheduling, invoicing, and time tracking. The quoting module is straightforward - line items, labour rates, and markup - but there is no digital takeoff or material calculation engine.</p>
+      <p>Tradify is a job management tool popular with New Zealand and Australian tradies. It handles quoting, job scheduling, invoicing, and time tracking. The quoting module is straightforward - line items, labour rates, and markup - but there is no digital takeoff or material calculation engine. For NZ-specific options, see our guide to <a href="/blog/best-quoting-software-nz">quoting software in New Zealand</a>.</p>
       <p>For a solo tradie who needs a simple way to produce professional quotes and track jobs without spreadsheet chaos, Tradify is a solid, affordable choice.</p>
       <p><strong>Where it falls short:</strong> No takeoff, no material calculations, no component libraries. Quoting is manual line-item entry. Not built for measured trades.</p>
       <p><strong>Best for:</strong> Solo tradies and small teams who need simple quoting + job management.</p>

@@ -141,11 +141,11 @@ export default function Post() {
         />
       </div>
 
-      <p>For the full workflow, watch <a href="https://www.youtube.com/watch?v=kOkQuUy8MWQ">How to Order Materials from an Accepted Quote</a> to see the process inside QuoteCore+.</p>
+      <p>For the full workflow, watch <a href="https://www.youtube.com/watch?v=kOkQuUy8MWQ">How to Order Materials from an Accepted Quote</a> to see the process inside QuoteCore+. For the connected version of that workflow - quote, order and invoice feeding each other - see <a href="/construction-quoting-software">construction quoting software</a>.</p>
       <p>This is also why a strong supplier network matters. Contractors need accurate product information, dependable availability, clear service areas, and suppliers who can support how materials are actually specified and ordered.</p>
       <h2>Frequently asked questions</h2>
       <h3>Is a purchase order the same as a supplier invoice?</h3>
-      <p>No. The buyer issues a purchase order to request and authorise goods or services. The supplier issues an invoice to request payment after supplying them according to agreed terms.</p>
+      <p>No. The buyer issues a purchase order to request and authorise goods or services. The supplier issues an invoice to request payment after supplying them according to agreed terms. For the document that sits on the customer side of that exchange, see <a href="/blog/how-to-create-an-invoice-for-contractors">how to create an invoice for contractors</a>.</p>
       <h3>Does every supplier order need a PO?</h3>
       <p>That depends on the business process, but consistent POs improve approval, job costing, delivery checking, and invoice matching. They are especially valuable for bespoke, high-value, or multi-line orders.</p>
       <h3>Can a purchase order be changed after sending?</h3>

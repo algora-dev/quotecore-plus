@@ -28,7 +28,7 @@ export default function Post() {
         Pitch matters because it changes the actual surface area of the roof. A roof that covers
         100 square metres on plan at 30 degrees has an actual surface area of about 115.5 square
         metres. If you order materials based on the plan area, you will be short. If you price
-        labour based on the plan area, you will undercharge.
+        labour based on the plan area, you will undercharge. <Link href="/roofing-estimating-software">Roofing estimating software</Link> applies pitch factors automatically when turning measurements into material quantities.
       </p>
       <p>
         Pitch also affects:

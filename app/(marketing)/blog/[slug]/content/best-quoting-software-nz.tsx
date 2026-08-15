@@ -250,7 +250,7 @@ export default function Post() {
       <p>Both are NZ-built and well-regarded. Tradify is stronger on job scheduling and team management for multi-person operations. Fergus is stronger on job costing and profitability tracking. If knowing your actual job margins matters most, Fergus. If managing a team and their jobs is the priority, Tradify.</p>
 
       <h3>Also looking at the UK market?</h3>
-      <p>See our guide to the <a href="/blog/best-roofing-quoting-software-uk-2026">best roofing quoting software for UK contractors in 2026</a> for a comparable breakdown of the UK options.</p>
+      <p>See our guide to the <a href="/blog/best-roofing-quoting-software-uk-2026">best roofing quoting software for UK contractors in 2026</a> for a comparable breakdown of the UK options. For the Australian market, see <a href="/blog/best-quoting-software-au">quoting software in Australia</a>.</p>
 
       <hr />
 

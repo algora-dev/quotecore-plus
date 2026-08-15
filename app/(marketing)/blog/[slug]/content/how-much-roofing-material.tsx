@@ -11,7 +11,8 @@ export default function Post() {
       </p>
       <p>
         This guide explains how to calculate quantities from measured roof components, current
-        manufacturer coverage data, pack sizes, and a job-specific allowance.
+        manufacturer coverage data, pack sizes, and a job-specific allowance. For a deeper walkthrough of the
+        estimation process behind each quantity, see <a href="/blog/how-to-estimate-roofing-materials">how to estimate roofing materials</a>.
       </p>
 
       <hr />

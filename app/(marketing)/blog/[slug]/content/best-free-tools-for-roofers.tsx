@@ -370,7 +370,7 @@ export default function Post() {
       <h3>What is the difference between the free tools and QuoteCore+?</h3>
       <p>
         The free tools handle individual tasks - one calculation, one quote, one invoice at a time.
-        QuoteCore+ connects everything: takeoff feeds into the quote, the accepted quote becomes a
+        <a href="/roofing-quoting-software">QuoteCore+ roofing quoting software</a> connects everything: takeoff feeds into the quote, the accepted quote becomes a
         material order, the job is tracked through to completion, and the invoice is generated from
         the original quote data. It also includes saved pricing templates, a material catalog,
         customer management, and team access.

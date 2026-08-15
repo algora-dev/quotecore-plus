@@ -70,7 +70,7 @@ export default function Post() {
       <p>If speed is the main issue - not just accuracy - <a href="/blog/construction-quote-speed-checklist">the Construction Quote Speed Checklist</a> shows how to build a process that gets quotes out the same day as a site visit, regardless of what tool you are using.</p>
       <h2>See how reusable pricing replaces spreadsheet workarounds</h2>
       <p>
-        If your spreadsheet is mainly holding repeat pricing rules, this Smart Components tutorial shows how QuoteCore+ lets you save materials, labour, waste, pitch, measurements and pricing logic so you do not rebuild the same quote every time.
+        If your spreadsheet is mainly holding repeat pricing rules, this <a href="/blog/reusable-quoting-templates-smart-components">Smart Components tutorial</a> shows how QuoteCore+ lets you save materials, labour, waste, pitch, measurements and pricing logic so you do not rebuild the same quote every time.
       </p>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
@@ -133,6 +133,7 @@ export default function Post() {
       <hr />
 
       <h2>When a spreadsheet may still be enough</h2>
+      <p>Not sure which side of the line your process falls on? The <a href="/blog/roofing-estimating-vs-quoting">difference between estimating and quoting</a> explains where a simple sheet ends and where a connected workflow starts.</p>
       <p>A spreadsheet may still work if:</p>
       <ul>
         <li>you only quote a few jobs each month</li>
@@ -150,7 +151,7 @@ export default function Post() {
       <p>Spreadsheets are not the enemy. Disconnected admin is.</p>
       <p>QuoteCore+ was built for roofing and construction businesses that want measurements, pricing, quotes, approvals, material orders, job details and invoicing to stay connected.</p>
       <p>If your spreadsheet still works, keep it.</p>
-      <p>If it has become the thing you are constantly working around, it may be time to try a different workflow. <a href="/blog/best-roofing-quoting-software-uk-2026">Here is a full comparison of the best roofing quoting software for UK contractors in 2026</a> - with honest assessments of six tools across the criteria that actually matter for roofers. For the full pricing process that software handles, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
+      <p>If it has become the thing you are constantly working around, it may be time to try a different workflow - <a href="/roofing-quoting-software">roofing quoting software</a> built for roofing and construction businesses keeps measurements, pricing, quotes, approvals, material orders, job details and invoicing connected. <a href="/blog/best-roofing-quoting-software-uk-2026">Here is a full comparison of the best roofing quoting software for UK contractors in 2026</a> - with honest assessments of six tools across the criteria that actually matter for roofers. For the full pricing process that software handles, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
     </div>
   );
 }

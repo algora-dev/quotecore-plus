@@ -6,7 +6,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>Most contractors don&apos;t struggle because they&apos;re bad at the work. They struggle because getting the work is often left to chance.</p>
-      <p>A referral comes in. Someone sees the van. A past customer passes your number on. That all helps, and word of mouth will always matter in the trades, but it is not a proper system. If the phone goes quiet for a week or two, you need more than hope and a few old contacts to keep work coming in.</p>
+      <p>A referral comes in. Someone sees the van. A past customer passes your number on. That all helps, and word of mouth will always matter in the trades, but it is not a proper system. If the phone goes quiet for a week or two, you need more than hope and a few old contacts to keep work coming in. If you are starting from scratch, our guide to <Link href="/blog/how-to-start-a-roofing-business-uk">starting a roofing business in the UK</Link> covers the foundations.</p>
       <p>The good news is you do not need to become a marketing expert. You do not need to post online every day, run complicated ads, or spend thousands on a new website. For most contractors, getting more work starts with fixing the basics that customers already look at before they choose who to call.</p>
       <p>That means showing up locally, looking trustworthy, asking happy customers for reviews, following up properly, and sending quotes that make people feel confident hiring you.</p>
       <p>Here are the areas worth fixing first.</p>
