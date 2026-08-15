@@ -100,7 +100,7 @@ export default function SmartComponentsPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Smart Components™: build a roof quote in minutes.
@@ -181,7 +181,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* What they are */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What are Smart Components™?</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Smart Components™ are the core building blocks of a QuoteCore+ quote. A Smart Component stores three things: what it is (a product, material, or service), how it is measured (area, linear length, volume, per unit, or fixed cost), and how it is priced. When you add a Smart Component to a roof section in a quote, it looks at the section&apos;s dimensions and calculates its own quantity and price automatically.
@@ -195,7 +195,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* Supplier catalogs */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Import from supplier catalogs</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Don&apos;t have your own pricing yet? Smart Components™ can be imported from supplier catalogs and component libraries. Search by your area or by product type, find a supplier&apos;s library, and add it to your account. You get baseline pricing to start quoting with immediately.
@@ -211,7 +211,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* How it works */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
           <div className="mt-8 space-y-8">
             {steps.map((step) => (
@@ -227,7 +227,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* Who it's for */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Any contractor who quotes the same types of jobs repeatedly. If you find yourself looking up the same material prices, applying the same waste factors, and doing the same calculations for every quote, Smart Components™ eliminate that repetition.
@@ -238,7 +238,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* What it solves */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What problem it solves</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -257,7 +257,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* Supported inputs and outputs */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -286,7 +286,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* Worked example */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Worked example: pricing a concrete tile roof</h2>
           <div className="mt-6 rounded-xl border border-slate-200 p-6">
             <p className="text-sm text-zinc-600">A contractor creates a Smart Component for a concrete interlocking tile:</p>
@@ -301,7 +301,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* Honest limitations */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -316,7 +316,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* Less suitable use */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -327,7 +327,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
           <div className="mt-6 space-y-4">
             {faqs.map((faq) => (
@@ -340,7 +340,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* Related */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/digital-roof-takeoff" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
@@ -367,7 +367,7 @@ export default function SmartComponentsPage() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Start building Smart Components™</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>

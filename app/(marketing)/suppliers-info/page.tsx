@@ -162,7 +162,7 @@ export default function SuppliersPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-16 pt-12">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
-          <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
               Supplier Network
             </p>
@@ -299,7 +299,7 @@ export default function SuppliersPage() {
 
         {/* FAQ */}
         <section className="border-t border-zinc-200 bg-zinc-50 py-16 lg:py-20">
-          <div className="mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Frequently asked questions
             </h2>
@@ -316,7 +316,7 @@ export default function SuppliersPage() {
 
         {/* Honest limitations */}
         <section className="py-16 lg:py-20">
-          <div className="mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">What supplier resources does not do</h2>
             <div className="mt-8 space-y-4">
               <div className="rounded-xl border border-slate-200 p-6">
@@ -337,7 +337,7 @@ export default function SuppliersPage() {
 
         {/* Related */}
         <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
-          <div className="mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Related</h2>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <a href="/features/supplier-resources" className="rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
@@ -362,7 +362,7 @@ export default function SuppliersPage() {
 
         {/* CTA */}
         <section className="bg-zinc-950 py-16 lg:py-20">
-          <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <div className="mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
               Ready to grow your roofing supply business?
             </h2>

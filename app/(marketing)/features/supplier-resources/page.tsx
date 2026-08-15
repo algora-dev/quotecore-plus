@@ -100,7 +100,7 @@ export default function SupplierResourcesPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Supplier pricing catalogs and component libraries, ready to use.
@@ -147,7 +147,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* What it is */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What are supplier resources?</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Supplier resources are publicly available pricing data published by roofing and construction suppliers on QuoteCore+. There are two types: catalogs and component libraries.
@@ -222,7 +222,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* Catalog to component converter */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Catalog to component converter</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             The catalog to component converter is a bulk import tool. Open a supplier catalog (CSV) or one of your own uploaded catalogs, and the converter shows you each row. You select which columns map to which component fields - name, price, product code, measurement type - and the converter creates Smart Components™ from every row at once.
@@ -233,7 +233,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* How it works */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
           <div className="mt-8 space-y-8">
             {steps.map((step) => (
@@ -249,7 +249,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* Who it's for */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Contractors who need pricing data to quote accurately. If you&apos;re new to a market, working with a new supplier, or simply don&apos;t have your own pricing library built up yet, supplier resources give you indicative supplier pricing to start quoting with immediately.
@@ -260,7 +260,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* What it solves */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What problem it solves</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -283,7 +283,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* Supported inputs and outputs */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -306,7 +306,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* Honest limitations */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -326,7 +326,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* Worked example */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Worked example: importing a supplier catalog</h2>
           <div className="mt-6 rounded-xl border border-slate-200 p-6">
             <p className="text-sm text-zinc-600">A roofing supplier publishes their 2026 catalog as a CSV with 240 products:</p>
@@ -340,7 +340,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* Less suitable use */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -351,7 +351,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
           <div className="mt-6 space-y-4">
             {faqs.map((faq) => (
@@ -364,7 +364,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* Related */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/smart-components" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
@@ -391,7 +391,7 @@ export default function SupplierResourcesPage() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try supplier resources free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>

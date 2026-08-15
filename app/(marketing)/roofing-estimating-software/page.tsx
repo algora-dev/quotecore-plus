@@ -183,7 +183,7 @@ export default function RoofingEstimatingSoftwarePage() {
         </section>
 
         {/* What is roofing estimating software? */}
-        <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
+        <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">
             What is roofing estimating software?
           </h2>

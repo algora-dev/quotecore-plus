@@ -244,7 +244,7 @@ export default async function CataloguePage({ params, searchParams }: PageProps)
     return (
       <main className="min-h-screen bg-white text-zinc-950">
         <BlogHeader />
-        <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+        <div className="mx-auto max-w-6xl px-4 py-20 text-center">
           <h1 className="text-2xl font-semibold">{supplierData.supplier.supplier_name}</h1>
           <p className="mt-4 text-zinc-600">No published catalogue available yet.</p>
           <Link

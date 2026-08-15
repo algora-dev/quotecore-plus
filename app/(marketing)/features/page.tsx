@@ -96,7 +96,7 @@ export default function FeaturesHubPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Features</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Every part of the quoting workflow, connected.
@@ -231,7 +231,7 @@ export default function FeaturesHubPage() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try all features free for 14 days</h2>
             <p className="mt-2 text-zinc-600">No credit card required. Full access to every feature.</p>
