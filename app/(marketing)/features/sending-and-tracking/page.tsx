@@ -107,7 +107,7 @@ export default function SendingAndTrackingPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Send, track and follow up. Automatically.
@@ -263,7 +263,7 @@ export default function SendingAndTrackingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 py-12 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 py-12 lg:px-8">
           <h2 className="text-2xl font-semibold sm:text-3xl">FAQ</h2>
           <div className="mt-6 space-y-4">
             {faqs.map((faq) => (
@@ -277,7 +277,7 @@ export default function SendingAndTrackingPage() {
 
         {/* CTA */}
         <section className="relative overflow-hidden bg-white py-16 sm:py-20">
-          <div className="relative mx-auto max-w-3xl px-6 text-center lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">Stop chasing. Start tracking.</h2>
             <p className="mt-4 text-base text-zinc-600">Send, track and follow up automatically. 14-day trial, no card required.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">

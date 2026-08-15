@@ -347,7 +347,7 @@ export default function SupplierPartnershipPage() {
 
         {/* 4. Why Is It Free */}
         <section className="border-y border-zinc-200 bg-zinc-50 py-16 lg:py-20">
-          <div className="mx-auto max-w-4xl px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
             <div className="max-w-3xl">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#E85D2B]">
                 Genuinely free
@@ -369,7 +369,7 @@ export default function SupplierPartnershipPage() {
 
         {/* 5. Brand spacer */}
         <section className="py-12 lg:py-16">
-          <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-400">
               QuoteCore+
             </p>
@@ -417,7 +417,7 @@ export default function SupplierPartnershipPage() {
 
         {/* 7. Final CTA */}
         <section className="py-16 lg:py-20">
-          <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
+          <div className="mx-auto max-w-6xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
               Ready to get your products in front of buyers?
             </h2>

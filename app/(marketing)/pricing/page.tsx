@@ -62,6 +62,18 @@ const faqs = [
 
 const faqSchema = buildFaqSchema(faqs);
 
+// Card styling per tier — richer treatment on higher tiers draws the eye up-range
+function planStyles(plan: (typeof pricingPlans)[number]): string {
+  const premium = plan.name === "Pro Plus" || plan.name === "Premium";
+  if (plan.featured) {
+    return "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)] hover:border-[#BD4A1A] hover:shadow-[0_26px_64px_rgba(189,74,26,0.22)]";
+  }
+  if (premium) {
+    return "border-zinc-300 bg-gradient-to-b from-white to-zinc-50 shadow-[0_10px_36px_rgba(24,24,27,0.07)] hover:border-zinc-400 hover:shadow-[0_22px_54px_rgba(24,24,27,0.15)]";
+  }
+  return "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]";
+}
+
 export default function PricingPage() {
   return (
     <>
@@ -90,14 +102,17 @@ export default function PricingPage() {
         </section>
 
         <section className="border-y border-zinc-200 bg-zinc-50 py-16">
-          <div className="mx-auto grid max-w-7xl gap-6 px-6 sm:grid-cols-2 lg:grid-cols-3 lg:px-8">
+          <div className="mx-auto grid max-w-7xl items-stretch gap-6 px-6 sm:grid-cols-2 lg:grid-cols-3 lg:px-8">
             {pricingPlans.map((plan) => (
-              <article key={plan.name} className={`relative flex flex-col rounded-[2rem] border bg-white p-8 ${plan.featured ? "border-[#BD4A1A] shadow-[0_18px_50px_rgba(24,24,27,0.10)]" : "border-zinc-200"}`}>
+              <article
+                key={plan.name}
+                className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${planStyles(plan)}`}
+              >
                 {plan.featured && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
                 <h2 className="text-xl font-semibold">{plan.displayName}</h2>
                 <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
                 <div className="mt-6">
-                  <div className="rounded-xl border border-zinc-200 p-4 inline-block">
+                  <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
                     <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
                     <p className="mt-1 text-2xl font-semibold">{plan.usd}</p>
                     {!plan.isFree && !plan.contactUs && <p className="text-xs text-zinc-500">per month</p>}
@@ -123,8 +138,8 @@ export default function PricingPage() {
           <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">Monthly prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
         </section>
 
-        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
-          <div className="text-center">
+        <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+          <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Pricing questions</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Know what happens before you start.</h2>
           </div>
@@ -139,7 +154,7 @@ export default function PricingPage() {
         </section>
 
         {/* Related */}
-        <section className="mx-auto max-w-4xl px-6 pb-20 lg:px-8">
+        <section className="mx-auto max-w-7xl px-6 pb-20 lg:px-8">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Related</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">

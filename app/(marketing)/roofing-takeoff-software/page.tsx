@@ -172,7 +172,7 @@ export default function RoofingTakeoffSoftwarePage() {
         </section>
 
         {/* What is roofing takeoff software? */}
-        <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
+        <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">
             What is roofing takeoff software?
           </h2>
@@ -295,7 +295,7 @@ export default function RoofingTakeoffSoftwarePage() {
         </section>
 
         {/* Takeoff vs estimating */}
-        <section className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">
             Takeoff vs estimating — what&apos;s the difference?
           </h2>

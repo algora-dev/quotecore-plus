@@ -123,7 +123,7 @@ export default function DigitalRoofTakeoffPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Digital roof takeoff that actually works.
@@ -219,7 +219,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* What it is */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">A better alternative to expensive takeoff software</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Most digital takeoff tools are either too expensive, too complicated, or both. QuoteCore+ is built by roofers, for roofers. It does the measuring, the calculating, and the quoting in one connected flow - without the enterprise price tag.
@@ -230,7 +230,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* Supported inputs and outputs */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -256,7 +256,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* Honest limitations */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -275,7 +275,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* Worked example */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Worked example: a 180 m2 gable roof</h2>
           <div className="mt-6 rounded-xl border border-slate-200 p-6">
             <p className="text-sm text-zinc-600">A contractor uploads a plan for a simple gable roof. Here is what happens at each step:</p>
@@ -291,7 +291,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* Less suitable use */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -306,7 +306,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* How it works */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
           <div className="mt-8 space-y-8">
             {steps.map((step) => (
@@ -322,7 +322,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* Who it's for */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Roofing contractors who currently measure jobs with paper plans, a calculator, and a spreadsheet. If you&apos;re re-entering measurements from site notes into a separate quote document, the takeoff builder eliminates that step.
@@ -333,7 +333,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* What it solves */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What problem it solves</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -352,7 +352,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
           <div className="mt-6 space-y-4">
             {faqs.map((faq) => (
@@ -365,7 +365,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* Related */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/smart-components" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
@@ -400,7 +400,7 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try the takeoff builder free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>

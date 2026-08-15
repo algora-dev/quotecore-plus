@@ -91,7 +91,7 @@ export default function InvoicingPage() {
         {/* Hero */}
         <section className="relative overflow-hidden pb-12 pt-16">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
-          <div className="relative mx-auto max-w-3xl px-6 lg:px-8">
+          <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <p className="text-sm font-medium text-[#FF6B35]">Feature</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
               Professional invoices, standalone or from a quote.
@@ -153,7 +153,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* What it is */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What is invoicing in QuoteCore+?</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Invoicing is a standalone tool. You can generate an invoice from an accepted quote in QuoteCore+, import a quote from another tool, or create a blank invoice from scratch. However you start, the result is a branded, professional invoice document with line items, totals, and payment instructions.
@@ -164,7 +164,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* How it works */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">How it works</h2>
           <div className="mt-8 space-y-8">
             {steps.map((step) => (
@@ -180,7 +180,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* Who it's for */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Who it&apos;s for</h2>
           <p className="mt-4 leading-7 text-zinc-600">
             Contractors who want to send professional invoices without manually formatting them. Whether you quote in QuoteCore+ or elsewhere, the invoicing tool gives you a clean, branded document with payment tracking.
@@ -188,7 +188,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* What it solves */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What problem it solves</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -207,7 +207,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* Supported inputs and outputs */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Supported inputs and outputs</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -233,7 +233,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* Worked example */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Worked example: invoicing an accepted quote</h2>
           <div className="mt-6 rounded-xl border border-slate-200 p-6">
             <p className="text-sm text-zinc-600">A contractor accepts a $4,850 roofing quote:</p>
@@ -247,7 +247,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* Honest limitations */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">What it does not do</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -262,7 +262,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* Less suitable use */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">When it may not be the right fit</h2>
           <div className="mt-6 space-y-4">
             <div className="rounded-xl border border-slate-200 p-6">
@@ -273,7 +273,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* FAQ */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
           <div className="mt-6 space-y-4">
             {faqs.map((faq) => (
@@ -286,7 +286,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* Related */}
-        <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-16 lg:px-8">
           <h2 className="text-2xl font-semibold tracking-tight">Related</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <Link href="/features/digital-roof-takeoff" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
@@ -313,7 +313,7 @@ export default function InvoicingPage() {
         </section>
 
         {/* CTA */}
-        <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
+        <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try invoicing free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
