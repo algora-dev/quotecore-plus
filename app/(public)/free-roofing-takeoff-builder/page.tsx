@@ -1,7 +1,15 @@
 import Link from 'next/link';
 import { SharedTakeoffBuilder } from './SharedTakeoffBuilder';
+import { parseQueryInput } from './public-contract';
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const supplied = await searchParams;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(supplied)) {
+    if (typeof value === 'string') params.set(key, value);
+    else if (Array.isArray(value)) params.set(key, value.join(','));
+  }
+  const initialInput = params.size > 0 ? parseQueryInput(params) : undefined;
   return (
     <>
       {/* Screen-reader and crawler overview */}
@@ -44,7 +52,7 @@ export default async function Page() {
           <li><a href="/llms.txt">llms.txt</a> - machine-readable site summary</li>
         </ul>
       </section>
-      <SharedTakeoffBuilder />
+      <SharedTakeoffBuilder initialInput={initialInput} />
       {/* Visible developer and AI access section */}
       <section className="border-t border-slate-200 bg-slate-50 px-4 py-8" aria-labelledby="machine-access">
         <div className="mx-auto max-w-5xl">

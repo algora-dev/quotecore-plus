@@ -14,8 +14,10 @@ import type {
   ThemeConfig,
   TakeoffCapabilities,
   RoofComponentDef,
+  TakeoffPrefill,
 } from '@quote-core/roof-takeoff';
 import { TakeoffFlow } from '@quote-core/roof-takeoff';
+import { parseQueryInput, validatePublicInput, type PublicRoofTakeoffInput } from './public-contract';
 import { quoteCoreSupplierAdapter, quoteCoreEnquiryAdapter, quoteCoreResultAdapter } from './shared-adapters';
 import BlogHeader from '@/components/BlogHeader';
 
@@ -75,9 +77,62 @@ const DEFAULT_COMPONENTS: RoofComponentDef[] = [
 
 interface SharedTakeoffBuilderProps {
   initialSupplierSlug?: string;
+  initialInput?: PublicRoofTakeoffInput;
 }
 
-export function SharedTakeoffBuilder({ initialSupplierSlug }: SharedTakeoffBuilderProps) {
+/**
+ * Convert a public-contract input (parsed from URL query params) into a
+ * TakeoffFlow prefill. Returns null when the input is absent or invalid -
+ * an invalid prefill must never blank out the wizard.
+ */
+export function buildPrefillFromInput(input?: PublicRoofTakeoffInput): TakeoffPrefill | null {
+  if (!input) return null;
+  if (validatePublicInput(input).length > 0) return null;
+  const mode = input.mode ?? 'actual';
+  const units = input.units ?? 'metric';
+  const pitchDegrees = input.pitchDegrees ?? 0;
+
+  const list = (v: unknown): number[] => {
+    const arr = Array.isArray(v) ? v : v == null ? [] : [v];
+    return arr
+      .map((item) => {
+        if (typeof item === 'number' && Number.isFinite(item)) return item;
+        if (item && typeof item === 'object') {
+          const m = item as { length?: unknown; area?: unknown; value?: unknown };
+          const candidate = m.length ?? m.area ?? m.value;
+          return typeof candidate === 'number' && Number.isFinite(candidate) ? candidate : null;
+        }
+        return null;
+      })
+      .filter((item): item is number => item != null && item > 0);
+  };
+
+  const values: Record<string, number[]> = {
+    roof_area: list(input.area ?? input.roofArea),
+    hip: list(input.hips),
+    ridge: list(input.ridges ?? input.ridge),
+    valley: list(input.valleys),
+    barge: list(input.barges),
+    spouting: list(input.spouting ?? input.gutters ?? input.gutter),
+    underlay: list(input.underlay),
+    fixings: list(input.fixings),
+  };
+  if (!Object.values(values).some((arr) => arr.length > 0)) return null;
+
+  return {
+    measureMode: mode,
+    unitSystem: units,
+    pitchDegrees,
+    values,
+    wastePercent: input.wastePercent,
+    pricingMode: null,
+    roofType: null,
+    layout: 'fast',
+  };
+}
+
+export function SharedTakeoffBuilder({ initialSupplierSlug, initialInput }: SharedTakeoffBuilderProps) {
+  const prefill = buildPrefillFromInput(initialInput);
   return (
     <>
       <BlogHeader />
@@ -89,6 +144,7 @@ export function SharedTakeoffBuilder({ initialSupplierSlug }: SharedTakeoffBuild
         enquiryAdapter={quoteCoreEnquiryAdapter}
         resultAdapter={quoteCoreResultAdapter}
         initialSupplierSlug={initialSupplierSlug}
+        prefill={prefill}
         hideHeader
       />
     </>
