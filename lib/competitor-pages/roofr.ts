@@ -32,7 +32,7 @@ export const roofrPage: CompetitorPageData = {
   },
   quickAnswer: {
     heading: "The short answer",
-    body: "Roofr is a broad roofing CRM and sales platform: lead management, job boards, automations, ordered measurement reports, proposals, payments, material ordering and invoicing - free Starter plan, then Measure+ from $109/mo, Essentials $249/mo and Scale $349/mo (checked August 2026). QuoteCore+ is deliberately narrower: plan-based roof takeoff with AI Scan Assist, Smart Components that turn measurements into materials, labour and priced quotes, then material orders and invoices - $0-$59/mo, no per-seat fees. If you want one platform running your whole roofing business, leads to payments, Roofr is the broader product and we won't pretend otherwise. If estimating is the actual bottleneck and you're happy with your current CRM or spreadsheets, QuoteCore+ does that specific job for a fraction of the cost.",
+    body: "Roofr is a broad roofing CRM and sales platform: lead management, job boards, automations, ordered measurement reports, proposals, payments, material ordering and invoicing - free Starter plan, then Measure+ from $109/mo, with pricing varying by report turnaround; Essentials $249/mo; Scale $349/mo (checked August 2026). QuoteCore+ is deliberately narrower: plan-based roof takeoff with AI Scan Assist, Smart Components that turn measurements into materials, labour and priced quotes, then material orders and invoices - $0-$59/mo, no per-seat fees. If you want one platform running your whole roofing business, leads to payments, Roofr is the broader product and we won't pretend otherwise. If estimating is the actual bottleneck and you're happy with your current CRM or spreadsheets, QuoteCore+ does that specific job for a fraction of the cost.",
   },
   bestFor: {
     competitorBestFor: [
@@ -247,7 +247,7 @@ export const roofrPage: CompetitorPageData = {
       "Roofr pricing from roofr.com/pricing, checked August 2026. Monthly prices shown; annual billing saves up to ~15%. All Roofr plans include unlimited users; measurement reports are pay-as-you-go on every plan ($13–$19 per report). Instant Estimator and Roofr Sites are priced as separate add-ons.",
     competitorTiers: [
       { name: "Starter", price: "$0/mo", detail: "$19 reports (24 hr), 10 trial proposals/invoices/work orders, material ordering" },
-      { name: "Measure+", price: "from $109/mo", detail: "Depending on report turnaround/options - $13 reports, 2-6 hr delivery, material calculations, waste factor" },
+      { name: "Measure+", price: "from $109/mo", detail: "With pricing varying by report turnaround — $13 reports, 2-6 hr delivery, material calculations, waste factor" },
       { name: "Essentials", price: "$249/mo ($209 annual)", detail: "Unlimited proposals/invoices/work orders, card & ACH payments, e-signatures, SMS" },
       { name: "Scale", price: "$349/mo ($299 annual)", detail: "7 job boards, crew management, reporting, QuickBooks" },
     ],
@@ -321,7 +321,7 @@ export const roofrPage: CompetitorPageData = {
     {
       question: "Is QuoteCore+ cheaper than Roofr?",
       answer:
-        "It depends on the plan. Roofr's Starter plan is free (with $19 per measurement report), and its paid plans - Measure+ from $109/mo depending on report turnaround/options, Essentials $249/mo, Scale $349/mo (checked August 2026) - include unlimited users and a much broader platform. To unlock unlimited proposals and payments you need Essentials at $249/mo. QuoteCore+ runs $0-$59/mo total, priced by quote volume. If you need Roofr's CRM and payments, comparing subscription prices alone is misleading. If you only need estimating, QuoteCore+ is dramatically less.",
+        "It depends on the plan. Roofr's Starter plan is free (with $19 per measurement report), and its paid plans - Measure+ from $109/mo, with pricing varying by report turnaround; Essentials $249/mo; Scale $349/mo (checked August 2026) - include unlimited users and a much broader platform. To unlock unlimited proposals and payments you need Essentials at $249/mo. QuoteCore+ runs $0-$59/mo total, priced by quote volume. If you need Roofr's CRM and payments, comparing subscription prices alone is misleading. If you only need estimating, QuoteCore+ is dramatically less.",
     },
     {
       question: "Can I keep my existing CRM and use QuoteCore+ for estimating?",
