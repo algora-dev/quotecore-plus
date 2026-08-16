@@ -301,6 +301,7 @@ export const roofSnapPage: CompetitorPageData = {
     { label: "PlanSwift alternative", description: "General takeoff vs roofing-native.", href: "/planswift-alternative" },
     { label: "Roofr alternative", description: "Broad roofing CRM vs focused estimating.", href: "/roofr-alternative" },
     { label: "STACK alternative for roofing", description: "Multi-trade platform vs roofing-native.", href: "/stack-alternative-for-roofing" },
+    { label: "HOVER alternative", description: "Generated 3D measurement vs owned takeoff.", href: "/hover-alternative" },
     { label: "Free takeoff builder", description: "Try roof takeoff free, no signup.", href: "/free-roofing-takeoff-builder" },
   ],
   sectionOrder: [

@@ -341,6 +341,7 @@ export const stackPage: CompetitorPageData = {
     { label: "Roofr alternative", description: "Broad roofing CRM vs focused estimating.", href: "/roofr-alternative" },
     { label: "PlanSwift alternative", description: "General takeoff vs roofing-native.", href: "/planswift-alternative" },
     { label: "RoofSnap alternative", description: "Closest product-to-product comparison.", href: "/roofsnap-alternative" },
+    { label: "Bluebeam alternative for roofing", description: "Configurable PDF toolkit vs roofing workflow.", href: "/bluebeam-alternative-for-roofing" },
   ],
   sectionOrder: [
     "quickAnswer",
