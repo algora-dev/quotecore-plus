@@ -446,10 +446,12 @@
 - Round 9: Page-switch auto-save + per-entry pitch ✅
 - Round 5: RPC saves work ✅
 
-### Takeoff demo v1
-- [ ] `/takeoff-demo` is public without authentication and shows Scan plan / Measure manually entry points
-- [ ] Scan replay completes, shows detection summary, and applies populated objects to the canvas
-- [ ] Manual mode opens the same plan with zero takeoff objects
-- [ ] Manual area and line drawing update live totals; selected objects can be deleted and the last drawing can be undone
-- [ ] Finish shows the sample customer quote and signup CTA; empty takeoff remains a friendly no-measurement state
-- [ ] Fabric loads only after entering the demo; plan asset remains under 300KB
+### Takeoff demo v2 (fork of real workstation)
+- [ ] `/takeoff-demo` is public without authentication and shows Scan plan with AI / Measure manually entry points
+- [ ] Scan mode auto-replays captured scan: overlay stages -> AI Assist Results modal -> Apply -> canvas populated; sidebar totals match baseline (Main Roof 62.10 m2 plan, Ridge 5.43 m, Hip 18.07 m, Valley 3.88 m, Barge 2.77 m, Spouting 30.93 m)
+- [ ] Manual mode opens the same plan + same baked calibration with zero takeoff objects; all workstation tools live
+- [ ] Manual drawing updates live totals; select/delete works; full undo/redo works (real workstation behaviour)
+- [ ] Finish and Save -> sample customer quote (pitch-adjusted line items via real applyPitchAndWaste) + signup CTA; empty takeoff -> friendly no-measurement state
+- [ ] Upload-another-plan button visible but disabled; back link returns to demo start
+- [ ] Fabric loads only after entering the demo; plan asset (176KB PNG) under 300KB; no console errors on the route
+- [ ] Homepage / feature-page entry buttons link to the demo (NOT YET BUILT - v1 buttons were on main before v2 rewrite, verify they still point correctly)
