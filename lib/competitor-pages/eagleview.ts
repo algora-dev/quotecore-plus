@@ -14,6 +14,9 @@ export const eagleViewPage: CompetitorPageData = {
   hero: {
     title: "Looking for an EagleView alternative?",
     sub: "EagleView sells expertly produced aerial measurement reports. QuoteCore+ is quoting software where you measure your own plans — PDF takeoff, AI Scan Assist, automatic materials and pricing — and own the whole estimate. Different tools for different jobs.",
+    qualifier: "If you want another aerial-report provider, QuoteCore+ isn't that. If you want to stop buying a report for every roof where suitable plans or images already exist, keep reading.",
+    primaryCta: { href: "/free-roofing-takeoff-builder", label: "See what you can measure without buying another report" },
+    ghostCta: { href: "/free-trial", label: "Start a free 14-day trial" },
   },
   quickAnswer: {
     heading: "The short answer",
@@ -53,7 +56,62 @@ export const eagleViewPage: CompetitorPageData = {
       },
     ],
   },
+  replace: {
+    verdict: {
+      pill: "Not as an aerial provider",
+      tone: "mixed",
+      answer: "No for aerial reports; yes for measuring suitable plans or images yourself and carrying the result through to a quote.",
+    },
+    body: "QuoteCore+ is not a replacement for EagleView's aerial imagery or property-intelligence reports. It is an alternative when the job already has a PDF plan, drawing, or usable image and you want to own the takeoff instead of paying for a report. You measure or run AI Scan Assist, verify the geometry, and let Smart Components apply materials, waste, labour and pricing before the quote goes out. If the roof is unsafe to access or the customer needs an address-based report before a site visit, EagleView remains the better fit.",
+    bullets: [
+      { label: "Own the plan-based takeoff", detail: "Upload plans or images, measure roofing geometry yourself, and correct the result before pricing it.", positive: true },
+      { label: "Turn measurement into a quote", detail: "Smart Components apply materials, waste, labour and margins; the same data continues to order and invoice.", positive: true },
+      { label: "Avoid a report fee where plans exist", detail: "QuoteCore+ plans run from free to $59/mo with no per-report charge.", positive: true },
+      { label: "Aerial imagery and property intelligence", detail: "EagleView's core strength. QuoteCore+ does not provide flown reports, solar data, wall data or property intelligence.", positive: false },
+      { label: "Remote or unsafe properties", detail: "When you cannot access the roof or need a measurement before visiting, an EagleView report may be exactly what you need.", positive: false },
+    ],
+  },
+  switching: {
+    intro: "If you currently order an EagleView report for every roof, this is what changes:",
+    rows: [
+      {
+        current: "Order a report by address and wait for the measured PDF",
+        qc: "Upload the plan or image you already have; AI Scan Assist detects roofing geometry for you to verify",
+        benefit: "No report order or per-roof fee when the source material is suitable",
+      },
+      {
+        current: "Read measurement data, then re-enter it into estimating software or a spreadsheet",
+        qc: "Apply Smart Components directly to areas, ridges, hips, valleys, barges and spouting",
+        benefit: "Materials, waste, labour and pricing stay connected to the measurement",
+      },
+      {
+        current: "Send a report to the next tool to build and track the quote",
+        qc: "Send a branded quote with accept/decline tracking, then create the order and invoice",
+        benefit: "One browser workflow from takeoff to payment",
+      },
+      {
+        current: "Keep ordering reports for each new roof",
+        qc: "Reuse your components, pricing rules and templates on every plan-based job",
+        benefit: "Your estimating system gets faster and more consistent over time",
+      },
+    ],
+  },
   workflow: {
+    proof: {
+      heading: "What the plan-based workflow produces",
+      images: [
+        {
+          src: "/images/features/digital-roof-takeoff.png",
+          alt: "QuoteCore+ roof takeoff showing colour-coded measurement lines over a roof plan",
+          caption: "Measure a supplied plan yourself, with colour-coded roofing geometry ready to review.",
+        },
+        {
+          src: "/images/features/smart-components-quote.png",
+          alt: "Smart Components applying material quantities and pricing inside a QuoteCore+ quote",
+          caption: "Turn verified measurements into materials and a customer-ready priced quote.",
+        },
+      ],
+    },
     heading: "Reports vs owning the workflow",
     intro: "Two different ways to get from \"customer calls\" to \"quote sent\".",
     steps: [
@@ -231,6 +289,20 @@ export const eagleViewPage: CompetitorPageData = {
     { label: "RoofSnap alternative", description: "Closest product-to-product comparison.", href: "/roofsnap-alternative" },
     { label: "PlanSwift alternative", description: "General takeoff vs roofing-native.", href: "/planswift-alternative" },
     { label: "AI roof measuring guide", description: "How AI measurement actually works.", href: "/blog/ai-roof-measuring" },
+  ],
+  sectionOrder: [
+    "replace",
+    "quickAnswer",
+    "switching",
+    "workflow",
+    "comparison",
+    "pricing",
+    "bestFor",
+    "video",
+    "honestWhen",
+    "freeTool",
+    "faq",
+    "related",
   ],
   finalCta: {
     heading: "Own the measurements. Own the margin.",

@@ -15,6 +15,8 @@ export const planSwiftPage: CompetitorPageData = {
   hero: {
     title: "Looking for a PlanSwift alternative for roofing?",
     sub: "PlanSwift is general construction takeoff software — powerful, trade-agnostic, and US$2,000/year per seat. QuoteCore+ is roofing-first quoting software in the browser: roofing-native geometry, Smart Components that price themselves, and plans from free.",
+    primaryCta: { href: "/free-trial", label: "See if QuoteCore+ can replace PlanSwift on your next roof" },
+    ghostCta: { href: "/free-roofing-calculator", label: "Try the roofing calculator free" },
   },
   quickAnswer: {
     heading: "The short answer",
@@ -54,7 +56,61 @@ export const planSwiftPage: CompetitorPageData = {
       },
     ],
   },
+  replace: {
+    verdict: {
+      pill: "Yes — for roofing",
+      tone: "mixed",
+      answer: "Yes, if the work you take off and estimate is mostly roofing. Not if you need one platform for many trades or already run deep PlanSwift assemblies.",
+    },
+    body: "Switching from PlanSwift to software like QuoteCore+ makes sense when roofing is your trade: the geometry types (ridges, hips, valleys, barges, spouting, pitch factors) exist natively instead of being assembled from generic lengths, and the takeoff flows straight into quotes, material orders and invoices rather than ending at an estimate export. If you estimate concrete, framing, drywall and electrical on the same plan sets, or your PlanSwift assemblies are tuned over years, stay with PlanSwift.",
+    bullets: [
+      { label: "Roofing takeoff and estimating", detail: "Plan-based takeoff, roofing geometry, materials, waste, labour, priced quotes — the full roofing estimating job.", positive: true },
+      { label: "Quoting, material orders, invoices", detail: "The estimate becomes a customer quote, then an order and invoice in the same workflow. PlanSwift's output stops at takeoff/estimate reports.", positive: true },
+      { label: "Cost and access", detail: "$19–$59/mo browser-based subscription vs US$2,000/seat/yr desktop software.", positive: true },
+      { label: "Broad multi-trade estimating", detail: "Concrete, drywall, electrical, HVAC and more on one platform — PlanSwift's breadth is genuine. QuoteCore+ is roofing-first.", positive: false },
+      { label: "Mature PlanSwift assemblies", detail: "If you've invested years tuning assemblies and starter packs, that library is real capital a switch discards.", positive: false },
+    ],
+  },
+  switching: {
+    rows: [
+      {
+        current: "Import plan set into the Windows desktop app, set scale across pages (or let Takeoff Boost do it)",
+        qc: "Upload the PDF in your browser; AI Scan Assist detects areas, ridges, hips, valleys, barges and spouting to verify",
+        benefit: "Nothing to install or maintain; the first pass on roof geometry is done for you",
+      },
+      {
+        current: "Build or buy assemblies so generic areas and lengths become roofing materials",
+        qc: "Ridge, hip, valley, barge and spouting components exist out of the box and pitch with their parent roof area",
+        benefit: "No assembly construction phase — roofing logic is already there",
+      },
+      {
+        current: "Estimate lands in takeoff/estimate reports; quoting and ordering continue elsewhere",
+        qc: "The priced takeoff becomes a branded quote with accept/decline, then a material order and invoice",
+        benefit: "One workflow from plan to payment instead of three tools",
+      },
+      {
+        current: "US$2,000 per seat per year, plus plugins, training and support add-ons",
+        qc: "$19–$59/mo total depending on quote volume, free tier available",
+        benefit: "A fraction of the cost for roofing-focused teams",
+      },
+    ],
+  },
   workflow: {
+    proof: {
+      heading: "What the output actually looks like",
+      images: [
+        {
+          src: "/images/features/digital-roof-takeoff.png",
+          alt: "QuoteCore+ roof takeoff showing colour-coded measurement lines over a roof plan",
+          caption: "Roof takeoff in QuoteCore+ — colour-coded measurements over the plan, every area named and pitched.",
+        },
+        {
+          src: "/images/features/smart-components-quote.png",
+          alt: "Smart Components applying material quantities and pricing inside a QuoteCore+ quote",
+          caption: "Smart Components turning those measurements into materials and a priced quote — no assemblies to build first.",
+        },
+      ],
+    },
     heading: "What roofing setup looks like in each",
     intro: "The same re-roof plan, configured in a general platform vs a roofing-native one.",
     steps: [
@@ -167,7 +223,7 @@ export const planSwiftPage: CompetitorPageData = {
     intro: "Watch a roof plan become ridge caps, sheets, flashings and a priced quote — no assemblies to build first.",
     videoKey: "smartComponents",
     ctaHref: "/free-trial",
-    ctaLabel: "Try it on your next roof plan",
+    ctaLabel: "See the roofing-native workflow yourself",
   },
   honestWhen: {
     heading: "When PlanSwift is the better choice",
@@ -223,6 +279,11 @@ export const planSwiftPage: CompetitorPageData = {
       answer:
         "Probably not. If almost all your estimating is roofing, a roofing-native tool does the geometry, materials, waste and pricing without building roofing logic atop generic measurements — and carries the result through to quotes, orders and invoices. If you genuinely estimate across many trades, a general platform like PlanSwift earns its keep.",
     },
+    {
+      question: "How do I switch from PlanSwift to QuoteCore+?",
+      answer:
+        "Nothing to export — run them side by side. Rebuild your core roofing materials as Smart Components (most trades finish their core set in an afternoon), then take your next roof from its PDF in QuoteCore+ and send the quote from there. When the quotes match your expectations, drop the PlanSwift seat. The free Lite plan and 14-day trial mean switching costs nothing up front.",
+    },
   ],
   related: [
     { label: "Roofing takeoff software", description: "Measure roof plans digitally with AI assistance.", href: "/roofing-takeoff-software" },
@@ -232,8 +293,23 @@ export const planSwiftPage: CompetitorPageData = {
     { label: "EagleView alternative", description: "Reports vs owning your workflow.", href: "/eagleview-alternative" },
     { label: "Free quote generator", description: "Draft a professional quote free.", href: "/free-quote-generator" },
   ],
+  sectionOrder: [
+    "replace",
+    "switching",
+    "workflow",
+    "quickAnswer",
+    "comparison",
+    "pricing",
+    "bestFor",
+    "video",
+    "honestWhen",
+    "freeTool",
+    "faq",
+    "related",
+  ],
   finalCta: {
     heading: "Roofing-native, not general-purpose.",
     body: "Measure the roof, price the roof, quote the job — one browser workflow built for roofing. Free for 14 days.",
+    ctaLabel: "Try QuoteCore+ on your next roof plan",
   },
 };

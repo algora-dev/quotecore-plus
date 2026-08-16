@@ -1,4 +1,5 @@
-import type { CompetitorPageData, ComparisonRow, SupportStatus } from "@/lib/competitor-pages/types";
+import type { ReactNode } from "react";
+import type { CompetitorPageData, ComparisonRow, SupportStatus, SectionKey } from "@/lib/competitor-pages/types";
 import { STATUS_LABEL } from "@/lib/competitor-pages/types";
 import { TrackedCta } from "./tracked-cta";
 import CompetitorVideo from "./competitor-video";
@@ -7,12 +8,31 @@ import { VIDEOS } from "@/lib/videos";
 
 /**
  * Shared server layout for competitor alternative pages.
- * Uniform structure: hero -> quick answer -> best-for -> comparison table
- * -> pricing (with checked date) -> workflow -> video -> honest-fit
- * -> free tool -> FAQ -> related -> final CTA.
- * Styling matches the marketing design system (white/zinc surfaces,
- * orange accents, black rounded-full CTAs, rounded-[1.5rem] cards).
+ * Uniform design system (white/zinc surfaces, orange accents, black
+ * rounded-full CTAs, rounded-[1.5rem] cards) with per-page section
+ * ordering so each page leads with its own switching argument:
+ * PlanSwift = roofing specialisation, RoofSnap = self-service vs
+ * outsourced, EagleView = cost/control vs per-report.
+ *
+ * Honesty rules: unverifiable competitor cells say "Not publicly
+ * confirmed"; competitor pricing carries a visible checked date;
+ * the "choose competitor if" section is mandatory.
  */
+
+const DEFAULT_ORDER: SectionKey[] = [
+  "quickAnswer",
+  "replace",
+  "switching",
+  "bestFor",
+  "comparison",
+  "pricing",
+  "workflow",
+  "video",
+  "honestWhen",
+  "freeTool",
+  "faq",
+  "related",
+];
 
 function StatusCell({
   status,
@@ -23,10 +43,9 @@ function StatusCell({
   note?: string;
   accent?: boolean;
 }) {
-  const base = "flex items-start gap-2";
   const label = STATUS_LABEL[status];
   return (
-    <div className={base}>
+    <div className="flex items-start gap-2">
       {status === "yes" && (
         <span
           aria-hidden="true"
@@ -138,56 +157,121 @@ function ComparisonTable({
   );
 }
 
+const VERDICT_STYLES: Record<"yes" | "mixed" | "no", string> = {
+  yes: "bg-black text-white",
+  mixed: "bg-[#FF6B35] text-white",
+  no: "bg-zinc-200 text-zinc-800",
+};
+
 export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
   const slug = data.slug;
   const video = VIDEOS[data.video.videoKey];
+  const order = data.sectionOrder ?? DEFAULT_ORDER;
 
-  return (
-    <main className="min-h-screen bg-white text-zinc-950">
-      {/* Hero */}
-      <section className="relative overflow-hidden pb-16 pt-12">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
-        <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-widest text-zinc-500">
-            {data.positioning}
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-            {data.hero.title}
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-            {data.hero.sub}
-          </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <TrackedCta
-              slug={slug}
-              location="hero"
-              href="/free-trial"
-              label="Try it on your next roof plan"
-            />
-            <TrackedCta
-              slug={slug}
-              location="hero"
-              href={data.freeTool.primaryHref}
-              label={data.freeTool.primaryLabel}
-              variant="ghost"
-            />
-          </div>
-          <p className="mt-3 text-sm text-zinc-500">
-            14-day free trial. No credit card required.
-          </p>
-        </div>
-      </section>
-
-      {/* Quick answer */}
-      <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+  const sections: Record<SectionKey, ReactNode> = {
+    quickAnswer: (
+      <section key="quickAnswer" className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
         <div className="rounded-[2rem] border border-zinc-200 bg-zinc-50 px-8 py-8">
           <h2 className="text-2xl font-semibold sm:text-3xl">{data.quickAnswer.heading}</h2>
           <p className="mt-4 text-lg leading-8 text-zinc-700">{data.quickAnswer.body}</p>
         </div>
       </section>
+    ),
 
-      {/* Best for */}
-      <section className="bg-zinc-50 py-20">
+    replace: (
+      <section key="replace" className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+        <h2 className="text-3xl font-semibold sm:text-4xl">
+          Can QuoteCore+ replace {data.competitorName}?
+        </h2>
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          <span
+            className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold ${VERDICT_STYLES[data.replace.verdict.tone]}`}
+          >
+            {data.replace.verdict.pill}
+          </span>
+          <p className="flex-1 text-lg font-medium text-zinc-900">
+            {data.replace.verdict.answer}
+          </p>
+        </div>
+        <p className="mt-5 text-lg leading-8 text-zinc-600">{data.replace.body}</p>
+        <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+          {data.replace.bullets.map((b) => (
+            <li
+              key={b.label}
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5"
+            >
+              <p className="flex items-start gap-2 font-semibold text-zinc-950">
+                <span
+                  aria-hidden="true"
+                  className={`mt-0.5 shrink-0 font-bold ${b.positive ? "text-[#FF6B35]" : "text-zinc-400"}`}
+                >
+                  {b.positive ? "✓" : "—"}
+                </span>
+                {b.label}
+              </p>
+              <p className="mt-2 pl-6 text-sm leading-7 text-zinc-600">{b.detail}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ),
+
+    switching: (
+      <section key="switching" className="mx-auto max-w-5xl px-6 py-16 lg:px-8">
+        <h2 className="text-3xl font-semibold sm:text-4xl">
+          Switching from {data.competitorName}
+        </h2>
+        <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-600">
+          {data.switching.intro ?? "What actually changes in your day-to-day workflow:"}
+        </p>
+
+        <div className="mt-10 hidden overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white md:block">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 bg-zinc-50">
+                <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">
+                  Today with {data.competitorName}
+                </th>
+                <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">
+                  With QuoteCore+
+                </th>
+                <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">
+                  What you gain
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.switching.rows.map((r) => (
+                <tr key={r.current} className="border-b border-zinc-100 last:border-0">
+                  <td className="px-6 py-4 align-top text-zinc-600">{r.current}</td>
+                  <td className="px-6 py-4 align-top font-medium text-zinc-900">{r.qc}</td>
+                  <td className="px-6 py-4 align-top text-zinc-600">{r.benefit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-8 space-y-4 md:hidden">
+          {data.switching.rows.map((r) => (
+            <div key={r.current} className="rounded-[1.5rem] border border-zinc-200 bg-white px-5 py-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                Today with {data.competitorName}
+              </p>
+              <p className="mt-1 text-sm text-zinc-600">{r.current}</p>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#BD4A1A]">
+                With QuoteCore+
+              </p>
+              <p className="mt-1 text-sm font-medium text-zinc-900">{r.qc}</p>
+              <p className="mt-3 text-sm leading-6 text-zinc-600">{r.benefit}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    ),
+
+    bestFor: (
+      <section key="bestFor" className="bg-zinc-50 py-20">
         <div className="mx-auto max-w-4xl px-6 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">Which one fits your business?</h2>
           <p className="mt-4 text-lg leading-8 text-zinc-600">
@@ -195,9 +279,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           </p>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
             <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-7 py-7">
-              <h3 className="text-xl font-semibold">
-                Choose {data.competitorName} if…
-              </h3>
+              <h3 className="text-xl font-semibold">Choose {data.competitorName} if…</h3>
               <ul className="mt-5 space-y-4">
                 {data.bestFor.competitorBestFor.map((c) => (
                   <li key={c.title}>
@@ -226,9 +308,10 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           </div>
         </div>
       </section>
+    ),
 
-      {/* Comparison table */}
-      <section className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
+    comparison: (
+      <section key="comparison" className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
         <h2 className="text-3xl font-semibold sm:text-4xl">{data.comparison.heading}</h2>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-600">
           {data.comparison.intro}
@@ -239,9 +322,10 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           vendor’s official website — it may exist, but we do not claim it either way.
         </p>
       </section>
+    ),
 
-      {/* Pricing */}
-      <section id="pricing" className="bg-zinc-50 py-20">
+    pricing: (
+      <section key="pricing" id="pricing" className="bg-zinc-50 py-20">
         <div className="mx-auto max-w-5xl px-6 lg:px-8">
           <PricingViewTracker slug={slug} />
           <h2 className="text-3xl font-semibold sm:text-4xl">{data.pricing.heading}</h2>
@@ -313,7 +397,6 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
             </div>
           </div>
 
-          {/* Cost scenarios */}
           <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white">
             <table className="w-full text-left text-sm">
               <thead>
@@ -347,9 +430,10 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           )}
         </div>
       </section>
+    ),
 
-      {/* Workflow */}
-      <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+    workflow: (
+      <section key="workflow" className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
         <h2 className="text-3xl font-semibold sm:text-4xl">{data.workflow.heading}</h2>
         <p className="mt-4 text-lg leading-8 text-zinc-600">{data.workflow.intro}</p>
         <div className="mt-12 flex flex-col gap-5">
@@ -370,10 +454,32 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
             </div>
           ))}
         </div>
-      </section>
 
-      {/* Video */}
-      <section className="bg-zinc-50 py-20">
+        {data.workflow.proof && (
+          <div className="mt-16">
+            <h3 className="text-2xl font-semibold sm:text-3xl">{data.workflow.proof.heading}</h3>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2">
+              {data.workflow.proof.images.map((img) => (
+                <figure key={img.src} className="rounded-[1.5rem] border border-zinc-200 bg-white p-3">
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="w-full rounded-xl border border-zinc-100"
+                    loading="lazy"
+                  />
+                  <figcaption className="px-2 pb-1 pt-3 text-sm text-zinc-600">
+                    {img.caption}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    ),
+
+    video: (
+      <section key="video" className="bg-zinc-50 py-20">
         <div className="mx-auto max-w-3xl px-6 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">{data.video.heading}</h2>
           <p className="mt-4 text-lg leading-8 text-zinc-600">{data.video.intro}</p>
@@ -396,9 +502,10 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           </div>
         </div>
       </section>
+    ),
 
-      {/* Honest fit */}
-      <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+    honestWhen: (
+      <section key="honestWhen" className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
         <h2 className="text-3xl font-semibold sm:text-4xl">{data.honestWhen.heading}</h2>
         <p className="mt-4 text-lg leading-8 text-zinc-600">{data.honestWhen.intro}</p>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -413,9 +520,10 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           ))}
         </div>
       </section>
+    ),
 
-      {/* Free tool */}
-      <section className="bg-zinc-50 py-20">
+    freeTool: (
+      <section key="freeTool" className="bg-zinc-50 py-20">
         <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">{data.freeTool.heading}</h2>
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-zinc-600">
@@ -444,9 +552,10 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           </div>
         </div>
       </section>
+    ),
 
-      {/* FAQ */}
-      <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+    faq: (
+      <section key="faq" className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
         <h2 className="text-3xl font-semibold sm:text-4xl">Common questions</h2>
         <div className="mt-10 space-y-4">
           {data.faqs.map((f) => (
@@ -460,9 +569,10 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           ))}
         </div>
       </section>
+    ),
 
-      {/* Related */}
-      <section className="mx-auto max-w-4xl px-6 pb-20 lg:px-8">
+    related: (
+      <section key="related" className="mx-auto max-w-4xl px-6 pb-20 lg:px-8">
         <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.related.map((r) => (
@@ -477,6 +587,55 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           ))}
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <main className="min-h-screen bg-white text-zinc-950">
+      {/* Hero */}
+      <section className="relative overflow-hidden pb-16 pt-12">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
+        <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
+          <p className="text-sm font-semibold uppercase tracking-widest text-zinc-500">
+            {data.positioning}
+          </p>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
+            {data.hero.title}
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
+            {data.hero.sub}
+          </p>
+
+          {data.hero.qualifier && (
+            <p className="mx-auto mt-6 max-w-2xl rounded-[1.5rem] border border-zinc-200 bg-zinc-50 px-6 py-4 text-left text-base leading-7 text-zinc-700">
+              {data.hero.qualifier}
+            </p>
+          )}
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <TrackedCta
+              slug={slug}
+              location="hero"
+              href={data.hero.primaryCta.href}
+              label={data.hero.primaryCta.label}
+            />
+            {data.hero.ghostCta && (
+              <TrackedCta
+                slug={slug}
+                location="hero"
+                href={data.hero.ghostCta.href}
+                label={data.hero.ghostCta.label}
+                variant="ghost"
+              />
+            )}
+          </div>
+          <p className="mt-3 text-sm text-zinc-500">
+            Browser-based, nothing to install. 14-day free trial, no credit card.
+          </p>
+        </div>
+      </section>
+
+      {order.map((key) => sections[key])}
 
       {/* Final CTA */}
       <section className="mx-auto max-w-4xl px-6 pb-24 pt-4 text-center lg:px-8">
@@ -487,7 +646,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
             slug={slug}
             location="final_cta"
             href="/free-trial"
-            label="Start your free 14-day trial"
+            label={data.finalCta.ctaLabel ?? "Start your free 14-day trial"}
           />
           <TrackedCta
             slug={slug}
