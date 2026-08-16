@@ -88,6 +88,8 @@ const PUBLIC_PATHS = [
   '/roofsnap-alternative',        // Competitor comparison pages (marketing)
   '/eagleview-alternative',
   '/planswift-alternative',
+  '/roofr-alternative',
+  '/stack-alternative-for-roofing',
   '/free-construction-calculator', // Free public calculator (no auth)
   '/free-roofing-calculator',     // Free roofing calculator (no auth)
   '/free-quote-generator',        // Free AI quote generator (future)

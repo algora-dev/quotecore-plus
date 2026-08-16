@@ -376,6 +376,24 @@ export default function RoofingEstimatingSoftwarePage() {
               </p>
             </a>
             <a
+              href="/roofr-alternative"
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+            >
+              <p className="font-semibold text-zinc-950">Roofr alternative</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                Broad roofing CRM vs focused estimating workflow.
+              </p>
+            </a>
+            <a
+              href="/stack-alternative-for-roofing"
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+            >
+              <p className="font-semibold text-zinc-950">STACK alternative for roofing</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                Multi-trade estimating platform vs roofing-native workflow.
+              </p>
+            </a>
+            <a
               href="/roofing-takeoff-software"
               className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
             >

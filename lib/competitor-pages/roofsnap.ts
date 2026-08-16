@@ -299,6 +299,8 @@ export const roofSnapPage: CompetitorPageData = {
     { label: "Roofing estimating software", description: "Turn measurements into priced estimates.", href: "/roofing-estimating-software" },
     { label: "EagleView alternative", description: "Reports vs owning your workflow.", href: "/eagleview-alternative" },
     { label: "PlanSwift alternative", description: "General takeoff vs roofing-native.", href: "/planswift-alternative" },
+    { label: "Roofr alternative", description: "Broad roofing CRM vs focused estimating.", href: "/roofr-alternative" },
+    { label: "STACK alternative for roofing", description: "Multi-trade platform vs roofing-native.", href: "/stack-alternative-for-roofing" },
     { label: "Free takeoff builder", description: "Try roof takeoff free, no signup.", href: "/free-roofing-takeoff-builder" },
   ],
   sectionOrder: [
