@@ -64,7 +64,7 @@ export const stackPage: CompetitorPageData = {
       },
       {
         title: "You want a specialist's price",
-        body: "$19–$59/mo total vs $249/user/mo. When roofing is 90%+ of your estimating, you stop paying for platform you don't open.",
+        body: "$19–$59/mo total vs $249/user/mo. When nearly all of your estimating is roofing, you stop paying for platform capabilities you rarely use.",
       },
     ],
   },
@@ -78,7 +78,7 @@ export const stackPage: CompetitorPageData = {
     body: "STACK covers digital plan takeoff, items and assemblies, estimating and proposals across the whole construction plan set — and it does roofing well within that. QuoteCore+ replaces it credibly when roofing is essentially all you estimate: the takeoff, the AI assistance, the reusable pricing logic and the downstream quote/order/invoice workflow are all roofing-shaped. If you also estimate concrete, framing, drywall and MEP on the same platform — or run estimating as a team sport across large commercial plan sets — STACK is the wrong thing to give up.",
     bullets: [
       { label: "Roofing takeoff and estimating", detail: "Plan-based takeoff, roofing geometry, materials, waste, labour, priced quotes — the complete roofing estimating job.", positive: true },
-      { label: "Quote → material order → invoice", detail: "The estimate becomes a customer quote, an order and an invoice in one workflow. STACK's strength is the estimate and proposal; ordering and invoicing continue elsewhere.", positive: true },
+      { label: "Quote → material order → invoice", detail: "The estimate becomes a customer quote, an order and an invoice in one workflow. In STACK, purchase orders and invoices connect through ERP/accounting integrations rather than as the core Takeoff & Estimate workflow.", positive: true },
       { label: "Cost", detail: "$19–$59/mo total vs $249/user/mo for STACK Takeoff & Estimate — roughly $2,500/year difference for a single estimator.", positive: true },
       { label: "Multi-trade breadth", detail: "STACK estimates dozens of trades from one platform with pre-built item and assembly libraries. QuoteCore+ is roofing-first.", positive: false },
       { label: "Collaboration, documents and integrations", detail: "STACK's plan-set collaboration, version overlays, ERP integrations and APIs have no QuoteCore+ equivalent.", positive: false },
@@ -99,7 +99,7 @@ export const stackPage: CompetitorPageData = {
         benefit: "Reusable logic that already speaks roof: ridge caps per lineal metre, sheets per square with waste, flashings per valley",
       },
       {
-        current: "Estimate and proposal tools produce the bid; ordering and invoicing continue in other systems",
+        current: "Estimate and proposal tools produce the bid; purchase orders and invoices connect through ERP/accounting integrations",
         qc: "The priced takeoff becomes a branded quote with accept/decline, then a material order and an invoice",
         benefit: "The workflow runs past the estimate instead of stopping at it",
       },
@@ -133,7 +133,7 @@ export const stackPage: CompetitorPageData = {
       {
         number: "04",
         title: "Turning the estimate into work",
-        body: "STACK: the estimate becomes a proposal and the bid goes out; material ordering and invoicing happen in other tools. QuoteCore+: the priced takeoff becomes a branded quote with accept/decline tracking, then converts to a material order and an invoice — one continuous workflow for the roofing job you won.",
+        body: "STACK: the estimate becomes a proposal and the bid goes out, with purchase orders and invoices typically connected through ERP/accounting integrations. QuoteCore+: the priced takeoff becomes a branded quote with accept/decline tracking, then converts to a material order and an invoice — one continuous workflow for the roofing job you won.",
       },
     ],
     proof: {
@@ -200,12 +200,12 @@ export const stackPage: CompetitorPageData = {
       {
         feature: "Material ordering",
         qc: { status: "yes", note: "Quote converts to material order" },
-        competitor: { status: "unconfirmed", note: "Not a core advertised capability — estimating and proposals are the published workflow" },
+        competitor: { status: "partial", note: "Handled through connected systems/integrations rather than as the core Takeoff & Estimate workflow" },
       },
       {
         feature: "Invoicing",
         qc: { status: "yes", note: "Invoice from accepted quote" },
-        competitor: { status: "unconfirmed", note: "Not a core advertised capability" },
+        competitor: { status: "partial", note: "Handled through connected systems/integrations rather than as the core workflow" },
       },
       {
         feature: "Aerial imagery",
@@ -321,7 +321,7 @@ export const stackPage: CompetitorPageData = {
     {
       question: "Why would a roofing contractor choose QuoteCore+ instead?",
       answer:
-        "Focus and price. Roofing-native measurement types mean no assembly-building phase before the first quote; Smart Components carry waste, labour and margin rules forward into quoting, ordering and invoicing; and $19–$59/mo total is a fraction of $249/user/mo. If roofing is 90%+ of your estimating work, a specialist tool does the whole job for less.",
+        "Focus and price. Roofing-native measurement types mean no assembly-building phase before the first quote; Smart Components carry waste, labour and margin rules forward into quoting, ordering and invoicing; and $19–$59/mo total is a fraction of $249/user/mo. When nearly all of your estimating work is roofing, a specialist tool does the whole job for less.",
     },
     {
       question: "How much does STACK cost compared with QuoteCore+?",
