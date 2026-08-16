@@ -1,17 +1,56 @@
 {
-  "scale": { "detected": true, "ratio": "1:100", "dimension_line": null },
+  "scale": {
+    "detected": false,
+    "ratio": null,
+    "dimension_line": null
+  },
   "pitch": { "detected": true, "global_degrees": 25 },
   "roof_areas": [
-    { "name": "Main roof", "pitch_degrees": 25, "points": [{ "x": 170, "y": 170 }, { "x": 585, "y": 95 }, { "x": 1035, "y": 190 }, { "x": 1035, "y": 505 }, { "x": 700, "y": 625 }, { "x": 170, "y": 505 }] }
+    {
+      "name": "Main Roof",
+      "pitch_degrees": 25,
+      "points": [
+        { "x": 86, "y": 59 },
+        { "x": 731, "y": 59 },
+        { "x": 731, "y": 510 },
+        { "x": 507, "y": 510 },
+        { "x": 507, "y": 602 },
+        { "x": 312, "y": 602 },
+        { "x": 312, "y": 510 },
+        { "x": 86, "y": 510 }
+      ]
+    }
   ],
   "components": {
-    "ridges": [{ "points": [{ "x": 585, "y": 95 }, { "x": 700, "y": 625 }] }],
-    "hips": [{ "points": [{ "x": 585, "y": 95 }, { "x": 170, "y": 170 }] }, { "points": [{ "x": 585, "y": 95 }, { "x": 1035, "y": 190 }] }],
-    "valleys": [{ "points": [{ "x": 700, "y": 625 }, { "x": 1035, "y": 505 }] }],
+    "ridges": [
+      { "points": [{ "x": 312, "y": 284 }, { "x": 507, "y": 284 }] },
+      { "points": [{ "x": 409, "y": 602 }, { "x": 409, "y": 414 }] }
+    ],
+    "hips": [
+      { "points": [{ "x": 312, "y": 284 }, { "x": 86, "y": 59 }] },
+      { "points": [{ "x": 507, "y": 284 }, { "x": 731, "y": 59 }] },
+      { "points": [{ "x": 86, "y": 510 }, { "x": 312, "y": 284 }] },
+      { "points": [{ "x": 731, "y": 510 }, { "x": 507, "y": 284 }] }
+    ],
+    "valleys": [
+      { "points": [{ "x": 312, "y": 510 }, { "x": 409, "y": 414 }] },
+      { "points": [{ "x": 507, "y": 510 }, { "x": 409, "y": 414 }] }
+    ],
     "broken_hips": [],
-    "barges": [],
-    "spouting": [{ "points": [{ "x": 170, "y": 170 }, { "x": 170, "y": 505 }] }, { "points": [{ "x": 170, "y": 505 }, { "x": 700, "y": 625 }] }, { "points": [{ "x": 700, "y": 625 }, { "x": 1035, "y": 505 }] }, { "points": [{ "x": 1035, "y": 505 }, { "x": 1035, "y": 190 }] }],
+    "barges": [
+      { "points": [{ "x": 409, "y": 602 }, { "x": 507, "y": 602 }] },
+      { "points": [{ "x": 409, "y": 602 }, { "x": 312, "y": 602 }] }
+    ],
+    "spouting": [
+      { "points": [{ "x": 86, "y": 59 }, { "x": 731, "y": 59 }] },
+      { "points": [{ "x": 731, "y": 59 }, { "x": 731, "y": 510 }] },
+      { "points": [{ "x": 731, "y": 510 }, { "x": 507, "y": 510 }] },
+      { "points": [{ "x": 507, "y": 510 }, { "x": 507, "y": 602 }] },
+      { "points": [{ "x": 312, "y": 602 }, { "x": 312, "y": 510 }] },
+      { "points": [{ "x": 312, "y": 510 }, { "x": 86, "y": 510 }] },
+      { "points": [{ "x": 86, "y": 510 }, { "x": 86, "y": 59 }] }
+    ],
     "uncertain": []
   },
-  "notes": ["Static demonstration scan replay."]
+  "notes": ["Replay of a real AI scan captured in the QuoteCore+ app on 2026-08-16 (quote 1015, RS Roofing)."]
 }

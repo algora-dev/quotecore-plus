@@ -1,17 +1,11 @@
 import type { Metadata } from 'next';
-import DemoTakeoff from './DemoTakeoff';
+import { DemoTakeoff } from './DemoTakeoff';
 
 export const metadata: Metadata = {
-  title: 'Try the digital roof takeoff demo | QuoteCore+',
-  description: 'Measure a roof plan, see live takeoff totals, and generate a sample quote in the QuoteCore+ interactive demo.',
-  alternates: { canonical: 'https://quote-core.com/takeoff-demo' },
-  openGraph: {
-    title: 'Try the QuoteCore+ digital roof takeoff demo',
-    description: 'Measure a roof plan in your browser and see a sample quote generated from the takeoff.',
-    url: 'https://quote-core.com/takeoff-demo',
-    siteName: 'QuoteCore+',
-    type: 'website',
-  },
+  title: 'Roof Takeoff Demo - Try QuoteCore+ Digital Takeoff',
+  description:
+    'Try the QuoteCore+ digital roof takeoff workstation free. Scan a sample roof plan with AI or measure it yourself and see a finished quote in under a minute.',
+  robots: { index: true, follow: true },
 };
 
 export default function TakeoffDemoPage() {
