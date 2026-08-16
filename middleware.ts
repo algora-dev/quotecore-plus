@@ -90,6 +90,8 @@ const PUBLIC_PATHS = [
   '/planswift-alternative',
   '/roofr-alternative',
   '/stack-alternative-for-roofing',
+  '/hover-alternative',
+  '/bluebeam-alternative-for-roofing',
   '/free-construction-calculator', // Free public calculator (no auth)
   '/free-roofing-calculator',     // Free roofing calculator (no auth)
   '/free-quote-generator',        // Free AI quote generator (future)

@@ -290,6 +290,7 @@ export const planSwiftPage: CompetitorPageData = {
     { label: "Roofing estimating software", description: "Turn measurements into priced estimates.", href: "/roofing-estimating-software" },
     { label: "Roofing quoting software", description: "The full quote-to-invoice workflow for roofers.", href: "/roofing-quoting-software" },
     { label: "RoofSnap alternative", description: "Closest product-to-product comparison.", href: "/roofsnap-alternative" },
+    { label: "Bluebeam alternative for roofing", description: "Configurable PDF toolkit vs roofing workflow.", href: "/bluebeam-alternative-for-roofing" },
     { label: "EagleView alternative", description: "Reports vs owning your workflow.", href: "/eagleview-alternative" },
     { label: "Roofr alternative", description: "Broad roofing CRM vs focused estimating.", href: "/roofr-alternative" },
     { label: "Free quote generator", description: "Draft a professional quote free.", href: "/free-quote-generator" },

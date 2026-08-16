@@ -394,6 +394,24 @@ export default function RoofingEstimatingSoftwarePage() {
               </p>
             </a>
             <a
+              href="/hover-alternative"
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+            >
+              <p className="font-semibold text-zinc-950">HOVER alternative</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                Generated 3D measurement vs owned plan takeoff.
+              </p>
+            </a>
+            <a
+              href="/bluebeam-alternative-for-roofing"
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+            >
+              <p className="font-semibold text-zinc-950">Bluebeam alternative for roofing</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                Configurable PDF takeoff vs roofing-native estimating.
+              </p>
+            </a>
+            <a
               href="/roofing-takeoff-software"
               className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
             >

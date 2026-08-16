@@ -340,6 +340,7 @@ export const roofrPage: CompetitorPageData = {
     { label: "Roofing quoting software", description: "The full quote-to-invoice workflow for roofers.", href: "/roofing-quoting-software" },
     { label: "RoofSnap alternative", description: "Closest product-to-product comparison.", href: "/roofsnap-alternative" },
     { label: "STACK alternative for roofing", description: "Multi-trade platform vs roofing-native.", href: "/stack-alternative-for-roofing" },
+    { label: "HOVER alternative", description: "Generated 3D measurement vs owned takeoff.", href: "/hover-alternative" },
     { label: "PlanSwift alternative", description: "General takeoff vs roofing-native.", href: "/planswift-alternative" },
   ],
   sectionOrder: [
