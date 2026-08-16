@@ -18,7 +18,7 @@ export async function GET() {
       <video:title><![CDATA[${v.title}]]></video:title>
       <video:description><![CDATA[${v.description}]]></video:description>
       <video:player_loc>https://www.youtube-nocookie.com/embed/${v.id}</video:player_loc>
-      <video:upload_date>${v.uploadDate}</video:upload_date>
+      <video:publication_date>${v.uploadDate}</video:publication_date>
     </video:video>`).join("\n");
     return `  <url>
     <loc>${pageUrl}</loc>
