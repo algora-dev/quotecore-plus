@@ -53,6 +53,17 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         </ul>
       </section>
       <SharedTakeoffBuilder initialInput={initialInput} />
+      {/* Full workflow upsell */}
+      <section className="border-t border-slate-200 bg-white px-4 py-6">
+        <p className="mx-auto max-w-5xl text-center text-sm text-slate-600">
+          Ready for the full workflow? See how QuoteCore+ compares to{' '}
+          <Link href="/roofsnap-alternative" className="font-medium text-[#BD4A1A] hover:underline">RoofSnap</Link>,{' '}
+          <Link href="/eagleview-alternative" className="font-medium text-[#BD4A1A] hover:underline">EagleView</Link>{' '}
+          and{' '}
+          <Link href="/planswift-alternative" className="font-medium text-[#BD4A1A] hover:underline">PlanSwift</Link>.
+        </p>
+      </section>
+
       {/* Visible developer and AI access section */}
       <section className="border-t border-slate-200 bg-slate-50 px-4 py-8" aria-labelledby="machine-access">
         <div className="mx-auto max-w-5xl">

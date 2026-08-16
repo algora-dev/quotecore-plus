@@ -333,6 +333,47 @@ export default function RoofingTakeoffSoftwarePage() {
           </div>
         </section>
 
+        {/* Comparing takeoff tools */}
+        <section className="bg-zinc-50 py-20">
+          <div className="mx-auto max-w-4xl px-6 lg:px-8">
+            <h2 className="text-3xl font-semibold sm:text-4xl">
+              Comparing takeoff tools?
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-zinc-600">
+              Looking at RoofSnap, EagleView or PlanSwift? We compare them with QuoteCore+ honestly — features, workflow and pricing:
+            </p>
+            <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <a
+                href="/roofsnap-alternative"
+                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+              >
+                <p className="font-semibold text-zinc-950">RoofSnap alternative</p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  Closest product-to-product comparison — measure-and-quote software vs software.
+                </p>
+              </a>
+              <a
+                href="/eagleview-alternative"
+                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+              >
+                <p className="font-semibold text-zinc-950">EagleView alternative</p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  Aerial measurement reports vs plan-based takeoff you own.
+                </p>
+              </a>
+              <a
+                href="/planswift-alternative"
+                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+              >
+                <p className="font-semibold text-zinc-950">PlanSwift alternative</p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  General-purpose desktop takeoff vs roofing-native quoting.
+                </p>
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ */}
         <section className="bg-zinc-50 py-20">
           <div className="mx-auto max-w-4xl px-6 lg:px-8">

@@ -31,6 +31,11 @@ export default function Post() {
         they cost $7-15 per report and you wait 30 minutes to 2 hours for delivery. You also have
         no way to check or adjust the measurements - you get a PDF and that is it.
       </p>
+      <p>
+        If you are weighing report services against doing your own plan takeoff, we compare the
+        two approaches in detail in our{' '}
+        <a href="/eagleview-alternative">EagleView alternative comparison</a>.
+      </p>
       <h3>2. AI-assisted plan takeoff</h3>
       <p>
         This is where you upload a roof plan image - from an architect, a council submission, or

@@ -95,6 +95,10 @@ export default function Post() {
         actually interpret images, which is why they can read plans and trace geometry in a way
         traditional software cannot.
       </p>
+      <p>
+        For a deeper look at how plan-based takeoff stacks up against aerial report services, see
+        our <a href="/eagleview-alternative">EagleView alternative comparison</a>.
+      </p>
 
       <h2>What AI does well in roofing</h2>
       <ul>
