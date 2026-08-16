@@ -85,6 +85,9 @@ const PUBLIC_PATHS = [
   '/roofing-quoting-software',
   '/roofing-estimating-software',
   '/roofing-takeoff-software',
+  '/roofsnap-alternative',        // Competitor comparison pages (marketing)
+  '/eagleview-alternative',
+  '/planswift-alternative',
   '/free-construction-calculator', // Free public calculator (no auth)
   '/free-roofing-calculator',     // Free roofing calculator (no auth)
   '/free-quote-generator',        // Free AI quote generator (future)

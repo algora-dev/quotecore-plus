@@ -157,6 +157,18 @@ export default function PricingPage() {
         <section className="mx-auto max-w-7xl px-6 pb-20 lg:px-8">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Related</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <a href="/roofsnap-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">RoofSnap alternative</p>
+              <p className="mt-1 text-sm text-zinc-600">How our pricing and workflow compare.</p>
+            </a>
+            <a href="/eagleview-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">EagleView alternative</p>
+              <p className="mt-1 text-sm text-zinc-600">Per-report costs vs a flat subscription.</p>
+            </a>
+            <a href="/planswift-alternative" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">PlanSwift alternative</p>
+              <p className="mt-1 text-sm text-zinc-600">US$2,000/seat/yr vs plans from free.</p>
+            </a>
             <a href="/features" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Features</p>
               <p className="mt-1 text-sm text-zinc-600">See what is included in each plan.</p>
