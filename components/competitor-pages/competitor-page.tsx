@@ -311,7 +311,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
     ),
 
     comparison: (
-      <section key="comparison" className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
+      <section key="comparison" id="comparison" className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
         <h2 className="text-3xl font-semibold sm:text-4xl">{data.comparison.heading}</h2>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-600">
           {data.comparison.intro}

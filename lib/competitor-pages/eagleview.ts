@@ -288,6 +288,8 @@ export const eagleViewPage: CompetitorPageData = {
     { label: "Roofing quoting software", description: "The full quote-to-invoice workflow for roofers.", href: "/roofing-quoting-software" },
     { label: "RoofSnap alternative", description: "Closest product-to-product comparison.", href: "/roofsnap-alternative" },
     { label: "PlanSwift alternative", description: "General takeoff vs roofing-native.", href: "/planswift-alternative" },
+    { label: "Roofr alternative", description: "Broad roofing CRM vs focused estimating.", href: "/roofr-alternative" },
+    { label: "STACK alternative for roofing", description: "Multi-trade platform vs roofing-native.", href: "/stack-alternative-for-roofing" },
     { label: "AI roof measuring guide", description: "How AI measurement actually works.", href: "/blog/ai-roof-measuring" },
   ],
   sectionOrder: [

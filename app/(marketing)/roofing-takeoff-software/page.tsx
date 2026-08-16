@@ -340,7 +340,7 @@ export default function RoofingTakeoffSoftwarePage() {
               Comparing takeoff tools?
             </h2>
             <p className="mt-4 text-lg leading-8 text-zinc-600">
-              Looking at RoofSnap, EagleView or PlanSwift? We compare them with QuoteCore+ honestly — features, workflow and pricing:
+              Looking at RoofSnap, EagleView, PlanSwift, Roofr or STACK? We compare them with QuoteCore+ honestly — features, workflow and pricing:
             </p>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <a
@@ -368,6 +368,24 @@ export default function RoofingTakeoffSoftwarePage() {
                 <p className="font-semibold text-zinc-950">PlanSwift alternative</p>
                 <p className="mt-1 text-sm text-zinc-600">
                   General-purpose desktop takeoff vs roofing-native quoting.
+                </p>
+              </a>
+              <a
+                href="/roofr-alternative"
+                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+              >
+                <p className="font-semibold text-zinc-950">Roofr alternative</p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  Broad roofing CRM platform vs focused estimating workflow.
+                </p>
+              </a>
+              <a
+                href="/stack-alternative-for-roofing"
+                className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+              >
+                <p className="font-semibold text-zinc-950">STACK alternative for roofing</p>
+                <p className="mt-1 text-sm text-zinc-600">
+                  Multi-trade preconstruction platform vs roofing-native estimating.
                 </p>
               </a>
             </div>

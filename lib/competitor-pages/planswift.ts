@@ -291,6 +291,7 @@ export const planSwiftPage: CompetitorPageData = {
     { label: "Roofing quoting software", description: "The full quote-to-invoice workflow for roofers.", href: "/roofing-quoting-software" },
     { label: "RoofSnap alternative", description: "Closest product-to-product comparison.", href: "/roofsnap-alternative" },
     { label: "EagleView alternative", description: "Reports vs owning your workflow.", href: "/eagleview-alternative" },
+    { label: "Roofr alternative", description: "Broad roofing CRM vs focused estimating.", href: "/roofr-alternative" },
     { label: "Free quote generator", description: "Draft a professional quote free.", href: "/free-quote-generator" },
   ],
   sectionOrder: [
