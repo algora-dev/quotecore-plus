@@ -407,6 +407,9 @@ export default function DigitalRoofTakeoffPage() {
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Start free trial
             </a>
+            <Link href="/takeoff-demo" className="ml-3 mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-[#E55A28] transition-colors hover:bg-orange-50">
+              Try the takeoff demo
+            </Link>
             <p className="mt-4 text-sm text-zinc-500">
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
             </p>

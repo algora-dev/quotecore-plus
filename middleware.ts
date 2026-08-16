@@ -79,6 +79,7 @@ const PUBLIC_PATHS = [
   '/coffee-terms',
   '/tutorials',
   '/features',     // Feature pages (marketing)
+  '/takeoff-demo', // Interactive public takeoff demo (client-only, no auth)
   '/free-trial',
   '/construction-quoting-software',
   '/roofing-quoting-software',

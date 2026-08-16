@@ -445,3 +445,11 @@
 - Round 10: Re-entry pitch preservation ✅
 - Round 9: Page-switch auto-save + per-entry pitch ✅
 - Round 5: RPC saves work ✅
+
+### Takeoff demo v1
+- [ ] `/takeoff-demo` is public without authentication and shows Scan plan / Measure manually entry points
+- [ ] Scan replay completes, shows detection summary, and applies populated objects to the canvas
+- [ ] Manual mode opens the same plan with zero takeoff objects
+- [ ] Manual area and line drawing update live totals; selected objects can be deleted and the last drawing can be undone
+- [ ] Finish shows the sample customer quote and signup CTA; empty takeoff remains a friendly no-measurement state
+- [ ] Fabric loads only after entering the demo; plan asset remains under 300KB

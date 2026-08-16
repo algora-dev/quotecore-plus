@@ -5,6 +5,7 @@ import CoffeePopup from "@/components/CoffeePopup";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import YouTubeLite from "@/components/YouTubeLite";
+import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 
 const testimonials = [
@@ -247,6 +248,12 @@ export default function HomePage() {
                   >
                     See how it works
                   </a>
+                  <Link
+                    href="/takeoff-demo"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#FF6B35] px-7 py-2.5 text-sm font-medium text-[#E55A28] transition-colors hover:bg-orange-50"
+                  >
+                    Try the takeoff demo
+                  </Link>
                 </div>
 
               </div>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+  <rect width="1200" height="760" fill="#f8fafc"/>
+  <path d="M100 80h1000M100 680h1000M100 80v600M1100 80v600" stroke="#cbd5e1" stroke-width="2"/>
+  <path d="M170 170 585 95 1035 190v315L700 625 170 505Z" fill="#fff" stroke="#475569" stroke-width="3"/>
+  <path d="M585 95 700 625M585 95 170 170M585 95 1035 190M700 625 1035 505" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="10 8"/>
+  <path d="M130 250h60M130 250v250M130 500h60M150 370h40" stroke="#64748b" stroke-width="2"/>
+  <path d="M240 640h200M240 632v16M340 632v16M440 632v16" stroke="#334155" stroke-width="2"/>
+  <text x="240" y="665" fill="#475569" font-family="Arial,sans-serif" font-size="16">10m scale</text>
+  <text x="830" y="90" fill="#64748b" font-family="Arial,sans-serif" font-size="18" letter-spacing="3">ROOF PLAN · DEMO 01</text>
+  <text x="830" y="120" fill="#94a3b8" font-family="Arial,sans-serif" font-size="14">SYNTHETIC PLAN / 25° PITCH</text>
+  <g fill="#64748b" font-family="Arial,sans-serif" font-size="14"><text x="190" y="155">GABLE</text><text x="715" y="645">VALLEY</text><text x="1070" y="360" transform="rotate(90 1070 360)">EAVE / SPOUTING</text></g>
+</svg>

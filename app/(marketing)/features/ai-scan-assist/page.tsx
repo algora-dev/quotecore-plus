@@ -248,6 +248,9 @@ export default function AIScanAssistPage() {
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
               Start free trial
             </a>
+            <Link href="/takeoff-demo" className="ml-3 mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 px-7 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-[#FF6B35] hover:bg-orange-50">
+              Try the takeoff demo
+            </Link>
           </div>
         </section>
 
