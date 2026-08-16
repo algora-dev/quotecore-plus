@@ -2,16 +2,6 @@
 
 ## Status: `main` at `13776b8` = `development` at `13776b8` (synced, 2026-07-14)
 
-### Pending verification (test on quotecore-plus-testing git-development preview URL, 2026-08-15)
-
-**SHARED TAKEOFF RESTORE. Fixed-quantity UI + Fast-mode Known Price + URL prefill (development `80900867`, 2026-08-15)**
-- [ ] URL prefill lands directly in builder: `/free-roofing-takeoff-builder?mode=plan&area=126&pitch=25&ridge=8&valleys=4,4&gutter=18` -> builder shows 5 entries (area 126 @ 25 deg, ridge 8, 2 valleys, gutter 18)
-- [ ] Garbage/invalid URL params still start the wizard fresh (no blank builder)
-- [ ] Fast mode: Add Custom Component -> type Fixed -> entry form is quantity-only, unit pcs, waste locked at 0
-- [ ] Fast mode: Known Price toggle (Select Product / Known Price) shows on entry forms and prices correctly
-- [ ] Guided mode regression: normal entry flow unchanged (dimensions, total area, product dropdown)
-- [ ] Results report: known-price entries show their price (not $0.00); fixed components price per piece
-
 ### Pending verification (test on feature/ai-takeoff preview URL)
 
 **AI-TAKEOFF. Phase A — DB foundation (feature/ai-takeoff `4406af4`, 2026-07-17)**
@@ -450,6 +440,7 @@
 - [ ] Tier limit: if batch would exceed limit, shows error message
 
 ### Passed (recent)
+- 2026-08-16 smoke test by Shaun on quote-core.com ✅ — SHARED TAKEOFF RESTORE (main `8a0886c9`): URL prefill lands directly in builder with all 5 entries; garbage params (`mode=banana`, both quoted and appended after an existing query) start the wizard fresh, no blank builder (re-verified by Gavin live); Fast-mode Fixed custom components quantity-only in pcs; Fast-mode Known Price toggle + correct report pricing (no $0.00); Print/PDF works. Guided-mode flow covered by 46/46 shared-engine tests.
 - 2026-07-07 baseline test by Shaun ✅ — quote email send, quote notes add/edit/delete, summary file upload, no Server-Components 500s (root cause: 'use server' on adapter files, fixed in `ea0cf06`)
 - Round 10: Re-entry pitch preservation ✅
 - Round 9: Page-switch auto-save + per-entry pitch ✅
