@@ -79,11 +79,11 @@ export const bluebeamPage: CompetitorPageData = {
       answer:
         "If you mainly use Bluebeam to measure roof plans and prepare pricing elsewhere, QuoteCore+ can consolidate more of that job. If Revu is also your markup, Studio, CAD or document-control platform, it isn't a replacement.",
     },
-    body: "Bluebeam gives expert estimators flexible primitives — areas, lengths, counts, custom columns, formulas — that you configure to represent roofing. QuoteCore+ gives roofing estimators a data model already shaped around the roof, with the commercial documents attached. If your Revu use is genuinely document-wide — collaboration, overlays, CAD, batch tools across trades — QuoteCore+ replaces none of that and shouldn't. If Revu is essentially your roof-measuring tool and the quote gets built somewhere else afterwards, that's the workflow QuoteCore+ collapses.",
+    body: "Bluebeam gives expert estimators flexible primitives — areas, lengths, counts, custom columns, formulas — that you configure to represent roofing. QuoteCore+ gives roofing estimators a data model already shaped around the roof, with the commercial documents attached. If your Revu use is genuinely document-wide — collaboration, overlays, CAD, batch tools across trades — QuoteCore+ replaces none of that and shouldn't. If Revu is essentially your roof-measuring tool and customer quoting runs through spreadsheets or downstream systems afterwards, that's the workflow QuoteCore+ collapses.",
     bullets: [
       { label: "Roofing takeoff and estimating", detail: "Plan-based takeoff with roofing-native geometry, Smart Components pricing, and the full quote workflow — the measuring-plus-quoting job in one tool.", positive: true },
       { label: "Quote → material order → invoice", detail: "The priced takeoff becomes a customer quote, then an order and invoice. In Revu, customer proposal and ordering workflows aren't core advertised features.", positive: true },
-      { label: "No estimating system to build", detail: "Roofing conventions, waste, labour and margin exist as product concepts — not Tool Chest sets, custom columns and formulas you construct and maintain.", positive: true },
+      { label: "Roofing estimating logic is already native", detail: "Roofing conventions, waste, labour and margin exist as product concepts — reducing the need to build your workflow from Tool Chest sets, custom columns, formulas and spreadsheets. You still set up your own prices and rules; the roofing scaffolding is already there.", positive: true },
       { label: "General PDF and document workflows", detail: "Markup, drawing comparison, Studio collaboration, CAD plug-ins, batch automation — Bluebeam's core, with no QuoteCore+ equivalent.", positive: false },
       { label: "Multi-trade measurement", detail: "One calibrated measurement engine across every trade on the plan set. QuoteCore+ is roofing-first.", positive: false },
     ],
@@ -102,7 +102,7 @@ export const bluebeamPage: CompetitorPageData = {
         benefit: "Pricing logic lives in the system — no parallel spreadsheet model to keep in sync",
       },
       {
-        current: "Quantities exported or linked out to a separate quoting process; the customer document is assembled elsewhere",
+        current: "Quantities exported via reports or Quantity Link; customer quoting, ordering and invoicing are not core native Revu workflows and are typically handled through configured reports, spreadsheets or downstream systems",
         qc: "The priced takeoff becomes a branded quote with accept/decline tracking, then a material order and invoice",
         benefit: "One continuous workflow instead of measurement here, quote there",
       },
@@ -135,7 +135,7 @@ export const bluebeamPage: CompetitorPageData = {
       {
         number: "04",
         title: "Turning it into the job",
-        body: "Bluebeam: export quantities and reports, then build the customer quote in whatever comes next — Revu's published workflow centers on documents and takeoff, not customer proposals. QuoteCore+: the priced takeoff becomes a branded quote with accept/decline tracking, then converts to a material order and invoice in the same system.",
+        body: "Bluebeam: export quantities and reports; customer quoting, ordering and invoicing are not core native Revu workflows and are typically handled through configured reports, spreadsheets or downstream systems. QuoteCore+: the priced takeoff becomes a branded quote with accept/decline tracking, then converts to a material order and invoice in the same system.",
       },
     ],
     proof: {
@@ -266,7 +266,7 @@ export const bluebeamPage: CompetitorPageData = {
     scenarios: [
       {
         label: "Solo roofer measuring roofs in Revu today",
-        competitor: "Core $330/yr (~$28/mo) — but quoting, ordering and invoicing continue in other tools",
+        competitor: "Core $330/yr (~$28/mo) — customer quoting, ordering and invoicing typically handled through spreadsheets or downstream systems",
         qc: "Starter or Pro $19–$39/mo — quote, material order and invoice included in the same workflow",
       },
       {

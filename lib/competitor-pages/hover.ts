@@ -74,7 +74,7 @@ export const hoverPage: CompetitorPageData = {
       answer:
         "QuoteCore+ cannot replace HOVER's photo-to-3D measurement or visualization. It can replace the plan-based estimating slice: takeoff, materials, pricing, quote, order, invoice.",
     },
-    body: "HOVER's value starts before the measurement — it creates the measured property model for you, from ground photos or submitted blueprints. QuoteCore+'s value starts with direct takeoff control and goes deeper after the measurement, into reusable roofing calculations and commercial documents. If you rely on HOVER to measure properties you can't or won't climb on, there is no QuoteCore+ equivalent and we say so plainly. If you already hold architectural plans and your real problem is turning them into priced quotes, QuoteCore+ covers more of that workflow — with no per-project fees.",
+    body: "HOVER's value starts before the measurement — it creates the measured property model for you, from ground photos or submitted blueprints. QuoteCore+'s value starts with direct takeoff control and follows a different roofing-specific path after measurement: reusable Smart Components™, customer quote, material order and invoice. If you rely on HOVER to measure properties you can't or won't climb on, there is no QuoteCore+ equivalent and we say so plainly. If you already hold architectural plans and your real problem is turning them into priced quotes, QuoteCore+ gives you a more direct, user-controlled plan-to-quote workflow with no per-project measurement fee.",
     bullets: [
       { label: "Plan-based takeoff, no per-project fees", detail: "Upload the PDF, verify the geometry, price it — measurement isn't a purchased line item on every roof.", positive: true },
       { label: "Reusable roofing calculation logic", detail: "Smart Components carry coverage, waste, labour and margin rules across roof areas, ridges, hips, valleys and barges.", positive: true },
@@ -94,7 +94,7 @@ export const hoverPage: CompetitorPageData = {
       {
         current: "Estimates generated from the 3D model with waste and coverage (Pro), using standard or custom estimate templates",
         qc: "Smart Components apply your own coverage, pack sizes, waste, labour and margin rules to every measurement",
-        benefit: "Your roofing logic rather than a generic template — reusable on every future job",
+        benefit: "Your reusable roofing rules tied directly to editable roof measurements, rather than a model-generated estimate workflow",
       },
       {
         current: "Branded agreements and direct ordering with suppliers like ABC, SRS and QXO (Pro)",
