@@ -448,10 +448,10 @@
 
 ### Takeoff demo v2 (fork of real workstation)
 - [ ] `/takeoff-demo` is public without authentication and shows Scan plan with AI / Measure manually entry points
-- [ ] Scan mode auto-replays captured scan: overlay stages -> AI Assist Results modal -> Apply -> canvas populated; sidebar totals match baseline (Main Roof 62.10 m2 plan, Ridge 5.43 m, Hip 18.07 m, Valley 3.88 m, Barge 2.77 m, Spouting 30.93 m)
-- [ ] Manual mode opens the same plan + same baked calibration with zero takeoff objects; all workstation tools live
+- [ ] Scan mode auto-replays captured scan: overlay stages -> NO results modal -> canvas auto-populated at 25 deg (Main Roof 62.10 m2 plan, Ridge 5.43 m, Hip 18.07 m, Valley 3.88 m, Barge 2.77 m, Spouting 30.93 m)
+- [ ] Manual mode opens the same plan + same baked calibration with zero takeoff objects, NO post-calibration popup; all workstation tools live; drawn areas auto-commit as "Roof Area N" at 25 deg (no name/pitch modal)
 - [ ] Manual drawing updates live totals; select/delete works; full undo/redo works (real workstation behaviour)
-- [ ] Finish and Save -> sample customer quote (pitch-adjusted line items via real applyPitchAndWaste) + signup CTA; empty takeoff -> friendly no-measurement state
+- [ ] Finish and Save -> sample customer quote (pitch-adjusted line items via real applyPitchAndWaste) + signup CTA; manual-drawn library components (e.g. Ridge (Soft Edge, Standard)) appear as quote lines, not just AI-scan components; empty takeoff -> friendly no-measurement state
 - [ ] Upload-another-plan button visible but disabled; back link returns to demo start
 - [ ] Fabric loads only after entering the demo; plan asset (176KB PNG) under 300KB; no console errors on the route
 - [ ] Homepage / feature-page entry buttons link to the demo (NOT YET BUILT - v1 buttons were on main before v2 rewrite, verify they still point correctly)

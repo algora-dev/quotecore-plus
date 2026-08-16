@@ -44,6 +44,39 @@ const ROOF_AREA_RATE: DemoRate = {
   pitchType: 'rafter', wasteType: 'percent', wastePercent: 3, wasteFixed: 0,
 };
 
+/** Rates keyed by user-library component IDs (manual-measure components).
+ *  Manual drawings use the library rows the user picked; AI scans use the
+ *  system placeholder rows (resolved via SEMANTIC_RATES). */
+const COMPONENT_RATES: Record<string, DemoRate> = {
+  '881aa963-1209-4344-9cf7-b1da84ff3c55': SEMANTIC_RATES.ridges,   // Ridge (Soft Edge, Standard)
+  '8d94451a-75ff-4b1f-bc45-057bcdd75c48': SEMANTIC_RATES.hips,      // Hip Flashing (Soft Edge Standard)
+  '3536e596-2103-4af5-861f-48d38fb24614': SEMANTIC_RATES.valleys,   // Valley Flashing (Standard)
+  '74c2e3dc-b95e-45d3-930a-2c5facba572a': SEMANTIC_RATES.barges,    // Barge Flashing (Standard)
+  'cf898e6b-f6d0-4330-a7b9-e5bcf41b6acf': SEMANTIC_RATES.spouting,  // Spouting (Standard)
+  '916eac91-f744-4a3f-888f-a7bed643c160': ROOF_AREA_RATE,           // Corrugate .40g (area)
+  '44698955-f141-4eb3-8652-23d1d2efbbb1': { ...ROOF_AREA_RATE, label: 'Rubber Membrane Roofing' },
+  '5c5a49a0-5dee-4d33-add3-7f357e2162e7': {
+    label: 'Tek Screws (50mm)', unit: 'ea', materialRate: 1.5, labourRate: 0,
+    pitchType: 'none', wasteType: 'none', wastePercent: 0, wasteFixed: 0,
+  },
+};
+
+/** Name-based fallback so a manual component can never be silently dropped
+ *  from the quote (IDs live in baseline.ts; this catches drift). */
+function rateForComponent(g: DemoFinishPayload['componentGroups'][number]): DemoRate | null {
+  const byId = COMPONENT_RATES[g.componentId];
+  if (byId) return byId;
+  if (g.semantic != null && g.semantic in SEMANTIC_RATES) return SEMANTIC_RATES[g.semantic];
+  const name = g.name.toLowerCase();
+  if (name.startsWith('ridge')) return SEMANTIC_RATES.ridges;
+  if (name.startsWith('hip')) return SEMANTIC_RATES.hips;
+  if (name.startsWith('valley')) return SEMANTIC_RATES.valleys;
+  if (name.startsWith('barge')) return SEMANTIC_RATES.barges;
+  if (name.startsWith('spouting')) return SEMANTIC_RATES.spouting;
+  if (name.startsWith('corrugate')) return ROOF_AREA_RATE;
+  return null;
+}
+
 interface QuoteLine {
   key: string;
   label: string;
@@ -82,15 +115,17 @@ export function DemoQuoteView({
     });
   }
 
-  // Component groups keyed by semantic replacement rates.
+  // Component groups: rate by user-library component ID first (manual draws),
+  // then by AI semantic key (system placeholder components).
   for (const g of payload.componentGroups) {
-    if (g.count === 0 || g.semantic == null || !(g.semantic in SEMANTIC_RATES)) continue;
-    const rate = SEMANTIC_RATES[g.semantic];
+    if (g.count === 0) continue;
+    const rate = rateForComponent(g);
+    if (!rate) continue;
     const r = applyPitchAndWaste(g.total, true, rate.pitchType, pitch, rate.wasteType, rate.wastePercent, rate.wasteFixed);
     const unitRate = rate.materialRate + rate.labourRate;
     lines.push({
       key: g.componentId,
-      label: `${rate.label} (${g.count} × ${fmt(g.total)} m measured)`,
+      label: `${rate.label} (${g.count} × ${fmt(g.total)} ${rate.unit} measured)`,
       quantity: r.afterWaste,
       unit: rate.unit,
       rate: unitRate,

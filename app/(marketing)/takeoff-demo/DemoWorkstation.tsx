@@ -13,7 +13,7 @@ import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-t
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
-import { AiResultsModal, type AiResultsData, type AiResultsArea } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal';
+import { AiResultsModal, type AiResultsData } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import { AlertModal } from '@/app/components/AlertModal';
@@ -1059,18 +1059,20 @@ export function DemoWorkstation({
     if (areaMode) return;
     // Once dismissed, never re-show the "Calibration complete" popup this session.
     if (roofAreaInstructionsDismissedRef.current) return;
-    if (calibrationConfirmed && calibrations.length > 0 && roofAreas.length === 0) {
-      if (demoMode === 'scan' && canvasReady && !aiAutoScanRef.current) {
-        // DEMO scan entry: auto-replay the captured AI scan once the canvas is live.
+    // DEMO: never show the post-calibration "draw an area / AI / skip" popup -
+    // scan mode auto-replays below, manual mode goes straight to the blank canvas
+    // (the user is prompted by the tool bar instead).
+    if (demoMode === 'scan') {
+      if (canvasReady && !aiAutoScanRef.current) {
         aiAutoScanRef.current = true;
         const timer = setTimeout(() => { handleAiScan(); }, 400);
         return () => clearTimeout(timer);
       }
-      // Delay slightly to show after calibration flash
-      const timer = setTimeout(() => {
-        setShowRoofAreaInstructions(true);
-      }, 1500);
-      return () => clearTimeout(timer);
+      return;
+    }
+    if (demoMode === 'manual') {
+      roofAreaInstructionsDismissedRef.current = true;
+      return;
     }
   }, [calibrationConfirmed, calibrations.length, roofAreas.length, takeoffMode, isExistingAreaMode, hydrationData, areaMode, demoMode, canvasReady]);
   
@@ -1896,7 +1898,29 @@ export function DemoWorkstation({
   };
 
   // (2026-07-05) handleConfirmAreaAssignment REMOVED with the Assign-Area modal.
-  
+
+  // DEMO: never show the AreaNameModal - the moment an area draw closes,
+  // auto-commit it with a generic name and the fixed 25-degree demo pitch.
+  // Roof areas become "Roof Area N"; component areas use the component's
+  // library name. Runs after the state commit, so pendingAreaPoints is fresh.
+  useEffect(() => {
+    if (!showAreaNamePrompt) return;
+    const comp = pendingComponentId ? components.find(c => c.id === pendingComponentId) : null;
+    const name = comp ? comp.name : `Roof Area ${roofAreas.length + 1}`;
+    setShowAreaNamePrompt(false);
+    handleSaveArea(name, 25);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAreaNamePrompt]);
+
+  // DEMO: same for the pitch-only prompt (+ New Area flows) - commit at the
+  // fixed 25-degree demo pitch instead of asking.
+  useEffect(() => {
+    if (!showPitchOnlyPrompt) return;
+    setShowPitchOnlyPrompt(false);
+    handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), 25);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPitchOnlyPrompt]);
+
   const handleToggleAreaVisibility = (areaId: string) => {
     pushHistorySnapshot();
     setRoofAreas(roofAreas.map(area => {
@@ -3972,31 +3996,15 @@ export function DemoWorkstation({
       const data = DEMO_SCAN;
       setAiScanRaw(data);
 
-      const areas: AiResultsArea[] = (data.roof_areas ?? []).map((area, idx) => ({
-        index: idx,
-        name: area.name || `Area ${idx + 1}`,
-        pitch: area.pitch_degrees ?? data.pitch?.global_degrees ?? null,
-        vertexCount: area.points?.length ?? 0,
-      }));
-
-      setAiResults({
-        summary: {
-          areas: data.roof_areas.length,
-          components: Object.values(data.components).reduce((s, arr) => s + arr.length, 0),
-          ridges: data.components.ridges.length,
-          hips: data.components.hips.length,
-          valleys: data.components.valleys.length,
-          broken_hips: data.components.broken_hips.length,
-          barges: data.components.barges.length,
-          spouting: data.components.spouting.length,
-          uncertain: data.components.uncertain.length,
-          notes: data.notes ?? [],
-          unreadable: false,
-        },
-        scaleCheck: null,
-        droppedCount: 0,
-        areas,
+      // DEMO: skip the AiResultsModal confirmation step entirely - apply the
+      // scan straight to the canvas with the captured area names and the
+      // fixed 25-degree demo pitch. The user lands on the finished takeoff
+      // seconds after clicking Scan.
+      const autoOverrides: Record<number, { name: string; pitch: number }> = {};
+      (data.roof_areas ?? []).forEach((area, idx) => {
+        autoOverrides[idx] = { name: area.name || `Roof Area ${idx + 1}`, pitch: 25 };
       });
+      await handleApplyAiResults(autoOverrides, data);
       scanCompleted = true;
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
@@ -4129,9 +4137,10 @@ export function DemoWorkstation({
   };
 
   // ── AI Takeoff: apply results to canvas ───────────────────────────
-  const handleApplyAiResults = async (areaOverrides: Record<number, { name: string; pitch: number }>) => {
+  const handleApplyAiResults = async (areaOverrides: Record<number, { name: string; pitch: number }>, rawData?: AiScanData) => {
     const canvas = fabricRef.current;
-    if (!canvas || !aiScanRaw) return;
+    const scanData = rawData ?? aiScanRaw;
+    if (!canvas || !scanData) return;
 
     const bgImage = canvas.backgroundImage as unknown as { width?: number; height?: number } | null;
     if (!bgImage || !bgImage.width || !bgImage.height) {
@@ -4149,7 +4158,7 @@ export function DemoWorkstation({
     }
 
     const applied = applyAiResults({
-      aiData: aiScanRaw,
+      aiData: scanData,
       calibrations,
       systemComponentIds,
       canvasWidth: canvasDims.width,
