@@ -63,7 +63,7 @@ export const roofSnapPage: CompetitorPageData = {
     body: "Plenty of roofers searching for software like RoofSnap want the same outcome — faster measurements and professional quotes — without paying per user per month or per report. If that's you, QuoteCore+ replaces the workflow: measure your own plans with AI assistance, price them with your own rules, send the quote, order materials, invoice. If your business model depends on ordering flown reports for properties you never visit, keep RoofSnap's report service — QuoteCore+ doesn't fly planes.",
     bullets: [
       { label: "DIY measurement + estimating + quoting", detail: "The subscription workflow — draw measurements, build estimates, create material orders — is fully covered at $19–$59/mo.", positive: true },
-      { label: "Quote-to-order-to-invoice", detail: "The measurement becomes a quote the customer accepts, then a material order and invoice. RoofSnap's published features stop at estimates and material orders.", positive: true },
+      { label: "Quote-to-order-to-invoice", detail: "The measurement becomes a quote the customer accepts, then a material order and invoice. RoofSnap's published feature list centres on measurements, estimates and material orders.", positive: true },
       { label: "AI first pass on your own plans", detail: "AI Scan Assist traces roof geometry from a plan you supply — you verify and adjust. RoofSnap's AI assistance is not publicly confirmed.", positive: true },
       { label: "Ordered aerial reports", detail: "RoofSnap delivers flown reports in 2–4 hours (rush under 1). If you need someone else to measure remote properties, that's their strength, not ours.", positive: false },
       { label: "In-app payments and financing", detail: "RoofSnap subscriptions include payment acceptance and Acorn financing. QuoteCore+ takes a different approach with accept/decline quotes.", positive: false },
@@ -119,7 +119,7 @@ export const roofSnapPage: CompetitorPageData = {
       },
     ],
     proof: {
-      heading: "What the output actually looks like",
+      heading: "What switching to QuoteCore+ looks like",
       images: [
         {
           src: "/images/features/digital-roof-takeoff.png",
