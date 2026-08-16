@@ -20,7 +20,7 @@ export const planSwiftPage: CompetitorPageData = {
   },
   quickAnswer: {
     heading: "The short answer",
-    body: "PlanSwift is a well-established general takeoff platform used across many trades — 60,000+ users, desktop-based, US$2,000/year per seat for the Professional subscription (checked August 2026), with trade plugins and starter packs sold separately. QuoteCore+ is deliberately narrower and deeper: roofing-native measurements (ridges, hips, valleys, barges, spouting, pitch factors), Smart Components that convert measurements into materials, labour, waste and priced quotes automatically, plus quote-to-order-to-invoice workflow — browser-based, $19–$59/mo. If you estimate across many trades, PlanSwift's breadth is real. If 90%+ of your work is roofing, a roofing-native tool does the same jobs without building roofing logic on top of generic measurements.",
+    body: "PlanSwift is a well-established general takeoff platform used across many trades — 60,000+ users, desktop-based, US$2,000/year per seat for the Professional subscription (checked August 2026), with trade plugins and starter packs sold separately. QuoteCore+ is deliberately narrower and deeper: roofing-native measurements (ridges, hips, valleys, barges, spouting, pitch factors), Smart Components that convert measurements into materials, labour, waste and priced quotes automatically, plus quote-to-order-to-invoice workflow — browser-based, $19–$59/mo. If you estimate across many trades, PlanSwift's breadth is real. If nearly all of your work is roofing, a roofing-native tool does the same jobs without building roofing logic on top of generic measurements.",
   },
   bestFor: {
     competitorBestFor: [
@@ -84,7 +84,7 @@ export const planSwiftPage: CompetitorPageData = {
         benefit: "No assembly construction phase — roofing logic is already there",
       },
       {
-        current: "Estimate lands in takeoff/estimate reports; quoting and ordering continue elsewhere",
+        current: "Estimate lands in takeoff/estimate reports; quoting, ordering and invoicing aren't part of the core PlanSwift workflow",
         qc: "The priced takeoff becomes a branded quote with accept/decline, then a material order and invoice",
         benefit: "One workflow from plan to payment instead of three tools",
       },
@@ -132,7 +132,7 @@ export const planSwiftPage: CompetitorPageData = {
       {
         number: "04",
         title: "Send it and get paid",
-        body: "PlanSwift: export the estimate and continue in other tools to quote, order and invoice. QuoteCore+: the priced takeoff becomes a branded quote with accept/decline tracking, then converts to a material order and invoice in the same system.",
+        body: "PlanSwift: export the estimate; quoting, ordering and invoicing sit outside the core takeoff workflow. QuoteCore+: the priced takeoff becomes a branded quote with accept/decline tracking, then converts to a material order and invoice in the same system.",
       },
     ],
   },
@@ -275,7 +275,7 @@ export const planSwiftPage: CompetitorPageData = {
         "PlanSwift is desktop software you download (Windows), with cloud access for your project files. QuoteCore+ runs entirely in the browser — nothing to install, and projects are accessible from any device.",
     },
     {
-      question: "Do I need a general takeoff platform if 90% of my work is roofing?",
+      question: "Do I need a general takeoff platform if nearly all of my work is roofing?",
       answer:
         "Probably not. If almost all your estimating is roofing, a roofing-native tool does the geometry, materials, waste and pricing without building roofing logic atop generic measurements — and carries the result through to quotes, orders and invoices. If you genuinely estimate across many trades, a general platform like PlanSwift earns its keep.",
     },
