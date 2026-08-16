@@ -14,7 +14,7 @@ export const eagleViewPage: CompetitorPageData = {
   hero: {
     title: "Looking for an EagleView alternative?",
     sub: "EagleView sells expertly produced aerial measurement reports. QuoteCore+ is quoting software where you measure your own plans — PDF takeoff, AI Scan Assist, automatic materials and pricing — and own the whole estimate. Different tools for different jobs.",
-    qualifier: "If you want another aerial-report provider, QuoteCore+ isn't that. If you want to stop buying a report for every roof where suitable plans or images already exist, keep reading.",
+    qualifier: "Need another aerial measurement provider? QuoteCore+ isn't one. Already have plans or usable imagery and want to stop paying per report? That's where QuoteCore+ fits.",
     primaryCta: { href: "/free-roofing-takeoff-builder", label: "See what you can measure without buying another report" },
     ghostCta: { href: "/free-trial", label: "Start a free 14-day trial" },
   },
@@ -128,7 +128,7 @@ export const eagleViewPage: CompetitorPageData = {
       {
         number: "03",
         title: "Send the quote",
-        body: "EagleView: the report is the deliverable — quoting happens in your own tools. QuoteCore+: a branded quote goes to the customer with accept/decline tracking, then converts to a material order and invoice when approved.",
+        body: "EagleView: the report is the deliverable — quoting typically continues in your own tools. QuoteCore+: a branded quote goes to the customer with accept/decline tracking, then converts to a material order and invoice when approved.",
       },
       {
         number: "04",
@@ -169,12 +169,12 @@ export const eagleViewPage: CompetitorPageData = {
       {
         feature: "Quote generation & tracking",
         qc: { status: "yes", note: "Templates, accept/decline, follow-ups" },
-        competitor: { status: "no", note: "EagleView is a reports/data business, not quoting software" },
+        competitor: { status: "unconfirmed", note: "Primarily a reports and property-data business; customer quote workflows are not a core advertised feature" },
       },
       {
         feature: "Material orders & invoices",
         qc: { status: "yes", note: "Quote converts to order and invoice" },
-        competitor: { status: "no" },
+        competitor: { status: "unconfirmed", note: "Not a core advertised capability — published products centre on measurement reports and property data" },
       },
       {
         feature: "Cloud / browser access",
