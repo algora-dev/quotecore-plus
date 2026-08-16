@@ -1,7 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { headers } from 'next/headers';
-import { SITE_URL } from '@/lib/seo/site-url';
-import { isNzHost, canonicalOrigin } from '@/lib/seo/dual-domain';
+import { canonicalOrigin } from '@/lib/seo/dual-domain';
 
 /**
  * robots.txt - domain-aware.
@@ -42,6 +41,12 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         '/free-invoice-generator',
         '/free-purchase-order-generator',
         '/free-roofing-takeoff-builder',
+        '/docs/components',
+        '/docs/attachments',
+        '/docs/templates',
+        '/docs/material-orders',
+        '/docs/account',
+        '/docs/concepts',
       ],
       disallow: [
         '/api/',
