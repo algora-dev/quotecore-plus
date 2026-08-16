@@ -40,6 +40,35 @@ export type BestForCard = { title: string; body: string };
 
 export type RelatedLink = { label: string; description: string; href: string };
 
+export type SectionKey =
+  | "quickAnswer"
+  | "replace"
+  | "switching"
+  | "bestFor"
+  | "comparison"
+  | "pricing"
+  | "workflow"
+  | "video"
+  | "honestWhen"
+  | "freeTool"
+  | "faq"
+  | "related";
+
+export type ReplaceBullet = { label: string; detail: string; positive: boolean };
+
+export type ReplaceSection = {
+  verdict: { pill: string; tone: "yes" | "mixed" | "no"; answer: string };
+  body: string;
+  bullets: ReplaceBullet[];
+};
+
+export type SwitchingSection = {
+  intro?: string;
+  rows: Array<{ current: string; qc: string; benefit: string }>;
+};
+
+export type ProofImage = { src: string; alt: string; caption: string };
+
 export type CompetitorPageData = {
   slug: string; // e.g. "roofsnap-alternative"
   competitorName: string; // e.g. "RoofSnap"
@@ -48,6 +77,10 @@ export type CompetitorPageData = {
   hero: {
     title: string;
     sub: string;
+    /** EagleView-style early qualification, rendered as a bordered note */
+    qualifier?: string;
+    primaryCta: { href: string; label: string };
+    ghostCta?: { href: string; label: string };
   };
   quickAnswer: {
     heading: string;
@@ -57,10 +90,13 @@ export type CompetitorPageData = {
     competitorBestFor: BestForCard[];
     qcBestFor: BestForCard[];
   };
+  replace: ReplaceSection;
+  switching: SwitchingSection;
   workflow: {
     heading: string;
     intro: string;
     steps: Array<{ number: string; title: string; body: string }>;
+    proof?: { heading: string; images: ProofImage[] };
   };
   comparison: {
     heading: string;
@@ -97,7 +133,8 @@ export type CompetitorPageData = {
   };
   faqs: CompetitorFaq[];
   related: RelatedLink[];
-  finalCta: { heading: string; body: string };
+  sectionOrder?: SectionKey[];
+  finalCta: { heading: string; body: string; ctaLabel?: string };
 };
 
 export const STATUS_LABEL: Record<SupportStatus, string> = {

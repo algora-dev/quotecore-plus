@@ -13,6 +13,8 @@ export const roofSnapPage: CompetitorPageData = {
   hero: {
     title: "Looking for a RoofSnap alternative?",
     sub: "RoofSnap sells roof measurements and estimating tools. QuoteCore+ is roofing quoting software you run yourself — measure your own plans, apply your own pricing rules, and send quotes from one workflow.",
+    primaryCta: { href: "/free-roofing-takeoff-builder", label: "Measure your next roof without ordering a report" },
+    ghostCta: { href: "/free-trial", label: "Start a free 14-day trial" },
   },
   quickAnswer: {
     heading: "The short answer",
@@ -52,6 +54,45 @@ export const roofSnapPage: CompetitorPageData = {
       },
     ],
   },
+  replace: {
+    verdict: {
+      pill: "Depends what you use RoofSnap for",
+      tone: "mixed",
+      answer: "Yes, if you use (or would use) RoofSnap's subscription for DIY measuring and estimating — QuoteCore+ covers that workflow end to end at a lower price. No, if what you actually need is ordered aerial measurement reports.",
+    },
+    body: "Plenty of roofers searching for software like RoofSnap want the same outcome — faster measurements and professional quotes — without paying per user per month or per report. If that's you, QuoteCore+ replaces the workflow: measure your own plans with AI assistance, price them with your own rules, send the quote, order materials, invoice. If your business model depends on ordering flown reports for properties you never visit, keep RoofSnap's report service — QuoteCore+ doesn't fly planes.",
+    bullets: [
+      { label: "DIY measurement + estimating + quoting", detail: "The subscription workflow — draw measurements, build estimates, create material orders — is fully covered at $19–$59/mo.", positive: true },
+      { label: "Quote-to-order-to-invoice", detail: "The measurement becomes a quote the customer accepts, then a material order and invoice. RoofSnap's published features stop at estimates and material orders.", positive: true },
+      { label: "AI first pass on your own plans", detail: "AI Scan Assist traces roof geometry from a plan you supply — you verify and adjust. RoofSnap's AI assistance is not publicly confirmed.", positive: true },
+      { label: "Ordered aerial reports", detail: "RoofSnap delivers flown reports in 2–4 hours (rush under 1). If you need someone else to measure remote properties, that's their strength, not ours.", positive: false },
+      { label: "In-app payments and financing", detail: "RoofSnap subscriptions include payment acceptance and Acorn financing. QuoteCore+ takes a different approach with accept/decline quotes.", positive: false },
+    ],
+  },
+  switching: {
+    rows: [
+      {
+        current: "Order a report at $13+ and wait 2–4 hours, or draw over HD aerial imagery yourself",
+        qc: "Upload the plan or image you already have; AI Scan Assist traces areas, ridges, hips, valleys, barges and spouting for you to verify",
+        benefit: "No per-report spend and no waiting — measurements in minutes from plans you already hold",
+      },
+      {
+        current: "Watch image allowances (5 HD images/mo on monthly, bonus images annually)",
+        qc: "Quote-based tiers — 25 to 200 quotes/month, unlimited measuring within them",
+        benefit: "The thing you're billed for matches the thing you sell: quotes",
+      },
+      {
+        current: "Build estimates and material orders with customised materials and pricing",
+        qc: "Smart Components apply your materials, coverage, pack sizes, waste, labour and margins to every measurement automatically",
+        benefit: "Pricing rules live in the system, not in your head — the second roof prices itself",
+      },
+      {
+        current: "$105/mo per user monthly ($52–78 annual), or $13+ per report",
+        qc: "$19–$59/mo total, free tier available, no per-user multiplier",
+        benefit: "Predictable cost that undercuts RoofSnap for solo roofers and small teams",
+      },
+    ],
+  },
   workflow: {
     heading: "The same roof, quoted both ways",
     intro: "How a typical re-roof job flows through each tool.",
@@ -77,6 +118,21 @@ export const roofSnapPage: CompetitorPageData = {
         body: "RoofSnap: each new roof starts with a new measurement order or a new DIY session on imagery. QuoteCore+: your components, pricing rules and templates carry over — the second roof quotes faster than the first, and every historical result stays auditable.",
       },
     ],
+    proof: {
+      heading: "What the output actually looks like",
+      images: [
+        {
+          src: "/images/features/digital-roof-takeoff.png",
+          alt: "QuoteCore+ roof takeoff showing colour-coded measurement lines over a roof plan",
+          caption: "Your plan, measured — colour-coded areas and lengths you drew yourself, ready to verify.",
+        },
+        {
+          src: "/images/features/smart-components-admin.png",
+          alt: "Smart Components library showing stored materials, coverage, waste and pricing rules",
+          caption: "The estimating brain — stored materials, coverage, waste and pricing rules that apply themselves to every measurement.",
+        },
+      ],
+    },
   },
   comparison: {
     heading: "RoofSnap vs QuoteCore+ feature comparison",
@@ -231,6 +287,11 @@ export const roofSnapPage: CompetitorPageData = {
       answer:
         "Yes. A quote converts to a material order with supplier details carried over, and invoices are generated from quotes with the same data. RoofSnap lists estimates and material orders on subscription plans; invoicing is not clearly stated on their public pricing page.",
     },
+    {
+      question: "How do I switch from RoofSnap to QuoteCore+?",
+      answer:
+        "There's no import step you're waiting on — your RoofSnap subscription stays active while you rebuild your material pricing as Smart Components (most trades have their core set done in an afternoon). Then measure your next roof from its plan in QuoteCore+ and send the quote from there. Both can run side by side until you're confident, and the free Lite plan plus 14-day trial means switching costs nothing up front.",
+    },
   ],
   related: [
     { label: "Roofing takeoff software", description: "Measure roof plans digitally with AI assistance.", href: "/roofing-takeoff-software" },
@@ -240,8 +301,23 @@ export const roofSnapPage: CompetitorPageData = {
     { label: "PlanSwift alternative", description: "General takeoff vs roofing-native.", href: "/planswift-alternative" },
     { label: "Free takeoff builder", description: "Try roof takeoff free, no signup.", href: "/free-roofing-takeoff-builder" },
   ],
+  sectionOrder: [
+    "quickAnswer",
+    "replace",
+    "bestFor",
+    "switching",
+    "comparison",
+    "pricing",
+    "workflow",
+    "video",
+    "honestWhen",
+    "freeTool",
+    "faq",
+    "related",
+  ],
   finalCta: {
     heading: "Own your quoting workflow.",
     body: "Measure your own plans, apply your own pricing rules, and turn any roof into a priced quote in minutes. Free for 14 days.",
+    ctaLabel: "Measure your next roof without a report",
   },
 };
