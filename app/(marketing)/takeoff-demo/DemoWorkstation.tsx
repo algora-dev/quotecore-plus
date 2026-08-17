@@ -5294,7 +5294,18 @@ export function DemoWorkstation({
                 // components panel scrolls it; anywhere else scrolls the
                 // canvas/plan container. Clicks stay blocked by the overlay.
                 const sidebar = document.querySelector('[data-copilot="takeoff-sidebar"]');
-                const canvasScroll = canvasRef.current?.parentElement ?? null;
+                // Fabric wraps the <canvas> in a .canvas-container div, so
+                // parentElement is not the scroller. Climb ancestors until we
+                // find an element that actually scrolls.
+                const canvasEl = canvasRef.current;
+                let canvasScroll: HTMLElement | null = null;
+                if (canvasEl) {
+                  let node: HTMLElement | null = canvasEl.parentElement;
+                  while (node) {
+                    if (node.scrollHeight > node.clientHeight) { canvasScroll = node; break; }
+                    node = node.parentElement;
+                  }
+                }
                 if (sidebar) {
                   const r = sidebar.getBoundingClientRect();
                   if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
