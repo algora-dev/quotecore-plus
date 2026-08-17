@@ -5287,7 +5287,15 @@ export function DemoWorkstation({
           {/* DEMO pre-scan modal - scan mode opens with a blank canvas and this
               prompt. "Scan plan now" kicks off the AI scan replay. */}
           {showScanStartModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25">
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25"
+              onWheel={(e) => {
+                // Let the user scroll the sidebar while the modal is open:
+                // forward wheel deltas to the component panel under the overlay.
+                const sidebar = document.querySelector('[data-copilot="takeoff-sidebar"]');
+                if (sidebar) sidebar.scrollTop += e.deltaY;
+              }}
+            >
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
                 <div className="p-6">
                   <h3 className="text-base font-semibold text-slate-900">Scan the plan with AI</h3>
@@ -6233,8 +6241,10 @@ export function DemoWorkstation({
             </h3>
             <p className="text-xs text-slate-500 mt-1">This may take a few moments.</p>
             <button
-              onClick={handleCancelAiScan}
-              className="mt-4 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors"
+              type="button"
+              disabled
+              className="mt-4 inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-400 cursor-not-allowed"
+              title="The demo scan runs from a captured session and cannot be cancelled"
             >
               Cancel scan
             </button>
