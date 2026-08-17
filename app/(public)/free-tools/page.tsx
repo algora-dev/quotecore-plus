@@ -27,7 +27,7 @@ export default function FreeToolsPage() {
           <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-10 md:pt-14 pb-6 md:pb-8 text-center">
             <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing Tools & Calculators</h1>
             <p className="mt-3 md:mt-4 text-sm md:text-lg text-slate-500 max-w-2xl mx-auto px-2">
-              Professional roofing calculators and document generators so good, other apps charge you for them. Built by a roofer, for roofers - and every trade that measures and quotes.
+              Professional roofing calculators and document generators so good, other apps charge you for them. Built by a roofer, for roofers - and every trade that measures and quotes. Need the full workflow? Explore <Link href="/construction-quoting-software" className="text-[#BD4A1A] underline underline-offset-2">construction quoting software</Link> from QuoteCore+.
             </p>
           </div>
         </section>

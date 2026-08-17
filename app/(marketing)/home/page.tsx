@@ -221,7 +221,7 @@ export default function HomePage() {
                   Built for roofing. Powerful enough for every trade.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Use digital takeoff, AI Scan Assist and Smart Components&#8482; to turn roof measurements into materials, labour and accurate pricing - then create, send and track the quote, order and invoice from the same connected job.
+                  <a href="/roofing-quoting-software" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Roofing quoting software</a> that uses digital takeoff, AI Scan Assist and Smart Components&#8482; to turn roof measurements into materials, labour and accurate pricing - then create, send and track the quote, order and invoice from the same connected job.
                 </p>
 
                 {/* Pricing reassurance line */}

@@ -6,7 +6,9 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        Roof pitch is one of the first things you need to get right on any roofing job. It affects
+        <strong>Quick answer:</strong> Roof pitch is the roof's slope, expressed as a ratio (e.g. 4:12), degrees, or percentage. Calculate it by dividing the vertical rise by the horizontal run (or measuring the angle), then convert to the format your supplier or code uses. Enter your measurements into the <Link href="/free-roof-pitch-calculator">free roof pitch calculator</Link> for instant conversions.
+      </p>
+      <p> It affects
         everything from material quantities to labour costs to whether a roof is even classed as a
         pitched roof or a flat one. Get it wrong and your numbers are off before you have even
         started.
@@ -243,6 +245,21 @@ export default function Post() {
         best free roofing tools</a> can speed up the rest of your workflow. And when you are ready
         to turn those numbers into a price, <a href="/blog/how-to-price-a-roofing-job">the roofing
         pricing guide</a> walks through the full quoting process step by step.
+      </p>
+
+      <hr />
+
+      <h2>What is the minimum roof pitch for tiles and slates?</h2>
+      <p>
+        Minimum roof slopes are set by code, not preference: under the International Residential
+        Code (IRC 2021, §R905.2.2), asphalt shingles are permitted only on slopes of 2:12 or
+        greater — with double underlayment required between 2:12 and 4:12 — while clay and
+        concrete tile requires 2.5:12 and slate 4:12 (see the{' '}
+        <a href="https://codes.iccsafe.org/s/IRC2021P3/chapter-9-roof-assemblies/IRC2021P3-Pt03-Ch09-SecR905.2.2" target="_blank" rel="noopener noreferrer">ICC IRC 2021 §R905 slope requirements</a>).
+        In the UK, NHBC Standards additionally require tile and slate roofs to comply with
+        BS 5534 (<a href="https://www.nhbc.co.uk/kontentdocuments/9bc33791-a17d-4d82-83fd-5235f20c3219/section-4-roofs.pdf" target="_blank" rel="noopener noreferrer">NHBC Standards, Chapter 7.2</a>).
+        Practical effect: once you have calculated your pitch, check it against the code minimum
+        for your covering before specifying materials.
       </p>
 
       <hr />

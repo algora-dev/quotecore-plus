@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: 'Free Purchase Order Generator',
+    title: 'Purchase Order Generator — Free | No Signup',
     description:
       'Free online purchase order generator for trades. Create professional POs for suppliers with line items and delivery dates. No signup - download as PDF.',
     alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },

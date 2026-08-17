@@ -10,6 +10,9 @@ export default function Post() {
         stuck with stock you cannot send back.
       </p>
       <p>
+        <strong>Quick answer:</strong> To work out how much roofing material you need, calculate the actual roof surface area (plan area adjusted for pitch), then apply the manufacturer's published coverage per unit and pack size for your exact tile or covering, and add a job-specific allowance for waste, cuts, and breaks. This guide shows the calculation for tiles, underlay, battens, fixings, and ridges.
+      </p>
+      <p>
         This guide explains how to calculate quantities from measured roof components, current
         manufacturer coverage data, pack sizes, and a job-specific allowance. For a deeper walkthrough of the
         estimation process behind each quantity, see <a href="/blog/how-to-estimate-roofing-materials">how to estimate roofing materials</a>.
@@ -214,6 +217,20 @@ export default function Post() {
           allowFullScreen
         />
       </div>
+
+      <hr />
+
+      <h2>What standards govern roofing material quantities and fixing?</h2>
+      <p>
+        Roofing material quantities are driven by code, not rules of thumb: in the UK, slating and
+        tiling — including the batten gauge, fixing and weather-tightness that drive material
+        counts — is governed by BS 5534:2014+A2:2018, with dry-fix ridge, hip and verge systems
+        covered by BS 8612:2018 (<a href="https://www.nhbc.co.uk/kontentdocuments/9bc33791-a17d-4d82-83fd-5235f20c3219/section-4-roofs.pdf" target="_blank" rel="noopener noreferrer">source: NHBC Standards, Chapter 7.2</a>;{' '}
+        <a href="https://www.marley.co.uk/britishstandards/bs5534" target="_blank" rel="noopener noreferrer">Marley's BS 5534 guidance</a>);
+        in IRC jurisdictions, Chapter 9 (R905) sets the equivalent slope and underlayment
+        requirements. Practical effect: calculate quantities against the specific tile's batten
+        gauge and fixing spec, not generic per-square-metre averages.
+      </p>
 
       <hr />
 
