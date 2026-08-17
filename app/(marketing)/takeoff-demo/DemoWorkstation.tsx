@@ -300,6 +300,9 @@ export function DemoWorkstation({
   // DEMO Guide Me: multi-step tutorial modal. Auto-opens after the AI scan
   // lands (scan mode); reopenable any time from the toolbar "Guide me" button.
   const [guideOpen, setGuideOpen] = useState(false);
+  // DEMO pre-scan modal - shown when scan mode opens, fires handleAiScan on
+  // "Scan plan now".
+  const [showScanStartModal, setShowScanStartModal] = useState(false);
   // DEMO limit modal - one slot, text set by whichever action was blocked.
   const [limitModal, setLimitModal] = useState<{ title: string; body: string } | null>(null);
 
@@ -1070,9 +1073,12 @@ export function DemoWorkstation({
     // scan mode auto-replays below, manual mode goes straight to the blank canvas
     // (the user is prompted by the tool bar instead).
     if (demoMode === 'scan') {
+      // DEMO: scan mode now opens the blank canvas (same as manual) with a
+      // pre-scan modal. The user clicks "Scan plan now" to kick off the AI
+      // scan replay - no auto-fire.
       if (canvasReady && !aiAutoScanRef.current) {
         aiAutoScanRef.current = true;
-        const timer = setTimeout(() => { handleAiScan(); }, 400);
+        const timer = setTimeout(() => { setShowScanStartModal(true); }, 400);
         return () => clearTimeout(timer);
       }
       return;
@@ -5278,6 +5284,35 @@ export function DemoWorkstation({
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
           <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+          {/* DEMO pre-scan modal - scan mode opens with a blank canvas and this
+              prompt. "Scan plan now" kicks off the AI scan replay. */}
+          {showScanStartModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+                <div className="p-6">
+                  <h3 className="text-base font-semibold text-slate-900">Scan the plan with AI</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    The plan is loaded and calibrated. Scan it with AI and QuoteCore+ will find the
+                    roof area and every component it can - then you can edit anything you want.
+                  </p>
+                  <div className="mt-6 flex flex-col gap-2">
+                    <button
+                      onClick={() => { setShowScanStartModal(false); handleAiScan(); }}
+                      className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                    >
+                      Scan plan now
+                    </button>
+                    <button
+                      onClick={() => setShowScanStartModal(false)}
+                      className="w-full py-2.5 text-sm font-medium text-slate-600 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+                    >
+                      Measure manually instead
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <DemoLimitModal
             open={limitModal !== null}
             title={limitModal?.title ?? ''}
