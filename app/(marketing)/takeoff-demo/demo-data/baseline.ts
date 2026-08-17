@@ -63,14 +63,15 @@ export interface DemoComponent {
 }
 
 export const DEMO_COMPONENTS: DemoComponent[] = [
-  // System placeholder components (AI scan targets) - seeded rows
-  { id: 'd711bd93-2225-467e-8278-80f26c838b38', name: 'Hip', is_system: true },
-  { id: '538eac7a-d359-4c42-bff1-8c4957c7f4cc', name: 'Valley', is_system: true },
-  { id: 'de45e5d8-70b9-4827-95be-40a881dd5fcd', name: 'Ridge', is_system: true },
-  { id: '8f3a3e15-4497-480e-afaf-60c316a37de5', name: 'Barge', is_system: true },
-  { id: '99882053-bebc-427c-9450-b652a85ef665', name: 'Spouting', is_system: true },
-  { id: 'b2d33024-e32b-4809-b0ed-3b5e90babcba', name: 'Roof Area', is_system: true },
-  { id: '2e8bf4c9-553c-4aa2-b9a4-25248124df8a', name: 'Broken Hip', is_system: true },
+  // System placeholder components (AI scan targets) - seeded rows.
+  // measurement_type drives auto tool selection when added in the demo.
+  { id: 'd711bd93-2225-467e-8278-80f26c838b38', name: 'Hip', is_system: true, measurement_type: 'lineal' },
+  { id: '538eac7a-d359-4c42-bff1-8c4957c7f4cc', name: 'Valley', is_system: true, measurement_type: 'lineal' },
+  { id: 'de45e5d8-70b9-4827-95be-40a881dd5fcd', name: 'Ridge', is_system: true, measurement_type: 'lineal' },
+  { id: '8f3a3e15-4497-480e-afaf-60c316a37de5', name: 'Barge', is_system: true, measurement_type: 'lineal' },
+  { id: '99882053-bebc-427c-9450-b652a85ef665', name: 'Spouting', is_system: true, measurement_type: 'lineal' },
+  { id: 'b2d33024-e32b-4809-b0ed-3b5e90babcba', name: 'Roof Area', is_system: true, measurement_type: 'area' },
+  { id: '2e8bf4c9-553c-4aa2-b9a4-25248124df8a', name: 'Broken Hip', is_system: true, measurement_type: 'lineal' },
   // User library rows (subset shown in the Add Component selector)
   { id: '916eac91-f744-4a3f-888f-a7bed643c160', name: 'Corrugate .40g', measurement_type: 'area', collection_id: '29c8b030-a6f7-42d8-9c06-3a82b67c58bd' },
   { id: '881aa963-1209-4344-9cf7-b1da84ff3c55', name: 'Ridge (Soft Edge, Standard)', measurement_type: 'lineal', collection_id: '29c8b030-a6f7-42d8-9c06-3a82b67c58bd' },

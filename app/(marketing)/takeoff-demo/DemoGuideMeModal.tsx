@@ -51,7 +51,7 @@ const MANUAL_STEPS: GuideStep[] = [
   },
   {
     title: 'Draw the roof area',
-    body: 'First, draw the roof area. Click the Area tool in the toolbar above the plan, then either click point to point around the roof and close on your first point, or switch to Rectangle and drag a box.',
+    body: 'First, draw the roof area. Click the Area tool in the toolbar above the plan and select Polygon. Click point to point around the roof - your final point must land on your first point to close the area.',
   },
   {
     title: 'Add the Ridge component',

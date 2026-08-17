@@ -5177,8 +5177,9 @@ export function DemoWorkstation({
                   <div>
                     <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Add Components</span>
 
-                    {/* Library selector */}
-                    {collections.length > 0 && (
+                {/* Library selector - DEMO: hidden. Only the scan placeholder
+                    components are addable, so a library filter is meaningless. */}
+                {false && collections.length > 0 && (
                       <div className="mb-3">
                         <p className="text-[11px] font-medium text-gray-500 mb-1.5">Select Library</p>
                         <select
@@ -5211,12 +5212,6 @@ export function DemoWorkstation({
                     {(() => {
                       const available = displayComponents
                         .filter(comp => !activeComponentIds.includes(comp.id))
-                        .filter(comp => !comp.is_system)
-                        .filter(comp =>
-                          selectedLibraryId === ALL_LIBRARIES
-                            ? true
-                            : (comp.collection_id ?? null) === selectedLibraryId,
-                        )
                         .filter(comp =>
                           componentSearch.trim() === ''
                             ? true
@@ -5227,9 +5222,7 @@ export function DemoWorkstation({
                           <p className="text-xs text-gray-400 py-2">
                             {componentSearch.trim() !== ''
                               ? 'No matches.'
-                              : selectedLibraryId === ALL_LIBRARIES
-                              ? 'All components are already active.'
-                              : 'No components in this library.'}
+                              : 'All components are already active.'}
                           </p>
                         );
                       }
@@ -5320,7 +5313,15 @@ export function DemoWorkstation({
                     className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'polygon' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Point by point, click first point to close"
                   >Polygon</button>
-                  <button onClick={() => { cleanupBoxDrag(); setAreaSubTool('rect'); setAreaPoints([]); }}
+                  <button onClick={() => {
+                      // DEMO: Rectangle sub-tool is app-only - the demo roof
+                      // needs two boxes but only one polygon per area is
+                      // supported in the flow, so block it with the limit modal.
+                      setLimitModal({
+                        title: 'Rectangle areas are app-only',
+                        body: 'This demo roof needs a polygon outline, so Rectangle is switched off here. Sign up for free and use Polygon or Rectangle on any plan.',
+                      });
+                    }}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'rect' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Click and drag to create box"
                   >Rectangle</button>
