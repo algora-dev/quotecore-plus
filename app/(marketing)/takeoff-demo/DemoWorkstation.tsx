@@ -5290,10 +5290,19 @@ export function DemoWorkstation({
             <div
               className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25"
               onWheel={(e) => {
-                // Let the user scroll the sidebar while the modal is open:
-                // forward wheel deltas to the component panel under the overlay.
+                // Position-aware scroll passthrough: hovering the left
+                // components panel scrolls it; anywhere else scrolls the
+                // canvas/plan container. Clicks stay blocked by the overlay.
                 const sidebar = document.querySelector('[data-copilot="takeoff-sidebar"]');
-                if (sidebar) sidebar.scrollTop += e.deltaY;
+                const canvasScroll = canvasRef.current?.parentElement ?? null;
+                if (sidebar) {
+                  const r = sidebar.getBoundingClientRect();
+                  if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+                    sidebar.scrollTop += e.deltaY;
+                    return;
+                  }
+                }
+                if (canvasScroll) canvasScroll.scrollTop += e.deltaY;
               }}
             >
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
