@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import {
@@ -12,6 +12,24 @@ import {
 } from './demo-data/baseline';
 import type { DemoFinishPayload } from './DemoWorkstation';
 import { DemoQuoteView } from './DemoQuoteView';
+
+type DemoDevice = 'desktop' | 'tablet' | 'mobile';
+
+/** DEMO device detection - best effort via UA + screen metrics.
+ *  Mobile = phones only. Tablets are detected separately so we can warn
+ *  (works, but not optimized) instead of block. */
+function detectDemoDevice(): DemoDevice {
+  if (typeof window === 'undefined') return 'desktop';
+  const ua = navigator.userAgent;
+  const isIpad = /iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  const isTabletUA = isIpad || /Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua);
+  if (isTabletUA) return 'tablet';
+  const isMobileUA = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua);
+  if (isMobileUA) return 'mobile';
+  // Touch-capable small screens ( Surface/phones in desktop mode )
+  if (navigator.maxTouchPoints > 0 && window.innerWidth < 768) return 'mobile';
+  return 'desktop';
+}
 
 // Fabric.js + the full workstation load ONLY when the user enters the demo.
 const DemoWorkstation = dynamic(
@@ -34,6 +52,14 @@ type DemoStage =
 export function DemoTakeoff() {
   const [stage, setStage] = useState<DemoStage>({ phase: 'landing' });
   const [run, setRun] = useState(0);
+  const [device, setDevice] = useState<DemoDevice>('desktop');
+  const [deviceNoticeOpen, setDeviceNoticeOpen] = useState(false);
+
+  useEffect(() => {
+    const d = detectDemoDevice();
+    setDevice(d);
+    if (d !== 'desktop') setDeviceNoticeOpen(true);
+  }, []);
 
   const enter = useCallback((mode: 'scan' | 'manual') => {
     setRun(r => r + 1);
@@ -70,6 +96,31 @@ export function DemoTakeoff() {
   // Landing panel - same visual language as the marketing site.
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center px-4 py-16">
+      {/* Device notice - mobile/tablet users get one clear warning up front. */}
+      {deviceNoticeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-6">
+              <h3 className="text-base font-semibold text-slate-900">
+                {device === 'mobile' ? 'Not available on mobile' : 'Not optimized for tablets'}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {device === 'mobile'
+                  ? 'This takeoff tool needs a desktop computer - the precision measuring tools do not work on a phone screen. Open this page on a desktop to try it.'
+                  : 'You can use this tool on a tablet, but it is not optimized - touch input is less accurate for placing points and some things may be buggy. For the best experience, use a desktop computer.'}
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <button
+                  onClick={() => setDeviceNoticeOpen(false)}
+                  className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                >
+                  {device === 'mobile' ? 'Close' : 'Continue anyway'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
         <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Interactive demo</p>
         <h1 className="mt-2 text-2xl font-semibold text-slate-900">Try the digital takeoff</h1>
@@ -102,8 +153,17 @@ export function DemoTakeoff() {
 
         <p className="mt-6 text-xs text-slate-400">
           Sample plan and AI scan captured from a real QuoteCore+ takeoff session.
-          Roof pitch fixed at 25 degrees. Best experienced on a desktop.
+          Roof pitch fixed at 25 degrees. Optimized for desktop computers - tablets
+          work but are not optimized, and mobile is not supported.
         </p>
+
+        {device !== 'desktop' && (
+          <p className="mt-3 text-xs font-medium text-[#BD4A1A]">
+            {device === 'mobile'
+              ? 'This tool does not work on mobile. Please open it on a desktop computer.'
+              : 'You are on a tablet - this tool works but is not optimized. A desktop gives the most accurate results.'}
+          </p>
+        )}
 
         <div className="mt-6 pt-6 border-t border-slate-100">
           <Link href="/" className="text-sm text-slate-500 hover:text-slate-800">

@@ -5212,6 +5212,10 @@ export function DemoWorkstation({
                     {(() => {
                       const available = displayComponents
                         .filter(comp => !activeComponentIds.includes(comp.id))
+                        // DEMO: Broken Hip (not on this plan) and Roof Area
+                        // (drawn first, before components) stay out of the
+                        // addable list.
+                        .filter(comp => !(comp.is_system && /^(broken hip|roof area)$/i.test(comp.name)))
                         .filter(comp =>
                           componentSearch.trim() === ''
                             ? true
