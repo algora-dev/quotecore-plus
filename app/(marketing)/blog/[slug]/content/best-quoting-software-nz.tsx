@@ -4,7 +4,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
 
-      <p><strong>Quick answer:</strong> The best quoting software for NZ tradies in 2026 is the one that eliminates your biggest quoting bottleneck. For most trades, that is turning measurements into a priced, professional quote quickly. QuoteCore+ is built specifically for roofing and construction contractors who want digital takeoff, reusable Smart Components, and material ordering in one platform. Buildxact, Fergus, and ServiceM8 each have strengths in different areas — job management, service work, or estimating. This guide compares all six options on pricing, features, and NZ-specific fit.</p>
+      <p><strong>Quick answer:</strong> Quoting software for contractors turns measurements, labour, and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. For NZ tradies in 2026, the strongest options are QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact, and Xero Projects. This guide compares all six on pricing, features, and NZ-specific fit.</p>
 
       <p><em>Last checked: June 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing.</em></p>
 
@@ -68,7 +68,7 @@ export default function Post() {
       <p>Once the quote is sent, acceptance tracking runs automatically. You get a notification when a customer views or accepts the quote. No more chasing phone calls asking whether they received it.</p>
       <p>From an accepted quote, you generate a materials order directly - including custom details for specific job requirements. The job then moves into workflow management: tracked from first measurement to job completion in one place.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ has NZD monthly plans for New Zealand businesses, with a 14-day free trial and no credit card required. <Link href="/pricing">See pricing</Link>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ publishes transparent pricing on its <Link href="/pricing">pricing page</Link>: a free Lite plan, paid plans from $19/month (Starter) and $39/month (Pro) up to $59/month (Pro Plus), and a 14-day free trial of all features with no credit card required. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
@@ -196,8 +196,8 @@ export default function Post() {
               ["Job costing", "Basic", "✅", "Strong", "Basic", "✅", "Basic"],
               ["NZ-built", "✅", "✅", "✅", "❌", "❌", "NZ HQ"],
               ["GST-ready", "✅", "✅", "✅", "✅", "✅", "✅"],
-              ["Free trial", "✅ 2wk", "Limited", "❌", "❌", "Limited", "Via Xero"],
-              ["Starting price (NZD)", "-", "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
+              ["Starting price (NZD)", "Free–$59/mo", "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
+              ["Free trial, no card", "✅ 14 days", "Limited", "❌", "❌", "Limited", "Via Xero"],
             ].map(([feature, ...values]) => (
               <tr key={feature}>
                 <td className="px-3 py-2 font-medium text-zinc-800 text-xs">{feature}</td>

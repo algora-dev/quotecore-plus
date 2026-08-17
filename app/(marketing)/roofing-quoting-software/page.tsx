@@ -7,13 +7,13 @@ import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Quoting Software for Contractors | QuoteCore+",
+  title: "Roofing Quoting Software | QuoteCore+",
   description:
-    "Quoting software for contractors and roofers. Digital takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
+    "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
   openGraph: {
-    title: "Quoting Software for Contractors | QuoteCore+",
+    title: "Roofing Quoting Software | QuoteCore+",
     description:
-      "Quoting software for contractors and roofers. Digital takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
+      "Roofing quoting software for roofers and contractors. Digital roof takeoff, AI Scan Assist, Smart Components, quotes, material ordering, invoicing. Plans from free to $59/month.",
     url: "/roofing-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -217,11 +217,11 @@ export default function RoofingQuotingSoftwarePage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
           <div className="relative mx-auto max-w-4xl px-6 text-center lg:px-8">
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Quoting software for contractors that keeps the whole job connected.
+              Roofing quoting software that keeps the whole job connected.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
-              Measure the roof with AI Scan Assist, build the quote with Smart Components™, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow.
+              Measure the roof with digital takeoff and AI Scan Assist, build the quote with Smart Components™, send it to the customer, order materials, manage the job, invoice and get paid - all in one connected workflow.
             </p>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
@@ -229,7 +229,7 @@ export default function RoofingQuotingSoftwarePage() {
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
-                QuoteCore+ is quoting software for contractors who want more than a quote template. It helps you move from measurements and pricing to customer approval, materials ordering, job management, invoicing and payment without rebuilding the same job information across spreadsheets, emails and documents.
+                QuoteCore+ is roofing quoting software that does more than format a quote. It helps you move from roof measurements and pricing to customer approval, materials ordering, job management, invoicing and payment without rebuilding the same job information across spreadsheets, emails and documents.
               </p>
               <p className="mt-4 text-sm text-zinc-500">
                 Built from roofing experience, but no longer limited to quoting only. QuoteCore+ supports the wider workflow from quote to payment.

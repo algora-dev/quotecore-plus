@@ -349,6 +349,11 @@ function POGeneratorForm() {
             Create a professional purchase order for your suppliers. Upload a photo of your existing
             PO and AI will fill in the form - or paste your details, or type it manually. No signup required.
           </p>
+          <div className="mt-4 max-w-xl rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm leading-6 text-slate-600">
+              <strong className="text-slate-900">Quick answer:</strong> Generate a free purchase order in seconds — fill in your details, line items, and delivery date, then download a professional PO as a PDF. Completely free, no signup, no watermark, unlimited POs.
+            </p>
+          </div>
         </section>
 
         {/* Signup notification banner - always shows content, never blank */}
