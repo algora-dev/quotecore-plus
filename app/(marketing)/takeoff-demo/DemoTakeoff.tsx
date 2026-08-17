@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import {
   DEMO_QUOTE,
   DEMO_PLAN_URL,
@@ -12,6 +11,7 @@ import {
 } from './demo-data/baseline';
 import type { DemoFinishPayload } from './DemoWorkstation';
 import { DemoQuoteView } from './DemoQuoteView';
+import { trackEvent } from '@/lib/analytics';
 
 type DemoDevice = 'desktop' | 'tablet' | 'mobile';
 
@@ -37,7 +37,7 @@ const DemoWorkstation = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-[60vh] bg-slate-900 flex items-center justify-center">
         <div className="text-white text-sm">Loading canvas...</div>
       </div>
     ),
@@ -54,14 +54,14 @@ export function DemoTakeoff() {
   const [run, setRun] = useState(0);
   const [device, setDevice] = useState<DemoDevice>('desktop');
   const [deviceNoticeOpen, setDeviceNoticeOpen] = useState(false);
-
-  useEffect(() => {
-    const d = detectDemoDevice();
-    setDevice(d);
-    if (d !== 'desktop') setDeviceNoticeOpen(true);
-  }, []);
+  // Mobile never renders the interactive UI - the page-level video fallback
+  // section (md:hidden) takes over instead.
+  const [suppressMobile, setSuppressMobile] = useState(false);
+  const deepLinked = useRef(false);
 
   const enter = useCallback((mode: 'scan' | 'manual') => {
+    trackEvent('demo_start', { mode });
+    trackEvent(mode === 'scan' ? 'demo_scan_used' : 'demo_measure_used');
     setRun(r => r + 1);
     setStage({ phase: 'takeoff', mode, run: run + 1, startedAt: Date.now() });
   }, [run]);
@@ -70,6 +70,33 @@ export function DemoTakeoff() {
     setStage({ phase: 'landing' });
     if (typeof window !== 'undefined') window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    const d = detectDemoDevice();
+    setDevice(d);
+    if (d === 'mobile') {
+      setSuppressMobile(true);
+      return;
+    }
+    if (d === 'tablet') setDeviceNoticeOpen(true);
+
+    // Deep-link support: /takeoff-demo?mode=ai|manual opens the demo at that stage.
+    if (!deepLinked.current) {
+      deepLinked.current = true;
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get('mode');
+      if (mode === 'ai' || mode === 'scan') enter('scan');
+      else if (mode === 'manual') enter('manual');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const finish = useCallback((payload: DemoFinishPayload, mode: 'scan' | 'manual') => {
+    trackEvent('demo_quote_viewed', { mode });
+    setStage(s => ({ phase: 'quote', payload, run: s.phase === 'takeoff' ? s.run : 0, startedAt: s.phase === 'takeoff' ? s.startedAt : Date.now() }));
+  }, []);
+
+  if (suppressMobile) return null;
 
   if (stage.phase === 'quote') {
     return <DemoQuoteView payload={stage.payload} elapsedMs={Date.now() - stage.startedAt} onRestart={restart} />;
@@ -88,33 +115,32 @@ export function DemoTakeoff() {
         aiTakeoffAvailable
         aiAssistPoints={DEMO_AI_POINTS}
         demoMode={stage.mode}
-        onFinish={payload => setStage({ phase: 'quote', payload, run: stage.run, startedAt: stage.startedAt })}
+        onFinish={payload => finish(payload, stage.mode)}
       />
     );
   }
 
   // Landing panel - same visual language as the marketing site.
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center px-4 py-16">
-      {/* Device notice - mobile/tablet users get one clear warning up front. */}
+    <div className="flex items-center justify-center px-4 py-10 md:py-14">
+      {/* Device notice - tablet users get one clear warning up front. */}
       {deviceNoticeOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
             <div className="p-6">
               <h3 className="text-base font-semibold text-slate-900">
-                {device === 'mobile' ? 'Not available on mobile' : 'Not optimized for tablets'}
+                Not optimized for tablets
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                {device === 'mobile'
-                  ? 'This takeoff tool needs a desktop computer - the precision measuring tools do not work on a phone screen. Open this page on a desktop to try it.'
-                  : 'You can use this tool on a tablet, but it is not optimized - touch input is less accurate for placing points and some things may be buggy. For the best experience, use a desktop computer.'}
+                You can use this tool on a tablet, but it is not optimized - touch input is less accurate for placing
+                points and some things may be buggy. For the best experience, use a desktop computer.
               </p>
               <div className="mt-6 flex flex-col gap-2">
                 <button
                   onClick={() => setDeviceNoticeOpen(false)}
                   className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
                 >
-                  {device === 'mobile' ? 'Close' : 'Continue anyway'}
+                  Continue anyway
                 </button>
               </div>
             </div>
@@ -123,7 +149,7 @@ export function DemoTakeoff() {
       )}
       <div className="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
         <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Interactive demo</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">Try the digital takeoff</h1>
+        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Try the digital takeoff</h2>
         <p className="mt-2 text-sm text-slate-500">
           The full QuoteCore+ takeoff workstation with a sample roof plan. Scan it with AI or measure
           it yourself, then see the customer quote your measurements produce. No sign-in, nothing
@@ -154,22 +180,14 @@ export function DemoTakeoff() {
         <p className="mt-6 text-xs text-slate-400">
           Sample plan and AI scan captured from a real QuoteCore+ takeoff session.
           Roof pitch fixed at 25 degrees. Optimized for desktop computers - tablets
-          work but are not optimized, and mobile is not supported.
+          work but are not optimized.
         </p>
 
-        {device !== 'desktop' && (
+        {device === 'tablet' && (
           <p className="mt-3 text-xs font-medium text-[#BD4A1A]">
-            {device === 'mobile'
-              ? 'This tool does not work on mobile. Please open it on a desktop computer.'
-              : 'You are on a tablet - this tool works but is not optimized. A desktop gives the most accurate results.'}
+            You are on a tablet - this tool works but is not optimized. A desktop gives the most accurate results.
           </p>
         )}
-
-        <div className="mt-6 pt-6 border-t border-slate-100">
-          <Link href="/" className="text-sm text-slate-500 hover:text-slate-800">
-            <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to site
-          </Link>
-        </div>
       </div>
     </div>
   );

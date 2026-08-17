@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { trackEvent } from '@/lib/analytics';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { DemoFinishPayload } from './DemoWorkstation';
 
@@ -261,7 +262,8 @@ export function DemoQuoteView({
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/signup?source=takeoff-demo"
+              href="/free-trial?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=trial"
+              onClick={() => trackEvent('trial_click', { source: 'takeoff-demo', stage: 'quote-view' })}
               className="inline-flex items-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
             >
               Create your free account
