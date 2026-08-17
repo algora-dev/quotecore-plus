@@ -5287,7 +5287,7 @@ export function DemoWorkstation({
           {/* DEMO pre-scan modal - scan mode opens with a blank canvas and this
               prompt. "Scan plan now" kicks off the AI scan replay. */}
           {showScanStartModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25">
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
                 <div className="p-6">
                   <h3 className="text-base font-semibold text-slate-900">Scan the plan with AI</h3>
