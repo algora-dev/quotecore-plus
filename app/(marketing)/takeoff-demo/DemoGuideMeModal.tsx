@@ -21,51 +21,30 @@ export interface GuideStep {
 const SCAN_STEPS: GuideStep[] = [
   {
     title: 'AI scan complete',
-    body: 'The AI has scanned your plan and drawn the roof area plus every component it could find: ridges, hips, valleys, barges and spouting.',
+    body: 'Visually check the components and area on the plan to make sure the AI got it right. The roof is fixed at 25 degrees - everything is adjusted for pitch in the next step. This is a demo - nothing is saved.',
+  },
+  {
+    title: 'Check the plan',
+    body: 'Look over the plan itself and make sure all the measurements you expect are there.',
+  },
+  {
+    title: 'The components panel',
+    body: 'On the left is the components panel. Scroll down to see everything the AI added to the plan.',
+  },
+  {
+    title: 'Select Ridge and edit',
+    body: 'Click Ridge in the panel. Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it.',
     bullets: [
-      'Calibration is already set - no need to measure a known distance.',
-      'Roof pitch is fixed at 25 degrees, so hips, valleys, barges and the roof area adjust automatically in the next step.',
-      'This is a demo - nothing is saved.',
+      'To add more lengths to Ridge, use the Line tool in the toolbar above the plan - every component except Main Roof uses Line.',
     ],
   },
   {
-    title: 'Everything is editable',
-    body: 'Check the scan got everything right. You can hide, delete, or add as many components as you want. Click Next to see how, or close this guide and just try it.',
-  },
-  {
-    title: 'Step 1 - Click an active component',
-    body: 'In the left sidebar, click any active component (try Ridge). The correct drawing tool for that component is selected automatically.',
-    bullets: [
-      'Area components (like Roof Area) use the Area tool.',
-      'Line components (ridge, hip, valley, barge, spouting) use the Line tool.',
-      'Point components use the Point tool.',
-    ],
-  },
-  {
-    title: 'Hide or delete a measurement',
-    body: 'Expand the component in the sidebar. Each measurement row has an eye icon to hide it from the plan and an X to delete it.',
-    bullets: [
-      'Hidden measurements can be shown again later.',
-      'Deleted measurements are removed from the quote totals.',
-    ],
-  },
-  {
-    title: 'Add a new component',
-    body: 'Scroll to Add Components in the sidebar, then click any component to add it. It becomes active immediately with the right tool selected.',
-    bullets: [
-      'Draw as many measurements as you need for each component.',
-    ],
-  },
-  {
-    title: 'Drawing with the tools',
-    body: 'Area tool: click point to point and close on your first point, or switch to Rectangle and drag a box. Line tool: click two points per line - add as many lines as you want. Point tool: every click on the plan counts one item.',
+    title: 'Add more components',
+    body: 'Scroll to the bottom of the panel to Add Components and add any that are missing.',
   },
   {
     title: 'Finish and see your quote',
-    body: 'When you are happy with the takeoff, click Finish and Save in the top right. Your measurements roll straight into a customer quote.',
-    bullets: [
-      'Use Undo/Redo in the toolbar if you make a mistake.',
-    ],
+    body: 'When you are happy, click Finish and Save in the top right. Your measurements roll straight into a customer quote.',
   },
 ];
 
@@ -99,6 +78,37 @@ interface Props {
   open: boolean;
   flow: 'scan' | 'manual';
   onClose: () => void;
+}
+
+/** DEMO limit modal - shown when the user tries a feature that is app-only
+ *  (custom components, new area, recalibration). Explicit Close button only,
+ *  no click-outside-to-close. */
+export function DemoLimitModal({ open, title, body, onClose }: { open: boolean; title: string; body: string; onClose: () => void }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        <div className="p-6">
+          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+          <div className="mt-6 flex flex-col gap-2">
+            <a
+              href="/signup?source=takeoff-demo"
+              className="w-full inline-flex items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            >
+              Sign up for free
+            </a>
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 text-sm font-medium text-slate-600 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+            >
+              Continue with the demo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const PANEL_W = 340;
@@ -171,7 +181,7 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
             <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
           </svg>
           <span className="text-xs font-semibold uppercase tracking-wide text-[#BD4A1A]">
-            Guide me - Step {step + 1} of {steps.length}
+            Guide me
           </span>
         </div>
         <button

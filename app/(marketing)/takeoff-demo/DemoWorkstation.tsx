@@ -27,7 +27,7 @@ import { PointMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/
 import { LineMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal';
 import { CalibrationModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal';
 import { DEMO_CALIBRATION, DEMO_SCAN } from './demo-data/baseline';
-import { DemoGuideMeModal } from './DemoGuideMeModal';
+import { DemoGuideMeModal, DemoLimitModal } from './DemoGuideMeModal';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -300,6 +300,8 @@ export function DemoWorkstation({
   // DEMO Guide Me: multi-step tutorial modal. Auto-opens after the AI scan
   // lands (scan mode); reopenable any time from the toolbar "Guide me" button.
   const [guideOpen, setGuideOpen] = useState(false);
+  // DEMO limit modal - one slot, text set by whichever action was blocked.
+  const [limitModal, setLimitModal] = useState<{ title: string; body: string } | null>(null);
 
   // Phase 7: multi-page takeoff state.
   // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
@@ -1399,6 +1401,12 @@ export function DemoWorkstation({
   // - If no areas exist, go straight to drawing mode for a new area.
   // - If areas exist, show: Option A (add to existing) or Option B (create new).
   const handleCreateNewArea = useCallback(() => {
+    // DEMO: block new areas - the sample plan has its roof area already.
+    setLimitModal({
+      title: 'New areas are app-only',
+      body: 'This demo plan already has its roof area set. Sign up for free to add as many roof areas and plans as you need on your own projects.',
+    });
+    return;
     // RULE: "+ New Area" always deselects any active component so the
     // drawn polygon is routed as a roof area, not a component measurement.
     // RC-2 fix (2026-07-05): do NOT clear activeComponentIds here - that wiped
@@ -2014,6 +2022,17 @@ export function DemoWorkstation({
   };
 
   const handleAddComponent = (componentId: string) => {
+    // DEMO: only the AI placeholder components (Ridge/Hip/Valley/Barge/
+    // Spouting/Roof Area/Broken Hip) can be added. Library rows from the
+    // captured account stay visible but are blocked with a sign-up modal.
+    const comp = components.find(c => c.id === componentId);
+    if (comp && !comp.is_system) {
+      setLimitModal({
+        title: 'Custom components are app-only',
+        body: `"${comp.name}" is from the sample component library and cannot be added in the demo. Sign up for free and you can create as many custom components as you want and use them here.`,
+      });
+      return;
+    }
     // Add to active list
     setActiveComponentIds([...activeComponentIds, componentId]);
     
@@ -4414,6 +4433,12 @@ export function DemoWorkstation({
   };
 
   const handleStartCalibration = () => {
+    // DEMO: calibration is pre-set - block recalibration with a sign-up modal.
+    setLimitModal({
+      title: 'Calibration is already set',
+      body: 'This demo plan is calibrated for you. Calibration on your own plans is available in the full app - sign up for free and use it on any plan you upload.',
+    });
+    return;
     cleanupBoxDrag();
     // If recalibrating, clear confirmation
     if (calibrationConfirmed) {
@@ -5246,6 +5271,12 @@ export function DemoWorkstation({
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
           <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+          <DemoLimitModal
+            open={limitModal !== null}
+            title={limitModal?.title ?? ''}
+            body={limitModal?.body ?? ''}
+            onClose={() => setLimitModal(null)}
+          />
 
           {/* Top Toolbar */}
           <div className="flex-shrink-0 mx-4 mt-1 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-sm" data-copilot="takeoff-toolbar">
