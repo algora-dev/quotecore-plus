@@ -46,8 +46,8 @@ const DemoWorkstation = dynamic(
 
 type DemoStage =
   | { phase: 'landing' }
-  | { phase: 'takeoff'; mode: 'scan' | 'manual'; run: number }
-  | { phase: 'quote'; payload: DemoFinishPayload; run: number };
+  | { phase: 'takeoff'; mode: 'scan' | 'manual'; run: number; startedAt: number }
+  | { phase: 'quote'; payload: DemoFinishPayload; run: number; startedAt: number };
 
 export function DemoTakeoff() {
   const [stage, setStage] = useState<DemoStage>({ phase: 'landing' });
@@ -63,7 +63,7 @@ export function DemoTakeoff() {
 
   const enter = useCallback((mode: 'scan' | 'manual') => {
     setRun(r => r + 1);
-    setStage({ phase: 'takeoff', mode, run: run + 1 });
+    setStage({ phase: 'takeoff', mode, run: run + 1, startedAt: Date.now() });
   }, [run]);
 
   const restart = useCallback(() => {
@@ -72,7 +72,7 @@ export function DemoTakeoff() {
   }, []);
 
   if (stage.phase === 'quote') {
-    return <DemoQuoteView payload={stage.payload} onRestart={restart} />;
+    return <DemoQuoteView payload={stage.payload} elapsedMs={Date.now() - stage.startedAt} onRestart={restart} />;
   }
 
   if (stage.phase === 'takeoff') {
@@ -88,7 +88,7 @@ export function DemoTakeoff() {
         aiTakeoffAvailable
         aiAssistPoints={DEMO_AI_POINTS}
         demoMode={stage.mode}
-        onFinish={payload => setStage({ phase: 'quote', payload, run: stage.run })}
+        onFinish={payload => setStage({ phase: 'quote', payload, run: stage.run, startedAt: stage.startedAt })}
       />
     );
   }

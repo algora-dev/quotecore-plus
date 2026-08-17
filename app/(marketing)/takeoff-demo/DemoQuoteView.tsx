@@ -91,9 +91,12 @@ const money = (n: number) => `$${fmt(n)}`;
 
 export function DemoQuoteView({
   payload,
+  elapsedMs,
   onRestart,
 }: {
   payload: DemoFinishPayload;
+  /** Real time from clicking Scan/Manual to reaching this screen. */
+  elapsedMs: number;
   onRestart: () => void;
 }) {
   // Roof pitch: use the first roof area's pitch (demo plan is 25 degrees).
@@ -237,8 +240,23 @@ export function DemoQuoteView({
 
         {/* CTA */}
         <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
-          <h2 className="text-xl font-semibold text-slate-900">This quote took 60 seconds.</h2>
-          <p className="mt-2 text-sm text-slate-500">
+          {(() => {
+            const secs = Math.max(1, Math.round(elapsedMs / 1000));
+            const timeLabel =
+              secs < 60
+                ? `${secs} second${secs !== 1 ? 's' : ''}`
+                : `${Math.round(secs / 60)} minute${secs >= 120 ? 's' : ''}`;
+            return (
+              <>
+                <h2 className="text-xl font-semibold text-slate-900">This quote took you {timeLabel}.</h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Including the guided tour. With your own component library and a bit of practice,
+                  every quote gets faster and easier.
+                </p>
+              </>
+            );
+          })()}
+          <p className="mt-3 text-sm text-slate-500">
             Measure plans, scan with AI, price components and send branded quotes - from one workspace.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
