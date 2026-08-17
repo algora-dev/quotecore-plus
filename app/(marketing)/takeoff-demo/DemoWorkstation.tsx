@@ -4432,6 +4432,16 @@ export function DemoWorkstation({
     setGuideOpen(true);
   };
 
+  // DEMO Guide Me (manual mode): no AI scan to wait for - open the guide as
+  // soon as the canvas is ready so the user's first instruction is drawing
+  // the roof area.
+  useEffect(() => {
+    if (demoMode !== 'manual' || !canvasReady) return;
+    const t = setTimeout(() => setGuideOpen(true), 300);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoMode, canvasReady]);
+
   const handleStartCalibration = () => {
     // DEMO: calibration is pre-set - block recalibration with a sign-up modal.
     setLimitModal({

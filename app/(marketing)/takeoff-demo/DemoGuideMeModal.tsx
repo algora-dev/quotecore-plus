@@ -20,16 +20,12 @@ export interface GuideStep {
 
 const SCAN_STEPS: GuideStep[] = [
   {
-    title: 'AI scan complete',
-    body: 'Visually check the components and area on the plan to make sure the AI got it right. The roof is fixed at 25 degrees - everything is adjusted for pitch in the next step. This is a demo - nothing is saved.',
-  },
-  {
-    title: 'Check the plan',
-    body: 'Look over the plan itself and make sure all the measurements you expect are there.',
+    title: 'Scan complete',
+    body: 'Visually check the components and area to make sure the scan found everything correctly. The roof is fixed at 25 degrees - everything is adjusted for pitch in the next step. This is a demo - nothing is saved.',
   },
   {
     title: 'The components panel',
-    body: 'On the left is the components panel. Scroll down to see everything the AI added to the plan.',
+    body: 'On the left is the components panel. Scroll down to see everything the scan added to the plan - you can edit everything from there.',
   },
   {
     title: 'Select Ridge and edit',
@@ -40,7 +36,7 @@ const SCAN_STEPS: GuideStep[] = [
   },
   {
     title: 'Add more components',
-    body: 'Scroll to the bottom of the panel to Add Components and add any that are missing.',
+    body: 'Scroll further down to Add Components. In the demo you can re-add the scan components - in the main app you can add as many custom components as you like.',
   },
   {
     title: 'Finish and see your quote',
@@ -50,27 +46,28 @@ const SCAN_STEPS: GuideStep[] = [
 
 const MANUAL_STEPS: GuideStep[] = [
   {
-    title: 'Measure it yourself',
-    body: 'This plan starts blank. Calibration is already set and the roof pitch is fixed at 25 degrees, so hips, valleys, barges and the roof area adjust automatically in the next step.',
+    title: 'Your plan is ready',
+    body: 'Calibration is already set and the roof pitch is fixed at 25 degrees, so everything is adjusted for pitch in the next step. This is a demo - nothing is saved.',
   },
   {
-    title: 'Step 1 - Draw the roof area',
-    body: 'Click the Area tool in the toolbar. Click point to point around the roof and close on your first point to finish. Or switch to Rectangle and drag a box.',
+    title: 'Draw the roof area',
+    body: 'First, draw the roof area. Click the Area tool in the toolbar above the plan, then either click point to point around the roof and close on your first point, or switch to Rectangle and drag a box.',
   },
   {
-    title: 'Add a component',
-    body: 'In the left sidebar under Add Components, click any component (try Ridge). The right drawing tool is selected for you - line components use the Line tool, point components the Point tool.',
-    bullets: [
-      'Add as many measurements as you want for each component.',
-      'Each click of the Point tool counts one item.',
-    ],
+    title: 'Add the Ridge component',
+    body: 'Scroll down to Add Components in the panel and click Ridge. The Line tool is selected for you. There are two ridges on this plan - measure point to point on each. They are labelled on the plan.',
+  },
+  {
+    title: 'Edit your measurements',
+    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it. Add more lines any time with the Line tool.',
+  },
+  {
+    title: 'Keep going',
+    body: 'The same process works for every other component - Hip, Valley, Barge, Spouting all use the Line tool. Add each one from the list and measure it.',
   },
   {
     title: 'Finish and see your quote',
-    body: 'When you are happy with the takeoff, click Finish and Save in the top right. Your measurements roll straight into a customer quote.',
-    bullets: [
-      'Use Undo/Redo in the toolbar if you make a mistake.',
-    ],
+    body: 'When you are happy, click Finish and Save in the top right. Your measurements roll straight into a customer quote.',
   },
 ];
 
