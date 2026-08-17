@@ -27,6 +27,7 @@ import { PointMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/
 import { LineMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal';
 import { CalibrationModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal';
 import { DEMO_CALIBRATION, DEMO_SCAN } from './demo-data/baseline';
+import { DemoGuideMeModal } from './DemoGuideMeModal';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -295,6 +296,10 @@ export function DemoWorkstation({
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
   const roofAreaInstructionsDismissedRef = useRef(false);
+
+  // DEMO Guide Me: multi-step tutorial modal. Auto-opens after the AI scan
+  // lands (scan mode); reopenable any time from the toolbar "Guide me" button.
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // Phase 7: multi-page takeoff state.
   // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
@@ -4399,6 +4404,13 @@ export function DemoWorkstation({
     setAiScanRaw(null);
     setShowRoofAreaInstructions(false);
     roofAreaInstructionsDismissedRef.current = true;
+
+    // DEMO Guide Me: auto-open the tutorial once the scanned takeoff is on
+    // screen, and pre-select the Ridge component so step 3's "click an active
+    // component" is already demonstrated on screen.
+    const ridge = components.find(c => c.is_system && /ridge/i.test(c.name));
+    if (ridge) setSelectedComponentId(ridge.id);
+    setGuideOpen(true);
   };
 
   const handleStartCalibration = () => {
@@ -5233,6 +5245,8 @@ export function DemoWorkstation({
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
+          <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+
           {/* Top Toolbar */}
           <div className="flex-shrink-0 mx-4 mt-1 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Fix 7: Calibrate, Area, Line, Point. Sub-tools conditional. */}
@@ -5313,6 +5327,19 @@ export function DemoWorkstation({
                 }`}
                 title="Add point marker"
               >Point</button>
+              {/* DEMO: Guide me - reopens the tutorial from step 1 */}
+              <button
+                onClick={() => setGuideOpen(true)}
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-1.5 transition-all ${
+                  guideOpen
+                    ? 'bg-orange-100 border border-orange-500 text-orange-700'
+                    : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent text-gray-700'
+                }`}
+                title="Open the step-by-step guide"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v1.5M12 18h.01" /><circle cx="12" cy="12" r="10" /></svg>
+                Guide me
+              </button>
                         </div>
 
             {/* Phase 7: Multi-lineal in-progress readout floats below the toolbar
