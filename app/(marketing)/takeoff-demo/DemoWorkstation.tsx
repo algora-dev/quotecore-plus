@@ -27,6 +27,7 @@ import { PointMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/
 import { LineMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal';
 import { CalibrationModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal';
 import { DEMO_CALIBRATION, DEMO_SCAN } from './demo-data/baseline';
+import { DemoGuideMeModal, DemoLimitModal } from './DemoGuideMeModal';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -295,6 +296,15 @@ export function DemoWorkstation({
   // for the current session. Prevents the popup re-appearing every time areaMode
   // toggles (which happens on every component add/finish when no roof area exists).
   const roofAreaInstructionsDismissedRef = useRef(false);
+
+  // DEMO Guide Me: multi-step tutorial modal. Auto-opens after the AI scan
+  // lands (scan mode); reopenable any time from the toolbar "Guide me" button.
+  const [guideOpen, setGuideOpen] = useState(false);
+  // DEMO pre-scan modal - shown when scan mode opens, fires handleAiScan on
+  // "Scan plan now".
+  const [showScanStartModal, setShowScanStartModal] = useState(false);
+  // DEMO limit modal - one slot, text set by whichever action was blocked.
+  const [limitModal, setLimitModal] = useState<{ title: string; body: string } | null>(null);
 
   // Phase 7: multi-page takeoff state.
   // P1-1b: when initialPageId is provided (new-area mode), seed pages with that page
@@ -1063,9 +1073,12 @@ export function DemoWorkstation({
     // scan mode auto-replays below, manual mode goes straight to the blank canvas
     // (the user is prompted by the tool bar instead).
     if (demoMode === 'scan') {
+      // DEMO: scan mode now opens the blank canvas (same as manual) with a
+      // pre-scan modal. The user clicks "Scan plan now" to kick off the AI
+      // scan replay - no auto-fire.
       if (canvasReady && !aiAutoScanRef.current) {
         aiAutoScanRef.current = true;
-        const timer = setTimeout(() => { handleAiScan(); }, 400);
+        const timer = setTimeout(() => { setShowScanStartModal(true); }, 400);
         return () => clearTimeout(timer);
       }
       return;
@@ -1394,6 +1407,12 @@ export function DemoWorkstation({
   // - If no areas exist, go straight to drawing mode for a new area.
   // - If areas exist, show: Option A (add to existing) or Option B (create new).
   const handleCreateNewArea = useCallback(() => {
+    // DEMO: block new areas - the sample plan has its roof area already.
+    setLimitModal({
+      title: 'New areas are app-only',
+      body: 'This demo plan already has its roof area set. Sign up for free to add as many roof areas and plans as you need on your own projects.',
+    });
+    return;
     // RULE: "+ New Area" always deselects any active component so the
     // drawn polygon is routed as a roof area, not a component measurement.
     // RC-2 fix (2026-07-05): do NOT clear activeComponentIds here - that wiped
@@ -2009,6 +2028,17 @@ export function DemoWorkstation({
   };
 
   const handleAddComponent = (componentId: string) => {
+    // DEMO: only the AI placeholder components (Ridge/Hip/Valley/Barge/
+    // Spouting/Roof Area/Broken Hip) can be added. Library rows from the
+    // captured account stay visible but are blocked with a sign-up modal.
+    const comp = components.find(c => c.id === componentId);
+    if (comp && !comp.is_system) {
+      setLimitModal({
+        title: 'Custom components are app-only',
+        body: `"${comp.name}" is from the sample component library and cannot be added in the demo. Sign up for free and you can create as many custom components as you want and use them here.`,
+      });
+      return;
+    }
     // Add to active list
     setActiveComponentIds([...activeComponentIds, componentId]);
     
@@ -4399,9 +4429,32 @@ export function DemoWorkstation({
     setAiScanRaw(null);
     setShowRoofAreaInstructions(false);
     roofAreaInstructionsDismissedRef.current = true;
+
+    // DEMO Guide Me: auto-open the tutorial once the scanned takeoff is on
+    // screen, and pre-select the Ridge component so step 3's "click an active
+    // component" is already demonstrated on screen.
+    const ridge = components.find(c => c.is_system && /ridge/i.test(c.name));
+    if (ridge) setSelectedComponentId(ridge.id);
+    setGuideOpen(true);
   };
 
+  // DEMO Guide Me (manual mode): no AI scan to wait for - open the guide as
+  // soon as the canvas is ready so the user's first instruction is drawing
+  // the roof area.
+  useEffect(() => {
+    if (demoMode !== 'manual' || !canvasReady) return;
+    const t = setTimeout(() => setGuideOpen(true), 300);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoMode, canvasReady]);
+
   const handleStartCalibration = () => {
+    // DEMO: calibration is pre-set - block recalibration with a sign-up modal.
+    setLimitModal({
+      title: 'Calibration is already set',
+      body: 'This demo plan is calibrated for you. Calibration on your own plans is available in the full app - sign up for free and use it on any plan you upload.',
+    });
+    return;
     cleanupBoxDrag();
     // If recalibrating, clear confirmation
     if (calibrationConfirmed) {
@@ -5130,8 +5183,9 @@ export function DemoWorkstation({
                   <div>
                     <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Add Components</span>
 
-                    {/* Library selector */}
-                    {collections.length > 0 && (
+                {/* Library selector - DEMO: hidden. Only the scan placeholder
+                    components are addable, so a library filter is meaningless. */}
+                {false && collections.length > 0 && (
                       <div className="mb-3">
                         <p className="text-[11px] font-medium text-gray-500 mb-1.5">Select Library</p>
                         <select
@@ -5164,12 +5218,10 @@ export function DemoWorkstation({
                     {(() => {
                       const available = displayComponents
                         .filter(comp => !activeComponentIds.includes(comp.id))
-                        .filter(comp => !comp.is_system)
-                        .filter(comp =>
-                          selectedLibraryId === ALL_LIBRARIES
-                            ? true
-                            : (comp.collection_id ?? null) === selectedLibraryId,
-                        )
+                        // DEMO: Broken Hip (not on this plan) and Roof Area
+                        // (drawn first, before components) stay out of the
+                        // addable list.
+                        .filter(comp => !(comp.is_system && /^(broken hip|roof area)$/i.test(comp.name)))
                         .filter(comp =>
                           componentSearch.trim() === ''
                             ? true
@@ -5180,9 +5232,7 @@ export function DemoWorkstation({
                           <p className="text-xs text-gray-400 py-2">
                             {componentSearch.trim() !== ''
                               ? 'No matches.'
-                              : selectedLibraryId === ALL_LIBRARIES
-                              ? 'All components are already active.'
-                              : 'No components in this library.'}
+                              : 'All components are already active.'}
                           </p>
                         );
                       }
@@ -5233,6 +5283,71 @@ export function DemoWorkstation({
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
+          <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+          {/* DEMO pre-scan modal - scan mode opens with a blank canvas and this
+              prompt. "Scan plan now" kicks off the AI scan replay. */}
+          {showScanStartModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25"
+              onWheel={(e) => {
+                // Position-aware scroll passthrough: hovering the left
+                // components panel scrolls it; anywhere else scrolls the
+                // canvas/plan container. Clicks stay blocked by the overlay.
+                const sidebar = document.querySelector('[data-copilot="takeoff-sidebar"]');
+                // Fabric wraps the <canvas> in a .canvas-container div, so
+                // parentElement is not the scroller. Climb ancestors until we
+                // find an element that actually scrolls.
+                const canvasEl = canvasRef.current;
+                let canvasScroll: HTMLElement | null = null;
+                if (canvasEl) {
+                  let node: HTMLElement | null = canvasEl.parentElement;
+                  while (node) {
+                    if (node.scrollHeight > node.clientHeight) { canvasScroll = node; break; }
+                    node = node.parentElement;
+                  }
+                }
+                if (sidebar) {
+                  const r = sidebar.getBoundingClientRect();
+                  if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+                    sidebar.scrollTop += e.deltaY;
+                    return;
+                  }
+                }
+                if (canvasScroll) canvasScroll.scrollTop += e.deltaY;
+              }}
+            >
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+                <div className="p-6">
+                  <h3 className="text-base font-semibold text-slate-900">Scan the plan with AI</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    The plan is loaded and calibrated. Scan it with AI and QuoteCore+ will find the
+                    roof area and every component it can - then you can edit anything you want.
+                  </p>
+                  <div className="mt-6 flex flex-col gap-2">
+                    <button
+                      onClick={() => { setShowScanStartModal(false); handleAiScan(); }}
+                      className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                    >
+                      Scan plan now
+                    </button>
+                    <button
+                      onClick={() => setShowScanStartModal(false)}
+                      className="w-full py-2.5 text-sm font-medium text-slate-600 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+                    >
+                      Measure manually instead
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DemoLimitModal
+            open={limitModal !== null}
+            title={limitModal?.title ?? ''}
+            body={limitModal?.body ?? ''}
+            onClose={() => setLimitModal(null)}
+          />
+
           {/* Top Toolbar */}
           <div className="flex-shrink-0 mx-4 mt-1 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-sm" data-copilot="takeoff-toolbar">
             {/* Tools - Fix 7: Calibrate, Area, Line, Point. Sub-tools conditional. */}
@@ -5265,7 +5380,15 @@ export function DemoWorkstation({
                     className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'polygon' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Point by point, click first point to close"
                   >Polygon</button>
-                  <button onClick={() => { cleanupBoxDrag(); setAreaSubTool('rect'); setAreaPoints([]); }}
+                  <button onClick={() => {
+                      // DEMO: Rectangle sub-tool is app-only - the demo roof
+                      // needs two boxes but only one polygon per area is
+                      // supported in the flow, so block it with the limit modal.
+                      setLimitModal({
+                        title: 'Rectangle areas are app-only',
+                        body: 'This demo roof needs a polygon outline, so Rectangle is switched off here. Sign up for free and use Polygon or Rectangle on any plan.',
+                      });
+                    }}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'rect' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Click and drag to create box"
                   >Rectangle</button>
@@ -5313,6 +5436,19 @@ export function DemoWorkstation({
                 }`}
                 title="Add point marker"
               >Point</button>
+              {/* DEMO: Guide me - reopens the tutorial from step 1 */}
+              <button
+                onClick={() => setGuideOpen(true)}
+                className={`px-3 py-2 rounded-full text-sm flex items-center gap-1.5 transition-all ${
+                  guideOpen
+                    ? 'bg-orange-100 border border-orange-500 text-orange-700'
+                    : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent text-gray-700'
+                }`}
+                title="Open the step-by-step guide"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v1.5M12 18h.01" /><circle cx="12" cy="12" r="10" /></svg>
+                Guide me
+              </button>
                         </div>
 
             {/* Phase 7: Multi-lineal in-progress readout floats below the toolbar
@@ -6125,8 +6261,10 @@ export function DemoWorkstation({
             </h3>
             <p className="text-xs text-slate-500 mt-1">This may take a few moments.</p>
             <button
-              onClick={handleCancelAiScan}
-              className="mt-4 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors"
+              type="button"
+              disabled
+              className="mt-4 inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-400 cursor-not-allowed"
+              title="The demo scan runs from a captured session and cannot be cancelled"
             >
               Cancel scan
             </button>

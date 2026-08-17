@@ -91,9 +91,12 @@ const money = (n: number) => `$${fmt(n)}`;
 
 export function DemoQuoteView({
   payload,
+  elapsedMs,
   onRestart,
 }: {
   payload: DemoFinishPayload;
+  /** Real time from clicking Scan/Manual to reaching this screen. */
+  elapsedMs: number;
   onRestart: () => void;
 }) {
   // Roof pitch: use the first roof area's pitch (demo plan is 25 degrees).
@@ -137,7 +140,8 @@ export function DemoQuoteView({
   const tax = subtotal * 0.15;
   const total = subtotal + tax;
 
-  const today = new Date().toLocaleDateString('en-NZ', { day: 'numeric', month: 'long', year: 'numeric' });
+  const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
+  const validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
 
   if (lines.length === 0) {
     return (
@@ -154,91 +158,105 @@ export function DemoQuoteView({
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 px-4 py-10">
-      <div className="mx-auto max-w-3xl">
-        {/* Quote document */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="px-8 pt-8 pb-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-slate-900">QuoteCore<span className="text-[#BD4A1A]">+</span></span>
-              </div>
-              <p className="mt-1 text-sm text-slate-500">RS Roofing (demo company)</p>
-              <p className="text-xs text-slate-400 mt-1">Prepared for John Smith</p>
+      <div className="mx-auto max-w-4xl">
+        {/* Quote document - 1:1 mirror of the real customer-facing accept view
+            (app/accept/[token]). Line data comes from the user's canvas. */}
+        <div id="demo-quote-document" className="bg-white rounded-xl border border-black p-8 md:p-12 space-y-8">
+          {/* Quote Header */}
+          <div className="border-b-2 border-black pb-6 mb-6">
+            {/* Logo (Top Right) */}
+            <div className="flex justify-end mb-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/MainQCP.png" alt="QuoteCore+ Roofing" className="h-16 object-contain" />
             </div>
-            <div className="text-left sm:text-right">
-              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Sample quote</p>
-              <p className="text-lg font-semibold text-slate-900">#{1015}</p>
-              <p className="text-xs text-slate-400 mt-1">{today}</p>
+
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div>
+                <h1 className="text-xl font-bold text-black mb-4">QUOTE #1015</h1>
+                <div className="space-y-2">
+                  <p className="text-base text-black"><span className="font-semibold">Client:</span> John Doe</p>
+                  <p className="text-base text-black"><span className="font-semibold">Job:</span> Roof replacement</p>
+                  <p className="text-base text-black"><span className="font-semibold">Site:</span> 42 Kowhai Lane, Auckland 1025</p>
+                  <p className="text-base text-black"><span className="font-semibold">Date:</span> {today}</p>
+                  <p className="text-base text-black">
+                    <span className="font-semibold">Valid until:</span> {validUntil}
+                    <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                      30 days remaining
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Company Details */}
+              <div className="text-right space-y-1 sm:text-right">
+                <p className="font-semibold text-base text-black">QuoteCore+ Roofing</p>
+                <p className="text-sm text-black">18 Rimu Street, Auckland 1010</p>
+                <p className="text-sm text-black">09 555 0142</p>
+                <p className="text-sm text-black">quotes@quotecore-roofing.co.nz</p>
+              </div>
             </div>
           </div>
 
-          {/* Summary strip */}
-          <div className="px-8 py-4 bg-slate-50 border-b border-slate-100 flex flex-wrap gap-x-8 gap-y-2">
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Roof area</p>
-              <p className="text-sm font-semibold text-slate-900">
-                {fmt(payload.roofAreas.reduce((s, ra) => s + ra.area, 0))} m² plan · {fmt(payload.roofAreas.reduce((s, ra) => s + ra.area, 0) / Math.cos((pitch * Math.PI) / 180))} m² at {pitch}°
-              </p>
+          {/* Line Items - same two-column format as the accept view. The
+              description folds in the measured quantity so the numbers the
+              user produced on the canvas are visible in the document. */}
+          <div className="space-y-3">
+            {lines.map(l => (
+              <div key={l.key} className="flex items-start justify-between py-3 border-b border-black">
+                <div className="flex-1">
+                  <p className="text-black">{l.label} - {fmt(l.quantity)} {l.unit}</p>
+                </div>
+                <div className="ml-4">
+                  <p className="text-black font-medium whitespace-nowrap">{money(l.total)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Totals */}
+          <div className="space-y-3 pt-4 border-t-2 border-black">
+            <div className="flex justify-between text-base">
+              <span className="text-black">Subtotal</span>
+              <span className="font-medium text-black">{money(subtotal)}</span>
             </div>
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Components measured</p>
-              <p className="text-sm font-semibold text-slate-900">{payload.componentGroups.reduce((s, g) => s + g.count, 0)} lines</p>
+            <div className="flex justify-between text-base">
+              <span className="text-black">GST (15%)</span>
+              <span className="font-medium text-black">{money(tax)}</span>
             </div>
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide">Total (incl. GST)</p>
-              <p className="text-sm font-semibold text-slate-900">{money(total)}</p>
+            <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
+              <span className="text-black">Total</span>
+              <span className="text-black">{money(total)}</span>
             </div>
           </div>
 
-          {/* Line items */}
-          <div className="px-8 py-6">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-slate-400 uppercase tracking-wide">
-                  <th className="pb-3 font-medium">Item</th>
-                  <th className="pb-3 font-medium text-right">Qty</th>
-                  <th className="pb-3 font-medium text-right">Rate</th>
-                  <th className="pb-3 font-medium text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lines.map(l => (
-                  <tr key={l.key} className="border-t border-slate-100">
-                    <td className="py-3 pr-4 text-slate-700">{l.label}</td>
-                    <td className="py-3 text-right text-slate-700 whitespace-nowrap">{fmt(l.quantity)} {l.unit}</td>
-                    <td className="py-3 text-right text-slate-500 whitespace-nowrap">{money(l.rate)} / {l.unit}</td>
-                    <td className="py-3 text-right font-medium text-slate-900 whitespace-nowrap">{money(l.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Totals */}
-            <div className="mt-6 ml-auto max-w-xs space-y-2">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal</span><span>{money(subtotal)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>GST (15%)</span><span>{money(tax)}</span>
-              </div>
-              <div className="flex justify-between text-base font-semibold text-slate-900 pt-2 border-t border-slate-200">
-                <span>Total</span><span>{money(total)}</span>
-              </div>
-            </div>
-
-            <p className="mt-8 text-xs text-slate-400 leading-relaxed">
-              Sample quote generated from your demo measurements. Quantities are pitch-adjusted
-              using QuoteCore+ takeoff calculations with sample material and labour rates.
-              This is a demonstration document, not a binding quote.
+          {/* Footer */}
+          <div className="pt-6 border-t border-black">
+            <p className="text-sm text-black italic whitespace-pre-wrap">
+              Prices are in NZD and include GST. This quote is valid for 30 days from the date above.
+              Payment is due within 7 days of job completion. Sample quote generated by the QuoteCore+
+              interactive demo - quantities come from your own measurements on the demo plan.
             </p>
           </div>
         </div>
 
         {/* CTA */}
         <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
-          <h2 className="text-xl font-semibold text-slate-900">This quote took 60 seconds.</h2>
-          <p className="mt-2 text-sm text-slate-500">
+          {(() => {
+            const secs = Math.max(1, Math.round(elapsedMs / 1000));
+            const timeLabel =
+              secs < 60
+                ? `${secs} second${secs !== 1 ? 's' : ''}`
+                : `${Math.round(secs / 60)} minute${secs >= 120 ? 's' : ''}`;
+            return (
+              <>
+                <h2 className="text-xl font-semibold text-slate-900">This quote took you {timeLabel}.</h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Including the guided tour. Sign up for free and try it on your own plans - 14-day trial, no card needed.
+                </p>
+              </>
+            );
+          })()}
+          <p className="mt-3 text-sm text-slate-500">
             Measure plans, scan with AI, price components and send branded quotes - from one workspace.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
