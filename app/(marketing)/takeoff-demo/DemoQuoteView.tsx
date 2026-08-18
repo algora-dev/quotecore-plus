@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { DemoFinishPayload } from './DemoWorkstation';
@@ -141,6 +142,26 @@ export function DemoQuoteView({
   const tax = subtotal * 0.15;
   const total = subtotal + tax;
 
+  const [endModalOpen, setEndModalOpen] = useState(false);
+
+  // End-of-demo modal: auto-open once per browser session on first reaching
+  // the quote view. Dismissible, non-blocking.
+  useEffect(() => {
+    if (lines.length === 0) return;
+    try {
+      if (sessionStorage.getItem('qc_demo_end_modal_seen') === '1') return;
+      sessionStorage.setItem('qc_demo_end_modal_seen', '1');
+    } catch {
+      // sessionStorage unavailable (private mode) - still show once per mount
+    }
+    const t = setTimeout(() => {
+      setEndModalOpen(true);
+      trackEvent('demo_end_modal_view');
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
   const validUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
 
@@ -241,8 +262,7 @@ export function DemoQuoteView({
         </div>
 
         {/* CTA */}
-        <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
-          {(() => {
+        <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">          {(() => {
             const secs = Math.max(1, Math.round(elapsedMs / 1000));
             const timeLabel =
               secs < 60
@@ -274,6 +294,50 @@ export function DemoQuoteView({
           </div>
         </div>
       </div>
+
+      {/* End-of-demo modal: shown once per session */}
+      {endModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40" role="dialog" aria-modal="true" aria-labelledby="demo-end-modal-heading">
+          <div className="relative w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={() => setEndModalOpen(false)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+
+            <h2 id="demo-end-modal-heading" className="text-xl font-semibold text-slate-900">
+              That&apos;s the fast version 🎉
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              You just used our real digital takeoff system — the canvas you measured on is exactly what&apos;s in the app.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              To keep the demo quick and easy, we pre-loaded the component library and skipped straight to the finished quote. In the full app, you can create as many components as you want with your own rules and pricing, and fully edit the quote before you send it.
+            </p>
+            <p className="mt-4 text-sm font-semibold text-slate-900">You can do all of that right now, for free.</p>
+
+            <div className="mt-6 flex flex-col gap-3">
+              <Link
+                href="/free-trial?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=demo-end-modal"
+                onClick={() => trackEvent('trial_click', { source: 'takeoff-demo', stage: 'end-modal' })}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+              >
+                Start free trial
+              </Link>
+              <Link
+                href="/#how-it-works"
+                onClick={() => trackEvent('demo_end_modal_cta', { target: 'how-it-works' })}
+                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+              >
+                See how the full workflow works
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
