@@ -309,7 +309,7 @@ export function DemoQuoteView({
             </button>
 
             <h2 id="demo-end-modal-heading" className="text-xl font-semibold text-slate-900">
-              That&apos;s the fast version 🎉
+              That&apos;s the fast version
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               You just used our real digital takeoff system — the canvas you measured on is exactly what&apos;s in the app.
@@ -317,7 +317,7 @@ export function DemoQuoteView({
             <p className="mt-3 text-sm leading-6 text-slate-600">
               To keep the demo quick and easy, we pre-loaded the component library and skipped straight to the finished quote. In the full app, you can create as many components as you want with your own rules and pricing, and fully edit the quote before you send it.
             </p>
-            <p className="mt-4 text-sm font-semibold text-slate-900">You can do all of that right now, for free.</p>
+            <p className="mt-4 text-sm font-semibold text-slate-900">Try it on your next job — free, right now.</p>
 
             <div className="mt-6 flex flex-col gap-3">
               <Link
