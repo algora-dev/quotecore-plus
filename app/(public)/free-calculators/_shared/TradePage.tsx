@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { TradeConfig } from './types';
 import { signupHref } from './types';
 import { TradeCalculator } from './TradeCalculator';
+import DemoCTACard from '@/components/DemoCTACard';
+import { ROOFING_SLUGS } from '../../free-calculators/configs/roofingSlugRegistry';
 
 /**
  * Shared page body for every trade calculator: hero, calculator, related
@@ -26,6 +28,13 @@ export function TradePage({ config }: { config: TradeConfig }) {
 
       {/* Calculator */}
       <TradeCalculator config={config} />
+
+      {/* Demo card — roofing calculators only (audience match) */}
+      {ROOFING_SLUGS.includes(config.slug) && (
+        <section className="mt-12">
+          <DemoCTACard location={`calc_${config.slug}`} variant="inline" />
+        </section>
+      )}
 
       {/* Related Free tools */}
       <section className="mt-12">
