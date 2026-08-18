@@ -479,6 +479,22 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     ],
   },
   {
+    slug: 'chrome-roof-pitch-calculator-extension',
+    category: 'roofing-estimating',
+    title: 'Free Roof Pitch Calculator for Chrome: Pitch, Angle and Rafter Length Instantly',
+    description:
+      'The QuoteCore+ Roof Pitch Calculator Chrome extension works out pitch, angle, slope and rafter length as you type, and converts rise/run, degrees and ratios. Free, no account.',
+    date: '2026-08-18',
+    lastModified: '2026-08-18',
+    faqs: [
+      { question: 'Is the QuoteCore+ Roof Pitch Calculator extension free?', answer: 'Yes. The extension is completely free with no paid tier, no trial limit and no account required. It installs from the Chrome Web Store like any other extension.' },
+      { question: 'Does the roof pitch calculator extension need an account?', answer: 'No. It is a self-contained popup calculator that opens when you click the toolbar icon. It does not ask for any personal details and does not connect to an account.' },
+      { question: 'What data does the roof pitch extension access?', answer: 'None beyond its own popup. The extension does not request permissions to read your browsing history, tabs, or website data. It is a calculator that opens on click and closes when you are done.' },
+      { question: 'Does the extension work in Edge, Brave, Arc or Opera?', answer: 'Yes. Any Chromium-based browser can install extensions from the Chrome Web Store, including Edge, Brave, Arc and Opera.' },
+      { question: 'Can the extension convert roof pitch to degrees?', answer: 'Yes. Enter rise and run, a pitch ratio, or an angle, and the extension shows the equivalent values in the other formats, plus rafter length from span and pitch.' },
+    ],
+  },
+  {
     slug: 'how-to-reduce-roofing-waste',
     category: 'roofing-estimating',
     title: 'How to Reduce Roofing Waste in Estimates: 7 Practical Strategies',

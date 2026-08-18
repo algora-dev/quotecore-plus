@@ -46,6 +46,7 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'how-to-estimate-roofing-materials': () => import('./content/how-to-estimate-roofing-materials'),
   'manual-vs-digital-roof-takeoff': () => import('./content/manual-vs-digital-roof-takeoff'),
   'how-to-reduce-roofing-waste': () => import('./content/how-to-reduce-roofing-waste'),
+  'chrome-roof-pitch-calculator-extension': () => import('./content/chrome-roof-pitch-calculator-extension'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

@@ -6,6 +6,10 @@ import DemoCTACard from '@/components/DemoCTACard';
 import { ROOFING_SLUGS } from '../../free-calculators/configs/roofingSlugRegistry';
 import { roofingConfig } from '../../free-calculators/configs/roofing';
 
+const CHROME_EXTENSION_URL =
+  'https://chromewebstore.google.com/detail/ldndmfncphniifbddcbkmamhpdnfmehm';
+const PITCH_EXTENSION_SLUGS = ['free-roof-pitch-calculator', 'free-roof-pitch-converter'];
+
 /**
  * Shared page body for every trade calculator: hero, calculator, related
  * links, tips, formula reference, FAQ. All copy comes from the config so
@@ -35,6 +39,35 @@ export function TradePage({ config }: { config: TradeConfig }) {
       {(ROOFING_SLUGS.includes(config.slug) || config.slug === roofingConfig.slug) && (
         <section className="mt-12">
           <DemoCTACard location={`calc_${config.slug}`} variant="inline" />
+        </section>
+      )}
+
+      {/* Chrome extension strip — pitch pages only */}
+      {PITCH_EXTENSION_SLUGS.includes(config.slug) && (
+        <section className="mt-8 flex flex-col items-start gap-4 rounded-xl border-2 border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/images/blog/chrome-extension-icon.png"
+            alt="QuoteCore+ Roof Pitch Calculator Chrome extension icon"
+            className="h-12 w-12 rounded-lg"
+            loading="lazy"
+            width={48}
+            height={48}
+          />
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-slate-900">Also available as a Chrome extension</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Pitch, angle, slope and rafter calculations in one click, from any tab. Free, no account.
+            </p>
+          </div>
+          <a
+            href={CHROME_EXTENSION_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]"
+          >
+            Add to Chrome
+          </a>
         </section>
       )}
 
