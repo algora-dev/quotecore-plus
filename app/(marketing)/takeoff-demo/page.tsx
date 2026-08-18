@@ -73,8 +73,11 @@ export default function TakeoffDemoPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      {/* Hero / answer block */}
-      <section className="mx-auto max-w-3xl px-4 pt-14 pb-2 text-center md:pt-20">
+      {/* The demo itself sits directly under the standard header */}
+      <DemoTakeoff />
+
+      {/* Intro / answer block (moved below the tool) */}
+      <section className="mx-auto max-w-3xl px-4 pt-14 pb-2 text-center">
         <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Interactive demo · Free · No sign-in</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
           Free Roof Takeoff Demo — Try QuoteCore+ Digital Takeoff
@@ -85,9 +88,6 @@ export default function TakeoffDemoPage() {
           desktop computer.
         </p>
       </section>
-
-      {/* The demo itself (client-only; mobile gets the video fallback below) */}
-      <DemoTakeoff />
 
       {/* Mobile fallback: interactive demo needs a desktop; show product video instead */}
       <section className="mx-auto max-w-2xl px-4 py-10 md:hidden">
