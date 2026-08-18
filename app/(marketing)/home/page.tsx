@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import CoffeePopup from "@/components/CoffeePopup";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import YouTubeLite from "@/components/YouTubeLite";
+import DemoToolCard from "@/components/DemoToolCard";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 
@@ -258,13 +258,9 @@ export default function HomePage() {
 
               </div>
 
-              {/* Right: hero video */}
+              {/* Right: interactive demo card */}
               <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
-                <YouTubeLite
-                  videoId="X379HDoDE_o"
-                  title="Create a complex roofing quote in under 3 minutes"
-                  className="w-full"
-                />
+                <DemoToolCard />
               </div>
             </div>
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { DemoTakeoff } from './DemoTakeoff';
+import BlogHeader from '@/components/BlogHeader';
 import YouTubeLite from '@/components/YouTubeLite';
 import { TrialCTA } from './TrialCTA';
 import { buildFaqSchema } from '@/lib/schema';
@@ -73,7 +74,10 @@ export default function TakeoffDemoPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      {/* The demo itself sits directly under the standard header */}
+      {/* Standard site header */}
+      <BlogHeader />
+
+      {/* The demo itself sits directly under the header */}
       <DemoTakeoff />
 
       {/* Intro / answer block (moved below the tool) */}
