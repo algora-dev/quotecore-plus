@@ -4,6 +4,7 @@ import SiteFooter from "@/components/SiteFooter";
 import YouTubeLite from "@/components/YouTubeLite";
 import { siteUrl } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import DemoCTACard from "@/components/DemoCTACard";
 
 export const metadata: Metadata = {
   title: "Video Tutorials & Walkthroughs | QuoteCore+",
@@ -257,6 +258,10 @@ export default function TutorialsPage() {
               <p className="mt-1 text-sm text-slate-500">Roofing calculators, takeoff builder, and document generators.</p>
             </a>
           </div>
+        </section>
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="tutorials_bottom" variant="inline" className="mx-auto max-w-2xl" />
         </section>
 
         <SiteFooter />

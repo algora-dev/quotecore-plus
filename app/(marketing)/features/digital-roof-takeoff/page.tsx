@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import DemoCTACard from "@/components/DemoCTACard";
 
 export const metadata: Metadata = {
   title: "Digital Roof Takeoff Software",
@@ -400,16 +401,18 @@ export default function DigitalRoofTakeoffPage() {
         </section>
 
         {/* CTA */}
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="feature_digital_roof_takeoff_bottom" variant="inline" className="mx-auto max-w-2xl" primaryMode="manual" />
+        </section>
+
         <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try the takeoff builder free</h2>
             <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
+            <a href="https://app.quote-core.com/signup?utm_source=feature-digital-roof-takeoff" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
               Start free trial
             </a>
-            <Link href="/takeoff-demo" className="ml-3 mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-[#E55A28] transition-colors hover:bg-orange-50">
-              Try the takeoff demo
-            </Link>
             <p className="mt-4 text-sm text-zinc-500">
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
             </p>

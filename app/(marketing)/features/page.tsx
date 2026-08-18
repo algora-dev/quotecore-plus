@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import React from "react";
 import Link from "next/link";
+import DemoCTACard from "@/components/DemoCTACard";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -245,6 +246,10 @@ export default function FeaturesHubPage() {
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
             </p>
           </div>
+        </section>
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="features_bottom" variant="inline" className="mx-auto max-w-2xl" />
         </section>
 
         <SiteFooter />

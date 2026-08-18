@@ -4,6 +4,7 @@ import ServicesHeader from "@/components/ServicesHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { buildBreadcrumbSchema, siteUrl } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import DemoCTACard from "@/components/DemoCTACard";
 
 export const metadata: Metadata = {
   title: "Done-for-you roofing quote service",
@@ -276,7 +277,12 @@ export default function ServicesPage() {
           </div>
         </div>
       </section>
-      <SiteFooter />
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="services_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        </section>
+
+        <SiteFooter />
     </main>
   );
 }

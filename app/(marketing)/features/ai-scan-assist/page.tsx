@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import DemoCTACard from "@/components/DemoCTACard";
 
 export const metadata: Metadata = {
   title: "AI Scan Assist for Roof Plans",
@@ -240,17 +241,19 @@ export default function AIScanAssistPage() {
           </div>
         </section>
 
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="feature_ai_scan_assist_bottom" variant="inline" className="mx-auto max-w-2xl" primaryMode="ai" />
+        </section>
+
         {/* CTA */}
         <section className="relative overflow-hidden bg-white py-16 sm:py-20">
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">Try AI Scan Assist free for 14 days</h2>
             <p className="mt-4 text-base text-zinc-600">20 AI scan points included. No card required.</p>
-            <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
+            <a href="https://app.quote-core.com/signup?utm_source=feature-ai-scan-assist" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
               Start free trial
             </a>
-            <Link href="/takeoff-demo" className="ml-3 mt-6 inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 px-7 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-[#FF6B35] hover:bg-orange-50">
-              Try the takeoff demo
-            </Link>
           </div>
         </section>
 

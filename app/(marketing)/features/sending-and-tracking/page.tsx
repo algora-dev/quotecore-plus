@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
+import DemoCTACard from "@/components/DemoCTACard";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -275,7 +276,12 @@ export default function SendingAndTrackingPage() {
           </div>
         </section>
 
-        {/* CTA */}
+        
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="feature_sending_and_tracking_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        </section>
+{/* CTA */}
         <section className="relative overflow-hidden bg-white py-16 sm:py-20">
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">Stop chasing. Start tracking.</h2>

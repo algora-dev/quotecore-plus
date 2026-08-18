@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
+import DemoCTACard from "@/components/DemoCTACard";
 import BlogHeader from "@/components/BlogHeader";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import SiteFooter from "@/components/SiteFooter";
@@ -196,7 +197,12 @@ export default function PricingPage() {
           </div>
         </section>
       </main>
-      <SiteFooter />
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="pricing_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        </section>
+
+        <SiteFooter />
     </>
   );
 }

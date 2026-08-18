@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import Link from "next/link";
+import DemoCTACard from "@/components/DemoCTACard";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -312,7 +313,12 @@ export default function MaterialOrderingPage() {
           </div>
         </section>
 
-        {/* CTA */}
+        
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="feature_material_ordering_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        </section>
+{/* CTA */}
         <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try material ordering free</h2>

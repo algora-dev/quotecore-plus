@@ -8,6 +8,7 @@ import BlogHeader from "@/components/BlogHeader";
 import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
+import DemoCTACard from "@/components/DemoCTACard";
 
 export const metadata: Metadata = {
   title: "Free 14-Day Trial - No Card Required",
@@ -197,6 +198,11 @@ export default function FreeTrialPage() {
             </div>
           </div>
         </section>
+        {/* Demo card */}
+        <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
+          <DemoCTACard location="free_trial_bottom" variant="inline" className="mx-auto max-w-2xl" />
+        </section>
+
         <SiteFooter />
       </main>
     </>
