@@ -321,7 +321,7 @@ export function DemoQuoteView({
 
             <div className="mt-6 flex flex-col gap-3">
               <Link
-                href="/signup?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=demo-end-modal"
+                href="https://app.quote-core.com/signup?utm_source=takeoff-demo&utm_medium=demo&utm_campaign=demo-end-modal"
                 onClick={() => trackEvent('trial_click', { source: 'takeoff-demo', stage: 'end-modal' })}
                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
               >
