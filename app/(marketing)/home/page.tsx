@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import CoffeePopup from "@/components/CoffeePopup";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import DemoToolCard from "@/components/DemoToolCard";
+import DemoCTACard from "@/components/DemoCTACard";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 
@@ -260,7 +260,7 @@ export default function HomePage() {
 
               {/* Right: interactive demo card */}
               <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
-                <DemoToolCard />
+                <DemoCTACard location="homepage_hero" />
               </div>
             </div>
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import DemoCTACard from "@/components/DemoCTACard";
 import {
   buildSoftwareApplicationSchema,
   buildBreadcrumbSchema,
@@ -186,6 +187,10 @@ export default function RoofingTakeoffSoftwarePage() {
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             QuoteCore+ replaces that with digital takeoff tools and AI Scan Assist. Upload a plan, measure digitally or let AI detect roof geometry, and Smart Components&#8482; automatically apply materials, labour, waste and pricing. The takeoff becomes an estimate, and the estimate becomes a quote — all in one connected workflow.
           </p>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
+          <DemoCTACard location="roofing_takeoff_software_intro" />
         </section>
 
         {/* Key takeoff features */}

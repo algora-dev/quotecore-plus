@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import DemoCTACard from "@/components/DemoCTACard";
 import {
   buildSoftwareApplicationSchema,
   buildBreadcrumbSchema,
@@ -197,6 +198,10 @@ export default function RoofingEstimatingSoftwarePage() {
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             QuoteCore+ replaces that process with a connected estimating workflow. Digital takeoff tools measure the roof. Smart Components&#8482; apply your stored materials, labour, waste and pricing rules automatically. The estimate becomes a quote without manual re-entry, and the same data carries through to material orders and invoices.
           </p>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
+          <DemoCTACard location="roofing_estimating_software_intro" />
         </section>
 
         {/* Key estimating features */}

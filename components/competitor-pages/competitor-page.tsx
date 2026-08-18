@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { CompetitorPageData, ComparisonRow, SupportStatus, SectionKey } from "@/lib/competitor-pages/types";
 import { STATUS_LABEL } from "@/lib/competitor-pages/types";
 import { TrackedCta } from "./tracked-cta";
+import DemoCTACard from "@/components/DemoCTACard";
 import CompetitorVideo from "./competitor-video";
 import PricingViewTracker from "./pricing-tracker";
 import { VIDEOS } from "@/lib/videos";
@@ -321,6 +322,9 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           “Not publicly confirmed” means the capability is not clearly stated on the
           vendor’s official website — it may exist, but we do not claim it either way.
         </p>
+        <div className="mt-12">
+          <DemoCTACard location={`${slug}_comparison_mid`} />
+        </div>
       </section>
     ),
 
@@ -657,6 +661,9 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           />
         </div>
         <p className="mt-4 text-sm text-zinc-500">No card required. Cancel anytime.</p>
+        <div className="mt-12 text-left">
+          <DemoCTACard location={`${slug}_final_cta`} variant="inline" className="mx-auto max-w-2xl" />
+        </div>
       </section>
     </main>
   );

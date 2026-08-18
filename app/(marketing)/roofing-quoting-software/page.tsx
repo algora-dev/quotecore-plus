@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import DemoCTACard from "@/components/DemoCTACard";
 import YouTubeLite from "@/components/YouTubeLite";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
@@ -263,6 +264,10 @@ export default function RoofingQuotingSoftwarePage() {
           <p className="mt-5 text-lg font-semibold text-zinc-950">
             QuoteCore+ keeps the roofing job connected from first measurement to final invoice.
           </p>
+        </section>
+
+        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
+          <DemoCTACard location="roofing_quoting_software_intro" />
         </section>
 
         {/* How it works */}
