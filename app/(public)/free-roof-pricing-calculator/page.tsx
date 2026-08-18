@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import DemoCTACard from '@/components/DemoCTACard';
 import { RoofTakeoffBuilder } from '../free-roofing-takeoff-builder/RoofTakeoffBuilder';
 
 export default function Page() {
@@ -269,6 +270,11 @@ export default function Page() {
                   </p>
                 </div>
               </div>
+            </section>
+
+            {/* Demo card */}
+            <section className="mt-10">
+              <DemoCTACard location="calc_free_roof_pricing" variant="inline" />
             </section>
 
             {/* Related tools */}

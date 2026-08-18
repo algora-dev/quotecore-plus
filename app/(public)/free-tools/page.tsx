@@ -5,6 +5,7 @@ import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { TOOLS, CALCULATORS, CALCULATOR_COUNT } from './tools-data';
 import CalculatorSearchGrid from './CalculatorSearchGrid';
 import { QuoteGeneratorSection, RoofTakeoffSection, CalculatorsSection, PurchaseOrderSection, InvoiceSection } from './ToolSections';
+import DemoCTACard from "@/components/DemoCTACard";
 
 const SITE_URL = 'https://quote-core.com';
 
@@ -132,6 +133,11 @@ export default function FreeToolsPage() {
               </div>
             </div>
           )}
+        </section>
+
+        {/* Demo card */}
+        <section className="mx-auto max-w-3xl px-2 md:px-6 py-6">
+          <DemoCTACard location="free_tools_hub" variant="inline" />
         </section>
 
         {/* Why free? */}

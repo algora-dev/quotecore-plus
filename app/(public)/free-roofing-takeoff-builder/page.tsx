@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import DemoCTACard from '@/components/DemoCTACard';
 import { SharedTakeoffBuilder } from './SharedTakeoffBuilder';
 import { parseQueryInput } from './public-contract';
 
@@ -53,6 +54,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         </ul>
       </section>
       <SharedTakeoffBuilder initialInput={initialInput} />
+
+      {/* Demo card */}
+      <section className="border-t border-slate-200 bg-white px-4 py-8">
+        <div className="mx-auto max-w-5xl">
+          <DemoCTACard location="calc_free_roofing_takeoff_builder" variant="inline" />
+        </div>
+      </section>
+
       {/* Full workflow upsell */}
       <section className="border-t border-slate-200 bg-white px-4 py-6">
         <p className="mx-auto max-w-5xl text-center text-sm text-slate-600">
