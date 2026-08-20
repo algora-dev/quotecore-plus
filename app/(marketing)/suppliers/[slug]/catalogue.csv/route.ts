@@ -23,7 +23,13 @@ export async function GET(
   // Fetch all catalogue items
   const catalogue = await getAllPublicSupplierCatalogueItems(slug);
   if (!catalogue) {
-    return new Response("No published catalogue available", { status: 404 });
+    // BRIEF-003 Phase 2: indexed export URLs previously 404'd for suppliers
+    // without a published catalogue. Resolve them to the HTML catalogue page
+    // instead of leaving dead endpoints in Google's index.
+    return Response.redirect(
+      new URL(`/suppliers/${slug}/catalogue`, _request.url),
+      301,
+    );
   }
 
   const items = catalogue.items;
