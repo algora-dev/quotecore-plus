@@ -71,6 +71,33 @@ const MANUAL_STEPS: GuideStep[] = [
   },
 ];
 
+const UPLOAD_STEPS: GuideStep[] = [
+  {
+    title: 'Calibrate your plan',
+    body: 'First, set the scale. Click Calibrate in the toolbar above the plan, then click two points on a known dimension (a wall or ridge length printed on the plan). Enter its real length and confirm. At least one calibration is required.',
+  },
+  {
+    title: 'Draw the roof area',
+    body: 'Click the Area tool and choose Polygon or Rectangle. Draw the roof plane - when it closes, name the area and enter its roof pitch. Use + New Area for each additional roof plane.',
+  },
+  {
+    title: 'Add components and measure',
+    body: 'Scroll down to Add Components in the panel and pick the first one you want to measure. The right tool is selected for you - Line for linear items, Area for planes, Count for fixings.',
+  },
+  {
+    title: 'Edit your measurements',
+    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it. Add more lines any time with the Line tool.',
+  },
+  {
+    title: 'Keep going',
+    body: 'The same process works for every other component - add each one from the list (your own components or the roofing placeholders) and measure it.',
+  },
+  {
+    title: 'Finish and see your report',
+    body: 'When you are happy, click Finish and Save in the top right. Your measurements roll into a takeoff report you can print or send into QuoteCore+.',
+  },
+];
+
 interface Props {
   open: boolean;
   flow: 'scan' | 'manual' | 'upload';
@@ -151,7 +178,7 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
 
   if (!open) return null;
 
-  const steps = flow === 'scan' ? SCAN_STEPS : MANUAL_STEPS;
+  const steps = flow === 'scan' ? SCAN_STEPS : flow === 'upload' ? UPLOAD_STEPS : MANUAL_STEPS;
   const current = steps[step];
   const isLast = step === steps.length - 1;
 

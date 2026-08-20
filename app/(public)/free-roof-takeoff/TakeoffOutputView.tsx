@@ -122,21 +122,27 @@ export function TakeoffOutputView({
             // Pitch factor comes from the first roof area that has a pitch
             // (matches the app: one pitch per area, areas measured separately).
             const pitch = payload.roofAreas.find(a => (a.pitch || 0) > 0)?.pitch ?? 0;
-            const r = applyPitchAndWaste(
-              g.total,
-              true,
-              spec.pitchEnabled ? spec.pitchType : 'none',
-              pitch,
-              spec.wasteType,
-              spec.wasteType === 'percent' ? spec.wasteValue : 0,
-              spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
-            );
-            adjustedTotal = r.afterWaste;
+            // Waste applies PER ENTRY (per measured length/area), not to the
+            // group total - same as the app. Pitch + percent are multiplicative
+            // so they commute, but fixed/per-segment waste must hit every entry.
+            const adjusted = g.measurements.reduce((sum, m) => {
+              const r = applyPitchAndWaste(
+                m.value,
+                true,
+                spec.pitchEnabled ? spec.pitchType : 'none',
+                pitch,
+                spec.wasteType,
+                spec.wasteType === 'percent' ? spec.wasteValue : 0,
+                spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
+              );
+              return sum + r.afterWaste;
+            }, 0);
+            adjustedTotal = adjusted;
             if (spec.pricingStrategy === 'per_unit') {
-              cost = adjustedTotal * (spec.materialRate + spec.labourRate);
+              cost = adjusted * (spec.materialRate + spec.labourRate);
             } else if (spec.packPrice && spec.packSize) {
-              const packs = Math.ceil(adjustedTotal / spec.packSize);
-              cost = packs * spec.packPrice + adjustedTotal * spec.labourRate;
+              const packs = Math.ceil(adjusted / spec.packSize);
+              cost = packs * spec.packPrice + adjusted * spec.labourRate;
             }
           } else if (spec && g.measurementType === 'quantity') {
             adjustedTotal = g.count;
@@ -283,7 +289,7 @@ export function TakeoffOutputView({
                         {c.adjustedTotal != null && c.measurementType !== 'quantity' && (
                           <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(c.adjustedTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} adjusted</span>
                         )}
-                        {c.cost != null && <span className="ml-2">- ${fmt(c.cost)}</span>}
+                        {c.cost != null && <span className="ml-2">&middot; ${fmt(c.cost)}</span>}
                       </span>
                     </div>
                     <div className="space-y-0.5">
