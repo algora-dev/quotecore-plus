@@ -86,3 +86,43 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
 export function resolveUnitOption(system: TakeoffUnitSystem, config: TakeoffTradeConfig): TakeoffUnitOption {
   return config.unitOptions.find(o => o.value === system) ?? config.unitOptions[0];
 }
+
+// ---------------------------------------------------------------------------
+// User-built component specs (free-roof-takeoff step 2)
+// ---------------------------------------------------------------------------
+
+/** Full user-built component spec - mirrors the app's Add Component form
+ *  (component_library columns) so it can be persisted 1:1 on signup. */
+export interface TakeoffComponentSpec {
+  /** Session id (custom-*). NOT a DB id. */
+  id: string;
+  name: string;
+  measurementType: 'lineal' | 'area' | 'quantity';
+  /** Material rate per measured unit (per_unit strategy). */
+  materialRate: number;
+  /** Labour rate per measured unit. */
+  labourRate: number;
+  pricingStrategy: 'per_unit' | 'per_pack_length' | 'per_pack_area';
+  /** Fixed-quantity pack price + size (strategy != per_unit). */
+  packPrice: number | null;
+  packSize: number | null;
+  wasteType: 'none' | 'percent' | 'fixed' | 'fixed_per_segment';
+  /** Waste amount: percent value, or fixed amount. */
+  wasteValue: number;
+  /** Apply pitch factor to measured quantities (roofing only). */
+  pitchEnabled: boolean;
+  pitchType: 'rafter' | 'valley_hip';
+}
+
+export const EMPTY_SPEC: Omit<TakeoffComponentSpec, 'id' | 'name'> = {
+  measurementType: 'lineal',
+  materialRate: 0,
+  labourRate: 0,
+  pricingStrategy: 'per_unit',
+  packPrice: null,
+  packSize: null,
+  wasteType: 'none',
+  wasteValue: 0,
+  pitchEnabled: false,
+  pitchType: 'rafter',
+};

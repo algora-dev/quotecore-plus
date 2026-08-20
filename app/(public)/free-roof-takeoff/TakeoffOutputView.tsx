@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { applyPitchAndWaste, hipValleyPitchFactor } from '@/app/lib/pricing/engine';
+import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
-import type { TakeoffUnitSystem } from './tradeConfig';
+import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
 
 /**
  * Free Roof Takeoff output view.
@@ -44,6 +44,10 @@ interface ComponentRow {
   measurementType?: string;
   entries: { value: number }[];
   semantic: string | null;
+  /** Pitch/waste-adjusted total (user-built components only). */
+  adjustedTotal: number | null;
+  /** Material + labour cost at the spec rates (user-built only). */
+  cost: number | null;
 }
 
 const HIP_SEMANTICS = ['hips', 'broken_hips'];
@@ -59,6 +63,7 @@ export function TakeoffOutputView({
   payload,
   extras,
   unitSystem = 'metric',
+  specs = [],
   onRestart,
   onBackToCanvas,
 }: {
@@ -66,6 +71,9 @@ export function TakeoffOutputView({
   extras: TakeoffOutputExtras;
   /** Chosen in the landing wizard. Falls back to the calibration unit. */
   unitSystem?: TakeoffUnitSystem;
+  /** User-built component specs (step 2 "build your own"). When present,
+   *  quantities are pitch/waste-adjusted and costs shown per component. */
+  specs?: TakeoffComponentSpec[];
   onRestart: () => void;
   onBackToCanvas: () => void;
 }) {
@@ -106,17 +114,51 @@ export function TakeoffOutputView({
     () =>
       payload.componentGroups
         .filter(g => g.count > 0)
-        .map(g => ({
-          key: g.componentId,
-          name: g.name,
-          count: g.count,
-          total: g.total,
-          measurementType: g.measurementType,
-          entries: g.measurements,
-          semantic: g.semantic,
-        })),
-    [payload],
+        .map(g => {
+          const spec = specs.find(s => s.id === g.componentId) ?? null;
+          let adjustedTotal: number | null = null;
+          let cost: number | null = null;
+          if (spec && g.measurementType !== 'quantity') {
+            // Pitch factor comes from the first roof area that has a pitch
+            // (matches the app: one pitch per area, areas measured separately).
+            const pitch = payload.roofAreas.find(a => (a.pitch || 0) > 0)?.pitch ?? 0;
+            const r = applyPitchAndWaste(
+              g.total,
+              true,
+              spec.pitchEnabled ? spec.pitchType : 'none',
+              pitch,
+              spec.wasteType,
+              spec.wasteType === 'percent' ? spec.wasteValue : 0,
+              spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
+            );
+            adjustedTotal = r.afterWaste;
+            if (spec.pricingStrategy === 'per_unit') {
+              cost = adjustedTotal * (spec.materialRate + spec.labourRate);
+            } else if (spec.packPrice && spec.packSize) {
+              const packs = Math.ceil(adjustedTotal / spec.packSize);
+              cost = packs * spec.packPrice + adjustedTotal * spec.labourRate;
+            }
+          } else if (spec && g.measurementType === 'quantity') {
+            adjustedTotal = g.count;
+            cost = g.count * (spec.materialRate + spec.labourRate);
+          }
+          return {
+            key: g.componentId,
+            name: g.name,
+            count: g.count,
+            total: g.total,
+            measurementType: g.measurementType,
+            entries: g.measurements,
+            semantic: g.semantic,
+            adjustedTotal,
+            cost,
+          };
+        }),
+    [payload, specs],
   );
+
+  const totalCost = components.reduce((s, c) => s + (c.cost ?? 0), 0);
+  const hasAnyCost = components.some(c => c.cost != null);
 
   const totalPlanArea = areas.reduce((s, a) => s + a.planArea, 0);
   const totalPitchedArea = areas.reduce((s, a) => s + a.pitchedArea, 0);
@@ -140,6 +182,7 @@ export function TakeoffOutputView({
             tool: 'free-roof-takeoff',
             unit: payload.calibrationUnit,
             unitSystem: system,
+            componentSpecs: specs,
             roofAreas: payload.roofAreas,
             componentGroups: payload.componentGroups.map(g => ({
               componentId: g.componentId,
@@ -234,7 +277,13 @@ export function TakeoffOutputView({
                     <div className="flex items-center justify-between pb-1">
                       <span className="text-black font-semibold">{c.name}</span>
                       <span className="text-black font-semibold whitespace-nowrap">
-                        {c.measurementType === 'quantity' ? `${c.count} ea` : `${fmt(c.total)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+                        {c.measurementType === 'quantity'
+                          ? `${c.count} ea`
+                          : `${fmt(c.total)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+                        {c.adjustedTotal != null && c.measurementType !== 'quantity' && (
+                          <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(c.adjustedTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} adjusted</span>
+                        )}
+                        {c.cost != null && <span className="ml-2">- ${fmt(c.cost)}</span>}
                       </span>
                     </div>
                     <div className="space-y-0.5">
