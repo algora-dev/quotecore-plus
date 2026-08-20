@@ -98,6 +98,7 @@ export function TakeoffOutputView({
               semantic: g.semantic,
               count: g.count,
               total: g.total,
+              measurementType: g.measurementType,
               measurements: g.measurements,
             })),
             savedAt: new Date().toISOString(),

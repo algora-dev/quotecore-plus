@@ -123,6 +123,7 @@ export interface DemoFinishPayload {
     semantic: string | null;
     count: number;
     total: number;
+    measurementType?: string;
     measurements: { value: number }[];
   }>;
   calibrationUnit: string;
@@ -511,6 +512,36 @@ export function DemoWorkstation({
   
   // Component display state (may include test components)
   const [displayComponents, setDisplayComponents] = useState<Component[]>([]);
+
+  // UPLOAD MODE (free-roof-takeoff): in-session custom components. Max 7,
+  // never persisted - rebuilt each visit. Deliberate friction: the fix is
+  // signing up where the component library saves.
+  const customComponentsRef = useRef<Component[]>([]);
+  const [customVersion, setCustomVersion] = useState(0);
+  const [showCreateComponent, setShowCreateComponent] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customType, setCustomType] = useState<'lineal' | 'area'>('lineal');
+  const MAX_CUSTOM_COMPONENTS = 7;
+
+  const handleCreateCustomComponent = () => {
+    const name = customName.trim();
+    if (!name) return;
+    if (customComponentsRef.current.length >= MAX_CUSTOM_COMPONENTS) {
+      setLimitModal({
+        title: 'Component limit reached',
+        body: `This free tool holds up to ${MAX_CUSTOM_COMPONENTS} custom components per session - and they reset when you leave. Create a free QuoteCore+ account and your component library saves permanently, with unlimited components on paid plans.`,
+      });
+      setShowCreateComponent(false);
+      return;
+    }
+    const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const comp: Component = { id, name, measurement_type: customType, is_system: false, collection_id: 'tool-custom' };
+    customComponentsRef.current = [...customComponentsRef.current, comp];
+    setCustomVersion(v => v + 1);
+    setCustomName('');
+    setCustomType('lineal');
+    setShowCreateComponent(false);
+  };
   
   // Auto-assign colors to components
   useEffect(() => {
@@ -523,8 +554,13 @@ export function DemoWorkstation({
       console.warn('[Components] No components found in component library for this company');
     }
     
-    setDisplayComponents(components);
-  }, [components, calibrationConfirmed]);
+    setDisplayComponents(
+      demoMode === 'upload'
+        ? [...components, ...customComponentsRef.current]
+        : components,
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [components, calibrationConfirmed, customVersion, demoMode]);
   
   // Assign colors to active components (when activeComponentIds changes)
   // NOTE: AI system placeholder components keep their registry colour,
@@ -1413,11 +1449,14 @@ export function DemoWorkstation({
   // - If areas exist, show: Option A (add to existing) or Option B (create new).
   const handleCreateNewArea = useCallback(() => {
     // DEMO: block new areas - the sample plan has its roof area already.
-    setLimitModal({
-      title: 'New areas are app-only',
-      body: 'This demo plan already has its roof area set. Sign up for free to add as many roof areas and plans as you need on your own projects.',
-    });
-    return;
+    // UPLOAD MODE: real flow - the user's plan may need multiple areas.
+    if (demoMode !== 'upload') {
+      setLimitModal({
+        title: 'New areas are app-only',
+        body: 'This demo plan already has its roof area set. Sign up for free to add as many roof areas and plans as you need on your own projects.',
+      });
+      return;
+    }
     // RULE: "+ New Area" always deselects any active component so the
     // drawn polygon is routed as a roof area, not a component measurement.
     // RC-2 fix (2026-07-05): do NOT clear activeComponentIds here - that wiped
@@ -2036,8 +2075,10 @@ export function DemoWorkstation({
     // DEMO: only the AI placeholder components (Ridge/Hip/Valley/Barge/
     // Spouting/Roof Area/Broken Hip) can be added. Library rows from the
     // captured account stay visible but are blocked with a sign-up modal.
+    // Upload mode (free-roof-takeoff): in-session custom components and the
+    // system placeholders are both addable; there is no captured library.
     const comp = components.find(c => c.id === componentId);
-    if (comp && !comp.is_system) {
+    if (demoMode !== 'upload' && comp && !comp.is_system) {
       setLimitModal({
         title: 'Custom components are app-only',
         body: `"${comp.name}" is from the sample component library and cannot be added in the demo. Sign up for free and you can create as many custom components as you want and use them here.`,
@@ -4574,6 +4615,7 @@ export function DemoWorkstation({
         semantic: comp ? resolveSemanticKey(comp.name) : null,
         count: g.measurements.length,
         total: g.measurements.reduce((s, m) => s + m.value, 0),
+        measurementType: comp?.measurement_type,
         measurements: g.measurements.map(m => ({ value: m.value })),
       };
     }),
@@ -5277,6 +5319,24 @@ export function DemoWorkstation({
                       <svg className="flex-shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                       <p className="text-xs text-gray-500 italic">Click on the plan to count this item. Each click adds one.</p>
                     </div>
+
+                    {/* UPLOAD MODE: create custom components (max 7, session only) */}
+                    {demoMode === 'upload' && (
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowCreateComponent(true)}
+                          className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-[#FF6B35] hover:bg-orange-50/40 text-sm text-gray-600 hover:text-gray-800 transition-all"
+                        >
+                          + Create your own component
+                        </button>
+                        {customComponentsRef.current.length > 0 && (
+                          <p className="mt-2 text-[11px] text-gray-400">
+                            {customComponentsRef.current.length}/{MAX_CUSTOM_COMPONENTS} custom components this session - they reset when you leave. A free account saves them permanently.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -5292,6 +5352,59 @@ export function DemoWorkstation({
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
           <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+
+          {/* UPLOAD MODE: create-custom-component modal (session-only) */}
+          {showCreateComponent && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/40">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                <h3 className="text-base font-semibold text-slate-900">Create a component</h3>
+                <p className="mt-1 text-xs text-slate-500">Measures like the app - saved for this session only. A free account keeps your library permanently.</p>
+                <label className="block mt-4 text-xs font-medium text-slate-600">Name</label>
+                <input
+                  autoFocus
+                  value={customName}
+                  onChange={e => setCustomName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleCreateCustomComponent(); }}
+                  placeholder="e.g. Fascia, Flashing, Ridge Capping"
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                />
+                <label className="block mt-3 text-xs font-medium text-slate-600">Measurement type</label>
+                <div className="mt-1 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCustomType('lineal')}
+                    className={`flex-1 px-3 py-2 rounded-full text-xs font-medium border transition-all ${customType === 'lineal' ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`}
+                  >
+                    Length (m)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomType('area')}
+                    className={`flex-1 px-3 py-2 rounded-full text-xs font-medium border transition-all ${customType === 'area' ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`}
+                  >
+                    Area (m&sup2;)
+                  </button>
+                </div>
+                <div className="mt-5 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCreateCustomComponent}
+                    disabled={!customName.trim()}
+                    className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Create component
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateComponent(false)}
+                    className="px-4 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* DEMO pre-scan modal - scan mode opens with a blank canvas and this
               prompt. "Scan plan now" kicks off the AI scan replay. */}
           {showScanStartModal && (
@@ -5391,11 +5504,15 @@ export function DemoWorkstation({
                   <button onClick={() => {
                       // DEMO: Rectangle sub-tool is app-only - the demo roof
                       // needs two boxes but only one polygon per area is
-                      // supported in the flow, so block it with the limit modal.
-                      setLimitModal({
-                        title: 'Rectangle areas are app-only',
-                        body: 'This demo roof needs a polygon outline, so Rectangle is switched off here. Sign up for free and use Polygon or Rectangle on any plan.',
-                      });
+                      // supported in the flow. UPLOAD MODE: real flow.
+                      if (demoMode !== 'upload') {
+                        setLimitModal({
+                          title: 'Rectangle areas are app-only',
+                          body: 'This demo roof needs a polygon outline, so Rectangle is switched off here. Sign up for free and use Polygon or Rectangle on any plan.',
+                        });
+                        return;
+                      }
+                      setAreaSubTool('rect');
                     }}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'rect' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Click and drag to create box"

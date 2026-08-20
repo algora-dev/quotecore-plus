@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/app/lib/supabase/server';
+import { createAdminClient } from '@/app/lib/supabase/admin';
 import { createComponentFromCalcDraft } from '@/app/lib/free-tools/createComponentFromDraft';
 
 export const runtime = 'nodejs';
@@ -89,6 +90,23 @@ export async function GET(req: NextRequest) {
     .maybeSingle();
 
   const slug = company?.slug || 'workspace';
+
+  // Free-roof-takeoff drafts are NOT smart components - dispatch them to
+  // their own import route (creates a digital-entry quote at the builder
+  // stage). The signup banner links here for ALL draft types.
+  {
+    const admin = createAdminClient();
+    const { data: typeRow } = await admin
+      .from('free_document_drafts')
+      .select('draft_type')
+      .eq('id', draftId)
+      .maybeSingle();
+    if (typeRow?.draft_type === 'takeoff') {
+      return NextResponse.redirect(
+        new URL(`/api/app/import-takeoff-draft?draft=${draftId}`, req.url),
+      );
+    }
+  }
 
   // Server UUIDs get created directly; local-only fallback ids (draft-<ts>)
   // have no server copy, so the prefill path is the only option for them.

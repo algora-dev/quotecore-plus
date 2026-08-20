@@ -68,6 +68,19 @@ export function DocDraftRestorer({ workspaceSlug }: { workspaceSlug: string }) {
           }
         }
 
+        // 3. Takeoff drafts have their own import route (creates a digital-
+        // entry quote at the quote-builder stage).
+        if (!draftData) {
+          const res = await fetch(`/api/free-tools/drafts/${id}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json?.draftType === 'takeoff') {
+              router.push(`/api/app/import-takeoff-draft?draft=${id}`);
+              return;
+            }
+          }
+        }
+
         if (!draftData) {
           setStatus('error');
           setErrorMessage('Draft not found. It may have expired.');
