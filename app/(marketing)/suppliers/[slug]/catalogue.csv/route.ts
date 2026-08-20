@@ -1,10 +1,5 @@
 import { NextRequest } from "next/server";
 import { getPublicSupplier } from "@/lib/supplier-directory";
-import {
-  getAllPublicSupplierCatalogueItems,
-  getOrderedColumns,
-  columnLabel,
-} from "@/lib/supplier-catalogue";
 
 export const dynamic = "force-dynamic";
 
@@ -14,61 +9,16 @@ export async function GET(
 ) {
   const { slug } = await params;
 
-  // Verify supplier exists and is visible
+  // BRIEF-003 residual cleanup: export URLs are no longer public download
+  // endpoints. Resolve them to the HTML catalogue page (which links to the
+  // versioned downloads) instead of serving raw CSV. Indexed URLs get a 301.
   const supplierData = await getPublicSupplier(slug);
   if (!supplierData || !supplierData.eligibility.page_visible) {
     return new Response("Catalogue not found", { status: 404 });
   }
 
-  // Fetch all catalogue items
-  const catalogue = await getAllPublicSupplierCatalogueItems(slug);
-  if (!catalogue) {
-    // BRIEF-003 Phase 2: indexed export URLs previously 404'd for suppliers
-    // without a published catalogue. Resolve them to the HTML catalogue page
-    // instead of leaving dead endpoints in Google's index.
-    return Response.redirect(
-      new URL(`/suppliers/${slug}/catalogue`, _request.url),
-      301,
-    );
-  }
-
-  const items = catalogue.items;
-  const columns = getOrderedColumns(items);
-
-  // Build CSV
-  const headerRow = columns.map((col) => escapeCSV(columnLabel(col))).join(",");
-  const dataRows = items.map((item) =>
-    columns
-      .map((col) => escapeCSV(item.raw_row[col] ?? ""))
-      .join(","),
+  return Response.redirect(
+    new URL(`/suppliers/${slug}/catalogue`, _request.url),
+    301,
   );
-
-  const csv = [headerRow, ...dataRows].join("\r\n");
-
-  // Build filename: supplier-name-catalogue-v{version}-{date}.csv
-  const supplierName = catalogue.supplier.name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  const version = catalogue.catalogue.version ?? 1;
-  const date = new Date().toISOString().split("T")[0];
-  const filename = `${supplierName}-catalogue-v${version}-${date}.csv`;
-
-  return new Response(`\uFEFF${csv}`, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${filename}"`,
-      "Cache-Control": "public, max-age=300, s-maxage=600",
-      "X-Robots-Tag": "noindex",
-    },
-  });
-}
-
-function escapeCSV(value: string): string {
-  // If value contains comma, quote, or newline, wrap in quotes and escape quotes
-  if (/[",\r\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
 }

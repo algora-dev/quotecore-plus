@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title,
     description,
     alternates: {
-      canonical: `https://quote-core.com/suppliers/${slug}/catalogues/${versionNum}`,
+      canonical: `https://quote-core.com/suppliers/${slug}/catalogue`,
     },
     openGraph: {
       title,
@@ -53,7 +53,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
     },
-    robots: { index: true, follow: true },
+    // BRIEF-003 residual cleanup: versioned catalogue pages are working
+    // archives reached from the supplier page, not separate indexable entry
+    // points. Canonical points to the parent catalogue page.
+    robots: { index: false, follow: true },
   };
 }
 

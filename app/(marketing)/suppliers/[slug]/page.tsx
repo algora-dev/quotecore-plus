@@ -633,27 +633,6 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                     </svg>
                   </Link>
                 </div>
-                {/* Download links */}
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <a
-                    href={`/suppliers/${s.slug}/catalogue.csv`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-                  >
-                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download CSV
-                  </a>
-                  <a
-                    href={`/suppliers/${s.slug}/catalogue.json`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
-                  >
-                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download JSON
-                  </a>
-                </div>
               </div>
             </div>
           </section>

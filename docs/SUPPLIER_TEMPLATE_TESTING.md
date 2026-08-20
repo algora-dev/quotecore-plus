@@ -30,13 +30,13 @@
 - [ ] Pricing notice visible: "Pricing is indicative..."
 
 ## 4. Catalogue CSV Download (Phase 1)
-- [ ] Click "Download CSV" or visit `/suppliers/{slug}/catalogue.csv`
+- [ ] Visit `/suppliers/{slug}/catalogue.csv` — confirms 301 redirect to `/suppliers/{slug}/catalogue` (export URLs are no longer direct downloads; versioned downloads live under `/catalogues/{version}/`)
 - [ ] File downloads with correct filename: `{supplier-name}-catalogue-v{version}-{date}.csv`
 - [ ] File opens in Excel/Sheets with proper columns
 - [ ] UTF-8 BOM present (accented characters display correctly)
 
 ## 5. Catalogue JSON Download (Phase 1)
-- [ ] Click "Download JSON" or visit `/suppliers/{slug}/catalogue.json`
+- [ ] Visit `/suppliers/{slug}/catalogue.json` — confirms 301 redirect to `/suppliers/{slug}/catalogue`
 - [ ] Returns valid JSON with `supplier`, `catalogue`, `items` structure
 - [ ] Each item has `supplier_product_code`, `product_name`, `price` (or aliases mapped)
 - [ ] Unknown columns appear in `additional_attributes`
