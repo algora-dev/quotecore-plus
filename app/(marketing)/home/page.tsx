@@ -5,6 +5,7 @@ import CoffeePopup from "@/components/CoffeePopup";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import DemoCTACard from "@/components/DemoCTACard";
+import YouTubeLite from "@/components/YouTubeLite";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
 
@@ -216,13 +217,13 @@ export default function HomePage() {
               {/* Left: text */}
               <div className="relative z-20 flex-1 text-center lg:flex-[1.12] lg:text-left">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
-                  Roofing quoting, takeoff and job workflow software
+                  Takeoff, estimating &amp; quoting software for measured trades
                 </p>
                 <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-6xl">
-                  Built for roofing. Powerful enough for every trade.
+                  Measure the job. Calculate the price. Send the quote.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  <a href="/roofing-quoting-software" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Roofing quoting software</a> that uses digital takeoff, AI Scan Assist and Smart Components&#8482; to turn roof measurements into materials, labour and accurate pricing - then create, send and track the quote, order and invoice from the same connected job.
+                  QuoteCore+ is the app that takes you from plan to priced quote. Built for roofing first - powerful enough for every trade - it uses <a href="/features/digital-roof-takeoff" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">digital takeoff</a>, <a href="/features/ai-scan-assist" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</a> and <a href="/features/smart-components" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</a> to turn roof measurements into materials, labour and accurate pricing - then create, send and track the quote, order and invoice from the same connected job.
                 </p>
 
                 {/* Pricing reassurance line */}
@@ -278,9 +279,47 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* 1a. Plain-language three-step flow */}
+        <section className="border-b border-zinc-100 bg-white py-14 lg:py-16">
+          <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
+            <h2 className="text-center text-2xl font-semibold sm:text-3xl">
+              How you go from plan to priced quote
+            </h2>
+            <div className="mt-10 grid gap-6 lg:grid-cols-3">
+              <div className="rounded-2xl border border-zinc-200 bg-white p-7">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6B35]/10 text-base font-semibold text-[#FF6B35]">1</div>
+                <h3 className="mt-4 text-lg font-semibold text-zinc-950">Measure the job in the app</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">Upload a plan and measure on screen - no printing, no scaling by hand (using <Link href="/features/digital-roof-takeoff" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Digital Takeoff</Link>), or speed it up with <Link href="/features/ai-scan-assist" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</Link>.</p>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white p-7">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6B35]/10 text-base font-semibold text-[#FF6B35]">2</div>
+                <h3 className="mt-4 text-lg font-semibold text-zinc-950">Price it with your saved pricing</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">Your materials, labour, waste, pitch and pack-size rules are remembered and applied automatically (using <Link href="/features/smart-components" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</Link>). You don't re-enter them every quote.</p>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white p-7">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6B35]/10 text-base font-semibold text-[#FF6B35]">3</div>
+                <h3 className="mt-4 text-lg font-semibold text-zinc-950">Create the quote in a few clicks</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">The quote is generated from what you measured and priced. Review, send, and track when it's opened - all from the same job.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Differentiator - moved up from Smart Components section */}
+        <section className="mx-auto w-full max-w-4xl px-6 py-14 text-center lg:px-8">
+          <h2 className="text-2xl font-semibold leading-snug text-zinc-950 sm:text-3xl">
+            Most software remembers what you charged.
+            <br className="hidden sm:block" /> QuoteCore+ remembers <span className="text-[#FF6B35]">how you work</span>.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-zinc-600">
+            Everything your business does - labour rates, waste factors, pack sizes, formulas - can be saved once as a Smart Component and reused on every future quote.
+          </p>
+        </section>
+
         {/* 1b. Three Engines Band */}
         <section className="border-y border-zinc-100 bg-zinc-50/60">
           <div className="mx-auto w-full max-w-7xl px-6 py-10 lg:px-8">
+            <p className="mb-6 text-center text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">The engines behind each step</p>
             <div className="grid gap-6 sm:grid-cols-3">
               <div className="rounded-2xl border border-zinc-200 bg-white p-6 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FF6B35]/10">
@@ -405,7 +444,7 @@ export default function HomePage() {
                   Smart Components™ store the materials, labour, waste allowances, pricing, formulas, and business rules behind the work you quote regularly. Build the logic once, then reuse it across every future job.
                 </p>
                 <p className="mt-4 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Most software remembers what you charged. QuoteCore+ remembers how you work - so every quote starts from your own proven logic, not a blank page.
+                  Every quote starts from your own proven logic, not a blank page.
                 </p>
                 <ul className="mt-6 grid gap-3 sm:grid-cols-2">
                   {[
@@ -567,6 +606,29 @@ export default function HomePage() {
               Try our free tools
             </a>
           </div>
+        </section>
+
+        {/* 4b. Video proof */}
+        <section className="mx-auto w-full max-w-5xl px-6 py-14 lg:px-8 lg:py-16">
+          <div className="text-center">
+            <h2 className="text-3xl font-semibold sm:text-4xl">
+              From blank plan to priced quote in under 3 minutes - for less than $1.
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+              Shown here in under 3 minutes with a saved Smart Component&#8482; library (times vary by job and user). Compare that to per-report measurement services that charge <Link href="/roof-measurement-cost-comparison" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">$13-$105 per report</Link>.
+            </p>
+          </div>
+          <div className="mx-auto mt-10 max-w-3xl">
+            <YouTubeLite
+              videoId="X379HDoDE_o"
+              start={18}
+              title="Create a complex roofing quote in under 3 minutes"
+              className="w-full"
+            />
+          </div>
+          <p className="mt-6 text-center text-sm text-zinc-600">
+            Use <Link href="/features/ai-scan-assist" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</Link> to speed this up even more. Try it on your next quote - <a href="/free-trial" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]" onClick={() => trackEvent("free_trial_click", { location: "video_section" })}>free in the app</a>.
+          </p>
         </section>
 
         {/* 5. Customer Proof */}

@@ -92,6 +92,7 @@ const PUBLIC_PATHS = [
   '/stack-alternative-for-roofing',
   '/hover-alternative',
   '/bluebeam-alternative-for-roofing',
+  '/roof-measurement-cost-comparison', // Cost-per-quote comparison page (marketing)
   '/free-construction-calculator', // Free public calculator (no auth)
   '/free-roofing-calculator',     // Free roofing calculator (no auth)
   '/free-quote-generator',        // Free AI quote generator (future)
