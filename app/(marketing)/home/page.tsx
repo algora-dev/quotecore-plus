@@ -217,10 +217,10 @@ export default function HomePage() {
               {/* Left: text */}
               <div className="relative z-20 flex-1 text-center lg:flex-[1.12] lg:text-left">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#FF6B35]">
-                  Roofing quoting, takeoff and job workflow software
+                  Takeoff, estimating &amp; quoting software for measured trades
                 </p>
                 <h1 className="mt-6 text-4xl font-semibold tracking-tight text-zinc-950 sm:text-5xl lg:text-6xl">
-                  Measure the roof. Work out the materials. Price it. Send the quote.
+                  Measure the job. Calculate the price. Send the quote.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
                   QuoteCore+ is the app that takes you from plan to priced quote. Built for roofing first - powerful enough for every trade - it uses <a href="/features/digital-roof-takeoff" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">digital takeoff</a>, <a href="/features/ai-scan-assist" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</a> and <a href="/features/smart-components" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</a> to turn roof measurements into materials, labour and accurate pricing - then create, send and track the quote, order and invoice from the same connected job.
