@@ -33,6 +33,33 @@ export default function FreeToolsPage() {
           </div>
         </section>
 
+        {/* Most used tools (BRIEF-003 Phase 3: equity concentration on proven-demand tools) */}
+        <section className="mx-auto max-w-5xl px-2 md:px-6 pt-4 md:pt-6 pb-2">
+          <h2 className="text-lg md:text-2xl font-semibold text-slate-900 mb-4">Most used tools</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Link href="/free-roof-pitch-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+              <p className="font-semibold text-slate-900 text-sm">Roof Pitch Calculator</p>
+              <p className="text-xs text-slate-500 mt-0.5">Convert degrees, rise/run ratio, percentage and pitch factor in one click</p>
+            </Link>
+            <Link href="/free-flooring-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+              <p className="font-semibold text-slate-900 text-sm">Flooring Calculator</p>
+              <p className="text-xs text-slate-500 mt-0.5">Packs of laminate, wood or vinyl needed for any room, with waste</p>
+            </Link>
+            <Link href="/free-paint-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+              <p className="font-semibold text-slate-900 text-sm">Paint Calculator</p>
+              <p className="text-xs text-slate-500 mt-0.5">Litres per coat for any room size, with coverage and coats built in</p>
+            </Link>
+            <Link href="/free-tile-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+              <p className="font-semibold text-slate-900 text-sm">Tile Calculator</p>
+              <p className="text-xs text-slate-500 mt-0.5">Tiles, grout and adhesive quantities including waste allowance</p>
+            </Link>
+            <Link href="/free-purchase-order-generator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+              <p className="font-semibold text-slate-900 text-sm">Purchase Order Generator</p>
+              <p className="text-xs text-slate-500 mt-0.5">Professional supplier POs in minutes — free PDF download, no signup</p>
+            </Link>
+          </div>
+        </section>
+
         {/* What do you need to do? routing */}
         <section className="mx-auto max-w-5xl px-2 md:px-6 py-8 md:py-12">
           <h2 className="text-lg md:text-2xl font-semibold text-slate-900 mb-4">What do you need to do?</h2>

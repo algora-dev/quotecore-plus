@@ -19,6 +19,10 @@ export interface SlugDef {
   defaultTab?: string;
   /** Contextual link to a relevant commercial page */
   commercialBridge?: { text: string; href: string; linkText: string };
+  /** BRIEF-003 Phase 3: worked example, assumptions, per-tool related links */
+  workedExample?: string[];
+  assumptions?: string[];
+  related?: RelatedLink[];
 }
 
 const REL: RelatedLink[] = [
@@ -45,7 +49,9 @@ export function toConfig(d: SlugDef): TradeConfig {
       tips: d.tips.map(([title, body]) => ({ title, body })),
       formulas: d.formulas.map(([name, formula]) => ({ name, formula })),
       faqs: d.faqs.map(([q, a]) => ({ q, a })),
-      related: REL,
+      related: d.related ?? REL,
+      workedExample: d.workedExample ? { title: d.workedExample[0], steps: d.workedExample.slice(1) } : undefined,
+      assumptions: d.assumptions,
       commercialBridge: d.commercialBridge,
     },
   };
@@ -86,6 +92,27 @@ export const SLUGS_1: SlugDef[] = [
       href: '/roofing-quoting-software',
       linkText: 'See how QuoteCore+ handles roofing quotes from takeoff to invoice',
     },
+    workedExample: [
+      'Worked example: 6:12 roof, converting to degrees, percentage and surface area',
+      'Ratio 6:12 means 6 units of rise per 12 units of run',
+      'Degrees: arctan(6 / 12) = arctan(0.5) = 26.57°',
+      'Percentage: 0.5 × 100 = 50%',
+      'Pitch factor: 1 / cos(26.57°) = 1.118',
+      'A 100 m² plan roof at this pitch: 100 × 1.118 = 111.8 m² of roof surface',
+      'Ordering materials for the surface area, not the plan area, avoids shortfalls',
+    ],
+    assumptions: [
+      'Pitch is measured from the horizontal (run), not the rafter length.',
+      'The pitch factor converts plan (footprint) area to actual roof surface area. It assumes a single uniform pitch.',
+      'Hipped roofs with multiple pitches need each plane calculated separately.',
+      'Minimum pitch rules vary by material and manufacturer - always check the product datasheet.',
+    ],
+    related: [
+      { href: '/free-roofing-calculator', title: 'Free Roofing Calculator', desc: 'Full roofing calculator - pitch, area, rafters, materials' },
+      { href: '/free-flooring-calculator', title: 'Free Flooring Calculator', desc: 'Flooring packs, waste and cost for any room' },
+      { href: '/free-paint-calculator', title: 'Free Paint Calculator', desc: 'Paint litres and coats for any room' },
+      { href: '/free-purchase-order-generator', title: 'Free PO Generator', desc: 'Turn quantities into a supplier order' },
+    ],
   },
   {
     slug: 'free-roof-pitch-converter',

@@ -1,4 +1,4 @@
-import type { TradeConfig } from '../_shared/types';
+import type { TradeConfig, RelatedLink } from '../_shared/types';
 import { constructionConfig } from './construction';
 
 interface ConstrSlugDef {
@@ -19,6 +19,8 @@ interface ConstrSlugDef {
   assumptions: string[];
   whenToAskPro: string;
   commercialBridge?: { text: string; href: string; linkText: string };
+  /** BRIEF-003 Phase 3: per-tool related links (cross-links between priority tools) */
+  related?: RelatedLink[];
 }
 
 function toConfig(d: ConstrSlugDef): TradeConfig {
@@ -45,7 +47,7 @@ function toConfig(d: ConstrSlugDef): TradeConfig {
       },
       assumptions: d.assumptions,
       whenToAskPro: d.whenToAskPro,
-      related: [
+      related: d.related ?? [
         { href: '/free-construction-calculator', title: 'Free Construction Calculator', desc: 'Full construction calculator' },
         { href: '/free-roofing-calculator', title: 'Free Roofing Calculator', desc: 'Roof area, rafters, and materials' },
         { href: '/free-quote-generator', title: 'Free Quote Generator', desc: 'Turn measurements into a quote' },
@@ -155,6 +157,11 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
       href: '/construction-quoting-software',
       linkText: 'See how QuoteCore+ handles construction quotes from measurement to invoice',
     },
+    related: [
+      { href: '/free-flooring-calculator', title: 'Free Flooring Calculator', desc: 'Flooring packs, waste and cost for any room' },
+      { href: '/free-tile-calculator', title: 'Free Tile Calculator', desc: 'Tiles, grout and adhesive quantities' },
+      { href: '/free-purchase-order-generator', title: 'Free PO Generator', desc: 'Order your paint from the supplier' },
+    ],
   },
   {
     slug: 'free-tile-calculator',
@@ -202,6 +209,16 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
       'Always check tile batch numbers match before installation.',
     ],
     whenToAskPro: 'For wet rooms, waterproof tanking must be installed before tiling by a specialist. For heavy stone tiles on walls, verify the substrate can support the weight (max 32 kg/m² for plaster, 50 kg/m² for tile backer board).',
+    commercialBridge: {
+      text: 'Need to turn tile quantities into a quoted job for your client?',
+      href: '/construction-quoting-software',
+      linkText: 'See how QuoteCore+ handles construction quotes from measurement to invoice',
+    },
+    related: [
+      { href: '/free-flooring-calculator', title: 'Free Flooring Calculator', desc: 'Flooring packs, waste and cost for any room' },
+      { href: '/free-paint-calculator', title: 'Free Paint Calculator', desc: 'Paint litres and coats for any room' },
+      { href: '/free-purchase-order-generator', title: 'Free PO Generator', desc: 'Order your tiles from the supplier' },
+    ],
   },
   {
     slug: 'free-flooring-calculator',
@@ -249,6 +266,11 @@ export const CONSTRUCTION_SLUGS: ConstrSlugDef[] = [
       'Subfloor must be flat (max 3mm deviation over 2m) before installation.',
     ],
     whenToAskPro: 'For solid wood flooring (not engineered), installation over underfloor heating requires specialist advice. For concrete subfloors with high moisture content, a damp-proof membrane is essential. Uneven subfloors (deviation >3mm over 2m) need self-levelling compound before installation.',
+    related: [
+      { href: '/free-paint-calculator', title: 'Free Paint Calculator', desc: 'Paint litres and coats for any room' },
+      { href: '/free-tile-calculator', title: 'Free Tile Calculator', desc: 'Tiles, grout and adhesive quantities' },
+      { href: '/free-purchase-order-generator', title: 'Free PO Generator', desc: 'Order your materials from the supplier' },
+    ],
     commercialBridge: {
       text: 'Need to turn flooring quantities into a quoted job for your client?',
       href: '/construction-quoting-software',

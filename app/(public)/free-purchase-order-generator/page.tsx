@@ -983,7 +983,43 @@ function POGeneratorForm() {
         )}
 
         {/* SEO content */}
-        <section className="mt-16 space-y-8 print:hidden">
+        <section className="mt-16 space-y-8">
+          {/* Usage guide (BRIEF-003 Phase 3) */}
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">How to use this purchase order generator</h2>
+            <div className="mt-4 space-y-4">
+              <p className="text-sm text-slate-600 leading-relaxed">A purchase order (PO) is the document you send to a supplier to order materials at agreed prices. This generator produces a professional PO in about two minutes — no signup, no watermark on your first documents, and instant PDF download. Here is the fastest way to use it.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 1 — Enter your business details.</strong> Under &quot;Your business&quot;, add your company name, address, email and phone. These appear in the PO header and are what the supplier uses to identify the order. Set your currency and PO number in the document settings bar — a simple sequence like PO-001, PO-002 works fine.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 2 — Add the supplier and delivery details.</strong> Enter the supplier&apos;s name and (optionally) the delivery address and required date. Clear delivery instructions reduce follow-up calls and disputes about what was ordered.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 3 — Add line items.</strong> For each material, enter the description, quantity, unit (m², m, each, box, roll) and unit rate. The generator totals the order live. If you already have quantities from a calculator — flooring packs, paint litres, tile boxes — paste them straight in.</p>
+              <p className="text-sm text-slate-600 leading-relaxed"><strong className="text-slate-900">Step 4 — Review and download.</strong> Check the totals, then hit generate. You get a clean PDF purchase order you can email to the supplier. Uploading a photo of an existing PO uses AI to extract the details for you (5 free scans per day).</p>
+              <p className="text-sm text-slate-600 leading-relaxed">A good PO states: PO number, order date, supplier, delivery address and date, itemised materials with quantities and rates, and your business details. Because it is dated and numbered, a PO also protects you — if a supplier delivers the wrong quantity, the PO is your written record of what was agreed.</p>
+            </div>
+          </div>
+
+          {/* Related tools (BRIEF-003 Phase 3 cross-links) */}
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Related free tools</h2>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Link href="/free-flooring-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+                <p className="font-semibold text-slate-900 text-sm">Free Flooring Calculator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Flooring packs, waste and cost for any room</p>
+              </Link>
+              <Link href="/free-paint-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+                <p className="font-semibold text-slate-900 text-sm">Free Paint Calculator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Paint litres and coats for any room</p>
+              </Link>
+              <Link href="/free-roof-pitch-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+                <p className="font-semibold text-slate-900 text-sm">Free Roof Pitch Calculator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Degrees, ratio, percentage and pitch factor</p>
+              </Link>
+              <Link href="/free-tile-calculator" prefetch={false} className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all">
+                <p className="font-semibold text-slate-900 text-sm">Free Tile Calculator</p>
+                <p className="text-xs text-slate-500 mt-0.5">Tiles, grout and adhesive quantities</p>
+              </Link>
+            </div>
+          </div>
+
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Free purchase order generator FAQ</h2>
             <div className="mt-4 space-y-2">
