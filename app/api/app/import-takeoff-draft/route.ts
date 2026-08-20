@@ -208,7 +208,13 @@ export async function GET(req: NextRequest) {
             labour_cost: 0,
             waste_type: spec ? spec.wasteType : ('none' as const),
             waste_percent: spec && spec.wasteType === 'percent' ? spec.wasteValue || 0 : 0,
-            waste_fixed: spec && (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment') ? spec.wasteValue || 0 : 0,
+            // Per-entry waste: the draft combines all entries into one, so a
+            // fixed/per-segment waste amount must be multiplied by the entry
+            // count to match the app's per-entry semantics.
+            waste_fixed:
+              spec && (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment')
+                ? (spec.wasteValue || 0) * g.count
+                : 0,
             pitch_type: spec && spec.pitchEnabled ? spec.pitchType : ('none' as const),
             pricing_strategy: isPack ? spec!.pricingStrategy : ('per_unit' as const),
             pack_price: isPack ? spec!.packPrice : null,

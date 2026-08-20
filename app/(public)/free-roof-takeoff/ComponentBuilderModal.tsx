@@ -143,7 +143,7 @@ export function ComponentBuilderModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">Pricing</label>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <span className="block text-xs text-slate-500 mb-1">Material (${rateUnit})</span>
+                  <span className="block text-xs text-slate-500 mb-1">Material (${metric ? '$' : '$'}/{rateUnit})</span>
                   <input
                     type="number" step="0.01" min="0" value={materialRate}
                     onChange={e => setMaterialRate(e.target.value)}
@@ -152,7 +152,7 @@ export function ComponentBuilderModal({
                   />
                 </div>
                 <div className="flex-1">
-                  <span className="block text-xs text-slate-500 mb-1">Labour (${rateUnit})</span>
+                  <span className="block text-xs text-slate-500 mb-1">Labour (${metric ? '$' : '$'}/{rateUnit})</span>
                   <input
                     type="number" step="0.01" min="0" value={labourRate}
                     onChange={e => setLabourRate(e.target.value)}
@@ -245,7 +245,7 @@ export function ComponentBuilderModal({
                         onClick={() => setPitchType('rafter')}
                         className={`px-3 py-1.5 text-xs font-medium ${pitchType === 'rafter' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-50'}`}
                       >
-                        Rafter (1/cos)
+                        Rafter
                       </button>
                       <button
                         type="button"
