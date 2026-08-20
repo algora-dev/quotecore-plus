@@ -17,7 +17,11 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   const expected = process.env.ADMIN_SIGNUPS_API_KEY;
-  const provided = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
+  const headerKey = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
+  // Query-param fallback so a HUMAN can generate a link by pasting a URL
+  // into a normal browser (no curl/auth-header tooling needed).
+  const queryKey = req.nextUrl.searchParams.get('key') ?? '';
+  const provided = headerKey || queryKey;
   if (!expected || provided.length !== expected.length || provided !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
