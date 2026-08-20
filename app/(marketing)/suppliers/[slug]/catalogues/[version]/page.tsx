@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ slug: string; version: string }>;
@@ -25,5 +25,6 @@ export default async function VersionedCataloguePage({ params }: PageProps) {
 
   // BRIEF-003 residual (Tom, 20 Aug): versioned catalogue HTML pages 301 to
   // the parent catalogue page - same as the unversioned CSV/JSON routes.
-  redirect(`/suppliers/${slug}/catalogue`);
+  // permanentRedirect => 301 (permanent) so signals consolidate.
+  permanentRedirect(`/suppliers/${slug}/catalogue`);
 }
