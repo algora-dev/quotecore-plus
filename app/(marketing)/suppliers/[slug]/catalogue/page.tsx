@@ -122,12 +122,12 @@ function buildStructuredData(
       {
         "@type": "DataDownload",
         encodingFormat: "text/csv",
-        contentUrl: `${baseUrl}/catalogue.csv`,
+        contentUrl: `${baseUrl}/catalogues/${catalogueVersion ?? 1}/catalogue.csv`,
       },
       {
         "@type": "DataDownload",
         encodingFormat: "application/json",
-        contentUrl: `${baseUrl}/catalogue.json`,
+        contentUrl: `${baseUrl}/catalogues/${catalogueVersion ?? 1}/catalogue.json`,
       },
     ],
   };
@@ -365,7 +365,7 @@ export default async function CataloguePage({ params, searchParams }: PageProps)
           <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
             <div className="flex flex-wrap gap-3">
               <a
-                href={`/suppliers/${slug}/catalogue.csv`}
+                href={`/suppliers/${slug}/catalogues/${cat.version ?? 1}/catalogue.csv`}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -374,7 +374,7 @@ export default async function CataloguePage({ params, searchParams }: PageProps)
                 Download CSV
               </a>
               <a
-                href={`/suppliers/${slug}/catalogue.json`}
+                href={`/suppliers/${slug}/catalogues/${cat.version ?? 1}/catalogue.json`}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

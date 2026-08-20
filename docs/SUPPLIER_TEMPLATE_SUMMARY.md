@@ -5,8 +5,8 @@
 ### Phase 1: Catalogue Routes + Metadata Migration
 - **Migration `20260808120000`:** Added `valid_from`, `valid_until`, `default_currency`, `uploaded_by`, `original_filename`, `catalogue_status` to `catalogs` table; `address_visibility`, `business_registration_number`, `verification_link` to `supplier_profiles`. Two public SECURITY DEFINER RPCs: `public_supplier_catalogue(slug, limit, offset)` and `public_supplier_catalogue_count(slug)`.
 - **HTML catalogue page** (`/suppliers/{slug}/catalogue`): Server-rendered table, 50 rows/page, search via query params, sortable columns, pagination. BreadcrumbList + Dataset + DataDownload JSON-LD.
-- **CSV route** (`/suppliers/{slug}/catalogue.csv`): UTF-8 CSV with BOM, proper filename format.
-- **JSON route** (`/suppliers/{slug}/catalogue.json`): Machine-readable with `additional_attributes` for unknown columns.
+- **CSV route** (`/suppliers/{slug}/catalogue.csv`): redirects (301) to the HTML catalogue page; versioned downloads live at `/suppliers/{slug}/catalogues/{version}/catalogue.csv`.
+- **JSON route** (`/suppliers/{slug}/catalogue.json`): redirects (301) to the HTML catalogue page; versioned downloads live at `/suppliers/{slug}/catalogues/{version}/catalogue.json`.
 
 ### Phase 2: Trust Panel + Page Layout Reorder
 - Supplier page restructured to 11 sections per brief Section 14:
