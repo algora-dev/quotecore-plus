@@ -3000,6 +3000,27 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_suppressions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string
+        }
+        Relationships: []
+      }
       material_order_lines: {
         Row: {
           component_id: string | null

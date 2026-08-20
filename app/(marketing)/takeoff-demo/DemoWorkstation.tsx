@@ -127,6 +127,9 @@ export interface DemoFinishPayload {
     measurements: { value: number }[];
   }>;
   calibrationUnit: string;
+  /** Unit system chosen in the free-tool landing wizard (metric / imperial / squares).
+   *  Absent for the takeoff-demo flows (defaults to metric display). */
+  unitSystem?: 'metric' | 'imperial' | 'squares';
 }
 
 interface Props {
@@ -161,6 +164,13 @@ interface Props {
    *  'upload' = free-roof-takeoff tool - blank canvas, NO baked calibration
    *  (the user calibrates their own uploaded plan, exactly like the app). */
   demoMode?: 'scan' | 'manual' | 'upload';
+  /** UPLOAD MODE: default calibration length unit chosen in the landing wizard
+   *  (metric -> meters, imperial/roofing squares -> feet). Squares calibrate
+   *  in feet (lineal) - areas convert to squares in the report. */
+  preferredLengthUnit?: 'meters' | 'feet';
+  /** UPLOAD MODE: unit system chosen in the landing wizard (passed through
+   *  to the finish payload so the report displays the right units). */
+  unitSystem?: 'metric' | 'imperial' | 'squares';
   /** DEMO: called instead of navigating to the quote builder on Finish and Save. */
   onFinish?: (payload: DemoFinishPayload) => void;
 }
@@ -251,6 +261,8 @@ export function DemoWorkstation({
   aiAssistPoints = null,
   demoMode = 'manual',
   onFinish,
+  preferredLengthUnit = 'meters',
+  unitSystem,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -1962,12 +1974,12 @@ export function DemoWorkstation({
 
   // (2026-07-05) handleConfirmAreaAssignment REMOVED with the Assign-Area modal.
 
-  // DEMO: never show the AreaNameModal - the moment an area draw closes,
-  // auto-commit it with a generic name and the fixed 25-degree demo pitch.
-  // Roof areas become "Roof Area N"; component areas use the component's
-  // library name. Runs after the state commit, so pendingAreaPoints is fresh.
+  // UPLOAD MODE (free-roof-takeoff): do NOT auto-commit - show the real
+  // AreaNameModal so the user names the area and enters its roof pitch
+  // (degrees or ratio via PitchInput). Demo modes keep the 25-deg auto-commit.
   useEffect(() => {
     if (!showAreaNamePrompt) return;
+    if (demoMode === 'upload') return;
     const comp = pendingComponentId ? components.find(c => c.id === pendingComponentId) : null;
     const name = comp ? comp.name : `Roof Area ${roofAreas.length + 1}`;
     setShowAreaNamePrompt(false);
@@ -1975,10 +1987,10 @@ export function DemoWorkstation({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showAreaNamePrompt]);
 
-  // DEMO: same for the pitch-only prompt (+ New Area flows) - commit at the
-  // fixed 25-degree demo pitch instead of asking.
+  // Same for the pitch-only prompt - upload mode shows the real prompt.
   useEffect(() => {
     if (!showPitchOnlyPrompt) return;
+    if (demoMode === 'upload') return;
     setShowPitchOnlyPrompt(false);
     handleSaveArea(isExistingAreaMode ? existingAreaLabel : (initialPageName || 'New Area'), 25);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4620,6 +4632,7 @@ export function DemoWorkstation({
       };
     }),
     calibrationUnit: calibrations[0]?.unit ?? 'meters',
+    unitSystem,
   });
 
   return (
@@ -5718,7 +5731,7 @@ export function DemoWorkstation({
       {showCalibrationModal && (
         <CalibrationModal
           calibrationNumber={calibrations.length + 1}
-          defaultUnit={quote.measurement_system === 'metric' ? 'meters' : 'feet'}
+          defaultUnit={demoMode === 'upload' ? preferredLengthUnit : (quote.measurement_system === 'metric' ? 'meters' : 'feet')}
           onSave={handleSaveCalibration}
           onCancel={handleCancelCalibration}
         />
