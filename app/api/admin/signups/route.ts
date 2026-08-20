@@ -31,6 +31,7 @@ interface SignupRow {
   subscriptionStatus: string | null;
   trialEndsAt: string | null;
   adminPaused: boolean;
+  suppressed: boolean;
 }
 
 export async function GET(req: NextRequest) {
@@ -84,6 +85,13 @@ export async function GET(req: NextRequest) {
     : { data: [] };
   const ownerByCompany = new Map((ownerRows ?? []).map(u => [u.company_id, u]));
 
+  // Marketing unsubscribes - flag suppressed emails so the agent skips them.
+  const ownerEmails = (ownerRows ?? []).map(u => u.email.toLowerCase()).filter(Boolean);
+  const { data: suppressedRows } = ownerEmails.length
+    ? await admin.from('marketing_suppressions').select('email').in('email', ownerEmails)
+    : { data: [] };
+  const suppressedSet = new Set((suppressedRows ?? []).map(r => (r.email as string).toLowerCase()));
+
   const signups: SignupRow[] = (companies ?? []).map(c => {
     const owner = ownerByCompany.get(c.id);
     return {
@@ -96,6 +104,7 @@ export async function GET(req: NextRequest) {
       subscriptionStatus: (c as { subscription_status?: string | null }).subscription_status ?? null,
       trialEndsAt: (c as { trial_ends_at?: string | null }).trial_ends_at ?? null,
       adminPaused: c.admin_paused ?? false,
+      suppressed: owner ? suppressedSet.has(owner.email.toLowerCase()) : false,
     };
   });
 
