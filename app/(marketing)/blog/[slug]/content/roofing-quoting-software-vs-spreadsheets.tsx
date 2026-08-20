@@ -52,7 +52,7 @@ export default function Post() {
       <hr />
 
       <h2>What QuoteCore+ changes</h2>
-      <p>QuoteCore+ is not just a prettier spreadsheet.</p>
+      <p>QuoteCore+ is not just a prettier spreadsheet. It is <a href="/construction-quoting-software">construction quoting software</a> that keeps the whole job connected.</p>
       <p>It is built to connect the job information from measurement through to quote and then into the next steps after the customer responds.</p>
       <p>Instead of using separate tools for each stage, QuoteCore+ helps keep the workflow in one place:</p>
       <ul>

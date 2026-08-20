@@ -32,7 +32,7 @@ export default function SiteFooter() {
               <Link href="/roofing-quoting-software" className={linkClass}>Roofing software</Link>
               <Link href="/roofing-estimating-software" className={linkClass}>Roofing estimating</Link>
               <Link href="/roofing-takeoff-software" className={linkClass}>Roofing takeoff</Link>
-              <Link href="/construction-quoting-software" className={linkClass}>Other trades</Link>
+              <Link href="/construction-quoting-software" className={linkClass}>Construction quoting software</Link>
               <Link href="/pricing" className={linkClass}>Pricing</Link>
               <Link href="/free-tools" className={linkClass}>Free tools</Link>
               <Link href="/free-calculators" className={linkClass}>Free calculators</Link>

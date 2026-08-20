@@ -7,13 +7,13 @@ import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Construction Quoting Software for Contractors | QuoteCore+",
+  title: "Construction Quoting Software for Contractors | Free Trial · QuoteCore+",
   description:
-    "Multi-trade construction quoting software with Smart Components, digital takeoff, material ordering, invoicing and purchase orders. Measure, quote, and get paid in one platform. Free trial.",
+    "Quoting software for contractors and trades — roofing, carpentry, plastering, subcontractors and general contractors. Digital takeoff, Smart Components, material ordering and invoicing. Plans from free.",
   openGraph: {
-    title: "Construction Quoting Software for Contractors | QuoteCore+",
+    title: "Construction Quoting Software for Contractors | Free Trial · QuoteCore+",
     description:
-      "Multi-trade construction quoting software with Smart Components, digital takeoff, material ordering, invoicing and purchase orders. Measure, quote, and get paid in one platform. Free trial.",
+      "Quoting software for contractors and trades — roofing, carpentry, plastering, subcontractors and general contractors. Plans from free, 14-day free trial.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -358,6 +358,17 @@ export default function ConstructionQuotingSoftwarePage() {
             </div>
 
             <p className="mt-3 text-sm text-zinc-400">No card required. 14 days free.</p>
+
+            <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-600">
+              <span className="font-semibold text-zinc-950">Simple pricing:</span>
+              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Free Lite plan</a>
+              <span className="text-zinc-300">·</span>
+              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Starter $19/mo</a>
+              <span className="text-zinc-300">·</span>
+              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Pro $39/mo</a>
+              <span className="text-zinc-300">·</span>
+              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Pro Plus $59/mo</a>
+            </div>
           </div>
         </section>
 
@@ -386,6 +397,111 @@ export default function ConstructionQuotingSoftwarePage() {
 
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
           <DemoCTACard location="construction_quoting_software_intro" />
+        </section>
+
+        {/* Pricing clarity */}
+        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
+          <div className="rounded-[2rem] border border-zinc-200 bg-zinc-50 px-7 py-8">
+            <h2 className="text-2xl font-semibold text-zinc-950">How much does it cost?</h2>
+            <p className="mt-3 text-zinc-600">Simple monthly plans in USD. Start with a 14-day full-feature free trial — no credit card required.</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-4">
+              {[
+                { name: "Lite", price: "Free", note: "Core quoting" },
+                { name: "Starter", price: "$19/mo", note: "Quoting + templates" },
+                { name: "Pro", price: "$39/mo", note: "Takeoff + AI Scan Assist" },
+                { name: "Pro Plus", price: "$59/mo", note: "Everything included" },
+              ].map((p) => (
+                <div key={p.name} className="rounded-2xl border border-zinc-200 bg-white px-5 py-4">
+                  <p className="text-sm font-semibold text-zinc-950">{p.name}</p>
+                  <p className="mt-1 text-xl font-semibold text-[#BD4A1A]">{p.price}</p>
+                  <p className="mt-1 text-xs text-zinc-500">{p.note}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-sm text-zinc-500">See the <a href="/pricing" className="text-[#BD4A1A] hover:underline">full pricing comparison</a> for everything included in each plan.</p>
+          </div>
+        </section>
+
+        {/* Trade-by-trade sections */}
+        <section id="trades" className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">Quoting software built for your trade.</h2>
+          <p className="mt-4 text-lg leading-8 text-zinc-600">Whatever trade you work in, the job is the same: measure it, price it, quote it, and get paid. Here is how QuoteCore+ fits the way each trade works.</p>
+
+          <div className="mt-10 space-y-5">
+            {[
+              { slug: "roofing", title: "Roofing contractors", body: <>Roofing quoting is measurement-heavy: roof areas, ridges, hips, valleys, barges, waste allowances and material pricing per square. QuoteCore+ includes <a href="/features/digital-roof-takeoff" className="text-[#BD4A1A] hover:underline">digital roof takeoff</a> with AI Scan Assist to identify roof areas and components from an uploaded plan, and Smart Components™ that store your per-square pricing, labour and waste rules so re-roof and repair quotes build in minutes. See the dedicated <a href="/roofing-quoting-software" className="text-[#BD4A1A] hover:underline">roofing quoting software</a> and <a href="/roofing-estimating-software" className="text-[#BD4A1A] hover:underline">roofing estimating software</a> pages.</> },
+              { slug: "carpentry", title: "Carpentry", body: <>Carpentry quotes mix materials (timber, fixings, sheet goods), labour hours and often repeated assemblies — decks, pergolas, framing packages. Save each assembly once as a Smart Component™ with its materials list, labour and pricing rule, then drop it into the next quote and adjust quantities. Measure on site or from plans, then let the quote update from the measurements.</> },
+              { slug: "plastering", title: "Plastering", body: <>Plastering quotes come from wall and ceiling areas, openings deducted, coats and finishes priced per area, and materials like plasterboard, compound and tape ordered by the job. Build Smart Components™ per finish type, quote from measured areas, and turn the accepted quote into a material order without re-keying anything.</> },
+              { slug: "subcontractors", title: "Subcontractors", body: <>Subcontractors quote from head-contractor plans, then need to move fast: price it, submit it, and if accepted, order materials and invoice without admin overhead. QuoteCore+ keeps takeoff, quote, <a href="/features/material-ordering" className="text-[#BD4A1A] hover:underline">material orders</a> and <a href="/features/invoicing" className="text-[#BD4A1A] hover:underline">invoicing</a> connected to the same job data — especially valuable when you repeat similar work across multiple jobs.</> },
+              { slug: "general-contractors", title: "General contractors", body: <>General builders juggle multiple trades, materials and suppliers on every quote. QuoteCore+ lets you build quotes from a library of trade-specific Smart Components™, keep every customer and job in one place, track which quotes are accepted, and move the winners straight through to material orders and invoices — instead of rebuilding the job in spreadsheets at every stage.</> },
+            ].map((t) => (
+              <div key={t.slug} id={t.slug} className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-6 shadow-sm">
+                <h3 className="text-xl font-semibold text-zinc-950">{t.title}</h3>
+                <p className="mt-3 text-base leading-7 text-zinc-600">{t.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Comparison table */}
+        <section className="bg-zinc-50 py-20">
+          <div className="mx-auto max-w-4xl px-6 lg:px-8">
+            <h2 className="text-3xl font-semibold sm:text-4xl">QuoteCore+ vs spreadsheets vs generic invoicing tools.</h2>
+            <p className="mt-4 text-lg leading-8 text-zinc-600">Spreadsheets calculate. Invoicing apps bill. Neither keeps the whole job connected. Here is the honest comparison.</p>
+            <div className="mt-8 overflow-x-auto rounded-[1.5rem] border border-zinc-200 bg-white">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 bg-zinc-50">
+                    <th className="px-5 py-4 font-semibold text-zinc-950">Capability</th>
+                    <th className="px-5 py-4 font-semibold text-zinc-950">QuoteCore+</th>
+                    <th className="px-5 py-4 font-semibold text-zinc-950">Spreadsheets</th>
+                    <th className="px-5 py-4 font-semibold text-zinc-950">Generic invoicing tools</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {[
+                    ["Measure from plans / digital takeoff", "Yes — built-in, with AI Scan Assist", "No — separate tool or manual", "No"],
+                    ["Reusable trade pricing rules", "Yes — Smart Components™", "Fragile formulas you rebuild", "No"],
+                    ["Professional quote output", "Yes — from live job data", "Manual formatting each time", "Basic templates"],
+                    ["Quote-to-material-order flow", "Yes — from the accepted quote", "Copy-paste into a new sheet", "No"],
+                    ["Quote-to-invoice flow", "Yes — same job data", "Rebuild manually", "Yes — but quote side is basic"],
+                    ["Approval and follow-up tracking", "Yes — accepted / declined per quote", "Your memory or another sheet", "Limited"],
+                    ["Works offline / field-friendly", "Web-based, measure on screen", "Yes", "Varies"],
+                  ].map((row) => (
+                    <tr key={row[0]}>
+                      <td className="px-5 py-4 font-medium text-zinc-900">{row[0]}</td>
+                      <td className="px-5 py-4 text-zinc-700"><span className="mr-2 font-bold text-[#FF6B35]">✓</span>{row[1]}</td>
+                      <td className="px-5 py-4 text-zinc-600">{row[2]}</td>
+                      <td className="px-5 py-4 text-zinc-600">{row[3]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-4 text-sm text-zinc-500">For a deeper walkthrough, see <a href="/blog/roofing-quoting-software-vs-spreadsheets" className="text-[#BD4A1A] hover:underline">quoting software vs spreadsheets</a>.</p>
+          </div>
+        </section>
+
+        {/* Product screenshots */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">See the platform.</h2>
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
+            {[
+              { src: "/images/features/digital-roof-takeoff.png", alt: "Digital roof takeoff in QuoteCore+ — measure roof areas and components on an uploaded plan", caption: "Digital takeoff — measure plans on screen" },
+              { src: "/images/features/smart-components-quote.png", alt: "Smart Components in a QuoteCore+ quote — reusable pricing, labour and waste rules", caption: "Smart Components™ — your pricing, reusable" },
+              { src: "/images/features/material-ordering.png", alt: "Material ordering from an accepted quote in QuoteCore+", caption: "Material orders from accepted quotes" },
+              { src: "/images/features/invoicing.png", alt: "Invoicing in QuoteCore+ — turn an accepted quote into an invoice", caption: "Invoicing without re-keying the job" },
+            ].map((img) => (
+              <figure key={img.src} className="overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white shadow-sm">
+                <img src={img.src} alt={img.alt} className="w-full object-cover" loading="lazy" />
+                <figcaption className="px-5 py-3 text-sm text-zinc-600">{img.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <a href="/free-trial" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Start free 14-day trial</a>
+            <p className="mt-3 text-sm text-zinc-400">No card required. 14 days free.</p>
+          </div>
         </section>
 
         {/* What QuoteCore+ does */}
