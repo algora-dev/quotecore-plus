@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-create-an-invoice-for-contractors.tsx`
 
-## Outbound internal links (8)
+## Outbound internal links (9)
 
 ### Money pages (1)
 
@@ -17,7 +17,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-create-an-invoice-for-contra
 | /blog/how-to-price-a-roofing-job | how to price a roofing job |
 | /blog/how-to-send-a-purchase-order | purchase order |
 
-### Free tools (5)
+### Free tools (6)
 
 | Destination | Anchor |
 |---|---|
@@ -25,6 +25,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-create-an-invoice-for-contra
 | /free-quote-generator | free quote generator |
 | /free-invoice-generator | free invoice generator |
 | /free-invoice-generator | free invoice generator |
+| /free-purchase-order-generator | free purchase order generator |
 | /free-trial | free QuoteCore+ trial |
 
 ## Inbound in-article links (1)

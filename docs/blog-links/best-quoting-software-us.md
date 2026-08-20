@@ -2,13 +2,14 @@
 
 Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-us.tsx`
 
-## Outbound internal links (8)
+## Outbound internal links (9)
 
-### Money pages (1)
+### Money pages (2)
 
 | Destination | Anchor |
 |---|---|
 | /roofing-quoting-software | roofing quoting software |
+| /construction-quoting-software | construction quoting workflow |
 
 ### Blog articles (1)
 

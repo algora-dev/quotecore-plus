@@ -2,14 +2,15 @@
 
 Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-nz.tsx`
 
-## Outbound internal links (13)
+## Outbound internal links (15)
 
-### Money pages (2)
+### Money pages (3)
 
 | Destination | Anchor |
 |---|---|
 | /roofing-quoting-software | quoting software for contractors |
 | /construction-quoting-software | construction quoting software |
+| /construction-quoting-software | construction quoting software hub |
 
 ### Blog articles (5)
 
@@ -29,12 +30,13 @@ Source: `app/(marketing)/blog/[slug]/content/best-quoting-software-nz.tsx`
 | /free-roofing-takeoff-builder | free roof takeoff builder |
 | /free-trial | start a 14-day free trial of QuoteCore+ |
 
-### Other site pages (3)
+### Other site pages (4)
 
 | Destination | Anchor |
 |---|---|
 | /features/ai-scan-assist | AI Scan Assist |
-| /pricing | See pricing |
+| /pricing | pricing page |
+| /suppliers | supplier directory |
 | /suppliers | supplier directory |
 
 ## Inbound in-article links (1)

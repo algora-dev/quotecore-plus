@@ -2,13 +2,14 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-follow-up-on-a-quote.tsx`
 
-## Outbound internal links (4)
+## Outbound internal links (5)
 
-### Money pages (1)
+### Money pages (2)
 
 | Destination | Anchor |
 |---|---|
-| /roofing-quoting-software | quoting software for contractors |
+| /roofing-quoting-software | quoting software for roofers |
+| /construction-quoting-software | construction quoting software for contractors |
 
 ### Blog articles (1)
 

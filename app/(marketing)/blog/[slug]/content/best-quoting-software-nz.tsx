@@ -6,7 +6,7 @@ export default function Post() {
 
       <p><strong>Quick answer:</strong> Quoting software for contractors turns measurements, labour, and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. For NZ tradies in 2026, the strongest options are QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact, and Xero Projects. This guide compares all six on pricing, features, and NZ-specific fit.</p>
 
-      <p><em>Last checked: June 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing.</em></p>
+      <p><em>Last checked: August 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing.</em></p>
 
       <p><em>Editorial note: This guide is published by QuoteCore+, so our own product appears in the comparison. We have listed where other tools may be a better fit, including for trade job scheduling, high-volume service work, detailed construction cost estimating, and businesses already embedded in Xero.</em></p>
       <p>This guide compares six quoting platforms available to NZ tradies in 2026, with honest assessments of where each one works well and where it falls short.</p>
@@ -100,6 +100,15 @@ export default function Post() {
       <p><a href="/free-trial">Start a free 14-day trial of QuoteCore+</a></p>
 
       <p>QuoteCore+ also includes a <a href="/suppliers">supplier directory</a> where roofing and construction suppliers can publish their catalogues and get found by contractors and AI search:</p>
+
+      <h3>QuoteCore+ is built for NZ conditions</h3>
+      <p>QuoteCore+ was built in and for the NZ market, and the platform reflects how quoting actually works here:</p>
+      <ul>
+        <li><strong>Material pricing in NZD with GST.</strong> Prices, quotes, material orders and invoices all handle 15% GST and NZD natively - no USD conversions or tax workarounds.</li>
+        <li><strong>NZ roofing systems supported.</strong> Long-run metal roofing (tray and corrugated profiles), concrete and terracotta tiles, and membrane flat roofs - with component libraries built around NZ profiles and fixings.</li>
+        <li><strong>NZ supplier catalogues.</strong> The <Link href="/suppliers">supplier directory</Link> lets NZ suppliers publish live component catalogues, so your quotes price from real NZ material rates instead of generic numbers.</li>
+        <li><strong>Trade measurement conventions.</strong> Linear metres for spouting and ridges, m² for roof areas, and pitch factors that match how NZ roofers measure - not US squares.</li>
+      </ul>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe

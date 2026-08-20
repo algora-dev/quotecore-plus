@@ -2,12 +2,13 @@
 
 Source: `app/(marketing)/blog/[slug]/content/roofing-quoting-software-vs-spreadsheets.tsx`
 
-## Outbound internal links (8)
+## Outbound internal links (9)
 
-### Money pages (1)
+### Money pages (2)
 
 | Destination | Anchor |
 |---|---|
+| /construction-quoting-software | construction quoting software |
 | /roofing-quoting-software | roofing quoting software |
 
 ### Blog articles (6)

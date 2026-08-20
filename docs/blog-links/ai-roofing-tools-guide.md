@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/ai-roofing-tools-guide.tsx`
 
-## Outbound internal links (6)
+## Outbound internal links (7)
 
 ### Free tools (6)
 
@@ -14,6 +14,12 @@ Source: `app/(marketing)/blog/[slug]/content/ai-roofing-tools-guide.tsx`
 | /free-quote-generator | Free Quote Generator |
 | /free-tools | Browse all free tools |
 | /free-trial | start a free 14-day trial |
+
+### Other site pages (1)
+
+| Destination | Anchor |
+|---|---|
+| /eagleview-alternative | EagleView alternative comparison |
 
 ## Inbound in-article links (0)
 

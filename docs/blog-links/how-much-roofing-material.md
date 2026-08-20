@@ -44,4 +44,4 @@ Source: `app/(marketing)/blog/[slug]/content/how-much-roofing-material.tsx`
 | /blog/how-to-price-a-roofing-job | How Much Roofing Material Do You Need? (Material Calculator Guide) |
 | /blog/roofing-material-list | how much roofing material do you need |
 
-External links in source: 4
+External links in source: 6

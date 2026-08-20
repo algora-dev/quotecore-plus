@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/ai-roof-measuring.tsx`
 
-## Outbound internal links (7)
+## Outbound internal links (8)
 
 ### Free tools (7)
 
@@ -15,6 +15,12 @@ Source: `app/(marketing)/blog/[slug]/content/ai-roof-measuring.tsx`
 | /free-tools | Browse all free tools |
 | /free-trial | start a free 14-day trial of QuoteCore+ |
 | /free-trial | Try it free for 14 days |
+
+### Other site pages (1)
+
+| Destination | Anchor |
+|---|---|
+| /eagleview-alternative | EagleView alternative comparison |
 
 ## Inbound in-article links (1)
 
