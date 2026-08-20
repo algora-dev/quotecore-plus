@@ -105,6 +105,8 @@ const PUBLIC_PATHS = [
                    //  the requireAdmin() helper at the page boundary).
   '/m',            // Public recipient reply pages (Messages pipeline).
                    //  HMAC-signed token in the URL is the access gate.
+  '/unsubscribe',  // Public marketing unsubscribe confirm page. HMAC-signed
+                   //  per-recipient token in the URL is the access gate.
   '/orders',       // Public supplier order pages. Random UUID token in
                    //  the URL is the access gate.
   '/invoice',      // Public customer invoice pages. Random UUID public_token
