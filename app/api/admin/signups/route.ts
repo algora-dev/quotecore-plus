@@ -37,8 +37,18 @@ interface SignupRow {
 export async function GET(req: NextRequest) {
   // 1. Static key check (constant-time-ish compare on both lengths).
   const expected = process.env.ADMIN_SIGNUPS_API_KEY;
-  const provided = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
-  if (!expected || provided.length !== expected.length || provided !== expected) {
+  const headerKey = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
+  // Query-param fallback (browser-testable; also rules out proxies that
+  // strip the Authorization header).
+  const queryKey = req.nextUrl.searchParams.get('key') ?? '';
+  const provided = headerKey || queryKey;
+  // Distinct failures so misconfiguration is diagnosable from outside:
+  // 503 = key not configured server-side; 401 = key present but wrong.
+  if (!expected) {
+    console.error('[admin/signups] ADMIN_SIGNUPS_API_KEY is not set');
+    return NextResponse.json({ error: 'API key not configured on server' }, { status: 503 });
+  }
+  if (provided.length !== expected.length || provided !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
