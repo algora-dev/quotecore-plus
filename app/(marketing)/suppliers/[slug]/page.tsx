@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { getPublicSupplier, type SupplierDetail } from "@/lib/supplier-directory";
+import { getPublicSupplier, TEST_SUPPLIER_SLUGS, type SupplierDetail } from "@/lib/supplier-directory";
 import { getCatalogueVersionHistory } from "@/lib/supplier-catalogue";
 import { SupplierPageTracker, SupplierCalculatorClickTracker } from "@/components/SupplierAnalytics";
 
@@ -11,16 +11,9 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Test supplier slugs — demo profiles that showcase the supplier system.
-// Real partners will eventually replace these. Kept visible so users can
+// Test supplier slugs imported from lib/supplier-directory (TEST_SUPPLIER_SLUGS).
+// Demo profiles that showcase the supplier system. Kept visible so users can
 // see how supplier search works, but clearly marked as test data.
-const TEST_SUPPLIER_SLUGS = new Set([
-  'rs-roofing',
-  'thames-slate-tile',
-  'pacific-roofing-supplies',
-  'empire-roofing-materials',
-  'harbour-metal-roofing',
-]);
 
 // Force dynamic rendering — supplier publication state can change at any time,
 // so we always SSR rather than serving stale static pages.
@@ -92,9 +85,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = buildSeoTitle(s);
   const description = buildMetaDescription(s);
 
-  const robots = data.eligibility.indexable
-    ? { index: true, follow: true }
-    : { index: false, follow: true };
+  const robots =
+    data.eligibility.indexable && !TEST_SUPPLIER_SLUGS.has(s.slug)
+      ? { index: true, follow: true }
+      : { index: false, follow: true };
 
   return {
     title,

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { getPublicSupplier } from "@/lib/supplier-directory";
+import { getPublicSupplier, TEST_SUPPLIER_SLUGS } from "@/lib/supplier-directory";
 import {
   getPublicSupplierCatalogue,
   getPublicSupplierCatalogueCount,
@@ -51,9 +51,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
     },
-    robots: data.eligibility.indexable
-      ? { index: true, follow: true }
-      : { index: false, follow: true },
+    robots:
+      data.eligibility.indexable && !TEST_SUPPLIER_SLUGS.has(slug)
+        ? { index: true, follow: true }
+        : { index: false, follow: true },
   };
 }
 

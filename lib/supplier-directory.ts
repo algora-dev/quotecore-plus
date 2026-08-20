@@ -1,6 +1,20 @@
 ﻿import { supabase } from "@/lib/supabase";
 
 /**
+ * Test supplier accounts kept live for demo/Takeoff Builder purposes.
+ * noindex + excluded from sitemap so test pricing can't surface in search
+ * or AI engines (Tom brief 2026-08-20). When a real supplier replaces a
+ * test one, remove its slug here and resubmit the sitemap.
+ */
+export const TEST_SUPPLIER_SLUGS = new Set([
+  "rs-roofing",
+  "thames-slate-tile",
+  "pacific-roofing-supplies",
+  "empire-roofing-materials",
+  "harbour-metal-roofing",
+]);
+
+/**
  * Public supplier data layer.
  * Uses the SECURITY DEFINER RPCs created in migration 20260804203000.
  * These functions strip disallowed fields server-side ÔÇö hidden prices

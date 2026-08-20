@@ -6,7 +6,7 @@ import { CONSTRUCTION_SLUGS } from '@/app/(public)/free-calculators/configs/cons
 import { SLOPE_SLUGS } from '@/app/(public)/free-calculators/configs/slopeSlugs';
 import { getSitemapPosts } from '@/app/lib/blog-posts';
 import { SITE_URL } from '@/lib/seo/site-url';
-import { getSupplierDirectory } from '@/lib/supplier-directory';
+import { getSupplierDirectory, TEST_SUPPLIER_SLUGS } from '@/lib/supplier-directory';
 
 /**
  * Public sitemap for https://quote-core.com.
@@ -35,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/stack-alternative-for-roofing`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/hover-alternative`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/bluebeam-alternative-for-roofing`, changeFrequency: 'monthly', priority: 0.8 },
+  { url: `${SITE_URL}/roof-measurement-cost-comparison`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/services`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/about`, changeFrequency: 'yearly', priority: 0.5 },
@@ -136,10 +137,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Supplier pages (dynamic, from public_supplier_directory RPC)
   // Only HTML profile and catalogue pages are included — CSV/JSON data
   // exports and versioned catalogue routes are excluded (non-indexable).
+  // Test supplier accounts are excluded (noindex) — they exist for
+  // demo/Takeoff Builder purposes, not search (Tom brief 2026-08-20).
   const suppliers = await getSupplierDirectory();
   const supplierEntries: MetadataRoute.Sitemap = [];
   for (const s of suppliers) {
     if (!s.slug) continue;
+    if (TEST_SUPPLIER_SLUGS.has(s.slug)) continue;
     supplierEntries.push({
       url: `${SITE_URL}/suppliers/${s.slug}`,
       changeFrequency: 'monthly' as const,

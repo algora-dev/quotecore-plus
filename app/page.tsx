@@ -106,10 +106,10 @@ export default async function Home() {
       name: "Create a complex roofing quote in under 3min for less than $1!",
       description:
         "See how QuoteCore+ lets you create a complex roofing quote in under 3 minutes using preconfigured Smart Components - for less than a dollar per quote.",
-      thumbnailUrl: "https://i.ytimg.com/vi/DziFjqnPdqQ/maxresdefault.jpg",
+      thumbnailUrl: "https://i.ytimg.com/vi/X379HDoDE_o/maxresdefault.jpg",
       uploadDate: "2026-07-28",
-      embedUrl: "https://www.youtube-nocookie.com/embed/DziFjqnPdqQ",
-      contentUrl: "https://www.youtube.com/watch?v=DziFjqnPdqQ",
+      embedUrl: "https://www.youtube-nocookie.com/embed/X379HDoDE_o?start=18",
+      contentUrl: "https://www.youtube.com/watch?v=X379HDoDE_o",
     };
 
     return (
