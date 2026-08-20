@@ -41,7 +41,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 
-  const draftType = body.draftType === 'smart_component' ? 'smart_component' : 'document';
+  const draftType =
+    body.draftType === 'smart_component'
+      ? 'smart_component'
+      : body.draftType === 'takeoff'
+        ? 'takeoff'
+        : 'document';
   if (!body.payload || typeof body.payload !== 'object') {
     return NextResponse.json({ error: 'Missing payload' }, { status: 400 });
   }

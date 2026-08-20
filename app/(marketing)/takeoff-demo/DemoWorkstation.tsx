@@ -156,8 +156,10 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
-  /** DEMO: 'scan' auto-replays the captured AI scan on entry; 'manual' starts empty. */
-  demoMode?: 'scan' | 'manual';
+  /** DEMO: 'scan' auto-replays the captured AI scan on entry; 'manual' starts empty;
+   *  'upload' = free-roof-takeoff tool - blank canvas, NO baked calibration
+   *  (the user calibrates their own uploaded plan, exactly like the app). */
+  demoMode?: 'scan' | 'manual' | 'upload';
   /** DEMO: called instead of navigating to the quote builder on Finish and Save. */
   onFinish?: (payload: DemoFinishPayload) => void;
 }
@@ -268,8 +270,11 @@ export function DemoWorkstation({
   // DEMO: calibration is baked from the captured session (baseline.ts) - the
   // same 9.15 m scale the account holder drew in the real app. Recalibrate
   // stays available exactly like the product.
+  // Upload mode (free-roof-takeoff): NO baked calibration - the user runs the
+  // real calibration flow on their own plan, exactly like the app.
   useEffect(() => {
     if (hydrationData) return;
+    if (demoMode === 'upload') return;
     setCalibrations(DEMO_CALIBRATION.map(c => ({ ...c })));
     setCalibrationConfirmed(true);
     setShowCalibrationHelp(false);
@@ -1083,7 +1088,7 @@ export function DemoWorkstation({
       }
       return;
     }
-    if (demoMode === 'manual') {
+    if (demoMode === 'manual' || demoMode === 'upload') {
       roofAreaInstructionsDismissedRef.current = true;
       return;
     }
@@ -4442,7 +4447,7 @@ export function DemoWorkstation({
   // soon as the canvas is ready so the user's first instruction is drawing
   // the roof area.
   useEffect(() => {
-    if (demoMode !== 'manual' || !canvasReady) return;
+    if ((demoMode !== 'manual' && demoMode !== 'upload') || !canvasReady) return;
     const t = setTimeout(() => setGuideOpen(true), 300);
     return () => clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -4450,11 +4455,14 @@ export function DemoWorkstation({
 
   const handleStartCalibration = () => {
     // DEMO: calibration is pre-set - block recalibration with a sign-up modal.
-    setLimitModal({
-      title: 'Calibration is already set',
-      body: 'This demo plan is calibrated for you. Calibration on your own plans is available in the full app - sign up for free and use it on any plan you upload.',
-    });
-    return;
+    // Upload mode: calibration is live - the user calibrates their own plan.
+    if (demoMode !== 'upload') {
+      setLimitModal({
+        title: 'Calibration is already set',
+        body: 'This demo plan is calibrated for you. Calibration on your own plans is available in the full app - sign up for free and use it on any plan you upload.',
+      });
+      return;
+    }
     cleanupBoxDrag();
     // If recalibrating, clear confirmation
     if (calibrationConfirmed) {
@@ -4578,7 +4586,7 @@ export function DemoWorkstation({
     <div className="-my-8 h-[calc(100vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
       <Link
-        href="/takeoff-demo"
+        href={demoMode === 'upload' ? '/free-roof-takeoff' : '/takeoff-demo'}
         className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
       >
         <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start

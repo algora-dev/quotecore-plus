@@ -73,7 +73,7 @@ const MANUAL_STEPS: GuideStep[] = [
 
 interface Props {
   open: boolean;
-  flow: 'scan' | 'manual';
+  flow: 'scan' | 'manual' | 'upload';
   onClose: () => void;
 }
 

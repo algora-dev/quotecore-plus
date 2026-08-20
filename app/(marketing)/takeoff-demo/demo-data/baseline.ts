@@ -100,5 +100,14 @@ export const DEMO_PRICING: Record<string, { material: number; labour: number; la
   '5c5a49a0-5dee-4d33-add3-7f357e2162e7': { material: 1.5, labour: 0.0, label: 'Tek Screws 50mm (ea)' },
 };
 
+/** Free Roof Takeoff tool - the public upload-your-own-plan version's
+ *  placeholder-only component list (system placeholders, no user library,
+ *  no pricing). Same UUIDs as DEMO_COMPONENTS so shared UI paths match. */
+export const TOOL_COMPONENTS: DemoComponent[] = DEMO_COMPONENTS.filter(c => c.is_system);
+
+export const TOOL_COLLECTIONS = [
+  { id: 'tool-builtin', name: 'Roofing Components' },
+];
+
 /** AI Assist points - static for the demo (points UI only). */
 export const DEMO_AI_POINTS = { used: 0, limit: 8, remaining: 8, isBlocked: false };
