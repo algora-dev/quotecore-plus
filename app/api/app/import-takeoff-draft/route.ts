@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { createQuoteAtomic, resolveQuoteCreationDefaults } from '@/app/lib/billing/quote-creation';
 import { pitchFactor } from '@/app/lib/pricing/engine';
+import { ensureCompanyHasCollection } from '@/app/lib/data/ensure-company-has-collection';
 
 export const runtime = 'nodejs';
 
@@ -20,9 +21,26 @@ export const runtime = 'nodejs';
  * qcp_doc_draft cookie + URL param).
  */
 
+interface TakeoffComponentSpec {
+  id: string;
+  name: string;
+  measurementType: 'lineal' | 'area' | 'quantity';
+  materialRate: number;
+  labourRate: number;
+  pricingStrategy: 'per_unit' | 'per_pack_length' | 'per_pack_area';
+  packPrice: number | null;
+  packSize: number | null;
+  wasteType: 'none' | 'percent' | 'fixed' | 'fixed_per_segment';
+  wasteValue: number;
+  pitchEnabled: boolean;
+  pitchType: 'rafter' | 'valley_hip';
+}
+
 interface TakeoffDraftPayload {
   tool?: string;
   unit?: string;
+  unitSystem?: 'metric' | 'imperial' | 'squares';
+  componentSpecs?: TakeoffComponentSpec[];
   roofAreas?: { id: string; name: string; area: number; pitch: number }[];
   componentGroups?: {
     componentId: string;
@@ -82,9 +100,53 @@ export async function GET(req: NextRequest) {
   const payload = draft.payload as unknown as TakeoffDraftPayload;
   const roofAreas = (payload.roofAreas ?? []).filter(a => a && typeof a.area === 'number');
   const groups = (payload.componentGroups ?? []).filter(g => g && g.count > 0 && g.total > 0);
+  const specs = payload.componentSpecs ?? [];
 
   try {
     const { trade, componentCollectionId } = await resolveQuoteCreationDefaults(companyId);
+
+    // User-built components (step 2 "build your own"): create real
+    // component_library rows so the user's components persist into their
+    // account alongside the takeoff draft. Field mapping mirrors
+    // createComponentFromCalcDraft 1:1 (app Add Component form semantics).
+    const specLibIds = new Map<string, string>(); // session id -> library id
+    if (specs.length > 0) {
+      let specCollectionId: string | null = null;
+      try {
+        specCollectionId = await ensureCompanyHasCollection(companyId, admin);
+      } catch {
+        // non-fatal - insert with null collection
+      }
+      for (const spec of specs) {
+        const isPack = spec.pricingStrategy !== 'per_unit' && !!spec.packPrice && !!spec.packSize;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const row: any = {
+          company_id: companyId,
+          collection_id: specCollectionId,
+          name: (spec.name || 'Component').slice(0, 120),
+          component_type: 'main',
+          measurement_type: spec.measurementType === 'quantity' ? 'quantity' : spec.measurementType,
+          default_material_rate: isPack ? 0 : spec.materialRate || 0,
+          default_labour_rate: spec.labourRate || 0,
+          default_waste_type: spec.wasteType || 'none',
+          default_waste_percent: spec.wasteType === 'percent' ? spec.wasteValue || 0 : 0,
+          default_waste_fixed: spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue || 0 : 0,
+          waste_unit:
+            spec.wasteType === 'fixed' ? 'flat' : spec.wasteType === 'fixed_per_segment' ? 'flat_per_segment' : 'percent',
+          default_pitch_type: spec.pitchEnabled ? spec.pitchType : 'none',
+          pricing_strategy: isPack ? spec.pricingStrategy : 'per_unit',
+          pack_price: isPack ? spec.packPrice : null,
+          pack_size: isPack ? spec.packSize : null,
+          notes: 'Created from the free roof takeoff tool',
+        };
+        const { data: inserted, error: insertErr } = await admin
+          .from('component_library')
+          .insert(row)
+          .select('id')
+          .single();
+        if (!insertErr && inserted) specLibIds.set(spec.id, inserted.id);
+      }
+    }
 
     const quoteId = await createQuoteAtomic(companyId, session.user.id, {
       customerName: 'Roof Takeoff',
@@ -123,31 +185,41 @@ export async function GET(req: NextRequest) {
     }
 
     // Component groups: one quote_components row per group, one combined
-    // entry with the measured total. Rates zero - priced in the builder.
+    // entry with the measured total. User-built components link to their new
+    // component_library rows and carry the spec rates/waste/pitch through.
     if (groups.length > 0) {
       const { data: insertedComps, error: compsError } = await admin
         .from('quote_components')
-        .insert(groups.map((g, i) => ({
-          quote_id: quoteId,
-          name: g.name,
-          component_type: 'main' as const,
-          measurement_type: (g.measurementType === 'area' ? 'area' : 'lineal') as 'area' | 'lineal',
-          input_mode: 'calculated' as const,
-          quote_roof_area_id: firstAreaId,
-          material_rate: 0,
-          labour_rate: 0,
-          material_cost: 0,
-          labour_cost: 0,
-          waste_type: 'none' as const,
-          waste_percent: 0,
-          waste_fixed: 0,
-          pitch_type: 'none' as const,
-          is_customer_visible: true,
-          sort_order: i,
-          calc_raw_value: g.total,
-          final_quantity: g.total,
-          final_value: g.total,
-        })))
+        .insert(groups.map((g, i) => {
+          const spec = specs.find(s => s.id === g.componentId);
+          const libId = spec ? specLibIds.get(spec.id) ?? null : null;
+          const isPack = spec && spec.pricingStrategy !== 'per_unit' && !!spec.packPrice && !!spec.packSize;
+          return {
+            quote_id: quoteId,
+            name: g.name,
+            component_type: 'main' as const,
+            measurement_type: (g.measurementType === 'area' ? 'area' : 'lineal') as 'area' | 'lineal',
+            input_mode: 'calculated' as const,
+            quote_roof_area_id: firstAreaId,
+            component_library_id: libId,
+            material_rate: spec ? (isPack ? 0 : spec.materialRate || 0) : 0,
+            labour_rate: spec ? spec.labourRate || 0 : 0,
+            material_cost: 0,
+            labour_cost: 0,
+            waste_type: spec ? spec.wasteType : ('none' as const),
+            waste_percent: spec && spec.wasteType === 'percent' ? spec.wasteValue || 0 : 0,
+            waste_fixed: spec && (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment') ? spec.wasteValue || 0 : 0,
+            pitch_type: spec && spec.pitchEnabled ? spec.pitchType : ('none' as const),
+            pricing_strategy: isPack ? spec!.pricingStrategy : ('per_unit' as const),
+            pack_price: isPack ? spec!.packPrice : null,
+            pack_size: isPack ? spec!.packSize : null,
+            is_customer_visible: true,
+            sort_order: i,
+            calc_raw_value: g.total,
+            final_quantity: g.total,
+            final_value: g.total,
+          };
+        }))
         .select('id');
       if (compsError) throw new Error(`components: ${compsError.message}`);
 

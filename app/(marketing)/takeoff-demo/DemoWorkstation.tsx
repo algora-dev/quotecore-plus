@@ -130,6 +130,9 @@ export interface DemoFinishPayload {
   /** Unit system chosen in the free-tool landing wizard (metric / imperial / squares).
    *  Absent for the takeoff-demo flows (defaults to metric display). */
   unitSystem?: 'metric' | 'imperial' | 'squares';
+  /** UPLOAD MODE: user-built component specs from the landing wizard.
+   *  Persisted into the draft so signup creates real component_library rows. */
+  componentSpecs?: import('@/app/(public)/free-roof-takeoff/tradeConfig').TakeoffComponentSpec[];
 }
 
 interface Props {
@@ -171,6 +174,9 @@ interface Props {
   /** UPLOAD MODE: unit system chosen in the landing wizard (passed through
    *  to the finish payload so the report displays the right units). */
   unitSystem?: 'metric' | 'imperial' | 'squares';
+  /** UPLOAD MODE: user-built component specs from the landing wizard - passed
+   *  straight through to the finish payload (never used inside the canvas). */
+  componentSpecs?: import('@/app/(public)/free-roof-takeoff/tradeConfig').TakeoffComponentSpec[];
   /** DEMO: called instead of navigating to the quote builder on Finish and Save. */
   onFinish?: (payload: DemoFinishPayload) => void;
 }
@@ -263,6 +269,7 @@ export function DemoWorkstation({
   onFinish,
   preferredLengthUnit = 'meters',
   unitSystem,
+  componentSpecs,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -4633,6 +4640,7 @@ export function DemoWorkstation({
     }),
     calibrationUnit: calibrations[0]?.unit ?? 'meters',
     unitSystem,
+    componentSpecs,
   });
 
   return (

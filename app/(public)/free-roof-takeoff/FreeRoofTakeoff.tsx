@@ -7,21 +7,15 @@ import { TOOL_COLLECTIONS, DEMO_AI_POINTS } from '@/app/(marketing)/takeoff-demo
 import {
   ROOFING_TAKEOFF_CONFIG,
   resolveUnitOption,
+  EMPTY_SPEC,
   type TakeoffUnitSystem,
   type TakeoffPlaceholderComponent,
+  type TakeoffComponentSpec,
 } from './tradeConfig';
 import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
 import { TakeoffOutputView, type TakeoffOutputExtras } from './TakeoffOutputView';
+import { ComponentBuilderModal } from './ComponentBuilderModal';
 import type { QuoteRow } from '@/app/lib/types';
-
-/** Minimal component shape the workstation accepts (mirrors its local interface). */
-interface ToolComponent {
-  id: string;
-  name: string;
-  measurement_type?: string;
-  collection_id?: string | null;
-  is_system?: boolean;
-}
 
 // Fabric.js + the full workstation load ONLY when the user enters the tool.
 const Workstation = dynamic(
@@ -38,8 +32,8 @@ const Workstation = dynamic(
 
 type Stage =
   | { phase: 'landing' }
-  | { phase: 'takeoff'; run: number; planDataUrl: string; startedAt: number; unitSystem: TakeoffUnitSystem; components: ToolComponent[] }
-  | { phase: 'output'; payload: DemoFinishPayload; run: number; planDataUrl: string; startedAt: number; unitSystem: TakeoffUnitSystem; components: ToolComponent[] };
+  | { phase: 'takeoff'; run: number; planDataUrl: string; startedAt: number; unitSystem: TakeoffUnitSystem; components: ToolComponent[]; specs: TakeoffComponentSpec[] }
+  | { phase: 'output'; payload: DemoFinishPayload; run: number; planDataUrl: string; startedAt: number; unitSystem: TakeoffUnitSystem; components: ToolComponent[]; specs: TakeoffComponentSpec[] };
 
 type Device = 'desktop' | 'tablet' | 'mobile';
 
@@ -58,8 +52,15 @@ const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp'];
 
 const CONFIG = ROOFING_TAKEOFF_CONFIG;
 
-/** Build the full component list: placeholders always available in the tool
- *  (user ticks which to start with) + any custom components from step 2. */
+/** Minimal component shape the workstation accepts (mirrors its local interface). */
+interface ToolComponent {
+  id: string;
+  name: string;
+  measurement_type?: string;
+  collection_id?: string | null;
+  is_system?: boolean;
+}
+
 function toComponents(list: TakeoffPlaceholderComponent[]): ToolComponent[] {
   return list.map(c => ({
     id: c.id,
@@ -79,11 +80,11 @@ export function FreeRoofTakeoff() {
   // Wizard state (step 1: unit, step 2: components, step 3: upload)
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [unitSystem, setUnitSystem] = useState<TakeoffUnitSystem>('metric');
-  const [usePlaceholders, setUsePlaceholders] = useState(true);
-  const [selectedIds, setSelectedIds] = useState<string[]>(CONFIG.placeholderComponents.map(c => c.id));
-  const [customList, setCustomList] = useState<{ name: string; type: 'lineal' | 'area' }[]>([]);
-  const [customName, setCustomName] = useState('');
-  const [customType, setCustomType] = useState<'lineal' | 'area'>('lineal');
+  // Step 2 choice: 'ours' = placeholder set, 'own' = build up to 7 custom components.
+  const [componentChoice, setComponentChoice] = useState<'ours' | 'own'>('ours');
+  const [specs, setSpecs] = useState<TakeoffComponentSpec[]>([]);
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const [editingSpecId, setEditingSpecId] = useState<string | null>(null);
 
   useEffect(() => {
     const d = detectDevice();
@@ -91,40 +92,41 @@ export function FreeRoofTakeoff() {
     if (d !== 'desktop') setDeviceNoticeOpen(true);
   }, []);
 
-  const toggleSelected = (id: string) =>
-    setSelectedIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
-
-  const addCustom = () => {
-    const name = customName.trim();
-    if (!name || customList.length >= CONFIG.maxCustomComponents) return;
-    setCustomList(prev => [...prev, { name, type: customType }]);
-    setCustomName('');
+  const openBuilder = () => {
+    setEditingSpecId(null);
+    setBuilderOpen(true);
+  };
+  const openEditBuilder = (id: string) => {
+    setEditingSpecId(id);
+    setBuilderOpen(true);
+  };
+  const handleBuilderSave = (spec: TakeoffComponentSpec, isNew: boolean) => {
+    setSpecs(prev => (isNew ? [...prev, spec] : prev.map(s => (s.id === spec.id ? spec : s))));
+    setBuilderOpen(false);
   };
 
-  const placeholderComps = useMemo(
-    () => CONFIG.placeholderComponents.filter(c => selectedIds.includes(c.id)),
-    [selectedIds],
-  );
-
-  const extraComponents = useMemo<ToolComponent[]>(
-    () =>
-      customList.map((c, i) => ({
-        id: `custom-${i}-${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
-        name: c.name,
-        measurement_type: c.type,
-        is_system: false,
-        collection_id: 'tool-custom',
-      })),
-    [customList],
-  );
-
-  /** Full component list passed to the workstation. */
-  const toolComponents = useMemo<ToolComponent[]>(
-    () => [...toComponents(usePlaceholders ? placeholderComps : []), ...extraComponents],
-    [usePlaceholders, placeholderComps, extraComponents],
-  );
-
   const unitOption = resolveUnitOption(unitSystem, CONFIG);
+
+  const specComponents = useMemo<ToolComponent[]>(
+    () =>
+      componentChoice !== 'own'
+        ? []
+        : specs.map(s => ({
+            id: s.id,
+            name: s.name,
+            measurement_type: s.measurementType,
+            is_system: false,
+            collection_id: 'tool-custom',
+          })),
+    [componentChoice, specs],
+  );
+
+  const toolComponents = useMemo<ToolComponent[]>(
+    () => [...(componentChoice === 'ours' ? toComponents(CONFIG.placeholderComponents) : []), ...specComponents],
+    [componentChoice, specComponents],
+  );
+
+  const activeSpecs = componentChoice === 'own' ? specs : [];
 
   const TOOL_QUOTE = useMemo(
     () =>
@@ -156,13 +158,13 @@ export function FreeRoofTakeoff() {
         const dataUrl = String(reader.result);
         setStage(prev => {
           const run = prev.phase === 'landing' ? 1 : (prev.run ?? 0) + 1;
-          return { phase: 'takeoff', run, planDataUrl: dataUrl, startedAt: Date.now(), unitSystem, components: toolComponents };
+          return { phase: 'takeoff', run, planDataUrl: dataUrl, startedAt: Date.now(), unitSystem, components: toolComponents, specs: activeSpecs };
         });
       };
       reader.onerror = () => setError('Could not read that image. Try a different file.');
       reader.readAsDataURL(file);
     },
-    [unitSystem, toolComponents],
+    [unitSystem, toolComponents, activeSpecs],
   );
 
   const restart = useCallback(() => {
@@ -178,9 +180,10 @@ export function FreeRoofTakeoff() {
         payload={stage.payload}
         extras={extras}
         unitSystem={stage.unitSystem}
+        specs={stage.specs}
         onRestart={restart}
         onBackToCanvas={() =>
-          setStage({ phase: 'takeoff', run: stage.run + 1, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components })
+          setStage({ phase: 'takeoff', run: stage.run + 1, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs })
         }
       />
     );
@@ -201,8 +204,9 @@ export function FreeRoofTakeoff() {
         demoMode="upload"
         preferredLengthUnit={unitOption.lengthUnit}
         unitSystem={stage.unitSystem}
+        componentSpecs={stage.specs}
         onFinish={payload =>
-          setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components })
+          setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs })
         }
       />
     );
@@ -304,83 +308,85 @@ export function FreeRoofTakeoff() {
 
         {step === 2 && (
           <div className="mt-4 space-y-4">
+            {/* Option A: our placeholders */}
             <label
-              className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
-                usePlaceholders ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'
+              className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                componentChoice === 'ours' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               <input
-                type="checkbox"
-                checked={usePlaceholders}
-                onChange={e => setUsePlaceholders(e.target.checked)}
-                className="w-4 h-4 accent-orange-500"
+                type="radio"
+                name="component-choice"
+                checked={componentChoice === 'ours'}
+                onChange={() => setComponentChoice('ours')}
+                className="mt-0.5 w-4 h-4 accent-orange-500"
               />
               <span>
                 <span className="block text-sm font-semibold text-slate-900">Use our roofing components</span>
-                <span className="block text-xs text-slate-500 mt-0.5">Ridge, Hip, Valley, Barge, Spouting, Roof Area, Broken Hip</span>
+                <span className="block text-xs text-slate-500 mt-0.5">
+                  Ridge, Hip, Valley, Barge, Spouting, Roof Area, Broken Hip - standard placeholders
+                </span>
               </span>
             </label>
 
-            {usePlaceholders && (
-              <div className="grid grid-cols-2 gap-2 px-1">
-                {CONFIG.placeholderComponents.map(c => (
-                  <label key={c.id} className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(c.id)}
-                      onChange={() => toggleSelected(c.id)}
-                      className="w-4 h-4 accent-orange-500"
-                    />
-                    {c.name}
-                  </label>
-                ))}
+            {/* Option B: build your own */}
+            <label
+              className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
+                componentChoice === 'own' ? 'border-orange-500 bg-orange-50' : 'border-slate-200 hover:border-slate-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="component-choice"
+                checked={componentChoice === 'own'}
+                onChange={() => setComponentChoice('own')}
+                className="mt-0.5 w-4 h-4 accent-orange-500"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">Build your own components</span>
+                <span className="block text-xs text-slate-500 mt-0.5">
+                  Same component builder as the app - name, measurement type, rates, pricing, waste and pitch. Up to {CONFIG.maxCustomComponents}.
+                </span>
+              </span>
+            </label>
+
+            {componentChoice === 'own' && (
+              <div className="pt-2 border-t border-slate-100">
+                {specs.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    {specs.map(s => (
+                      <div key={s.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 hover:border-orange-200 hover:bg-orange-50/40">
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">{s.name}</p>
+                          <p className="text-xs text-slate-500">
+                            {s.measurementType === 'lineal' ? 'Lineal' : s.measurementType === 'area' ? 'Area' : 'Quantity'}
+                            {s.materialRate > 0 || s.labourRate > 0 ? ` - $${s.materialRate} mat / $${s.labourRate} labour` : ''}
+                            {s.wasteType !== 'none' ? ` - waste ${s.wasteType === 'percent' ? s.wasteValue + '%' : s.wasteValue}` : ''}
+                            {s.pitchEnabled ? ' - pitch calc' : ''}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openEditBuilder(s.id)} className="text-xs text-slate-500 hover:text-slate-800">Edit</button>
+                          <button onClick={() => setSpecs(prev => prev.filter(x => x.id !== s.id))} className="text-xs text-slate-400 hover:text-[#BD4A1A]">Remove</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {specs.length < CONFIG.maxCustomComponents ? (
+                  <button
+                    onClick={openBuilder}
+                    className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-[#FF6B35] hover:bg-orange-50/40 text-sm text-gray-600 hover:text-gray-800 transition-all"
+                  >
+                    + Create component {specs.length > 0 ? `(${specs.length}/${CONFIG.maxCustomComponents})` : ''}
+                  </button>
+                ) : (
+                  <p className="text-xs text-slate-400 text-center">
+                    {CONFIG.maxCustomComponents} components max - a free account saves unlimited components permanently.
+                  </p>
+                )}
               </div>
             )}
-
-            <div className="pt-2 border-t border-slate-100">
-              <p className="text-sm font-semibold text-slate-900">Or build your own</p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Up to {CONFIG.maxCustomComponents} custom components this session - they reset when you leave (a free account saves them permanently).
-              </p>
-              {customList.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {customList.map((c, i) => (
-                    <span key={i} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">
-                      {c.name} ({c.type === 'lineal' ? 'lineal' : 'area'})
-                      <button onClick={() => setCustomList(prev => prev.filter((_, j) => j !== i))} className="text-slate-400 hover:text-slate-700">
-                        &times;
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              {customList.length < CONFIG.maxCustomComponents && (
-                <div className="mt-3 flex gap-2">
-                  <input
-                    type="text"
-                    value={customName}
-                    onChange={e => setCustomName(e.target.value)}
-                    placeholder="Component name e.g. Fascia"
-                    className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-                  />
-                  <select
-                    value={customType}
-                    onChange={e => setCustomType(e.target.value as 'lineal' | 'area')}
-                    className="px-2 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
-                  >
-                    <option value="lineal">Lineal</option>
-                    <option value="area">Area</option>
-                  </select>
-                  <button
-                    onClick={addCustom}
-                    disabled={!customName.trim()}
-                    className="px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 disabled:opacity-40"
-                  >
-                    Add
-                  </button>
-                </div>
-              )}
-            </div>
 
             <button
               onClick={() => setStep(3)}
@@ -390,7 +396,7 @@ export function FreeRoofTakeoff() {
               Continue
             </button>
             {toolComponents.length === 0 && (
-              <p className="text-xs text-[#BD4A1A] text-center">Select at least one component to continue.</p>
+              <p className="text-xs text-[#BD4A1A] text-center">Build at least one component to continue.</p>
             )}
           </div>
         )}
@@ -400,7 +406,7 @@ export function FreeRoofTakeoff() {
             <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
               Unit: <span className="font-semibold text-slate-800">{unitOption.label}</span> &middot; Components:{' '}
               <span className="font-semibold text-slate-800">{toolComponents.length}</span>
-              {customList.length > 0 && <> ({customList.length} custom)</>}
+              {componentChoice === 'own' && <> (your own{specs.length > 0 ? `, ${specs.length} built` : ''})</>}
             </div>
             <label
               className="mt-4 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 px-6 py-12 cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition-colors"
@@ -437,6 +443,16 @@ export function FreeRoofTakeoff() {
               </ul>
             </div>
           </div>
+        )}
+
+        {builderOpen && (
+          <ComponentBuilderModal
+            key={editingSpecId ?? 'new'}
+            initial={editingSpecId ? specs.find(s => s.id === editingSpecId) ?? null : null}
+            measurementSystem={unitOption.lengthUnit === 'meters' ? 'metric' : 'imperial_ft'}
+            onSave={handleBuilderSave}
+            onClose={() => setBuilderOpen(false)}
+          />
         )}
 
         <p className="mt-6 text-xs text-slate-400">
