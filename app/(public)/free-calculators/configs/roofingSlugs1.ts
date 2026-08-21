@@ -67,7 +67,7 @@ export const SLUGS_1: SlugDef[] = [
     ogTitle: 'Free Roof Pitch Calculator - Degrees, Ratio & Rise/Run',
     ogDesc: 'Free roof pitch calculator. Convert between degrees, rise/run, and percentage.',
     h1: 'Roof Pitch Calculator',
-    hero: 'Calculate roof pitch in degrees, as a rise/run ratio, or as a percentage. Enter any one value and the calculator converts instantly. Includes pitch factor for surface area. Free, no signup.',
+    hero: 'The QuoteCore Plus Free Roof Pitch Calculator calculates roof pitch in degrees, as a rise/run ratio, or as a percentage. Enter any one value and the calculator converts instantly. Includes pitch factor for surface area. Free, no signup.',
     tipsH: 'Roof pitch - did you know?',
     tips: [
       ['What exactly is roof pitch?', 'Roof pitch is the steepness of a roof, expressed as an angle in degrees or as a ratio of rise to run. UK uses degrees (e.g. 35°). US uses rise/run (e.g. 6:12 = 6 inches rise per 12 inches run). Both describe the same thing.'],

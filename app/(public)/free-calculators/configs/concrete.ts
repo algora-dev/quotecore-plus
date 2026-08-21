@@ -72,7 +72,7 @@ export const concreteConfig: TradeConfig = {
   content: {
     h1: 'Concrete Calculator',
     heroText:
-      'Free concrete calculator for slabs, footings, and foundations. Work out volumes in m³ with depth presets, formwork and mesh areas, drainage falls, and ready-mix pricing. No signup required - works on mobile and desktop.',
+      'The QuoteCore Plus Free Concrete Calculator is a free concrete calculator for slabs, footings, and foundations. Work out volumes in m³ with depth presets, formwork and mesh areas, drainage falls, and ready-mix pricing. No signup required - works on mobile and desktop.',
     tipsHeading: 'Concrete calculation tips',
     tips: [
       {
