@@ -4623,9 +4623,37 @@ export function DemoWorkstation({
 
   // DEMO: build the finish payload handed to the demo shell (replaces the
   // router.push to the quote builder in the real app).
-  const buildDemoFinishPayload = (): DemoFinishPayload => ({
-    roofAreas: roofAreas.map(ra => ({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch })),
-    componentGroups: componentMeasurements.map(g => {
+  //
+  // Multi-area fix (2026-08-21): creating a NEW separate area moves the
+  // previous area's state into areaCanvasStatesRef and clears current state.
+  // The report must include EVERY area, so merge the cached areas (all except
+  // the active one, whose state is live) with the current state before building.
+  const buildDemoFinishPayload = (): DemoFinishPayload => {
+    const mergedByComponent = new Map<string, typeof componentMeasurements[number]>();
+    const pushGroup = (g: typeof componentMeasurements[number]) => {
+      const existing = mergedByComponent.get(g.componentId);
+      if (existing) {
+        existing.measurements.push(...g.measurements);
+      } else {
+        mergedByComponent.set(g.componentId, { ...g, measurements: [...g.measurements] });
+      }
+    };
+    componentMeasurements.forEach(pushGroup);
+    areaCanvasStatesRef.current.forEach((cached, areaId) => {
+      if (areaId === activeAreaId) return;
+      cached.componentMeasurements.forEach(pushGroup);
+    });
+
+    const mergedRoofAreas: { id: string; name: string; area: number; pitch: number }[] = [];
+    areaCanvasStatesRef.current.forEach((cached, areaId) => {
+      if (areaId === activeAreaId) return;
+      cached.roofAreas.forEach((ra: any) => mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+    });
+    roofAreas.forEach(ra => mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+
+    return {
+    roofAreas: mergedRoofAreas,
+    componentGroups: [...mergedByComponent.values()].map(g => {
       const comp = components.find(c => c.id === g.componentId);
       return {
         componentId: g.componentId,
@@ -4641,7 +4669,8 @@ export function DemoWorkstation({
     calibrationUnit: calibrations[0]?.unit ?? 'meters',
     unitSystem,
     componentSpecs,
-  });
+    };
+  };
 
   return (
     <>
@@ -6450,3 +6479,4 @@ export function DemoWorkstation({
 
 // Area Name Modal - isRoofing controls whether pitch is shown/required.
 // modalTitle + namePlaceholder are trade-config-driven.
+
