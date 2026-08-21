@@ -32,6 +32,13 @@ Variant test set pattern (adapt per tool): exact handle / minus "Free" / minus "
 | 6 | /free-birds-mouth-calculator | QuoteCore Plus Free Birds Mouth Calculator | Yes | Pending | Pending | Pending | NO | — |
 | 7 | /takeoff-demo | QuoteCore Plus Takeoff Demo | Yes | Pending | Pending | Pending | NO | — |
 | 8 | /free-roof-takeoff | QuoteCore Plus Free Roof Takeoff | Yes | Pending | Pending | Pending | NO | — |
+
+### Free Roof Takeoff page (Tom v2 brief, 2026-08-21)
+- Primary phrase: `QuoteCore Plus free roof takeoff` — verbatim in About opening sentence (HTML).
+- Secondary phrase: `QuoteCore Plus free roof takeoff tool` — verbatim in FAQ (HTML + FAQPage JSON-LD).
+- Page rebuilt per brief: title `Free Roof Takeoff — Upload Your Plan & Measure Online | QuoteCore Plus`, H1, badge row, 5-step how-it-works, SEO body, 8 FAQs, WebApplication+FAQPage+BreadcrumbList schema, sitemap entry, homepage two-tier CTA (FreeTakeoffCTACard), /free-tools hub card.
+- Tool truth held to: image uploads only (PNG/JPG/WebP, no PDF), max 7 custom components, no-save sessions, manual measuring only, pricing only with custom components.
+- Blog embeds = batch 2, after Tom confirms indexation. Review date: 2026-09-04.
 | 9 | /free-roof-pitch-calculator | QuoteCore Plus Free Roof Pitch Calculator | Yes | Pending | Pending | Pending | NO | — |
 | 10 | /free-concrete-calculator | QuoteCore Plus Free Concrete Calculator | Yes | Pending | Pending | Pending | NO | — |
 
