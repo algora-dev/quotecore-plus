@@ -83,6 +83,15 @@ const nextConfig: NextConfig = {
   // must be declared or Turbopack bundles it without native binaries
   // (caused the 2026-08-21 prod 500s on all AI Assist endpoints).
   serverExternalPackages: ['sharp'],
+  // sharp loads its Linux binary and libvips dynamically, so Next's output
+  // tracer cannot discover them from static imports. Include them explicitly
+  // in API function bundles (Vercel otherwise deploys sharp without libvips).
+  outputFileTracingIncludes: {
+    '/*': [
+      './node_modules/@img/sharp-linux-x64/**/*',
+      './node_modules/@img/sharp-libvips-linux-x64/**/*',
+    ],
+  },
   // No serverExternalPackages needed for fabric.js
   images: {
     remotePatterns: [
