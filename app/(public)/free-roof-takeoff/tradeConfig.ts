@@ -75,7 +75,6 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
     { id: '8f3a3e15-4497-480e-afaf-60c316a37de5', name: 'Barge', measurement_type: 'lineal' },
     { id: '99882053-bebc-427c-9450-b652a85ef665', name: 'Spouting', measurement_type: 'lineal' },
     { id: 'b2d33024-e32b-4809-b0ed-3b5e90babcba', name: 'Roof Area', measurement_type: 'area' },
-    { id: '2e8bf4c9-553c-4aa2-b9a4-25248124df8a', name: 'Broken Hip', measurement_type: 'lineal' },
   ],
   maxCustomComponents: 7,
   reportNote:
