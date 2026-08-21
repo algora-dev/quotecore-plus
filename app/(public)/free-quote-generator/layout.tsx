@@ -133,7 +133,7 @@ export default function QuoteLayout({ children }: { children: React.ReactNode })
       <section className="mx-auto max-w-3xl px-4 py-12 md:py-16">
         <h2 className="text-xl md:text-2xl font-semibold text-slate-900 mb-4">About the Free Quote Generator</h2>
         <p className="text-sm text-slate-600 leading-relaxed mb-6">
-          The QuoteCore+ free quote generator helps trades contractors create professional quotes in minutes.
+          The QuoteCore Plus free quote generator helps trades contractors create professional quotes in minutes.
           Add line items with quantities and pricing, apply tax rates, include your business branding, and download as PDF.
           No signup, no email required, no watermark. Built by trades, for trades.
         </p>
