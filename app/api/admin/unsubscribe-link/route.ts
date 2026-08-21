@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getClientIP } from '@/app/lib/security/rateLimit';
 import { buildUnsubscribeToken } from '@/app/lib/marketing/unsubscribeToken';
+import { getAdminSignupsApiKey, getUnsubscribeHmacSecret } from '@/app/lib/marketing/adminSecrets';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +17,7 @@ export const runtime = 'nodejs';
  */
 
 export async function GET(req: NextRequest) {
-  const expected = process.env.ADMIN_SIGNUPS_API_KEY;
+  const expected = await getAdminSignupsApiKey();
   const headerKey = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
   // Query-param fallback so a HUMAN can generate a link by pasting a URL
   // into a normal browser (no curl/auth-header tooling needed).
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Valid email query param required' }, { status: 400 });
   }
 
-  const token = buildUnsubscribeToken(email, expected);
+  const token = buildUnsubscribeToken(email, await getUnsubscribeHmacSecret() ?? '');
 
   const base = process.env.NEXT_PUBLIC_SITE_URL
     ?? (req.nextUrl.hostname.includes('localhost') ? 'http://localhost:3000' : 'https://app.quote-core.com');

@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { verifyUnsubscribeToken } from '@/app/lib/marketing/unsubscribeToken';
+import { getUnsubscribeHmacSecret } from '@/app/lib/marketing/adminSecrets';
 
 /**
  * Public unsubscribe confirmation for agent-sent marketing emails.
@@ -9,7 +10,7 @@ import { verifyUnsubscribeToken } from '@/app/lib/marketing/unsubscribeToken';
  * message_suppressions). Idempotent upsert.
  */
 export async function confirmMarketingUnsubscribe(token: string): Promise<{ ok: boolean; error?: string }> {
-  const secret = process.env.ADMIN_SIGNUPS_API_KEY;
+  const secret = await getUnsubscribeHmacSecret();
   if (!secret) return { ok: false, error: 'not_configured' };
 
   const email = verifyUnsubscribeToken(token, secret);
