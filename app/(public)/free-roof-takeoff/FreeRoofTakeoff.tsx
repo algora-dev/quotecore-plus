@@ -261,7 +261,7 @@ export function FreeRoofTakeoff() {
       )}
       <div className="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
         <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Free takeoff tool</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900">Measure your own roof plan</h1>
+        <p className="mt-2 text-2xl font-semibold text-slate-900">Measure your own roof plan</p>
         <p className="mt-1 text-sm font-medium text-[#BD4A1A]">The QuoteCore Plus Free Roof Takeoff tool — free, no signup required.</p>
         <div className="mt-4 flex items-center justify-between">
           {stepIndicator}

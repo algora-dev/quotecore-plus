@@ -262,8 +262,12 @@ export default function HomePage() {
 
               {/* Right: interactive demo card + free takeoff tool card (two-tier funnel) */}
               <div className="relative z-10 flex flex-1 flex-col items-center justify-start gap-4 overflow-hidden lg:flex-1 lg:items-start lg:gap-5">
-                <DemoCTACard location="homepage_hero" className="max-w-xl" />
-                <FreeTakeoffCTACard className="max-w-lg" />
+                <div className="w-full max-w-xl">
+                  <DemoCTACard location="homepage_hero" />
+                </div>
+                <div className="w-full max-w-lg">
+                  <FreeTakeoffCTACard />
+                </div>
               </div>
             </div>
 
