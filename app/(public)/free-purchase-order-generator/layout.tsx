@@ -85,7 +85,7 @@ const faqLd = {
       name: 'Is the purchase order generator really free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. The QuoteCore+ free purchase order generator is completely free with no signup required. Create unlimited POs and download as PDF. No watermark, no hidden fees.',
+        text: 'Yes. The QuoteCore Plus free purchase order generator is completely free with no signup required. Create unlimited POs and download as PDF. No watermark, no hidden fees.',
       },
     },
     {
