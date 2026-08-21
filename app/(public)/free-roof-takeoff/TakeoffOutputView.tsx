@@ -42,7 +42,7 @@ interface ComponentRow {
   count: number;
   total: number;
   measurementType?: string;
-  entries: { value: number; adjusted: number | null; areaName: string | null }[];
+  entries: { value: number; adjusted: number | null; areaId: string | null }[];
   semantic: string | null;
   /** Pitch/waste-adjusted total (user-built components only). */
   adjustedTotal: number | null;
@@ -147,10 +147,10 @@ export function TakeoffOutputView({
           };
           const entries = g.measurements.map(m => {
             const pt = g.measurementType === 'quantity' || g.measurementType === 'area' ? 'none' : pitchTypeFor();
-            if (pt === 'none') return { value: m.value, adjusted: null, areaName: null };
+            const areaId = (m as any).quoteRoofAreaId ?? null;
+            if (pt === 'none') return { value: m.value, adjusted: null, areaId };
             const r = applyPitchAndWaste(m.value, true, pt as any, areaPitchFor(m as any), 'none', 0, 0);
-            const area = (m as any).quoteRoofAreaId ? payload.roofAreas.find(a => a.id === (m as any).quoteRoofAreaId) : null;
-            return { value: m.value, adjusted: r.afterPitch, areaName: area?.name ?? null };
+            return { value: m.value, adjusted: r.afterPitch, areaId };
           });
           const anyAdjusted = entries.some(e => e.adjusted != null);
           const pitchAdjustedTotal = anyAdjusted ? entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
@@ -305,43 +305,69 @@ export function TakeoffOutputView({
             </div>
           )}
 
-          {/* Components - EVERY entry listed individually, then the group total */}
+          {/* Components grouped under their roof area (2026-08-21): each
+              area is a clear heading, its components sit indented underneath,
+              so the pitch context is self-evident. Un-stamped entries fall to
+              the first area. */}
           {components.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Components</h2>
-              <div className="mt-3 space-y-4">
-                {components.map(c => (
-                  <div key={c.key}>
-                    <div className="flex items-center justify-between pb-1">
-                      <span className="text-black font-semibold">{c.name}</span>
-                      <span className="text-black font-semibold whitespace-nowrap">
-                        {c.measurementType === 'quantity'
-                          ? `${c.count} ea`
-                          : `${fmt(c.total)} ${c.measurementType === 'area' ? areaUnitLabel : L} plan`}
-                        {c.adjustedTotal != null && c.measurementType !== 'quantity' && (
-                          <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(c.adjustedTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} adjusted</span>
-                        )}
-                        {c.cost != null && <span className="ml-2">&middot; ${fmt(c.cost)}</span>}
-                      </span>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Roof Areas &amp; Components</h2>
+              <div className="mt-3 space-y-6">
+                {areas.map(a => {
+                  // Entries for this area: stamped with its id, or un-stamped (first area only).
+                  const groupsHere = components
+                    .map(c => ({ ...c, entries: c.entries.filter(e => e.areaId === a.key || (e.areaId === null && a.key === areas[0]?.key)) }))
+                    .filter(c => c.entries.length > 0);
+                  if (groupsHere.length === 0) return null;
+                  return (
+                    <div key={a.key}>
+                      <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
+                        <span className="text-black font-bold">{a.name} <span className="font-medium">- pitch {fmt(a.pitch, 0)}&deg;</span></span>
+                        <span className="text-black font-medium whitespace-nowrap text-sm">
+                          {fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched
+                        </span>
+                      </div>
+                      <div className="pl-6 pt-2 space-y-3">
+                        {groupsHere.map(c => {
+                          const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
+                          const anyAdj = c.entries.some(e => e.adjusted != null);
+                          const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
+                          return (
+                            <div key={c.key}>
+                              <div className="flex items-center justify-between pb-1">
+                                <span className="text-black font-semibold">{c.name}</span>
+                                <span className="text-black font-semibold whitespace-nowrap text-sm">
+                                  {c.measurementType === 'quantity'
+                                    ? `${c.entries.length} ea`
+                                    : `${fmt(planTotal)} ${c.measurementType === 'area' ? areaUnitLabel : L} plan`}
+                                  {adjTotal != null && c.measurementType !== 'quantity' && (
+                                    <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} pitched</span>
+                                  )}
+                                  {c.cost != null && <span className="ml-2">&middot; ${fmt(c.cost)}</span>}
+                                </span>
+                              </div>
+                              <div className="space-y-0.5">
+                                {c.entries.map((m, i) => (
+                                  <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
+                                    <span className="text-black/70">Entry {i + 1}</span>
+                                    <span className="text-black/80 whitespace-nowrap">
+                                      {c.measurementType === 'quantity'
+                                        ? '1 ea'
+                                        : m.adjusted != null
+                                          ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted)} ${L} pitched`
+                                          : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="space-y-0.5">
-                      {c.entries.map((m, i) => (
-                        <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
-                          <span className="text-black/70">
-                            Entry {i + 1}{m.areaName ? ` - ${m.areaName}` : ''}
-                          </span>
-                          <span className="text-black/80 whitespace-nowrap">
-                            {c.measurementType === 'quantity'
-                              ? '1 ea'
-                              : m.adjusted != null
-                                ? `${fmt(m.value)} ${L} plan &rarr; ${fmt(m.adjusted)} ${L} pitched`
-                                : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
+                {/* Total component count line for orientation */}
               </div>
             </div>
           )}
