@@ -18,6 +18,22 @@ import {
  * - On blur (or Enter), the value is converted to degrees and passed to `onSave`.
  * - If `degrees` prop changes externally, the display updates to match.
  */
+/** Persisted so the takeoff report can show pitch in the mode the user
+ *  chose (degrees / ratio / gradient) instead of always degrees. */
+const PITCH_MODE_STORAGE_KEY = 'qc-pitch-input-mode';
+
+/** Read the last pitch input mode the user selected (client-side only). */
+export function getStoredPitchMode(): PitchInputMode {
+  if (typeof window === 'undefined') return 'degrees';
+  const v = window.localStorage.getItem(PITCH_MODE_STORAGE_KEY);
+  return v === 'ratio' || v === 'gradient' || v === 'degrees' ? v : 'degrees';
+}
+
+function storePitchMode(mode: PitchInputMode) {
+  if (typeof window === 'undefined') return;
+  try { window.localStorage.setItem(PITCH_MODE_STORAGE_KEY, mode); } catch {}
+}
+
 export function PitchInput(props: {
   /** Current pitch in degrees (controlled from parent / DB). */
   degrees: number | null | undefined;
@@ -38,6 +54,10 @@ export function PitchInput(props: {
 }) {
   const { degrees, onSave, label, required, showMax, className, compact, autoFocus } = props;
   const [mode, setMode] = useState<PitchInputMode>('degrees');
+  // Restore the user's last-selected mode (report also reads this).
+  useEffect(() => {
+    setMode(getStoredPitchMode());
+  }, []);
   const [text, setText] = useState('');
 
   // Sync display text when external degrees change or mode changes
@@ -77,7 +97,7 @@ export function PitchInput(props: {
             <button
               key={m}
               type="button"
-              onClick={() => setMode(m)}
+              onClick={() => { setMode(m); storePitchMode(m); }}
               className={`px-2 py-1 text-[11px] font-medium transition-colors ${
                 mode === m
                   ? 'bg-slate-900 text-white'
