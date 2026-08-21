@@ -1,0 +1,22 @@
+{
+  "firstName": "Cece",
+  "subject": "QuoteCore+ is officially live - and here's your welcome offer",
+  "heading": "QuoteCore+ is officially live!",
+  "intro": [
+    "You asked us to let you know when QuoteCore+ was live - and it officially is!",
+    "You were one of the people who signed up early to see what we were building, so I wanted to make sure you got a little something for being here from the start."
+  ],
+  "body": "Use code CECEDISCOUNT2026 before 30 September 2026 to get 50% off your QuoteCore+ subscription for your first 3 months.",
+  "discount": {
+    "amount": "50% off",
+    "code": "CECEDISCOUNT2026",
+    "duration": "for your first 3 months"
+  },
+  "ctaLabel": "Start Your Free Trial",
+  "ctaUrl": "https://app.quote-core.com/signup?utm_source=free-trial-page",
+  "bodyHtmlExtra": "Have a play with it, create a real quote and see how it fits into the way you work. I'd genuinely love to know what you think!",
+  "secondaryLabel": "Check Out the Free Tools",
+  "secondaryUrl": "https://quote-core.com/free-tools",
+  "closing": "And if you get stuck, have a question, think something could be better, or just want to tell me what you think - reply to this email, I'll see it and be happy to help.\n\nThanks again for being here early. It really does mean a lot to us.\nCece\nQuoteCore+",
+  "unsubscribeUrl": "https://app.quote-core.com/unsubscribe/Y2VjZS5jYXJzb24xQGhvdG1haWwuY29t.8nkA_8Tsa2Wz--hY1-1ou3_cYC1GTYT1i-xVztpqJrU"
+}
