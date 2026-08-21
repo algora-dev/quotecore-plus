@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
+import { getStoredPitchMode } from '@/app/components/PitchInput';
+import { fromDegrees } from '@/app/lib/pitch-inputs';
 import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
 import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
 
@@ -89,6 +91,13 @@ export function TakeoffOutputView({
 }) {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
+  // Show pitch in the mode the user entered it (degrees / ratio / gradient).
+  const pitchMode = getStoredPitchMode();
+  const fmtPitch = (deg: number) => {
+    if (pitchMode === 'degrees') return `${fmt(deg, 0)}\u00b0`;
+    if (pitchMode === 'ratio') return `1:${fromDegrees('ratio', deg)}`;
+    return `${fromDegrees('gradient', deg)}%`;
+  };
 
   // Determine the display system: explicit choice first, else infer from calibration.
   const calibUnit = payload.calibrationUnit;
@@ -286,7 +295,7 @@ export function TakeoffOutputView({
               <div className="mt-3 space-y-2">
                 {areas.map(a => (
                   <div key={a.key} className="flex items-center justify-between py-2 border-b border-black/10">
-                    <span className="text-black">{a.name} - pitch {fmt(a.pitch, 0)}&deg;</span>
+                    <span className="text-black">{a.name} - pitch {fmtPitch(a.pitch)}</span>
                     <span className="text-black font-medium whitespace-nowrap">
                       {fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched
                     </span>
@@ -322,7 +331,7 @@ export function TakeoffOutputView({
                   return (
                     <div key={a.key}>
                       <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
-                        <span className="text-black font-bold">{a.name} <span className="font-medium">- pitch {fmt(a.pitch, 0)}&deg;</span></span>
+                        <span className="text-black font-bold">{a.name} <span className="font-medium">- pitch {fmtPitch(a.pitch)}</span></span>
                         <span className="text-black font-medium whitespace-nowrap text-sm">
                           {fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched
                         </span>
