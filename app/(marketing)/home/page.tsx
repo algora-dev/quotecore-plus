@@ -265,7 +265,7 @@ export default function HomePage() {
                 <div className="w-full max-w-xl">
                   <DemoCTACard location="homepage_hero" />
                 </div>
-                <div className="w-full max-w-lg">
+                <div className="w-full max-w-xl">
                   <FreeTakeoffCTACard />
                 </div>
               </div>
