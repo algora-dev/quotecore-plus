@@ -85,7 +85,7 @@ const faqLd = {
       name: 'Is the invoice generator really free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. The QuoteCore+ free invoice generator is completely free with no signup required. Create unlimited invoices and download as PDF. No watermark, no hidden fees.',
+        text: 'Yes. The QuoteCore Plus free invoice generator is completely free with no signup required. Create unlimited invoices and download as PDF. No watermark, no hidden fees.',
       },
     },
     {
@@ -101,7 +101,7 @@ const faqLd = {
       name: 'Can I pre-fill an invoice from a quote?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. If you created a free quote using the QuoteCore+ quote generator, you can generate an invoice from it using URL parameters. The line items, pricing, and customer details carry over automatically.',
+        text: 'Yes. If you created a free quote using the QuoteCore Plus quote generator, you can generate an invoice from it using URL parameters. The line items, pricing, and customer details carry over automatically.',
       },
     },
     {

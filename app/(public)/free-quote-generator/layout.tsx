@@ -85,7 +85,7 @@ const faqLd = {
       name: 'Is the quote generator really free?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. The QuoteCore+ free quote generator is completely free with no signup required. Create unlimited quotes, download as PDF, and send to customers. No watermark, no hidden fees.',
+        text: 'Yes. The QuoteCore Plus free quote generator is completely free with no signup required. Create unlimited quotes, download as PDF, and send to customers. No watermark, no hidden fees.',
       },
     },
     {
