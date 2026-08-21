@@ -132,7 +132,7 @@ export default function InvoiceLayout({ children }: { children: React.ReactNode 
       <section className="mx-auto max-w-3xl px-4 py-12 md:py-16">
         <h2 className="text-xl md:text-2xl font-semibold text-slate-900 mb-4">About the Free Invoice Generator</h2>
         <p className="text-sm text-slate-600 leading-relaxed mb-6">
-          The QuoteCore+ free invoice generator helps trades contractors create professional invoices in minutes.
+          The QuoteCore Plus free invoice generator helps trades contractors create professional invoices in minutes.
           Add line items with quantities and rates, apply tax, include payment terms and bank details, and download as PDF.
           No signup required. Built by trades, for trades.
         </p>
