@@ -455,3 +455,12 @@
 - [ ] Upload-another-plan button visible but disabled; back link returns to demo start
 - [ ] Fabric loads only after entering the demo; plan asset (176KB PNG) under 300KB; no console errors on the route
 - [ ] Homepage / feature-page entry buttons link to the demo (NOT YET BUILT - v1 buttons were on main before v2 rewrite, verify they still point correctly)
+
+## Free Roof Takeoff - multi-area report (main, 2026-08-21, `d94373d3`)
+- [ ] Upload plan, calibrate, confirm calibration (top left)
+- [ ] Draw Main Roof 25deg + hip/ridge/spouting entries; + New Area -> create new -> Gable End 45deg + valley/ridge/barge
+- [ ] Finish and Save -> report shows BOTH areas as bold headers, components nested under each
+- [ ] Hips adjusted at 25deg hip/valley; valleys/barges adjusted at 45deg; ridge/spouting = plan length
+- [ ] Enter pitch as ratio (12 = 1:12) -> report header shows ratio, not degrees
+- [ ] Placeholder list shows Ridge, Hip, Valley, Barge, Spouting, Roof Area (no pricing) - no Broken Hip
+- [ ] Send to QuoteCore+ -> signup -> draft restores into quote builder with both areas + components
