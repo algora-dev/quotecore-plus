@@ -74,15 +74,15 @@ const MANUAL_STEPS: GuideStep[] = [
 const UPLOAD_STEPS: GuideStep[] = [
   {
     title: 'Calibrate your plan',
-    body: 'First, set the scale. Click Calibrate in the toolbar above the plan, then click two points on a known dimension (a wall or ridge length printed on the plan). Enter its real length and confirm. At least one calibration is required. When you are happy, click Confirm Calibration (bottom left) to move on to drawing the roof area.',
+    body: 'Click two points on a known dimension (a wall or ridge length printed on the plan). Enter its real length and confirm. At least one calibration is required. When you are happy, click Confirm Calibration (top left) to move on to drawing the roof area.',
   },
   {
     title: 'Draw the roof area',
-    body: 'Click the Area tool and choose Polygon or Rectangle. From there, trace the outline of the entire roof area you want to calculate - it does not matter how many planes are inside it. When it closes, name the area. Use + New Area for each additional roof area.',
+    body: 'Click the Area tool and choose Polygon or Rectangle. From there, trace the outline of the entire roof area you want to calculate - it does not matter how many planes are inside it. With Polygon, click back on your first point (or hover over it and click) to close the shape - then name the area. Use + New Area for each additional roof area.',
   },
   {
     title: 'Add components and measure',
-    body: 'Scroll down to Add Components in the panel and pick the first one you want to measure. The right tool is selected for you - Line for linear items, Area for roof outlines, Count for fixings.',
+    body: 'Scroll down to Add Components in the panel and pick the first one you want to measure. The right tool is selected for you - Line for linear items, Area for roof outlines, Point for fixings.',
   },
   {
     title: 'Edit your measurements',
