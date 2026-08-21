@@ -78,6 +78,11 @@ const APP_CSP_REPORT_ONLY = [
 
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
+  // sharp is used directly by server code (AI scan pipeline). Next.js
+  // only externalises sharp for its OWN image optimizer - direct app usage
+  // must be declared or Turbopack bundles it without native binaries
+  // (caused the 2026-08-21 prod 500s on all AI Assist endpoints).
+  serverExternalPackages: ['sharp'],
   // No serverExternalPackages needed for fabric.js
   images: {
     remotePatterns: [
