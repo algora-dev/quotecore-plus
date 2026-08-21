@@ -86,6 +86,7 @@ export default function TakeoffDemoPage() {
         <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
           Free Roof Takeoff Demo — Try QuoteCore+ Digital Takeoff
         </h1>
+        <p className="mt-1 text-sm font-medium text-[#BD4A1A]">The QuoteCore Plus Takeoff Demo — free, no sign-in required.</p>
         <p className="mt-4 text-base leading-relaxed text-slate-600">
           An interactive demo of the QuoteCore+ takeoff workstation. Scan a sample roof plan with AI or measure it
           manually, and the demo produces a real customer quote from your measurements. Free, no sign-in — best on a

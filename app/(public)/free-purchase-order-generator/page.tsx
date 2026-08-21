@@ -345,6 +345,7 @@ function POGeneratorForm() {
         {/* Hero */}
         <section className="mb-8 print:hidden">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Purchase Order Generator</h1>
+          <p className="mt-1 text-sm font-medium text-[#BD4A1A]">QuoteCore Plus Free Purchase Order Generator — free, no signup required.</p>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
             Create a professional purchase order for your suppliers. Upload a photo of your existing
             PO and AI will fill in the form - or paste your details, or type it manually. No signup required.

@@ -100,7 +100,7 @@ export const constructionConfig: TradeConfig = {
   content: {
     h1: 'Construction Calculator',
     heroText:
-      'Free construction calculator for builders and site managers. Work out floor and wall areas, timber and stud lengths, material quantities with waste allowances, and cutting angles. No signup required - works on mobile and desktop.',
+      'The QuoteCore Plus Free Construction Calculator is a free construction calculator for builders and site managers. Work out floor and wall areas, timber and stud lengths, material quantities with waste allowances, and cutting angles. No signup required - works on mobile and desktop.',
     tipsHeading: 'Construction calculation tips',
     tips: [
       {

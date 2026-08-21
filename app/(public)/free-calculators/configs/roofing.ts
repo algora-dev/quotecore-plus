@@ -90,7 +90,7 @@ export const roofingConfig: TradeConfig = {
   content: {
     h1: 'Roofing Calculator',
     heroText:
-      'Calculate roof pitch, rafter length, roof surface area, quantities and complex pricing. No signup required - works on mobile and desktop.',
+      'The QuoteCore Plus Free Roofing Calculator calculates roof pitch, rafter length, roof surface area, quantities and complex pricing. No signup required - works on mobile and desktop.',
     tipsHeading: 'Roofing calculation tips',
     tips: [
       {

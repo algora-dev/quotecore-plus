@@ -66,7 +66,7 @@ export const birdsmouthConfig: TradeConfig = {
   content: {
     h1: "Bird's Mouth Calculator",
     heroText:
-      "Free bird's mouth calculator for roofers, carpenters, and stair builders. Work out seat cut and plumb cut angles, heel height, and notch depth from the pitch and timber size. Includes the ⅓-depth structural check so you don't weaken the rafter. No signup required.",
+      "The QuoteCore Plus Free Birds Mouth Calculator is a free bird's mouth calculator for roofers, carpenters, and stair builders. Work out seat cut and plumb cut angles, heel height, and notch depth from the pitch and timber size. Includes the ⅓-depth structural check so you don't weaken the rafter. No signup required.",
     tipsHeading: "Bird's mouth calculation tips",
     tips: [
       {
