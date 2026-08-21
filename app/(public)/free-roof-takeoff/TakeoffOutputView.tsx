@@ -42,7 +42,7 @@ interface ComponentRow {
   count: number;
   total: number;
   measurementType?: string;
-  entries: { value: number }[];
+  entries: { value: number; adjusted: number | null; areaName: string | null }[];
   semantic: string | null;
   /** Pitch/waste-adjusted total (user-built components only). */
   adjustedTotal: number | null;
@@ -52,6 +52,16 @@ interface ComponentRow {
 
 const HIP_SEMANTICS = ['hips', 'broken_hips'];
 const VALLEY_SEMANTICS = ['valleys'];
+
+/** Placeholder/system component pitch handling (matches main-app system defaults):
+ *  ridge + spouting = none, barge = rafter, hip/valley = hip & valley. */
+function placeholderPitchType(row: { semantic: string | null; name: string }): 'none' | 'rafter' | 'valley_hip' {
+  const n = row.name.toLowerCase();
+  if (row.semantic && (HIP_SEMANTICS.includes(row.semantic) || VALLEY_SEMANTICS.includes(row.semantic))) return 'valley_hip';
+  if (n.startsWith('hip') || n.startsWith('valley')) return 'valley_hip';
+  if (n.startsWith('barge')) return 'rafter';
+  return 'none';
+}
 
 function isHipOrValley(row: ComponentRow): boolean {
   if (row.semantic && (HIP_SEMANTICS.includes(row.semantic) || VALLEY_SEMANTICS.includes(row.semantic))) return true;
@@ -118,19 +128,41 @@ export function TakeoffOutputView({
           const spec = specs.find(s => s.id === g.componentId) ?? null;
           let adjustedTotal: number | null = null;
           let cost: number | null = null;
+          // Per-measurement pitch adjustment (2026-08-21): each measurement is
+          // stamped with the roof area it was drawn on, so pitch comes from THAT
+          // area. Placeholder (no spec) components use the system pitch mapping:
+          // ridge/spouting = none, barge = rafter, hip/valley = hip & valley.
+          const fallbackPitchType = placeholderPitchType(g);
+          const pitchTypeFor = (): 'none' | 'rafter' | 'valley_hip' => {
+            if (spec) return spec.pitchEnabled ? (spec.pitchType as any) : 'none';
+            return fallbackPitchType;
+          };
+          const areaPitchFor = (m: { quoteRoofAreaId?: string | null }) => {
+            if (m.quoteRoofAreaId) {
+              const area = payload.roofAreas.find(a => a.id === m.quoteRoofAreaId);
+              if (area) return area.pitch || 0;
+            }
+            // Un-stamped (single-area sessions): first pitched area.
+            return payload.roofAreas.find(a => (a.pitch || 0) > 0)?.pitch ?? 0;
+          };
+          const entries = g.measurements.map(m => {
+            const pt = g.measurementType === 'quantity' || g.measurementType === 'area' ? 'none' : pitchTypeFor();
+            if (pt === 'none') return { value: m.value, adjusted: null, areaName: null };
+            const r = applyPitchAndWaste(m.value, true, pt as any, areaPitchFor(m as any), 'none', 0, 0);
+            const area = (m as any).quoteRoofAreaId ? payload.roofAreas.find(a => a.id === (m as any).quoteRoofAreaId) : null;
+            return { value: m.value, adjusted: r.afterPitch, areaName: area?.name ?? null };
+          });
+          const anyAdjusted = entries.some(e => e.adjusted != null);
+          const pitchAdjustedTotal = anyAdjusted ? entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
           if (spec && g.measurementType !== 'quantity') {
-            // Pitch factor comes from the first roof area that has a pitch
-            // (matches the app: one pitch per area, areas measured separately).
-            const pitch = payload.roofAreas.find(a => (a.pitch || 0) > 0)?.pitch ?? 0;
-            // Waste applies PER ENTRY (per measured length/area), not to the
-            // group total - same as the app. Pitch + percent are multiplicative
-            // so they commute, but fixed/per-segment waste must hit every entry.
-            const adjusted = g.measurements.reduce((sum, m) => {
+            // Waste applies PER ENTRY on top of the pitch-adjusted length
+            // (pitch was already applied per-entry above, from that entry's area).
+            const adjusted = entries.reduce((sum, e) => {
               const r = applyPitchAndWaste(
-                m.value,
-                true,
-                spec.pitchEnabled ? spec.pitchType : 'none',
-                pitch,
+                e.adjusted ?? e.value,
+                false, // pitch already applied - only waste runs here
+                'none',
+                0,
                 spec.wasteType,
                 spec.wasteType === 'percent' ? spec.wasteValue : 0,
                 spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
@@ -154,9 +186,9 @@ export function TakeoffOutputView({
             count: g.count,
             total: g.total,
             measurementType: g.measurementType,
-            entries: g.measurements,
+            entries,
             semantic: g.semantic,
-            adjustedTotal,
+            adjustedTotal: adjustedTotal ?? pitchAdjustedTotal,
             cost,
           };
         }),
@@ -285,7 +317,7 @@ export function TakeoffOutputView({
                       <span className="text-black font-semibold whitespace-nowrap">
                         {c.measurementType === 'quantity'
                           ? `${c.count} ea`
-                          : `${fmt(c.total)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+                          : `${fmt(c.total)} ${c.measurementType === 'area' ? areaUnitLabel : L} plan`}
                         {c.adjustedTotal != null && c.measurementType !== 'quantity' && (
                           <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(c.adjustedTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} adjusted</span>
                         )}
@@ -296,10 +328,14 @@ export function TakeoffOutputView({
                       {c.entries.map((m, i) => (
                         <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
                           <span className="text-black/70">
-                            Entry {i + 1}{isHipOrValley(c) && c.measurementType !== 'area' && c.measurementType !== 'quantity' ? ' (plan length)' : ''}
+                            Entry {i + 1}{m.areaName ? ` - ${m.areaName}` : ''}
                           </span>
                           <span className="text-black/80 whitespace-nowrap">
-                            {c.measurementType === 'quantity' ? '1 ea' : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+                            {c.measurementType === 'quantity'
+                              ? '1 ea'
+                              : m.adjusted != null
+                                ? `${fmt(m.value)} ${L} plan &rarr; ${fmt(m.adjusted)} ${L} pitched`
+                                : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
                           </span>
                         </div>
                       ))}
@@ -312,11 +348,11 @@ export function TakeoffOutputView({
 
           <div className="pt-4 border-t border-black">
             <p className="text-sm text-black italic">
-              Measurements taken with the QuoteCore+ digital takeoff system. Pitched areas use the rafter
-              pitch factor for each area. Hip and valley entries are shown as plan lengths - the system
-              calculates the hip/valley pitch (and therefore true hip/valley lengths) from the roof pitch
-              entered for each area. Send this takeoff into QuoteCore+ to price it with your own
-              component rates and turn it into a quote.
+              Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter
+              pitch factor for each area. Hips and valleys are adjusted using the hip &amp; valley pitch
+              calculated from their roof area&apos;s pitch; barges use the rafter pitch factor. Ridge and
+              spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with
+              your own component rates and turn it into a quote.
             </p>
           </div>
         </div>

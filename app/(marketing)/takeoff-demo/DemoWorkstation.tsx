@@ -124,7 +124,7 @@ export interface DemoFinishPayload {
     count: number;
     total: number;
     measurementType?: string;
-    measurements: { value: number }[];
+    measurements: { value: number; quoteRoofAreaId?: string | null }[];
   }>;
   calibrationUnit: string;
   /** Unit system chosen in the free-tool landing wizard (metric / imperial / squares).
@@ -4663,7 +4663,7 @@ export function DemoWorkstation({
         count: g.measurements.length,
         total: g.measurements.reduce((s, m) => s + m.value, 0),
         measurementType: comp?.measurement_type,
-        measurements: g.measurements.map(m => ({ value: m.value })),
+        measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ?? null })),
       };
     }),
     calibrationUnit: calibrations[0]?.unit ?? 'meters',
