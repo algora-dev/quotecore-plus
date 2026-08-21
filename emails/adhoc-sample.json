@@ -1,0 +1,21 @@
+{
+  "firstName": "Sam",
+  "subject": "Get 20% off QuoteCore+ for 3 months",
+  "heading": "Save 20% on QuoteCore+",
+  "intro": [
+    "We know running a trade business is busy work. That's why we built QuoteCore+ to make quoting, measuring, and managing jobs faster.",
+    "As a thank you for being part of our early users, here's a little incentive to upgrade your plan."
+  ],
+  "body": "Quote faster, price jobs more accurately, and keep every job organised in one place. Take 20% off any plan for your first three months.",
+  "discount": {
+    "amount": "20% off",
+    "code": "WELCOME20",
+    "duration": "for the first 3 months"
+  },
+  "ctaLabel": "Claim my discount",
+  "ctaUrl": "https://quote-core.com/pricing",
+  "secondaryLabel": "or book a quick call with our team",
+  "secondaryUrl": "https://calendly.com/quote-core-info/15-minute-meeting",
+  "closing": "Happy quoting - the QuoteCore+ team.",
+  "unsubscribeUrl": "https://quote-core.com/unsubscribe"
+}
