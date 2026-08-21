@@ -11,7 +11,7 @@ export default function FreeTakeoffCTACard({ className = "" }: { className?: str
       <div className="relative aspect-video w-full overflow-hidden bg-white">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/free-tools/FreeRoofTakeOffTool1.png"
+          src="/free-tools/FreeRoofTakeOffTool2.png"
           alt="Measure your own roof plan with the QuoteCore+ free roof takeoff tool"
           className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
           loading="eager"
