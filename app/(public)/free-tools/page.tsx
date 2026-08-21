@@ -4,7 +4,7 @@ import SiteFooter from '@/components/SiteFooter';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { TOOLS, CALCULATORS, CALCULATOR_COUNT } from './tools-data';
 import CalculatorSearchGrid from './CalculatorSearchGrid';
-import { QuoteGeneratorSection, RoofTakeoffSection, CalculatorsSection, PurchaseOrderSection, InvoiceSection } from './ToolSections';
+import { QuoteGeneratorSection, RoofTakeoffSection, FreeRoofTakeoffSection, CalculatorsSection, PurchaseOrderSection, InvoiceSection } from './ToolSections';
 import DemoCTACard from "@/components/DemoCTACard";
 
 const SITE_URL = 'https://quote-core.com';
@@ -79,6 +79,7 @@ export default function FreeToolsPage() {
         <div className="mx-auto max-w-5xl px-2 md:px-6 pb-12 md:pb-20 space-y-12 md:space-y-20">
           <QuoteGeneratorSection />
           <RoofTakeoffSection />
+          <FreeRoofTakeoffSection />
           <CalculatorsSection calculatorCount={CALCULATOR_COUNT} />
           <PurchaseOrderSection />
           <InvoiceSection />

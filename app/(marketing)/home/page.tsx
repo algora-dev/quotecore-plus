@@ -5,6 +5,7 @@ import CoffeePopup from "@/components/CoffeePopup";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import DemoCTACard from "@/components/DemoCTACard";
+import FreeTakeoffCTACard from "@/components/FreeTakeoffCTACard";
 import YouTubeLite from "@/components/YouTubeLite";
 import Link from "next/link";
 import { trackEvent } from "@/lib/analytics";
@@ -259,9 +260,10 @@ export default function HomePage() {
 
               </div>
 
-              {/* Right: interactive demo card */}
-              <div className="relative z-10 flex flex-1 items-center justify-center overflow-hidden lg:flex-1">
+              {/* Right: interactive demo card + free takeoff tool card (two-tier funnel) */}
+              <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-6 overflow-hidden lg:flex-1">
                 <DemoCTACard location="homepage_hero" />
+                <FreeTakeoffCTACard className="max-w-xl" />
               </div>
             </div>
 

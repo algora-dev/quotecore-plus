@@ -69,6 +69,32 @@ export function RoofTakeoffSection() {
   );
 }
 
+export function FreeRoofTakeoffSection() {
+  return (
+    <section id="free-roof-takeoff" className="scroll-mt-24">
+      <div className="flex items-center gap-2.5 mb-3">
+        <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
+        <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Roof Takeoff</h2>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
+        <div className="order-2 lg:order-1">
+          <p className="text-xs md:text-sm text-slate-500 leading-relaxed">Upload your own roof plan and measure it digitally. Draw lengths and areas on screen with automatic pitch calculations, and get a full measurement output.</p>
+          <ul className="mt-4 md:mt-5 space-y-3">
+            <li className="flex items-start gap-2.5"><svg className="w-5 h-5 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg><span className="text-sm text-slate-600 leading-relaxed">Upload your own plan image, calibrate the scale, measure to scale</span></li>
+            <li className="flex items-start gap-2.5"><svg className="w-5 h-5 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg><span className="text-sm text-slate-600 leading-relaxed">Pitch-calculated measurements — plan lengths become true roof lengths</span></li>
+            <li className="flex items-start gap-2.5"><svg className="w-5 h-5 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg><span className="text-sm text-slate-600 leading-relaxed">Default components for measurements, or create up to 7 with your own pricing</span></li>
+            <li className="flex items-start gap-2.5"><svg className="w-5 h-5 text-[#BD4A1A] flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg><span className="text-sm text-slate-600 leading-relaxed">No signup — nothing is saved unless you send the result into the app</span></li>
+          </ul>
+        </div>
+        <div className="order-1 lg:order-2">
+          <ImageCarousel images={['/free-tools/FreeRoofTakeOffTool1.png', '/free-tools/FreeRoofTakeOffTool2.png', '/free-tools/FreeRoofTakeOffTool3.png']} alt="Free Roof Takeoff tool - measure your own roof plan" />
+          <ToolCtaCentered href="/free-roof-takeoff" label="Open Free Roof Takeoff" onClick={() => trackEvent('free_tools_hub_click', { tool: 'free-roof-takeoff' })} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function CalculatorsSection({ calculatorCount }: { calculatorCount: number }) {
   return (
     <section id="calculators" className="scroll-mt-24">
