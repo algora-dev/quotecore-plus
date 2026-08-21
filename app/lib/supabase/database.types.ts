@@ -396,6 +396,27 @@ export type Database = {
           },
         ]
       }
+      app_runtime_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string

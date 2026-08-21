@@ -7,7 +7,7 @@
 import 'dotenv/config';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { AdhocEmailInput } from '../app/lib/email/templates/adhoc-types';
+import { AdhocEmailInput } from '../app/lib/email/templates/adhoc';
 
 const LOGO_URL = 'https://quotecore-plus-main.vercel.app/logo-email.png';
 const esc = (s: string) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
@@ -32,3 +32,4 @@ const { subject, html, text } = render(input);
 console.log(`SUBJECT: ${subject}`);
 console.log(`\n--- HTML ---\n${html}`);
 console.log(`\n--- TEXT ---\n${text}`);
+

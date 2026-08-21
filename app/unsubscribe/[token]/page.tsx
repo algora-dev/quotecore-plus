@@ -1,4 +1,5 @@
 import { verifyUnsubscribeToken } from '@/app/lib/marketing/unsubscribeToken';
+import { getUnsubscribeHmacSecret } from '@/app/lib/marketing/adminSecrets';
 import { UnsubscribeConfirm } from './UnsubscribeConfirm';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,7 @@ export default async function MarketingUnsubscribePage({
   const { token } = await params;
   const { confirmed, error } = await searchParams;
 
-  const secret = process.env.ADMIN_SIGNUPS_API_KEY;
+  const secret = await getUnsubscribeHmacSecret();
   const valid = secret ? verifyUnsubscribeToken(token, secret) !== null : false;
 
   return (

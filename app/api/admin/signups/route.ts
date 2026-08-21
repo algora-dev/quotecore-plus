@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { getClientIP } from '@/app/lib/security/rateLimit';
+import { getAdminSignupsApiKey } from '@/app/lib/marketing/adminSecrets';
 
 export const runtime = 'nodejs';
 
@@ -35,8 +36,9 @@ interface SignupRow {
 }
 
 export async function GET(req: NextRequest) {
-  // 1. Static key check (constant-time-ish compare on both lengths).
-  const expected = process.env.ADMIN_SIGNUPS_API_KEY;
+  // 1. Static key check. Key lives in app_runtime_config (DB) with env fallback,
+  // so it can be fixed/rotated with SQL without a Vercel re-paste.
+  const expected = await getAdminSignupsApiKey();
   const headerKey = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
   // Query-param fallback (browser-testable; also rules out proxies that
   // strip the Authorization header).
