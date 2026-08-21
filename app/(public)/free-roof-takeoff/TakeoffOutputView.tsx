@@ -405,7 +405,7 @@ export function TakeoffOutputView({
               disabled={saveState === 'saving' || saveState === 'saved'}
               className="inline-flex items-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
             >
-              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - redirecting...' : 'Send to QuoteCore+ and price it'}
+              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - redirecting...' : 'Save my takeoff - it comes with you'}
             </button>
             <button
               onClick={() => window.print()}
