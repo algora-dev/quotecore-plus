@@ -4647,9 +4647,11 @@ export function DemoWorkstation({
     const mergedRoofAreas: { id: string; name: string; area: number; pitch: number }[] = [];
     areaCanvasStatesRef.current.forEach((cached, areaId) => {
       if (areaId === activeAreaId) return;
-      cached.roofAreas.forEach((ra: any) => mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+      // id must match measurement stamps (quoteRoofAreaId = DB area id),
+      // otherwise the report cannot resolve which area a measurement belongs to.
+      cached.roofAreas.forEach((ra: any) => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
     });
-    roofAreas.forEach(ra => mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+    roofAreas.forEach(ra => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
 
     return {
     roofAreas: mergedRoofAreas,
