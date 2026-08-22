@@ -37,7 +37,7 @@ export function FreeToolsSignupBanner() {
     <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 mb-6 print:hidden">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-slate-700">
-          Sign up with 1 click for higher daily limits and branding removal for all tools
+          Sign up free for higher AI limits and branding removal across QuoteCore+ tools
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <button
