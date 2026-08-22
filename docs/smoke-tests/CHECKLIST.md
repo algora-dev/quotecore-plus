@@ -464,3 +464,4 @@
 - [ ] Enter pitch as ratio (12 = 1:12) -> report header shows ratio, not degrees
 - [ ] Placeholder list shows Ridge, Hip, Valley, Barge, Spouting, Roof Area (no pricing) - no Broken Hip
 - [ ] Send to QuoteCore+ -> signup -> draft restores into quote builder with both areas + components
+- [ ] /free-margin-calculator: Quick mode math (100 + 20% margin = 125), Line-by-line totals, AI quote import, Quote Generator round-trip (Check / Add Margin -> send prices back)
