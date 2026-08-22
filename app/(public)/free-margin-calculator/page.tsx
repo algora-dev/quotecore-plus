@@ -228,7 +228,7 @@ function MarginCalculator() {
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Free Margin Calculator</h1>
           <p className="mt-1 text-sm font-medium text-[#BD4A1A]">Enter costs, add margin, see your profit - free, no signup required.</p>
           <p className="mt-2 text-sm text-slate-500 max-w-xl">
-            Calculate margin on a single total or line by line across a whole quote. Works for
+            Calculate gross margin on a single total or line by line across a whole quote. Works for
             materials, labour, installation, delivery - any cost at all.
           </p>
         </section>
@@ -316,7 +316,7 @@ function MarginCalculator() {
                   <p className="mt-1 text-xl font-semibold text-slate-900">{formatMoney(quickSell, sym)}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
-                  <p className="text-xs font-medium text-slate-500">Profit</p>
+                  <p className="text-xs font-medium text-slate-500">Gross profit</p>
                   <p className="mt-1 text-xl font-semibold text-[#BD4A1A]">{formatMoney(quickProfit, sym)}</p>
                 </div>
                 <div className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
@@ -512,7 +512,7 @@ function MarginCalculator() {
                       <span className="font-medium text-slate-900">{formatMoney(totalCost, sym)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-500">Total profit</span>
+                      <span className="text-slate-500">Gross profit</span>
                       <span className="font-medium text-[#BD4A1A]">{Number.isFinite(totalProfit) ? formatMoney(totalProfit, sym) : '-'}</span>
                     </div>
                     <div className="flex justify-between text-base font-semibold border-t border-slate-200 pt-1.5">
@@ -520,9 +520,10 @@ function MarginCalculator() {
                       <span className="text-slate-900">{Number.isFinite(totalSell) ? formatMoney(totalSell, sym) : '-'}</span>
                     </div>
                     <div className="flex justify-between text-xs text-slate-500">
-                      <span>Overall margin</span>
+                      <span>Gross margin</span>
                       <span>{overallMargin.toFixed(1)}%</span>
                     </div>
+                    <p className="text-[10px] text-slate-400 pt-1">Gross figures based on the costs you enter - before overheads, tax and business running costs.</p>
                   </div>
                 </div>
               )}
@@ -561,7 +562,7 @@ function MarginCalculator() {
                   Should I apply different margins to materials and labour?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">Many trades do. Materials often carry 15-25% margin, while labour can carry more because errors and rework come out of your time. This calculator lets you set a different margin on every line, so labour and materials can be margined independently even though the calculation itself is the same.</p>
+                  <p className="text-sm text-slate-600">You can - and it is common practice, though the right split varies by trade and business model. Some trades apply a higher margin to labour than materials (or the other way round) because of where their risk sits: rework and errors usually eat labour time, while material price changes eat material profit. There is no universal rule - this calculator simply lets you set a different margin on every line so you can price each part of the job the way your business works.</p>
                 </div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
@@ -569,7 +570,7 @@ function MarginCalculator() {
                   What is a safe margin for a small trade business?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">Most successful small construction and roofing businesses target a gross margin of 20-35% once materials, labour, and waste are costed. Below roughly 15% there is usually nothing left for overheads, slow payment periods, and the jobs that go wrong. Your real number depends on your overheads - this calculator shows gross margin before overheads.</p>
+                  <p className="text-sm text-slate-600">This calculator shows <strong>gross margin</strong>: profit on the costs you enter, before overheads like insurance, vehicles, office costs and your own time quoting. There is no single right number - the appropriate margin depends on your trade, your costs, your overheads, the risk and complexity of the job, material price volatility, and how competitive your local market is. Many trades work at different margins for materials versus labour, and change margin by job type. If you are unsure, an accountant or trade association for your trade can help you find a number that covers your overheads and leaves a real profit.</p>
                 </div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
@@ -585,7 +586,7 @@ function MarginCalculator() {
                   Is this calculator really free?
                 </summary>
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-slate-600">Yes - no signup, no limits. Everything runs in your browser. If you want quote tracking, follow-ups, digital takeoff and client management, <Link href="/signup" className="text-[#BD4A1A] font-medium">try QuoteCore+ free &rarr;</Link></p>
+                  <p className="text-sm text-slate-600">Yes - the calculator itself is completely free, no signup required, with no limits on how many calculations you run. Everything calculates in your browser. The only limited feature is the AI quote import (photo upload or paste text), which has a small number of free scans per day and offers a free account for more. If you want quote tracking, follow-ups, digital takeoff and client management, <Link href="/signup" className="text-[#BD4A1A] font-medium">try QuoteCore+ free &rarr;</Link></p>
                 </div>
               </details>
             </div>
