@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { parseConvertLines, buildConvertUrl, type ConvertibleLine } from '../shared/convertLines';
+import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
+import { PromptBox } from '../free-quote-generator/PromptBox';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { FreeToolsAuthButton } from '../_components/FreeToolsAuthButton';
@@ -169,6 +171,30 @@ function MarginCalculator() {
   });
 
   const imported = !!(importedLines && importedLines.length > 0);
+
+  const [uploadError, setUploadError] = useState('');
+  const [aiNotice, setAiNotice] = useState('');
+
+  // AI quote import - fills the Line-by-Line calculator from an uploaded/pasted quote.
+  // Quoted prices are used as the starting cost; the user corrects to true costs.
+  function handleParsed(data: ParsedUploadResult) {
+    if (data.lines && data.lines.length > 0) {
+      setMode('lines');
+      setLines(data.lines.map((l, i) => ({
+        id: String(Date.now() + i),
+        description: l.description,
+        cost: l.qty * l.rate,
+        marginPercent: null,
+      })));
+    }
+    const noticeParts: string[] = [];
+    if (data.confidence === 'medium') noticeParts.push('medium confidence');
+    if (data.confidence === 'low') noticeParts.push('low confidence');
+    if (data.warnings && data.warnings.length > 0) noticeParts.push(data.warnings.join('; '));
+    if (data.remaining <= 2) noticeParts.push(`${data.remaining} free AI scans left today`);
+    setAiNotice(noticeParts.length > 0 ? `AI extraction: ${noticeParts.join(' · ')}` : '');
+    setUploadError('');
+  }
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -356,6 +382,28 @@ function MarginCalculator() {
           </div>
         ) : (
           <div className="mt-4 space-y-6">
+            {/* AI import - upload or paste an existing quote to fill the lines */}
+            <ImageUpload
+              documentType="quote"
+              onParsed={handleParsed}
+              onError={(msg) => { setUploadError(msg); setAiNotice(''); }}
+            />
+            {uploadError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2.5">
+                <p className="text-sm text-red-700">{uploadError}</p>
+              </div>
+            )}
+            {aiNotice && (
+              <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-2.5">
+                <p className="text-sm text-blue-700">{aiNotice}</p>
+              </div>
+            )}
+            <PromptBox
+              documentType="quote"
+              onParsed={(data) => handleParsed(data as unknown as ParsedUploadResult)}
+              onError={(msg) => { setUploadError(msg); setAiNotice(''); }}
+            />
+
             {/* Default margin */}
             <div className="rounded-xl border border-slate-200 bg-white p-5">
               <div className="flex flex-wrap items-end justify-between gap-3">
