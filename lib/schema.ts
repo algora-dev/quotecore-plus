@@ -69,8 +69,8 @@ export function buildSoftwareApplicationSchema() {
   return {
     "@type": "SoftwareApplication",
     "@id": softwareId,
-    name: "QuoteCore+",
-    alternateName: ["QuoteCore", "Quote Core", "Quote Core Plus", "QuoteCore Plus"],
+    name: "QuoteCore Plus",
+    alternateName: ["QuoteCore+", "QuoteCore", "Quote Core", "Quote Core Plus"],
     applicationCategory: "BusinessApplication",
     applicationSubCategory: "Quoting software",
     operatingSystem: "Web",

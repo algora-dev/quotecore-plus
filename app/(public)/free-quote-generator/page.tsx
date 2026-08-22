@@ -986,6 +986,16 @@ function QuoteGeneratorForm() {
                 </svg>
                 Convert to Invoice
               </a>
+              <a
+                href={buildConvertUrl({ targetPath: '/free-margin-calculator', amount: total, lines: lines.filter(l => !l.lineHidden), ref: 'free-quote-generator' })}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"
+                title="Send every line into the free margin calculator - set margin per line and send prices back"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                Check / Add Margin
+              </a>
               <button
                 onClick={resetQuote}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 transition"

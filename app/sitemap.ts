@@ -84,6 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/free-birds-mouth-calculator`, changeFrequency: 'monthly', priority: 0.9 },
     // Free document generators
     { url: `${SITE_URL}/free-quote-generator`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/free-margin-calculator`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-purchase-order-generator`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/free-invoice-generator`, changeFrequency: 'monthly', priority: 0.9 },
     // Roof takeoff builder (standalone tool, not part of slug system)

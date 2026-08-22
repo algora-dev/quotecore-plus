@@ -38,7 +38,7 @@ const faqs = [
   {
     question: "Who is QuoteCore+ built for?",
     answer:
-      "QuoteCore+ is built first for roofing contractors and estimators who need a faster, more accurate way to measure, price, quote and manage work. Smart Components™ can also support construction, cladding and other measured trades that use repeatable materials, labour and pricing rules.",
+      "QuoteCore+ is built first for roofing contractors and estimators who need a faster, more accurate way to measure, price, quote and manage work. Smart Components™ can also support construction, cladding and other trades that use repeatable materials, labour and pricing rules.",
   },
   {
     question: "How fast can I create a quote?",
@@ -289,23 +289,29 @@ export default function HomePage() {
         <section className="border-b border-zinc-100 bg-white py-14 lg:py-16">
           <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
             <h2 className="text-center text-2xl font-semibold sm:text-3xl">
-              How you go from plan to priced quote
+              How QuoteCore Plus works
             </h2>
+            <p className="mt-3 text-center text-sm font-medium uppercase tracking-wide text-[#FF6B35]">
+              Measure &rarr; Price &rarr; Quote
+            </p>
+            <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-6 text-zinc-600">
+              Take a plan from measurements to a priced customer quote without re-entering the same information between tools. The full story - through ordering and invoicing - is below.
+            </p>
             <div className="mt-10 grid gap-6 lg:grid-cols-3">
               <div className="rounded-2xl border border-zinc-200 bg-white p-7">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6B35]/10 text-base font-semibold text-[#FF6B35]">1</div>
                 <h3 className="mt-4 text-lg font-semibold text-zinc-950">Measure the job in the app</h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">Upload a plan and measure on screen - no printing, no scaling by hand (using <Link href="/features/digital-roof-takeoff" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Digital Takeoff</Link>), or speed it up with <Link href="/features/ai-scan-assist" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</Link>.</p>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">Upload a plan and measure on screen - by hand or faster with <Link href="/features/ai-scan-assist" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</Link>.</p>
               </div>
               <div className="rounded-2xl border border-zinc-200 bg-white p-7">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6B35]/10 text-base font-semibold text-[#FF6B35]">2</div>
                 <h3 className="mt-4 text-lg font-semibold text-zinc-950">Price it with your saved pricing</h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">Your materials, labour, waste, pitch and pack-size rules are remembered and applied automatically (using <Link href="/features/smart-components" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</Link>). You don't re-enter them every quote.</p>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">Materials, labour, waste and pitch rules are remembered and applied automatically - not re-entered every quote.</p>
               </div>
               <div className="rounded-2xl border border-zinc-200 bg-white p-7">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF6B35]/10 text-base font-semibold text-[#FF6B35]">3</div>
                 <h3 className="mt-4 text-lg font-semibold text-zinc-950">Create the quote in a few clicks</h3>
-                <p className="mt-3 text-sm leading-6 text-zinc-600">The quote is generated from what you measured and priced. Review, send, and track when it's opened - all from the same job.</p>
+                <p className="mt-3 text-sm leading-6 text-zinc-600">Generated from what you measured and priced. Review, send, and track when it's opened.</p>
               </div>
             </div>
           </div>

@@ -29,10 +29,10 @@ export default function FreeTakeoffCTACard({ className = "" }: { className?: str
         {/* Copy overlay */}
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-4 sm:p-5">
           <p className="text-base font-semibold leading-snug text-white sm:text-lg">
-            Test it on your own job — 30 seconds to start
+            Measure your own roof plan — free, no signup
           </p>
           <p className="hidden text-sm leading-6 text-zinc-200 sm:block">
-            Upload your own roof plan and measure it with pitch calculations — the full takeoff tool, free and no sign-in.
+            Upload a real plan and test the takeoff workflow on your own job - no account needed.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Link
