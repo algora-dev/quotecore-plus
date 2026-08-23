@@ -92,11 +92,11 @@ export default function Post() {
       </blockquote>
       <p>
         And here is the same set of changes in a structured quote editor: click line 4, change £380 to £420, save.
-        The address field is a field. VAT is a setting. Nothing else can drift, because nothing else is being
-        regenerated.
+        The address field is a field. VAT is a setting. Nothing else needs to change, because you are editing the
+        field directly rather than regenerating the whole document.
       </p>
       <p>
-        General AI generates the document quickly. Structured software makes small corrections faster because you
+        General AI generates the document quickly. Structured software can make small corrections faster because you
         edit the actual data instead of describing the correction conversationally.
       </p>
 
