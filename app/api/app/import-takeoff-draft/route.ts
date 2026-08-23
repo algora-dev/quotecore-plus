@@ -205,7 +205,7 @@ export async function GET(req: NextRequest) {
         (areaId && areaIdMap.get(areaId) ? areaId : roofAreas[0]?.id) ?? '';
       type Row = {
         row: Record<string, unknown>;
-        measurements: { value: number; quoteRoofAreaId?: string | null }[];
+        measurements: { value: number; final: number }[];
       };
       const rows: Row[] = [];
       let sortIdx = 0;
@@ -225,6 +225,25 @@ export async function GET(req: NextRequest) {
         }
         for (const [k, bucket] of buckets) {
           const total = bucket.reduce((s, m) => s + m.value, 0);
+          // FINAL values (pitch + waste per entry), identical to the free
+          // tool's report: plan -> pitched (entry's area pitch, spec pitch
+          // type) -> incl waste. Stored as value_after_waste so the quote
+          // builder shows the finished figures straight away (2026-08-23).
+          const bucketArea = roofAreas.find(ra => ra.id === k);
+          const areaPitch = bucketArea?.pitch || 0;
+          const pitchT = spec && spec.pitchEnabled && g.measurementType !== 'area' && g.measurementType !== 'quantity' ? spec.pitchType : 'none';
+          const finalOf = (raw: number) => {
+            let v = raw;
+            if (pitchT !== 'none') {
+              v = raw * pitchFactor(areaPitch, pitchT === 'rafter' ? 'rafter' : 'valley_hip');
+            }
+            if (spec) {
+              if (spec.wasteType === 'percent') v *= 1 + (spec.wasteValue || 0) / 100;
+              else if (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment') v += spec.wasteValue || 0;
+            }
+            return v;
+          };
+          const finalTotal = bucket.reduce((s, m) => s + finalOf(m.value), 0);
           rows.push({
             row: {
               quote_id: quoteId,
@@ -251,10 +270,10 @@ export async function GET(req: NextRequest) {
               is_customer_visible: true,
               sort_order: sortIdx++,
               calc_raw_value: total,
-              final_quantity: total,
-              final_value: total,
+              final_quantity: finalTotal,
+              final_value: finalTotal,
             },
-            measurements: bucket,
+            measurements: bucket.map(m => ({ value: m.value, final: finalOf(m.value) })),
           });
         }
       }
@@ -270,7 +289,7 @@ export async function GET(req: NextRequest) {
           rows[i].measurements.map((m, j) => ({
             quote_component_id: c.id,
             raw_value: m.value,
-            value_after_waste: m.value,
+            value_after_waste: (m as { final: number }).final,
             sort_order: j,
             is_combined: false,
           }))
