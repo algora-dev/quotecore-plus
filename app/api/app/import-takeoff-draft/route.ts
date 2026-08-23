@@ -216,9 +216,7 @@ export async function GET(req: NextRequest) {
                 ? (spec.wasteValue || 0) * g.count
                 : 0,
             pitch_type: spec && spec.pitchEnabled ? spec.pitchType : ('none' as const),
-            pricing_strategy: isPack ? spec!.pricingStrategy : ('per_unit' as const),
-            pack_price: isPack ? spec!.packPrice : null,
-            pack_size: isPack ? spec!.packSize : null,
+            pack_size_snapshot: spec && spec.pricingStrategy !== 'per_unit' ? spec.packSize : null,
             is_customer_visible: true,
             sort_order: i,
             calc_raw_value: g.total,
@@ -251,8 +249,20 @@ export async function GET(req: NextRequest) {
       .is('consumed_at', null);
 
     const dash = await dashboardUrl(admin, companyId, req.url);
-    const builder = new URL(`/${dash.pathname.split('/')[1]}/quotes/${quoteId}/build`, dash.origin);
-    return NextResponse.redirect(builder);
+    // dest=components (banner click) lands the user on their component
+    // library so they immediately see what was imported.
+    const target =
+      req.nextUrl.searchParams.get('dest') === 'components'
+        ? new URL(`/${dash.pathname.split('/')[1]}/components`, dash.origin)
+        : new URL(`/${dash.pathname.split('/')[1]}/quotes/${quoteId}/build`, dash.origin);
+    const res = NextResponse.redirect(target);
+    // Clear the signup handoff cookies so the dashboard banner stops
+    // offering the (now consumed) draft.
+    for (const name of ['qcp_signup_draft', 'qcp_signup_ref']) {
+      res.cookies.set({ name, value: '', path: '/', maxAge: 0 });
+      res.cookies.set({ name, value: '', path: '/', maxAge: 0, domain: '.quote-core.com' });
+    }
+    return res;
   } catch (err) {
     console.error('[import-takeoff-draft] failed:', err);
     const dash = await dashboardUrl(admin, companyId, req.url);

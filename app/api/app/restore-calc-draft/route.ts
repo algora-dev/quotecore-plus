@@ -102,9 +102,12 @@ export async function GET(req: NextRequest) {
       .eq('id', draftId)
       .maybeSingle();
     if (typeRow?.draft_type === 'takeoff') {
-      return NextResponse.redirect(
-        new URL(`/api/app/import-takeoff-draft?draft=${draftId}`, req.url),
-      );
+      // Forward the dest param so banner clicks land on the components page
+      // (import-takeoff-draft defaults to the quote builder otherwise).
+      const dest = req.nextUrl.searchParams.get('dest');
+      const importUrl = new URL(`/api/app/import-takeoff-draft?draft=${draftId}`, req.url);
+      if (dest) importUrl.searchParams.set('dest', dest);
+      return NextResponse.redirect(importUrl);
     }
   }
 
