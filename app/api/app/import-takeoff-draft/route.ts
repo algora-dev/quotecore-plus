@@ -178,7 +178,9 @@ export async function GET(req: NextRequest) {
           input_mode: 'calculated' as const,
           calc_pitch_degrees: a.pitch || 0,
           calc_plan_sqm: a.area,
-          computed_sqm: a.area,
+          // In-app takeoff stores the PITCHED area in computed_sqm (what the
+          // builder header displays) - match that exactly (2026-08-23).
+          computed_sqm: pitched,
           final_value_sqm: pitched,
         };
       });
@@ -255,8 +257,10 @@ export async function GET(req: NextRequest) {
               component_library_id: libId,
               material_rate: spec ? (isPack ? 0 : spec.materialRate || 0) : 0,
               labour_rate: spec ? spec.labourRate || 0 : 0,
-              material_cost: 0,
-              labour_cost: 0,
+              // Price the final (pitch + waste) quantity at the spec rates so
+              // the builder shows the same dollars as the free tool report.
+              material_cost: spec && !isPack ? finalTotal * (spec.materialRate || 0) : 0,
+              labour_cost: spec ? finalTotal * (spec.labourRate || 0) : 0,
               waste_type: spec ? spec.wasteType : 'none',
               waste_percent: spec && spec.wasteType === 'percent' ? spec.wasteValue || 0 : 0,
               // Fixed/per-segment waste multiplies by THIS area's entry count
