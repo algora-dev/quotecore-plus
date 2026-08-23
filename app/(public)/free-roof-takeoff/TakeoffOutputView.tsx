@@ -45,6 +45,8 @@ interface ComponentRow {
   total: number;
   measurementType?: string;
   entries: { value: number; adjusted: number | null; areaId: string | null }[];
+  /** Per-entry cost aligned with `entries` (per_unit pricing only; null where N/A). */
+  entryCosts: (number | null)[];
   semantic: string | null;
   /** Pitch/waste-adjusted total (user-built components only). */
   adjustedTotal: number | null;
@@ -161,6 +163,23 @@ export function TakeoffOutputView({
             const r = applyPitchAndWaste(m.value, true, pt as any, areaPitchFor(m as any), 'none', 0, 0);
             return { value: m.value, adjusted: r.afterPitch, areaId };
           });
+          // Per-entry cost (per_unit pricing only), so each roof-area section
+          // shows ITS OWN dollar figure instead of the group-wide total.
+          // Waste runs per entry, exactly like the group total below.
+          const entryCosts = spec
+            ? g.measurements.map((m, i) => {
+                if (g.measurementType === 'quantity') return (spec.materialRate || 0) + (spec.labourRate || 0);
+                if (spec.pricingStrategy !== 'per_unit') return null; // pack: group-level only
+                const base = entries[i].adjusted ?? m.value;
+                const w = applyPitchAndWaste(
+                  base, false, 'none', 0,
+                  spec.wasteType,
+                  spec.wasteType === 'percent' ? spec.wasteValue : 0,
+                  spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
+                );
+                return w.afterWaste * ((spec.materialRate || 0) + (spec.labourRate || 0));
+              })
+            : g.measurements.map(() => null as number | null);
           const anyAdjusted = entries.some(e => e.adjusted != null);
           const pitchAdjustedTotal = anyAdjusted ? entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
           if (spec && g.measurementType !== 'quantity') {
@@ -196,6 +215,7 @@ export function TakeoffOutputView({
             total: g.total,
             measurementType: g.measurementType,
             entries,
+            entryCosts,
             semantic: g.semantic,
             adjustedTotal: adjustedTotal ?? pitchAdjustedTotal,
             cost,
@@ -341,6 +361,14 @@ export function TakeoffOutputView({
                           const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
                           const anyAdj = c.entries.some(e => e.adjusted != null);
                           const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
+                          // THIS area's cost: sum the per-entry costs for the entries
+                          // shown here (was the group-wide c.cost - fixed 2026-08-23).
+                          const indicesHere = c.entries
+                            .map((e, i) => (e.areaId === a.key || (e.areaId === null && a.key === areas[0]?.key) ? i : -1))
+                            .filter(i => i >= 0);
+                          const areaCost = indicesHere.length > 0 && indicesHere.every(i => c.entryCosts[i] != null)
+                            ? indicesHere.reduce((s, i) => s + (c.entryCosts[i] ?? 0), 0)
+                            : null;
                           return (
                             <div key={c.key}>
                               <div className="flex items-center justify-between pb-1">
@@ -352,7 +380,7 @@ export function TakeoffOutputView({
                                   {adjTotal != null && c.measurementType !== 'quantity' && (
                                     <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} pitched</span>
                                   )}
-                                  {c.cost != null && <span className="ml-2">&middot; ${fmt(c.cost)}</span>}
+                                  {areaCost != null && <span className="ml-2">&middot; ${fmt(areaCost)}</span>}
                                 </span>
                               </div>
                               <div className="space-y-0.5">

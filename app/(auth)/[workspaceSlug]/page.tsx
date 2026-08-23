@@ -5,6 +5,7 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { WelcomeModal } from './tutorials/WelcomeModal';
 import { DocDraftRestorer } from './DocDraftRestorer';
+import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
 
 export default async function WorkspaceHome({
   params,
@@ -165,6 +166,11 @@ export default async function WorkspaceHome({
       <Suspense fallback={null}>
         <DocDraftRestorer workspaceSlug={workspaceSlug} />
       </Suspense>
+
+      {/* "Where is my takeoff" helper - shows after a takeoff draft import
+          until dismissed. Distinct colour so it never competes visually with
+          the blue component-import banner above. */}
+      <TakeoffDraftNoteBanner />
 
       {/* Alert banner */}
       {(unreadAlerts ?? 0) > 0 && (
