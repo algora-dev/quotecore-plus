@@ -73,7 +73,7 @@ export default function BuilderStep({ components, areas, setAreas, measureMode, 
       <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
         <div>
           <div className="text-sm font-medium text-slate-800">{measureMode === 'actual' ? 'Actual measurements' : 'Plan measurements (pitch applied)'}</div>
-          <div className="text-xs text-slate-400">Change this in step 1 if needed.</div>
+          <div className="text-xs text-slate-400">Change this in step 3 if needed.</div>
         </div>
         <button onClick={onBack} className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400">Change</button>
       </div>
