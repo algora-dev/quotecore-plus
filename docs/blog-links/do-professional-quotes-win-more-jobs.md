@@ -41,4 +41,4 @@ Source: `app/(marketing)/blog/[slug]/content/do-professional-quotes-win-more-job
 | /blog/how-to-get-more-work-as-a-contractor | what the evidence says about professional quotes winning more jobs |
 | /blog/roofing-quote-example | evidence on whether professional quotes win more jobs |
 
-External links in source: 2
+External links in source: 6
