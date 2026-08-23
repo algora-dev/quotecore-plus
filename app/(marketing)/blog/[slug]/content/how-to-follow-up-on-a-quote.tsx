@@ -172,7 +172,7 @@ export default function Post() {
       <p>Thank them for the response and ask one optional question about the deciding factor. Do not argue. Record the reason and leave the relationship professional.</p>
       <h3>Can quote follow-up be automated?</h3>
       <p>Yes, but automation should stop when the customer responds and should use helpful, varied messages. Review timing and tone regularly.</p>
-      <p>Want the process handled consistently? Explore <a href="/roofing-quoting-software">quoting software for roofers</a>, see the full <a href="/construction-quoting-software">construction quoting software for contractors</a>, or start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
+      <p>Want the process handled consistently? Follow-up works best on quotes that arrived fast and looked professional - <a href="/blog/do-professional-quotes-win-more-jobs">here is the evidence for that</a>. Explore <a href="/roofing-quoting-software">quoting software for roofers</a>, see the full <a href="/construction-quoting-software">construction quoting software for contractors</a>, or start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
     </div>
   );
 }

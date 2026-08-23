@@ -254,6 +254,14 @@ export default function FreeRoofTakeoffPage() {
           plans just to measure them - upload the drawing, set the scale and measure roof areas and lengths directly in
           your browser instead of working between printed plans, a ruler, calculator and spreadsheet.
         </p>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          Want the full walkthrough? See <Link href="/blog/how-to-measure-a-roof-online" className="text-[#BD4A1A] underline underline-offset-2">how to measure a roof online, step by step</Link>{' '}
+          - uploading, calibrating the scale and measuring every component. From there, turn quantities into a
+          materials order with the{' '}
+          <Link href="/free-roofing-material-calculator" className="text-[#BD4A1A] underline underline-offset-2">free roofing material calculator</Link>{' '}
+          or build the quote itself with the{' '}
+          <Link href="/free-quote-generator" className="text-[#BD4A1A] underline underline-offset-2">free quote generator</Link>.
+        </p>
       </section>
 
       {/* Free tool vs QuoteCore+ */}

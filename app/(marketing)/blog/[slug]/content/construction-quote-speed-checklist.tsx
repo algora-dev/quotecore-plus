@@ -135,7 +135,7 @@ export default function Post() {
         <li><strong>Follow up in 48 hours.</strong> Send a short, polite follow-up two days after the quote. No chasing, just checking they received it and asking if they have questions.</li>
         <li><strong>Track your quotes.</strong> Keep a simple list of what was sent, when, and whether it was accepted. Patterns will emerge.</li>
       </ol>
-      <p>These changes cost nothing and can cut your quote turnaround time significantly. When you are ready to go further, <a href="/free-trial">QuoteCore+ handles all of this in one connected workflow</a>.</p>
+      <p>These changes cost nothing and can cut your quote turnaround time significantly. Speed is one of the clearest documented win factors - <a href="/blog/do-professional-quotes-win-more-jobs">see the evidence on professional quotes and win rates</a>. When you are ready to go further, <a href="/free-trial">QuoteCore+ handles all of this in one connected workflow</a>.</p>
     </div>
   );
 }

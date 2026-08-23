@@ -155,7 +155,7 @@ export default function Post() {
 
       <hr />
 
-      <p>Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>. No card needed. From complex plan to quote in under 3 minutes for less than a dollar.</p>
+      <p>Ready to quote faster? Build your quotes with the <a href="/free-quote-generator">free quote generator</a> - professional, itemised, no signup - and see <a href="/blog/do-professional-quotes-win-more-jobs">what the evidence says about professional quotes winning more jobs</a>. Or <a href="/free-trial">start your free QuoteCore+ trial today</a>. No card needed. From complex plan to quote in under 3 minutes for less than a dollar.</p>
     </div>
   );
 }

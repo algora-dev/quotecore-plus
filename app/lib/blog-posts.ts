@@ -519,6 +519,53 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     lastModified: '2026-07-29',
     draft: true,
   },
+  {
+    slug: 'do-professional-quotes-win-more-jobs',
+    category: 'contractor-business',
+    title: 'Do Professional Quotes Win More Jobs? What the Evidence Says',
+    description:
+      'Does a professional-looking quote actually win more work? We break down what matters - presentation, speed, clarity - and how to test it free.',
+    date: '2026-08-23',
+    lastModified: '2026-08-23',
+    faqs: [
+      { question: 'Do professional quotes really win more jobs?', answer: 'The evidence says professional quotes improve your win probability. There is no single verified percentage, but first-impression research, decision-fluency studies and response-speed data all point the same way: clearer, more credible, faster quotes win more often than scrappy ones, all else being equal.' },
+      { question: 'What makes a quote look professional?', answer: 'Business details and branding, an itemised scope separating materials and labour, plain-language inclusions and exclusions, a validity period, payment terms, and a clean layout the customer can read and compare. Presentation matters because it reduces the perceived risk of saying yes.' },
+      { question: 'Does it matter how fast I send a quote?', answer: 'Yes. Response-speed research across service industries consistently finds the first responder wins a disproportionate share of enquiries. The first quote on the table frames the conversation, so sending the same day as your site visit puts you in that position.' },
+      { question: 'Can I test this without paying for software?', answer: 'Yes. The QuoteCore+ free quote generator builds itemised, professional quotes free with no signup. Send your next 10 quotes through it, same-day, and compare your win rate against your previous quotes.' },
+    ],
+  },
+  {
+    slug: 'how-to-measure-a-roof-online',
+    category: 'digital-takeoffs',
+    title: 'How to Measure a Roof Online for Free (From Any Plan Image)',
+    description:
+      'Measure a roof from a plan image online - free, no signup. Upload, set the scale, and get pitch-calculated areas, ridges, hips and valleys.',
+    date: '2026-08-23',
+    lastModified: '2026-08-23',
+    faqs: [
+      { question: 'Can I measure a roof online for free?', answer: 'Yes. The QuoteCore+ free roof takeoff tool lets you upload a plan image, set the scale, and measure roof areas, ridges, hips, valleys and gutters entirely free - no signup, no credit card, nothing saved.' },
+      { question: 'Can I measure a roof from a photo or image?', answer: 'Yes, as long as the image is a plan or drawing you can calibrate: draw a line along any known true dimension, enter its length, and every measurement is to scale. A clear screenshot or export of a PDF plan works well.' },
+      { question: 'Can I upload a PDF plan?', answer: 'Not yet. The free tool accepts PNG, JPG and WebP images. Export or screenshot the PDF page as an image first - virtually any PDF viewer can do this.' },
+      { question: 'Do I need an account to measure a roof online?', answer: 'No. Measuring and getting the full output is completely free with no signup. An account is only needed if you want to save a takeoff and continue into the QuoteCore+ app.' },
+      { question: 'Does the free tool handle roof pitch?', answer: 'Yes. Every length is pitch-calculated, converting plan measurements to true roof measurements automatically. Pitch can be entered as degrees or a ratio like 6:12, and units as metric, imperial or roofing squares.' },
+    ],
+  },
+  {
+    slug: 'margin-vs-markup',
+    category: 'construction-quoting',
+    title: 'Margin vs Markup: The Difference Explained (With Free Calculator)',
+    description:
+      'Margin and markup are not the same - get it wrong and you underprice. Learn the difference and set different margins per item with our free calculator.',
+    date: '2026-08-23',
+    lastModified: '2026-08-23',
+    faqs: [
+      { question: 'What is the difference between margin and markup?', answer: 'Margin is profit as a percentage of the selling price; markup is profit as a percentage of the cost price. A £100 cost sold at £125 has 25% markup and 20% margin. Margin divides by the sell price, so it is always the smaller number for the same price.' },
+      { question: 'How do I add margin to a quote?', answer: 'Convert margin to a selling price with: sell = cost divided by (1 minus margin%). A 20% margin on £1,000 of cost is £1,250. Do not multiply cost by 1.20 - that is markup and only earns 16.7% margin.' },
+      { question: 'Can I have different margins for each item in a quote?', answer: 'Yes. In the free margin calculator Line-by-line mode, set a default margin, then override the margin on any individual line. Blank lines inherit the default, and totals update live so you can see the blended margin across the whole quote.' },
+      { question: 'How do I convert margin to markup?', answer: 'Markup % = (margin / (1 - margin)) x 100. So 20% margin equals 25% markup, 30% margin equals 42.9% markup, and 50% margin equals 100% markup.' },
+      { question: 'What margin should a contractor charge?', answer: 'There is no universal number - it depends on trade, overheads, job risk and local competition. What matters is pricing with sell = cost / (1 - margin%) so the margin you intend is the margin you get, and making sure it covers overheads with real profit left over.' },
+    ],
+  },
 ];
 
 /** Map slug -> BlogPostMeta for quick lookups. */
