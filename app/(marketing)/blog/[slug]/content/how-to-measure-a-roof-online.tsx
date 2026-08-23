@@ -13,6 +13,13 @@ export default function Post() {
         payment - and nothing is saved unless you choose to continue into the app.
       </p>
       <p>
+        One clarification before the steps: this measures from a <strong>plan, drawing or image you upload</strong> -
+        and you calibrate it against a dimension you already know. It is not an aerial or satellite measurement
+        service: there is no imagery lookup, and the accuracy comes from your calibration. If you need a roof
+        measured with no plan at all, aerial report services exist - see{' '}
+        <Link href="/roof-measurement-cost-comparison">what measurement reports cost</Link>.
+      </p>
+      <p>
         This guide walks through the whole process on a computer step by step: getting your plan ready as an image,
         calibrating the scale, measuring each component, and turning the output into materials and a quote.
       </p>
@@ -137,6 +144,13 @@ export default function Post() {
         areas, ridges, hips, valleys and gutters entirely free - no signup, no credit card, nothing saved.
       </p>
 
+      <h3>Can I measure a roof remotely, without visiting the site?</h3>
+      <p>
+        Yes - that is exactly what this workflow is. Upload the plan image from anywhere, calibrate it, and measure.
+        For re-roofs you will still want a site visit to assess existing condition, but the measurement itself can be
+        done remotely from the drawing.
+      </p>
+
       <h3>Can I measure a roof from a photo or image?</h3>
       <p>
         Yes, as long as the image is a plan or drawing you can calibrate: draw a line along any known true dimension,
@@ -153,6 +167,13 @@ export default function Post() {
       <p>
         No. Measuring and getting the full output is completely free with no signup. An account is only needed if you
         want to save a takeoff and continue into the QuoteCore+ app.
+      </p>
+
+      <h3>Can I measure a roof from satellite imagery?</h3>
+      <p>
+        Not with this tool - it measures from a plan or drawing you upload and calibrate, not from satellite or
+        aerial imagery. If you have no plan at all, aerial measurement report services are the alternative -{' '}
+        <Link href="/roof-measurement-cost-comparison">see the cost comparison</Link> for what they charge.
       </p>
 
       <h3>Does it handle pitch?</h3>

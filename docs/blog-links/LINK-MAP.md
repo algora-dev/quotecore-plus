@@ -20,7 +20,7 @@ Per-article snapshots live next to this file. This is the canonical record of wh
 | chrome-roof-pitch-calculator-extension | 5 | 1 | 1 | 0 |
 | construction-cost-estimator-guide | 21 | 2 | 1 | 1 |
 | construction-quote-speed-checklist | 14 | 6 | 1 | 7 |
-| do-professional-quotes-win-more-jobs | 11 | 4 | 1 | 4 |
+| do-professional-quotes-win-more-jobs | 13 | 4 | 1 | 4 |
 | how-much-roofing-material | 16 | 5 | 1 | 4 |
 | how-to-calculate-roof-pitch | 12 | 3 | 1 | 7 |
 | how-to-create-an-invoice-for-contractors | 9 | 2 | 1 | 1 |
@@ -28,7 +28,7 @@ Per-article snapshots live next to this file. This is the canonical record of wh
 | how-to-estimate-roofing-materials | 20 | 6 | 2 | 1 |
 | how-to-follow-up-on-a-quote | 6 | 2 | 2 | 4 |
 | how-to-get-more-work-as-a-contractor | 10 | 6 | 1 | 4 |
-| how-to-measure-a-roof-online | 12 | 4 | 1 | 2 |
+| how-to-measure-a-roof-online | 14 | 4 | 1 | 2 |
 | how-to-measure-a-roof | 21 | 6 | 1 | 8 |
 | how-to-price-a-roofing-job | 19 | 8 | 2 | 23 |
 | how-to-quote-a-roof-from-plans | 8 | 5 | 1 | 3 |

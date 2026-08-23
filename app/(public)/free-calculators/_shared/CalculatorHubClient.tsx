@@ -17,6 +17,69 @@ export interface FreeToolEntry {
   description: string;
 }
 
+export type TaskId = 'all' | 'measure' | 'materials' | 'price' | 'margin' | 'quote' | 'invoice' | 'roofing';
+
+const TASKS: { id: TaskId; label: string; heading: string }[] = [
+  { id: 'all', label: 'Browse all', heading: '' },
+  { id: 'measure', label: 'Measure something', heading: 'Measure' },
+  { id: 'materials', label: 'Work out materials', heading: 'Estimate materials' },
+  { id: 'price', label: 'Price a job', heading: 'Price the job' },
+  { id: 'margin', label: 'Check profit or margin', heading: 'Check profit or margin' },
+  { id: 'quote', label: 'Create a quote', heading: 'Create documents' },
+  { id: 'invoice', label: 'Create an invoice', heading: 'Create documents' },
+  { id: 'roofing', label: 'Roofing tools', heading: 'Roofing tools' },
+];
+
+const slugMatches = (slug: string, patterns: RegExp[]) => patterns.some((p) => p.test(slug));
+
+function taskMatch(task: TaskId, slug: string, category?: string): boolean {
+  switch (task) {
+    case 'measure':
+      return slug === 'free-roof-takeoff' || slugMatches(slug, [/area/, /square/, /pitch/, /rafter/, /angle/, /slope/, /hip-valley/, /birds-mouth/, /takeoff/, /wall-area/]);
+    case 'materials':
+      return slugMatches(slug, [/material/, /concrete/, /rebar/, /tile/, /paint/, /shingle/, /sheathing/, /waste/, /flooring/, /landscaping/, /trench/, /pipe/, /bag/]);
+    case 'price':
+      return slugMatches(slug, [/pricing/, /replacement-cost/, /quote-calculator/, /construction-calculator/]);
+    case 'margin':
+      return slug === 'free-margin-calculator';
+    case 'quote':
+      return slug === 'free-quote-generator' || slug === 'free-purchase-order-generator';
+    case 'invoice':
+      return slug === 'free-invoice-generator' || slug === 'free-purchase-order-generator';
+    case 'roofing':
+      return category === 'roofing' || slugMatches(slug, [/roof/]);
+    default:
+      return true;
+  }
+}
+
+const WORKFLOW_STEPS: { title: string; body: string; href: string; linkText: string }[] = [
+  {
+    title: '1. Measure the job',
+    body: 'Upload a plan image, set the scale, and get pitch-calculated roof measurements.',
+    href: '/free-roof-takeoff',
+    linkText: 'Free roof takeoff',
+  },
+  {
+    title: '2. Calculate materials',
+    body: 'Turn roof areas and lengths into material quantities with waste allowances.',
+    href: '/free-roofing-material-calculator',
+    linkText: 'Material calculator',
+  },
+  {
+    title: '3. Check margin',
+    body: 'See selling price and profit from your real costs - per line or on a total.',
+    href: '/free-margin-calculator',
+    linkText: 'Margin calculator',
+  },
+  {
+    title: '4. Create the quote',
+    body: 'Build a professional, printable customer quote from your items and prices.',
+    href: '/free-quote-generator',
+    linkText: 'Quote generator',
+  },
+];
+
 const CATEGORY_LABELS: Record<string, string> = {
   roofing: 'Roofing calculators',
   construction: 'Construction calculators',
@@ -51,9 +114,24 @@ export function CalculatorHubClient({
 }) {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'core' | 'all'>('core');
+  const [task, setTask] = useState<TaskId>('all');
 
   const isSearching = search.trim().length > 0;
   const q = search.toLowerCase().trim();
+
+  // Combined tool list for task filtering (free tools first)
+  const allTools = useMemo(
+    () => [
+      ...freeTools.map((t) => ({ slug: t.slug, name: t.name, description: t.description, category: '' as const, isFreeTool: true })),
+      ...calculators.map((c) => ({ slug: c.slug, name: c.name, description: c.description, category: c.category, isFreeTool: false })),
+    ],
+    [calculators, freeTools],
+  );
+
+  const taskResults = useMemo(() => {
+    if (task === 'all') return [];
+    return allTools.filter((t) => taskMatch(task, t.slug, t.category || undefined));
+  }, [task, allTools]);
 
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
@@ -92,6 +170,62 @@ export function CalculatorHubClient({
           waste allowances, and pricing. No signup required, works on mobile and desktop.
         </p>
       </section>
+
+      {/* Task quick-filter */}
+      <section className="mb-5">
+        <p className="text-sm font-medium text-slate-700">What are you trying to do?</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {TASKS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTask(t.id)}
+              className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
+                task === t.id
+                  ? 'border-slate-900 bg-slate-900 text-white'
+                  : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* From measurement to finished quote workflow */}
+      {task === 'all' && !isSearching && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold text-slate-900">From measurement to finished quote</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            These tools work as one chain - free at every step, no signup required.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {WORKFLOW_STEPS.map((step, i) => (
+              <div key={step.title} className="relative rounded-xl border border-slate-200 bg-white p-4">
+                <p className="text-sm font-semibold text-slate-900">{step.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">{step.body}</p>
+                <Link
+                  href={step.href}
+                  prefetch={false}
+                  className="mt-2 inline-block text-xs font-medium text-[#BD4A1A] hover:underline"
+                >
+                  {step.linkText} &rarr;
+                </Link>
+                {i < WORKFLOW_STEPS.length - 1 && (
+                  <svg
+                    className="absolute -right-2.5 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-slate-300 lg:block"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Search + Filter */}
       <section className="mb-8">
@@ -170,8 +304,44 @@ export function CalculatorHubClient({
         </section>
       )}
 
+      {/* Task-filtered results */}
+      {!isSearching && task !== 'all' && (
+        <section className="mb-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">{TASKS.find((t) => t.id === task)?.heading}</h2>
+            <button onClick={() => setTask('all')} className="text-xs font-medium text-slate-500 hover:text-[#BD4A1A]">
+              Show everything
+            </button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {taskResults.map((tool) => (
+              <Link
+                key={tool.slug}
+                href={`/${tool.slug}`}
+                prefetch={false}
+                className={`block w-full text-left p-5 bg-white rounded-xl transition-all group ${
+                  tool.isFreeTool
+                    ? 'border-2 border-slate-200 hover:border-[#FF6B35] hover:shadow-lg'
+                    : 'border border-slate-200 hover:border-[#FF6B35] hover:shadow-sm'
+                }`}
+              >
+                <p className={`font-semibold text-slate-900 group-hover:text-[#BD4A1A] transition ${tool.isFreeTool ? 'text-sm' : 'text-sm'}`}>
+                  {tool.name}
+                </p>
+                <p className="text-xs text-slate-500 mt-0.5">{tool.description}</p>
+              </Link>
+            ))}
+            {taskResults.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center">
+                <p className="text-sm text-slate-400">No tools match this task. Try &quot;Browse all&quot;.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Core Calculators (default view) */}
-      {!isSearching && view === 'core' && (
+      {!isSearching && task === 'all' && view === 'core' && (
         <section className="mb-8">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {coreCalcs.map((calc) => (
@@ -197,7 +367,7 @@ export function CalculatorHubClient({
       )}
 
       {/* All Calculators - grouped by category */}
-      {!isSearching && view === 'all' && (
+      {!isSearching && task === 'all' && view === 'all' && (
         <section className="mb-8">
           {CATEGORY_ORDER.map((cat) => {
             const items = grouped.get(cat) ?? [];
@@ -244,7 +414,8 @@ export function CalculatorHubClient({
         </section>
       )}
 
-      {/* Free document tools (always visible) */}
+      {/* Free document tools (always visible when not task-filtered) */}
+      {task === 'all' && (
       <section className="mb-8">
         <h2 className="text-lg font-semibold text-slate-900">Free document tools</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -275,6 +446,7 @@ export function CalculatorHubClient({
           ))}
         </div>
       </section>
+      )}
 
       {/* Why use these calculators */}
       <section className="mb-8">
