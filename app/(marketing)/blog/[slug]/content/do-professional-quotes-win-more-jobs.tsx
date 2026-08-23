@@ -64,8 +64,8 @@ export default function Post() {
       </p>
       <ul>
         <li>
-          <strong>First impressions and trust transfer to documents.</strong> Studies of visual first impressions
-          (including widely cited research on website credibility by Stanford's Persuasive Technology Lab) find that
+          <strong>First impressions and trust transfer to documents.</strong> Studies of visual first impressions,
+          including <a href="https://credibility.stanford.edu/guidelines/index.html" target="_blank" rel="noopener noreferrer">Stanford's web-credibility research</a>, find that
           people judge trustworthiness largely on design and presentation before evaluating substance. A quote is a
           designed artefact; customers read it the same way.
         </li>
@@ -75,9 +75,10 @@ export default function Post() {
           and behavioural research on the "fluency" of information shows easily processed information is trusted more.
         </li>
         <li>
-          <strong>Speed is a documented win factor.</strong> Industry surveys of lead response consistently find that
-          the first business to respond is far more likely to win the enquiry. The same logic extends to the quote
-          itself: the first quote on the table frames the buying conversation.
+          <strong>Speed is a documented win factor.</strong> Lead-response research consistently finds that
+          the first business to respond is far more likely to win the enquiry - <a href="https://hbr.org/2011/03/the-short-life-of-online-sales-leads" target="_blank" rel="noopener noreferrer">one frequently cited study of online sales leads</a> found
+          the odds of qualifying a lead drop dramatically as response time increases. The same logic extends to the
+          quote itself: the first quote on the table frames the buying conversation.
         </li>
         <li>
           <strong>Professional presentation supports price.</strong> Trades who present itemised, professional quotes
@@ -86,9 +87,9 @@ export default function Post() {
         </li>
       </ul>
       <p>
-        <strong>Quotable summary:</strong> no credible study puts a single number on it, but every relevant strand of
-        evidence - first-impression research, decision fluency, response-speed studies - says the same thing: a
-        clear, professional, promptly delivered quote improves your win probability, never reduces it.
+        <strong>Quotable summary:</strong> no credible study puts a single number on it, but the relevant evidence -
+        first-impression research, decision fluency, response-speed studies - points consistently in one direction:
+        a clear, professional, promptly delivered quote improves your position in competitive situations.
       </p>
 
       <hr />
@@ -103,7 +104,8 @@ export default function Post() {
       <p>
         If your bottleneck is the admin after the site visit - typing up notes, formatting a document, calculating
         totals - that is a fixable problem. Our <Link href="/blog/construction-quote-speed-checklist">construction quote speed checklist</Link> walks
-        through cutting quote turnaround without rushing the numbers.
+        through cutting quote turnaround without rushing the numbers. When the quote goes out, profitable pricing
+        matters as much as presentation - check yours with the <Link href="/free-margin-calculator">free margin calculator</Link>.
       </p>
 
       <hr />
@@ -133,9 +135,10 @@ export default function Post() {
         <li>Send a follow-up within a few days on every unanswered quote - <Link href="/blog/how-to-follow-up-on-a-quote">here is how to follow up without being a pest</Link>.</li>
       </ol>
       <p>
-        Most contractors who run this test find the same thing: the quotes that look professional and arrive fast get
-        answered faster and questioned less. When you are ready to connect measurement, quoting, material orders and
-        invoicing in one workflow, <Link href="/construction-quoting-software">construction quoting software</Link> like QuoteCore+ does the
+        Most contractors who run this test report the same pattern: the quotes that look professional and arrive fast
+        get answered faster and questioned less. Explore more tools for the whole estimating workflow on the
+        <Link href="/free-calculators">free calculators hub</Link> - and when you are ready to connect measurement,
+        quoting, material orders and invoicing in one workflow, <Link href="/construction-quoting-software">construction quoting software</Link> like QuoteCore+ does the
         rest - or <Link href="/free-trial">start a free trial</Link> and see for yourself.
       </p>
 
@@ -173,9 +176,8 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to test it? <Link href="/free-quote-generator">Build a professional quote free</Link> - no signup, no card, no
-        limits. Or <Link href="/free-trial">start a free QuoteCore+ trial</Link> for the full workflow from measurement to
-        material orders and invoicing.
+        <strong>Create a professional quote free</strong> with the <Link href="/free-quote-generator">QuoteCore+ quote generator</Link> - no
+        signup, no card, no limits. For the full workflow from measurement to material orders and invoicing, <Link href="/free-trial">start a free QuoteCore+ trial</Link>.
       </p>
     </div>
   );

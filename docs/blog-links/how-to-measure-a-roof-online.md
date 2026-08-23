@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-online.tsx`
 
-## Outbound internal links (12)
+## Outbound internal links (14)
 
 ### Money pages (1)
 
@@ -30,11 +30,13 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof-online.tsx`
 | /free-roof-takeoff | Measure your roof plan online free |
 | /free-trial | start a free QuoteCore+ trial |
 
-### Other site pages (1)
+### Other site pages (3)
 
 | Destination | Anchor |
 |---|---|
+| /roof-measurement-cost-comparison | what measurement reports cost |
 | /roof-measurement-cost-comparison | Roof Measurement Cost Comparison |
+| /roof-measurement-cost-comparison | see the cost comparison |
 
 ## Inbound in-article links (2)
 

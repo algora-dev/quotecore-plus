@@ -92,8 +92,8 @@ export default function Post() {
 
       <h2>How to set different margins for each item in a quote</h2>
       <p>
-        Real quotes are rarely one margin fits all. You might want a tighter margin on high-value materials where
-        customers price-shop, and a fatter margin on labour, delivery or sundries. That is{" "}
+        Some businesses use one default margin across a whole quote, while others adjust margin by line depending
+        on the product, labour, risk or job type. If you want per-line control, that is{" "}
         <Link href="/free-margin-calculator">Line-by-line mode</Link>:
       </p>
       <ol>

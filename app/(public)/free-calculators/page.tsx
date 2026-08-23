@@ -74,17 +74,17 @@ export default function Page() {
     {
       slug: 'free-roof-takeoff',
       name: 'Free Roof Takeoff',
-      description: 'Upload a plan image, set the scale, and measure a roof online - free, no signup.',
+      description: 'Measure roof areas and dimensions from a plan or image - free, no signup.',
     },
     {
       slug: 'free-margin-calculator',
       name: 'Free Margin Calculator',
-      description: 'Add margin or markup to a total, or set different margins per line - free, no signup.',
+      description: 'Calculate selling price, profit and margin from your real job costs. Quick mode or line-by-line margins.',
     },
     {
       slug: 'free-quote-generator',
       name: 'Free Quote Generator',
-      description: 'Turn measurements into a professional quote',
+      description: 'Create a professional customer quote from your items, labour and prices.',
     },
     {
       slug: 'free-invoice-generator',

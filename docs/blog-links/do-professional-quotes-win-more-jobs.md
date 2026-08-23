@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/do-professional-quotes-win-more-jobs.tsx`
 
-## Outbound internal links (11)
+## Outbound internal links (13)
 
 ### Money pages (1)
 
@@ -19,15 +19,17 @@ Source: `app/(marketing)/blog/[slug]/content/do-professional-quotes-win-more-job
 | /blog/roofing-quote-example | Roofing Quote Example: What a Professional Quote Looks Like |
 | /blog/how-to-follow-up-on-a-quote | here is how to follow up without being a pest |
 
-### Free tools (6)
+### Free tools (8)
 
 | Destination | Anchor |
 |---|---|
 | /free-quote-generator | test it on your next job - no signup required |
+| /free-margin-calculator | free margin calculator |
 | /free-quote-generator | free QuoteCore+ quote generator |
 | /free-quote-generator | free quote generator |
+| /free-calculators | free calculators hub |
 | /free-trial | start a free trial |
-| /free-quote-generator | Build a professional quote free |
+| /free-quote-generator | QuoteCore+ quote generator |
 | /free-trial | start a free QuoteCore+ trial |
 
 ## Inbound in-article links (4)
@@ -39,4 +41,4 @@ Source: `app/(marketing)/blog/[slug]/content/do-professional-quotes-win-more-job
 | /blog/how-to-get-more-work-as-a-contractor | what the evidence says about professional quotes winning more jobs |
 | /blog/roofing-quote-example | evidence on whether professional quotes win more jobs |
 
-External links in source: 0
+External links in source: 2

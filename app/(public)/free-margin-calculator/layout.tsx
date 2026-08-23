@@ -32,7 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: 'Free Margin Calculator | Margin & Markup per Line | QuoteCore Plus',
+    title: {
+      absolute: 'Free Margin Calculator | Margin & Markup per Line | QuoteCore Plus',
+    },
     description:
       'Free margin calculator for trades. Add margin or markup to a total, or set a different margin per line across a whole quote. No signup required.',
     alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
