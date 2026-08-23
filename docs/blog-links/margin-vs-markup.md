@@ -30,10 +30,11 @@ Source: `app/(marketing)/blog/[slug]/content/margin-vs-markup.tsx`
 | /free-quote-generator | free quote generator |
 | /free-trial | start a free QuoteCore+ trial |
 
-## Inbound in-article links (1)
+## Inbound in-article links (2)
 
 | From | Anchor used |
 |---|---|
+| /blog/can-chatgpt-create-a-quote | margin vs markup |
 | /blog/how-to-price-a-roofing-job | margin vs markup |
 
 External links in source: 0

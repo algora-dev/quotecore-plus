@@ -56,6 +56,7 @@ All 10 posts shipped to quote-core.com main branch. Content OS IDs QC-018 throug
 | 1 | do-professional-quotes-win-more-jobs | Do Professional Quotes Win More Jobs? What the Evidence Says | published | Sales & Win-Rate | Evidence-led, no fabricated stats, feeds /free-quote-generator |
 | 2 | how-to-measure-a-roof-online | How to Measure a Roof Online for Free (From Any Plan Image) | published | Roof Measurement / Takeoff | Feeds /free-roof-takeoff; verified RoofSnap/EagleView pricing |
 | 3 | margin-vs-markup | Margin vs Markup: The Difference Explained (With Free Calculator) | published | Pricing / Margin | Feeds /free-margin-calculator; formulas match tool math |
+| 4 | can-chatgpt-create-a-quote | Can ChatGPT Create a Quote, Invoice or Purchase Order? | published | AI / Document Generation | Feeds /free-quote-generator; balanced chat-vs-structured framing |
 
 Supplier cluster unchanged.
 

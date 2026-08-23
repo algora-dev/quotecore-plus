@@ -154,7 +154,7 @@ export default function Post() {
       <p>Review the substitute for specification, compatibility, appearance, warranty, compliance, and price. Obtain approval before accepting it where the change affects the work or customer agreement.</p>
       <h3>Should a PO show prices?</h3>
       <p>Usually yes when prices are agreed, because it supports approval and invoice matching. If final price is variable, state the agreed basis and any approval limit clearly.</p>
-      <p>Create your next order with the <a href="/free-purchase-order-generator">free purchase order generator</a>. To create material orders directly from accepted quotes, start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
+      <p>Create your next order with the <a href="/free-purchase-order-generator">free purchase order generator</a>. Curious whether AI can draft these for you? See <a href="/blog/can-chatgpt-create-a-quote">ChatGPT vs structured document tools</a>. To create material orders directly from accepted quotes, start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
     </div>
   );
 }

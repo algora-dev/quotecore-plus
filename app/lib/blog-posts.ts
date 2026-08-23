@@ -566,6 +566,24 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'What margin should a contractor charge?', answer: 'There is no universal number - it depends on trade, overheads, job risk and local competition. What matters is pricing with sell = cost / (1 - margin%) so the margin you intend is the margin you get, and making sure it covers overheads with real profit left over.' },
     ],
   },
+  {
+    slug: 'can-chatgpt-create-a-quote',
+    category: 'ai',
+    title: 'Can ChatGPT Create a Quote, Invoice or Purchase Order?',
+    description:
+      'Yes, ChatGPT can create a good quote. But editing and repeating the process in chat can become slow. See how a free structured AI quote generator works instead.',
+    date: '2026-08-23',
+    lastModified: '2026-08-23',
+    faqs: [
+      { question: 'Can ChatGPT create a quote?', answer: 'Yes. It can create a good first draft from instructions or supplied information. For repeated use, a structured quote generator can make detailed editing and consistency easier.' },
+      { question: 'Can ChatGPT create an invoice?', answer: 'Yes. General AI can draft an invoice, but customer details, tax, quantities, prices and totals should be checked before sending.' },
+      { question: 'Can ChatGPT create a purchase order?', answer: 'Yes. It can draft a PO from supplied information. A structured PO generator can be easier when documents need consistent fields and repeatable formatting.' },
+      { question: 'Can AI calculate a quote accurately?', answer: 'AI can perform calculations, but customer-facing prices, quantities, tax and totals should always be verified before sending - whether the document came from chat or a structured tool.' },
+      { question: 'Is there a free AI quote generator?', answer: 'Yes. The QuoteCore+ free quote generator includes AI-assisted input (image upload and job description) with structured, editable output. AI-assisted input has a small number of free scans per day; everything else is unlimited.' },
+      { question: 'Do I need to sign up to use the QuoteCore+ quote generator?', answer: 'No. The free quote generator, invoice generator and purchase order generator all work without an account. Signing up is only needed for the wider QuoteCore+ workflow - saved documents, tracking, takeoff and connected quoting.' },
+      { question: 'Is ChatGPT better than quoting software?', answer: 'It depends on the task. ChatGPT is excellent for drafting and one-off work. Quoting software is usually better for repeatable, structured documents that need precise editing, consistent fields and connected workflows.' },
+    ],
+  },
 ];
 
 /** Map slug -> BlogPostMeta for quick lookups. */
