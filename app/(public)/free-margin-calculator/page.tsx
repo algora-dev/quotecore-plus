@@ -547,6 +547,39 @@ function MarginCalculator() {
         {/* SEO content */}
         <section className="mt-16 space-y-8">
           <div>
+            <h2 className="text-lg font-semibold text-slate-900">What this margin calculator does</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Three ways to work. <strong>Quick mode</strong>: enter a single total cost, apply margin or markup, and see
+              the selling price, gross profit and equivalent markup live. <strong>Line-by-line mode</strong>: add every
+              item in a quote, set a default margin, then override the margin on any line individually. <strong>AI
+              import</strong>: upload a photo of a supplier list or quote (or paste the text) and the lines populate
+              automatically - fully editable afterwards. When you are done, one click sends the adjusted prices to the{' '}
+              <Link href="/free-quote-generator" className="text-[#BD4A1A] font-medium">free quote generator</Link> to
+              build the finished document.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Margin vs markup - the short version</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Margin is a percentage of the <strong>selling price</strong>; markup is a percentage of the <strong>cost</strong>.
+              A £100 cost sold at £125 has 25% markup but only 20% margin. Selling price from margin is calculated as
+              cost ÷ (1 − margin%). Confusing the two systematically underprices your work - the full explanation with a
+              conversion table is in our guide to{' '}
+              <Link href="/blog/margin-vs-markup" className="text-[#BD4A1A] font-medium">margin vs markup for contractors</Link>.
+            </p>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">How to set different margins per item</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Switch to Line-by-line mode, set your default margin at the top, then add your lines. Every new line
+              inherits the default - type a margin into any line to override it, and clear the field to inherit the
+              default again. The totals panel tracks total cost, gross profit, selling price and the blended margin
+              across the whole quote, live as you type. It is the same per-line margin behaviour as the quote editor in
+              the full QuoteCore+ app - <Link href="/free-trial" className="text-[#BD4A1A] font-medium">try it free</Link> when you
+              want margins, measurements, material orders and invoicing connected.
+            </p>
+          </div>
+          <div>
             <h2 className="text-lg font-semibold text-slate-900">Margin questions, answered</h2>
             <div className="mt-4 space-y-2">
               <details className="rounded-xl border border-slate-200 bg-white">

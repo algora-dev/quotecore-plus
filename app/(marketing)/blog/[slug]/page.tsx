@@ -47,6 +47,9 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'manual-vs-digital-roof-takeoff': () => import('./content/manual-vs-digital-roof-takeoff'),
   'how-to-reduce-roofing-waste': () => import('./content/how-to-reduce-roofing-waste'),
   'chrome-roof-pitch-calculator-extension': () => import('./content/chrome-roof-pitch-calculator-extension'),
+  'do-professional-quotes-win-more-jobs': () => import('./content/do-professional-quotes-win-more-jobs'),
+  'how-to-measure-a-roof-online': () => import('./content/how-to-measure-a-roof-online'),
+  'margin-vs-markup': () => import('./content/margin-vs-markup'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

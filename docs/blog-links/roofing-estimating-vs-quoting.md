@@ -32,10 +32,11 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-estimating-vs-quoting.tsx`
 | /features/smart-components | Smart Components&#8482; |
 | /pricing | pricing plans |
 
-## Inbound in-article links (1)
+## Inbound in-article links (2)
 
 | From | Anchor used |
 |---|---|
+| /blog/margin-vs-markup | estimating and quoting |
 | /blog/roofing-quoting-software-vs-spreadsheets | difference between estimating and quoting |
 
 External links in source: 0

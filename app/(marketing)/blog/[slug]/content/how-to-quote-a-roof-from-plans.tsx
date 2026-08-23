@@ -186,6 +186,8 @@ export default function Post() {
       <p>Typical measurements include roof areas, pitch, ridges, hips, valleys, barges or verges, eaves, penetrations, flashings and rainwater goods. The exact list depends on the roof system and quoted scope.</p>
       <h3>How long does it take to quote a roof from plans?</h3>
       <p>Time varies with complexity, plan quality and how much pricing logic is already configured. A repeatable digital workflow avoids rebuilding the same measurements in separate spreadsheets and quote documents.</p>
+      <h3>Can I measure the plan online instead of by hand?</h3>
+      <p>Yes. Upload the plan image to the <a href="/free-roof-takeoff">free roof takeoff tool</a> and measure it in your browser - <a href="/blog/how-to-measure-a-roof-online">see the full guide to measuring a roof online</a>.</p>
     </div>
   );
 }

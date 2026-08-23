@@ -464,3 +464,7 @@
 - [ ] Enter pitch as ratio (12 = 1:12) -> report header shows ratio, not degrees
 - [ ] Placeholder list shows Ridge, Hip, Valley, Barge, Spouting, Roof Area (no pricing) - no Broken Hip
 - [ ] Send to QuoteCore+ -> signup -> draft restores into quote builder with both areas + components
+- [ ] /free-margin-calculator: Quick mode math (100 + 20% margin = 125), Line-by-line totals, AI quote import, Quote Generator round-trip (Check / Add Margin -> send prices back)
+- [ ] /free-calculators hub: Roof Takeoff and Margin Calculator cards listed first in Free document tools, links resolve
+- [ ] New blogs load 200: /blog/do-professional-quotes-win-more-jobs, /blog/how-to-measure-a-roof-online, /blog/margin-vs-markup
+- [ ] /free-roof-takeoff page links to /blog/how-to-measure-a-roof-online; /free-margin-calculator links to /blog/margin-vs-markup

@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.tsx`
 
-## Outbound internal links (13)
+## Outbound internal links (14)
 
 ### Money pages (1)
 
@@ -10,7 +10,7 @@ Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.
 |---|---|
 | /construction-quoting-software | QuoteCore+ construction quoting software |
 
-### Blog articles (5)
+### Blog articles (6)
 
 | Destination | Anchor |
 |---|---|
@@ -19,6 +19,7 @@ Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.
 | /blog/how-to-get-more-work-as-a-contractor | here are the basics worth fixing |
 | /blog/how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide |
 | /blog/how-to-follow-up-on-a-quote | How to Follow Up on a Quote Without Losing the Job |
+| /blog/do-professional-quotes-win-more-jobs | see the evidence on professional quotes and win rates |
 
 ### Free tools (6)
 
@@ -37,12 +38,13 @@ Source: `app/(marketing)/blog/[slug]/content/construction-quote-speed-checklist.
 |---|---|
 | /qc-checklist.pdf | Download checklist (PDF) |
 
-## Inbound in-article links (6)
+## Inbound in-article links (7)
 
 | From | Anchor used |
 |---|---|
 | /blog/best-quoting-software-nz | Construction Quote Speed Checklist |
 | /blog/best-roofing-quoting-software-uk-2026 | Construction Quote Speed Checklist |
+| /blog/do-professional-quotes-win-more-jobs | construction quote speed checklist |
 | /blog/how-to-get-more-work-as-a-contractor | The Construction Quote Speed Checklist |
 | /blog/quotecore-plus-reviews | the Construction Quote Speed Checklist is free to download |
 | /blog/roofing-quoting-software-uk | the Construction Quote Speed Checklist |

@@ -142,14 +142,14 @@ export default async function WorkspaceHome({
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-blue-800">
-              Your Smart Component is ready to add
+              Your components are ready to add
             </p>
             <p className="text-xs text-blue-600">
-              We saved your component from the {signupRef ? signupRef.replace(/-/g, ' ').replace(/^free /, '') : 'free calculator'} - click to add it to your workspace.
+              We saved your components from the {signupRef ? signupRef.replace(/-/g, ' ').replace(/^free /, '') : 'free tool'} - click to add them to your workspace.
             </p>
           </div>
           <a
-            href={`/api/app/restore-calc-draft?draft=${encodeURIComponent(signupDraft!)}`}
+            href={`/api/app/restore-calc-draft?draft=${encodeURIComponent(signupDraft!)}&dest=components`}
             className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-blue-600 px-3 py-2 md:px-4 text-sm font-semibold text-white hover:bg-blue-700 transition-colors min-h-[44px]"
           >
             <span className="hidden sm:inline">Add to my components</span>

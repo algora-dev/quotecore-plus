@@ -144,7 +144,9 @@ export default function Post() {
       </p>
       <p>
         Contractors quoting regularly can use <Link href="/roofing-quoting-software">roofing quoting software</Link> to
-        connect takeoff quantities, reusable pricing logic, customer quotes, materials ordering and invoicing.
+        connect takeoff quantities, reusable pricing logic, customer quotes, materials ordering and invoicing. Wondering
+        whether the presentation itself pays off? We break down
+        the <Link href="/blog/do-professional-quotes-win-more-jobs">evidence on whether professional quotes win more jobs</Link>.
       </p>
 
       <h2>Frequently asked questions</h2>

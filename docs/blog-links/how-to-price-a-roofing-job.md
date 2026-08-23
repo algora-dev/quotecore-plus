@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 
-## Outbound internal links (17)
+## Outbound internal links (19)
 
 ### Money pages (2)
 
@@ -11,7 +11,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 | /roofing-quoting-software | QuoteCore+ roofing quoting software |
 | /roofing-estimating-software | roofing estimating software |
 
-### Blog articles (7)
+### Blog articles (8)
 
 | Destination | Anchor |
 |---|---|
@@ -22,8 +22,9 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 | /blog/roof-replacement-cost-guide-uk | Roof replacement cost guide (UK) |
 | /blog/construction-cost-estimator-guide | Construction cost estimator guide |
 | /blog/roofing-quoting-software-vs-spreadsheets | Roofing Quoting Software vs Spreadsheets: What Actually Saves Time? |
+| /blog/margin-vs-markup | margin vs markup |
 
-### Free tools (7)
+### Free tools (8)
 
 | Destination | Anchor |
 |---|---|
@@ -33,7 +34,8 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 | /free-roofing-takeoff-builder | Roof Takeoff Builder |
 | /free-roof-replacement-cost-calculator | Roof Replacement Cost Calculator |
 | /free-roofing-quote-calculator | Roofing Quote Calculator |
-| /free-trial | Start your free QuoteCore+ trial today |
+| /free-margin-calculator | free margin calculator |
+| /free-trial | start your free QuoteCore+ trial today |
 
 ### Other site pages (1)
 
@@ -41,7 +43,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 |---|---|
 | /features/ai-scan-assist | AI Scan Assist |
 
-## Inbound in-article links (21)
+## Inbound in-article links (23)
 
 | From | Anchor used |
 |---|---|
@@ -55,9 +57,11 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 | /blog/how-to-estimate-roofing-materials | how to price a roofing job |
 | /blog/how-to-follow-up-on-a-quote | how to price a roofing job |
 | /blog/how-to-get-more-work-as-a-contractor | How to Price a Roofing Job: Step-by-Step Pricing Guide |
+| /blog/how-to-measure-a-roof-online | How to Price a Roofing Job |
 | /blog/how-to-measure-a-roof | How to Price a Roofing Job: Step-by-Step Pricing Guide |
 | /blog/how-to-quote-a-roof-from-plans | step-by-step roofing pricing guide |
 | /blog/how-to-start-a-roofing-business-uk | how to price a roofing job |
+| /blog/margin-vs-markup | How to Price a Roofing Job |
 | /blog/quotecore-plus-vs-quotesmith | How to Price a Roofing Job: Step-by-Step Pricing Guide |
 | /blog/reusable-quoting-templates-smart-components | how to price a roofing job |
 | /blog/roof-replacement-cost-guide-uk | how to price a roofing job |

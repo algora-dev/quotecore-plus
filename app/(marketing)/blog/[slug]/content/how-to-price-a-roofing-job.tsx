@@ -353,7 +353,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.
+        Ready to quote faster? Check your profit on every price with the <a href="/free-margin-calculator">free margin calculator</a> and our guide to <a href="/blog/margin-vs-markup">margin vs markup</a>. Or <a href="/free-trial">start your free QuoteCore+ trial today</a>.
         No card needed. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>
