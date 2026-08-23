@@ -148,7 +148,7 @@ export default function Post() {
       </ol>
       <p>
         Most contractors who run this test tell us the clearer, faster quotes get answered sooner - your own
-        numbers are the evidence that matters. Explore more tools for the whole estimating workflow on the
+        numbers are the evidence that matters. Explore more tools for the whole estimating workflow on the{' '}
         <Link href="/free-calculators">free calculators hub</Link> - and when you are ready to connect measurement,
         quoting, material orders and invoicing in one workflow, <Link href="/construction-quoting-software">construction quoting software</Link> like QuoteCore+ does the
         rest - or <Link href="/free-trial">start a free trial</Link> and see for yourself.
