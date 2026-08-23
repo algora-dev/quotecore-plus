@@ -23,13 +23,11 @@ interface ComponentStepProps {
 export default function ComponentStep({ components, setComponents, unitSystem, onBack, onContinue, onSaveToApp }: ComponentStepProps) {
   const [tab, setTab] = useState<'manual' | 'csv'>('manual');
   const [name, setName] = useState('');
+  const [sku, setSku] = useState('');
   const [measurementType, setMeasurementType] = useState<MeasurementType>('lineal');
   const [materialRate, setMaterialRate] = useState('');
   const [labourRate, setLabourRate] = useState('');
-  const [wastePercent, setWastePercent] = useState('5');
   const [pitchType, setPitchType] = useState<'none' | 'rafter' | 'valley_hip'>('none');
-  const [packSize, setPackSize] = useState('');
-  const [packPrice, setPackPrice] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const full = components.length >= MAX_COMPONENTS;
@@ -40,25 +38,23 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
     setError(null);
     if (!name.trim()) { setError('Give your component a name.'); return; }
     if (full) { setError(`Free tool limit: ${MAX_COMPONENTS} components.`); return; }
-    const ps = parseFloat(packSize) || 0;
-    const pp = parseFloat(packPrice) || 0;
-    const isPack = ps > 0 && pp > 0;
     setComponents([...components, {
       id: makeId('comp'),
       name: name.trim().slice(0, 120),
+      sku: sku.trim() || undefined,
       measurementType,
       materialRate: parseFloat(materialRate) || 0,
       labourRate: parseFloat(labourRate) || 0,
-      pricingStrategy: isPack ? (measurementType === 'area' ? 'per_pack_area' : 'per_pack_length') : 'per_unit',
-      packPrice: isPack ? pp : null,
-      packSize: isPack ? ps : null,
-      wasteType: (parseFloat(wastePercent) || 0) > 0 ? 'percent' : 'none',
-      wasteValue: parseFloat(wastePercent) || 0,
+      pricingStrategy: 'per_unit',
+      packPrice: null,
+      packSize: null,
+      wasteType: 'none',
+      wasteValue: 0,
       pitchEnabled: pitchType !== 'none' && measurementType !== 'quantity',
       pitchType: pitchType === 'none' ? 'none' : pitchType,
       source: 'manual',
     }]);
-    setName(''); setMaterialRate(''); setLabourRate(''); setPackSize(''); setPackPrice('');
+    setName(''); setSku(''); setMaterialRate(''); setLabourRate('');
   }
 
   return (
@@ -66,7 +62,7 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
       <div>
         <h2 className="text-base md:text-lg font-bold text-slate-900">Step 2: Build your components</h2>
         <p className="mt-0.5 text-xs md:text-sm text-slate-400">
-          Add up to {MAX_COMPONENTS} smart components with pricing, labour, waste and pitch logic - one at a time, or import from a CSV catalog.
+          Add up to {MAX_COMPONENTS} smart components with pricing, labour and pitch logic - one at a time, or import from a CSV catalog.
         </p>
         <div className="mt-3 flex gap-2">
           {([['manual', 'Add manually'], ['csv', 'Import CSV catalog']] as const).map(([k, label]) => (
@@ -90,6 +86,11 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
             <input id="comp-name" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Apron Flashing, Colorsteel Roofing"
               className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
           </div>
+          <div>
+            <label htmlFor="comp-sku" className="text-xs font-medium text-slate-600">SKU / Product code (optional)</label>
+            <input id="comp-sku" type="text" value={sku} onChange={e => setSku(e.target.value)} placeholder="e.g. CF-0.42-G300"
+              className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+          </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="text-xs font-medium text-slate-600">Measurement</label>
@@ -108,13 +109,8 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
                 <option value="valley_hip">Hip/Valley pitch</option>
               </select>
             </div>
-            <div>
-              <label htmlFor="comp-waste" className="text-xs font-medium text-slate-600">Waste %</label>
-              <input id="comp-waste" type="number" value={measurementType === 'quantity' ? '0' : wastePercent} onChange={e => setWastePercent(e.target.value)} min={0} max={100} step={1} disabled={measurementType === 'quantity'}
-                className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-center focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400" />
-            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor="comp-mat" className="text-xs font-medium text-slate-600">Material $/unit</label>
               <input id="comp-mat" type="number" min="0" step="0.01" value={materialRate} onChange={e => setMaterialRate(e.target.value)} placeholder="0.00"
@@ -123,16 +119,6 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
             <div>
               <label htmlFor="comp-lab" className="text-xs font-medium text-slate-600">Labour $/unit</label>
               <input id="comp-lab" type="number" min="0" step="0.01" value={labourRate} onChange={e => setLabourRate(e.target.value)} placeholder="0.00"
-                className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-            </div>
-            <div>
-              <label htmlFor="comp-pack-size" className="text-xs font-medium text-slate-600">Pack size (opt.)</label>
-              <input id="comp-pack-size" type="number" min="0" step="0.01" value={packSize} onChange={e => setPackSize(e.target.value)} placeholder="0"
-                className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-            </div>
-            <div>
-              <label htmlFor="comp-pack-price" className="text-xs font-medium text-slate-600">Pack price (opt.)</label>
-              <input id="comp-pack-price" type="number" min="0" step="0.01" value={packPrice} onChange={e => setPackPrice(e.target.value)} placeholder="0.00"
                 className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
             </div>
           </div>
@@ -165,10 +151,9 @@ export default function ComponentStep({ components, setComponents, unitSystem, o
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
                   <span>{c.measurementType === 'lineal' ? `Linear (${len})` : c.measurementType === 'area' ? `Area (${areaU})` : 'Fixed (pcs)'}</span>
+                  {c.sku && <span>{c.sku}</span>}
                   {c.materialRate > 0 && <span>${c.materialRate.toFixed(2)} mat</span>}
                   {c.labourRate > 0 && <span>${c.labourRate.toFixed(2)} labour</span>}
-                  {c.wasteValue > 0 && <span>+{c.wasteValue}% waste</span>}
-                  {c.packSize && c.packPrice && <span>pack {c.packSize} / ${c.packPrice.toFixed(2)}</span>}
                   {c.pitchEnabled && <span>pitch: {c.pitchType === 'rafter' ? 'rafter' : 'hip/valley'}</span>}
                 </div>
               </div>
@@ -285,6 +270,32 @@ function CsvImport({ components, setComponents, maxComponents, onError }: {
             <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. We auto-detected matches where possible.</p>
           </div>
           <button onClick={reset} className="text-xs text-slate-400 hover:text-slate-600">Start over</button>
+        </div>
+        {/* Data preview: first 3 rows so users can map columns even without header titles */}
+        <div className="rounded-lg border border-slate-200 overflow-hidden">
+          <div className="bg-slate-50 border-b border-slate-200 px-4 py-2">
+            <p className="text-xs font-medium text-slate-600">Preview - first 3 rows of your file</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-white">
+                <tr>
+                  {csv.headers.map((h, i) => (
+                    <th key={i} className="px-3 py-2 text-left font-medium text-slate-500 whitespace-nowrap border-b border-slate-100">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {csv.rows.slice(0, 3).map((row, ri) => (
+                  <tr key={ri} className="bg-white">
+                    {row.map((c, ci) => (
+                      <td key={ci} className="px-3 py-1.5 text-slate-600 whitespace-nowrap max-w-48 truncate">{c}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         <div className="rounded-lg border border-slate-200 overflow-hidden divide-y divide-slate-100">
           {MAPPABLE_FIELDS.map(field => {
