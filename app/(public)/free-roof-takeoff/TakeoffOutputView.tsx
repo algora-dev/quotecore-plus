@@ -155,7 +155,14 @@ export function TakeoffOutputView({
             return payload.roofAreas.find(a => (a.pitch || 0) > 0)?.pitch ?? 0;
           };
           const entries = g.measurements.map(m => {
-            const pt = g.measurementType === 'quantity' || g.measurementType === 'area' ? 'none' : pitchTypeFor();
+            // Area-measured components (e.g. Roofing) get the RAFTER pitch of
+            // the roof area they sit under, then waste on top - same as the
+            // area itself (fixed 2026-08-23: was skipping pitch entirely).
+            const pt = g.measurementType === 'quantity'
+              ? 'none'
+              : g.measurementType === 'area'
+                ? 'rafter'
+                : pitchTypeFor();
             const areaId = (m as any).quoteRoofAreaId ?? null;
             if (pt === 'none') return { value: m.value, adjusted: null, afterWaste: null, cost: null as number | null, areaId };
             const r = applyPitchAndWaste(m.value, true, pt as any, areaPitchFor(m as any), 'none', 0, 0);
