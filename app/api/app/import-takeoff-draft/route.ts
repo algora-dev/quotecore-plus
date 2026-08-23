@@ -178,7 +178,9 @@ export async function GET(req: NextRequest) {
           input_mode: 'calculated' as const,
           calc_pitch_degrees: a.pitch || 0,
           calc_plan_sqm: a.area,
-          computed_sqm: a.area,
+          // In-app takeoff stores the PITCHED area in computed_sqm (what the
+          // builder header displays) - match that exactly (2026-08-23).
+          computed_sqm: pitched,
           final_value_sqm: pitched,
         };
       });
@@ -205,7 +207,7 @@ export async function GET(req: NextRequest) {
         (areaId && areaIdMap.get(areaId) ? areaId : roofAreas[0]?.id) ?? '';
       type Row = {
         row: Record<string, unknown>;
-        measurements: { value: number; quoteRoofAreaId?: string | null }[];
+        measurements: { value: number; final: number }[];
       };
       const rows: Row[] = [];
       let sortIdx = 0;
@@ -225,6 +227,30 @@ export async function GET(req: NextRequest) {
         }
         for (const [k, bucket] of buckets) {
           const total = bucket.reduce((s, m) => s + m.value, 0);
+          // FINAL values (pitch + waste per entry), identical to the free
+          // tool's report: plan -> pitched (entry's area pitch, spec pitch
+          // type) -> incl waste. Stored as value_after_waste so the quote
+          // builder shows the finished figures straight away (2026-08-23).
+          const bucketArea = roofAreas.find(ra => ra.id === k);
+          const areaPitch = bucketArea?.pitch || 0;
+          // Area components (e.g. Roofing) get the RAFTER pitch of the roof
+          // area they sit under, then waste - matching the free tool report
+          // (fixed 2026-08-23: was skipping pitch for area components).
+          const pitchT = spec && spec.pitchEnabled && g.measurementType !== 'quantity'
+            ? (g.measurementType === 'area' ? 'rafter' : spec.pitchType)
+            : 'none';
+          const finalOf = (raw: number) => {
+            let v = raw;
+            if (pitchT !== 'none') {
+              v = raw * pitchFactor(areaPitch, pitchT === 'rafter' ? 'rafter' : 'valley_hip');
+            }
+            if (spec) {
+              if (spec.wasteType === 'percent') v *= 1 + (spec.wasteValue || 0) / 100;
+              else if (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment') v += spec.wasteValue || 0;
+            }
+            return v;
+          };
+          const finalTotal = bucket.reduce((s, m) => s + finalOf(m.value), 0);
           rows.push({
             row: {
               quote_id: quoteId,
@@ -236,8 +262,10 @@ export async function GET(req: NextRequest) {
               component_library_id: libId,
               material_rate: spec ? (isPack ? 0 : spec.materialRate || 0) : 0,
               labour_rate: spec ? spec.labourRate || 0 : 0,
-              material_cost: 0,
-              labour_cost: 0,
+              // Price the final (pitch + waste) quantity at the spec rates so
+              // the builder shows the same dollars as the free tool report.
+              material_cost: spec && !isPack ? finalTotal * (spec.materialRate || 0) : 0,
+              labour_cost: spec ? finalTotal * (spec.labourRate || 0) : 0,
               waste_type: spec ? spec.wasteType : 'none',
               waste_percent: spec && spec.wasteType === 'percent' ? spec.wasteValue || 0 : 0,
               // Fixed/per-segment waste multiplies by THIS area's entry count
@@ -251,10 +279,10 @@ export async function GET(req: NextRequest) {
               is_customer_visible: true,
               sort_order: sortIdx++,
               calc_raw_value: total,
-              final_quantity: total,
-              final_value: total,
+              final_quantity: finalTotal,
+              final_value: finalTotal,
             },
-            measurements: bucket,
+            measurements: bucket.map(m => ({ value: m.value, final: finalOf(m.value) })),
           });
         }
       }
@@ -270,7 +298,7 @@ export async function GET(req: NextRequest) {
           rows[i].measurements.map((m, j) => ({
             quote_component_id: c.id,
             raw_value: m.value,
-            value_after_waste: m.value,
+            value_after_waste: (m as { final: number }).final,
             sort_order: j,
             is_combined: false,
           }))
