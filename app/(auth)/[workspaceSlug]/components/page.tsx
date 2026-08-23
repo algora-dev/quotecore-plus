@@ -7,6 +7,7 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { BackButton } from '@/app/components/BackButton';
 import { getPendingSupplierUpdates } from '../supplier-directory/actions';
+import { TakeoffDraftNoteBanner } from '../TakeoffDraftNoteBanner';
 import type { PendingUpdate } from '../supplier-directory/actions';
 
 export default async function ComponentsPage(props: {
@@ -57,6 +58,9 @@ export default async function ComponentsPage(props: {
     <>
       {!introSeen && <ComponentsIntroModal />}
       <BackButton />
+      {/* "Where is my takeoff" helper - shown here because this is the landing
+          page after the free-takeoff import banner click. */}
+      <TakeoffDraftNoteBanner />
       {pendingUpdates.length > 0 && (
         <PendingUpdatesBanner workspaceSlug={workspaceSlug} updates={pendingUpdates} />
       )}
