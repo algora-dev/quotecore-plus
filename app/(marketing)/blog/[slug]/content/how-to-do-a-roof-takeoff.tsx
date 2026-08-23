@@ -161,7 +161,7 @@ export default function Post() {
       <p>It should be accurate enough to support the commercial decision being made. Early budgets can use stated allowances. A final order needs confirmed dimensions, product data, details, and quantities.</p>
       <h3>What is the fastest way to check a manual takeoff?</h3>
       <p>Recalculate area by roof plane, total linear components independently, compare the result with the roof footprint, and review the material schedule against the specification. A second-person check is valuable on complex work.</p>
-      <p>Ready to build a takeoff? Try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a>, then explore <Link href="/roofing-quoting-software">roofing quoting software</Link> when you want the whole process connected.</p>
+      <p>Ready to build a takeoff? Upload your plan to the <a href="/free-roof-takeoff">free roof takeoff tool</a> - <a href="/blog/how-to-measure-a-roof-online">here is the step-by-step guide to measuring a roof online</a> - try the <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> for quantities, then explore <Link href="/roofing-quoting-software">roofing quoting software</Link> when you want the whole process connected.</p>
     </div>
   );
 }

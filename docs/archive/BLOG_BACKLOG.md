@@ -49,6 +49,16 @@ All 10 posts shipped to quote-core.com main branch. Content OS IDs QC-018 throug
 | 2 | how-to-estimate-construction-costs | How to Estimate Construction Costs | planned | medium | Folded into construction-cost-estimator-guide |
 | 3 | spreadsheets-vs-quoting-software | Spreadsheets vs Quoting Software | planned | medium | Existing spreadsheet post covers this |
 
+## Batch 5: Free Tools Discovery Push (published 2026-08-23)
+
+| # | Slug | Title | Status | Cluster | Notes |
+|---|------|-------|--------|---------|-------|
+| 1 | do-professional-quotes-win-more-jobs | Do Professional Quotes Win More Jobs? What the Evidence Says | published | Sales & Win-Rate | Evidence-led, no fabricated stats, feeds /free-quote-generator |
+| 2 | how-to-measure-a-roof-online | How to Measure a Roof Online for Free (From Any Plan Image) | published | Roof Measurement / Takeoff | Feeds /free-roof-takeoff; verified RoofSnap/EagleView pricing |
+| 3 | margin-vs-markup | Margin vs Markup: The Difference Explained (With Free Calculator) | published | Pricing / Margin | Feeds /free-margin-calculator; formulas match tool math |
+
+Supplier cluster unchanged.
+
 ## Supplier Cluster (blocked by /suppliers page)
 
 | # | Slug | Title | Status | Notes |

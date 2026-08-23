@@ -72,6 +72,16 @@ export default function Page() {
 
   const freeTools: FreeToolEntry[] = [
     {
+      slug: 'free-roof-takeoff',
+      name: 'Free Roof Takeoff',
+      description: 'Upload a plan image, set the scale, and measure a roof online - free, no signup.',
+    },
+    {
+      slug: 'free-margin-calculator',
+      name: 'Free Margin Calculator',
+      description: 'Add margin or markup to a total, or set different margins per line - free, no signup.',
+    },
+    {
       slug: 'free-quote-generator',
       name: 'Free Quote Generator',
       description: 'Turn measurements into a professional quote',

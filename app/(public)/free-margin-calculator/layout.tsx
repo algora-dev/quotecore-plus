@@ -32,9 +32,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: 'Free Margin Calculator',
+    title: 'Free Margin Calculator | Margin & Markup per Line | QuoteCore Plus',
     description:
-      'Free online margin calculator for trades. Enter costs, add margin per line or on a total, see selling price, profit, and markup instantly. No signup required.',
+      'Free margin calculator for trades. Add margin or markup to a total, or set a different margin per line across a whole quote. No signup required.',
     alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
     openGraph: {
       title: 'Free Margin Calculator - Selling Price, Profit and Markup',
@@ -64,12 +64,71 @@ const webAppLd = {
     'Free margin calculator for trades. Enter costs, add margin per line or on a total, and see selling price, profit, and markup instantly.',
 };
 
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Is the free margin calculator really free?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. The calculator is completely free with no signup required and unlimited calculations - everything runs in your browser. The only limited feature is the AI quote import (photo upload or pasted text), which has a small number of free scans per day.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do I need an account to use the margin calculator?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'No. Both Quick mode and Line-by-line mode work with no account and no card. An account is only needed for the wider QuoteCore+ workflow - quote tracking, follow-ups, digital takeoff and client management.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is the difference between margin and markup?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Margin is a percentage of the selling price; markup is a percentage of the cost. A £100 cost sold at £125 has 25% markup but only 20% margin. Sell price from margin = cost divided by (1 - margin%).',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Can I set a different margin for each item in a quote?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. In Line-by-line mode, set a default margin and every line inherits it. Override the margin on any individual line and clear it to inherit the default again. Totals and the blended margin update live.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Which currencies does the margin calculator support?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'GBP, USD, EUR, AUD, CAD and NZD. The calculator picks a default from your location, and you can switch currency at any time.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Can I turn the result into a quote?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. One click sends your adjusted line prices to the free QuoteCore+ quote generator, which builds a professional, printable quote. The quote generator can also send its lines back into the margin calculator.',
+      },
+    },
+  ],
+};
+
 export default function FreeMarginCalculatorLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
       />
       {children}
     </>

@@ -45,7 +45,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 | /features/ai-scan-assist | AI Scan Assist |
 | /features/smart-components | Smart Components |
 
-## Inbound in-article links (7)
+## Inbound in-article links (8)
 
 | From | Anchor used |
 |---|---|
@@ -54,6 +54,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 | /blog/how-to-calculate-roof-pitch | How to Measure a Roof for Materials (Complete Guide) |
 | /blog/how-to-do-a-roof-takeoff | how to measure a roof for materials |
 | /blog/how-to-estimate-roofing-materials | how to measure a roof for materials |
+| /blog/how-to-measure-a-roof-online | How to Measure a Roof for Materials |
 | /blog/roof-replacement-cost-guide-uk | how to measure a roof for materials |
 | /blog/roofing-material-list | how to measure a roof for materials |
 
