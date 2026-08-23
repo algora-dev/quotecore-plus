@@ -11,6 +11,7 @@ export type PricingStrategy = 'per_unit' | 'per_pack_length' | 'per_pack_area';
 export interface BuilderComponent {
   id: string;
   name: string;
+  sku?: string;
   measurementType: MeasurementType;
   materialRate: number;
   labourRate: number;
