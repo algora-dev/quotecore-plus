@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import type { BuilderComponent, MeasurementType } from './types';
-import { makeId } from './types';
+import type { BuilderComponent, MeasureMode, MeasurementType } from './types';
+import { makeId, lenLabel, areaLabel } from './types';
 import {
   MAPPABLE_FIELDS, guessMapping, parseCsvText, componentsFromRows,
   type ColumnMapping, type ParsedCsv,
@@ -10,22 +10,17 @@ import {
 
 const MAX_COMPONENTS = 7;
 
-const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
-  lineal: 'Length (m / ft)',
-  area: 'Area (m\u00B2 / sq ft)',
-  quantity: 'Quantity (pcs)',
-};
-
 interface ComponentStepProps {
   components: BuilderComponent[];
   setComponents: (c: BuilderComponent[]) => void;
+  measureMode: MeasureMode;
   unitSystem: 'metric' | 'imperial' | 'squares';
-  setUnitSystem: (u: 'metric' | 'imperial' | 'squares') => void;
+  onBack: () => void;
   onContinue: () => void;
   onSaveToApp: () => void;
 }
 
-export default function ComponentStep({ components, setComponents, unitSystem, setUnitSystem, onContinue, onSaveToApp }: ComponentStepProps) {
+export default function ComponentStep({ components, setComponents, measureMode, unitSystem, onBack, onContinue, onSaveToApp }: ComponentStepProps) {
   const [tab, setTab] = useState<'manual' | 'csv'>('manual');
   const [name, setName] = useState('');
   const [measurementType, setMeasurementType] = useState<MeasurementType>('lineal');
@@ -46,6 +41,13 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
   const [csvMeasurementType, setCsvMeasurementType] = useState<MeasurementType>('lineal');
 
   const full = components.length >= MAX_COMPONENTS;
+  const len = lenLabel(unitSystem);
+  const areaU = areaLabel(unitSystem);
+  const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
+    lineal: `Length (${len})`,
+    area: `Area (${areaU})`,
+    quantity: 'Quantity (pcs)',
+  };
 
   function addManual() {
     setError(null);
@@ -99,7 +101,6 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
     const add = created.slice(0, room);
     setComponents([...components, ...add]);
     setCsv(null);
-    if (selected.size) setSelected(new Set());
     if (fileRef.current) fileRef.current.value = '';
     if (created.length > add.length) setError(`Imported ${add.length} of ${created.length} (limit ${MAX_COMPONENTS}).`);
   }
@@ -108,24 +109,12 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
 
   return (
     <div className="space-y-6">
-      {/* Unit system */}
-      <div>
-        <h2 className="text-base md:text-lg font-bold text-slate-900">Measurement units</h2>
-        <p className="mt-0.5 text-xs md:text-sm text-slate-400">Pick once - it applies to every component and measurement in this tool.</p>
-        <div className="mt-3 flex gap-2">
-          {(['metric', 'imperial', 'squares'] as const).map(u => (
-            <button key={u} onClick={() => setUnitSystem(u)}
-              className={`rounded-full border px-4 py-2 text-xs font-medium transition ${unitSystem === u ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`}>
-              {u === 'metric' ? 'Metric (m, m\u00B2)' : u === 'imperial' ? 'Imperial (ft, sq ft)' : 'Squares'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Tabs */}
       <div>
         <h2 className="text-base md:text-lg font-bold text-slate-900">Build your components</h2>
-        <p className="mt-0.5 text-xs md:text-sm text-slate-400">Add up to {MAX_COMPONENTS} components one at a time, or import them from a CSV / spreadsheet catalog. These are your smart components - they carry pricing, labour, waste and pitch logic.</p>
+        <p className="mt-0.5 text-xs md:text-sm text-slate-400">
+          Add up to {MAX_COMPONENTS} components one at a time, or import them from a CSV catalog. These are your smart components - they carry pricing, labour, waste and pitch logic.
+          {measureMode === 'plan' && ' Plan measurements are active: enable pitch per component and it gets applied automatically in step 3.'}
+        </p>
         <div className="mt-3 flex gap-2">
           {([['manual', 'Add manually'], ['csv', 'Import CSV']] as const).map(([k, label]) => (
             <button key={k} onClick={() => setTab(k)}
@@ -172,7 +161,7 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
           <div className="flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
               <input type="checkbox" checked={pitchEnabled} onChange={e => setPitchEnabled(e.target.checked)} className="rounded border-slate-300 text-orange-500 focus:ring-0" />
-              Apply pitch factor (plan measurements)
+              Apply pitch factor
             </label>
             {pitchEnabled && (
               <select className="rounded-lg border border-slate-300 px-2 py-1.5 text-xs focus:border-orange-500 focus:outline-none" value={pitchType} onChange={e => setPitchType(e.target.value as 'rafter' | 'valley_hip')} aria-label="Pitch type">
@@ -202,7 +191,6 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
 
       {tab === 'csv' && csv && (
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-4">
-          {/* column mapping */}
           <div>
             <h3 className="text-sm font-semibold text-slate-900">1. Map your columns</h3>
             <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
@@ -223,7 +211,6 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
               ))}
             </div>
           </div>
-          {/* measurement type */}
           <div>
             <h3 className="text-sm font-semibold text-slate-900">2. How are these measured?</h3>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -235,7 +222,6 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
               ))}
             </div>
           </div>
-          {/* rows */}
           <div>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-900">3. Pick rows ({selected.size} selected)</h3>
@@ -279,7 +265,6 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
 
       {error && <p className="text-xs text-red-600">{error}</p>}
 
-      {/* Component list */}
       {components.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-semibold text-slate-900">Your components ({components.length}/{MAX_COMPONENTS})</h3>
@@ -291,7 +276,7 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
                   {c.source === 'csv' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">CSV</span>}
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
-                  <span>{MEASUREMENT_LABELS[c.measurementType].split(' (')[0]}</span>
+                  <span>{c.measurementType === 'lineal' ? `Length (${len})` : c.measurementType === 'area' ? `Area (${areaU})` : 'Quantity (pcs)'}</span>
                   {c.materialRate > 0 && <span>${c.materialRate.toFixed(2)} mat</span>}
                   {c.labourRate > 0 && <span>${c.labourRate.toFixed(2)} labour</span>}
                   {c.wasteValue > 0 && <span>+{c.wasteValue}% waste</span>}
@@ -307,15 +292,17 @@ export default function ComponentStep({ components, setComponents, unitSystem, s
         </div>
       )}
 
-      {/* Actions */}
       {components.length > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-          <button onClick={onSaveToApp} className="rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-slate-400">
-            Save components to my account
-          </button>
-          <button onClick={onContinue} className="rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#A03E15]">
-            Continue to quote builder
-          </button>
+          <button onClick={onBack} className="rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-slate-400">Back</button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={onSaveToApp} className="rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-slate-400">
+              Save components to my account
+            </button>
+            <button onClick={onContinue} className="rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#A03E15]">
+              Continue to quote builder
+            </button>
+          </div>
         </div>
       )}
     </div>
