@@ -12,7 +12,6 @@ interface BuilderStepProps {
   areas: ParentArea[];
   setAreas: (a: ParentArea[]) => void;
   measureMode: MeasureMode;
-  setMeasureMode: (m: MeasureMode) => void;
   unitSystem: 'metric' | 'imperial' | 'squares';
   currency: string;
   onBack: () => void;
@@ -21,7 +20,7 @@ interface BuilderStepProps {
 
 const inputCls = 'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:outline-none';
 
-export default function BuilderStep({ components, areas, setAreas, measureMode, setMeasureMode, unitSystem, currency, onBack, onGenerate }: BuilderStepProps) {
+export default function BuilderStep({ components, areas, setAreas, measureMode, unitSystem, currency, onBack, onGenerate }: BuilderStepProps) {
   const [newAreaName, setNewAreaName] = useState('');
   const compById = new Map(components.map(c => [c.id, c]));
   const len = unitSystem === 'metric' ? 'm' : 'ft';
@@ -70,22 +69,13 @@ export default function BuilderStep({ components, areas, setAreas, measureMode, 
 
   return (
     <div className="space-y-6">
-      {/* Mode gate */}
-      <div>
-        <h2 className="text-base md:text-lg font-bold text-slate-900">How are you entering measurements?</h2>
-        <p className="mt-0.5 text-xs md:text-sm text-slate-400">Decide up-front - this controls whether pitch factors are applied.</p>
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button onClick={() => setMeasureMode('actual')}
-            className={`rounded-xl border p-4 text-left transition ${measureMode === 'actual' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white hover:border-slate-400'}`}>
-            <div className="text-sm font-semibold">Actual measurements</div>
-            <div className={`mt-1 text-xs ${measureMode === 'actual' ? 'text-slate-300' : 'text-slate-400'}`}>I already have true, final measurements. No pitch adjustment needed.</div>
-          </button>
-          <button onClick={() => setMeasureMode('plan')}
-            className={`rounded-xl border p-4 text-left transition ${measureMode === 'plan' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white hover:border-slate-400'}`}>
-            <div className="text-sm font-semibold">Plan measurements</div>
-            <div className={`mt-1 text-xs ${measureMode === 'plan' ? 'text-slate-300' : 'text-slate-400'}`}>Taken from a 2D plan - pitch factors get applied to get true lengths and areas.</div>
-          </button>
+      {/* Mode summary (mode was chosen in step 1) */}
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3">
+        <div>
+          <div className="text-sm font-medium text-slate-800">{measureMode === 'actual' ? 'Actual measurements' : 'Plan measurements (pitch applied)'}</div>
+          <div className="text-xs text-slate-400">Change this in step 1 if needed.</div>
         </div>
+        <button onClick={onBack} className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400">Change</button>
       </div>
 
       {/* Areas */}
