@@ -50,6 +50,9 @@ interface TakeoffDraftPayload {
     count: number;
     total: number;
     measurementType?: string;
+    /** Per-measurement breakdown; each entry is stamped with the roof area
+     * it was drawn on (matches the app's per-area component semantics). */
+    measurements?: { value: number; quoteRoofAreaId?: string | null }[];
   }[];
   savedAt?: string;
 }
@@ -160,6 +163,9 @@ export async function GET(req: NextRequest) {
     });
 
     // Roof areas: plan m2 -> pitched m2 via the real pitch-factor engine.
+    // Keep the draft-area-id -> inserted-row-id map so component groups can
+    // attach to the roof area they were measured on.
+    const areaIdMap = new Map<string, string>();
     let firstAreaId: string | null = null;
     if (roofAreas.length > 0) {
       const rows = roofAreas.map((a, i) => {
@@ -181,62 +187,97 @@ export async function GET(req: NextRequest) {
         .insert(rows)
         .select('id');
       if (areasError) throw new Error(`roof areas: ${areasError.message}`);
+      insertedAreas?.forEach((r, i) => areaIdMap.set(roofAreas[i].id, r.id));
       firstAreaId = insertedAreas?.[0]?.id ?? null;
     }
 
     // Component groups: one quote_components row per group, one combined
     // entry with the measured total. User-built components link to their new
     // component_library rows and carry the spec rates/waste/pitch through.
+    // Split per roof area: one quote_components row per (group, area) pair,
+    // attached to the area the measurements were drawn on, with one
+    // quote_component_entries row PER MEASUREMENT - mirroring exactly what
+    // the free tool report shows (2026-08-23 fix).
     if (groups.length > 0) {
+      // area bucket key: draft area id, or '' for un-stamped entries
+      // (attach to the first area).
+      const bucketKey = (areaId: string | null | undefined) =>
+        (areaId && areaIdMap.get(areaId) ? areaId : roofAreas[0]?.id) ?? '';
+      type Row = {
+        row: Record<string, unknown>;
+        measurements: { value: number; quoteRoofAreaId?: string | null }[];
+      };
+      const rows: Row[] = [];
+      let sortIdx = 0;
+      for (const g of groups) {
+        const spec = specs.find(s => s.id === g.componentId);
+        const libId = spec ? specLibIds.get(spec.id) ?? null : null;
+        const isPack = spec && spec.pricingStrategy !== 'per_unit' && !!spec.packPrice && !!spec.packSize;
+        const ms = (g.measurements && g.measurements.length > 0)
+          ? g.measurements
+          : [{ value: g.total, quoteRoofAreaId: null }];
+        // Bucket measurements by roof area, preserving draw order within each.
+        const buckets = new Map<string, { value: number; quoteRoofAreaId?: string | null }[]>();
+        for (const m of ms) {
+          const k = bucketKey(m.quoteRoofAreaId);
+          if (!buckets.has(k)) buckets.set(k, []);
+          buckets.get(k)!.push(m);
+        }
+        for (const [k, bucket] of buckets) {
+          const total = bucket.reduce((s, m) => s + m.value, 0);
+          rows.push({
+            row: {
+              quote_id: quoteId,
+              name: g.name,
+              component_type: 'main',
+              measurement_type: (g.measurementType === 'area' ? 'area' : 'lineal'),
+              input_mode: 'calculated',
+              quote_roof_area_id: areaIdMap.get(k) ?? firstAreaId,
+              component_library_id: libId,
+              material_rate: spec ? (isPack ? 0 : spec.materialRate || 0) : 0,
+              labour_rate: spec ? spec.labourRate || 0 : 0,
+              material_cost: 0,
+              labour_cost: 0,
+              waste_type: spec ? spec.wasteType : 'none',
+              waste_percent: spec && spec.wasteType === 'percent' ? spec.wasteValue || 0 : 0,
+              // Fixed/per-segment waste multiplies by THIS area's entry count
+              // (matches the app's per-entry waste semantics).
+              waste_fixed:
+                spec && (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment')
+                  ? (spec.wasteValue || 0) * bucket.length
+                  : 0,
+              pitch_type: spec && spec.pitchEnabled ? spec.pitchType : 'none',
+              pack_size_snapshot: spec && spec.pricingStrategy !== 'per_unit' ? spec.packSize : null,
+              is_customer_visible: true,
+              sort_order: sortIdx++,
+              calc_raw_value: total,
+              final_quantity: total,
+              final_value: total,
+            },
+            measurements: bucket,
+          });
+        }
+      }
       const { data: insertedComps, error: compsError } = await admin
         .from('quote_components')
-        .insert(groups.map((g, i) => {
-          const spec = specs.find(s => s.id === g.componentId);
-          const libId = spec ? specLibIds.get(spec.id) ?? null : null;
-          const isPack = spec && spec.pricingStrategy !== 'per_unit' && !!spec.packPrice && !!spec.packSize;
-          return {
-            quote_id: quoteId,
-            name: g.name,
-            component_type: 'main' as const,
-            measurement_type: (g.measurementType === 'area' ? 'area' : 'lineal') as 'area' | 'lineal',
-            input_mode: 'calculated' as const,
-            quote_roof_area_id: firstAreaId,
-            component_library_id: libId,
-            material_rate: spec ? (isPack ? 0 : spec.materialRate || 0) : 0,
-            labour_rate: spec ? spec.labourRate || 0 : 0,
-            material_cost: 0,
-            labour_cost: 0,
-            waste_type: spec ? spec.wasteType : ('none' as const),
-            waste_percent: spec && spec.wasteType === 'percent' ? spec.wasteValue || 0 : 0,
-            // Per-entry waste: the draft combines all entries into one, so a
-            // fixed/per-segment waste amount must be multiplied by the entry
-            // count to match the app's per-entry semantics.
-            waste_fixed:
-              spec && (spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment')
-                ? (spec.wasteValue || 0) * g.count
-                : 0,
-            pitch_type: spec && spec.pitchEnabled ? spec.pitchType : ('none' as const),
-            pack_size_snapshot: spec && spec.pricingStrategy !== 'per_unit' ? spec.packSize : null,
-            is_customer_visible: true,
-            sort_order: i,
-            calc_raw_value: g.total,
-            final_quantity: g.total,
-            final_value: g.total,
-          };
-        }))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .insert(rows.map(r => r.row) as any[])
         .select('id');
       if (compsError) throw new Error(`components: ${compsError.message}`);
 
       if (insertedComps && insertedComps.length > 0) {
+        const entryRows = insertedComps.flatMap((c, i) =>
+          rows[i].measurements.map((m, j) => ({
+            quote_component_id: c.id,
+            raw_value: m.value,
+            value_after_waste: m.value,
+            sort_order: j,
+            is_combined: false,
+          }))
+        );
         const { error: entriesError } = await admin
           .from('quote_component_entries')
-          .insert(insertedComps.map((c, i) => ({
-            quote_component_id: c.id,
-            raw_value: groups[i].total,
-            value_after_waste: groups[i].total,
-            sort_order: 0,
-            is_combined: false,
-          })));
+          .insert(entryRows);
         if (entriesError) throw new Error(`entries: ${entriesError.message}`);
       }
     }
@@ -262,6 +303,10 @@ export async function GET(req: NextRequest) {
       res.cookies.set({ name, value: '', path: '/', maxAge: 0 });
       res.cookies.set({ name, value: '', path: '/', maxAge: 0, domain: '.quote-core.com' });
     }
+    // Show the "where is my takeoff" helper banner until the user dismisses
+    // it (TakeoffDraftNoteBanner on the dashboard reads this cookie).
+    res.cookies.set({ name: 'qcp_takeoff_note', value: '1', path: '/', maxAge: 60 * 60 * 24 * 30, sameSite: 'lax' });
+    res.cookies.set({ name: 'qcp_takeoff_note', value: '1', path: '/', maxAge: 60 * 60 * 24 * 30, sameSite: 'lax', domain: '.quote-core.com' });
     return res;
   } catch (err) {
     console.error('[import-takeoff-draft] failed:', err);
