@@ -50,6 +50,7 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'do-professional-quotes-win-more-jobs': () => import('./content/do-professional-quotes-win-more-jobs'),
   'how-to-measure-a-roof-online': () => import('./content/how-to-measure-a-roof-online'),
   'margin-vs-markup': () => import('./content/margin-vs-markup'),
+  'can-chatgpt-create-a-quote': () => import('./content/can-chatgpt-create-a-quote'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

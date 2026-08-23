@@ -32,10 +32,11 @@ Source: `app/(marketing)/blog/[slug]/content/do-professional-quotes-win-more-job
 | /free-quote-generator | QuoteCore+ quote generator |
 | /free-trial | start a free QuoteCore+ trial |
 
-## Inbound in-article links (4)
+## Inbound in-article links (5)
 
 | From | Anchor used |
 |---|---|
+| /blog/can-chatgpt-create-a-quote | what makes a professional quote |
 | /blog/construction-quote-speed-checklist | see the evidence on professional quotes and win rates |
 | /blog/how-to-follow-up-on-a-quote | here is the evidence for that |
 | /blog/how-to-get-more-work-as-a-contractor | what the evidence says about professional quotes winning more jobs |

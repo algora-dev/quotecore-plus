@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-create-an-invoice-for-contractors.tsx`
 
-## Outbound internal links (9)
+## Outbound internal links (10)
 
 ### Money pages (1)
 
@@ -10,12 +10,13 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-create-an-invoice-for-contra
 |---|---|
 | /construction-quoting-software | Construction quoting software |
 
-### Blog articles (2)
+### Blog articles (3)
 
 | Destination | Anchor |
 |---|---|
 | /blog/how-to-price-a-roofing-job | how to price a roofing job |
 | /blog/how-to-send-a-purchase-order | purchase order |
+| /blog/can-chatgpt-create-a-quote | whether ChatGPT can create quotes, invoices and POs |
 
 ### Free tools (6)
 

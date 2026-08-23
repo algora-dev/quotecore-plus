@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-send-a-purchase-order.tsx`
 
-## Outbound internal links (8)
+## Outbound internal links (9)
 
 ### Money pages (1)
 
@@ -10,12 +10,13 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-send-a-purchase-order.tsx`
 |---|---|
 | /construction-quoting-software | construction quoting software |
 
-### Blog articles (2)
+### Blog articles (3)
 
 | Destination | Anchor |
 |---|---|
 | /blog/roofing-material-list | roofing material list guide |
 | /blog/how-to-create-an-invoice-for-contractors | how to create an invoice for contractors |
+| /blog/can-chatgpt-create-a-quote | ChatGPT vs structured document tools |
 
 ### Free tools (5)
 

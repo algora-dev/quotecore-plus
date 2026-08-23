@@ -174,7 +174,7 @@ export default function Post() {
       <p>Send it at the milestone agreed in the quote or contract. That may be a deposit, progress stage, delivery event, completion, or recurring date.</p>
       <h3>What should I do if an invoice is disputed?</h3>
       <p>Respond promptly, identify the exact disputed line, compare it with the quote and approvals, and keep the undisputed amount separate. Use written records, photographs, variation approvals, and activity history to resolve facts.</p>
-      <p>Create a professional PDF now with the <a href="/free-invoice-generator">free invoice generator</a>. Need to order materials for the job first? Use the <a href="/free-purchase-order-generator">free purchase order generator</a>. To connect quoting, ordering, and invoicing, start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
+      <p>Create a professional PDF now with the <a href="/free-invoice-generator">free invoice generator</a>. Wondering about AI for the job? See <a href="/blog/can-chatgpt-create-a-quote">whether ChatGPT can create quotes, invoices and POs</a>. Need to order materials first? Use the <a href="/free-purchase-order-generator">free purchase order generator</a>. To connect quoting, ordering, and invoicing, start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
     </div>
   );
 }
