@@ -1,6 +1,6 @@
 'use client';
 
-// CSV parsing + column mapping for the Free Quote Builder step 1.
+// CSV parsing + column mapping for the Free Quote Builder step 2.
 // Client-side only (papaparse). Field targets mirror BuilderComponent.
 
 import Papa from 'papaparse';
@@ -18,6 +18,8 @@ export function parseCsvText(text: string): ParsedCsv {
   });
   const rows = (result.data as string[][]).filter(r => r.some(c => (c ?? '').trim() !== ''));
   if (rows.length === 0) return { headers: [], rows: [] };
+  // Files without header rows: generated "Column N" titles let the user map
+  // using the data preview instead of real header names.
   const headers = rows[0].map((h, i) => (h ?? '').trim() || `Column ${i + 1}`);
   const body = rows.slice(1);
   return { headers, rows: body };
@@ -25,12 +27,10 @@ export function parseCsvText(text: string): ParsedCsv {
 
 /** Map-able component fields. `required` fields must be mapped before import. */
 export const MAPPABLE_FIELDS = [
-  { key: 'name', label: 'Component name', required: true },
+  { key: 'name', label: 'Component Name', required: true },
+  { key: 'sku', label: 'SKU / Product Code', required: false },
   { key: 'materialRate', label: 'Material price / unit', required: false },
   { key: 'labourRate', label: 'Labour rate / unit', required: false },
-  { key: 'packSize', label: 'Pack size', required: false },
-  { key: 'packPrice', label: 'Pack price', required: false },
-  { key: 'wastePercent', label: 'Waste %', required: false },
 ] as const;
 
 export type FieldKey = (typeof MAPPABLE_FIELDS)[number]['key'];
@@ -46,7 +46,7 @@ function toNumber(v: string | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Guess sensible default column mappings from headers (name-like, price-like...). */
+/** Guess sensible default column mappings from headers (name-like, sku-like, price-like...). */
 export function guessMapping(headers: string[]): ColumnMapping {
   const mapping: ColumnMapping = {};
   const lower = headers.map(h => h.toLowerCase());
@@ -57,18 +57,14 @@ export function guessMapping(headers: string[]): ColumnMapping {
     }
     return -1;
   };
-  const idx = findIdx([/^(name|item|description|product|component)/, /name/, /item/]);
-  if (idx >= 0) mapping.name = idx;
+  const name = findIdx([/^(name|item|description|product|component)/, /name/, /item/]);
+  if (name >= 0) mapping.name = name;
+  const sku = findIdx([/^(sku|code|product code|item code|part)/, /sku/]);
+  if (sku >= 0) mapping.sku = sku;
   const mat = findIdx([/material/, /price/, /cost/, /rate/, /unit\s*price/]);
   if (mat >= 0) mapping.materialRate = mat;
   const lab = findIdx([/labour/, /labor/, /wage/]);
   if (lab >= 0) mapping.labourRate = lab;
-  const ps = findIdx([/pack\s*size/, /bundle/, /qty\s*per\s*pack/]);
-  if (ps >= 0) mapping.packSize = ps;
-  const pp = findIdx([/pack\s*price/, /bundle\s*price/, /pack\s*cost/]);
-  if (pp >= 0) mapping.packPrice = pp;
-  const wp = findIdx([/waste/]);
-  if (wp >= 0) mapping.wastePercent = wp;
   return mapping;
 }
 
@@ -87,21 +83,18 @@ export function componentsFromRows(
       mapping[k] != null && mapping[k]! < row.length ? (row[mapping[k]! as number] ?? '').trim() : undefined;
     const name = get('name');
     if (!name) continue;
-    const packSize = toNumber(get('packSize'));
-    const packPrice = toNumber(get('packPrice'));
-    const isPack = packSize > 0 && packPrice > 0;
-    const waste = toNumber(get('wastePercent'));
     out.push({
       id: makeId('comp'),
       name: name.slice(0, 120),
+      sku: get('sku') || undefined,
       measurementType,
       materialRate: toNumber(get('materialRate')),
       labourRate: toNumber(get('labourRate')),
-      pricingStrategy: isPack ? (measurementType === 'area' ? 'per_pack_area' : 'per_pack_length') : 'per_unit',
-      packPrice: isPack ? packPrice : null,
-      packSize: isPack ? packSize : null,
-      wasteType: waste > 0 ? 'percent' : 'none',
-      wasteValue: waste > 0 ? waste : 0,
+      pricingStrategy: 'per_unit',
+      packPrice: null,
+      packSize: null,
+      wasteType: 'none',
+      wasteValue: 0,
       // CSV import cannot infer pitch logic; user can enable per component after import.
       pitchEnabled: false,
       pitchType: 'none',
