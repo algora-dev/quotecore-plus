@@ -51,6 +51,9 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       disallow: [
         '/api/',
         '/auth/',
+        // Supplier catalogue data files (machine-readable, no search value; GSC 404 noise)
+        '/*catalogue.csv',
+        '/*catalogue.json',
         '/onboarding',
         '/2fa',
         '/accept/',

@@ -44,9 +44,7 @@ interface ComponentRow {
   count: number;
   total: number;
   measurementType?: string;
-  entries: { value: number; adjusted: number | null; areaId: string | null }[];
-  /** Per-entry cost aligned with `entries` (per_unit pricing only; null where N/A). */
-  entryCosts: (number | null)[];
+  entries: { value: number; adjusted: number | null; afterWaste: number | null; cost: number | null; areaId: string | null }[];
   semantic: string | null;
   /** Pitch/waste-adjusted total (user-built components only). */
   adjustedTotal: number | null;
@@ -157,35 +155,25 @@ export function TakeoffOutputView({
             return payload.roofAreas.find(a => (a.pitch || 0) > 0)?.pitch ?? 0;
           };
           const entries = g.measurements.map(m => {
-            const pt = g.measurementType === 'quantity' || g.measurementType === 'area' ? 'none' : pitchTypeFor();
+            // Area-measured components (e.g. Roofing) get the RAFTER pitch of
+            // the roof area they sit under, then waste on top - same as the
+            // area itself (fixed 2026-08-23: was skipping pitch entirely).
+            const pt = g.measurementType === 'quantity'
+              ? 'none'
+              : g.measurementType === 'area'
+                ? 'rafter'
+                : pitchTypeFor();
             const areaId = (m as any).quoteRoofAreaId ?? null;
-            if (pt === 'none') return { value: m.value, adjusted: null, areaId };
+            if (pt === 'none') return { value: m.value, adjusted: null, afterWaste: null, cost: null as number | null, areaId };
             const r = applyPitchAndWaste(m.value, true, pt as any, areaPitchFor(m as any), 'none', 0, 0);
-            return { value: m.value, adjusted: r.afterPitch, areaId };
+            return { value: m.value, adjusted: r.afterPitch, afterWaste: null as number | null, cost: null as number | null, areaId };
           });
-          // Per-entry cost (per_unit pricing only), so each roof-area section
-          // shows ITS OWN dollar figure instead of the group-wide total.
-          // Waste runs per entry, exactly like the group total below.
-          const entryCosts = spec
-            ? g.measurements.map((m, i) => {
-                if (g.measurementType === 'quantity') return (spec.materialRate || 0) + (spec.labourRate || 0);
-                if (spec.pricingStrategy !== 'per_unit') return null; // pack: group-level only
-                const base = entries[i].adjusted ?? m.value;
-                const w = applyPitchAndWaste(
-                  base, false, 'none', 0,
-                  spec.wasteType,
-                  spec.wasteType === 'percent' ? spec.wasteValue : 0,
-                  spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
-                );
-                return w.afterWaste * ((spec.materialRate || 0) + (spec.labourRate || 0));
-              })
-            : g.measurements.map(() => null as number | null);
           const anyAdjusted = entries.some(e => e.adjusted != null);
           const pitchAdjustedTotal = anyAdjusted ? entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
           if (spec && g.measurementType !== 'quantity') {
             // Waste applies PER ENTRY on top of the pitch-adjusted length
             // (pitch was already applied per-entry above, from that entry's area).
-            const adjusted = entries.reduce((sum, e) => {
+            const adjusted = entries.reduce((sum, e, i) => {
               const r = applyPitchAndWaste(
                 e.adjusted ?? e.value,
                 false, // pitch already applied - only waste runs here
@@ -195,6 +183,12 @@ export function TakeoffOutputView({
                 spec.wasteType === 'percent' ? spec.wasteValue : 0,
                 spec.wasteType === 'fixed' || spec.wasteType === 'fixed_per_segment' ? spec.wasteValue : 0,
               );
+              // Stamp waste + cost onto the entry itself so each roof-area
+              // section sums ITS OWN entries (index-safe: same array object).
+              e.afterWaste = r.afterWaste;
+              e.cost = spec.pricingStrategy === 'per_unit'
+                ? r.afterWaste * ((spec.materialRate || 0) + (spec.labourRate || 0))
+                : null; // pack pricing stays group-level
               return sum + r.afterWaste;
             }, 0);
             adjustedTotal = adjusted;
@@ -207,6 +201,7 @@ export function TakeoffOutputView({
           } else if (spec && g.measurementType === 'quantity') {
             adjustedTotal = g.count;
             cost = g.count * (spec.materialRate + spec.labourRate);
+            entries.forEach(e => { e.cost = (spec.materialRate || 0) + (spec.labourRate || 0); });
           }
           return {
             key: g.componentId,
@@ -215,7 +210,6 @@ export function TakeoffOutputView({
             total: g.total,
             measurementType: g.measurementType,
             entries,
-            entryCosts,
             semantic: g.semantic,
             adjustedTotal: adjustedTotal ?? pitchAdjustedTotal,
             cost,
@@ -344,6 +338,8 @@ export function TakeoffOutputView({
               <div className="mt-3 space-y-6">
                 {areas.map(a => {
                   // Entries for this area: stamped with its id, or un-stamped (first area only).
+                  // Costs/waste are stamped per entry, so filtering to this area's
+                  // entries and summing them is always correct (index-safe).
                   const groupsHere = components
                     .map(c => ({ ...c, entries: c.entries.filter(e => e.areaId === a.key || (e.areaId === null && a.key === areas[0]?.key)) }))
                     .filter(c => c.entries.length > 0);
@@ -361,13 +357,12 @@ export function TakeoffOutputView({
                           const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
                           const anyAdj = c.entries.some(e => e.adjusted != null);
                           const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
-                          // THIS area's cost: sum the per-entry costs for the entries
-                          // shown here (was the group-wide c.cost - fixed 2026-08-23).
-                          const indicesHere = c.entries
-                            .map((e, i) => (e.areaId === a.key || (e.areaId === null && a.key === areas[0]?.key) ? i : -1))
-                            .filter(i => i >= 0);
-                          const areaCost = indicesHere.length > 0 && indicesHere.every(i => c.entryCosts[i] != null)
-                            ? indicesHere.reduce((s, i) => s + (c.entryCosts[i] ?? 0), 0)
+                          const anyWaste = c.entries.some(e => e.afterWaste != null);
+                          const wasteTotal = anyWaste ? c.entries.reduce((s, e) => s + (e.afterWaste ?? e.adjusted ?? e.value), 0) : null;
+                          // THIS area's cost: sum the per-entry costs of the entries
+                          // shown here (pack-priced components keep group-level cost).
+                          const areaCost = c.entries.some(e => e.cost != null)
+                            ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
                             : null;
                           return (
                             <div key={c.key}>
@@ -380,6 +375,9 @@ export function TakeoffOutputView({
                                   {adjTotal != null && c.measurementType !== 'quantity' && (
                                     <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} pitched</span>
                                   )}
+                                  {wasteTotal != null && c.measurementType !== 'quantity' && (
+                                    <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} incl waste</span>
+                                  )}
                                   {areaCost != null && <span className="ml-2">&middot; ${fmt(areaCost)}</span>}
                                 </span>
                               </div>
@@ -390,9 +388,11 @@ export function TakeoffOutputView({
                                     <span className="text-black/80 whitespace-nowrap">
                                       {c.measurementType === 'quantity'
                                         ? '1 ea'
-                                        : m.adjusted != null
-                                          ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted)} ${L} pitched`
-                                          : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+                                        : m.afterWaste != null
+                                          ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${L} pitched \u2192 ${fmt(m.afterWaste)} ${L} incl waste`
+                                          : m.adjusted != null
+                                            ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted)} ${L} pitched`
+                                            : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
                                     </span>
                                   </div>
                                 ))}

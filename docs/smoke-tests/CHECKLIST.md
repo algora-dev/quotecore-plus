@@ -468,3 +468,12 @@
 - [ ] /free-calculators hub: Roof Takeoff and Margin Calculator cards listed first in Free document tools, links resolve
 - [ ] New blogs load 200: /blog/do-professional-quotes-win-more-jobs, /blog/how-to-measure-a-roof-online, /blog/margin-vs-markup
 - [ ] /free-roof-takeoff page links to /blog/how-to-measure-a-roof-online; /free-margin-calculator links to /blog/margin-vs-markup
+
+### Pending verification (main 79424eaa, 2026-08-23)
+
+**FREE-ROOF-TAKEOFF -> APP FLOW (baseline, verified by Shaun 2026-08-23)**
+- [x] Free tool report: per-area costs differ per roof area; plan -> pitched -> incl waste shown per entry
+- [x] Area components (Roofing) get parent area rafter pitch before waste
+- [x] Banner: plural "components are ready" -> click routes to components page, banner clears
+- [x] Green "find your takeoff in Quotes -> Drafts" banner shows on components page/dashboard, dismissable
+- [x] Quote builder: areas pitched, components per-area/per-entry, final incl-waste values + spec-rate prices
