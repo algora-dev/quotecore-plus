@@ -233,7 +233,12 @@ export async function GET(req: NextRequest) {
           // builder shows the finished figures straight away (2026-08-23).
           const bucketArea = roofAreas.find(ra => ra.id === k);
           const areaPitch = bucketArea?.pitch || 0;
-          const pitchT = spec && spec.pitchEnabled && g.measurementType !== 'area' && g.measurementType !== 'quantity' ? spec.pitchType : 'none';
+          // Area components (e.g. Roofing) get the RAFTER pitch of the roof
+          // area they sit under, then waste - matching the free tool report
+          // (fixed 2026-08-23: was skipping pitch for area components).
+          const pitchT = spec && spec.pitchEnabled && g.measurementType !== 'quantity'
+            ? (g.measurementType === 'area' ? 'rafter' : spec.pitchType)
+            : 'none';
           const finalOf = (raw: number) => {
             let v = raw;
             if (pitchT !== 'none') {
