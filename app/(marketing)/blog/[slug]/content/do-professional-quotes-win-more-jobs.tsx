@@ -6,10 +6,11 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        <strong>Quick answer:</strong> Yes - the evidence consistently points the same way. Customers judge quotes on
-        presentation, clarity and speed, and a professional-looking quote improves your position in every competitive
-        situation. How much it wins on its own varies by job and customer, but no evidence suggests a scrappy quote
-        wins more work. The good news: you can build a professional quote free and <Link href="/free-quote-generator">test it on your next job - no signup required</Link>.
+        <strong>Quick answer:</strong> Professional presentation will not win a job on its own - but clear,
+        well-structured quotes can make it easier for customers to understand and compare an offer, while faster
+        follow-up may help a contractor stay competitive. No credible study puts a single number on the effect, and
+        this article will not invent one. The good news: you can build a professional quote free and{' '}
+        <Link href="/free-quote-generator">test it on your next job - no signup required</Link>.
       </p>
       <p>
         A professional quote is a structured, itemised, clearly written offer of work: scope, materials, labour,
@@ -22,18 +23,18 @@ export default function Post() {
 
       <h2>Do customers actually judge quotes?</h2>
       <p>
-        Yes. For most homeowners and small commercial clients, a quote is one of the few artefacts they have to judge a
-        trade business by. They cannot assess your roofing skill or your joinery, but they can absolutely assess the
-        document you send them. Research on first impressions consistently shows that people form judgements of
-        competence and trustworthiness within seconds of seeing new information, and that visual presentation shapes
-        those judgements before any content is processed. A quote is not exempt from that - it is the product of your
-        professionalism, delivered as a document.
+        For most homeowners and small commercial clients, a quote is one of the few things they have to judge a
+        trade business by. They cannot assess your roofing skill or your joinery, but they can assess the
+        document you send them. <a href="https://www.gov.uk/government/publications/domestic-clients-undergoing-construction-work" target="_blank" rel="noopener noreferrer">UK Government research into domestic construction clients</a> found
+        that homeowners weigh factors like price, recommendations and trust when choosing who carries out work -
+        and the quote is where price and professionalism become visible. A quote is not exempt from first
+        impressions: it is the product of your professionalism, delivered as a document.
       </p>
       <p>
         It also matters more when the customer cannot compare the work itself. If three roofers quote a re-roof and
-        the customer has never seen any of them work, the quote (and how quickly it arrives) is what they have. In
-        competitive situations, everything else being roughly equal, the clearer and more credible document has the
-        better chance.
+        the customer has never seen any of them work, the quote - and how clearly it explains itself - is a large
+        part of what they have to go on. A clearer document can make it easier for the customer to understand and
+        compare what is on offer.
       </p>
 
       <h2>What "professional" actually means in a quote</h2>
@@ -49,9 +50,12 @@ export default function Post() {
         <li><strong>Speed:</strong> arriving while the job is still fresh - ideally before a competitor's quote does.</li>
       </ul>
       <p>
-        Each of these reduces the customer's perceived risk. That is the mechanism: a professional quote does not win
-        because it looks nice, it wins because it makes saying yes feel safer. For a concrete example of what good
-        looks like, see <Link href="/blog/roofing-quote-example">this annotated roofing quote example</Link>.
+        Each of these reduces the customer&apos;s perceived risk. That is the mechanism: a professional quote does not
+        win because it looks nice - it makes the offer easier to understand, compare and act on. Official guidance
+        for homeowners points the same way: <a href="https://www.ashford.gov.uk/building-control/technical-guidance/choosing-a-builder/" target="_blank" rel="noopener noreferrer">local authority advice on choosing a builder</a> tells
+        customers to expect the scope, price, timing and payment arrangements in writing. A quote that provides
+        exactly that answers the questions a cautious customer is being told to ask. For a concrete example of what
+        good looks like, see <Link href="/blog/roofing-quote-example">this annotated roofing quote example</Link>.
       </p>
 
       <hr />
@@ -66,40 +70,48 @@ export default function Post() {
         <li>
           <strong>First impressions and trust transfer to documents.</strong> Studies of visual first impressions,
           including <a href="https://credibility.stanford.edu/guidelines/index.html" target="_blank" rel="noopener noreferrer">Stanford's web-credibility research</a>, find that
-          people judge trustworthiness largely on design and presentation before evaluating substance. A quote is a
-          designed artefact; customers read it the same way.
+          people judge trustworthiness largely on design and presentation before evaluating substance. That research
+          was conducted on websites, not quotes - but a quote is a designed artefact, and the same instinct to judge
+          credibility through presentation is a reasonable expectation here.
         </li>
         <li>
-          <strong>Clarity drives decisions.</strong> Decision research consistently shows that people choose options
-          they can understand and compare. An itemised, clearly structured quote lowers the effort of choosing you -
-          and behavioural research on the "fluency" of information shows easily processed information is trusted more.
+          <strong>Clarity and transparency are best practice in estimating.</strong> The UK Government's{' '}
+          <a href="https://www.gov.uk/government/publications/cost-estimating-guidance" target="_blank" rel="noopener noreferrer">Cost Estimating Guidance</a> for
+          infrastructure projects is built on clear scope, stated assumptions and transparent, evidenced estimates.
+          The principle scales down: an itemised, clearly structured quote lowers the effort of understanding and
+          comparing your offer.
         </li>
         <li>
-          <strong>Speed is a documented win factor.</strong> Lead-response research consistently finds that
-          the first business to respond is far more likely to win the enquiry - <a href="https://hbr.org/2011/03/the-short-life-of-online-sales-leads" target="_blank" rel="noopener noreferrer">one frequently cited study of online sales leads</a> found
-          the odds of qualifying a lead drop dramatically as response time increases. The same logic extends to the
-          quote itself: the first quote on the table frames the buying conversation.
+          <strong>Responding fast matters.</strong> Research on enquiry handling - including{' '}
+          <a href="https://hbr.org/2011/03/the-short-life-of-online-sales-leads" target="_blank" rel="noopener noreferrer">a frequently cited Harvard Business Review study of online sales leads</a> -
+          found that the odds of qualifying a lead fall sharply as response time increases. That evidence is about
+          responding to enquiries, not about quotes specifically - but the practical read for contractors is the
+          same: a same-day quote is likely to reach the customer while the job is still live in their mind.
         </li>
         <li>
-          <strong>Professional presentation supports price.</strong> Trades who present itemised, professional quotes
-          report anecdotally - and it matches the trust research - that customers query prices less and negotiate
-          less when the quote explains itself.
+          <strong>Clear pricing can reduce friction.</strong> A quote that explains itself - itemised, with scope and
+          terms stated plainly - gives the customer less to be uncertain about. Many contractors find customers
+          engage more constructively with a well-explained price than with a bare total, though this is experience,
+          not measured research.
         </li>
       </ul>
       <p>
-        <strong>Quotable summary:</strong> no credible study puts a single number on it, but the relevant evidence -
-        first-impression research, decision fluency, response-speed studies - points consistently in one direction:
-        a clear, professional, promptly delivered quote improves your position in competitive situations.
+        <strong>Quotable summary:</strong> no credible study puts a single number on it, but clear, well-structured
+        quotes can make it easier for customers to understand and compare an offer, while faster follow-up may help
+        a contractor stay competitive - and clear, transparent estimating is official best practice.
       </p>
 
       <hr />
 
       <h2>Speed-to-send: the quiet win factor</h2>
       <p>
-        Speed deserves its own section because it is the one factor contractors most consistently underestimate. The
-        quote you send the same evening competes against quotes arriving three days later. By the time those arrive,
-        the customer has often already shortlisted - or accepted. Response-speed research across service industries
-        finds the first responder wins a disproportionate share of enquiries, and quoting is no different.
+        Speed deserves its own section because it is one of the factors contractors most consistently underestimate.
+        The quote you send the same evening reaches the customer while the job is still fresh - before some
+        competitors have even opened their laptop. The best available evidence comes from enquiry handling rather
+        than quoting itself: <a href="https://hbr.org/2011/03/the-short-life-of-online-sales-leads" target="_blank" rel="noopener noreferrer">HBR's study of online sales leads</a> found
+        the odds of qualifying an enquiry drop sharply as response time increases. Quoting is not identical to lead
+        response, but a quote that arrives days after the site visit risks landing after the customer has already
+        shortlisted - or accepted.
       </p>
       <p>
         If your bottleneck is the admin after the site visit - typing up notes, formatting a document, calculating
@@ -135,8 +147,8 @@ export default function Post() {
         <li>Send a follow-up within a few days on every unanswered quote - <Link href="/blog/how-to-follow-up-on-a-quote">here is how to follow up without being a pest</Link>.</li>
       </ol>
       <p>
-        Most contractors who run this test report the same pattern: the quotes that look professional and arrive fast
-        get answered faster and questioned less. Explore more tools for the whole estimating workflow on the
+        Most contractors who run this test tell us the clearer, faster quotes get answered sooner - your own
+        numbers are the evidence that matters. Explore more tools for the whole estimating workflow on the
         <Link href="/free-calculators">free calculators hub</Link> - and when you are ready to connect measurement,
         quoting, material orders and invoicing in one workflow, <Link href="/construction-quoting-software">construction quoting software</Link> like QuoteCore+ does the
         rest - or <Link href="/free-trial">start a free trial</Link> and see for yourself.
@@ -148,9 +160,10 @@ export default function Post() {
 
       <h3>Do professional quotes really win more jobs?</h3>
       <p>
-        The evidence says professional quotes improve your win probability. There is no single verified percentage,
-        but first-impression research, decision-fluency studies and response-speed data all point the same way:
-        clearer, more credible, faster quotes win more often than scrappy ones, all else being equal.
+        There is no single verified percentage, and any specific number should be treated with suspicion. What the
+        available evidence supports is more modest: clear, well-structured quotes make an offer easier to understand
+        and compare, official guidance stresses clear written scope and pricing, and fast response to enquiries is
+        linked to materially better lead outcomes. Presentation helps your position - it is not a guarantee.
       </p>
 
       <h3>What makes a quote look professional?</h3>
@@ -162,9 +175,9 @@ export default function Post() {
 
       <h3>Does it matter how fast I send a quote?</h3>
       <p>
-        Yes. Response-speed research across service industries consistently finds the first responder wins a
-        disproportionate share of enquiries. The first quote on the table frames the conversation - sending the same
-        day as your site visit puts you in that position.
+        Probably, though the direct evidence is about enquiries rather than quotes. HBR research on online sales
+        leads found qualification odds fall sharply as response time increases. Sending your quote the same day as
+        the site visit keeps you in the conversation while it is still live.
       </p>
 
       <h3>Can I test this without paying for software?</h3>

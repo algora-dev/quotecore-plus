@@ -528,9 +528,9 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     date: '2026-08-23',
     lastModified: '2026-08-23',
     faqs: [
-      { question: 'Do professional quotes really win more jobs?', answer: 'The evidence says professional quotes improve your win probability. There is no single verified percentage, but first-impression research, decision-fluency studies and response-speed data all point the same way: clearer, more credible, faster quotes win more often than scrappy ones, all else being equal.' },
+      { question: 'Do professional quotes really win more jobs?', answer: 'There is no single verified percentage, and any specific number should be treated with suspicion. What the available evidence supports is more modest: clear, well-structured quotes make an offer easier to understand and compare, official guidance stresses clear written scope and pricing, and fast response to enquiries is linked to materially better lead outcomes. Presentation helps your position - it is not a guarantee.' },
       { question: 'What makes a quote look professional?', answer: 'Business details and branding, an itemised scope separating materials and labour, plain-language inclusions and exclusions, a validity period, payment terms, and a clean layout the customer can read and compare. Presentation matters because it reduces the perceived risk of saying yes.' },
-      { question: 'Does it matter how fast I send a quote?', answer: 'Yes. Response-speed research across service industries consistently finds the first responder wins a disproportionate share of enquiries. The first quote on the table frames the conversation, so sending the same day as your site visit puts you in that position.' },
+      { question: 'Does it matter how fast I send a quote?', answer: 'Probably, though the direct evidence is about enquiries rather than quotes. Harvard Business Review research on online sales leads found qualification odds fall sharply as response time increases. Sending your quote the same day as the site visit keeps you in the conversation while it is still live.' },
       { question: 'Can I test this without paying for software?', answer: 'Yes. The QuoteCore+ free quote generator builds itemised, professional quotes free with no signup. Send your next 10 quotes through it, same-day, and compare your win rate against your previous quotes.' },
     ],
   },
