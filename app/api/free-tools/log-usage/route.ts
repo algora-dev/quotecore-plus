@@ -19,7 +19,8 @@ export const runtime = 'nodejs';
 const TOOL_ALLOWLIST: Record<string, string> = {
   'roof-takeoff': 'Free Roof Takeoff',
   'takeoff-builder': 'Free Roofing Takeoff Builder',
-  'quote-builder': 'Free Quote Builder',
+  'measurement-to-quote-tool': 'Measurement-to-Quote Tool',
+  'quote-builder': 'Measurement-to-Quote Tool',
   'quote-gen': 'Quote Generator',
   'po-gen': 'Purchase Order Generator',
   'invoice-gen': 'Invoice Generator',
