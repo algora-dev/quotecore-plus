@@ -182,7 +182,7 @@ export default function FreeQuoteBuilder() {
   // ── Wizard shell (identical to Free Roof Takeoff) ──
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center px-4 py-16">
-      <div className="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
+      <div className="w-full max-w-5xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
         <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Free quote builder tool</p>
         <p className="mt-2 text-2xl font-semibold text-slate-900">Build a quote from your own measurements</p>
         <p className="mt-1 text-sm font-medium text-[#BD4A1A]">The QuoteCore Plus Free Quote Builder - free, no signup required.</p>

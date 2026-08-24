@@ -111,7 +111,7 @@ export default function BuilderStep({ components, areas, setAreas, measureMode, 
       {/* Areas */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold text-slate-900">Parent areas</h2>
-        <p className="mt-1 text-sm text-slate-500">Group your work by area - roof planes, rooms, slabs, whatever suits the job. Add components and entries to each.</p>
+        <p className="mt-1 text-sm text-slate-500">Create an area - which could be a roof area, floor area, wall area or anything else. You can have 1 area, or multiple areas. Components will be attached to the chosen area.</p>
         <div className="mt-3 flex gap-2">
           <input
             className={inputCls}
@@ -135,7 +135,7 @@ export default function BuilderStep({ components, areas, setAreas, measureMode, 
         const key = (sub: string) => `${area.id}::${sub}`;
         const unusedComponents = components.filter(c => !area.components.some(ac => ac.componentId === c.id));
         return (
-          <div key={area.id} className="mt-4 rounded-xl border border-slate-200 bg-white">
+          <div key={area.id} className="mt-4 rounded-xl border border-slate-200 bg-white transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]">
             {/* Area header - collapsible like FRTB sections */}
             <div className="flex items-center justify-between px-2 md:px-4 py-3">
               <button
@@ -313,17 +313,20 @@ function AddComponentPicker({ components, onPick }: { components: BuilderCompone
     <div className="relative">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-[#FF6B35] hover:bg-orange-50/40 text-sm text-gray-600 hover:text-gray-800 transition-all"
+        className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl bg-black text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
-        + Add component to this area {components.length > 0 ? `(${components.length} left)` : ''}
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+        Add component to this area
+        <svg className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 z-20 mt-1 w-56 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+          <div className="absolute left-0 right-0 z-20 mt-1 rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
             {components.map(c => (
-              <button key={c.id} onClick={() => { setOpen(false); onPick(c.id); }} className="block w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-orange-50/40 transition">
-                {c.name}
+              <button key={c.id} onClick={() => { setOpen(false); onPick(c.id); }} className="flex items-center justify-between w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-orange-50/40 hover:text-slate-900 transition">
+                <span className="truncate">{c.name}</span>
+                <svg className="w-4 h-4 text-[#FF6B35] flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
               </button>
             ))}
           </div>
