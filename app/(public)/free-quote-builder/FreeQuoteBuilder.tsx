@@ -7,6 +7,37 @@ import ComponentStep from './ComponentStep';
 import BuilderStep from './BuilderStep';
 import OutputView from './OutputView';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
+import { entryRawValue } from './calc';
+
+// Unit conversions into metric - the app stores sqm/m internally regardless
+// of the unit system the free tool (or the app account) was created in.
+const FT_TO_M = 0.3048;
+const FT2_TO_M2 = 0.09290304;
+const SQ_TO_M2 = 9.290304;
+const toM2 = (v: number, u: UnitSystem) => (u === 'imperial' ? v * FT2_TO_M2 : u === 'squares' ? v * SQ_TO_M2 : v);
+const toM = (v: number, u: UnitSystem) => (u === 'metric' ? v : v * FT_TO_M);
+
+/** Plan area of a parent area in m2: summed from its area-type component
+ * entries (raw plan values - the import route applies pitch itself). */
+function areaPlanSqmFor(areas: ParentArea[], components: BuilderComponent[], areaId: string, u: UnitSystem): number {
+  const area = areas.find(a => a.id === areaId);
+  if (!area) return 0;
+  const byId = new Map(components.map(c => [c.id, c]));
+  let total = 0;
+  for (const ac of area.components) {
+    const comp = byId.get(ac.componentId);
+    if (!comp || comp.measurementType !== 'area') continue;
+    for (const e of ac.entries) total += entryRawValue(e, comp);
+  }
+  return toM2(total, u);
+}
+
+/** Raw plan measurement for an entry in the app's internal unit (m / m2 / ea). */
+function entryValueForApp(entryValue: number, mt: 'lineal' | 'area' | 'quantity', u: UnitSystem): number {
+  if (mt === 'area') return toM2(entryValue, u);
+  if (mt === 'lineal') return toM(entryValue, u);
+  return entryValue;
+}
 
 const STORAGE_KEY = 'free-quote-builder-v2';
 
@@ -35,6 +66,7 @@ export default function FreeQuoteBuilder() {
    * otherwise import components + areas + entries as a draft quote. */
   async function saveToApp(componentsOnly: boolean) {
     if (components.length === 0) return;
+    const u = unitSystem ?? 'metric';
     setSaving(true);
     setSaveError(null);
     try {
@@ -56,19 +88,31 @@ export default function FreeQuoteBuilder() {
           pitchType: c.pitchType,
         })),
         ...(componentsOnly ? {} : {
-          roofAreas: areas.map(a => ({ id: a.id, name: a.name, area: 0, pitch: a.pitchDegrees })),
+          // Plan area per parent area (m2 - the app stores sqm internally):
+          // summed from the area-type component entries, unit-converted.
+          roofAreas: areas.map(a => ({
+            id: a.id,
+            name: a.name,
+            area: areaPlanSqmFor(areas, components, a.id, u),
+            pitch: a.pitchDegrees,
+          })),
           componentGroups: areas.flatMap(a => a.components
             .filter(ac => ac.entries.length > 0)
-            .map(ac => ({
-              componentId: ac.componentId,
-              name: components.find(c => c.id === ac.componentId)?.name ?? 'Component',
-              isSystem: false,
-              semantic: null,
-              count: ac.entries.length,
-              total: ac.entries.reduce((s, e) => s + (e.value || 0) * (e.quantity || 1), 0),
-              measurementType: components.find(c => c.id === ac.componentId)?.measurementType,
-              measurements: ac.entries.map(e => ({ value: (e.value || 0) * (e.quantity || 1), quoteRoofAreaId: a.id })),
-            }))),
+            .map(ac => {
+              const comp = components.find(c => c.id === ac.componentId);
+              const mt = comp?.measurementType ?? 'lineal';
+              const vals = ac.entries.map(e => entryValueForApp(entryRawValue(e, comp!), mt, u));
+              return {
+                componentId: ac.componentId,
+                name: comp?.name ?? 'Component',
+                isSystem: false,
+                semantic: null,
+                count: ac.entries.length,
+                total: vals.reduce((s, v) => s + v, 0),
+                measurementType: mt,
+                measurements: vals.map(v => ({ value: v, quoteRoofAreaId: a.id })),
+              };
+            })),
         }),
         savedAt: new Date().toISOString(),
       };
