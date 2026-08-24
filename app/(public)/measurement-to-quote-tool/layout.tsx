@@ -11,10 +11,10 @@ async function getHost() {
 export async function generateMetadata(): Promise<Metadata> {
   const host = await getHost();
   const origin = canonicalOrigin(host);
-  const path = '/free-quote-builder';
-  const title = 'Free Quote Builder';
+  const path = '/measurement-to-quote-tool';
+  const title = 'Free Measurement-to-Quote Tool';
   const description =
-    'Free quote builder with smart components. Import your price list from CSV or add components manually, enter your measurements, and get instant priced results. No signup required.';
+    'Already have your measurements? Turn areas, lengths and quantities into materials, labour and pricing using reusable components. Free to use, no signup required.';
   return {
     title,
     description,
@@ -24,18 +24,18 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function FreeQuoteBuilderLayout({ children }: { children: ReactNode }) {
+export default async function MeasurementToQuoteLayout({ children }: { children: ReactNode }) {
   const host = await getHost();
   const origin = canonicalOrigin(host);
-  const path = '/free-quote-builder';
+  const path = '/measurement-to-quote-tool';
   const isNz = isNzHost(host);
 
   const webAppLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'Free Quote Builder',
+    name: 'Free Measurement-to-Quote Tool',
     description:
-      'Free quote builder with smart components. Import your price list from CSV or add components manually, enter your measurements, and get instant priced results.',
+      'Turn areas, lengths and quantities into materials, labour and pricing using reusable components. Import a CSV price list or add components manually. Free, no signup required.',
     applicationCategory: 'CalculatorApplication',
     operatingSystem: 'Web',
     offers: { '@type': 'Offer', price: '0', priceCurrency: isNz ? 'NZD' : 'USD' },
@@ -47,7 +47,7 @@ export default async function FreeQuoteBuilderLayout({ children }: { children: R
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Free Tools', item: `${origin}/free-tools` },
-      { '@type': 'ListItem', position: 2, name: 'Quote Builder', item: `${origin}${path}` },
+      { '@type': 'ListItem', position: 2, name: 'Measurement-to-Quote Tool', item: `${origin}${path}` },
     ],
   };
 
@@ -57,10 +57,10 @@ export default async function FreeQuoteBuilderLayout({ children }: { children: R
     mainEntity: [
       {
         '@type': 'Question',
-        name: 'What is the free quote builder?',
+        name: 'What is a measurement-to-quote tool?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'A free tool that turns your own price list into smart components. Import a CSV catalog or add components manually, enter your measurements, and get an instantly priced report.',
+          text: 'A free tool for contractors who already have measurements from a site measure, plan takeoff or estimating workflow. You build reusable pricing components, enter your measured quantities, and the tool calculates materials, labour and a priced output you can print, download, convert into a customer quote, or save to QuoteCore+.',
         },
       },
       {
@@ -68,15 +68,31 @@ export default async function FreeQuoteBuilderLayout({ children }: { children: R
         name: 'Can I import my spreadsheet price list?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Yes. Upload a CSV export of your price list, map your columns to component fields such as name, material price, labour rate, waste and pack pricing, then select the rows to import.',
+          text: 'Yes. Upload a CSV export of your price list, map your columns to component fields such as name, material price, labour rate, waste and pack pricing, then select the rows to import. The free converter handles up to 7 components at a time.',
         },
       },
       {
         '@type': 'Question',
-        name: 'Does the quote builder apply roof pitch calculations?',
+        name: 'What measurement types can I use?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Area measurements such as square metres or square feet, lineal measurements such as metres or feet, and simple quantity counts. Components can include percentage waste or a fixed waste allowance per length.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Does the tool apply roof pitch calculations?',
         acceptedAnswer: {
           '@type': 'Answer',
           text: 'Yes. Choose plan measurements and pitch factors are applied automatically to components with pitch logic enabled, for rafter and hip or valley lengths and roof areas.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is the measurement-to-quote tool free?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. The core workflow is free to use with no signup required. You can create an account to save components and continue in the app, but the free tool works on its own.',
         },
       },
     ],

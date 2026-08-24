@@ -1068,6 +1068,13 @@ function QuoteGeneratorForm() {
           </div>
         </section>
       </div>
+      <section className="mx-auto max-w-5xl px-4 pb-14">
+        <p className="text-center text-sm text-slate-600">
+          Got measurements but no prices yet? Turn them into priced lines with the{' '}
+          <Link href="/measurement-to-quote-tool" className="font-medium text-[#BD4A1A] hover:underline">Measurement-to-Quote Tool</Link>{' '}
+          - then convert the result straight into a quote here.
+        </p>
+      </section>
       <PublicFooter />
 
       <style jsx global>{`

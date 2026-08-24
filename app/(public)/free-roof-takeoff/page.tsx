@@ -310,6 +310,11 @@ export default function FreeRoofTakeoffPage() {
             <Link href="/free-roofing-takeoff-calculator" className="text-[#BD4A1A] underline underline-offset-2">roof takeoff calculator</Link>.
           </li>
           <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <strong className="text-slate-900">I already have measurements and need pricing with my own rates.</strong> Use the{' '}
+            <Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">Measurement-to-Quote Tool</Link>{' '}
+            - reusable pricing components, free, no signup required.
+          </li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
             <strong className="text-slate-900">I want to go from measure to quote to job management.</strong> That&rsquo;s
             the full{' '}
             <Link href="/free-trial" className="text-[#BD4A1A] underline underline-offset-2">QuoteCore+ workflow</Link>.

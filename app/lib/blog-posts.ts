@@ -54,6 +54,42 @@ export interface BlogPostMeta {
 
 export const BLOG_POSTS: BlogPostMeta[] = [
   {
+    slug: 'price-a-job-from-measurements',
+    category: 'construction-quoting',
+    title: 'How to Price a Job From Your Measurements',
+    description:
+      'Already measured the job? Learn how to turn areas, lengths and quantities into materials, labour and pricing using reusable components instead of manually rebuilding calculations each time.',
+    date: '2026-08-24',
+    lastModified: '2026-08-24',
+    faqs: [
+      { question: 'How do I price a job from site measurements?', answer: 'Turn each measurement into a quantity (applying waste where relevant), multiply by your material and labour rates, and total the lines. Reusable pricing components save those rules once so every new measurement set flows through the same logic.' },
+      { question: 'How do I turn a takeoff into a quote?', answer: 'Take your takeoff quantities (areas, lengths, counts), price them through reusable components, then convert the priced output into a customer-facing quote in one click - no retyping.' },
+      { question: 'Can I calculate materials and labour from measurements?', answer: 'Yes. Each component carries both a material rate and a labour rate plus waste rules, so quantities, materials, labour and totals come out together.' },
+      { question: 'Can I use my own material and labour rates?', answer: 'Yes. Every rate is yours - nothing is locked to a supplier price book.' },
+      { question: 'Can I import prices from Excel or CSV?', answer: 'Yes. Upload a CSV export of your price list, map your columns, and turn rows into reusable components - up to 7 at a time in the free tool.' },
+      { question: 'Is the measurement-to-quote tool free?', answer: 'Yes, the core workflow is free with no signup required.' },
+      { question: 'Do I need to create an account?', answer: 'Not for the free workflow. An account is only needed to save components and continue in the QuoteCore+ app.' },
+      { question: 'Can I convert the result into a customer quote?', answer: 'Yes - one click sends the priced lines into the Free Quote Generator without retyping anything.' },
+      { question: 'Can I reuse the pricing rules on future jobs?', answer: 'That is the core idea: save the pricing logic once, then reuse it every time you measure a new job.' },
+      { question: 'Which trades can use this workflow?', answer: 'Roofing, cladding, flooring, fencing, decking, landscaping, concrete, carpentry and any measured work where quantities drive pricing.' },
+    ],
+  },
+  {
+    slug: 'construction-estimating-spreadsheet-alternative',
+    category: 'construction-quoting',
+    title: 'Is There a Better Alternative to a Construction Estimating Spreadsheet?',
+    description:
+      'Spreadsheets can price jobs well, but they become slow when formulas, copying and quoting are spread across multiple files. See a free reusable alternative built for measured jobs.',
+    date: '2026-08-24',
+    lastModified: '2026-08-24',
+    faqs: [
+      { question: 'Is a construction estimating spreadsheet still worth using?', answer: 'Yes, if your estimating volume is low, one person understands the file, pricing rarely changes and there is little copying between systems. The reason to change is workflow cost, not licence cost.' },
+      { question: 'What is the alternative to an estimating spreadsheet?', answer: 'A reusable pricing component system: save the pricing logic (materials, waste, labour, rates) once as components, then enter each job\u2019s measurements and get a priced output you can convert directly into a quote.' },
+      { question: 'Can I import my spreadsheet pricing into QuoteCore+?', answer: 'Yes. Export your price list as CSV, upload it, map your columns, and turn rows into reusable components. You keep your pricing work - you move it into a reusable workflow.' },
+      { question: 'Is the Measurement-to-Quote Tool free?', answer: 'Yes - free to use with no signup required for the core workflow.' },
+    ],
+  },
+  {
     slug: 'quotecore-plus-reviews',
     category: 'comparisons',
     title: 'QuoteCore+ Reviews: Is It Legit and Who Is It For?',
