@@ -108,6 +108,17 @@ export async function GET(req: NextRequest) {
   try {
     const { trade, componentCollectionId } = await resolveQuoteCreationDefaults(companyId);
 
+    // The quote must display in the COMPANY's default measurement system
+    // (what the user picked at signup) - never a hardcoded 'metric'.
+    // createQuoteAtomic defaults to metric when this is omitted (2026-08-24 bug).
+    const { data: company } = await admin
+      .from('companies')
+      .select('default_measurement_system')
+      .eq('id', companyId)
+      .maybeSingle();
+    const measurementSystem =
+      (company?.default_measurement_system as 'metric' | 'imperial_ft' | 'imperial_rs' | null) ?? 'metric';
+
     // User-built components (step 2 "build your own"): create real
     // component_library rows so the user's components persist into their
     // account alongside the takeoff draft. Field mapping mirrors
@@ -157,6 +168,7 @@ export async function GET(req: NextRequest) {
       entryMode: 'digital',
       trade,
       componentCollectionId,
+      measurementSystem,
       currency: 'NZD',
       materialMarginPercent: 0,
       materialMarginEnabled: false,
