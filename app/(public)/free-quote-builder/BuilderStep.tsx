@@ -166,10 +166,8 @@ export default function BuilderStep({ components, areas, setAreas, measureMode, 
                 <button onClick={() => removeArea(area.id)} className="text-slate-300 hover:text-red-500 transition p-1" aria-label={`Remove ${area.name}`}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
-                <button onClick={() => setExpandedKey(expandedKey === key('head') ? null : key('head'))}>
-                  <svg className={`w-4 h-4 text-slate-400 transition-transform ${expandedKey === key('head') ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
+                <button onClick={() => setExpandedKey(expandedKey === key('head') ? null : key('head'))} title="Add component" aria-label="Add component to this area" className="group/add w-6 h-6 rounded-full flex items-center justify-center text-slate-300 hover:text-[#FF6B35] hover:bg-orange-50 transition">
+                  <svg className={`w-4 h-4 transition-transform ${expandedKey === key('head') ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                 </button>
               </div>
             </div>
@@ -202,10 +200,8 @@ export default function BuilderStep({ components, areas, setAreas, measureMode, 
                           <button onClick={() => removeAreaComponent(area.id, ac.id)} className="text-slate-300 hover:text-red-500 transition p-1" aria-label={`Remove ${comp.name}`}>
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
-                          <button onClick={() => setExpandedKey(isExpanded ? null : cKey)}>
-                            <svg className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
+                          <button onClick={() => setExpandedKey(isExpanded ? null : cKey)} title="Add entry" aria-label={`Add entry to ${comp.name}`} className="w-6 h-6 rounded-full flex items-center justify-center text-slate-300 hover:text-[#FF6B35] hover:bg-orange-50 transition">
+                            <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-45' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                           </button>
                         </div>
                       </div>

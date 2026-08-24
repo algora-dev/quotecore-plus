@@ -9,14 +9,6 @@ import OutputView from './OutputView';
 
 const STORAGE_KEY = 'free-quote-builder-v2';
 
-interface PersistedState {
-  step: number;
-  components: BuilderComponent[];
-  areas: ParentArea[];
-  unitSystem: UnitSystem;
-  measureMode: MeasureMode;
-}
-
 /** Free Quote Builder - manual version of the Free Roof Takeoff tool.
  * Same wizard shell (units -> components -> gate), then the Free Roofing
  * Takeoff Builder measurement UX (areas + component sections + entries). */
@@ -28,30 +20,12 @@ export default function FreeQuoteBuilder() {
   const [measureMode, setMeasureMode] = useState<MeasureMode | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
 
+  // No sessionStorage restore: on refresh the user starts over. This is
+  // deliberate friction - the way to keep your components is to sign up.
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const s = JSON.parse(raw) as PersistedState;
-        if (Array.isArray(s.components)) setComponents(s.components);
-        if (Array.isArray(s.areas)) setAreas(s.areas);
-        if (s.unitSystem) setUnitSystem(s.unitSystem);
-        if (s.measureMode) setMeasureMode(s.measureMode);
-        if (s.step === 2 || s.step === 3 || s.step === 4) setStep(s.step);
-      }
-    } catch { /* ignore */ }
-    setHydrated(true);
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      const s: PersistedState = { step, components, areas, unitSystem: unitSystem ?? 'metric', measureMode: measureMode ?? 'actual' };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-    } catch { /* quota - ignore */ }
-  }, [hydrated, step, components, areas, unitSystem, measureMode]);
 
   const currency = '$';
 
@@ -108,7 +82,9 @@ export default function FreeQuoteBuilder() {
       }
       const { id } = await res.json() as { id: string };
       const dest = componentsOnly ? '&dest=components' : '';
-      window.location.href = `/api/app/import-takeoff-draft?draft=${id}${dest}`;
+      // Same hand-off as the Free Roof Takeoff tool: draft id goes to the
+      // signup flow and the app restores it after signup.
+      window.location.href = `/signup?ref=free-quote-builder&draft=${id}${dest}`;
     } catch {
       setSaveError('Could not save right now. Please try again.');
     } finally {
@@ -256,7 +232,7 @@ export default function FreeQuoteBuilder() {
             </div>
             {([
               { value: 'actual' as const, title: 'I have actual measurements', desc: 'You already have final dimensions. Just type them in - no pitch calculation needed.' },
-              { value: 'plan' as const, title: 'I&apos;m measuring from a plan', desc: 'You have a top-down plan. Enter plan dimensions and the roof pitch - we&apos;ll calculate the real sloped lengths and areas.' },
+              { value: 'plan' as const, title: 'I\u2019m measuring from a plan', desc: 'You have a top-down plan. Enter plan dimensions and the roof pitch - we\u2019ll calculate the real sloped lengths and areas.' },
             ]).map(o => (
               <label
                 key={o.value}

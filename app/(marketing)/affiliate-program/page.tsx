@@ -356,7 +356,7 @@ export default function DistributorsPage() {
             <div className="text-center">
               <h2 className="text-3xl font-bold tracking-tight text-zinc-950">What 30% could look like</h2>
               <p className="mt-4 leading-7 text-zinc-600">
-                Illustrative examples using the standard 30% revenue share. Plans start free; paid plans begin at $19/mo.
+                Illustrative examples using the standard 30% revenue share.
               </p>
             </div>
             <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
@@ -364,21 +364,19 @@ export default function DistributorsPage() {
                 <thead>
                   <tr className="border-b border-zinc-200 bg-zinc-50">
                     <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Referred paying customers</th>
-                    <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Avg eligible spend / month</th>
                     <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">Your monthly commission (30%)</th>
                     <th scope="col" className="px-6 py-4 font-semibold text-zinc-950">12-month total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    { c: 10, s: 29, m: 87, y: 1044 },
-                    { c: 25, s: 29, m: 218, y: 2601 },
-                    { c: 50, s: 39, m: 585, y: 7020 },
-                    { c: 100, s: 39, m: 1170, y: 14040 },
+                    { c: 10, m: 87, y: 1044 },
+                    { c: 25, m: 218, y: 2601 },
+                    { c: 50, m: 435, y: 5220 },
+                    { c: 100, m: 870, y: 10440 },
                   ].map((r) => (
                     <tr key={r.c} className="border-b border-zinc-100 last:border-0">
                       <td className="px-6 py-4 font-medium text-zinc-900">{r.c}</td>
-                      <td className="px-6 py-4 text-zinc-600">${r.s}</td>
                       <td className="px-6 py-4 font-semibold text-zinc-950">${r.m.toLocaleString()}</td>
                       <td className="px-6 py-4 text-zinc-600">${r.y.toLocaleString()}</td>
                     </tr>
@@ -387,8 +385,18 @@ export default function DistributorsPage() {
               </table>
             </div>
             <p className="mt-4 text-center text-xs leading-5 text-zinc-500">
+              Examples use an illustrative $29 average monthly customer spend. QuoteCore paid plans start at $19/month,
+              with higher tiers available, so actual customer spend and commissions will vary.
+            </p>
+            <p className="mt-2 text-center text-xs leading-5 text-zinc-500">
               Illustrative example only. Actual earnings depend on customer plan, spend, retention, refunds, eligibility
               and agreed partner terms. Earnings are not guaranteed.
+            </p>
+            <p className="mt-6 text-center">
+              <a href="#apply" className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline">
+                Think you could refer 50+ paying customers? Apply and tell us how.
+                <ArrowIcon />
+              </a>
             </p>
           </div>
         </section>
