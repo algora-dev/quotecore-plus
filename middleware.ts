@@ -82,6 +82,7 @@ const PUBLIC_PATHS = [
   '/tutorials',
   '/features',     // Feature pages (marketing)
   '/takeoff-demo', // Interactive public takeoff demo (client-only, no auth)
+  '/measurement-to-quote-tool', // Free measurement-to-pricing tool (renamed from /free-quote-builder)
   '/free-trial',
   '/construction-quoting-software',
   '/roofing-quoting-software',

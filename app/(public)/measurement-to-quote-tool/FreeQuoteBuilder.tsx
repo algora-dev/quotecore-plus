@@ -129,7 +129,7 @@ export default function FreeQuoteBuilder() {
       const dest = componentsOnly ? '&dest=components' : '';
       // Same hand-off as the Free Roof Takeoff tool: draft id goes to the
       // signup flow and the app restores it after signup.
-      window.location.href = `/signup?ref=free-quote-builder&draft=${id}${dest}`;
+      window.location.href = `/signup?ref=measurement-to-quote-tool&draft=${id}${dest}`;
     } catch {
       setSaveError('Could not save right now. Please try again.');
     } finally {
@@ -204,9 +204,9 @@ export default function FreeQuoteBuilder() {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-5xl bg-white rounded-2xl border border-slate-200 shadow-lg p-8 md:p-10">
-        <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Free quote builder tool</p>
-        <p className="mt-2 text-2xl font-semibold text-slate-900">Build a quote from your own measurements</p>
-        <p className="mt-1 text-sm font-medium text-[#BD4A1A]">The QuoteCore Plus Free Quote Builder - free, no signup required.</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-[#BD4A1A]">Free measurement-to-quote tool</p>
+        <p className="mt-2 text-2xl font-semibold text-slate-900">Turn your measurements into pricing</p>
+        <p className="mt-1 text-sm font-medium text-[#BD4A1A]">Save the pricing logic once, reuse it every time you measure a new job. Free, no signup required.</p>
         <div className="mt-4 flex items-center justify-between">
           {stepIndicator}
           {step > 1 && (

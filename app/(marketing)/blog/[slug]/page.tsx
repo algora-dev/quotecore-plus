@@ -51,6 +51,8 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'how-to-measure-a-roof-online': () => import('./content/how-to-measure-a-roof-online'),
   'margin-vs-markup': () => import('./content/margin-vs-markup'),
   'can-chatgpt-create-a-quote': () => import('./content/can-chatgpt-create-a-quote'),
+  'price-a-job-from-measurements': () => import('./content/price-a-job-from-measurements'),
+  'construction-estimating-spreadsheet-alternative': () => import('./content/construction-estimating-spreadsheet-alternative'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

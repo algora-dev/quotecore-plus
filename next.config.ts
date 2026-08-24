@@ -106,6 +106,8 @@ const nextConfig: NextConfig = {
     return [
       // Old cookie page -> canonical /cookie-policy
       { source: '/cookies', destination: '/cookie-policy', permanent: true },
+      // Old free tool name -> canonical /measurement-to-quote-tool
+      { source: '/free-quote-builder', destination: '/measurement-to-quote-tool', permanent: true },
       // Partner program aliases -> canonical /affiliate-program
       { source: '/referrals', destination: '/affiliate-program', permanent: true },
       { source: '/partners', destination: '/affiliate-program', permanent: true },

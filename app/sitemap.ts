@@ -92,7 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Roof takeoff builder (standalone tool, not part of slug system)
     { url: `${SITE_URL}/free-roofing-takeoff-builder`, changeFrequency: 'monthly', priority: 0.9 },
     // Free quote builder (smart components + manual measurements)
-    { url: `${SITE_URL}/free-quote-builder`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/measurement-to-quote-tool`, changeFrequency: 'monthly', priority: 0.9 },
     // Supplier-specific takeoff builder pages are noindex — excluded from sitemap
     // Roof pricing calculator (component-based pricing page)
     { url: `${SITE_URL}/free-roof-pricing-calculator`, changeFrequency: 'monthly', priority: 0.9 },

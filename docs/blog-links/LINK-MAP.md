@@ -1,6 +1,6 @@
 # Blog Internal Link Map
 
-Generated: 2026-08-23 by `scripts/generate-blog-link-map.mjs` — re-run after any blog content change and commit together.
+Generated: 2026-08-24 by `scripts/generate-blog-link-map.mjs` — re-run after any blog content change and commit together.
 
 Per-article snapshots live next to this file. This is the canonical record of what links to what (blog body links only).
 
@@ -20,6 +20,7 @@ Per-article snapshots live next to this file. This is the canonical record of wh
 | can-chatgpt-create-a-quote | 10 | 2 | 0 | 2 |
 | chrome-roof-pitch-calculator-extension | 5 | 1 | 1 | 0 |
 | construction-cost-estimator-guide | 21 | 2 | 1 | 1 |
+| construction-estimating-spreadsheet-alternative | 7 | 2 | 0 | 1 |
 | construction-quote-speed-checklist | 14 | 6 | 1 | 7 |
 | do-professional-quotes-win-more-jobs | 13 | 4 | 1 | 5 |
 | how-much-roofing-material | 16 | 5 | 1 | 4 |
@@ -38,6 +39,7 @@ Per-article snapshots live next to this file. This is the canonical record of wh
 | how-to-start-a-roofing-business-uk | 8 | 3 | 0 | 1 |
 | manual-vs-digital-roof-takeoff | 7 | 1 | 1 | 1 |
 | margin-vs-markup | 11 | 2 | 1 | 2 |
+| price-a-job-from-measurements | 8 | 1 | 0 | 2 |
 | quotecore-plus-reviews | 5 | 3 | 0 | 2 |
 | quotecore-plus-vs-quotesmith | 6 | 4 | 1 | 2 |
 | reusable-quoting-templates-smart-components | 7 | 2 | 2 | 1 |

@@ -14,7 +14,7 @@ const toolCode = (() => {
   const p = window.location.pathname;
   if (p.startsWith('/free-roofing-takeoff-builder')) return 'takeoff-builder';
   if (p.startsWith('/free-roof-takeoff')) return 'roof-takeoff';
-  if (p.startsWith('/free-quote-builder')) return 'quote-builder';
+  if (p.startsWith('/measurement-to-quote-tool')) return 'measurement-to-quote-tool';
   if (p.startsWith('/free-quote-generator')) return 'quote-gen';
   if (p.startsWith('/free-purchase-order-generator')) return 'po-gen';
   if (p.startsWith('/free-invoice-generator')) return 'invoice-gen';
