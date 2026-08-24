@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BlogHeader from '@/components/BlogHeader';
 import FreeQuoteBuilder from './FreeQuoteBuilder';
 
 const TOOL_HREF = '/measurement-to-quote-tool';
@@ -24,6 +25,7 @@ export default function Page() {
           <li>Get a priced report, then print or download it, convert it into a free customer quote, or save it to QuoteCore+</li>
         </ul>
       </section>
+      <BlogHeader />
       <FreeQuoteBuilder />
 
       {/* What this tool does */}
