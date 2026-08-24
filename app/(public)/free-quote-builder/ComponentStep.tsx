@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { BuilderComponent, MeasurementType, UnitSystem } from './types';
 import { makeId, lenLabel, areaLabel } from './types';
+import { ComponentEditorModal } from './ComponentEditorModal';
 import {
   guessMapping, parseCsvText, componentsFromRows,
   type ColumnMapping, type ParsedCsv,
 } from './csv-import';
-import { MAPPABLE_FIELDS } from './csv-import';
 
 const MAX_COMPONENTS = 7;
 
@@ -18,171 +18,122 @@ interface ComponentStepProps {
   onBack: () => void;
   onContinue: () => void;
   onSaveToApp: () => void;
+  saving: boolean;
+  saveError: string | null;
 }
 
-export default function ComponentStep({ components, setComponents, unitSystem, onBack, onContinue, onSaveToApp }: ComponentStepProps) {
-  const [tab, setTab] = useState<'manual' | 'csv'>('manual');
-  const [name, setName] = useState('');
-  const [sku, setSku] = useState('');
-  const [measurementType, setMeasurementType] = useState<MeasurementType>('lineal');
-  const [materialRate, setMaterialRate] = useState('');
-  const [labourRate, setLabourRate] = useState('');
-  const [pitchType, setPitchType] = useState<'none' | 'rafter' | 'valley_hip'>('none');
+/** Step 2 of the wizard - same UX as the Free Roof Takeoff component step:
+ * one decision per screen, component cards with Edit / Remove, the app-style
+ * Create/Edit component modal, plus a CSV import option (partial rows allowed -
+ * they get safe defaults and can be edited after import). */
+export default function ComponentStep({ components, setComponents, unitSystem, onBack, onContinue, onSaveToApp, saving, saveError }: ComponentStepProps) {
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const full = components.length >= MAX_COMPONENTS;
   const len = lenLabel(unitSystem);
   const areaU = areaLabel(unitSystem);
 
-  function addManual() {
+  function openBuilder() {
     setError(null);
-    if (!name.trim()) { setError('Give your component a name.'); return; }
-    if (full) { setError(`Free tool limit: ${MAX_COMPONENTS} components.`); return; }
-    setComponents([...components, {
-      id: makeId('comp'),
-      name: name.trim().slice(0, 120),
-      sku: sku.trim() || undefined,
-      measurementType,
-      materialRate: parseFloat(materialRate) || 0,
-      labourRate: parseFloat(labourRate) || 0,
-      pricingStrategy: 'per_unit',
-      packPrice: null,
-      packSize: null,
-      wasteType: 'none',
-      wasteValue: 0,
-      pitchEnabled: pitchType !== 'none' && measurementType !== 'quantity',
-      pitchType: pitchType === 'none' ? 'none' : pitchType,
-      source: 'manual',
-    }]);
-    setName(''); setSku(''); setMaterialRate(''); setLabourRate('');
+    setEditingId(null);
+    setBuilderOpen(true);
+  }
+  function openEditBuilder(id: string) {
+    setError(null);
+    setEditingId(id);
+    setBuilderOpen(true);
+  }
+  function handleBuilderSave(c: BuilderComponent, isNew: boolean) {
+    setComponents(isNew ? [...components, c] : components.map(x => (x.id === c.id ? c : x)));
+    setBuilderOpen(false);
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-base md:text-lg font-bold text-slate-900">Step 2: Build your components</h2>
-        <p className="mt-0.5 text-xs md:text-sm text-slate-400">
-          Add up to {MAX_COMPONENTS} smart components with pricing, labour and pitch logic - one at a time, or import from a CSV catalog.
-        </p>
-        <div className="mt-3 flex gap-2">
-          {([['manual', 'Add manually'], ['csv', 'Import CSV catalog']] as const).map(([k, label]) => (
-            <button key={k} onClick={() => setTab(k)}
-              className={`rounded-full border px-4 py-2 text-xs font-medium transition ${tab === k ? 'bg-slate-900 text-white border-slate-900' : 'border-slate-300 text-slate-600 hover:border-slate-400'}`}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
+    <div className="mt-4 space-y-4">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>}
-
-      {tab === 'manual' && (
-        <div className="rounded-xl border-2 border-[#FF6B35] bg-orange-50/30 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-700">New Component</span>
-          </div>
-          <div>
-            <label htmlFor="comp-name" className="text-xs font-medium text-slate-600">Name</label>
-            <input id="comp-name" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Apron Flashing, Colorsteel Roofing"
-              className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
-          </div>
-          <div>
-            <label htmlFor="comp-sku" className="text-xs font-medium text-slate-600">SKU / Product code (optional)</label>
-            <input id="comp-sku" type="text" value={sku} onChange={e => setSku(e.target.value)} placeholder="e.g. CF-0.42-G300"
-              className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <label className="text-xs font-medium text-slate-600">Measurement</label>
-              <div className="mt-0.5 flex rounded-lg border border-slate-300 overflow-hidden">
-                <button onClick={() => setMeasurementType('lineal')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'lineal' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Linear</button>
-                <button onClick={() => setMeasurementType('area')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'area' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Area</button>
-                <button onClick={() => setMeasurementType('quantity')} className={`flex-1 px-2 py-1.5 text-xs font-medium transition ${measurementType === 'quantity' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Fixed</button>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="comp-pitch" className="text-xs font-medium text-slate-600">Pitch calc</label>
-              <select id="comp-pitch" value={measurementType === 'quantity' ? 'none' : pitchType} onChange={e => setPitchType(e.target.value as 'none' | 'rafter' | 'valley_hip')} disabled={measurementType === 'quantity'}
-                className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-xs text-slate-700 focus:border-orange-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400">
-                <option value="none">None</option>
-                <option value="rafter">Rafter pitch</option>
-                <option value="valley_hip">Hip/Valley pitch</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label htmlFor="comp-mat" className="text-xs font-medium text-slate-600">Material $/unit</label>
-              <input id="comp-mat" type="number" min="0" step="0.01" value={materialRate} onChange={e => setMaterialRate(e.target.value)} placeholder="0.00"
-                className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-            </div>
-            <div>
-              <label htmlFor="comp-lab" className="text-xs font-medium text-slate-600">Labour $/unit</label>
-              <input id="comp-lab" type="number" min="0" step="0.01" value={labourRate} onChange={e => setLabourRate(e.target.value)} placeholder="0.00"
-                className="mt-0.5 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:border-orange-500 focus:outline-none" />
-            </div>
-          </div>
-          {measurementType === 'quantity' && <p className="text-xs text-slate-400">Fixed components are priced per piece. Enter the quantity when adding entries.</p>}
-          <button onClick={addManual} disabled={!name.trim() || full}
-            className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${name.trim() && !full ? 'bg-[#FF6B35] text-white hover:bg-[#A03E15]' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
-            Create Component ({components.length}/{MAX_COMPONENTS})
-          </button>
-        </div>
-      )}
-
-      {tab === 'csv' && (
-        <CsvImport
-          components={components}
-          setComponents={setComponents}
-          maxComponents={MAX_COMPONENTS}
-          onError={setError}
-        />
-      )}
 
       {components.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-900">Your components ({components.length}/{MAX_COMPONENTS})</h3>
           {components.map(c => (
-            <div key={c.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-orange-50/40 hover:border-orange-200">
+            <div key={c.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 hover:border-orange-200 hover:bg-orange-50/40">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-900 truncate">{c.name}</span>
-                  {c.source === 'csv' && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">CSV</span>}
-                </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[11px] text-slate-400">
-                  <span>{c.measurementType === 'lineal' ? `Linear (${len})` : c.measurementType === 'area' ? `Area (${areaU})` : 'Fixed (pcs)'}</span>
-                  {c.sku && <span>{c.sku}</span>}
-                  {c.materialRate > 0 && <span>${c.materialRate.toFixed(2)} mat</span>}
-                  {c.labourRate > 0 && <span>${c.labourRate.toFixed(2)} labour</span>}
-                  {c.pitchEnabled && <span>pitch: {c.pitchType === 'rafter' ? 'rafter' : 'hip/valley'}</span>}
-                </div>
+                <p className="text-sm font-medium text-slate-900 truncate">{c.name}</p>
+                <p className="text-xs text-slate-500">
+                  {c.measurementType === 'lineal' ? `Linear (${len})` : c.measurementType === 'area' ? `Area (${areaU})` : 'Quantity (ea)'}
+                  {c.sku ? ` - ${c.sku}` : ''}
+                  {c.materialRate > 0 || c.labourRate > 0 ? ` - $${c.materialRate} mat / $${c.labourRate} labour` : ''}
+                  {c.wasteType !== 'none' ? ` - waste ${c.wasteType === 'percent' ? c.wasteValue + '%' : c.wasteValue}` : ''}
+                  {c.pitchEnabled ? ' - pitch calc' : ''}
+                  {c.source === 'csv' ? ' - CSV' : ''}
+                </p>
               </div>
-              <button onClick={() => setComponents(components.filter(x => x.id !== c.id))} className="p-1 text-slate-300 hover:text-red-500 transition" aria-label={`Remove ${c.name}`}>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                <button onClick={() => openEditBuilder(c.id)} className="text-xs text-slate-500 hover:text-slate-800">Edit</button>
+                <button onClick={() => setComponents(components.filter(x => x.id !== c.id))} className="text-xs text-slate-400 hover:text-[#BD4A1A]">Remove</button>
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {components.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-          <button onClick={onBack} className="rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-slate-400">Back</button>
-          <div className="flex flex-wrap items-center gap-2">
-            <button onClick={onSaveToApp} className="rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-slate-400">
-              Save components to my account
-            </button>
-            <button onClick={onContinue} className="rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#A03E15]">
-              Continue to quote builder
-            </button>
-          </div>
+      {!full ? (
+        <div className="space-y-2">
+          <button
+            onClick={openBuilder}
+            className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-[#FF6B35] hover:bg-orange-50/40 text-sm text-gray-600 hover:text-gray-800 transition-all"
+          >
+            + Create component {components.length > 0 ? `(${components.length}/${MAX_COMPONENTS})` : ''}
+          </button>
+          <CsvImport
+            components={components}
+            setComponents={setComponents}
+            maxComponents={MAX_COMPONENTS}
+            onError={setError}
+          />
         </div>
+      ) : (
+        <p className="text-xs text-slate-400 text-center">
+          {MAX_COMPONENTS} components max - a free account saves unlimited components permanently.
+        </p>
+      )}
+
+      <div className="pt-2 border-t border-slate-100 space-y-2">
+        <button
+          onClick={onContinue}
+          disabled={components.length === 0}
+          className="w-full py-2.5 text-sm font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
+        >
+          Continue to quote builder
+        </button>
+        {components.length === 0 && <p className="text-xs text-[#BD4A1A] text-center">Build at least one component to continue.</p>}
+        <button
+          onClick={onSaveToApp}
+          disabled={components.length === 0 || saving}
+          className="w-full py-2.5 text-sm font-medium text-slate-700 rounded-full border border-slate-300 hover:border-slate-400 disabled:opacity-40"
+        >
+          {saving ? 'Saving to your account...' : 'Save components to my account instead'}
+        </button>
+        {saveError && <p className="text-xs text-[#BD4A1A] text-center">{saveError}</p>}
+        <button onClick={onBack} className="w-full py-1 text-xs text-slate-400 hover:text-slate-600">Back</button>
+      </div>
+
+      {builderOpen && (
+        <ComponentEditorModal
+          key={editingId ?? 'new'}
+          initial={editingId ? components.find(c => c.id === editingId) ?? null : null}
+          unitSystem={unitSystem}
+          onSave={handleBuilderSave}
+          onClose={() => setBuilderOpen(false)}
+        />
       )}
     </div>
   );
 }
 
-// ─── CSV import: same map-columns → select-rows flow as the in-app Catalogue Converter ───
+// ─── CSV import: map-columns -> select-rows, creates PARTIAL components that
+// the user then completes via Edit (same modal as manual components) ───
 
 type CsvStep = 'upload' | 'map-columns' | 'select-rows';
 
@@ -193,6 +144,7 @@ function CsvImport({ components, setComponents, maxComponents, onError }: {
   onError: (msg: string | null) => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
   const [step, setCsvStep] = useState<CsvStep>('upload');
   const [csv, setCsv] = useState<ParsedCsv | null>(null);
   const [mapping, setMapping] = useState<ColumnMapping>({});
@@ -206,6 +158,7 @@ function CsvImport({ components, setComponents, maxComponents, onError }: {
     setMapping({});
     setSelected(new Set());
     setSearchFilter('');
+    setOpen(false);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -242,158 +195,115 @@ function CsvImport({ components, setComponents, maxComponents, onError }: {
     const add = created.slice(0, room);
     setComponents([...components, ...add]);
     if (created.length > add.length) onError(`Imported ${add.length} of ${created.length} (limit ${maxComponents}).`);
+    else onError(null);
     reset();
+  }
+
+  if (!open && step === 'upload') {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full px-3 py-2.5 rounded-xl border border-dashed border-gray-300 hover:border-[#FF6B35] hover:bg-orange-50/40 text-sm text-gray-600 hover:text-gray-800 transition-all"
+      >
+        Import from CSV price list
+      </button>
+    );
   }
 
   if (step === 'upload') {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center">
-        <p className="text-sm text-slate-600">Upload a CSV export of your price list or catalog.</p>
-        <p className="mt-1 text-xs text-slate-400">You will map your columns to component fields, then select the rows to convert - just like the QuoteCore+ catalog converter.</p>
-        <label className="mt-4 inline-flex cursor-pointer items-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+        <p className="text-sm font-medium text-slate-700">Upload your CSV price list</p>
+        <p className="mt-1 text-xs text-slate-400">
+          Map columns, pick rows - imported components can be edited (add rates, waste, pitch) before you continue.
+        </p>
+        <label className="mt-4 inline-block cursor-pointer rounded-full border border-slate-300 px-5 py-2 text-sm text-slate-700 hover:border-slate-400 transition">
           Choose CSV file
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} />
         </label>
+        <button onClick={reset} className="mt-3 block mx-auto text-xs text-slate-400 hover:text-slate-600">Cancel</button>
       </div>
     );
   }
 
-  if (!csv) return null;
-
-  // Step: map columns (field-first, exactly like the in-app converter)
   if (step === 'map-columns') {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900">Map your catalog columns</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">Only Component Name is required. We auto-detected matches where possible.</p>
-          </div>
-          <button onClick={reset} className="text-xs text-slate-400 hover:text-slate-600">Start over</button>
-        </div>
-        {/* Data preview: first 3 rows so users can map columns even without header titles */}
-        <div className="rounded-lg border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50 border-b border-slate-200 px-4 py-2">
-            <p className="text-xs font-medium text-slate-600">Preview - first 3 rows of your file</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead className="bg-white">
-                <tr>
-                  {csv.headers.map((h, i) => (
-                    <th key={i} className="px-3 py-2 text-left font-medium text-slate-500 whitespace-nowrap border-b border-slate-100">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {csv.rows.slice(0, 3).map((row, ri) => (
-                  <tr key={ri} className="bg-white">
-                    {row.map((c, ci) => (
-                      <td key={ci} className="px-3 py-1.5 text-slate-600 whitespace-nowrap max-w-48 truncate">{c}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="rounded-lg border border-slate-200 overflow-hidden divide-y divide-slate-100">
-          {MAPPABLE_FIELDS.map(field => {
-            const selectedHeader = mapping[field.key] != null ? csv.headers[mapping[field.key]!] : '';
-            const isNameUnset = field.required && !selectedHeader;
-            return (
-              <div key={field.key} className="flex items-center justify-between px-4 py-2.5 gap-3 bg-slate-50/50 border-b border-slate-200 last:border-b-0">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-xs font-medium text-slate-700">{field.label}</span>
-                  {field.required && <span className="text-red-500 text-xs">*</span>}
-                  {isNameUnset && <span className="text-[10px] text-orange-500 font-medium">required</span>}
-                </div>
+      <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+        <p className="text-sm font-medium text-slate-800">Map your columns</p>
+        {csv && (
+          <div className="space-y-2">
+            {(['name', 'sku', 'materialRate', 'labourRate'] as const).map(f => (
+              <div key={f} className="flex items-center gap-2">
+                <span className="w-28 text-xs font-medium text-slate-600">
+                  {f === 'name' ? 'Name *' : f === 'sku' ? 'SKU' : f === 'materialRate' ? 'Material $' : 'Labour $'}
+                </span>
                 <select
-                  value={selectedHeader}
-                  onChange={e => {
-                    const idx = e.target.value === '' ? undefined : csv.headers.indexOf(e.target.value);
-                    setMapping(m => ({ ...m, [field.key]: idx } as ColumnMapping));
-                  }}
-                  className={`text-xs rounded-lg border px-2 py-1.5 focus:border-orange-500 focus:outline-none min-w-[140px] ${isNameUnset ? 'border-orange-300 ring-1 ring-orange-200' : 'border-slate-300'}`}>
-                  <option value="">Select a column...</option>
-                  {csv.headers.map(h => <option key={h} value={h}>{h}</option>)}
+                  value={mapping[f] ?? ''}
+                  onChange={e => setMapping({ ...mapping, [f]: e.target.value === '' ? null : Number(e.target.value) })}
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-800 focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="">- None -</option>
+                  {csv.headers.map((h, i) => <option key={i} value={i}>{h}</option>)}
                 </select>
               </div>
-            );
-          })}
-        </div>
-        <div>
-          <label className="text-xs font-medium text-slate-600">How are these components measured?</label>
-          <div className="mt-1 flex rounded-lg border border-slate-300 overflow-hidden w-fit">
-            <button onClick={() => setMeasurementType('lineal')} className={`px-3 py-1.5 text-xs font-medium transition ${measurementType === 'lineal' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Linear</button>
-            <button onClick={() => setMeasurementType('area')} className={`px-3 py-1.5 text-xs font-medium transition ${measurementType === 'area' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Area</button>
-            <button onClick={() => setMeasurementType('quantity')} className={`px-3 py-1.5 text-xs font-medium transition ${measurementType === 'quantity' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'}`}>Fixed</button>
+            ))}
           </div>
-        </div>
-        <div className="flex justify-end">
-          <button onClick={proceedToRowSelect} className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition">
-            Continue to row selection
+        )}
+        <div className="flex items-center gap-2 pt-1">
+          <button onClick={proceedToRowSelect} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition">
+            Next: select rows
           </button>
+          <button onClick={reset} className="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
         </div>
       </div>
     );
   }
 
-  // Step: select rows (search + select all, like the in-app converter)
-  const filtered = csv.rows
-    .map((row, i) => ({ row, i }))
-    .filter(({ row }) => !searchFilter || row.some(v => v.toLowerCase().includes(searchFilter.toLowerCase())));
+  // select-rows
+  const filtered = csv
+    ? csv.rows.map((row, i) => ({ row, i })).filter(({ row }) => {
+        if (!searchFilter) return true;
+        const name = String(row[mapping.name ?? 0] ?? '').toLowerCase();
+        return name.includes(searchFilter.toLowerCase());
+      })
+    : [];
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-slate-900">Select rows to convert</h3>
-          <p className="text-[11px] text-slate-400 mt-0.5">{selected.size} of {csv.rows.length} rows selected{selected.size > 0 ? ` (limit ${maxComponents - components.length} for this tool)` : ''}</p>
-        </div>
-        <button onClick={reset} className="text-xs text-slate-400 hover:text-slate-600">Start over</button>
-      </div>
+    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+      <p className="text-sm font-medium text-slate-800">Select components to import</p>
       <div className="flex items-center gap-2">
         <input
           value={searchFilter}
           onChange={e => setSearchFilter(e.target.value)}
-          placeholder="Search rows..."
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-          aria-label="Search rows" />
-        <button onClick={() => setSelected(selected.size === csv.rows.length ? new Set() : new Set(csv.rows.map((_, i) => i)))} className="flex-shrink-0 rounded-full border border-slate-300 px-4 py-2 text-xs font-medium text-slate-600 hover:border-slate-400">
-          {selected.size === csv.rows.length ? 'Deselect all' : 'Select all'}
-        </button>
+          placeholder="Search..."
+          className="flex-1 rounded-full border border-slate-300 px-4 py-1.5 text-sm focus:border-orange-500 focus:outline-none"
+        />
+        <span className="text-xs text-slate-400">{selected.size} selected</span>
       </div>
-      <div className="max-h-72 overflow-auto rounded-xl border border-slate-200">
-        <table className="w-full text-xs">
-          <thead className="sticky top-0 bg-slate-50">
-            <tr>
-              <th className="px-2 py-2 w-8"></th>
-              {csv.headers.map((h, i) => <th key={i} className="px-2 py-2 text-left font-medium text-slate-500">{h}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.slice(0, 200).map(({ row, i }) => (
-              <tr key={i} className={`border-t border-slate-100 hover:bg-orange-50/40 ${selected.has(i) ? 'bg-orange-50/40' : 'bg-white'}`}>
-                <td className="px-2 py-1.5">
-                  <input type="checkbox" checked={selected.has(i)} onChange={e => {
-                    const next = new Set(selected);
-                    if (e.target.checked) next.add(i); else next.delete(i);
-                    setSelected(next);
-                  }} className="rounded border-slate-300 text-orange-500 focus:ring-0" aria-label={`Select row ${i + 1}`} />
-                </td>
-                {row.map((c, ci) => <td key={ci} className="px-2 py-1.5 text-slate-600 max-w-40 truncate">{c}</td>)}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="max-h-64 overflow-y-auto rounded-lg border border-slate-100 divide-y divide-slate-100">
+        {filtered.map(({ row, i }) => (
+          <label key={i} className="flex items-center gap-2 px-3 py-2 hover:bg-orange-50/40 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected.has(i)}
+              onChange={e => {
+                const next = new Set(selected);
+                if (e.target.checked) next.add(i); else next.delete(i);
+                setSelected(next);
+              }}
+              className="w-4 h-4 accent-orange-500"
+            />
+            <span className="text-sm text-slate-700 truncate">{String(row[mapping.name ?? 0] ?? '')}</span>
+          </label>
+        ))}
+        {filtered.length === 0 && <p className="px-3 py-4 text-xs text-slate-400 text-center">No matching rows.</p>}
       </div>
-      {filtered.length > 200 && <p className="text-xs text-slate-400">Showing first 200 matches of {filtered.length}.</p>}
-      <div className="flex justify-end gap-2">
-        <button onClick={() => setCsvStep('map-columns')} className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:border-slate-400">Back</button>
-        <button onClick={convert} disabled={selected.size === 0} className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40">
-          Convert {selected.size} row{selected.size === 1 ? '' : 's'}
+      <div className="flex items-center gap-2 pt-1">
+        <button onClick={convert} disabled={selected.size === 0} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40">
+          Import {selected.size > 0 ? `(${selected.size})` : ''}
         </button>
+        <button onClick={() => setCsvStep('map-columns')} className="text-xs text-slate-500 hover:text-slate-700">Back</button>
+        <button onClick={reset} className="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
       </div>
     </div>
   );
