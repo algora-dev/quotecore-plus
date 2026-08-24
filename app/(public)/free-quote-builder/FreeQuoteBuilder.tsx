@@ -6,6 +6,7 @@ import { lenLabel, areaLabel } from './types';
 import ComponentStep from './ComponentStep';
 import BuilderStep from './BuilderStep';
 import OutputView from './OutputView';
+import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 
 const STORAGE_KEY = 'free-quote-builder-v2';
 
@@ -120,7 +121,7 @@ export default function FreeQuoteBuilder() {
         unitSystem={unitSystem}
         currency={currency}
         onBack={() => setStep(3)}
-        onGenerate={() => setStep(5)}
+        onGenerate={() => { trackFreeToolEvent('result'); setStep(5); }}
       />
     );
   }

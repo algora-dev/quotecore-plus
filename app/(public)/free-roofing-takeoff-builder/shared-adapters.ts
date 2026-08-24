@@ -25,6 +25,7 @@ import type {
   PricingMode,
   RoofType,
 } from '@quote-core/roof-takeoff';
+import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 
 // ─── SupplierAdapter ─────────────────────────────────
 
@@ -132,6 +133,7 @@ export const quoteCoreEnquiryAdapter: EnquiryAdapter = {
 
 export const quoteCoreResultAdapter: ResultAdapter = {
   async createResult(input: SharedTakeoffSnapshot): Promise<{ id: string; url: string }> {
+    trackFreeToolEvent('result');
     const res = await fetch('/api/free-tools/roof-takeoff-result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
