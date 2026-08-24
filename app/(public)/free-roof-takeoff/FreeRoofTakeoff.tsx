@@ -15,6 +15,7 @@ import {
 import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
 import { TakeoffOutputView, type TakeoffOutputExtras } from './TakeoffOutputView';
 import { ComponentBuilderModal } from './ComponentBuilderModal';
+import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import type { QuoteRow } from '@/app/lib/types';
 
 // Fabric.js + the full workstation load ONLY when the user enters the tool.
@@ -205,9 +206,10 @@ export function FreeRoofTakeoff() {
         preferredLengthUnit={unitOption.lengthUnit}
         unitSystem={stage.unitSystem}
         componentSpecs={stage.specs}
-        onFinish={payload =>
-          setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs })
-        }
+        onFinish={payload => {
+          trackFreeToolEvent('finish');
+          setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs });
+        }}
       />
     );
   }

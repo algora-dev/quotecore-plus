@@ -6,6 +6,7 @@ import BlogHeader from '@/components/BlogHeader';
 import SiteFooter from '@/components/SiteFooter';
 import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import { trackEvent } from '@/lib/analytics';
+import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import type { Entry, ComponentSection, RoofComponentDef, CustomComponentDef } from './types';
 import {
   COMPONENT_DEFS,
@@ -1121,7 +1122,7 @@ export function RoofTakeoffBuilder({ initialInput, embed = false, initialSupplie
                       <span className="text-xl font-bold">{cur}{grandTotal.toFixed(2)}</span>
                     </div>
                   )}
-                  <button onClick={() => { setShowResults(true); trackEvent('free_roof_builder_generate', { entries: totalEntries }); }}
+                  <button onClick={() => { setShowResults(true); trackEvent('free_roof_builder_generate', { entries: totalEntries }); trackFreeToolEvent('result'); }}
                     className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
                     Generate Takeoff Report
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
