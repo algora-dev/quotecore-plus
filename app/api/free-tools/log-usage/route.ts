@@ -61,17 +61,24 @@ export async function POST(req: NextRequest) {
   const client = getUsageClient();
   if (!client) return new NextResponse(null, { status: 204 });
 
-  client.from('free_tool_usage').insert({
-    tool_code: toolCode,
-    tool_name: toolName,
-    parse_mode: 'none',
-    document_type: action,
-    tier: 1,
-    user_id: null,
-    user_email: null,
-    ip_address: ip,
-    has_app_account: false,
-  }).then(() => {}, () => {});
+  // Await: Vercel suspends the function once the response returns, so a
+  // fire-and-forget insert would never run. Insert is a single fast query.
+  try {
+    const { error } = await client.from('free_tool_usage').insert({
+      tool_code: toolCode,
+      tool_name: toolName,
+      parse_mode: 'none',
+      document_type: action,
+      tier: 1,
+      user_id: null,
+      user_email: null,
+      ip_address: ip,
+      has_app_account: false,
+    });
+    if (error) console.warn('[log-usage] insert failed:', error.message);
+  } catch (err) {
+    console.warn('[log-usage] unexpected:', err);
+  }
 
   return new NextResponse(null, { status: 204 });
 }
