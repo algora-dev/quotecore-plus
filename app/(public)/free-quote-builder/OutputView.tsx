@@ -66,7 +66,7 @@ export default function OutputView({ areas, components, measureMode, unitSystem,
   const entryCount = areas.reduce((s, a) => s + a.components.reduce((s2, ac) => s2 + ac.entries.length, 0), 0);
 
   return (
-    <div className="mx-auto max-w-3xl px-2 md:px-6 py-6 md:py-10 bg-white min-h-screen">
+    <div className="mx-auto max-w-5xl px-2 md:px-6 py-6 md:py-10 bg-white min-h-screen">
       <div id="fqb-print" className="print:visible">
         {/* Header - same structure as takeoff output */}
         <div className="flex items-center justify-between px-0 md:px-0 pb-4 border-b border-slate-100 print:border-slate-300">
