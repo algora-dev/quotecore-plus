@@ -88,12 +88,13 @@ export default function FreeQuoteBuilder() {
           pitchType: c.pitchType,
         })),
         ...(componentsOnly ? {} : {
-          // Plan area per parent area (m2 - the app stores sqm internally):
-          // summed from the area-type component entries, unit-converted.
+          // Area rows are pitch/naming containers ONLY - the quantities live
+          // in the component entries (area components each cover the whole
+          // area, so summing them would double-count). area stays 0.
           roofAreas: areas.map(a => ({
             id: a.id,
             name: a.name,
-            area: areaPlanSqmFor(areas, components, a.id, u),
+            area: 0,
             pitch: a.pitchDegrees,
           })),
           componentGroups: areas.flatMap(a => a.components
