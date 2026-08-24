@@ -330,7 +330,7 @@ export default function DistributorsPage() {
                 You will not be left to figure everything out yourself. Every approved partner receives:
               </p>
             </div>
-            <ul className="mx-auto mt-10 grid max-w-4xl gap-3 sm:grid-cols-2">
+            <ul className="mt-10 grid gap-3 sm:grid-cols-2">
               {[
                 "Your unique referral link",
                 "Your personal discount code",
@@ -352,7 +352,7 @@ export default function DistributorsPage() {
 
         {/* Earnings example */}
         <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold tracking-tight text-zinc-950">What 30% could look like</h2>
               <p className="mt-4 leading-7 text-zinc-600">
@@ -403,7 +403,7 @@ export default function DistributorsPage() {
 
         {/* Strategic partnerships */}
         <section className="mt-20 md:mt-28">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="rounded-2xl border border-zinc-200 bg-gradient-to-b from-white to-orange-50/30 p-8 text-center md:p-12">
               <h2 className="text-3xl font-bold tracking-tight text-zinc-950">
                 Have a large audience or a serious distribution opportunity?
@@ -422,7 +422,7 @@ export default function DistributorsPage() {
 
         {/* FAQ */}
         <section className="mt-20 md:mt-28">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-950">Frequently asked questions</h2>
             <div className="mt-10 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white">
               {faqs.map((f) => (
