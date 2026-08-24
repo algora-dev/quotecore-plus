@@ -106,6 +106,9 @@ const nextConfig: NextConfig = {
     return [
       // Old cookie page -> canonical /cookie-policy
       { source: '/cookies', destination: '/cookie-policy', permanent: true },
+      // Partner program aliases -> canonical /distributors
+      { source: '/referrals', destination: '/distributors', permanent: true },
+      { source: '/partners', destination: '/distributors', permanent: true },
     ];
   },
   async headers() {
