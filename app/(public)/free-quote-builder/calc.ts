@@ -36,8 +36,8 @@ export function entryRawValue(entry: BuilderEntry, comp: BuilderComponent): numb
   return (entry.value || 0) * qty;
 }
 
-/** Final measurement for an entry: raw -> pitch (plan mode) -> nothing else.
- * Waste is applied at the component level, matching the app's semantics. */
+/** Final measurement for an entry: raw -> pitch (plan mode). Waste is applied
+ * at the component level in areaComponentTotals. */
 export function entryFinalValue(
   entry: BuilderEntry,
   comp: BuilderComponent,
@@ -46,6 +46,8 @@ export function entryFinalValue(
 ): number {
   const raw = entryRawValue(entry, comp);
   if (measureMode !== 'plan' || !comp.pitchEnabled || comp.pitchType === 'none') return raw;
+  // Undefined pitch means "follow the area pitch" - only an explicit per-entry
+  // override (user typed a value) pins the entry to a different pitch.
   const degrees = entry.pitchDegrees ?? area.pitchDegrees ?? 0;
   return raw * pitchFactor(degrees, comp.pitchType);
 }
@@ -99,8 +101,10 @@ export function areaComponentTotals(
     finalTotal += entryFinalValue(e, comp, area, measureMode);
   }
   const withWaste = applyWaste(finalTotal, comp) + wasteFixedTotal(comp, ac.entries.length);
-  const mat = materialCost(applyWaste(finalTotal, comp), comp);
-  const lab = labourCost(applyWaste(finalTotal, comp), comp);
+  // Cost uses the full waste-inclusive quantity (percent AND fixed waste)
+  // so the price covers what is actually billed/needed.
+  const mat = materialCost(withWaste, comp);
+  const lab = labourCost(withWaste, comp);
   return {
     rawTotal,
     finalTotal,
