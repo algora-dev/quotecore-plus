@@ -69,7 +69,8 @@ const PUBLIC_PATHS = [
   '/contact',
   '/suppliers',
   '/suppliers-info',
-  '/distributors',  // Partner & Distributor Program (public landing page)
+  '/affiliate-program', // Partner & Affiliate Program (public landing page)
+  '/affiliate-program-terms', // Partner Program Terms (public)
   '/supplier-partnership', // Hidden supplier partnership page (email outreach, not in nav)
   '/blog',
   '/resources',     // Resource hub pages (blog category hubs)
