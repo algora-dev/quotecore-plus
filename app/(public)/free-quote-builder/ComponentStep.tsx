@@ -255,6 +255,31 @@ function CsvImport({ components, setComponents, maxComponents, onError }: {
           </button>
           <button onClick={reset} className="text-xs text-slate-400 hover:text-slate-600">Cancel</button>
         </div>
+
+        {/* Data preview - first 3 rows so the user can verify the mapping */}
+        {csv && csv.rows.length > 0 && (
+          <div className="overflow-x-auto rounded-lg border border-slate-100">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  {csv.headers.map((h, i) => (
+                    <th key={i} className="px-3 py-2 text-left font-semibold text-slate-600 whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {csv.rows.slice(0, 3).map((row, r) => (
+                  <tr key={r}>
+                    {csv.headers.map((_, c) => (
+                      <td key={c} className="px-3 py-1.5 text-slate-700 whitespace-nowrap">{String(row[c] ?? '')}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="px-3 py-1.5 text-[10px] text-slate-400 border-t border-slate-100">Preview of first 3 rows of {csv.rows.length}</p>
+          </div>
+        )}
       </div>
     );
   }
