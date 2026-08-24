@@ -4,6 +4,7 @@ import { useState, Suspense, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PostGenerationModal } from '../shared/PostGenerationModal';
+import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import { parseConvertLines } from '../shared/convertLines';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from '../free-quote-generator/ImageUpload';
@@ -313,6 +314,7 @@ function InvoiceGeneratorForm() {
     } catch {
       // Network error - don't block the user from generating
     }
+    trackFreeToolEvent('generate');
     setGenerated(true);
     setPopupTrigger(false);
     setTimeout(() => setPopupTrigger(true), 1500);

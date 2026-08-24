@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { trackFreeToolEvent } from '../../lib/trackFreeToolEvent';
 
 /**
  * Conversion popup that shows the calculation result + a CTA to the next funnel stage.
@@ -50,6 +51,7 @@ export function CalcResultPopup({
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const storageKey = `qcp:popup:${stage}:${slug}`;
+  const loggedRef = useRef(false);
 
   const dismiss = useCallback(() => {
     setVisible(false);
@@ -58,6 +60,11 @@ export function CalcResultPopup({
 
   useEffect(() => {
     if (!trigger) return;
+    // Log one usage event per page view when the first result fires.
+    if (!loggedRef.current) {
+      loggedRef.current = true;
+      trackFreeToolEvent('result');
+    }
     // Check dismissal
     try {
       if (sessionStorage.getItem(storageKey)) return;

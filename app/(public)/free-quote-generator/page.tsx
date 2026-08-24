@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PostGenerationModal } from '../shared/PostGenerationModal';
+import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import { buildConvertUrl, parseConvertLines } from '../shared/convertLines';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { ImageUpload, type ParsedUploadResult } from './ImageUpload';
@@ -329,6 +330,7 @@ function QuoteGeneratorForm() {
     } catch {
       // Network error - don't block the user from generating
     }
+    trackFreeToolEvent('generate');
     setGenerated(true);
     setPopupTrigger(false);
     setTimeout(() => setPopupTrigger(true), 1500);
