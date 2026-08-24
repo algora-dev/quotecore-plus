@@ -349,7 +349,10 @@ function AddEntryForm({ comp, area, masterPitch, measureMode, len, areaU, onAdd 
   const [val2, setVal2] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [label, setLabel] = useState('');
-  const [pitch, setPitch] = useState(String(area.pitchDegrees || masterPitch || 25));
+  // Pitch defaults to following the area pitch; only pin the entry's own
+  // pitch when the user actually edits the field.
+  const [pitch, setPitch] = useState('');
+  const [pitchTouched, setPitchTouched] = useState(false);
 
   const isArea = comp.measurementType === 'area';
   const isFixed = comp.measurementType === 'quantity';
@@ -380,7 +383,7 @@ function AddEntryForm({ comp, area, masterPitch, measureMode, len, areaU, onAdd 
       if (!l || l <= 0) return;
       entry = { id: makeId('e'), label: label.trim(), value: l, quantity: qty };
     }
-    if (usePitch) entry.pitchDegrees = parseFloat(pitch) || 0;
+    if (usePitch && pitchTouched) entry.pitchDegrees = parseFloat(pitch) || 0;
     onAdd(entry);
     resetForm();
   }
