@@ -41,25 +41,40 @@ function getUsageClient() {
 }
 
 export async function POST(req: NextRequest) {
+  const debug = req.headers.get('x-debug') === '1';
+  const stages: string[] = [];
   let toolCode: string | null = null;
   let action = 'output';
   try {
     const body = await req.json() as { toolCode?: string; action?: string };
     toolCode = body.toolCode ?? null;
     action = body.action ?? 'output';
-  } catch { /* invalid JSON - ignore */ }
+    stages.push('json-ok');
+  } catch {
+    stages.push('json-fail');
+    if (debug) return NextResponse.json({ stages });
+  }
 
   const toolName = toolCode ? TOOL_ALLOWLIST[toolCode] : undefined;
-  if (!toolCode || !toolName || !ACTIONS.has(action)) return new NextResponse(null, { status: 204 });
+  if (!toolCode || !toolName || !ACTIONS.has(action)) {
+    if (debug) return NextResponse.json({ stages: [...stages, `rejected tool=${toolCode} action=${action}`] });
+    return new NextResponse(null, { status: 204 });
+  }
+  stages.push('allowlist-ok');
 
   const ip = getClientIP(req.headers);
   const allowed = await checkRateLimit(`ft-log:${ip}`, 60, 60 * 60 * 1000);
+  stages.push(`ratelimit=${allowed}`);
   if (!allowed) {
     return new NextResponse(null, { status: 429 });
   }
 
   const client = getUsageClient();
-  if (!client) return new NextResponse(null, { status: 204 });
+  if (!client) {
+    if (debug) return NextResponse.json({ stages: [...stages, 'no-env-client'] });
+    return new NextResponse(null, { status: 204 });
+  }
+  stages.push('client-ok');
 
   // Await: Vercel suspends the function once the response returns, so a
   // fire-and-forget insert would never run. Insert is a single fast query.
@@ -72,13 +87,14 @@ export async function POST(req: NextRequest) {
       tier: 1,
       user_id: null,
       user_email: null,
-      ip_address: ip,
+      ip_address: debug ? 'debug-probe' : ip,
       has_app_account: false,
     });
-    if (error) console.warn('[log-usage] insert failed:', error.message);
+    stages.push(error ? `insert-error=${error.message}` : 'insert-ok');
   } catch (err) {
-    console.warn('[log-usage] unexpected:', err);
+    stages.push(`insert-throw=${err instanceof Error ? err.message : String(err)}`);
   }
 
+  if (debug) return NextResponse.json({ stages, toolCode, action });
   return new NextResponse(null, { status: 204 });
 }
