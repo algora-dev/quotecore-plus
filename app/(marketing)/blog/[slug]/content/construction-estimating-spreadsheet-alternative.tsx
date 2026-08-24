@@ -82,7 +82,8 @@ export default function Post() {
       <ul>
         <li>
           <strong>Roofing area component:</strong> takes 100 m², adds 10% waste, applies your
-          material and labour rates per m². Next job: enter 125 m², same result, zero rebuilds.
+          material and labour rates per m². Next job: enter 125 m² and the same pricing rules run
+          again, with no formula rebuild.
         </li>
         <li>
           <strong>Ridge component:</strong> takes 12 lineal metres, adds a fixed 0.3 m allowance per
@@ -113,9 +114,8 @@ export default function Post() {
       </ol>
       <p>
         <strong>You are not throwing away your pricing work. You are moving it into a reusable
-        workflow.</strong> The free converter handles up to 7 components at a time; larger catalogs
-        are handled by the{' '}
-        <Link href="/free-smart-component-creator" className={link}>Catalog-to-Component Converter</Link>.
+        workflow.</strong> The free Catalog-to-Component Converter creates up to 7 components at a
+        time; the full QuoteCore+ app workflow supports larger batches of the same conversion.
       </p>
 
       <h2>When a spreadsheet is still fine</h2>

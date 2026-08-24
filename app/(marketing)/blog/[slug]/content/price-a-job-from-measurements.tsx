@@ -171,9 +171,8 @@ export default function Post() {
         <li>Save them to QuoteCore+ if you want to keep and reuse them.</li>
       </ol>
       <p>
-        The free converter handles up to 7 components at a time; the{' '}
-        <Link href="/free-smart-component-creator" className={link}>Catalog-to-Component Converter</Link>{' '}
-        handles larger catalogs inside the app workflow.
+        The free Catalog-to-Component Converter creates up to 7 components at a time; the full
+        QuoteCore+ app workflow supports larger batches of the same conversion.
       </p>
 
       <hr />
