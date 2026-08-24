@@ -23,7 +23,9 @@ const TOOL_ALLOWLIST: Record<string, string> = {
   'quote-gen': 'Quote Generator',
   'po-gen': 'Purchase Order Generator',
   'invoice-gen': 'Invoice Generator',
-  calc: 'Trade Calculators',
+  'calc-roof': 'Roof Calculators',
+  'calc-build': 'Construction Calculators',
+  calc: 'Other Trade Calculators',
 };
 
 const ACTIONS = new Set(['output', 'generate', 'result', 'print', 'upload', 'finish']);

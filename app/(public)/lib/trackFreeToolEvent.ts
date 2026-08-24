@@ -4,6 +4,11 @@
 
 const ENDPOINT = '/api/free-tools/log-usage';
 
+/** Roof-family calculator slugs -> tracked as 'calc-roof'. */
+const ROOF_RE = /(roof|rafter|hip|valley|gable|skillion|shingle|flashing|spouting|gutter|tile|birdsmouth|square)/;
+/** Construction-family calculator slugs -> tracked as 'calc-build'. */
+const BUILD_RE = /(concrete|slab|footing|rebar|trench|construction|landscaping|paint|flooring|wall|pipe|slope|margin)/;
+
 const toolCode = (() => {
   if (typeof window === 'undefined') return null;
   const p = window.location.pathname;
@@ -13,9 +18,17 @@ const toolCode = (() => {
   if (p.startsWith('/free-quote-generator')) return 'quote-gen';
   if (p.startsWith('/free-purchase-order-generator')) return 'po-gen';
   if (p.startsWith('/free-invoice-generator')) return 'invoice-gen';
-  if (p.startsWith('/free-calculators')) return 'calc';
+  if (p.startsWith('/free-calculators')) {
+    if (ROOF_RE.test(p)) return 'calc-roof';
+    if (BUILD_RE.test(p)) return 'calc-build';
+    return 'calc';
+  }
   // Static calculator slug pages live at the root (42 SEO pages).
-  if (/^\/[a-z0-9-]+-calculator(\/|$)/.test(p)) return 'calc';
+  if (/^\/[a-z0-9-]+-calculator(\/|$)/.test(p) || /^\/free-[a-z0-9-]+/.test(p)) {
+    if (ROOF_RE.test(p)) return 'calc-roof';
+    if (BUILD_RE.test(p)) return 'calc-build';
+    return 'calc';
+  }
   return null;
 })();
 
