@@ -5,15 +5,15 @@ import SiteFooter from "@/components/SiteFooter";
 import DistributorApplicationForm from "./DistributorApplicationForm";
 
 export const metadata: Metadata = {
-  title: "QuoteCore Partner Program — Earn 30% Recurring Revenue",
+  title: "QuoteCore Partner Program — Earn 30% Recurring Commission",
   description:
-    "Earn 30% standard recurring revenue promoting QuoteCore+, with custom partnership terms available. Share free tools, content, software or your own campaigns. Apply in about 30 seconds.",
-  alternates: { canonical: "https://quote-core.com/distributors" },
+    "Join the QuoteCore affiliate program: earn 30% recurring commission on referred paying customers for 12 months, with custom partnership terms available. Apply in about 30 seconds.",
+  alternates: { canonical: "https://quote-core.com/affiliate-program" },
   openGraph: {
-    title: "Earn 30% Recurring Revenue Promoting QuoteCore+",
+    title: "Earn 30% Recurring Commission Promoting QuoteCore+",
     description:
-      "A 12-month partner program for creators, trade professionals and distributors. Custom terms available. Apply in about 30 seconds.",
-    url: "https://quote-core.com/distributors",
+      "A software affiliate program for creators, trade professionals and distributors. Custom terms available. Apply in about 30 seconds.",
+    url: "https://quote-core.com/affiliate-program",
     siteName: "QuoteCore+",
     type: "website",
   },
@@ -38,7 +38,7 @@ const faqs = [
   },
   {
     q: "How does my discount code work?",
-    a: "Your code gives referred customers a discount on their first month and attributes eligible purchases to you when used at checkout.",
+    a: "Your code gives referred customers a discount on their first month and attributes the purchase to you when used at checkout. The exact customer offer is confirmed when you are approved, and stronger offers may be available for custom deals.",
   },
   {
     q: "What if someone uses a free tool and upgrades later?",
@@ -151,15 +151,15 @@ export default function DistributorsPage() {
         <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
-              QuoteCore Partner &amp; Distributor Program
+              QuoteCore Partner &amp; Affiliate Program
             </p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-950 sm:text-5xl">
-              Earn recurring income by promoting QuoteCore+
+              Earn recurring income promoting QuoteCore
             </h1>
             <p className="mt-5 text-lg leading-8 text-zinc-600">
-              Earn <strong className="text-zinc-900">30% of eligible referred customer revenue for 12 months</strong>,
-              with custom partnership terms available for the right opportunities. Promote QuoteCore however suits your
-              audience: free tools, tutorials, reviews, direct recommendations, content, outreach, or your own strategy.
+              Earn <strong className="text-zinc-900">30% as standard</strong> on eligible revenue from referred paying
+              customers for 12 months, with custom partnership terms available. Promote our free tools, app, content, or
+              use your own strategy. Apply in about 30 seconds.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
@@ -229,12 +229,14 @@ export default function DistributorsPage() {
               <p className="mt-4 text-lg leading-8 text-zinc-600">
                 Instead of asking someone to immediately pay for software, share something useful first — a free quote
                 generator, a margin calculator, a roof measurement tool. Someone might discover QuoteCore through a free
-                tool today, create a free account later, and upgrade weeks afterwards.
+                tool today, create a free account later, and upgrade weeks afterwards. It is the lowest-friction way to
+                start — but only one of many.
               </p>
               <p className="mt-4 rounded-2xl border border-zinc-200 bg-white p-6 text-left leading-7 text-zinc-700">
-                <strong className="text-zinc-950">Your code matters.</strong> Some people may discover QuoteCore through
-                your content and only upgrade weeks later. Make sure your audience knows your discount code so they can
-                use it when they purchase.
+                <strong className="text-zinc-950">Your code matters.</strong> Your personal discount code gives referred
+                customers a discount on their first month (the exact customer offer is confirmed when you are approved)
+                and attributes their purchase to you. Some people may discover QuoteCore through your content and only
+                upgrade weeks later — make sure your audience knows your code so they use it when they purchase.
               </p>
             </div>
           </div>
@@ -249,7 +251,9 @@ export default function DistributorsPage() {
               </h2>
               <p className="mt-4 leading-7 text-zinc-600">
                 A roofing audience may respond to a free roof tool. A small-business audience may care about quotes and
-                invoices. Another partner may prefer to promote the full QuoteCore+ app directly.
+                invoices. Another partner may prefer to promote the full QuoteCore+ app or paid plans directly, through
+                reviews, tutorials, client recommendations, newsletters, social, blogs or outreach. Free tools are the
+                lowest-friction entry point — not a requirement.
               </p>
             </div>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -314,6 +318,35 @@ export default function DistributorsPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* What you get when approved */}
+        <section className="mt-20 md:mt-28">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">What you get when approved</h2>
+              <p className="mt-4 leading-7 text-zinc-600">
+                You will not be left to figure everything out yourself. Every approved partner receives:
+              </p>
+            </div>
+            <ul className="mx-auto mt-10 grid max-w-4xl gap-3 sm:grid-cols-2">
+              {[
+                "Your unique referral link",
+                "Your personal discount code",
+                "Links to relevant tools and products",
+                "Screenshots and brand assets",
+                "Tutorials and content to share",
+                "Promotion ideas to get you started",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-4 text-sm font-medium text-zinc-800">
+                  <span className="text-[#FF6B35]">
+                    <CheckIcon />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
@@ -416,7 +449,11 @@ export default function DistributorsPage() {
         <section className="py-10">
           <p className="text-center text-xs leading-5 text-zinc-400">
             This is an independent partner/referral opportunity, not employment. By applying you agree to be contacted by
-            email about your application. Full partner terms are shared with approved partners. See our{" "}
+            email about your application. Commission, attribution and payout rules are covered in the{" "}
+            <Link href="/affiliate-program-terms" className="underline hover:text-zinc-600">
+              Partner Program Terms
+            </Link>
+            . See our{" "}
             <Link href="/terms" className="underline hover:text-zinc-600">
               Terms of Service
             </Link>{" "}

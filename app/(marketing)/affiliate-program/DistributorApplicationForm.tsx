@@ -201,8 +201,7 @@ export default function DistributorApplicationForm() {
         <span>
           <span className="block text-sm font-medium text-zinc-900">I&rsquo;d like to discuss a custom partnership deal</span>
           <span className="mt-1 block text-xs leading-5 text-zinc-500">
-            Optional. Tick this if you have an established audience, distribution channel, business network, unique
-            promotion strategy, or would like to discuss different commercial terms.
+            Optional. Tick this if you&rsquo;d like us to consider bespoke commercial terms.
           </span>
         </span>
       </label>
