@@ -78,8 +78,8 @@ export default function FreeToolsPage() {
         {/* Tool sections */}
         <div className="mx-auto max-w-5xl px-2 md:px-6 pb-12 md:pb-20 space-y-12 md:space-y-20">
           <FreeRoofTakeoffSection />
-          <RoofTakeoffSection />
           <MeasurementToQuoteSection />
+          <RoofTakeoffSection />
           <QuoteGeneratorSection />
           <CalculatorsSection calculatorCount={CALCULATOR_COUNT} />
           <PurchaseOrderSection />

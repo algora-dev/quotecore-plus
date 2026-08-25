@@ -74,7 +74,7 @@ export function FreeRoofTakeoffSection() {
     <section id="free-roof-takeoff" className="scroll-mt-24">
       <div className="flex items-center gap-2.5 mb-3">
         <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10" /></svg>
-        <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Roof Takeoff</h2>
+        <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Free Roof Plan Takeoff Tool</h2>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
         <div className="order-2 lg:order-1">
@@ -100,7 +100,7 @@ export function MeasurementToQuoteSection() {
     <section id="measurement-to-quote" className="scroll-mt-24">
       <div className="flex items-center gap-2.5 mb-3">
         <svg className="w-6 h-6 md:w-7 md:h-7 text-slate-900 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-        <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Measurement-to-Quote Tool</h2>
+        <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Measurement to Quote Tool</h2>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6 md:gap-10 items-center">
         <div className="order-2 lg:order-1">
