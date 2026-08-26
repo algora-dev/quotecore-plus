@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import type { Metadata } from 'next';
 import MarketingHome from './(marketing)/home/page';
 import HeroVideo from '@/components/HeroVideo';
+import DoneForYouBanner from '@/components/DoneForYouBanner';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 import { shouldRenderMarketing, marketingUrl } from '@/lib/app-url';
 import {
@@ -139,6 +140,7 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(videoSchema) }}
         />
         <HeroVideo />
+        <DoneForYouBanner />
         <MarketingHome />
       </>
     );
