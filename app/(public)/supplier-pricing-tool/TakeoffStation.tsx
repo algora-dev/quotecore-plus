@@ -1,18 +1,18 @@
-// In-tool digital takeoff station. Borrows the workstation component the
-// takeoff demo uses (same Fabric canvas + measuring UX) - the user never
-// leaves the supplier pricing tool. Finished measurements map into the
-// shared Measurement Set and flow into the same pricing steps.
+// In-tool digital takeoff station. COPIED workstation component (the copy
+// lives in this folder as TakeoffWorkstation.tsx, recoloured to the supplier
+// pricing tool palette) - the user never leaves the tool. Upload mode forces
+// the real calibration flow (point-to-point on a known dimension) before any
+// measuring. Finished measurements map into the shared Measurement Set.
 
 'use client';
 
 import dynamic from 'next/dynamic';
-import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
-import { DEMO_QUOTE, DEMO_COMPONENTS, DEMO_COLLECTIONS } from '@/app/(marketing)/takeoff-demo/demo-data/baseline';
+import type { DemoFinishPayload } from './TakeoffWorkstation';
 import type { GroupKey, MeasurementSet } from './types';
 import { emptyMeasurementSet, GROUP_DEFS, makeId } from './types';
 
 const Workstation = dynamic(
-  () => import('@/app/(marketing)/takeoff-demo/DemoWorkstation').then(mod => ({ default: mod.DemoWorkstation })),
+  () => import('./TakeoffWorkstation').then(mod => ({ default: mod.TakeoffWorkstation })),
   {
     ssr: false,
     loading: () => (
@@ -52,7 +52,6 @@ function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
       set.groups[key].entries.push({ id: makeId('e'), label: '', value: m.value, quantity: 1 });
     }
   }
-  // Default labels for unlabelled entries
   for (const def of GROUP_DEFS) {
     if (def.key === 'roofAreas') continue;
     set.groups[def.key].entries = set.groups[def.key].entries.map((e, i) => ({
@@ -63,20 +62,40 @@ function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
   return set;
 }
 
-export function TakeoffStation({ planUrl, onFinish }: {
+/** Stage header for the takeoff step - clearer than the step counter alone. */
+export function TakeoffStageHeader({ planName }: { planName: string }) {
+  return (
+    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3">
+      <div className="flex items-center gap-2.5">
+        <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">Digital Takeoff</span>
+        <span className="text-sm font-semibold text-slate-900">Measure your plan</span>
+        <span className="hidden md:inline text-xs text-slate-400 truncate max-w-[240px]">{planName}</span>
+      </div>
+      <span className="text-xs text-slate-400">Calibrate first, then draw areas and lines</span>
+    </div>
+  );
+}
+
+export function TakeoffStation({ planUrl, planName, onFinish }: {
   planUrl: string;
+  planName: string;
   onFinish: (set: MeasurementSet) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="w-[125%] -ml-[12.5%] space-y-3">
       <Workstation
         workspaceSlug="supplier-demo"
-        quote={DEMO_QUOTE as never}
+        quote={{
+          id: 'supplier-tool',
+          quote_number: 'SUP-1',
+          measurement_system: 'metric',
+        } as never}
         planUrl={planUrl}
-        components={DEMO_COMPONENTS}
-        collections={DEMO_COLLECTIONS}
+        components={[]}
+        collections={[]}
         hydrationData={null}
-        demoMode="manual"
+        demoMode="upload"
+        preferredLengthUnit="meters"
         onFinish={(payload: DemoFinishPayload) => onFinish(mapTakeoffPayload(payload))}
       />
     </div>

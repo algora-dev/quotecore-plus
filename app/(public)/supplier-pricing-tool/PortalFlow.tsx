@@ -14,7 +14,7 @@ import { EntryModeStep } from './EntryModeStep';
 import { MeasureEntryStep } from './MeasureEntryStep';
 import { ProductStep } from './ProductStep';
 import { OutputView } from './OutputView';
-import { TakeoffStation } from './TakeoffStation';
+import { TakeoffStation, TakeoffStageHeader } from './TakeoffStation';
 import { DEMO_CATALOG } from './supplier';
 
 export function PortalFlow() {
@@ -62,8 +62,8 @@ export function PortalFlow() {
         <StepProgress steps={steps} current={currentStep} />
       )}
       <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        {/* Persistent Standard/Advanced toggle - visible on the entry step onward */}
-        {step >= 2 && (
+        {/* Persistent Standard/Advanced toggle - entry step onward, but NOT on the takeoff step */}
+        {step >= 2 && !(step === 2 && entryMode === 'measure') && (
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
               <button
@@ -111,7 +111,10 @@ export function PortalFlow() {
 
         {/* Step 2a: in-tool takeoff station (measure a plan) */}
         {step === 2 && entryMode === 'measure' && planUrl && (
-          <TakeoffStation planUrl={planUrl} onFinish={handleTakeoffFinish} />
+          <>
+            <TakeoffStageHeader planName={planFile?.name ?? 'your plan'} />
+            <TakeoffStation planUrl={planUrl} planName={planFile?.name ?? 'your plan'} onFinish={handleTakeoffFinish} />
+          </>
         )}
 
         {/* Step 2b: manual measurement entry (have measurements) */}

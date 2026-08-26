@@ -1,0 +1,56 @@
+{
+  "scale": {
+    "detected": false,
+    "ratio": null,
+    "dimension_line": null
+  },
+  "pitch": { "detected": true, "global_degrees": 25 },
+  "roof_areas": [
+    {
+      "name": "Main Roof",
+      "pitch_degrees": 25,
+      "points": [
+        { "x": 86, "y": 59 },
+        { "x": 731, "y": 59 },
+        { "x": 731, "y": 510 },
+        { "x": 507, "y": 510 },
+        { "x": 507, "y": 602 },
+        { "x": 312, "y": 602 },
+        { "x": 312, "y": 510 },
+        { "x": 86, "y": 510 }
+      ]
+    }
+  ],
+  "components": {
+    "ridges": [
+      { "points": [{ "x": 312, "y": 284 }, { "x": 507, "y": 284 }] },
+      { "points": [{ "x": 409, "y": 602 }, { "x": 409, "y": 414 }] }
+    ],
+    "hips": [
+      { "points": [{ "x": 312, "y": 284 }, { "x": 86, "y": 59 }] },
+      { "points": [{ "x": 507, "y": 284 }, { "x": 731, "y": 59 }] },
+      { "points": [{ "x": 86, "y": 510 }, { "x": 312, "y": 284 }] },
+      { "points": [{ "x": 731, "y": 510 }, { "x": 507, "y": 284 }] }
+    ],
+    "valleys": [
+      { "points": [{ "x": 312, "y": 510 }, { "x": 409, "y": 414 }] },
+      { "points": [{ "x": 507, "y": 510 }, { "x": 409, "y": 414 }] }
+    ],
+    "broken_hips": [],
+    "barges": [
+      { "points": [{ "x": 409, "y": 602 }, { "x": 507, "y": 602 }] },
+      { "points": [{ "x": 409, "y": 602 }, { "x": 312, "y": 602 }] }
+    ],
+    "spouting": [
+      { "points": [{ "x": 86, "y": 59 }, { "x": 731, "y": 59 }] },
+      { "points": [{ "x": 731, "y": 59 }, { "x": 731, "y": 510 }] },
+      { "points": [{ "x": 731, "y": 510 }, { "x": 507, "y": 510 }] },
+      { "points": [{ "x": 507, "y": 510 }, { "x": 507, "y": 602 }] },
+      { "points": [{ "x": 312, "y": 602 }, { "x": 312, "y": 510 }] },
+      { "points": [{ "x": 312, "y": 510 }, { "x": 86, "y": 510 }] },
+      { "points": [{ "x": 86, "y": 510 }, { "x": 86, "y": 59 }] }
+    ],
+    "uncertain": []
+  },
+  "notes": ["Replay of a real AI scan captured in the QuoteCore+ app on 2026-08-16 (quote 1015, RS Roofing)."]
+}
