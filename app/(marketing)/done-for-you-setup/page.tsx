@@ -28,47 +28,44 @@ const talkUsClass =
 const steps = [
   {
     num: '1',
-    title: 'We learn how you currently work',
+    title: 'We learn how you work',
     body: [
-      'We start with a short 15-minute call. Tell us how you currently price jobs, what you measure, what materials or services you normally use, whether you work from site measurements, plans, or both, what you currently use for estimating and quoting, and what you\u2019d actually like QuoteCore+ to make easier.',
-      'This isn\u2019t a hard sell. If QuoteCore+ isn\u2019t a good fit for the way you work, we\u2019d rather tell you before you pay us to set anything up.',
+      'A quick 15-minute call to understand how you currently measure, price and quote jobs — and whether QuoteCore+ is actually a good fit.',
     ],
   },
   {
     num: '2',
-    title: 'You send us your pricing and setup',
+    title: 'You send us what you use',
     body: [
-      'If it looks like a good fit, send us whatever you currently use to price work — supplier price lists, spreadsheets, labour rates, waste allowances, formulas, existing quotes, common products, services, your usual margins or pricing methods, and examples of the types of jobs you normally price.',
-      'It doesn\u2019t have to be neat. We\u2019ll work through it with you.',
+      'Send us your pricing, labour rates, supplier lists, spreadsheets, existing quotes or anything else you currently rely on.',
     ],
   },
   {
     num: '3',
-    title: 'We build your QuoteCore+ system',
+    title: 'We build it for you',
     body: [
-      'We create your components and configure your account around the way you actually work.',
+      'We recreate your components, pricing and workflow inside QuoteCore+ so you don\u2019t have to start from scratch.',
     ],
   },
   {
     num: '4',
-    title: 'We show you how it works using your own setup',
+    title: 'We show you using your own setup',
     body: [
-      'Once everything is configured, we\u2019ll walk you through your account using the pricing and components we built for you. Where possible, we can use a job you have already priced, a real upcoming job, one of your plans, or your own measurements.',
-      'This can be done through a live screen-share session or a personalised screen recording you can watch whenever you like. The important part is that you see your own estimating system working inside QuoteCore+, rather than learning from generic examples.',
+      'We walk you through your configured account using one of your real jobs, either live or with a personalised screen recording.',
     ],
   },
   {
     num: '5',
-    title: 'We stay around while you get used to it',
+    title: 'You start using it',
     body: [
-      'You\u2019re not left on your own once setup is complete. Both packages include ongoing setup and product support for the first 6 months, as well as 6 months of QuoteCore+ Pro included at no extra cost.',
+      'You\u2019re ready to price and quote jobs with your new system — with ongoing support available if you still need help.',
     ],
   },
 ];
 
 const packages = [
   {
-    name: 'Done-For-You Setup',
+    name: 'Done-For-You Estimating Setup',
     price: '$499',
     tagline: 'Best for individual contractors and smaller businesses that want us to build the core of their estimating system.',
     items: [
@@ -89,7 +86,6 @@ const packages = [
     tagline: 'Best for businesses with more products, services or a more detailed estimating system.',
     highlight: true,
     items: [
-      'Everything in the standard setup, plus:',
       'Up to 60 custom components built for you',
       'Larger material and pricing setup',
       'More complex labour and waste configurations',
@@ -107,16 +103,13 @@ const doList = [
   'Build your agreed components',
   'Add the pricing information you provide',
   'Configure labour and waste rules',
-  'Help recreate the way you currently price work',
   'Set up QuoteCore+ around your workflow',
   'Show you how to use your configured system',
-  'Help you get comfortable using it',
-  'Provide ongoing setup and product support during the included support period',
+  'Provide support during the included support period',
 ];
 
 const dontList = [
-  'Decide what your products should cost',
-  'Decide what labour you should charge',
+  'Decide what your products should cost or what labour you should charge',
   'Guarantee the accuracy of pricing information supplied to us',
   'Replace your own checking of measurements, quantities or quotes',
   'Provide unlimited custom software development as part of the setup package',
@@ -190,12 +183,22 @@ export default function DoneForYouSetupPage() {
                 </li>
               ))}
             </ol>
-            <div className="mt-12">
-              <Link href="/contact" className={bookCallClass}>
-                Book your 15-minute call
-              </Link>
-            </div>
           </div>
+        </section>
+
+        {/* ── Goal statement ── */}
+        <section className="mx-auto max-w-4xl px-6 py-16 text-center md:py-20">
+          <p className="text-xl font-bold leading-snug tracking-tight text-slate-900 md:text-3xl">
+            Our goal is simple: get you up and running with a better way to
+            price and quote jobs —{' '}
+            <span className="text-[#FF6B35]">
+              faster, easier and with less admin.
+            </span>
+          </p>
+          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-slate-600 md:text-base">
+            Once we&rsquo;re finished, you should be confident using QuoteCore+
+            on real jobs, with ongoing support there whenever you need it.
+          </p>
         </section>
 
         {/* ── Packages ── */}
@@ -203,6 +206,10 @@ export default function DoneForYouSetupPage() {
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
             Choose your setup
           </h2>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
+            You tell us how you work. We turn it into a ready-to-use QuoteCore+
+            system.
+          </p>
           <div className="mt-10 grid gap-6 lg:grid-cols-2">
             {packages.map((pkg) => (
               <div
@@ -224,7 +231,9 @@ export default function DoneForYouSetupPage() {
                   {pkg.tagline}
                 </p>
                 <h4 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Includes
+                  {pkg.highlight
+                    ? 'Everything in the $499 setup, plus:'
+                    : 'Includes'}
                 </h4>
                 <ul className="mt-3 space-y-2.5">
                   {pkg.items.map((item, i) => (
