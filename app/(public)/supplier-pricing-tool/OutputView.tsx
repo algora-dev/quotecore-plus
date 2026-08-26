@@ -6,19 +6,29 @@
 import type { MeasurementSet, SupplierProduct } from './types';
 import { GROUP_DEFS, groupPitchedTotal, entryPitched } from './types';
 import { fmt, priceOutput } from './pricing';
-import { SUPPLIER } from './supplier';
+import { useSupplierConfig } from './supplierConfig';
 import { OutputActions } from './OutputActions';
 
-export function OutputView({ measureSet, catalog, onBack, onRestart }: {
+export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tradeLabel, onBack, onRestart }: {
   measureSet: MeasurementSet;
   catalog: SupplierProduct[];
+  /** baseline-price catalog for the standard-vs-trade comparison */
+  baselineCatalog?: SupplierProduct[];
+  /** logged in (or trade public) - show trade totals */
+  showTrade?: boolean;
+  tradeLabel?: string | null;
   onBack: () => void;
   onRestart: () => void;
 }) {
   const output = priceOutput(measureSet, catalog);
+  // Same quantities priced at baseline for the trade-saving comparison.
+  const baselineOutput = baselineCatalog ? priceOutput(measureSet, baselineCatalog) : null;
+  const { config: supplierCfg } = useSupplierConfig();
   const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
-  const cur = SUPPLIER.currency;
+  const cur = supplierCfg.currency;
+  const supplierName = supplierCfg.name;
   const hasLabour = output.labour > 0;
+  const showTradeTotals = !!showTrade && !!baselineOutput && baselineOutput.material > output.material;
   const measureNote = measureSet.entryPath === 'plan'
     ? 'Plan measurements with pitch applied - metric (m / m\u00B2)'
     : 'Actual/site measurements - metric (m / m\u00B2)';
@@ -48,8 +58,8 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
       <div className="bg-white rounded-xl border border-black p-6 md:p-10 space-y-6">
         <div className="border-b-2 border-black pb-5">
           <h1 className="text-xl font-bold text-black">MATERIALS PRICING</h1>
-          <p className="mt-1 text-sm text-black">Generated {today} - {SUPPLIER.name}</p>
-          <p className="mt-1 text-xs text-black/60">{measureNote}</p>
+          <p className="mt-1 text-sm text-black">Generated {today} - {supplierName}</p>
+          <p className="mt-1 text-xs text-black/60">{measureNote}{tradeLabel ? ` - ${tradeLabel}` : ''}</p>
         </div>
 
         {byGroup.map(({ def, lines }) => (
@@ -110,10 +120,22 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
         ))}
 
         <div className="border-t-2 border-black pt-4 space-y-1.5">
+          {showTradeTotals && baselineOutput && (
+            <div className="flex items-center justify-between">
+              <span className="text-black font-medium">Standard materials price</span>
+              <span className="text-black/60">{cur}{fmt(baselineOutput.material)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between">
-            <span className="text-black font-bold">Materials total (baseline pricing)</span>
+            <span className="text-black font-bold">{showTradeTotals ? 'Your trade price' : 'Materials total (baseline pricing)'}</span>
             <span className="text-lg font-bold text-black">{cur}{fmt(output.material)}</span>
           </div>
+          {showTradeTotals && baselineOutput && (
+            <div className="flex items-center justify-between">
+              <span className="text-black font-medium">Your saving</span>
+              <span className="text-black font-semibold">{cur}{fmt(Math.max(0, baselineOutput.material - output.material))}</span>
+            </div>
+          )}
           {hasLabour && (
             <div className="flex items-center justify-between">
               <span className="text-black font-medium">Labour total</span>
@@ -131,7 +153,9 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
           Calc Qty includes pitch allowance (plan measurement x pitch factor). Purchase Qty = Calc Qty + waste.
         </p>
         <p className="text-xs text-black/50">
-          Standard materials price. Trade pricing is revealed once you&apos;re signed in (if your account has trade pricing with {SUPPLIER.name}).
+          {showTradeTotals
+            ? `Trade pricing applied for ${supplierName} account holders.`
+            : `Standard materials price. Trade pricing is revealed once you're signed in (if your account has trade pricing with ${supplierName}).`}
         </p>
       </div>
 

@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import type { MeasurementSet, SupplierProduct } from './types';
 import { priceOutput, fmt } from './pricing';
-import { SUPPLIER } from './supplier';
+import { useSupplierConfig } from './supplierConfig';
 import { GROUP_DEFS, groupPitchedTotal } from './types';
 
 /** Save the takeoff output as a draft quote handoff (areas + component groups
@@ -74,19 +74,18 @@ export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: Supp
   return `/free-quote-generator?${params.toString()}`;
 }
 
-function buildRequestBody(measureSet: MeasurementSet, catalog: SupplierProduct[], kind: 'quote' | 'order', customer: { name: string; email: string; jobRef: string }): string {
+function buildRequestBody(measureSet: MeasurementSet, catalog: SupplierProduct[], kind: 'quote' | 'order', customer: { name: string; email: string; jobRef: string }, supplierName: string, cur: string): string {
   const output = priceOutput(measureSet, catalog);
-  const cur = SUPPLIER.currency;
   const rows = output.lines.map(l =>
     `${l.name} (${l.code}) - ${fmt(l.purchaseQty, 1)} ${l.basisUnit} @ ${cur}${fmt(l.unitPrice)} = ${cur}${fmt(l.lineTotal)}`,
   ).join('\n');
   const subject = kind === 'quote'
-    ? `Quote request - ${customer.jobRef || 'new job'} (${SUPPLIER.name})`
-    : `Order request - ${customer.jobRef || 'new job'} (${SUPPLIER.name})`;
+    ? `Quote request - ${customer.jobRef || 'new job'} (${supplierName})`
+    : `Order request - ${customer.jobRef || 'new job'} (${supplierName})`;
   const body = [
     kind === 'quote'
-      ? `Hi ${SUPPLIER.name}, please provide a quote for the following job:`
-      : `Hi ${SUPPLIER.name}, I'd like to place an order request for the following:`,
+      ? `Hi ${supplierName}, please provide a quote for the following job:`
+      : `Hi ${supplierName}, I'd like to place an order request for the following:`,
     '',
     customer.jobRef ? `Job reference: ${customer.jobRef}` : '',
     customer.name ? `Name: ${customer.name}` : '',
@@ -99,7 +98,7 @@ function buildRequestBody(measureSet: MeasurementSet, catalog: SupplierProduct[]
     output.labour > 0 ? `Labour total: ${cur}${fmt(output.labour)}` : '',
     `Total: ${cur}${fmt(output.material + output.labour)}`,
     '',
-    `Generated with the ${SUPPLIER.name} pricing tool (powered by QuoteCore+).`,
+    `Generated with the ${supplierName} pricing tool (powered by QuoteCore+).`,
   ].filter(Boolean).join('\n');
   return `mailto:orders@roofline.example?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
@@ -114,6 +113,7 @@ export function OutputActions({ measureSet, catalog }: {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [jobRef, setJobRef] = useState('');
+  const { config: supplierCfg } = useSupplierConfig();
 
   const quoteUrl = buildConvertToQuoteUrl(measureSet, catalog);
   const [saving, setSaving] = useState(false);
@@ -189,7 +189,7 @@ export function OutputActions({ measureSet, catalog }: {
                 Cancel
               </button>
               <a
-                href={buildRequestBody(measureSet, catalog, modal, { name, email, jobRef })}
+                href={buildRequestBody(measureSet, catalog, modal, { name, email, jobRef }, supplierCfg.name, supplierCfg.currency)}
                 onClick={() => setModal(null)}
                 className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >

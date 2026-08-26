@@ -6,16 +6,18 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { EntryMode, HaveSubMode, MeasurementSet, Mode } from './types';
 import { emptyMeasurementSet, GROUP_DEFS } from './types';
+import type { SupplierProduct } from './types';
 import { StepProgress } from './StepShell';
 import { EntryModeStep } from './EntryModeStep';
 import { MeasureEntryStep } from './MeasureEntryStep';
 import { ProductStep } from './ProductStep';
 import { OutputView } from './OutputView';
 import { TakeoffStation, stageSlug } from './TakeoffStation';
-import { DEMO_CATALOG } from './supplier';
+import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
+import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 
 export function PortalFlow() {
   const [entryMode, setEntryMode] = useState<EntryMode | null>(null);
@@ -28,6 +30,17 @@ export function PortalFlow() {
 
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
   const productDefs = populated;
+
+  // Trade pricing (Phase 5): logged-in users see trade prices when the
+  // supplier config allows it; anonymous users always see baseline prices.
+  const { config } = useSupplierConfig();
+  const { user } = useFreeToolsAuth();
+  const showTrade = user != null || !config.tradeRequiresLogin;
+  const catalog = useMemo<SupplierProduct[]>(() =>
+    showTrade
+      ? config.products.map(p => ({ ...p, unitPrice: tradeUnitPrice(p, config) }))
+      : config.products,
+    [config, showTrade]);
 
   const steps = [
     { key: 'mode', label: 'How do you want to price this job?' },
@@ -139,7 +152,7 @@ export function PortalFlow() {
           <ProductStep
             def={productDefs[productStepIdx]}
             measureSet={measureSet}
-            catalog={DEMO_CATALOG}
+            catalog={catalog}
             setMeasureSet={setMeasureSet}
             mode={mode}
             onBack={() => setStep(step - 1)}
@@ -152,7 +165,10 @@ export function PortalFlow() {
         {step >= 3 && productStepIdx >= productDefs.length && (
           <OutputView
             measureSet={measureSet}
-            catalog={DEMO_CATALOG}
+            catalog={catalog}
+            baselineCatalog={config.products}
+            showTrade={showTrade}
+            tradeLabel={showTrade && config.discountPct > 0 ? `trade pricing (-${config.discountPct}%)` : null}
             onBack={() => setStep(step - 1)}
             onRestart={reset}
           />
