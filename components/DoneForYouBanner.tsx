@@ -11,7 +11,7 @@ export default function DoneForYouBanner() {
         <div className="max-w-2xl">
           <h2 className="text-xl font-bold tracking-tight text-slate-900 md:text-2xl">
             &ldquo;Oh great&hellip; another piece of software I have to set up.&rdquo;{' '}
-            <span className="text-[#BD4A1A]">You don&rsquo;t.</span>
+            <span className="text-[#FF6B35]">You don&rsquo;t.</span>
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
             Tell us how you&rsquo;re currently pricing and working now, and we&rsquo;ll
