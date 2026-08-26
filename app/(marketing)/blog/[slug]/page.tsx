@@ -53,6 +53,7 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'can-chatgpt-create-a-quote': () => import('./content/can-chatgpt-create-a-quote'),
   'price-a-job-from-measurements': () => import('./content/price-a-job-from-measurements'),
   'construction-estimating-spreadsheet-alternative': () => import('./content/construction-estimating-spreadsheet-alternative'),
+  'roofing-estimating-spreadsheet-vs-software': () => import('./content/roofing-estimating-spreadsheet-vs-software'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

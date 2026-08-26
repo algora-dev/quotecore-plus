@@ -90,6 +90,23 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     ],
   },
   {
+    slug: 'roofing-estimating-spreadsheet-vs-software',
+    category: 'roofing-estimating',
+    title: 'Still Quoting Roofing Jobs in Excel? When Spreadsheets Stop Saving Time',
+    description:
+      'Still pricing roofing jobs in Excel? See where spreadsheets work, where they start costing time, and how to switch without rebuilding your estimating system from scratch.',
+    date: '2026-08-26',
+    lastModified: '2026-08-26',
+    faqs: [
+      { question: 'Is Excel good enough for roofing estimates?', answer: 'It can be. If you quote a small number of straightforward jobs and your spreadsheet is accurate, easy to maintain and quick to use, there may be no reason to change. Dedicated estimating software becomes more useful when you are repeatedly copying jobs, re-entering measurements, maintaining complicated formulas or moving the same information between several systems.' },
+      { question: 'What can replace a roofing estimating spreadsheet?', answer: 'Roofing estimating software can replace the calculation and quoting parts of a spreadsheet while adding reusable materials, labour, waste rules, digital takeoffs, quote generation and other connected workflows. The right choice depends on how you currently estimate and which parts of your process actually need improving.' },
+      { question: 'Can I move my existing roofing pricing into QuoteCore+?', answer: 'Yes. Your existing material pricing, labour rates, waste allowances and estimating logic can be recreated as Smart Components. You can build these yourself or use the Done-For-You Setup if you would rather have QuoteCore+ configure the agreed setup for you.' },
+      { question: 'Do I need to stop using my spreadsheet immediately?', answer: 'No. Running both systems for several jobs is often the safest way to switch. Compare familiar jobs, check the calculations and move across once you are comfortable with the new workflow.' },
+      { question: 'Can someone set up roofing estimating software for me?', answer: "Yes. QuoteCore+'s Done-For-You Setup is designed for contractors who want a better estimating system but do not want to configure everything themselves. We first check whether QuoteCore+ suits your workflow, then use the pricing and information you provide to build the agreed setup and help you learn how to use it." },
+      { question: 'Does QuoteCore+ only work for roofing?', answer: 'No. QuoteCore+ was built for roofing first, but Smart Components can represent products, materials, services and labour across other measured trades where reusable pricing and calculation rules are useful.' },
+    ],
+  },
+  {
     slug: 'quotecore-plus-reviews',
     category: 'comparisons',
     title: 'QuoteCore+ Reviews: Is It Legit and Who Is It For?',
