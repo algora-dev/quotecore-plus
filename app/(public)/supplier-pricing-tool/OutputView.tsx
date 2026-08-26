@@ -56,11 +56,9 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
     pitched: entryPitched(measureSet, 'roofAreas', e.id),
   }));
 
-  const wasteLabel = (l: { wastePct: number; wasteFlat: number }) => {
-    const parts: string[] = [];
-    if (l.wastePct > 0) parts.push(`${fmt(l.wastePct, 1)}%`);
-    if (l.wasteFlat > 0) parts.push(`+${fmt(l.wasteFlat, 1)}`);
-    return parts.length > 0 ? parts.join(' + ') : '-';
+  const wasteLabel = (l: { wastePct: number; wasteFlat: number; wasteMode?: 'percent' | 'flat' }) => {
+    if (l.wasteMode === 'flat') return l.wasteFlat > 0 ? `+${fmt(l.wasteFlat, 1)}` : '-';
+    return l.wastePct > 0 ? `${fmt(l.wastePct, 1)}%` : '-';
   };
 
   return (

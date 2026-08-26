@@ -5,6 +5,12 @@
 import type { AppliedProduct, GroupKey, MeasurementSet, SupplierProduct } from './types';
 import { GROUP_DEFS, groupPitchedTotal, entryPitched, applyWaste } from './types';
 
+/** Only lineal products support flat (per-length) waste - area/count math is
+ *  identical to a percentage, so they get percent only (Shaun, 2026-08-26). */
+function wasteModeFor(p: SupplierProduct, ap: AppliedProduct): 'percent' | 'flat' {
+  return p.basis === 'lineal' ? (ap.wasteMode ?? 'percent') : 'percent';
+}
+
 export interface OutputLine {
   groupKey: GroupKey;
   groupLabel: string;
@@ -17,6 +23,7 @@ export interface OutputLine {
   calcQty: number;      // measured quantity (after override if set)
   wastePct: number;
   wasteFlat: number;
+  wasteMode: 'percent' | 'flat';
   purchaseQty: number;  // waste-adjusted
   unitPrice: number;    // effective (after override if honoured)
   lineTotal: number;    // material
@@ -56,7 +63,7 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
     }
 
     const calcQty = effectiveQty(ap, measured);
-    const purchaseQty = applyWaste(calcQty, ap.wastePct, ap.wasteFlat);
+    const purchaseQty = applyWaste({ ...ap, wasteMode: wasteModeFor(p, ap) }, calcQty);
     const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
     const lineTotal = Math.round(purchaseQty * unitPrice * 100) / 100;
     const labourTotal = Math.round(purchaseQty * (ap.labourRate || 0) * 100) / 100;
@@ -72,6 +79,7 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
       calcQty,
       wastePct: ap.wastePct,
       wasteFlat: ap.wasteFlat || 0,
+      wasteMode: wasteModeFor(p, ap),
       purchaseQty,
       unitPrice,
       lineTotal,

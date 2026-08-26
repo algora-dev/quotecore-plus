@@ -81,15 +81,21 @@ export interface AppliedProduct {
   wastePct: number;
   /** length-based waste: flat amount added to calc qty (same unit as the group) */
   wasteFlat: number;
+  /** which waste mode is active - only one applies at a time */
+  wasteMode: 'percent' | 'flat';
   labourRate: number;          // $ per unit (0 = none)
   qtyOverride: number | null;  // replaces measured qty when set
   priceOverride: number | null; // only honoured if product.priceEditable
 }
 
-/** Purchase qty after waste (pct and/or flat length) - single source of truth
- *  shared by the pricing engine and the live UI previews. */
-export function applyWaste(calcQty: number, wastePct: number, wasteFlat: number): number {
-  return calcQty * (1 + (wastePct || 0) / 100) + (wasteFlat || 0);
+/** Purchase qty after waste (percent OR flat length per wasteMode - never
+ *  both) - single source of truth shared by the pricing engine and the live
+ *  UI previews. */
+export function applyWaste(ap: { wastePct?: number; wasteFlat?: number; wasteMode?: 'percent' | 'flat' }, calcQty: number): number {
+  if (ap.wasteMode === 'flat') {
+    return calcQty + (ap.wasteFlat || 0);
+  }
+  return calcQty * (1 + (ap.wastePct || 0) / 100);
 }
 
 export interface MeasurementSet {

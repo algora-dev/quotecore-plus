@@ -65,6 +65,7 @@ export function ProductStep({
       entryId,
       wastePct: p.defaultWastePct,
       wasteFlat: 0,
+      wasteMode: 'percent',
       labourRate: p.defaultLabourRate,
       qtyOverride: null,
       priceOverride: null,
@@ -259,7 +260,7 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
   onUpdate: (patch: Partial<AppliedProduct>) => void;
 }) {
   const calcQty = ap.qtyOverride != null ? ap.qtyOverride : measured;
-  const purchaseQty = applyWaste(calcQty, ap.wastePct, ap.wasteFlat);
+  const purchaseQty = applyWaste(ap, calcQty);
   const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
   const mat = purchaseQty * unitPrice;
   const lab = purchaseQty * (ap.labourRate || 0);
@@ -278,23 +279,29 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
       </div>
       <label className="flex items-center gap-1.5 text-xs text-slate-500 flex-shrink-0">
         Waste
+        {p.basis === 'lineal' && (
+          <select
+            value={ap.wasteMode ?? 'percent'}
+            onChange={e => onUpdate({ wasteMode: e.target.value as 'percent' | 'flat' })}
+            className="rounded-lg border border-slate-300 px-1.5 py-1.5 text-xs text-slate-600 focus:border-blue-500 focus:outline-none cursor-pointer"
+            aria-label={`Waste type for ${p.name}`}
+          >
+            <option value="percent">%</option>
+            <option value="flat">+{def.unit}</option>
+          </select>
+        )}
         <input
-          type="number" min="0" max="100" step="0.5"
-          value={ap.wastePct}
-          onChange={e => onUpdate({ wastePct: parseFloat(e.target.value) || 0 })}
-          className={`${inputCls} w-14 text-center`}
-          aria-label={`Waste percent for ${p.name}`}
-        />
-        <span className="text-slate-400">%</span>
-        <input
-          type="number" min="0" step="0.1"
-          value={ap.wasteFlat || ''}
-          onChange={e => onUpdate({ wasteFlat: parseFloat(e.target.value) || 0 })}
+          type="number" min="0" step={ap.wasteMode === 'flat' ? 0.1 : 0.5}
+          value={ap.wasteMode === 'flat' ? (ap.wasteFlat || '') : ap.wastePct}
+          onChange={e => {
+            const v = parseFloat(e.target.value) || 0;
+            onUpdate(ap.wasteMode === 'flat' ? { wasteFlat: v } : { wastePct: v });
+          }}
           placeholder="0"
           className={`${inputCls} w-14 text-center`}
-          aria-label={`Extra waste length for ${p.name}`}
+          aria-label={`Waste value for ${p.name}`}
         />
-        <span className="text-slate-400">{def.unit}</span>
+        {p.basis !== 'lineal' && <span className="text-slate-400">%</span>}
       </label>
       <span className="text-sm font-semibold text-slate-900 whitespace-nowrap flex-shrink-0">
         {purchaseQty.toFixed(1)} {def.unit}
@@ -379,6 +386,7 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
 }) {
   const [wastePct, setWastePct] = useState(String(ap.wastePct));
   const [wasteFlat, setWasteFlat] = useState(ap.wasteFlat ? String(ap.wasteFlat) : '');
+  const [wasteMode, setWasteMode] = useState<'percent' | 'flat'>(ap.wasteMode ?? 'percent');
   const [labourRate, setLabourRate] = useState(String(ap.labourRate));
   const [qtyOverride, setQtyOverride] = useState(ap.qtyOverride != null ? String(ap.qtyOverride) : '');
   const [priceOverride, setPriceOverride] = useState(ap.priceOverride != null ? String(ap.priceOverride) : '');
@@ -389,15 +397,18 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
   const wasteLen = parseFloat(wasteFlat) || 0;
   const labour = parseFloat(labourRate) || 0;
 
-  const purchaseQty = applyWaste(qty ?? 0, waste, wasteLen);
+  const purchaseQty = wasteMode === 'flat'
+    ? (qty ?? 0) + wasteLen
+    : (qty ?? 0) * (1 + waste / 100);
   const unitPrice = price != null ? price : p.unitPrice;
   const mat = purchaseQty * unitPrice;
   const lab = purchaseQty * labour;
 
   function save() {
     onSave({
-      wastePct: waste,
-      wasteFlat: wasteLen,
+      wastePct: wasteMode === 'flat' ? 0 : waste,
+      wasteFlat: wasteMode === 'flat' ? wasteLen : 0,
+      wasteMode,
       labourRate: labour,
       qtyOverride: qty,
       priceOverride: price,
@@ -413,14 +424,39 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
         </div>
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-slate-600">Waste %</label>
-              <input type="number" min="0" max="100" step="0.5" value={wastePct} onChange={e => setWastePct(e.target.value)} className={`${inputCls} mt-0.5 w-full`} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600">Extra waste ({def.unit})</label>
-              <input type="number" min="0" step="0.1" value={wasteFlat} onChange={e => setWasteFlat(e.target.value)} placeholder="0" className={`${inputCls} mt-0.5 w-full`} />
-            </div>
+            {p.basis === 'lineal' ? (
+              <>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">Waste type</label>
+                  <select
+                    value={wasteMode}
+                    onChange={e => setWasteMode(e.target.value as 'percent' | 'flat')}
+                    className={`${inputCls} mt-0.5 w-full cursor-pointer`}
+                  >
+                    <option value="percent">Percentage</option>
+                    <option value="flat">Amount per length ({def.unit})</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600">
+                    {wasteMode === 'flat' ? `Extra waste (${def.unit})` : 'Waste %'}
+                  </label>
+                  <input
+                    type="number" min="0" step={wasteMode === 'flat' ? 0.1 : 0.5}
+                    value={wasteMode === 'flat' ? wasteFlat : wastePct}
+                    onChange={e => (wasteMode === 'flat' ? setWasteFlat(e.target.value) : setWastePct(e.target.value))}
+                    placeholder="0"
+                    className={`${inputCls} mt-0.5 w-full`}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-slate-600">Waste %</label>
+                <input type="number" min="0" max="100" step="0.5" value={wastePct} onChange={e => setWastePct(e.target.value)} className={`${inputCls} mt-0.5 w-full`} />
+                <p className="mt-0.5 text-[10px] text-slate-400">Area products use percentage waste only.</p>
+              </div>
+            )}
             <div>
               <label className="text-xs font-medium text-slate-600">Labour rate ($/{def.unit})</label>
               <input type="number" min="0" step="0.1" value={labourRate} onChange={e => setLabourRate(e.target.value)} className={`${inputCls} mt-0.5 w-full`} />
