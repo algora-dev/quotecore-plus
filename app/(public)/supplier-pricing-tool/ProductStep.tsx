@@ -21,6 +21,7 @@ export function ProductStep({
   onNext,
   stepNum,
   totalSteps,
+  hideNav = false,
 }: {
   def: GroupDef;
   measureSet: MeasurementSet;
@@ -31,6 +32,8 @@ export function ProductStep({
   onNext: () => void;
   stepNum: number;
   totalSteps: number;
+  /** Fast mode: hide the per-group Back/Next nav (parent renders its own) */
+  hideNav?: boolean;
 }) {
   const group = measureSet.groups[def.key];
   const [search, setSearch] = useState('');
@@ -210,18 +213,20 @@ export function ProductStep({
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2">
-        <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
-          Back
-        </button>
-        <button
-          onClick={onNext}
-          disabled={!hasAnyApplied}
-          className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
-        >
-          {stepNum === totalSteps ? 'Generate output' : 'Next'}
-        </button>
-      </div>
+      {!hideNav && (
+        <div className="flex items-center justify-between pt-2">
+          <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
+            Back
+          </button>
+          <button
+            onClick={onNext}
+            disabled={!hasAnyApplied}
+            className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
+          >
+            {stepNum === totalSteps ? 'Generate output' : 'Next'}
+          </button>
+        </div>
+      )}
 
       {editing && (
         <ProductEditorModal

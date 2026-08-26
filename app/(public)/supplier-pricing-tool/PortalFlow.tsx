@@ -27,15 +27,20 @@ export function PortalFlow() {
   const [measureSet, setMeasureSet] = useState<MeasurementSet>(emptyMeasurementSet());
   const [mode, setMode] = useState<Mode>('standard');
   const [step, setStep] = useState(1);
+  // Guide (one product group per page) vs Fast (all groups on one page).
+  // Mirrors the takeoff tool's Guide me / Fast mode switch.
+  const [flowSpeed, setFlowSpeed] = useState<'guide' | 'fast'>('guide');
 
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
   const productDefs = populated;
 
   // Trade pricing (Phase 5): logged-in users see trade prices when the
   // supplier config allows it; anonymous users always see baseline prices.
+  // When the login feature is OFF nobody can log in, so trade-requires-login
+  // can never be satisfied - treat trade pricing as public in that case.
   const { config } = useSupplierConfig();
   const { user } = useFreeToolsAuth();
-  const showTrade = user != null || !config.tradeRequiresLogin;
+  const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
   const catalog = useMemo<SupplierProduct[]>(() =>
     showTrade
       ? config.products.map(p => ({ ...p, unitPrice: tradeUnitPrice(p, config) }))
@@ -86,23 +91,43 @@ export function PortalFlow() {
         <StepProgress steps={steps} current={currentStep} />
       )}
       <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        {/* Persistent Standard/Advanced toggle - entry step onward, but NOT on the takeoff step */}
+        {/* Persistent Standard/Advanced + Guide/Fast toggles - entry step onward, but NOT on the takeoff step */}
         {step >= 2 && !(step === 2 && entryMode === 'measure') && (
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
-              <button
-                onClick={() => setMode('standard')}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${mode === 'standard' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
-              >
-                Standard
-              </button>
-              <button
-                onClick={() => setMode('advanced')}
-                title="Advanced adds per-entry products, labour, waste and overrides - your choice is remembered across steps"
-                className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${mode === 'advanced' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
-              >
-                Advanced
-              </button>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+                <button
+                  onClick={() => setMode('standard')}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${mode === 'standard' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
+                >
+                  Standard
+                </button>
+                <button
+                  onClick={() => setMode('advanced')}
+                  title="Advanced adds per-entry products, labour, waste and overrides - your choice is remembered across steps"
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${mode === 'advanced' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
+                >
+                  Advanced
+                </button>
+              </div>
+              {step >= 3 && (
+                <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+                  <button
+                    onClick={() => setFlowSpeed('guide')}
+                    title="One measurement group per page, step by step"
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${flowSpeed === 'guide' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
+                  >
+                    Guide me
+                  </button>
+                  <button
+                    onClick={() => setFlowSpeed('fast')}
+                    title="All measurement groups on one page"
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${flowSpeed === 'fast' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
+                  >
+                    Fast mode
+                  </button>
+                </div>
+              )}
             </div>
             <span className="text-xs text-slate-400">
               {mode === 'standard' ? 'Fast materials pricing' : 'Detailed job costing - per-entry products, labour, waste, overrides'}
@@ -148,7 +173,41 @@ export function PortalFlow() {
           />
         )}
 
-        {step >= 3 && productStepIdx < productDefs.length && (
+        {/* Product assignment: Fast mode = every populated group on one page;
+            Guide = one group per step. */}
+        {step >= 3 && flowSpeed === 'fast' && productStepIdx < productDefs.length && (
+          <div className="space-y-4">
+            {productDefs.map(def => (
+              <ProductStep
+                key={def.key}
+                def={def}
+                measureSet={measureSet}
+                catalog={catalog}
+                setMeasureSet={setMeasureSet}
+                mode={mode}
+                hideNav
+                onBack={() => setStep(2)}
+                onNext={() => {}}
+                stepNum={productDefs.indexOf(def) + 1}
+                totalSteps={productDefs.length}
+              />
+            ))}
+            <div className="flex items-center justify-between pt-2">
+              <button onClick={() => setStep(2)} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
+                Back
+              </button>
+              <button
+                onClick={() => setStep(3 + productDefs.length)}
+                disabled={catalog.length === 0 || !measureSet.appliedProducts.some(ap => productDefs.some(d => d.key === ap.groupKey))}
+                className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
+              >
+                Generate output
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step >= 3 && flowSpeed === 'guide' && productStepIdx < productDefs.length && (
           <ProductStep
             def={productDefs[productStepIdx]}
             measureSet={measureSet}

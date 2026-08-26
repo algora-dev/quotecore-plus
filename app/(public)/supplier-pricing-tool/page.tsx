@@ -3,6 +3,7 @@
 import { PortalFlow } from './PortalFlow';
 import { FreeToolsAuthProvider, useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { useSupplierConfig } from './supplierConfig';
+import Link from 'next/link';
 
 // Supplier Pricing Tool demo - standalone demo flow living in the main app
 // under /supplier-pricing-tool. NOT linked from public nav until Shaun approves.
@@ -25,7 +26,12 @@ function Header() {
         </div>
         <div className="flex items-center gap-3">
           {config.poweredBy && <span className="hidden md:inline text-xs text-slate-400">Powered by QuoteCore+</span>}
-          {user ? (
+          {config.features.adminPanel && (
+            <Link href="/supplier-pricing-tool/admin" className="hidden md:inline text-xs text-slate-400 hover:text-slate-600 transition">
+              Admin
+            </Link>
+          )}
+          {config.features.login && (user ? (
             <button
               onClick={() => void signOut()}
               className="rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition"
@@ -40,7 +46,7 @@ function Header() {
               <span className="hidden sm:inline">Log in for trade pricing</span>
               <span className="sm:hidden">Log in</span>
             </button>
-          )}
+          ))}
         </div>
       </div>
     </header>

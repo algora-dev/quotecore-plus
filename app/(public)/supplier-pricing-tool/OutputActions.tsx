@@ -4,10 +4,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { MeasurementSet, SupplierProduct } from './types';
 import { priceOutput, fmt } from './pricing';
-import { useSupplierConfig } from './supplierConfig';
+import { useSupplierConfig, addLead } from './supplierConfig';
 import { GROUP_DEFS, groupPitchedTotal } from './types';
 
 /** Save the takeoff output as a draft quote handoff (areas + component groups
@@ -116,6 +116,25 @@ export function OutputActions({ measureSet, catalog }: {
   const { config: supplierCfg } = useSupplierConfig();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  // Email capture (lead-gen for the supplier): one-time modal on the output.
+  const [leadOpen, setLeadOpen] = useState(false);
+  const [leadDone, setLeadDone] = useState(false);
+  const [leadName, setLeadName] = useState('');
+  const [leadEmail, setLeadEmail] = useState('');
+
+  useEffect(() => {
+    if (supplierCfg.features.emailCapture && !leadDone) {
+      const t = setTimeout(() => setLeadOpen(true), 900);
+      return () => clearTimeout(t);
+    }
+  }, [supplierCfg.features.emailCapture, leadDone]);
+
+  function captureLead() {
+    if (!leadEmail.trim()) return;
+    addLead({ email: leadEmail.trim(), name: leadName.trim() });
+    setLeadDone(true);
+    setLeadOpen(false);
+  }
 
   const quoteUrl = buildConvertToQuoteUrl(measureSet, catalog);
 
@@ -150,14 +169,16 @@ export function OutputActions({ measureSet, catalog }: {
           desc="Place an order request for these products and quantities."
           onClick={() => setModal('order')}
         />
-        <a
-          href={quoteUrl}
-          className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
-        >
-          <div className="text-sm font-semibold text-slate-900">Convert to customer quote</div>
-          <div className="mt-0.5 text-xs text-slate-500">Editable quote document with your markup - opens the quote generator.</div>
-        </a>
-        {supplierCfg.poweredBy && (
+        {supplierCfg.features.convertToQuote && (
+          <a
+            href={quoteUrl}
+            className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
+          >
+            <div className="text-sm font-semibold text-slate-900">Convert to customer quote</div>
+            <div className="mt-0.5 text-xs text-slate-500">Editable quote document with your markup - opens the quote generator.</div>
+          </a>
+        )}
+        {supplierCfg.poweredBy && supplierCfg.features.quoteCoreConnect && (
           <ActionTile
             title="Continue in QuoteCore+"
             desc="Save this takeoff as a draft quote - measurements and pitches carry into the app."
@@ -170,6 +191,42 @@ export function OutputActions({ measureSet, catalog }: {
         <p className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
           Could not save right now. Check your connection and try again.
         </p>
+      )}
+
+      {/* Email-capture modal: supplier lead-gen ("sign up, get 5% off") */}
+      {leadOpen && !leadDone && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl bg-white border border-slate-200 shadow-xl">
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h3 className="text-sm font-semibold text-slate-900">Get 5% off this job</h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Pop your email in and {supplierCfg.name} will send your saving code plus a copy of this pricing.
+              </p>
+            </div>
+            <div className="p-5 space-y-3">
+              <div>
+                <label className="text-xs font-medium text-slate-600">Your name</label>
+                <input type="text" value={leadName} onChange={e => setLeadName(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="Sam Taylor" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Email</label>
+                <input type="email" value={leadEmail} onChange={e => setLeadEmail(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="sam@example.com" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4">
+              <button onClick={() => setLeadOpen(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">
+                No thanks
+              </button>
+              <button
+                onClick={captureLead}
+                disabled={!leadEmail.trim()}
+                className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+              >
+                Get my 5% off
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {modal && (

@@ -11,6 +11,19 @@ import { useEffect, useState } from 'react';
 import type { SupplierProduct } from './types';
 import { DEMO_CATALOG, SUPPLIER } from './supplier';
 
+export interface SupplierFeatures {
+  /** trade-customer login (Google/email/magic link) + trade pricing gate */
+  login: boolean;
+  /** supplier admin panel at /admin */
+  adminPanel: boolean;
+  /** "Continue in QuoteCore+" draft-quote handoff (powered-by only) */
+  quoteCoreConnect: boolean;
+  /** convert output to customer quote via the quote generator */
+  convertToQuote: boolean;
+  /** email-capture modal at the output (lead capture for the supplier) */
+  emailCapture: boolean;
+}
+
 export interface SupplierConfig {
   name: string;
   tagline: string;
@@ -21,6 +34,8 @@ export interface SupplierConfig {
   discountPct: number;
   /** trade pricing only shown to logged-in users */
   tradeRequiresLogin: boolean;
+  /** feature blocks - flipping one off never breaks the others */
+  features: SupplierFeatures;
   products: SupplierProduct[];
 }
 
@@ -34,6 +49,13 @@ export function defaultConfig(): SupplierConfig {
     poweredBy: SUPPLIER.mode === 'powered_by',
     discountPct: 12,
     tradeRequiresLogin: true,
+    features: {
+      login: true,
+      adminPanel: true,
+      quoteCoreConnect: true,
+      convertToQuote: true,
+      emailCapture: true,
+    },
     products: DEMO_CATALOG,
   };
 }
@@ -48,6 +70,8 @@ export function readStoredConfig(): SupplierConfig | null {
     return {
       ...base,
       ...parsed,
+      // merge feature flags so older stored configs pick up new flags
+      features: { ...base.features, ...(parsed.features ?? {}) },
       products: Array.isArray(parsed.products) && parsed.products.length > 0
         ? parsed.products
         : base.products,
@@ -71,6 +95,37 @@ export function resetStoredConfig() {
   try {
     window.localStorage.removeItem(CONFIG_STORAGE_KEY);
     window.dispatchEvent(new CustomEvent('qc-spt-config-changed'));
+  } catch { /* ignore */ }
+}
+
+/** Captured leads (email-capture modal). Demo-grade storage: localStorage,
+ *  surfaced in the admin panel. Production moves these to the supplier DB. */
+const LEADS_KEY = 'qc-spt…leads-v1';
+
+export interface CapturedLead {
+  email: string;
+  name: string;
+  capturedAt: string;
+}
+
+export function readLeads(): CapturedLead[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(LEADS_KEY);
+    return raw ? (JSON.parse(raw) as CapturedLead[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function addLead(lead: Omit<CapturedLead, 'capturedAt'>) {
+  if (typeof window === 'undefined') return;
+  try {
+    const leads = readLeads();
+    if (leads.some(l => l.email.toLowerCase() === lead.email.toLowerCase())) return;
+    leads.unshift({ ...lead, capturedAt: new Date().toISOString() });
+    window.localStorage.setItem(LEADS_KEY, JSON.stringify(leads));
+    window.dispatchEvent(new CustomEvent('qc-spt-leads-changed'));
   } catch { /* ignore */ }
 }
 

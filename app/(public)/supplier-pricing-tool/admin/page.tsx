@@ -12,7 +12,7 @@ import type { SupplierProduct } from '../types';
 import { GROUP_DEFS } from '../types';
 import {
   defaultConfig, readStoredConfig, resetStoredConfig, tradeUnitPrice,
-  useSupplierConfig, writeStoredConfig, type SupplierConfig,
+  useSupplierConfig, writeStoredConfig, readLeads, type SupplierConfig,
 } from '../supplierConfig';
 
 const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
@@ -23,10 +23,15 @@ export default function SupplierAdminPage() {
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [leads, setLeads] = useState<ReturnType<typeof readLeads>>([]);
 
   useEffect(() => {
     setCfg(readStoredConfig() ?? defaultConfig());
     setLoaded(true);
+    const loadLeads = () => setLeads(readLeads());
+    loadLeads();
+    window.addEventListener('qc-spt-leads-changed', loadLeads);
+    return () => window.removeEventListener('qc-spt-leads-changed', loadLeads);
   }, []);
 
   function patch(p: Partial<SupplierConfig>) {
@@ -37,6 +42,12 @@ export default function SupplierAdminPage() {
 
   function patchProduct(id: string, p: Partial<SupplierProduct>) {
     setCfg(c => ({ ...c, products: c.products.map(x => (x.id === id ? { ...x, ...p } : x)) }));
+    setDirty(true);
+    setSaved(false);
+  }
+
+  function patchFeature(key: keyof SupplierConfig['features'], value: boolean) {
+    setCfg(c => ({ ...c, features: { ...c.features, [key]: value } }));
     setDirty(true);
     setSaved(false);
   }
@@ -158,6 +169,55 @@ export default function SupplierAdminPage() {
           </div>
         </section>
 
+        {/* Feature blocks */}
+        <section className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-3">
+          <h2 className="text-sm font-semibold text-slate-900">Features</h2>
+          <p className="text-xs text-slate-400 -mt-1">
+            Toggle what this deployment includes. Turning a feature off never breaks the rest of the tool.
+          </p>
+          <div className="grid gap-2 md:grid-cols-2">
+            <FeatureToggle label="Customer login" desc="Google / email / magic-link. Unlocks per-customer trade pricing." checked={cfg.features.login} onChange={v => patchFeature('login', v)} />
+            <FeatureToggle label="Supplier admin panel" desc="This page - branding, pricing, catalog management." checked={cfg.features.adminPanel} onChange={v => patchFeature('adminPanel', v)} />
+            <FeatureToggle label="Convert to customer quote" desc="Quote-generator handoff from the final output." checked={cfg.features.convertToQuote} onChange={v => patchFeature('convertToQuote', v)} />
+            <FeatureToggle label="Continue in QuoteCore+" desc="Powered-by draft-quote handoff into the app." checked={cfg.features.quoteCoreConnect} onChange={v => patchFeature('quoteCoreConnect', v)} />
+            <FeatureToggle label="Email capture" desc="Get 5% off pop-up on the output - collects leads." checked={cfg.features.emailCapture} onChange={v => patchFeature('emailCapture', v)} />
+          </div>
+        </section>
+
+        {/* Captured leads (email capture) */}
+        <section className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-3">
+          <h2 className="text-sm font-semibold text-slate-900">Captured leads ({leads.length})</h2>
+          <p className="text-xs text-slate-400 -mt-1">
+            Emails collected from the output pop-up (this browser, demo storage). Production tracks these server-side per supplier.
+          </p>
+          {leads.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-3">
+              No leads yet - complete a pricing to the output and the email pop-up appears.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                    <th className="py-1.5 pr-2 font-medium">Name</th>
+                    <th className="py-1.5 pr-2 font-medium">Email</th>
+                    <th className="py-1.5 font-medium">Captured</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.map(l => (
+                    <tr key={l.email} className="border-b border-slate-100">
+                      <td className="py-1.5 pr-2 text-slate-900">{l.name || '-'}</td>
+                      <td className="py-1.5 pr-2 text-slate-600">{l.email}</td>
+                      <td className="py-1.5 text-xs text-slate-400">{new Date(l.capturedAt).toLocaleString('en-NZ')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
         <div className="flex items-center justify-between">
           <button onClick={resetAll} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
             Reset to defaults
@@ -175,5 +235,17 @@ export default function SupplierAdminPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function FeatureToggle({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-3 cursor-pointer transition ${checked ? 'border-slate-900 bg-slate-50' : 'border-slate-200 bg-white hover:border-blue-200'}`}>
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="mt-0.5 h-4 w-4 accent-slate-900" />
+      <span>
+        <span className="block text-sm font-medium text-slate-900">{label}</span>
+        <span className="block mt-0.5 text-xs text-slate-500">{desc}</span>
+      </span>
+    </label>
   );
 }
