@@ -105,30 +105,32 @@ export function MeasureEntryStep({
         </>
       ) : (
         GROUP_DEFS.map(def => (
-          <div key={def.key} className="space-y-4">
-            <GroupCard
-              def={def}
-              measureSet={measureSet}
-              onChange={(patch) => setMeasureSet({
-                ...measureSet,
-                groups: { ...measureSet.groups, [def.key]: { ...measureSet.groups[def.key], ...patch } },
-              })}
-            />
+          <GroupCard
+            key={def.key}
+            def={def}
+            measureSet={measureSet}
+            onChange={(patch) => setMeasureSet({
+              ...measureSet,
+              groups: { ...measureSet.groups, [def.key]: { ...measureSet.groups[def.key], ...patch } },
+            })}
+          >
             {!fromTakeoff && catalog && measureSet.groups[def.key].entries.length > 0 && (
-              <ProductStep
-                def={def}
-                measureSet={measureSet}
-                catalog={catalog}
-                setMeasureSet={setMeasureSet}
-                mode={mode}
-                hideNav
-                onBack={onBack}
-                onNext={onNext}
-                stepNum={GROUP_DEFS.indexOf(def) + 1}
-                totalSteps={GROUP_DEFS.length}
-              />
+              <div className="border-t border-slate-100 p-4">
+                <ProductStep
+                  def={def}
+                  measureSet={measureSet}
+                  catalog={catalog}
+                  setMeasureSet={setMeasureSet}
+                  mode={mode}
+                  hideNav
+                  onBack={onBack}
+                  onNext={onNext}
+                  stepNum={GROUP_DEFS.indexOf(def) + 1}
+                  totalSteps={GROUP_DEFS.length}
+                />
+              </div>
             )}
-          </div>
+          </GroupCard>
         ))
       )}
 
@@ -167,12 +169,14 @@ export function MeasureEntryStep({
   );
 }
 
-export function GroupCard({ def, measureSet, onChange, forceOpen = false }: {
+export function GroupCard({ def, measureSet, onChange, forceOpen = false, children }: {
   def: typeof GROUP_DEFS[number];
   measureSet: MeasurementSet;
   onChange: (patch: Partial<MeasurementSet['groups'][GroupKey]>) => void;
   /** Guide mode: card is always expanded (single group per page) */
   forceOpen?: boolean;
+  /** Fast mode: product assignment block - collapses WITH the group card */
+  children?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const expanded = forceOpen || open;
@@ -209,7 +213,8 @@ export function GroupCard({ def, measureSet, onChange, forceOpen = false }: {
       )}
 
       {(expanded || forceOpen) && (
-        <div className="border-t border-slate-100 p-4 space-y-3">
+        <>
+          <div className="border-t border-slate-100 p-4 space-y-3">
           {isPlan && (
             <div className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50/50 border border-slate-200 px-3 py-2">
               <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600">
@@ -288,7 +293,9 @@ export function GroupCard({ def, measureSet, onChange, forceOpen = false }: {
           )}
 
           <AddEntryForm def={def} converts={converts} onAdd={(entry) => onChange({ entries: [...group.entries, { ...entry, label: entry.label || `${def.singular} ${group.entries.length + 1}` }] })} />
-        </div>
+          </div>
+          {children}
+        </>
       )}
     </div>
   );
