@@ -55,6 +55,7 @@ function QuoteBuilder() {
   const [showGlobal, setShowGlobal] = useState(true);
 
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [savingToApp, setSavingToApp] = useState(false);
 
   // Read the carried lines from the tool output handoff
   useEffect(() => {
@@ -92,6 +93,47 @@ function QuoteBuilder() {
   const tax = taxEnabled ? globalAdjusted * (taxRate / 100) : 0;
   const total = globalAdjusted + tax;
 
+  // Save the finished quote into QuoteCore+ as a draft - persists through
+  // the signup flow (same contract as the other free tools).
+  async function saveToApp() {
+    setSavingToApp(true);
+    try {
+      const payload = {
+        companyName: fromName || 'Quote',
+        fromName,
+        fromPhone,
+        fromEmail,
+        clientName,
+        clientAddress,
+        documentNumber: quoteNumber,
+        documentDate: quoteDate,
+        validDays,
+        notes,
+        logo,
+        currency: '$',
+        taxRate: taxEnabled ? taxRate : 0,
+        taxName,
+        lines: lines.map(l => ({
+          description: l.description,
+          qty: l.qty,
+          unit: l.unit,
+          rate: Math.round(lineAmount(l) / Math.max(l.qty, 0.0001) * 100) / 100,
+        })),
+      };
+      const res = await fetch('/api/free-tools/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ draftType: 'document', payload, email: fromEmail || undefined }),
+      });
+      if (!res.ok) throw new Error('save failed');
+      const { id } = await res.json() as { id: string };
+      window.location.href = `/signup?ref=supplier-pricing-tool&draft=${id}`;
+    } catch {
+      setSavingToApp(false);
+      alert('Could not save right now. Please try again.');
+    }
+  }
+
   function onLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -100,7 +142,7 @@ function QuoteBuilder() {
     r.readAsDataURL(f);
   }
 
-  if (!ready) return <main className="min-h-screen flex items-center justify-center text-sm text-slate-400">Loading quote...</main>;
+  if (!ready) return <main className="spt-scope min-h-screen flex items-center justify-center text-sm text-slate-400">Loading quote...</main>;
 
   const Toggle = ({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) => (
     <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
@@ -110,7 +152,7 @@ function QuoteBuilder() {
   );
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="spt-scope min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white print:hidden">
         <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between gap-2">
           <div className="text-sm font-semibold text-slate-900">Customer quote</div>
@@ -120,6 +162,13 @@ function QuoteBuilder() {
             </button>
             <button onClick={() => window.print()} className="rounded-full bg-black px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition">
               Download / Print PDF
+            </button>
+            <button
+              onClick={() => void saveToApp()}
+              disabled={savingToApp}
+              className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition disabled:opacity-40"
+            >
+              {savingToApp ? 'Saving...' : 'Save to QuoteCore+'}
             </button>
             <Link href="/supplier-pricing-tool" className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition">
               Back to tool
@@ -166,7 +215,22 @@ function QuoteBuilder() {
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Brand colour</label>
-                <input type="color" value={accent} onChange={e => setAccent(e.target.value)} className="mt-0.5 h-9 w-14 rounded border border-slate-300 cursor-pointer" />
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  {['#2563EB', '#0F766E', '#7C3AED', '#DC2626', '#EA580C', '#0F172A'].map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setAccent(c)}
+                      aria-label={`Brand colour ${c}`}
+                      className={`h-7 w-7 rounded-full border-2 transition cursor-pointer ${accent === c ? 'border-slate-900 scale-110' : 'border-transparent hover:border-slate-300'}`}
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                  <label className="ml-1 flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
+                    <input type="color" value={accent} onChange={e => setAccent(e.target.value)} className="h-7 w-7 rounded-md border border-slate-300 cursor-pointer p-0.5" aria-label="Custom brand colour" />
+                    Custom
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -279,15 +343,25 @@ function QuoteBuilder() {
             </thead>
             <tbody>
               {lines.map((l, i) => (
-                <tr key={i} className="border-b border-slate-100">
+                <tr key={i} className="border-b border-slate-100 group">
                   {showLineText && (
                     <td className="py-2.5 pr-2">
-                      <input
-                        type="text" value={l.description}
-                        onChange={e => updateLine(i, { description: e.target.value })}
-                        className="w-full bg-transparent border-none outline-none text-slate-900 focus:bg-slate-50 rounded px-1 -ml-1"
-                        aria-label={`Description line ${i + 1}`}
-                      />
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text" value={l.description}
+                          onChange={e => updateLine(i, { description: e.target.value })}
+                          className="flex-1 min-w-0 bg-transparent border-none outline-none text-slate-900 focus:bg-slate-50 rounded px-1 -ml-1"
+                          aria-label={`Description line ${i + 1}`}
+                          placeholder="Item description"
+                        />
+                        <button
+                          onClick={() => setLines(ls => ls.filter((_, idx) => idx !== i))}
+                          className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition print:hidden"
+                          aria-label={`Delete line ${i + 1}`}
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
                     </td>
                   )}
                   {showQty && (
@@ -332,10 +406,27 @@ function QuoteBuilder() {
             </tbody>
           </table>
 
+          <div className="mt-2 print:hidden">
+            <button
+              onClick={() => setLines(ls => [...ls, { description: '', qty: 1, unit: 'ea', rate: 0, markupPct: 0 }])}
+              className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition cursor-pointer"
+            >
+              + Add line
+            </button>
+            {lines.length > 0 && (
+              <span className="ml-2 text-[11px] text-slate-400">hover a row and click ✕ to delete it</span>
+            )}
+          </div>
+
           <div className="mt-5 ml-auto max-w-xs space-y-1.5 text-sm">
             {showLinePrice && (
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal</span><span>${fmtMoney(subtotal)}</span>
+              </div>
+            )}
+            {!showLinePrice && lines.length > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Subtotal ({lines.length} items)</span><span>${fmtMoney(subtotal)}</span>
               </div>
             )}
             {showGlobal && gp > 0 && (

@@ -55,7 +55,7 @@ function Header() {
 
 function ToolShell() {
   return (
-    <main className="min-h-screen">
+    <main className="spt-scope min-h-screen">
       <Header />
       <PortalFlow />
     </main>

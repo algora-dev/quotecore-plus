@@ -599,7 +599,12 @@ a,
   outline: none;
 }
 
-/* Help drawer: full width on mobile, desktop width from inline style */
+/* Supplier pricing tool scope: blue focus ring instead of the global orange
+   baseline (covers every input incl. ones without explicit focus classes). */
+.spt-scope :focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.45);
+  outline-offset: 2px;
+}
 @media (max-width: 767px) {
   .help-drawer-panel {
     width: 100vw !important;
