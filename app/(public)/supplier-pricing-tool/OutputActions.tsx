@@ -124,7 +124,8 @@ export function OutputActions({ measureSet, catalog }: {
 
   useEffect(() => {
     if (supplierCfg.features.emailCapture && !leadDone) {
-      const t = setTimeout(() => setLeadOpen(true), 900);
+      // Let the user actually read their output before pitching (12s)
+      const t = setTimeout(() => setLeadOpen(true), 12000);
       return () => clearTimeout(t);
     }
   }, [supplierCfg.features.emailCapture, leadDone]);
@@ -195,34 +196,43 @@ export function OutputActions({ measureSet, catalog }: {
 
       {/* Email-capture modal: supplier lead-gen ("sign up, get 5% off") */}
       {leadOpen && !leadDone && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-xl bg-white border border-slate-200 shadow-xl">
-            <div className="border-b border-slate-100 px-5 py-4">
-              <h3 className="text-sm font-semibold text-slate-900">Get 5% off this job</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Pop your email in and {supplierCfg.name} will send your saving code plus a copy of this pricing.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden">
+            <div className="relative bg-slate-900 px-6 py-7 text-center">
+              <button onClick={() => setLeadOpen(false)} className="absolute top-3 right-3 text-slate-400 hover:text-white transition" aria-label="Close">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-600/20 ring-1 ring-blue-500/40">
+                <svg className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="mt-3 text-lg font-bold text-white">Get 5% off this job</h3>
+              <p className="mt-1 text-xs text-slate-400">
+                Join {supplierCfg.name} pricing list - we&apos;ll email your saving code plus a copy of this pricing.
               </p>
             </div>
             <div className="p-5 space-y-3">
               <div>
                 <label className="text-xs font-medium text-slate-600">Your name</label>
-                <input type="text" value={leadName} onChange={e => setLeadName(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="Sam Taylor" />
+                <input type="text" value={leadName} onChange={e => setLeadName(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="Sam Taylor" />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Email</label>
-                <input type="email" value={leadEmail} onChange={e => setLeadEmail(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" placeholder="sam@example.com" />
+                <input type="email" value={leadEmail} onChange={e => setLeadEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') captureLead(); }} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="sam@example.com" />
               </div>
-            </div>
-            <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4">
-              <button onClick={() => setLeadOpen(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">
-                No thanks
-              </button>
               <button
                 onClick={captureLead}
                 disabled={!leadEmail.trim()}
-                className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-40"
+                className="w-full rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] disabled:opacity-40"
               >
-                Get my 5% off
+                Send my 5% saving code
+              </button>
+              <p className="text-center text-[11px] text-slate-400">No spam. One email with your code, that&apos;s it.</p>
+            </div>
+            <div className="border-t border-slate-100 px-5 py-3 text-center">
+              <button onClick={() => setLeadOpen(false)} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition">
+                No thanks, I&apos;ll pay full price
               </button>
             </div>
           </div>

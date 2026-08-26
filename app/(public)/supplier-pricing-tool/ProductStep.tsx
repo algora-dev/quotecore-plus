@@ -39,6 +39,9 @@ export function ProductStep({
   const [search, setSearch] = useState('');
   const [pickerFor, setPickerFor] = useState<string | null>(null); // null = group, entryId = per-entry
   const [editing, setEditing] = useState<AppliedProduct | null>(null);
+  // Embedded (merged flow): entry rows live in the GroupCard above - the
+  // summary card would duplicate them, so it only renders standalone.
+  const showSummary = !hideNav;
 
   const valid = useMemo(
     () => catalog.filter(p => p.groups.includes(def.key)),
@@ -86,28 +89,31 @@ export function ProductStep({
 
   return (
     <div className="space-y-4">
-      {/* Group summary */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">{def.label}</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'} - measured total{' '}
-              <span className="font-semibold text-slate-900">{total.toFixed(1)} {def.unit}</span>
-            </p>
-          </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500">
-            {stepNum} of {totalSteps}
-          </span>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {group.entries.map(e => (
-            <span key={e.id} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
-              {e.label}: {(e.value * (e.quantity || 1)).toFixed(0)} {def.unit}
+      {/* Group summary - standalone mode only (embedded mode shows the
+          live entry rows in the GroupCard above instead) */}
+      {showSummary && (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">{def.label}</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                {group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'} - measured total{' '}
+                <span className="font-semibold text-slate-900">{total.toFixed(1)} {def.unit}</span>
+              </p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-500">
+              {stepNum} of {totalSteps}
             </span>
-          ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {group.entries.map(e => (
+              <span key={e.id} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
+                {e.label}: {(e.value * (e.quantity || 1)).toFixed(0)} {def.unit}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Standard: group-level applications */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6 space-y-2">

@@ -19,17 +19,58 @@ import { TakeoffStation, stageSlug } from './TakeoffStation';
 import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 
+/** Session persistence: the whole in-progress flow survives Back navigation,
+ *  refreshes and the output -> back loop. sessionStorage (not localStorage)
+ *  so genuinely leaving (closing the tab) starts fresh. */
+const FLOW_KEY = '***';
+
+interface PersistedFlow {
+  entryMode: EntryMode | null;
+  haveSubMode: HaveSubMode | null;
+  measureSet: MeasurementSet;
+  mode: Mode;
+  flowSpeed: 'guide' | 'fast';
+  step: number;
+}
+
+function readPersisted(): PersistedFlow | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(FLOW_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as PersistedFlow;
+    if (!p?.measureSet?.groups || typeof p.step !== 'number') return null;
+    return p;
+  } catch {
+    return null;
+  }
+}
+
 export function PortalFlow() {
-  const [entryMode, setEntryMode] = useState<EntryMode | null>(null);
-  const [haveSubMode, setHaveSubMode] = useState<HaveSubMode | null>(null);
+  const restored = readPersisted();
+  const [entryMode, setEntryMode] = useState<EntryMode | null>(restored?.entryMode ?? null);
+  const [haveSubMode, setHaveSubMode] = useState<HaveSubMode | null>(restored?.haveSubMode ?? null);
   const [planFile, setPlanFile] = useState<File | null>(null);
   const [planUrl, setPlanUrl] = useState<string | null>(null);
-  const [measureSet, setMeasureSet] = useState<MeasurementSet>(emptyMeasurementSet());
-  const [mode, setMode] = useState<Mode>('standard');
-  const [step, setStep] = useState(1);
+  const [measureSet, setMeasureSet] = useState<MeasurementSet>(restored?.measureSet ?? emptyMeasurementSet());
+  const [mode, setMode] = useState<Mode>(restored?.mode ?? 'standard');
+  const [step, setStep] = useState(() => {
+    // A restored takeoff flow at the station step has no plan file to
+    // re-render - drop to start (measurements survive for the manual edit).
+    if (restored && restored.entryMode === 'measure' && restored.step === 2) return 1;
+    return restored?.step ?? 1;
+  });
   // Guide (one product group per page) vs Fast (all groups on one page).
   // Mirrors the takeoff tool's Guide me / Fast mode switch.
-  const [flowSpeed, setFlowSpeed] = useState<'guide' | 'fast'>('guide');
+  const [flowSpeed, setFlowSpeed] = useState<'guide' | 'fast'>(restored?.flowSpeed ?? 'guide');
+
+  // Persist after every change so Back/refresh/output-return never loses work
+  useEffect(() => {
+    try {
+      const p: PersistedFlow = { entryMode, haveSubMode, measureSet, mode, flowSpeed, step };
+      window.sessionStorage.setItem(FLOW_KEY, JSON.stringify(p));
+    } catch { /* ignore quota */ }
+  }, [entryMode, haveSubMode, measureSet, mode, flowSpeed, step]);
 
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
   const productDefs = populated;
@@ -81,6 +122,7 @@ export function PortalFlow() {
     setPlanUrl(null);
     setMeasureSet(emptyMeasurementSet());
     setStep(1);
+    try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
   }
 
   function handleTakeoffFinish(set: MeasurementSet) {
