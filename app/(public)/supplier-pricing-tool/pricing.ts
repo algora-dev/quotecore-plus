@@ -3,7 +3,7 @@
 // waste %, labour, qty override, supplier-permitted price override.
 
 import type { AppliedProduct, GroupKey, MeasurementSet, SupplierProduct } from './types';
-import { GROUP_DEFS, groupTotal } from './types';
+import { GROUP_DEFS, groupPitchedTotal, entryPitched } from './types';
 
 export interface OutputLine {
   groupKey: GroupKey;
@@ -46,11 +46,11 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
     let measured: number;
     let entryLabel: string | null = null;
     if (ap.entryId == null) {
-      measured = groupTotal(set, ap.groupKey);
+      measured = groupPitchedTotal(set, ap.groupKey);
     } else {
       const entry = group.entries.find(e => e.id === ap.entryId);
       if (!entry) continue; // entry was deleted - skip
-      measured = entry.value;
+      measured = entryPitched(set, ap.groupKey, ap.entryId);
       entryLabel = entry.label;
     }
 

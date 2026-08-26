@@ -2,6 +2,8 @@
 // Phase 2: Standard + Advanced mode. AppliedProduct carries all settings;
 // entryId=null means whole-group (Standard), specific entryId = per-entry.
 
+import { GROUP_PITCH_RULES, pitchFactor } from './pitch';
+
 export type MeasurementBasis = 'area' | 'lineal' | 'count';
 
 /** Which measurement group a product can be applied to. */
@@ -49,13 +51,17 @@ export interface SupplierProduct {
 export interface MeasureEntry {
   id: string;
   label: string;
-  /** area (m2), length (m) or count */
+  /** area (m2), length (m) or count - plan value when entryPath === 'plan' */
   value: number;
+  /** optional per-entry pitch override (plan mode) */
+  pitchDegrees?: number;
 }
 
 export interface MeasurementGroup {
   key: GroupKey;
   entries: MeasureEntry[];
+  /** master pitch (plan mode); entries inherit unless they carry their own */
+  pitchDegrees: number;
 }
 
 /** One product application. entryId=null applies to the whole group
@@ -85,13 +91,29 @@ export type HaveSubMode = 'plan' | 'actual'; // Step 1B choice
 export function emptyMeasurementSet(): MeasurementSet {
   const groups = {} as MeasurementSet['groups'];
   for (const g of GROUP_DEFS) {
-    groups[g.key] = { key: g.key, entries: [] };
+    groups[g.key] = { key: g.key, entries: [], pitchDegrees: 25 };
   }
   return { entryPath: 'actual', groups, appliedProducts: [] };
 }
 
 export function groupTotal(set: MeasurementSet, key: GroupKey): number {
   return set.groups[key].entries.reduce((s, e) => s + (e.value || 0), 0);
+}
+
+/** Pitched (converted) value of an entry - plan mode applies the group's
+ *  pitch rule; actual mode returns the value unchanged. */
+export function entryPitched(set: MeasurementSet, key: GroupKey, entryId: string): number {
+  const g = set.groups[key];
+  const e = g.entries.find(x => x.id === entryId);
+  if (!e) return 0;
+  if (set.entryPath !== 'plan') return e.value;
+  const deg = e.pitchDegrees ?? g.pitchDegrees ?? 0;
+  return e.value * pitchFactor(GROUP_PITCH_RULES[key] ?? 'none', deg);
+}
+
+/** Pitched total for a whole group. */
+export function groupPitchedTotal(set: MeasurementSet, key: GroupKey): number {
+  return set.groups[key].entries.reduce((s, e) => s + entryPitched(set, key, e.id), 0);
 }
 
 export function makeId(prefix = 'id'): string {

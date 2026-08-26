@@ -7,7 +7,7 @@
 
 import { useMemo, useState } from 'react';
 import type { AppliedProduct, GroupDef, MeasurementSet, Mode, SupplierProduct } from './types';
-import { GROUP_DEFS, groupTotal, makeId } from './types';
+import { GROUP_DEFS, groupPitchedTotal, entryPitched, makeId } from './types';
 
 const inputCls = 'rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-orange-500 focus:outline-none';
 
@@ -47,7 +47,7 @@ export function ProductStep({
     return p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q);
   });
 
-  const total = groupTotal(measureSet, def.key);
+  const total = groupPitchedTotal(measureSet, def.key);
   const groupApplied = measureSet.appliedProducts.filter(ap => ap.groupKey === def.key && ap.entryId == null);
 
   function applyProduct(pid: string, entryId: string | null) {
@@ -168,7 +168,7 @@ export function ProductStep({
               <div key={entry.id} className="rounded-xl border border-slate-200 p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-slate-700">
-                    {entry.label} <span className="font-normal text-slate-400">- {entry.value.toFixed(1)} {def.unit}</span>
+                    {entry.label} <span className="font-normal text-slate-400">- {entryPitched(measureSet, def.key, entry.id).toFixed(1)} {def.unit}</span>
                   </span>
                   <button
                     onClick={() => setPickerFor(pickerFor === entry.id ? null : entry.id)}
@@ -186,7 +186,7 @@ export function ProductStep({
                       ap={ap}
                       p={p}
                       def={def}
-                      measured={entry.value}
+                      measured={entryPitched(measureSet, def.key, entry.id)}
                       advanced={mode === 'advanced'}
                       onEdit={() => setEditing(ap)}
                       onRemove={() => removeApplied(ap.id)}

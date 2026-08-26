@@ -93,6 +93,7 @@ export function PortalFlow() {
           <MeasureEntryStep
             measureSet={measureSet}
             setMeasureSet={setMeasureSet}
+            fromTakeoff={entryMode === 'measure'}
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
           />

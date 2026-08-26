@@ -4,7 +4,7 @@
 'use client';
 
 import type { MeasurementSet, SupplierProduct } from './types';
-import { GROUP_DEFS, groupTotal } from './types';
+import { GROUP_DEFS, groupPitchedTotal } from './types';
 import { fmt, priceOutput } from './pricing';
 import { SUPPLIER } from './supplier';
 
@@ -18,6 +18,9 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
   const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
   const cur = SUPPLIER.currency;
   const hasLabour = output.labour > 0;
+  const measureNote = measureSet.entryPath === 'plan'
+    ? 'Plan measurements with pitch applied - metric (m / m\u00B2)'
+    : 'Actual/site measurements - metric (m / m\u00B2)';
 
   const byGroup = GROUP_DEFS
     .map(def => ({ def, lines: output.lines.filter(l => l.groupKey === def.key) }))
@@ -29,14 +32,14 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
         <div className="border-b-2 border-black pb-5">
           <h1 className="text-xl font-bold text-black">MATERIALS PRICING</h1>
           <p className="mt-1 text-sm text-black">Generated {today} - {SUPPLIER.name}</p>
-          <p className="mt-1 text-xs text-black/60">Actual/site measurements - metric (m / m²)</p>
+          <p className="mt-1 text-xs text-black/60">{measureNote}</p>
         </div>
 
         {byGroup.map(({ def, lines }) => (
           <div key={def.key}>
             <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
               <span className="text-black font-bold">{def.label}</span>
-              <span className="text-black font-medium text-sm">{fmt(groupTotal(measureSet, def.key), 1)} {def.unit}</span>
+              <span className="text-black font-medium text-sm">{fmt(groupPitchedTotal(measureSet, def.key), 1)} {def.unit}</span>
             </div>
             <div className="mt-2 overflow-x-auto">
               <table className="w-full text-sm">
