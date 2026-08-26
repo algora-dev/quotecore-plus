@@ -13,11 +13,11 @@ export function StepProgress({ steps, current }: { steps: StepDef[]; current: nu
   return (
     <div className="border-b border-slate-200 bg-white">
       <div className="mx-auto max-w-5xl px-4 py-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-900">
+        <div className="flex items-center justify-between gap-3">
+          <span className="whitespace-nowrap text-sm font-semibold text-slate-900">
             Step {current} of {steps.length}
           </span>
-          <span className="text-xs text-slate-500">{steps[current - 1]?.label}</span>
+          <span className="truncate text-xs text-slate-500">{steps[current - 1]?.label}</span>
         </div>
         <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
           <div

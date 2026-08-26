@@ -114,17 +114,23 @@ export function OutputActions({ measureSet, catalog }: {
   const [email, setEmail] = useState('');
   const [jobRef, setJobRef] = useState('');
   const { config: supplierCfg } = useSupplierConfig();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const quoteUrl = buildConvertToQuoteUrl(measureSet, catalog);
-  const [saving, setSaving] = useState(false);
 
   async function continueInApp() {
     setSaving(true);
+    setSaveError(false);
     try {
       const id = await saveDraftQuote(measureSet);
-      window.location.href = id
-        ? `/signup?ref=supplier-pricing-tool&draft=${id}`
-        : '/signup';
+      if (!id) {
+        setSaveError(true);
+        return;
+      }
+      window.location.href = `/signup?ref=supplier-pricing-tool&draft=${id}`;
+    } catch {
+      setSaveError(true);
     } finally {
       setSaving(false);
     }
@@ -151,13 +157,20 @@ export function OutputActions({ measureSet, catalog }: {
           <div className="text-sm font-semibold text-slate-900">Convert to customer quote</div>
           <div className="mt-0.5 text-xs text-slate-500">Editable quote document with your markup - opens the quote generator.</div>
         </a>
-        <ActionTile
-          title="Continue in QuoteCore+"
-          desc="Save this takeoff as a draft quote - measurements and pitches carry into the app."
-          onClick={continueInApp}
-          disabled={saving}
-        />
+        {supplierCfg.poweredBy && (
+          <ActionTile
+            title="Continue in QuoteCore+"
+            desc="Save this takeoff as a draft quote - measurements and pitches carry into the app."
+            onClick={continueInApp}
+            disabled={saving}
+          />
+        )}
       </div>
+      {saveError && (
+        <p className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
+          Could not save right now. Check your connection and try again.
+        </p>
+      )}
 
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
