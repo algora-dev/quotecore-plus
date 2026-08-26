@@ -107,6 +107,23 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     ],
   },
   {
+    slug: 'simple-roofing-estimating-software',
+    category: 'roofing-estimating',
+    title: 'I Need Better Estimating Software — But I Don\u2019t Want Another Complicated App',
+    description:
+      'Need better roofing estimating software but don\u2019t want another complicated app? Learn what simple estimating software should actually do — and how to switch without the setup pain.',
+    date: '2026-08-26',
+    lastModified: '2026-08-26',
+    faqs: [
+      { question: 'What is the easiest roofing estimating software to use?', answer: 'The easiest system depends on how you already work. Look for software that lets you reuse your common pricing, labour and material rules, supports the measurements you already have, and avoids forcing you to configure features you do not need.' },
+      { question: 'Is roofing estimating software difficult to set up?', answer: 'It can be if you have a large amount of existing pricing, products and labour rules to move across. A sensible approach is to start with your most common work and build gradually, or use a setup service if the software provider offers one.' },
+      { question: 'Can estimating software be set up for me?', answer: 'Yes. QuoteCore+ offers a Done-For-You Estimating Setup where we first check whether the system suits your workflow, then configure agreed components, pricing and setup using the information you provide.' },
+      { question: 'Do I need a full roofing CRM just to estimate and quote?', answer: 'Not necessarily. A full CRM can be useful for businesses that need broader sales and job-management tools, but contractors who mainly want to improve measurement, estimating and quoting may prefer a more focused system.' },
+      { question: 'Can I use estimating software if I already have roof measurements?', answer: 'Yes. You should not need to remeasure a job simply because you changed estimating systems. QuoteCore+ supports workflows where you already have the measurements, as well as digital takeoff for plan-based jobs.' },
+      { question: 'What should I look for in simple contractor estimating software?', answer: 'Look for reusable pricing, clear calculations, flexible labour and waste rules, easy measurement entry, quote generation, straightforward setup and support when you need it. The system should remove repetitive work rather than create more administration.' },
+    ],
+  },
+  {
     slug: 'quotecore-plus-reviews',
     category: 'comparisons',
     title: 'QuoteCore+ Reviews: Is It Legit and Who Is It For?',

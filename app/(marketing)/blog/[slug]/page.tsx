@@ -54,6 +54,7 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'price-a-job-from-measurements': () => import('./content/price-a-job-from-measurements'),
   'construction-estimating-spreadsheet-alternative': () => import('./content/construction-estimating-spreadsheet-alternative'),
   'roofing-estimating-spreadsheet-vs-software': () => import('./content/roofing-estimating-spreadsheet-vs-software'),
+  'simple-roofing-estimating-software': () => import('./content/simple-roofing-estimating-software'),
 };
 
 type Props = { params: Promise<{ slug: string }> };
