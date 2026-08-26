@@ -23,18 +23,22 @@ const Workstation = dynamic(
   },
 );
 
-const SEMANTIC_TO_GROUP: Record<string, GroupKey> = {
-  ridge: 'ridges',
-  hip: 'hips',
-  valley: 'valleys',
-  barge: 'barges',
-  spouting: 'spouting',
-  gutter: 'spouting',
-};
+/** Component -> measurement group. Primary match is the component NAME
+ *  (placeholder components carry no semantic field), semantic is fallback. */
+function componentToGroup(name: string, semantic: string | null): GroupKey | null {
+  const key = `${name} ${semantic ?? ''}`.toLowerCase();
+  if (key.includes('ridge') && !key.includes('barge')) return 'ridges';
+  if (key.includes('hip') && !key.includes('valley')) return 'hips';
+  if (key.includes('valley')) return 'valleys';
+  if (key.includes('barge')) return 'barges';
+  if (key.includes('spout') || key.includes('gutter') || key.includes('downpipe')) return 'spouting';
+  return null;
+}
 
 /** Map workstation output -> Measurement Set. Workstation values are final
  *  (pitch already applied where relevant), so entryPath = 'measure' with no
- *  further conversion downstream. */
+ *  further conversion downstream. Roof areas keep their individual names and
+ *  pitches so different products can be applied per area downstream. */
 function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
   const set = emptyMeasurementSet();
   set.entryPath = 'measure';
@@ -46,7 +50,7 @@ function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
     pitchDegrees: ra.pitch || undefined,
   }));
   for (const cg of p.componentGroups) {
-    const key = SEMANTIC_TO_GROUP[cg.semantic ?? ''];
+    const key = componentToGroup(cg.name, cg.semantic);
     if (!key) continue;
     for (const m of cg.measurements) {
       set.groups[key].entries.push({ id: makeId('e'), label: '', value: m.value, quantity: 1 });
@@ -58,6 +62,15 @@ function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
       ...e,
       label: e.label || `${def.singular} ${i + 1}`,
     }));
+  }
+  // TEMPORARY DEBUG (Shaun's troubleshooting round): log everything captured
+  // at the takeoff boundary so we can verify persistence + downstream maths.
+  if (typeof console !== 'undefined') {
+    console.log('[supplier-tool] takeoff payload:', JSON.stringify(p, null, 2));
+    console.log('[supplier-tool] mapped measurement set:', GROUP_DEFS.map(d => ({
+      group: d.key,
+      entries: set.groups[d.key].entries.map(e => ({ label: e.label, value: e.value, pitch: e.pitchDegrees ?? null })),
+    })).filter(g => g.entries.length > 0));
   }
   return set;
 }

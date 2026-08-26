@@ -22,9 +22,9 @@ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModa
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 // F-15: Extracted modal components
-import { AreaNameModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal';
-import { PointMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal';
-import { LineMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal';
+import { AreaNameModal } from './AreaNameModal';
+import { PointMeasurementModal } from './PointMeasurementModal';
+import { LineMeasurementModal } from './LineMeasurementModal';
 import { CalibrationModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal';
 import { DEMO_CALIBRATION, DEMO_SCAN } from './baseline';
 import { DemoGuideMeModal, DemoLimitModal } from './DemoGuideMeModal';
