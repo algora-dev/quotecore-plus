@@ -82,7 +82,7 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
                   <div key={a.id} className="flex items-center justify-between rounded-lg bg-black/[0.03] px-3 py-1.5">
                     <span className="text-xs font-semibold text-black">{a.label}</span>
                     <span className="text-xs text-black/60">
-                      {a.pitch != null ? `${a.pitch}\u00B0 pitch - ` : ''}{fmt(a.pitched, 1)} m\u00B2
+                      {a.pitch != null ? `${a.pitch}° pitch - ` : ''}{fmt(a.pitched, 1)} m²
                     </span>
                   </div>
                 ))}
