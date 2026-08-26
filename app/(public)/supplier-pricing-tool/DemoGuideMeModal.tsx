@@ -118,7 +118,7 @@ export function DemoLimitModal({ open, title, body, onClose }: { open: boolean; 
           <div className="mt-6 flex flex-col gap-2">
             <a
               href="/signup?source=takeoff-demo"
-              className="w-full inline-flex items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+              className="w-full inline-flex items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)]"
             >
               Sign up for free
             </a>
@@ -189,13 +189,13 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
   return (
     <div
       ref={panelRef}
-      className="fixed z-50 bg-white rounded-xl border border-orange-200 shadow-xl select-none"
+      className="fixed z-50 bg-white rounded-xl border border-blue-200 shadow-xl select-none"
       style={style}
       data-demo-guide
     >
       {/* Drag handle header */}
       <div
-        className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 cursor-grab active:cursor-grabbing bg-orange-50 rounded-t-xl"
+        className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 cursor-grab active:cursor-grabbing bg-blue-50 rounded-t-xl"
         onMouseDown={onMouseDown}
       >
         <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
             <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
             <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
           </svg>
-          <span className="text-xs font-semibold uppercase tracking-wide text-[#BD4A1A]">
+          <span className="text-xs font-semibold uppercase tracking-wide text-[#1D4ED8]">
             Guide me
           </span>
         </div>
@@ -226,7 +226,7 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
           <ul className="mt-2 space-y-1">
             {current.bullets.map((b, i) => (
               <li key={i} className="flex items-start gap-1.5 text-xs text-slate-500">
-                <span className="mt-1 w-1 h-1 rounded-full bg-orange-400 flex-shrink-0" />
+                <span className="mt-1 w-1 h-1 rounded-full bg-blue-400 flex-shrink-0" />
                 {b}
               </li>
             ))}
@@ -240,7 +240,7 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
           {steps.map((_, i) => (
             <span
               key={i}
-              className={`w-1.5 h-1.5 rounded-full transition-colors ${i === step ? 'bg-[#FF6B35]' : 'bg-slate-200'}`}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${i === step ? 'bg-[#2563EB]' : 'bg-slate-200'}`}
             />
           ))}
         </div>
@@ -255,7 +255,7 @@ export function DemoGuideMeModal({ open, flow, onClose }: Props) {
           )}
           <button
             onClick={() => (isLast ? onClose() : setStep(s => s + 1))}
-            className="px-4 py-1.5 text-xs font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
+            className="px-4 py-1.5 text-xs font-semibold text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(37,99,235,0.4)]"
           >
             {isLast ? 'Done' : 'Next'}
           </button>

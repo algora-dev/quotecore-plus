@@ -9,7 +9,7 @@ import type { GroupKey, MeasureEntry, MeasurementSet } from './types';
 import { GROUP_DEFS, entryPitched, makeId } from './types';
 import { pitchFactor, GROUP_PITCH_RULES } from './pitch';
 
-const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none';
+const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
 export function MeasureEntryStep({
   measureSet, setMeasureSet, onBack, onNext, fromTakeoff = false,
@@ -37,7 +37,7 @@ export function MeasureEntryStep({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition p-4 md:p-6">
+      <div className="rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] transition p-4 md:p-6">
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         <p className="mt-1 text-sm text-slate-500">{sub}</p>
       </div>
@@ -65,7 +65,7 @@ export function MeasureEntryStep({
           <button
             onClick={onNext}
             disabled={!canNext}
-            className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
+            className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
           >
             Next
           </button>
@@ -89,7 +89,7 @@ function GroupCard({ def, measureSet, onChange }: {
   const pitchedTotal = group.entries.reduce((s, e) => s + entryPitched(measureSet, def.key, e.id), 0);
 
   return (
-    <div className={`rounded-xl border transition ${open || group.entries.length > 0 ? 'border-slate-200 bg-white' : 'border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]'}`}>
+    <div className={`rounded-xl border transition ${open || group.entries.length > 0 ? 'border-slate-200 bg-white' : 'border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)]'}`}>
       <button
         onClick={() => setOpen(o => !o)}
         className="flex w-full items-center justify-between px-4 py-3.5 text-left cursor-pointer"
@@ -121,7 +121,7 @@ function GroupCard({ def, measureSet, onChange }: {
                   type="number" min="0" max="89" step="0.5"
                   value={group.pitchDegrees}
                   onChange={e => onChange({ pitchDegrees: parseFloat(e.target.value) || 0 })}
-                  className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-center text-sm focus:border-orange-500 focus:outline-none"
+                  className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-center text-sm focus:border-blue-500 focus:outline-none"
                   aria-label={`Pitch for ${def.label}`}
                 />
                 °
@@ -141,7 +141,7 @@ function GroupCard({ def, measureSet, onChange }: {
                 const showConversion = converts && Math.abs(pitched - e.value * (e.quantity || 1)) > 0.01;
                 const raw = e.value * (e.quantity || 1);
                 return (
-                  <div key={e.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white hover:bg-orange-50/40 hover:border-orange-200 px-3 py-2 transition">
+                  <div key={e.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white hover:bg-blue-50/40 hover:border-blue-200 px-3 py-2 transition">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-xs font-medium text-slate-700 truncate">{e.label}</span>
                       {(e.quantity || 1) > 1 && <span className="text-[10px] text-slate-400">x{e.quantity}</span>}

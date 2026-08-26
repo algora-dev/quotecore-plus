@@ -62,23 +62,27 @@ function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
   return set;
 }
 
-/** Stage header for the takeoff step - clearer than the step counter alone. */
-export function TakeoffStageHeader({ planName }: { planName: string }) {
-  return (
-    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div className="flex items-center gap-2.5">
-        <span className="rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">Digital Takeoff</span>
-        <span className="text-sm font-semibold text-slate-900">Measure your plan</span>
-        <span className="hidden md:inline text-xs text-slate-400 truncate max-w-[240px]">{planName}</span>
-      </div>
-      <span className="text-xs text-slate-400">Calibrate first, then draw areas and lines</span>
-    </div>
-  );
+/** Stage slug written to the URL hash so the user always knows where they are. */
+export function stageSlug(step: number, entryMode: string | null, groupKey: string | null): string {
+  if (step <= 1) return '#start';
+  if (step === 2) return entryMode === 'measure' ? '#digital-takeoff' : '#measurements';
+  return groupKey ? `#products-${groupKey}` : '#output';
 }
 
-export function TakeoffStation({ planUrl, planName, onFinish }: {
+/** Placeholder measurement components shown in the takeoff sidebar. These
+ *  are measurement buckets only - real supplier products get applied to the
+ *  measured groups in the pricing steps, per the product plan. */
+const PLACEHOLDER_COMPONENTS = [
+  { id: 'ph-ridge', name: 'Ridge', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-hip', name: 'Hip', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-valley', name: 'Valley', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-barge', name: 'Barge', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-spouting', name: 'Spouting', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-downpipe', name: 'Downpipes', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+] as never;
+
+export function TakeoffStation({ planUrl, onFinish }: {
   planUrl: string;
-  planName: string;
   onFinish: (set: MeasurementSet) => void;
 }) {
   return (
@@ -91,7 +95,7 @@ export function TakeoffStation({ planUrl, planName, onFinish }: {
           measurement_system: 'metric',
         } as never}
         planUrl={planUrl}
-        components={[]}
+        components={PLACEHOLDER_COMPONENTS}
         collections={[]}
         hydrationData={null}
         demoMode="upload"

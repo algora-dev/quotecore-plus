@@ -32,7 +32,7 @@ export function EntryModeStep({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition p-4 md:p-6">
+      <div className="rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] transition p-4 md:p-6">
         <h2 className="text-lg font-semibold text-slate-900">How do you want to price this job?</h2>
         <p className="mt-1 text-sm text-slate-500">Measure from a plan, or enter measurements you already have.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -53,13 +53,13 @@ export function EntryModeStep({
 
       {/* Upload plan - appears directly below when 'measure a plan' is chosen */}
       {entryMode === 'measure' && (
-        <div className="rounded-xl border border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition p-4 md:p-6">
+        <div className="rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] transition p-4 md:p-6">
           <h3 className="text-base font-semibold text-slate-900">Upload your plan</h3>
           <p className="mt-1 text-sm text-slate-500">PDF or image. You&apos;ll measure roof areas and lines on it in the next step.</p>
 
           <button
             onClick={() => fileRef.current?.click()}
-            className="mt-4 flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-10 text-center transition hover:border-orange-300 hover:bg-orange-50/40 cursor-pointer"
+            className="mt-4 flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-10 text-center transition hover:border-blue-300 hover:bg-blue-50/40 cursor-pointer"
           >
             {planFile ? (
               <>
@@ -88,7 +88,7 @@ export function EntryModeStep({
 
       {/* Plan vs actual sub-choice - appears directly below when 'have' is chosen */}
       {entryMode === 'have' && (
-        <div className="rounded-xl border border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition p-4 md:p-6">
+        <div className="rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] transition p-4 md:p-6">
           <h3 className="text-base font-semibold text-slate-900">What kind of measurements do you have?</h3>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <ChoiceCard
@@ -111,7 +111,7 @@ export function EntryModeStep({
         <button
           onClick={onNext}
           disabled={!canNext}
-          className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
+          className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
         >
           {entryMode === 'measure' ? 'Proceed to measuring' : 'Next'}
         </button>
@@ -124,7 +124,7 @@ function ChoiceCard({ title, desc, selected, onClick }: { title: string; desc: s
   return (
     <button
       onClick={onClick}
-      className={`text-left rounded-xl border px-4 py-4 transition cursor-pointer ${selected ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900' : 'border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/40'}`}
+      className={`text-left rounded-xl border px-4 py-4 transition cursor-pointer ${selected ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40'}`}
     >
       <div className="flex items-start gap-3">
         <span className={`mt-0.5 h-4 w-4 flex-shrink-0 rounded-full border-2 flex items-center justify-center ${selected ? 'border-slate-900' : 'border-slate-300'}`}>

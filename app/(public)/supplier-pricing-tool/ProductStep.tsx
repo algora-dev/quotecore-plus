@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react';
 import type { AppliedProduct, GroupDef, MeasurementSet, Mode, SupplierProduct } from './types';
 import { GROUP_DEFS, groupPitchedTotal, entryPitched, makeId } from './types';
 
-const inputCls = 'rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-orange-500 focus:outline-none';
+const inputCls = 'rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none';
 
 export function ProductStep({
   def,
@@ -216,7 +216,7 @@ export function ProductStep({
         <button
           onClick={onNext}
           disabled={!hasAnyApplied}
-          className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
+          className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
         >
           {stepNum === totalSteps ? 'Generate output' : 'Next'}
         </button>
@@ -253,11 +253,11 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
   const lab = purchaseQty * (ap.labourRate || 0);
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white hover:bg-orange-50/40 hover:border-orange-200 px-3 py-2.5 transition flex-wrap">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/40 hover:border-blue-200 px-3 py-2.5 transition flex-wrap">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-slate-900 truncate">
           {p.name}
-          {ap.qtyOverride != null && <span className="ml-2 text-xs font-normal text-[#BD4A1A]">qty overridden</span>}
+          {ap.qtyOverride != null && <span className="ml-2 text-xs font-normal text-[#1D4ED8]">qty overridden</span>}
         </div>
         <div className="text-xs text-slate-400">
           {p.code} - ${unitPrice.toFixed(2)}/{def.unit}
@@ -276,7 +276,7 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
       </label>
       <span className="text-sm font-semibold text-slate-900 whitespace-nowrap flex-shrink-0">
         {purchaseQty.toFixed(1)} {def.unit}
-        <span className="ml-2 text-[#BD4A1A]">${(mat + lab).toFixed(2)}</span>
+        <span className="ml-2 text-[#1D4ED8]">${(mat + lab).toFixed(2)}</span>
       </span>
       {advanced && (
         <button onClick={onEdit} className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-slate-400 transition flex-shrink-0 cursor-pointer">
@@ -332,7 +332,7 @@ function PickerRow({ p, def, onPick }: { p: SupplierProduct; def: GroupDef; onPi
   return (
     <button
       onClick={() => onPick(p.id)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition cursor-pointer hover:border-orange-200 hover:bg-orange-50/40"
+      className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition cursor-pointer hover:border-blue-200 hover:bg-blue-50/40"
     >
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-slate-900 truncate">{p.name}</div>

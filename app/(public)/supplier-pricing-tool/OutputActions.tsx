@@ -85,7 +85,7 @@ export function OutputActions({ measureSet, catalog }: {
         />
         <a
           href={quoteUrl}
-          className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-orange-200 hover:bg-orange-50/40"
+          className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
         >
           <div className="text-sm font-semibold text-slate-900">Convert to customer quote</div>
           <div className="mt-0.5 text-xs text-slate-500">Editable quote document with your markup - opens the quote generator.</div>
@@ -111,15 +111,15 @@ export function OutputActions({ measureSet, catalog }: {
             <div className="p-5 space-y-3">
               <div>
                 <label className="text-xs font-medium text-slate-600">Your name</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                <input type="text" value={name} onChange={e => setName(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
               </div>
               <div>
                 <label className="text-xs font-medium text-slate-600">Job reference (optional)</label>
-                <input type="text" value={jobRef} onChange={e => setJobRef(e.target.value)} placeholder="e.g. 12 Smith Street" className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none" />
+                <input type="text" value={jobRef} onChange={e => setJobRef(e.target.value)} placeholder="e.g. 12 Smith Street" className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none" />
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-5 py-4">
@@ -145,7 +145,7 @@ function ActionTile({ title, desc, onClick }: { title: string; desc: string; onC
   return (
     <button
       onClick={onClick}
-      className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-orange-200 hover:bg-orange-50/40 cursor-pointer"
+      className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40 cursor-pointer"
     >
       <div className="text-sm font-semibold text-slate-900">{title}</div>
       <div className="mt-0.5 text-xs text-slate-500">{desc}</div>

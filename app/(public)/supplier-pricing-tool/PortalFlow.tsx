@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { EntryMode, HaveSubMode, MeasurementSet, Mode } from './types';
 import { emptyMeasurementSet, GROUP_DEFS } from './types';
 import { StepProgress } from './StepShell';
@@ -14,7 +14,7 @@ import { EntryModeStep } from './EntryModeStep';
 import { MeasureEntryStep } from './MeasureEntryStep';
 import { ProductStep } from './ProductStep';
 import { OutputView } from './OutputView';
-import { TakeoffStation, TakeoffStageHeader } from './TakeoffStation';
+import { TakeoffStation, stageSlug } from './TakeoffStation';
 import { DEMO_CATALOG } from './supplier';
 
 export function PortalFlow() {
@@ -39,6 +39,17 @@ export function PortalFlow() {
   ];
   const currentStep = Math.min(step, steps.length);
   const productStepIdx = step - 3; // 0-based index into productDefs
+  const activeGroupKey = step >= 3 && productStepIdx < productDefs.length ? productDefs[productStepIdx].key : null;
+
+  // Keep the URL hash in sync with the current stage so the user always
+  // knows where they are (e.g. #digital-takeoff, #products-ridges, #output).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const slug = stageSlug(step, entryMode, activeGroupKey);
+    if (window.location.hash !== slug) {
+      window.history.replaceState(null, '', `/supplier-pricing-tool${slug}`);
+    }
+  }, [step, entryMode, activeGroupKey]);
 
   function reset() {
     setEntryMode(null);
@@ -111,10 +122,7 @@ export function PortalFlow() {
 
         {/* Step 2a: in-tool takeoff station (measure a plan) */}
         {step === 2 && entryMode === 'measure' && planUrl && (
-          <>
-            <TakeoffStageHeader planName={planFile?.name ?? 'your plan'} />
-            <TakeoffStation planUrl={planUrl} planName={planFile?.name ?? 'your plan'} onFinish={handleTakeoffFinish} />
-          </>
+          <TakeoffStation planUrl={planUrl} onFinish={handleTakeoffFinish} />
         )}
 
         {/* Step 2b: manual measurement entry (have measurements) */}

@@ -4789,7 +4789,7 @@ export function TakeoffWorkstation({
               <label
                 className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
                   uploadAnotherTarget === 'existing'
-                    ? 'border-orange-500 bg-blue-50'
+                    ? 'border-blue-500 bg-blue-50'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -4799,7 +4799,7 @@ export function TakeoffWorkstation({
                     name="uploadAnotherTarget"
                     checked={uploadAnotherTarget === 'existing'}
                     onChange={() => setUploadAnotherTarget('existing')}
-                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                    className="mt-0.5 w-4 h-4 accent-blue-500"
                   />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-900">Add to existing area</p>
@@ -4810,7 +4810,7 @@ export function TakeoffWorkstation({
                       <select
                         value={uploadAnotherAreaId}
                         onChange={e => setUploadAnotherAreaId(e.target.value)}
-                        className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Select an area…</option>
                         {areaList.map(a => (
@@ -4826,7 +4826,7 @@ export function TakeoffWorkstation({
               <label
                 className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
                   uploadAnotherTarget === 'new'
-                    ? 'border-orange-500 bg-blue-50'
+                    ? 'border-blue-500 bg-blue-50'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -4836,7 +4836,7 @@ export function TakeoffWorkstation({
                     name="uploadAnotherTarget"
                     checked={uploadAnotherTarget === 'new'}
                     onChange={() => setUploadAnotherTarget('new')}
-                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                    className="mt-0.5 w-4 h-4 accent-blue-500"
                   />
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Create new area for this upload</p>
@@ -4861,7 +4861,7 @@ export function TakeoffWorkstation({
                     </button>
                   </div>
                 ) : (
-                  <label className="flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-orange-400 transition-colors">
+                  <label className="flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-blue-400 transition-colors">
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -4937,7 +4937,7 @@ export function TakeoffWorkstation({
               /* Not confirmed - Show details + Confirm button */
               <div className="space-y-2">
                 {/* Average Scale Display */}
-                <div className="p-3 rounded-xl bg-white border border-orange-400">
+                <div className="p-3 rounded-xl bg-white border border-blue-400">
                   <div className="text-xs text-gray-600 mb-1">Average Scale</div>
                   <div className="font-bold text-gray-700">
                     {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
@@ -5058,7 +5058,7 @@ export function TakeoffWorkstation({
                                 className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold border transition-all ${
                                   isCurrentChip
                                     ? 'bg-slate-900 text-white border-slate-900'
-                                    : 'bg-white text-gray-600 border-gray-300 hover:border-orange-300 hover:text-blue-700'
+                                    : 'bg-white text-gray-600 border-gray-300 hover:border-blue-300 hover:text-blue-700'
                                 }`}
                                 title={`View plan ${i + 1} for ${area.label}`}
                               >
@@ -5190,7 +5190,7 @@ export function TakeoffWorkstation({
                                             }
                                           }}
                                           defaultValue=""
-                                          className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
+                                          className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none bg-white text-gray-700"
                                         >
                                           <option value="">Attach component…</option>
                                           {compatibleComps.map(c => (
@@ -5419,7 +5419,7 @@ export function TakeoffWorkstation({
                   onChange={e => setCustomName(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleCreateCustomComponent(); }}
                   placeholder="e.g. Fascia, Flashing, Ridge Capping"
-                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-orange-500 focus:outline-none"
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:border-blue-500 focus:outline-none"
                 />
                 <label className="block mt-3 text-xs font-medium text-slate-600">Measurement type</label>
                 <div className="mt-1 flex gap-2">
@@ -5530,7 +5530,7 @@ export function TakeoffWorkstation({
                 onClick={handleStartCalibration}
                 data-copilot="takeoff-tool-calibrate"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 ${
-                  calibrationMode ? 'bg-blue-100 hover:bg-orange-200 text-blue-700 border border-orange-500'
+                  calibrationMode ? 'bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-500'
                   : calibrationConfirmed ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
@@ -5544,7 +5544,7 @@ export function TakeoffWorkstation({
                 disabled={calibrationMode || calibrations.length === 0}
                 data-copilot="takeoff-tool-area"
                 className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  areaMode ? 'bg-blue-100 border border-orange-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  areaMode ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
               >Area</button>
@@ -5585,7 +5585,7 @@ export function TakeoffWorkstation({
                 disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-line"
                 className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  (lineMode || multiLinealMode) ? 'bg-blue-100 border border-orange-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  (lineMode || multiLinealMode) ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title="Measure line or polyline"
               >Line</button>
@@ -5610,7 +5610,7 @@ export function TakeoffWorkstation({
                 disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-point"
                 className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  pointMode ? 'bg-blue-100 border border-orange-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  pointMode ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title="Add point marker"
               >Point</button>
@@ -5619,7 +5619,7 @@ export function TakeoffWorkstation({
                 onClick={() => setGuideOpen(true)}
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-1.5 transition-all ${
                   guideOpen
-                    ? 'bg-blue-100 border border-orange-500 text-blue-700'
+                    ? 'bg-blue-100 border border-blue-500 text-blue-700'
                     : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent text-gray-700'
                 }`}
                 title="Open the step-by-step guide"
@@ -5698,7 +5698,7 @@ export function TakeoffWorkstation({
                 style={style}
               >
                 <div
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-orange-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
                   onMouseDown={(e) => {
                     // Drag from anywhere on the toolbar EXCEPT the buttons.
                     if ((e.target as HTMLElement).closest('button')) return;
@@ -6023,7 +6023,7 @@ export function TakeoffWorkstation({
                 : 'Enter the slope or angle if applicable, or skip.'}
             </p>
             {/* Issue 1 fix (2026-07-05): show the measured area, same as AreaNameModal */}
-            <div className="p-3 bg-gray-50 border border-orange-400 rounded-lg mb-4">
+            <div className="p-3 bg-gray-50 border border-blue-400 rounded-lg mb-4">
               <p className="text-xs text-gray-900 font-medium">
                 Plan Area: {(pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0).toFixed(2)} sq {calibrations[0]?.unit || 'feet'}{tradeConfig.pitchRequired ? ' (before pitch adjustment)' : ''}
               </p>
@@ -6101,7 +6101,7 @@ export function TakeoffWorkstation({
               <label
                 className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
                   newAreaChoice === 'existing'
-                    ? 'border-orange-500 bg-blue-50'
+                    ? 'border-blue-500 bg-blue-50'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -6111,7 +6111,7 @@ export function TakeoffWorkstation({
                     name="newAreaChoice"
                     checked={newAreaChoice === 'existing'}
                     onChange={() => setNewAreaChoice('existing')}
-                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                    className="mt-0.5 w-4 h-4 accent-blue-500"
                   />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-900">Add to existing area</p>
@@ -6122,7 +6122,7 @@ export function TakeoffWorkstation({
                       <select
                         value={newAreaExistingId}
                         onChange={e => setNewAreaExistingId(e.target.value)}
-                        className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {areaList.map(a => (
                           <option key={a.id} value={a.id}>{a.label}</option>
@@ -6137,7 +6137,7 @@ export function TakeoffWorkstation({
               <label
                 className={`w-full text-left p-4 rounded-xl border-2 mb-3 transition-colors cursor-pointer block ${
                   newAreaChoice === 'new'
-                    ? 'border-orange-500 bg-blue-50'
+                    ? 'border-blue-500 bg-blue-50'
                     : 'border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -6147,7 +6147,7 @@ export function TakeoffWorkstation({
                     name="newAreaChoice"
                     checked={newAreaChoice === 'new'}
                     onChange={() => setNewAreaChoice('new')}
-                    className="mt-0.5 w-4 h-4 accent-orange-500"
+                    className="mt-0.5 w-4 h-4 accent-blue-500"
                   />
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Create new area</p>
