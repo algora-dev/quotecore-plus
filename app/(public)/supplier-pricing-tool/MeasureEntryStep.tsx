@@ -1,4 +1,6 @@
 // Step 2: Measurement entry (actual/site + plan modes). All populated groups move forward.
+// Roof areas: total m2 OR length x width toggle. Lineal groups: length + quantity.
+// Label optional, shown last.
 
 'use client';
 
@@ -28,7 +30,7 @@ export function MeasureEntryStep({
       ? 'Enter your plan measurements'
       : 'Enter your site measurements';
   const sub = fromTakeoff
-    ? 'Measure your plan in the takeoff tool, then enter the group totals from its report here. These flow straight into pricing.'
+    ? 'Review the measurements picked up from your plan. Adjust anything, then continue to pricing.'
     : isPlan
       ? 'Enter measurements off the plan. Roof pitch is applied automatically to convert them to actual values.'
       : 'Fill in the groups you have. Anything left empty is skipped - only the groups you enter move on to pricing.';
@@ -39,17 +41,6 @@ export function MeasureEntryStep({
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         <p className="mt-1 text-sm text-slate-500">{sub}</p>
       </div>
-
-      {fromTakeoff && (
-        <a
-          href="https://app.quote-core.com/free-roof-takeoff"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-xl border border-slate-900 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
-          Open the Roof Takeoff tool (measure your plan) - opens in a new tab
-        </a>
-      )}
 
       {GROUP_DEFS.map(def => (
         <GroupCard
@@ -90,26 +81,12 @@ function GroupCard({ def, measureSet, onChange }: {
   onChange: (patch: Partial<MeasurementSet['groups'][GroupKey]>) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [label, setLabel] = useState('');
-  const [value, setValue] = useState('');
-  const [pitch, setPitch] = useState('');
   const group = measureSet.groups[def.key];
   const isPlan = measureSet.entryPath === 'plan';
   const rule = GROUP_PITCH_RULES[def.key] ?? 'none';
   const converts = isPlan && rule !== 'none';
-  const total = group.entries.reduce((s, e) => s + e.value, 0);
+  const total = group.entries.reduce((s, e) => s + e.value * (e.quantity || 1), 0);
   const pitchedTotal = group.entries.reduce((s, e) => s + entryPitched(measureSet, def.key, e.id), 0);
-
-  function add() {
-    const v = parseFloat(value);
-    if (!Number.isFinite(v) || v <= 0) return;
-    const entry: MeasureEntry = { id: makeId('e'), label: label.trim() || `${def.singular} ${group.entries.length + 1}`, value: v };
-    if (converts && pitch.trim() !== '') entry.pitchDegrees = parseFloat(pitch) || 0;
-    onChange({ entries: [...group.entries, entry] });
-    setLabel('');
-    setValue('');
-    setPitch('');
-  }
 
   return (
     <div className={`rounded-xl border transition ${open || group.entries.length > 0 ? 'border-slate-200 bg-white' : 'border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]'}`}>
@@ -161,22 +138,24 @@ function GroupCard({ def, measureSet, onChange }: {
             <div className="space-y-1.5">
               {group.entries.map(e => {
                 const pitched = entryPitched(measureSet, def.key, e.id);
-                const showConversion = converts && Math.abs(pitched - e.value) > 0.01;
+                const showConversion = converts && Math.abs(pitched - e.value * (e.quantity || 1)) > 0.01;
+                const raw = e.value * (e.quantity || 1);
                 return (
                   <div key={e.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white hover:bg-orange-50/40 hover:border-orange-200 px-3 py-2 transition">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-xs font-medium text-slate-700 truncate">{e.label}</span>
+                      {(e.quantity || 1) > 1 && <span className="text-[10px] text-slate-400">x{e.quantity}</span>}
                       {(e.pitchDegrees ?? 0) > 0 && <span className="text-[10px] text-slate-400">@ {e.pitchDegrees}°</span>}
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       {showConversion ? (
                         <span className="text-sm font-semibold text-slate-900">
-                          <span className="font-normal text-slate-400">{e.value.toFixed(1)} plan</span>
+                          <span className="font-normal text-slate-400">{raw.toFixed(1)} plan</span>
                           {' - '}
                           {pitched.toFixed(1)} {def.unit}
                         </span>
                       ) : (
-                        <span className="text-sm font-semibold text-slate-900">{e.value.toFixed(1)} {def.unit}</span>
+                        <span className="text-sm font-semibold text-slate-900">{raw.toFixed(1)} {def.unit}</span>
                       )}
                       <button
                         onClick={() => onChange({ entries: group.entries.filter(x => x.id !== e.id) })}
@@ -192,31 +171,119 @@ function GroupCard({ def, measureSet, onChange }: {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_140px_110px_auto] gap-2 items-end">
-            <div>
-              <label className="text-xs font-medium text-slate-600">Label (optional)</label>
-              <input type="text" value={label} onChange={e => setLabel(e.target.value)} placeholder={`e.g. ${def.key === 'roofAreas' ? 'Main roof, Garage' : 'Front, Rear'}`} className={inputCls} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600">{isPlan ? 'Plan ' : ''}{def.basis === 'area' ? 'area' : 'length'} ({def.unit})</label>
-              <input type="number" min="0" step="any" inputMode="decimal" value={value} onChange={e => setValue(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} placeholder="0" className={inputCls} />
-            </div>
-            {converts ? (
-              <div>
-                <label className="text-xs font-medium text-slate-600">Pitch ° (opt.)</label>
-                <input type="number" min="0" max="89" step="0.5" value={pitch} onChange={e => setPitch(e.target.value)} placeholder="default" className={inputCls} />
-              </div>
-            ) : <div className="hidden md:block" />}
-            <button
-              onClick={add}
-              disabled={!(parseFloat(value) > 0)}
-              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-40 cursor-pointer"
-            >
-              Add
-            </button>
-          </div>
+          <AddEntryForm def={def} converts={converts} onAdd={(entry) => onChange({ entries: [...group.entries, { ...entry, label: entry.label || `${def.singular} ${group.entries.length + 1}` }] })} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Entry form: area groups get total/length-x-width toggle; lineal groups get
+ *  length + quantity (default 1); label optional and last. */
+function AddEntryForm({ def, converts, onAdd }: {
+  def: typeof GROUP_DEFS[number];
+  converts: boolean;
+  onAdd: (e: MeasureEntry) => void;
+}) {
+  const isArea = def.basis === 'area';
+  const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>('dimensions');
+  const [val1, setVal1] = useState('');
+  const [val2, setVal2] = useState('');
+  const [qty, setQty] = useState('1');
+  const [pitch, setPitch] = useState('');
+  const [label, setLabel] = useState('');
+
+  function add() {
+    const quantity = Math.max(1, Math.round(parseFloat(qty) || 1));
+    let value = 0;
+    if (isArea) {
+      if (areaMode === 'dimensions') {
+        const w = parseFloat(val1);
+        const l = parseFloat(val2);
+        if (!w || w <= 0 || !l || l <= 0) return;
+        value = w * l;
+      } else {
+        const t = parseFloat(val1);
+        if (!t || t <= 0) return;
+        value = t;
+      }
+    } else {
+      const v = parseFloat(val1);
+      if (!Number.isFinite(v) || v <= 0) return;
+      value = v;
+    }
+    const entry: MeasureEntry = {
+      id: makeId('e'),
+      label: label.trim() || `${def.singular} ${''}`,
+      value,
+      quantity,
+    };
+    // auto-number label based on count is handled by caller; keep entered label or default below
+    if (!label.trim()) entry.label = ''; // caller replaces empty labels
+    if (converts && pitch.trim() !== '') entry.pitchDegrees = parseFloat(pitch) || 0;
+    onAdd(entry);
+    setVal1(''); setVal2(''); setQty('1'); setPitch(''); setLabel('');
+  }
+
+  const canAdd = isArea
+    ? (areaMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(val1) > 0)
+    : parseFloat(val1) > 0;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
+      {isArea && (
+        <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
+          <button onClick={() => setAreaMode('dimensions')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'dimensions' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Length x Width</button>
+          <button onClick={() => setAreaMode('total')} className={`cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium transition ${areaMode === 'total' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}>Total Area</button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {isArea && areaMode === 'dimensions' ? (
+          <>
+            <div>
+              <label className="text-xs font-medium text-slate-600">Length (m)</label>
+              <input type="number" min="0" step="any" inputMode="decimal" value={val1} onChange={e => setVal1(e.target.value)} placeholder="0" className={inputCls} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600">Width (m)</label>
+              <input type="number" min="0" step="any" inputMode="decimal" value={val2} onChange={e => setVal2(e.target.value)} placeholder="0" className={inputCls} />
+            </div>
+          </>
+        ) : (
+          <div className="col-span-2">
+            <label className="text-xs font-medium text-slate-600">{isArea ? `Total area (${def.unit})` : `Length (${def.unit})`}</label>
+            <input type="number" min="0" step="any" inputMode="decimal" value={val1} onChange={e => setVal1(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} placeholder="0" className={inputCls} />
+          </div>
+        )}
+        {!isArea && (
+          <div>
+            <label className="text-xs font-medium text-slate-600">Quantity</label>
+            <input type="number" min="1" step="1" value={qty} onChange={e => setQty(e.target.value)} className={inputCls} />
+          </div>
+        )}
+        {converts ? (
+          <div>
+            <label className="text-xs font-medium text-slate-600">Pitch ° (opt.)</label>
+            <input type="number" min="0" max="89" step="0.5" value={pitch} onChange={e => setPitch(e.target.value)} placeholder="default" className={inputCls} />
+          </div>
+        ) : <div className="hidden md:block" />}
+        <button
+          onClick={add}
+          disabled={!canAdd}
+          className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-40 cursor-pointer min-h-[38px] self-end"
+        >
+          Add
+        </button>
+      </div>
+
+      <input
+        type="text"
+        value={label}
+        onChange={e => setLabel(e.target.value)}
+        placeholder="Optional label (e.g. Main roof, Front gable)"
+        className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 focus:border-slate-900 focus:outline-none"
+      />
     </div>
   );
 }

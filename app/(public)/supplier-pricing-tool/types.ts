@@ -53,6 +53,8 @@ export interface MeasureEntry {
   label: string;
   /** area (m2), length (m) or count - plan value when entryPath === 'plan' */
   value: number;
+  /** how many of this measurement (length x qty); areas use 1 */
+  quantity: number;
   /** optional per-entry pitch override (plan mode) */
   pitchDegrees?: number;
 }
@@ -106,9 +108,10 @@ export function entryPitched(set: MeasurementSet, key: GroupKey, entryId: string
   const g = set.groups[key];
   const e = g.entries.find(x => x.id === entryId);
   if (!e) return 0;
-  if (set.entryPath !== 'plan') return e.value;
+  const raw = e.value * (e.quantity || 1);
+  if (set.entryPath !== 'plan') return raw;
   const deg = e.pitchDegrees ?? g.pitchDegrees ?? 0;
-  return e.value * pitchFactor(GROUP_PITCH_RULES[key] ?? 'none', deg);
+  return raw * pitchFactor(GROUP_PITCH_RULES[key] ?? 'none', deg);
 }
 
 /** Pitched total for a whole group. */

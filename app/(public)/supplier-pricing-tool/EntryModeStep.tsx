@@ -1,41 +1,92 @@
-// Step 1: How do you want to price this job? (Google-form style choice cards)
+// Step 1: How do you want to price this job? Nothing pre-selected.
+// 'measure a plan' -> inline plan upload appears BELOW, proceed -> in-tool takeoff station.
+// 'already have measurements' -> plan/actual sub-choice appears BELOW -> entry step.
 
 'use client';
 
+import { useRef, useState } from 'react';
 import type { EntryMode, HaveSubMode } from './types';
 
 export function EntryModeStep({
-  entryMode, setEntryMode, haveSubMode, setHaveSubMode, onNext,
+  entryMode, setEntryMode, haveSubMode, setHaveSubMode, planFile, setPlanFile, onNext,
 }: {
   entryMode: EntryMode | null;
-  setEntryMode: (m: EntryMode) => void;
+  setEntryMode: (m: EntryMode | null) => void;
   haveSubMode: HaveSubMode | null;
   setHaveSubMode: (m: HaveSubMode | null) => void;
+  planFile: File | null;
+  setPlanFile: (f: File | null) => void;
   onNext: () => void;
 }) {
-  const canNext = entryMode === 'measure' || (entryMode === 'have' && haveSubMode !== null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const canNext = entryMode === 'measure'
+    ? planFile !== null
+    : entryMode === 'have' && haveSubMode !== null;
+
+  function pick(mode: EntryMode) {
+    // switching choice resets the dependent state
+    setEntryMode(mode);
+    setHaveSubMode(null);
+    if (mode !== 'measure') setPlanFile(null);
+  }
 
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition p-4 md:p-6">
         <h2 className="text-lg font-semibold text-slate-900">How do you want to price this job?</h2>
-        <p className="mt-1 text-sm text-slate-500">You can measure from a plan, or enter measurements you already have.</p>
+        <p className="mt-1 text-sm text-slate-500">Measure from a plan, or enter measurements you already have.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <ChoiceCard
             selected={entryMode === 'measure'}
             title="I need to measure a plan"
-            desc="Upload a plan and measure roof areas and lines with our digital takeoff tool."
-            onClick={() => { setEntryMode('measure'); setHaveSubMode(null); }}
+            desc="Upload your plan and measure roof areas and lines right here."
+            onClick={() => pick('measure')}
           />
           <ChoiceCard
             selected={entryMode === 'have'}
             title="I already have my measurements"
-            desc="Enter your measurements manually - areas and lineal measurements you've taken."
-            onClick={() => setEntryMode('have')}
+            desc="Enter your measurements - plan or actual/site values."
+            onClick={() => pick('have')}
           />
         </div>
       </div>
 
+      {/* Upload plan - appears directly below when 'measure a plan' is chosen */}
+      {entryMode === 'measure' && (
+        <div className="rounded-xl border border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition p-4 md:p-6">
+          <h3 className="text-base font-semibold text-slate-900">Upload your plan</h3>
+          <p className="mt-1 text-sm text-slate-500">PDF or image. You&apos;ll measure roof areas and lines on it in the next step.</p>
+
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="mt-4 flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-10 text-center transition hover:border-orange-300 hover:bg-orange-50/40 cursor-pointer"
+          >
+            {planFile ? (
+              <>
+                <span className="text-sm font-semibold text-slate-900">{planFile.name}</span>
+                <span className="mt-1 text-xs text-slate-400">Click to replace</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+                </svg>
+                <span className="mt-2 text-sm font-medium text-slate-600">Click to upload your plan</span>
+                <span className="mt-1 text-xs text-slate-400">PDF, PNG, JPG</span>
+              </>
+            )}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/pdf,image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={e => setPlanFile(e.target.files?.[0] ?? null)}
+          />
+        </div>
+      )}
+
+      {/* Plan vs actual sub-choice - appears directly below when 'have' is chosen */}
       {entryMode === 'have' && (
         <div className="rounded-xl border border-slate-200 bg-white hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition p-4 md:p-6">
           <h3 className="text-base font-semibold text-slate-900">What kind of measurements do you have?</h3>
@@ -62,7 +113,7 @@ export function EntryModeStep({
           disabled={!canNext}
           className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-40"
         >
-          Next
+          {entryMode === 'measure' ? 'Proceed to measuring' : 'Next'}
         </button>
       </div>
     </div>

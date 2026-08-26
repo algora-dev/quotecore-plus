@@ -1,6 +1,8 @@
-// Main flow orchestrator: Step 1 (entry mode) - Step 2 (measurements)
-// - one product step per populated group - output. Standard/Advanced mode is
-// a persistent toggle held here (persists across steps until manually changed).
+// Main flow orchestrator: Step 1 (entry mode + inline upload / sub-choice)
+// - in-tool takeoff station (measure a plan) OR measurement entry - one
+// product step per populated group - output. Standard/Advanced mode is a
+// persistent toggle held here. Fully self-contained: no links out to any
+// other tool.
 
 'use client';
 
@@ -12,23 +14,26 @@ import { EntryModeStep } from './EntryModeStep';
 import { MeasureEntryStep } from './MeasureEntryStep';
 import { ProductStep } from './ProductStep';
 import { OutputView } from './OutputView';
+import { TakeoffStation } from './TakeoffStation';
 import { DEMO_CATALOG } from './supplier';
 
 export function PortalFlow() {
   const [entryMode, setEntryMode] = useState<EntryMode | null>(null);
   const [haveSubMode, setHaveSubMode] = useState<HaveSubMode | null>(null);
+  const [planFile, setPlanFile] = useState<File | null>(null);
+  const [planUrl, setPlanUrl] = useState<string | null>(null);
   const [measureSet, setMeasureSet] = useState<MeasurementSet>(emptyMeasurementSet());
   const [mode, setMode] = useState<Mode>('standard');
-  // step >= 3 means product step index (step - 3); last = output
   const [step, setStep] = useState(1);
 
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
   const productDefs = populated;
 
-  // Build display steps: 1 = mode, 2 = measurements, one per populated group, then output
   const steps = [
     { key: 'mode', label: 'How do you want to price this job?' },
-    { key: 'measure', label: 'Enter measurements' },
+    ...(entryMode === 'measure'
+      ? [{ key: 'takeoff', label: 'Measure your plan' }]
+      : [{ key: 'measure', label: 'Enter measurements' }]),
     ...productDefs.map(d => ({ key: d.key, label: `Products - ${d.label}` })),
     { key: 'output', label: 'Output' },
   ];
@@ -38,15 +43,26 @@ export function PortalFlow() {
   function reset() {
     setEntryMode(null);
     setHaveSubMode(null);
+    setPlanFile(null);
+    if (planUrl) URL.revokeObjectURL(planUrl);
+    setPlanUrl(null);
     setMeasureSet(emptyMeasurementSet());
     setStep(1);
   }
 
+  function handleTakeoffFinish(set: MeasurementSet) {
+    setMeasureSet(set);
+    // skip the manual entry step - measurements came from the station
+    setStep(3);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <StepProgress steps={steps} current={currentStep} />
+      {step < 3 && (
+        <StepProgress steps={steps} current={currentStep} />
+      )}
       <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
-        {/* Persistent Standard/Advanced toggle - visible from measurement step on */}
+        {/* Persistent Standard/Advanced toggle - visible on the entry step onward */}
         {step >= 2 && (
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
@@ -76,10 +92,14 @@ export function PortalFlow() {
             setEntryMode={setEntryMode}
             haveSubMode={haveSubMode}
             setHaveSubMode={setHaveSubMode}
+            planFile={planFile}
+            setPlanFile={f => {
+              if (planUrl) URL.revokeObjectURL(planUrl);
+              setPlanFile(f);
+              setPlanUrl(f ? URL.createObjectURL(f) : null);
+            }}
             onNext={() => {
               if (entryMode === 'have' && haveSubMode === 'plan') {
-                // Phase 3: plan measurement entry. For now route to actual entry
-                // with a note; pitch conversion lands with Phase 3.
                 setMeasureSet({ ...emptyMeasurementSet(), entryPath: 'plan' });
               } else {
                 setMeasureSet({ ...emptyMeasurementSet(), entryPath: entryMode === 'measure' ? 'measure' : 'actual' });
@@ -89,11 +109,16 @@ export function PortalFlow() {
           />
         )}
 
-        {step === 2 && (
+        {/* Step 2a: in-tool takeoff station (measure a plan) */}
+        {step === 2 && entryMode === 'measure' && planUrl && (
+          <TakeoffStation planUrl={planUrl} onFinish={handleTakeoffFinish} />
+        )}
+
+        {/* Step 2b: manual measurement entry (have measurements) */}
+        {step === 2 && entryMode !== 'measure' && (
           <MeasureEntryStep
             measureSet={measureSet}
             setMeasureSet={setMeasureSet}
-            fromTakeoff={entryMode === 'measure'}
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
           />
