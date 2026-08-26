@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { GroupKey, MeasureEntry, MeasurementSet } from './types';
 import { GROUP_DEFS, entryPitched, makeId } from './types';
 import { pitchFactor, GROUP_PITCH_RULES } from './pitch';
@@ -12,7 +12,7 @@ import { pitchFactor, GROUP_PITCH_RULES } from './pitch';
 const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
 export function MeasureEntryStep({
-  measureSet, setMeasureSet, onBack, onNext, fromTakeoff = false,
+  measureSet, setMeasureSet, onBack, onNext, fromTakeoff = false, flowSpeed = 'fast',
 }: {
   measureSet: MeasurementSet;
   setMeasureSet: (s: MeasurementSet) => void;
@@ -20,7 +20,10 @@ export function MeasureEntryStep({
   onNext: () => void;
   /** takeoff handoff: values come from a takeoff report, no conversion */
   fromTakeoff?: boolean;
+  /** guide = one group per page with diagram; fast = all groups on one page */
+  flowSpeed?: 'guide' | 'fast';
 }) {
+  const [guideIdx, setGuideIdx] = useState(0);
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
   const canNext = populated.length > 0;
   const isPlan = measureSet.entryPath === 'plan' && !fromTakeoff;
@@ -35,6 +38,14 @@ export function MeasureEntryStep({
       ? 'Enter measurements off the plan. Roof pitch is applied automatically to convert them to actual values.'
       : 'Fill in the groups you have. Anything left empty is skipped - only the groups you enter move on to pricing.';
 
+  // Guide mode: one group per page (diagram + entry form), skip groups the
+  // user has passed; final page's Next finishes the step.
+  const guideGroups = flowSpeed === 'guide' && !fromTakeoff
+    ? GROUP_DEFS.filter(g => g.key !== 'downpipes' || true)
+    : null;
+  const guideDef = guideGroups ? guideGroups[Math.min(guideIdx, guideGroups.length - 1)] : null;
+  const guideLast = guideGroups ? guideIdx >= guideGroups.length - 1 : false;
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] transition p-4 md:p-6">
@@ -42,45 +53,78 @@ export function MeasureEntryStep({
         <p className="mt-1 text-sm text-slate-500">{sub}</p>
       </div>
 
-      {GROUP_DEFS.map(def => (
-        <GroupCard
-          key={def.key}
-          def={def}
-          measureSet={measureSet}
-          onChange={(patch) => setMeasureSet({
-            ...measureSet,
-            groups: { ...measureSet.groups, [def.key]: { ...measureSet.groups[def.key], ...patch } },
-          })}
-        />
-      ))}
+      {flowSpeed === 'guide' && guideDef ? (
+        <>
+          <GroupDiagram def={guideDef} count={measureSet.groups[guideDef.key].entries.length} />
+          <GroupCard
+            key={guideDef.key}
+            def={guideDef}
+            measureSet={measureSet}
+            forceOpen
+            onChange={(patch) => setMeasureSet({
+              ...measureSet,
+              groups: { ...measureSet.groups, [guideDef.key]: { ...measureSet.groups[guideDef.key], ...patch } },
+            })}
+          />
+        </>
+      ) : (
+        GROUP_DEFS.map(def => (
+          <GroupCard
+            key={def.key}
+            def={def}
+            measureSet={measureSet}
+            onChange={(patch) => setMeasureSet({
+              ...measureSet,
+              groups: { ...measureSet.groups, [def.key]: { ...measureSet.groups[def.key], ...patch } },
+            })}
+          />
+        ))
+      )}
 
       <div className="flex items-center justify-between pt-2">
         <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
           Back
         </button>
         <div className="flex items-center gap-4">
-          {populated.length > 0 && (
-            <span className="text-xs text-slate-500">{populated.length} group{populated.length === 1 ? '' : 's'} ready</span>
+          {flowSpeed === 'guide' && guideGroups ? (
+            <>
+              <span className="text-xs text-slate-500">{guideIdx + 1} of {guideGroups.length}</span>
+              <button
+                onClick={() => (guideLast ? onNext() : setGuideIdx(i => i + 1))}
+                className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)]"
+              >
+                {guideLast ? 'Next' : 'Next: ' + (guideGroups[guideIdx + 1]?.label ?? '')}
+              </button>
+            </>
+          ) : (
+            <>
+              {populated.length > 0 && (
+                <span className="text-xs text-slate-500">{populated.length} group{populated.length === 1 ? '' : 's'} ready</span>
+              )}
+              <button
+                onClick={onNext}
+                disabled={!canNext}
+                className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
+              >
+                Next
+              </button>
+            </>
           )}
-          <button
-            onClick={onNext}
-            disabled={!canNext}
-            className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
-          >
-            Next
-          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function GroupCard({ def, measureSet, onChange }: {
+function GroupCard({ def, measureSet, onChange, forceOpen = false }: {
   def: typeof GROUP_DEFS[number];
   measureSet: MeasurementSet;
   onChange: (patch: Partial<MeasurementSet['groups'][GroupKey]>) => void;
+  /** Guide mode: card is always expanded (single group per page) */
+  forceOpen?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const expanded = forceOpen || open;
   const group = measureSet.groups[def.key];
   const isPlan = measureSet.entryPath === 'plan';
   const rule = GROUP_PITCH_RULES[def.key] ?? 'none';
@@ -89,29 +133,31 @@ function GroupCard({ def, measureSet, onChange }: {
   const pitchedTotal = group.entries.reduce((s, e) => s + entryPitched(measureSet, def.key, e.id), 0);
 
   return (
-    <div className={`rounded-xl border transition ${open || group.entries.length > 0 ? 'border-slate-200 bg-white' : 'border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)]'}`}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="flex w-full items-center justify-between px-4 py-3.5 text-left cursor-pointer"
-      >
-        <span className="text-sm font-semibold text-slate-900">
-          {def.label}
-          {group.entries.length > 0 && (
-            <span className="ml-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-normal text-slate-500">
-              {group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'} - {converts ? (
-                <>{total.toFixed(1)} plan - <span className="font-medium text-slate-700">{pitchedTotal.toFixed(1)} {def.unit} pitched</span></>
-              ) : (
-                <>{total.toFixed(1)} {def.unit}</>
-              )}
-            </span>
-          )}
-        </span>
-        <svg className={`h-4 w-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+    <div className={`rounded-xl border transition ${expanded || group.entries.length > 0 ? 'border-slate-200 bg-white' : 'border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)]'}`}>
+      {!forceOpen && (
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="flex w-full items-center justify-between px-4 py-3.5 text-left cursor-pointer"
+        >
+          <span className="text-sm font-semibold text-slate-900">
+            {def.label}
+            {group.entries.length > 0 && (
+              <span className="ml-2 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-normal text-slate-500">
+                {group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'} - {converts ? (
+                  <>{total.toFixed(1)} plan - <span className="font-medium text-slate-700">{pitchedTotal.toFixed(1)} {def.unit} pitched</span></>
+                ) : (
+                  <>{total.toFixed(1)} {def.unit}</>
+                )}
+              </span>
+            )}
+          </span>
+          <svg className={`h-4 w-4 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      )}
 
-      {open && (
+      {(expanded || forceOpen) && (
         <div className="border-t border-slate-100 p-4 space-y-3">
           {isPlan && (
             <div className="flex flex-wrap items-center gap-3 rounded-lg bg-slate-50/50 border border-slate-200 px-3 py-2">
@@ -295,6 +341,82 @@ function AddEntryForm({ def, converts, onAdd }: {
         placeholder="Optional label (e.g. Main roof, Front gable)"
         className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 focus:border-slate-900 focus:outline-none"
       />
+    </div>
+  );
+}
+
+/** Guide-mode illustration: gable+hip roof diagram with the current group's
+ *  lines highlighted (blue) so the user can see what a ridge/hip/valley/etc is. */
+function GroupDiagram({ def, count }: { def: typeof GROUP_DEFS[number]; count: number }) {
+  const HI = '#2563EB';
+  const LO = '#CBD5E1';
+  const key = def.key;
+
+  // key elements of a hip-ended gable roof (viewBox 0 0 260 150)
+  const ridge = <line x1="80" y1="30" x2="180" y2="30" />;
+  const leftEave = <line x1="30" y1="100" x2="80" y2="100" />;
+  const rightEave = <line x1="180" y1="100" x2="230" y2="100" />;
+  const hipLL = <line x1="30" y1="100" x2="80" y2="30" />;
+  const hipLR = <line x1="230" y1="100" x2="180" y2="30" />;
+  const valleyL = <line x1="80" y1="100" x2="105" y2="30" />;
+  const valleyR = <line x1="180" y1="100" x2="155" y2="30" />;
+  const bargeL = <line x1="80" y1="30" x2="80" y2="100" />;
+  const bargeR = <line x1="180" y1="30" x2="180" y2="100" />;
+
+  const el = (node: React.ReactElement, on: boolean) =>
+    React.cloneElement(node as never, { stroke: on ? HI : LO, strokeWidth: on ? 5 : 1.5 } as never);
+
+  const on = {
+    roofAreas: false, ridges: false, hips: false, valleys: false,
+    barges: false, spouting: false, downpipes: false,
+    ...{ [key]: true },
+  };
+
+  const desc: Record<string, string> = {
+    roofAreas: 'The total surface of each roof slope - measured flat off the plan, pitched automatically.',
+    ridges: 'The horizontal line along the top where two slopes meet.',
+    hips: 'The sloped lines running from the roof corners up to the ridge.',
+    valleys: 'The internal lines where two roof slopes meet - water runs down them.',
+    barges: 'The sloped edge boards at the gable end, running up along the roof slope.',
+    spouting: 'The guttering fixed along the bottom edge of the roof (the eaves).',
+    downpipes: 'The vertical pipes that take water from the spouting down to the ground - counted, not measured.',
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <svg viewBox="0 0 260 150" className="w-full max-w-[280px] flex-shrink-0" role="img" aria-label={`${def.label} diagram`}>
+          {/* roof slopes */}
+          <polygon points="80,30 180,30 230,100 30,100" fill={on.roofAreas ? 'rgba(37,99,235,0.12)' : '#F1F5F9'} stroke={LO} strokeWidth="1.5" />
+          {on.roofAreas && <polygon points="80,30 180,30 230,100 30,100" fill="none" stroke={HI} strokeWidth="4" />}
+          {el(ridge, on.ridges)}
+          {el(leftEave, on.spouting)}
+          {el(rightEave, on.spouting)}
+          {el(hipLL, on.hips)}
+          {el(hipLR, on.hips)}
+          {el(valleyL, on.valleys)}
+          {el(valleyR, on.valleys)}
+          {el(bargeL, on.barges)}
+          {el(bargeR, on.barges)}
+          {on.downpipes && (
+            <>
+              <line x1="30" y1="100" x2="30" y2="138" stroke={HI} strokeWidth="5" />
+              <line x1="230" y1="100" x2="230" y2="138" stroke={HI} strokeWidth="5" />
+              <circle cx="30" cy="100" r="5" fill={HI} />
+              <circle cx="230" cy="100" r="5" fill={HI} />
+            </>
+          )}
+        </svg>
+        <div>
+          <h3 className="text-base font-semibold text-slate-900">{def.label}</h3>
+          <p className="mt-1 text-sm text-slate-500">{desc[key]}</p>
+          {count > 0 && (
+            <p className="mt-2 text-xs font-medium text-blue-600">
+              {count} {count === 1 ? 'entry' : 'entries'} added
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

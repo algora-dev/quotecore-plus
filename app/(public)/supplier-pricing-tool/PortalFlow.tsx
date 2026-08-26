@@ -110,18 +110,18 @@ export function PortalFlow() {
                   Advanced
                 </button>
               </div>
-              {step >= 3 && (
+              {step >= 2 && (
                 <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
                   <button
                     onClick={() => setFlowSpeed('guide')}
-                    title="One measurement group per page, step by step"
+                    title="Step by step, one page at a time with diagrams"
                     className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${flowSpeed === 'guide' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
                   >
                     Guide me
                   </button>
                   <button
                     onClick={() => setFlowSpeed('fast')}
-                    title="All measurement groups on one page"
+                    title="Everything on one page"
                     className={`rounded-full px-3 py-1 text-xs font-medium transition cursor-pointer ${flowSpeed === 'fast' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
                   >
                     Fast mode
@@ -168,6 +168,7 @@ export function PortalFlow() {
           <MeasureEntryStep
             measureSet={measureSet}
             setMeasureSet={setMeasureSet}
+            flowSpeed={flowSpeed}
             onBack={() => setStep(1)}
             onNext={() => setStep(3)}
           />
