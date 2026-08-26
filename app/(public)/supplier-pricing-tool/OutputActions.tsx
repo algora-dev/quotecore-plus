@@ -71,7 +71,9 @@ export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: Supp
   params.set('amount', (output.material + output.labour).toFixed(2));
   if (lines.length > 0) params.set('lines', encodeURIComponent(JSON.stringify(lines)));
   params.set('ref', 'supplier-pricing-tool');
-  return `/free-quote-generator?${params.toString()}`;
+  // Self-contained supplier quote builder (per-line + global markup/margin,
+  // branding) - replaces the /free-quote-generator handoff.
+  return `/supplier-pricing-tool/quote?${params.toString()}`;
 }
 
 function buildRequestBody(measureSet: MeasurementSet, catalog: SupplierProduct[], kind: 'quote' | 'order', customer: { name: string; email: string; jobRef: string }, supplierName: string, cur: string): string {
