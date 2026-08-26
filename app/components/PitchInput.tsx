@@ -119,7 +119,7 @@ export function PitchInput(props: {
           onKeyDown={(e) => { if (e.key === 'Enter') commit(); }}
           placeholder={pitchPlaceholder(mode)}
           autoFocus={autoFocus}
-          className={`${compact ? 'w-16 px-1 py-0.5 text-xs' : 'w-24 px-2 py-1 text-sm'} border border-slate-300 rounded`}
+          className={`${compact ? 'w-16 px-1 py-0.5 text-xs' : 'w-24 px-2 py-1 text-sm'} border border-slate-300 rounded focus:outline-none focus:border-slate-500`}
         />
         <span className="text-[11px] text-slate-400">{pitchSuffix(mode)}</span>
         {showMax && <span className="text-[11px] text-slate-400">max 80°</span>}

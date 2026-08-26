@@ -38,6 +38,9 @@ export const DEMO_CATALOG: SupplierProduct[] = [
 
   // Spouting
   { id: 'p-spout', name: 'Spouting - 125mm Quad', code: 'SPO-125Q', basis: 'lineal', groups: ['spouting'], unitPrice: 16.8, packSize: null, defaultWastePct: 6, defaultLabourRate: 0, priceEditable: true, suggested: true },
-  { id: 'p-downpipe', name: 'Downpipe 80mm PVC (per m spouting)', code: 'DWN-80P', basis: 'lineal', groups: ['spouting'], unitPrice: 7.4, packSize: null, defaultWastePct: 5, defaultLabourRate: 0, priceEditable: false },
   { id: 'p-spoutbrack', name: 'Spouting Brackets & Fittings', code: 'SPO-FIT-K', basis: 'lineal', groups: ['spouting'], unitPrice: 5.2, packSize: null, defaultWastePct: 5, defaultLabourRate: 0, priceEditable: true, suggested: true },
+
+  // Downpipes (point-measured - counted, not lineal)
+  { id: 'p-downpipe', name: 'Downpipe 80mm PVC (per ea)', code: 'DWN-80P', basis: 'count', groups: ['downpipes'], unitPrice: 38.5, packSize: null, defaultWastePct: 0, defaultLabourRate: 0, priceEditable: true, suggested: true },
+  { id: 'p-dp-bracket', name: 'Downpipe Brackets & Offsets', code: 'DWN-BRK', basis: 'count', groups: ['downpipes'], unitPrice: 9.2, packSize: null, defaultWastePct: 0, defaultLabourRate: 0, priceEditable: false },
 ];

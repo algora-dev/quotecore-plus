@@ -7,7 +7,7 @@
 
 import { useMemo, useState } from 'react';
 import type { AppliedProduct, GroupDef, MeasurementSet, Mode, SupplierProduct } from './types';
-import { GROUP_DEFS, groupPitchedTotal, entryPitched, makeId } from './types';
+import { GROUP_DEFS, groupPitchedTotal, entryPitched, makeId, applyWaste } from './types';
 
 const inputCls = 'rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none';
 
@@ -58,6 +58,7 @@ export function ProductStep({
       productId: pid,
       entryId,
       wastePct: p.defaultWastePct,
+      wasteFlat: 0,
       labourRate: p.defaultLabourRate,
       qtyOverride: null,
       priceOverride: null,
@@ -99,7 +100,7 @@ export function ProductStep({
         <div className="mt-3 flex flex-wrap gap-1.5">
           {group.entries.map(e => (
             <span key={e.id} className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-600">
-              {e.label}: {e.value.toFixed(1)} {def.unit}
+              {e.label}: {(e.value * (e.quantity || 1)).toFixed(0)} {def.unit}
             </span>
           ))}
         </div>
@@ -247,7 +248,7 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
   onUpdate: (patch: Partial<AppliedProduct>) => void;
 }) {
   const calcQty = ap.qtyOverride != null ? ap.qtyOverride : measured;
-  const purchaseQty = calcQty * (1 + (ap.wastePct || 0) / 100);
+  const purchaseQty = applyWaste(calcQty, ap.wastePct, ap.wasteFlat);
   const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
   const mat = purchaseQty * unitPrice;
   const lab = purchaseQty * (ap.labourRate || 0);
@@ -265,14 +266,24 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
         </div>
       </div>
       <label className="flex items-center gap-1.5 text-xs text-slate-500 flex-shrink-0">
-        Waste %
+        Waste
         <input
           type="number" min="0" max="100" step="0.5"
           value={ap.wastePct}
           onChange={e => onUpdate({ wastePct: parseFloat(e.target.value) || 0 })}
-          className={`${inputCls} w-16 text-center`}
+          className={`${inputCls} w-14 text-center`}
           aria-label={`Waste percent for ${p.name}`}
         />
+        <span className="text-slate-400">%</span>
+        <input
+          type="number" min="0" step="0.1"
+          value={ap.wasteFlat || ''}
+          onChange={e => onUpdate({ wasteFlat: parseFloat(e.target.value) || 0 })}
+          placeholder="0"
+          className={`${inputCls} w-14 text-center`}
+          aria-label={`Extra waste length for ${p.name}`}
+        />
+        <span className="text-slate-400">{def.unit}</span>
       </label>
       <span className="text-sm font-semibold text-slate-900 whitespace-nowrap flex-shrink-0">
         {purchaseQty.toFixed(1)} {def.unit}
@@ -356,6 +367,7 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
   onSave: (patch: Partial<AppliedProduct>) => void;
 }) {
   const [wastePct, setWastePct] = useState(String(ap.wastePct));
+  const [wasteFlat, setWasteFlat] = useState(ap.wasteFlat ? String(ap.wasteFlat) : '');
   const [labourRate, setLabourRate] = useState(String(ap.labourRate));
   const [qtyOverride, setQtyOverride] = useState(ap.qtyOverride != null ? String(ap.qtyOverride) : '');
   const [priceOverride, setPriceOverride] = useState(ap.priceOverride != null ? String(ap.priceOverride) : '');
@@ -363,9 +375,10 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
   const qty = qtyOverride.trim() !== '' ? parseFloat(qtyOverride) || 0 : null;
   const price = p.priceEditable && priceOverride.trim() !== '' ? parseFloat(priceOverride) || 0 : null;
   const waste = parseFloat(wastePct) || 0;
+  const wasteLen = parseFloat(wasteFlat) || 0;
   const labour = parseFloat(labourRate) || 0;
 
-  const purchaseQty = (qty ?? 0) * (1 + waste / 100);
+  const purchaseQty = applyWaste(qty ?? 0, waste, wasteLen);
   const unitPrice = price != null ? price : p.unitPrice;
   const mat = purchaseQty * unitPrice;
   const lab = purchaseQty * labour;
@@ -373,6 +386,7 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
   function save() {
     onSave({
       wastePct: waste,
+      wasteFlat: wasteLen,
       labourRate: labour,
       qtyOverride: qty,
       priceOverride: price,
@@ -391,6 +405,10 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
             <div>
               <label className="text-xs font-medium text-slate-600">Waste %</label>
               <input type="number" min="0" max="100" step="0.5" value={wastePct} onChange={e => setWastePct(e.target.value)} className={`${inputCls} mt-0.5 w-full`} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-600">Extra waste ({def.unit})</label>
+              <input type="number" min="0" step="0.1" value={wasteFlat} onChange={e => setWasteFlat(e.target.value)} placeholder="0" className={`${inputCls} mt-0.5 w-full`} />
             </div>
             <div>
               <label className="text-xs font-medium text-slate-600">Labour rate ($/{def.unit})</label>

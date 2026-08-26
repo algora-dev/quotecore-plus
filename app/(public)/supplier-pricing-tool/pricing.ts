@@ -3,7 +3,7 @@
 // waste %, labour, qty override, supplier-permitted price override.
 
 import type { AppliedProduct, GroupKey, MeasurementSet, SupplierProduct } from './types';
-import { GROUP_DEFS, groupPitchedTotal, entryPitched } from './types';
+import { GROUP_DEFS, groupPitchedTotal, entryPitched, applyWaste } from './types';
 
 export interface OutputLine {
   groupKey: GroupKey;
@@ -16,6 +16,7 @@ export interface OutputLine {
   basisUnit: string;
   calcQty: number;      // measured quantity (after override if set)
   wastePct: number;
+  wasteFlat: number;
   purchaseQty: number;  // waste-adjusted
   unitPrice: number;    // effective (after override if honoured)
   lineTotal: number;    // material
@@ -55,7 +56,7 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
     }
 
     const calcQty = effectiveQty(ap, measured);
-    const purchaseQty = calcQty * (1 + (ap.wastePct || 0) / 100);
+    const purchaseQty = applyWaste(calcQty, ap.wastePct, ap.wasteFlat);
     const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
     const lineTotal = Math.round(purchaseQty * unitPrice * 100) / 100;
     const labourTotal = Math.round(purchaseQty * (ap.labourRate || 0) * 100) / 100;
@@ -70,6 +71,7 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
       basisUnit: def.unit,
       calcQty,
       wastePct: ap.wastePct,
+      wasteFlat: ap.wasteFlat || 0,
       purchaseQty,
       unitPrice,
       lineTotal,

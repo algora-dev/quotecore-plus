@@ -4,7 +4,7 @@
 'use client';
 
 import type { MeasurementSet, SupplierProduct } from './types';
-import { GROUP_DEFS, groupPitchedTotal } from './types';
+import { GROUP_DEFS, groupPitchedTotal, entryPitched } from './types';
 import { fmt, priceOutput } from './pricing';
 import { SUPPLIER } from './supplier';
 import { OutputActions } from './OutputActions';
@@ -27,6 +27,22 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
     .map(def => ({ def, lines: output.lines.filter(l => l.groupKey === def.key) }))
     .filter(g => g.lines.length > 0);
 
+  // Roof area entries shown as their own labelled sub-rows with pitch,
+  // so each area is clearly identified in the output.
+  const areaEntries = measureSet.groups.roofAreas.entries.map(e => ({
+    id: e.id,
+    label: e.label,
+    pitch: e.pitchDegrees ?? null,
+    pitched: entryPitched(measureSet, 'roofAreas', e.id),
+  }));
+
+  const wasteLabel = (l: { wastePct: number; wasteFlat: number }) => {
+    const parts: string[] = [];
+    if (l.wastePct > 0) parts.push(`${fmt(l.wastePct, 1)}%`);
+    if (l.wasteFlat > 0) parts.push(`+${fmt(l.wasteFlat, 1)}`);
+    return parts.length > 0 ? parts.join(' + ') : '-';
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-xl border border-black p-6 md:p-10 space-y-6">
@@ -42,6 +58,18 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
               <span className="text-black font-bold">{def.label}</span>
               <span className="text-black font-medium text-sm">{fmt(groupPitchedTotal(measureSet, def.key), 1)} {def.unit}</span>
             </div>
+            {def.key === 'roofAreas' && areaEntries.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {areaEntries.map(a => (
+                  <div key={a.id} className="flex items-center justify-between rounded-lg bg-black/[0.03] px-3 py-1.5">
+                    <span className="text-xs font-semibold text-black">{a.label}</span>
+                    <span className="text-xs text-black/60">
+                      {a.pitch != null ? `${a.pitch}\u00B0 pitch - ` : ''}{fmt(a.pitched, 1)} m\u00B2
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="mt-2 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -49,7 +77,6 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
                     <th className="py-1.5 pr-2 font-medium">Product</th>
                     <th className="py-1.5 pr-2 font-medium">Code</th>
                     <th className="py-1.5 pr-2 font-medium text-right">Calc Qty</th>
-                    <th className="py-1.5 pr-2 font-medium text-right">Waste</th>
                     <th className="py-1.5 pr-2 font-medium text-right">Purchase Qty</th>
                     <th className="py-1.5 pr-2 font-medium text-right">Unit Price</th>
                     <th className="py-1.5 pr-2 font-medium text-right">Line Total</th>
@@ -65,8 +92,10 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
                       </td>
                       <td className="py-2 pr-2 text-black/60 text-xs">{l.code}</td>
                       <td className="py-2 pr-2 text-right text-black">{fmt(l.calcQty, 1)} {l.basisUnit}</td>
-                      <td className="py-2 pr-2 text-right text-black/60">{l.wastePct > 0 ? `${fmt(l.wastePct, 1)}%` : '-'}</td>
-                      <td className="py-2 pr-2 text-right text-black font-medium">{fmt(l.purchaseQty, 1)} {l.basisUnit}</td>
+                      <td className="py-2 pr-2 text-right text-black font-medium">
+                        {fmt(l.purchaseQty, 1)} {l.basisUnit}
+                        <span className="ml-1 text-xs font-normal text-black/50">({wasteLabel(l)})</span>
+                      </td>
                       <td className="py-2 pr-2 text-right text-black/60">{cur}{fmt(l.unitPrice)}</td>
                       <td className="py-2 pr-2 text-right text-black font-semibold">{cur}{fmt(l.lineTotal)}</td>
                       {hasLabour && (
@@ -98,6 +127,9 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
             </div>
           )}
         </div>
+        <p className="text-xs text-black/50">
+          Calc Qty includes pitch allowance (plan measurement x pitch factor). Purchase Qty = Calc Qty + waste.
+        </p>
         <p className="text-xs text-black/50">
           Standard materials price. Trade pricing is revealed once you&apos;re signed in (if your account has trade pricing with {SUPPLIER.name}).
         </p>

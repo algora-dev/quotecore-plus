@@ -8,9 +8,57 @@ import { useState } from 'react';
 import type { MeasurementSet, SupplierProduct } from './types';
 import { priceOutput, fmt } from './pricing';
 import { SUPPLIER } from './supplier';
+import { GROUP_DEFS, groupPitchedTotal } from './types';
 
-/** Build a /free-quote-generator URL carrying the priced lines, same contract
- *  as the measurement-to-quote-tool handoff (amount + encoded lines + ref). */
+/** Save the takeoff output as a draft quote handoff (areas + component groups
+ *  with measured quantities and pitches). Component persistence is deliberately
+ *  skipped - this tool prices supplier products, not user components. */
+async function saveDraftQuote(measureSet: MeasurementSet): Promise<string | null> {
+  const payload = {
+    tool: 'supplier-pricing-tool',
+    unitSystem: 'metric' as const,
+    roofAreas: measureSet.groups.roofAreas.entries.map((a, i) => ({
+      id: a.id,
+      name: a.label || `Roof Area ${i + 1}`,
+      // plan area for pitch conversion in the app import; takeoff-measured
+      // areas are already pitched so the value passes through unchanged.
+      area: entryPlanArea(measureSet, a.id),
+      pitch: a.pitchDegrees ?? 0,
+    })),
+    componentGroups: GROUP_DEFS
+      .filter(d => d.key !== 'roofAreas')
+      .flatMap(d => {
+        const entries = measureSet.groups[d.key].entries;
+        if (entries.length === 0) return [];
+        return [{
+          componentId: `g-${d.key}`,
+          name: d.label,
+          isSystem: true,
+          semantic: null,
+          count: entries.length,
+          total: groupPitchedTotal(measureSet, d.key),
+          measurementType: d.basis === 'count' ? 'quantity' : d.basis,
+          measurements: entries.map(e => ({ value: e.value * (e.quantity || 1), quoteRoofAreaId: null })),
+        }];
+      }),
+    savedAt: new Date().toISOString(),
+  };
+  const res = await fetch('/api/free-tools/drafts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ draftType: 'takeoff', payload }),
+  });
+  if (!res.ok) return null;
+  const { id } = await res.json() as { id: string };
+  return id;
+}
+
+/** Plan (pre-pitch) area of one roof-area entry, undoing the pitch factor. */
+function entryPlanArea(measureSet: MeasurementSet, entryId: string): number {
+  const e = measureSet.groups.roofAreas.entries.find(x => x.id === entryId);
+  if (!e) return 0;
+  return e.value * (e.quantity || 1);
+}
 export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: SupplierProduct[]): string {
   const output = priceOutput(measureSet, catalog);
   const lines = output.lines.map(l => ({
@@ -68,6 +116,19 @@ export function OutputActions({ measureSet, catalog }: {
   const [jobRef, setJobRef] = useState('');
 
   const quoteUrl = buildConvertToQuoteUrl(measureSet, catalog);
+  const [saving, setSaving] = useState(false);
+
+  async function continueInApp() {
+    setSaving(true);
+    try {
+      const id = await saveDraftQuote(measureSet);
+      window.location.href = id
+        ? `/signup?ref=supplier-pricing-tool&draft=${id}`
+        : '/signup';
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
@@ -92,8 +153,9 @@ export function OutputActions({ measureSet, catalog }: {
         </a>
         <ActionTile
           title="Continue in QuoteCore+"
-          desc="Save this job, reuse your measurements and order again faster."
-          onClick={() => window.open('/signup', '_blank')}
+          desc="Save this takeoff as a draft quote - measurements and pitches carry into the app."
+          onClick={continueInApp}
+          disabled={saving}
         />
       </div>
 
@@ -141,11 +203,12 @@ export function OutputActions({ measureSet, catalog }: {
   );
 }
 
-function ActionTile({ title, desc, onClick }: { title: string; desc: string; onClick: () => void }) {
+function ActionTile({ title, desc, onClick, disabled }: { title: string; desc: string; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
-      className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40 cursor-pointer"
+      disabled={disabled}
+      className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40 cursor-pointer disabled:opacity-50"
     >
       <div className="text-sm font-semibold text-slate-900">{title}</div>
       <div className="mt-0.5 text-xs text-slate-500">{desc}</div>

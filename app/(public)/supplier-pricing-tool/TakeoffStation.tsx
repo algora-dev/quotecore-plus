@@ -31,7 +31,10 @@ function componentToGroup(name: string, semantic: string | null): GroupKey | nul
   if (key.includes('hip') && !key.includes('valley')) return 'hips';
   if (key.includes('valley')) return 'valleys';
   if (key.includes('barge')) return 'barges';
-  if (key.includes('spout') || key.includes('gutter') || key.includes('downpipe')) return 'spouting';
+  // Downpipes are POINT-measured (counted) - their own group, never folded
+  // into spouting (that caused 2x spouting entries).
+  if (key.includes('downpipe')) return 'downpipes';
+  if (key.includes('spout') || key.includes('gutter')) return 'spouting';
   return null;
 }
 
@@ -91,7 +94,7 @@ const PLACEHOLDER_COMPONENTS = [
   { id: 'ph-valley', name: 'Valley', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
   { id: 'ph-barge', name: 'Barge', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
   { id: 'ph-spouting', name: 'Spouting', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
-  { id: 'ph-downpipe', name: 'Downpipes', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-downpipe', name: 'Downpipes', measurement_type: 'point', is_system: true, collection_id: 'tool-builtin' },
 ] as never;
 
 export function TakeoffStation({ planUrl, onFinish }: {

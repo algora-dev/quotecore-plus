@@ -179,13 +179,15 @@ function GroupCard({ def, measureSet, onChange }: {
 }
 
 /** Entry form: area groups get total/length-x-width toggle; lineal groups get
- *  length + quantity (default 1); label optional and last. */
+ *  length + quantity (default 1); count groups get quantity only; label
+ *  optional and last. */
 function AddEntryForm({ def, converts, onAdd }: {
   def: typeof GROUP_DEFS[number];
   converts: boolean;
   onAdd: (e: MeasureEntry) => void;
 }) {
   const isArea = def.basis === 'area';
+  const isCount = def.basis === 'count';
   const [areaMode, setAreaMode] = useState<'dimensions' | 'total'>('dimensions');
   const [val1, setVal1] = useState('');
   const [val2, setVal2] = useState('');
@@ -196,7 +198,9 @@ function AddEntryForm({ def, converts, onAdd }: {
   function add() {
     const quantity = Math.max(1, Math.round(parseFloat(qty) || 1));
     let value = 0;
-    if (isArea) {
+    if (isCount) {
+      value = 1; // each entry is one counted item; quantity carries the count
+    } else if (isArea) {
       if (areaMode === 'dimensions') {
         const w = parseFloat(val1);
         const l = parseFloat(val2);
@@ -225,9 +229,11 @@ function AddEntryForm({ def, converts, onAdd }: {
     setVal1(''); setVal2(''); setQty('1'); setPitch(''); setLabel('');
   }
 
-  const canAdd = isArea
-    ? (areaMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(val1) > 0)
-    : parseFloat(val1) > 0;
+  const canAdd = isCount
+    ? Math.round(parseFloat(qty) || 1) > 0
+    : isArea
+      ? (areaMode === 'dimensions' ? (parseFloat(val1) > 0 && parseFloat(val2) > 0) : parseFloat(val1) > 0)
+      : parseFloat(val1) > 0;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
@@ -239,7 +245,12 @@ function AddEntryForm({ def, converts, onAdd }: {
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {isArea && areaMode === 'dimensions' ? (
+        {isCount ? (
+          <div className="col-span-2">
+            <label className="text-xs font-medium text-slate-600">How many? (count)</label>
+            <input type="number" min="1" step="1" value={qty} onChange={e => setQty(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} className={inputCls} />
+          </div>
+        ) : isArea && areaMode === 'dimensions' ? (
           <>
             <div>
               <label className="text-xs font-medium text-slate-600">Length (m)</label>
@@ -256,7 +267,7 @@ function AddEntryForm({ def, converts, onAdd }: {
             <input type="number" min="0" step="any" inputMode="decimal" value={val1} onChange={e => setVal1(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }} placeholder="0" className={inputCls} />
           </div>
         )}
-        {!isArea && (
+        {!isArea && !isCount && (
           <div>
             <label className="text-xs font-medium text-slate-600">Quantity</label>
             <input type="number" min="1" step="1" value={qty} onChange={e => setQty(e.target.value)} className={inputCls} />

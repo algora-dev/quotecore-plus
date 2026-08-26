@@ -13,7 +13,8 @@ export type GroupKey =
   | 'hips'
   | 'valleys'
   | 'barges'
-  | 'spouting';
+  | 'spouting'
+  | 'downpipes';
 
 export interface GroupDef {
   key: GroupKey;
@@ -30,6 +31,7 @@ export const GROUP_DEFS: GroupDef[] = [
   { key: 'valleys', label: 'Valleys', singular: 'Valley', basis: 'lineal', unit: 'm' },
   { key: 'barges', label: 'Barges', singular: 'Barge', basis: 'lineal', unit: 'm' },
   { key: 'spouting', label: 'Spouting', singular: 'Spouting', basis: 'lineal', unit: 'm' },
+  { key: 'downpipes', label: 'Downpipes', singular: 'Downpipe', basis: 'count', unit: 'ea' },
 ];
 
 export interface SupplierProduct {
@@ -74,9 +76,17 @@ export interface AppliedProduct {
   productId: string;
   entryId: string | null;
   wastePct: number;
+  /** length-based waste: flat amount added to calc qty (same unit as the group) */
+  wasteFlat: number;
   labourRate: number;          // $ per unit (0 = none)
   qtyOverride: number | null;  // replaces measured qty when set
   priceOverride: number | null; // only honoured if product.priceEditable
+}
+
+/** Purchase qty after waste (pct and/or flat length) - single source of truth
+ *  shared by the pricing engine and the live UI previews. */
+export function applyWaste(calcQty: number, wastePct: number, wasteFlat: number): number {
+  return calcQty * (1 + (wastePct || 0) / 100) + (wasteFlat || 0);
 }
 
 export interface MeasurementSet {

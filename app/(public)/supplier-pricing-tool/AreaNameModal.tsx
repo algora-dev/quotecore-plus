@@ -84,7 +84,7 @@ export function AreaNameModal({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+                    className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded focus:outline-none focus:border-slate-500 focus:ring-0"
                     placeholder={namePlaceholder ?? (isRoofing ? 'e.g. Main Roof' : 'e.g. North Wall')}
                     autoFocus
                     required

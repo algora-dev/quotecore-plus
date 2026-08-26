@@ -24,6 +24,7 @@ export const GROUP_PITCH_RULES: Record<string, PitchRule> = {
   valleys: 'hipvalley',
   barges: 'rafter',      // barge follows the rafter slope
   spouting: 'none',      // eaves edge is horizontal
+  downpipes: 'none',     // counted points - no conversion
 };
 
 export function pitchFactor(rule: PitchRule, degrees: number): number {
