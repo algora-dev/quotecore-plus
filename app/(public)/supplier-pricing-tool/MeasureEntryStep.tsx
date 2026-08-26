@@ -4,10 +4,22 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { GroupKey, MeasureEntry, MeasurementSet } from './types';
 import { GROUP_DEFS, entryPitched, makeId } from './types';
 import { pitchFactor, GROUP_PITCH_RULES } from './pitch';
+import { ComponentGuideBox } from './ComponentGuideBox';
+
+// measurement group key -> ComponentGuideBox component key
+const GUIDE_KEY: Record<string, string> = {
+  roofAreas: 'roof_area',
+  ridges: 'ridge',
+  hips: 'hip',
+  valleys: 'valley',
+  barges: 'barge',
+  spouting: 'spouting',
+  downpipes: 'downpipe',
+};
 
 const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
@@ -55,7 +67,9 @@ export function MeasureEntryStep({
 
       {flowSpeed === 'guide' && guideDef ? (
         <>
-          <GroupDiagram def={guideDef} count={measureSet.groups[guideDef.key].entries.length} />
+          <div className="mb-3">
+            <ComponentGuideBox componentKey={GUIDE_KEY[guideDef.key] ?? 'roof_area'} entries={measureSet.groups[guideDef.key].entries.length} />
+          </div>
           <GroupCard
             key={guideDef.key}
             def={guideDef}
@@ -341,82 +355,6 @@ function AddEntryForm({ def, converts, onAdd }: {
         placeholder="Optional label (e.g. Main roof, Front gable)"
         className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-slate-600 focus:border-slate-900 focus:outline-none"
       />
-    </div>
-  );
-}
-
-/** Guide-mode illustration: gable+hip roof diagram with the current group's
- *  lines highlighted (blue) so the user can see what a ridge/hip/valley/etc is. */
-function GroupDiagram({ def, count }: { def: typeof GROUP_DEFS[number]; count: number }) {
-  const HI = '#2563EB';
-  const LO = '#CBD5E1';
-  const key = def.key;
-
-  // key elements of a hip-ended gable roof (viewBox 0 0 260 150)
-  const ridge = <line x1="80" y1="30" x2="180" y2="30" />;
-  const leftEave = <line x1="30" y1="100" x2="80" y2="100" />;
-  const rightEave = <line x1="180" y1="100" x2="230" y2="100" />;
-  const hipLL = <line x1="30" y1="100" x2="80" y2="30" />;
-  const hipLR = <line x1="230" y1="100" x2="180" y2="30" />;
-  const valleyL = <line x1="80" y1="100" x2="105" y2="30" />;
-  const valleyR = <line x1="180" y1="100" x2="155" y2="30" />;
-  const bargeL = <line x1="80" y1="30" x2="80" y2="100" />;
-  const bargeR = <line x1="180" y1="30" x2="180" y2="100" />;
-
-  const el = (node: React.ReactElement, on: boolean) =>
-    React.cloneElement(node as never, { stroke: on ? HI : LO, strokeWidth: on ? 5 : 1.5 } as never);
-
-  const on = {
-    roofAreas: false, ridges: false, hips: false, valleys: false,
-    barges: false, spouting: false, downpipes: false,
-    ...{ [key]: true },
-  };
-
-  const desc: Record<string, string> = {
-    roofAreas: 'The total surface of each roof slope - measured flat off the plan, pitched automatically.',
-    ridges: 'The horizontal line along the top where two slopes meet.',
-    hips: 'The sloped lines running from the roof corners up to the ridge.',
-    valleys: 'The internal lines where two roof slopes meet - water runs down them.',
-    barges: 'The sloped edge boards at the gable end, running up along the roof slope.',
-    spouting: 'The guttering fixed along the bottom edge of the roof (the eaves).',
-    downpipes: 'The vertical pipes that take water from the spouting down to the ground - counted, not measured.',
-  };
-
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
-        <svg viewBox="0 0 260 150" className="w-full max-w-[280px] flex-shrink-0" role="img" aria-label={`${def.label} diagram`}>
-          {/* roof slopes */}
-          <polygon points="80,30 180,30 230,100 30,100" fill={on.roofAreas ? 'rgba(37,99,235,0.12)' : '#F1F5F9'} stroke={LO} strokeWidth="1.5" />
-          {on.roofAreas && <polygon points="80,30 180,30 230,100 30,100" fill="none" stroke={HI} strokeWidth="4" />}
-          {el(ridge, on.ridges)}
-          {el(leftEave, on.spouting)}
-          {el(rightEave, on.spouting)}
-          {el(hipLL, on.hips)}
-          {el(hipLR, on.hips)}
-          {el(valleyL, on.valleys)}
-          {el(valleyR, on.valleys)}
-          {el(bargeL, on.barges)}
-          {el(bargeR, on.barges)}
-          {on.downpipes && (
-            <>
-              <line x1="30" y1="100" x2="30" y2="138" stroke={HI} strokeWidth="5" />
-              <line x1="230" y1="100" x2="230" y2="138" stroke={HI} strokeWidth="5" />
-              <circle cx="30" cy="100" r="5" fill={HI} />
-              <circle cx="230" cy="100" r="5" fill={HI} />
-            </>
-          )}
-        </svg>
-        <div>
-          <h3 className="text-base font-semibold text-slate-900">{def.label}</h3>
-          <p className="mt-1 text-sm text-slate-500">{desc[key]}</p>
-          {count > 0 && (
-            <p className="mt-2 text-xs font-medium text-blue-600">
-              {count} {count === 1 ? 'entry' : 'entries'} added
-            </p>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
