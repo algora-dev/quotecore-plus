@@ -59,6 +59,9 @@ export interface MeasureEntry {
   quantity: number;
   /** optional per-entry pitch override (plan mode) */
   pitchDegrees?: number;
+  /** linear entries: the roof area this component belongs to. Drives
+   *  plan-mode pitch conversion (attached area's pitch) and output grouping. */
+  roofAreaId?: string | null;
 }
 
 export interface MeasurementGroup {
@@ -112,15 +115,20 @@ export function groupTotal(set: MeasurementSet, key: GroupKey): number {
   return set.groups[key].entries.reduce((s, e) => s + (e.value || 0), 0);
 }
 
-/** Pitched (converted) value of an entry - plan mode applies the group's
- *  pitch rule; actual mode returns the value unchanged. */
+/** Pitched (converted) value of an entry - plan mode applies the pitch
+ *  rule; actual mode returns the value unchanged. Attached linear entries
+ *  convert at their ROOF AREA's pitch (per-area correctness), falling back
+ *  to the group pitch when unattached. */
 export function entryPitched(set: MeasurementSet, key: GroupKey, entryId: string): number {
   const g = set.groups[key];
   const e = g.entries.find(x => x.id === entryId);
   if (!e) return 0;
   const raw = e.value * (e.quantity || 1);
   if (set.entryPath !== 'plan') return raw;
-  const deg = e.pitchDegrees ?? g.pitchDegrees ?? 0;
+  const areaPitch = e.roofAreaId
+    ? set.groups.roofAreas.entries.find(a => a.id === e.roofAreaId)?.pitchDegrees
+    : undefined;
+  const deg = e.pitchDegrees ?? areaPitch ?? g.pitchDegrees ?? 0;
   return raw * pitchFactor(GROUP_PITCH_RULES[key] ?? 'none', deg);
 }
 

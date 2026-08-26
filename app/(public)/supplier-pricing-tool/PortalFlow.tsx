@@ -51,8 +51,12 @@ export function PortalFlow() {
     { key: 'mode', label: 'How do you want to price this job?' },
     ...(entryMode === 'measure'
       ? [{ key: 'takeoff', label: 'Measure your plan' }]
-      : [{ key: 'measure', label: 'Enter measurements' }]),
-    ...productDefs.map(d => ({ key: d.key, label: `Products - ${d.label}` })),
+      : [{ key: 'measure', label: 'Measurements & products' }]),
+    // manual flow assigns products inline on the measurement pages (merged
+    // flow) - only the takeoff path gets separate product steps.
+    ...(entryMode === 'measure'
+      ? productDefs.map(d => ({ key: d.key, label: `Products - ${d.label}` }))
+      : []),
     { key: 'output', label: 'Output' },
   ];
   const currentStep = Math.min(step, steps.length);
@@ -163,20 +167,25 @@ export function PortalFlow() {
           <TakeoffStation planUrl={planUrl} onFinish={handleTakeoffFinish} />
         )}
 
-        {/* Step 2b: manual measurement entry (have measurements) */}
+        {/* Step 2b: manual measurement entry (have measurements).
+            Merged flow: entry + product assignment happen on the SAME page
+            per group (guide = one group per page, fast = all stacked).
+            Next goes straight to the output - there is no separate product phase. */}
         {step === 2 && entryMode !== 'measure' && (
           <MeasureEntryStep
             measureSet={measureSet}
             setMeasureSet={setMeasureSet}
             flowSpeed={flowSpeed}
+            catalog={catalog}
+            mode={mode}
             onBack={() => setStep(1)}
-            onNext={() => setStep(3)}
+            onNext={() => setStep(3 + productDefs.length)}
           />
         )}
 
         {/* Product assignment: Fast mode = every populated group on one page;
             Guide = one group per step. */}
-        {step >= 3 && flowSpeed === 'fast' && productStepIdx < productDefs.length && (
+        {step >= 3 && productStepIdx < productDefs.length && flowSpeed === 'fast' && entryMode === 'measure' && (
           <div className="space-y-4">
             {productDefs.map(def => (
               <ProductStep
@@ -208,7 +217,7 @@ export function PortalFlow() {
           </div>
         )}
 
-        {step >= 3 && flowSpeed === 'guide' && productStepIdx < productDefs.length && (
+        {step >= 3 && flowSpeed === 'guide' && entryMode === 'measure' && productStepIdx < productDefs.length && (
           <ProductStep
             def={productDefs[productStepIdx]}
             measureSet={measureSet}
@@ -229,7 +238,7 @@ export function PortalFlow() {
             baselineCatalog={config.products}
             showTrade={showTrade}
             tradeLabel={showTrade && config.discountPct > 0 ? `trade pricing (-${config.discountPct}%)` : null}
-            onBack={() => setStep(step - 1)}
+            onBack={() => setStep(entryMode === 'measure' ? step - 1 : 2)}
             onRestart={reset}
           />
         )}

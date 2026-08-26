@@ -3,7 +3,7 @@
 
 'use client';
 
-import type { MeasurementSet, SupplierProduct } from './types';
+import type { GroupKey, MeasurementSet, SupplierProduct } from './types';
 import { GROUP_DEFS, groupPitchedTotal, entryPitched } from './types';
 import { fmt, priceOutput } from './pricing';
 import { useSupplierConfig } from './supplierConfig';
@@ -36,6 +36,16 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
   const byGroup = GROUP_DEFS
     .map(def => ({ def, lines: output.lines.filter(l => l.groupKey === def.key) }))
     .filter(g => g.lines.length > 0);
+
+  // Linear entries attached to a roof area group under that area in the
+  // output (per-area attachments drive both grouping and plan pitch maths).
+  const areaNameById = new Map(measureSet.groups.roofAreas.entries.map(e => [e.id, e.label]));
+  const attachLabel = (entryLabel: string | null, groupKey: GroupKey) => {
+    if (!entryLabel) return null;
+    const entry = measureSet.groups[groupKey]?.entries.find(e => e.label === entryLabel);
+    const areaId = entry?.roofAreaId;
+    return areaId ? (areaNameById.get(areaId) ?? null) : null;
+  };
 
   // Roof area entries shown as their own labelled sub-rows with pitch,
   // so each area is clearly identified in the output.
@@ -99,6 +109,10 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
                       <td className="py-2 pr-2 text-black">
                         {l.name}
                         {l.entryLabel && <span className="ml-1.5 text-xs text-black/50">({l.entryLabel})</span>}
+                        {(() => {
+                          const area = attachLabel(l.entryLabel, l.groupKey);
+                          return area && <span className="ml-1.5 text-[10px] font-medium text-blue-700">[ {area} ]</span>;
+                        })()}
                       </td>
                       <td className="py-2 pr-2 text-black/60 text-xs">{l.code}</td>
                       <td className="py-2 pr-2 text-right text-black">{fmt(l.calcQty, 1)} {l.basisUnit}</td>

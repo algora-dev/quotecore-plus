@@ -38,7 +38,7 @@ function GuideSVG({ componentKey }: { componentKey: string }) {
   const black = '#1e293b';
   const blue = '#2563EB';
   const sw = 1.5;
-  const ow = 2.25;
+  const ow = 3.5;
 
   // Building outline path
   const outline = 'M 40 40 L 420 40 L 420 280 L 320 280 L 320 340 L 140 340 L 140 280 L 40 280 Z';
@@ -130,7 +130,7 @@ function GuideSVG({ componentKey }: { componentKey: string }) {
   }
 
   return (
-    <svg viewBox="0 0 460 380" className="w-full h-auto" style={{ maxHeight: '140px' }}>
+    <svg viewBox="0 0 460 380" className="w-full h-auto">
       <path
         d={outline}
         fill="none"
@@ -161,7 +161,7 @@ export function ComponentGuideBox({ componentKey, entries }: ComponentGuideBoxPr
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
       <div className="flex items-center gap-3">
-        <div className="flex-shrink-0 w-28 sm:w-32">
+        <div className="flex-shrink-0 w-44 sm:w-56">
           <GuideSVG componentKey={componentKey} />
         </div>
         <div className="min-w-0">

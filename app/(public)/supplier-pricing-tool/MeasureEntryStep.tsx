@@ -9,9 +9,11 @@ import type { GroupKey, MeasureEntry, MeasurementSet } from './types';
 import { GROUP_DEFS, entryPitched, makeId } from './types';
 import { pitchFactor, GROUP_PITCH_RULES } from './pitch';
 import { ComponentGuideBox } from './ComponentGuideBox';
+import { ProductStep } from './ProductStep';
+import type { Mode, SupplierProduct } from './types';
 
 // measurement group key -> ComponentGuideBox component key
-const GUIDE_KEY: Record<string, string> = {
+export const GUIDE_KEY: Record<string, string> = {
   roofAreas: 'roof_area',
   ridges: 'ridge',
   hips: 'hip',
@@ -25,6 +27,7 @@ const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 tex
 
 export function MeasureEntryStep({
   measureSet, setMeasureSet, onBack, onNext, fromTakeoff = false, flowSpeed = 'fast',
+  catalog, mode = 'standard',
 }: {
   measureSet: MeasurementSet;
   setMeasureSet: (s: MeasurementSet) => void;
@@ -34,6 +37,9 @@ export function MeasureEntryStep({
   fromTakeoff?: boolean;
   /** guide = one group per page with diagram; fast = all groups on one page */
   flowSpeed?: 'guide' | 'fast';
+  /** catalog + mode: manual flow assigns products ON THE SAME page as entry */
+  catalog?: SupplierProduct[];
+  mode?: Mode;
 }) {
   const [guideIdx, setGuideIdx] = useState(0);
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
@@ -80,18 +86,49 @@ export function MeasureEntryStep({
               groups: { ...measureSet.groups, [guideDef.key]: { ...measureSet.groups[guideDef.key], ...patch } },
             })}
           />
+          {!fromTakeoff && catalog && measureSet.groups[guideDef.key].entries.length > 0 && (
+            <div className="mt-4">
+              <ProductStep
+                def={guideDef}
+                measureSet={measureSet}
+                catalog={catalog}
+                setMeasureSet={setMeasureSet}
+                mode={mode}
+                hideNav
+                onBack={onBack}
+                onNext={onNext}
+                stepNum={guideIdx + 1}
+                totalSteps={guideGroups ? guideGroups.length : 1}
+              />
+            </div>
+          )}
         </>
       ) : (
         GROUP_DEFS.map(def => (
-          <GroupCard
-            key={def.key}
-            def={def}
-            measureSet={measureSet}
-            onChange={(patch) => setMeasureSet({
-              ...measureSet,
-              groups: { ...measureSet.groups, [def.key]: { ...measureSet.groups[def.key], ...patch } },
-            })}
-          />
+          <div key={def.key} className="space-y-4">
+            <GroupCard
+              def={def}
+              measureSet={measureSet}
+              onChange={(patch) => setMeasureSet({
+                ...measureSet,
+                groups: { ...measureSet.groups, [def.key]: { ...measureSet.groups[def.key], ...patch } },
+              })}
+            />
+            {!fromTakeoff && catalog && measureSet.groups[def.key].entries.length > 0 && (
+              <ProductStep
+                def={def}
+                measureSet={measureSet}
+                catalog={catalog}
+                setMeasureSet={setMeasureSet}
+                mode={mode}
+                hideNav
+                onBack={onBack}
+                onNext={onNext}
+                stepNum={GROUP_DEFS.indexOf(def) + 1}
+                totalSteps={GROUP_DEFS.length}
+              />
+            )}
+          </div>
         ))
       )}
 
@@ -130,7 +167,7 @@ export function MeasureEntryStep({
   );
 }
 
-function GroupCard({ def, measureSet, onChange, forceOpen = false }: {
+export function GroupCard({ def, measureSet, onChange, forceOpen = false }: {
   def: typeof GROUP_DEFS[number];
   measureSet: MeasurementSet;
   onChange: (patch: Partial<MeasurementSet['groups'][GroupKey]>) => void;
@@ -200,12 +237,31 @@ function GroupCard({ def, measureSet, onChange, forceOpen = false }: {
                 const pitched = entryPitched(measureSet, def.key, e.id);
                 const showConversion = converts && Math.abs(pitched - e.value * (e.quantity || 1)) > 0.01;
                 const raw = e.value * (e.quantity || 1);
+                const areas = measureSet.groups.roofAreas.entries;
+                const canAttach = def.basis === 'lineal' && areas.length > 0;
                 return (
                   <div key={e.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white hover:bg-blue-50/40 hover:border-blue-200 px-3 py-2 transition">
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
                       <span className="text-xs font-medium text-slate-700 truncate">{e.label}</span>
                       {(e.quantity || 1) > 1 && <span className="text-[10px] text-slate-400">x{e.quantity}</span>}
                       {(e.pitchDegrees ?? 0) > 0 && <span className="text-[10px] text-slate-400">@ {e.pitchDegrees}°</span>}
+                      {canAttach && (
+                        <select
+                          value={e.roofAreaId ?? ''}
+                          onChange={ev => onChange({
+                            entries: group.entries.map(x => x.id === e.id ? { ...x, roofAreaId: ev.target.value || null } : x),
+                          })}
+                          className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-500 focus:border-blue-500 focus:outline-none cursor-pointer"
+                          aria-label={`Roof area for ${e.label}`}
+                        >
+                          <option value="">No roof area</option>
+                          {areas.map(a => (
+                            <option key={a.id} value={a.id}>
+                              {a.label}{(a.pitchDegrees ?? 0) > 0 ? ` (${a.pitchDegrees}°)` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       {showConversion ? (
