@@ -1,0 +1,43 @@
+// Demo supplier config - hardcoded per plan (one fictional supplier).
+// This is the template every per-supplier build will swap out.
+
+import type { SupplierProduct } from './types';
+
+export const SUPPLIER = {
+  name: 'Roofline Supplies',
+  tagline: 'Roofing materials, priced fast',
+  unit: 'metric',
+  currency: '$',
+  mode: 'powered_by' as const, // powered_by | white_label
+};
+
+export const DEMO_CATALOG: SupplierProduct[] = [
+  // Roof areas
+  { id: 'p-tile', name: 'Concrete Roof Tile - Charcoal', code: 'TIL-CH-01', basis: 'area', groups: ['roofAreas'], unitPrice: 28.5, packSize: null, defaultWastePct: 7.5, suggested: true },
+  { id: 'p-tile-ts', name: 'Terracotta Roof Tile - Classic', code: 'TIL-TC-02', basis: 'area', groups: ['roofAreas'], unitPrice: 36.9, packSize: null, defaultWastePct: 7.5 },
+  { id: 'p-underlay', name: 'Roofing Underlay - Double Sided', code: 'UND-DS-10', basis: 'area', groups: ['roofAreas'], unitPrice: 4.2, packSize: null, defaultWastePct: 10, suggested: true },
+  { id: 'p-batten', name: 'Timber Roof Batten 50x25', code: 'BAT-5025', basis: 'area', groups: ['roofAreas'], unitPrice: 6.8, packSize: null, defaultWastePct: 5 },
+  { id: 'p-fixings', name: 'Roof Fixings Pack (per 10m2)', code: 'FIX-10M', basis: 'area', groups: ['roofAreas'], unitPrice: 3.5, packSize: null, defaultWastePct: 0, suggested: true },
+
+  // Ridges
+  { id: 'p-dryridge', name: 'Dry Ridge System Kit (per m)', code: 'DRS-PM', basis: 'lineal', groups: ['ridges'], unitPrice: 21.4, packSize: null, defaultWastePct: 5, suggested: true },
+  { id: 'p-ridgetile', name: 'Ridge Tile - Charcoal', code: 'RID-CH-01', basis: 'lineal', groups: ['ridges'], unitPrice: 12.8, packSize: null, defaultWastePct: 5 },
+  { id: 'p-ridgebed', name: 'Bedding Mortar (per m ridge)', code: 'BED-PM', basis: 'lineal', groups: ['ridges'], unitPrice: 8.2, packSize: null, defaultWastePct: 8 },
+
+  // Hips
+  { id: 'p-hiptile', name: 'Hip Tile - Charcoal', code: 'HIP-CH-01', basis: 'lineal', groups: ['hips'], unitPrice: 14.2, packSize: null, defaultWastePct: 6, suggested: true },
+  { id: 'p-hipflex', name: 'Flexible Hip Flashing', code: 'HIP-FL-05', basis: 'lineal', groups: ['hips'], unitPrice: 9.6, packSize: null, defaultWastePct: 8 },
+
+  // Valleys
+  { id: 'p-valleytray', name: 'Valley Tray - Coloursteel', code: 'VAL-CS-03', basis: 'lineal', groups: ['valleys'], unitPrice: 18.9, packSize: null, defaultWastePct: 7, suggested: true },
+  { id: 'p-valleyflash', name: 'Valley Flashing 300mm', code: 'VAL-FL-30', basis: 'lineal', groups: ['valleys'], unitPrice: 11.4, packSize: null, defaultWastePct: 7 },
+
+  // Barges
+  { id: 'p-bargetile', name: 'Barge Tile - Charcoal', code: 'BAR-CH-01', basis: 'lineal', groups: ['barges'], unitPrice: 13.5, packSize: null, defaultWastePct: 6, suggested: true },
+  { id: 'p-bargeflash', name: 'Barge Flashing', code: 'BAR-FL-01', basis: 'lineal', groups: ['barges'], unitPrice: 8.9, packSize: null, defaultWastePct: 7 },
+
+  // Spouting
+  { id: 'p-spout', name: 'Spouting - 125mm Quad', code: 'SPO-125Q', basis: 'lineal', groups: ['spouting'], unitPrice: 16.8, packSize: null, defaultWastePct: 6, suggested: true },
+  { id: 'p-downpipe', name: 'Downpipe 80mm PVC (per m spouting)', code: 'DWN-80P', basis: 'lineal', groups: ['spouting'], unitPrice: 7.4, packSize: null, defaultWastePct: 5 },
+  { id: 'p-spoutbrack', name: 'Spouting Brackets & Fittings', code: 'SPO-FIT-K', basis: 'lineal', groups: ['spouting'], unitPrice: 5.2, packSize: null, defaultWastePct: 5, suggested: true },
+];
