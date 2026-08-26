@@ -7,6 +7,7 @@ import type { MeasurementSet, SupplierProduct } from './types';
 import { GROUP_DEFS, groupPitchedTotal } from './types';
 import { fmt, priceOutput } from './pricing';
 import { SUPPLIER } from './supplier';
+import { OutputActions } from './OutputActions';
 
 export function OutputView({ measureSet, catalog, onBack, onRestart }: {
   measureSet: MeasurementSet;
@@ -101,6 +102,8 @@ export function OutputView({ measureSet, catalog, onBack, onRestart }: {
           Standard materials price. Trade pricing is revealed once you&apos;re signed in (if your account has trade pricing with {SUPPLIER.name}).
         </p>
       </div>
+
+      <OutputActions measureSet={measureSet} catalog={catalog} />
 
       <div className="flex items-center justify-between">
         <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
