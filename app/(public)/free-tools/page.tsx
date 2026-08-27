@@ -5,6 +5,7 @@ import { FreeToolsAuthProvider } from '../_components/FreeToolsAuthProvider';
 import SmartToolFinder from './SmartToolFinder';
 import TaskAccordions from './TaskAccordions';
 import BrowseAllTools from './BrowseAllTools';
+import { TOOL_COUNT } from './tool-registry';
 import DemoCTACard from "@/components/DemoCTACard";
 
 export default function FreeToolsPage() {
@@ -33,7 +34,7 @@ export default function FreeToolsPage() {
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-5 py-4 text-center">
             <h2 className="text-sm md:text-base font-semibold text-slate-900">What free tools does QuoteCore+ provide?</h2>
             <p className="mt-1.5 text-xs md:text-sm leading-relaxed text-slate-600">
-              QuoteCore+ provides free online tools for roofing and construction, including digital roof takeoff, roofing calculators, material calculators, quote generators, invoice generators and purchase order tools. Most tools can be used without creating an account.
+              QuoteCore+ provides more than {Math.floor(TOOL_COUNT / 10) * 10} free online tools for roofing and construction, including digital roof takeoff, roof pitch and material calculators, construction calculators, quote generators, invoice generators and purchase order tools. Most tools can be used without creating an account.
             </p>
           </div>
         </section>

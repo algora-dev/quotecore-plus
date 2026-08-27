@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { TOOLS } from './tools-data';
+import { TOOL_REGISTRY } from './tool-registry';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 const SITE_URL = 'https://quote-core.com';
@@ -28,16 +28,18 @@ export const metadata = {
   },
 };
 
+const SCHEMA_TOOLS = TOOL_REGISTRY.filter((t) => t.showInSchema !== false);
+
 const itemListLd = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
-  name: 'Free Trade Tools',
-  description: `Free professional trade tools including ${TOOLS.length} calculators, generators, and a roof takeoff builder.`,
-  itemListElement: TOOLS.map((tool, i) => ({
+  name: 'Free Roofing & Construction Tools',
+  description: `Free professional trade tools including ${SCHEMA_TOOLS.length} calculators, generators, and takeoff tools.`,
+  itemListElement: SCHEMA_TOOLS.map((tool, i) => ({
     '@type': 'ListItem',
     position: i + 1,
     name: tool.name,
-    url: `${SITE_URL}/${tool.slug}`,
+    url: `${SITE_URL}${tool.url}`,
   })),
 };
 

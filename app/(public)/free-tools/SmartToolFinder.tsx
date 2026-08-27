@@ -40,6 +40,7 @@ export default function SmartToolFinder() {
   const [noMatch, setNoMatch] = useState(false);
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [intentBucket, setIntentBucket] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +54,7 @@ export default function SmartToolFinder() {
     // Privacy-safe: classify the query by its best-matched tool's primary category, never log raw text
     const preview = findTools(q, 1);
     const bucket = preview[0]?.tool.categories[0] ?? 'no_match';
+    setIntentBucket(bucket);
     trackEvent('tool_finder_submit', { query_bucket: bucket, query_length: q.length });
     const matches = findTools(q, 3);
     if (matches.length === 0) {
@@ -98,6 +100,14 @@ export default function SmartToolFinder() {
 
   return (
     <section className="mx-auto max-w-5xl px-2 md:px-6 pt-2 pb-4 md:pb-6">
+      {/* Task 1: make the finder visually distinct from normal search */}
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-xs md:text-sm font-medium uppercase tracking-wide text-slate-400">Not sure which tool you need?</p>
+        <h2 className="mt-1 text-lg md:text-2xl font-semibold tracking-tight text-slate-900">
+          Tell us what you&apos;re trying to do.
+        </h2>
+      </div>
+
       {/* Input */}
       <form
         className="mt-5 flex items-center gap-2"
@@ -148,7 +158,8 @@ export default function SmartToolFinder() {
       </form>
 
       {/* Example chips */}
-      <div className="mt-3 flex flex-wrap justify-center gap-2">
+      <p className="mt-3 text-center text-xs text-slate-400">Or choose a common task:</p>
+      <div className="mt-2 flex flex-wrap justify-center gap-2">
         {EXAMPLE_CHIPS.map((chip) => (
           <button
             key={chip}
@@ -190,9 +201,9 @@ export default function SmartToolFinder() {
                   <p className="mt-1 text-xs leading-relaxed text-slate-500">{m.tool.shortDescription}</p>
                 </div>
                 <Link
-                  href={m.tool.url}
+                  href={`${m.tool.url}${m.tool.url.includes('?') ? '&' : '?'}source=tool-finder&intent=${encodeURIComponent(intentBucket ?? 'unclassified')}`}
                   prefetch={false}
-                  onClick={() => trackEvent('tool_finder_recommendation_click', { tool_id: m.tool.id, position: i + 1 })}
+                  onClick={() => trackEvent('tool_finder_recommendation_click', { tool_id: m.tool.id, position: i + 1, intent: intentBucket ?? 'unclassified' })}
                   className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-xs font-semibold text-white transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.45)] min-h-[40px]"
                 >
                   Open {m.tool.name}

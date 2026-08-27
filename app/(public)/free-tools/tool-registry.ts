@@ -20,6 +20,10 @@ export interface FreeTool {
   keywords: string[];
   aliases?: string[];
   priority?: number;
+  /** Visibility flags — registry is the single source of truth (default: true) */
+  showInFinder?: boolean;
+  showInDirectory?: boolean;
+  showInSchema?: boolean;
 }
 
 /** Extra tools that exist as routes but aren't in tools-data TOOLS yet. */
@@ -44,6 +48,9 @@ const RICH: Record<string, Partial<FreeTool>> = {
     aliases: ['takeoff builder', 'manual takeoff'],
     priority: 95,
     categories: ['roofing', 'takeoff', 'measurement'],
+    // Hidden from the hub for now — route stays live and stays in schema
+    showInFinder: false,
+    showInDirectory: false,
   },
   'measurement-to-quote-tool': {
     intents: ['turn measurements into a price', 'price from measurements', 'measurement to quote'],
@@ -111,13 +118,10 @@ function toFreeTool(t: ToolEntry): FreeTool {
   return { ...base, ...RICH[t.slug] };
 }
 
-/** Tools hidden from the hub (finder + browse) for now — routes stay live. */
-export const HIDDEN_TOOL_IDS = new Set(['free-roofing-takeoff-builder']);
-
 export const TOOL_REGISTRY: FreeTool[] = [
   ...EXTRA_TOOLS,
   ...TOOLS.map(toFreeTool),
-].filter((t) => !HIDDEN_TOOL_IDS.has(t.id));
+];
 
 export const TOOL_COUNT = TOOL_REGISTRY.length;
 
@@ -151,7 +155,9 @@ export function findTools(rawQuery: string, limit = 3): MatchResult[] {
   if (!q) return [];
   const words = q.split(' ');
 
-  const scored = TOOL_REGISTRY.map((tool) => {
+  const scored = TOOL_REGISTRY
+    .filter((t) => t.showInFinder !== false)
+    .map((tool) => {
     let score = 0;
 
     for (const intent of tool.intents) {
@@ -179,7 +185,7 @@ export function findTools(rawQuery: string, limit = 3): MatchResult[] {
     score += Math.min((tool.priority ?? 0) / 50, 2); // mild popularity boost
 
     return { tool, score } satisfies MatchResult;
-  });
+    });
 
   return scored
     .filter((m) => m.score >= 4)
