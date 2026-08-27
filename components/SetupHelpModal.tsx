@@ -95,10 +95,9 @@ export default function SetupHelpModal() {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — click does NOT close (prevent accidental dismissal) */}
       <div
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-        onClick={close}
         aria-hidden="true"
       />
 
@@ -130,7 +129,7 @@ export default function SetupHelpModal() {
               Don&apos;t want to set up another piece of software?
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-600">
-              We get it. We can set QuoteCore+ up around the way you already work — or you can test our free tools first, with no commitment.
+              <span className="font-semibold text-[#BD4A1A]">We get it.</span> We can set QuoteCore+ up around the way you already work - or you can test our free tools first, with no commitment.
             </p>
 
             <div className="mt-6 flex flex-col gap-3">
@@ -157,11 +156,23 @@ export default function SetupHelpModal() {
             <button
               type="button"
               onClick={close}
-              className="mx-auto mt-3 rounded-full px-4 py-2 text-sm text-zinc-500 transition-colors hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+              className="mx-auto mt-3 rounded-full border border-zinc-200 px-4 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
             >
-              No thanks
+              Close
             </button>
           </div>
+
+          {/* X close button (top right) */}
+          <button
+            type="button"
+            onClick={close}
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-zinc-500 shadow-sm transition-colors hover:bg-white hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            aria-label="Close"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       </div>
     </>
