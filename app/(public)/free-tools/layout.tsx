@@ -41,10 +41,30 @@ const itemListLd = {
   })),
 };
 
+const collectionLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Free Roofing & Construction Tools',
+  description:
+    'Free online tools for roofing and construction: digital roof takeoff, calculators, quote generator, invoice generator and purchase order tools. No signup required for most tools.',
+  url: `${SITE_URL}/free-tools`,
+};
+
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+    { '@type': 'ListItem', position: 2, name: 'Free Tools', item: `${SITE_URL}/free-tools` },
+  ],
+};
+
 export default function FreeToolsLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       {children}
     </>
   );

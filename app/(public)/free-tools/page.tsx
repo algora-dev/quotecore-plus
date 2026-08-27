@@ -18,15 +18,25 @@ export default function FreeToolsPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
           <div className="relative mx-auto max-w-3xl px-2 md:px-6 pt-10 md:pt-14 pb-1 text-center">
-            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing Tools &amp; Calculators</h1>
+            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing &amp; Construction Tools</h1>
             <p className="mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto px-2">
-              Free calculators, takeoff tools and document generators for roofing and construction — no signup required for most tools. What are you trying to solve? Tell us below and we&apos;ll take you straight to it.
+              Measure roofs, calculate materials, build takeoffs, create quotes, invoices and purchase orders — all in one place, and free. What are you trying to solve? Tell us below and we&apos;ll take you straight to it.
             </p>
           </div>
         </section>
 
         {/* Smart Tool Finder */}
         <SmartToolFinder />
+
+        {/* SEO/GEO answer block */}
+        <section className="mx-auto max-w-3xl px-2 md:px-6 pb-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-5 py-4 text-center">
+            <h2 className="text-sm md:text-base font-semibold text-slate-900">What free tools does QuoteCore+ provide?</h2>
+            <p className="mt-1.5 text-xs md:text-sm leading-relaxed text-slate-600">
+              QuoteCore+ provides free online tools for roofing and construction, including digital roof takeoff, roofing calculators, material calculators, quote generators, invoice generators and purchase order tools. Most tools can be used without creating an account.
+            </p>
+          </div>
+        </section>
 
         {/* Primary task-based accordions */}
         <TaskAccordions />
@@ -75,15 +85,31 @@ export default function FreeToolsPage() {
         </section>
 
         {/* Why free? — short */}
-        <section className="mx-auto max-w-3xl px-2 md:px-6 py-10 md:py-16 text-center">
+        <section className="mx-auto max-w-3xl px-2 md:px-6 py-10 md:py-14 text-center">
           <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Why are these tools free?</h2>
+          <p className="mt-3 text-sm md:text-base font-medium text-slate-700">These free tools solve individual jobs. QuoteCore+ connects the whole workflow.</p>
+          <p className="mt-2 text-xs md:text-sm text-[#BD4A1A] font-semibold tracking-wide">Measure → Price → Quote → Order → Invoice.</p>
           <p className="mt-3 text-xs md:text-sm text-slate-500 leading-relaxed">
-            They are parts of QuoteCore+, separated out so you can use them without committing to the full platform. Use them whenever you want. If you eventually want your measurements, pricing, quotes, orders and invoices connected in one workspace, that&apos;s what QuoteCore+ is for.
+            Use the free tools whenever you need them. If you want everything connected in one workspace, that is what QuoteCore+ is built for.
           </p>
           <Link href="/signup" className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E55A2B] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
             Explore QuoteCore+
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
           </Link>
+        </section>
+
+        {/* Done-For-You bridge */}
+        <section className="mx-auto max-w-3xl px-2 md:px-6 pb-12 md:pb-16">
+          <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 text-center">
+            <p className="text-sm font-semibold text-slate-900">Like the tools but don&apos;t want to set up a new system yourself?</p>
+            <p className="mt-1.5 text-xs md:text-sm text-slate-500">
+              We can rebuild the way you currently estimate and price work inside QuoteCore+ and show you how to use it.
+            </p>
+            <Link href="/done-for-you-setup" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#BD4A1A] transition-colors hover:text-[#FF6B35]">
+              See Done-For-You Setup
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            </Link>
+          </div>
         </section>
 
         <SiteFooter />

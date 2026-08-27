@@ -6,8 +6,8 @@ import { findTools, type MatchResult } from './tool-registry';
 import { trackEvent } from '@/lib/analytics';
 
 const EXAMPLE_CHIPS = [
-  'Measure something',
-  'Price a roof',
+  'Measure a roof',
+  'Price a job',
   'Calculate materials',
   'Create a quote',
   'Create an invoice',
@@ -50,7 +50,10 @@ export default function SmartToolFinder() {
   const run = useCallback((raw: string) => {
     const q = raw.trim();
     if (!q) return;
-    trackEvent('tool_finder_submit', { query_length: q.length });
+    // Privacy-safe: classify the query by its best-matched tool's primary category, never log raw text
+    const preview = findTools(q, 1);
+    const bucket = preview[0]?.tool.categories[0] ?? 'no_match';
+    trackEvent('tool_finder_submit', { query_bucket: bucket, query_length: q.length });
     const matches = findTools(q, 3);
     if (matches.length === 0) {
       setResults(null);

@@ -20,8 +20,8 @@ const ITEMS: AccordionItem[] = [
   {
     id: 'measure-from-plan',
     icon: 'M3 12l9-9 9 9M5 10v10h14V10',
-    heading: 'Need to measure a roof from a plan?',
-    support: 'Upload your plan and measure roof areas and lengths digitally.',
+    heading: 'Need to measure a roof or job from plans?',
+    support: 'Upload your plans and measure everything digitally with your real pricing.',
     badge: 'Free · No signup',
     toolName: 'Free Roof Takeoff',
     benefits: [
@@ -31,7 +31,7 @@ const ITEMS: AccordionItem[] = [
       'Default components included, or create up to 7 with your own pricing',
       'Nothing is saved unless you send the result into the app',
     ],
-    image: { src: '/takeoff-demo/roofplan-baseline.png', alt: 'Measure your own roof plan digitally' },
+    image: { src: '/free-tools/FreeRoofTakeOffTool2.png', alt: 'Measure your own plans digitally with your real pricing' },
     cta: { label: 'Open Free Roof Takeoff', href: '/free-roof-takeoff' },
   },
   {

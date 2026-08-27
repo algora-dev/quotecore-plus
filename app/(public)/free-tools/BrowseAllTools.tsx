@@ -43,7 +43,7 @@ export default function BrowseAllTools() {
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              if (e.target.value.length > 2) trackEvent('browse_tool_search', {});
+              if (e.target.value.length > 2) trackEvent('tool_directory_search', {});
             }}
             placeholder="Search tools..."
             aria-label="Search all tools"
@@ -56,7 +56,7 @@ export default function BrowseAllTools() {
                 type="button"
                 onClick={() => {
                   setFilter(f);
-                  if (f !== 'All') trackEvent('browse_tool_filter', { filter: f });
+                  if (f !== 'All') trackEvent('tool_directory_filter', { filter: f });
                 }}
                 className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all ${
                   filter === f
@@ -77,7 +77,7 @@ export default function BrowseAllTools() {
               key={tool.id}
               href={tool.url}
               prefetch={false}
-              onClick={() => trackEvent('browse_tool_click', { tool_id: tool.id })}
+              onClick={() => trackEvent('tool_directory_click', { tool_id: tool.id })}
               className="block bg-white border rounded-xl p-4 hover:border-[#FF6B35] hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] hover:bg-orange-50/40 transition-all group"
             >
               <div className="flex items-start justify-between gap-2">
