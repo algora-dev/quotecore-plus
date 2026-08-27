@@ -87,6 +87,8 @@ export default function HeroVideo() {
   const handleEnded = () => {
     setIsPlaying(false);
     setVideoEnded(true);
+    // Let SetupHelpModal know the video has finished (fallback trigger path)
+    window.dispatchEvent(new Event("qc:hero-video-ended"));
   };
 
   return (

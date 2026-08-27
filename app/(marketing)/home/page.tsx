@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import CoffeePopup from "@/components/CoffeePopup";
+import SetupHelpModal from "@/components/SetupHelpModal";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 import DemoCTACard from "@/components/DemoCTACard";
@@ -779,7 +779,7 @@ export default function HomePage() {
         <SiteFooter />
       </main>
 
-      <CoffeePopup />
+      <SetupHelpModal />
       <style>{`
         .brand-wordmark {
           white-space: nowrap;
