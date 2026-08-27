@@ -129,7 +129,7 @@ export default function SetupHelpModal() {
               Don&apos;t want to set up another piece of software?
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-zinc-600">
-              <span className="font-semibold text-[#BD4A1A]">We get it.</span> We can set QuoteCore+ up around the way you already work - or you can test our free tools first, with no commitment.
+              <span className="font-semibold text-[#FF6B35]">We get it.</span> We can set QuoteCore+ up around the way you already work - or you can test our free tools first, with no commitment.
             </p>
 
             <div className="mt-6 flex flex-col gap-3">
@@ -156,7 +156,7 @@ export default function SetupHelpModal() {
             <button
               type="button"
               onClick={close}
-              className="mx-auto mt-3 rounded-full border border-zinc-200 px-4 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-300 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+              className="mx-auto mt-3 rounded-full border border-zinc-200 px-4 py-1.5 text-xs text-zinc-500 transition-colors hover:border-[#FF6B35] hover:text-[#FF6B35] hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
             >
               Close
             </button>
@@ -166,7 +166,7 @@ export default function SetupHelpModal() {
           <button
             type="button"
             onClick={close}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-zinc-500 shadow-sm transition-colors hover:bg-white hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-zinc-500 shadow-sm transition-all hover:bg-white hover:text-[#FF6B35] hover:shadow-[0_0_16px_rgba(255,107,53,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
             aria-label="Close"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
