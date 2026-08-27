@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { findTools, type MatchResult } from './tool-registry';
+import { findTools } from './tool-registry';
 import { trackEvent } from '@/lib/analytics';
 
 const EXAMPLE_CHIPS = [
@@ -12,6 +12,46 @@ const EXAMPLE_CHIPS = [
   'Create a quote',
   'Create an invoice',
 ];
+
+/** Below this top deterministic score we ask the server (AI fallback) for help. */
+const AI_FALLBACK_THRESHOLD = 8;
+
+interface Recommendation {
+  toolId: string;
+  reason?: string;
+  name: string;
+  url: string;
+  shortDescription: string;
+}
+
+/* ── Backend event logging (fire-and-forget, append-only) ──────────────── */
+
+function getSessionId(): string {
+  try {
+    const KEY = 'qc-finder-session';
+    let id = sessionStorage.getItem(KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      sessionStorage.setItem(KEY, id);
+    }
+    return id;
+  } catch {
+    return 'anonymous';
+  }
+}
+
+function logFinderEvent(payload: Record<string, unknown>) {
+  try {
+    fetch('/api/free-tools/finder-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: getSessionId(), ...payload }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* non-blocking */
+  }
+}
 
 /* ── Voice input (browser Speech API, hidden if unsupported) ───────────── */
 
@@ -36,41 +76,139 @@ function getSpeechCtor(): (new () => SpeechRecognitionLike) | null {
 
 export default function SmartToolFinder() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<MatchResult[] | null>(null);
+  const [results, setResults] = useState<Recommendation[] | null>(null);
   const [noMatch, setNoMatch] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [intentBucket, setIntentBucket] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastQueryRef = useRef('');
 
   useEffect(() => {
     setVoiceSupported(getSpeechCtor() !== null);
   }, []);
 
-  const run = useCallback((raw: string) => {
+  const run = useCallback(async (raw: string) => {
     const q = raw.trim();
     if (!q) return;
-    // Privacy-safe: classify the query by its best-matched tool's primary category, never log raw text
-    const preview = findTools(q, 1);
-    const bucket = preview[0]?.tool.categories[0] ?? 'no_match';
+    lastQueryRef.current = q;
+    setSearching(true);
+    setNoMatch(false);
+
+    const matches = findTools(q, 3);
+    const bucket = matches[0]?.tool.categories[0] ?? 'no_match';
     setIntentBucket(bucket);
     trackEvent('tool_finder_submit', { query_bucket: bucket, query_length: q.length });
-    const matches = findTools(q, 3);
-    if (matches.length === 0) {
-      setResults(null);
-      setNoMatch(true);
-      trackEvent('tool_finder_no_match');
-    } else {
-      setResults(matches);
-      setNoMatch(false);
+
+    const highConfidence = matches.length > 0 && matches[0].score >= AI_FALLBACK_THRESHOLD;
+
+    if (highConfidence) {
+      const recs: Recommendation[] = matches.map((m) => ({
+        toolId: m.tool.id,
+        name: m.tool.name,
+        url: m.tool.url,
+        shortDescription: m.tool.shortDescription,
+      }));
+      setResults(recs);
       trackEvent('tool_finder_deterministic_match', {
-        top_tool: matches[0].tool.id,
-        count: matches.length,
+        top_tool: recs[0].toolId,
+        count: recs.length,
         score: matches[0].score,
       });
+      logFinderEvent({
+        query: q,
+        queryCategory: bucket,
+        matchMethod: 'deterministic',
+        confidenceScore: matches[0].score,
+        recommendedToolIds: recs.map((r) => r.toolId),
+        noMatch: false,
+      });
+      setSearching(false);
+      return;
     }
+
+    // Low confidence → server route (re-runs deterministic, then AI if needed)
+    try {
+      const res = await fetch('/api/free-tools/finder-recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q, clientTopScore: matches[0]?.score ?? 0 }),
+      });
+      if (res.status === 429 || !res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as {
+        matchMethod: 'ai' | 'deterministic';
+        recommendations: Recommendation[];
+      };
+
+      if (data.recommendations.length > 0) {
+        setResults(data.recommendations);
+        setIntentBucket(data.recommendations[0].toolId.split('-')[0]);
+        if (data.matchMethod === 'ai') {
+          trackEvent('tool_finder_ai_fallback');
+        } else {
+          trackEvent('tool_finder_deterministic_match', {
+            top_tool: data.recommendations[0].toolId,
+            count: data.recommendations.length,
+          });
+        }
+        logFinderEvent({
+          query: q,
+          queryCategory: bucket,
+          matchMethod: data.matchMethod,
+          confidenceScore: matches[0]?.score ?? 0,
+          recommendedToolIds: data.recommendations.map((r) => r.toolId),
+          noMatch: false,
+        });
+      } else {
+        setResults(null);
+        setNoMatch(true);
+        trackEvent('tool_finder_no_match');
+        logFinderEvent({
+          query: q,
+          queryCategory: 'no_match',
+          matchMethod: data.matchMethod,
+          confidenceScore: matches[0]?.score ?? 0,
+          recommendedToolIds: [],
+          noMatch: true,
+        });
+      }
+    } catch {
+      // Network/rate-limit failure → fall back to deterministic results (may be empty)
+      if (matches.length > 0) {
+        const recs: Recommendation[] = matches.map((m) => ({
+          toolId: m.tool.id,
+          name: m.tool.name,
+          url: m.tool.url,
+          shortDescription: m.tool.shortDescription,
+        }));
+        setResults(recs);
+        logFinderEvent({
+          query: q,
+          queryCategory: bucket,
+          matchMethod: 'deterministic',
+          confidenceScore: matches[0].score,
+          recommendedToolIds: recs.map((r) => r.toolId),
+          noMatch: false,
+        });
+      } else {
+        setResults(null);
+        setNoMatch(true);
+        trackEvent('tool_finder_no_match');
+      }
+    }
+    setSearching(false);
   }, []);
+
+  const onRecommendationClick = useCallback((rec: Recommendation, position: number) => {
+    trackEvent('tool_finder_recommendation_click', { tool_id: rec.toolId, position, intent: intentBucket ?? 'unclassified' });
+    logFinderEvent({
+      clickedToolId: rec.toolId,
+      clickedPosition: position,
+      query: lastQueryRef.current,
+    });
+  }, [intentBucket]);
 
   const toggleVoice = useCallback(() => {
     const Ctor = getSpeechCtor();
@@ -149,11 +287,19 @@ export default function SmartToolFinder() {
         <button
           type="submit"
           aria-label="Find a tool"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black text-white transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.45)]"
+          disabled={searching}
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-black text-white transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.45)] disabled:opacity-50"
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
+          {searching ? (
+            <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          )}
         </button>
       </form>
 
@@ -181,9 +327,9 @@ export default function SmartToolFinder() {
           <p className="text-center text-xs md:text-sm font-medium text-slate-500">
             Based on what you described, I&apos;d start here:
           </p>
-          {results.map((m, i) => (
+          {results.map((rec, i) => (
             <div
-              key={m.tool.id}
+              key={rec.toolId}
               className={`rounded-xl border bg-white p-4 transition-all hover:border-[#FF6B35] hover:shadow-[0_0_12px_rgba(255,107,53,0.12)] ${
                 i === 0 ? 'border-[#FF6B35]/60' : 'border-slate-200'
               }`}
@@ -196,17 +342,17 @@ export default function SmartToolFinder() {
                         Best match
                       </span>
                     )}
-                    <p className="text-sm font-semibold text-slate-900">{m.tool.name}</p>
+                    <p className="text-sm font-semibold text-slate-900">{rec.name}</p>
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{m.tool.shortDescription}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{rec.reason || rec.shortDescription}</p>
                 </div>
                 <Link
-                  href={`${m.tool.url}${m.tool.url.includes('?') ? '&' : '?'}source=tool-finder&intent=${encodeURIComponent(intentBucket ?? 'unclassified')}`}
+                  href={`${rec.url}${rec.url.includes('?') ? '&' : '?'}source=tool-finder&intent=${encodeURIComponent(intentBucket ?? 'unclassified')}`}
                   prefetch={false}
-                  onClick={() => trackEvent('tool_finder_recommendation_click', { tool_id: m.tool.id, position: i + 1, intent: intentBucket ?? 'unclassified' })}
+                  onClick={() => onRecommendationClick(rec, i + 1)}
                   className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-xs font-semibold text-white transition-all hover:shadow-[0_0_16px_rgba(255,107,53,0.45)] min-h-[40px]"
                 >
-                  Open {m.tool.name}
+                  Open {rec.name}
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
