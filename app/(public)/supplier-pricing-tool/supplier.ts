@@ -7,6 +7,7 @@ import type { SupplierProduct } from './types';
 
 export const SUPPLIER = {
   name: 'Roofline Supplies',
+  slug: 'roofline-supplies',
   tagline: 'Roofing materials, priced fast',
   unit: 'metric',
   currency: '$',

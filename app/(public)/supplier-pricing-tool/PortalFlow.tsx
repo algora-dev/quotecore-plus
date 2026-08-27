@@ -15,6 +15,7 @@ import { EntryModeStep } from './EntryModeStep';
 import { MeasureEntryStep } from './MeasureEntryStep';
 import { ProductStep } from './ProductStep';
 import { OutputView } from './OutputView';
+import { CustomComponentsStep } from './CustomComponentsStep';
 import { TakeoffStation, stageSlug } from './TakeoffStation';
 import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
@@ -98,11 +99,16 @@ export function PortalFlow() {
     ...(entryMode === 'measure'
       ? productDefs.map(d => ({ key: d.key, label: `Products - ${d.label}` }))
       : []),
+    { key: 'custom', label: 'Custom components' },
     { key: 'output', label: 'Output' },
   ];
   const currentStep = Math.min(step, steps.length);
   const productStepIdx = step - 3; // 0-based index into productDefs
   const activeGroupKey = step >= 3 && productStepIdx < productDefs.length ? productDefs[productStepIdx].key : null;
+  // custom components step sits between the last product/measure step and
+  // the output in BOTH flows (manual + takeoff).
+  const customStepNum = 3 + (entryMode === 'measure' ? productDefs.length : 0);
+  const outputStepNum = customStepNum + 1;
 
   // Keep the URL hash in sync with the current stage so the user always
   // knows where they are (e.g. #digital-takeoff, #products-ridges, #output).
@@ -221,7 +227,7 @@ export function PortalFlow() {
             catalog={catalog}
             mode={mode}
             onBack={() => setStep(1)}
-            onNext={() => setStep(3 + productDefs.length)}
+            onNext={() => setStep(customStepNum)}
           />
         )}
 
@@ -249,17 +255,17 @@ export function PortalFlow() {
                 Back
               </button>
               <button
-                onClick={() => setStep(3 + productDefs.length)}
+                onClick={() => setStep(customStepNum)}
                 disabled={catalog.length === 0 || !measureSet.appliedProducts.some(ap => productDefs.some(d => d.key === ap.groupKey))}
                 className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
               >
-                Generate output
+                Next: Custom components
               </button>
             </div>
           </div>
         )}
 
-        {step >= 3 && flowSpeed === 'guide' && entryMode === 'measure' && productStepIdx < productDefs.length && (
+        {step >= 3 && flowSpeed === 'guide' && entryMode === 'measure' && productStepIdx < productDefs.length && productStepIdx >= 0 && (
           <ProductStep
             def={productDefs[productStepIdx]}
             measureSet={measureSet}
@@ -273,14 +279,24 @@ export function PortalFlow() {
           />
         )}
 
-        {step >= 3 && productStepIdx >= productDefs.length && (
+        {/* Custom components: final step before the output in both flows */}
+        {step === customStepNum && (
+          <CustomComponentsStep
+            measureSet={measureSet}
+            setMeasureSet={setMeasureSet}
+            onBack={() => setStep(customStepNum - 1)}
+            onNext={() => setStep(outputStepNum)}
+          />
+        )}
+
+        {step >= outputStepNum && (
           <OutputView
             measureSet={measureSet}
             catalog={catalog}
             baselineCatalog={config.products}
             showTrade={showTrade}
             tradeLabel={showTrade && config.discountPct > 0 ? `trade pricing (-${config.discountPct}%)` : null}
-            onBack={() => setStep(entryMode === 'measure' ? step - 1 : 2)}
+            onBack={() => setStep(customStepNum)}
             onRestart={reset}
           />
         )}

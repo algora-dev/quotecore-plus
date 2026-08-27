@@ -26,6 +26,8 @@ export interface SupplierFeatures {
 
 export interface SupplierConfig {
   name: string;
+  /** supplier slug - routes enquiries via the supplier-enquiry API */
+  slug: string;
   tagline: string;
   currency: string;
   /** supplier logo URL (null = monogram placeholder) */
@@ -48,6 +50,7 @@ export const CONFIG_STORAGE_KEY = 'qc-spt-supplier-config-v1';
 export function defaultConfig(): SupplierConfig {
   return {
     name: SUPPLIER.name,
+    slug: SUPPLIER.slug,
     tagline: SUPPLIER.tagline,
     currency: SUPPLIER.currency,
     // PLACEHOLDER branding - Shaun supplies real name/logo/colour per supplier

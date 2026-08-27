@@ -2,8 +2,8 @@
 // Handles group-level (Standard) and per-entry (Advanced) applications,
 // waste %, labour, qty override, supplier-permitted price override.
 
-import type { AppliedProduct, GroupKey, MeasurementSet, SupplierProduct } from './types';
-import { GROUP_DEFS, groupPitchedTotal, entryPitched, applyWaste } from './types';
+import type { AppliedProduct, GroupKey, MeasurementSet, SupplierProduct, CustomComponent } from './types';
+import { GROUP_DEFS, groupPitchedTotal, entryPitched, applyWaste, CUSTOM_BASIS_UNIT } from './types';
 
 /** Only lineal products support flat (per-length) waste - area/count math is
  *  identical to a percentage, so they get percent only (Shaun, 2026-08-26). */
@@ -34,6 +34,10 @@ export interface OutputTotals {
   material: number;
   labour: number;
   lines: OutputLine[];
+  /** user-created custom components (self-priced, included in totals) */
+  customs: CustomComponent[];
+  customMaterial: number;
+  customLabour: number;
 }
 
 function effectiveQty(ap: AppliedProduct, measured: number): number {
@@ -88,10 +92,15 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
   }
 
   const round = (n: number) => Math.round(n * 100) / 100;
+  const customMaterial = round(set.customComponents?.reduce((s, c) => s + c.quantity * c.unitPrice, 0) || 0);
+  const customLabour = round(set.customComponents?.reduce((s, c) => s + c.quantity * c.labourRate, 0) || 0);
   return {
-    material: round(lines.reduce((s, l) => s + l.lineTotal, 0)),
-    labour: round(lines.reduce((s, l) => s + l.labourTotal, 0)),
+    material: round(lines.reduce((s, l) => s + l.lineTotal, 0)) + customMaterial,
+    labour: round(lines.reduce((s, l) => s + l.labourTotal, 0)) + customLabour,
     lines,
+    customs: set.customComponents ?? [],
+    customMaterial,
+    customLabour,
   };
 }
 

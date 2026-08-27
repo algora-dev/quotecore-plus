@@ -4,7 +4,7 @@
 'use client';
 
 import type { GroupKey, MeasurementSet, SupplierProduct } from './types';
-import { GROUP_DEFS, groupPitchedTotal, entryPitched } from './types';
+import { GROUP_DEFS, groupPitchedTotal, entryPitched, CUSTOM_BASIS_UNIT } from './types';
 import { fmt, priceOutput } from './pricing';
 import { useSupplierConfig } from './supplierConfig';
 import { OutputActions } from './OutputActions';
@@ -146,6 +146,41 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
             </div>
           </div>
         ))}
+
+        {output.customs.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between border-b-2 px-3 py-2" style={{ backgroundColor: `${brand}14`, borderColor: brand }}>
+              <span className="text-black font-bold">Custom Components</span>
+              <span className="text-black font-medium text-sm">{output.customs.length} item{output.customs.length === 1 ? '' : 's'}</span>
+            </div>
+            <div className="mt-2 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-black/20 text-left text-xs text-black/60">
+                    <th className="py-1.5 pr-2 font-medium">Component</th>
+                    <th className="py-1.5 pr-2 font-medium text-right">Qty</th>
+                    <th className="py-1.5 pr-2 font-medium text-right">Unit Price</th>
+                    <th className="py-1.5 pr-2 font-medium text-right">Line Total</th>
+                    {hasLabour && <th className="py-1.5 font-medium text-right">Labour</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {output.customs.map(c => (
+                    <tr key={c.id} className="border-b border-black/10">
+                      <td className="py-2 pr-2 text-black">{c.name}</td>
+                      <td className="py-2 pr-2 text-right text-black">{fmt(c.quantity, c.basis === 'count' ? 0 : 1)} {CUSTOM_BASIS_UNIT[c.basis]}</td>
+                      <td className="py-2 pr-2 text-right text-black/60">{cur}{fmt(c.unitPrice)}</td>
+                      <td className="py-2 pr-2 text-right text-black font-semibold">{cur}{fmt(c.quantity * c.unitPrice)}</td>
+                      {hasLabour && (
+                        <td className="py-2 text-right text-black/60">{c.labourRate > 0 ? `${cur}${fmt(c.quantity * c.labourRate)}` : '-'}</td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="border-t-2 pt-4 space-y-1.5" style={{ borderColor: brand }}>
           {showTradeTotals && baselineOutput && (

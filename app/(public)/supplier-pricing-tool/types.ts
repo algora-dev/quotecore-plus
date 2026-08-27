@@ -98,10 +98,33 @@ export function applyWaste(ap: { wastePct?: number; wasteFlat?: number; wasteMod
   return calcQty * (1 + (ap.wastePct || 0) / 100);
 }
 
+/** User-defined custom component (final step before output). Fully
+ *  self-priced: the user enters measurement basis, quantity, material cost
+ *  and labour cost. Session-only - never persisted to any library. */
+export interface CustomComponent {
+  id: string;
+  name: string;
+  basis: MeasurementBasis;
+  /** measured amount: m2, m or count */
+  quantity: number;
+  /** material cost per unit */
+  unitPrice: number;
+  /** labour cost per unit (0 = none) */
+  labourRate: number;
+}
+
+export const CUSTOM_BASIS_UNIT: Record<MeasurementBasis, string> = {
+  area: 'm\u00B2',
+  lineal: 'm',
+  count: 'ea',
+};
+
 export interface MeasurementSet {
   entryPath: 'measure' | 'plan' | 'actual'; // Phase 1: 'actual' only
   groups: Record<GroupKey, MeasurementGroup>;
   appliedProducts: AppliedProduct[];
+  /** user-created custom components (final step before output) */
+  customComponents: CustomComponent[];
 }
 
 export type Mode = 'standard' | 'advanced';
@@ -114,7 +137,7 @@ export function emptyMeasurementSet(): MeasurementSet {
   for (const g of GROUP_DEFS) {
     groups[g.key] = { key: g.key, entries: [], pitchDegrees: 25 };
   }
-  return { entryPath: 'actual', groups, appliedProducts: [] };
+  return { entryPath: 'actual', groups, appliedProducts: [], customComponents: [] };
 }
 
 export function groupTotal(set: MeasurementSet, key: GroupKey): number {

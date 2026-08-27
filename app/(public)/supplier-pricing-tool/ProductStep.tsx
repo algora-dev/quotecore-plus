@@ -125,7 +125,7 @@ export function ProductStep({
             onClick={() => setPickerFor(pickerFor === '__group__' ? null : '__group__')}
             className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 cursor-pointer"
           >
-            {pickerFor === '__group__' ? 'Close' : '+ Add product'}
+            {pickerFor === '__group__' ? 'Done' : '+ Add product'}
           </button>
         </div>
 
@@ -161,6 +161,7 @@ export function ProductStep({
             setSearch={setSearch}
             onPick={pid => applyProduct(pid, null)}
             appliedIds={new Set(groupApplied.map(ap => ap.productId))}
+            onDone={() => setPickerFor(null)}
           />
         )}
       </div>
@@ -187,7 +188,7 @@ export function ProductStep({
                     onClick={() => setPickerFor(pickerFor === entry.id ? null : entry.id)}
                     className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-slate-400 transition cursor-pointer"
                   >
-                    {pickerFor === entry.id ? 'Close' : '+ Product'}
+                    {pickerFor === entry.id ? 'Done' : '+ Product'}
                   </button>
                 </div>
                 {entryApplied.map(ap => {
@@ -215,6 +216,7 @@ export function ProductStep({
                     setSearch={setSearch}
                     onPick={pid => applyProduct(pid, entry.id)}
                     appliedIds={new Set(entryApplied.map(ap => ap.productId))}
+                    onDone={() => setPickerFor(null)}
                   />
                 )}
               </div>
@@ -322,14 +324,17 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
   );
 }
 
-/** Inline catalog picker: suggested first, then all, with search. */
-function ProductPicker({ products, def, search, setSearch, onPick, appliedIds }: {
+/** Inline catalog picker: suggested first, then all, with search. Stays
+ *  open after each pick so multiple products can be applied back-to-back;
+ *  Done closes it. */
+function ProductPicker({ products, def, search, setSearch, onPick, appliedIds, onDone }: {
   products: SupplierProduct[];
   def: GroupDef;
   search: string;
   setSearch: (s: string) => void;
   onPick: (pid: string) => void;
   appliedIds: Set<string>;
+  onDone: () => void;
 }) {
   const suggested = products.filter(p => p.suggested);
   const others = products.filter(p => !p.suggested);
@@ -357,6 +362,14 @@ function ProductPicker({ products, def, search, setSearch, onPick, appliedIds }:
       {products.length === 0 && (
         <p className="text-sm text-slate-400 text-center py-2">No products match "{search}".</p>
       )}
+      <div className="pt-1">
+        <button
+          onClick={onDone}
+          className="w-full rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(37,99,235,0.4)] cursor-pointer"
+        >
+          Done{appliedIds.size > 0 ? ` (${appliedIds.size} added)` : ''}
+        </button>
+      </div>
     </div>
   );
 }
