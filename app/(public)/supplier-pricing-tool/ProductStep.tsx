@@ -71,8 +71,9 @@ export function ProductStep({
       priceOverride: null,
     };
     setMeasureSet({ ...measureSet, appliedProducts: [...measureSet.appliedProducts, ap] });
-    setPickerFor(null);
-    setSearch('');
+    // Keep the picker open so multiple products can be added back-to-back
+    // without re-clicking "+ Product". Search stays so the user can keep
+    // filtering; already-added products show an "Added" state.
   }
 
   function removeApplied(apId: string) {
@@ -159,6 +160,7 @@ export function ProductStep({
             search={search}
             setSearch={setSearch}
             onPick={pid => applyProduct(pid, null)}
+            appliedIds={new Set(groupApplied.map(ap => ap.productId))}
           />
         )}
       </div>
@@ -212,6 +214,7 @@ export function ProductStep({
                     search={search}
                     setSearch={setSearch}
                     onPick={pid => applyProduct(pid, entry.id)}
+                    appliedIds={new Set(entryApplied.map(ap => ap.productId))}
                   />
                 )}
               </div>
@@ -320,12 +323,13 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
 }
 
 /** Inline catalog picker: suggested first, then all, with search. */
-function ProductPicker({ products, def, search, setSearch, onPick }: {
+function ProductPicker({ products, def, search, setSearch, onPick, appliedIds }: {
   products: SupplierProduct[];
   def: GroupDef;
   search: string;
   setSearch: (s: string) => void;
   onPick: (pid: string) => void;
+  appliedIds: Set<string>;
 }) {
   const suggested = products.filter(p => p.suggested);
   const others = products.filter(p => !p.suggested);
@@ -341,13 +345,13 @@ function ProductPicker({ products, def, search, setSearch, onPick }: {
       {suggested.length > 0 && (
         <>
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Suggested</p>
-          {suggested.map(p => <PickerRow key={p.id} p={p} def={def} onPick={onPick} />)}
+          {suggested.map(p => <PickerRow key={p.id} p={p} def={def} onPick={onPick} added={appliedIds.has(p.id)} />)}
         </>
       )}
       {others.length > 0 && (
         <>
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">All products</p>
-          {others.map(p => <PickerRow key={p.id} p={p} def={def} onPick={onPick} />)}
+          {others.map(p => <PickerRow key={p.id} p={p} def={def} onPick={onPick} added={appliedIds.has(p.id)} />)}
         </>
       )}
       {products.length === 0 && (
@@ -357,11 +361,11 @@ function ProductPicker({ products, def, search, setSearch, onPick }: {
   );
 }
 
-function PickerRow({ p, def, onPick }: { p: SupplierProduct; def: GroupDef; onPick: (pid: string) => void }) {
+function PickerRow({ p, def, onPick, added }: { p: SupplierProduct; def: GroupDef; onPick: (pid: string) => void; added: boolean }) {
   return (
     <button
       onClick={() => onPick(p.id)}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition cursor-pointer hover:border-blue-200 hover:bg-blue-50/40"
+      className={`flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left transition ${added ? 'border-blue-200 bg-blue-50/40 cursor-default' : 'border-slate-200 bg-white cursor-pointer hover:border-blue-200 hover:bg-blue-50/40'}`}
     >
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-slate-900 truncate">{p.name}</div>
@@ -370,7 +374,16 @@ function PickerRow({ p, def, onPick }: { p: SupplierProduct; def: GroupDef; onPi
           {p.defaultWastePct > 0 && <span> - {p.defaultWastePct}% waste</span>}
         </div>
       </div>
-      <span className="flex-shrink-0 rounded-full border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500">Add</span>
+      {added ? (
+        <span className="flex-shrink-0 flex items-center gap-1 rounded-full bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+          Added
+        </span>
+      ) : (
+        <span className="flex-shrink-0 rounded-full border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-500">Add</span>
+      )}
     </button>
   );
 }
