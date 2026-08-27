@@ -17,11 +17,10 @@ export default function FreeToolsPage() {
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
-          <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-10 md:pt-14 pb-2 md:pb-4 text-center">
-            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing Tools & Calculators</h1>
-            <p className="mt-2 text-xs md:text-sm font-medium text-[#BD4A1A]">The official QuoteCore Plus Free Tools collection</p>
+          <div className="relative mx-auto max-w-3xl px-2 md:px-6 pt-10 md:pt-14 pb-1 text-center">
+            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing Tools &amp; Calculators</h1>
             <p className="mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto px-2">
-              Free calculators, takeoff tools and document generators for roofing and construction. Find the tool you need below — no signup required for most tools.
+              Free calculators, takeoff tools and document generators for roofing and construction — no signup required for most tools. What are you trying to solve? Tell us below and we&apos;ll take you straight to it.
             </p>
           </div>
         </section>

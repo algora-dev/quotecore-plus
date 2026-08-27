@@ -111,10 +111,13 @@ function toFreeTool(t: ToolEntry): FreeTool {
   return { ...base, ...RICH[t.slug] };
 }
 
+/** Tools hidden from the hub (finder + browse) for now — routes stay live. */
+export const HIDDEN_TOOL_IDS = new Set(['free-roofing-takeoff-builder']);
+
 export const TOOL_REGISTRY: FreeTool[] = [
   ...EXTRA_TOOLS,
   ...TOOLS.map(toFreeTool),
-];
+].filter((t) => !HIDDEN_TOOL_IDS.has(t.id));
 
 export const TOOL_COUNT = TOOL_REGISTRY.length;
 

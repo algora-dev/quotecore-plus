@@ -94,14 +94,7 @@ export default function SmartToolFinder() {
   }, [listening, run]);
 
   return (
-    <section className="mx-auto max-w-3xl px-2 md:px-6 pt-6 md:pt-8 pb-4 md:pb-6">
-      <h2 className="text-center text-xl md:text-3xl font-semibold tracking-tight text-slate-900">
-        What are you trying to do?
-      </h2>
-      <p className="mt-1.5 text-center text-xs md:text-sm text-slate-500">
-        Tell us what you need help with — we&apos;ll take you straight to the right tool.
-      </p>
-
+    <section className="mx-auto max-w-3xl px-2 md:px-6 pt-2 pb-4 md:pb-6">
       {/* Input */}
       <form
         className="mt-5 flex items-center gap-2"
