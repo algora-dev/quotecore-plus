@@ -210,3 +210,124 @@ export async function getT3UserUsage(userId: string): Promise<T3UserUsageResult>
 
   return { ok: true, usage, totalUses, lastActivity };
 }
+
+// ── Finder: Smart Tool Finder query intelligence ───────────
+
+export interface FinderSummary {
+  totalQueries: number;
+  queriesLast7: number;
+  queriesLast30: number;
+  aiQueries: number;
+  deterministicQueries: number;
+  noMatchQueries: number;
+  clicks: number;
+  ctrPct: number;
+}
+
+export interface FinderTopQuery {
+  query: string;
+  count: number;
+  matchMethod: 'deterministic' | 'ai';
+  lastSeen: string;
+}
+
+export interface FinderClickedTool {
+  toolId: string;
+  toolName: string;
+  clicks: number;
+  position1Clicks: number;
+}
+
+export interface FinderNoMatch {
+  query: string;
+  lastSeen: string;
+}
+
+export type FinderStatsResult =
+  | { ok: true; summary: FinderSummary; topQueries: FinderTopQuery[]; clickedTools: FinderClickedTool[]; noMatches: FinderNoMatch[] }
+  | { ok: false; error: string };
+
+export async function getFinderStats(): Promise<FinderStatsResult> {
+  await requireAdmin();
+  const admin = createAdminClient();
+
+  // Read everything from the append-only event stream and aggregate in JS -
+  // same pattern as T1. Volume is low (finder queries), so a full read is fine.
+  const { data, error } = await admin
+    .from('free_tool_finder_events')
+    .select('event_type, session_id, raw_query_sanitised, normalised_query, match_method, clicked_tool_id, clicked_position, no_match, created_at')
+    .order('created_at', { ascending: false })
+    .limit(20000);
+
+  if (error) return { ok: false, error: error.message };
+
+  const now = Date.now();
+  const day7 = 7 * 86400000;
+  const day30 = 30 * 86400000;
+
+  const summary: FinderSummary = {
+    totalQueries: 0, queriesLast7: 0, queriesLast30: 0,
+    aiQueries: 0, deterministicQueries: 0, noMatchQueries: 0,
+    clicks: 0, ctrPct: 0,
+  };
+
+  const queryMap = new Map<string, FinderTopQuery & { matchMethods: Set<string> }>();
+  const clickMap = new Map<string, FinderClickedTool>();
+  const noMatchMap = new Map<string, FinderNoMatch>();
+
+  // Tool id -> display name from the registry (single source of truth)
+  const { TOOL_REGISTRY } = await import('@/app/(public)/free-tools/tool-registry');
+  const nameById = new Map(TOOL_REGISTRY.map(t => [t.id, t.name]));
+
+  for (const row of data ?? []) {
+    const ts = new Date(row.created_at).getTime();
+    if (row.event_type === 'click') {
+      summary.clicks++;
+      const id = row.clicked_tool_id;
+      if (id) {
+        if (!clickMap.has(id)) {
+          clickMap.set(id, { toolId: id, toolName: nameById.get(id) ?? id, clicks: 0, position1Clicks: 0 });
+        }
+        const t = clickMap.get(id)!;
+        t.clicks++;
+        if (row.clicked_position === 1) t.position1Clicks++;
+      }
+      continue;
+    }
+
+    // query event
+    summary.totalQueries++;
+    if (now - ts < day7) summary.queriesLast7++;
+    if (now - ts < day30) summary.queriesLast30++;
+    if (row.match_method === 'ai') summary.aiQueries++;
+    else summary.deterministicQueries++;
+    if (row.no_match) summary.noMatchQueries++;
+
+    const q = (row.raw_query_sanitised ?? row.normalised_query ?? '').trim();
+    if (!q) continue;
+    if (!queryMap.has(q)) {
+      queryMap.set(q, { query: q, count: 0, matchMethod: 'deterministic', lastSeen: row.created_at, matchMethods: new Set() });
+    }
+    const e = queryMap.get(q)!;
+    e.count++;
+    if (row.created_at > e.lastSeen) e.lastSeen = row.created_at;
+    if (row.match_method) e.matchMethods.add(row.match_method);
+
+    if (row.no_match) {
+      if (!noMatchMap.has(q)) noMatchMap.set(q, { query: q, lastSeen: row.created_at });
+      else if (row.created_at > noMatchMap.get(q)!.lastSeen) noMatchMap.get(q)!.lastSeen = row.created_at;
+    }
+  }
+
+  summary.ctrPct = summary.totalQueries > 0 ? Math.round((summary.clicks / summary.totalQueries) * 1000) / 10 : 0;
+
+  const topQueries = Array.from(queryMap.values())
+    .map(({ matchMethods, ...e }) => ({ ...e, matchMethod: (matchMethods.has('ai') ? 'ai' : 'deterministic') as 'deterministic' | 'ai' }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 25);
+
+  const clickedTools = Array.from(clickMap.values()).sort((a, b) => b.clicks - a.clicks);
+  const noMatches = Array.from(noMatchMap.values()).sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 25);
+
+  return { ok: true, summary, topQueries, clickedTools, noMatches };
+}
