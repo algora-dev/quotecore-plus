@@ -28,6 +28,10 @@ export interface SupplierConfig {
   name: string;
   tagline: string;
   currency: string;
+  /** supplier logo URL (null = monogram placeholder) */
+  logoUrl: string | null;
+  /** supplier brand colour - drives output page accents/borders */
+  brandColor: string;
   /** Powered by QuoteCore+ vs white-label */
   poweredBy: boolean;
   /** blanket trade discount % off baseline prices */
@@ -46,6 +50,9 @@ export function defaultConfig(): SupplierConfig {
     name: SUPPLIER.name,
     tagline: SUPPLIER.tagline,
     currency: SUPPLIER.currency,
+    // PLACEHOLDER branding - Shaun supplies real name/logo/colour per supplier
+    logoUrl: null,
+    brandColor: '#1E5AA8',
     poweredBy: SUPPLIER.mode === 'powered_by',
     discountPct: 12,
     tradeRequiresLogin: true,

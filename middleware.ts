@@ -72,6 +72,7 @@ const PUBLIC_PATHS = [
   '/affiliate-program', // Partner & Affiliate Program (public landing page)
   '/affiliate-program-terms', // Partner Program Terms (public)
   '/supplier-partnership', // Hidden supplier partnership page (email outreach, not in nav)
+  '/supplier-pricing-tool', // Public supplier pricing tool (incl. /quote handoff page)
   '/blog',
   '/resources',     // Resource hub pages (blog category hubs)
   '/pricing',

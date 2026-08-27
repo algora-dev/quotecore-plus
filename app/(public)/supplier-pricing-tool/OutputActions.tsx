@@ -163,7 +163,8 @@ export function OutputActions({ measureSet, catalog }: {
         setSaveError(true);
         return;
       }
-      window.location.href = `/signup?ref=supplier-pricing-tool&draft=${id}`;
+      // New tab: the output page stays behind so the user can come back
+      window.open(`/signup?ref=supplier-pricing-tool&draft=${id}`, '_blank', 'noopener');
     } catch {
       setSaveError(true);
     } finally {
@@ -173,35 +174,59 @@ export function OutputActions({ measureSet, catalog }: {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
-      <h3 className="text-sm font-semibold text-slate-900">What next?</h3>
-      <div className="mt-3 grid gap-2 md:grid-cols-2">
+      <h3 className="text-base font-bold text-slate-900">What next?</h3>
+
+      {/* Featured hero card - QuoteCore+ is the option we push */}
+      {supplierCfg.poweredBy && supplierCfg.features.quoteCoreConnect && (
+        <button
+          onClick={continueInApp}
+          disabled={saving}
+          className="relative mt-3 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 p-5 text-left ring-1 ring-blue-500/30 transition hover:shadow-[0_0_24px_rgba(37,99,235,0.35)] cursor-pointer disabled:opacity-50"
+        >
+          <span className="absolute right-4 top-4 rounded-full bg-blue-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-300 ring-1 ring-blue-400/40">
+            Recommended
+          </span>
+          <div className="flex items-start gap-4 pr-24">
+            <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-blue-500/20 ring-1 ring-blue-400/40">
+              <svg className="h-6 w-6 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </span>
+            <div>
+              <div className="text-base font-bold text-white">Continue in QuoteCore+</div>
+              <div className="mt-0.5 text-xs leading-relaxed text-slate-400">
+                Turn this takeoff into a full quote - measurements, pitches and products carry straight into the app. Opens in a new tab.
+              </div>
+            </div>
+          </div>
+        </button>
+      )}
+
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
         <ActionTile
+          icon={
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          }
+          title="Convert to customer quote"
+          desc="Editable quote document with your markup - opens the quote builder in a new tab."
+          href={quoteUrl}
+        />
+        <ActionTile
+          icon={
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          }
           title="Request supplier quote"
           desc="Send this pricing to the supplier and ask for a formal quote."
           onClick={() => setModal('quote')}
         />
         <ActionTile
+          icon={
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          }
           title="Send order request"
           desc="Place an order request for these products and quantities."
           onClick={() => setModal('order')}
         />
-        {supplierCfg.features.convertToQuote && (
-          <a
-            href={quoteUrl}
-            className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40"
-          >
-            <div className="text-sm font-semibold text-slate-900">Convert to customer quote</div>
-            <div className="mt-0.5 text-xs text-slate-500">Editable quote document with your markup - opens the quote generator.</div>
-          </a>
-        )}
-        {supplierCfg.poweredBy && supplierCfg.features.quoteCoreConnect && (
-          <ActionTile
-            title="Continue in QuoteCore+"
-            desc="Save this takeoff as a draft quote - measurements and pitches carry into the app."
-            onClick={continueInApp}
-            disabled={saving}
-          />
-        )}
       </div>
       {saveError && (
         <p className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-600">
@@ -315,15 +340,45 @@ export function OutputActions({ measureSet, catalog }: {
   );
 }
 
-function ActionTile({ title, desc, onClick, disabled }: { title: string; desc: string; onClick: () => void; disabled?: boolean }) {
+function ActionTile({ title, desc, onClick, href, icon, disabled }: {
+  title: string;
+  desc: string;
+  onClick?: () => void;
+  /** link tile - always opens in a new tab so the output page stays put */
+  href?: string;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+}) {
+  const inner = (
+    <>
+      <div className="flex items-start gap-3">
+        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 ring-1 ring-blue-100">
+          <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            {icon}
+          </svg>
+        </span>
+        <div>
+          <div className="text-sm font-semibold text-slate-900">{title}</div>
+          <div className="mt-0.5 text-xs text-slate-500">{desc}</div>
+        </div>
+      </div>
+    </>
+  );
+  const cls = 'text-left rounded-xl border border-slate-200 bg-white px-4 py-3.5 transition hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] disabled:opacity-50';
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener" className={cls}>
+        {inner}
+      </a>
+    );
+  }
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className="text-left rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-blue-200 hover:bg-blue-50/40 cursor-pointer disabled:opacity-50"
+      className={`${cls} cursor-pointer`}
     >
-      <div className="text-sm font-semibold text-slate-900">{title}</div>
-      <div className="mt-0.5 text-xs text-slate-500">{desc}</div>
+      {inner}
     </button>
   );
 }

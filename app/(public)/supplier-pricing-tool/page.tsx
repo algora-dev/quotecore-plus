@@ -16,9 +16,17 @@ function Header() {
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto max-w-5xl px-4 py-3 md:py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-sm font-bold text-white">
-            {config.name.slice(0, 1).toUpperCase()}
-          </span>
+          {config.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={config.logoUrl} alt={config.name} className="h-9 w-auto object-contain" />
+          ) : (
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
+              style={{ backgroundColor: config.brandColor }}
+            >
+              {config.name.slice(0, 1).toUpperCase()}
+            </span>
+          )}
           <div>
             <div className="text-sm font-semibold text-slate-900">{config.name}</div>
             <div className="hidden sm:block text-xs text-slate-400">{config.tagline}</div>

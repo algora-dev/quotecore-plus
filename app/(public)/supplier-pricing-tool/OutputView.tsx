@@ -27,6 +27,9 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
   const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
   const cur = supplierCfg.currency;
   const supplierName = supplierCfg.name;
+  // Supplier branding: brand colour drives accents/borders, logo (or
+  // brand-coloured monogram placeholder) sits in the output header.
+  const brand = supplierCfg.brandColor || '#1E5AA8';
   const hasLabour = output.labour > 0;
   const showTradeTotals = !!showTrade && !!baselineOutput && baselineOutput.material > output.material;
   const measureNote = measureSet.entryPath === 'plan'
@@ -63,16 +66,29 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border border-black p-6 md:p-10 space-y-6">
-        <div className="border-b-2 border-black pb-5">
-          <h1 className="text-xl font-bold text-black">MATERIALS PRICING</h1>
-          <p className="mt-1 text-sm text-black">Generated {today} - {supplierName}</p>
-          <p className="mt-1 text-xs text-black/60">{measureNote}{tradeLabel ? ` - ${tradeLabel}` : ''}</p>
+      <div className="bg-white rounded-xl border-2 p-6 md:p-10 space-y-6" style={{ borderColor: brand }}>
+        <div className="flex items-start justify-between gap-4 border-b-2 pb-5" style={{ borderColor: brand }}>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-black">MATERIALS PRICING</h1>
+            <p className="mt-1 text-sm text-black">Generated {today} - {supplierName}</p>
+            <p className="mt-1 text-xs text-black/60">{measureNote}{tradeLabel ? ` - ${tradeLabel}` : ''}</p>
+          </div>
+          {supplierCfg.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={supplierCfg.logoUrl} alt={supplierName} className="h-14 w-auto object-contain flex-shrink-0" />
+          ) : (
+            <span
+              className="flex h-14 w-14 items-center justify-center rounded-xl text-lg font-bold text-white flex-shrink-0"
+              style={{ backgroundColor: brand }}
+            >
+              {supplierName.slice(0, 1).toUpperCase()}
+            </span>
+          )}
         </div>
 
         {byGroup.map(({ def, lines }) => (
           <div key={def.key}>
-            <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
+            <div className="flex items-center justify-between border-b-2 px-3 py-2" style={{ backgroundColor: `${brand}14`, borderColor: brand }}>
               <span className="text-black font-bold">{def.label}</span>
               <span className="text-black font-medium text-sm">{fmt(groupPitchedTotal(measureSet, def.key), 1)} {def.unit}</span>
             </div>
@@ -131,7 +147,7 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
           </div>
         ))}
 
-        <div className="border-t-2 border-black pt-4 space-y-1.5">
+        <div className="border-t-2 pt-4 space-y-1.5" style={{ borderColor: brand }}>
           {showTradeTotals && baselineOutput && (
             <div className="flex items-center justify-between">
               <span className="text-black font-medium">Standard materials price</span>
@@ -155,7 +171,7 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
             </div>
           )}
           {hasLabour && (
-            <div className="flex items-center justify-between border-t border-black/20 pt-1.5">
+            <div className="flex items-center justify-between border-t border-black/20 pt-1.5" style={{ borderColor: `${brand}55` }}>
               <span className="text-black font-bold">Total</span>
               <span className="text-xl font-bold text-black">{cur}{fmt(output.material + output.labour)}</span>
             </div>

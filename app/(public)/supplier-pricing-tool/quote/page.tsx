@@ -160,16 +160,6 @@ function QuoteBuilder() {
             <button onClick={() => setShowSettings(s => !s)} className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition">
               {showSettings ? 'Hide settings' : 'Show settings'}
             </button>
-            <button onClick={() => window.print()} className="rounded-full bg-black px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition">
-              Download / Print PDF
-            </button>
-            <button
-              onClick={() => void saveToApp()}
-              disabled={savingToApp}
-              className="rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition disabled:opacity-40"
-            >
-              {savingToApp ? 'Saving...' : 'Save to QuoteCore+'}
-            </button>
             <Link href="/supplier-pricing-tool" className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition">
               Back to tool
             </Link>
@@ -451,6 +441,31 @@ function QuoteBuilder() {
           <p className="mt-6 text-[10px] text-slate-400 text-center">
             Quote valid for {validDays} days from {quoteDate}. Prices include estimated quantities; final invoice may vary with site conditions.
           </p>
+        </div>
+
+        {/* Bottom CTA - download / next step sits AFTER the document so the
+            natural reading flow ends on the action. */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 print:hidden">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-slate-900">Happy with your quote?</h3>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Download it as a PDF, or save it into QuoteCore+ to send, track and manage the job.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={() => window.print()} className="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition">
+                Download / Print PDF
+              </button>
+              <button
+                onClick={() => void saveToApp()}
+                disabled={savingToApp}
+                className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition disabled:opacity-40"
+              >
+                {savingToApp ? 'Saving...' : 'Save to QuoteCore+'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </main>
