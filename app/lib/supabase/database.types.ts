@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -2018,6 +2018,54 @@ export type Database = {
           expires_at?: string
           id?: string
           payload?: Json
+        }
+        Relationships: []
+      }
+      free_tool_finder_events: {
+        Row: {
+          clicked_position: number | null
+          clicked_tool_id: string | null
+          confidence_score: number | null
+          created_at: string
+          event_type: string
+          id: string
+          match_method: string
+          no_match: boolean
+          normalised_query: string | null
+          query_category: string | null
+          raw_query_sanitised: string | null
+          recommended_tool_ids: string[] | null
+          session_id: string
+        }
+        Insert: {
+          clicked_position?: number | null
+          clicked_tool_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          match_method?: string
+          no_match?: boolean
+          normalised_query?: string | null
+          query_category?: string | null
+          raw_query_sanitised?: string | null
+          recommended_tool_ids?: string[] | null
+          session_id: string
+        }
+        Update: {
+          clicked_position?: number | null
+          clicked_tool_id?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          match_method?: string
+          no_match?: boolean
+          normalised_query?: string | null
+          query_category?: string | null
+          raw_query_sanitised?: string | null
+          recommended_tool_ids?: string[] | null
+          session_id?: string
         }
         Relationships: []
       }
