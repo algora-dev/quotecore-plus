@@ -97,7 +97,7 @@ export default function SmartToolFinder() {
   }, [listening, run]);
 
   return (
-    <section className="mx-auto max-w-3xl px-2 md:px-6 pt-2 pb-4 md:pb-6">
+    <section className="mx-auto max-w-5xl px-2 md:px-6 pt-2 pb-4 md:pb-6">
       {/* Input */}
       <form
         className="mt-5 flex items-center gap-2"

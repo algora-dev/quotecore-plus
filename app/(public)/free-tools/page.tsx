@@ -17,7 +17,7 @@ export default function FreeToolsPage() {
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
-          <div className="relative mx-auto max-w-3xl px-2 md:px-6 pt-10 md:pt-14 pb-1 text-center">
+          <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-10 md:pt-14 pb-1 text-center">
             <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing &amp; Construction Tools</h1>
             <p className="mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto px-2">
               Measure roofs, calculate materials, build takeoffs, create quotes, invoices and purchase orders — all in one place, and free. What are you trying to solve? Tell us below and we&apos;ll take you straight to it.
@@ -29,7 +29,7 @@ export default function FreeToolsPage() {
         <SmartToolFinder />
 
         {/* SEO/GEO answer block */}
-        <section className="mx-auto max-w-3xl px-2 md:px-6 pb-2">
+        <section className="mx-auto max-w-5xl px-2 md:px-6 pb-2">
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-5 py-4 text-center">
             <h2 className="text-sm md:text-base font-semibold text-slate-900">What free tools does QuoteCore+ provide?</h2>
             <p className="mt-1.5 text-xs md:text-sm leading-relaxed text-slate-600">
@@ -42,7 +42,7 @@ export default function FreeToolsPage() {
         <TaskAccordions />
 
         {/* Interactive demo */}
-        <section className="mx-auto max-w-3xl px-2 md:px-6 py-6 md:py-10">
+        <section className="mx-auto max-w-5xl px-2 md:px-6 py-6 md:py-10">
           <div className="text-center mb-4">
             <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Want to see what the full system feels like?</h2>
             <p className="mt-1 text-xs md:text-sm text-slate-500">
@@ -56,7 +56,7 @@ export default function FreeToolsPage() {
         <BrowseAllTools />
 
         {/* Chrome extension strip */}
-        <section className="mx-auto max-w-3xl px-2 md:px-6 py-6">
+        <section className="mx-auto max-w-5xl px-2 md:px-6 py-6">
           <div className="flex flex-col items-start gap-4 rounded-xl border-2 border-slate-200 bg-white p-5 sm:flex-row sm:items-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -85,7 +85,7 @@ export default function FreeToolsPage() {
         </section>
 
         {/* Why free? — short */}
-        <section className="mx-auto max-w-3xl px-2 md:px-6 py-10 md:py-14 text-center">
+        <section className="mx-auto max-w-5xl px-2 md:px-6 py-10 md:py-14 text-center">
           <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Why are these tools free?</h2>
           <p className="mt-3 text-sm md:text-base font-medium text-slate-700">These free tools solve individual jobs. QuoteCore+ connects the whole workflow.</p>
           <p className="mt-2 text-xs md:text-sm text-[#BD4A1A] font-semibold tracking-wide">Measure → Price → Quote → Order → Invoice.</p>
@@ -99,7 +99,7 @@ export default function FreeToolsPage() {
         </section>
 
         {/* Done-For-You bridge */}
-        <section className="mx-auto max-w-3xl px-2 md:px-6 pb-12 md:pb-16">
+        <section className="mx-auto max-w-5xl px-2 md:px-6 pb-12 md:pb-16">
           <div className="rounded-xl border border-slate-200 bg-white px-5 py-5 text-center">
             <p className="text-sm font-semibold text-slate-900">Like the tools but don&apos;t want to set up a new system yourself?</p>
             <p className="mt-1.5 text-xs md:text-sm text-slate-500">

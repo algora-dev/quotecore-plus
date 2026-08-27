@@ -119,7 +119,7 @@ export default function TaskAccordions() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   return (
-    <section className="mx-auto max-w-3xl px-2 md:px-6 py-8 md:py-12">
+    <section className="mx-auto max-w-5xl px-2 md:px-6 py-8 md:py-12">
       <h2 className="text-lg md:text-2xl font-semibold text-slate-900 mb-4">Common tasks</h2>
       <div className="space-y-3">
         {ITEMS.map((item) => {
@@ -145,11 +145,9 @@ export default function TaskAccordions() {
                   <span className="block text-sm font-semibold text-slate-900 sm:text-[15px]">{item.heading}</span>
                   <span className="mt-0.5 block text-xs text-slate-500">{item.support}</span>
                 </span>
-                {item.badge && (
-                  <span className="hidden sm:inline-flex items-center rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#BD4A1A] flex-shrink-0">
-                    {item.badge}
-                  </span>
-                )}
+                <span className="hidden sm:inline-flex items-center rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#BD4A1A] flex-shrink-0">
+                  Click here
+                </span>
                 <svg
                   viewBox="0 0 24 24"
                   className={`h-5 w-5 flex-shrink-0 text-[#FF6B35] transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
