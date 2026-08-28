@@ -47,7 +47,7 @@ export default function FreeToolsPage() {
           <div className="text-center mb-4">
             <h2 className="text-lg md:text-2xl font-semibold text-slate-900">Want to see what the full system feels like?</h2>
             <p className="mt-1 text-xs md:text-sm text-slate-500">
-              Try the actual QuoteCore+ takeoff workspace without creating an account.
+              Try the actual QuoteCore+ takeoff workspace without creating an account. Working from architect PDFs? See <a href="/blog/how-to-measure-a-roof-from-a-pdf-plan" className="text-[#BD4A1A] hover:underline">how to measure a roof from a PDF plan</a> first.
             </p>
           </div>
           <DemoCTACard location="free_tools_hub" variant="inline" />

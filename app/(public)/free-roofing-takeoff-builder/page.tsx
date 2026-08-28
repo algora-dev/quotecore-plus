@@ -65,7 +65,8 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
       {/* Full workflow upsell */}
       <section className="border-t border-slate-200 bg-white px-4 py-6">
         <p className="mx-auto max-w-5xl text-center text-sm text-slate-600">
-          Ready for the full workflow? See how QuoteCore+ compares to{' '}
+          Measuring from an architect&apos;s PDF? Start with our guide on{' '}
+          <Link href="/blog/how-to-measure-a-roof-from-a-pdf-plan" className="font-medium text-[#BD4A1A] hover:underline">how to measure a roof from a PDF plan</Link>. Ready for the full workflow? See how QuoteCore+ compares to{' '}
           <Link href="/roofsnap-alternative" className="font-medium text-[#BD4A1A] hover:underline">RoofSnap</Link>,{' '}
           <Link href="/eagleview-alternative" className="font-medium text-[#BD4A1A] hover:underline">EagleView</Link>{' '}
           and{' '}

@@ -322,6 +322,12 @@ export default async function SupplierCalculatorPage({ params, searchParams }: P
         <p className="mt-2 text-sm text-slate-600 max-w-3xl">
           Calculate roof materials and costs using {s.supplier_name}'s pricing catalogue.
           Enter your roof measurements and get instant material quantities and indicative pricing — no signup required.
+          {s.slug === "thames-slate-tile" && (
+            <>
+              {' '}
+              Measuring from an architect&apos;s PDF? See <a href="/blog/how-to-measure-a-roof-from-a-pdf-plan" className="text-[#BD4A1A] hover:underline">how to measure a roof from a PDF plan</a> first.
+            </>
+          )}
         </p>
       </section>
 

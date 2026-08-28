@@ -250,6 +250,30 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     lastModified: '2026-07-29',
   },
   {
+    slug: 'how-to-measure-a-roof-from-a-pdf-plan',
+    category: 'roofing-estimating',
+    title: 'How to Measure a Roof from a PDF Plan (2026 Guide)',
+    description:
+      'Measure a roof from a PDF plan: verify or calibrate the scale, work plane by plane, apply pitch factors, and price linear components. Free Roof Takeoff Builder, no signup.',
+    date: '2026-08-28',
+    lastModified: '2026-08-28',
+    faqs: [
+      { question: 'Can you measure a roof from a PDF plan?', answer: 'Yes. Verify the drawing scale against a labelled dimension first (or calibrate from any known dimension), then measure each roof plane on screen, apply pitch factors for true area, and measure ridges, hips, valleys, verges and eaves separately. The free Roof Takeoff Builder does this from an uploaded PDF with no account required.' },
+      { question: 'What if the PDF plan has no scale?', answer: 'Calibrate from a known dimension: any labelled dimension string, or a standard component drawn to scale such as a door leaf or parking bay. Measure it on screen, divide the real size by the measured size, and apply that factor to every other measurement. If nothing on the drawing has a knowable size, request a scaled drawing or measure on site.' },
+      { question: 'How accurate is measuring from a PDF plan?', answer: 'Vector PDFs exported from CAD hold their scale exactly once calibrated, so accuracy is limited mainly by your measuring care. Scanned plans add distortion risk. The bigger accuracy risk is not the measuring but the drawing itself: stale revisions, grid vs external dimensions, and details hidden on other sheets.' },
+      { question: 'Do I still need a site visit if I measure from the PDF?', answer: 'Not always. New-build and fully specified work can usually be quoted from plans alone. You need a site visit when access, existing damage, or as-built deviations could change the scope. A hybrid works well: full takeoff from the PDF now, short site check before contract.' },
+    ],
+  },
+  {
+    slug: 'quoting-from-plans-vs-site-visits',
+    category: 'construction-quoting',
+    title: 'Quoting From Plans vs Site Visits: When to Visit',
+    description:
+      'When contractors can safely quote from PDF plans alone, when a site visit is unavoidable, and the hybrid approach that gets the quote out same day without carrying the risk.',
+    date: '2026-08-28',
+    lastModified: '2026-08-28',
+  },
+  {
     slug: 'how-much-roofing-material',
     category: 'roofing-estimating',
     title: 'How Much Roofing Material Do You Need? Guide',
