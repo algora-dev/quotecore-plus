@@ -323,7 +323,7 @@ export default function ConstructionQuotingSoftwarePage() {
             </p>
 
             <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Construction quoting software for trades that work from measurements.
+              Quoting software for contractors who work from measurements.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
@@ -335,7 +335,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
-                QuoteCore+ is construction quoting software for trade businesses that quote from measurements, plans, materials, labour and pricing rules. It replaces the scattered workflow of spreadsheets, emails, documents, folders and manual follow-up with one connected platform from first quote to final payment.
+                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. QuoteCore+ starts free (Lite plan), with paid plans from $19/month and a 14-day free trial — so you can send your first professional quote before paying anything.
               </p>
             </div>
 
@@ -440,6 +440,30 @@ export default function ConstructionQuotingSoftwarePage() {
                 <p className="mt-3 text-base leading-7 text-zinc-600">{t.body}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Contractor evaluation criteria */}
+        <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">How contractors evaluate quoting software.</h2>
+          <p className="mt-4 text-lg leading-8 text-zinc-600">Before choosing job quoting software, most contractors weigh the same four things. Here is how QuoteCore+ handles each.</p>
+          <div className="mt-8 space-y-4">
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Quotes per week: will it keep up with your volume?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">Whether you send 2 quotes a week or 20, the bottleneck is the same: rebuilding the same measurements, materials and labour pricing every time. Smart Components™ store your pricing rules once, then drop them into every new quote — so quoting volume scales without your admin hours scaling with it.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Material lists: can the quote become an order?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">A quote that can&apos;t be ordered from is only half a job. In QuoteCore+, the accepted quote drives <a href="/features/material-ordering" className="text-[#BD4A1A] hover:underline">materials ordering</a> directly — component quantities, drawings and custom lengths stay connected, with no copy-paste into a separate spreadsheet.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Follow-ups: do you know which quotes are still open?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">Most lost jobs are lost to silence, not to competitors. QuoteCore+ tracks whether each quote has been viewed, accepted or declined, so follow-up is a list you work — not a feeling. For scripts and timing, see our guide on <a href="/blog/how-to-follow-up-on-a-quote" className="text-[#BD4A1A] hover:underline">how to follow up on a quote</a>.</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 shadow-sm">
+              <h3 className="text-xl font-semibold text-zinc-950">Client-facing PDF: will customers trust the document?</h3>
+              <p className="mt-3 text-base leading-7 text-zinc-600">Homeowners, developers and project managers judge professionalism quickly. Quotes export as clean, branded PDF documents generated from live job data — not a spreadsheet printout — which helps the quote get taken seriously before your price is even compared.</p>
+            </div>
           </div>
         </section>
 

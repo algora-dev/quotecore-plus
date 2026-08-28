@@ -139,7 +139,7 @@ export default function Post() {
         <li>Failing to record assumptions</li>
       </ul>
       <h2>A faster connected workflow</h2>
-      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ connects <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link>, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
+      <p>The <a href="/free-roofing-takeoff-builder">free roofing takeoff builder</a> is useful for a one-off takeoff. For repeat work, QuoteCore+ is <Link href="/construction-quoting-software">quoting software for contractors</Link> that connects <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link>, Smart Components™, pricing, customer quotes, material orders, and invoices in one workflow.</p>
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
           src="https://www.youtube.com/embed/B--YAux8Bqo"

@@ -189,11 +189,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'best-quoting-software-nz',
     category: 'comparisons',
-    title: 'Best Quoting Software for Contractors (2026) — NZ & UK',
+    title: 'Best Quoting Software NZ (2026): 6 Tools Compared',
     description:
-      'Comparing quoting software for contractors: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero Projects on pricing, features and fit. NZ-focused with UK guidance.',
+      'Compare QuoteCore+, Tradify, Fergus and ServiceM8 on pricing, features and NZ trade fit. Free tools and free trial to get you quoting faster.',
     date: '2026-07-15',
-    lastModified: '2026-08-05',
+    lastModified: '2026-08-28',
   },
   {
     slug: 'best-quoting-software-au',
