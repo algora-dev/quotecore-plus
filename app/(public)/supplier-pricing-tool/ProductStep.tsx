@@ -5,9 +5,11 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AppliedProduct, GroupDef, MeasurementSet, Mode, SupplierProduct } from './types';
 import { GROUP_DEFS, groupPitchedTotal, entryPitched, makeId, applyWaste } from './types';
+import { activeFamily, activeRoofTypes, isRoofCompatible, isRecommended } from './compatibility';
+import { useSupplierConfig } from './supplierConfig';
 
 const inputCls = 'rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:outline-none';
 
@@ -39,14 +41,20 @@ export function ProductStep({
   const [search, setSearch] = useState('');
   const [pickerFor, setPickerFor] = useState<string | null>(null); // null = group, entryId = per-entry
   const [editing, setEditing] = useState<AppliedProduct | null>(null);
+  const { config: supplierCfg } = useSupplierConfig();
+  const cur = supplierCfg.currency;
   // Embedded (merged flow): entry rows live in the GroupCard above - the
   // summary card would duplicate them, so it only renders standalone.
   const showSummary = !hideNav;
 
   const valid = useMemo(
-    () => catalog.filter(p => p.groups.includes(def.key)),
-    [catalog, def.key],
+    () => {
+      const active = activeRoofTypes(catalog, measureSet.appliedProducts);
+      return catalog.filter(p => p.groups.includes(def.key) && isRoofCompatible(p, active));
+    },
+    [catalog, def.key, measureSet.appliedProducts],
   );
+  const family = activeFamily(catalog, measureSet.appliedProducts);
   const filtered = valid.filter(p => {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
@@ -55,6 +63,37 @@ export function ProductStep({
 
   const total = groupPitchedTotal(measureSet, def.key);
   const groupApplied = measureSet.appliedProducts.filter(ap => ap.groupKey === def.key && ap.entryId == null);
+  const activeRoofs = activeRoofTypes(catalog, measureSet.appliedProducts);
+
+  // Auto-apply default (recommended) products once per group when the user
+  // has not applied anything themselves - the "override tick box" behaviour:
+  // defaults pre-ticked, user can remove or swap them.
+  const autoAddedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (autoAddedRef.current === def.key) return;
+    const anyForGroup = measureSet.appliedProducts.some(ap => ap.groupKey === def.key);
+    if (anyForGroup) return;
+    const defaults = valid.filter(p => isRecommended(p, family));
+    if (defaults.length === 0) return;
+    autoAddedRef.current = def.key;
+    const next = [...measureSet.appliedProducts];
+    for (const p of defaults) {
+      next.push({
+        id: makeId('ap'),
+        groupKey: def.key,
+        productId: p.id,
+        entryId: null,
+        wastePct: p.defaultWastePct,
+        wasteFlat: 0,
+        wasteMode: 'percent',
+        labourRate: p.defaultLabourRate,
+        qtyOverride: null,
+        priceOverride: null,
+      });
+    }
+    setMeasureSet({ ...measureSet, appliedProducts: next });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [def.key]);
 
   function applyProduct(pid: string, entryId: string | null) {
     const p = catalog.find(x => x.id === pid)!;
@@ -128,6 +167,12 @@ export function ProductStep({
             {pickerFor === '__group__' ? 'Done' : '+ Add product'}
           </button>
         </div>
+        {def.key !== 'roofAreas' && activeRoofs.length > 0 && (
+          <p className="text-xs text-slate-500">
+            Filtered to <span className="font-semibold text-slate-700">{activeRoofs.join(' / ')}-compatible</span> products
+            {family && (<span>{' - '}<span className="font-semibold text-slate-700">{family}</span>{' items highlighted as Recommended'}</span>)}
+          </p>
+        )}
 
         {groupApplied.length === 0 && (
           <p className="text-sm text-slate-400 text-center py-3">
@@ -149,6 +194,7 @@ export function ProductStep({
               onEdit={() => setEditing(ap)}
               onRemove={() => removeApplied(ap.id)}
               onUpdate={patch => updateApplied(ap.id, patch)}
+              cur={cur}
             />
           );
         })}
@@ -157,6 +203,8 @@ export function ProductStep({
           <ProductPicker
             products={filtered}
             def={def}
+            cur={cur}
+            family={family}
             search={search}
             setSearch={setSearch}
             onPick={pid => applyProduct(pid, null)}
@@ -205,6 +253,7 @@ export function ProductStep({
                       onEdit={() => setEditing(ap)}
                       onRemove={() => removeApplied(ap.id)}
                       onUpdate={patch => updateApplied(ap.id, patch)}
+                      cur={cur}
                     />
                   );
                 })}
@@ -212,6 +261,8 @@ export function ProductStep({
                   <ProductPicker
                     products={filtered}
                     def={def}
+                    cur={cur}
+                    family={family}
                     search={search}
                     setSearch={setSearch}
                     onPick={pid => applyProduct(pid, entry.id)}
@@ -245,6 +296,7 @@ export function ProductStep({
           ap={editing}
           p={catalog.find(x => x.id === editing.productId)!}
           def={def}
+          cur={cur}
           onClose={() => setEditing(null)}
           onSave={patch => { updateApplied(editing.id, patch); setEditing(null); }}
         />
@@ -254,7 +306,7 @@ export function ProductStep({
 }
 
 /** One applied product row: name, qty, waste, live totals, edit/remove. */
-function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate }: {
+function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate, cur }: {
   ap: AppliedProduct;
   p: SupplierProduct;
   def: GroupDef;
@@ -263,6 +315,7 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
   onEdit: () => void;
   onRemove: () => void;
   onUpdate: (patch: Partial<AppliedProduct>) => void;
+  cur: string;
 }) {
   const calcQty = ap.qtyOverride != null ? ap.qtyOverride : measured;
   const purchaseQty = applyWaste(ap, calcQty);
@@ -278,8 +331,8 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
           {ap.qtyOverride != null && <span className="ml-2 text-xs font-normal text-[#1D4ED8]">qty overridden</span>}
         </div>
         <div className="text-xs text-slate-400">
-          {p.code} - ${unitPrice.toFixed(2)}/{def.unit}
-          {ap.labourRate > 0 && <span> - labour ${ap.labourRate.toFixed(2)}/{def.unit}</span>}
+          {p.code} - {cur}{unitPrice.toFixed(2)}/{def.unit}
+          {ap.labourRate > 0 && <span> - labour {cur}{ap.labourRate.toFixed(2)}/{def.unit}</span>}
         </div>
       </div>
       <label className="flex items-center gap-1.5 text-xs text-slate-500 flex-shrink-0">
@@ -310,7 +363,7 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
       </label>
       <span className="text-sm font-semibold text-slate-900 whitespace-nowrap flex-shrink-0">
         {purchaseQty.toFixed(1)} {def.unit}
-        <span className="ml-2 text-[#1D4ED8]">${(mat + lab).toFixed(2)}</span>
+        <span className="ml-2 text-[#1D4ED8]">{cur}{(mat + lab).toFixed(2)}</span>
       </span>
       {advanced && (
         <button onClick={onEdit} className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-slate-400 transition flex-shrink-0 cursor-pointer">
@@ -327,17 +380,19 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
 /** Inline catalog picker: suggested first, then all, with search. Stays
  *  open after each pick so multiple products can be applied back-to-back;
  *  Done closes it. */
-function ProductPicker({ products, def, search, setSearch, onPick, appliedIds, onDone }: {
+function ProductPicker({ products, def, cur, family, search, setSearch, onPick, appliedIds, onDone }: {
   products: SupplierProduct[];
   def: GroupDef;
+  cur: string;
+  family: string | null;
   search: string;
   setSearch: (s: string) => void;
   onPick: (pid: string) => void;
   appliedIds: Set<string>;
   onDone: () => void;
 }) {
-  const suggested = products.filter(p => p.suggested);
-  const others = products.filter(p => !p.suggested);
+  const recommended = products.filter(p => isRecommended(p, family));
+  const others = products.filter(p => !isRecommended(p, family));
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
       <input
@@ -347,16 +402,16 @@ function ProductPicker({ products, def, search, setSearch, onPick, appliedIds, o
         placeholder="Search name or code..."
         className={`${inputCls} w-full`}
       />
-      {suggested.length > 0 && (
+      {recommended.length > 0 && (
         <>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Suggested</p>
-          {suggested.map(p => <PickerRow key={p.id} p={p} def={def} onPick={onPick} added={appliedIds.has(p.id)} />)}
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Recommended{family ? ` - ${family}` : ''}</p>
+          {recommended.map(p => <PickerRow key={p.id} p={p} def={def} cur={cur} onPick={onPick} added={appliedIds.has(p.id)} />)}
         </>
       )}
       {others.length > 0 && (
         <>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">All products</p>
-          {others.map(p => <PickerRow key={p.id} p={p} def={def} onPick={onPick} added={appliedIds.has(p.id)} />)}
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">All compatible products</p>
+          {others.map(p => <PickerRow key={p.id} p={p} def={def} cur={cur} onPick={onPick} added={appliedIds.has(p.id)} />)}
         </>
       )}
       {products.length === 0 && (
@@ -374,7 +429,7 @@ function ProductPicker({ products, def, search, setSearch, onPick, appliedIds, o
   );
 }
 
-function PickerRow({ p, def, onPick, added }: { p: SupplierProduct; def: GroupDef; onPick: (pid: string) => void; added: boolean }) {
+function PickerRow({ p, def, cur, onPick, added }: { p: SupplierProduct; def: GroupDef; cur: string; onPick: (pid: string) => void; added: boolean }) {
   return (
     <button
       onClick={() => onPick(p.id)}
@@ -383,7 +438,7 @@ function PickerRow({ p, def, onPick, added }: { p: SupplierProduct; def: GroupDe
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-slate-900 truncate">{p.name}</div>
         <div className="text-xs text-slate-400">
-          {p.code} - ${p.unitPrice.toFixed(2)}/{def.unit}
+          {p.code} - {cur}{p.unitPrice.toFixed(2)}/{def.unit}
           {p.defaultWastePct > 0 && <span> - {p.defaultWastePct}% waste</span>}
         </div>
       </div>
@@ -403,10 +458,11 @@ function PickerRow({ p, def, onPick, added }: { p: SupplierProduct; def: GroupDe
 
 /** Advanced product editor: labour rate, waste, qty override, price override
  *  (only when the supplier allows price edits on this product). */
-function ProductEditorModal({ ap, p, def, onClose, onSave }: {
+function ProductEditorModal({ ap, p, def, cur, onClose, onSave }: {
   ap: AppliedProduct;
   p: SupplierProduct;
   def: GroupDef;
+  cur: string;
   onClose: () => void;
   onSave: (patch: Partial<AppliedProduct>) => void;
 }) {
@@ -484,7 +540,7 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
               </div>
             )}
             <div>
-              <label className="text-xs font-medium text-slate-600">Labour rate ($/{def.unit})</label>
+              <label className="text-xs font-medium text-slate-600">Labour rate ({cur}/{def.unit})</label>
               <input type="number" min="0" step="0.1" value={labourRate} onChange={e => setLabourRate(e.target.value)} className={`${inputCls} mt-0.5 w-full`} />
             </div>
             <div>
@@ -492,7 +548,7 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
               <input type="number" min="0" step="any" value={qtyOverride} onChange={e => setQtyOverride(e.target.value)} placeholder="measured" className={`${inputCls} mt-0.5 w-full`} />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-600">Price override ($/{def.unit})</label>
+              <label className="text-xs font-medium text-slate-600">Price override ({cur}/{def.unit})</label>
               <input
                 type="number" min="0" step="0.01" value={priceOverride}
                 onChange={e => setPriceOverride(e.target.value)}
@@ -506,7 +562,7 @@ function ProductEditorModal({ ap, p, def, onClose, onSave }: {
           <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 flex items-center justify-between">
             <span className="text-xs text-slate-500">Purchase qty: {purchaseQty.toFixed(1)} {def.unit}</span>
             <span className="text-sm font-semibold text-slate-900">
-              ${mat.toFixed(2)}{lab > 0 && <span className="text-xs font-normal text-slate-500"> + ${lab.toFixed(2)} labour</span>}
+              {cur}{mat.toFixed(2)}{lab > 0 && <span className="text-xs font-normal text-slate-500"> + {cur}{lab.toFixed(2)} labour</span>}
             </span>
           </div>
         </div>

@@ -45,7 +45,7 @@ export interface SupplierConfig {
   products: SupplierProduct[];
 }
 
-export const CONFIG_STORAGE_KEY = 'qc-spt-supplier-config-v1';
+export const CONFIG_STORAGE_KEY = 'qc-spt-supplier-config-v2';
 
 export function defaultConfig(): SupplierConfig {
   return {
@@ -53,9 +53,8 @@ export function defaultConfig(): SupplierConfig {
     slug: SUPPLIER.slug,
     tagline: SUPPLIER.tagline,
     currency: SUPPLIER.currency,
-    // PLACEHOLDER branding - Shaun supplies real name/logo/colour per supplier
-    logoUrl: null,
-    brandColor: '#1E5AA8',
+    logoUrl: '/supplier-logos/burton-roofing.png',
+    brandColor: '#012B39', // Burton Roofing teal
     poweredBy: SUPPLIER.mode === 'powered_by',
     discountPct: 12,
     tradeRequiresLogin: true,

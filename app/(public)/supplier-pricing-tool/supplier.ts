@@ -1,50 +1,63 @@
-// Demo supplier config - hardcoded per plan (one fictional supplier).
-// This is the template every per-supplier build will swap out.
-// Labour defaults are non-zero on common items so the demo output shows
-// the full materials + labour story without Advanced-mode editing.
+// Burton Roofing demo catalog - the first real supplier build.
+// Structure per Shaun's system: every product carries
+//   basis (area/lineal/count) + component + roofTypes + family.
+// The covering the user picks filters every later component group by
+// roofTypes and highlights same-family products as Recommended.
+//
+// PRICES ARE PLACEHOLDERS (realistic UK trade estimates) pending Shaun's
+// Burton price list - every item is priceEditable so they can be corrected
+// in the admin panel or by swapping the numbers here.
 
 import type { SupplierProduct } from './types';
 
 export const SUPPLIER = {
-  name: 'Roofline Supplies',
-  slug: 'roofline-supplies',
-  tagline: 'Roofing materials, priced fast',
+  name: 'Burton Roofing',
+  slug: 'burton-roofing',
+  tagline: 'The Roofing People',
   unit: 'metric',
-  currency: '$',
+  currency: '\u00A3', // GBP
   mode: 'powered_by' as const, // powered_by | white_label
 };
 
 export const DEMO_CATALOG: SupplierProduct[] = [
-  // Roof areas
-  { id: 'p-tile', name: 'Concrete Roof Tile - Charcoal', code: 'TIL-CH-01', basis: 'area', groups: ['roofAreas'], unitPrice: 28.5, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 12.9, priceEditable: true, suggested: true },
-  { id: 'p-tile-ts', name: 'Terracotta Roof Tile - Classic', code: 'TIL-TC-02', basis: 'area', groups: ['roofAreas'], unitPrice: 36.9, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 15.2, priceEditable: false },
-  { id: 'p-underlay', name: 'Roofing Underlay - Double Sided', code: 'UND-DS-10', basis: 'area', groups: ['roofAreas'], unitPrice: 4.2, packSize: null, defaultWastePct: 10, defaultLabourRate: 6.6, priceEditable: true, suggested: true },
-  { id: 'p-batten', name: 'Timber Roof Batten 50x25', code: 'BAT-5025', basis: 'area', groups: ['roofAreas'], unitPrice: 6.8, packSize: null, defaultWastePct: 5, defaultLabourRate: 8.4, priceEditable: false },
-  { id: 'p-fixings', name: 'Roof Fixings Pack (per 10m2)', code: 'FIX-10M', basis: 'area', groups: ['roofAreas'], unitPrice: 3.5, packSize: null, defaultWastePct: 0, defaultLabourRate: 13.0, priceEditable: true, suggested: true },
-  { id: 'p-eaveflash', name: 'Eave Flashing Trim (per m2)', code: 'EAV-FL-04', basis: 'area', groups: ['roofAreas'], unitPrice: 5.9, packSize: null, defaultWastePct: 5, defaultLabourRate: 0, priceEditable: false },
+  // ---- Roof coverings (area) - picking one sets roof type + family ----
+  { id: 'cupa-r18', name: 'CUPA R18 Natural Spanish Slate 500x250mm', code: 'SLT-CU-R18', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 48.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 42.0, priceEditable: true, suggested: true },
+  { id: 'cupa-heavy3', name: 'CUPA Heavy 3 Natural Spanish Slate 500x250mm', code: 'SLT-CU-H3', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 52.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 42.0, priceEditable: true },
+  { id: 'marley-edgemere', name: 'Marley Edgemere - Smooth Grey', code: 'TIL-MA-EDG', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['tile'], family: 'Marley Edgemere', unitPrice: 32.0, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 28.0, priceEditable: true, suggested: true },
+  { id: 'marley-ludlow', name: 'Marley Ludlow Plus - Greystone', code: 'TIL-MA-LUD', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['tile'], family: 'Marley Ludlow', unitPrice: 34.0, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 28.0, priceEditable: true },
 
-  // Ridges
-  { id: 'p-dryridge', name: 'Dry Ridge System Kit (per m)', code: 'DRS-PM', basis: 'lineal', groups: ['ridges'], unitPrice: 21.4, packSize: null, defaultWastePct: 5, defaultLabourRate: 10.4, priceEditable: true, suggested: true },
-  { id: 'p-ridgetile', name: 'Ridge Tile - Charcoal', code: 'RID-CH-01', basis: 'lineal', groups: ['ridges'], unitPrice: 12.8, packSize: null, defaultWastePct: 5, defaultLabourRate: 12.75, priceEditable: false },
-  { id: 'p-ridgebed', name: 'Bedding Mortar (per m ridge)', code: 'BED-PM', basis: 'lineal', groups: ['ridges'], unitPrice: 8.2, packSize: null, defaultWastePct: 8, defaultLabourRate: 0, priceEditable: false },
+  // ---- Underlays (area, all roofs) ----
+  { id: 'tyvek-supro', name: 'TYVEK Supro Felt 50m x 1.5m', code: 'UND-TY-SUP', basis: 'area', groups: ['roofAreas'], component: 'underlay', roofTypes: ['all'], unitPrice: 3.2, packSize: null, defaultWastePct: 10, defaultLabourRate: 6.0, priceEditable: true, suggested: true },
+  { id: 'permavent-apex', name: 'Permavent Apex Air Permeable Membrane 1m x 50m', code: 'UND-PV-APX', basis: 'area', groups: ['roofAreas'], component: 'underlay', roofTypes: ['all'], unitPrice: 2.8, packSize: null, defaultWastePct: 10, defaultLabourRate: 6.0, priceEditable: true },
 
-  // Hips
-  { id: 'p-hiptile', name: 'Hip Tile - Charcoal', code: 'HIP-CH-01', basis: 'lineal', groups: ['hips'], unitPrice: 14.2, packSize: null, defaultWastePct: 6, defaultLabourRate: 12.75, priceEditable: true, suggested: true },
-  { id: 'p-hipflex', name: 'Flexible Hip Flashing', code: 'HIP-FL-05', basis: 'lineal', groups: ['hips'], unitPrice: 9.6, packSize: null, defaultWastePct: 8, defaultLabourRate: 0, priceEditable: false },
+  // ---- Fixings (area, roof-type specific) ----
+  { id: 'copper-slate-nails', name: 'Copper Slate Nails / Slate Fixings', code: 'FIX-CU-SLT', basis: 'area', groups: ['roofAreas'], component: 'fixing', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 1.2, packSize: null, defaultWastePct: 0, defaultLabourRate: 0, priceEditable: true, suggested: true },
+  { id: 'tile-nails-clips', name: 'Tile Nails + Clips 45 x 3.35mm', code: 'FIX-TL-45', basis: 'area', groups: ['roofAreas'], component: 'fixing', roofTypes: ['tile'], family: 'Marley', unitPrice: 0.9, packSize: null, defaultWastePct: 0, defaultLabourRate: 0, priceEditable: true, suggested: true },
 
-  // Valleys
-  { id: 'p-valleytray', name: 'Valley Tray - Coloursteel', code: 'VAL-CS-03', basis: 'lineal', groups: ['valleys'], unitPrice: 18.9, packSize: null, defaultWastePct: 7, defaultLabourRate: 14.8, priceEditable: true, suggested: true },
-  { id: 'p-valleyflash', name: 'Valley Flashing 300mm', code: 'VAL-FL-30', basis: 'lineal', groups: ['valleys'], unitPrice: 11.4, packSize: null, defaultWastePct: 7, defaultLabourRate: 0, priceEditable: false },
+  // ---- Barge / dry verge (lineal) ----
+  { id: 'readyslate-verge', name: 'ReadySlate Aluminium Dry Verge 18mm Black 1m', code: 'BRS-RS-1M', basis: 'lineal', groups: ['barges'], component: 'barge', roofTypes: ['slate'], unitPrice: 14.5, packSize: null, defaultWastePct: 5, defaultLabourRate: 9.0, priceEditable: true },
+  { id: 'manthorpe-slate-verge', name: 'Manthorpe Slate Dry Verge - Grey/Black', code: 'BRS-MP-SLT', basis: 'lineal', groups: ['barges'], component: 'barge', roofTypes: ['slate'], family: 'Manthorpe', unitPrice: 11.2, packSize: null, defaultWastePct: 5, defaultLabourRate: 9.0, priceEditable: true, suggested: true },
+  { id: 'edgemere-verge-lh', name: 'Marley Edgemere Dry Verge LH - Smooth Grey', code: 'BRS-MA-LH', basis: 'lineal', groups: ['barges'], component: 'barge', roofTypes: ['tile'], family: 'Marley Edgemere', unitPrice: 9.8, packSize: null, defaultWastePct: 5, defaultLabourRate: 9.0, priceEditable: true, suggested: true },
+  { id: 'edgemere-verge-rh', name: 'Marley Edgemere Dry Verge RH - Smooth Grey', code: 'BRS-MA-RH', basis: 'lineal', groups: ['barges'], component: 'barge', roofTypes: ['tile'], family: 'Marley Edgemere', unitPrice: 9.8, packSize: null, defaultWastePct: 5, defaultLabourRate: 9.0, priceEditable: true },
 
-  // Barges
-  { id: 'p-bargetile', name: 'Barge Tile - Charcoal', code: 'BAR-CH-01', basis: 'lineal', groups: ['barges'], unitPrice: 13.5, packSize: null, defaultWastePct: 6, defaultLabourRate: 12.75, priceEditable: true, suggested: true },
-  { id: 'p-bargeflash', name: 'Barge Flashing', code: 'BAR-FL-01', basis: 'lineal', groups: ['barges'], unitPrice: 8.9, packSize: null, defaultWastePct: 7, defaultLabourRate: 6.75, priceEditable: false },
+  // ---- Ridge (lineal) ----
+  { id: 'manthorpe-ridge6', name: 'Manthorpe 6m Dry Ridge System - Black', code: 'RDG-MP-6M', basis: 'lineal', groups: ['ridges'], component: 'ridge', roofTypes: ['slate'], family: 'Manthorpe', unitPrice: 10.5, packSize: null, defaultWastePct: 5, defaultLabourRate: 11.0, priceEditable: true },
+  { id: 'easytrim-ridge', name: 'Easy-Trim Ridge F Dry Fix Ridge Kit 6m Black', code: 'RDG-ET-6M', basis: 'lineal', groups: ['ridges'], component: 'ridge', roofTypes: ['slate', 'tile'], unitPrice: 9.7, packSize: null, defaultWastePct: 5, defaultLabourRate: 11.0, priceEditable: true, suggested: true },
+  { id: 'marley-ridgefast', name: 'Marley RidgeFast Dry Fixing System 6m', code: 'RDG-MA-RF', basis: 'lineal', groups: ['ridges'], component: 'ridge', roofTypes: ['tile'], family: 'Marley', unitPrice: 11.3, packSize: null, defaultWastePct: 5, defaultLabourRate: 11.0, priceEditable: true, suggested: true },
 
-  // Spouting
-  { id: 'p-spout', name: 'Spouting - 125mm Quad', code: 'SPO-125Q', basis: 'lineal', groups: ['spouting'], unitPrice: 16.8, packSize: null, defaultWastePct: 6, defaultLabourRate: 12.7, priceEditable: true, suggested: true },
-  { id: 'p-spoutbrack', name: 'Spouting Brackets & Fittings', code: 'SPO-FIT-K', basis: 'lineal', groups: ['spouting'], unitPrice: 5.2, packSize: null, defaultWastePct: 5, defaultLabourRate: 3.15, priceEditable: true, suggested: true },
+  // ---- Valleys (lineal) ----
+  { id: 'grp-slate-valley', name: 'Slate GRP Valley Trough', code: 'VAL-GRP-SLT', basis: 'lineal', groups: ['valleys'], component: 'valley', roofTypes: ['slate'], unitPrice: 18.0, packSize: null, defaultWastePct: 6, defaultLabourRate: 16.0, priceEditable: true, suggested: true },
+  { id: 'grp-tile-valley', name: 'GRP Tile Valley Trough', code: 'VAL-GRP-TIL', basis: 'lineal', groups: ['valleys'], component: 'valley', roofTypes: ['tile'], unitPrice: 16.0, packSize: null, defaultWastePct: 6, defaultLabourRate: 16.0, priceEditable: true, suggested: true },
 
-  // Downpipes (point-measured - counted, not lineal)
-  { id: 'p-downpipe', name: 'Downpipe 80mm PVC (per ea)', code: 'DWN-80P', basis: 'count', groups: ['downpipes'], unitPrice: 38.5, packSize: null, defaultWastePct: 0, defaultLabourRate: 42.0, priceEditable: true, suggested: true },
-  { id: 'p-dp-bracket', name: 'Downpipe Brackets & Offsets', code: 'DWN-BRK', basis: 'count', groups: ['downpipes'], unitPrice: 9.2, packSize: null, defaultWastePct: 0, defaultLabourRate: 0, priceEditable: false },
+  // ---- Hips (lineal) ----
+  { id: 'manthorpe-hip', name: 'Manthorpe Universal Dry Ridge & Hip System', code: 'HIP-MP-UNI', basis: 'lineal', groups: ['hips'], component: 'hip', roofTypes: ['slate', 'tile'], family: 'Manthorpe', unitPrice: 12.0, packSize: null, defaultWastePct: 5, defaultLabourRate: 12.0, priceEditable: true, suggested: true },
+  { id: 'marley-hip', name: 'Marley Dry-Fix Hip System', code: 'HIP-MA-DF', basis: 'lineal', groups: ['hips'], component: 'hip', roofTypes: ['tile'], family: 'Marley', unitPrice: 13.0, packSize: null, defaultWastePct: 5, defaultLabourRate: 12.0, priceEditable: true, suggested: true },
+
+  // ---- Spouting / gutter (lineal, all roofs) ----
+  { id: 'floplast-gutter', name: 'FloPlast Half Round PVC Gutter 4m - Black', code: 'SPO-FP-4M', basis: 'lineal', groups: ['spouting'], component: 'gutter', roofTypes: ['all'], unitPrice: 3.9, packSize: null, defaultWastePct: 5, defaultLabourRate: 8.0, priceEditable: true, suggested: true },
+  { id: 'evolve-gutter', name: 'EVOLVE Half Round Gutter 3m - Heritage Black', code: 'SPO-EV-3M', basis: 'lineal', groups: ['spouting'], component: 'gutter', roofTypes: ['all'], unitPrice: 4.7, packSize: null, defaultWastePct: 5, defaultLabourRate: 8.0, priceEditable: true },
+
+  // ---- Downpipes (count) ----
+  { id: 'evolve-downpipe', name: 'EVOLVE 76mm Flushfit Downpipe 3m - Black', code: 'DWN-EV-76', basis: 'count', groups: ['downpipes'], component: 'downpipe', roofTypes: ['all'], family: 'EVOLVE', unitPrice: 14.8, packSize: null, defaultWastePct: 0, defaultLabourRate: 24.0, priceEditable: true, suggested: true },
+  { id: 'floplast-downpipe', name: 'FloPlast Round Downpipe - Black', code: 'DWN-FP-RD', basis: 'count', groups: ['downpipes'], component: 'downpipe', roofTypes: ['all'], family: 'FloPlast', unitPrice: 13.2, packSize: null, defaultWastePct: 0, defaultLabourRate: 24.0, priceEditable: true },
 ];

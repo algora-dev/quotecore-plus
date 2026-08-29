@@ -10,11 +10,12 @@ import { useState } from 'react';
 import type { CustomComponent, MeasurementBasis, MeasurementSet } from './types';
 import { CUSTOM_BASIS_UNIT, makeId } from './types';
 import { fmt } from './pricing';
+import { useSupplierConfig } from './supplierConfig';
 
 const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
 const BASIS_OPTIONS: { value: MeasurementBasis; label: string; unit: string; desc: string }[] = [
-  { value: 'area', label: 'Area', unit: 'm\u00B2', desc: 'Measured in square metres' },
+  { value: 'area', label: 'Area', unit: 'm\\\\u00B2', desc: 'Measured in square metres' },
   { value: 'lineal', label: 'Lineal', unit: 'm', desc: 'Measured in metres of length' },
   { value: 'count', label: 'Fixed quantity', unit: 'ea', desc: 'A count of items' },
 ];
@@ -28,6 +29,8 @@ export function CustomComponentsStep({
   onNext: () => void;
 }) {
   const customs = measureSet.customComponents;
+  const { config: supplierCfg } = useSupplierConfig();
+  const cur = supplierCfg.currency;
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [basis, setBasis] = useState<MeasurementBasis>('area');
@@ -88,12 +91,12 @@ export function CustomComponentsStep({
                 <div className="text-sm font-semibold text-slate-900 truncate">{c.name}</div>
                 <div className="text-xs text-slate-400">
                   {fmt(c.quantity, c.basis === 'count' ? 0 : 1)} {CUSTOM_BASIS_UNIT[c.basis]} -
-                  ${fmt(c.unitPrice)}/{CUSTOM_BASIS_UNIT[c.basis]}
-                  {c.labourRate > 0 && <span> - labour ${fmt(c.labourRate)}/{CUSTOM_BASIS_UNIT[c.basis]}</span>}
+                  ${cur}${fmt(c.unitPrice)}/{CUSTOM_BASIS_UNIT[c.basis]}
+                  {c.labourRate > 0 && <span> - labour ${cur}${fmt(c.labourRate)}/{CUSTOM_BASIS_UNIT[c.basis]}</span>}
                 </div>
               </div>
               <span className="text-sm font-semibold text-slate-900 whitespace-nowrap flex-shrink-0">
-                ${fmt(c.quantity * (c.unitPrice + c.labourRate))}
+                ${cur}${fmt(c.quantity * (c.unitPrice + c.labourRate))}
               </span>
               <button
                 onClick={() => removeCustom(c.id)}
@@ -105,8 +108,8 @@ export function CustomComponentsStep({
             </div>
           ))}
           <p className="text-xs text-slate-400 pt-1">
-            Custom components total: ${fmt(customMaterial + customLabour)}
-            {customLabour > 0 && <span> (${fmt(customMaterial)} materials + ${fmt(customLabour)} labour)</span>}
+            Custom components total: ${cur}${fmt(customMaterial + customLabour)}
+            {customLabour > 0 && <span> (${cur}${fmt(customMaterial)} materials + ${cur}${fmt(customLabour)} labour)</span>}
           </p>
         </div>
       )}
@@ -154,7 +157,7 @@ export function CustomComponentsStep({
           </div>
           {canAdd && (
             <p className="text-xs text-slate-500">
-              Line total: <span className="font-semibold text-slate-900">${fmt(qty * (price + labour))}</span>
+              Line total: <span className="font-semibold text-slate-900">${cur}${fmt(qty * (price + labour))}</span>
             </p>
           )}
           <div className="flex items-center justify-between pt-1">
@@ -220,3 +223,6 @@ export function CustomComponentsStep({
     </div>
   );
 }
+
+
+

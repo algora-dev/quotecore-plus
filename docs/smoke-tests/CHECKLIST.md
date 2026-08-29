@@ -477,3 +477,4 @@
 - [x] Banner: plural "components are ready" -> click routes to components page, banner clears
 - [x] Green "find your takeoff in Quotes -> Drafts" banner shows on components page/dashboard, dismissable
 - [x] Quote builder: areas pitched, components per-area/per-entry, final incl-waste values + spec-rate prices
+- [ ] /supplier-pricing-tool: Burton branding (logo + teal #012B39), GBP prices; pick CUPA slate on Roof Areas -> later groups filter to slate-compatible, CUPA Slate/Manthorpe items flagged Recommended, defaults pre-ticked; pick Marley Edgemere tile -> filters flip to tile + Marley Edgemere family

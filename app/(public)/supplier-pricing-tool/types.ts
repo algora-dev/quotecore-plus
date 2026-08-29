@@ -34,6 +34,8 @@ export const GROUP_DEFS: GroupDef[] = [
   { key: 'downpipes', label: 'Downpipes', singular: 'Downpipe', basis: 'count', unit: 'ea' },
 ];
 
+export type RoofTypeTag = string; // 'slate' | 'tile' | 'metal' | ... | 'all'
+
 export interface SupplierProduct {
   id: string;
   name: string;
@@ -41,6 +43,12 @@ export interface SupplierProduct {
   basis: MeasurementBasis;
   /** groups this product is valid for */
   groups: GroupKey[];
+  /** component category - coverings drive roof-type compatibility */
+  component?: 'covering' | 'underlay' | 'fixing' | 'ridge' | 'hip' | 'valley' | 'barge' | 'gutter' | 'downpipe';
+  /** roof types this product suits - ['all'] when omitted */
+  roofTypes?: RoofTypeTag[];
+  /** system family - same-family items are Recommended once a covering is picked */
+  family?: string;
   unitPrice: number; // baseline/public price per unit
   packSize: number | null; // when set, sold in packs
   defaultWastePct: number; // suggested waste for this product
