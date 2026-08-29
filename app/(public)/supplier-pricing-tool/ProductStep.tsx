@@ -54,6 +54,15 @@ export function ProductStep({
     },
     [catalog, def.key, measureSet.appliedProducts],
   );
+  // incompatible items stay reachable as an override (greyed section)
+  const incompatible = useMemo(
+    () => {
+      const active = activeRoofTypes(catalog, measureSet.appliedProducts);
+      if (def.key === 'roofAreas' || active.length === 0) return [];
+      return catalog.filter(p => p.groups.includes(def.key) && !isRoofCompatible(p, active));
+    },
+    [catalog, def.key, measureSet.appliedProducts],
+  );
   const family = activeFamily(catalog, measureSet.appliedProducts);
   const filtered = valid.filter(p => {
     if (!search.trim()) return true;
@@ -73,7 +82,10 @@ export function ProductStep({
     if (autoAddedRef.current === def.key) return;
     const anyForGroup = measureSet.appliedProducts.some(ap => ap.groupKey === def.key);
     if (anyForGroup) return;
-    const defaults = valid.filter(p => isRecommended(p, family));
+    // never auto-pick a covering - that choice is the user's; and on Roof
+    // Areas wait until a covering has been chosen so defaults match the roof type
+    const defaults = valid.filter(p => isRecommended(p, family) && (p.component ?? 'covering') !== 'covering');
+    if (def.key === 'roofAreas' && activeRoofs.length === 0) return;
     if (defaults.length === 0) return;
     autoAddedRef.current = def.key;
     const next = [...measureSet.appliedProducts];
@@ -96,6 +108,11 @@ export function ProductStep({
   }, [def.key]);
 
   function applyProduct(pid: string, entryId: string | null) {
+    // toggle: clicking an already-applied product removes it (override tick box)
+    const already = measureSet.appliedProducts.find(
+      ap => ap.groupKey === def.key && ap.productId === pid && (ap.entryId ?? null) === (entryId ?? null),
+    );
+    if (already) { removeApplied(already.id); return; }
     const p = catalog.find(x => x.id === pid)!;
     const ap: AppliedProduct = {
       id: makeId('ap'),
@@ -205,6 +222,8 @@ export function ProductStep({
             def={def}
             cur={cur}
             family={family}
+            incompatible={incompatible}
+            activeRoofs={activeRoofs}
             search={search}
             setSearch={setSearch}
             onPick={pid => applyProduct(pid, null)}
@@ -263,6 +282,8 @@ export function ProductStep({
                     def={def}
                     cur={cur}
                     family={family}
+                    incompatible={incompatible}
+                    activeRoofs={activeRoofs}
                     search={search}
                     setSearch={setSearch}
                     onPick={pid => applyProduct(pid, entry.id)}
@@ -380,11 +401,13 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
 /** Inline catalog picker: suggested first, then all, with search. Stays
  *  open after each pick so multiple products can be applied back-to-back;
  *  Done closes it. */
-function ProductPicker({ products, def, cur, family, search, setSearch, onPick, appliedIds, onDone }: {
+function ProductPicker({ products, def, cur, family, incompatible, activeRoofs, search, setSearch, onPick, appliedIds, onDone }: {
   products: SupplierProduct[];
   def: GroupDef;
   cur: string;
   family: string | null;
+  incompatible: SupplierProduct[];
+  activeRoofs: string[];
   search: string;
   setSearch: (s: string) => void;
   onPick: (pid: string) => void;
@@ -413,6 +436,17 @@ function ProductPicker({ products, def, cur, family, search, setSearch, onPick, 
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">All compatible products</p>
           {others.map(p => <PickerRow key={p.id} p={p} def={def} cur={cur} onPick={onPick} added={appliedIds.has(p.id)} />)}
         </>
+      )}
+      {incompatible.length > 0 && (
+        <details className="pt-1">
+          <summary className="cursor-pointer text-xs font-medium text-slate-400 uppercase tracking-wide hover:text-slate-600">
+            Not {activeRoofs.join(' / ')}-compatible ({incompatible.length}) - show anyway
+          </summary>
+          <p className="mt-1 text-[10px] text-slate-400">Override: add one of these if you know it works for this job.</p>
+          <div className="mt-1 space-y-1 opacity-80">
+            {incompatible.map(p => <PickerRow key={p.id} p={p} def={def} cur={cur} onPick={onPick} added={appliedIds.has(p.id)} />)}
+          </div>
+        </details>
       )}
       {products.length === 0 && (
         <p className="text-sm text-slate-400 text-center py-2">No products match "{search}".</p>

@@ -21,10 +21,10 @@ export const SUPPLIER = {
 
 export const DEMO_CATALOG: SupplierProduct[] = [
   // ---- Roof coverings (area) - picking one sets roof type + family ----
-  { id: 'cupa-r18', name: 'CUPA R18 Natural Spanish Slate 500x250mm', code: 'SLT-CU-R18', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 48.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 42.0, priceEditable: true, suggested: true },
-  { id: 'cupa-heavy3', name: 'CUPA Heavy 3 Natural Spanish Slate 500x250mm', code: 'SLT-CU-H3', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 52.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 42.0, priceEditable: true },
-  { id: 'marley-edgemere', name: 'Marley Edgemere - Smooth Grey', code: 'TIL-MA-EDG', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['tile'], family: 'Marley Edgemere', unitPrice: 32.0, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 28.0, priceEditable: true, suggested: true },
-  { id: 'marley-ludlow', name: 'Marley Ludlow Plus - Greystone', code: 'TIL-MA-LUD', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['tile'], family: 'Marley Ludlow', unitPrice: 34.0, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 28.0, priceEditable: true },
+  { id: 'cupa-r18', name: 'CUPA R18 Natural Spanish Slate 500x250mm', code: 'SLT-CU-R18', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 48.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 21.0, priceEditable: true, suggested: true },
+  { id: 'cupa-heavy3', name: 'CUPA Heavy 3 Natural Spanish Slate 500x250mm', code: 'SLT-CU-H3', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 52.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 21.0, priceEditable: true },
+  { id: 'marley-edgemere', name: 'Marley Edgemere - Smooth Grey', code: 'TIL-MA-EDG', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['tile'], family: 'Marley Edgemere', unitPrice: 32.0, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 14.0, priceEditable: true, suggested: true },
+  { id: 'marley-ludlow', name: 'Marley Ludlow Plus - Greystone', code: 'TIL-MA-LUD', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['tile'], family: 'Marley Ludlow', unitPrice: 34.0, packSize: null, defaultWastePct: 7.5, defaultLabourRate: 14.0, priceEditable: true },
 
   // ---- Underlays (area, all roofs) ----
   { id: 'tyvek-supro', name: 'TYVEK Supro Felt 50m x 1.5m', code: 'UND-TY-SUP', basis: 'area', groups: ['roofAreas'], component: 'underlay', roofTypes: ['all'], unitPrice: 3.2, packSize: null, defaultWastePct: 10, defaultLabourRate: 6.0, priceEditable: true, suggested: true },
