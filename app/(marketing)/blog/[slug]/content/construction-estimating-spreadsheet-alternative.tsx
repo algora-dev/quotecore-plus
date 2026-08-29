@@ -153,6 +153,13 @@ export default function Post() {
         — bring your CSV or Excel price list with you.
       </p>
       <p>
+        Quoting from your existing sheet today?{' '}
+        <Link href="/blog/convert-spreadsheet-to-quote" className={link}>
+          Learn how to turn a spreadsheet into a professional quote
+        </Link>{' '}
+        — three ways, including a free converter that needs no signup.
+      </p>
+      <p>
         Need the background first?{' '}
         <Link href="/blog/price-a-job-from-measurements" className={link}>
           See how to price a job from your measurements

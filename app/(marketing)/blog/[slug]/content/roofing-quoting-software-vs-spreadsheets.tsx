@@ -143,7 +143,7 @@ export default function Post() {
         <li>you do not need material orders or invoices connected to accepted quotes</li>
         <li>you are not losing time after site visits</li>
       </ul>
-      <p>But if quoting is becoming a bottleneck, or if job information keeps getting copied between different places, a spreadsheet may no longer be the best centre of the workflow.</p>
+      <p>But if quoting is becoming a bottleneck, or if job information keeps getting copied between different places, a spreadsheet may no longer be the best centre of the workflow. For the specific step of producing a customer document, see <a href="/blog/convert-spreadsheet-to-quote">how to turn a spreadsheet into a professional quote</a>.</p>
 
       <hr />
 

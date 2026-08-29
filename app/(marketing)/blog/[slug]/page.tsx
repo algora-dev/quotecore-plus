@@ -29,6 +29,7 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'how-much-roofing-material': () => import('./content/how-much-roofing-material'),
   'how-to-price-a-roofing-job': () => import('./content/how-to-price-a-roofing-job'),
   'roofing-quote-example': () => import('./content/roofing-quote-example'),
+  'convert-spreadsheet-to-quote': () => import('./content/convert-spreadsheet-to-quote'),
   'how-to-quote-a-roof-from-plans': () => import('./content/how-to-quote-a-roof-from-plans'),
   'best-free-tools-for-roofers': () => import('./content/best-free-tools-for-roofers'),
   'ai-roof-measuring': () => import('./content/ai-roof-measuring'),

@@ -2,13 +2,14 @@
 
 Source: `app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet-alternative.tsx`
 
-## Outbound internal links (6)
+## Outbound internal links (7)
 
-### Blog articles (2)
+### Blog articles (3)
 
 | Destination | Anchor |
 |---|---|
 | /blog/price-a-job-from-measurements | See the full measurements-to-pricing example → |
+| /blog/convert-spreadsheet-to-quote | Learn how to turn a spreadsheet into a professional quote |
 | /blog/price-a-job-from-measurements | See how to price a job from your measurements |
 
 ### Free tools (2)
@@ -25,10 +26,11 @@ Source: `app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet
 | /measurement-to-quote-tool | Try the free Measurement-to-Quote Tool → |
 | /measurement-to-quote-tool | Try the free Measurement-to-Quote Tool |
 
-## Inbound in-article links (1)
+## Inbound in-article links (2)
 
 | From | Anchor used |
 |---|---|
+| /blog/convert-spreadsheet-to-quote | spreadsheet alternative guide |
 | /blog/price-a-job-from-measurements | our guide to moving on from an estimating spreadsheet |
 
 External links in source: 0

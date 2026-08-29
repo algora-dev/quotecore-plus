@@ -270,6 +270,11 @@ export default function Post() {
         making the switch painless enough to be worth doing. That is exactly what we are
         trying to solve.
       </p>
+      <p>
+        And if you simply need a customer-facing document from your sheet today, see{' '}
+        <Link href="/blog/convert-spreadsheet-to-quote">how to turn a spreadsheet into a professional quote</Link>{' '}
+        — three ways, including a free converter.
+      </p>
 
       <h2>Want us to rebuild your current estimating setup for you?</h2>
       <p>You do not need to buy anything before speaking with us.</p>

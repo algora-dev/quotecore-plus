@@ -2,7 +2,13 @@
 
 Source: `app/(marketing)/blog/[slug]/content/roofing-estimating-spreadsheet-vs-software.tsx`
 
-## Outbound internal links (5)
+## Outbound internal links (6)
+
+### Blog articles (1)
+
+| Destination | Anchor |
+|---|---|
+| /blog/convert-spreadsheet-to-quote | how to turn a spreadsheet into a professional quote |
 
 ### Other site pages (5)
 
@@ -14,8 +20,10 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-estimating-spreadsheet-vs-s
 | /done-for-you-setup | See Done-For-You Setup |
 | /contact | Book a 15-minute fit call |
 
-## Inbound in-article links (0)
+## Inbound in-article links (1)
 
-_None — potential in-article orphan._
+| From | Anchor used |
+|---|---|
+| /blog/convert-spreadsheet-to-quote | roofing estimating spreadsheet vs software |
 
 External links in source: 0

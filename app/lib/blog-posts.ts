@@ -75,6 +75,21 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     ],
   },
   {
+    slug: 'convert-spreadsheet-to-quote',
+    category: 'construction-quoting',
+    title: 'How to Turn a Spreadsheet Into a Professional Quote (3 Ways)',
+    description:
+      'Three ways to turn your Excel or Google Sheets estimate into a professional quote — manual, free converter, or reusable components. Free, no signup.',
+    date: '2026-08-29',
+    lastModified: '2026-08-29',
+    faqs: [
+      { question: 'Is there an Excel to quote converter?', answer: 'Yes. The free Quote Generator converts pasted spreadsheet rows into a formatted, downloadable quote with no account required. To convert the pricing itself into reusable rules, the Catalog-to-Component Converter turns CSV rows into Smart Components.' },
+      { question: 'Can I turn a Google Sheets estimate into a quote?', answer: 'Yes — the same three options apply. Copy rows out of Google Sheets and paste them into the free quote generator, or export the sheet as CSV and convert your pricing into reusable components.' },
+      { question: 'Spreadsheet vs quoting software — which should I use for quotes?', answer: 'Spreadsheets work for estimating, but the copy-paste step into a customer document is where errors and time pile up. Quoting software removes that step by generating the customer document directly from the priced estimate.' },
+      { question: 'How do I stop rebuilding the same quote every job?', answer: 'Convert your pricing into reusable Smart Components once. After that, each quote reuses the same priced components — measure the job, drop them in, and the totals recalculate.' },
+    ],
+  },
+  {
     slug: 'construction-estimating-spreadsheet-alternative',
     category: 'construction-quoting',
     title: 'Is There a Better Alternative to a Construction Estimating Spreadsheet?',

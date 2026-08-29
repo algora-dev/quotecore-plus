@@ -20,8 +20,9 @@ Per-article snapshots live next to this file. This is the canonical record of wh
 | can-chatgpt-create-a-quote | 10 | 2 | 0 | 2 |
 | chrome-roof-pitch-calculator-extension | 5 | 1 | 1 | 0 |
 | construction-cost-estimator-guide | 21 | 2 | 1 | 1 |
-| construction-estimating-spreadsheet-alternative | 6 | 2 | 0 | 1 |
+| construction-estimating-spreadsheet-alternative | 7 | 3 | 0 | 2 |
 | construction-quote-speed-checklist | 14 | 6 | 1 | 7 |
+| convert-spreadsheet-to-quote | 11 | 4 | 0 | 3 |
 | do-professional-quotes-win-more-jobs | 13 | 4 | 1 | 5 |
 | how-much-roofing-material | 16 | 5 | 1 | 4 |
 | how-to-calculate-roof-pitch | 12 | 3 | 1 | 7 |
@@ -46,12 +47,12 @@ Per-article snapshots live next to this file. This is the canonical record of wh
 | quoting-from-plans-vs-site-visits | 4 | 1 | 1 | 1 |
 | reusable-quoting-templates-smart-components | 7 | 2 | 2 | 1 |
 | roof-replacement-cost-guide-uk | 12 | 3 | 1 | 1 |
-| roofing-estimating-spreadsheet-vs-software | 5 | 0 | 0 | 0 |
+| roofing-estimating-spreadsheet-vs-software | 6 | 1 | 0 | 1 |
 | roofing-estimating-vs-quoting | 8 | 2 | 2 | 2 |
 | roofing-material-list | 17 | 3 | 2 | 5 |
-| roofing-quote-example | 5 | 3 | 1 | 4 |
+| roofing-quote-example | 5 | 3 | 1 | 5 |
 | roofing-quoting-software-uk | 15 | 10 | 1 | 6 |
-| roofing-quoting-software-vs-spreadsheets | 9 | 6 | 2 | 8 |
+| roofing-quoting-software-vs-spreadsheets | 10 | 7 | 2 | 9 |
 | roofing-waste-calculation | 10 | 2 | 1 | 5 |
 | simple-roofing-estimating-software | 5 | 0 | 0 | 0 |
 
@@ -60,7 +61,6 @@ Per-article snapshots live next to this file. This is the canonical record of wh
 - ai-quoting-software
 - ai-roofing-tools-guide
 - chrome-roof-pitch-calculator-extension
-- roofing-estimating-spreadsheet-vs-software
 - simple-roofing-estimating-software
 
 ## Money-page inbound totals (from article body links)
