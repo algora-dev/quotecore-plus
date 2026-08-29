@@ -47,14 +47,13 @@ export function ProductStep({
   // summary card would duplicate them, so it only renders standalone.
   const showSummary = !hideNav;
 
+  // EVERY product for this group stays visible and selectable - compatibility
+  // only affects ordering and the "other roof types" tag, never hides items.
   const valid = useMemo(
-    () => {
-      const active = activeRoofTypes(catalog, measureSet.appliedProducts);
-      return catalog.filter(p => p.groups.includes(def.key) && isRoofCompatible(p, active));
-    },
-    [catalog, def.key, measureSet.appliedProducts],
+    () => catalog.filter(p => p.groups.includes(def.key)),
+    [catalog, def.key],
   );
-  // incompatible items stay reachable as an override (greyed section)
+  // items not matching the chosen roof type - listed last, still clickable
   const incompatible = useMemo(
     () => {
       const active = activeRoofTypes(catalog, measureSet.appliedProducts);
@@ -83,8 +82,12 @@ export function ProductStep({
     const anyForGroup = measureSet.appliedProducts.some(ap => ap.groupKey === def.key);
     if (anyForGroup) return;
     // never auto-pick a covering - that choice is the user's; and on Roof
-    // Areas wait until a covering has been chosen so defaults match the roof type
-    const defaults = valid.filter(p => isRecommended(p, family) && (p.component ?? 'covering') !== 'covering');
+    // Areas wait until a covering has been chosen so defaults match the roof type.
+    // Only COMPATIBLE items ever auto-apply - incompatible ones stay manual.
+    const defaults = valid.filter(p =>
+      isRecommended(p, family) && (p.component ?? 'covering') !== 'covering' &&
+      (activeRoofs.length === 0 || isRoofCompatible(p, activeRoofs)),
+    );
     if (def.key === 'roofAreas' && activeRoofs.length === 0) return;
     if (defaults.length === 0) return;
     autoAddedRef.current = def.key;
@@ -186,8 +189,9 @@ export function ProductStep({
         </div>
         {def.key !== 'roofAreas' && activeRoofs.length > 0 && (
           <p className="text-xs text-slate-500">
-            Filtered to <span className="font-semibold text-slate-700">{activeRoofs.join(' / ')}-compatible</span> products
+            <span className="font-semibold text-slate-700">{activeRoofs.join(' / ')}-compatible</span>{' items shown first'}
             {family && (<span>{' - '}<span className="font-semibold text-slate-700">{family}</span>{' items highlighted as Recommended'}</span>)}
+            {' - every product stays selectable'}
           </p>
         )}
 
@@ -415,7 +419,8 @@ function ProductPicker({ products, def, cur, family, incompatible, activeRoofs, 
   onDone: () => void;
 }) {
   const recommended = products.filter(p => isRecommended(p, family));
-  const others = products.filter(p => !isRecommended(p, family));
+  const incompatIds = new Set(incompatible.map(p => p.id));
+  const others = products.filter(p => !isRecommended(p, family) && !incompatIds.has(p.id));
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3 space-y-2">
       <input
@@ -433,20 +438,17 @@ function ProductPicker({ products, def, cur, family, incompatible, activeRoofs, 
       )}
       {others.length > 0 && (
         <>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">All compatible products</p>
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Compatible products</p>
           {others.map(p => <PickerRow key={p.id} p={p} def={def} cur={cur} onPick={onPick} added={appliedIds.has(p.id)} />)}
         </>
       )}
       {incompatible.length > 0 && (
-        <details className="pt-1">
-          <summary className="cursor-pointer text-xs font-medium text-slate-400 uppercase tracking-wide hover:text-slate-600">
-            Not {activeRoofs.join(' / ')}-compatible ({incompatible.length}) - show anyway
-          </summary>
-          <p className="mt-1 text-[10px] text-slate-400">Override: add one of these if you know it works for this job.</p>
-          <div className="mt-1 space-y-1 opacity-80">
-            {incompatible.map(p => <PickerRow key={p.id} p={p} def={def} cur={cur} onPick={onPick} added={appliedIds.has(p.id)} />)}
-          </div>
-        </details>
+        <div className="pt-1">
+          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+            Other roof types ({activeRoofs.length > 0 ? `not ${activeRoofs.join(' / ')}` : 'all'}) - still selectable
+          </p>
+          {incompatible.map(p => <PickerRow key={p.id} p={p} def={def} cur={cur} onPick={onPick} added={appliedIds.has(p.id)} />)}
+        </div>
       )}
       {products.length === 0 && (
         <p className="text-sm text-slate-400 text-center py-2">No products match "{search}".</p>
