@@ -30,12 +30,11 @@ Source: `app/(marketing)/blog/[slug]/content/convert-spreadsheet-to-quote.tsx`
 |---|---|
 | /features/smart-components | how Smart Components work |
 
-## Inbound in-article links (3)
+## Inbound in-article links (2)
 
 | From | Anchor used |
 |---|---|
-| /blog/construction-estimating-spreadsheet-alternative | Learn how to turn a spreadsheet into a professional quote |
-| /blog/roofing-estimating-spreadsheet-vs-software | how to turn a spreadsheet into a professional quote |
-| /blog/roofing-quoting-software-vs-spreadsheets | how to turn a spreadsheet into a professional quote |
+| /blog/construction-estimating-spreadsheet-alternative | turn a spreadsheet estimate into a quote |
+| /blog/roofing-quoting-software-vs-spreadsheets | how to turn a spreadsheet estimate into a professional quote |
 
 External links in source: 0

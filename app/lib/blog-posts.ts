@@ -92,11 +92,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'construction-estimating-spreadsheet-alternative',
     category: 'construction-quoting',
-    title: 'Is There a Better Alternative to a Construction Estimating Spreadsheet?',
+    title: 'Construction Estimating Spreadsheet Alternative: What Works Better?',
     description:
-      'Spreadsheets can price jobs well, but they become slow when formulas, copying and quoting are spread across multiple files. See a free reusable alternative built for measured jobs.',
+      'What can you use instead of an Excel or Google Sheets estimate? Compare estimating alternatives, score them on a 7-point checklist, and keep your existing pricing.',
     date: '2026-08-24',
-    lastModified: '2026-08-24',
+    lastModified: '2026-08-29',
     faqs: [
       { question: 'Is a construction estimating spreadsheet still worth using?', answer: 'Yes, if your estimating volume is low, one person understands the file, pricing rarely changes and there is little copying between systems. The reason to change is workflow cost, not licence cost.' },
       { question: 'What is the alternative to an estimating spreadsheet?', answer: 'A reusable pricing component system: save the pricing logic (materials, waste, labour, rates) once as components, then enter each job\u2019s measurements and get a priced output you can convert directly into a quote.' },
@@ -107,11 +107,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'roofing-estimating-spreadsheet-vs-software',
     category: 'roofing-estimating',
-    title: 'Still Quoting Roofing Jobs in Excel? When Spreadsheets Stop Saving Time',
+    title: 'Roofing Estimating: Keep Your Spreadsheet or Switch to Software?',
     description:
-      'Still pricing roofing jobs in Excel? See where spreadsheets work, where they start costing time, and how to switch without rebuilding your estimating system from scratch.',
+      'Should you keep your roofing estimating spreadsheet or switch to software? A stay-or-switch decision table, the real cost of switching, and how to bring your pricing across.',
     date: '2026-08-26',
-    lastModified: '2026-08-26',
+    lastModified: '2026-08-29',
     faqs: [
       { question: 'Is Excel good enough for roofing estimates?', answer: 'It can be. If you quote a small number of straightforward jobs and your spreadsheet is accurate, easy to maintain and quick to use, there may be no reason to change. Dedicated estimating software becomes more useful when you are repeatedly copying jobs, re-entering measurements, maintaining complicated formulas or moving the same information between several systems.' },
       { question: 'What can replace a roofing estimating spreadsheet?', answer: 'Roofing estimating software can replace the calculation and quoting parts of a spreadsheet while adding reusable materials, labour, waste rules, digital takeoffs, quote generation and other connected workflows. The right choice depends on how you currently estimate and which parts of your process actually need improving.' },
@@ -168,11 +168,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'roofing-quoting-software-vs-spreadsheets',
     category: 'comparisons',
-    title: 'Roofing Quoting Software vs Spreadsheets: What Saves Time?',
+    title: 'Creating Roofing Quotes: Spreadsheet vs Quoting Software',
     description:
-      'Spreadsheets can work for roofing quotes, but they start to slow businesses down when measurements, pricing, approvals, material orders, job details and invoicing need to stay connected.',
+      'Turning a finished roofing estimate into the customer quote — spreadsheet workflow vs quoting software, with a side-by-side comparison and a quote QA checklist.',
     date: '2026-05-11',
-    lastModified: '2026-05-11',
+    lastModified: '2026-08-29',
   },
   {
     slug: 'built-by-a-roofer',

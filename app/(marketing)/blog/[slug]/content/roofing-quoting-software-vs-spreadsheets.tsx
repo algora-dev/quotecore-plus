@@ -1,89 +1,143 @@
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
-      <p>A lot of roofing businesses run on spreadsheets, and there is a good reason for that.</p>
-      <p>Spreadsheets are flexible. They are familiar. They let you build your own formulas, adjust rates, copy old jobs and keep control of the numbers. For a small business, especially in the early days, a spreadsheet can do a decent job.</p>
-      <p>So the question is not whether spreadsheets are bad.</p>
-      <p>The better question is: at what point does the spreadsheet start creating more admin than it saves?</p>
-      <p>For many roofers, the answer comes when the spreadsheet becomes the middle of a much bigger workflow. The job starts with measurements and photos, then moves into pricing, then into a quote document, then into follow-up, then material orders, then job management and invoicing. If the spreadsheet only handles one part of that, everything else still has to be managed somewhere else.</p>
-
-      <hr />
-
-      <h2>Where spreadsheets work well</h2>
-      <p>Spreadsheets can be useful for:</p>
-      <ul>
-        <li>basic pricing calculations</li>
-        <li>keeping material rates in one place</li>
-        <li>duplicating similar jobs</li>
-        <li>adjusting margins</li>
-        <li>working through labour and material costs</li>
-        <li>creating a familiar quoting structure</li>
-      </ul>
-      <p>If a contractor only sends a small number of quotes each month and the process is simple, a spreadsheet may be enough.</p>
-      <p>There is no need to overcomplicate things if the current system is genuinely working.</p>
-
-      <hr />
-
-      <h2>Where spreadsheets start to slow things down</h2>
-      <p>The problem usually starts when the spreadsheet is expected to do more than it was built for.</p>
-      <p>A roofing quote is not just a set of numbers. It is connected to the customer, the site, the measurements, the material orders, the scope, the approval, the job itself and eventually the invoice.</p>
-      <p>A spreadsheet can calculate, but it does not naturally manage the full process.</p>
-      <p>Common problems include:</p>
-      <ul>
-        <li>measurements being copied from notes into the spreadsheet</li>
-        <li>quote details being copied again into a Word or PDF template</li>
-        <li>old files being reused and accidentally left with the wrong details</li>
-        <li>material orders being created separately after the quote is accepted</li>
-        <li>follow-ups being handled manually</li>
-        <li>job details being stored across folders, emails and someone&apos;s memory</li>
-      </ul>
-      <p>None of these problems are dramatic on their own. But over time, they add up.</p>
-      <p>The business ends up doing the same job admin more than once.</p>
-      <p>For a broader look at what the shift to digital quoting actually looks like on the ground, <a href="/blog/roofing-quoting-software-uk">this breakdown of how UK roofers are winning more jobs by moving away from manual processes</a> puts the context around it.</p>
-
-      <hr />
-
-      <h2>Why the quote output matters</h2>
-      <p>A spreadsheet might be great internally, but it is not always what the customer should see.</p>
-      <p>Most businesses end up turning spreadsheet information into something more polished before sending it. That often means copying the details into a separate quote template, checking the formatting, removing internal notes and making sure it looks professional.</p>
-      <p>That is another step where time is lost and mistakes can creep in.</p>
-      <p>With a connected quote workflow, the aim is for the information used to price the job to also help create the customer-facing quote. That reduces the need to rebuild the quote just to make it presentable.</p>
-
-      <hr />
-
-      <h2>What QuoteCore+ changes</h2>
-      <p>QuoteCore+ is not just a prettier spreadsheet. It is <a href="/construction-quoting-software">construction quoting software</a> that keeps the whole job connected.</p>
-      <p>It is built to connect the job information from measurement through to quote and then into the next steps after the customer responds.</p>
-      <p>Instead of using separate tools for each stage, QuoteCore+ helps keep the workflow in one place:</p>
-      <ul>
-        <li>measurements feed the quote</li>
-        <li>pricing logic can be reused consistently</li>
-        <li>the quote is ready to send</li>
-        <li>acceptance or decline can be tracked</li>
-        <li>follow-ups are easier to manage</li>
-        <li>materials can be ordered from the accepted quote</li>
-        <li>invoices can be created without starting again</li>
-        <li>job details stay connected after the quote is won</li>
-      </ul>
-      <p>Spreadsheets can't read a roof plan. QuoteCore+ can — <a href="/features/ai-scan-assist">AI Scan Assist</a> identifies roof areas and flashings from an uploaded plan, then Smart Components price them. That's a workflow no spreadsheet can replicate.</p>
-      <p>The point is not that every roofing business must stop using spreadsheets immediately. The point is that once the spreadsheet becomes the thing holding the entire job together, it may be time for a better system.</p>
-      <p>If speed is the main issue - not just accuracy - <a href="/blog/construction-quote-speed-checklist">the Construction Quote Speed Checklist</a> shows how to build a process that gets quotes out the same day as a site visit, regardless of what tool you are using.</p>
-      <h2>See how reusable pricing replaces spreadsheet workarounds</h2>
       <p>
-        If your spreadsheet is mainly holding repeat pricing rules, this <a href="/blog/reusable-quoting-templates-smart-components">Smart Components tutorial</a> shows how QuoteCore+ lets you save materials, labour, waste, pitch, measurements and pricing logic so you do not rebuild the same quote every time.
+        <strong>Your estimate is done. Now: build the customer quote in the spreadsheet, or in quoting software?</strong>
+      </p>
+      <p>
+        This article is only about the output step — turning a finished roofing estimate into the
+        professional quote document the customer receives. In a spreadsheet workflow that means
+        copying totals into a document and formatting it by hand; in a quoting-software workflow the
+        quote is generated from the priced estimate and stays connected to follow-up, acceptance,
+        orders and invoicing.
+      </p>
+      <p>
+        If you have not finished estimating yet, that is a different question:{' '}
+        <a href="/blog/roofing-estimating-spreadsheet-vs-software">whether to keep your roofing spreadsheet or switch to estimating software</a>{' '}
+        has its own decision guide, and broader{' '}
+        <a href="/blog/construction-estimating-spreadsheet-alternative">construction estimating spreadsheet alternatives</a>{' '}
+        are compared separately. For the exact mechanics of getting your sheet&apos;s numbers into a quote document, see{' '}
+        <a href="/blog/convert-spreadsheet-to-quote">how to turn a spreadsheet estimate into a professional quote</a>.
       </p>
 
-      <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
-        <iframe
-          src="https://www.youtube.com/embed/XZSTIfGUHAU?start=3"
-          title="How to set up Smart Components in QuoteCore+"
-          className="h-full w-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowFullScreen
-        />
+      <hr />
+
+      <h2>Start from a finished estimate</h2>
+      <p>
+        Assume the numbers are right: areas, components, quantities, labour, margin. The question this
+        page answers is what happens between &ldquo;the estimate is done&rdquo; and &ldquo;the customer has a
+        professional quote in their inbox&rdquo;. Both routes start the same place. They diverge quickly.
+      </p>
+
+      <h2>The spreadsheet quote workflow</h2>
+      <p>
+        Most roofing businesses that quote from a spreadsheet do some version of this:
+      </p>
+      <ol>
+        <li>Open the estimate file and confirm it is the current version.</li>
+        <li>Open a Word, PDF or spreadsheet quote template.</li>
+        <li>Copy across customer details, scope and the line items to show.</li>
+        <li>Reformat: remove internal notes and costs, group items, fix layout.</li>
+        <li>Add tax, validity date, exclusions and payment terms — by hand, every time.</li>
+        <li>Export to PDF, name it carefully, email it.</li>
+        <li>Record somewhere that it was sent, and set a reminder to follow up.</li>
+      </ol>
+      <p>
+        Each step works. The cost is that every quote rebuilds the same document, and the version
+        sitting with the customer can drift from the version in your files.
+      </p>
+
+      <h2>The quoting-software workflow</h2>
+      <p>
+        A connected quoting tool starts where the estimate ends:
+      </p>
+      <ol>
+        <li>Open the priced job.</li>
+        <li>Generate the customer quote from it — scope, grouped line items, totals, terms.</li>
+        <li>Review what the customer will see: hide or group internal detail.</li>
+        <li>Send it, and the system records when, to whom, and whether it was opened.</li>
+        <li>Follow up from the same record; on acceptance, order and invoice from the same job.</li>
+      </ol>
+      <p>
+        The document is not rebuilt per job because it is produced from the estimate, and the record
+        of what was sent stays attached to the job.
+      </p>
+
+      <h2>Side-by-side: producing the quote document</h2>
+      <div className="not-prose my-8 overflow-x-auto rounded-xl border border-zinc-200">
+        <table className="w-full min-w-[640px] border-collapse bg-white text-left text-sm">
+          <thead className="bg-zinc-50 text-zinc-950">
+            <tr><th className="px-5 py-4 font-semibold">Quote-output stage</th><th className="px-5 py-4 font-semibold">Spreadsheet</th><th className="px-5 py-4 font-semibold">Quoting software</th></tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100 text-zinc-700">
+            <tr><td className="px-5 py-4 font-medium text-zinc-950">Creating the document</td><td className="px-5 py-4">Copied into a separate template by hand</td><td className="px-5 py-4">Generated from the priced estimate</td></tr>
+            <tr><td className="px-5 py-4 font-medium text-zinc-950">Formatting</td><td className="px-5 py-4">Manual, every quote</td><td className="px-5 py-4">Consistent layout automatically</td></tr>
+            <tr><td className="px-5 py-4 font-medium text-zinc-950">Internal costs vs customer view</td><td className="px-5 py-4">Delete internal columns carefully</td><td className="px-5 py-4">Estimator detail stays internal; quote shows what you choose</td></tr>
+            <tr><td className="px-5 py-4 font-medium text-zinc-950">Tax, validity, terms</td><td className="px-5 py-4">Retyped per quote</td><td className="px-5 py-4">Applied from your defaults</td></tr>
+            <tr><td className="px-5 py-4 font-medium text-zinc-950">Version control</td><td className="px-5 py-4">File names and hope</td><td className="px-5 py-4">Revision history on the job</td></tr>
+            <tr><td className="px-5 py-4 font-medium text-zinc-950">Record of what was sent</td><td className="px-5 py-4">Sent email, if you can find it</td><td className="px-5 py-4">Attached to the job, with open/accept status</td></tr>
+            <tr><td className="px-5 py-4 font-medium text-zinc-950">After acceptance</td><td className="px-5 py-4">Re-enter into order/invoice</td><td className="px-5 py-4">Order and invoice from the accepted quote</td></tr>
+          </tbody>
+        </table>
       </div>
 
-      <p>Not sure if it is worth switching? This 45-second overview shows the difference:</p>
+      <h2>Revisions and version control</h2>
+      <p>
+        The moment a customer asks for a change, the spreadsheet workflow forks: quote_v2, an email
+        with &ldquo;final FINAL&rdquo; in the subject, and real uncertainty about which document is
+        binding. In a connected tool, a revision is issued on the same job record — you always know
+        which version the customer accepted.
+      </p>
+
+      <h2>Customer-facing presentation</h2>
+      <p>
+        A quote is a sales document. Professional presentation — clear scope, grouped line items,
+        your branding, explicit exclusions — wins work that a raw spreadsheet print-out does not.
+        The spreadsheet can hold perfect numbers and still cost you the job at the presentation step,
+        which is why most contractors end up rebuilding the quote in a document anyway. See{' '}
+        <a href="/blog/roofing-quote-example">a roofing quote example and free template</a> for what
+        a strong customer-facing structure looks like.
+      </p>
+
+      <h2>Quote-output QA checklist</h2>
+      <p>
+        Whichever route you use, run every quote against this checklist before sending:
+      </p>
+      <ul>
+        <li><strong>Customer details</strong> — correct name, business and address (not the last job&apos;s)</li>
+        <li><strong>Scope</strong> — clearly states what is included, in the customer&apos;s language</li>
+        <li><strong>Exclusions</strong> — explicit; unwritten exclusions are future disputes</li>
+        <li><strong>Tax</strong> — shown correctly, not silently inside totals</li>
+        <li><strong>Quote validity</strong> — a stated expiry, protecting you against price moves</li>
+        <li><strong>Payment terms</strong> — deposit, stage payments, due dates</li>
+        <li><strong>Revision/version</strong> — the customer can see this supersedes the previous quote</li>
+        <li><strong>Acceptance</strong> — a clear way to say yes (signature, link, button)</li>
+        <li><strong>Tracking</strong> — you know it was sent, when, and when to follow up</li>
+      </ul>
+      <p>
+        A quoting tool applies most of these by default; in a spreadsheet workflow you are the
+        checklist.
+      </p>
+
+      <hr />
+
+      <div className="not-prose my-10 rounded-xl border border-zinc-200 bg-zinc-50 px-6 py-7 text-center">
+        <p className="text-xl font-semibold text-zinc-950">Create a professional roofing quote now</p>
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-zinc-600">
+          Turn your line items into a formatted, customer-ready quote document — free, no signup required.
+        </p>
+        <a
+          href="/free-quote-generator"
+          className="mt-5 inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+        >
+          Try the Free Quote Generator →
+        </a>
+      </div>
+
+      <h2>See the connected workflow in action</h2>
+      <p>
+        Not sure if it is worth switching? This 45-second overview shows the difference:
+      </p>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
@@ -95,63 +149,18 @@ export default function Post() {
         />
       </div>
 
-      
-      <hr />
-
-      <h2>Spreadsheet vs QuoteCore+</h2>
-      <div className="not-prose overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50">
-              <th className="px-4 py-3 text-left font-semibold text-zinc-950">Workflow area</th>
-              <th className="px-4 py-3 text-left font-semibold text-zinc-950">Spreadsheet</th>
-              <th className="px-4 py-3 text-left font-semibold text-zinc-950">QuoteCore+</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {[
-              ["Measurements", "Usually copied in manually", "Built into the workflow"],
-              ["Pricing", "Flexible but often dependent on formulas", "Set up to apply consistently"],
-              ["Quote output", "Often needs formatting elsewhere", "Designed to create a client-ready quote"],
-              ["Follow-up", "Manual", "Built into the workflow"],
-              ["Approval tracking", "Usually manual", "Track accepted or declined quotes"],
-              ["Material orders", "Created separately", "Can be created from the accepted quote"],
-              ["Invoicing", "Usually handled separately", "Can follow from the accepted quote"],
-              ["Job details", "Spread across files and emails", "Kept with the job"],
-              ["Team use", "Often depends on who built the sheet", "Easier to keep consistent"],
-            ].map(([area, spreadsheet, qcp]) => (
-              <tr key={area}>
-                <td className="px-4 py-3 font-medium text-zinc-800">{area}</td>
-                <td className="px-4 py-3 text-zinc-600">{spreadsheet}</td>
-                <td className="px-4 py-3 text-zinc-600">{qcp}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <hr />
-
-      <h2>When a spreadsheet may still be enough</h2>
-      <p>Not sure which side of the line your process falls on? The <a href="/blog/roofing-estimating-vs-quoting">difference between estimating and quoting</a> explains where a simple sheet ends and where a connected workflow starts.</p>
-      <p>A spreadsheet may still work if:</p>
-      <ul>
-        <li>you only quote a few jobs each month</li>
-        <li>you work alone</li>
-        <li>your quotes are simple</li>
-        <li>you already have a clean follow-up process</li>
-        <li>you do not need material orders or invoices connected to accepted quotes</li>
-        <li>you are not losing time after site visits</li>
-      </ul>
-      <p>But if quoting is becoming a bottleneck, or if job information keeps getting copied between different places, a spreadsheet may no longer be the best centre of the workflow. For the specific step of producing a customer document, see <a href="/blog/convert-spreadsheet-to-quote">how to turn a spreadsheet into a professional quote</a>.</p>
-
-      <hr />
-
-      <h2>The honest answer</h2>
-      <p>Spreadsheets are not the enemy. Disconnected admin is.</p>
-      <p>QuoteCore+ was built for roofing and construction businesses that want measurements, pricing, quotes, approvals, material orders, job details and invoicing to stay connected.</p>
-      <p>If your spreadsheet still works, keep it.</p>
-      <p>If it has become the thing you are constantly working around, it may be time to try a different workflow - <a href="/roofing-quoting-software">roofing quoting software</a> built for roofing and construction businesses keeps measurements, pricing, quotes, approvals, material orders, job details and invoicing connected. <a href="/blog/best-roofing-quoting-software-uk-2026">Here is a full comparison of the best roofing quoting software for UK contractors in 2026</a> - with honest assessments of six tools across the criteria that actually matter for roofers. For the full pricing process that software handles, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
+      <p>
+        And if repeat pricing rules are what your spreadsheet mainly holds,{' '}
+        <a href="/blog/reusable-quoting-templates-smart-components">this Smart Components tutorial</a>{' '}
+        shows how to save materials, labour, waste and pricing logic once.
+      </p>
+      <p>
+        Comparing systems? See{' '}
+        <a href="/roofing-quoting-software">roofing quoting software</a> for what a connected setup
+        includes, or{' '}
+        <a href="/blog/best-roofing-quoting-software-uk-2026">the best roofing quoting software for UK contractors in 2026</a>{' '}
+        for a full comparison.
+      </p>
     </div>
   );
 }

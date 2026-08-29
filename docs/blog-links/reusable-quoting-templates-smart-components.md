@@ -30,6 +30,6 @@ Source: `app/(marketing)/blog/[slug]/content/reusable-quoting-templates-smart-co
 
 | From | Anchor used |
 |---|---|
-| /blog/roofing-quoting-software-vs-spreadsheets | Smart Components tutorial |
+| /blog/roofing-quoting-software-vs-spreadsheets | this Smart Components tutorial |
 
 External links in source: 2

@@ -44,6 +44,6 @@ Source: `app/(marketing)/blog/[slug]/content/best-roofing-quoting-software-uk-20
 |---|---|
 | /blog/best-quoting-software-nz | best roofing quoting software for UK contractors in 2026 |
 | /blog/roofing-quoting-software-uk | Best Roofing Quoting Software UK (2026): Compared for Contractors |
-| /blog/roofing-quoting-software-vs-spreadsheets | Here is a full comparison of the best roofing quoting software for UK contractors in 2026 |
+| /blog/roofing-quoting-software-vs-spreadsheets | the best roofing quoting software for UK contractors in 2026 |
 
 External links in source: 0

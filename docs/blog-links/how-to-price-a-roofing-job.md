@@ -43,7 +43,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 |---|---|
 | /features/ai-scan-assist | AI Scan Assist |
 
-## Inbound in-article links (23)
+## Inbound in-article links (22)
 
 | From | Anchor used |
 |---|---|
@@ -69,6 +69,5 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-price-a-roofing-job.tsx`
 | /blog/roofing-quote-example | step-by-step roofing pricing guide |
 | /blog/roofing-quoting-software-uk | How to Price a Roofing Job: Step-by-Step Pricing Guide |
 | /blog/roofing-quoting-software-uk | How to Price a Roofing Job: Step-by-Step Pricing Guide |
-| /blog/roofing-quoting-software-vs-spreadsheets | How to Price a Roofing Job: Step-by-Step Pricing Guide |
 
 External links in source: 2

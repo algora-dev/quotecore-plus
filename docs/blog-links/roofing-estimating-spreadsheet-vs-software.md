@@ -2,28 +2,41 @@
 
 Source: `app/(marketing)/blog/[slug]/content/roofing-estimating-spreadsheet-vs-software.tsx`
 
-## Outbound internal links (6)
+## Outbound internal links (7)
 
-### Blog articles (1)
-
-| Destination | Anchor |
-|---|---|
-| /blog/convert-spreadsheet-to-quote | how to turn a spreadsheet into a professional quote |
-
-### Other site pages (5)
+### Money pages (1)
 
 | Destination | Anchor |
 |---|---|
-| /features/smart-components | Learn how Smart Components work |
-| /features/digital-roof-takeoff | See digital roof takeoff |
-| /done-for-you-setup | See the Done-For-You Setup |
-| /done-for-you-setup | See Done-For-You Setup |
-| /contact | Book a 15-minute fit call |
+| /roofing-estimating-software | roofing estimating software |
 
-## Inbound in-article links (1)
+### Blog articles (2)
+
+| Destination | Anchor |
+|---|---|
+| /blog/construction-estimating-spreadsheet-alternative | alternatives to construction estimating spreadsheets |
+| /blog/roofing-quoting-software-vs-spreadsheets | the customer-facing quote document |
+
+### Free tools (1)
+
+| Destination | Anchor |
+|---|---|
+| /free-smart-component-creator | Try the free converter → |
+
+### Other site pages (3)
+
+| Destination | Anchor |
+|---|---|
+| /done-for-you-setup | Done-For-You Estimating Setup |
+| /features/smart-components | how Smart Components work |
+| /features/digital-roof-takeoff | digital roof takeoff |
+
+## Inbound in-article links (3)
 
 | From | Anchor used |
 |---|---|
+| /blog/construction-estimating-spreadsheet-alternative | whether to keep your spreadsheet or switch to estimating software |
 | /blog/convert-spreadsheet-to-quote | roofing estimating spreadsheet vs software |
+| /blog/roofing-quoting-software-vs-spreadsheets | whether to keep your roofing spreadsheet or switch to estimating software |
 
 External links in source: 0

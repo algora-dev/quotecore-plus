@@ -5,129 +5,103 @@ const link = 'font-medium text-[#BD4A1A] hover:underline';
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
-      <p><strong>Spreadsheets are powerful. The problem is usually everything around the spreadsheet.</strong></p>
+      <p><strong>What can you use instead of an Excel or Google Sheets estimate?</strong></p>
       <p>
-        A good spreadsheet can calculate accurately, handle complex formulas, store pricing,
-        include waste, calculate labour and produce totals. If you built one that works, you did
-        something genuinely useful.
+        For construction and trade estimating, the realistic alternatives are: a template-based
+        estimating tool, a component system that reuses your pricing logic, or full estimating
+        software that connects quotes, orders and invoices. Which one fits depends on how often you
+        estimate, how much of your pricing repeats between jobs, and how much of the surrounding
+        admin you want connected. This guide compares the approaches and gives you a checklist for
+        evaluating any of them.
       </p>
       <p>
-        But if you price measured jobs regularly, the friction around the file tends to grow:
-        knowing how to build formulas in the first place, templates getting complicated over the
-        years, copying the file for every job, rates drifting out of date across versions,
-        measurements being typed in manually, totals being copied again into quotes, and quote,
-        order and invoice workflows living somewhere else entirely.
-      </p>
-      <p>
-        This article is about the alternative: a free tool built for exactly this workflow —
-        measurements in, reusable pricing logic, priced output out, one click into a customer quote.
-        And if you like your spreadsheet&apos;s maths, you can bring its pricing with you.
-      </p>
-      <p>
-        <Link href="/measurement-to-quote-tool" className={link}>
-          <strong>Try the free Measurement-to-Quote Tool →</strong>
-        </Link>{' '}
-        — free, no signup required.
+        Two related questions are covered separately: if you are a roofer deciding{' '}
+        <Link href="/blog/roofing-estimating-spreadsheet-vs-software" className={link}>
+          whether to keep your spreadsheet or switch to estimating software
+        </Link>
+        , see our decision guide. If you already have an estimate and need{' '}
+        <Link href="/blog/roofing-quoting-software-vs-spreadsheets" className={link}>
+          the customer-facing quote document
+        </Link>
+        , that is a separate workflow. And to actually{' '}
+        <Link href="/blog/convert-spreadsheet-to-quote" className={link}>
+          turn a spreadsheet estimate into a quote
+        </Link>
+        , there is a free converter.
       </p>
 
       <hr />
 
-      <h2>If my spreadsheet costs nothing, why replace it?</h2>
+      <h2>Why contractors look beyond spreadsheets</h2>
       <p>
-        Honest answer first: <strong>if your spreadsheet is fast, accurate and easy to maintain,
-        you may not need to replace it.</strong> Not every business needs new tooling, and a
-        well-built sheet is a real asset.
-      </p>
-      <p>
-        The reason to change is <strong>workflow cost, not licence cost</strong>. The spreadsheet
-        itself is free — the time around it isn&apos;t:
+        Spreadsheets are powerful — a good one calculates accurately, handles complex formulas,
+        stores pricing and produces totals. If you built one that works, you did something
+        genuinely useful. The reason to look at alternatives is{' '}
+        <strong>workflow cost, not licence cost</strong>. The spreadsheet itself is free — the time
+        around it isn&apos;t:
       </p>
       <ul>
-        <li>time spent copying data between files, tabs and documents</li>
+        <li>copying data between files, tabs and documents</li>
         <li>rebuilding or duplicating sheets for each new job</li>
         <li>fixing formulas that broke when someone inserted a row</li>
         <li>finding the right version of the file (&quot;FINAL_v3_really_final.xlsx&quot;)</li>
         <li>training another person to use the file the way you do</li>
-        <li>moving totals into quotes — then again into orders and invoices</li>
         <li>maintaining duplicated pricing across multiple templates</li>
       </ul>
-      <p>
-        None of that shows up on an invoice, but all of it shows up in your evenings.
-      </p>
+      <p>None of that shows up on an invoice, but all of it shows up in your evenings.</p>
 
-      <h2>What a better workflow looks like</h2>
-      <p>Here is the same job, priced both ways.</p>
-      <p><strong>Spreadsheet workflow:</strong></p>
+      <h2>What to look for in an estimating alternative</h2>
       <p>
-        Site measure → open spreadsheet → copy template → enter measurements → check formulas →
-        update prices → calculate → copy totals → build quote → possibly copy again into
-        order/invoice.
+        Every serious option — free tool or paid software — should reduce the amount of work you
+        rebuild on every job. The core ideas to look for:
       </p>
-      <p><strong>Component workflow:</strong></p>
-      <p>
-        Site measure → enter measurements → reusable component calculates output → review result →
-        convert to quote / order / app workflow.
-      </p>
-      <p>
-        The difference is not the maths — it is how much of the process you rebuild every time.
-      </p>
-
-      <h2>Reusable components vs spreadsheet formulas</h2>
-      <p>
-        If a spreadsheet formula says <em>&quot;roof area × material allowance + waste + labour&quot;</em>,
-        a QuoteCore component stores that same business logic in a reusable component rather than a
-        collection of cells.
-      </p>
-      <p>Two quick examples:</p>
       <ul>
-        <li>
-          <strong>Roofing area component:</strong> takes 100 m², adds 10% waste, applies your
-          material and labour rates per m². Next job: enter 125 m² and the same pricing rules run
-          again, with no formula rebuild.
-        </li>
-        <li>
-          <strong>Ridge component:</strong> takes 12 lineal metres, adds a fixed 0.3 m allowance per
-          length, applies ridge material and labour rates. The waste rule is saved in the component,
-          not remembered per job.
-        </li>
+        <li><strong>Reusable pricing</strong> — rates and rules saved once, applied to each job&apos;s measurements.</li>
+        <li><strong>Measurement input</strong> — enter quantities directly, or measure from plans, without re-typing.</li>
+        <li><strong>Document output</strong> — a priced result that becomes a customer quote without copy-paste.</li>
+        <li><strong>Migration path</strong> — a way to bring your existing spreadsheet pricing with you.</li>
       </ul>
+
+      <h2>The main replacement approaches</h2>
+      <p><strong>1. Template-based estimating tools.</strong> Pre-built spreadsheets or quote templates. Lowest effort, but they keep the core problem: you still copy and adjust per job, and pricing rules live in cells only you understand.</p>
+      <p><strong>2. Component systems.</strong> You save your pricing logic — materials, labour, waste, pack rules — as reusable components, then enter each job&apos;s measurements. If a spreadsheet formula says <em>&quot;roof area × material allowance + waste + labour&quot;</em>, a component stores that same business logic once and re-applies it to every new measurement, with no formula rebuild.</p>
+      <p><strong>3. Connected estimating software.</strong> A component system plus the surrounding workflow — quote, order, invoice, follow-up — kept attached to the same job instead of living in separate files.</p>
       <p>
         Want the full walkthrough with numbers?{' '}
         <Link href="/blog/price-a-job-from-measurements" className={link}>
-          See the full measurements-to-pricing example →
+          See the measurements-to-pricing example
         </Link>
+        .
       </p>
 
-      <hr />
-
-      <h2>You already built the spreadsheet. Keep the useful part.</h2>
+      <h2>7-point evaluation checklist</h2>
       <p>
-        The most common worry about moving on from a spreadsheet is losing years of pricing work.
-        You don&apos;t have to.
+        Before you commit time (or money) to any alternative — including ours — score it against
+        this checklist:
       </p>
       <ol>
-        <li>Your existing pricing data still has value — export or save it as CSV where possible.</li>
-        <li>Use the Catalog-to-Component Converter to turn rows into reusable components.</li>
-        <li>Review the generated components.</li>
-        <li>Use them inside the free Measurement-to-Quote Tool.</li>
-        <li>Save them into QuoteCore+ if you want to keep the whole system for reuse.</li>
+        <li><strong>Reusable pricing:</strong> can rates, labour and product rules be saved once and reused on every job?</li>
+        <li><strong>Labour handling:</strong> does it price labour per m², per linear metre and per unit, the way you actually charge?</li>
+        <li><strong>Waste rules:</strong> can waste be applied per component (valleys vs plain field vs flashings) rather than one blanket percentage?</li>
+        <li><strong>Measurement input:</strong> can you enter measurements directly, or ideally measure from uploaded plans?</li>
+        <li><strong>Quote/document output:</strong> does the priced result convert into a professional customer document without rebuilding it in Word?</li>
+        <li><strong>Price updates:</strong> when supplier pricing changes, do you update one place — or every template?</li>
+        <li><strong>Migration/setup effort:</strong> can your existing spreadsheet pricing be imported, or do you start from zero?</li>
       </ol>
       <p>
-        <strong>You are not throwing away your pricing work. You are moving it into a reusable
-        workflow.</strong> The free Catalog-to-Component Converter creates up to 7 components at a
-        time; the full QuoteCore+ app workflow supports larger batches of the same conversion.
+        A tool that fails items 1, 5 or 7 is usually just a prettier spreadsheet.
       </p>
 
-      <h2>When a spreadsheet is still fine</h2>
+      <h2>When a spreadsheet is still enough</h2>
       <p>Stay on the spreadsheet when:</p>
       <ul>
         <li>estimating volume is very low</li>
         <li>one person understands the file (and that person is you)</li>
         <li>pricing rarely changes</li>
         <li>there is little copying between systems</li>
-        <li>no connected quote/order/invoice workflow is needed</li>
       </ul>
-      <p>A structured component system becomes more useful when:</p>
+
+      <h2>When a connected estimating system becomes worthwhile</h2>
       <ul>
         <li>jobs repeat with similar measurements driving pricing</li>
         <li>multiple pricing rules and waste approaches are reused</li>
@@ -142,32 +116,24 @@ export default function Post() {
       <h2>Where to start</h2>
       <p>
         <Link href="/measurement-to-quote-tool" className={link}>
-          <strong>Try the free Measurement-to-Quote Tool</strong>
+          <strong>Try the free Measurement-to-Quote Tool →</strong>
         </Link>{' '}
-        — enter your measurements, reuse your pricing, get a priced output.
+        — enter your measurements, reuse your pricing, get a priced output. Free, no signup required.
       </p>
       <p>
+        You already built the spreadsheet — keep the useful part. Export your pricing as CSV and use
+        the{' '}
         <Link href="/free-smart-component-creator" className={link}>
-          Import your existing pricing with the Catalog-to-Component Converter
+          Catalog-to-Component Converter
         </Link>{' '}
-        — bring your CSV or Excel price list with you.
+        to turn rows into reusable components (up to 7 at a time in the free tool).
       </p>
       <p>
-        Quoting from your existing sheet today?{' '}
-        <Link href="/blog/convert-spreadsheet-to-quote" className={link}>
-          Learn how to turn a spreadsheet into a professional quote
-        </Link>{' '}
-        — three ways, including a free converter that needs no signup.
-      </p>
-      <p>
-        Need the background first?{' '}
-        <Link href="/blog/price-a-job-from-measurements" className={link}>
-          See how to price a job from your measurements
-        </Link>{' '}
-        — then{' '}
-        <Link href="/free-quote-generator" className={link}>
-          convert your result into a free quote
-        </Link>.
+        Evaluating full systems? Compare options in{' '}
+        <Link href="/construction-quoting-software" className={link}>
+          construction quoting software
+        </Link>
+        .
       </p>
     </div>
   );

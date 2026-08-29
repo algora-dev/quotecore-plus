@@ -4,33 +4,40 @@ Source: `app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet
 
 ## Outbound internal links (7)
 
-### Blog articles (3)
+### Money pages (1)
 
 | Destination | Anchor |
 |---|---|
-| /blog/price-a-job-from-measurements | See the full measurements-to-pricing example → |
-| /blog/convert-spreadsheet-to-quote | Learn how to turn a spreadsheet into a professional quote |
-| /blog/price-a-job-from-measurements | See how to price a job from your measurements |
+| /construction-quoting-software | construction quoting software |
 
-### Free tools (2)
+### Blog articles (4)
 
 | Destination | Anchor |
 |---|---|
-| /free-smart-component-creator | Import your existing pricing with the Catalog-to-Component Converter |
-| /free-quote-generator | convert your result into a free quote |
+| /blog/roofing-estimating-spreadsheet-vs-software | whether to keep your spreadsheet or switch to estimating software |
+| /blog/roofing-quoting-software-vs-spreadsheets | the customer-facing quote document |
+| /blog/convert-spreadsheet-to-quote | turn a spreadsheet estimate into a quote |
+| /blog/price-a-job-from-measurements | See the measurements-to-pricing example |
 
-### Other site pages (2)
+### Free tools (1)
+
+| Destination | Anchor |
+|---|---|
+| /free-smart-component-creator | Catalog-to-Component Converter |
+
+### Other site pages (1)
 
 | Destination | Anchor |
 |---|---|
 | /measurement-to-quote-tool | Try the free Measurement-to-Quote Tool → |
-| /measurement-to-quote-tool | Try the free Measurement-to-Quote Tool |
 
-## Inbound in-article links (2)
+## Inbound in-article links (4)
 
 | From | Anchor used |
 |---|---|
 | /blog/convert-spreadsheet-to-quote | spreadsheet alternative guide |
 | /blog/price-a-job-from-measurements | our guide to moving on from an estimating spreadsheet |
+| /blog/roofing-estimating-spreadsheet-vs-software | alternatives to construction estimating spreadsheets |
+| /blog/roofing-quoting-software-vs-spreadsheets | construction estimating spreadsheet alternatives |
 
 External links in source: 0

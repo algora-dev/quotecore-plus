@@ -2,34 +2,32 @@
 
 Source: `app/(marketing)/blog/[slug]/content/roofing-quoting-software-vs-spreadsheets.tsx`
 
-## Outbound internal links (10)
+## Outbound internal links (8)
 
-### Money pages (2)
+### Money pages (1)
 
 | Destination | Anchor |
 |---|---|
-| /construction-quoting-software | construction quoting software |
 | /roofing-quoting-software | roofing quoting software |
 
-### Blog articles (7)
+### Blog articles (6)
 
 | Destination | Anchor |
 |---|---|
-| /blog/roofing-quoting-software-uk | this breakdown of how UK roofers are winning more jobs by moving away from manual processes |
-| /blog/construction-quote-speed-checklist | the Construction Quote Speed Checklist |
-| /blog/reusable-quoting-templates-smart-components | Smart Components tutorial |
-| /blog/roofing-estimating-vs-quoting | difference between estimating and quoting |
-| /blog/convert-spreadsheet-to-quote | how to turn a spreadsheet into a professional quote |
-| /blog/best-roofing-quoting-software-uk-2026 | Here is a full comparison of the best roofing quoting software for UK contractors in 2026 |
-| /blog/how-to-price-a-roofing-job | How to Price a Roofing Job: Step-by-Step Pricing Guide |
+| /blog/roofing-estimating-spreadsheet-vs-software | whether to keep your roofing spreadsheet or switch to estimating software |
+| /blog/construction-estimating-spreadsheet-alternative | construction estimating spreadsheet alternatives |
+| /blog/convert-spreadsheet-to-quote | how to turn a spreadsheet estimate into a professional quote |
+| /blog/roofing-quote-example | a roofing quote example and free template |
+| /blog/reusable-quoting-templates-smart-components | this Smart Components tutorial |
+| /blog/best-roofing-quoting-software-uk-2026 | the best roofing quoting software for UK contractors in 2026 |
 
-### Other site pages (1)
+### Free tools (1)
 
 | Destination | Anchor |
 |---|---|
-| /features/ai-scan-assist | AI Scan Assist |
+| /free-quote-generator | Try the Free Quote Generator → |
 
-## Inbound in-article links (9)
+## Inbound in-article links (11)
 
 | From | Anchor used |
 |---|---|
@@ -37,10 +35,12 @@ Source: `app/(marketing)/blog/[slug]/content/roofing-quoting-software-vs-spreads
 | /blog/best-quoting-software-au | roofing quoting software vs spreadsheets |
 | /blog/best-quoting-software-us | roofing quoting software vs spreadsheets |
 | /blog/best-roofing-quoting-software-uk-2026 | roofing quoting software vs spreadsheets |
+| /blog/construction-estimating-spreadsheet-alternative | the customer-facing quote document |
 | /blog/construction-quote-speed-checklist | here is an honest look at where roofing quoting software and spreadsheets differ |
 | /blog/convert-spreadsheet-to-quote | quoting software vs spreadsheets |
 | /blog/how-to-price-a-roofing-job | Roofing Quoting Software vs Spreadsheets: What Actually Saves Time? |
 | /blog/quotecore-plus-vs-quotesmith | here is how roofing quoting software and spreadsheets actually compare |
+| /blog/roofing-estimating-spreadsheet-vs-software | the customer-facing quote document |
 | /blog/roofing-quoting-software-uk | the difference between roofing quoting software and a spreadsheet is more significant than most contractors expect |
 
 External links in source: 0
