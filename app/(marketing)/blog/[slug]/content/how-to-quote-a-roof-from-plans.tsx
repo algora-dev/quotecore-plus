@@ -11,7 +11,13 @@ export default function Post() {
         sent and tracked.
       </p>
       <p>
-        This guide covers the complete workflow. It is different from a pure takeoff, which produces
+        This guide covers the full quoting workflow: takeoff, quantities, costs, margin and the customer
+        quote itself. If you only need accurate measurements from a drawing, see{" "}
+        <Link href="/blog/how-to-measure-a-roof-from-a-pdf-plan">how to measure a roof from a PDF plan</Link>{" "}
+        or the <Link href="/blog/how-to-do-a-roof-takeoff">complete roof takeoff guide</Link>.
+      </p>
+      <p>
+        It is different from a pure takeoff, which produces
         measurements and quantities, and from pricing alone, which calculates what the work should sell for.
       </p>
 
@@ -44,44 +50,25 @@ export default function Post() {
         incomplete drawing is still an incomplete quote.
       </p>
 
-      <h2>2. Calibrate the roof plan</h2>
+      <h2>2. Do the takeoff</h2>
       <p>
-        Digital <Link href="/roofing-takeoff-software">roof takeoff software</Link> needs at least one known dimension. Select two clear points, enter the stated
-        distance and verify a second dimension where possible. Longer reference dimensions usually reduce the
-        effect of small clicking errors.
+        Measurement is its own discipline — this step is about getting it done reliably, then moving on to
+        pricing. Calibrate the plan against a known dimension, trace each roof plane as a separate area with
+        its own pitch, and measure or count every linear and point component: ridges, hips, valleys, barges,
+        eaves, flashings, parapets, gutters, penetrations and access requirements. Keep the main roof, lower
+        roofs and canopies separate when they use different products, pitches or waste allowances, and
+        remember plan area is not sloped roof area.
       </p>
       <p>
-        If the drawing has been resized, scanned or exported without scale, do not assume the printed scale is
-        still correct. Ask for a reliable dimension or confirm measurements on site.
-      </p>
-
-      <h2>3. Separate the roof into areas</h2>
-      <p>
-        Trace each roof plane or logical roof area and assign its pitch. Keep the main roof, lower roofs,
-        garages and canopies separate when they use different products, pitches or waste allowances.
-      </p>
-      <p>
-        Plan area is not the same as sloped roof area. The roof covering quantity must account for pitch,
-        while individual products may need laps, cover widths, pack sizes or sheet lengths applied later.
+        For the full measurement process, use the{" "}
+        <Link href="/blog/how-to-do-a-roof-takeoff">complete roof takeoff guide</Link>, and for
+        drawing-specific problems like verifying scale or calibrating a plan with no stated scale, see{" "}
+        <Link href="/blog/how-to-measure-a-roof-from-a-pdf-plan">how to measure a roof from a PDF plan</Link>.
+        If you prefer to measure by hand, <Link href="/blog/how-to-measure-a-roof">how to measure a roof</Link>{" "}
+        covers the manual method.
       </p>
 
-      <h2>4. Measure every linear and point component</h2>
-      <p>Area alone is not enough to quote a roof. Measure or count the components that drive materials and labour:</p>
-      <ul>
-        <li>Ridges, hips and valleys</li>
-        <li>Barges, verges and eaves</li>
-        <li>Apron, back and side flashings</li>
-        <li>Parapets and internal gutters</li>
-        <li>Roof penetrations, skylights and chimneys</li>
-        <li>Gutters, outlets and downpipes</li>
-        <li>Roof access, edge protection and scaffold requirements</li>
-      </ul>
-      <p>
-        Use the <Link href="/blog/how-to-do-a-roof-takeoff">complete roof takeoff guide</Link> when you need
-        a deeper measurement checklist.
-      </p>
-
-      <h2>5. Convert measurements into material quantities</h2>
+      <h2>3. Convert measurements into material quantities</h2>
       <p>
         Measurements become useful only after product rules are applied. Convert roof areas and lengths into
         order quantities using the actual roof system, effective cover, laps, sheet or tile dimensions, pack sizes,
@@ -92,7 +79,7 @@ export default function Post() {
         covering may need a different allowance from valleys, short sheets, fragile tiles or custom flashings.
       </p>
 
-      <h2>6. Add labour, access and job costs</h2>
+      <h2>4. Add labour, access and job costs</h2>
       <p>A complete roof price can include more than materials and installation hours:</p>
       <ul>
         <li>Removal, loading and disposal</li>
@@ -107,7 +94,17 @@ export default function Post() {
         For the commercial calculation, use the <Link href="/blog/how-to-price-a-roofing-job">step-by-step roofing pricing guide</Link>.
       </p>
 
-      <h2>7. Review the estimator breakdown</h2>
+      <h3>A short worked example (illustrative numbers)</h3>
+      <p>
+        Say the takeoff gives 95 m² of sloped roof area plus 24 linear metres of ridge and hip. Applying
+        the covering rules gives 105 m² of material (after laps and waste). At an illustrative materials
+        rate of 30 per m², materials come to 3,150. Labour, scaffold and disposal add an illustrative 2,600,
+        giving a job cost of 5,750. Applying a 20% margin prices the job at 6,900 — the number that appears
+        on the customer quote once tax, validity and exclusions are added. These figures are example round
+        numbers only, not market rates; replace them with your own measured quantities and current costs.
+      </p>
+
+      <h2>5. Review the estimator breakdown</h2>
       <p>Before creating the customer document, check the quote as an estimator:</p>
       <ul>
         <li>Compare the measured roof areas with a rough reasonableness check.</li>
@@ -118,7 +115,7 @@ export default function Post() {
         <li>Make exclusions and unknown conditions explicit.</li>
       </ul>
 
-      <h2>8. Build the customer quote</h2>
+      <h2>6. Build the customer quote</h2>
       <p>
         The estimator breakdown may contain every material, quantity, cost and margin. The customer quote should
         translate that detail into clear scope, grouped line items, price, tax, assumptions, exclusions, validity and
@@ -129,7 +126,7 @@ export default function Post() {
         customer-facing structure.
       </p>
 
-      <h2>9. Send, track and follow up</h2>
+      <h2>7. Send, track and follow up</h2>
       <p>
         Send the quote to the correct decision-maker and make acceptance, decline or change requests easy. Record
         when it was sent, whether it was opened and when follow-up is due. Stop automated reminders when the customer
@@ -140,7 +137,7 @@ export default function Post() {
         examples and a practical follow-up sequence.
       </p>
 
-      <h2>10. Carry accepted information into ordering and invoicing</h2>
+      <h2>8. Carry accepted information into ordering and invoicing</h2>
       <p>
         Once accepted, the quote should become the reference for procurement and invoicing. Reusing the approved
         quantities and scope reduces re-entry and makes it easier to identify later variations.

@@ -224,7 +224,7 @@ export default function DoneForYouSetupPage() {
                 <p className="mt-1 text-4xl font-bold tracking-tight text-slate-900">
                   {pkg.price}
                   <span className="ml-2 align-middle text-sm font-medium text-slate-500">
-                    one-time
+                    one-time · USD
                   </span>
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">

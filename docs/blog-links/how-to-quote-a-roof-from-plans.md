@@ -2,19 +2,17 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-quote-a-roof-from-plans.tsx`
 
-## Outbound internal links (8)
+## Outbound internal links (11)
 
-### Money pages (1)
-
-| Destination | Anchor |
-|---|---|
-| /roofing-takeoff-software | roof takeoff software |
-
-### Blog articles (5)
+### Blog articles (9)
 
 | Destination | Anchor |
 |---|---|
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | how to measure a roof from a PDF plan |
 | /blog/how-to-do-a-roof-takeoff | complete roof takeoff guide |
+| /blog/how-to-do-a-roof-takeoff | complete roof takeoff guide |
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | how to measure a roof from a PDF plan |
+| /blog/how-to-measure-a-roof | how to measure a roof |
 | /blog/how-to-price-a-roofing-job | step-by-step roofing pricing guide |
 | /blog/roofing-quote-example | roofing quote example and free template |
 | /blog/how-to-follow-up-on-a-quote | quote follow-up guide |
@@ -27,10 +25,11 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-quote-a-roof-from-plans.tsx`
 | /free-trial | Start a free 14-day trial |
 | /free-roof-takeoff | free roof takeoff tool |
 
-## Inbound in-article links (3)
+## Inbound in-article links (4)
 
 | From | Anchor used |
 |---|---|
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | turn your measurements into a priced, professional quote |
 | /blog/how-to-measure-a-roof-online | How to Quote a Roof From Plans |
 | /blog/how-to-measure-a-roof | how to quote a roof from plans |
 | /blog/roofing-quote-example | plan-to-quote workflow |

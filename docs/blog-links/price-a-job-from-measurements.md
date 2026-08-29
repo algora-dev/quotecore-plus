@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx`
 
-## Outbound internal links (8)
+## Outbound internal links (7)
 
 ### Blog articles (1)
 
@@ -10,11 +10,10 @@ Source: `app/(marketing)/blog/[slug]/content/price-a-job-from-measurements.tsx`
 |---|---|
 | /blog/construction-estimating-spreadsheet-alternative | our guide to moving on from an estimating spreadsheet |
 
-### Free tools (4)
+### Free tools (3)
 
 | Destination | Anchor |
 |---|---|
-| /free-smart-component-creator | Catalog-to-Component Converter |
 | /free-quote-generator | Free Quote Generator |
 | /free-quote-generator | Free Quote Generator |
 | /free-margin-calculator | free margin calculator |

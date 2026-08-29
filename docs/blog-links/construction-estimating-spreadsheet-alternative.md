@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet-alternative.tsx`
 
-## Outbound internal links (7)
+## Outbound internal links (6)
 
 ### Blog articles (2)
 
@@ -11,11 +11,10 @@ Source: `app/(marketing)/blog/[slug]/content/construction-estimating-spreadsheet
 | /blog/price-a-job-from-measurements | See the full measurements-to-pricing example → |
 | /blog/price-a-job-from-measurements | See how to price a job from your measurements |
 
-### Free tools (3)
+### Free tools (2)
 
 | Destination | Anchor |
 |---|---|
-| /free-smart-component-creator | Catalog-to-Component Converter |
 | /free-smart-component-creator | Import your existing pricing with the Catalog-to-Component Converter |
 | /free-quote-generator | convert your result into a free quote |
 

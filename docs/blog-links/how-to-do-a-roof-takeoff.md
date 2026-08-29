@@ -2,18 +2,20 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx`
 
-## Outbound internal links (17)
+## Outbound internal links (19)
 
-### Money pages (1)
+### Money pages (2)
 
 | Destination | Anchor |
 |---|---|
+| /construction-quoting-software | quoting software for contractors |
 | /roofing-quoting-software | roofing quoting software |
 
-### Blog articles (6)
+### Blog articles (7)
 
 | Destination | Anchor |
 |---|---|
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | measuring a roof from a PDF plan |
 | /blog/manual-vs-digital-roof-takeoff | manual vs digital roof takeoff |
 | /blog/how-to-measure-a-roof | how to measure a roof for materials |
 | /blog/ai-roof-measuring | AI roof measuring |
@@ -41,12 +43,14 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-do-a-roof-takeoff.tsx`
 | /features/ai-scan-assist | AI Scan Assist |
 | /features/digital-roof-takeoff | digital roof takeoff |
 
-## Inbound in-article links (9)
+## Inbound in-article links (11)
 
 | From | Anchor used |
 |---|---|
 | /blog/construction-cost-estimator-guide | how to do a roof takeoff |
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | complete roof takeoff guide |
 | /blog/how-to-measure-a-roof-online | How to Do a Roof Takeoff: Complete Step-by-Step Guide |
+| /blog/how-to-quote-a-roof-from-plans | complete roof takeoff guide |
 | /blog/how-to-quote-a-roof-from-plans | complete roof takeoff guide |
 | /blog/how-to-reduce-roofing-waste | how to do a roof takeoff |
 | /blog/manual-vs-digital-roof-takeoff | how to do a roof takeoff |

@@ -342,11 +342,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-quote-a-roof-from-plans',
     category: 'digital-takeoffs',
-    title: 'How to Quote a Roof From Plans: Complete Workflow',
+    title: 'How to Quote a Roof From Plans: Takeoff to Priced Quote (2026)',
     description:
-      'Learn how to quote a roof from plans: verify scale, complete the takeoff, apply pitch and waste, price the job, build the customer quote, send it and track the result.',
+      'Turn roof plans into a priced, professional quote: takeoff, material quantities, labour, margin and a customer-ready document.',
     date: '2026-08-14',
-    lastModified: '2026-08-14',
+    lastModified: '2026-08-29',
     video: {
       videoId: 'AHXhlOuRAvw',
       title: 'Quote a Roof From Start to Finish with QuoteCore+',

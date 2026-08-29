@@ -2,7 +2,7 @@
 
 Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 
-## Outbound internal links (21)
+## Outbound internal links (22)
 
 ### Money pages (1)
 
@@ -10,10 +10,11 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 |---|---|
 | /roofing-quoting-software | QuoteCore+ roofing quoting software |
 
-### Blog articles (6)
+### Blog articles (7)
 
 | Destination | Anchor |
 |---|---|
+| /blog/how-to-measure-a-roof-from-a-pdf-plan | how to measure a roof from a PDF plan |
 | /blog/how-to-quote-a-roof-from-plans | how to quote a roof from plans |
 | /blog/how-to-calculate-roof-pitch | How to Calculate Roof Pitch (And Why It Matters for Your Quote) |
 | /blog/how-much-roofing-material | How Much Roofing Material Do You Need? (Material Calculator Guide) |
@@ -45,7 +46,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 | /features/ai-scan-assist | AI Scan Assist |
 | /features/smart-components | Smart Components |
 
-## Inbound in-article links (8)
+## Inbound in-article links (9)
 
 | From | Anchor used |
 |---|---|
@@ -55,6 +56,7 @@ Source: `app/(marketing)/blog/[slug]/content/how-to-measure-a-roof.tsx`
 | /blog/how-to-do-a-roof-takeoff | how to measure a roof for materials |
 | /blog/how-to-estimate-roofing-materials | how to measure a roof for materials |
 | /blog/how-to-measure-a-roof-online | How to Measure a Roof for Materials |
+| /blog/how-to-quote-a-roof-from-plans | how to measure a roof |
 | /blog/roof-replacement-cost-guide-uk | how to measure a roof for materials |
 | /blog/roofing-material-list | how to measure a roof for materials |
 

@@ -2,13 +2,14 @@
 
 Source: `app/(marketing)/blog/[slug]/content/best-roofing-quoting-software-uk-2026.tsx`
 
-## Outbound internal links (13)
+## Outbound internal links (14)
 
-### Money pages (1)
+### Money pages (2)
 
 | Destination | Anchor |
 |---|---|
 | /roofing-quoting-software | quoting software for contractors |
+| /construction-quoting-software | construction quoting software for contractors |
 
 ### Blog articles (8)
 
