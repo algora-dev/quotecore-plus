@@ -4625,6 +4625,41 @@ export function DemoWorkstation({
     }
   };
 
+  /** Apply an existing (already-drawn) roof area to an area-type component:
+   *  adds the area's plan area as a normal entry stamped with that area, so
+   *  the report pitches/prices it exactly like a hand-drawn area entry.
+   *  2026-08-30: lets users measure a wall/roof once and reuse it for every
+   *  area-based component (e.g. wrap / battens / cladding layers). */
+  const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string) => {
+    const ra = roofAreas.find(a => (a.quoteRoofAreaId ?? a.id) === roofAreaId);
+    if (!ra || !(ra.area > 0)) return;
+    pushHistorySnapshot();
+    const newMeasurement: ComponentMeasurement = {
+      id: `apply-${Date.now()}`,
+      type: 'area' as ComponentMeasurement['type'],
+      value: ra.area,
+      points: [],
+      visible: true,
+      canvasObjects: [], // derived entry - no canvas geometry of its own
+      quoteRoofAreaId: roofAreaId, // stamp so the report uses THIS area's pitch
+      fromPageId: currentPageIdRef.current,
+    };
+    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    if (compData) {
+      setComponentMeasurements(componentMeasurements.map(c =>
+        c.componentId === componentId
+          ? { ...c, measurements: [...c.measurements, newMeasurement], expanded: true }
+          : c
+      ));
+    } else {
+      setComponentMeasurements([
+        ...componentMeasurements,
+        { componentId, measurements: [newMeasurement], expanded: true },
+      ]);
+    }
+    setIsDirty(true);
+  };
+
   // DEMO: build the finish payload handed to the demo shell (replaces the
   // router.push to the quote builder in the real app).
   //
@@ -5181,6 +5216,33 @@ export function DemoWorkstation({
                                       </button>
                                     </div>
                                   </div>
+
+                                  {/* Use an existing roof area as this component's entry
+                                      (area-type components only; requires at least
+                                      one drawn roof area). Adds the area's plan area
+                                      as a normal entry stamped with that area - the
+                                      report pitches/prices it like a hand-drawn one. */}
+                                  {mt === 'area' && roofAreas.length > 0 && (
+                                    <div className="mt-2">
+                                      <select
+                                        onChange={(e) => {
+                                          if (e.target.value) {
+                                            handleApplyRoofAreaToComponent(comp.id, e.target.value);
+                                            e.target.value = '';
+                                          }
+                                        }}
+                                        defaultValue=""
+                                        className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
+                                      >
+                                        <option value="">Use an existing area…</option>
+                                        {roofAreas.map(ra => (
+                                          <option key={ra.quoteRoofAreaId ?? ra.id} value={ra.quoteRoofAreaId ?? ra.id}>
+                                            {ra.name} · {ra.area.toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'} (pitch {Math.round(ra.pitch ?? 0)}°)
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  )}
 
                                   {/* AI Placeholder: Attach real component */}
                                   {comp.is_system && compData && compData.measurements.length > 0 && (() => {
