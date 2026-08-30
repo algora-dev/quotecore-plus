@@ -228,6 +228,56 @@ export function TakeoffOutputView({
 
   const hasMeasurements = areas.length > 0 || components.length > 0;
 
+  // Shared renderer for one component group (used both under a roof-area
+  // heading and in the no-areas layout). 2026-08-30: components with NO roof
+  // areas must still show in the report - previously the whole components
+  // section looped over areas only, so a no-area takeoff rendered nothing.
+  const renderGroup = (c: ComponentRow) => {
+    const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
+    const anyAdj = c.entries.some(e => e.adjusted != null);
+    const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
+    const anyWaste = c.entries.some(e => e.afterWaste != null);
+    const wasteTotal = anyWaste ? c.entries.reduce((s, e) => s + (e.afterWaste ?? e.adjusted ?? e.value), 0) : null;
+    const groupCost = c.entries.some(e => e.cost != null)
+      ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
+      : null;
+    return (
+      <div key={c.key}>
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-black font-semibold">{c.name}</span>
+          <span className="text-black font-semibold whitespace-nowrap text-sm">
+            {c.measurementType === 'quantity'
+              ? `${c.entries.length} ea`
+              : `${fmt(planTotal)} ${c.measurementType === 'area' ? areaUnitLabel : L} plan`}
+            {adjTotal != null && c.measurementType !== 'quantity' && (
+              <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} pitched</span>
+            )}
+            {wasteTotal != null && c.measurementType !== 'quantity' && (
+              <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} incl waste</span>
+            )}
+            {groupCost != null && <span className="ml-2">&middot; ${fmt(groupCost)}</span>}
+          </span>
+        </div>
+        <div className="space-y-0.5">
+          {c.entries.map((m, i) => (
+            <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
+              <span className="text-black/70">Entry {i + 1}</span>
+              <span className="text-black/80 whitespace-nowrap">
+                {c.measurementType === 'quantity'
+                  ? '1 ea'
+                  : m.afterWaste != null
+                    ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${L} pitched \u2192 ${fmt(m.afterWaste)} ${L} incl waste`
+                    : m.adjusted != null
+                      ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted)} ${L} pitched`
+                      : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   /** Persist the takeoff as a server-side draft (free_document_drafts,
    *  draft_type='takeoff') and send the user to signup/app with the draft
    *  id - the app restores it into the quote-builder stage after signup. */
@@ -334,8 +384,16 @@ export function TakeoffOutputView({
               the first area. */}
           {components.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Roof Areas &amp; Components</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">{areas.length > 0 ? 'Roof Areas &amp; Components' : 'Components'}</h2>
               <div className="mt-3 space-y-6">
+                {/* 2026-08-30: no roof areas - components stand alone (flat list,
+                    same as the app's no-area flow). Previously this section only
+                    looped over areas, so a no-area takeoff rendered nothing. */}
+                {areas.length === 0 && (
+                  <div className="space-y-3">
+                    {components.map(renderGroup)}
+                  </div>
+                )}
                 {areas.map(a => {
                   // Entries for this area: stamped with its id, or un-stamped (first area only).
                   // Costs/waste are stamped per entry, so filtering to this area's
@@ -353,53 +411,7 @@ export function TakeoffOutputView({
                         </span>
                       </div>
                       <div className="pl-6 pt-2 space-y-3">
-                        {groupsHere.map(c => {
-                          const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
-                          const anyAdj = c.entries.some(e => e.adjusted != null);
-                          const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
-                          const anyWaste = c.entries.some(e => e.afterWaste != null);
-                          const wasteTotal = anyWaste ? c.entries.reduce((s, e) => s + (e.afterWaste ?? e.adjusted ?? e.value), 0) : null;
-                          // THIS area's cost: sum the per-entry costs of the entries
-                          // shown here (pack-priced components keep group-level cost).
-                          const areaCost = c.entries.some(e => e.cost != null)
-                            ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
-                            : null;
-                          return (
-                            <div key={c.key}>
-                              <div className="flex items-center justify-between pb-1">
-                                <span className="text-black font-semibold">{c.name}</span>
-                                <span className="text-black font-semibold whitespace-nowrap text-sm">
-                                  {c.measurementType === 'quantity'
-                                    ? `${c.entries.length} ea`
-                                    : `${fmt(planTotal)} ${c.measurementType === 'area' ? areaUnitLabel : L} plan`}
-                                  {adjTotal != null && c.measurementType !== 'quantity' && (
-                                    <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} pitched</span>
-                                  )}
-                                  {wasteTotal != null && c.measurementType !== 'quantity' && (
-                                    <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} incl waste</span>
-                                  )}
-                                  {areaCost != null && <span className="ml-2">&middot; ${fmt(areaCost)}</span>}
-                                </span>
-                              </div>
-                              <div className="space-y-0.5">
-                                {c.entries.map((m, i) => (
-                                  <div key={i} className="flex items-center justify-between py-1 pl-4 text-sm border-b border-black/5">
-                                    <span className="text-black/70">Entry {i + 1}</span>
-                                    <span className="text-black/80 whitespace-nowrap">
-                                      {c.measurementType === 'quantity'
-                                        ? '1 ea'
-                                        : m.afterWaste != null
-                                          ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${L} pitched \u2192 ${fmt(m.afterWaste)} ${L} incl waste`
-                                          : m.adjusted != null
-                                            ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted)} ${L} pitched`
-                                            : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {groupsHere.map(renderGroup)}
                       </div>
                     </div>
                   );
