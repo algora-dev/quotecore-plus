@@ -4648,7 +4648,7 @@ export function DemoWorkstation({
       points: [],
       visible: true,
       canvasObjects: [], // derived entry - no canvas geometry of its own
-      quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id, // stamp so the report uses THIS area's pitch
+      quoteRoofAreaId: ra.id, // unique per-area stamp - report keys areas by their own id
       fromPageId: currentPageIdRef.current,
     };
     const compData = componentMeasurements.find(c => c.componentId === componentId);
@@ -4696,13 +4696,24 @@ export function DemoWorkstation({
     });
 
     const mergedRoofAreas: { id: string; name: string; area: number; pitch: number }[] = [];
+    // 2026-08-30: every area gets its OWN unique report key (ra.id). Sibling
+    // areas under one parent share a quoteRoofAreaId stamp - keying by it made
+    // every entry render under BOTH siblings. Shared stamps are remapped to
+    // the first sibling's unique id so hand-drawn measurements still resolve.
+    const seenAreaIds = new Set<string>();
+    const stampToFirstId = new Map<string, string>();
+    const pushArea = (ra: { id: string; name: string; area: number; pitch: number; quoteRoofAreaId?: string | null }) => {
+      if (seenAreaIds.has(ra.id)) return;
+      seenAreaIds.add(ra.id);
+      const stamp = ra.quoteRoofAreaId ?? ra.id;
+      if (!stampToFirstId.has(stamp)) stampToFirstId.set(stamp, ra.id);
+      mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch });
+    };
     areaCanvasStatesRef.current.forEach((cached, areaId) => {
       if (areaId === activeAreaId) return;
-      // id must match measurement stamps (quoteRoofAreaId = DB area id),
-      // otherwise the report cannot resolve which area a measurement belongs to.
-      cached.roofAreas.forEach((ra: any) => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+      cached.roofAreas.forEach((ra: any) => pushArea(ra));
     });
-    roofAreas.forEach(ra => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+    roofAreas.forEach(ra => pushArea(ra));
 
     return {
     roofAreas: mergedRoofAreas,
@@ -4716,7 +4727,7 @@ export function DemoWorkstation({
         count: g.measurements.length,
         total: g.measurements.reduce((s, m) => s + m.value, 0),
         measurementType: comp?.measurement_type,
-        measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ?? null })),
+        measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ? (stampToFirstId.get(m.quoteRoofAreaId) ?? m.quoteRoofAreaId) : null })),
       };
     }),
     calibrationUnit: calibrations[0]?.unit ?? 'meters',

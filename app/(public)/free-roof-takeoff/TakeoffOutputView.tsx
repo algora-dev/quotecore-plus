@@ -233,6 +233,7 @@ export function TakeoffOutputView({
   // areas must still show in the report - previously the whole components
   // section looped over areas only, so a no-area takeoff rendered nothing.
   const renderGroup = (c: ComponentRow) => {
+    const u = c.measurementType === 'area' ? areaUnitLabel : L; // 2026-08-30: m2 for area components, not m
     const planTotal = c.entries.reduce((s, e) => s + e.value, 0);
     const anyAdj = c.entries.some(e => e.adjusted != null);
     const adjTotal = anyAdj ? c.entries.reduce((s, e) => s + (e.adjusted ?? e.value), 0) : null;
@@ -248,12 +249,12 @@ export function TakeoffOutputView({
           <span className="text-black font-semibold whitespace-nowrap text-sm">
             {c.measurementType === 'quantity'
               ? `${c.entries.length} ea`
-              : `${fmt(planTotal)} ${c.measurementType === 'area' ? areaUnitLabel : L} plan`}
+              : `${fmt(planTotal)} ${u} plan`}
             {adjTotal != null && c.measurementType !== 'quantity' && (
-              <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} pitched</span>
+              <span className="ml-2 text-black/70 font-medium">&rarr; {fmt(adjTotal)} {u} pitched</span>
             )}
             {wasteTotal != null && c.measurementType !== 'quantity' && (
-              <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {c.measurementType === 'area' ? areaUnitLabel : L} incl waste</span>
+              <span className="ml-2 text-black/70 font-medium">&middot; {fmt(wasteTotal)} {u} incl waste</span>
             )}
             {groupCost != null && <span className="ml-2">&middot; ${fmt(groupCost)}</span>}
           </span>
@@ -266,10 +267,10 @@ export function TakeoffOutputView({
                 {c.measurementType === 'quantity'
                   ? '1 ea'
                   : m.afterWaste != null
-                    ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${L} pitched \u2192 ${fmt(m.afterWaste)} ${L} incl waste`
+                    ? `${fmt(m.value)} ${u} plan \u2192 ${fmt(m.adjusted ?? m.value)} ${u} pitched \u2192 ${fmt(m.afterWaste)} ${u} incl waste`
                     : m.adjusted != null
-                      ? `${fmt(m.value)} ${L} plan \u2192 ${fmt(m.adjusted)} ${L} pitched`
-                      : `${fmt(m.value)} ${c.measurementType === 'area' ? areaUnitLabel : L}`}
+                      ? `${fmt(m.value)} ${u} plan \u2192 ${fmt(m.adjusted)} ${u} pitched`
+                      : `${fmt(m.value)} ${u}`}
               </span>
             </div>
           ))}
@@ -369,31 +370,8 @@ export function TakeoffOutputView({
             </p>
           </div>
 
-          {/* Roof areas - every entry */}
-          {areas.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Roof Areas</h2>
-              <div className="mt-3 space-y-2">
-                {areas.map(a => (
-                  <div key={a.key} className="flex items-center justify-between py-2 border-b border-black/10">
-                    <span className="text-black">{a.name} - pitch {fmtPitch(a.pitch)}</span>
-                    <span className="text-black font-medium whitespace-nowrap">
-                      {fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched
-                    </span>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between py-2 font-semibold">
-                  <span className="text-black">Total roof area</span>
-                  <span className="text-black whitespace-nowrap">
-                    {fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched
-                  </span>
-                </div>
-                {system === 'squares' && (
-                  <p className="text-xs text-black/60">1 square = 100 ft&sup2;</p>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Roof areas summary removed (2026-08-30): each area is listed once
+              with its components below - no separate duplicate area list. */}
 
           {/* Components grouped under their roof area (2026-08-21): each
               area is a clear heading, its components sit indented underneath,
@@ -401,7 +379,7 @@ export function TakeoffOutputView({
               the first area. */}
           {components.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">{areas.length > 0 ? 'Roof Areas &amp; Components' : 'Components'}</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">{areas.length > 0 ? 'Roof Areas & Components' : 'Components'}</h2>
               <div className="mt-3 space-y-6">
                 {/* 2026-08-30: no roof areas - components stand alone (flat list,
                     same as the app's no-area flow). Previously this section only
