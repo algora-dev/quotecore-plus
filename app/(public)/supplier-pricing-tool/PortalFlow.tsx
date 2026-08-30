@@ -297,6 +297,7 @@ export function PortalFlow() {
             showTrade={showTrade}
             tradeLabel={showTrade && config.discountPct > 0 ? `trade pricing (-${config.discountPct}%)` : null}
             onBack={() => setStep(customStepNum)}
+            onAddCustom={() => setStep(customStepNum)}
             onRestart={reset}
           />
         )}

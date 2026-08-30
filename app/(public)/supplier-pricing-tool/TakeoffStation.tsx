@@ -41,7 +41,11 @@ function componentToGroup(name: string, semantic: string | null): GroupKey | nul
 /** Map workstation output -> Measurement Set. Workstation values are final
  *  (pitch already applied where relevant), so entryPath = 'measure' with no
  *  further conversion downstream. Roof areas keep their individual names and
- *  pitches so different products can be applied per area downstream. */
+ *  pitches so different products can be applied per area downstream.
+ *  2026-08-30 fix: components that DON'T match a standard roofing group (e.g.
+ *  custom components the user created in the takeoff stage) are no longer
+ *  dropped - they map into customComponents so they flow through to the
+ *  custom step and the output. */
 function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
   const set = emptyMeasurementSet();
   set.entryPath = 'measure';
@@ -54,7 +58,23 @@ function mapTakeoffPayload(p: DemoFinishPayload): MeasurementSet {
   }));
   for (const cg of p.componentGroups) {
     const key = componentToGroup(cg.name, cg.semantic);
-    if (!key) continue;
+    if (!key) {
+      // Custom/unmatched component -> custom component (self-priced by the
+      // user on the custom step; quantities carried from the measurements).
+      const basis = cg.measurementType === 'area' ? 'area' : cg.measurementType === 'quantity' || cg.measurementType === 'point' ? 'count' : 'lineal';
+      const qty = cg.measurements.reduce((s, m) => s + m.value, 0) || cg.total || cg.count;
+      if (qty > 0 && cg.name) {
+        set.customComponents.push({
+          id: makeId('cc'),
+          name: cg.name,
+          basis,
+          quantity: Math.round(qty * 1000) / 1000,
+          unitPrice: 0,
+          labourRate: 0,
+        });
+      }
+      continue;
+    }
     for (const m of cg.measurements) {
       set.groups[key].entries.push({ id: makeId('e'), label: '', value: m.value, quantity: 1 });
     }

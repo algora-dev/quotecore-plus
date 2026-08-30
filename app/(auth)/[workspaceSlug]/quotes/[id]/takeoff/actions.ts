@@ -306,11 +306,17 @@ export async function saveTakeoffMeasurements(
             effectiveWasteType = 'fixed';
           }
 
+          // 2026-08-30: entries applied from an existing area via the
+          // "Use an existing area" dropdown already carry the PITCHED value
+          // (matching what the user sees, e.g. 68.16 m²) - never pitch twice.
+          const pitchPreApplied =
+            (m as { entryInputs?: { pitch_applied?: boolean } | null }).entryInputs?.pitch_applied === true;
+
           const result = applyPitchAndWaste(
             metricValue,
             true,
-            pitchType as any,
-            groupPitch,
+            (pitchPreApplied ? 'none' : pitchType) as any,
+            pitchPreApplied ? 0 : groupPitch,
             effectiveWasteType as any,
             wastePercent,
             effectiveWasteFixed
@@ -321,9 +327,13 @@ export async function saveTakeoffMeasurements(
             sort_order: index,
             // Per-entry pitch (2026-07-08): actual pitch used for this entry so
             // the calc audit + UI can report it faithfully per page/area.
+            // pitch_applied entries carry the pitched value - record the area's
+            // pitch so the display still shows the waste context (e.g. 30°).
             pitch_degrees: groupPitch,
             // v8: input reference snapshot (display only).
-            entry_inputs: entryInputs,
+            entry_inputs: pitchPreApplied
+              ? { ...(entryInputs ?? {}), pitch_applied: true }
+              : entryInputs,
           };
         });
 

@@ -23,6 +23,7 @@ import { createClient as createSupabaseBrowserClient } from '@/app/lib/supabase/
 import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
+import { rafterPitchFactor } from '@/app/lib/pricing/engine';
 // F-15: Extracted modal components
 import { AreaNameModal } from './modals/AreaNameModal';
 import { PointMeasurementModal } from './modals/PointMeasurementModal';
@@ -1981,10 +1982,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const ra = roofAreas.find(a => a.id === roofAreaId);
     if (!ra || !(ra.area > 0)) return;
     pushHistorySnapshot();
+    // 2026-08-30: store the PITCHED area value (what the user sees everywhere -
+    // e.g. "68.16 m²" not the plan "59.03 m²") and mark the entry so the save
+    // path does NOT apply pitch again. Waste still applies downstream.
+    const pitched = ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1);
     const newMeasurement: ComponentMeasurement = {
       id: `apply-${Date.now()}`,
       type: 'area' as ComponentMeasurement['type'],
-      value: ra.area,
+      value: pitched,
       points: [],
       visible: true,
       canvasObjects: [], // derived entry - no canvas geometry of its own
@@ -1992,6 +1997,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // Postgres, so a client row id ("area-...") fails with invalid uuid.
       quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id,
       fromPageId: currentPageIdRef.current,
+      // Marker consumed by saveTakeoffMeasurements: pitch already applied.
+      entryInputs: { pitch_applied: true } as unknown as ComponentMeasurement['entryInputs'],
     };
     const compData = componentMeasurements.find(c => c.componentId === componentId);
     if (compData) {
@@ -5389,7 +5396,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                         <option value="">Use an existing area…</option>
                                         {roofAreas.map(ra => (
                                           <option key={ra.id} value={ra.id}>
-                                            {ra.name} · {ra.area.toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'} (pitch {Math.round(ra.pitch ?? 0)}°)
+                                            {ra.name} · {(ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1)).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}{ra.pitch ? ` (pitch ${Math.round(ra.pitch)}°)` : ''}
                                           </option>
                                         ))}
                                       </select>

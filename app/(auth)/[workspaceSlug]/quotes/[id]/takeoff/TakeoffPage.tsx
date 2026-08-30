@@ -74,22 +74,24 @@ export function TakeoffPage({
   aiAssistPoints,
 }: Props) {
   return (
-    <TakeoffWorkstation
-      workspaceSlug={workspaceSlug}
-      quote={quote}
-      planUrl={planUrl}
-      components={components}
-      collections={collections}
-      hydrationData={hydrationData}
-      takeoffMode={takeoffMode}
-      initialPageId={initialPageId}
-      initialPageName={initialPageName}
-      existingRoofAreas={existingRoofAreas}
-      initialRoofAreaId={initialRoofAreaId}
-      isOverStorage={isOverStorage}
-      allRoofAreas={allRoofAreas}
-      aiTakeoffAvailable={aiTakeoffAvailable}
-      aiAssistPoints={aiAssistPoints}
-    />
+    <div className="w-[125%] -ml-[12.5%]">
+      <TakeoffWorkstation
+        workspaceSlug={workspaceSlug}
+        quote={quote}
+        planUrl={planUrl}
+        components={components}
+        collections={collections}
+        hydrationData={hydrationData}
+        takeoffMode={takeoffMode}
+        initialPageId={initialPageId}
+        initialPageName={initialPageName}
+        existingRoofAreas={existingRoofAreas}
+        initialRoofAreaId={initialRoofAreaId}
+        isOverStorage={isOverStorage}
+        allRoofAreas={allRoofAreas}
+        aiTakeoffAvailable={aiTakeoffAvailable}
+        aiAssistPoints={aiAssistPoints}
+      />
+    </div>
   );
 }

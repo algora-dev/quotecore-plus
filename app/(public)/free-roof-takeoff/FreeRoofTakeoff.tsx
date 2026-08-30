@@ -192,26 +192,28 @@ export function FreeRoofTakeoff() {
 
   if (stage.phase === 'takeoff') {
     return (
-      <Workstation
-        key={stage.run}
-        workspaceSlug="takeoff-tool"
-        quote={TOOL_QUOTE}
-        planUrl={stage.planDataUrl}
-        components={stage.components}
-        collections={TOOL_COLLECTIONS}
-        hydrationData={null}
-        aiTakeoffAvailable={false}
-        aiAssistPoints={DEMO_AI_POINTS}
-        demoMode="upload"
-        onExitToStart={restart}
-        preferredLengthUnit={unitOption.lengthUnit}
-        unitSystem={stage.unitSystem}
-        componentSpecs={stage.specs}
-        onFinish={payload => {
-          trackFreeToolEvent('finish');
-          setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs });
-        }}
-      />
+      <div className="w-[125%] -ml-[12.5%]">
+        <Workstation
+          key={stage.run}
+          workspaceSlug="takeoff-tool"
+          quote={TOOL_QUOTE}
+          planUrl={stage.planDataUrl}
+          components={stage.components}
+          collections={TOOL_COLLECTIONS}
+          hydrationData={null}
+          aiTakeoffAvailable={false}
+          aiAssistPoints={DEMO_AI_POINTS}
+          demoMode="upload"
+          onExitToStart={restart}
+          preferredLengthUnit={unitOption.lengthUnit}
+          unitSystem={stage.unitSystem}
+          componentSpecs={stage.specs}
+          onFinish={payload => {
+            trackFreeToolEvent('finish');
+            setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs });
+          }}
+        />
+      </div>
     );
   }
 

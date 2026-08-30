@@ -4727,7 +4727,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="-my-8 h-[calc(100vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
+    <div className="-my-8 h-[calc(120vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
       <Link
         href={demoMode === 'upload' ? '/free-roof-takeoff' : '/takeoff-demo'}
@@ -4745,7 +4745,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             onClick={openSaveAndUploadAnotherPlan}
             disabled
             data-demo-disabled
-            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
+            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(1,43,57,0.45)]"
             title="Uploads are not available in the demo - create a free account to upload your own plans"
           >
             {isSaving || isUploadingPage ? 'Saving…' : 'Upload another plan or image'}
@@ -4754,7 +4754,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             onClick={handleSaveTakeoff}
             disabled={calibrations.length === 0 || isSaving}
             data-copilot="takeoff-save"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.5)]"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(37,99,235,0.5)]"
             title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
           >
             {isSaving ? 'Saving...' : 'Finish and Save'}

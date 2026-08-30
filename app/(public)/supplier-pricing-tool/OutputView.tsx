@@ -9,7 +9,7 @@ import { fmt, priceOutput } from './pricing';
 import { useSupplierConfig } from './supplierConfig';
 import { OutputActions } from './OutputActions';
 
-export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tradeLabel, onBack, onRestart }: {
+export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tradeLabel, onBack, onRestart, onAddCustom }: {
   measureSet: MeasurementSet;
   catalog: SupplierProduct[];
   /** baseline-price catalog for the standard-vs-trade comparison */
@@ -19,6 +19,9 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
   tradeLabel?: string | null;
   onBack: () => void;
   onRestart: () => void;
+  /** 2026-08-30: jump back to the custom-components step to add one more
+   *  without restarting the flow. Falls back to onBack when not provided. */
+  onAddCustom?: () => void;
 }) {
   const output = priceOutput(measureSet, catalog);
   // Same quantities priced at baseline for the trade-saving comparison.
@@ -224,13 +227,24 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
 
       <OutputActions measureSet={measureSet} catalog={catalog} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
           Back
         </button>
-        <button onClick={onRestart} className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)]">
-          Start a new job
-        </button>
+        <div className="flex items-center gap-2">
+          {/* 2026-08-30: quick path back to the custom step - add another
+              custom component without restarting the whole flow. */}
+          <button
+            onClick={onAddCustom ?? onBack}
+            className="rounded-full border px-5 py-2.5 text-sm font-medium transition"
+            style={{ borderColor: `${brand}55`, color: brand }}
+          >
+            + Add a custom component
+          </button>
+          <button onClick={onRestart} className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)]">
+            Start a new job
+          </button>
+        </div>
       </div>
     </div>
   );
