@@ -5047,10 +5047,11 @@ export function DemoWorkstation({
                 <button
                   onClick={handleCreateNewArea}
                   disabled={false}
-                  className="text-xs font-medium text-[#FF6B35] hover:text-orange-600"
+                  className="inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_12px_rgba(255,107,53,0.45)] transition hover:bg-orange-600 animate-pulse"
                   title="Create a new area"
                 >
-                  + New Area
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                  New Area
                 </button>
               </div>
               <div className="space-y-2">

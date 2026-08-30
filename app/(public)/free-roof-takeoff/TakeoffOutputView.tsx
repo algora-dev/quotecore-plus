@@ -461,6 +461,13 @@ export function TakeoffOutputView({
             <button
               onClick={handleSendToApp}
               disabled={saveState === 'saving' || saveState === 'saved'}
+              className="inline-flex items-center rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
+            >
+              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - redirecting...' : 'Convert to quote - free in QuoteCore+'}
+            </button>
+            <button
+              onClick={handleSendToApp}
+              disabled={saveState === 'saving' || saveState === 'saved'}
               className="inline-flex items-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
             >
               {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - redirecting...' : 'Save my takeoff - it comes with you'}
