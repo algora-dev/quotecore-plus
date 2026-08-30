@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { buildConvertUrl } from '../shared/convertLines';
 import { applyPitchAndWaste } from '@/app/lib/pricing/engine';
 import { getStoredPitchMode } from '@/app/components/PitchInput';
 import { fromDegrees } from '@/app/lib/pitch-inputs';
@@ -220,6 +221,21 @@ export function TakeoffOutputView({
 
   const totalCost = components.reduce((s, c) => s + (c.cost ?? 0), 0);
   const hasAnyCost = components.some(c => c.cost != null);
+
+  // 2026-08-30: "Convert to quote" routes to the FREE QUOTE GENERATOR with the
+  // takeoff's component lines pre-filled (same cross-tool conversion pattern as
+  // the other free document generators), NOT the app signup funnel.
+  const convertToQuoteUrl = buildConvertUrl({
+    targetPath: '/free-quote-generator',
+    amount: totalCost,
+    lines: components.map(c => {
+      const qty = c.measurementType === 'quantity' ? c.count : (c.adjustedTotal ?? c.total);
+      const unit = c.measurementType === 'quantity' ? 'pcs' : c.measurementType === 'area' ? areaUnitLabel : L;
+      const rate = c.cost != null && qty > 0 ? c.cost / qty : 0;
+      return { description: c.name, qty, unit, rate };
+    }).filter(l => l.qty > 0),
+    ref: 'free-roof-takeoff',
+  });
 
   const totalPlanArea = areas.reduce((s, a) => s + a.planArea, 0);
   const totalPitchedArea = areas.reduce((s, a) => s + a.pitchedArea, 0);
@@ -458,13 +474,12 @@ export function TakeoffOutputView({
             measurements above carry straight into the QuoteCore+ quote builder.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={handleSendToApp}
-              disabled={saveState === 'saving' || saveState === 'saved'}
-              className="inline-flex items-center rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
+            <Link
+              href={convertToQuoteUrl}
+              className="inline-flex items-center rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
             >
-              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - redirecting...' : 'Convert to quote - free in QuoteCore+'}
-            </button>
+              Convert to quote - free quote generator
+            </Link>
             <button
               onClick={handleSendToApp}
               disabled={saveState === 'saving' || saveState === 'saved'}
