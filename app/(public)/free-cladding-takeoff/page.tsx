@@ -8,12 +8,12 @@ import { buildFaqSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Wall & Cladding Takeoff Tool — Measure Wall Plans Online | QuoteCore',
+  title: 'Free Wall & Cladding Takeoff Tool — Measure Wall Plans Online',
   description:
     'Upload your plans and measure wall, cladding, siding and façade areas free. Calibrate the scale, trace areas, deduct openings, export quantities. No printing, no scale ruler.',
   alternates: { canonical: '/free-cladding-takeoff' },
   openGraph: {
-    title: 'Free Wall & Cladding Takeoff Tool — Measure Wall Plans Online | QuoteCore',
+    title: 'Free Wall & Cladding Takeoff Tool — Measure Wall Plans Online',
     description:
       'Calibrate the scale on your plan or elevation and measure wall areas, cladding, trims, battens and openings directly on screen. Free, no signup required.',
     url: '/free-cladding-takeoff',
@@ -250,6 +250,21 @@ export default function FreeCladdingTakeoffPage() {
         </p>
       </section>
 
+      {/* Measurement methodology */}
+      <section className="mx-auto max-w-3xl px-4 pb-14">
+        <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Measurement methodology</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          All measurements in this tool are based on the plan scale you calibrate: you set the scale from a known
+          dimension on your drawing, and every traced area, length and count is then calculated from that calibrated
+          scale. Areas are measured by tracing the boundary of each wall, elevation or material zone on the drawing;
+          openings such as windows and doors can be traced and deducted separately, and every measurement can be
+          named and labelled by material so totals stay organised. Accuracy depends on the quality of the plan image
+          and the calibration — always check the scale against a second known dimension before measuring. Final
+          quantities, waste allowances and fixing requirements should be verified against your specifications and
+          the manufacturer&rsquo;s installation requirements before ordering.
+        </p>
+      </section>
+
       {/* What is a cladding takeoff */}
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">What is a wall &amp; cladding takeoff?</h2>
@@ -267,8 +282,8 @@ export default function FreeCladdingTakeoffPage() {
         </p>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Measuring a roof? Try the{' '}
-          <Link href="/free-roof-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Tool</Link> — same
-          workflow, roof components. Or read{' '}
+          <Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Builder</Link> — the
+          same workflow for roof measurements. Or read{' '}
           <Link href="/blog/how-to-measure-a-roof-from-a-pdf-plan" className="text-[#BD4A1A] underline underline-offset-2">how to measure a roof from a plan</Link>.
         </p>
       </section>
@@ -277,7 +292,7 @@ export default function FreeCladdingTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Related free tools</h2>
         <ul className="mt-4 grid gap-3 text-sm text-slate-600">
-          <li><Link href="/free-roof-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Tool</Link> — measure roof plans the same way</li>
+          <li><Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Builder</Link> — build a roof takeoff from your measurements</li>
           <li><Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">Measurement-to-Quote Tool</Link> — turn these measurements into a priced quote</li>
           <li><Link href="/free-wall-area-calculator" className="text-[#BD4A1A] underline underline-offset-2">Wall Area Calculator</Link> — already know your dimensions</li>
           <li><Link href="/free-paint-calculator" className="text-[#BD4A1A] underline underline-offset-2">Paint Calculator</Link> — paint quantities from wall areas</li>
