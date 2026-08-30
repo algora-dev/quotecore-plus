@@ -81,6 +81,26 @@ export const ROOFING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
     'Hip and valley entries are calculated as true lengths: the system derives the hip/valley pitch from the roof pitch you entered for each area.',
 };
 
+export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
+  slug: 'free-cladding-takeoff',
+  tradeName: 'cladding',
+  requiresPitch: false,
+  unitOptions: [METRIC, IMPERIAL],
+  placeholderComponents: [
+    { id: 'clad-wrap-01', name: 'Building Wrap', measurement_type: 'area' },
+    { id: 'clad-batten-02', name: 'Cavity Battens', measurement_type: 'lineal' },
+    { id: 'clad-cedar-03', name: 'Horizontal Cladding - Cedar', measurement_type: 'area' },
+    { id: 'clad-corrugate-04', name: 'Horizontal Cladding - Corrugate', measurement_type: 'area' },
+    { id: 'clad-window-trim-05', name: 'Window Trim', measurement_type: 'lineal' },
+    { id: 'clad-door-trim-06', name: 'Door Trim', measurement_type: 'lineal' },
+    { id: 'clad-corner-07', name: 'Corner Trims', measurement_type: 'lineal' },
+    { id: 'clad-soffit-08', name: 'Soffit', measurement_type: 'area' },
+    { id: 'clad-openings-09', name: 'Openings (windows/doors)', measurement_type: 'quantity' },
+  ],
+  maxCustomComponents: 7,
+  reportNote: 'Wall areas are measured as drawn - no pitch adjustment applies in this tool.',
+};
+
 /** Resolve the unit option object for a chosen system (falls back to metric). */
 export function resolveUnitOption(system: TakeoffUnitSystem, config: TakeoffTradeConfig): TakeoffUnitOption {
   return config.unitOptions.find(o => o.value === system) ?? config.unitOptions[0];
