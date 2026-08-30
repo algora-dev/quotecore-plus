@@ -4065,6 +4065,38 @@ export function TakeoffWorkstation({
     setZoom(scale);
   };
 
+  // ── AI Takeoff: in-browser downscale before upload ────────────
+  // Vercel caps request bodies at 4.5MB (base64 inflates ~33%), so large
+  // phone/drone photos 413 before the server resize ever runs. Downscaling
+  // to 2000px JPEG here mirrors the server-side resize, so scan quality
+  // is unchanged. Fallback: return the original on any failure.
+  const compressImageForAiScan = async (rawDataUrl: string): Promise<{ dataUrl: string; mime: string }> => {
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new window.Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error('decode failed'));
+        el.src = rawDataUrl;
+      });
+      const MAX_PX = 2000;
+      const longest = Math.max(img.naturalWidth, img.naturalHeight);
+      // Already small enough (~3.4MB raw payload limit) - send as-is
+      if (longest <= MAX_PX && rawDataUrl.length < 2_500_000) {
+        return { dataUrl: rawDataUrl, mime: 'image/png' };
+      }
+      const scale = Math.min(1, MAX_PX / longest);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return { dataUrl: rawDataUrl, mime: 'image/png' };
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      return { dataUrl: canvas.toDataURL('image/jpeg', 0.85), mime: 'image/jpeg' };
+    } catch {
+      return { dataUrl: rawDataUrl, mime: 'image/png' };
+    }
+  };
+
   // ── AI Takeoff: scan handler (direct 3-scan pipeline) ──────────
   const handleAiScan = async () => {
     const canvas = fabricRef.current;
@@ -4105,14 +4137,18 @@ export function TakeoffWorkstation({
         reader.readAsDataURL(imgBlob);
       });
 
+      const compressed = await compressImageForAiScan(dataUrl);
+      const scanImage = compressed.dataUrl;
+      const scanImageMime = compressed.mime;
+
       // ── Scan 1: Outline ──
       const response = await fetch(aiScanEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           stage: 'scan1',
-          image: dataUrl,
-          imageMime: imgBlob.type || 'image/png',
+          image: scanImage,
+          imageMime: scanImageMime,
           quoteId: quote.id,
           pageId,
           canvasDimensions: canvasDims,
@@ -4124,7 +4160,10 @@ export function TakeoffWorkstation({
       const result = await response.json().catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
 
       if (!response.ok || !result.success) {
-        const errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
+        let errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
+        if (response.status === 413) {
+          errMsg = 'Your plan image is too large for AI Assist even after automatic compression. Please try a smaller or compressed image, or use Manual Measure, which accepts larger images.';
+        }
         console.error('[AI Takeoff V3] scan1 error:', errMsg, result);
         if (response.status === 402 && result.pointsExhausted) {
           setAiPoints(prev => prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null);
@@ -4152,7 +4191,7 @@ export function TakeoffWorkstation({
       scanCompleted = await runRemainingAiScans({
         outlineData: result.data,
         areas: areaInfos,
-        imageDataUrl: dataUrl,
+        imageDataUrl: scanImage,
         analysisDimensions: result.analysisDimensions ?? { width: canvasDims.width, height: canvasDims.height },
         pageId,
         qualityLevel: aiQualityLevel,

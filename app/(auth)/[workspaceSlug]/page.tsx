@@ -6,6 +6,7 @@ import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabas
 import { WelcomeModal } from './tutorials/WelcomeModal';
 import { DocDraftRestorer } from './DocDraftRestorer';
 import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
+import { CalcDraftImportBanner } from './CalcDraftImportBanner';
 
 export default async function WorkspaceHome({
   params,
@@ -131,35 +132,9 @@ export default async function WorkspaceHome({
         </Link>
       </div>
 
-      {/* Calculator draft restoration banner (H-03) */}
+      {/* Calculator draft restoration banner (H-03) - dismissible X */}
       {hasCalcDraft && (
-        <div className="flex items-center gap-3 px-3 py-3 md:px-4 rounded-xl border border-blue-200 bg-blue-50">
-          <div className="flex-shrink-0">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-              </svg>
-            </span>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-blue-800">
-              Your components are ready to add
-            </p>
-            <p className="text-xs text-blue-600">
-              We saved your components from the {signupRef ? signupRef.replace(/-/g, ' ').replace(/^free /, '') : 'free tool'} - click to add them to your workspace.
-            </p>
-          </div>
-          <a
-            href={`/api/app/restore-calc-draft?draft=${encodeURIComponent(signupDraft!)}&dest=components`}
-            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full bg-blue-600 px-3 py-2 md:px-4 text-sm font-semibold text-white hover:bg-blue-700 transition-colors min-h-[44px]"
-          >
-            <span className="hidden sm:inline">Add to my components</span>
-            <span className="sm:hidden">Add</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </a>
-        </div>
+        <CalcDraftImportBanner draftId={signupDraft!} sourceRef={signupRef ?? null} />
       )}
 
       {/* Free document draft restoration (from free tools Save to App flow) */}
