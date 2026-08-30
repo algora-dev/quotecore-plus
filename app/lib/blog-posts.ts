@@ -494,11 +494,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-follow-up-on-a-quote',
     category: 'contractor-business',
-    title: 'How to Follow Up on a Quote Without Losing the Job',
+    title: 'How to Follow Up on a Quote: Timing + Message Examples',
     description:
-      'Practical guide to following up on quotes: when to follow up, what to say, how many times, handling objections, and using automated follow-ups to win more jobs without chasing.',
+      'When to follow up after sending a quote, what to say, and practical follow-up message examples for contractors — without sounding pushy.',
     date: '2026-07-31',
-    lastModified: '2026-08-14',
+    lastModified: '2026-08-30',
     video: {
       videoId: 'AHXhlOuRAvw',
       title: 'Automatic Quote Follow-Ups and Customer Tracking in QuoteCore+',

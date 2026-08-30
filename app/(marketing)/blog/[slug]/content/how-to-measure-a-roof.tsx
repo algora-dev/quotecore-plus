@@ -241,6 +241,10 @@ export default function Post() {
           calculation in imperial units
         </li>
         <li>
+          <a href="/free-roof-square-metre-calculator">Roof Square Metre Calculator</a> - same
+          calculation in metric units
+        </li>
+        <li>
           <Link href="/free-roofing-calculator">Full Roofing Calculator</Link> - pitch, area, rafter
           lengths, and material quantities in one tool
         </li>

@@ -166,7 +166,7 @@ export default function Post() {
         <li><strong>Design-build firms needing polished proposals:</strong> Houzz Pro.</li>
       </ul>
 
-      <p>If you want to see how QuoteCore+ compares to spreadsheet quoting in detail - including where spreadsheets genuinely hold up and where they start costing you jobs - see our <a href="/blog/roofing-quoting-software-vs-spreadsheets">roofing quoting software vs spreadsheets</a> breakdown.</p>
+      <p>If you want to see how QuoteCore+ compares to spreadsheet quoting in detail - including where spreadsheets genuinely hold up and where they start costing you jobs - see our <a href="/blog/roofing-quoting-software-vs-spreadsheets">roofing quoting software vs spreadsheets</a> breakdown. If you also work in New Zealand or know contractors there, we have a separate <a href="/blog/best-quoting-software-nz">comparison of quoting software for NZ tradies</a>.</p>
 
       <hr />
 
