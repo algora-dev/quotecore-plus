@@ -1752,7 +1752,11 @@ export function DemoWorkstation({
                   roofAreas: outgoingRoofAreas.map(ra => ({
                     id: ra.id, name: ra.name, points: ra.points, area: ra.area,
                     pitch: ra.pitch, visible: ra.visible, fromPageId: ra.fromPageId,
-                    quoteRoofAreaId: ra.quoteRoofAreaId ?? outgoingAreaId,
+                    // 2026-08-30: keep the area's OWN identity (ra.id), not the
+                    // page's area id. Stamping every area on a page with the page
+                    // id made multiple areas share one key at report time, so the
+                    // same entries rendered under every area of that page.
+                    quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id,
                   })),
                   calibrations: outgoingCalibrations.map(cal => ({ ...cal })),
                   calibrationPoints: outgoingCalibrationPoints.map(p => ({ ...p })),
@@ -4672,7 +4676,12 @@ export function DemoWorkstation({
     const pushGroup = (g: typeof componentMeasurements[number]) => {
       const existing = mergedByComponent.get(g.componentId);
       if (existing) {
-        existing.measurements.push(...g.measurements);
+        // 2026-08-30 dedupe: the live state and an area-page snapshot can both
+        // contain the same measurement (restore path) - never count one twice.
+        for (const m of g.measurements) {
+          if (m.id && existing.measurements.some(x => x.id === m.id)) continue;
+          existing.measurements.push(m);
+        }
       } else {
         mergedByComponent.set(g.componentId, { ...g, measurements: [...g.measurements] });
       }
