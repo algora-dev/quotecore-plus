@@ -2119,6 +2119,43 @@ export function TakeoffWorkstation({
     }
   };
   
+  /** Apply an existing (already-drawn) roof area to an area-type component:
+ *  adds the area's plan area as a normal entry stamped with that area, so
+ *  downstream pitch/pricing logic treats it exactly like a hand-drawn entry.
+ *  2026-08-30 (ported from free roof takeoff): lets users measure an area
+ *  once and reuse it for every area-based component without re-drawing it. */
+const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string) => {
+    // Match by UNIQUE row id (sibling areas under one parent can share a
+    // quoteRoofAreaId stamp - never resolve by the shared stamp).
+    const ra = roofAreas.find(a => a.id === roofAreaId);
+    if (!ra || !(ra.area > 0)) return;
+    pushHistorySnapshot();
+    const newMeasurement: ComponentMeasurement = {
+      id: `apply-${Date.now()}`,
+      type: 'area' as ComponentMeasurement['type'],
+      value: ra.area,
+      points: [],
+      visible: true,
+      canvasObjects: [], // derived entry - no canvas geometry of its own
+      quoteRoofAreaId: ra.id, // stamp so downstream logic uses THIS area's pitch
+      fromPageId: currentPageIdRef.current,
+    };
+    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    if (compData) {
+      setComponentMeasurements(componentMeasurements.map(c =>
+        c.componentId === componentId
+          ? { ...c, measurements: [...c.measurements, newMeasurement], expanded: true }
+          : c
+      ));
+    } else {
+      setComponentMeasurements([
+        ...componentMeasurements,
+        { componentId, measurements: [newMeasurement], expanded: true },
+      ]);
+    }
+    setIsDirty(true);
+  };
+
   const handleRemoveComponent = (componentId: string) => {
     pushHistorySnapshot();
     // Discard any in-progress drawing when removing a component
@@ -4645,13 +4682,26 @@ export function TakeoffWorkstation({
     });
 
     const mergedRoofAreas: { id: string; name: string; area: number; pitch: number }[] = [];
+    // 2026-08-30 (ported from free roof takeoff): every area gets its OWN unique
+    // report key (ra.id). Sibling areas under one parent share a quoteRoofAreaId
+    // stamp - keying by it made every entry render under BOTH siblings. Shared
+    // stamps are remapped to the first sibling's unique id so hand-drawn
+    // measurements still resolve. Also dedupes by measurement id across the
+    // live state and area-page snapshots (restore path can hold both).
+    const seenAreaIds = new Set<string>();
+    const stampToFirstId = new Map<string, string>();
+    const pushArea = (ra: { id: string; name: string; area: number; pitch: number; quoteRoofAreaId?: string | null }) => {
+      if (seenAreaIds.has(ra.id)) return;
+      seenAreaIds.add(ra.id);
+      const stamp = ra.quoteRoofAreaId ?? ra.id;
+      if (!stampToFirstId.has(stamp)) stampToFirstId.set(stamp, ra.id);
+      mergedRoofAreas.push({ id: ra.id, name: ra.name, area: ra.area, pitch: ra.pitch });
+    };
     areaCanvasStatesRef.current.forEach((cached, areaId) => {
       if (areaId === activeAreaId) return;
-      // id must match measurement stamps (quoteRoofAreaId = DB area id),
-      // otherwise the report cannot resolve which area a measurement belongs to.
-      cached.roofAreas.forEach((ra: any) => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+      cached.roofAreas.forEach((ra: any) => pushArea(ra));
     });
-    roofAreas.forEach(ra => mergedRoofAreas.push({ id: ra.quoteRoofAreaId ?? ra.id, name: ra.name, area: ra.area, pitch: ra.pitch }));
+    roofAreas.forEach(ra => pushArea(ra));
 
     return {
     roofAreas: mergedRoofAreas,
@@ -4665,7 +4715,7 @@ export function TakeoffWorkstation({
         count: g.measurements.length,
         total: g.measurements.reduce((s, m) => s + m.value, 0),
         measurementType: comp?.measurement_type,
-        measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ?? null })),
+        measurements: g.measurements.map(m => ({ value: m.value, quoteRoofAreaId: m.quoteRoofAreaId ? (stampToFirstId.get(m.quoteRoofAreaId) ?? m.quoteRoofAreaId) : null })),
       };
     }),
     calibrationUnit: calibrations[0]?.unit ?? 'meters',
@@ -5168,6 +5218,33 @@ export function TakeoffWorkstation({
                                       </button>
                                     </div>
                                   </div>
+
+                                  {/* Use an existing roof area as this component's entry
+                                      (area-type components only; requires at least
+                                      one drawn roof area). Adds the area's plan area
+                                      as a normal entry stamped with that area.
+                                      Ported from free roof takeoff 2026-08-30. */}
+                                  {mt === 'area' && roofAreas.length > 0 && (
+                                    <div className="mt-2">
+                                      <select
+                                        onChange={(e) => {
+                                          if (e.target.value) {
+                                            handleApplyRoofAreaToComponent(comp.id, e.target.value);
+                                            e.target.value = '';
+                                          }
+                                        }}
+                                        defaultValue=""
+                                        className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-blue-500 focus:outline-none bg-white text-gray-700"
+                                      >
+                                        <option value="">Use an existing area…</option>
+                                        {roofAreas.map(ra => (
+                                          <option key={ra.id} value={ra.id}>
+                                            {ra.name} · {ra.area.toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'} (pitch {Math.round(ra.pitch ?? 0)}°)
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  )}
 
                                   {/* AI Placeholder: Attach real component */}
                                   {comp.is_system && compData && compData.measurements.length > 0 && (() => {
