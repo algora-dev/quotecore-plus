@@ -1,84 +1,204 @@
-# QuoteCore+ Supplier Tool - Explainer & Handoff Brief
+# Configurable Construction Estimating & Pricing Tool
 
-> Written 2026-08-30 by Gavin for handoff to any agent taking over the supplier tool workstream.
-> Repo: `github.com/algora-dev/quotecore-plus` (workspace: `C:\Users\Jimmy\.openclaw\workspace-gavin\projects\quotecore-plus`).
-> Companion docs: `docs/SUPPLIER_TEMPLATE_SUMMARY.md`, `docs/SUPPLIER_DASHBOARD_PLAN.md`, `docs/GAVIN_SUPPLIER_MIGRATION.md`, `memory/2026-08-26.md`.
+## What It Is
 
-## 1. What the Supplier Tool Is (one paragraph)
+This is a configurable, white-label estimating, pricing and takeoff platform designed for construction suppliers, installers, and businesses that supply and install products.
 
-The Supplier Tool is a white-label **supplier pricing and takeoff portal** that we (QuoteCore+) deploy per building-material supplier. A supplier gets their own branded mini-site where their customers upload or measure a roof plan, get quantities for standard roofing components (ridge, hip, valley, barge, spouting, downpipes, etc.), see prices **from the supplier's own catalogue**, and can request a formal quote or place an order request - all inside the supplier's brand instead of ours. The supplier captures leads, drives catalogue adoption, and we get a funnel into QuoteCore+ subscriptions. It is a template: ONE codebase, configured per supplier via flags/config - never forked.
+It provides a proven base from which we can create a tailored online tool for each business. The final system can be simple or highly customised depending on what the client needs.
 
-## 2. The Pieces
+Although the first target market is roofing, the platform is not limited to roofing. The same model can be adapted for cladding, flooring, painting, insulation, sheet products, drainage, fencing, landscaping, and other construction categories where measurements need to be converted into quantities, products, labour, pricing, or quotes.
 
-| Piece | Where | What it does |
-|---|---|---|
-| Public tool | `app/(public)/supplier-pricing-tool/` | The customer-facing flow: upload/measure plan, assign products, see priced output, convert to quote, request supplier quote / order request |
-| Takeoff station | `supplier-pricing-tool/TakeoffWorkstation.tsx` | In-tool digital takeoff (self-contained copy of the demo workstation, recoloured blue) - user uploads a plan, calibrates scale, measures lines/areas |
-| Quote builder | `supplier-pricing-tool/quote/page.tsx` | Self-contained customer quote document builder (markup, margin, logo, tax, column strip) fed from the tool output |
-| Demo admin | `supplier-pricing-tool/admin/page.tsx` | Per-supplier config: branding, discount, trade policy, per-product prices, feature flags, captured-leads table (currently localStorage; see Known Gaps) |
-| Supplier directory (app side) | `app/(auth)/[workspaceSlug]/supplier-directory/`, `/suppliers/[slug]` public pages | Approved supplier profiles, catalogues, public catalogue pages (HTML/CSV/JSON, versioned) |
-| Supplier dashboard (app side) | `app/(auth)/[workspaceSlug]/supplier/` | Where a logged-in supplier manages their profile, catalogue uploads, order requests, active-component allowance |
-| DB | Supabase project `aaavvfttkesdzblttmby` | `supplier_profiles`, `catalogs` + `catalog_rows`, component collections, order/enquiry tables. Supplier tables isolated from core QC+ tables in the same DB (split later at volume) |
+The platform uses technology and logic developed from the QuoteCore+ codebase, but the supplier or client tool is its own product. QuoteCore+ may sit behind it as an optional downstream pathway, but it does not need to be visible to the end user.
 
-## 3. The Customer Flow (what it actually does)
+## The Core Idea
 
-1. **Landing**: branded header, "start measuring" or "I already have measurements".
-2. **Measure**: either (a) upload a plan PDF/image into the in-tool takeoff station, calibrate scale, draw lines/areas (roof areas get a pitch), or (b) enter actual/site measurements directly. Guide mode = one component group per page with diagrams; Fast mode = everything stacked in accordions.
-3. **Assign products**: each measurement group gets a product from the supplier catalogue. Per-entry roof-area attachment for linears; pitch conversion applied automatically (rafter factor for areas/barges, hip/valley factor for hips/valleys, none for ridges/spouting).
-4. **Output**: named roof areas with pitch, pitched m2 sub-rows, waste folded into Purchase Qty, trade-vs-standard-vs-savings block.
-5. **Actions**: convert to a customer quote (in-tool builder), request a formal quote from the supplier, send an order request, print/PDF.
-6. **Persistence**: the whole flow survives refresh via sessionStorage (`qc-spt-flow-v1`); "Save to QuoteCore+" persists a server-side draft and routes to signup - the draft imports into the app on onboarding (same free-tools handoff machinery as our other tools).
-7. **Lead capture**: delayed popup (Google one-click or email); login-gated trade pricing (blanket % off baseline, default 12%).
+The tool turns project information into a commercial outcome.
 
-## 4. Why It's Useful (the pitch)
+A user can enter measurements directly or, where enabled, upload a plan and measure the job digitally. The system then uses configured calculation rules to determine quantities, apply waste, select or assign products, calculate material and labour costs, and produce preliminary or quoting information.
 
-- **For suppliers**: their customers stop guessing quantities and calling - the tool does the takeoff maths with the supplier's own prices, driving stickiness and catalogue compliance. Leads land in the supplier's inbox/admin. No build cost to them; we deploy a configured copy.
-- **For us (QuoteCore+)**: a lead-gen and signup funnel (free tool -> saved draft -> trial account), SEO surface (public supplier catalogue pages with structured data), and a demo asset we can re-skin to a prospect's real catalogue in ~10 minutes for pitch videos.
+The exact journey is controlled by the owner of the tool.
 
-## 5. Who It Helps
+A simple version might provide an approximate customer price.
 
-Roofing/building material suppliers (starting with roofing: spouting, ridges, flashings etc.) who want an online quantity-and-price experience for their trade customers, without building software. Works for any trade with measurable quantities - config-driven components, no hard-coded units, currency, or country.
+A more advanced version might operate as a complete measuring, estimating and quoting system for tradespeople or the business's own team.
 
-## 6. What It Can't Do (current limitations - be honest with prospects)
+## Smart Components
 
-- **Admin is demo-grade**: per-supplier config lives in localStorage (`qc-spt-config-v1`, `qc-spt-leads`), not the DB. Production admin (QC-staff auth, DB-backed config/catalogue/leads) is the NEXT planned task - see Follow-Ups.
-- No live stock/availability, no real-time pricing ERP integration, no payments - order requests are notifications, not transactions.
-- Deep digital-takeoff automation (AI scans) is not wired into the supplier tool; the takeoff station is manual measurement only.
-- One catalogue per supplier instance; multi-branch/multi-price-region not supported yet.
-- The supplier-side "app dashboard" (profile, catalogue uploads) and the public white-label tool are two separate surfaces today; a supplier does not edit the white-label tool's config themselves.
+The platform is built around configurable components.
 
-## 7. Architecture Rules (LOCKED with Shaun - do not violate)
+A component can represent a product, material, labour activity, accessory, service, or other measurable item. Each component can carry its own rules and pricing, including:
 
-1. **Fully self-contained**: the tool never links out to our other free tools; code/logic is copied in. Measure-a-plan is an inline upload + in-tool station.
-2. **Template, not fork**: this codebase is the master full-feature template. Supplier copies are config/flag-driven (`features{login, adminPanel, convertToQuote, quoteCoreConnect, emailCapture}` - each independent, off breaks nothing).
-3. **One repo, one DB** for now; supplier tables isolated; split later at volume.
-4. **Admin model**: us-first -> handover to supplier email -> our permanent override fallback.
-5. **Scale target**: thousands of customer emails, 3-4 pricing tiers per supplier.
-6. Blue colour scheme inside the tool (`#2563EB`/`#1D4ED8`, `spt-scope` focus ring) - deliberate, do not "fix" to orange.
-7. Component-to-group mapping is NAME-based (semantic field was empty on placeholder rows - a past silent-drop bug).
+- baseline material cost
+- baseline labour cost
+- waste allowances
+- measurement and conversion rules
+- quantity calculations
+- pricing or margin logic
+- product options
+- visibility and editing permissions
 
-## 8. Follow-Ups (the next agent's queue)
+The owner decides what the user is allowed to see and change.
 
-1. **Real server-backed admin panel** (priority 1): app-domain route, QC-staff admin auth, config + catalogue + leads in Supabase instead of localStorage.
-2. Replace placeholder downpipe prices ($38.50/$9.20 ea) with the supplier's real ones when Shaun sends them.
-3. Wire a real supplier pilot end-to-end (demo play: swap catalogue/branding to a target supplier for pitch videos).
-4. Verify station component values are pitch-adjusted vs plan values (debug logging `[supplier-tool]` was left at the takeoff finish boundary - remove once verified).
-5. Banner image warping fix + the 28 deferred test cases from the template brief.
+For example, a tool can:
 
-## 9. Gotchas Learned the Hard Way
+- show only a final product price
+- expose material pricing but hide labour
+- expose labour but hide material pricing
+- allow the user to edit material costs
+- allow the user to edit labour rates
+- allow both to be edited
+- lock all pricing to the owner's configured rates
+- include or hide waste calculations
+- use different pricing structures for different users or customer types
 
-- PowerShell `-replace` on .tsx corrupts UTF-8 - use proper edit tools for files with unicode.
-- Folders that exist only on `development` vanish when switching to `main` - keep a standalone copy.
-- Free-tools drafts: `auth.admin.createUser` never sends emails - must fire `supabase.auth.resend({type:'signup'})`.
-- Em dashes: never use in UI text (Shaun hard rule).
+This makes the same underlying system useful across very different business models.
 
-## 10. Key File Paths
+## Who It Is For
 
-- Tool root: `app/(public)/supplier-pricing-tool/`
-- Workstation: `app/(public)/supplier-pricing-tool/TakeoffWorkstation.tsx`
-- Output actions (continue-in-app, convert, enquiry): `app/(public)/supplier-pricing-tool/OutputActions.tsx`
-- Quote builder: `app/(public)/supplier-pricing-tool/quote/page.tsx`
-- Demo admin: `app/(public)/supplier-pricing-tool/admin/page.tsx`
-- Draft save/handoff: `app/(public)/shared/SaveToAppButton.tsx`, `app/(auth)/[workspaceSlug]/DocDraftRestorer.tsx`
-- Supplier profile/catalogue public pages: `app/(public)/suppliers/[slug]/` (HTML/CSV/JSON, versioned)
-- Supplier app dashboard: `app/(auth)/[workspaceSlug]/supplier/SupplierDashboard.tsx`
+The platform can support:
+
+**Supply-only businesses**
+Customers can calculate what they need, select products, see indicative pricing, and submit an enquiry, quote request, or order request.
+
+**Supply-and-install businesses**
+The tool can calculate both materials and labour, giving customers or staff a much more realistic project price.
+
+**Install-only businesses**
+Material pricing can be hidden or removed entirely, allowing the system to focus on labour, measurement, estimating and quoting.
+
+**Tradespeople and contractors**
+A supplier can configure the tool for professional users who want to measure jobs, calculate quantities, price work, and create customer quotes.
+
+**Internal sales and estimating teams**
+The business can use the tool privately as its own estimating and quoting system rather than offering every feature publicly.
+
+**Homeowners and inexperienced customers**
+A simplified version can guide someone with limited construction knowledge through enough information to receive a useful preliminary price before speaking to the business.
+
+## Why Roofing Is the First Focus
+
+Roofing is a strong proving ground because its calculations become more complex than many straightforward area-based trades.
+
+Pitch affects roof areas and various linear measurements. Different components can require different conversion rules, and customers often struggle to estimate material quantities accurately.
+
+If the platform can make roofing measurement and pricing accessible to a non-expert while still being useful to a professional roofer, the same underlying system can be adapted to many simpler construction categories.
+
+Roofing is therefore the initial market focus, not the platform's limitation.
+
+## Possible User Experiences
+
+There is no single required version of the tool.
+
+Depending on the client, it can be configured as:
+
+- a simple online price calculator
+- a lead-generation tool
+- a material quantity calculator
+- a supplier product selector
+- a preliminary estimating tool
+- a digital takeoff system
+- a trade pricing portal
+- a supply-and-install estimator
+- a full quoting workflow
+- an internal sales estimator
+- a customer self-service quoting tool
+- a professional contractor measurement and pricing system
+
+Features can be enabled, removed, simplified, extended, or built specifically for an individual client.
+
+The platform provides the foundation rather than forcing every business into the same workflow.
+
+## Benefits to the Business
+
+### Faster customer pricing
+
+Customers can get useful pricing information without waiting for a staff member to manually calculate every early-stage enquiry.
+
+### Fewer low-value enquiries
+
+The system can answer basic quantity and pricing questions before they reach the sales or estimating team, reducing time spent on enquiries that may never convert.
+
+### Better-qualified leads
+
+When a customer does make contact, the business can receive measurements, project details, selected products, quantities, and pricing context rather than an unstructured enquiry.
+
+### Faster quoting
+
+Tradespeople or internal staff can use the same system to measure, price and build quotes, reducing repetitive estimating work.
+
+### More consistent calculations
+
+Configured rules, waste factors, labour rates and product quantities reduce reliance on individual staff members performing the same calculations differently.
+
+### Increased product sales
+
+By connecting measurements directly to products and accessories, the tool can guide customers toward a more complete material requirement and improve catalogue adoption.
+
+### Support for different customer types
+
+A homeowner, trade customer, estimator and internal salesperson can potentially use different levels of the same system.
+
+### A stronger digital customer experience
+
+Instead of providing only a catalogue, phone number or enquiry form, the business gives customers a practical tool that helps them solve a real problem.
+
+### Competitive differentiation
+
+In markets where several suppliers offer similar products, an intelligent estimating or pricing tool can become a meaningful reason for customers to visit, return to, and recommend one supplier over another.
+
+### Search and discovery value
+
+Useful online calculators and estimating tools create reasons for people to reach the business through Google, AI search tools, direct sharing, trade communities and other discovery channels.
+
+Someone searching for a price or quantity calculation can enter the business's funnel before they have decided which supplier or installer to use.
+
+### Longer-term customer retention
+
+Once professional users become familiar with a supplier's measurement, pricing or quoting tool, it can become part of their normal workflow. That gives the business a much stronger relationship than a traditional product catalogue alone.
+
+## Commercial Model
+
+The primary purpose of the platform is to be sold as a standalone business solution.
+
+A client pays an upfront implementation or development fee for its configured or bespoke version of the tool.
+
+They then pay an ongoing subscription for hosting, operation, updates, maintenance and support.
+
+The amount of customisation can vary substantially. Some businesses may need a relatively standard configured deployment, while others may commission additional workflows, integrations, calculations or functionality.
+
+This creates two forms of value for us:
+
+1. upfront revenue from implementation and bespoke development
+2. recurring monthly revenue from ongoing platform use and support
+
+## Relationship With QuoteCore+
+
+QuoteCore+ is a secondary opportunity rather than the main reason the tool exists.
+
+Where appropriate, users of a client tool may be given the option to continue their work in QuoteCore+, save a project, create a more complete quote, or access additional functionality.
+
+This creates a possible second funnel:
+
+**client purchases the tool -> client attracts users -> some users discover QuoteCore+ -> some become QuoteCore+ customers**
+
+The client tool therefore has the potential to generate implementation revenue, recurring client revenue, and additional downstream QuoteCore+ subscriptions.
+
+However, a client tool does not need to visibly promote QuoteCore+ if that is not appropriate for the deployment.
+
+## The Broader Opportunity
+
+The strongest part of the platform is not one roofing calculator or one supplier template.
+
+It is the reusable foundation underneath them.
+
+The same underlying system can be adapted to different trades, different business models, different pricing structures, and different levels of complexity.
+
+At one end, it can be a simple public calculator that gives a customer an indicative price.
+
+At the other, it can become a business's core digital system for measurement, estimating, product selection, labour calculation, quoting and lead generation.
+
+The objective is to create useful tools that reduce friction between a customer having a project and a business being able to price, supply, install or quote that project.
+
+Every deployment can be different, but the underlying principle remains the same:
+
+**turn project measurements and requirements into accurate, configurable, business-specific pricing and action.**
