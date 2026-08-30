@@ -4635,7 +4635,10 @@ export function DemoWorkstation({
    *  2026-08-30: lets users measure a wall/roof once and reuse it for every
    *  area-based component (e.g. wrap / battens / cladding layers). */
   const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string) => {
-    const ra = roofAreas.find(a => (a.quoteRoofAreaId ?? a.id) === roofAreaId);
+    // 2026-08-30 fix: match by UNIQUE row id. Sibling areas under one parent share
+    // the same quoteRoofAreaId stamp, so every dropdown option resolved to the
+    // FIRST area - always adding its value no matter which one was picked.
+    const ra = roofAreas.find(a => a.id === roofAreaId);
     if (!ra || !(ra.area > 0)) return;
     pushHistorySnapshot();
     const newMeasurement: ComponentMeasurement = {
@@ -4645,7 +4648,7 @@ export function DemoWorkstation({
       points: [],
       visible: true,
       canvasObjects: [], // derived entry - no canvas geometry of its own
-      quoteRoofAreaId: roofAreaId, // stamp so the report uses THIS area's pitch
+      quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id, // stamp so the report uses THIS area's pitch
       fromPageId: currentPageIdRef.current,
     };
     const compData = componentMeasurements.find(c => c.componentId === componentId);
@@ -5245,7 +5248,7 @@ export function DemoWorkstation({
                                       >
                                         <option value="">Use an existing area…</option>
                                         {roofAreas.map(ra => (
-                                          <option key={ra.quoteRoofAreaId ?? ra.id} value={ra.quoteRoofAreaId ?? ra.id}>
+                                          <option key={ra.id} value={ra.id}>
                                             {ra.name} · {ra.area.toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'} (pitch {Math.round(ra.pitch ?? 0)}°)
                                           </option>
                                         ))}
