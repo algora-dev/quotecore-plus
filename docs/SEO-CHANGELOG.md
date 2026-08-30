@@ -29,5 +29,10 @@ GSC baseline data: export reviewed 30 Aug 2026 (35-day comparison window).
 
 ## Pending / blocked
 
-- **7 × Crawled–currently not indexed**: GSC API does not expose Coverage examples. Needs manual export from GSC UI (Indexing → Pages → Crawled – currently not indexed → examples). Owner: Shaun.
+- ~~7 × Crawled–currently not indexed~~ **RESOLVED 2026-08-30** (addendum, URLs supplied by Shaun):
+  - 3 × Next.js assets (JS chunk, CSS chunk, woff2 font) — not SEO pages, no action, ignore in future Coverage reviews.
+  - 2 × `/suppliers/rs-roofing/catalogue.{json,csv}` — machine-readable data files. Already handled in code: unversioned routes 301 to the HTML catalogue page; versioned routes already serve `X-Robots-Tag: noindex`; sitemap excludes CSV/JSON. No further action.
+  - `/blog/roofing-quoting-software-uk` — reviewed in full. Genuinely workflow-focused (quote turnaround, stages, follow-up); title/H1 already workflow intent; comparison page links to it and it hands comparison intent off to `/blog/best-roofing-quoting-software-uk-2026`. **Kept standalone.** One edit: reframed final H2 "What to look for in roofing quoting software" → "What a faster quoting workflow needs from software" to remove buying-guide drift. Request indexing once after deploy (GSC UI — URL Inspection API not writable with current scope).
+  - `/blog/built-by-a-roofer` — founder/trust story, no distinct search intent. **Left unchanged** — current content is what it is; strengthening requires genuine founder material (specific jobs, photos, feature origin stories) which only Shaun can supply. It still serves its brand-proof role via internal links (linked from roofing-quoting-software-uk).
+  - **Net conclusion: there is no seven-page indexing problem.** Five entries were harmless technical/data resources.
 - 46 × Discovered–currently not indexed: per brief, conservative wait — no blanket intervention.

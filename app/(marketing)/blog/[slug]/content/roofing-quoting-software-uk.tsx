@@ -146,8 +146,8 @@ export default function Post() {
 
       <hr />
 
-      <h2>What to look for in roofing quoting software</h2>
-      <p>If you are evaluating roofing quoting software in the UK, look for:</p>
+      <h2>What a faster quoting workflow needs from software</h2>
+      <p>If you are evaluating tools to support that workflow, look for:</p>
       <ul>
         <li><strong>Measurement-to-quote workflow</strong> - can you go from plan or site measurement to priced quote without re-entering data?</li>
         <li><strong>Saved materials and pricing</strong> - can you store your material list, rates, and waste rules so each quote starts from your data, not from blank?</li>
