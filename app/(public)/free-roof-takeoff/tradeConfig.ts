@@ -88,7 +88,7 @@ export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   unitOptions: [METRIC, IMPERIAL],
   placeholderComponents: [
     { id: 'clad-wrap-01', name: 'Building Wrap', measurement_type: 'area' },
-    { id: 'clad-batten-02', name: 'Cavity Battens', measurement_type: 'lineal' },
+    { id: 'clad-batten-02', name: 'Cavity Battens', measurement_type: 'area' },
     { id: 'clad-cedar-03', name: 'Horizontal Cladding - Cedar', measurement_type: 'area' },
     { id: 'clad-corrugate-04', name: 'Horizontal Cladding - Corrugate', measurement_type: 'area' },
     { id: 'clad-window-trim-05', name: 'Window Trim', measurement_type: 'lineal' },

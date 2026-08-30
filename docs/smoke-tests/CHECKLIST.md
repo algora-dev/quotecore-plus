@@ -280,6 +280,51 @@
 - [ ] Create Template → goes STRAIGHT to the builder (selector page removed)
 - [ ] Builder "Back" and "Cancel" return to the templates list (no redirect loop)
 
+### Pending verification (Takeoff tools batch - 2026-08-30 session, commits `25a2dc86`..`6419e08d` on main + LOCAL-ONLY taller change)
+
+**A. Convert to Quote reroute (free roof takeoff, `25a2dc86`)**
+- [ ] Finish a takeoff on /free-roof-takeoff -> orange CTA reads "Convert to quote - free quote generator"
+- [ ] Clicking it lands on /free-quote-generator with lines prefilled (desc, qty, unit, rate) and total carried over
+- [ ] "Save my takeoff" app handoff still works alongside it
+
+**B. Use-an-existing-area dropdown (main app + supplier tool, `4afe0100`)**
+- [ ] Main app: draw 2+ areas, add an area-type component -> "Use an existing area…" dropdown lists each with value + pitch
+- [ ] Applying adds an entry instantly (no re-draw); dropdown resets to placeholder; can apply same area to multiple components
+- [ ] Main app: Finish and Save SUCCEEDS (no "invalid input syntax for type uuid" error - `fc36a8f4` fix)
+- [ ] Supplier tool: same dropdown works in its takeoff stage
+
+**C. Corrugate pitch display fix (main app, `6419e08d`)**
+- [ ] Apply area (e.g. 68.16 m² @ 30°) to an area component -> builder entry reads `68.16 -> ~70.20 incl waste (30°)` (NOT 59.03)
+- [ ] Dropdown option label shows the pitched value (68.2 m², pitch 30°)
+- [ ] Final quantities/costs unchanged vs before the fix (same totals, only display differs)
+
+**D. Canvas sizing (wide = `6419e08d` live; TALLER 20% = LOCAL ONLY, not live yet)**
+- [ ] Wide: main app takeoff, /free-roof-takeoff, /free-cladding-takeoff and supplier tool canvases extend ~125% width
+- [ ] Live check (after next push): all four canvases ~20% taller, less scrolling before the plan fits
+- [ ] Main app fit-to-screen: plan auto-fits largest size (up to 2x); resize browser window -> plan re-fits; manual zoom buttons stop auto re-fit
+
+**E. Main app UI (fc36a8f4)**
+- [ ] Pulsing orange "+ New Area" pill button in the areas panel (matches supplier/free tools)
+
+**F. Supplier pricing tool (6419e08d)**
+- [ ] Takeoff stage: no orange hover glows (black buttons glow Burton teal, blue glows blue)
+- [ ] Create a custom component in the takeoff stage, measure it, Finish -> it appears on the Custom components step (not dropped) with quantity carried over
+- [ ] Output screen: "+ Add a custom component" button returns to the custom step, add another, output updates
+- [ ] Custom step values (basis/qty) match what was measured
+
+**G. New cladding tool (/free-cladding-takeoff, `077716d6` + SEO `3e3f77ad`)**
+- [ ] Page loads with 3-step wizard (units -> components -> upload); wall terminology everywhere ("Wall Area", "North Elevation" placeholder, no "roof")
+- [ ] Default components: Building Wrap, Cavity Battens, Cladding Cedar/Corrugate, Window/Door Trim, Corner Trims, Soffit, Openings
+- [ ] Full run: upload elevation, calibrate, draw wall area, measure, Finish -> "WALL & CLADDING TAKEOFF REPORT", "Wall Areas & Components", "Total wall area", NO pitch language
+- [ ] Build-your-own components path works; report footer notes no pitch adjustment
+- [ ] Convert to quote + Save-to-app handoffs work; cross-links to/from /free-roof-takeoff present; sitemap/blog guides resolve
+
+**H. Free roof takeoff output fixes (last session, `b227eac8`+`1a652d1c`+`fe3ea1ce`)**
+- [ ] Two sibling areas with same name: components render under the CORRECT area only (no cross-duplication)
+- [ ] Area dropdown applies the selected sibling's value (not always the first)
+- [ ] Area-type entries show m² (not m); no literal "&amp;" in headings
+- [ ] Pulsing New Area button present
+
 ### Pending verification (Supplier Component System - Phases 1-10, main `a64a2b0`, 2026-07-27)
 
 **Prerequisites:**

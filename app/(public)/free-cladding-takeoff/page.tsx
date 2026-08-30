@@ -100,7 +100,7 @@ const TRUST_POINTS = [
 const MEASUREMENTS = [
   ['Wall areas', 'Trace any wall or elevation on your plan to get its area'],
   ['Building wrap & soffit', 'Full-surface areas straight off the elevation'],
-  ['Cavity battens', 'Vertical or horizontal batten runs, by length'],
+  ['Cavity battens', 'Full-surface batten coverage, by wall area'],
   ['Cladding areas', 'Cedar, corrugate or your own cladding, by area'],
   ['Window & door trims', 'Perimeter trim runs around every opening'],
   ['Corner trims', 'External and internal corner runs by length'],

@@ -4739,7 +4739,7 @@ export function DemoWorkstation({
   return (
     <>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="-my-8 h-[calc(100vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
+    <div className="-my-8 h-[calc(120vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
       {demoMode === 'upload' && onExitToStart ? (
         <button
