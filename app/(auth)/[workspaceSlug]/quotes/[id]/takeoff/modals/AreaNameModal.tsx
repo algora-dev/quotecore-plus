@@ -37,9 +37,9 @@ export function AreaNameModal({
       // Component area - no pitch needed
       onSave('');
     } else if (isRoofing) {
-      // Roof area - require pitch; name comes from pre-fill or input
+      // Roof area - pitch is optional (0°/flat is valid); name comes from pre-fill or input
       const effectiveName = nameIsLocked ? initialName : name.trim();
-      if (effectiveName && (pitchDegrees != null || nameIsLocked)) {
+      if (effectiveName) {
         onSave(effectiveName, pitchDegrees ?? 0);
       }
     } else {
@@ -97,9 +97,8 @@ export function AreaNameModal({
                     degrees={pitchDegrees}
                     onSave={setPitchDegrees}
                     label="Roof Pitch"
-                    required={!nameIsLocked}
-                    autoFocus={nameIsLocked}
                     className="block"
+                    autoFocus={nameIsLocked}
                   />
                   <p className="text-xs text-gray-600 -mt-2">
                     Used to calculate component lengths (rafters, hips, valleys)
@@ -134,7 +133,7 @@ export function AreaNameModal({
             <button
               type="submit"
               className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              disabled={!componentName && !nameIsLocked && (!name.trim() || (isRoofing && pitchDegrees == null))}
+              disabled={!componentName && !nameIsLocked && !name.trim()}
             >
               {componentName ? 'Add to Component' : isRoofing ? 'Create Roof Area' : 'Create Area'}
             </button>

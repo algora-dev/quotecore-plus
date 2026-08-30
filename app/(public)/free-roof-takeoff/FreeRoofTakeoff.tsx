@@ -203,6 +203,7 @@ export function FreeRoofTakeoff() {
         aiTakeoffAvailable={false}
         aiAssistPoints={DEMO_AI_POINTS}
         demoMode="upload"
+        onExitToStart={restart}
         preferredLengthUnit={unitOption.lengthUnit}
         unitSystem={stage.unitSystem}
         componentSpecs={stage.specs}

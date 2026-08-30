@@ -177,6 +177,9 @@ interface Props {
   /** UPLOAD MODE: user-built component specs from the landing wizard - passed
    *  straight through to the finish payload (never used inside the canvas). */
   componentSpecs?: import('@/app/(public)/free-roof-takeoff/tradeConfig').TakeoffComponentSpec[];
+  /** UPLOAD MODE: reset back to the tool's landing wizard. Without this the
+   *  "Back to demo start" link targets the current URL and does nothing. */
+  onExitToStart?: () => void;
   /** DEMO: called instead of navigating to the quote builder on Finish and Save. */
   onFinish?: (payload: DemoFinishPayload) => void;
 }
@@ -270,6 +273,7 @@ export function DemoWorkstation({
   preferredLengthUnit = 'meters',
   unitSystem,
   componentSpecs,
+  onExitToStart,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<Canvas | null>(null);
@@ -4679,12 +4683,22 @@ export function DemoWorkstation({
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
     <div className="-my-8 h-[calc(100vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
       {/* Back link sits above the canvas card so it never crowds the header */}
-      <Link
-        href={demoMode === 'upload' ? '/free-roof-takeoff' : '/takeoff-demo'}
-        className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
-      >
-        <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start
-      </Link>
+      {demoMode === 'upload' && onExitToStart ? (
+        <button
+          type="button"
+          onClick={() => { if (typeof window !== 'undefined') window.scrollTo(0, 0); onExitToStart(); }}
+          className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
+        >
+          <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start
+        </button>
+      ) : (
+        <Link
+          href={demoMode === 'upload' ? '/free-roof-takeoff' : '/takeoff-demo'}
+          className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
+        >
+          <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to demo start
+        </Link>
+      )}
       <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden min-h-0">
         {/* Header: title + action buttons only - no nav links */}
         <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-2 md:py-3 flex items-center justify-between">
