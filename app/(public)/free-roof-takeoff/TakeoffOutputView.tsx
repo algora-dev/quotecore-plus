@@ -242,7 +242,7 @@ export function TakeoffOutputView({
       ? c.entries.reduce((s, e) => s + (e.cost ?? 0), 0)
       : null;
     return (
-      <div key={c.key}>
+      <div key={c.key} className="avoid-break">
         <div className="flex items-center justify-between pb-1">
           <span className="text-black font-semibold">{c.name}</span>
           <span className="text-black font-semibold whitespace-nowrap text-sm">
@@ -338,6 +338,23 @@ export function TakeoffOutputView({
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 px-4 py-10">
+      {/* Print/PDF: output document ONLY - hide the rest of the page (header,
+          nav, marketing sections, action buttons). Groups never split across
+          pages; a group that doesn't fit moves to the next page whole. */}
+      <style jsx global>{`
+        @media print {
+          body { background: #fff !important; }
+          body * { visibility: hidden; }
+          #takeoff-report, #takeoff-report * { visibility: visible; }
+          #takeoff-report {
+            position: absolute; left: 0; top: 0; width: 100%;
+            border: none !important; border-radius: 0 !important; box-shadow: none !important;
+            padding: 0 !important;
+          }
+          .avoid-break { break-inside: avoid; page-break-inside: avoid; }
+          .print-hide { display: none !important; }
+        }
+      `}</style>
       <div className="mx-auto max-w-4xl">
         {/* Takeoff report - clean measurement document, same format the app
             hands to the quote builder. */}
@@ -403,7 +420,7 @@ export function TakeoffOutputView({
                     .filter(c => c.entries.length > 0);
                   if (groupsHere.length === 0) return null;
                   return (
-                    <div key={a.key}>
+                    <div key={a.key} className="avoid-break">
                       <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
                         <span className="text-black font-bold">{a.name} <span className="font-medium">- pitch {fmtPitch(a.pitch)}</span></span>
                         <span className="text-black font-medium whitespace-nowrap text-sm">
@@ -420,6 +437,29 @@ export function TakeoffOutputView({
               </div>
             </div>
           )}
+
+          {/* Totals - always the last block of the report */}
+          <div className="pt-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Totals</h2>
+            <div className="mt-3 space-y-2">
+              {areas.length > 0 && (
+                <div className="flex items-center justify-between py-2 border-b border-black/10">
+                  <span className="text-black">Total plan area</span>
+                  <span className="text-black font-medium">{fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between py-2 border-b border-black/10">
+                <span className="text-black">Total components measured</span>
+                <span className="text-black font-medium">{components.length}</span>
+              </div>
+              {hasAnyCost && (
+                <div className="flex items-center justify-between py-1 mt-1">
+                  <span className="text-black font-bold">Estimated total</span>
+                  <span className="text-black font-bold text-lg">${fmt(totalCost)}</span>
+                </div>
+              )}
+            </div>
+          </div>
 
           <div className="pt-4 border-t border-black">
             <p className="text-sm text-black italic">
