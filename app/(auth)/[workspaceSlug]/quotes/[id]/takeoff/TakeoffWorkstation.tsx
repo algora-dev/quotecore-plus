@@ -230,6 +230,11 @@ export function TakeoffWorkstation({
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Zoom ownership: when set, the zoom was applied by auto-fit (initial load,
+  // page switch, Fit to Screen or window resize) and the window-resize
+  // listener may re-fit. Manual zoom controls null it so resize never
+  // overrides the user's chosen zoom level.
+  const lastAutoFitZoom = useRef<number | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const [zoom, setZoom] = useState(1);
   
@@ -1983,7 +1988,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       points: [],
       visible: true,
       canvasObjects: [], // derived entry - no canvas geometry of its own
-      quoteRoofAreaId: ra.id, // stamp so downstream logic uses THIS area's pitch
+      // Stamp the DB area id (UUID) - the save flow sends quoteRoofAreaId to
+      // Postgres, so a client row id ("area-...") fails with invalid uuid.
+      quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id,
       fromPageId: currentPageIdRef.current,
     };
     const compData = componentMeasurements.find(c => c.componentId === componentId);
@@ -2231,10 +2238,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (container) {
         const cw = container.clientWidth - 32;
         const ch = container.clientHeight - 32;
-        const fitScale = Math.min(cw / dims.width, ch / dims.height, 1);
+        // 2026-08-30: fit the plan at the LARGEST size that fits the viewport
+        // (upscale allowed up to 2x so small plans fill the screen).
+        const fitScale = Math.min(cw / dims.width, ch / dims.height, 2);
         canvas.setZoom(fitScale);
         canvas.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
         setZoom(fitScale);
+        lastAutoFitZoom.current = fitScale;
       }
     };
     imgElement.src = imageUrl;
@@ -3215,12 +3225,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (container) {
         const containerWidth = container.clientWidth - 32;
         const containerHeight = container.clientHeight - 32;
-        const fitScale = Math.min(containerWidth / dims.width, containerHeight / dims.height, 1);
-        if (fitScale < 1) {
-          canvas.setZoom(fitScale);
-          canvas.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
-          setZoom(fitScale);
-        }
+        // 2026-08-30: fit at the LARGEST size that fits the viewport
+        // (upscale allowed up to 2x so small plans fill the screen).
+        const fitScale = Math.min(containerWidth / dims.width, containerHeight / dims.height, 2);
+        canvas.setZoom(fitScale);
+        canvas.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
+        setZoom(fitScale);
+        lastAutoFitZoom.current = fitScale;
       }
 
       // Canvas-rework: canvas is now ready for reconstruction.
@@ -3854,6 +3865,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const newZoom = Math.min(zoom + 0.1, 5);
     fabricRef.current.setZoom(newZoom);
     setZoom(newZoom);
+    lastAutoFitZoom.current = null; // user took control of zoom
   };
 
   const handleZoomOut = () => {
@@ -3861,6 +3873,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const newZoom = Math.max(zoom - 0.1, 0.1);
     fabricRef.current.setZoom(newZoom);
     setZoom(newZoom);
+    lastAutoFitZoom.current = null; // user took control of zoom
   };
 
   const handleResetZoom = () => {
@@ -3869,7 +3882,39 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     fabricRef.current.viewportTransform = [1, 0, 0, 1, 0, 0];
     fabricRef.current.requestRenderAll();
     setZoom(1);
+    lastAutoFitZoom.current = null; // user took control of zoom
   };
+
+  // 2026-08-30: dynamic fit-to-screen. Re-fit the plan to the viewport when the
+  // window resizes (browser maximize/restore, sidebar toggles, zoom changes the
+  // CSS pixel size) - but ONLY while auto-fit still owns the zoom. Once the
+  // user zooms manually, resizes never override their chosen level.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (lastAutoFitZoom.current == null || !fabricRef.current || canvasDims.width === 0) return;
+        const container = canvasRef.current?.parentElement;
+        if (!container) return;
+        const cw = container.clientWidth - 32;
+        const ch = container.clientHeight - 32;
+        if (cw <= 0 || ch <= 0) return;
+        const fitScale = Math.min(cw / canvasDims.width, ch / canvasDims.height, 2);
+        if (Math.abs(fitScale - lastAutoFitZoom.current) < 0.005) return;
+        fabricRef.current.setZoom(fitScale);
+        fabricRef.current.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
+        fabricRef.current.requestRenderAll();
+        setZoom(fitScale);
+        lastAutoFitZoom.current = fitScale;
+      }, 150);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      clearTimeout(timer);
+    };
+  }, [canvasDims]);
 
   // Reset Canvas: replaces the old Reset Zoom button.
   // New takeoff (no hydration) → wipe to blank canvas + calibrate step.
@@ -4095,12 +4140,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const containerHeight = container.clientHeight - 32;
     const scaleX = containerWidth / canvasDims.width;
     const scaleY = containerHeight / canvasDims.height;
-    const scale = Math.min(scaleX, scaleY, 1); // never zoom in beyond 100%
+    // 2026-08-30: fit at the LARGEST size that fits (upscale to 2x allowed so
+    // small plans fill the screen; never blow up beyond 2x to limit blur).
+    const scale = Math.min(scaleX, scaleY, 2);
 
     fabricRef.current.setZoom(scale);
     fabricRef.current.viewportTransform = [scale, 0, 0, scale, 0, 0];
     fabricRef.current.requestRenderAll();
     setZoom(scale);
+    lastAutoFitZoom.current = scale; // auto-fit owns zoom again
   };
 
   // ── AI Takeoff: in-browser downscale before upload ────────────
@@ -5126,10 +5174,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 <button
                   onClick={handleCreateNewArea}
                   disabled={false}
-                  className="text-xs font-medium text-[#FF6B35] hover:text-orange-600"
+                  className="inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_12px_rgba(255,107,53,0.45)] transition hover:bg-orange-600 animate-pulse"
                   title="Create a new area"
                 >
-                  + New Area
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                  New Area
                 </button>
               </div>
               <div className="space-y-2">
