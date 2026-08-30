@@ -58,6 +58,9 @@ const contentLoaders: Record<string, () => Promise<{ default: React.ComponentTyp
   'construction-estimating-spreadsheet-alternative': () => import('./content/construction-estimating-spreadsheet-alternative'),
   'roofing-estimating-spreadsheet-vs-software': () => import('./content/roofing-estimating-spreadsheet-vs-software'),
   'simple-roofing-estimating-software': () => import('./content/simple-roofing-estimating-software'),
+  'how-to-measure-walls-cladding-from-plans': () => import('./content/how-to-measure-walls-cladding-from-plans'),
+  'how-to-measure-pdf-plans': () => import('./content/how-to-measure-pdf-plans'),
+  'how-to-do-cladding-takeoff': () => import('./content/how-to-do-cladding-takeoff'),
 };
 
 type Props = { params: Promise<{ slug: string }> };

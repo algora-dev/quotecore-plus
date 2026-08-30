@@ -693,6 +693,62 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'Is ChatGPT better than quoting software?', answer: 'It depends on the task. ChatGPT is excellent for drafting and one-off work. Quoting software is usually better for repeatable, structured documents that need precise editing, consistent fields and connected workflows.' },
     ],
   },
+  {
+    slug: 'how-to-measure-walls-cladding-from-plans',
+    category: 'digital-takeoffs',
+    title: 'How to Measure Walls & Cladding From Plans: Complete Takeoff Guide',
+    description:
+      'Step-by-step: measure wall and cladding areas from plans and elevations — scale check, gables, irregular walls, opening deductions, material zones. Free PDF takeoff tool included.',
+    date: '2026-08-30',
+    lastModified: '2026-08-30',
+    faqs: [
+      { question: 'How do I measure wall areas from plans?', answer: 'Calibrate the drawing scale from a known dimension, trace each wall or elevation as a polygon to get gross area, then trace windows and doors and subtract them for net area. A free tool like the QuoteCore+ Wall & Cladding Takeoff does the arithmetic on screen.' },
+      { question: 'How do I calculate cladding area from a drawing?', answer: 'Measure the gross wall area per elevation (including gables), deduct all window and door openings to get net area, then add your waste allowance (typically 5-10%) at the ordering stage.' },
+      { question: 'Do I include gables in wall area?', answer: 'Yes. Gables are cladding area. Calculate each gable as half base times height, or trace it as a triangle in a takeoff tool. Gables are the most commonly forgotten area in wall takeoffs.' },
+      { question: 'Should cladding be ordered from gross or net wall area?', answer: 'Net. Cladding only covers wall area minus openings, so order from net area plus waste. Paint and render are often priced from gross area because reveals still get coated.' },
+      { question: 'What drawings do I need for a wall takeoff?', answer: 'Elevations are the key drawings for cladding, plus floor plans for wall lengths, sections for build-ups, and the window/door schedule to cross-check opening deductions.' },
+      { question: 'Can I measure plans digitally for free?', answer: 'Yes. The QuoteCore+ Free Wall & Cladding Takeoff Tool lets you upload a plan image, calibrate the scale and trace wall areas, trims and openings free, with no signup.' },
+      { question: 'How do I handle multiple cladding materials on one elevation?', answer: 'Trace each material zone as its own area and name it (e.g. brick lower, weatherboard upper). Your takeoff then totals each material separately, which is what suppliers need for ordering.' },
+      { question: 'What is the difference between gross and net wall area?', answer: 'Gross wall area is the full elevation as drawn (width x height plus gables). Net wall area subtracts windows, doors and other openings. Keep both numbers - different materials use different baselines.' },
+    ],
+  },
+  {
+    slug: 'how-to-measure-pdf-plans',
+    category: 'digital-takeoffs',
+    title: 'How to Measure Anything From PDF Plans: Areas, Lengths & Quantities',
+    description:
+      'Measure areas, lengths and quantities directly from PDF construction plans — calibration, irregular shapes, opening deductions, elevations vs floor plans. Free online tool.',
+    date: '2026-08-30',
+    lastModified: '2026-08-30',
+    faqs: [
+      { question: 'Can I measure a PDF plan online for free?', answer: 'Yes. Export or screenshot the PDF sheet as an image, upload it to a free measurement tool like the QuoteCore+ plan takeoff, calibrate the scale from a known dimension, and trace areas and lengths on screen.' },
+      { question: 'How do I calibrate the scale on a PDF plan?', answer: 'Find a dimension you trust (a labelled dimension line or a standard door width), draw a calibration line along it, and enter the known length. Then sanity-check by measuring a second known dimension before continuing.' },
+      { question: 'How do I calculate area from a PDF drawing?', answer: 'Calibrate the scale, then trace the boundary of the area as a polygon - rectangles, L-shapes and irregular shapes all work by clicking around the boundary and closing the shape. The tool computes the area.' },
+      { question: 'How do I measure lengths on a plan?', answer: 'Draw a line along the route - a wall, fence, pipe run or path - and read the measurement at your calibrated scale. Multi-segment lines give total run lengths.' },
+      { question: 'Do I measure floors on the floor plan and walls on the elevations?', answer: 'Yes. Floor plans give horizontal quantities (floor and room areas, wall lengths); elevations give vertical quantities (wall areas, cladding zones, opening perimeters). Calibrate each sheet separately.' },
+      { question: 'Does screenshotting a PDF change the scale?', answer: 'No - as long as you do not crop or stretch the image, proportions are preserved exactly and one calibration covers the whole sheet. Cropping after calibrating does invalidate the scale.' },
+      { question: 'Is measuring plans digitally accurate?', answer: 'Yes, when calibrated correctly. Accuracy depends on zooming in when clicking vertices and verifying calibration against a second known dimension. The same method is used for professional digital takeoffs.' },
+    ],
+  },
+  {
+    slug: 'how-to-do-cladding-takeoff',
+    category: 'digital-takeoffs',
+    title: 'How to Do a Cladding Takeoff From Plans: Areas, Openings & Quantities',
+    description:
+      'Complete cladding takeoff guide: gross wall area, opening deductions, net cladding area, gables, material types, trims and waste. Do it free from your plans.',
+    date: '2026-08-30',
+    lastModified: '2026-08-30',
+    faqs: [
+      { question: 'How do I do a cladding takeoff?', answer: 'Measure gross wall area from each elevation (including gables), deduct windows and doors for net cladding area, separate mixed materials into zones, measure trims and battens as linear runs, then add waste and price each quantity.' },
+      { question: 'What is net cladding area?', answer: 'Gross wall area minus all openings (windows, doors, garage doors). Cladding is ordered from net area plus waste, not gross area.' },
+      { question: 'How much waste should I add for cladding?', answer: 'Typically 5-10% for weatherboard and composite boards, 7-10% for fibre cement sheet, 5-8% for metal sheet, 5% for trims and battens, and 3-5% for panelised systems. More short cuts means more waste.' },
+      { question: 'How do I convert cladding area to linear metres of board?', answer: 'Divide the net area (plus waste) by the board\u0027s effective coverage in m per m\u00b2 - effective width after laps, not total width. For example 46.3 m\u00b2 at 175 mm effective coverage is about 264 linear metres of board.' },
+      { question: 'Do I measure trims as areas or lengths?', answer: 'Lengths. Window and door trims run around the opening perimeter, corner trims run the corner height per corner, and cavity battens are vertical runs from batten spacing. All are linear measurements, not areas.' },
+      { question: 'Is a siding takeoff the same as a cladding takeoff?', answer: 'Yes - siding is the US term for cladding. The takeoff process is identical: gross elevation areas, opening deductions, material zones, linear trims and waste.' },
+      { question: 'Can I do a cladding takeoff free?', answer: 'Yes. The QuoteCore+ Free Wall & Cladding Takeoff Tool measures wall areas, trims, battens and openings from your plan or elevation images, free with no signup.' },
+      { question: 'What is a facade takeoff?', answer: 'A facade takeoff is the same measurement process applied to the full building envelope - all elevations, all materials including cladding, panels, trims and flashings - producing quantities for pricing the facade package.' },
+    ],
+  },
 ];
 
 /** Map slug -> BlogPostMeta for quick lookups. */

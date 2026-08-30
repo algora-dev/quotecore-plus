@@ -54,6 +54,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/takeoff-demo`, changeFrequency: 'monthly', priority: 0.8 },
     // Free roof takeoff tool (upload your own plan)
     { url: `${SITE_URL}/free-roof-takeoff`, changeFrequency: 'monthly', priority: 0.8 },
+    // Free wall & cladding takeoff tool (upload your own plan)
+    { url: `${SITE_URL}/free-cladding-takeoff`, changeFrequency: 'monthly', priority: 0.8 },
     // Resource hubs
     { url: `${SITE_URL}/resources/roofing-estimating`, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${SITE_URL}/resources/construction-quoting`, changeFrequency: 'weekly', priority: 0.7 },

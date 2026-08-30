@@ -39,6 +39,17 @@ const EXTRA_TOOLS: FreeTool[] = [
     aliases: ['roof measurement tool', 'plan measure', 'digital takeoff', 'measure my plan'],
     priority: 100,
   },
+  {
+    id: 'free-cladding-takeoff',
+    name: 'Free Wall & Cladding Takeoff',
+    url: '/free-cladding-takeoff',
+    shortDescription: 'Upload a wall or elevation plan, calibrate the scale and measure wall areas, cladding, trims, battens and openings directly on screen.',
+    categories: ['walls', 'cladding', 'takeoff', 'measurement'],
+    intents: ['measure walls from plan', 'measure cladding from elevation', 'wall takeoff', 'cladding takeoff', 'measure elevation', 'siding takeoff', 'measure facade'],
+    keywords: ['wall', 'cladding', 'siding', 'facade', 'elevation', 'measure', 'plan', 'drawing', 'takeoff', 'area', 'trim', 'batten', 'opening', 'calibrate'],
+    aliases: ['cladding takeoff tool', 'wall measurement tool', 'elevation measurer', 'siding takeoff'],
+    priority: 100,
+  },
 ];
 
 /** Finder/search enrichment for key tools (matched by slug). */

@@ -304,6 +304,11 @@ export default function FreeRoofTakeoffPage() {
             the right place - this is the Free Roof Takeoff tool.
           </li>
           <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <strong className="text-slate-900">I need to measure walls, cladding or façades from a plan.</strong> Use the{' '}
+            <Link href="/free-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Wall &amp; Cladding Takeoff Tool</Link>{' '}
+            - same workflow, wall and cladding components.
+          </li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
             <strong className="text-slate-900">I already have my measurements and need quantities.</strong> Use the{' '}
             <Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">roof takeoff builder</Link>{' '}
             or the{' '}
