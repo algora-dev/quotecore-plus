@@ -201,8 +201,9 @@ export function CladdingTakeoff() {
 
   if (stage.phase === 'takeoff') {
     return (
-      <div className="w-[125%]">
-        <Workstation
+      <div className="mx-auto max-w-5xl px-4">
+        <div className="w-[125%] -ml-[12.5%]">
+          <Workstation
           key={stage.run}
           workspaceSlug="takeoff-tool"
           quote={TOOL_QUOTE}
@@ -221,7 +222,8 @@ export function CladdingTakeoff() {
             trackFreeToolEvent('finish');
             setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs });
           }}
-        />
+                />
+        </div>
       </div>
     );
   }
