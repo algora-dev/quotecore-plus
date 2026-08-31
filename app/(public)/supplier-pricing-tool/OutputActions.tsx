@@ -114,7 +114,7 @@ export function OutputActions({ measureSet, catalog }: {
 
   function captureLead() {
     if (!leadEmail.trim()) return;
-    addLead({ email: leadEmail.trim(), name: leadName.trim() });
+    addLead({ email: leadEmail.trim(), name: leadName.trim() }, supplierCfg.slug);
     setLeadDone(true);
     setLeadOpen(false);
   }
@@ -124,7 +124,7 @@ export function OutputActions({ measureSet, catalog }: {
     const before = user?.email;
     await signInWithGoogle();
     if (before == null && user?.email) {
-      addLead({ email: user.email, name: user.email?.split('@')[0] ?? '' });
+      addLead({ email: user.email, name: user.email?.split('@')[0] ?? '' }, supplierCfg.slug);
       setLeadDone(true);
       setLeadOpen(false);
     }

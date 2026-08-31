@@ -1,0 +1,56 @@
+// Supplier definition registry. Adding a supplier demo:
+//   1. Copy burton-roofing.ts -> <slug>.ts, change values + catalog.
+//   2. Import it here and add to SUPPLIER_DEFS.
+// Route: /supplier-pricing-tool/<slug> (default route = DEFAULT_SUPPLIER_SLAG).
+// The tool components never change - everything renders from the def.
+
+import { BURTON_ROOFING } from './burton-roofing';
+import type { SupplierProduct } from '../types';
+
+/** Theme palette that drives the scoped CSS remap in the tool shell. */
+export interface SupplierTheme {
+  primary: string;
+  primaryHover: string;
+  accent: string;
+  accentHover: string;
+  border: string;
+  borderHover: string;
+  washAlpha: number;
+  glowAlpha: number;
+}
+
+export interface SupplierDefinition {
+  slug: string;
+  name: string;
+  tagline: string;
+  currency: string;
+  logoUrl: string | null;
+  logoDarkUrl: string | null;
+  brandColor: string;
+  theme: SupplierTheme;
+  poweredBy: boolean;
+  discountPct: number;
+  tradeRequiresLogin: boolean;
+  features: {
+    login: boolean;
+    adminPanel: boolean;
+    quoteCoreConnect: boolean;
+    convertToQuote: boolean;
+    emailCapture: boolean;
+  };
+  products: SupplierProduct[];
+}
+
+export const SUPPLIER_DEFS: SupplierDefinition[] = [
+  BURTON_ROOFING as unknown as SupplierDefinition,
+];
+
+export const DEFAULT_SUPPLIER_SLUG = 'burton-roofing';
+
+export function getSupplierDef(slug: string | undefined | null): SupplierDefinition {
+  return SUPPLIER_DEFS.find(d => d.slug === slug) ?? SUPPLIER_DEFS.find(d => d.slug === DEFAULT_SUPPLIER_SLUG)!;
+}
+
+export function supplierExists(slug: string): boolean {
+  return SUPPLIER_DEFS.some(d => d.slug === slug);
+}

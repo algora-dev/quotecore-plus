@@ -80,7 +80,7 @@ export function PortalFlow() {
   // supplier config allows it; anonymous users always see baseline prices.
   // When the login feature is OFF nobody can log in, so trade-requires-login
   // can never be satisfied - treat trade pricing as public in that case.
-  const { config } = useSupplierConfig();
+  const { config, basePath } = useSupplierConfig();
   const { user } = useFreeToolsAuth();
   const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
   const catalog = useMemo<SupplierProduct[]>(() =>
@@ -116,9 +116,9 @@ export function PortalFlow() {
     if (typeof window === 'undefined') return;
     const slug = stageSlug(step, entryMode, activeGroupKey);
     if (window.location.hash !== slug) {
-      window.history.replaceState(null, '', `/supplier-pricing-tool${slug}`);
+      window.history.replaceState(null, '', `${basePath}${slug}`);
     }
-  }, [step, entryMode, activeGroupKey]);
+  }, [step, entryMode, activeGroupKey, basePath]);
 
   function reset() {
     setEntryMode(null);

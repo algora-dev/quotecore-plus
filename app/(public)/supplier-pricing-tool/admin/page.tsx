@@ -6,29 +6,43 @@
 // demo stand-in for the production supplier self-service admin; the read
 // API is identical so the swap later is backend-only.
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import type { SupplierProduct } from '../types';
 import { GROUP_DEFS } from '../types';
 import {
   defaultConfig, readStoredConfig, resetStoredConfig, tradeUnitPrice,
-  useSupplierConfig, writeStoredConfig, readLeads, type SupplierConfig,
+  SupplierConfigProvider, useSupplierConfig, writeStoredConfig, readLeads,
+  type SupplierConfig,
 } from '../supplierConfig';
+import { DEFAULT_SUPPLIER_SLUG, getSupplierDef } from '../supplierDefs';
 
 const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
 export default function SupplierAdminPage() {
-  const { config: live } = useSupplierConfig();
-  const [cfg, setCfg] = useState<SupplierConfig>(defaultConfig);
+  return (
+    <Suspense fallback={<main className="min-h-screen flex items-center justify-center text-sm text-slate-400">Loading admin...</main>}>
+      <AdminPage />
+    </Suspense>
+  );
+}
+
+function AdminPage() {
+  // supplier selection via ?supplier=<slug> - defaults to Burton (dev build)
+  const search = useSearchParams();
+  const slug = getSupplierDef(search.get('supplier')).slug;
+  const { config: live, basePath } = useSupplierConfig();
+  const [cfg, setCfg] = useState<SupplierConfig>(() => defaultConfig(slug));
   const [loaded, setLoaded] = useState(false);
   const [saved, setSaved] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [leads, setLeads] = useState<ReturnType<typeof readLeads>>([]);
 
   useEffect(() => {
-    setCfg(readStoredConfig() ?? defaultConfig());
+    setCfg(readStoredConfig(slug) ?? defaultConfig(slug));
     setLoaded(true);
-    const loadLeads = () => setLeads(readLeads());
+    const loadLeads = () => setLeads(readLeads(slug));
     loadLeads();
     window.addEventListener('qc-spt-leads-changed', loadLeads);
     return () => window.removeEventListener('qc-spt-leads-changed', loadLeads);
@@ -60,8 +74,8 @@ export default function SupplierAdminPage() {
   }
 
   function resetAll() {
-    resetStoredConfig();
-    setCfg(defaultConfig());
+    resetStoredConfig(slug);
+    setCfg(defaultConfig(slug));
     setDirty(false);
   }
 

@@ -298,9 +298,9 @@
 - [ ] Dropdown option label shows the pitched value (68.2 m², pitch 30°)
 - [ ] Final quantities/costs unchanged vs before the fix (same totals, only display differs)
 
-**D. Canvas sizing (wide = `6419e08d` live; TALLER 20% = LOCAL ONLY, not live yet)**
+**D. Canvas sizing (wide = `6419e08d`, taller = `c8103e87`, both live)**
 - [ ] Wide: main app takeoff, /free-roof-takeoff, /free-cladding-takeoff and supplier tool canvases extend ~125% width
-- [ ] Live check (after next push): all four canvases ~20% taller, less scrolling before the plan fits
+- [ ] Taller: all four canvases ~20% taller, less scrolling before the plan fits (incl. cavity-battens-area batch, `c8103e87`)
 - [ ] Main app fit-to-screen: plan auto-fits largest size (up to 2x); resize browser window -> plan re-fits; manual zoom buttons stop auto re-fit
 
 **E. Main app UI (fc36a8f4)**
@@ -523,3 +523,5 @@
 - [x] Green "find your takeoff in Quotes -> Drafts" banner shows on components page/dashboard, dismissable
 - [x] Quote builder: areas pitched, components per-area/per-entry, final incl-waste values + spec-rate prices
 - [ ] /supplier-pricing-tool: Burton branding (logo + teal #012B39), GBP prices; pick CUPA slate on Roof Areas -> later groups filter to slate-compatible, CUPA Slate/Manthorpe items flagged Recommended, defaults pre-ticked; pick Marley Edgemere tile -> filters flip to tile + Marley Edgemere family
+
+- [ ] /supplier-pricing-tool/[supplierSlug]: add a supplier def in supplierDefs, confirm /supplier-pricing-tool/<slug> renders that branding + catalog (Burton = default route unchanged)
