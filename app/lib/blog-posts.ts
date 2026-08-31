@@ -54,6 +54,51 @@ export interface BlogPostMeta {
 
 export const BLOG_POSTS: BlogPostMeta[] = [
   {
+    slug: 'roof-measurements-to-quote',
+    category: 'roofing-estimating',
+    title: 'Roof Measurements to Quote: The Roofing Path From Numbers to Price',
+    description:
+      'Turn roof measurements into a priced quote: the areas, lines and pitch you need, the four conversions from measurement to price, and a free tool that does them for you.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: 'How do I turn roof measurements into a quote?', answer: 'Convert each area measurement into material quantities using coverage and waste rules, convert each lineal measurement (ridges, valleys, barges) into lineal components, add labour, apply your margin, then present the result as a quote document. The free Measurement to Quote Tool does these conversions from your entered measurements.' },
+      { question: 'Does roof pitch change the quote?', answer: 'Yes. Pitch multiplies the flat (plan) area to give the true roof surface area, and can affect labour difficulty too. Any measurement-to-price system you use should apply pitch per roof area, not as one global number - different faces often have different pitches.' },
+      { question: 'Can I price a roof from measurements without software?', answer: 'You can - a spreadsheet with the right formulas will produce numbers. The risks are maintenance, re-entry of the same data into quotes and orders, and inconsistent results between jobs. Free tools remove those risks at the same price as the spreadsheet.' },
+      { question: 'Is the Measurement to Quote Tool really free?', answer: 'Yes - enter measurements, price them, print or PDF the result, no account needed. Creating a free account lets you save results and convert them into editable quotes in QuoteCore+.' },
+    ],
+  },
+  {
+    slug: 'takeoff-to-quote-workflow',
+    category: 'digital-takeoffs',
+    title: 'From Takeoff to Quote: The End-to-End Workflow',
+    description:
+      'How a roof takeoff becomes a priced quote without re-entering data: plan, takeoff, components, calculation, quote, order and invoice - one connected path with no copy-paste.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: 'Does QuoteCore+ turn a takeoff into a quote automatically?', answer: 'A takeoff with components attached produces calculated quantities and prices for the whole job. The quote document is generated from that same data - you review, adjust presentation, and send. No re-entry between takeoff and quote.' },
+      { question: 'Can I go straight from a takeoff to a material order?', answer: 'Yes. Once a quote is accepted, it converts into a material order using the same calculated quantities - and later into an invoice. The job data is entered once and reused downstream.' },
+      { question: 'Do I have to draw the plan myself?', answer: 'No. AI Scan Assist can propose the roof geometry from an uploaded plan, which you then verify and adjust. A full manual drawing path also exists, and you can mix both on the same plan.' },
+      { question: 'What if I have measurements but no plan?', answer: 'Use the site-measurement path instead: enter your measurements directly and attach components - see our Roof Measurements to Quote guide. A plan is optional, not required.' },
+    ],
+  },
+  {
+    slug: 'import-price-list-csv-to-components',
+    category: 'quotecore-guides',
+    title: 'Import a Price List CSV Into Your Quoting Software',
+    description:
+      'Stop re-typing supplier price lists. How to import a CSV price list as a catalogue and convert it into reusable, calculating components - free up to 7 components, full catalogues in QuoteCore+.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: "Can I import my supplier's price list CSV?", answer: 'Yes. Supplier catalogues import from CSV into QuoteCore+, and catalogue rows convert into reusable components with the Catalogue to Component Converter. If your supplier publishes a catalogue on the platform, you can pull it directly without handling files.' },
+      { question: 'How many components can I convert at once?', answer: 'The free version of the converter handles up to 7 components at a time. QuoteCore+ accounts support larger batches for full-catalogue imports.' },
+      { question: 'Do supplier price updates flow through?', answer: 'Catalogue data is imported into your account, so you update prices where they live - the catalogue - and re-convert or update as needed. Historical quotes keep their original pricing, so past jobs stay explainable.' },
+      { question: 'Can I use my own products, not just supplier lists?', answer: 'Yes. Your own products, labour rates and waste rules become your own Smart Components - the import path is the same, the data source is just your list instead of a supplier\u2019s.' },
+    ],
+  },
+  {
     slug: 'custom-roofing-quoting-software',
     category: 'comparisons',
     title: 'Custom Roofing Software: Do You Need It Built or Configured?',
