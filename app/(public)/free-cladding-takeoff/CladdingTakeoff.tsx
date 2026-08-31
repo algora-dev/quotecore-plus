@@ -201,7 +201,7 @@ export function CladdingTakeoff() {
 
   if (stage.phase === 'takeoff') {
     return (
-      <div className="w-[125%] -ml-[12.5%]">
+      <div className="w-[125%]">
         <Workstation
           key={stage.run}
           workspaceSlug="takeoff-tool"

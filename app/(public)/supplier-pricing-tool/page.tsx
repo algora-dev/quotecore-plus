@@ -88,6 +88,12 @@ function ThemeStyle() {
       .spt-scope .focus\\:border-blue-500:focus { border-color: ${t.accent}; }
       .spt-scope .focus\\:border-blue-400:focus { border-color: ${t.accent}; }
       .spt-scope .shadow-\\[0_0_16px_rgba\\(37\\,99\\,235\\,0\\.5\\)\\] { box-shadow: 0 0 16px rgba(${hexToRgb(t.primary)}, ${glow}); }
+      .spt-scope .hover\\:shadow-\\[0_0_12px_rgba\\(255\\,107\\,53\\,0\\.4\\)\\]:hover { box-shadow: 0 0 12px rgba(${hexToRgb(t.accent)}, 0.45); }
+      .spt-scope .pill-shimmer::before {
+        background: linear-gradient(90deg, transparent 0%, transparent 40%, ${t.accent} 50%, transparent 60%, transparent 100%);
+        background-size: 200% 100%;
+        background-repeat: no-repeat;
+      }
     `}</style>
   );
 }
