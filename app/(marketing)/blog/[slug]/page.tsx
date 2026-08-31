@@ -11,6 +11,7 @@ import { BLOG_POST_MAP } from '@/app/lib/blog-posts';
 
 // Content imports - keep inline (page-specific dynamic imports)
 const contentLoaders: Record<string, () => Promise<{ default: React.ComponentType }>> = {
+  'custom-roofing-quoting-software': () => import('./content/custom-roofing-quoting-software'),
   'quotecore-plus-reviews': () => import('./content/quotecore-plus-reviews'),
   'quotecore-plus-vs-quotesmith': () => import('./content/quotecore-plus-vs-quotesmith'),
   'roofing-quoting-software-uk': () => import('./content/roofing-quoting-software-uk'),

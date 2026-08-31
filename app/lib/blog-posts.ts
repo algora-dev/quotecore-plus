@@ -54,6 +54,21 @@ export interface BlogPostMeta {
 
 export const BLOG_POSTS: BlogPostMeta[] = [
   {
+    slug: 'custom-roofing-quoting-software',
+    category: 'comparisons',
+    title: 'Custom Roofing Software: Do You Need It Built or Configured?',
+    description:
+      'Custom roofing software vs a configurable platform: a decision table and framework for whether you need a bespoke build or software that uses your own pricing, labour and waste rules.',
+    date: '2026-08-31',
+    lastModified: '2026-08-31',
+    faqs: [
+      { question: 'Is QuoteCore+ custom software?', answer: "It's configurable software. The platform is purpose-built for roofing estimating and commercial workflows, but the content — your components, products, prices, labour, waste rules and documents — is entirely yours. That gets you the fit of custom software without funding a from-scratch build." },
+      { question: 'What does custom roofing software cost vs QuoteCore+?', answer: 'QuoteCore+ is a subscription from $19/month. A bespoke roofing platform is a five-to-six figure development project. If configuration solves your problem, that difference stays in your pocket.' },
+      { question: 'Can QuoteCore+ be customised further if I need something specific?', answer: 'Configuration covers products, pricing, labour, waste, documents and workflow. Requirements beyond that — portals, unique integrations, standalone applications — are handled by our development partner T3 Labs.' },
+      { question: 'Who is T3 Labs?', answer: 'T3 Labs is the product studio behind QuoteCore+. They build custom estimating, pricing, portal and workflow software for businesses whose requirements genuinely exceed what existing platforms offer.' },
+    ],
+  },
+  {
     slug: 'price-a-job-from-measurements',
     category: 'construction-quoting',
     title: 'How to Price a Job From Your Measurements',
