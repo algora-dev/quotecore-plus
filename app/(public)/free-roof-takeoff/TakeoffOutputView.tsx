@@ -343,7 +343,7 @@ export function TakeoffOutputView({
       const appOrigin = window.location.hostname.endsWith('.quote-core.com')
         ? 'https://app.quote-core.com'
         : '';
-      window.location.href = `${appOrigin}/signup?ref=${isCladding ? 'free-cladding-takeoff' : 'free-roof-takeoff'}&draft=${json.id}`;
+      window.open(`${appOrigin}/signup?ref=${isCladding ? 'free-cladding-takeoff' : 'free-roof-takeoff'}&draft=${json.id}`, '_blank', 'noopener');
     } catch {
       setSaveState('error');
     }
@@ -485,6 +485,8 @@ export function TakeoffOutputView({
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href={convertToQuoteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
             >
               Convert to quote - free quote generator
@@ -494,7 +496,7 @@ export function TakeoffOutputView({
               disabled={saveState === 'saving' || saveState === 'saved'}
               className="inline-flex items-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
             >
-              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - redirecting...' : 'Save my takeoff - it comes with you'}
+              {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? 'Saved - sign up opened in a new tab' : 'Save my takeoff - it comes with you'}
             </button>
             <button
               onClick={() => window.print()}
