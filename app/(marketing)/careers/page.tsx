@@ -171,6 +171,10 @@ export default function CareersPage() {
               workflow solutions arm building high-ticket projects for construction businesses. Uncapped commission,
               your strategy, real products already live and in production.
             </p>
+            <p className="mt-4 text-base leading-7 text-zinc-600">
+              Sell QuoteCore+, T3 Labs solutions, or focus on the type of customer you already understand
+              best. There is no requirement to cover everything.
+            </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
                 href="#apply"
