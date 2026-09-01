@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createQuoteWithDetails } from './actions';
 import { FileUploader } from '@/app/components/FileUploader';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { createClient } from '@/app/lib/supabase/client';
 import { checkStorageQuota, saveFileMetadata } from '@/app/lib/files/storage-actions';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
@@ -70,6 +71,7 @@ export function QuoteDetailsForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [customerName, setCustomerName] = useState('');
+  const pdfPicker = usePdfPagePicker();
   const [jobName, setJobName] = useState('');
   const [templateId, setTemplateId] = useState('');
   // Entry mode: manual (traditional builder), digital (takeoff canvas), or
@@ -108,7 +110,10 @@ export function QuoteDetailsForm({
     }
   }, [searchParams, templates]);
 
-  async function handlePlanUpload(file: File) {
+  async function handlePlanUpload(rawFile: File) {
+    // PDF plans: convert selected page to PNG client-side before upload.
+    const file = await pdfPicker.convertIfNeeded(rawFile);
+    if (!file) return; // user cancelled the page picker
     // Gerald audit H-05: the client no longer has direct INSERT on the
     // private bucket. Ask the server to mint a signed upload URL after
     // it has verified company context + tier + storage quota.
@@ -655,6 +660,9 @@ export function QuoteDetailsForm({
         description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. (${effectivePlanCode} plan)`}
         recommendedPlan={effectivePlanCode === 'trial' ? 'growth' : 'pro'}
       />
+
+      {/* PDF page picker modal (client-side pdfjs) */}
+      {pdfPicker.modal}
     </form>
   );
 }

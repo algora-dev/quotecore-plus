@@ -11,6 +11,7 @@ import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
 import type { TakeoffHydrationData } from './actions';
@@ -336,6 +337,7 @@ export function TakeoffWorkstation({
   // - target = 'new' creates a new roof area + new page with the uploaded plan
   //   (mirrors FilesManager Option C: new area, new plan).
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
+  const pdfPicker = usePdfPagePicker();
   const [uploadAnotherTarget, setUploadAnotherTarget] = useState<'existing' | 'new'>('existing');
   const [uploadAnotherAreaId, setUploadAnotherAreaId] = useState<string>('');
   const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
@@ -5076,12 +5078,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                       type="file"
                       accept="image/*,application/pdf"
                       className="hidden"
-                      onChange={e => {
-                        const f = e.target.files?.[0] || null;
-                        if (f && f.size > 10485760) {
+                      onChange={async e => {
+                        const raw = e.target.files?.[0] || null;
+                        e.target.value = '';
+                        if (!raw) return;
+                        if (raw.size > 10485760) {
                           setUploadAnotherError('File exceeds 10 MB limit.');
                           return;
                         }
+                        const f = await pdfPicker.convertIfNeeded(raw);
+                        if (!f) return;
                         setUploadAnotherFile(f);
                         setUploadAnotherError(null);
                       }}
@@ -6536,6 +6542,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           </button>
         </div>
       )}
+
+      {/* PDF page picker modal (client-side pdfjs) */}
+      {pdfPicker.modal}
 
       {/* AI Takeoff: results modal */}
       {aiResults && aiScanRaw && (

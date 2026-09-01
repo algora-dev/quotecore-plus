@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { checkStorageQuota, saveFileMetadata, getQuoteFileSignedUrl } from '@/app/lib/files/storage-actions';
 import { mintQuoteDocumentUploadUrl } from '@/app/lib/files/signed-upload';
 import { deleteFile } from './actions-files';
@@ -76,8 +77,12 @@ export function FilesManager({
   const [newPlanFile, setNewPlanFile] = useState<File | null>(null);
   const [isStartingTakeoff, setIsStartingTakeoff] = useState(false);
   const [takeoffError, setTakeoffError] = useState<string | null>(null);
+  const pdfPicker = usePdfPagePicker();
 
-  async function handlePlanUpload(file: File) {
+  async function handlePlanUpload(rawFile: File) {
+    // PDF plans: convert selected page to PNG client-side before upload.
+    const file = await pdfPicker.convertIfNeeded(rawFile);
+    if (!file) return; // user cancelled the page picker
     const hasQuota = await checkStorageQuota(companyId, file.size);
     if (!hasQuota) {
       throw new Error('Storage quota exceeded. Please upgrade your plan.');
@@ -439,6 +444,10 @@ export function FilesManager({
       pending={deleting !== null}
       onCancel={() => { if (deleting === null) setPendingDelete(null); }}
       onConfirm={confirmDelete}
-    /></>
+    />
+
+    {/* PDF page picker modal (client-side pdfjs) */}
+    {pdfPicker.modal}
+    </>
   );
 }
