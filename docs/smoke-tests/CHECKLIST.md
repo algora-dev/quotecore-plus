@@ -525,3 +525,10 @@
 - [ ] /supplier-pricing-tool: Burton branding (logo + teal #012B39), GBP prices; pick CUPA slate on Roof Areas -> later groups filter to slate-compatible, CUPA Slate/Manthorpe items flagged Recommended, defaults pre-ticked; pick Marley Edgemere tile -> filters flip to tile + Marley Edgemere family
 
 - [ ] /supplier-pricing-tool/[supplierSlug]: add a supplier def in supplierDefs, confirm /supplier-pricing-tool/<slug> renders that branding + catalog (Burton = default route unchanged)
+
+### PDF UPLOAD (main 2ef75531, 2026-09-01)
+- [ ] App takeoff: upload multi-page PDF (12+ MB) -> page picker opens -> pick page -> converts to PNG -> calibrates + measures
+- [ ] Free roof takeoff + cladding takeoff: same PDF flow works
+- [ ] Supplier pricing tool: PDF plan upload -> pick page -> measure
+- [ ] Image upload still capped at 10 MB; PDF accepted up to 50 MB
+- [ ] Password-protected PDF shows friendly screenshot-instead message (no dead end)
