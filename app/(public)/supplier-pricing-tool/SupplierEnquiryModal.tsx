@@ -8,6 +8,7 @@
 
 import { useRef, useState } from 'react';
 import { priceOutput, fmt } from './pricing';
+import { useSupplierConfig, toolUrls } from './supplierConfig';
 
 type Intent = 'detailed_quote' | 'order_request' | 'pricing_question' | 'general_enquiry';
 
@@ -45,6 +46,8 @@ export function SupplierEnquiryModal({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { config: supplierCfg } = useSupplierConfig();
+  const urls = toolUrls(supplierCfg);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const emailValid = emailRegex.test(email);
@@ -109,11 +112,11 @@ export function SupplierEnquiryModal({
       for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
-        const uploadRes = await fetch('/api/free-tools/supplier-enquiry', { method: 'PUT', body: formData });
+        const uploadRes = await fetch(urls.enquiryApi, { method: 'PUT', body: formData });
         const uploadData = await uploadRes.json();
         if (uploadData.ok && uploadData.fileId) attachmentIds.push(uploadData.fileId);
       }
-      const res = await fetch('/api/free-tools/supplier-enquiry', {
+      const res = await fetch(urls.enquiryApi, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

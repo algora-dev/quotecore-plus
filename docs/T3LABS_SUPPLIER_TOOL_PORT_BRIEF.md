@@ -68,12 +68,27 @@ The live dev build stays at https://www.quote-core.com/supplier-pricing-tool
 t3labs. When a supplier BUYS, we fork the codebase with their config baked in
 and host it for them - separate deployment, their domain.
 
-## Open items on my side
+## Open items / recommended port settings
 
-- `/supplier-pricing-tool/quote` (convert-to-quote) and `/signup` handoff
-  links still point at the quote-core.com app - fine for the dev version;
-  Ron's port should disable `convertToQuote`/`quoteCoreConnect` flags or
-  repoint those CTAs (they are config-driven, so just flags/URLs).
-- Supplier enquiry API (`/api/free-tools/supplier-enquiry`) posts to the
-  QuoteCore+ backend - in the port either repoint to a t3labs endpoint or
-  disable the enquiry modal via config.
+**Keep ALL feature flags ON** - the goal is a full-capability showcase:
+
+- `convertToQuote`: fully self-contained. The convert button opens the
+  tool's own branded quote builder at `/supplier-pricing-tool/quote`
+  (per-line pricing + markup/margin, supplier branding, no backend).
+  Works on t3labs.tech with zero changes. No redirect to the QuoteCore+
+  free quote generator is needed.
+- `quoteCoreConnect` ("Continue in QuoteCore+"): now config-driven. Set in
+  the supplier def:
+  ```ts
+  urls: {
+    signup: 'https://www.quote-core.com/signup',
+    draftsApi: 'https://www.quote-core.com/api/free-tools/drafts',
+    enquiryApi: 'https://www.quote-core.com/api/free-tools/supplier-enquiry',
+  }
+  ```
+  The CTA gracefully falls back to a plain signup link if the cross-origin
+  draft save is blocked (no CORS). To get the full draft handoff working
+  cross-domain, QuoteCore+ adds CORS headers on those two API routes - ask
+  Gavin when the port is live.
+- `emailCapture`: localStorage-based, self-contained - works as-is. Leads
+  surface in the demo admin panel.

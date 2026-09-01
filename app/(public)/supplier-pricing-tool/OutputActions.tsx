@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import type { MeasurementSet, SupplierProduct } from './types';
 import { priceOutput, fmt } from './pricing';
-import { useSupplierConfig, addLead } from './supplierConfig';
+import { useSupplierConfig, addLead, toolUrls } from './supplierConfig';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { GROUP_DEFS, groupPitchedTotal, CUSTOM_BASIS_UNIT } from './types';
 import { SupplierEnquiryModal } from './SupplierEnquiryModal';
@@ -15,7 +15,7 @@ import { SupplierEnquiryModal } from './SupplierEnquiryModal';
 /** Save the takeoff output as a draft quote handoff (areas + component groups
  *  with measured quantities and pitches). Component persistence is deliberately
  *  skipped - this tool prices supplier products, not user components. */
-async function saveDraftQuote(measureSet: MeasurementSet): Promise<string | null> {
+async function saveDraftQuote(measureSet: MeasurementSet, draftsApi: string): Promise<string | null> {
   const payload = {
     tool: 'supplier-pricing-tool',
     unitSystem: 'metric' as const,
@@ -103,6 +103,7 @@ export function OutputActions({ measureSet, catalog }: {
   const [leadDone, setLeadDone] = useState(false);
   const [leadName, setLeadName] = useState('');
   const [leadEmail, setLeadEmail] = useState('');
+  const urls = toolUrls(supplierCfg);
 
   useEffect(() => {
     if (supplierCfg.features.emailCapture && !leadDone) {
@@ -136,13 +137,14 @@ export function OutputActions({ measureSet, catalog }: {
     setSaving(true);
     setSaveError(false);
     try {
-      const id = await saveDraftQuote(measureSet);
-      if (!id) {
-        setSaveError(true);
-        return;
+      const id = await saveDraftQuote(measureSet, urls.draftsApi);
+      // Cross-origin (T3 Labs port) without CORS: skip the draft handoff and
+      // still send the user to signup so the CTA never dead-ends.
+      if (id) {
+        window.open(`${urls.signup}?ref=supplier-pricing-tool&draft=${id}`, '_blank', 'noopener');
+      } else {
+        window.open(`${urls.signup}?ref=supplier-pricing-tool`, '_blank', 'noopener');
       }
-      // New tab: the output page stays behind so the user can come back
-      window.open(`/signup?ref=supplier-pricing-tool&draft=${id}`, '_blank', 'noopener');
     } catch {
       setSaveError(true);
     } finally {

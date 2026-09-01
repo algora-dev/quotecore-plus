@@ -50,7 +50,24 @@ export interface SupplierConfig {
   tradeRequiresLogin: boolean;
   /** feature blocks - flipping one off never breaks the others */
   features: SupplierFeatures;
+  /** external endpoint overrides - defaults are same-origin relative paths.
+   *  Set absolute URLs (e.g. https://www.quote-core.com/...) when the tool
+   *  is embedded on another domain (T3 Labs port). */
+  urls?: {
+    signup?: string;
+    draftsApi?: string;
+    enquiryApi?: string;
+  };
   products: SupplierProduct[];
+}
+
+/** Resolved tool URLs - def overrides fall back to same-origin defaults. */
+export function toolUrls(cfg: SupplierConfig) {
+  return {
+    signup: cfg.urls?.signup ?? '/signup',
+    draftsApi: cfg.urls?.draftsApi ?? '/api/free-tools/drafts',
+    enquiryApi: cfg.urls?.enquiryApi ?? '/api/free-tools/supplier-enquiry',
+  };
 }
 
 export function defaultConfig(slug: string = DEFAULT_SUPPLIER_SLUG): SupplierConfig {

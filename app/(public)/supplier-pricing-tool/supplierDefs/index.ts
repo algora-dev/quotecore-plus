@@ -39,6 +39,14 @@ export interface SupplierDefinition {
     emailCapture: boolean;
   };
   products: SupplierProduct[];
+  /** external endpoint overrides - defaults are same-origin relative paths.
+   *  Set absolute URLs (e.g. https://www.quote-core.com/...) when the tool
+   *  is embedded on another domain (T3 Labs port). */
+  urls?: {
+    signup?: string;
+    draftsApi?: string;
+    enquiryApi?: string;
+  };
 }
 
 export const SUPPLIER_DEFS: SupplierDefinition[] = [
