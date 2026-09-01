@@ -29,7 +29,15 @@ const faqs = [
   },
   {
     q: "How much can I earn?",
-    a: "It depends on the role and your agreed terms. Subscription sales earn a recurring share of monthly revenue, which compounds as your customer base grows. Custom software referrals are high-ticket one-off projects, so a single closed deal can pay significantly more. Exact commission rates are agreed before you start.",
+    a: "It depends on the role and your agreed terms. Subscription sales earn a recurring share of monthly revenue, which compounds as your customer base grows. Custom software referrals are high-ticket projects — and depending on how the deal is structured, they can pay a one-off commission, a recurring share of monthly payments, or a mix of both. Exact rates are agreed before you start.",
+  },
+  {
+    q: "How do customers pay for T3 Labs custom projects?",
+    a: "Flexibly — there is no single pricing model. A customer can pay a larger upfront fee with lower ongoing monthly hosting and support costs, or pay less upfront with higher monthly payments for an agreed period. If a prospect understands the value but does not want to risk a lot of capital to find out if it works, the payment structure can usually be shaped around that. It makes these deals far easier to close.",
+  },
+  {
+    q: "Can I earn recurring commission on custom projects, not just one-off payments?",
+    a: "Yes — it depends on how the deal is structured. You might take a smaller share of the upfront payment and a larger share of the ongoing monthly revenue, or a larger one-off payment with little or no recurring. Your commission structure can be matched to the deal and to how you prefer to earn.",
   },
   {
     q: "Do I need sales experience?",
@@ -112,6 +120,8 @@ const roles = [
       "High commission per closed project",
       "Target market: construction & trade businesses lagging on tech — also SMBs, manufacturers, service businesses",
       "You find and qualify the opportunity — T3 Labs scopes, sells and builds",
+      "Flexible customer payment options — more upfront and less monthly, or the reverse",
+      "Your commission can follow the deal: bigger one-off, or recurring share of monthly payments",
       "Ideal if you have a B2B or trade network or consultative sales background",
     ],
   },
@@ -225,7 +235,10 @@ export default function CareersPage() {
                   just to get through the day. We replace that with one effective, cost-efficient solution that helps
                   them sell more of their own product or service while reducing their staff&apos;s workload — so they
                   scale without hiring. Projects start in the thousands. One qualified, closed referral can be worth
-                  more than a month of subscription sales.
+                  more than a month of subscription sales. Payment structures are flexible too: customers can pay more
+                  upfront with lower ongoing monthly costs, or less upfront with higher monthly payments for an agreed
+                  period — so if capital risk is the only thing blocking a sale, the deal can usually be shaped around
+                  the customer.
                 </p>
               </div>
             </div>
