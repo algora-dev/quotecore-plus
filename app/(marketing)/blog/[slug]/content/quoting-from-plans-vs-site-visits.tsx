@@ -50,7 +50,7 @@ export default function Post() {
       <h2>What plan-based pricing needs from your workflow</h2>
       <p>Quoting from plans is only faster if the measurement-to-price path is connected. The moving parts:</p>
       <ul>
-        <li><strong>Digital measurement from the PDF</strong> — scale-verified areas and lengths in real units, not a printed plan and a scale rule.</li>
+        <li><strong>Digital measurement from the PDF</strong> — upload the whole multi-page PDF (council plans included), pick the page, and get scale-verified areas and lengths in real units, not a printed plan and a scale rule.</li>
         <li><strong>Reusable pricing rules</strong> — your material, labour and waste logic saved once and applied to every new set of measurements.</li>
         <li><strong>Quote output from the same data</strong> — a client-facing PDF quote generated from the takeoff, with no re-typing.</li>
       </ul>

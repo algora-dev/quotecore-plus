@@ -168,7 +168,7 @@ export default function AIScanAssistPage() {
             <h2 className="text-2xl font-semibold sm:text-3xl">How it works</h2>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                { num: "1", title: "Upload plan", text: "Upload a roof plan PDF or image. AI Scan Assist starts from the same upload as manual takeoff." },
+                { num: "1", title: "Upload plan", text: "Upload a plan image or a multi-page PDF (e.g. council plans) and pick the page you need - it is converted to an image automatically. AI Scan Assist starts from the same upload as manual takeoff." },
                 { num: "2", title: "AI identifies elements", text: "AI detects roof areas, ridges, hips, valleys, barges and spouting. Each is a placeholder." },
                 { num: "3", title: "Verify and swap", text: "Adjust measurements, swap any placeholder to a saved Smart Component. Quantities, labour, waste and pricing recalculate automatically." },
                 { num: "4", title: "Add and carry to quote", text: "Add any non-detected components. Everything carries directly into your quote - no copy-pasting." },

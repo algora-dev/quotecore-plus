@@ -51,7 +51,7 @@ const faqs = [
   {
     question: "What plan formats does QuoteCore+ support for takeoff?",
     answer:
-      "QuoteCore+ supports uploaded images and PDF plans. AI Scan Assist works on the uploaded plan image to identify roof geometry. You can also use the free roof takeoff builder without uploading a plan if you already have measurements.",
+      "QuoteCore+ supports uploaded images (PNG, JPG) and multi-page PDF plans - upload the whole PDF (e.g. council plans), pick the page you need, and it is converted to an image for measuring. For best results, use a view that shows just the area you want to measure, large enough to read clearly, with the scale or a known dimension visible so you can calibrate. You can also use the free roof takeoff builder without uploading a plan if you already have measurements.",
   },
   {
     question: "Can I export takeoff measurements without creating a quote?",

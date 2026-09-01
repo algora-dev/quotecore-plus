@@ -121,7 +121,7 @@ export default function Post() {
       <hr />
 
       <h2>Measure your PDF plan free — no account</h2>
-      <p>Upload the plan, calibrate from a known dimension, and measure areas, lengths and components in real units with the <a href="/free-roofing-takeoff-builder">free Roof Takeoff Builder</a>. When the same jobs repeat, <Link href="/free-trial">start a free 14-day QuoteCore+ trial</Link> to save components, pricing rules and produce quotes, orders and invoices from the same measurements. To <Link href="/blog/how-to-quote-a-roof-from-plans">turn your measurements into a priced, professional quote</Link>, see the complete plan-to-quote workflow.</p>
+      <p>Upload the plan, calibrate from a known dimension, and measure areas, lengths and components in real units with the <a href="/free-roofing-takeoff-builder">free Roof Takeoff Builder</a>. The free builder takes plan images — if you are working from a PDF, export or screenshot the sheet you need as an image first (best results come from a view that shows just the area you want to measure, with the scale or a known dimension visible). In the full QuoteCore+ app you can upload the entire multi-page PDF — e.g. council-permitted plans — and simply pick the page you need; it is converted to an image automatically. When the same jobs repeat, <Link href="/free-trial">start a free 14-day QuoteCore+ trial</Link> to save components, pricing rules and produce quotes, orders and invoices from the same measurements. To <Link href="/blog/how-to-quote-a-roof-from-plans">turn your measurements into a priced, professional quote</Link>, see the complete plan-to-quote workflow.</p>
 
     </div>
   );

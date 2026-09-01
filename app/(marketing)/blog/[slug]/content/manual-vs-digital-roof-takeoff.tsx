@@ -12,7 +12,7 @@ export default function Post() {
       <p>For a standard residential roof, manual takeoff typically takes 45 to 90 minutes. The process is familiar, requires no software, and gives you full control over every measurement.</p>
       <p>The downsides are accuracy and speed. Scale rulers introduce measurement error, especially on printed plans that may not be perfectly scaled. Transferring numbers from paper to spreadsheet creates transcription errors. And the process does not scale — if you quote 10 roofs a week, manual takeoff becomes a bottleneck.</p>
       <h2>Digital takeoff: how it works</h2>
-      <p>Digital takeoff replaces the ruler and calculator with software. You upload a PDF plan, measure roof areas and lengths on screen, and the software calculates areas, pitch-adjusted surface areas, and material quantities automatically.</p>
+      <p>Digital takeoff replaces the ruler and calculator with software. You upload a plan - an image, or an entire multi-page PDF where you pick the page you need - measure roof areas and lengths on screen, and the software calculates areas, pitch-adjusted surface areas, and material quantities automatically.</p>
       <p>For the same standard residential roof, digital takeoff typically takes 10 to 20 minutes. Measurements are more accurate because the software uses the plan's embedded scale, and there is no transcription — quantities flow directly into the estimate.</p>
       <p>QuoteCore+ includes <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link> tools that handle area measurement, linear measurement, and pitch calculation. Measurements feed directly into <Link href="/features/smart-components">Smart Components&#8482;</Link> that apply materials, labour, and pricing.</p>
       <h2>AI-assisted takeoff: the next step</h2>
@@ -119,7 +119,7 @@ export default function Post() {
       <h3>Is digital roof takeoff accurate?</h3>
       <p>Yes, when the plan is accurately scaled and the software uses the embedded scale correctly. Digital takeoff eliminates the measurement error of a physical scale ruler and the transcription error of moving numbers from paper to spreadsheet. Always verify key dimensions, especially if the plan may have been re-scaled.</p>
       <h3>Do I need special hardware for digital takeoff?</h3>
-      <p>No. QuoteCore+ runs in a web browser on any laptop or desktop. You upload a PDF plan and measure on screen. No drawing tablet, large monitor, or specialised hardware is required.</p>
+      <p>No. QuoteCore+ runs in a web browser on any laptop or desktop. You upload a plan image or a multi-page PDF (pick the page you need) and measure on screen. No drawing tablet, large monitor, or specialised hardware is required.</p>
       <h3>Can AI really measure a roof from a plan?</h3>
       <p>AI Scan Assist can identify roof areas, ridges, hips, valleys, and barges from a digital roof plan. It does the initial detection — you review and adjust every measurement before committing. The AI speeds up the first pass, but the estimator stays in control of the final numbers.</p>
       <h3>How long does digital takeoff take compared to manual?</h3>

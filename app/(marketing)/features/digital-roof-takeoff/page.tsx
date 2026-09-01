@@ -237,7 +237,7 @@ export default function DigitalRoofTakeoffPage() {
             <div className="rounded-xl border border-slate-200 p-6">
               <h3 className="font-semibold text-slate-900">Inputs</h3>
               <ul className="mt-3 space-y-2 text-sm text-zinc-600">
-                <li>- Roof plan images (PNG, JPG, PDF)</li>
+                <li>- Plan images (PNG, JPG) or multi-page PDFs - pick the page you need</li>
                 <li>- Drawings and sketches</li>
                 <li>- Site measurements (start from scratch)</li>
                 <li>- Component library items (any saved component)</li>

@@ -578,7 +578,7 @@ export default function HomePage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { src: "/how-it-works-smart-components-list.png", label: "Smart Components™ library", desc: "Roofing pricing, labour and rules - reusable on every quote." },
-              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan, AI identifies areas and components.", href: "/features/ai-scan-assist" },
+              { src: "/how-it-works/how-it-works-1-3.png", label: "AI Scan Assist", desc: "Upload a roof plan (image or multi-page PDF), AI identifies areas and components.", href: "/features/ai-scan-assist" },
               { src: "/how-it-works/how-it-works-2-2.png", label: "Quote builder", desc: "Build, customise and send roofing quotes in minutes.", href: "/features/digital-roof-takeoff" },
               { src: "/how-it-works/how-it-works-5-2.png", label: "Connected invoicing", desc: "Invoice from the same job data - no re-entry.", href: "/features/invoicing" },
             ].map((item) => (
