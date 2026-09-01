@@ -53,8 +53,9 @@ export default function Post() {
         </li>
       </ul>
       <p>
-        If your plans are PDFs, export or screenshot the relevant sheets as images — most PDF viewers
-        and even a plain screenshot will preserve scale as long as you don&rsquo;t crop or stretch.
+        If your plans are PDFs, upload them directly — the free Wall &amp; Cladding Takeoff Tool
+        accepts multi-page PDFs up to 50 MB and you pick the page you need. As long as the sheet
+        isn&rsquo;t cropped or stretched, scale is preserved exactly.
       </p>
 
       <h2>Step 1: Check the scale</h2>

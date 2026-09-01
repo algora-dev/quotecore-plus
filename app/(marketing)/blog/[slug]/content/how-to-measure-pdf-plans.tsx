@@ -25,10 +25,11 @@ export default function Post() {
 
       <h2>Can you measure a PDF plan online?</h2>
       <p>
-        Yes. The fastest way is to open your PDF, export or screenshot the sheet you need as an
-        image (PNG, JPG or WebP), upload it to a measurement tool, calibrate the scale, and trace
-        your measurements on screen. As long as the image isn&rsquo;t cropped or stretched, the
-        proportions are exact — and once the scale is calibrated, every measurement is to scale.
+        Yes. Upload the PDF straight into the free Wall &amp; Cladding Takeoff Tool (up to
+        50 MB, pick the page you need), calibrate the scale, and trace your measurements on
+        screen. Images (PNG, JPG, WebP) work too. Exporting or screenshotting a sheet as an
+        image is no longer necessary — as long as the plan isn&rsquo;t cropped or stretched, the
+        proportions are exact, and once the scale is calibrated, every measurement is to scale.
       </p>
       <p>
         This works for any drawing: architectural floor plans, elevations, site plans, engineering

@@ -46,7 +46,7 @@ const FAQS = [
   {
     question: 'Can I upload a PDF plan?',
     answer:
-      'Not yet. The tool currently accepts plan images in PNG, JPG or WebP format. Most PDF plans can be exported or screenshotted as an image. Calibrate the scale from any known dimension and every measurement is to scale.',
+      'Yes. Upload a multi-page PDF (e.g. council or architect plans) up to 50 MB and pick the page you need — it converts to an image automatically. PNG, JPG and WebP images (up to 10 MB) are also supported.',
   },
   {
     question: 'Can I use my own cladding components and prices?',
@@ -161,7 +161,7 @@ export default function FreeCladdingTakeoffPage() {
         <div className="mt-6 grid gap-6">
           {[
             ['Choose your measurement units', 'Metric (metres) or imperial (feet). Wall areas are measured as drawn - no pitch to worry about.'],
-            ['Upload your plan', 'An image of your elevation or plan (PNG, JPG or WebP). Calibrate the scale from any known dimension such as a wall length.'],
+            ['Upload your plan', 'An image of your elevation or plan (PNG, JPG, WebP), or the whole PDF — upload up to 50 MB and pick the page you need. Calibrate the scale from any known dimension such as a wall length.'],
             ['Use default cladding components or create up to 7 of your own', 'Defaults cover wrap, battens, cladding, trims, soffit and openings. Custom components can carry your pricing and waste logic for any material.'],
             ['Measure your walls', 'Draw areas and lengths directly on your calibrated plan - wall areas, trim runs, batten lines, opening positions.'],
             ['Review and finish', 'Get the full output: wall areas, component totals, and pricing if you added your own rates. Save or continue in QuoteCore+ - optional.'],
