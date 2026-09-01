@@ -38,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   { url: `${SITE_URL}/roof-measurement-cost-comparison`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/affiliate-program`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/careers`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/affiliate-program-terms`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/services`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/about`, changeFrequency: 'yearly', priority: 0.5 },
