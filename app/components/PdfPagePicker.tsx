@@ -17,27 +17,37 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
-const WORKER_SRC = '/pdf.worker.min.mjs';
 const THUMB_WIDTH = 150;
 const MAX_RENDER_WIDTH = 3000;
 const MAX_RENDER_SCALE = 4;
+
+let pdfjsPromise: Promise<typeof import('pdfjs-dist')> | null = null;
+async function getPdfjs() {
+  if (!pdfjsPromise) {
+    pdfjsPromise = (async () => {
+      // Bundle the worker as a build asset via new URL(..., import.meta.url).
+      // DO NOT serve it from public/ and point workerSrc at a root path:
+      // www.quote-core.com redirects to the apex domain, which redirects to
+      // app.quote-core.com, where auth middleware bounces the file to /login.
+      // Workers must be same-origin, so that chain broke PDF loading on the
+      // free tools. Build assets under /_next/static are same-origin everywhere.
+      const worker = new Worker(
+        new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url),
+        { type: 'module' }
+      );
+      const lib = await import('pdfjs-dist');
+      lib.GlobalWorkerOptions.workerPort = worker;
+      return lib;
+    })();
+  }
+  return pdfjsPromise;
+}
 
 type PdfPagePickerState =
   | { kind: 'idle' }
   | { kind: 'loading' }
   | { kind: 'picking'; doc: PDFDocumentProxy; fileName: string }
   | { kind: 'error'; message: string };
-
-let pdfjsPromise: Promise<typeof import('pdfjs-dist')> | null = null;
-async function getPdfjs() {
-  if (!pdfjsPromise) {
-    pdfjsPromise = import('pdfjs-dist').then((lib) => {
-      lib.GlobalWorkerOptions.workerSrc = WORKER_SRC;
-      return lib;
-    });
-  }
-  return pdfjsPromise;
-}
 
 /** Render one PDF page to a PNG blob at high resolution. */
 async function renderPageToBlob(doc: PDFDocumentProxy, pageNumber: number): Promise<Blob> {
