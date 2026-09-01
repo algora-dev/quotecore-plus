@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import type { ParsedDocumentResult } from './types';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 
 interface AiUploadModalProps {
   documentType: 'quote' | 'order' | 'invoice';
@@ -21,6 +22,7 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfPicker = usePdfPagePicker();
 
   const compressImage = useCallback(async (file: File): Promise<string> => {
     const bitmap = await createImageBitmap(file);
@@ -42,7 +44,10 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
   }, []);
 
   const handleFile = useCallback(
-    async (file: File) => {
+    async (rawFile: File) => {
+      // PDFs: convert the chosen page to a PNG client-side first.
+      const file = await pdfPicker.convertIfNeeded(rawFile);
+      if (!file) return; // user cancelled the page picker
       const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         setError('Please upload a PNG, JPEG, or WebP image.');
@@ -85,7 +90,7 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
         setError(message);
       }
     },
-    [compressImage, documentType, onParsed]
+    [compressImage, documentType, onParsed, pdfPicker]
   );
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,7 +157,7 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp"
+              accept="image/png,image/jpeg,image/jpg,image/webp,application/pdf"
               capture="environment"
               onChange={onInputChange}
               className="hidden"
@@ -233,6 +238,9 @@ export function AiUploadModal({ documentType, onParsed, onClose }: AiUploadModal
           )}
         </div>
       </div>
+
+      {/* PDF page picker modal (client-side pdfjs) */}
+      {pdfPicker.modal}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas, uploadCanvasImage, checkStorageQuota, saveFileMetadata, mintQuoteDocumentUploadUrl, type TakeoffHydrationData } from './demoActions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { AiResultsModal, type AiResultsData } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal';
@@ -399,6 +400,7 @@ export function DemoWorkstation({
   // - target = 'new' creates a new roof area + new page with the uploaded plan
   //   (mirrors FilesManager Option C: new area, new plan).
   const [showUploadAnotherModal, setShowUploadAnotherModal] = useState(false);
+  const pdfPicker = usePdfPagePicker();
   const [uploadAnotherTarget, setUploadAnotherTarget] = useState<'existing' | 'new'>('existing');
   const [uploadAnotherAreaId, setUploadAnotherAreaId] = useState<string>('');
   const [uploadAnotherFile, setUploadAnotherFile] = useState<File | null>(null);
@@ -4937,17 +4939,23 @@ export function DemoWorkstation({
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-xs text-slate-500">Choose plan (PDF or image, max 10 MB)</span>
+                    <span className="text-xs text-slate-500">Choose plan (PDF up to 50 MB or image up to 10 MB)</span>
                     <input
                       type="file"
                       accept="image/*,application/pdf"
                       className="hidden"
-                      onChange={e => {
-                        const f = e.target.files?.[0] || null;
-                        if (f && f.size > 10485760) {
-                          setUploadAnotherError('File exceeds 10 MB limit.');
+                      onChange={async e => {
+                        const raw = e.target.files?.[0] || null;
+                        e.currentTarget.value = '';
+                        if (!raw) return;
+                        const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
+                        const limit = isPdf ? 52428800 : 10485760;
+                        if (raw.size > limit) {
+                          setUploadAnotherError(isPdf ? 'PDF exceeds 50 MB limit.' : 'File exceeds 10 MB limit.');
                           return;
                         }
+                        const f = await pdfPicker.convertIfNeeded(raw);
+                        if (!f) return;
                         setUploadAnotherFile(f);
                         setUploadAnotherError(null);
                       }}
@@ -6561,6 +6569,9 @@ export function DemoWorkstation({
           </button>
         </div>
       )}
+
+      {/* PDF page picker modal (client-side pdfjs) */}
+      {pdfPicker.modal}
 
       {/* AI Takeoff: results modal */}
       {aiResults && aiScanRaw && (

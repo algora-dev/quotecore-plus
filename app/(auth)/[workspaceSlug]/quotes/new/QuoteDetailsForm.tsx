@@ -611,10 +611,11 @@ export function QuoteDetailsForm({
             <FileUploader
               accept="image/*,application/pdf"
               maxSize={10485760}
+              pdfMaxSize={52428800}
               onUpload={handlePlanUpload}
               currentFileUrl={null}
               label="Upload Plans / Images"
-              description="PDF or image (max 10 MB)"
+              description="PDF up to 50 MB or image (max 10 MB)"
               isOverStorage={isOverStorage}
             />
           )}

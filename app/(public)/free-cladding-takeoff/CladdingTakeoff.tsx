@@ -14,6 +14,7 @@ import {
 import type { DemoFinishPayload } from '@/app/(marketing)/takeoff-demo/DemoWorkstation';
 import { TakeoffOutputView, type TakeoffOutputExtras } from '../free-roof-takeoff/TakeoffOutputView';
 import { ComponentBuilderModal } from '../free-roof-takeoff/ComponentBuilderModal';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { trackFreeToolEvent } from '../lib/trackFreeToolEvent';
 import type { QuoteRow } from '@/app/lib/types';
 
@@ -151,6 +152,8 @@ export function CladdingTakeoff() {
     [unitOption.lengthUnit]
   );
 
+  const pdfPicker = usePdfPagePicker();
+
   const handleFile = useCallback(
     (file: File) => {
       setError(null);
@@ -174,6 +177,28 @@ export function CladdingTakeoff() {
       reader.readAsDataURL(file);
     },
     [unitSystem, toolComponents, activeSpecs]
+  );
+
+  // PDF support: convert the chosen page to a PNG client-side, then run the
+  // normal image flow. PDFs get a higher size limit because only one page
+  // is ultimately converted and used.
+  const onFileSelected = useCallback(
+    async (raw: File) => {
+      setError(null);
+      const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
+      if (isPdf) {
+        if (raw.size > 50 * 1024 * 1024) {
+          setError('PDF too large - maximum 50 MB.');
+          return;
+        }
+        const converted = await pdfPicker.convertIfNeeded(raw);
+        if (!converted) return; // user cancelled the page picker
+        handleFile(converted);
+      } else {
+        handleFile(raw);
+      }
+    },
+    [pdfPicker, handleFile]
   );
 
   const restart = useCallback(() => {
@@ -430,21 +455,21 @@ export function CladdingTakeoff() {
               onDrop={e => {
                 e.preventDefault();
                 const f = e.dataTransfer.files?.[0];
-                if (f) handleFile(f);
+                if (f) onFileSelected(f);
               }}
             >
               <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
               </svg>
-              <span className="mt-3 text-sm font-medium text-slate-700">Click to upload your plan image</span>
-              <span className="mt-1 text-xs text-slate-400">Elevation or plan view - PNG, JPG or WebP, up to 10 MB</span>
+              <span className="mt-3 text-sm font-medium text-slate-700">Click to upload your plan image or PDF</span>
+              <span className="mt-1 text-xs text-slate-400">Elevation or plan view - PNG, JPG, WebP up to 10 MB - PDF up to 50 MB (pick a page)</span>
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,application/pdf"
                 className="hidden"
                 onChange={e => {
                   const f = e.target.files?.[0];
-                  if (f) handleFile(f);
+                  if (f) onFileSelected(f);
                 }}
               />
             </label>
@@ -490,6 +515,9 @@ export function CladdingTakeoff() {
           </Link>
         </div>
       </div>
+
+      {/* PDF page picker modal (client-side pdfjs) */}
+      {pdfPicker.modal}
     </div>
   );
 }

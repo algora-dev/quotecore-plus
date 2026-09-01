@@ -8,6 +8,7 @@ import { useRef, useState } from 'react';
 import type { EntryMode, HaveSubMode } from './types';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { useSupplierConfig } from './supplierConfig';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 
 export function EntryModeStep({
   entryMode, setEntryMode, haveSubMode, setHaveSubMode, planFile, setPlanFile, onNext,
@@ -21,6 +22,24 @@ export function EntryModeStep({
   onNext: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const pdfPicker = usePdfPagePicker();
+
+  async function onFileChosen(raw: File | null) {
+    if (!raw) { setPlanFile(null); return; }
+    const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
+    if (isPdf) {
+      // PDFs: convert the chosen page to a PNG client-side. 50 MB cap because
+      // only one page is ultimately used.
+      if (raw.size > 50 * 1024 * 1024) {
+        setPlanFile(null);
+        return;
+      }
+      const converted = await pdfPicker.convertIfNeeded(raw);
+      setPlanFile(converted); // null when the user cancels the page picker
+    } else {
+      setPlanFile(raw);
+    }
+  }
   const { config } = useSupplierConfig();
   const canNext = entryMode === 'measure'
     ? planFile !== null
@@ -91,7 +110,7 @@ export function EntryModeStep({
             type="file"
             accept="application/pdf,image/png,image/jpeg,image/webp"
             className="hidden"
-            onChange={e => setPlanFile(e.target.files?.[0] ?? null)}
+            onChange={e => { onFileChosen(e.target.files?.[0] ?? null); e.currentTarget.value = ''; }}
           />
         </div>
       )}
@@ -126,6 +145,9 @@ export function EntryModeStep({
           {entryMode === 'measure' ? 'Proceed to measuring' : 'Next'}
         </button>
       </div>
+
+      {/* PDF page picker modal (client-side pdfjs) */}
+      {pdfPicker.modal}
     </div>
   );
 }

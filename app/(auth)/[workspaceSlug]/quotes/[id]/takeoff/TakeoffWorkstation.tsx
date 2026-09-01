@@ -5073,7 +5073,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span className="text-xs text-slate-500">Choose plan (PDF or image, max 10 MB)</span>
+                    <span className="text-xs text-slate-500">Choose plan (PDF up to 50 MB or image up to 10 MB)</span>
                     <input
                       type="file"
                       accept="image/*,application/pdf"
@@ -5082,8 +5082,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                         const raw = e.target.files?.[0] || null;
                         e.target.value = '';
                         if (!raw) return;
-                        if (raw.size > 10485760) {
-                          setUploadAnotherError('File exceeds 10 MB limit.');
+                        const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
+                        const limit = isPdf ? 52428800 : 10485760; // PDFs 50 MB, images 10 MB
+                        if (raw.size > limit) {
+                          setUploadAnotherError(isPdf ? 'PDF exceeds 50 MB limit.' : 'File exceeds 10 MB limit.');
                           return;
                         }
                         const f = await pdfPicker.convertIfNeeded(raw);

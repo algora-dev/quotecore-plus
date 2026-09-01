@@ -5,6 +5,9 @@ import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModa
 interface Props {
   accept?: string;
   maxSize?: number; // bytes
+  /** Higher limit for PDFs - the page picker converts them to a PNG client-side,
+   *  so a large multi-page PDF is fine as long as the chosen page converts small. */
+  pdfMaxSize?: number; // bytes
   onUpload: (file: File) => Promise<void>;
   currentFileUrl?: string | null;
   label?: string;
@@ -18,6 +21,7 @@ interface Props {
 export function FileUploader({
   accept = 'image/*',
   maxSize = 2097152, // 2 MB default
+  pdfMaxSize,
   onUpload,
   currentFileUrl,
   label = 'Upload File',
@@ -30,9 +34,18 @@ export function FileUploader({
   const [storageBlocked, setStorageBlocked] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  function isPdf(file: File) {
+    return file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+  }
+
+  function effectiveMaxSize(file: File) {
+    return isPdf(file) && pdfMaxSize ? pdfMaxSize : maxSize;
+  }
+
   function validateFile(file: File): string | null {
-    if (maxSize && file.size > maxSize) {
-      const maxMB = (maxSize / 1024 / 1024).toFixed(1);
+    const max = effectiveMaxSize(file);
+    if (max && file.size > max) {
+      const maxMB = (max / 1024 / 1024).toFixed(0);
       return `File too large. Max size: ${maxMB} MB`;
     }
 
@@ -134,7 +147,7 @@ export function FileUploader({
                 <p className="text-sm font-medium text-slate-700">{label}</p>
                 <p className="text-xs text-slate-500">{description}</p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Max size: {(maxSize / 1024 / 1024).toFixed(1)} MB
+                  Max size: {(effectiveMaxSize({ type: '', name: 'x' } as File) / 1024 / 1024).toFixed(0)} MB{pdfMaxSize ? ` (${(pdfMaxSize / 1024 / 1024).toFixed(0)} MB for PDFs)` : ''}
                 </p>
               </div>
             </>
