@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: "What exactly would I be selling?",
-    a: "Two ways to earn from one team. QuoteCore+ is a multi-use subscription app for roofing and construction contractors — one platform covering takeoffs, quoting, ordering and invoicing. T3 Labs builds custom software, AI integrations and workflow systems for construction businesses running on outdated, disjointed processes — high-ticket projects. Many conversations open doors in both directions, so you can sell whichever fits the prospect.",
+    a: "Two ways to earn from one team. QuoteCore+ is a multi-use subscription app for roofing and construction contractors — one platform covering takeoffs, quoting, ordering and invoicing. T3 Labs finds and fixes expensive business problems — manual processes, outdated systems, disconnected software, weak online sales workflows and repetitive staff admin — with whatever digital solution makes sense, from a website tool or workflow automation to a customer portal or complete bespoke software platform. You identify the problem; T3 Labs works out the solution. Many conversations open doors in both directions, so you can sell whichever fits the prospect.",
   },
   {
     q: "How much can I earn?",
@@ -115,14 +115,13 @@ const roles = [
     tag: "Role 2 · High-ticket deals",
     title: "Custom Software Sales — T3 Labs",
     summary:
-      "Find construction and trade businesses stuck on outdated, disjointed processes — spreadsheets, Word docs, PDFs and separate apps stitched together — who need custom software, portals, integrations or workflow automation, and refer them to T3 Labs. These are high-ticket projects — one closed deal can outweigh months of small sales.",
+      "Find businesses losing time, money or sales because of slow, manual, outdated or disconnected processes. You qualify the opportunity; T3 Labs works out what should be built. High-ticket projects — one closed deal can outweigh months of small sales.",
     points: [
       "High commission per closed project",
-      "Target market: construction & trade businesses lagging on tech — also SMBs, manufacturers, service businesses",
-      "You find and qualify the opportunity — T3 Labs scopes, sells and builds",
-      "Flexible customer payment options — more upfront and less monthly, or the reverse",
-      "Your commission can follow the deal: bigger one-off, or recurring share of monthly payments",
-      "Ideal if you have a B2B or trade network or consultative sales background",
+      "Broad B2B market — any business with expensive friction",
+      "No technical background required",
+      "Flexible customer deal and payment structures",
+      "One-off or recurring commission depending on the deal",
     ],
   },
   {
@@ -228,17 +227,13 @@ export default function CareersPage() {
                 </p>
               </div>
               <div className="rounded-2xl border border-zinc-200 bg-white p-8">
-                <h3 className="text-xl font-semibold text-zinc-950">T3 Labs — high-ticket projects</h3>
+                <h3 className="text-xl font-semibold text-zinc-950">T3 Labs — finds and fixes expensive business problems</h3>
                 <p className="mt-3 leading-7 text-zinc-600">
-                  Custom software, AI integrations, portals and workflow systems for construction industry businesses
-                  lagging behind on tech — teams stitching spreadsheets, Word docs, PDFs and separate apps together
-                  just to get through the day. We replace that with one effective, cost-efficient solution that helps
-                  them sell more of their own product or service while reducing their staff&apos;s workload — so they
-                  scale without hiring. Projects start in the thousands. One qualified, closed referral can be worth
-                  more than a month of subscription sales. Payment structures are flexible too: customers can pay more
-                  upfront with lower ongoing monthly costs, or less upfront with higher monthly payments for an agreed
-                  period — so if capital risk is the only thing blocking a sale, the deal can usually be shaped around
-                  the customer.
+                  T3 Labs finds and fixes expensive business problems — manual processes, outdated systems,
+                  disconnected software, weak online sales workflows and repetitive staff admin — using whatever
+                  digital solution makes sense. You identify the opportunity; T3 Labs scopes, pitches and builds it.
+                  High-ticket projects with flexible payment structures: more upfront and less monthly, or the
+                  reverse — so capital risk never has to block a sale.
                 </p>
               </div>
             </div>
@@ -272,10 +267,22 @@ export default function CareersPage() {
                     ))}
                   </ul>
                   <div className="mt-auto pt-6">
-                    <a href="#apply" className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline">
-                      Apply for this role
-                      <ArrowIcon />
-                    </a>
+                    {r.id === "custom" ? (
+                      <a
+                        href="https://www.t3labs.tech/careers#sales-triggers"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline"
+                      >
+                        See what a good T3 Labs lead looks like
+                        <ArrowIcon />
+                      </a>
+                    ) : (
+                      <a href="#apply" className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline">
+                        Apply for this role
+                        <ArrowIcon />
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}
