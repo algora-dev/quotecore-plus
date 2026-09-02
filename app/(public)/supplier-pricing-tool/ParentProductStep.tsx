@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import type { ParentJob, ComponentApplied, SupplierProduct, ParentBasis } from './types';
 import { makeId, componentTotal, PARENT_BASIS_UNIT } from './types';
+import type { TradeConfig } from './tradeConfig';
 
 const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
@@ -21,13 +22,14 @@ const BASIS_PRODUCT_BASIS: Record<ParentBasis, 'area' | 'lineal' | 'count'> = {
 const BASIS_LABEL: Record<ParentBasis, string> = { area: 'Area', lineal: 'Length', point: 'Item' };
 
 export function ParentProductStep({
-  job, setJob, catalog, mode, currency, onBack, onNext,
+  job, setJob, catalog, mode, currency, trade, onBack, onNext,
 }: {
   job: ParentJob;
   setJob: (j: ParentJob) => void;
   catalog: SupplierProduct[];
   mode: 'standard' | 'advanced';
   currency: string;
+  trade: TradeConfig;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -40,7 +42,7 @@ export function ParentProductStep({
       <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
         <h2 className="text-lg font-semibold text-slate-900">Products</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Expand a wall system, then use Add products on each component to stack products (cladding + battens + wrap on the same m\u00B2). Optional - continue with none and your measurements still carry through.
+          Expand a {trade.areaNoun} system, then use Add products on each component to stack products ({trade.key === 'flooring' ? 'flooring + underlay + levelling on the same m\u00B2' : 'cladding + battens + wrap on the same m\u00B2'}). Optional - continue with none and your measurements still carry through.
         </p>
       </div>
 

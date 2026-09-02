@@ -6407,7 +6407,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             <div className="p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-1">New {(quote as { trade?: string }).trade === 'flooring' ? 'Floor' : 'Wall'} System</h2>
               <p className="text-sm text-slate-500 mb-4">
-                Name the system (e.g. Cedar Cladding, Plasterboard). Components and measurements attach to it; products get applied to the components at the next step.
+                Name the system {(quote as { trade?: string }).trade === 'flooring' ? '(e.g. Hybrid Flooring, Tiles)' : '(e.g. Cedar Cladding, Plasterboard)'}. Components and measurements attach to it; products get applied to the components at the next step.
               </p>
               <input
                 autoFocus

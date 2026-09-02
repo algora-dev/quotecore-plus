@@ -184,6 +184,7 @@ export function ParentFlow() {
             catalog={catalog}
             mode={mode}
             currency={config.currency}
+            trade={trade}
             onBack={() => setStep(measureStepNum)}
             onNext={() => setStep(customStepNum)}
           />

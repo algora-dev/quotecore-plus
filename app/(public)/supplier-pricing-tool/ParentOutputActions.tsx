@@ -203,7 +203,7 @@ export function ParentOutputActions({ job, catalog, onRestart }: {
             <div>
               <div className="text-base font-bold text-white">Continue in QuoteCore+</div>
               <div className="mt-0.5 text-xs leading-relaxed text-slate-400">
-                Turn this takeoff into a full quote - your wall systems, measurements and products carry straight into the app. Opens in a new tab.
+                Turn this takeoff into a full quote - your systems, measurements and products carry straight into the app. Opens in a new tab.
               </div>
             </div>
           </div>
