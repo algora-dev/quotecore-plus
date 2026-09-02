@@ -12,9 +12,9 @@ import type { TradeConfig } from './tradeConfig';
 const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
 const BASIS_OPTIONS: { value: ParentBasis; label: string; desc: string }[] = [
-  { value: 'area', label: 'Wall Area', desc: 'm\u00B2 - draw or enter areas, or length x height' },
-  { value: 'lineal', label: 'Wall Length', desc: 'm - point-to-point lengths, trims, tape' },
-  { value: 'point', label: 'Wall Item', desc: 'ea - one-off counted items (vents, fittings)' },
+  { value: 'area', label: 'Area', desc: 'm\u00B2 - draw or enter areas, or length x height' },
+  { value: 'lineal', label: 'Single Length', desc: 'm - point-to-point lengths, trims, tape' },
+  { value: 'point', label: 'Single Item', desc: 'ea - one-off counted items (vents, fittings)' },
 ];
 
 export function ParentMeasureStep({

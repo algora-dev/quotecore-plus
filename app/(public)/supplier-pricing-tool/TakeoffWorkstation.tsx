@@ -5181,7 +5181,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   className="inline-flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_12px_rgba(37,99,235,0.45)] transition hover:bg-blue-700 animate-pulse"
                   title="Create a new area"
                 >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                  {tradeConfig.pitchRequired && (
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                  )}
                   {tradeConfig.pitchRequired ? 'New Area' : `+ ${tradeConfig.areaSingularLabel.replace(/s$/, '')} System`}
                 </button>
               </div>

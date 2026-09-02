@@ -28,9 +28,9 @@ const Workstation = dynamic(
 /** The three generic placeholder components - measurement buckets only;
  *  real products get applied per component at the next step. */
 const PLACEHOLDER_COMPONENTS = [
-  { id: 'ph-wall-area', name: 'Wall Area', measurement_type: 'area', is_system: true, collection_id: 'tool-builtin' },
-  { id: 'ph-wall-length', name: 'Wall Length', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
-  { id: 'ph-wall-item', name: 'Wall Item', measurement_type: 'quantity', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-wall-area', name: 'Area', measurement_type: 'area', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-wall-length', name: 'Single Length', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-wall-item', name: 'Single Item', measurement_type: 'quantity', is_system: true, collection_id: 'tool-builtin' },
 ] as never;
 
 function basisForMeasurementType(mt: string | undefined): ParentBasis {
