@@ -1515,9 +1515,17 @@ export function TakeoffWorkstation({
       return;
     }
     // GENERIC TRADES: buckets are name-only - prompt for a name, no drawing.
+    // Once at least one bucket exists, show the same choice as roofing:
+    // attach to an existing system or create a new one.
     if (!tradeConfig.pitchRequired) {
-      setBucketNameInput('');
-      setShowBucketNamePrompt(true);
+      if (areaList.length === 0) {
+        setBucketNameInput('');
+        setShowBucketNamePrompt(true);
+        return;
+      }
+      setNewAreaChoice('existing');
+      setNewAreaExistingId(activeAreaId ?? areaList[0]?.id ?? '');
+      setShowNewAreaChoiceModal(true);
       return;
     }
     // RULE: "+ New Area" always deselects any active component so the
@@ -1572,7 +1580,11 @@ export function TakeoffWorkstation({
     setAreaList(prev => [...prev, { id: areaId, label: name }]);
     setShowBucketNamePrompt(false);
     setBucketNameInput('');
-    setActiveAreaId(areaId);
+    // Switch properly through handleSwitchArea (caches the outgoing bucket's
+    // measurements, restores the new one, syncs activeAreaIdRef) so every
+    // measurement from here on stamps to THIS bucket. Direct setActiveAreaId
+    // skipped the cache split and dumped everything onto one bucket.
+    setTimeout(() => { void handleSwitchArea(areaId); }, 60);
   };
 
   // Phase 6: confirm the choice modal → arm drawing mode
@@ -1582,6 +1594,20 @@ export function TakeoffWorkstation({
     setSelectedComponentId(null);
     activeAreaComponentIdRef.current = null;
     setPendingComponentId(null);
+
+    // GENERIC TRADES: no drawing - switch to the chosen existing bucket, or
+    // open the name prompt for a new one.
+    if (!tradeConfig.pitchRequired) {
+      if (newAreaChoice === 'existing' && newAreaExistingId) {
+        void handleSwitchArea(newAreaExistingId);
+      } else {
+        setBucketNameInput('');
+        setShowBucketNamePrompt(true);
+      }
+      setShowNewAreaChoiceModal(false);
+      return;
+    }
+
     // RC-5: mark this draw as authorised via the "+ New Area" flow.
     viaNewAreaFlowRef.current = true;
 
