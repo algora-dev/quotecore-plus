@@ -119,7 +119,7 @@ export function ParentFlow() {
       {step < outputStepNum && (
         <StepProgress steps={steps} current={currentStep} />
       )}
-      <div className={`px-4 py-6 pb-16 ${step === stationStep ? '' : 'mx-auto max-w-5xl'}`}>
+      <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
         {/* Persistent Standard/Advanced toggle (mirrors the roofing flow) */}
         {step >= measureStepNum && step < outputStepNum && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
