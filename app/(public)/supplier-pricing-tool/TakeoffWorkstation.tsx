@@ -470,33 +470,46 @@ export function TakeoffWorkstation({
   // measured this way (wall runs from a floor plan).
   const [lineHeightMode, setLineHeightMode] = useState(false);
   const lineHeightModeRef = useRef(false);
-  // Generic trades: the Line button opens a 4-option dropdown instead of
-  // arming a mode directly (Line / Line Multi / Length x Height x2).
-  const [showLineDropdown, setShowLineDropdown] = useState(false);
-  /** Arm a line-tool variant from the dropdown (generic trades). */
-  const armLineVariant = (variant: 'single' | 'multi' | 'lxh-single' | 'lxh-multi') => {
-    // Transition out of any active line drawing cleanly
+  // GENERIC TRADES: the Area button opens a 4-option dropdown instead of
+  // arming polygon directly: Polygon / Rectangle / Length x Height single /
+  // Length x Height multi (LxH produces m2 - it IS an area method).
+  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+  /** Arm an area-tool variant from the dropdown (generic trades). */
+  const armAreaVariant = (variant: 'polygon' | 'rect' | 'lxh-single' | 'lxh-multi') => {
+    // Transition out of any active drawing cleanly
     if (multiLinealMode) handleCancelMultiLineal();
     cleanupBoxDrag();
     discardInProgressDrawing();
-    setAreaMode(false);
-    setPointMode(false);
-    setShowLineDropdown(false);
-    const height = variant === 'lxh-single' || variant === 'lxh-multi';
-    setLineHeightMode(height);
-    lineHeightModeRef.current = height;
-    if (variant === 'single' || variant === 'lxh-single') {
-      setLineSubTool('single');
-      setMultiLinealMode(false);
-      setMultiLinealPoints([]);
-      setMultiLinealSegmentObjects([]);
-      setLinePoints([]);
-      setLineMode(true);
-    } else {
-      setLineSubTool('multi');
+    setShowAreaDropdown(false);
+    if (variant === 'polygon' || variant === 'rect') {
+      setLineHeightMode(false);
+      lineHeightModeRef.current = false;
       setLineMode(false);
-      setLinePoints([]);
-      setMultiLinealMode(true);
+      setMultiLinealMode(false);
+      setPointMode(false);
+      setAreaMode(true);
+      setAreaSubTool(variant);
+      setAreaPoints([]);
+    } else {
+      // Length x Height: line gesture, height prompt at the end,
+      // committed as m2 onto the selected component.
+      setAreaMode(false);
+      setPointMode(false);
+      setLineHeightMode(true);
+      lineHeightModeRef.current = true;
+      if (variant === 'lxh-single') {
+        setLineSubTool('single');
+        setLineMode(true);
+        setMultiLinealMode(false);
+        setMultiLinealPoints([]);
+        setMultiLinealSegmentObjects([]);
+        setLinePoints([]);
+      } else {
+        setLineSubTool('multi');
+        setLineMode(false);
+        setLinePoints([]);
+        setMultiLinealMode(true);
+      }
     }
   };
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
@@ -5797,19 +5810,56 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               >
                 {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
               </button>
+              <div className="relative">
               <button
                 onClick={() => {
+                  // GENERIC TRADES: the Area button opens the variant dropdown
+                  // (Polygon / Rectangle / Length x Height single / multi).
+                  if (quoteIsGeneric) {
+                    if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
+                    setShowAreaDropdown(v => !v);
+                    return;
+                  }
                   if (areaMode) { cleanupBoxDrag(); setAreaMode(false); setAreaPoints([]); }
                   else { setAreaMode(true); setLineMode(false); setPointMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setAreaPoints([]); }
                 }}
                 disabled={calibrationMode || calibrations.length === 0}
                 data-copilot="takeoff-tool-area"
                 className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  areaMode ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  (areaMode || showAreaDropdown || (lineHeightMode && (lineMode || multiLinealMode))) ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
+                title={calibrations.length === 0 ? 'Calibrate first' : 'Measure area'}
               >Area</button>
-              {areaMode && (
+              {/* Generic trades: 4-option area dropdown (opens on Area click) */}
+              {showAreaDropdown && quoteIsGeneric && (
+                <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-xl border border-gray-200 bg-white shadow-lg p-1">
+                  <button onClick={() => armAreaVariant('polygon')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Polygon
+                    <span className="block text-xs text-gray-400">Point by point, click first point to close</span>
+                  </button>
+                  <button onClick={() => armAreaVariant('rect')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Rectangle
+                    <span className="block text-xs text-gray-400">Click and drag to create a box</span>
+                  </button>
+                  <button onClick={() => armAreaVariant('lxh-single')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Length × Height - single
+                    <span className="block text-xs text-gray-400">One run, height at the end (m²)</span>
+                  </button>
+                  <button onClick={() => armAreaVariant('lxh-multi')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Length × Height - multi
+                    <span className="block text-xs text-gray-400">Chain of points × height at the end (m²)</span>
+                  </button>
+                  {(areaMode || ((lineMode || multiLinealMode))) && (
+                    <button onClick={() => { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setAreaMode(false); setLineMode(false); setMultiLinealMode(false); setAreaPoints([]); setLinePoints([]); setLineHeightMode(false); lineHeightModeRef.current = false; setShowAreaDropdown(false); }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition">
+                      Cancel area measurement
+                    </button>
+                  )}
+                </div>
+              )}
+              </div>
+              {/* Roofing keeps the classic Polygon/Rectangle pills */}
+              {areaMode && !quoteIsGeneric && (
                 <div className="flex items-center rounded-full bg-gray-100 p-0.5">
                   <button onClick={() => { cleanupBoxDrag(); setAreaSubTool('polygon'); setAreaPoints([]); }}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'polygon' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
@@ -5833,63 +5883,32 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   >Rectangle</button>
                 </div>
               )}
-              <div className="relative">
               <button
                 onClick={() => {
-                  // GENERIC TRADES: the Line button opens the variant dropdown
-                  // whether or not a line mode is already armed (component
-                  // selection auto-arms a tool - the button must still let the
-                  // user switch variants, incl. from an area component).
-                  if (quoteIsGeneric) {
-                    if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
-                    setShowLineDropdown(v => !v);
+                  const isActive = lineMode || multiLinealMode;
+                  if (isActive) {
+                    if (multiLinealMode) handleCancelMultiLineal();
+                    cleanupBoxDrag();
+                    setLineMode(false); setMultiLinealMode(false); setLinePoints([]);
+                    setLineHeightMode(false); lineHeightModeRef.current = false;
                     return;
                   }
-                  const isActive = lineMode || multiLinealMode;
-                  if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); return; }
-                  { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
+                  if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
                   if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
-                  cleanupBoxDrag(); setAreaMode(false); setPointMode(false);
+                  cleanupBoxDrag(); setAreaMode(false); setPointMode(false); setShowAreaDropdown(false);
                   if (lineSubTool === 'multi') { setMultiLinealMode(true); setLineMode(false); setLinePoints([]); }
                   else { setLineMode(true); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setLinePoints([]); }
                 }}
                 disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-line"
                 className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  (lineMode || multiLinealMode || showLineDropdown) ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  (lineMode || multiLinealMode) && !lineHeightMode ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
-                title="Measure line or polyline"
+                title="Measure length (point to point or multi-point)"
               >Line</button>
-              {/* Generic trades: 4-option line dropdown (opens on Line click) */}
-              {showLineDropdown && quoteIsGeneric && (
-                <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-xl border border-gray-200 bg-white shadow-lg p-1">
-                  <button onClick={() => armLineVariant('single')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
-                    Line - point to point
-                    <span className="block text-xs text-gray-400">Single two-point length</span>
-                  </button>
-                  <button onClick={() => armLineVariant('multi')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
-                    Line - multi point
-                    <span className="block text-xs text-gray-400">Chain of points, summed</span>
-                  </button>
-                  <button onClick={() => armLineVariant('lxh-single')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
-                    Length × Height - single
-                    <span className="block text-xs text-gray-400">One run, height at the end</span>
-                  </button>
-                  <button onClick={() => armLineVariant('lxh-multi')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
-                    Length × Height - multi
-                    <span className="block text-xs text-gray-400">Chain of points x height at the end</span>
-                  </button>
-                  {(lineMode || multiLinealMode) && (
-                    <button onClick={() => { if (multiLinealMode) handleCancelMultiLineal(); else { setLineMode(false); setLinePoints([]); } setLineHeightMode(false); lineHeightModeRef.current = false; setShowLineDropdown(false); }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition">
-                      Cancel line measurement
-                    </button>
-                  )}
-                </div>
-              )}
-              </div>
-              {/* Roofing keeps the classic Single/Multi pills (no L x H) */}
-              {(lineMode || multiLinealMode) && !quoteIsGeneric && (
+              {/* Lengths only - Single/Multi pills (both trades; hidden while a
+                  Length x Height variant from the Area dropdown is active) */}
+              {(lineMode || multiLinealMode) && !lineHeightMode && (
                 <div className="flex items-center rounded-full bg-gray-100 p-0.5">
                   <button onClick={() => { setLineSubTool('single'); if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
                     className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'single' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
