@@ -414,8 +414,8 @@ export default function CareersPage() {
                 Apply via contact form
                 <ArrowIcon />
               </Link>
-              <a href="mailto:insights@t3labs.co.uk" className="text-sm font-semibold text-[#BD4A1A] hover:underline">
-                Or email insights@t3labs.co.uk
+              <a href="mailto:cece@t3labs.co.uk" className="text-sm font-semibold text-[#BD4A1A] hover:underline">
+                Or email cece@t3labs.co.uk
               </a>
             </div>
           </div>
