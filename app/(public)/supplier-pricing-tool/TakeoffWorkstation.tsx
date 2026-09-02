@@ -475,7 +475,10 @@ export function TakeoffWorkstation({
   const [showLineDropdown, setShowLineDropdown] = useState(false);
   /** Arm a line-tool variant from the dropdown (generic trades). */
   const armLineVariant = (variant: 'single' | 'multi' | 'lxh-single' | 'lxh-multi') => {
+    // Transition out of any active line drawing cleanly
+    if (multiLinealMode) handleCancelMultiLineal();
     cleanupBoxDrag();
+    discardInProgressDrawing();
     setAreaMode(false);
     setPointMode(false);
     setShowLineDropdown(false);
@@ -5830,13 +5833,22 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   >Rectangle</button>
                 </div>
               )}
+              <div className="relative">
               <button
                 onClick={() => {
+                  // GENERIC TRADES: the Line button opens the variant dropdown
+                  // whether or not a line mode is already armed (component
+                  // selection auto-arms a tool - the button must still let the
+                  // user switch variants, incl. from an area component).
+                  if (quoteIsGeneric) {
+                    if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
+                    setShowLineDropdown(v => !v);
+                    return;
+                  }
                   const isActive = lineMode || multiLinealMode;
-                  if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); setLineHeightMode(false); lineHeightModeRef.current = false; setShowLineDropdown(false); return; }
-                  if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
+                  if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); return; }
+                  { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
                   if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
-                  if (quoteIsGeneric) { setShowLineDropdown(v => !v); return; }
                   cleanupBoxDrag(); setAreaMode(false); setPointMode(false);
                   if (lineSubTool === 'multi') { setMultiLinealMode(true); setLineMode(false); setLinePoints([]); }
                   else { setLineMode(true); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setLinePoints([]); }
@@ -5844,13 +5856,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
                 data-copilot="takeoff-tool-line"
                 className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  (lineMode || multiLinealMode) ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
+                  (lineMode || multiLinealMode || showLineDropdown) ? 'bg-blue-100 border border-blue-500 text-blue-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
                 }`}
                 title="Measure line or polyline"
               >Line</button>
               {/* Generic trades: 4-option line dropdown (opens on Line click) */}
-              {showLineDropdown && quoteIsGeneric && !lineMode && !multiLinealMode && (
-                <div className="absolute left-0 top-full mt-1 z-40 w-64 rounded-xl border border-gray-200 bg-white shadow-lg p-1">
+              {showLineDropdown && quoteIsGeneric && (
+                <div className="absolute left-0 top-full mt-1 z-50 w-64 rounded-xl border border-gray-200 bg-white shadow-lg p-1">
                   <button onClick={() => armLineVariant('single')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                     Line - point to point
                     <span className="block text-xs text-gray-400">Single two-point length</span>
@@ -5867,8 +5879,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     Length × Height - multi
                     <span className="block text-xs text-gray-400">Chain of points x height at the end</span>
                   </button>
+                  {(lineMode || multiLinealMode) && (
+                    <button onClick={() => { if (multiLinealMode) handleCancelMultiLineal(); else { setLineMode(false); setLinePoints([]); } setLineHeightMode(false); lineHeightModeRef.current = false; setShowLineDropdown(false); }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 transition">
+                      Cancel line measurement
+                    </button>
+                  )}
                 </div>
               )}
+              </div>
               {/* Roofing keeps the classic Single/Multi pills (no L x H) */}
               {(lineMode || multiLinealMode) && !quoteIsGeneric && (
                 <div className="flex items-center rounded-full bg-gray-100 p-0.5">
