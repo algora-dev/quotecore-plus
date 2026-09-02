@@ -1,15 +1,15 @@
-// Parent-model takeoff station (cladding / flooring). Same workstation,
-// trade-aware via quote.trade (getTradeLabels drives labels + no pitch
-// gating). Components are created in-session by the user - each component
-// IS a parent area group (one product type). Payload maps into a ParentJob:
-// area / length-x-height components -> parents + entries; lineal / count
-// components -> custom components (trims etc.).
+// Parent-model takeoff station v2 (cladding / flooring). Same workstation,
+// trade-aware via quote.trade. Sidebar buckets = areas created NAME-ONLY
+// (no drawing); three placeholder components (Wall Area / Wall Length /
+// Wall Item) attach per bucket and carry the measurements. Payload maps
+// into the v2 ParentJob: buckets from areas, components per
+// (bucket, component) pair via the measurement's area stamp.
 
 'use client';
 
 import dynamic from 'next/dynamic';
 import type { DemoFinishPayload } from './TakeoffWorkstation';
-import type { ParentJob } from './types';
+import type { ParentJob, ParentBasis } from './types';
 import { emptyParentJob, makeId } from './types';
 import type { Trade } from './tradeConfig';
 
@@ -25,55 +25,68 @@ const Workstation = dynamic(
   },
 );
 
-/** Component measurement types that produce wall/floor AREAS. */
-function isAreaType(mt: string | undefined): boolean {
+/** The three generic placeholder components - measurement buckets only;
+ *  real products get applied per component at the next step. */
+const PLACEHOLDER_COMPONENTS = [
+  { id: 'ph-wall-area', name: 'Wall Area', measurement_type: 'area', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-wall-length', name: 'Wall Length', measurement_type: 'lineal', is_system: true, collection_id: 'tool-builtin' },
+  { id: 'ph-wall-item', name: 'Wall Item', measurement_type: 'quantity', is_system: true, collection_id: 'tool-builtin' },
+] as never;
+
+function basisForMeasurementType(mt: string | undefined): ParentBasis {
   const t = (mt ?? '').toLowerCase();
-  return t === 'area'
-    || t === 'irregular_area'
-    || t.includes('lxh')
-    || t.includes('length_x_height');
+  if (t === 'area' || t === 'irregular_area' || t.includes('lxh') || t.includes('length_x_height')) return 'area';
+  if (t === 'quantity' || t === 'point') return 'point';
+  return 'lineal';
 }
 
-/** Map workstation output -> ParentJob. Measurement values are final m2
- *  (length x height freestyle entries are already multiplied + metric). */
+/** Map workstation output -> ParentJob v2. Buckets come from the payload's
+ *  areas (name only - drawn geometry ignored); each component group is split
+ *  into per-bucket components using each measurement's quoteRoofAreaId
+ *  (the bucket active at draw time). Values are final (LxH freestyle
+ *  entries already length x height, metric). */
 function mapParentPayload(p: DemoFinishPayload): ParentJob {
   const job = emptyParentJob();
+
+  // Buckets from areas (workstation areas created name-only for these trades).
+  const bucketByAreaId = new Map<string, string>();
+  for (const ra of p.roofAreas) {
+    const bucket = { id: makeId('bucket'), name: ra.name || 'Bucket' };
+    job.parents.push(bucket);
+    bucketByAreaId.set(ra.id, bucket.id);
+  }
+  const defaultBucketId = job.parents[0]?.id ?? null;
+
   for (const cg of p.componentGroups) {
     if (!cg.name) continue;
-    const mt = (cg.measurementType ?? '').toLowerCase();
-    if (isAreaType(cg.measurementType)) {
-      const parent = { id: makeId('parent'), name: cg.name };
-      job.parents.push(parent);
-      cg.measurements.forEach((m, i) => {
+    // Split this component's measurements per bucket.
+    const byBucket = new Map<string, typeof cg.measurements>();
+    for (const m of cg.measurements) {
+      const bucketId = (m.quoteRoofAreaId && bucketByAreaId.get(m.quoteRoofAreaId)) || defaultBucketId;
+      if (!bucketId) continue;
+      const list = byBucket.get(bucketId) ?? [];
+      list.push(m);
+      byBucket.set(bucketId, list);
+    }
+    for (const [bucketId, measurements] of byBucket) {
+      const basis = basisForMeasurementType(cg.measurementType);
+      const comp = { id: makeId('comp'), parentId: bucketId, name: cg.name, basis };
+      let count = 0;
+      measurements.forEach(m => {
         if (!(m.value > 0)) return;
+        count++;
         job.entries.push({
           id: makeId('pe'),
-          parentId: parent.id,
-          label: `${cg.name} ${i + 1}`,
+          componentId: comp.id,
+          label: `${cg.name} ${count}`,
           value: Math.round(m.value * 1000) / 1000,
           quantity: 1,
         });
       });
-      // skip empty parents (component created but never measured)
-      if (!job.entries.some(e => e.parentId === parent.id)) {
-        job.parents = job.parents.filter(x => x.id !== parent.id);
-      }
-    } else {
-      // Trims / counts -> custom components (self-priced on the custom step)
-      const basis = mt === 'quantity' || mt === 'point' ? 'count' : 'lineal';
-      const qty = cg.measurements.reduce((s, m) => s + m.value, 0) || cg.total || cg.count;
-      if (qty > 0) {
-        job.customComponents.push({
-          id: makeId('cc'),
-          name: cg.name,
-          basis: basis as 'count' | 'lineal',
-          quantity: Math.round(qty * 1000) / 1000,
-          unitPrice: 0,
-          labourRate: 0,
-        });
-      }
+      if (count > 0) job.components.push(comp);
     }
   }
+
   return job;
 }
 
@@ -93,7 +106,7 @@ export function ParentTakeoffStation({ trade, planUrl, onFinish }: {
           trade,
         } as never}
         planUrl={planUrl}
-        components={[]}
+        components={PLACEHOLDER_COMPONENTS}
         collections={[]}
         hydrationData={null}
         demoMode="upload"

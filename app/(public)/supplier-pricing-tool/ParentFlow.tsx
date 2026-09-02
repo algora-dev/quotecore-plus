@@ -179,7 +179,6 @@ export function ParentFlow() {
 
         {step === productStepNum && (
           <ParentProductStep
-            trade={trade}
             job={job}
             setJob={setJob}
             catalog={catalog}

@@ -473,6 +473,11 @@ export function TakeoffWorkstation({
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
+  // GENERIC TRADES (cladding / flooring): name-only buckets - the "New Area"
+  // button opens this prompt instead of arming polygon drawing. Buckets
+  // carry no geometry; components attached to them do the measuring.
+  const [showBucketNamePrompt, setShowBucketNamePrompt] = useState(false);
+  const [bucketNameInput, setBucketNameInput] = useState('');
   // P1-1b new-page mode: pitch-only prompt after drawing the first area boundary.
   // Bypasses AreaNameModal entirely so the name never has to be re-typed.
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
@@ -1483,6 +1488,12 @@ export function TakeoffWorkstation({
       });
       return;
     }
+    // GENERIC TRADES: buckets are name-only - prompt for a name, no drawing.
+    if (!tradeConfig.pitchRequired) {
+      setBucketNameInput('');
+      setShowBucketNamePrompt(true);
+      return;
+    }
     // RULE: "+ New Area" always deselects any active component so the
     // drawn polygon is routed as a roof area, not a component measurement.
     // RC-2 fix (2026-07-05): do NOT clear activeComponentIds here - that wiped
@@ -1512,6 +1523,31 @@ export function TakeoffWorkstation({
     setNewAreaExistingId(areaList[0]?.id ?? '');
     setShowNewAreaChoiceModal(true);
   }, [areaList]);
+
+  // GENERIC TRADES: create a name-only bucket. No polygon, no pitch - the
+  // bucket just names the system ("Cedar Cladding"); components attached
+  // to it carry the measurements. Becomes the active area so new
+  // measurements stamp to it (activeAreaIdRef).
+  const handleSaveBucket = () => {
+    const name = bucketNameInput.trim();
+    if (!name) return;
+    const areaId = `area-${Date.now()}`;
+    setRoofAreas(prev => [...prev, {
+      id: areaId,
+      name,
+      points: [],
+      area: 0,
+      pitch: 0,
+      visible: true,
+      markers: [],
+      quoteRoofAreaId: null,
+      fromPageId: currentPageIdRef.current,
+    }]);
+    setAreaList(prev => [...prev, { id: areaId, label: name }]);
+    setShowBucketNamePrompt(false);
+    setBucketNameInput('');
+    setActiveAreaId(areaId);
+  };
 
   // Phase 6: confirm the choice modal → arm drawing mode
   const handleConfirmNewAreaChoice = () => {
@@ -6149,6 +6185,35 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GENERIC TRADES: name-only bucket prompt (no drawing) */}
+      {showBucketNamePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-1">New {(quote as { trade?: string }).trade === 'flooring' ? 'Floor' : 'Wall'} System</h2>
+              <p className="text-sm text-slate-500 mb-4">
+                Name the system (e.g. Cedar Cladding, Plasterboard). Components and measurements attach to it; products get applied to the components at the next step.
+              </p>
+              <input
+                autoFocus
+                value={bucketNameInput}
+                onChange={e => setBucketNameInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleSaveBucket();
+                  if (e.key === 'Escape') setShowBucketNamePrompt(false);
+                }}
+                placeholder={(quote as { trade?: string }).trade === 'flooring' ? 'e.g. Hybrid Flooring, Tiles' : 'e.g. Cedar Cladding, Render'}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <button onClick={() => setShowBucketNamePrompt(false)} className="rounded-full border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:border-slate-400 transition">Cancel</button>
+                <button onClick={handleSaveBucket} disabled={!bucketNameInput.trim()} className="rounded-full bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40">Create</button>
+              </div>
             </div>
           </div>
         </div>

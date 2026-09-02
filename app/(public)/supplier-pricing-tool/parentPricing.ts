@@ -1,13 +1,17 @@
-// Pricing engine for parent-model trades (cladding / flooring): one product
-// per parent area, covering every measured area under it. Mirrors pricing.ts
-// semantics (waste %, labour, qty override, price override when editable).
+// Pricing engine for parent-model trades v2 (cladding / flooring):
+// buckets -> components -> measurement entries, with one or MORE products
+// per component (layered: cedar timber + battens + building wrap on the
+// same measured m2). Mirrors pricing.ts semantics per applied product.
 
-import type { ParentApplied, ParentJob, SupplierProduct, CustomComponent } from './types';
-import { parentTotal } from './types';
+import type { ComponentApplied, ParentJob, ParentBasis, SupplierProduct, CustomComponent } from './types';
+import { componentTotal, PARENT_BASIS_UNIT } from './types';
 
 export interface ParentOutputLine {
-  parentId: string;
-  parentName: string;
+  componentId: string;
+  componentName: string;
+  bucketId: string;
+  bucketName: string;
+  basis: ParentBasis;
   productId: string;
   name: string;
   code: string;
@@ -37,21 +41,26 @@ export function priceParentOutput(job: ParentJob, catalog: SupplierProduct[]): P
 
   for (const ap of job.applied) {
     const p = byId.get(ap.productId);
-    const parent = job.parents.find(x => x.id === ap.parentId);
-    if (!p || !parent) continue;
+    const comp = job.components.find(c => c.id === ap.componentId);
+    if (!p || !comp) continue;
+    const bucket = job.parents.find(b => b.id === comp.parentId);
+    if (!bucket) continue;
 
-    const measured = parentTotal(job, ap.parentId);
+    const measured = componentTotal(job, ap.componentId);
     const calcQty = ap.qtyOverride != null ? ap.qtyOverride : measured;
     const purchaseQty = calcQty * (1 + (ap.wastePct || 0) / 100);
     const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
 
     lines.push({
-      parentId: ap.parentId,
-      parentName: parent.name,
+      componentId: comp.id,
+      componentName: comp.name,
+      bucketId: bucket.id,
+      bucketName: bucket.name,
+      basis: comp.basis,
       productId: p.id,
       name: p.name,
       code: p.code,
-      basisUnit: 'm\u00B2',
+      basisUnit: PARENT_BASIS_UNIT[comp.basis],
       calcQty,
       wastePct: ap.wastePct || 0,
       purchaseQty,
