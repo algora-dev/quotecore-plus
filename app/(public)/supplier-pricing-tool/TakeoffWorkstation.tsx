@@ -4904,6 +4904,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       cached.roofAreas.forEach((ra: any) => pushArea(ra));
     });
     roofAreas.forEach(ra => pushArea(ra));
+    // GENERIC TRADES (supplier tool): buckets are name-only - their rows are
+    // never drawn polygons, so the fresh-area restore (setRoofAreas([]))
+    // wipes them from state/cache. Re-seed every sidebar bucket as a
+    // payload area so measurements resolve to their bucket (2026-09-02 fix:
+    // empty-bucket payload emptied the whole downstream flow).
+    if (!tradeConfig.pitchRequired) {
+      areaList.forEach(a => pushArea({ id: a.id, name: a.label, area: 0, pitch: 0, quoteRoofAreaId: null }));
+    }
 
     return {
     roofAreas: mergedRoofAreas,
