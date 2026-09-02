@@ -463,6 +463,13 @@ export function TakeoffWorkstation({
   // Fix #3: sub-tool selection for line mode: 'single' (2-point line) or
   // 'multi' (N-point polyline, formerly the standalone Multi-Line button).
   const [lineSubTool, setLineSubTool] = useState<'single' | 'multi'>('single');
+  // Length x Height toolbar mode (supplier tool): forces the multi-point
+  // chain and prompts for the height at Finish - the measurement is stored
+  // as length x height in m2. Mirrors the app's multi_lineal_lxh_freestyle
+  // component behaviour but toolbar-driven so ANY selected component can be
+  // measured this way (wall runs from a floor plan).
+  const [lineHeightMode, setLineHeightMode] = useState(false);
+  const lineHeightModeRef = useRef(false);
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
@@ -2277,7 +2284,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const compMeasType = (compForType?.measurement_type ?? compForType?.default_measurement_type) as string;
 
     // Freestyle: intercept multi_lineal_lxh_freestyle - show height prompt instead of committing.
-    if (compMeasType === 'multi_lineal_lxh_freestyle') {
+    // Also fires when the toolbar Length x Height mode is active (supplier tool).
+    if (compMeasType === 'multi_lineal_lxh_freestyle' || lineHeightModeRef.current) {
       const canvasObjs = [...multiLinealSegmentObjects];
       setPendingFreestyleLength(totalLength);
       setPendingFreestyleComponentId(compId);
@@ -5668,14 +5676,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               >Line</button>
               {(lineMode || multiLinealMode) && (
                 <div className="flex items-center rounded-full bg-gray-100 p-0.5">
-                  <button onClick={() => { setLineSubTool('single'); if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'single' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                  <button onClick={() => { setLineSubTool('single'); setLineHeightMode(false); lineHeightModeRef.current = false; if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'single' && !lineHeightMode ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Two-point line"
                   >Single</button>
-                  <button onClick={() => { setLineSubTool('multi'); if (lineMode) { setLineMode(false); setLinePoints([]); setMultiLinealMode(true); } }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'multi' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                  <button onClick={() => { setLineSubTool('multi'); setLineHeightMode(false); lineHeightModeRef.current = false; if (lineMode) { setLineMode(false); setLinePoints([]); setMultiLinealMode(true); } }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'multi' && !lineHeightMode ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Multi-point polyline"
                   >Multi</button>
+                  <button onClick={() => { setLineSubTool('multi'); setLineHeightMode(true); lineHeightModeRef.current = true; if (lineMode) { setLineMode(false); setLinePoints([]); } setMultiLinealMode(true); }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineHeightMode ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Length x Height: multi-point chain, then enter the height at Finish (wall runs from a floor plan)"
+                  >L × H</button>
                 </div>
               )}
               <button

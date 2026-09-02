@@ -1,28 +1,30 @@
-// Parent-model flow (cladding / flooring): entry mode -> parents &
-// measurements -> products per parent -> custom components -> output.
-// Mirrors PortalFlow structure/UX; data model is parent areas (see
-// tradeConfig.ts). Fully self-contained like the roofing flow.
+// Parent-model flow (cladding / flooring): entry mode -> (digital takeoff
+// station when measuring from plans) -> parents & measurements -> products
+// per parent -> custom components -> output. Mirrors PortalFlow structure;
+// data model is parent areas (see tradeConfig.ts). Fully self-contained.
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { EntryMode, MeasurementSet, ParentJob } from './types';
-import { emptyParentJob, makeId } from './types';
+import { emptyParentJob } from './types';
 import type { SupplierProduct } from './types';
 import { StepProgress } from './StepShell';
 import { ParentMeasureStep } from './ParentMeasureStep';
 import { ParentProductStep } from './ParentProductStep';
 import { ParentOutputView } from './ParentOutputView';
 import { CustomComponentsStep } from './CustomComponentsStep';
+import { ParentTakeoffStation } from './ParentTakeoffStation';
 import { tradeConfigFor } from './tradeConfig';
 import type { TradeConfig } from './tradeConfig';
 import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
-import { useMemo } from 'react';
+import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 
-const FLOW_KEY = 'qc-spt-parent-flow-v1';
+const FLOW_KEY = 'qc-spt-parentflow-v2';
 
 interface PersistedParentFlow {
+  entryMode: 'measure' | 'have' | null;
   step: number;
   mode: 'standard' | 'advanced';
   job: ParentJob;
@@ -47,15 +49,22 @@ export function ParentFlow() {
   const { user } = useFreeToolsAuth();
 
   const restored = readPersisted();
-  const [step, setStep] = useState(restored?.step ?? 1);
+  const [entryMode, setEntryMode] = useState<'measure' | 'have' | null>(restored?.entryMode ?? null);
+  const [planUrl, setPlanUrl] = useState<string | null>(null);
+  const [step, setStep] = useState(() => {
+    // A restored measure flow at the station step has no plan file to
+    // re-render - land on the measurement edit step (job data survives).
+    if (restored && restored.entryMode === 'measure' && restored.step === 2) return 3;
+    return restored?.step ?? 1;
+  });
   const [mode, setMode] = useState<'standard' | 'advanced'>(restored?.mode ?? 'standard');
   const [job, setJob] = useState<ParentJob>(restored?.job ?? emptyParentJob());
 
   useEffect(() => {
     try {
-      window.sessionStorage.setItem(FLOW_KEY, JSON.stringify({ step, mode, job } satisfies PersistedParentFlow));
+      window.sessionStorage.setItem(FLOW_KEY, JSON.stringify({ entryMode, step, mode, job } satisfies PersistedParentFlow));
     } catch { /* ignore quota */ }
-  }, [step, mode, job]);
+  }, [entryMode, step, mode, job]);
 
   // Trade pricing parity with the roofing flow
   const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
@@ -65,15 +74,21 @@ export function ParentFlow() {
       : config.products,
     [config, showTrade]);
 
+  // Dynamic step list: the takeoff station only exists on the measure path.
+  const stationStep = entryMode === 'measure' ? 2 : 0;
+  const measureStepNum = entryMode === 'measure' ? 3 : 2;
+  const productStepNum = measureStepNum + 1;
+  const customStepNum = productStepNum + 1;
+  const outputStepNum = customStepNum + 1;
+
   const steps = [
     { key: 'mode', label: 'How do you want to price this job?' },
+    ...(entryMode === 'measure' ? [{ key: 'takeoff', label: 'Measure your plans' }] : []),
     { key: 'measure', label: `${trade.areaLabel} & measurements` },
     { key: 'products', label: 'Products' },
     { key: 'custom', label: 'Custom components' },
     { key: 'output', label: 'Output' },
   ];
-  const customStepNum = 4;
-  const outputStepNum = 5;
   const currentStep = Math.min(step, steps.length);
 
   // Shim so the shared CustomComponentsStep (MeasurementSet-typed) can be
@@ -84,9 +99,19 @@ export function ParentFlow() {
   }
 
   function reset() {
+    setEntryMode(null);
+    if (planUrl) URL.revokeObjectURL(planUrl);
+    setPlanUrl(null);
     setJob(emptyParentJob());
     setStep(1);
     try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
+  }
+
+  /** Station finished: merge its parents/entries/customs into the job and
+   *  land on the measurement edit step so names/values can be reviewed. */
+  function handleStationFinish(next: ParentJob) {
+    setJob(next);
+    setStep(measureStepNum);
   }
 
   return (
@@ -94,9 +119,9 @@ export function ParentFlow() {
       {step < outputStepNum && (
         <StepProgress steps={steps} current={currentStep} />
       )}
-      <div className="mx-auto max-w-5xl px-4 py-6 pb-16">
+      <div className={`px-4 py-6 pb-16 ${step === stationStep ? '' : 'mx-auto max-w-5xl'}`}>
         {/* Persistent Standard/Advanced toggle (mirrors the roofing flow) */}
-        {step >= 2 && step < outputStepNum && (
+        {step >= measureStepNum && step < outputStepNum && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-0.5 w-fit">
               <button
@@ -119,19 +144,40 @@ export function ParentFlow() {
           </div>
         )}
 
-        {step === 1 && <ParentEntryStep trade={trade} onNext={() => setStep(2)} />}
+        {step === 1 && (
+          <ParentEntryStep
+            trade={trade}
+            entryMode={entryMode}
+            setEntryMode={setEntryMode}
+            planUrl={planUrl}
+            setPlanUrl={setPlanUrl}
+            onBackToChoice={() => { setEntryMode(null); setPlanUrl(null); }}
+            onNext={() => setStep(entryMode === 'measure' ? stationStep : measureStepNum)}
+          />
+        )}
 
-        {step === 2 && (
+        {/* Digital takeoff station (measure from plans). Multi-plan: use
+            "Upload another plan or image" inside the station to add the
+            floor plan then each elevation in the same takeoff. */}
+        {step === stationStep && entryMode === 'measure' && planUrl && (
+          <ParentTakeoffStation
+            trade={trade.key}
+            planUrl={planUrl}
+            onFinish={handleStationFinish}
+          />
+        )}
+
+        {step === measureStepNum && (
           <ParentMeasureStep
             trade={trade}
             job={job}
             setJob={setJob}
-            onBack={() => setStep(1)}
-            onNext={() => setStep(3)}
+            onBack={() => setStep(entryMode === 'measure' ? stationStep : 1)}
+            onNext={() => setStep(productStepNum)}
           />
         )}
 
-        {step === 3 && (
+        {step === productStepNum && (
           <ParentProductStep
             trade={trade}
             job={job}
@@ -139,7 +185,7 @@ export function ParentFlow() {
             catalog={catalog}
             mode={mode}
             currency={config.currency}
-            onBack={() => setStep(2)}
+            onBack={() => setStep(measureStepNum)}
             onNext={() => setStep(customStepNum)}
           />
         )}
@@ -148,7 +194,7 @@ export function ParentFlow() {
           <CustomComponentsStep
             measureSet={customsShim}
             setMeasureSet={setCustomsShim}
-            onBack={() => setStep(3)}
+            onBack={() => setStep(productStepNum)}
             onNext={() => setStep(outputStepNum)}
           />
         )}
@@ -173,12 +219,38 @@ export function ParentFlow() {
   );
 }
 
-/** Step 1: two paths - measure from plans, or enter known measurements.
- *  The digital takeoff for parent trades is the next build phase, so the
- *  measure option is visible but marked coming soon; known measurements is
- *  the live path. */
-function ParentEntryStep({ trade, onNext }: { trade: TradeConfig; onNext: () => void }) {
-  const [selected, setSelected] = useState<'measure' | 'have' | null>(null);
+/** Step 1: two paths - measure from plans (upload PNG/JPG/PDF) or enter
+ *  known measurements. The station handles multi-plan in-session. */
+function ParentEntryStep({
+  trade, entryMode, setEntryMode, planUrl, setPlanUrl, onBackToChoice, onNext,
+}: {
+  trade: TradeConfig;
+  entryMode: 'measure' | 'have' | null;
+  setEntryMode: (m: 'measure' | 'have' | null) => void;
+  planUrl: string | null;
+  setPlanUrl: (u: string | null) => void;
+  onBackToChoice: () => void;
+  onNext: () => void;
+}) {
+  const pdfPicker = usePdfPagePicker();
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function handleFile(raw: File) {
+    setBusy(true);
+    try {
+      const isPdf = raw.type === 'application/pdf' || /\.pdf$/i.test(raw.name);
+      const file = isPdf ? await pdfPicker.convertIfNeeded(raw) : raw;
+      if (!file) return; // PDF page picker cancelled
+      const url = URL.createObjectURL(file);
+      setPlanUrl(url);
+      setFileName(raw.name);
+      setEntryMode('measure');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
@@ -189,23 +261,43 @@ function ParentEntryStep({ trade, onNext }: { trade: TradeConfig; onNext: () => 
 
         <div className="mt-4 space-y-3">
           <button
-            disabled
-            className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-left opacity-70"
-            title="Digital takeoff for this trade is landing in the next update"
+            onClick={() => setEntryMode('measure')}
+            className={`w-full rounded-xl border px-4 py-4 text-left transition cursor-pointer ${entryMode === 'measure'
+              ? 'border-blue-300 bg-blue-50/40 shadow-[0_0_8px_rgba(37,99,235,0.08)]'
+              : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40'}`}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold text-slate-700">
-                Measure from plans <span className="ml-2 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">Coming soon</span>
-              </span>
-            </div>
+            <span className="text-sm font-semibold text-slate-900">Measure from plans</span>
             <p className="mt-1 text-xs text-slate-500">
-              Upload a floor plan and/or elevation plans, measure {trade.areaNoun} areas on screen (length x height or area shapes), then apply products.
+              Upload a floor plan and/or elevation plans{trade.allowHeight ? ' - measure wall runs (length x height) or draw areas' : ' - draw the areas on the plan'}. Add more plans in the same takeoff.
             </p>
+            {entryMode === 'measure' && (
+              <div className="mt-3">
+                <label className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center hover:border-blue-300 transition">
+                  <span className="text-sm font-medium text-slate-700">
+                    {busy ? 'Processing PDF...' : planUrl ? 'Choose a different plan' : 'Upload your first plan'}
+                  </span>
+                  <span className="mt-1 text-xs text-slate-400">PDF, PNG, JPG</span>
+                  <input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg"
+                    className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) void handleFile(f);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {fileName && (
+                  <p className="mt-2 truncate text-xs text-slate-500">Selected: {fileName}</p>
+                )}
+              </div>
+            )}
           </button>
 
           <button
-            onClick={() => setSelected('have')}
-            className={`w-full rounded-xl border px-4 py-4 text-left transition cursor-pointer ${selected === 'have'
+            onClick={() => setEntryMode('have')}
+            className={`w-full rounded-xl border px-4 py-4 text-left transition cursor-pointer ${entryMode === 'have'
               ? 'border-blue-300 bg-blue-50/40 shadow-[0_0_8px_rgba(37,99,235,0.08)]'
               : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40'}`}
           >
@@ -218,19 +310,19 @@ function ParentEntryStep({ trade, onNext }: { trade: TradeConfig; onNext: () => 
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-slate-400">Step 1 of 5</span>
+        {entryMode ? (
+          <button onClick={onBackToChoice} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
+            Clear choice
+          </button>
+        ) : <span className="text-xs text-slate-400">Step 1 of 5</span>}
         <button
           onClick={onNext}
-          disabled={selected !== 'have'}
+          disabled={entryMode === null || (entryMode === 'measure' && !planUrl) || busy}
           className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
         >
-          Next: {trade.areaLabel}
+          {entryMode === 'measure' ? 'Next: Measure your plans' : `Next: ${trade.areaLabel}`}
         </button>
       </div>
     </div>
   );
-}
-
-export function parentFlowMakeId(prefix: string): string {
-  return makeId(prefix);
 }
