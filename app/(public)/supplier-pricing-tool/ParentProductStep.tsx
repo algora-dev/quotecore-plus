@@ -1,11 +1,12 @@
-// Step 3 (parent model v2): apply products to COMPONENTS. A component can
-// take multiple layered products (cedar timber + battens + building wrap on
-// the same measured m2). Catalog is filtered by the component's basis.
-// Standard = one product with defaults; Advanced = add layers + edit waste,
-// labour, qty and price overrides.
+// Step 3 (parent model v2): apply products to COMPONENTS. Roofing-style
+// quick-add - click products in the picker to stack them onto the component
+// (click, click, click), every applied product has a Remove. Advanced mode
+// adds waste / labour / qty / price override editing per applied product.
+// Catalog is filtered by the component's basis.
 
 'use client';
 
+import { useState } from 'react';
 import type { ParentJob, ComponentApplied, SupplierProduct, ParentBasis } from './types';
 import { makeId, componentTotal, PARENT_BASIS_UNIT } from './types';
 
@@ -36,7 +37,7 @@ export function ParentProductStep({
       <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
         <h2 className="text-lg font-semibold text-slate-900">Products</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Pick the product for each measured component. Advanced mode lets you stack multiple products on one component (e.g. cladding + battens + building wrap on the same m\u00B2).
+          Click products to add them to each component - stack as many as needed (cladding + battens + wrap on the same m\u00B2). Remove any you don&apos;t want.
         </p>
       </div>
 
@@ -47,7 +48,7 @@ export function ParentProductStep({
           <div key={bucket.id} className="space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-slate-900">{bucket.name}</span>
-              <span className="text-xs text-slate-400">bucket</span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">bucket</span>
             </div>
             {components.map(comp => (
               <ComponentProductCard
@@ -95,10 +96,12 @@ function ComponentProductCard({
   const total = componentTotal(job, comp.id);
   const unit = PARENT_BASIS_UNIT[comp.basis];
   const entries = job.entries.filter(e => e.componentId === comp.id);
+  const [pickerOpen, setPickerOpen] = useState(applied.length === 0);
 
   function addApplied(productId: string) {
     const p = products.find(x => x.id === productId);
     if (!p) return;
+    if (applied.some(a => a.productId === productId)) return; // no duplicates
     const ap: ComponentApplied = {
       id: makeId('ap'),
       componentId: comp.id,
@@ -130,86 +133,103 @@ function ComponentProductCard({
             {entries.length} entr{entries.length === 1 ? 'y' : 'ies'} - {total.toFixed(1)} {unit} measured
           </p>
         </div>
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{total.toFixed(1)} {unit}</span>
-      </div>
-
-      <div className="space-y-3 p-4">
-        {applied.map(ap => {
-          const product = products.find(p => p.id === ap.productId);
-          if (!product) return null;
-          return (
-            <div key={ap.id} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <span className="text-sm font-medium text-slate-800">{product.name}</span>
-                  <div className="text-xs text-slate-400">
-                    {currency}{product.unitPrice.toFixed(2)}/{unit}
-                    {applied.length > 1 && mode === 'advanced' && (
-                      <button onClick={() => removeApplied(ap.id)} className="ml-3 text-slate-400 hover:text-slate-600 transition">Remove layer</button>
-                    )}
-                  </div>
-                </div>
-                {mode === 'standard' && (
-                  <span className="text-xs text-slate-500">
-                    {ap.wastePct > 0 && `${ap.wastePct}% waste incl. `}
-                    {ap.labourRate > 0 ? `${currency}${ap.labourRate.toFixed(2)}/${unit} labour` : 'materials only'}
-                  </span>
-                )}
-              </div>
-
-              {mode === 'advanced' && (
-                <div className="mt-2 grid gap-2 sm:grid-cols-4">
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Waste %</label>
-                    <input type="number" min="0" max="100" step="0.5" value={ap.wastePct}
-                      onChange={e => patchApplied(ap.id, { wastePct: parseFloat(e.target.value) || 0 })} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Labour {currency}/{unit}</label>
-                    <input type="number" min="0" step="0.5" value={ap.labourRate}
-                      onChange={e => patchApplied(ap.id, { labourRate: parseFloat(e.target.value) || 0 })} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600">Qty override ({unit})</label>
-                    <input type="number" min="0" step="0.1" value={ap.qtyOverride ?? ''}
-                      onChange={e => patchApplied(ap.id, { qtyOverride: e.target.value.trim() === '' ? null : parseFloat(e.target.value) })}
-                      placeholder={`measured ${total.toFixed(1)}`} className={inputCls} />
-                  </div>
-                  {product.priceEditable && (
-                    <div>
-                      <label className="text-xs font-medium text-slate-600">Price override {currency}/{unit}</label>
-                      <input type="number" min="0" step="0.01" value={ap.priceOverride ?? ''}
-                        onChange={e => patchApplied(ap.id, { priceOverride: e.target.value.trim() === '' ? null : parseFloat(e.target.value) })}
-                        placeholder={`list ${product.unitPrice.toFixed(2)}`} className={inputCls} />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Product picker / add layer */}
-        <div className="grid gap-2 sm:grid-cols-2 items-end">
-          <div>
-            <label className="text-xs font-medium text-slate-600">
-              {applied.length === 0 ? 'Product' : applied.length === 1 && mode === 'advanced' ? 'Add another product (layer)' : 'Product'}
-            </label>
-            <select
-              value=""
-              onChange={e => { if (e.target.value) addApplied(e.target.value); }}
-              className={inputCls}
-            >
-              <option value="">{applied.length === 0 ? 'Choose a product...' : mode === 'advanced' ? 'Add a product layer (optional)...' : 'Change product...'}</option>
-              {products.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({currency}{p.unitPrice.toFixed(2)}/{unit}){p.suggested ? ' - recommended' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{total.toFixed(1)} {unit}</span>
+          <button onClick={() => setPickerOpen(v => !v)} className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 hover:border-slate-400 transition">
+            {pickerOpen ? 'Close products' : '+ Add products'}
+          </button>
         </div>
       </div>
+
+      {/* Applied products - always removable */}
+      {applied.length > 0 && (
+        <div className="space-y-2 p-4 pb-0">
+          {applied.map(ap => {
+            const product = products.find(p => p.id === ap.productId);
+            if (!product) return null;
+            return (
+              <div key={ap.id} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-sm font-medium text-slate-800">{product.name}</span>
+                    <div className="text-xs text-slate-400">
+                      {currency}{product.unitPrice.toFixed(2)}/{unit}
+                      {ap.wastePct > 0 && ` - ${ap.wastePct}% waste`}
+                      {ap.labourRate > 0 ? ` - ${currency}${ap.labourRate.toFixed(2)}/${unit} labour` : ''}
+                    </div>
+                  </div>
+                  <button onClick={() => removeApplied(ap.id)}
+                    className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-500 hover:border-red-300 hover:text-red-500 transition">
+                    Remove
+                  </button>
+                </div>
+
+                {mode === 'advanced' && (
+                  <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Waste %</label>
+                      <input type="number" min="0" max="100" step="0.5" value={ap.wastePct}
+                        onChange={e => patchApplied(ap.id, { wastePct: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Labour {currency}/{unit}</label>
+                      <input type="number" min="0" step="0.5" value={ap.labourRate}
+                        onChange={e => patchApplied(ap.id, { labourRate: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600">Qty override ({unit})</label>
+                      <input type="number" min="0" step="0.1" value={ap.qtyOverride ?? ''}
+                        onChange={e => patchApplied(ap.id, { qtyOverride: e.target.value.trim() === '' ? null : parseFloat(e.target.value) })}
+                        placeholder={`measured ${total.toFixed(1)}`} className={inputCls} />
+                    </div>
+                    {product.priceEditable && (
+                      <div>
+                        <label className="text-xs font-medium text-slate-600">Price override {currency}/{unit}</label>
+                        <input type="number" min="0" step="0.01" value={ap.priceOverride ?? ''}
+                          onChange={e => patchApplied(ap.id, { priceOverride: e.target.value.trim() === '' ? null : parseFloat(e.target.value) })}
+                          placeholder={`list ${product.unitPrice.toFixed(2)}`} className={inputCls} />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Quick-add picker: click to stack products (roofing-style) */}
+      {pickerOpen && (
+        <div className="p-4">
+          {unassigned && <p className="mb-2 text-xs font-medium text-amber-600">Pick at least one product for this component</p>}
+          <div className="grid gap-1.5 sm:grid-cols-2">
+            {products.map(p => {
+              const already = applied.some(a => a.productId === p.id);
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => addApplied(p.id)}
+                  disabled={already}
+                  className={`w-full text-left rounded-xl border px-3 py-2 text-sm transition cursor-pointer ${
+                    already
+                      ? 'border-blue-200 bg-blue-50/40 text-blue-700 cursor-default'
+                      : 'border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium truncate">{p.name}</span>
+                    <span className="text-xs text-slate-500 whitespace-nowrap">{currency}{p.unitPrice.toFixed(2)}/{unit}</span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-400">
+                    {already ? <span className="text-blue-600 font-medium">Added</span> : p.suggested ? <span className="text-slate-500">recommended</span> : null}
+                    {p.code && <span>{p.code}</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

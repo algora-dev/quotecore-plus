@@ -1,6 +1,6 @@
-// Step 2 (parent model v2): add buckets (name-only parents), then measured
-// components under each bucket (area / lineal / point), then entries per
-// component. Buckets never carry measurements - components do.
+// Step 2 (parent model v2): buckets (name-only parents) -> measured
+// components -> entries. Everything lands COLLAPSED (bucket summary only);
+// expanding reveals components + entries with add/delete controls.
 
 'use client';
 
@@ -46,24 +46,19 @@ export function ParentMeasureStep({
     });
   }
 
-  function renameBucket(id: string, name: string) {
-    setJob({ ...job, parents: job.parents.map(p => p.id === id ? { ...p, name } : p) });
-  }
-
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
         <h2 className="text-lg font-semibold text-slate-900">{trade.areaLabel} & measurements</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Add a bucket for each {trade.areaNoun} system (e.g. &quot;Cedar Cladding&quot;, &quot;Plasterboard&quot;), then add measured components under it - walls (m\u00B2), lengths (m) or items (ea). Products get applied to the components at the next step.
+          Here&apos;s what you measured. Expand a bucket to review or add more - click any entry&apos;s Remove to delete it.
         </p>
-
         <div className="mt-4 flex flex-col sm:flex-row gap-2">
           <input
             value={bucketName}
             onChange={e => setBucketName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addBucket(bucketName); }}
-            placeholder={trade.key === 'cladding' ? 'e.g. Cedar Cladding, Render, Plasterboard' : 'e.g. Hybrid flooring, Tiles, Carpet'}
+            placeholder={trade.key === 'cladding' ? 'Add another bucket (e.g. Render)' : 'Add another bucket (e.g. Tiles)'}
             className={`${inputCls} flex-1`}
           />
           <button
@@ -83,7 +78,6 @@ export function ParentMeasureStep({
           bucket={p}
           job={job}
           setJob={setJob}
-          onRename={n => renameBucket(p.id, n)}
           onRemove={() => removeBucket(p.id)}
         />
       ))}
@@ -105,18 +99,28 @@ export function ParentMeasureStep({
 }
 
 function BucketCard({
-  trade, bucket, job, setJob, onRename, onRemove,
+  trade, bucket, job, setJob, onRemove,
 }: {
   trade: TradeConfig;
   bucket: ParentArea;
   job: ParentJob;
   setJob: (j: ParentJob) => void;
-  onRename: (name: string) => void;
   onRemove: () => void;
 }) {
   const components = job.components.filter(c => c.parentId === bucket.id);
+  const [open, setOpen] = useState(false);
   const [compName, setCompName] = useState('');
   const [compBasis, setCompBasis] = useState<ParentBasis>('area');
+
+  // Per-basis totals for the collapsed summary line
+  const totals = components.reduce<Record<string, number>>((acc, c) => {
+    const t = componentTotal(job, c.id);
+    acc[c.basis] = (acc[c.basis] ?? 0) + t;
+    return acc;
+  }, {});
+  const summary = Object.entries(totals)
+    .map(([basis, t]) => `${t.toFixed(1)} ${PARENT_BASIS_UNIT[basis as ParentBasis]}`)
+    .join(' - ');
 
   function addComponent() {
     const trimmed = compName.trim();
@@ -135,88 +139,101 @@ function BucketCard({
     });
   }
 
-  function renameComponent(id: string, name: string) {
-    setJob({ ...job, components: job.components.map(c => c.id === id ? { ...c, name } : c) });
-  }
-
   return (
     <div className="rounded-xl border border-slate-200 bg-white hover:border-blue-200 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] transition">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 p-4">
-        <input
-          value={bucket.name}
-          onChange={e => onRename(e.target.value)}
-          aria-label="Bucket name"
-          className="w-full sm:w-auto flex-1 min-w-40 rounded-lg border border-transparent px-2 py-1 text-sm font-semibold text-slate-900 hover:border-slate-200 focus:border-blue-500 focus:outline-none"
-        />
-        <button onClick={onRemove} className="text-xs text-slate-400 hover:text-slate-600 transition" title="Remove this bucket and its components">
-          Remove
-        </button>
-      </div>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between gap-2 p-4 text-left cursor-pointer"
+      >
+        <div className="min-w-0">
+          <span className="text-sm font-semibold text-slate-900">{bucket.name}</span>
+          <span className="ml-2 text-xs text-slate-400">
+            {components.length} component{components.length === 1 ? '' : 's'}
+            {summary ? ` - ${summary}` : ''}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <svg
+            className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
 
-      <div className="p-4 space-y-3">
-        {components.map(c => (
-          <ComponentCard key={c.id} trade={trade} comp={c} job={job} setJob={setJob}
-            onRename={n => renameComponent(c.id, n)} onRemove={() => removeComponent(c.id)} />
-        ))}
-
-        {/* Add component */}
-        <div className="rounded-lg bg-slate-50 p-3">
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div>
-              <label className="text-xs font-medium text-slate-600">Component name</label>
-              <input value={compName} onChange={e => setCompName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addComponent(); }}
-                placeholder={trade.key === 'cladding' ? 'e.g. Walls, Window trims, Vents' : 'e.g. Floors, Skirting, Transitions'}
-                className={inputCls} />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-slate-600">Measured by</label>
-              <select value={compBasis} onChange={e => setCompBasis(e.target.value as ParentBasis)} className={inputCls}>
-                {BASIS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label} - {o.desc}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="mt-2 flex justify-end">
-            <button onClick={addComponent} disabled={compName.trim().length === 0}
-              className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition disabled:opacity-40">
-              Add component
+      {open && (
+        <div className="border-t border-slate-100 p-4 space-y-3">
+          <div className="flex justify-end">
+            <button onClick={onRemove} className="text-xs text-slate-400 hover:text-red-500 transition" title="Delete this bucket and everything under it">
+              Delete bucket
             </button>
           </div>
+
+          {components.map(c => (
+            <ComponentCard key={c.id} trade={trade} comp={c} job={job} setJob={setJob}
+              onRemove={() => removeComponent(c.id)} />
+          ))}
+
+          {/* Add component */}
+          <div className="rounded-lg bg-slate-50 p-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-slate-600">New component name</label>
+                <input value={compName} onChange={e => setCompName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') addComponent(); }}
+                  placeholder={trade.key === 'cladding' ? 'e.g. Walls, Window trims, Vents' : 'e.g. Floors, Skirting'}
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Measured by</label>
+                <select value={compBasis} onChange={e => setCompBasis(e.target.value as ParentBasis)} className={inputCls}>
+                  {BASIS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label} - {o.desc}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="mt-2 flex justify-end">
+              <button onClick={addComponent} disabled={compName.trim().length === 0}
+                className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition disabled:opacity-40">
+                Add component
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 function ComponentCard({
-  trade, comp, job, setJob, onRename, onRemove,
+  trade, comp, job, setJob, onRemove,
 }: {
   trade: TradeConfig;
   comp: ParentComponent;
   job: ParentJob;
   setJob: (j: ParentJob) => void;
-  onRename: (name: string) => void;
   onRemove: () => void;
 }) {
   const entries = job.entries.filter(e => e.componentId === comp.id);
   const total = componentTotal(job, comp.id);
   const unit = PARENT_BASIS_UNIT[comp.basis];
+  const [adding, setAdding] = useState(false);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50/50">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-3 py-2">
-        <input
-          value={comp.name}
-          onChange={e => onRename(e.target.value)}
-          aria-label="Component name"
-          className="flex-1 min-w-32 rounded-lg border border-transparent px-2 py-1 text-sm font-medium text-slate-800 hover:border-slate-200 focus:border-blue-500 focus:outline-none"
-        />
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+        <div className="min-w-0">
+          <span className="text-sm font-medium text-slate-800">{comp.name}</span>
+          <span className="ml-2 rounded-full bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
             {BASIS_OPTIONS.find(o => o.value === comp.basis)?.label ?? comp.basis}
           </span>
+        </div>
+        <div className="flex items-center gap-3">
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{total.toFixed(1)} {unit}</span>
-          <button onClick={onRemove} className="text-xs text-slate-400 hover:text-slate-600 transition">Remove</button>
+          <button onClick={() => setAdding(v => !v)} className="text-xs text-blue-600 hover:text-blue-700 transition font-medium">
+            {adding ? 'Close' : '+ Add more'}
+          </button>
+          <button onClick={onRemove} className="text-xs text-slate-400 hover:text-red-500 transition">Delete</button>
         </div>
       </div>
       <div className="px-3 py-2">
@@ -235,29 +252,32 @@ function ComponentCard({
                 <div className="flex items-center gap-3 whitespace-nowrap">
                   <span className="text-sm font-medium text-slate-700">{(e.value * (e.quantity || 1)).toFixed(1)} {unit}</span>
                   <button onClick={() => setJob({ ...job, entries: job.entries.filter(x => x.id !== e.id) })}
-                    className="text-xs text-slate-400 hover:text-slate-600 transition">Remove</button>
+                    className="text-xs text-slate-400 hover:text-red-500 transition">Remove</button>
                 </div>
               </li>
             ))}
           </ul>
         )}
-        <AddEntryForm trade={trade} comp={comp} onAdd={e => setJob({ ...job, entries: [...job.entries, e] })} />
+        {adding && (
+          <AddEntryForm trade={trade} comp={comp} onDone={() => setAdding(false)}
+            onAdd={e => setJob({ ...job, entries: [...job.entries, e] })} />
+        )}
       </div>
     </div>
   );
 }
 
-function AddEntryForm({ trade, comp, onAdd }: {
+function AddEntryForm({ trade, comp, onAdd, onDone }: {
   trade: TradeConfig;
   comp: ParentComponent;
   onAdd: (e: ParentEntry) => void;
+  onDone: () => void;
 }) {
   const [label, setLabel] = useState('');
   const [val1, setVal1] = useState('');
   const [val2, setVal2] = useState('');
   const [qty, setQty] = useState('1');
   const [angle, setAngle] = useState('');
-  /** area basis: Area OR Length x Height (cladding only); others single value */
   const [mode, setMode] = useState<'area' | 'lxh'>(trade.allowHeight ? 'lxh' : 'area');
 
   const useLxh = comp.basis === 'area' && trade.allowHeight && mode === 'lxh';
@@ -268,7 +288,7 @@ function AddEntryForm({ trade, comp, onAdd }: {
   const value = comp.basis === 'point' ? Math.max(1, Math.round(a)) : useLxh ? a * b : a;
   const canAdd = label.trim().length > 0 && value > 0;
 
-  function add() {
+  function add(andContinue: boolean) {
     if (!canAdd) return;
     onAdd({
       id: makeId('pe'),
@@ -280,7 +300,11 @@ function AddEntryForm({ trade, comp, onAdd }: {
       height: useLxh ? b : null,
       angleDegrees: ang > 0 ? ang : null,
     });
-    setLabel(''); setVal1(''); setVal2(''); setQty('1'); setAngle('');
+    if (andContinue) {
+      setLabel(''); setVal1(''); setVal2(''); setQty('1'); setAngle('');
+    } else {
+      onDone();
+    }
   }
 
   const unit1 = comp.basis === 'area' ? (useLxh ? 'Length (m)' : 'Area (m²)') : comp.basis === 'lineal' ? 'Length (m)' : 'Count';
@@ -337,10 +361,16 @@ function AddEntryForm({ trade, comp, onAdd }: {
         <span className="text-xs text-slate-400">
           {canAdd ? `${(value * (comp.basis === 'point' ? 1 : q)).toFixed(1)} ${PARENT_BASIS_UNIT[comp.basis]} total` : 'Enter a name and value'}
         </span>
-        <button onClick={add} disabled={!canAdd}
-          className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition disabled:opacity-40">
-          Add entry
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => add(true)} disabled={!canAdd}
+            className="rounded-full border border-slate-300 px-4 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition disabled:opacity-40">
+            Add + another
+          </button>
+          <button onClick={() => add(false)} disabled={!canAdd}
+            className="rounded-full bg-black px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition disabled:opacity-40">
+            Add entry
+          </button>
+        </div>
       </div>
     </div>
   );

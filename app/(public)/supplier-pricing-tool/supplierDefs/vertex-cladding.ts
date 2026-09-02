@@ -48,5 +48,17 @@ export const VERTEX_CLADDING = {
 
     // ---- Paint / finish (area) ----
     { id: 'vc-paint-ext', name: 'Exterior Acrylic Paint System (2 coats, per m\u00B2)', code: 'FIN-PT-EXT', basis: 'area', groups: ['areas'], component: 'covering', roofTypes: ['all'], family: 'Paint', unitPrice: 5.8, packSize: null, defaultWastePct: 5, defaultLabourRate: 12.0, priceEditable: true },
+    // ---- Wall lengths (lineal, applied per length component) ----
+    { id: 'vc-cedar-trim', name: 'Cedar Window Trim 42mm', code: 'TRM-WB-42', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], family: 'Weatherboard', unitPrice: 6.4, packSize: null, defaultWastePct: 8, defaultLabourRate: 9.0, priceEditable: true, suggested: true },
+    { id: 'vc-corner-trim', name: 'Aluminium Corner Trim 90\u00B0 - Black', code: 'TRM-CN-90', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], unitPrice: 11.9, packSize: null, defaultWastePct: 5, defaultLabourRate: 10.0, priceEditable: true },
+    { id: 'vc-joint-flashing', name: 'Z-Joint Flashing 25mm - Colorsteel', code: 'FLS-ZJ-25', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], unitPrice: 8.7, packSize: null, defaultWastePct: 5, defaultLabourRate: 8.0, priceEditable: true },
+    { id: 'vc-plaster-tape', name: 'Paper Tape for Plastering Joints 50mm', code: 'TPE-PP-50', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], unitPrice: 0.85, packSize: null, defaultWastePct: 10, defaultLabourRate: 2.5, priceEditable: true },
+    { id: 'vc-skirting', name: 'MDF Skirting 90mm Primed', code: 'TRM-SK-90', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], unitPrice: 4.3, packSize: null, defaultWastePct: 8, defaultLabourRate: 9.5, priceEditable: true },
+
+    // ---- Wall items (count, one-off fittings) ----
+    { id: 'vc-wall-vent', name: 'Wall Vent 230x70mm - Colorsteel', code: 'ITM-WV-230', basis: 'count', groups: ['areas'], component: 'downpipe', roofTypes: ['all'], unitPrice: 18.9, packSize: null, defaultWastePct: 0, defaultLabourRate: 22.0, priceEditable: true, suggested: true },
+    { id: 'vc-louvres', name: 'Aluminium Louvre Vent 600x150mm', code: 'ITM-LV-600', basis: 'count', groups: ['areas'], component: 'downpipe', roofTypes: ['all'], unitPrice: 34.5, packSize: null, defaultWastePct: 0, defaultLabourRate: 28.0, priceEditable: true },
+    { id: 'vc-ext-light', name: 'Exterior Light Point (fitting only)', code: 'ITM-EL-PT', basis: 'count', groups: ['areas'], component: 'downpipe', roofTypes: ['all'], unitPrice: 42.0, packSize: null, defaultWastePct: 0, defaultLabourRate: 45.0, priceEditable: true },
+    { id: 'vc-tap-point', name: 'External Tap Point (fitting only)', code: 'ITM-TP-EX', basis: 'count', groups: ['areas'], component: 'downpipe', roofTypes: ['all'], unitPrice: 28.5, packSize: null, defaultWastePct: 0, defaultLabourRate: 35.0, priceEditable: true },
   ] as SupplierProduct[],
 } as const;

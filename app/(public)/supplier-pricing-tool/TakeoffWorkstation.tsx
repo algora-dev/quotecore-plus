@@ -337,7 +337,7 @@ export function TakeoffWorkstation({
   const [pages, setPages] = useState<Array<{ id?: string; url: string; name: string; order: number }>>(
     initialPageId
       ? [{ id: initialPageId, url: planUrl, name: initialPageName || 'New Area', order: 1 }]
-      : [{ url: planUrl, name: 'Plan 1', order: 1 }]
+      : [{ id: 'page-local-1', url: planUrl, name: 'Plan 1', order: 1 }]
   );
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   // P1-3: tracks the quote_roof_areas DB ID to route component measurements
@@ -470,6 +470,32 @@ export function TakeoffWorkstation({
   // measured this way (wall runs from a floor plan).
   const [lineHeightMode, setLineHeightMode] = useState(false);
   const lineHeightModeRef = useRef(false);
+  // Generic trades: the Line button opens a 4-option dropdown instead of
+  // arming a mode directly (Line / Line Multi / Length x Height x2).
+  const [showLineDropdown, setShowLineDropdown] = useState(false);
+  /** Arm a line-tool variant from the dropdown (generic trades). */
+  const armLineVariant = (variant: 'single' | 'multi' | 'lxh-single' | 'lxh-multi') => {
+    cleanupBoxDrag();
+    setAreaMode(false);
+    setPointMode(false);
+    setShowLineDropdown(false);
+    const height = variant === 'lxh-single' || variant === 'lxh-multi';
+    setLineHeightMode(height);
+    lineHeightModeRef.current = height;
+    if (variant === 'single' || variant === 'lxh-single') {
+      setLineSubTool('single');
+      setMultiLinealMode(false);
+      setMultiLinealPoints([]);
+      setMultiLinealSegmentObjects([]);
+      setLinePoints([]);
+      setLineMode(true);
+    } else {
+      setLineSubTool('multi');
+      setLineMode(false);
+      setLinePoints([]);
+      setMultiLinealMode(true);
+    }
+  };
   const [areaPoints, setAreaPoints] = useState<{ x: number; y: number }[]>([]);
   const [_tempAreaPolygon, _setTempAreaPolygon] = useState<any>(null);
   const [showAreaNamePrompt, setShowAreaNamePrompt] = useState(false);
@@ -3052,10 +3078,92 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     });
   };
 
-  // DEMO: plan uploads are out of scope - the header button is disabled.
-  // Confirming just surfaces the demo notice.
+  // Upload another plan (supplier tool / generic trades): fully client-side.
+  // Stamps current drawings with the current page + caches its calibration,
+  // adds the new page with a local id, switches to it and forces
+  // recalibration (different image = different scale). All pages'
+  // measurements stay in state; the redraw filter keeps each page's shapes.
   const handleConfirmSaveAndUploadAnother = async () => {
-    setUploadAnotherError('Uploads are not available in the demo - create a free account to upload your own plans.');
+    if (!uploadAnotherFile) {
+      setUploadAnotherError('Choose a plan image first.');
+      return;
+    }
+    if (uploadAnotherTarget === 'existing' && !activeAreaId && areaList.length === 0) {
+      setUploadAnotherError('Create a bucket first, then add plans to it.');
+      return;
+    }
+    setUploadAnotherError(null);
+    setIsUploadingPage(true);
+    try {
+      const currentPid = pages[currentPageIndex]?.id ?? null;
+      if (currentPid) {
+        setComponentMeasurements(prev => prev.map(c => ({
+          ...c,
+          measurements: c.measurements.map(m => m.fromPageId ? m : { ...m, fromPageId: currentPid }),
+        })));
+        if (calibrations.length > 0) {
+          pageCalibrationsRef.current.set(currentPid, calibrations.map(c => ({ ...c })));
+        }
+      }
+
+      // 'new' target: create the bucket now (named from the file) so the new
+      // page's measurements can stamp to it.
+      let targetAreaId = activeAreaId;
+      if (uploadAnotherTarget === 'new') {
+        const areaId = `area-${Date.now()}`;
+        const label = uploadAnotherFile.name.replace(/\.[^.]+$/, '') || 'New Area';
+        setRoofAreas(prev => [...prev, {
+          id: areaId, name: label, points: [], area: 0, pitch: 0,
+          visible: true, markers: [], quoteRoofAreaId: null, fromPageId: null,
+        }]);
+        setAreaList(prev => [...prev, { id: areaId, label }]);
+        targetAreaId = areaId;
+        setActiveAreaId(areaId);
+      }
+
+      const url = URL.createObjectURL(uploadAnotherFile);
+      const newPageId = `page-${Date.now()}`;
+      setPages(prev => [...prev, {
+        id: newPageId,
+        url,
+        name: uploadAnotherFile.name || `Plan ${prev.length + 1}`,
+        order: prev.length + 1,
+      }]);
+      // Register the page under the target area so the sidebar plan chips
+      // render and the user can switch back.
+      if (targetAreaId) {
+        setAreaPages(prev => ({
+          ...prev,
+          [targetAreaId]: [...(prev[targetAreaId] ?? []), newPageId],
+        }));
+      }
+
+      const switchTo = pages.length; // index of the page we just appended
+      setShowUploadAnotherModal(false);
+      setUploadAnotherFile(null);
+      setUploadAnotherTarget('existing');
+
+      setTimeout(() => {
+        setCurrentPageIndex(switchTo);
+        setPageBackgroundImage(url);
+        setCalibrations([]);
+        setCalibrationPoints([]);
+        setCalibrationConfirmed(false);
+        setCalibrationMode(true);
+        setShowCalibrationHelp(true);
+        setAreaMode(false);
+        setLineMode(false);
+        setPointMode(false);
+        setMultiLinealMode(false);
+        setAreaPoints([]);
+        setLinePoints([]);
+        setMultiLinealPoints([]);
+        setMultiLinealSegmentObjects([]);
+        setRedrawNonce(n => n + 1);
+      }, 80);
+    } finally {
+      setIsUploadingPage(false);
+    }
   };
   // Calculate area using Shoelace formula
   const calculatePolygonArea = (points: { x: number; y: number }[]) => {
@@ -4784,13 +4892,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-2 md:py-3 flex items-center justify-between">
           <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
         <div className="flex items-center gap-2">
-          {/* P1-3: Save current takeoff + upload another plan image. */}
+          {/* P1-3: Save current takeoff + upload another plan image.
+              Generic trades (supplier tool): client-side multi-plan, enabled.
+              Roofing demo: uploads stay disabled (app-only). */}
           <button
             onClick={openSaveAndUploadAnotherPlan}
-            disabled
-            data-demo-disabled
+            disabled={!quoteIsGeneric || isSaving || isUploadingPage}
             className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(1,43,57,0.45)]"
-            title="Uploads are not available in the demo - create a free account to upload your own plans"
+            title={quoteIsGeneric ? 'Add another plan or image to this takeoff' : 'Uploads are not available in the demo - create a free account to upload your own plans'}
           >
             {isSaving || isUploadingPage ? 'Saving…' : 'Upload another plan or image'}
           </button>
@@ -5065,7 +5174,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               Click an area to switch the canvas + component list. */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
+              <h2 className="text-sm font-bold text-gray-900">{tradeConfig.areaPluralLabel}</h2>
                 <button
                   onClick={handleCreateNewArea}
                   disabled={false}
@@ -5073,7 +5182,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   title="Create a new area"
                 >
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                  New Area
+                  {tradeConfig.pitchRequired ? 'New Area' : `+ ${tradeConfig.areaSingularLabel.replace(/s$/, '')} System`}
                 </button>
               </div>
               <div className="space-y-2">
@@ -5696,9 +5805,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               <button
                 onClick={() => {
                   const isActive = lineMode || multiLinealMode;
-                  if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); return; }
+                  if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); setLineHeightMode(false); lineHeightModeRef.current = false; setShowLineDropdown(false); return; }
                   if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
                   if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
+                  if (quoteIsGeneric) { setShowLineDropdown(v => !v); return; }
                   cleanupBoxDrag(); setAreaMode(false); setPointMode(false);
                   if (lineSubTool === 'multi') { setMultiLinealMode(true); setLineMode(false); setLinePoints([]); }
                   else { setLineMode(true); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setLinePoints([]); }
@@ -5710,20 +5820,38 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 }`}
                 title="Measure line or polyline"
               >Line</button>
-              {(lineMode || multiLinealMode) && (
+              {/* Generic trades: 4-option line dropdown (opens on Line click) */}
+              {showLineDropdown && quoteIsGeneric && !lineMode && !multiLinealMode && (
+                <div className="absolute left-0 top-full mt-1 z-40 w-64 rounded-xl border border-gray-200 bg-white shadow-lg p-1">
+                  <button onClick={() => armLineVariant('single')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Line - point to point
+                    <span className="block text-xs text-gray-400">Single two-point length</span>
+                  </button>
+                  <button onClick={() => armLineVariant('multi')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Line - multi point
+                    <span className="block text-xs text-gray-400">Chain of points, summed</span>
+                  </button>
+                  <button onClick={() => armLineVariant('lxh-single')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Length × Height - single
+                    <span className="block text-xs text-gray-400">One run, height at the end</span>
+                  </button>
+                  <button onClick={() => armLineVariant('lxh-multi')} className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    Length × Height - multi
+                    <span className="block text-xs text-gray-400">Chain of points x height at the end</span>
+                  </button>
+                </div>
+              )}
+              {/* Roofing keeps the classic Single/Multi pills (no L x H) */}
+              {(lineMode || multiLinealMode) && !quoteIsGeneric && (
                 <div className="flex items-center rounded-full bg-gray-100 p-0.5">
-                  <button onClick={() => { setLineSubTool('single'); setLineHeightMode(false); lineHeightModeRef.current = false; if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'single' && !lineHeightMode ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                  <button onClick={() => { setLineSubTool('single'); if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'single' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Two-point line"
                   >Single</button>
-                  <button onClick={() => { setLineSubTool('multi'); setLineHeightMode(false); lineHeightModeRef.current = false; if (lineMode) { setLineMode(false); setLinePoints([]); setMultiLinealMode(true); } }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'multi' && !lineHeightMode ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                  <button onClick={() => { setLineSubTool('multi'); if (lineMode) { setLineMode(false); setLinePoints([]); setMultiLinealMode(true); } }}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'multi' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                     title="Multi-point polyline"
                   >Multi</button>
-                  <button onClick={() => { setLineSubTool('multi'); setLineHeightMode(true); lineHeightModeRef.current = true; if (lineMode) { setLineMode(false); setLinePoints([]); } setMultiLinealMode(true); }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineHeightMode ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                    title="Length x Height: multi-point chain, then enter the height at Finish (wall runs from a floor plan)"
-                  >L × H</button>
                 </div>
               )}
               <button
@@ -6404,7 +6532,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
             // Freestyle intercept: length_x_height_freestyle - show height prompt.
             const selectedComp = components.find(c => c.id === selectedComponentId);
-            if ((selectedComp?.measurement_type as string) === 'length_x_height_freestyle') {
+            if ((selectedComp?.measurement_type as string) === 'length_x_height_freestyle' || lineHeightModeRef.current) {
               const objects = fabricRef.current?.getObjects() || [];
               const canvasObjs = objects.slice(-3);
               setPendingFreestyleLength(pendingLineMeasurement.length);
