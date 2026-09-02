@@ -520,6 +520,9 @@ export function TakeoffWorkstation({
   // carry no geometry; components attached to them do the measuring.
   const [showBucketNamePrompt, setShowBucketNamePrompt] = useState(false);
   const [bucketNameInput, setBucketNameInput] = useState('');
+  // Upload-another-plan -> new area: the file is stashed while the user
+  // names the bucket; the bucket prompt attaches the plan as its first page.
+  const [pendingNewAreaPlanFile, setPendingNewAreaPlanFile] = useState<File | null>(null);
   // P1-1b new-page mode: pitch-only prompt after drawing the first area boundary.
   // Bypasses AreaNameModal entirely so the name never has to be re-typed.
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
@@ -1574,10 +1577,54 @@ export function TakeoffWorkstation({
     setShowNewAreaChoiceModal(true);
   }, [areaList]);
 
+  /** Add an uploaded plan as a new page under an area, switch to it and
+   *  force recalibration. Switches the AREA through handleSwitchArea first
+   *  (caches the outgoing bucket's measurements, restores the target) so the
+   *  new plan's area never takes over existing areas. */
+  const attachPlanToArea = async (file: File, areaId: string | null) => {
+    const url = URL.createObjectURL(file);
+    const newPageId = `page-${Date.now()}`;
+    setPages(prev => [...prev, {
+      id: newPageId,
+      url,
+      name: file.name || `Plan ${prev.length + 1}`,
+      order: prev.length + 1,
+    }]);
+    if (areaId) {
+      setAreaPages(prev => ({
+        ...prev,
+        [areaId]: [...(prev[areaId] ?? []), newPageId],
+      }));
+    }
+    const switchTo = pages.length; // index of the page we just appended
+    setTimeout(async () => {
+      if (areaId && areaId !== activeAreaIdRef.current) {
+        try { await handleSwitchArea(areaId); } catch { /* best-effort */ }
+      }
+      setCurrentPageIndex(switchTo);
+      setPageBackgroundImage(url);
+      setCalibrations([]);
+      setCalibrationPoints([]);
+      setCalibrationConfirmed(false);
+      setCalibrationMode(true);
+      setShowCalibrationHelp(true);
+      setAreaMode(false);
+      setLineMode(false);
+      setPointMode(false);
+      setMultiLinealMode(false);
+      setAreaPoints([]);
+      setLinePoints([]);
+      setMultiLinealPoints([]);
+      setMultiLinealSegmentObjects([]);
+      setRedrawNonce(n => n + 1);
+    }, 80);
+  };
+
   // GENERIC TRADES: create a name-only bucket. No polygon, no pitch - the
   // bucket just names the system ("Cedar Cladding"); components attached
-  // to it carry the measurements. Becomes the active area so new
-  // measurements stamp to it (activeAreaIdRef).
+  // to it carry the measurements. Becomes the active area (via a proper
+  // switch) so new measurements stamp to it. When a plan upload is pending,
+  // the plan attaches to this bucket as its first page.
   const handleSaveBucket = () => {
     const name = bucketNameInput.trim();
     if (!name) return;
@@ -1596,11 +1643,13 @@ export function TakeoffWorkstation({
     setAreaList(prev => [...prev, { id: areaId, label: name }]);
     setShowBucketNamePrompt(false);
     setBucketNameInput('');
-    // Switch properly through handleSwitchArea (caches the outgoing bucket's
-    // measurements, restores the new one, syncs activeAreaIdRef) so every
-    // measurement from here on stamps to THIS bucket. Direct setActiveAreaId
-    // skipped the cache split and dumped everything onto one bucket.
-    setTimeout(() => { void handleSwitchArea(areaId); }, 60);
+    const file = pendingNewAreaPlanFile;
+    setPendingNewAreaPlanFile(null);
+    if (file) {
+      void attachPlanToArea(file, areaId);
+    } else {
+      setTimeout(() => { void handleSwitchArea(areaId); }, 60);
+    }
   };
 
   // Phase 6: confirm the choice modal → arm drawing mode
@@ -3122,16 +3171,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
   // Upload another plan (supplier tool / generic trades): fully client-side.
   // Stamps current drawings with the current page + caches its calibration,
-  // adds the new page with a local id, switches to it and forces
-  // recalibration (different image = different scale). All pages'
-  // measurements stay in state; the redraw filter keeps each page's shapes.
+  // then either adds the plan to an existing bucket (proper area switch -
+  // never a master-area takeover) or, for a NEW area, stashes the file and
+  // asks for the bucket name first (no filename-as-name).
   const handleConfirmSaveAndUploadAnother = async () => {
     if (!uploadAnotherFile) {
       setUploadAnotherError('Choose a plan image first.');
-      return;
-    }
-    if (uploadAnotherTarget === 'existing' && !activeAreaId && areaList.length === 0) {
-      setUploadAnotherError('Create a bucket first, then add plans to it.');
       return;
     }
     setUploadAnotherError(null);
@@ -3148,61 +3193,24 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         }
       }
 
-      // 'new' target: create the bucket now (named from the file) so the new
-      // page's measurements can stamp to it.
-      let targetAreaId = activeAreaId;
       if (uploadAnotherTarget === 'new') {
-        const areaId = `area-${Date.now()}`;
-        const label = uploadAnotherFile.name.replace(/\.[^.]+$/, '') || 'New Area';
-        setRoofAreas(prev => [...prev, {
-          id: areaId, name: label, points: [], area: 0, pitch: 0,
-          visible: true, markers: [], quoteRoofAreaId: null, fromPageId: null,
-        }]);
-        setAreaList(prev => [...prev, { id: areaId, label }]);
-        targetAreaId = areaId;
-        setActiveAreaId(areaId);
+        // Name-first: stash the plan, then the bucket prompt creates the
+        // bucket AND attaches this plan as its first page.
+        setPendingNewAreaPlanFile(uploadAnotherFile);
+        setShowUploadAnotherModal(false);
+        setUploadAnotherFile(null);
+        setUploadAnotherTarget('existing');
+        setBucketNameInput('');
+        setShowBucketNamePrompt(true);
+        return;
       }
 
-      const url = URL.createObjectURL(uploadAnotherFile);
-      const newPageId = `page-${Date.now()}`;
-      setPages(prev => [...prev, {
-        id: newPageId,
-        url,
-        name: uploadAnotherFile.name || `Plan ${prev.length + 1}`,
-        order: prev.length + 1,
-      }]);
-      // Register the page under the target area so the sidebar plan chips
-      // render and the user can switch back.
-      if (targetAreaId) {
-        setAreaPages(prev => ({
-          ...prev,
-          [targetAreaId]: [...(prev[targetAreaId] ?? []), newPageId],
-        }));
-      }
-
-      const switchTo = pages.length; // index of the page we just appended
+      // 'existing': the plan becomes a numbered slot under the CHOSEN bucket.
+      const targetAreaId = uploadAnotherAreaId || activeAreaId;
+      await attachPlanToArea(uploadAnotherFile, targetAreaId);
       setShowUploadAnotherModal(false);
       setUploadAnotherFile(null);
       setUploadAnotherTarget('existing');
-
-      setTimeout(() => {
-        setCurrentPageIndex(switchTo);
-        setPageBackgroundImage(url);
-        setCalibrations([]);
-        setCalibrationPoints([]);
-        setCalibrationConfirmed(false);
-        setCalibrationMode(true);
-        setShowCalibrationHelp(true);
-        setAreaMode(false);
-        setLineMode(false);
-        setPointMode(false);
-        setMultiLinealMode(false);
-        setAreaPoints([]);
-        setLinePoints([]);
-        setMultiLinealPoints([]);
-        setMultiLinealSegmentObjects([]);
-        setRedrawNonce(n => n + 1);
-      }, 80);
     } finally {
       setIsUploadingPage(false);
     }
