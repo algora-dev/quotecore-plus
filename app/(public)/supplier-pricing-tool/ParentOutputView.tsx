@@ -8,6 +8,7 @@
 import type { ParentJob, SupplierProduct } from './types';
 import { componentTotal, CUSTOM_BASIS_UNIT } from './types';
 import { priceParentOutput } from './parentPricing';
+import { ParentOutputActions } from './ParentOutputActions';
 import { fmt } from './pricing';
 import type { TradeConfig } from './tradeConfig';
 
@@ -155,18 +156,15 @@ export function ParentOutputView({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-8">
+      <div className="flex items-center justify-between pb-8">
         <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
           Back
         </button>
-        <div className="flex items-center gap-2">
-          <button onClick={onAddCustom} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
-            Add custom component
-          </button>
-          <button onClick={onRestart} className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)]">
-            Start a new job
-          </button>
-        </div>
+      </div>
+
+      {/* End-of-flow options - same set as the roofing tool */}
+      <div className="pb-8">
+        <ParentOutputActions job={job} catalog={catalog} onRestart={onRestart} />
       </div>
     </div>
   );
