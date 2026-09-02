@@ -6,8 +6,10 @@ import { GROUP_PITCH_RULES, pitchFactor } from './pitch';
 
 export type MeasurementBasis = 'area' | 'lineal' | 'count';
 
-/** Which measurement group a product can be applied to. */
+/** Which measurement group a product can be applied to.
+ *  'areas' = parent-model trades (cladding/flooring) - see tradeConfig.ts. */
 export type GroupKey =
+  | 'areas'
   | 'roofAreas'
   | 'ridges'
   | 'hips'
@@ -79,6 +81,66 @@ export interface MeasurementGroup {
   pitchDegrees: number;
 }
 
+// ---------------------------------------------------------------------
+// PARENT-AREA MODEL (cladding / flooring - see tradeConfig.ts)
+// No placeholder components: the user measures areas only, and attaches
+// each area to a named parent. A parent represents ONE product / covering
+// type ("Weatherboard zone", "Render zone", ...). Product assignment then
+// happens per parent at the next step and covers every area under it.
+// ---------------------------------------------------------------------
+
+/** A named grouping of measured areas = one product / covering type. */
+export interface ParentArea {
+  id: string;
+  name: string;
+}
+
+/** One measured area inside a parent. */
+export interface ParentEntry {
+  id: string;
+  parentId: string;
+  label: string;
+  /** area in m2 (already length x height when measured that way) */
+  value: number;
+  /** how many of this area (identical walls/floors); default 1 */
+  quantity: number;
+  /** optional raw length + height that produced value (display only) */
+  length?: number | null;
+  height?: number | null;
+  /** optional slope/angle in degrees (cladding only, display only) */
+  angleDegrees?: number | null;
+}
+
+/** One product applied to a parent - exactly one per parent. */
+export interface ParentApplied {
+  id: string;
+  parentId: string;
+  productId: string;
+  wastePct: number;
+  labourRate: number;         // $ per m2 (0 = none)
+  qtyOverride: number | null; // replaces measured qty when set
+  priceOverride: number | null; // only honoured if product.priceEditable
+}
+
+/** The whole in-progress job for parent-model trades. */
+export interface ParentJob {
+  parents: ParentArea[];
+  entries: ParentEntry[];
+  applied: ParentApplied[];
+  customComponents: CustomComponent[];
+}
+
+export function emptyParentJob(): ParentJob {
+  return { parents: [], entries: [], applied: [], customComponents: [] };
+}
+
+/** Total measured m2 under one parent. */
+export function parentTotal(job: ParentJob, parentId: string): number {
+  return job.entries
+    .filter(e => e.parentId === parentId)
+    .reduce((s, e) => s + (e.value || 0) * (e.quantity || 1), 0);
+}
+
 /** One product application. entryId=null applies to the whole group
  *  (Standard); a specific entryId is an Advanced per-entry assignment. */
 export interface AppliedProduct {
@@ -129,7 +191,8 @@ export const CUSTOM_BASIS_UNIT: Record<MeasurementBasis, string> = {
 
 export interface MeasurementSet {
   entryPath: 'measure' | 'plan' | 'actual'; // Phase 1: 'actual' only
-  groups: Record<GroupKey, MeasurementGroup>;
+  /** keyed by GroupKey; parent-model trades do not use this */
+  groups: Record<string, MeasurementGroup>;
   appliedProducts: AppliedProduct[];
   /** user-created custom components (final step before output) */
   customComponents: CustomComponent[];

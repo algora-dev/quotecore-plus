@@ -5,6 +5,8 @@
 // same shell. Everything supplier-specific comes from the supplier config.
 
 import { PortalFlow } from './PortalFlow';
+import { ParentFlow } from './ParentFlow';
+import { tradeConfigFor } from './tradeConfig';
 import { FreeToolsAuthProvider, useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { SupplierConfigProvider, useSupplierConfig } from './supplierConfig';
 import { DEFAULT_SUPPLIER_SLUG } from './supplierDefs';
@@ -105,12 +107,19 @@ function hexToRgb(hex: string): string {
   return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
 }
 
+function ToolBody() {
+  const { config } = useSupplierConfig();
+  // Roofing keeps the group + placeholder-component flow; cladding and
+  // flooring use the parent-area flow (one product per area group).
+  return tradeConfigFor(config.trade).model === 'parents' ? <ParentFlow /> : <PortalFlow />;
+}
+
 export function ToolShell() {
   return (
     <main className="spt-scope min-h-screen">
       <ThemeStyle />
       <Header />
-      <PortalFlow />
+      <ToolBody />
     </main>
   );
 }
