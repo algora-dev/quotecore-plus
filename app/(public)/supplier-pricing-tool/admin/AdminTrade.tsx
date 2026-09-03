@@ -74,18 +74,20 @@ export function AdminTrade({ admin, setAdmin, cfg }: { admin: AdminData; setAdmi
       </SectionCard>
 
       <SectionCard title={`Trade customers (${admin.customers.length})`} desc="Emails with trade-pricing access. First login: the customer sets their own password. Reset only sends them an email - owners never set customer passwords.">
-        <div className="flex flex-wrap items-end gap-2">
+        <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="text-xs font-medium text-slate-600">Customer email</label>
+            <label className="block text-xs font-medium text-slate-600">Customer email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addCustomer(); }} className={`${inputCls} w-64`} placeholder="buyer@business.co.uk" />
           </div>
           <div>
-            <label className="text-xs font-medium text-slate-600">Tier</label>
-            <select value={tierId} onChange={e => setTierId(e.target.value)} className={inputCls}>
+            <label className="block text-xs font-medium text-slate-600">Tier</label>
+            <select value={tierId} onChange={e => setTierId(e.target.value)} className={`${inputCls} w-48`}>
               {admin.tiers.map(t => <option key={t.id} value={t.id}>{t.name} (-{t.discountPct}%)</option>)}
             </select>
           </div>
-          <button onClick={addCustomer} className="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition">Add & send invite</button>
+          <div className="pb-0.5">
+            <button onClick={addCustomer} className="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition">Add & send invite</button>
+          </div>
         </div>
         {notice && <p className="text-xs text-green-700 rounded-lg bg-green-50 border border-green-200 px-3 py-2">{notice}</p>}
         {admin.customers.length > 0 && (

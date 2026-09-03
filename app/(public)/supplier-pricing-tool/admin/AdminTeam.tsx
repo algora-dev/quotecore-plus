@@ -37,22 +37,24 @@ export function AdminTeam({ admin, setAdmin }: { admin: AdminData; setAdmin: (fn
 
   return (
     <SectionCard title={`Team (${admin.team.length})`} desc="People who can access this admin. Passwords are never set here - invites and resets go by email and the user picks their own.">
-      <div className="flex flex-wrap items-end gap-2">
+      <div className="flex flex-wrap items-end gap-3">
         <div>
-          <label className="text-xs font-medium text-slate-600">Name</label>
-          <input type="text" value={name} onChange={e => setName(e.target.value)} className={`${inputCls} w-40`} placeholder="Sam Taylor" />
+          <label className="block text-xs font-medium text-slate-600">Name</label>
+          <input type="text" value={name} onChange={e => setName(e.target.value)} className={`${inputCls} w-44`} placeholder="Sam Taylor" />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600">Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addMember(); }} className={`${inputCls} w-56`} placeholder="sam@supplier.co.uk" />
+          <label className="block text-xs font-medium text-slate-600">Email</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addMember(); }} className={`${inputCls} w-60`} placeholder="sam@supplier.co.uk" />
         </div>
         <div>
-          <label className="text-xs font-medium text-slate-600">Role</label>
-          <select value={role} onChange={e => setRole(e.target.value as TeamMember['role'])} className={inputCls}>
+          <label className="block text-xs font-medium text-slate-600">Role</label>
+          <select value={role} onChange={e => setRole(e.target.value as TeamMember['role'])} className={`${inputCls} w-32`}>
             {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
-        <button onClick={addMember} className="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition">Add member</button>
+        <div className="pb-0.5">
+          <button onClick={addMember} className="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition">Add member</button>
+        </div>
       </div>
       {notice && <p className="text-xs text-green-700 rounded-lg bg-green-50 border border-green-200 px-3 py-2">{notice}</p>}
       <div className="overflow-x-auto">
