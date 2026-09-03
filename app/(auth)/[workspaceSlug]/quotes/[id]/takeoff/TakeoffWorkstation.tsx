@@ -30,6 +30,7 @@ import { AreaNameModal } from './modals/AreaNameModal';
 import { PointMeasurementModal } from './modals/PointMeasurementModal';
 import { LineMeasurementModal } from './modals/LineMeasurementModal';
 import { CalibrationModal } from './modals/CalibrationModal';
+import { RoofPitchEstimatorModal } from './modals/RoofPitchEstimatorModal';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -414,6 +415,8 @@ export function TakeoffWorkstation({
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
   const [pitchOnlyDegrees, setPitchOnlyDegrees] = useState<number | null>(null);
+  // Roof Pitch Estimator: opened from the toolbar or the pitch prompts.
+  const [showPitchEstimator, setShowPitchEstimator] = useState(false);
 
   // Volume (L × W × D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
@@ -5646,6 +5649,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
               </button>
               <button
+                onClick={() => setShowPitchEstimator(true)}
+                data-copilot="takeoff-tool-pitch-estimator"
+                title="Estimate roof pitch from a photo"
+                className="px-3 py-2 rounded-full text-sm bg-gray-100 hover:bg-gray-200 border-2 border-transparent"
+              >Find Pitch</button>
+              <button
                 onClick={() => {
                   if (areaMode) { cleanupBoxDrag(); setAreaMode(false); setAreaPoints([]); }
                   else { setAreaMode(true); setLineMode(false); setPointMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setAreaPoints([]); }
@@ -6094,6 +6103,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         </div>
       )}
 
+      {/* Roof Pitch Estimator - opened from toolbar or pitch prompts.
+          When a pitch prompt is open, result flows back into it; otherwise
+          the result screen just shows the estimate + copy. */}
+      {showPitchEstimator && (
+        <RoofPitchEstimatorModal
+          onClose={() => setShowPitchEstimator(false)}
+          onApply={showPitchOnlyPrompt
+            ? (deg) => { setPitchOnlyDegrees(deg); setShowPitchEstimator(false); }
+            : undefined}
+        />
+      )}
+
       {/* P1-1b pitch-only prompt for new-page mode (first area boundary drawn) */}
       {showPitchOnlyPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -6121,6 +6142,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 autoFocus
                 className="block"
               />
+              <button
+                type="button"
+                onClick={() => setShowPitchEstimator(true)}
+                className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700"
+              >
+                Not sure? Estimate it from a photo
+              </button>
             </div>
             <div className="flex gap-3">
               <button

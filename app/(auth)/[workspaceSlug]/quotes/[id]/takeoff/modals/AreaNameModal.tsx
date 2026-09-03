@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { PitchInput } from '@/app/components/PitchInput';
+import { RoofPitchEstimatorModal } from './RoofPitchEstimatorModal';
 
 export function AreaNameModal({
   isRoofing,
@@ -26,6 +27,7 @@ export function AreaNameModal({
 }) {
   const [name, setName] = useState(initialName);
   const [pitchDegrees, setPitchDegrees] = useState<number | null>(null);
+  const [showPitchEstimator, setShowPitchEstimator] = useState(false);
 
   // P1-1b: when initialName is pre-filled (new-page mode), name is locked -
   // only pitch is needed from the user.
@@ -100,6 +102,13 @@ export function AreaNameModal({
                     className="block"
                     autoFocus={nameIsLocked}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPitchEstimator(true)}
+                    className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700"
+                  >
+                    Not sure? Estimate it from a photo
+                  </button>
                   <p className="text-xs text-gray-600 -mt-2">
                     Used to calculate component lengths (rafters, hips, valleys)
                   </p>
@@ -140,6 +149,12 @@ export function AreaNameModal({
           </div>
         </form>
       </div>
+      {showPitchEstimator && (
+        <RoofPitchEstimatorModal
+          onClose={() => setShowPitchEstimator(false)}
+          onApply={(deg) => { setPitchDegrees(deg); setShowPitchEstimator(false); }}
+        />
+      )}
     </div>
   );
 }
