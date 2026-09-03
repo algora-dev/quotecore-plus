@@ -6149,7 +6149,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
                   title="Estimate roof pitch from a photo"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M8 4v4M4 8h4M6 6L4 4m10 3l3-3m0 6h-4v-2m9 3a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
                   Pitch Finder
                 </button>
               </div>
