@@ -8,7 +8,7 @@ import { use } from 'react';
 import { FreeToolsAuthProvider } from '../../_components/FreeToolsAuthProvider';
 import { SupplierConfigProvider } from '../supplierConfig';
 import { getSupplierDef } from '../supplierDefs';
-import { ToolShell } from '../page';
+import { ToolShell } from '../ToolShell';
 
 export default function SupplierDemoPage({ params }: { params: Promise<{ supplierSlug: string }> | { supplierSlug: string } }) {
   const { supplierSlug } = use(params as Promise<{ supplierSlug: string }>);
