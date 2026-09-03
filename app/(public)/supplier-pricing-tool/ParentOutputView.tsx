@@ -39,7 +39,7 @@ export function ParentOutputView({
       {/* Print/download target: everything except the action tiles below */}
       <div className="spt-print-area space-y-4">
       {/* Totals banner */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
+      <div className="spt-keep rounded-xl border border-slate-200 bg-white p-4 md:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-lg font-semibold text-slate-900">{trade.label} job estimate{demoSuffix}</h2>
           <span className="text-xs text-slate-400">
@@ -69,7 +69,7 @@ export function ParentOutputView({
         const bucketLines = totals.lines.filter(l => l.bucketId === bucket.id);
         if (components.length === 0 && bucketLines.length === 0) return null;
         return (
-          <div key={bucket.id} className="rounded-xl border border-slate-200 bg-white hover:border-blue-200 transition">
+          <div key={bucket.id} className="spt-keep rounded-xl border border-slate-200 bg-white hover:border-blue-200 transition">
             <div className="border-b border-slate-100 p-4">
               <h3 className="text-sm font-semibold text-slate-900">{bucket.name}</h3>
               <p className="mt-0.5 text-xs text-slate-500">Purchase qty includes waste allowance.</p>
@@ -140,7 +140,7 @@ export function ParentOutputView({
 
       {/* Custom components */}
       {totals.customs.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="spt-keep rounded-xl border border-slate-200 bg-white">
           <div className="border-b border-slate-100 p-4">
             <h3 className="text-sm font-semibold text-slate-900">Custom components</h3>
           </div>

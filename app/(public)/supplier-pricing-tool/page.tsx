@@ -56,7 +56,7 @@ function Header() {
           {config.features.login && (user ? (
             <button
               onClick={() => void signOut()}
-              className="rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-400 transition"
+              className="rounded-full border border-white/50 px-3.5 py-1.5 text-xs font-medium text-white hover:border-white transition"
             >
               Log out
             </button>
@@ -127,6 +127,13 @@ function PrintStyle() {
           padding: 0 !important;
         }
         .spt-print-area .overflow-x-auto { overflow: visible !important; }
+        /* Clean page breaks only: never split a table row, table header,
+           section header or totals block across pages. */
+        .spt-print-area tr,
+        .spt-print-area thead,
+        .spt-print-area .spt-keep { break-inside: avoid; page-break-inside: avoid; }
+        .spt-print-area thead { display: table-header-group; }
+        .spt-print-area table { break-inside: auto; }
       }
     `}</style>
   );
