@@ -18,6 +18,7 @@ import { ParentTakeoffStation } from './ParentTakeoffStation';
 import { tradeConfigFor } from './tradeConfig';
 import type { TradeConfig } from './tradeConfig';
 import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
+import { readAdminData, effectiveTrade } from './adminData';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 
@@ -66,13 +67,14 @@ export function ParentFlow() {
     } catch { /* ignore quota */ }
   }, [entryMode, step, mode, job]);
 
-  // Trade pricing parity with the roofing flow
+  // Trade pricing parity with the roofing flow (customer tier beats blanket)
   const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
+  const tradeInfo = effectiveTrade(config, readAdminData(config.slug, config), user?.email);
   const catalog = useMemo<SupplierProduct[]>(() =>
     showTrade
-      ? config.products.map(p => ({ ...p, unitPrice: tradeUnitPrice(p, config) }))
+      ? config.products.map(p => ({ ...p, unitPrice: tradeUnitPrice(p, config, tradeInfo.pct) }))
       : config.products,
-    [config, showTrade]);
+    [config, showTrade, tradeInfo.pct]);
 
   // Dynamic step list: the takeoff station only exists on the measure path.
   const stationStep = entryMode === 'measure' ? 2 : 0;
@@ -206,7 +208,7 @@ export function ParentFlow() {
             catalog={catalog}
             baselineCatalog={config.products}
             showTrade={showTrade}
-            tradeLabel={showTrade && config.discountPct > 0 ? `trade pricing (-${config.discountPct}%)` : null}
+            tradeLabel={showTrade && tradeInfo.pct > 0 ? tradeInfo.label : null}
             currency={config.currency}
             basePath={basePath}
             onBack={() => setStep(customStepNum)}

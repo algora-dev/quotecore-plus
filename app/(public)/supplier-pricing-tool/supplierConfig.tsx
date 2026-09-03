@@ -218,7 +218,9 @@ export function useSupplierConfig(): SupplierConfigContextValue {
   return { slug: DEFAULT_SUPPLIER_SLUG, basePath: '/supplier-pricing-tool', config: fallbackConfig, ready: fallbackReady };
 }
 
-/** Trade price for a product under a config (blanket discount off baseline). */
-export function tradeUnitPrice(p: SupplierProduct, cfg: SupplierConfig): number {
-  return Math.round(p.unitPrice * (1 - (cfg.discountPct || 0) / 100) * 100) / 100;
+/** Trade price for a product under a config + effective discount pct
+ *  (customer tier discount when provided, blanket discount otherwise). */
+export function tradeUnitPrice(p: SupplierProduct, cfg: SupplierConfig, discountPct?: number): number {
+  const pct = discountPct ?? (cfg.discountPct || 0);
+  return Math.round(p.unitPrice * (1 - pct / 100) * 100) / 100;
 }

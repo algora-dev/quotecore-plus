@@ -18,6 +18,7 @@ import { OutputView } from './OutputView';
 import { CustomComponentsStep } from './CustomComponentsStep';
 import { TakeoffStation, stageSlug } from './TakeoffStation';
 import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
+import { readAdminData, effectiveTrade } from './adminData';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 
 /** Session persistence: the whole in-progress flow survives Back navigation,
@@ -83,11 +84,12 @@ export function PortalFlow() {
   const { config, basePath } = useSupplierConfig();
   const { user } = useFreeToolsAuth();
   const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
+  const trade = effectiveTrade(config, readAdminData(config.slug, config), user?.email);
   const catalog = useMemo<SupplierProduct[]>(() =>
     showTrade
-      ? config.products.map(p => ({ ...p, unitPrice: tradeUnitPrice(p, config) }))
+      ? config.products.map(p => ({ ...p, unitPrice: tradeUnitPrice(p, config, trade.pct) }))
       : config.products,
-    [config, showTrade]);
+    [config, showTrade, trade.pct]);
 
   const steps = [
     { key: 'mode', label: 'How do you want to price this job?' },
@@ -295,7 +297,7 @@ export function PortalFlow() {
             catalog={catalog}
             baselineCatalog={config.products}
             showTrade={showTrade}
-            tradeLabel={showTrade && config.discountPct > 0 ? `trade pricing (-${config.discountPct}%)` : null}
+            tradeLabel={showTrade && trade.pct > 0 ? trade.label : null}
             onBack={() => setStep(customStepNum)}
             onAddCustom={() => setStep(customStepNum)}
             onRestart={reset}

@@ -3,10 +3,13 @@
 
 'use client';
 
+import { useEffect, useRef } from 'react';
 import type { GroupKey, MeasurementSet, SupplierProduct } from './types';
 import { GROUP_DEFS, groupPitchedTotal, entryPitched, CUSTOM_BASIS_UNIT } from './types';
 import { fmt, priceOutput } from './pricing';
 import { useSupplierConfig } from './supplierConfig';
+import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
+import { logEvent } from './adminData';
 import { OutputActions } from './OutputActions';
 
 export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tradeLabel, onBack, onRestart, onAddCustom }: {
@@ -27,6 +30,26 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
   // Same quantities priced at baseline for the trade-saving comparison.
   const baselineOutput = baselineCatalog ? priceOutput(measureSet, baselineCatalog) : null;
   const { config: supplierCfg } = useSupplierConfig();
+  const { user } = useFreeToolsAuth();
+  const loggedRef = useRef(false);
+  // Tracking (demo-grade): log one quote event per output view - value,
+  // item count, creator email and per-product quoted counters.
+  useEffect(() => {
+    if (loggedRef.current) return;
+    loggedRef.current = true;
+    const counts: Record<string, number> = {};
+    for (const l of output.lines) counts[l.productId] = (counts[l.productId] ?? 0) + 1;
+    logEvent(supplierCfg.slug, {
+      type: 'quote',
+      createdAt: new Date().toISOString(),
+      email: user?.email ?? null,
+      itemCount: output.lines.length,
+      total: output.material + output.labour,
+      currency: cur,
+      productCounts: counts,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
   const cur = supplierCfg.currency;
   const supplierName = supplierCfg.name;

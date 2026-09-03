@@ -5,12 +5,15 @@
 
 'use client';
 
+import { useEffect, useRef } from 'react';
 import type { ParentJob, SupplierProduct } from './types';
 import { componentTotal, CUSTOM_BASIS_UNIT } from './types';
 import { priceParentOutput } from './parentPricing';
 import { ParentOutputActions } from './ParentOutputActions';
 import { fmt } from './pricing';
 import { useSupplierConfig } from './supplierConfig';
+import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
+import { logEvent } from './adminData';
 import type { TradeConfig } from './tradeConfig';
 
 export function ParentOutputView({
@@ -32,7 +35,26 @@ export function ParentOutputView({
   const grand = totals.material + totals.labour;
   const baselineById = new Map(baselineCatalog.map(p => [p.id, p]));
   const { config: supplierCfg } = useSupplierConfig();
+  const { user } = useFreeToolsAuth();
   const demoSuffix = supplierCfg.demo ? ' (demo)' : '';
+  const loggedRef = useRef(false);
+  // Tracking (demo-grade): log one quote event per output view.
+  useEffect(() => {
+    if (loggedRef.current) return;
+    loggedRef.current = true;
+    const counts: Record<string, number> = {};
+    for (const l of totals.lines) counts[l.productId] = (counts[l.productId] ?? 0) + 1;
+    logEvent(supplierCfg.slug, {
+      type: 'quote',
+      createdAt: new Date().toISOString(),
+      email: user?.email ?? null,
+      itemCount: totals.lines.length,
+      total: grand,
+      currency,
+      productCounts: counts,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-4">

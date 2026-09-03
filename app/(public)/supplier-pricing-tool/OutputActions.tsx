@@ -9,6 +9,7 @@ import type { MeasurementSet, SupplierProduct } from './types';
 import { priceOutput, fmt } from './pricing';
 import { useSupplierConfig, addLead, toolUrls } from './supplierConfig';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
+import { readAdminData, logEvent, ctaText } from './adminData';
 import { GROUP_DEFS, groupPitchedTotal, CUSTOM_BASIS_UNIT } from './types';
 import { SupplierEnquiryModal } from './SupplierEnquiryModal';
 
@@ -104,9 +105,10 @@ export function OutputActions({ measureSet, catalog }: {
   const [leadName, setLeadName] = useState('');
   const [leadEmail, setLeadEmail] = useState('');
   const urls = toolUrls(supplierCfg);
+  const cta = readAdminData(supplierCfg.slug, supplierCfg).cta;
 
   useEffect(() => {
-    if (supplierCfg.features.emailCapture && !leadDone) {
+    if (supplierCfg.features.emailCapture && cta.enabled && !leadDone) {
       // Let the user actually read their output before pitching (12s)
       const t = setTimeout(() => setLeadOpen(true), 12000);
       return () => clearTimeout(t);
@@ -116,6 +118,7 @@ export function OutputActions({ measureSet, catalog }: {
   function captureLead() {
     if (!leadEmail.trim()) return;
     addLead({ email: leadEmail.trim(), name: leadName.trim() }, supplierCfg.slug);
+    logEvent(supplierCfg.slug, { type: 'signup', createdAt: new Date().toISOString(), email: leadEmail.trim(), name: leadName.trim() });
     setLeadDone(true);
     setLeadOpen(false);
   }
@@ -126,6 +129,7 @@ export function OutputActions({ measureSet, catalog }: {
     await signInWithGoogle();
     if (before == null && user?.email) {
       addLead({ email: user.email, name: user.email?.split('@')[0] ?? '' }, supplierCfg.slug);
+      logEvent(supplierCfg.slug, { type: 'signup', createdAt: new Date().toISOString(), email: user.email, name: user.email?.split('@')[0] ?? '' });
       setLeadDone(true);
       setLeadOpen(false);
     }
@@ -235,9 +239,9 @@ export function OutputActions({ measureSet, catalog }: {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="mt-3 text-lg font-bold text-white">Get 5% off this job</h3>
+              <h3 className="mt-3 text-lg font-bold text-white">{ctaText(cta.headline, cta.discountPct)}</h3>
               <p className="mt-1 text-xs text-slate-400">
-                Join {supplierCfg.name} pricing list - we&apos;ll email your saving code plus a copy of this pricing.
+                {ctaText(cta.body, cta.discountPct)}
               </p>
             </div>
             <div className="p-5 space-y-3">
@@ -271,7 +275,7 @@ export function OutputActions({ measureSet, catalog }: {
                 disabled={!leadEmail.trim()}
                 className="w-full rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] disabled:opacity-40"
               >
-                Send my 5% saving code
+                {ctaText(cta.buttonLabel, cta.discountPct)}
               </button>
               <p className="text-center text-[11px] text-slate-400">No spam. One email with your code, that&apos;s it.</p>
             </div>
