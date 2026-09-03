@@ -417,6 +417,17 @@ export function TakeoffWorkstation({
   const [pitchOnlyDegrees, setPitchOnlyDegrees] = useState<number | null>(null);
   // Roof Pitch Estimator: opened from the toolbar or the pitch prompts.
   const [showPitchEstimator, setShowPitchEstimator] = useState(false);
+  // Area-to-component attach chooser: which value basis to attach (plan vs
+  // pitched). Fixes the 2026-09-03 stale-pitch bug: the basis + plan value
+  // are stored on the entry so the save path recomputes from LIVE pitch.
+  const [areaAttachChoice, setAreaAttachChoice] = useState<null | {
+    componentId: string;
+    roofAreaId: string;
+    plan: number;
+    pitched: number;
+    pitch: number;
+    basis: 'pitched' | 'plan';
+  }>(null);
 
   // Volume (L × W × D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
@@ -1986,15 +1997,32 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // quoteRoofAreaId stamp - never resolve by the shared stamp).
     const ra = roofAreas.find(a => a.id === roofAreaId);
     if (!ra || !(ra.area > 0)) return;
-    pushHistorySnapshot();
-    // 2026-08-30: store the PITCHED area value (what the user sees everywhere -
-    // e.g. "68.16 m²" not the plan "59.03 m²") and mark the entry so the save
-    // path does NOT apply pitch again. Waste still applies downstream.
+    // 2026-09-03: ask the user WHICH value to attach (plan vs pitched) instead
+    // of silently snapshotting the pitched value. The choice + plan value are
+    // stored on the entry so the save path recomputes from the LIVE pitch -
+    // fixing the stale-snapshot bug where pitch was set after attaching.
     const pitched = ra.area * (ra.pitch ? rafterPitchFactor(ra.pitch) : 1);
+    setAreaAttachChoice({
+      componentId,
+      roofAreaId,
+      plan: ra.area,
+      pitched,
+      pitch: ra.pitch || 0,
+      basis: 'pitched',
+    });
+  };
+
+  const handleConfirmAreaAttach = () => {
+    const choice = areaAttachChoice;
+    if (!choice) return;
+    const ra = roofAreas.find(a => a.id === choice.roofAreaId);
+    if (!ra || !(ra.area > 0)) { setAreaAttachChoice(null); return; }
+    pushHistorySnapshot();
+    const value = choice.basis === 'pitched' ? choice.pitched : choice.plan;
     const newMeasurement: ComponentMeasurement = {
       id: `apply-${Date.now()}`,
       type: 'area' as ComponentMeasurement['type'],
-      value: pitched,
+      value,
       points: [],
       visible: true,
       canvasObjects: [], // derived entry - no canvas geometry of its own
@@ -2002,22 +2030,29 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // Postgres, so a client row id ("area-...") fails with invalid uuid.
       quoteRoofAreaId: ra.quoteRoofAreaId ?? ra.id,
       fromPageId: currentPageIdRef.current,
-      // Marker consumed by saveTakeoffMeasurements: pitch already applied.
-      entryInputs: { pitch_applied: true } as unknown as ComponentMeasurement['entryInputs'],
+      // 2026-09-03: value basis + plan snapshot. saveTakeoffMeasurements
+      // recomputes from the LIVE area pitch at save time:
+      //   basis 'pitched' -> plan x pitch factor   (roof sheets etc.)
+      //   basis 'plan'    -> plan, no pitch        (flat/plan takeoff)
+      entryInputs: {
+        value_basis: choice.basis,
+        plan_value: choice.plan,
+      } as unknown as ComponentMeasurement['entryInputs'],
     };
-    const compData = componentMeasurements.find(c => c.componentId === componentId);
+    const compData = componentMeasurements.find(c => c.componentId === choice.componentId);
     if (compData) {
       setComponentMeasurements(componentMeasurements.map(c =>
-        c.componentId === componentId
+        c.componentId === choice.componentId
           ? { ...c, measurements: [...c.measurements, newMeasurement], expanded: true }
           : c
       ));
     } else {
       setComponentMeasurements([
         ...componentMeasurements,
-        { componentId, measurements: [newMeasurement], expanded: true },
+        { componentId: choice.componentId, measurements: [newMeasurement], expanded: true },
       ]);
     }
+    setAreaAttachChoice(null);
     setIsDirty(true);
   };
 
@@ -6094,6 +6129,75 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   setAreaPoints([]);
                   setVolumeDepthInput('');
                 }}
+                className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Area-to-component attach chooser (2026-09-03): plan vs pitched.
+          Default Pitched. Stores the basis + plan value so the save path
+          recomputes from live pitch - never a stale snapshot again. */}
+      {areaAttachChoice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-5 w-96 border border-gray-200 shadow-xl">
+            <h2 className="text-lg font-semibold mb-1">Attach area to component</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Choose which value to attach. The live pitch is re-applied on every save,
+              so changing the area's pitch later updates this component automatically.
+            </p>
+            <div className="space-y-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setAreaAttachChoice(c => c && { ...c, basis: 'pitched' })}
+                className={`w-full text-left rounded-xl border px-4 py-3 transition ${
+                  areaAttachChoice.basis === 'pitched'
+                    ? 'border-orange-400 bg-orange-50/50 ring-1 ring-orange-300'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-900">Pitched area</span>
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">
+                    {areaAttachChoice.pitched.toFixed(2)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  {areaAttachChoice.pitch > 0
+                    ? `Plan ${areaAttachChoice.plan.toFixed(2)} × pitch factor at ${areaAttachChoice.pitch.toFixed(1)}° - use for roof sheets, underlay, battens (recommended)`
+                    : 'No pitch set on this area - same as plan. Set a pitch first for a pitched value.'}
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAreaAttachChoice(c => c && { ...c, basis: 'plan' })}
+                className={`w-full text-left rounded-xl border px-4 py-3 transition ${
+                  areaAttachChoice.basis === 'plan'
+                    ? 'border-orange-400 bg-orange-50/50 ring-1 ring-orange-300'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-900">Plan (base) area</span>
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">
+                    {areaAttachChoice.plan.toFixed(2)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">No pitch applied - footprint measurement only.</p>
+              </button>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmAreaAttach}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
+              >
+                Attach {areaAttachChoice.basis === 'pitched' ? 'pitched' : 'plan'} ({(areaAttachChoice.basis === 'pitched' ? areaAttachChoice.pitched : areaAttachChoice.plan).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'})
+              </button>
+              <button
+                onClick={() => setAreaAttachChoice(null)}
                 className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Cancel

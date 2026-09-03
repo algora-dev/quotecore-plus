@@ -306,17 +306,30 @@ export async function saveTakeoffMeasurements(
             effectiveWasteType = 'fixed';
           }
 
-          // 2026-08-30: entries applied from an existing area via the
-          // "Use an existing area" dropdown already carry the PITCHED value
-          // (matching what the user sees, e.g. 68.16 m²) - never pitch twice.
-          const pitchPreApplied =
-            (m as { entryInputs?: { pitch_applied?: boolean } | null }).entryInputs?.pitch_applied === true;
+          // 2026-09-03 (pitch-stale fix): entries attached from an existing
+          // area via the "Use an existing area" dropdown now carry a
+          // value_basis + plan_value snapshot. Recompute from the PLAN value
+          // and re-apply the LIVE pitch for this area at save time, so a
+          // pitch set/changed AFTER attaching always corrects the numbers:
+          //   basis 'pitched' -> plan x live pitch factor (roof sheets etc.)
+          //   basis 'plan'    -> plan, no pitch
+          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan'; plan_value?: number; pitch_applied?: boolean } | null }).entryInputs;
+          const hasLiveBasis = m.type === 'area' && ei && (ei.value_basis === 'pitched' || ei.value_basis === 'plan') && typeof ei.plan_value === 'number' && ei.plan_value > 0;
+          if (hasLiveBasis) {
+            metricValue = toMetricArea(ei!.plan_value!);
+          }
+
+          // Legacy (pre-2026-09-03) pitch_applied entries already carry the
+          // PITCHED value baked in - never pitch twice.
+          const pitchPreApplied = !hasLiveBasis && ei?.pitch_applied === true;
+          // basis 'plan' explicitly opts out of pitch entirely.
+          const basisPlanOnly = hasLiveBasis && ei!.value_basis === 'plan';
 
           const result = applyPitchAndWaste(
             metricValue,
             true,
-            (pitchPreApplied ? 'none' : pitchType) as any,
-            pitchPreApplied ? 0 : groupPitch,
+            (pitchPreApplied || basisPlanOnly ? 'none' : pitchType) as any,
+            (pitchPreApplied || basisPlanOnly) ? 0 : groupPitch,
             effectiveWasteType as any,
             wastePercent,
             effectiveWasteFixed
@@ -327,13 +340,13 @@ export async function saveTakeoffMeasurements(
             sort_order: index,
             // Per-entry pitch (2026-07-08): actual pitch used for this entry so
             // the calc audit + UI can report it faithfully per page/area.
-            // pitch_applied entries carry the pitched value - record the area's
-            // pitch so the display still shows the waste context (e.g. 30°).
-            pitch_degrees: groupPitch,
+            pitch_degrees: basisPlanOnly ? 0 : groupPitch,
             // v8: input reference snapshot (display only).
-            entry_inputs: pitchPreApplied
-              ? { ...(entryInputs ?? {}), pitch_applied: true }
-              : entryInputs,
+            entry_inputs: hasLiveBasis
+              ? { ...(entryInputs ?? {}), value_basis: ei!.value_basis, plan_value: ei!.plan_value }
+              : (pitchPreApplied
+                ? { ...(entryInputs ?? {}), pitch_applied: true }
+                : entryInputs),
           };
         });
 
