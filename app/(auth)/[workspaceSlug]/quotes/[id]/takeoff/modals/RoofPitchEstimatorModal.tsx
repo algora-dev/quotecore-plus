@@ -7,6 +7,11 @@
  * feature) -> choose single/two plane -> click eave/ridge points -> get an
  * estimated pitch to apply back to the area pitch field.
  *
+ * v2 (2026-09-03): fixed click-marker offset bug (points now stored in image
+ * coordinates, not screen coordinates), added zoom (+/- buttons + scroll
+ * wheel) with scrollbar/right-click-drag panning, bigger numbered markers
+ * with high-contrast outlines, SVG diagrams on the mode selector cards.
+ *
  * Remote estimating aid only - accuracy depends entirely on the user's image
  * and point placement. No fixed accuracy claims in the UI (per build brief).
  */
@@ -25,6 +30,38 @@ type Step = 'intro' | 'level' | 'mode' | 'measure' | 'result';
 type Mode = 'single' | 'two';
 
 const MAX_CANVAS_W = 560;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 5;
+
+/** Two-plane SVG diagram: gable silhouette with the 3 numbered click points. */
+function TwoPlaneDiagram() {
+  return (
+    <svg viewBox="0 0 120 60" className="w-24 h-14 mt-2" role="img" aria-label="Two roof planes diagram">
+      <polygon points="10,50 60,10 110,50" fill="#F1F5F9" stroke="#64748B" strokeWidth="2" strokeLinejoin="round" />
+      <line x1="60" y1="10" x2="60" y2="50" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 3" />
+      <circle cx="10" cy="50" r="6" fill="#FF6B35" stroke="white" strokeWidth="2" />
+      <text x="10" y="53.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="white">1</text>
+      <circle cx="60" cy="10" r="6" fill="#FF6B35" stroke="white" strokeWidth="2" />
+      <text x="60" y="13.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="white">2</text>
+      <circle cx="110" cy="50" r="6" fill="#FF6B35" stroke="white" strokeWidth="2" />
+      <text x="110" y="53.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="white">3</text>
+    </svg>
+  );
+}
+
+/** Single-plane SVG diagram: mono-pitch silhouette with the 2 numbered click points. */
+function SinglePlaneDiagram() {
+  return (
+    <svg viewBox="0 0 120 60" className="w-24 h-14 mt-2" role="img" aria-label="Single roof plane diagram">
+      <polygon points="15,50 105,12 105,50" fill="#F1F5F9" stroke="#64748B" strokeWidth="2" strokeLinejoin="round" />
+      <line x1="15" y1="50" x2="105" y2="50" stroke="#CBD5E1" strokeWidth="1" strokeDasharray="3 3" />
+      <circle cx="15" cy="50" r="6" fill="#FF6B35" stroke="white" strokeWidth="2" />
+      <text x="15" y="53.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="white">1</text>
+      <circle cx="105" cy="12" r="6" fill="#FF6B35" stroke="white" strokeWidth="2" />
+      <text x="105" y="15.5" textAnchor="middle" fontSize="7" fontWeight="700" fill="white">2</text>
+    </svg>
+  );
+}
 
 export function RoofPitchEstimatorModal({
   onClose,
@@ -55,8 +92,18 @@ export function RoofPitchEstimatorModal({
     consistent?: boolean;
   }>(null);
 
+  // Zoom: display scale = base scale * zoom. Pan via native scrollbars
+  // (container is overflow-auto) or right/middle-click drag.
+  const [zoom, setZoom] = useState(1);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const imgElRef = useRef<HTMLImageElement | null>(null);
+
+  // Effective scale factors.
+  const baseScale = imgSize ? Math.min(1, MAX_CANVAS_W / imgSize.w) : 1;
+  const totalScale = baseScale * zoom;
 
   // ---------- image loading ----------
   const onFile = useCallback((file: File) => {
@@ -64,11 +111,13 @@ export function RoofPitchEstimatorModal({
     const img = new Image();
     img.onload = () => {
       originalRef.current = img;
+      imgElRef.current = img;
       setWorkingUrl(url);
       setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
       setLevelPts([]);
       setPts([]);
       setResult(null);
+      setZoom(1);
       setStep('level');
     };
     img.src = url;
@@ -77,55 +126,100 @@ export function RoofPitchEstimatorModal({
   // ---------- canvas rendering ----------
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !workingUrl || !imgSize) return;
-    const scale = Math.min(1, MAX_CANVAS_W / imgSize.w);
-    const w = imgSize.w * scale;
-    const h = imgSize.h * scale;
+    const img = imgElRef.current;
+    if (!canvas || !img || !imgSize) return;
+    const w = Math.round(imgSize.w * totalScale);
+    const h = Math.round(imgSize.h * totalScale);
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0, w, h);
-      const all = step === 'level' ? levelPts : pts;
-      all.forEach((p, i) => {
-        // point marker
-        ctx.fillStyle = '#FF6B35';
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
+    ctx.drawImage(img, 0, 0, w, h);
+    const all = step === 'level' ? levelPts : pts;
+    const px = (p: Pt) => ({ x: p.x * totalScale, y: p.y * totalScale });
+
+    // Connection line(s): thick white underlay + orange top for contrast.
+    if (all.length > 1) {
+      for (const pass of [
+        { color: 'rgba(255,255,255,0.9)', width: 5 },
+        { color: '#FF6B35', width: 3 },
+      ] as const) {
+        ctx.strokeStyle = pass.color;
+        ctx.lineWidth = pass.width;
+        ctx.setLineDash(step === 'measure' && pass.color === '#FF6B35' ? [8, 5] : []);
         ctx.beginPath();
-        ctx.arc(p.x * scale, p.y * scale, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        // connection line
-        if (i > 0) {
-          const prev = all[i - 1];
-          ctx.strokeStyle = '#FF6B35';
-          ctx.lineWidth = 2;
-          ctx.setLineDash(step === 'level' ? [] : [6, 4]);
-          ctx.beginPath();
-          ctx.moveTo(prev.x * scale, prev.y * scale);
-          ctx.lineTo(p.x * scale, p.y * scale);
-          ctx.stroke();
-          ctx.setLineDash([]);
+        const start = px(all[0]);
+        ctx.moveTo(start.x, start.y);
+        for (let i = 1; i < all.length; i++) {
+          const p = px(all[i]);
+          ctx.lineTo(p.x, p.y);
         }
-      });
-    };
-    img.src = workingUrl;
-  }, [workingUrl, imgSize, levelPts, pts, step]);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+
+    // Numbered markers: big orange dot, white ring, white number badge.
+    all.forEach((raw, i) => {
+      const p = px(raw);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+      ctx.fillStyle = '#FF6B35';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'white';
+      ctx.stroke();
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(i + 1), p.x, p.y + 0.5);
+    });
+  }, [imgSize, levelPts, pts, step, totalScale]);
 
   useEffect(() => { draw(); }, [draw]);
 
+  // ---------- interactions ----------
   function canvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
-    if (!imgSize) return;
+    if (e.button !== 0 || !imgSize) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const p: Pt = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    // Store clicks in IMAGE coordinates so zoom/redraw can never skew them.
+    const p: Pt = {
+      x: (e.clientX - rect.left) / totalScale,
+      y: (e.clientY - rect.top) / totalScale,
+    };
     if (step === 'level') {
       if (levelPts.length < 2) setLevelPts(prev => [...prev, p]);
     } else if (step === 'measure') {
       const max = mode === 'two' ? 3 : 2;
       if (pts.length < max) setPts(prev => [...prev, p]);
+    }
+  }
+
+  // Right-click / middle-click drag pans the scroll container. Left click
+  // stays reserved for placing points.
+  const panRef = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  function panStart(e: React.MouseEvent) {
+    if (e.button !== 1 && e.button !== 2) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    e.preventDefault();
+    panRef.current = { x: e.clientX, y: e.clientY, left: el.scrollLeft, top: el.scrollTop };
+  }
+  function panMove(e: React.MouseEvent) {
+    const st = panRef.current;
+    const el = scrollRef.current;
+    if (!st || !el) return;
+    el.scrollLeft = st.left - (e.clientX - st.x);
+    el.scrollTop = st.top - (e.clientY - st.y);
+  }
+  function panEnd() { panRef.current = null; }
+
+  function wheelZoom(e: React.WheelEvent) {
+    if (!e.ctrlKey && Math.abs(e.deltaY) > 0) {
+      // Plain scroll over the canvas zooms (per Shaun 2026-09-03).
+      e.preventDefault();
+      setZoom(z => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + (e.deltaY < 0 ? 0.25 : -0.25))));
     }
   }
 
@@ -152,8 +246,12 @@ export function RoofPitchEstimatorModal({
     off.toBlob(blob => {
       if (blob) {
         setWorkingUrl(URL.createObjectURL(blob));
+        const levelled = new Image();
+        levelled.onload = () => { imgElRef.current = levelled; };
+        levelled.src = URL.createObjectURL(blob);
         setImgSize({ w: nw, h: nh });
         setLevelPts([]);
+        setZoom(1);
         setStep('mode');
       }
     }, 'image/png');
@@ -199,6 +297,7 @@ export function RoofPitchEstimatorModal({
 
   const heading = 'Estimate Roof Pitch From an Image';
   const btn = 'rounded-full px-4 py-2 text-sm font-semibold transition';
+  const iconBtn = 'rounded-full border border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50 px-2.5 py-1 text-sm font-bold leading-none transition';
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
@@ -236,14 +335,34 @@ export function RoofPitchEstimatorModal({
 
           {workingUrl && (step === 'level' || step === 'measure') && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="text-sm font-medium text-slate-800">
                   {step === 'level' ? 'Level Image (optional)' : mode === 'two' ? 'Two Roof Planes - click the points' : 'Single Roof Plane - click the points'}
                 </div>
                 <div className="text-xs text-slate-500">{tipFor(step === 'level' ? levelPts.length : pts.length)}</div>
               </div>
-              <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50 flex justify-center">
-                <canvas ref={canvasRef} onClick={canvasClick} className="max-w-full cursor-crosshair" />
+              <div className="flex items-center gap-2">
+                <button onClick={() => setZoom(z => Math.max(MIN_ZOOM, +(z - 0.5).toFixed(2)))} className={iconBtn} aria-label="Zoom out">−</button>
+                <span className="text-xs text-slate-500 tabular-nums w-12 text-center">{Math.round(zoom * 100)}%</span>
+                <button onClick={() => setZoom(z => Math.min(MAX_ZOOM, +(z + 0.5).toFixed(2)))} className={iconBtn} aria-label="Zoom in">+</button>
+                {zoom !== 1 && (
+                  <button onClick={() => setZoom(1)} className="text-xs text-slate-500 hover:text-slate-700 underline">Reset</button>
+                )}
+                <span className="text-[11px] text-slate-400">scroll to zoom - right-click or scroll-bars to pan</span>
+              </div>
+              <div ref={scrollRef} className="rounded-xl border border-slate-200 overflow-auto bg-slate-100 max-h-[55vh]">
+                <canvas
+                  ref={canvasRef}
+                  onClick={canvasClick}
+                  onWheel={wheelZoom}
+                  onMouseDown={panStart}
+                  onMouseMove={panMove}
+                  onMouseUp={panEnd}
+                  onMouseLeave={panEnd}
+                  onContextMenu={e => e.preventDefault()}
+                  className="cursor-crosshair block"
+                  style={{ maxWidth: 'none' }}
+                />
               </div>
               {step === 'level' && (
                 <div className="flex flex-wrap gap-2">
@@ -271,13 +390,13 @@ export function RoofPitchEstimatorModal({
                 <button onClick={() => { setMode('two'); setPts([]); setStep('measure'); }}
                   className="text-left rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/40 p-4 transition">
                   <div className="font-medium text-sm text-slate-900">Two roof planes</div>
-                  <pre className="text-[10px] text-slate-400 mt-2 leading-tight">{'   RIDGE\n    *\n   / \\\n  /   \\\n *-----*\nL eave  R eave'}</pre>
+                  <TwoPlaneDiagram />
                   <p className="text-xs text-slate-600 mt-2">Both sides visible and they look like the same pitch (gable / regular hip ends). 3 clicks.</p>
                 </button>
                 <button onClick={() => { setMode('single'); setPts([]); setStep('measure'); }}
                   className="text-left rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/40 p-4 transition">
                   <div className="font-medium text-sm text-slate-900">Single roof plane</div>
-                  <pre className="text-[10px] text-slate-400 mt-2 leading-tight">{'HIGH POINT\n    *\n   /\n  /\n *\n EAVE'}</pre>
+                  <SinglePlaneDiagram />
                   <p className="text-xs text-slate-600 mt-2">Only one plane visible, different pitches, or mono-pitch / skillion. 2 clicks.</p>
                 </button>
               </div>
@@ -314,7 +433,7 @@ export function RoofPitchEstimatorModal({
                 )}
                 <button onClick={resetMeasure} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Edit Points</button>
                 <button onClick={() => { setPts([]); setResult(null); setStep('mode'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Measure Another Plane</button>
-                <button onClick={() => { setWorkingUrl(null); setImgSize(null); setResult(null); setStep('intro'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Try Another Image</button>
+                <button onClick={() => { setWorkingUrl(null); setImgSize(null); imgElRef.current = null; setResult(null); setStep('intro'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Try Another Image</button>
               </div>
             </div>
           )}

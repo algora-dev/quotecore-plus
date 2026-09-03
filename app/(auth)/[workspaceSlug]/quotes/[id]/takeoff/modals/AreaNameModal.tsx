@@ -95,20 +95,24 @@ export function AreaNameModal({
               )}
               {isRoofing && (
                 <>
-                  <PitchInput
-                    degrees={pitchDegrees}
-                    onSave={setPitchDegrees}
-                    label="Roof Pitch"
-                    className="block"
-                    autoFocus={nameIsLocked}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPitchEstimator(true)}
-                    className="mt-2 text-xs font-medium text-orange-600 hover:text-orange-700"
-                  >
-                    Not sure? Estimate it from a photo
-                  </button>
+                  <div className="flex items-end gap-2">
+                    <PitchInput
+                      degrees={pitchDegrees}
+                      onSave={setPitchDegrees}
+                      label="Roof Pitch"
+                      className="block"
+                      autoFocus={nameIsLocked}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPitchEstimator(true)}
+                      className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
+                      title="Estimate roof pitch from a photo"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M8 4v4M4 8h4M6 6L4 4m10 3l3-3m0 6h-4v-2m9 3a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
+                      Pitch Finder
+                    </button>
+                  </div>
                   <p className="text-xs text-gray-600 -mt-2">
                     Used to calculate component lengths (rafters, hips, valleys)
                   </p>
