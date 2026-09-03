@@ -30,6 +30,9 @@ export interface SupplierDefinition {
   trade?: Trade;
   name: string;
   tagline: string;
+  /** demo instance - shows "(demo)" labelling so nobody mistakes it for a
+   *  real company. All current suppliers in this tool are demos. */
+  demo?: boolean;
   currency: string;
   logoUrl: string | null;
   logoDarkUrl: string | null;

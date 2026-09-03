@@ -33,8 +33,17 @@ function Header() {
             </span>
           )}
           <div>
-            <div className="text-sm font-semibold text-white">{config.name}</div>
-            <div className="hidden sm:block text-xs text-white/60">{config.tagline}</div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-white">{config.name}</span>
+              {config.demo && (
+                <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/80" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
+                  Demo
+                </span>
+              )}
+            </div>
+            <div className="hidden sm:block text-xs text-white/60">
+              {config.tagline}{config.demo ? ' - demo only, not a real company' : ''}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -100,6 +109,29 @@ function ThemeStyle() {
   );
 }
 
+/** Print rules for the output download/print action: when the user hits
+ *  "Download / Print", only the .spt-print-area content (the priced
+ *  output document) is printed - header, steps and action tiles drop out.
+ *  Browser print dialog offers "Save as PDF" for the download path. */
+function PrintStyle() {
+  return (
+    <style>{`
+      @media print {
+        body * { visibility: hidden; }
+        .spt-print-area, .spt-print-area * { visibility: visible; }
+        .spt-print-area {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 0 !important;
+        }
+        .spt-print-area .overflow-x-auto { overflow: visible !important; }
+      }
+    `}</style>
+  );
+}
+
 function hexToRgb(hex: string): string {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
   if (!m) return '0,0,0';
@@ -118,6 +150,7 @@ export function ToolShell() {
   return (
     <main className="spt-scope min-h-screen">
       <ThemeStyle />
+      <PrintStyle />
       <Header />
       <ToolBody />
     </main>

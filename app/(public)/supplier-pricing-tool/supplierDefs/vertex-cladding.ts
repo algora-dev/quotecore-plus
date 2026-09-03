@@ -8,6 +8,7 @@ export const VERTEX_CLADDING = {
   slug: 'vertex-cladding',
   trade: 'cladding' as const,
   name: 'Vertex Cladding',
+  demo: true,
   tagline: 'Wall & Cladding Supplies',
   currency: '\u00A3', // GBP
   logoUrl: null,

@@ -11,16 +11,18 @@ export const OAKLINE_FLOORING = {
   name: 'Oakline Flooring',
   tagline: 'Flooring Supplies',
   currency: '\u00A3', // GBP
-  logoUrl: null,
-  logoDarkUrl: null,
-  brandColor: '#5C4033', // warm oak brown
+  logoUrl: '/supplier-logos/oakline-flooring.svg',
+  /** lighter logo variant for use on the dark brand-coloured header */
+  logoDarkUrl: '/supplier-logos/oakline-flooring-header.svg',
+  brandColor: '#42505C', // graphite grey
+  demo: true,
   theme: {
-    primary: '#5C4033',
-    primaryHover: '#6E4F3F',
-    accent: '#8B6242',
-    accentHover: '#775336',
-    border: '#C9A98E',
-    borderHover: '#B08F72',
+    primary: '#42505C',
+    primaryHover: '#51606D',
+    accent: '#64748B',
+    accentHover: '#475569',
+    border: '#A8B4C0',
+    borderHover: '#8B99A8',
     washAlpha: 0.05,
     glowAlpha: 0.4,
   },

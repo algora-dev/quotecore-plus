@@ -69,10 +69,10 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-xl border-2 p-6 md:p-10 space-y-6" style={{ borderColor: brand }}>
+      <div className="spt-print-area bg-white rounded-xl border-2 p-6 md:p-10 space-y-6" style={{ borderColor: brand }}>
         <div className="flex items-start justify-between gap-4 border-b-2 pb-5" style={{ borderColor: brand }}>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-black">MATERIALS PRICING</h1>
+            <h1 className="text-xl font-bold text-black">MATERIALS PRICING{supplierCfg.demo ? ' (DEMO)' : ''}</h1>
             <p className="mt-1 text-sm text-black">Generated {today} - {supplierName}</p>
             <p className="mt-1 text-xs text-black/60">{measureNote}{tradeLabel ? ` - ${tradeLabel}` : ''}</p>
           </div>

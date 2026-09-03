@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="64" viewBox="0 0 240 64" role="img" aria-label="Oakline Flooring">
+  <!-- Header variant: white on transparent, for the dark brand-coloured header -->
+  <rect x="4" y="10" width="44" height="44" rx="10" fill="#FFFFFF"/>
+  <rect x="12" y="18" width="28" height="6" rx="3" fill="#42505C"/>
+  <rect x="12" y="29" width="20" height="6" rx="3" fill="#64748B"/>
+  <rect x="12" y="40" width="28" height="6" rx="3" fill="#42505C"/>
+  <text x="58" y="30" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#FFFFFF">Oakline</text>
+  <text x="58" y="47" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="400" letter-spacing="2" fill="#FFFFFF" opacity="0.7">FLOORING</text>
+</svg>

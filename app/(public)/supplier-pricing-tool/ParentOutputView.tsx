@@ -10,6 +10,7 @@ import { componentTotal, CUSTOM_BASIS_UNIT } from './types';
 import { priceParentOutput } from './parentPricing';
 import { ParentOutputActions } from './ParentOutputActions';
 import { fmt } from './pricing';
+import { useSupplierConfig } from './supplierConfig';
 import type { TradeConfig } from './tradeConfig';
 
 export function ParentOutputView({
@@ -30,13 +31,17 @@ export function ParentOutputView({
   const totals = priceParentOutput(job, catalog);
   const grand = totals.material + totals.labour;
   const baselineById = new Map(baselineCatalog.map(p => [p.id, p]));
+  const { config: supplierCfg } = useSupplierConfig();
+  const demoSuffix = supplierCfg.demo ? ' (demo)' : '';
 
   return (
     <div className="space-y-4">
+      {/* Print/download target: everything except the action tiles below */}
+      <div className="spt-print-area space-y-4">
       {/* Totals banner */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-semibold text-slate-900">{trade.label} job estimate</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{trade.label} job estimate{demoSuffix}</h2>
           <span className="text-xs text-slate-400">
             {job.parents.length} bucket{job.parents.length === 1 ? '' : 's'} - {job.components.length} component{job.components.length === 1 ? '' : 's'}
             {tradeLabel ? ` - ${tradeLabel}` : ''}
@@ -156,10 +161,11 @@ export function ParentOutputView({
         </div>
       )}
 
-      <div className="flex items-center justify-between pb-8">
+      <div className="flex items-center justify-between pb-8 spt-noprint">
         <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
           Back
         </button>
+      </div>
       </div>
 
       {/* End-of-flow options - same set as the roofing tool */}

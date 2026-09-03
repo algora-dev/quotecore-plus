@@ -37,6 +37,8 @@ export interface SupplierConfig {
   trade?: Trade;
   name: string;
   tagline: string;
+  /** demo instance - adds "(demo)" labelling to header + output */
+  demo?: boolean;
   currency: string;
   /** supplier logo URL (null = monogram placeholder) */
   logoUrl: string | null;

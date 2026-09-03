@@ -8,6 +8,7 @@ import type { SupplierProduct } from '../types';
 export const BURTON_ROOFING = {
   slug: 'burton-roofing',
   name: 'Burton Roofing',
+  demo: true,
   tagline: 'The Roofing People',
   currency: '\u00A3', // GBP
   logoUrl: '/supplier-logos/burton-roofing.png',
