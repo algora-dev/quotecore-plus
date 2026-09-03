@@ -8,7 +8,7 @@ import type { AdminData } from '../adminData';
 import { SectionCard } from './AdminPanel';
 
 export function AdminCta({ admin, setAdmin }: { admin: AdminData; setAdmin: (fn: (a: AdminData) => AdminData) => void }) {
-  const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
+  const inputCls = 'mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
   function patch(p: Partial<AdminData['cta']>) {
     setAdmin(a => ({ ...a, cta: { ...a.cta, ...p } }));

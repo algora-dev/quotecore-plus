@@ -136,6 +136,12 @@ export function OutputActions({ measureSet, catalog }: {
   }
 
   const quoteUrl = buildConvertToQuoteUrl(measureSet, catalog);
+  const outputTotal = (() => { const o = priceOutput(measureSet, catalog); return o.material + o.labour; })();
+
+  // Tracking: what the user did with the output (convert / order / enquiry)
+  function logAction(action: 'convert' | 'order' | 'enquiry') {
+    logEvent(supplierCfg.slug, { type: 'action', action, createdAt: new Date().toISOString(), email: user?.email ?? null, total: outputTotal });
+  }
 
   async function continueInApp() {
     setSaving(true);
@@ -202,6 +208,7 @@ export function OutputActions({ measureSet, catalog }: {
           title="Convert to customer quote"
           desc="Editable quote document with your markup - opens the quote builder in a new tab."
           href={quoteUrl}
+          onClick={() => logAction('convert')}
         />
         <ActionTile
           icon={
@@ -209,7 +216,7 @@ export function OutputActions({ measureSet, catalog }: {
           }
           title="Request supplier quote"
           desc="Send this pricing to the supplier and ask for a formal quote."
-          onClick={() => setModal('quote')}
+          onClick={() => { logAction('enquiry'); setModal('quote'); }}
         />
         <ActionTile
           icon={
@@ -217,7 +224,7 @@ export function OutputActions({ measureSet, catalog }: {
           }
           title="Send order request"
           desc="Place an order request for these products and quantities."
-          onClick={() => setModal('order')}
+          onClick={() => { logAction('order'); setModal('order'); }}
         />
       </div>
       {saveError && (
@@ -330,7 +337,7 @@ function ActionTile({ title, desc, onClick, href, icon, disabled }: {
   const cls = 'text-left rounded-xl border border-slate-200 bg-white px-4 py-3.5 transition hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)] disabled:opacity-50';
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noopener" className={cls}>
+      <a href={href} target="_blank" rel="noopener" onClick={onClick} className={cls}>
         {inner}
       </a>
     );

@@ -16,7 +16,7 @@ export function AdminTeam({ admin, setAdmin }: { admin: AdminData; setAdmin: (fn
   const [role, setRole] = useState<TeamMember['role']>('Editor');
   const [notice, setNotice] = useState('');
 
-  const inputCls = 'rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
+  const inputCls = 'mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
   function patchMember(id: string, p: Partial<TeamMember>) {
     setAdmin(a => ({ ...a, team: a.team.map(m => (m.id === id ? { ...m, ...p } : m)) }));

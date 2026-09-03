@@ -167,6 +167,12 @@ export function ParentOutputActions({ job, catalog, onRestart }: {
   }
 
   const quoteUrl = buildParentConvertToQuoteUrl(job, catalog);
+  const outputTotal = (() => { const o = priceParentOutput(job, catalog); return o.material + o.labour; })();
+
+  // Tracking: what the user did with the output (convert / order / enquiry)
+  function logAction(action: 'convert' | 'order' | 'enquiry') {
+    logEvent(supplierCfg.slug, { type: 'action', action, createdAt: new Date().toISOString(), email: user?.email ?? null, total: outputTotal });
+  }
 
   async function continueInApp() {
     setSaving(true);
@@ -226,18 +232,19 @@ export function ParentOutputActions({ job, catalog, onRestart }: {
           title="Convert to customer quote"
           desc="Editable quote document with your markup - opens the quote builder in a new tab."
           href={quoteUrl}
+          onClick={() => logAction('convert')}
         />
         <ActionTile
           icon={<path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />}
           title="Request supplier quote"
           desc="Send this pricing to the supplier and ask for a formal quote."
-          onClick={() => setModal('quote')}
+          onClick={() => { logAction('enquiry'); setModal('quote'); }}
         />
         <ActionTile
           icon={<path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />}
           title="Send order request"
           desc="Place an order request for these products and quantities."
-          onClick={() => setModal('order')}
+          onClick={() => { logAction('order'); setModal('order'); }}
         />
       </div>
 
@@ -352,7 +359,7 @@ function ActionTile({ title, desc, onClick, href, icon }: {
   );
   const cls = 'text-left rounded-xl border border-slate-200 bg-white px-4 py-3.5 transition hover:border-blue-200 hover:bg-blue-50/40 hover:shadow-[0_0_8px_rgba(37,99,235,0.08)]';
   if (href) {
-    return <a href={href} target="_blank" rel="noopener" className={cls}>{inner}</a>;
+    return <a href={href} target="_blank" rel="noopener" onClick={onClick} className={cls}>{inner}</a>;
   }
   return <button onClick={onClick} className={`${cls} cursor-pointer`}>{inner}</button>;
 }

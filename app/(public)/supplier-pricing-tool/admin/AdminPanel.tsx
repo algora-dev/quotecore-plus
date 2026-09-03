@@ -76,11 +76,11 @@ function AdminLogin({ slug, brand, logo, name, onLogin }: { slug: string; brand:
         <form onSubmit={submit} className="mt-6 space-y-3">
           <div>
             <label className="text-xs font-medium text-slate-600">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="you@example.com" />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="you@example.com" />
           </div>
           <div>
             <label className="text-xs font-medium text-slate-600">Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="Password" />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="Password" />
           </div>
           {error && <p className="text-xs text-red-600">{error}</p>}
           <button type="submit" className="w-full rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90" style={{ backgroundColor: brand }}>
@@ -267,7 +267,7 @@ function Settings({ slug, cfg, setCfg, admin, setAdmin, onReset }: {
   slug: string; cfg: SupplierConfig; setCfg: (fn: (c: SupplierConfig) => SupplierConfig) => void;
   admin: AdminData; setAdmin: (fn: (a: AdminData) => AdminData) => void; onReset: () => void;
 }) {
-  const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
+  const inputCls = 'mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
   return (
     <div className="space-y-4">
       <SectionCard title="Branding & wording">
@@ -290,7 +290,7 @@ function Settings({ slug, cfg, setCfg, admin, setAdmin, onReset }: {
           Powered by QuoteCore+ (off = white-label)
         </label>
       </SectionCard>
-      <SectionCard title="Admin feature modules" desc="Upsell tiers: turn modules off to show a lower plan. Tool + admin sections update together on save.">
+      <SectionCard title="Plan modules (internal)" desc="For QuoteCore+ use - we set which modules a customer's deployment includes when we build their version. Demos run with everything on; toggling here previews a lower tier.">
         <div className="grid gap-2 md:grid-cols-2">
           {([
             ['products', 'Products manager', 'Add, edit and remove catalog products and pricing.'],

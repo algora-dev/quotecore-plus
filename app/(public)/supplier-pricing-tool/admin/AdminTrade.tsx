@@ -15,7 +15,7 @@ export function AdminTrade({ admin, setAdmin, cfg }: { admin: AdminData; setAdmi
   const [tierId, setTierId] = useState<string>(admin.tiers[0]?.id ?? '');
   const [notice, setNotice] = useState('');
 
-  const inputCls = 'rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
+  const inputCls = 'mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none';
 
   function patchTier(id: string, p: Partial<TradeTier>) {
     setAdmin(a => ({ ...a, tiers: a.tiers.map(t => (t.id === id ? { ...t, ...p } : t)) }));

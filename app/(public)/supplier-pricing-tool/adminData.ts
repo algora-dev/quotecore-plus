@@ -72,7 +72,49 @@ export interface SignupEvent {
   name: string;
 }
 
-export type TrackingEvent = QuoteEvent | SignupEvent;
+export type TrackingEvent = QuoteEvent | SignupEvent | ActionEvent;
+
+/** End-of-flow actions: what the user did with the output. 'convert' =
+ *  opened the customer quote builder, 'order' = sent an order request,
+ *  'enquiry' = requested a supplier quote. Lets the owner see whether a
+ *  customer priced, quoted and actually ordered. */
+export interface ActionEvent {
+  type: 'action';
+  action: 'convert' | 'order' | 'enquiry';
+  createdAt: string;
+  email: string | null;
+  total: number;
+}
+
+/** Per-customer aggregate for the tracking view. */
+export interface CustomerSummary {
+  email: string;
+  outputs: number;
+  totalValue: number;
+  converted: number;
+  ordered: number;
+  lastActiveAt: string;
+}
+
+export function customerSummaries(events: TrackingEvent[]): CustomerSummary[] {
+  const byEmail = new Map<string, CustomerSummary>();
+  const get = (email: string, at: string) => {
+    let s = byEmail.get(email);
+    if (!s) { s = { email, outputs: 0, totalValue: 0, converted: 0, ordered: 0, lastActiveAt: at }; byEmail.set(email, s); }
+    if (at > s.lastActiveAt) s.lastActiveAt = at;
+    return s;
+  };
+  for (const ev of events) {
+    const email = (ev.type === 'signup' ? ev.email : ev.email) ?? 'anonymous';
+    const s = get(email, ev.createdAt);
+    if (ev.type === 'quote') { s.outputs += 1; s.totalValue += ev.total; }
+    else if (ev.type === 'action') {
+      if (ev.action === 'convert') s.converted += 1;
+      if (ev.action === 'order') { s.ordered += 1; s.totalValue += 0; }
+    }
+  }
+  return [...byEmail.values()].sort((a, b) => b.totalValue - a.totalValue);
+}
 
 export const DEFAULT_CTA: CtaSettings = {
   enabled: true,
