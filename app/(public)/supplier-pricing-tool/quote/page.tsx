@@ -19,8 +19,12 @@ interface QuoteLine {
 }
 
 function fmtMoney(n: number): string {
-  return n.toLocaleString('en-NZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+/** Generic clean default accent - user picks their own brand colour in settings. */
+const DEFAULT_ACCENT = '#2563EB';
+const CURRENCY = '\u00A3'; // GBP default (matches the supplier tool demos)
 
 function QuoteBuilder() {
   const [ready, setReady] = useState(false);
@@ -29,7 +33,7 @@ function QuoteBuilder() {
   const [fromEmail, setFromEmail] = useState('');
   const [fromAddress, setFromAddress] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
-  const [accent, setAccent] = useState('#2563EB');
+  const [accent, setAccent] = useState(DEFAULT_ACCENT);
   const [clientName, setClientName] = useState('');
   const [clientAddress, setClientAddress] = useState('');
   const [quoteDate, setQuoteDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -41,8 +45,8 @@ function QuoteBuilder() {
   const [globalMode, setGlobalMode] = useState<'markup' | 'margin'>('markup');
   const [globalPct, setGlobalPct] = useState('0');
   const [taxEnabled, setTaxEnabled] = useState(true);
-  const [taxRate, setTaxRate] = useState(15);
-  const [taxName, setTaxName] = useState('GST');
+  const [taxRate, setTaxRate] = useState(20);
+  const [taxName, setTaxName] = useState('VAT');
   const [showSettings, setShowSettings] = useState(true);
 
   // Column visibility - untick for a clean customer copy, tick for the
@@ -110,7 +114,7 @@ function QuoteBuilder() {
         validDays,
         notes,
         logo,
-        currency: '$',
+        currency: CURRENCY,
         taxRate: taxEnabled ? taxRate : 0,
         taxName,
         lines: lines.map(l => ({
@@ -363,7 +367,7 @@ function QuoteBuilder() {
                   )}
                   {showRate && (
                     <td className="py-2.5 pr-2 text-right text-slate-600 whitespace-nowrap">
-                      $<input
+                      {CURRENCY}<input
                         type="number" min="0" step="0.01" value={l.rate}
                         onChange={e => updateLine(i, { rate: parseFloat(e.target.value) || 0 })}
                         className="w-20 bg-transparent border-none outline-none text-right focus:bg-slate-50 rounded px-1"
@@ -382,7 +386,7 @@ function QuoteBuilder() {
                     </td>
                   )}
                   {showLinePrice && (
-                    <td className="py-2.5 text-right font-semibold text-slate-900">${fmtMoney(lineAmount(l))}</td>
+                    <td className="py-2.5 text-right font-semibold text-slate-900">{CURRENCY}{fmtMoney(lineAmount(l))}</td>
                   )}
                 </tr>
               ))}
@@ -407,27 +411,27 @@ function QuoteBuilder() {
           <div className="mt-5 ml-auto max-w-xs space-y-1.5 text-sm">
             {showLinePrice && (
               <div className="flex justify-between text-slate-600">
-                <span>Subtotal</span><span>${fmtMoney(subtotal)}</span>
+                <span>Subtotal</span><span>{CURRENCY}{fmtMoney(subtotal)}</span>
               </div>
             )}
             {!showLinePrice && lines.length > 0 && (
               <div className="flex justify-between text-slate-600">
-                <span>Subtotal ({lines.length} items)</span><span>${fmtMoney(subtotal)}</span>
+                <span>Subtotal ({lines.length} items)</span><span>{CURRENCY}{fmtMoney(subtotal)}</span>
               </div>
             )}
             {showGlobal && gp > 0 && (
               <div className="flex justify-between text-slate-600">
                 <span>{globalMode === 'markup' ? `Markup ${gp}%` : `Margin ${gp}%`}</span>
-                <span>${fmtMoney(globalAdjusted - subtotal)}</span>
+                <span>{CURRENCY}{fmtMoney(globalAdjusted - subtotal)}</span>
               </div>
             )}
             {taxEnabled && (
               <div className="flex justify-between text-slate-600">
-                <span>{taxName} ({taxRate}%)</span><span>${fmtMoney(tax)}</span>
+                <span>{taxName} ({taxRate}%)</span><span>{CURRENCY}{fmtMoney(tax)}</span>
               </div>
             )}
             <div className="flex justify-between pt-2 border-t-2 font-bold text-base" style={{ borderTopColor: accent }}>
-              <span>Total</span><span style={{ color: accent }}>${fmtMoney(total)}</span>
+              <span>Total</span><span style={{ color: accent }}>{CURRENCY}{fmtMoney(total)}</span>
             </div>
           </div>
 
