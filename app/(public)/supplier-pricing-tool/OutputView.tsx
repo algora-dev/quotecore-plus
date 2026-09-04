@@ -12,7 +12,7 @@ import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { logEvent } from './adminData';
 import { OutputActions } from './OutputActions';
 
-export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tradeLabel, onBack, onRestart, onAddCustom }: {
+export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tradeLabel, onBack, onRestart, onAddCustom, planImages }: {
   measureSet: MeasurementSet;
   catalog: SupplierProduct[];
   /** baseline-price catalog for the standard-vs-trade comparison */
@@ -25,6 +25,9 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
   /** 2026-08-30: jump back to the custom-components step to add one more
    *  without restarting the flow. Falls back to onBack when not provided. */
   onAddCustom?: () => void;
+  /** Plan images captured at the takeoff station - pre-attached to the
+   *  send-to-supplier enquiry (annotated drawings + originals). */
+  planImages?: { name: string; dataUrl: string; annotated: boolean }[];
 }) {
   const output = priceOutput(measureSet, catalog);
   // Same quantities priced at baseline for the trade-saving comparison.
@@ -248,7 +251,7 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
         </p>
       </div>
 
-      <OutputActions measureSet={measureSet} catalog={catalog} />
+      <OutputActions measureSet={measureSet} catalog={catalog} planImages={planImages} />
 
       <div className="flex items-center justify-between flex-wrap gap-2">
         <button onClick={onBack} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">

@@ -60,6 +60,9 @@ export function ParentFlow() {
   });
   const [mode, setMode] = useState<'standard' | 'advanced'>(restored?.mode ?? 'standard');
   const [job, setJob] = useState<ParentJob>(restored?.job ?? emptyParentJob());
+  // Plan images captured at the takeoff station (annotated + originals) -
+  // handed to the send-to-supplier enquiry as pre-attached files.
+  const [planImages, setPlanImages] = useState<{ name: string; dataUrl: string; annotated: boolean }[] | null>(null);
 
   useEffect(() => {
     try {
@@ -111,8 +114,9 @@ export function ParentFlow() {
 
   /** Station finished: merge its parents/entries/customs into the job and
    *  land on the measurement edit step so names/values can be reviewed. */
-  function handleStationFinish(next: ParentJob) {
+  function handleStationFinish(next: ParentJob, planImages?: { name: string; dataUrl: string; annotated: boolean }[]) {
     setJob(next);
+    setPlanImages(planImages ?? null);
     setStep(measureStepNum);
   }
 
@@ -207,6 +211,7 @@ export function ParentFlow() {
             job={job}
             catalog={catalog}
             baselineCatalog={config.products}
+            planImages={planImages ?? undefined}
             showTrade={showTrade}
             tradeLabel={showTrade && tradeInfo.pct > 0 ? tradeInfo.label : null}
             currency={config.currency}

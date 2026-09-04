@@ -123,10 +123,12 @@ function enquiryShim(job: ParentJob): MeasurementSet {
   };
 }
 
-export function ParentOutputActions({ job, catalog, onRestart }: {
+export function ParentOutputActions({ job, catalog, onRestart, planImages }: {
   job: ParentJob;
   catalog: SupplierProduct[];
   onRestart: () => void;
+  /** Plan images from the takeoff station - pre-attached to the supplier enquiry. */
+  planImages?: { name: string; dataUrl: string; annotated: boolean }[];
 }) {
   const [modal, setModal] = useState<'quote' | 'order' | null>(null);
   const { config: supplierCfg } = useSupplierConfig();
@@ -330,6 +332,7 @@ export function ParentOutputActions({ job, catalog, onRestart }: {
           catalog={catalog}
           currency={supplierCfg.currency}
           initialIntent={modal}
+          presetImages={planImages}
           onClose={() => setModal(null)}
         />
       )}

@@ -243,6 +243,7 @@ export function FlooringTakeoff() {
           preferredLengthUnit={unitOption.lengthUnit}
           unitSystem={stage.unitSystem}
           componentSpecs={stage.specs}
+          guideTrade="flooring"
           onFinish={payload => {
             trackFreeToolEvent('finish');
             setStage({ phase: 'output', payload, run: stage.run, planDataUrl: stage.planDataUrl, startedAt: stage.startedAt, unitSystem: stage.unitSystem, components: stage.components, specs: stage.specs });

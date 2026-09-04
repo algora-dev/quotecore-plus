@@ -90,9 +90,11 @@ export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: Supp
 
 /** Actions card under the output: request supplier quote, order request,
  *  convert to customer quote (free quote generator), continue in QuoteCore+. */
-export function OutputActions({ measureSet, catalog }: {
+export function OutputActions({ measureSet, catalog, planImages }: {
   measureSet: MeasurementSet;
   catalog: SupplierProduct[];
+  /** Plan images from the takeoff station - pre-attached to the supplier enquiry. */
+  planImages?: { name: string; dataUrl: string; annotated: boolean }[];
 }) {
   const [modal, setModal] = useState<'quote' | 'order' | null>(null);
   const { config: supplierCfg } = useSupplierConfig();
@@ -303,6 +305,7 @@ export function OutputActions({ measureSet, catalog }: {
           catalog={catalog}
           currency={supplierCfg.currency}
           initialIntent={modal}
+          presetImages={planImages}
           onClose={() => setModal(null)}
         />
       )}

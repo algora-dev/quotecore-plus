@@ -168,6 +168,9 @@ interface Props {
    *  'upload' = free-roof-takeoff tool - blank canvas, NO baked calibration
    *  (the user calibrates their own uploaded plan, exactly like the app). */
   demoMode?: 'scan' | 'manual' | 'upload';
+  /** UPLOAD MODE: trade variant for the Guide Me steps (cladding / flooring
+   *  free tools get trade-specific step sets). Default roofing. */
+  guideTrade?: 'roofing' | 'cladding' | 'flooring';
   /** UPLOAD MODE: default calibration length unit chosen in the landing wizard
    *  (metric -> meters, imperial/roofing squares -> feet). Squares calibrate
    *  in feet (lineal) - areas convert to squares in the report. */
@@ -273,6 +276,7 @@ export function DemoWorkstation({
   onFinish,
   preferredLengthUnit = 'meters',
   unitSystem,
+  guideTrade = 'roofing',
   componentSpecs,
   onExitToStart,
 }: Props) {
@@ -5511,7 +5515,7 @@ export function DemoWorkstation({
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
-          <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+          <DemoGuideMeModal open={guideOpen} flow={demoMode} trade={guideTrade} onClose={() => setGuideOpen(false)} />
 
           {/* UPLOAD MODE: create-custom-component modal (session-only) */}
           {showCreateComponent && (
@@ -5786,6 +5790,17 @@ export function DemoWorkstation({
           {/* Phase 7: Multi-lineal in-progress floating banner. DRAGGABLE so it
               never blocks the canvas where the user needs to click. Drag from
               the grip handle on the left; buttons remain clickable. */}
+          {/* Polygon in-progress hint: mirrors the multi-lineal banner -
+              tells the user how to CLOSE the shape without needing the guide. */}
+          {areaMode && areaSubTool === 'polygon' && areaPoints.length >= 1 && (
+            <div className="absolute z-20 left-1/2 -translate-x-1/2 top-16 pointer-events-none">
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-300 rounded-full text-sm shadow-md select-none">
+                <span className="text-blue-800 font-medium whitespace-nowrap">Polygon: {areaPoints.length} point{areaPoints.length !== 1 ? 's' : ''}</span>
+                <span className="text-blue-500 text-xs whitespace-nowrap">To close the shape, click back on your first point</span>
+              </div>
+            </div>
+          )}
+
           {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
             const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
             let runningTotal = 0;

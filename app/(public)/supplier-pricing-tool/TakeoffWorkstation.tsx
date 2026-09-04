@@ -133,6 +133,10 @@ export interface DemoFinishPayload {
   /** UPLOAD MODE: user-built component specs from the landing wizard.
    *  Persisted into the draft so signup creates real component_library rows. */
   componentSpecs?: import('@/app/(public)/free-roof-takeoff/tradeConfig').TakeoffComponentSpec[];
+  /** Supplier tool: plan images captured at Finish - the annotated canvas
+   *  (plan + drawings) per page plus the blank original upload. Used to
+   *  pre-attach files in the send-to-supplier enquiry. Session-only. */
+  planImages?: { name: string; dataUrl: string; annotated: boolean }[];
 }
 
 interface Props {
@@ -2807,7 +2811,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         // navigateAfter=true means the user clicked "Save & Continue" with no
         // new data drawn - also fine to navigate, but we do NOT mark dirty=false.
         if (navigateAfter) {
-          onFinish?.(buildDemoFinishPayload());
+          onFinish?.({ ...buildDemoFinishPayload(), planImages: await capturePlanImages() });
         }
         return true;
       }
@@ -3108,7 +3112,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // primary "Save & Continue to Components" CTA. The multi-page upload
       // flow stays inside the workstation and reloads to the new page.
       if (navigateAfter) {
-        onFinish?.(buildDemoFinishPayload());
+        onFinish?.({ ...buildDemoFinishPayload(), planImages: await capturePlanImages() });
       } else {
         console.log('[SaveTakeoff] Save complete (no navigation).');
       }
@@ -4860,6 +4864,53 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
   };
 
+  // SUPPLIER TOOL: capture every plan page as an image for the send-to-
+  //  supplier enquiry. For each page we snapshot the FULL canvas (plan +
+  //  drawings) and fetch the original upload as a data URL. Pages are cycled
+  //  through React state with a beat for the redraw to settle. Session-only -
+  //  never persisted anywhere.
+  const capturePlanImages = async (): Promise<{ name: string; dataUrl: string; annotated: boolean }[]> => {
+    const out: { name: string; dataUrl: string; annotated: boolean }[] = [];
+    if (pages.length === 0) return out;
+    const originalIndex = currentPageIndex;
+    const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+    for (let i = 0; i < pages.length && out.length < 10; i++) {
+      if (i !== originalIndex) {
+        setCurrentPageIndex(i);
+        await wait(450);
+      }
+      const page = pages[i];
+      const baseName = (page?.name ?? `Plan ${i + 1}`).replace(/\.(png|jpe?g|webp|pdf)$/i, '');
+      try {
+        if (fabricRef.current) {
+          out.push({
+            name: `${baseName} - with drawings.png`,
+            dataUrl: fabricRef.current.toDataURL({ format: 'png', multiplier: 1 }),
+            annotated: true,
+          });
+        }
+      } catch { /* snapshot is best-effort */ }
+      try {
+        const res = await fetch(page.url);
+        const blob = await res.blob();
+        if (blob.type.startsWith('image/')) {
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onload = () => resolve(String(fr.result));
+            fr.onerror = reject;
+            fr.readAsDataURL(blob);
+          });
+          out.push({ name: `${baseName} - original.png`, dataUrl, annotated: false });
+        }
+      } catch { /* original upload is best-effort */ }
+    }
+    if (originalIndex !== currentPageIndex) {
+      setCurrentPageIndex(originalIndex);
+      await wait(300);
+    }
+    return out;
+  };
+
   // DEMO: build the finish payload handed to the demo shell (replaces the
   // router.push to the quote builder in the real app).
   //
@@ -5694,7 +5745,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
-          <DemoGuideMeModal open={guideOpen} flow={demoMode} onClose={() => setGuideOpen(false)} />
+          <DemoGuideMeModal open={guideOpen} flow={demoMode} trade={(quote as { trade?: string }).trade as 'roofing' | 'cladding' | 'flooring' | undefined} onClose={() => setGuideOpen(false)} />
 
           {/* UPLOAD MODE: create-custom-component modal (session-only) */}
           {showCreateComponent && (
@@ -6010,6 +6061,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               </button>
             </div>
           </div>
+
+          {/* Polygon in-progress hint: mirrors the multi-lineal banner -
+              tells the user how to CLOSE the shape without needing the guide. */}
+          {areaMode && areaSubTool === 'polygon' && areaPoints.length >= 1 && (
+            <div className="absolute z-20 left-1/2 -translate-x-1/2 top-16 pointer-events-none">
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-300 rounded-full text-sm shadow-md select-none">
+                <span className="text-blue-800 font-medium whitespace-nowrap">Polygon: {areaPoints.length} point{areaPoints.length !== 1 ? 's' : ''}</span>
+                <span className="text-blue-500 text-xs whitespace-nowrap">To close the shape, click back on your first point</span>
+              </div>
+            </div>
+          )}
 
           {/* Phase 7: Multi-lineal in-progress floating banner. DRAGGABLE so it
               never blocks the canvas where the user needs to click. Drag from

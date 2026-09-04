@@ -55,6 +55,9 @@ export function PortalFlow() {
   const [planFile, setPlanFile] = useState<File | null>(null);
   const [planUrl, setPlanUrl] = useState<string | null>(null);
   const [measureSet, setMeasureSet] = useState<MeasurementSet>(restored?.measureSet ?? emptyMeasurementSet());
+  // Plan images captured at the takeoff station (annotated + originals) -
+  // handed to the send-to-supplier enquiry as pre-attached files.
+  const [planImages, setPlanImages] = useState<{ name: string; dataUrl: string; annotated: boolean }[] | null>(null);
   const [mode, setMode] = useState<Mode>(restored?.mode ?? 'standard');
   const [step, setStep] = useState(() => {
     // A restored takeoff flow at the station step has no plan file to
@@ -133,8 +136,9 @@ export function PortalFlow() {
     try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
   }
 
-  function handleTakeoffFinish(set: MeasurementSet) {
+  function handleTakeoffFinish(set: MeasurementSet, planImages?: { name: string; dataUrl: string; annotated: boolean }[]) {
     setMeasureSet(set);
+    setPlanImages(planImages ?? null);
     // skip the manual entry step - measurements came from the station
     setStep(3);
   }
@@ -301,6 +305,7 @@ export function PortalFlow() {
             onBack={() => setStep(customStepNum)}
             onAddCustom={() => setStep(customStepNum)}
             onRestart={reset}
+            planImages={planImages ?? undefined}
           />
         )}
       </div>

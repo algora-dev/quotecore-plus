@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { priceOutput, fmt } from './pricing';
 import { useSupplierConfig, toolUrls } from './supplierConfig';
 
@@ -27,11 +27,15 @@ export interface EnquiryModalProps {
   currency: string;
   /** 'quote' pre-selects detailed_quote, 'order' pre-selects order_request */
   initialIntent?: 'quote' | 'order';
+  /** Plan images captured by the takeoff station (annotated drawings +
+   *  originals). Pre-attached to the enquiry so the supplier receives
+   *  the marked-up plans and the output in one hit. Session-only. */
+  presetImages?: { name: string; dataUrl: string; annotated: boolean }[];
   onClose: () => void;
 }
 
 export function SupplierEnquiryModal({
-  supplierName, supplierSlug, measureSet, catalog, currency, initialIntent, onClose,
+  supplierName, supplierSlug, measureSet, catalog, currency, initialIntent, presetImages, onClose,
 }: EnquiryModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -46,6 +50,35 @@ export function SupplierEnquiryModal({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-attach the takeoff plan images (annotated drawings + originals)
+  // on mount - converted from data URLs to real Files so they upload
+  // through the normal attachment flow. Cap shared with manual picks (10).
+  useEffect(() => {
+    if (!presetImages || presetImages.length === 0) return;
+    const toFile = (img: { name: string; dataUrl: string }): Promise<File | null> =>
+      new Promise(resolve => {
+        try {
+          const comma = img.dataUrl.indexOf(',');
+          const meta = img.dataUrl.slice(0, comma);
+          const b64 = img.dataUrl.slice(comma + 1);
+          const mime = /data:(.*?)(;|$)/.exec(meta)?.[1] ?? 'image/png';
+          const bin = atob(b64);
+          const arr = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+          resolve(new File([arr], img.name, { type: mime }));
+        } catch {
+          resolve(null);
+        }
+      });
+    let cancelled = false;
+    void Promise.all(presetImages.map(toFile)).then(fs => {
+      if (cancelled) return;
+      const valid = fs.filter((f): f is File => !!f);
+      if (valid.length > 0) setFiles(prev => [...prev, ...valid].slice(0, 10));
+    });
+    return () => { cancelled = true; };
+  }, []);
   const { config: supplierCfg } = useSupplierConfig();
   const urls = toolUrls(supplierCfg);
 
@@ -98,7 +131,7 @@ export function SupplierEnquiryModal({
     const selected = Array.from(e.target.files ?? []);
     const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
     const valid = selected.filter(f => allowed.includes(f.type) && f.size <= 10 * 1024 * 1024);
-    setFiles([...files, ...valid].slice(0, 5));
+    setFiles([...files, ...valid].slice(0, 10));
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
@@ -281,7 +314,7 @@ export function SupplierEnquiryModal({
 
           {/* File upload */}
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Attachments (optional, max 5 files, 10MB each)</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Attachments (optional, max 10 files, 10MB each)</label>
             <input
               ref={fileInputRef}
               type="file"
@@ -292,10 +325,10 @@ export function SupplierEnquiryModal({
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              disabled={files.length >= 5}
+              disabled={files.length >= 10}
               className="w-full rounded-lg border border-dashed border-slate-300 px-4 py-3 text-xs text-slate-500 hover:border-[#FF6B35] hover:bg-orange-50/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {files.length >= 5 ? 'Maximum 5 files reached' : '+ Add file (PDF, JPG, PNG, WebP)'}
+              {files.length >= 5 ? 'Maximum 10 files reached' : '+ Add file (PDF, JPG, PNG, WebP)'}
             </button>
             {files.length > 0 && (
               <div className="mt-2 space-y-1">

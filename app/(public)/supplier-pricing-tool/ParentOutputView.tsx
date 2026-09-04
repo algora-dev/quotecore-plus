@@ -17,7 +17,7 @@ import { logEvent } from './adminData';
 import type { TradeConfig } from './tradeConfig';
 
 export function ParentOutputView({
-  trade, job, catalog, baselineCatalog, showTrade, tradeLabel, currency, basePath, onBack, onAddCustom, onRestart,
+  trade, job, catalog, baselineCatalog, showTrade, tradeLabel, currency, basePath, onBack, onAddCustom, onRestart, planImages,
 }: {
   trade: TradeConfig;
   job: ParentJob;
@@ -30,6 +30,9 @@ export function ParentOutputView({
   onBack: () => void;
   onAddCustom: () => void;
   onRestart: () => void;
+  /** Plan images captured at the takeoff station - pre-attached to the
+   *  send-to-supplier enquiry (annotated drawings + originals). */
+  planImages?: { name: string; dataUrl: string; annotated: boolean }[];
 }) {
   const totals = priceParentOutput(job, catalog);
   const grand = totals.material + totals.labour;

@@ -119,7 +119,7 @@ const PLACEHOLDER_COMPONENTS = [
 
 export function TakeoffStation({ planUrl, onFinish }: {
   planUrl: string;
-  onFinish: (set: MeasurementSet) => void;
+  onFinish: (set: MeasurementSet, planImages?: DemoFinishPayload['planImages']) => void;
 }) {
   return (
     <div className="w-[125%] -ml-[12.5%] space-y-3">
@@ -136,7 +136,7 @@ export function TakeoffStation({ planUrl, onFinish }: {
         hydrationData={null}
         demoMode="upload"
         preferredLengthUnit="meters"
-        onFinish={(payload: DemoFinishPayload) => onFinish(mapTakeoffPayload(payload))}
+        onFinish={(payload: DemoFinishPayload) => onFinish(mapTakeoffPayload(payload), payload.planImages)}
       />
     </div>
   );
