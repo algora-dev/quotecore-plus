@@ -529,7 +529,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 text-sm text-zinc-500">For a deeper walkthrough, see <a href="/blog/roofing-quoting-software-vs-spreadsheets" className="text-[#BD4A1A] hover:underline">quoting software vs spreadsheets</a>.</p>
+            <p className="mt-4 text-sm text-zinc-500">For a deeper walkthrough, see <a href="/blog/roofing-quoting-software-vs-spreadsheets" className="text-[#BD4A1A] hover:underline">quoting software vs spreadsheets</a> — or go straight to <a href="/blog/convert-spreadsheet-to-quote" className="text-[#BD4A1A] hover:underline">how to convert your spreadsheet to quoting software</a> without losing your pricing.</p>
           </div>
         </section>
 

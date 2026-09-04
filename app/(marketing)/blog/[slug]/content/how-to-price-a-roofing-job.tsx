@@ -247,7 +247,7 @@ export default function Post() {
         <a href="/blog/how-to-calculate-roof-pitch">How to Calculate Roof Pitch</a> covers the
         maths and common mistakes. To run the whole pricing-to-quote process in one place,
         <a href="/construction-quoting-software">quoting software for contractors</a> keeps the
-        roof measurements, pricing rules and customer document connected.
+        roof measurements, pricing rules and customer document connected. NZ readers comparing platforms can start with our guide to <a href="/blog/best-quoting-software-nz">quoting software for NZ trades</a>.
       </p>
 
       <hr />

@@ -104,7 +104,7 @@ export default function Post() {
       </table>
       <p>For sheet roofing, also check sheet direction, cover width, end laps, side laps, and maximum practical sheet length. For tiles or shingles, check gauge, exposure, headlap, and manufacturer coverage rather than relying on a generic units-per-square-metre figure.</p>
       <h2>Step 6: turn measurements into material quantities</h2>
-      <p>Once the geometry is complete, convert it into a material schedule covering the roof covering, underlay, battens or decking, ridge and edge systems, valleys, flashings, fixings, ventilation, and rainwater goods.</p>
+      <p>Once the geometry is complete, convert it into a material schedule covering the roof covering, underlay, battens or decking, ridge and edge systems, valleys, flashings, fixings, ventilation, and rainwater goods. Work in the units your suppliers quote in — m², sq ft, or roofing squares (one roofing square = 100 sq ft, or roughly 9.29 m² of roof area).</p>
       <p>Use manufacturer technical data for coverage, laps, fixing patterns, and product limits. The <a href="/free-roofing-material-calculator">free roofing material calculator</a> can help turn measured area into practical quantities, but the final order should still follow the selected product specification.</p>
       <h2>Step 7: apply waste intelligently</h2>
       <p>Waste is not one universal percentage. It depends on roof shape, material format, laying pattern, sheet lengths, cuts, breakage risk, and whether offcuts can be reused.</p>
@@ -113,7 +113,7 @@ export default function Post() {
       <h2>Step 8: add labour, access, and job-specific costs</h2>
       <p>A takeoff supports a quote, but quantities alone are not a complete price. Allow for strip-off and disposal, loading and material movement, scaffolding, lifting, complex details, weather protection, travel, supervision, and site constraints.</p>
       <p>Two roofs with the same area can require very different labour. A clear, accessible gable roof is not equivalent to a roof with multiple levels, valleys, rooflights, and restricted loading space.</p>
-      <p>For the pricing stage, use <a href="/blog/how-to-price-a-roofing-job">how to price a roofing job</a>.</p>
+      <p>For the pricing stage, use <a href="/blog/how-to-price-a-roofing-job">how to price a roofing job</a>. And if you are choosing a platform to run measurement-plus-quoting in one place, our guide to the <a href="/blog/best-quoting-software-nz">best quoting software for NZ trades</a> compares the main options side by side.</p>
       <h2>Worked example: a simple pitched roof</h2>
       <p>Assume a two-plane gable roof has a total plan area of 96 m? at 25 degrees.</p>
       <ol>
