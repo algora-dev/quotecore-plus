@@ -50,6 +50,17 @@ const EXTRA_TOOLS: FreeTool[] = [
     aliases: ['cladding takeoff tool', 'wall measurement tool', 'elevation measurer', 'siding takeoff'],
     priority: 100,
   },
+  {
+    id: 'free-flooring-takeoff',
+    name: 'Free Flooring Takeoff',
+    url: '/free-flooring-takeoff',
+    shortDescription: 'Upload a floor plan, calibrate the scale and measure floor areas, plank, carpet, tile, underlay, skirting and scotia directly on screen.',
+    categories: ['flooring', 'takeoff', 'measurement'],
+    intents: ['measure floors from plan', 'flooring takeoff', 'measure rooms from plan', 'measure floor area', 'carpet takeoff', 'tile takeoff'],
+    keywords: ['floor', 'flooring', 'carpet', 'tile', 'plank', 'skirting', 'scotia', 'underlay', 'measure', 'plan', 'drawing', 'takeoff', 'area', 'room', 'calibrate', 'upload'],
+    aliases: ['flooring takeoff tool', 'floor measurement tool', 'carpet measurer', 'floor plan measurer'],
+    priority: 100,
+  },
 ];
 
 /** Finder/search enrichment for key tools (matched by slug). */
