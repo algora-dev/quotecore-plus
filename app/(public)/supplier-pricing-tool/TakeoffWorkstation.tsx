@@ -5293,7 +5293,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   {tradeConfig.pitchRequired && (
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                   )}
-                  {tradeConfig.pitchRequired ? 'New Area' : `+ ${tradeConfig.areaSingularLabel.replace(/s$/, '')} System`}
+                  {tradeConfig.pitchRequired ? 'New Area' : `+ ${(quote as { trade?: string }).trade === 'flooring' ? 'Floor' : (quote as { trade?: string }).trade === 'cladding' ? 'Wall' : tradeConfig.areaSingularLabel.replace(/s$/, '')} System`}
                 </button>
               </div>
               <div className="space-y-2">

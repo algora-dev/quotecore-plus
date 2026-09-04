@@ -279,24 +279,66 @@ function ParentEntryStep({
             </p>
             {entryMode === 'measure' && (
               <div className="mt-3">
-                <label className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center hover:border-blue-300 transition">
-                  <span className="text-sm font-medium text-slate-700">
-                    {busy ? 'Processing PDF...' : planUrl ? 'Choose a different plan' : 'Upload your first plan'}
-                  </span>
-                  <span className="mt-1 text-xs text-slate-400">PDF, PNG, JPG</span>
-                  <input
-                    type="file"
-                    accept="application/pdf,image/png,image/jpeg"
-                    className="hidden"
-                    onChange={e => {
-                      const f = e.target.files?.[0];
-                      if (f) void handleFile(f);
-                      e.target.value = '';
-                    }}
-                  />
-                </label>
-                {fileName && (
-                  <p className="mt-2 truncate text-xs text-slate-500">Selected: {fileName}</p>
+                {planUrl ? (
+                  <div className="rounded-xl border border-green-200 bg-green-50/40 p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" /></svg>
+                      </span>
+                      <span className="text-sm font-semibold text-slate-900">Plan uploaded</span>
+                    </div>
+                    <div className="mt-3 flex items-start gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={planUrl}
+                        alt="Uploaded plan"
+                        className="h-28 w-40 flex-shrink-0 rounded-lg border border-slate-200 bg-white object-contain"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-slate-700" title={fileName ?? undefined}>{fileName ?? 'Your plan'}</p>
+                        <p className="mt-1 text-xs text-slate-500">This is the plan you will calibrate and measure in the next step.</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <label className="inline-flex cursor-pointer items-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-600 transition hover:border-slate-400">
+                            {busy ? 'Processing PDF...' : 'Upload another plan'}
+                            <input
+                              type="file"
+                              accept="application/pdf,image/png,image/jpeg"
+                              className="hidden"
+                              onChange={e => {
+                                const f = e.target.files?.[0];
+                                if (f) void handleFile(f);
+                                e.target.value = '';
+                              }}
+                            />
+                          </label>
+                          <button
+                            onClick={onNext}
+                            disabled={busy}
+                            className="inline-flex items-center rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
+                          >
+                            Continue
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center hover:border-blue-300 transition">
+                    <span className="text-sm font-medium text-slate-700">
+                      {busy ? 'Processing PDF...' : 'Upload your first plan'}
+                    </span>
+                    <span className="mt-1 text-xs text-slate-400">PDF, PNG, JPG</span>
+                    <input
+                      type="file"
+                      accept="application/pdf,image/png,image/jpeg"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) void handleFile(f);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
                 )}
               </div>
             )}

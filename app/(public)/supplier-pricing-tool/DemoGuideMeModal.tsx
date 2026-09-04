@@ -106,20 +106,16 @@ const SUPPLIER_CLADDING_STEPS: GuideStep[] = [
     body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left) to move on to your wall systems.',
   },
   {
-    title: 'Create your first wall system',
-    body: 'Click + Wall System (top left of the plan) and name it (e.g. Brick, Cedar, Plasterboard). You will measure the areas in the next step.',
+    title: 'Create your wall systems',
+    body: 'Click + Wall System (top left of the plan) and name it (e.g. Brick, Cedar, Plasterboard). Click it again to add as many systems as you need - one per covering on the job.',
   },
   {
-    title: 'Add other systems',
-    body: 'Think of systems as coverings. You can add as many as you like, the same way as step two, and apply measurements to each.',
+    title: 'Draw your areas',
+    body: 'Create as many areas as you need by drawing them with the Area tool (Polygon or Rectangle). Each area attaches to the system selected and highlighted in the left panel - click a different system first to switch.',
   },
   {
-    title: 'Measure into the right system',
-    body: 'Whatever you draw or apply attaches to the system selected and highlighted in the left panel. Click a different system first to switch.',
-  },
-  {
-    title: 'Attach areas, lines and items',
-    body: 'With a system selected, add a component and measure: Area for wall and cladding surfaces, Line for trims and lineal runs, Item for single items.',
+    title: 'Add your components',
+    body: 'Components come in three types. Area-based (e.g. cedar, brick), single length (e.g. trims, battens) and single item (e.g. fixings, single pieces). Pick one, measure it, repeat for the rest.',
   },
   {
     title: 'Finish and see your quote',
@@ -134,20 +130,16 @@ const SUPPLIER_FLOORING_STEPS: GuideStep[] = [
     body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left) to move on to your floor systems.',
   },
   {
-    title: 'Create your first floor system',
-    body: 'Click + Floor System (top left of the plan) and name it (e.g. Carpet, Tiles, Timber plank). You will measure the areas in the next step.',
+    title: 'Create your floor systems',
+    body: 'Click + Floor System (top left of the plan) and name it (e.g. Carpet, Tiles, Timber plank). Click it again to add as many systems as you need - one per covering on the job.',
   },
   {
-    title: 'Add other systems',
-    body: 'Think of systems as coverings. You can add as many as you like, the same way as step two, and apply measurements to each.',
+    title: 'Draw your areas',
+    body: 'Create as many areas as you need by drawing them with the Area tool (Polygon or Rectangle). Each area attaches to the system selected and highlighted in the left panel - click a different system first to switch.',
   },
   {
-    title: 'Measure into the right system',
-    body: 'Whatever you draw or apply attaches to the system selected and highlighted in the left panel. Click a different system first to switch.',
-  },
-  {
-    title: 'Attach areas, lines and items',
-    body: 'With a system selected, add a component and measure: Area for floor coverings, Line for skirting and scotia runs, Item for single items.',
+    title: 'Add your components',
+    body: 'Components come in three types. Area-based (e.g. carpet, tiles), single length (e.g. scotia, skirting) and single item (e.g. glue, sundries). Pick one, measure it, repeat for the rest.',
   },
   {
     title: 'Finish and see your quote',
