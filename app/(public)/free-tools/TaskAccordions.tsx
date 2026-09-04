@@ -36,7 +36,7 @@ const ITEMS: AccordionItem[] = [
   },
   {
     id: 'measure-walls-from-plan',
-    icon: 'M3 5h18M3 12h18M3 19h18',
+    icon: 'M3 3h18v18H3V3zM3 9h18M3 15h18M12 3v6M8 9v6M16 9v6M12 15v6',
     heading: 'Need to measure walls or cladding from plans?',
     support: 'Upload your elevations and measure wall areas, cladding, trims and battens digitally.',
     badge: 'Free &#183; No signup',
@@ -52,7 +52,7 @@ const ITEMS: AccordionItem[] = [
   },
   {
     id: 'measure-floors-from-plan',
-    icon: 'M4 4h16v16H4zM4 10h16M10 4v16',
+    icon: 'M4 4h16v16H4V4zM12 4v16M4 12h16',
     heading: 'Need to measure flooring from plans?',
     support: 'Upload your floor plans and measure rooms, plank, carpet, tile, skirting and scotia digitally.',
     badge: 'Free &#183; No signup',
