@@ -115,7 +115,7 @@ const UPLOAD_CLADDING_STEPS: GuideStep[] = [
   },
   {
     title: 'Apply your components',
-    body: 'With an area selected, pick a component and measure: Area for cladding surfaces, Line for trims and battens, Item for openings and fixings.',
+    body: 'With an area selected, pick a component and measure: Area for cladding surfaces, Line for trims and battens, Item for openings and fixings. You do not have to redraw every component - use the Use an existing area dropdown on the component to apply an area you have already measured.',
   },
   {
     title: 'Edit your measurements',
@@ -144,7 +144,7 @@ const UPLOAD_FLOORING_STEPS: GuideStep[] = [
   },
   {
     title: 'Apply your components',
-    body: 'With an area selected, pick a component and measure: Area for floor coverings, Line for skirting and scotia runs, Item for single items like glue and sundries.',
+    body: 'With an area selected, pick a component and measure: Area for floor coverings, Line for skirting and scotia runs, Item for single items like glue and sundries. You do not have to redraw every component - use the Use an existing area dropdown on the component to apply an area you have already measured.',
   },
   {
     title: 'Edit your measurements',

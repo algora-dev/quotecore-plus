@@ -520,6 +520,10 @@ export function DemoWorkstation({
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(null);
   const popupDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const popupContainerRef = useRef<HTMLDivElement>(null);
+  // Draggable polygon-hint chip position (null = default top-center).
+  const [polygonHintPos, setPolygonHintPos] = useState<{ x: number; y: number } | null>(null);
+  const polygonHintDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const polygonHintRef = useRef<HTMLDivElement>(null);
   const [showLineMeasurementPrompt, setShowLineMeasurementPrompt] = useState(false);
   const [pendingLineMeasurement, setPendingLineMeasurement] = useState<{ points: { x: number; y: number }[], length: number } | null>(null);
   const [_showAreaMeasurementPrompt, _setShowAreaMeasurementPrompt] = useState(false);
@@ -5792,14 +5796,52 @@ export function DemoWorkstation({
               the grip handle on the left; buttons remain clickable. */}
           {/* Polygon in-progress hint: mirrors the multi-lineal banner -
               tells the user how to CLOSE the shape without needing the guide. */}
-          {areaMode && areaSubTool === 'polygon' && areaPoints.length >= 1 && (
-            <div className="absolute z-20 left-1/2 -translate-x-1/2 top-16 pointer-events-none">
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-300 rounded-full text-sm shadow-md select-none">
-                <span className="text-blue-800 font-medium whitespace-nowrap">Polygon: {areaPoints.length} point{areaPoints.length !== 1 ? 's' : ''}</span>
-                <span className="text-blue-500 text-xs whitespace-nowrap">To close the shape, click back on your first point</span>
+          {areaMode && areaSubTool === 'polygon' && areaPoints.length >= 1 && (() => {
+            const style: CSSProperties = polygonHintPos
+              ? { left: polygonHintPos.x, top: polygonHintPos.y, transform: 'none' }
+              : { left: '50%', transform: 'translateX(-50%)', top: 96 };
+            return (
+              <div
+                ref={polygonHintRef}
+                className="absolute z-20"
+                style={style}
+              >
+                <div
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const container = polygonHintRef.current;
+                    if (!container) return;
+                    const rect = container.getBoundingClientRect();
+                    const parentRect = container.offsetParent?.getBoundingClientRect();
+                    if (!parentRect) return;
+                    polygonHintDragRef.current = {
+                      startX: e.clientX,
+                      startY: e.clientY,
+                      origX: rect.left - parentRect.left,
+                      origY: rect.top - parentRect.top,
+                    };
+                    const onMove = (ev: MouseEvent) => {
+                      if (!polygonHintDragRef.current) return;
+                      const dx = ev.clientX - polygonHintDragRef.current.startX;
+                      const dy = ev.clientY - polygonHintDragRef.current.startY;
+                      setPolygonHintPos({ x: polygonHintDragRef.current.origX + dx, y: polygonHintDragRef.current.origY + dy });
+                    };
+                    const onUp = () => {
+                      polygonHintDragRef.current = null;
+                      document.removeEventListener('mousemove', onMove);
+                      document.removeEventListener('mouseup', onUp);
+                    };
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                  }}
+                >
+                  <span className="text-blue-800 font-medium whitespace-nowrap">Polygon: {areaPoints.length} point{areaPoints.length !== 1 ? 's' : ''}</span>
+                  <span className="text-blue-500 text-xs whitespace-nowrap">To close the shape, click back on your first point</span>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
             const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
