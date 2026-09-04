@@ -15,6 +15,8 @@ const toolCode = (() => {
   if (p.startsWith('/free-roofing-takeoff-builder')) return 'takeoff-builder';
   if (p.startsWith('/free-roof-takeoff')) return 'roof-takeoff';
   if (p.startsWith('/free-cladding-takeoff')) return 'cladding-takeoff';
+  if (p.startsWith('/free-flooring-takeoff')) return 'flooring-takeoff';
+  if (p.startsWith('/free-margin-calculator')) return 'calc-margin';
   if (p.startsWith('/measurement-to-quote-tool')) return 'measurement-to-quote-tool';
   if (p.startsWith('/free-quote-generator')) return 'quote-gen';
   if (p.startsWith('/free-purchase-order-generator')) return 'po-gen';

@@ -19,6 +19,8 @@ export const runtime = 'nodejs';
 const TOOL_ALLOWLIST: Record<string, string> = {
   'roof-takeoff': 'Free Roof Takeoff',
   'takeoff-builder': 'Free Roofing Takeoff Builder',
+  'cladding-takeoff': 'Free Cladding Takeoff',
+  'flooring-takeoff': 'Free Flooring Takeoff',
   'measurement-to-quote-tool': 'Measurement-to-Quote Tool',
   'quote-builder': 'Measurement-to-Quote Tool',
   'quote-gen': 'Quote Generator',
@@ -26,6 +28,7 @@ const TOOL_ALLOWLIST: Record<string, string> = {
   'invoice-gen': 'Invoice Generator',
   'calc-roof': 'Roof Calculators',
   'calc-build': 'Construction Calculators',
+  'calc-margin': 'Margin Calculator',
   calc: 'Other Trade Calculators',
 };
 
