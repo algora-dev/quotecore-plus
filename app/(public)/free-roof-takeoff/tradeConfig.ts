@@ -101,6 +101,24 @@ export const CLADDING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
   reportNote: 'Wall areas are measured as drawn - no pitch adjustment applies in this tool.',
 };
 
+export const FLOORING_TAKEOFF_CONFIG: TakeoffTradeConfig = {
+  slug: 'free-flooring-takeoff',
+  tradeName: 'flooring',
+  requiresPitch: false,
+  unitOptions: [METRIC, IMPERIAL],
+  placeholderComponents: [
+    { id: 'floor-timber-plank-01', name: 'Timber Plank Flooring', measurement_type: 'area' },
+    { id: 'floor-carpet-02', name: 'Carpet', measurement_type: 'area' },
+    { id: 'floor-tile-03', name: 'Tile', measurement_type: 'area' },
+    { id: 'floor-underlay-04', name: 'Underlay', measurement_type: 'area' },
+    { id: 'floor-skirting-05', name: 'Skirting', measurement_type: 'lineal' },
+    { id: 'floor-scotia-06', name: 'Scotia', measurement_type: 'lineal' },
+    { id: 'floor-transition-07', name: 'Transition Strip', measurement_type: 'lineal' },
+    { id: 'floor-glue-08', name: 'Adhesive / Sundries', measurement_type: 'quantity' },
+  ],
+  maxCustomComponents: 7,
+  reportNote: 'Floor areas are measured as drawn - no pitch adjustment applies in this tool.',
+};
 /** Resolve the unit option object for a chosen system (falls back to metric). */
 export function resolveUnitOption(system: TakeoffUnitSystem, config: TakeoffTradeConfig): TakeoffUnitOption {
   return config.unitOptions.find(o => o.value === system) ?? config.unitOptions[0];

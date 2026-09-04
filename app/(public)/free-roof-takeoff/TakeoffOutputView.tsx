@@ -11,7 +11,7 @@ import type { TakeoffUnitSystem, TakeoffComponentSpec } from './tradeConfig';
 
 /** Trade variant for shared report copy (default roofing). Cladding switches
  *  headings to wall terminology and hides pitch language entirely. */
-export type TakeoffTrade = 'roofing' | 'cladding';
+export type TakeoffTrade = 'roofing' | 'cladding' | 'flooring';
 
 /**
  * Free Roof Takeoff output view.
@@ -99,6 +99,11 @@ export function TakeoffOutputView({
   onBackToCanvas: () => void;
 }) {
   const isCladding = trade === 'cladding';
+  const isFlooring = trade === 'flooring';
+  // Non-roof trades: no pitch language anywhere.
+  const isFlat = isCladding || isFlooring;
+  const toolSlug = trade === 'cladding' ? 'free-cladding-takeoff' : trade === 'flooring' ? 'free-flooring-takeoff' : 'free-roof-takeoff';
+  const areaNoun = isFlooring ? 'Floor' : 'Wall';
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   // Show pitch in the mode the user entered it (degrees / ratio / gradient).
@@ -243,7 +248,7 @@ export function TakeoffOutputView({
       const rate = c.cost != null && qty > 0 ? c.cost / qty : 0;
       return { description: c.name, qty, unit, rate };
     }).filter(l => l.qty > 0),
-    ref: isCladding ? 'free-cladding-takeoff' : 'free-roof-takeoff',
+    ref: toolSlug,
   });
 
   const totalPlanArea = areas.reduce((s, a) => s + a.planArea, 0);
@@ -316,7 +321,7 @@ export function TakeoffOutputView({
         body: JSON.stringify({
           draftType: 'takeoff',
           payload: {
-            tool: isCladding ? 'free-cladding-takeoff' : 'free-roof-takeoff',
+            tool: toolSlug,
             unit: payload.calibrationUnit,
             unitSystem: system,
             componentSpecs: specs,
@@ -343,7 +348,7 @@ export function TakeoffOutputView({
       const appOrigin = window.location.hostname.endsWith('.quote-core.com')
         ? 'https://app.quote-core.com'
         : '';
-      window.open(`${appOrigin}/signup?ref=${isCladding ? 'free-cladding-takeoff' : 'free-roof-takeoff'}&draft=${json.id}`, '_blank', 'noopener');
+      window.open(`${appOrigin}/signup?ref=${toolSlug}&draft=${json.id}`, '_blank', 'noopener');
     } catch {
       setSaveState('error');
     }
@@ -388,7 +393,7 @@ export function TakeoffOutputView({
           <div className="border-b-2 border-black pb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/MainQCP.png" alt="QuoteCore+ Roofing" className="h-14 object-contain" />
-            <h1 className="mt-4 text-xl font-bold text-black">{isCladding ? 'WALL & CLADDING TAKEOFF REPORT' : 'ROOF TAKEOFF REPORT'}</h1>
+            <h1 className="mt-4 text-xl font-bold text-black">{isCladding ? 'WALL & CLADDING TAKEOFF REPORT' : isFlooring ? 'FLOORING TAKEOFF REPORT' : 'ROOF TAKEOFF REPORT'}</h1>
             <p className="mt-1 text-sm text-black">Generated {today} - QuoteCore+ free digital takeoff</p>
             <p className="mt-1 text-xs text-black/60">
               Measurement units: {system === 'squares' ? 'Roofing squares (areas) / feet (lengths)' : system === 'imperial' ? 'Imperial (ft / ft\u00b2)' : 'Metric (m / m\u00b2)'}
@@ -404,7 +409,7 @@ export function TakeoffOutputView({
               the first area. */}
           {components.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">{areas.length > 0 ? (isCladding ? 'Wall Areas & Components' : 'Roof Areas & Components') : 'Components'}</h2>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">{areas.length > 0 ? (isCladding ? 'Wall Areas & Components' : isFlooring ? 'Floor Areas & Components' : 'Roof Areas & Components') : 'Components'}</h2>
               <div className="mt-3 space-y-6">
                 {/* 2026-08-30: no roof areas - components stand alone (flat list,
                     same as the app's no-area flow). Previously this section only
@@ -425,9 +430,9 @@ export function TakeoffOutputView({
                   return (
                     <div key={a.key} className="avoid-break">
                       <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
-                        <span className="text-black font-bold">{a.name}{isCladding ? '' : <span className="font-medium"> - pitch {fmtPitch(a.pitch)}</span>}</span>
+                        <span className="text-black font-bold">{a.name}{isFlat ? '' : <span className="font-medium"> - pitch {fmtPitch(a.pitch)}</span>}</span>
                         <span className="text-black font-medium whitespace-nowrap text-sm">
-                          {isCladding
+                          {isFlat
                             ? <>{fmt(a.planArea)} {areaUnitLabel} area</>
                             : <>{fmt(a.planArea)} {areaUnitLabel} plan &middot; {fmt(a.pitchedArea)} {areaUnitLabel} pitched</>}
                         </span>
@@ -449,8 +454,8 @@ export function TakeoffOutputView({
             <div className="mt-3 space-y-2">
               {areas.length > 0 && (
                 <div className="flex items-center justify-between py-2 border-b border-black/10">
-                  <span className="text-black">{isCladding ? 'Total wall area' : 'Total plan area'}</span>
-                  <span className="text-black font-medium">{isCladding ? <>{fmt(totalPlanArea)} {areaUnitLabel}</> : <>{fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched</>}</span>
+                  <span className="text-black">{isFlooring ? 'Total floor area' : isCladding ? 'Total wall area' : 'Total plan area'}</span>
+                  <span className="text-black font-medium">{isFlat ? <>{fmt(totalPlanArea)} {areaUnitLabel}</> : <>{fmt(totalPlanArea)} {areaUnitLabel} plan &middot; {fmt(totalPitchedArea)} {areaUnitLabel} pitched</>}</span>
                 </div>
               )}
               <div className="flex items-center justify-between py-2 border-b border-black/10">
@@ -468,7 +473,9 @@ export function TakeoffOutputView({
 
           <div className="pt-4 border-t border-black">
             <p className="text-sm text-black italic">
-              {isCladding
+              {isFlooring
+                ? 'Measurements taken with the QuoteCore+ digital takeoff system. Floor areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
+                : isCladding
                 ? 'Measurements taken with the QuoteCore+ digital takeoff system. Wall areas are measured as drawn - no pitch adjustment applies. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'
                 : 'Measurements taken with the QuoteCore+ digital takeoff system. Roof areas use the rafter pitch factor for each area. Hips and valleys are adjusted using the hip &amp; valley pitch calculated from their roof area&apos;s pitch; barges use the rafter pitch factor. Ridge and spouting require no pitch adjustment. Send this takeoff into QuoteCore+ to price it with your own component rates and turn it into a quote.'}
             </p>
