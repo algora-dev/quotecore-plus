@@ -1,5 +1,17 @@
 # Smoke Test Checklist
 
+### Pending verification (test on quote-core.com main, 2026-09-04 — commits be60aea7, ed2ce178, 5152185d, 3781ddbc)
+
+**FLOORING TAKEOFF + GUIDE FLOWS + SUPPLIER IMAGES (2026-09-04)**
+- [ ] /free-flooring-takeoff loads, wizard works: unit → our 8 defaults (Timber Plank/Carpet/Tile/Underlay/Skirting/Scotia/Transition/Adhesive) or build own 7 → PDF/image upload → calibrate → measure → report says FLOORING TAKEOFF REPORT
+- [ ] Free cladding + flooring Guide Me: auto-opens ~300ms after entering tool; trade-specific steps (area-first, no roofing wording); "Measurements land where you are clicked" step present
+- [ ] Roof takeoff guide unchanged except selected-area one-liner in Edit step
+- [ ] Polygon hint: select Area → Polygon, place ≥1 point → blue chip shows point count + "click back on your first point to close" (free tools + supplier tools)
+- [ ] Supplier tools (apex/vertex/oakline on quote-core.com): Guide Me shows system-first steps for cladding/flooring; roofing unchanged
+- [ ] Send-to-supplier: measure on 1-2 plan pages → Finish and Save → Request supplier quote → modal has "<plan> - with drawings.png" + "<plan> - original.png" pre-attached (up to 10 files)
+- [ ] Free tools hub /free-tools: cladding + flooring accordions sit directly under the roof takeoff accordion; brick wall + tiled floor icons; flooring findable via Smart Tool Finder ("measure floors from plan")
+- [ ] quote-core.com/sitemap.xml contains /free-flooring-takeoff and /free-cladding-takeoff
+
 ## Status: `main` at `13776b8` = `development` at `13776b8` (synced, 2026-07-14)
 
 ### Pending verification (test on feature/ai-takeoff preview URL)
