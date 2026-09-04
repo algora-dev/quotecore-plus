@@ -103,27 +103,27 @@ const UPLOAD_STEPS: GuideStep[] = [
 const UPLOAD_CLADDING_STEPS: GuideStep[] = [
   {
     title: 'Calibrate your plan',
-    body: 'Click two points on a known dimension (a wall length printed on the plan). Enter its real length and confirm. At least one calibration is required. When you are happy, click Confirm Calibration (top left) to move on to measuring your walls.',
+    body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left).',
   },
   {
     title: 'Create a new area',
-    body: 'Click + New Area and trace the first wall or elevation with the Area tool (Polygon or Rectangle), then name it (e.g. North Elevation). Use + New Area for each additional wall. Walls are measured as drawn - no pitch to worry about.',
+    body: 'Click + New Area and trace your first wall with the Area tool (Polygon or Rectangle), then name it after the covering (e.g. Brick, Cedar, Plasterboard). Use + New Area for each additional wall.',
   },
   {
-    title: 'Measurements land where you are clicked',
-    body: 'Before adding an area, line or item, check which area is selected in the panel on the left - the highlighted one. With only one area it does not matter. With several, whatever you draw or apply attaches to the selected area. Click a different area first to switch.',
+    title: 'Multiple areas, one selected',
+    body: 'You can add as many areas as you need, each with its own measurements. Just make sure the area you want to measure is the one selected and highlighted in the left panel - click it first to switch.',
   },
   {
     title: 'Apply your components',
-    body: 'Pick a component from the panel and measure: Area to trace a wall or cladding surface, Line for trims, battens and cladding runs, Item for openings and fixings. Covering the same shape with another area-based component? Use the Use an existing area option on the component - no re-tracing.',
+    body: 'With an area selected, pick a component and measure: Area for cladding surfaces, Line for trims and battens, Item for openings and fixings.',
   },
   {
     title: 'Edit your measurements',
-    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it. Add more any time with the Line tool.',
+    body: 'Hover a measurement to highlight its line on the plan. The eye hides it, the X deletes it.',
   },
   {
     title: 'Finish and see your report',
-    body: 'When you are happy, click Finish and Save in the top right. Your measurements roll into a takeoff report you can print or send into QuoteCore+.',
+    body: 'When you are happy, click Finish and Save (top right). Your measurements roll into a takeoff report you can print or send into QuoteCore+.',
   },
 ];
 
@@ -132,19 +132,19 @@ const UPLOAD_CLADDING_STEPS: GuideStep[] = [
 const UPLOAD_FLOORING_STEPS: GuideStep[] = [
   {
     title: 'Calibrate your plan',
-    body: 'Click two points on a known dimension (a wall length printed on the plan). Enter its real length and confirm. At least one calibration is required. When you are happy, click Confirm Calibration (top left) to move on to measuring your floors.',
+    body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left).',
   },
   {
     title: 'Create a new area',
-    body: 'Click + New Area and trace the first room with the Area tool (Polygon or Rectangle), then name it (e.g. Living Room). Use + New Area for each additional room. Floors are measured as drawn - no pitch to worry about.',
+    body: 'Click + New Area and trace your floor area with the Area tool (Polygon or Rectangle), then name it after the covering (e.g. Carpet, Tiles, Timber plank). Use + New Area for each additional area.',
   },
   {
-    title: 'Measurements land where you are clicked',
-    body: 'Before adding an area, line or item, check which area is selected in the panel on the left - the highlighted one. With only one area it does not matter. With several, whatever you draw or apply attaches to the selected area. Click a different area first to switch.',
+    title: 'Multiple areas, one selected',
+    body: 'You can add as many areas as you need, each with its own measurements. Just make sure the area you want to measure is the one selected and highlighted in the left panel - click it first to switch.',
   },
   {
     title: 'Apply your components',
-    body: 'Pick a component from the panel and measure: Area for floor coverings like plank, carpet and tile, Line for skirting and scotia runs, Item for single items like glue buckets and sundries. Covering the same room with another area-based component? Use the Use an existing area option on the component - no re-tracing.',
+    body: 'With an area selected, pick a component and measure: Area for floor coverings, Line for skirting and scotia runs, Item for single items like glue and sundries.',
   },
   {
     title: 'Edit your measurements',

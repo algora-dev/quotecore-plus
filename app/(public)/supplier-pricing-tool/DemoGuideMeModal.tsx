@@ -103,23 +103,23 @@ const UPLOAD_STEPS: GuideStep[] = [
 const SUPPLIER_CLADDING_STEPS: GuideStep[] = [
   {
     title: 'Calibrate your plan',
-    body: 'Click two points on a known dimension (a wall length printed on the plan). Enter its real length and confirm. At least one calibration is required. When you are happy, click Confirm Calibration (top left) to move on to your wall systems.',
+    body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left) to move on to your wall systems.',
   },
   {
     title: 'Create your first wall system',
-    body: 'Click + Wall System (top left of the plan) and just name it - e.g. Cedar Cladding, Brick, or Plasterboard for internal walls. A system is the product you are pricing. Nothing is measured yet.',
+    body: 'Click + Wall System (top left of the plan) and name it (e.g. Brick, Cedar, Plasterboard). You will measure the areas in the next step.',
   },
   {
-    title: 'Add your other systems',
-    body: 'One system per material on the job. Click + Wall System again - attach to an existing system or create a new one. Two systems or ten, whatever the job needs.',
+    title: 'Add other systems',
+    body: 'Think of systems as coverings. You can add as many as you like, the same way as step two, and apply measurements to each.',
   },
   {
-    title: 'Measurements land where you are clicked',
-    body: 'Before adding an area, line or item, check which system is selected in the panel on the left - the highlighted one. With only one system it does not matter. With several, whatever you draw or apply attaches to the selected system. Click a different system first to switch.',
+    title: 'Measure into the right system',
+    body: 'Whatever you draw or apply attaches to the system selected and highlighted in the left panel. Click a different system first to switch.',
   },
   {
     title: 'Attach areas, lines and items',
-    body: 'With a system selected, add a component and measure: Area for wall and cladding surfaces, Line for trims and lineal runs, Item for single items. Applying another area-based component over the same shape? Use the Use an existing area option - no re-drawing.',
+    body: 'With a system selected, add a component and measure: Area for wall and cladding surfaces, Line for trims and lineal runs, Item for single items.',
   },
   {
     title: 'Finish and see your quote',
@@ -131,23 +131,23 @@ const SUPPLIER_CLADDING_STEPS: GuideStep[] = [
 const SUPPLIER_FLOORING_STEPS: GuideStep[] = [
   {
     title: 'Calibrate your plan',
-    body: 'Click two points on a known dimension (a wall length printed on the plan). Enter its real length and confirm. At least one calibration is required. When you are happy, click Confirm Calibration (top left) to move on to your floor systems.',
+    body: 'Click two points on a known dimension printed on the plan, enter its real length and confirm. At least one calibration is required, then click Confirm Calibration (top left) to move on to your floor systems.',
   },
   {
     title: 'Create your first floor system',
-    body: 'Click + Floor System (top left of the plan) and just name it - e.g. Hybrid Flooring, Carpet, Tiles. A system is the floor covering you are pricing - one per material, not per room. Nothing is measured yet.',
+    body: 'Click + Floor System (top left of the plan) and name it (e.g. Carpet, Tiles, Timber plank). You will measure the areas in the next step.',
   },
   {
-    title: 'Add your other systems',
-    body: 'One system per floor covering on the job. Click + Floor System again - attach to an existing system or create a new one.',
+    title: 'Add other systems',
+    body: 'Think of systems as coverings. You can add as many as you like, the same way as step two, and apply measurements to each.',
   },
   {
-    title: 'Measurements land where you are clicked',
-    body: 'Before adding an area, line or item, check which system is selected in the panel on the left - the highlighted one. With only one system it does not matter. With several, whatever you draw or apply attaches to the selected system. Click a different system first to switch.',
+    title: 'Measure into the right system',
+    body: 'Whatever you draw or apply attaches to the system selected and highlighted in the left panel. Click a different system first to switch.',
   },
   {
     title: 'Attach areas, lines and items',
-    body: 'With a system selected, add a component and measure: Area for floor coverings, Line for skirting and scotia runs, Item for single items like glue and sundries. Applying another area-based component over the same room? Use the Use an existing area option - no re-drawing.',
+    body: 'With a system selected, add a component and measure: Area for floor coverings, Line for skirting and scotia runs, Item for single items.',
   },
   {
     title: 'Finish and see your quote',
