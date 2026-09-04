@@ -521,6 +521,15 @@ export default function RoofingTakeoffSoftwarePage() {
                 Methods and tools for accurate roof measurement.
               </p>
             </a>
+            <a
+              href="/blog/manual-vs-digital-roof-takeoff"
+              className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40"
+            >
+              <p className="font-semibold text-zinc-950">Manual vs digital roof takeoff</p>
+              <p className="mt-1 text-sm text-zinc-600">
+                Weighing tape-and-ladder against measuring from plans on screen.
+              </p>
+            </a>
           </div>
         </section>
 

@@ -6,10 +6,50 @@ export default function Post() {
 
       <p><strong>Quick answer:</strong> Quoting software for contractors turns measurements, labour, and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. For NZ tradies in 2026, the strongest options are QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact, and Xero Projects. This guide compares all six on pricing, features, and NZ-specific fit.</p>
 
-      <p><em>Last checked: August 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing.</em></p>
+      <p><em>Last updated: September 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing — always check with the vendor for current pricing.</em></p>
 
       <p><em>Editorial note: This guide is published by QuoteCore+, so our own product appears in the comparison. We have listed where other tools may be a better fit, including for trade job scheduling, high-volume service work, detailed construction cost estimating, and businesses already embedded in Xero.</em></p>
       <p>This guide compares six quoting platforms available to NZ tradies in 2026, with honest assessments of where each one works well and where it falls short.</p>
+
+      <h2>At a glance: the six options compared</h2>
+      <div className="not-prose my-6">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-zinc-200 bg-zinc-50">
+              <th className="px-3 py-2 text-left font-semibold text-zinc-950 text-xs">Feature</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">QC+</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Tradify</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Fergus</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">ServiceM8</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Buildxact</th>
+              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Xero</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100">
+            {[
+              ["Starting price (NZD)", "Free–$59/mo", "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
+              ["GST-ready (15%)", "✅", "✅", "✅", "✅", "✅", "✅"],
+              ["Roofing suitability", "✅ Strong", "Basic", "Basic", "Basic", "Builder-focused", "❌"],
+              ["Plan-based takeoff", "✅", "❌", "❌", "❌", "✅", "❌"],
+              ["Materials ordering from quote", "✅", "❌", "Basic", "❌", "✅", "❌"],
+              ["Invoicing", "✅", "✅", "✅", "✅", "✅", "✅"],
+              ["Job scheduling", "✅", "Strong", "Strong", "Strong", "Basic", "Basic"],
+              ["NZ-built / local presence", "✅", "✅", "✅", "AU/NZ", "AU", "NZ HQ"],
+              ["Free trial, no card", "✅ 14 days", "Limited", "❌", "❌", "Limited", "Via Xero"],
+            ].map(([feature, ...values]) => (
+              <tr key={feature}>
+                <td className="px-3 py-2 font-medium text-zinc-800 text-xs">{feature}</td>
+                {values.map((v, i) => (
+                  <td key={i} className="px-3 py-2 text-zinc-600 text-center text-xs">{v}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-2 text-xs text-zinc-500">Cells marked ~ are approximate published rates — check with the vendor for current pricing and inclusions.</p>
+      </div>
+
+      <p><strong>How we assessed these tools:</strong> each platform was evaluated on NZD pricing with GST handling, plan-based takeoff and measurement support, suitability for roofing and measured trades, the quote-to-order-to-invoice workflow, and NZ-specific support. Where a vendor does not publish a figure or we could not verify a capability, we say so rather than guess. Note: this guide is published by QuoteCore+, so our own product appears in the comparison — we have flagged where other tools may fit better.</p>
 
       <hr />
 
@@ -177,47 +217,6 @@ export default function Post() {
       <p><strong>Pricing:</strong> Included in Xero subscriptions at relevant tiers.</p>
       <p><strong>Pros:</strong> Deep Xero accounting integration. Familiar interface for existing Xero users. Removes double-entry.</p>
       <p><strong>Cons:</strong> Not built for trade-specific quoting workflows. No plan-based takeoff. WorkflowMax transition caused disruption for some businesses.</p>
-
-      <hr />
-
-      <h2>Comparison table</h2>
-
-      <div className="not-prose my-6">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50">
-              <th className="px-3 py-2 text-left font-semibold text-zinc-950 text-xs">Feature</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">QC+</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Tradify</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Fergus</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">ServiceM8</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Buildxact</th>
-              <th className="px-3 py-2 text-center font-semibold text-zinc-950 text-xs">Xero</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {[
-              ["Plan-based takeoff", "✅", "❌", "❌", "❌", "✅", "❌"],
-              ["Trade-specific pricing", "✅", "Basic", "Basic", "Basic", "✅", "❌"],
-              ["Quote acceptance tracking", "✅", "✅", "✅", "✅", "✅", "Basic"],
-              ["Materials ordering", "✅", "❌", "Basic", "❌", "✅", "❌"],
-              ["Job scheduling", "✅", "Strong", "Strong", "Strong", "Basic", "Basic"],
-              ["Job costing", "Basic", "✅", "Strong", "Basic", "✅", "Basic"],
-              ["NZ-built", "✅", "✅", "✅", "❌", "❌", "NZ HQ"],
-              ["GST-ready", "✅", "✅", "✅", "✅", "✅", "✅"],
-              ["Starting price (NZD)", "Free–$59/mo", "~$49/mo", "~$49/mo", "~$39/mo", "~$149/mo", "Included"],
-              ["Free trial, no card", "✅ 14 days", "Limited", "❌", "❌", "Limited", "Via Xero"],
-            ].map(([feature, ...values]) => (
-              <tr key={feature}>
-                <td className="px-3 py-2 font-medium text-zinc-800 text-xs">{feature}</td>
-                {values.map((v, i) => (
-                  <td key={i} className="px-3 py-2 text-zinc-600 text-center text-xs">{v}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
       <hr />
 

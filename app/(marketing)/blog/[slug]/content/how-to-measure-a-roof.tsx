@@ -309,7 +309,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements — no signup required. Or <a href="/free-trial">start your free QuoteCore+ trial</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. No card needed.
+        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements — no signup required. Once you have your dimensions, the <Link href="/blog/how-to-do-a-roof-takeoff">full roof takeoff guide</Link> shows how to turn them into a component-by-component material list, and <Link href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</Link> compares the two approaches in detail. Or <a href="/free-trial">start your free QuoteCore+ trial</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. No card needed.
       </p>
     </div>
   );

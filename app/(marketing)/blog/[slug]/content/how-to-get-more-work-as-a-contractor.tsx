@@ -69,7 +69,7 @@ export default function Post() {
         />
       </div>
       
-      <p>If you are still putting quotes together manually, <a href="/blog/roofing-quoting-software-uk">here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work</a>. For the full pricing process, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>.</p>
+      <p>If you are still putting quotes together manually, <a href="/blog/roofing-quoting-software-uk">here is how UK roofers are using digital quoting to send better quotes faster - and what that means for winning work</a>. For the full pricing process, see <a href="/blog/how-to-price-a-roofing-job">How to Price a Roofing Job: Step-by-Step Pricing Guide</a>. If you are comparing platforms, our guide to the <a href="/blog/best-quoting-software-nz">best quoting software for NZ tradies</a> covers the options in detail.</p>
 
       <hr />
 

@@ -245,7 +245,9 @@ export default function Post() {
         For more free tools that speed up quoting and measurement, see <a href="/blog/best-free-tools-for-roofers">Best
         Free Tools for Roofers (2026 Guide)</a>. And if you need to calculate pitch for your quote,
         <a href="/blog/how-to-calculate-roof-pitch">How to Calculate Roof Pitch</a> covers the
-        maths and common mistakes.
+        maths and common mistakes. To run the whole pricing-to-quote process in one place,
+        <a href="/construction-quoting-software">quoting software for contractors</a> keeps the
+        roof measurements, pricing rules and customer document connected.
       </p>
 
       <hr />

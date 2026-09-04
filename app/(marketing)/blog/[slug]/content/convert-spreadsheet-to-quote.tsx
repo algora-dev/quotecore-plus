@@ -109,7 +109,7 @@ export default function Post() {
       <h3>Can I turn a Google Sheets estimate into a quote?</h3>
       <p>Yes — the same three options apply. Copy rows out of Google Sheets and paste them into the free quote generator, or export the sheet as CSV and convert your pricing into reusable components.</p>
       <h3>Spreadsheet vs quoting software — which should I use for quotes?</h3>
-      <p>Spreadsheets work for estimating, but the copy-paste step into a customer document is where errors and time pile up. See our detailed comparisons: <Link href="/blog/roofing-estimating-spreadsheet-vs-software">roofing estimating spreadsheet vs software</Link> and <Link href="/blog/roofing-quoting-software-vs-spreadsheets">quoting software vs spreadsheets</Link>.</p>
+      <p>Spreadsheets work for estimating, but the copy-paste step into a customer document is where errors and time pile up. If you quote regularly, purpose-built <Link href="/construction-quoting-software">construction estimating and quoting software</Link> keeps measurement, pricing and the customer document connected. See our detailed comparisons: <Link href="/blog/roofing-estimating-spreadsheet-vs-software">roofing estimating spreadsheet vs software</Link> and <Link href="/blog/roofing-quoting-software-vs-spreadsheets">quoting software vs spreadsheets</Link>.</p>
       <h3>How do I stop rebuilding the same quote every job?</h3>
       <p>Convert your sheet&rsquo;s pricing into Smart Components once. After that, each quote reuses the same priced components — measure the job, drop them in, and the totals recalculate. The <Link href="/blog/construction-estimating-spreadsheet-alternative">spreadsheet alternative guide</Link> covers the full transition.</p>
 

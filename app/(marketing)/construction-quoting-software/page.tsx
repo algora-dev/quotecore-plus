@@ -7,13 +7,14 @@ import YouTubeLite from "@/components/YouTubeLite";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
-  title: "Construction Quoting Software for Contractors | Free Trial · QuoteCore+",
+  // Root layout appends "| QuoteCore+" via template - do NOT add brand suffix here (avoids suffix doubling)
+  title: "Contractor Estimating & Quoting Software for Construction — Free Trial",
   description:
-    "Quoting software for contractors and trades — roofing, carpentry, plastering, subcontractors and general contractors. Digital takeoff, Smart Components, material ordering and invoicing. Plans from free.",
+    "Contractor estimating and quoting software for trades — build estimates and quotes from measurements, with digital takeoff, Smart Components, material ordering and invoicing. Free plan and 14-day free trial.",
   openGraph: {
-    title: "Construction Quoting Software for Contractors | Free Trial · QuoteCore+",
+    title: "Contractor Estimating & Quoting Software | QuoteCore+",
     description:
-      "Quoting software for contractors and trades — roofing, carpentry, plastering, subcontractors and general contractors. Plans from free, 14-day free trial.",
+      "Contractor estimating and quoting software for trades — build estimates and quotes from measurements. Free plan and 14-day free trial.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -78,6 +79,14 @@ const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
   mainEntity: [
+    {
+      "@type": "Question",
+      name: "What is the difference between estimating and quoting?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "An estimate is an approximate price based on measured quantities and your pricing rules — useful for ballparking a job before committing. A quote is a fixed, professional offer you stand behind. QuoteCore+ supports both: build the estimate from measurements, then turn it into a sent, trackable quote when the numbers are confirmed.",
+      },
+    },
     {
       "@type": "Question",
       name: "What trades can use QuoteCore+?",
@@ -195,6 +204,10 @@ const steps = [
 ];
 
 const faqs = [
+  {
+    q: "What is the difference between estimating and quoting?",
+    a: "An estimate is an approximate price based on measured quantities and your pricing rules — useful for ballparking a job before committing. A quote is a fixed, professional offer you stand behind. QuoteCore+ supports both: build the estimate from measurements, then turn it into a sent, trackable quote when the numbers are confirmed.",
+  },
   {
     q: "What trades can use QuoteCore+?",
     a: "QuoteCore+ can be used by construction and trade businesses that quote from measurements, plans, site details, materials and labour. That includes roofing, cladding, flooring, fencing, landscaping, decking, general building, renovation trades and exterior works.",
@@ -370,6 +383,20 @@ export default function ConstructionQuotingSoftwarePage() {
               <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Pro Plus $59/mo</a>
             </div>
           </div>
+        </section>
+
+        {/* What is contractor quoting software */}
+        <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+          <h2 className="text-3xl font-semibold sm:text-4xl">What is contractor quoting software?</h2>
+          <p className="mt-6 text-lg leading-8 text-zinc-600">
+            Contractor quoting software is a tool that turns job measurements, labour and material prices into a professional, priced quote — or estimate — without spreadsheets or re-typed numbers. Instead of rebuilding formulas for every job, contractors save their pricing rules once and reuse them, so the typical workflow becomes <strong className="text-zinc-950">estimate → quote → order → invoice</strong> in one connected place.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            Construction estimating and quoting software goes further than a quote template: it connects measurement (manual or digital takeoff from plans), pricing, customer approval, material ordering and invoicing to the same job data. Job quoting software for trades like roofing, carpentry and plastering is built around this measured-work workflow, which is what separates it from generic invoicing apps.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            If you currently price jobs in a spreadsheet, see our guide to <a href="/blog/how-to-do-a-roof-takeoff" className="text-[#BD4A1A] hover:underline">how to do a roof takeoff</a> for the measurement side, or the <a href="/blog/construction-estimating-spreadsheet-alternative" className="text-[#BD4A1A] hover:underline">construction estimating spreadsheet alternative</a> walkthrough for moving your pricing across without starting from scratch.
+          </p>
         </section>
 
         {/* Problem section */}
