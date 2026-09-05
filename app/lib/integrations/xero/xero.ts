@@ -226,6 +226,8 @@ export class XeroApi {
     const h: Record<string, string> = {
       Authorization: `Bearer ${this.accessToken}`,
       'xero-tenant-id': this.tenantId,
+      // Xero's 2026 platform returns XML by default - always ask for JSON.
+      Accept: 'application/json',
     };
     if (json) h['Content-Type'] = 'application/json';
     return h;
