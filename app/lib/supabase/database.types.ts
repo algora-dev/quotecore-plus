@@ -3716,6 +3716,56 @@ export type Database = {
           },
         ]
       }
+      qbo_connections: {
+        Row: {
+          access_expires_at: string
+          access_token: string
+          company_id: string
+          company_name: string | null
+          created_at: string
+          environment: string
+          id: string
+          realm_id: string
+          refresh_expires_at: string | null
+          refresh_token: string
+          updated_at: string
+        }
+        Insert: {
+          access_expires_at: string
+          access_token: string
+          company_id: string
+          company_name?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          realm_id: string
+          refresh_expires_at?: string | null
+          refresh_token: string
+          updated_at?: string
+        }
+        Update: {
+          access_expires_at?: string
+          access_token?: string
+          company_id?: string
+          company_name?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          realm_id?: string
+          refresh_expires_at?: string | null
+          refresh_token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qbo_connections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quote_component_entries: {
         Row: {
           combined_from: Json | null

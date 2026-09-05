@@ -8,18 +8,18 @@ interface SendToAppButtonProps {
 
 type ExportState =
   | { phase: 'idle' }
-  | { phase: 'exporting' }
-  | { phase: 'done'; invoiceNumber: string; attachedPdf: boolean }
+  | { phase: 'exporting'; provider: 'xero' | 'quickbooks' }
+  | { phase: 'done'; provider: 'xero' | 'quickbooks'; invoiceNumber: string; attachedPdf: boolean }
   | { phase: 'error'; message: string };
 
 export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<ExportState>({ phase: 'idle' });
 
-  const exportToXero = async () => {
-    setState({ phase: 'exporting' });
+  const exportQuote = async (provider: 'xero' | 'quickbooks') => {
+    setState({ phase: 'exporting', provider });
     try {
-      const res = await fetch('/api/integrations/xero/export-quote', {
+      const res = await fetch(`/api/integrations/${provider}/export-quote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quoteId }),
@@ -28,6 +28,8 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
       if (!res.ok) {
         if (res.status === 400 && data.error === 'Xero is not connected') {
           setState({ phase: 'error', message: 'Xero is not connected yet. Connect it in Account > Integrations first.' });
+        } else if (res.status === 400 && data.error === 'QuickBooks is not connected') {
+          setState({ phase: 'error', message: 'QuickBooks is not connected yet. Connect it in Account > Integrations first.' });
         } else {
           setState({ phase: 'error', message: data.error ?? 'Export failed' });
         }
@@ -35,6 +37,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
       }
       setState({
         phase: 'done',
+        provider,
         invoiceNumber: data.invoiceNumber ?? '',
         attachedPdf: !!data.attachedPdf,
       });
@@ -85,34 +88,39 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
             </div>
 
             {state.phase === 'idle' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <p className="text-sm text-slate-600">
                   Export this quote as a draft invoice with line items to your accounting software.
                 </p>
                 <button
                   type="button"
-                  onClick={exportToXero}
+                  onClick={() => exportQuote('xero')}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#13B5EA] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90 transition"
                 >
                   <span className="font-bold">X</span>
                   Export to Xero
                 </button>
-                <p className="text-center text-xs text-slate-400">
-                  QuickBooks coming soon
-                </p>
+                <button
+                  type="button"
+                  onClick={() => exportQuote('quickbooks')}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#2CA01C] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90 transition"
+                >
+                  <span className="font-bold">QB</span>
+                  Export to QuickBooks
+                </button>
               </div>
             )}
 
             {state.phase === 'exporting' && (
               <div className="space-y-3 py-4">
                 <div className="flex justify-center">
-                  <svg className="w-8 h-8 animate-spin text-[#13B5EA]" fill="none" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 animate-spin text-slate-400" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 </div>
                 <p className="text-center text-sm text-slate-600">
-                  Creating draft invoice in Xero...
+                  Creating draft invoice in {state.provider === 'xero' ? 'Xero' : 'QuickBooks'}...
                 </p>
               </div>
             )}
@@ -125,12 +133,24 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                   </svg>
                 </div>
                 <p className="text-center text-sm text-slate-600">
-                  Draft invoice{state.invoiceNumber ? ` ${state.invoiceNumber}` : ''} created in Xero.
+                  Draft invoice{state.invoiceNumber ? ` ${state.invoiceNumber}` : ''} created in {state.provider === 'xero' ? 'Xero' : 'QuickBooks'}.
                   {state.attachedPdf ? ' Quote PDF attached.' : ''}
                 </p>
-                <p className="text-center text-xs text-slate-400">
-                  Review and approve it in Xero before sending.
-                </p>
+                {state.provider === 'xero' ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-xs font-medium text-slate-700">To find it in Xero:</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Contacts &gt; All contacts, then open the contact named after this quote&apos;s customer. The draft invoice is on their profile - review and approve it there before sending.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-xs font-medium text-slate-700">To find it in QuickBooks:</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Sales &gt; Customers, then open the customer named after this quote - the draft invoice is on their profile. Review and send it from there.
+                    </p>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={close}

@@ -9,18 +9,31 @@ interface XeroStatus {
   connectedAt: string | null;
 }
 
+interface QboStatus {
+  connected: boolean;
+  environment: string | null;
+  connectedAt: string | null;
+}
+
 export function IntegrationsPanel({ workspaceSlug }: { workspaceSlug?: string }) {
   const [status, setStatus] = useState<XeroStatus | null>(null);
+  const [qboStatus, setQboStatus] = useState<QboStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [qboDisconnecting, setQboDisconnecting] = useState(false);
   const params = useSearchParams();
   const xeroResult = params?.get('xero');
+  const qboResult = params?.get('qbo');
 
   useEffect(() => {
-    fetch('/api/integrations/xero/status')
-      .then((r) => r.json())
-      .then((data: XeroStatus) => setStatus(data))
-      .catch(() => setStatus({ connected: false, tenantName: null, connectedAt: null }))
+    Promise.all([
+      fetch('/api/integrations/xero/status').then((r) => r.json()).catch(() => ({ connected: false, tenantName: null, connectedAt: null })),
+      fetch('/api/integrations/quickbooks/status').then((r) => r.json()).catch(() => ({ connected: false, environment: null, connectedAt: null })),
+    ])
+      .then(([x, q]) => {
+        setStatus(x);
+        setQboStatus(q);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -31,6 +44,16 @@ export function IntegrationsPanel({ workspaceSlug }: { workspaceSlug?: string })
       setStatus({ connected: false, tenantName: null, connectedAt: null });
     } finally {
       setDisconnecting(false);
+    }
+  };
+
+  const disconnectQbo = async () => {
+    setQboDisconnecting(true);
+    try {
+      await fetch('/api/integrations/quickbooks/disconnect', { method: 'POST' });
+      setQboStatus({ connected: false, environment: null, connectedAt: null });
+    } finally {
+      setQboDisconnecting(false);
     }
   };
 
@@ -55,6 +78,16 @@ export function IntegrationsPanel({ workspaceSlug }: { workspaceSlug?: string })
       {xeroResult === 'error' && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
           Could not connect to Xero ({params?.get('reason') ?? 'unknown error'}). Please try again.
+        </div>
+      )}
+      {qboResult === 'connected' && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          QuickBooks connected successfully.
+        </div>
+      )}
+      {qboResult === 'error' && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          Could not connect to QuickBooks ({params?.get('reason') ?? 'unknown error'}). Please try again.
         </div>
       )}
 
@@ -108,21 +141,55 @@ export function IntegrationsPanel({ workspaceSlug }: { workspaceSlug?: string })
         </div>
       </div>
 
-      {/* Other providers - coming soon */}
-      <div className="grid gap-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 opacity-75">
-          <div className="flex items-start justify-between gap-4">
+      {/* QuickBooks card */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+              <span className="text-lg font-bold text-[#2CA01C]">QB</span>
+            </div>
             <div>
               <h3 className="text-sm font-semibold text-slate-900">QuickBooks Online</h3>
               <p className="mt-0.5 text-xs text-slate-500">
-                Export quotes to QuickBooks as draft invoices.
+                Export quotes to QuickBooks as draft invoices with line items.
               </p>
-              <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
-                Coming Soon
-              </span>
+              {qboStatus?.connected ? (
+                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  Connected{qboStatus.environment ? ` (${qboStatus.environment})` : ''}
+                </span>
+              ) : loading ? (
+                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                  Checking...
+                </span>
+              ) : (
+                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                  Not connected
+                </span>
+              )}
             </div>
           </div>
+          {qboStatus?.connected ? (
+            <button
+              type="button"
+              onClick={disconnectQbo}
+              disabled={qboDisconnecting}
+              className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:border-red-300 hover:bg-red-50/40 transition disabled:opacity-50"
+            >
+              {qboDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+            </button>
+          ) : (
+            <a
+              href={workspaceSlug
+                ? `/api/integrations/quickbooks/connect?workspace=${encodeURIComponent(workspaceSlug)}`
+                : '/api/integrations/quickbooks/connect'}
+              className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+            >
+              Connect
+            </a>
+          )}
         </div>
       </div>
     </div>
