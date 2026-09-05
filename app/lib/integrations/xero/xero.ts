@@ -19,9 +19,6 @@ const API_BASE = 'https://api.xero.com/api.xro/2.0';
 
 export const XERO_SCOPES = [
   'offline_access',
-  'openid',
-  'profile',
-  'email',
   'accounting.transactions',
   'accounting.contacts',
   'accounting.attachments',
@@ -53,13 +50,14 @@ export function buildAuthorizeUrl(
   redirectUri: string,
   state: string
 ): string {
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: XERO_SCOPES,
-    state,
-  });
+  // Xero requires %20 separators (a '+' is parsed as part of the scope name).
+  const params = [
+    `response_type=code`,
+    `client_id=${encodeURIComponent(clientId)}`,
+    `redirect_uri=${encodeURIComponent(redirectUri)}`,
+    `scope=${encodeURIComponent(XERO_SCOPES)}`,
+    `state=${encodeURIComponent(state)}`,
+  ].join('&');
   return `${AUTHORIZE_URL}?${params.toString()}`;
 }
 
