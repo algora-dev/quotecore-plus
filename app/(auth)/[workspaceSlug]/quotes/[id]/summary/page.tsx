@@ -443,7 +443,7 @@ export default async function QuoteSummaryPage({
             ) : quote.withdrawn_at ? (
               <ReopenQuoteButton quoteId={id} state="withdrawn" />
             ) : null}
-            <SendToAppButton />
+            <SendToAppButton quoteId={id} />
             <SendDocumentButton
               entityKind="quote"
               entityId={id}
