@@ -544,3 +544,4 @@
 - [ ] Supplier pricing tool: PDF plan upload -> pick page -> measure
 - [ ] Image upload still capped at 10 MB; PDF accepted up to 50 MB
 - [ ] Password-protected PDF shows friendly screenshot-instead message (no dead end)
+- [ ] Xero: Account > Integrations shows Connected (tenant name); quote Summary > Send to App > Export to Xero creates draft invoice (verify in Xero Contacts > All contacts > customer)

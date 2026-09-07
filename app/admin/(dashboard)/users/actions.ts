@@ -51,11 +51,43 @@ export interface SearchUserRow {
   planCode: string | null;
   subscriptionStatus: string | null;
   adminPaused: boolean;
+  lastActiveAt: string | null;
 }
 
 export type SearchResult =
   | { ok: true; users: SearchUserRow[]; total: number }
   | { ok: false; error: string };
+
+/**
+ * Fetch last_sign_in_at for a set of user ids from auth.users via the
+ * service-role admin API. Returns a map of user id -> ISO timestamp (null if
+ * the user never signed in / auth row missing).
+ */
+async function fetchLastActiveMap(
+  admin: ReturnType<typeof createAdminClient>,
+  userIds: string[],
+): Promise<Map<string, string | null>> {
+  const map = new Map<string, string | null>();
+  if (userIds.length === 0) return map;
+
+  const wanted = new Set(userIds);
+  let page = 1;
+  const perPage = 200;
+  // Walk pages until we have every id or run out of auth users (safety cap).
+  for (let i = 0; i < 20; i++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error || !data) break;
+    for (const au of data.users) {
+      if (wanted.has(au.id)) {
+        map.set(au.id, au.last_sign_in_at ?? au.created_at ?? null);
+      }
+    }
+    if (map.size === wanted.size || data.users.length < perPage) break;
+    page += 1;
+  }
+  for (const id of userIds) if (!map.has(id)) map.set(id, null);
+  return map;
+}
 
 /**
  * Server-side paginated search for admin user management.
@@ -84,6 +116,11 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       .select('id, email, full_name, is_admin, company_id')
       .in('company_id', companyIds);
 
+    const activeMap = await fetchLastActiveMap(
+      admin,
+      (allUsers ?? []).map((u) => u.id),
+    );
+
     const users: SearchUserRow[] = [];
     for (const co of companies ?? []) {
       const coUsers = (allUsers ?? []).filter((u) => u.company_id === co.id);
@@ -97,6 +134,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
           planCode: co.plan_code,
           subscriptionStatus: co.subscription_status,
           adminPaused: co.admin_paused,
+          lastActiveAt: activeMap.get(u.id) ?? null,
         });
       }
     }
@@ -125,6 +163,11 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     }
   }
 
+  const emailActiveMap = await fetchLastActiveMap(
+    admin,
+    (emailMatches ?? []).map((u) => u.id),
+  );
+
   const users: SearchUserRow[] = (emailMatches ?? []).map((u) => {
     const co = companiesById[u.company_id];
     return {
@@ -136,6 +179,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       planCode: co?.plan_code ?? null,
       subscriptionStatus: co?.subscription_status ?? null,
       adminPaused: co?.admin_paused ?? false,
+      lastActiveAt: emailActiveMap.get(u.id) ?? null,
     };
   });
 
@@ -156,6 +200,11 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
         .select('id, email, full_name, is_admin, company_id')
         .in('company_id', newCoIds);
 
+      const coActiveMap = await fetchLastActiveMap(
+        admin,
+        (coUsers ?? []).map((u) => u.id),
+      );
+
       for (const c of coMatches ?? []) {
         for (const u of (coUsers ?? []).filter((cu) => cu.company_id === c.id)) {
           users.push({
@@ -167,6 +216,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
             planCode: c.plan_code,
             subscriptionStatus: c.subscription_status,
             adminPaused: c.admin_paused,
+            lastActiveAt: coActiveMap.get(u.id) ?? null,
           });
         }
       }
