@@ -24,6 +24,7 @@ import { getTradeLabels } from '@/app/lib/trades/labels';
 import { convertLinearToMetric, convertAreaFt2ToMetric } from '@/app/lib/measurements/conversions';
 // F-15: Extracted modal components
 import { AreaNameModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal';
+import { RoofPitchEstimatorModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal';
 import { PointMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal';
 import { LineMeasurementModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal';
 import { CalibrationModal } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal';
@@ -481,6 +482,9 @@ export function DemoWorkstation({
   const [showPitchOnlyPrompt, setShowPitchOnlyPrompt] = useState(false);
   const [pitchOnlyInput, setPitchOnlyInput] = useState('');
   const [pitchOnlyDegrees, setPitchOnlyDegrees] = useState<number | null>(null);
+  // Pitch Finder (est. 2026-09-07): image-based pitch estimator available from the
+  // pitch-only prompt, mirroring the AreaNameModal entry point.
+  const [showPitchEstimator, setShowPitchEstimator] = useState(false);
 
   // Volume (L × W × D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
@@ -6192,7 +6196,7 @@ export function DemoWorkstation({
                 Plan Area: {(pendingAreaPoints.length > 0 ? calculatePolygonArea(pendingAreaPoints) : 0).toFixed(2)} sq {calibrations[0]?.unit || 'feet'}{tradeConfig.pitchRequired ? ' (before pitch adjustment)' : ''}
               </p>
             </div>
-            <div className="mb-4">
+            <div className="mb-4 flex items-end gap-2">
               <PitchInput
                 degrees={pitchOnlyDegrees}
                 onSave={(deg) => setPitchOnlyDegrees(deg)}
@@ -6201,6 +6205,17 @@ export function DemoWorkstation({
                 autoFocus
                 className="block"
               />
+              {tradeConfig.pitchRequired && (
+                <button
+                  type="button"
+                  onClick={() => setShowPitchEstimator(true)}
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
+                  title="Estimate roof pitch from a photo"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                  Pitch Finder
+                </button>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -6227,6 +6242,13 @@ export function DemoWorkstation({
             </div>
           </div>
         </div>
+      )}
+
+      {showPitchEstimator && (
+        <RoofPitchEstimatorModal
+          onClose={() => setShowPitchEstimator(false)}
+          onApply={(deg) => { setPitchOnlyDegrees(deg); setShowPitchEstimator(false); }}
+        />
       )}
 
       {/* Area Name Prompt */}

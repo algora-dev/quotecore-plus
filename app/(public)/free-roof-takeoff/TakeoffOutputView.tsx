@@ -369,21 +369,35 @@ export function TakeoffOutputView({
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 px-4 py-10">
-      {/* Print/PDF: output document ONLY - hide the rest of the page (header,
-          nav, marketing sections, action buttons). Groups never split across
-          pages; a group that doesn't fit moves to the next page whole. */}
+      {/* Print/PDF: output document ONLY. 2026-09-07 fix: the old approach
+          (visibility:hidden on body + position:absolute report) left all hidden
+          marketing sections occupying layout, which produced 3-4 trailing blank
+          pages, and multi-page absolutely-positioned content paginates badly in
+          print engines (content pushed to page 2 with page 1 empty). Now the
+          report stays IN FLOW, page chrome is removed with display:none, and
+          break-inside:avoid applies at the item level so nothing is cut in
+          half while sections flow naturally from page 1. */}
       <style jsx global>{`
         @media print {
-          body { background: #fff !important; }
-          body * { visibility: hidden; }
-          #takeoff-report, #takeoff-report * { visibility: visible; }
+          html, body {
+            background: #fff !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          /* Page chrome (site header + marketing/FAQ sections) removed from
+             layout entirely so it cannot create blank pages. The report uses
+             only divs internally, so this can never clip report content. */
+          header, section, footer { display: none !important; }
+          .print-hide { display: none !important; }
           #takeoff-report {
-            position: absolute; left: 0; top: 0; width: 100%;
-            border: none !important; border-radius: 0 !important; box-shadow: none !important;
+            position: static !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
             padding: 0 !important;
+            max-width: 100% !important;
           }
           .avoid-break { break-inside: avoid; page-break-inside: avoid; }
-          .print-hide { display: none !important; }
         }
       `}</style>
       <div className="mx-auto max-w-4xl">
@@ -428,8 +442,12 @@ export function TakeoffOutputView({
                     .filter(c => c.entries.length > 0);
                   if (groupsHere.length === 0) return null;
                   return (
-                    <div key={a.key} className="avoid-break">
-                      <div className="flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
+                    <div key={a.key}>
+                      {/* Area header stays attached to the page it starts on;
+                          individual component groups below each avoid being
+                          split mid-item, but the area section itself flows
+                          across pages naturally (2026-09-07 pagination fix). */}
+                      <div className="avoid-break flex items-center justify-between bg-black/5 border-b-2 border-black px-3 py-2">
                         <span className="text-black font-bold">{a.name}{isFlat ? '' : <span className="font-medium"> - pitch {fmtPitch(a.pitch)}</span>}</span>
                         <span className="text-black font-medium whitespace-nowrap text-sm">
                           {isFlat
@@ -449,7 +467,7 @@ export function TakeoffOutputView({
           )}
 
           {/* Totals - always the last block of the report */}
-          <div className="pt-2">
+          <div className="pt-2 avoid-break">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-black border-b border-black pb-2">Totals</h2>
             <div className="mt-3 space-y-2">
               {areas.length > 0 && (
@@ -483,7 +501,7 @@ export function TakeoffOutputView({
         </div>
 
         {/* Actions */}
-        <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
+        <div className="print-hide mt-8 bg-white border border-slate-200 rounded-2xl p-8 text-center">
           <h2 className="text-xl font-semibold text-slate-900">Your takeoff is ready.</h2>
           <p className="mt-2 text-sm text-slate-500">
             Price it with your own rates, save it, and turn it into a customer quote - the exact
