@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     q: "How much can I earn?",
-    a: "It depends on the role and your agreed terms. Subscription sales earn a recurring share of monthly revenue, which compounds as your customer base grows. Custom software referrals are high-ticket projects — and depending on how the deal is structured, they can pay a one-off commission, a recurring share of monthly payments, or a mix of both. Exact rates are agreed before you start.",
+    a: "It depends on the role and your agreed terms. Subscription sales earn a recurring share of monthly revenue, which compounds as your customer base grows. Custom software referrals are high-ticket projects — and depending on how the deal is structured, they can pay a one-off commission, a recurring share of monthly payments, or a mix of both. QuoteCore+ Done-For-You setup referrals (see quote-core.com/done-for-you-setup) pay a one-off 30% of the setup value — typically $150-$300+ per sale — on top of any subscription commission. Exact rates are agreed before you start.",
   },
   {
     q: "How do customers pay for T3 Labs custom projects?",
@@ -102,9 +102,10 @@ const roles = [
     tag: "Role 1 · Recurring revenue",
     title: "SaaS Subscription Sales — QuoteCore+",
     summary:
-      "Sell QuoteCore+ subscriptions to roofing and construction contractors. Every paying customer you bring in pays you a share of their subscription — every month they stay.",
+      "Sell QuoteCore+ subscriptions to roofing and construction contractors. Every paying customer you bring in pays you a share of their subscription — every month they stay. Plus one-off commission boosters: sell a Done-For-You setup ($499-$999) and take 30% of the setup value.",
     points: [
       "Recurring commission on monthly subscriptions",
+      "One-off boosters: Done-For-You setups pay 30% commission — $150-$300+ per sale",
       "Target market: roofers, builders, estimators, contractors (UK, US, NZ, AU)",
       "Lead with free tools, demos, or direct outreach — your strategy",
       "Compounds: your customer base keeps paying you as it grows",
