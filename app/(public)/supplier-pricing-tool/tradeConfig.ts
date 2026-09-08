@@ -75,9 +75,6 @@ export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
       { name: 'External Corner Flashing', basis: 'lineal' },
       { name: 'Jamb Flashing', basis: 'lineal' },
       { name: 'Sill Flashing', basis: 'lineal' },
-      { name: 'Small Penetration', basis: 'point' },
-      { name: 'Medium Penetration', basis: 'point' },
-      { name: 'Large Penetration', basis: 'point' },
     ],
   },
   flooring: {
