@@ -78,7 +78,7 @@ function StatCard({ value, label, support }: { value: string; label: string; sup
 function FeatureRoof({ roof, heading }: { roof: StudyRoof; heading: string }) {
   const pitchDiff = Math.abs(roof.digitalPitch - roof.sitePitch);
   return (
-    <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+    <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
       <h2 className="text-2xl font-semibold tracking-tight">{heading}</h2>
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <figure className="rounded-xl border border-slate-200 bg-white p-4">
@@ -137,7 +137,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Research", href: "/research" }, { label: "Google Earth Roof Measurement Accuracy" }]} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden pb-12 pt-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="relative overflow-hidden pb-12 pt-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.08),transparent_40%)]" />
         <div className="relative">
           <p className="text-sm font-medium text-[#FF6B35]">Original field study · 10 real roofs · New Zealand + United States</p>
@@ -163,7 +163,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* Hero result cards */}
-      <section id="results" className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section id="results" className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard value="3.52%" label="Average absolute roof-area variance" support="9 of 10 roof areas were within 5%. All 10 were within 10%." />
           <StatCard value="83.8%" label="of 136 component measurements within 5%" support="94.9% were within 10%. Median absolute component variance: 1.94%." />
@@ -173,7 +173,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* Quick answer */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="rounded-2xl border-2 border-[#FF6B35]/30 bg-orange-50/40 p-6 sm:p-8">
           <h2 className="text-xl font-semibold tracking-tight text-slate-900">Quick answer: how accurate was it?</h2>
           <div className="mt-3 space-y-3 text-sm leading-7 text-zinc-700">
@@ -196,7 +196,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* Methodology */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">What we tested</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -241,7 +241,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       <FeatureRoof roof={us03} heading="Feature roof: US-03 - medium-complex US roof" />
 
       {/* NZ-01 failure case */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">What remote imagery can miss</h2>
         <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50/50 p-6">
           <p className="text-sm leading-7 text-zinc-700">
@@ -262,7 +262,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* All 10 table */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">All 10 roofs - results at a glance</h2>
         <div className="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full min-w-[860px] text-left text-xs">
@@ -294,7 +294,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* All 10 accordions */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">Every roof, every measurement</h2>
         <p className="mt-2 text-sm text-zinc-600">Full component-level comparison for each of the 10 roofs. NZ-05 and US-03 are featured in detail above.</p>
         <div className="mt-6 space-y-3">
@@ -315,7 +315,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* Findings */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">Main findings</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-white p-5"><h3 className="font-semibold text-slate-900">Roof area was usually within 5%</h3><p className="mt-2 text-sm leading-6 text-zinc-600">Nine of 10 roof-area measurements were within 5% of the physical result, and all ten were within 10%. Average absolute area variance was 3.52%.</p></div>
@@ -327,7 +327,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* Paid imagery */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">Could paid aerial imagery be more accurate?</h2>
         <p className="mt-4 text-sm leading-7 text-zinc-600">Yes. Google Earth was deliberately used because it is widely accessible and free. It is not always the newest or highest-resolution imagery available. Commercial aerial measurement services can use higher-resolution imagery, elevation data, LiDAR, photogrammetry or human review and may produce tighter results.</p>
         <p className="mt-3 text-sm leading-7 text-zinc-600">If a job requires contract-grade measurement, difficult hidden geometry, insurance documentation or material ordering with very little tolerance, a paid report or physical verification may be the better choice.</p>
@@ -350,7 +350,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* Product transition */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">Measurement is only the first step</h2>
         <p className="mt-4 text-sm leading-7 text-zinc-600">A Google Earth measurement normally leaves you with numbers that still need to be moved into a spreadsheet, material calculator or quoting app.</p>
         <p className="mt-3 text-sm leading-7 text-zinc-600">QuoteCore+&apos;s free takeoff workflow can continue from the roof drawing into quantities and pricing. The 10 study takeoffs used the seven default free components, but users can also create up to seven custom components for the session and attach their own material, labour, waste and pricing logic.</p>
@@ -366,7 +366,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* Final CTA */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="rounded-2xl bg-black px-6 py-12 text-center sm:px-12">
           <h2 className="text-3xl font-semibold tracking-tight text-white">Don&apos;t take our word for it. Test it on your next roof.</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-400">Before you drive to your next reroof just to measure it, try the same process we used in this study. Find the roof remotely, complete the takeoff for free, save your numbers, then compare them with what you find on site.</p>
@@ -388,7 +388,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </section>
 
       {/* Dataset */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="rounded-xl border border-slate-200 bg-white p-6">
           <h2 className="text-xl font-semibold tracking-tight">Download the study data</h2>
           <p className="mt-3 text-sm leading-7 text-zinc-600">The complete dataset for all 10 roofs - every roof area, pitch, component measurement, variance and note - is published as a CSV.</p>
@@ -406,7 +406,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* FAQ */}
-      <section className="pb-16"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-16"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
         <div className="mt-6 space-y-3">
           {[
@@ -427,7 +427,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       </div></section>
 
       {/* References */}
-      <section className="pb-20"><div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="pb-20"><div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2 className="text-lg font-semibold tracking-tight">References</h2>
         <ul className="mt-3 space-y-1.5 text-xs text-zinc-600">
           <li>· <a className="text-[#FF6B35] underline underline-offset-2" href="https://www.google.com/earth/about/versions/" rel="nofollow noopener" target="_blank">Google Earth versions / Earth Pro availability</a></li>
