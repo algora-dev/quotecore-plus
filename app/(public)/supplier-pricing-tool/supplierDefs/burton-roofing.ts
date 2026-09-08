@@ -28,13 +28,14 @@ export const BURTON_ROOFING = {
   poweredBy: true,
   discountPct: 12,
   tradeRequiresLogin: true,
+  demoDisclaimer: false, // real company - keep the DEMO pill, drop the "not a real company" text
   features: {
     login: true,
     adminPanel: true,
     quoteCoreConnect: true,
     convertToQuote: true,
     emailCapture: true,
-    pricingMode: false,
+    pricingMode: true,
   },
   products: [
     // ---- Roof coverings (area) - picking one sets roof type + family ----
