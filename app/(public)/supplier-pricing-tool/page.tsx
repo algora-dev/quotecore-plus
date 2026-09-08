@@ -97,6 +97,42 @@ function Hub() {
         <p className="mt-8 text-center text-xs text-slate-400">
           Each trade runs the full flow: measure from a plan or site dimensions, pick products, get priced totals with trade discounts.
         </p>
+
+        {/* Dual-trade demo: Roofline Canterbury - roofing + cladding under one brand */}
+        <div className="mt-12">
+          <div className="text-center">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">Roofline Canterbury Ltd</h2>
+            <p className="mt-1 text-sm text-slate-500">Dual-trade demo - one brand, roofing and cladding. Pick your trade.</p>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <Link
+              href="/supplier-pricing-tool/roofline-roofing"
+              className="group rounded-xl border border-slate-200 bg-white px-6 py-7 text-center transition hover:border-red-200 hover:shadow-[0_0_12px_rgba(200,16,46,0.15)]"
+            >
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-black text-white transition group-hover:bg-[#C8102E]">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-8 9 8" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v10h14V10" />
+                </svg>
+              </span>
+              <div className="mt-4 text-base font-bold text-slate-900">Roofing</div>
+              <div className="mt-1.5 text-xs leading-relaxed text-slate-500">Roofdeck and Corrugate coverings, ridge/hip/valley/barge flashings, fascia, gutter and downpipes.</div>
+            </Link>
+            <Link
+              href="/supplier-pricing-tool/roofline-cladding"
+              className="group rounded-xl border border-slate-200 bg-white px-6 py-7 text-center transition hover:border-red-200 hover:shadow-[0_0_12px_rgba(200,16,46,0.15)]"
+            >
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-black text-white transition group-hover:bg-[#C8102E]">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 21V8l8-5 8 5v13" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M4 16h16" />
+                </svg>
+              </span>
+              <div className="mt-4 text-base font-bold text-slate-900">Cladding</div>
+              <div className="mt-1.5 text-xs leading-relaxed text-slate-500">Weatherboard (Colorsteel) and the full set of cladding flashings.</div>
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );

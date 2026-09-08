@@ -8,6 +8,8 @@ import { BURTON_ROOFING } from './burton-roofing';
 import { VERTEX_CLADDING } from './vertex-cladding';
 import { OAKLINE_FLOORING } from './oakline-flooring';
 import { APEX_ROOFING } from './apex-roofing';
+import { ROOFLINE_ROOFING } from './roofline-roofing';
+import { ROOFLINE_CLADDING } from './roofline-cladding';
 import type { SupplierProduct } from '../types';
 import type { Trade } from '../tradeConfig';
 
@@ -67,6 +69,8 @@ export const SUPPLIER_DEFS: SupplierDefinition[] = [
   BURTON_ROOFING as unknown as SupplierDefinition,
   VERTEX_CLADDING as unknown as SupplierDefinition,
   OAKLINE_FLOORING as unknown as SupplierDefinition,
+  ROOFLINE_ROOFING as unknown as SupplierDefinition,
+  ROOFLINE_CLADDING as unknown as SupplierDefinition,
 ];
 
 export const DEFAULT_SUPPLIER_SLUG = 'burton-roofing';
