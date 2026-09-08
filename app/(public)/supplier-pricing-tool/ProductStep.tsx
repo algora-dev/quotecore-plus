@@ -96,14 +96,15 @@ export function ProductStep({
     autoAddedRef.current = def.key;
     const next = [...measureSet.appliedProducts];
     for (const p of defaults) {
+      const wasteMode: 'percent' | 'flat' = p.basis === 'lineal' ? (p.defaultWasteMode ?? 'percent') : 'percent';
       next.push({
         id: makeId('ap'),
         groupKey: def.key,
         productId: p.id,
         entryId: null,
-        wastePct: p.defaultWastePct,
-        wasteFlat: 0,
-        wasteMode: 'percent',
+        wastePct: wasteMode === 'flat' ? 0 : p.defaultWastePct,
+        wasteFlat: wasteMode === 'flat' ? (p.defaultWasteFlat ?? 0) : 0,
+        wasteMode,
         labourRate: p.defaultLabourRate,
         qtyOverride: null,
         priceOverride: null,
@@ -120,14 +121,15 @@ export function ProductStep({
     );
     if (already) { removeApplied(already.id); return; }
     const p = catalog.find(x => x.id === pid)!;
+    const wasteMode: 'percent' | 'flat' = p.basis === 'lineal' ? (p.defaultWasteMode ?? 'percent') : 'percent';
     const ap: AppliedProduct = {
       id: makeId('ap'),
       groupKey: def.key,
       productId: pid,
       entryId,
-      wastePct: p.defaultWastePct,
-      wasteFlat: 0,
-      wasteMode: 'percent',
+      wastePct: wasteMode === 'flat' ? 0 : p.defaultWastePct,
+      wasteFlat: wasteMode === 'flat' ? (p.defaultWasteFlat ?? 0) : 0,
+      wasteMode,
       labourRate: p.defaultLabourRate,
       qtyOverride: null,
       priceOverride: null,

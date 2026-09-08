@@ -4,7 +4,7 @@
 // same measured m2). Mirrors pricing.ts semantics per applied product.
 
 import type { ComponentApplied, ParentJob, ParentBasis, SupplierProduct, CustomComponent } from './types';
-import { componentTotal, PARENT_BASIS_UNIT } from './types';
+import { componentTotal, PARENT_BASIS_UNIT, applyWaste } from './types';
 
 export interface ParentOutputLine {
   componentId: string;
@@ -48,7 +48,7 @@ export function priceParentOutput(job: ParentJob, catalog: SupplierProduct[], in
 
     const measured = componentTotal(job, ap.componentId);
     const calcQty = ap.qtyOverride != null ? ap.qtyOverride : measured;
-    const purchaseQty = calcQty * (1 + (ap.wastePct || 0) / 100);
+    const purchaseQty = applyWaste(ap, calcQty);
     const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
 
     lines.push({

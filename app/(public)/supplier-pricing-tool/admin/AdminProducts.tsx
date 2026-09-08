@@ -64,7 +64,7 @@ export function AdminProducts({ cfg, setCfg }: { cfg: SupplierConfig; setCfg: (f
               <th className="py-1.5 pr-2 font-medium">Basis</th>
               <th className="py-1.5 pr-2 font-medium text-right">Price ({cfg.currency})</th>
               <th className="py-1.5 pr-2 font-medium text-right">Labour</th>
-              <th className="py-1.5 pr-2 font-medium text-right">Waste %</th>
+              <th className="py-1.5 pr-2 font-medium text-right">Waste % / +m</th>
               <th className="py-1.5 pr-2 font-medium text-right">Trade</th>
               <th className="py-1.5" />
             </tr>
@@ -90,7 +90,26 @@ export function AdminProducts({ cfg, setCfg }: { cfg: SupplierConfig; setCfg: (f
                   <input type="number" min="0" step="0.5" value={p.defaultLabourRate} onChange={e => patchProduct(p.id, { defaultLabourRate: parseFloat(e.target.value) || 0 })} className={`${inputCls} text-right`} aria-label={`Labour ${p.name}`} />
                 </td>
                 <td className="py-1.5 pr-2 w-20">
-                  <input type="number" min="0" max="50" step="0.5" value={p.defaultWastePct} onChange={e => patchProduct(p.id, { defaultWastePct: parseFloat(e.target.value) || 0 })} className={`${inputCls} text-right`} aria-label={`Waste ${p.name}`} />
+                  {p.basis === 'lineal' ? (
+                    <div className="flex items-center gap-1">
+                      <select value={p.defaultWasteMode ?? 'percent'} onChange={e => {
+                        const mode = e.target.value as 'percent' | 'flat';
+                        patchProduct(p.id, mode === 'flat'
+                          ? { defaultWasteMode: 'flat', defaultWasteFlat: p.defaultWasteFlat ?? 0.5 }
+                          : { defaultWasteMode: 'percent' });
+                      }} className="w-12 rounded-lg border border-slate-300 px-1 py-1.5 text-sm focus:border-blue-500 focus:outline-none" aria-label={`Waste type ${p.name}`}>
+                        <option value="percent">%</option>
+                        <option value="flat">+m</option>
+                      </select>
+                      {(p.defaultWasteMode ?? 'percent') === 'flat' ? (
+                        <input type="number" min="0" step="0.1" value={p.defaultWasteFlat ?? 0} onChange={e => patchProduct(p.id, { defaultWasteFlat: parseFloat(e.target.value) || 0 })} className={`${inputCls} text-right`} aria-label={`Waste length ${p.name}`} />
+                      ) : (
+                        <input type="number" min="0" max="50" step="0.5" value={p.defaultWastePct} onChange={e => patchProduct(p.id, { defaultWastePct: parseFloat(e.target.value) || 0 })} className={`${inputCls} text-right`} aria-label={`Waste ${p.name}`} />
+                      )}
+                    </div>
+                  ) : (
+                    <input type="number" min="0" max="50" step="0.5" value={p.defaultWastePct} onChange={e => patchProduct(p.id, { defaultWastePct: parseFloat(e.target.value) || 0 })} className={`${inputCls} text-right`} aria-label={`Waste ${p.name}`} />
+                  )}
                 </td>
                 <td className="py-1.5 pr-2 text-right text-slate-600 whitespace-nowrap">{cfg.currency}{tradeUnitPrice(p, cfg).toFixed(2)}</td>
                 <td className="py-1.5 text-right">

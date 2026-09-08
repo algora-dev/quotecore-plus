@@ -54,6 +54,11 @@ export interface SupplierProduct {
   unitPrice: number; // baseline/public price per unit
   packSize: number | null; // when set, sold in packs
   defaultWastePct: number; // suggested waste for this product
+  /** lineal products: default waste MODE. 'flat' adds a fixed length per
+   *  entry (defaultWasteFlat, like the main app); 'percent' (default)
+   *  scales with length. Area/count products are always percent. */
+  defaultWasteMode?: 'percent' | 'flat';
+  defaultWasteFlat?: number; // suggested flat waste length (m) when mode = flat
   defaultLabourRate: number; // suggested labour $/unit (0 = none)
   priceEditable: boolean; // supplier config: can customer override price?
   suggested?: boolean;
@@ -129,6 +134,10 @@ export interface ComponentApplied {
   componentId: string;
   productId: string;
   wastePct: number;
+  /** lineal components: flat waste length added to calc qty (same unit) */
+  wasteFlat: number;
+  /** which waste mode is active - only one applies at a time */
+  wasteMode: 'percent' | 'flat';
   labourRate: number;         // per unit (0 = none)
   qtyOverride: number | null; // replaces measured qty when set
   priceOverride: number | null; // only honoured if product.priceEditable
