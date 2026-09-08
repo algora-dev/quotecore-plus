@@ -24,6 +24,11 @@ export default function Page() {
           <li>Enter actual measurements or plan measurements with automatic pitch factors</li>
           <li>Get a priced report, then print or download it, convert it into a free customer quote, or save it to QuoteCore+</li>
         </ul>
+        <p className="mt-3 text-sm text-slate-600">
+          Starting from a satellite or aerial measurement? See our{' '}
+          <a href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">10-roof satellite measurement field test</a>
+          for how accurate remote measurements were on real roofs.
+        </p>
       </section>
       <BlogHeader />
       <FreeQuoteBuilder />

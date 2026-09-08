@@ -13,6 +13,11 @@ export default function Post() {
         payment - and nothing is saved unless you choose to continue into the app.
       </p>
       <p>
+        How accurate is this approach when the image comes from Google Earth or satellite imagery? See our{' '}
+        <Link href="/research/google-earth-roof-measurement-accuracy">Google Earth roof takeoff study</Link>
+        , where 10 remote measurements were physically verified on site.
+      </p>
+      <p>
         One clarification before the steps: this measures from a <strong>plan, drawing or image you upload</strong> -
         and you calibrate it against a dimension you already know. It is not an aerial or satellite measurement
         service: there is no imagery lookup, and the accuracy comes from your calibration. If you need a roof

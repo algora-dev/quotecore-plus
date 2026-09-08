@@ -139,6 +139,11 @@ export default function RoofMeasurementCostComparison() {
               measure a handful of roofs a year, a $13-$105 report is a reasonable purchase.
             </p>
             <p>
+              Curious how close the free DIY route can get? See our{' '}
+              <a href="/research/google-earth-roof-measurement-accuracy">Google Earth roof measurement accuracy study</a>
+              , where 10 remote takeoffs were checked against physical site measurements.
+            </p>
+            <p>
               If you quote weekly or more — and especially if you then rebuild the measured roof
               into materials, labour and a priced quote — the per-report maths gets expensive fast,
               and the measurement doesn&rsquo;t carry through to the quote. That&rsquo;s the gap
