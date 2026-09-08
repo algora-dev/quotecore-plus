@@ -135,12 +135,14 @@ function AdminHome({ slug, onLogout }: { slug: string; onLogout: () => void }) {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <header className="border-b border-black/20" style={{ backgroundColor: cfg.brandColor }}>
+      <header className="border-b border-black/20" style={{ backgroundColor: cfg.headerColor ?? cfg.brandColor }}>
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             {cfg.logoDarkUrl || cfg.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={cfg.logoDarkUrl ?? cfg.logoUrl ?? undefined} alt={cfg.name} className="h-8 w-auto object-contain" />
+              <span className={"flex items-center justify-center " + (cfg.logoWhiteBox ? "rounded-lg bg-white px-2 py-1" : "")}>
+                {/* eslint-disable-next-line @nextjs/next/no-img-element */}
+                <img src={cfg.logoDarkUrl ?? cfg.logoUrl ?? undefined} alt={cfg.name} className={(cfg.logoWhiteBox ? "h-9 " : "h-8 ") + "w-auto object-contain"} />
+              </span>
             ) : (
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-xs font-bold" style={{ color: cfg.brandColor }}>{cfg.name.slice(0, 1)}</span>
             )}
