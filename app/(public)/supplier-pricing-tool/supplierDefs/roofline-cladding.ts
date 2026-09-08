@@ -11,9 +11,11 @@ export const ROOFLINE_CLADDING = {
   demo: true,
   tagline: 'Roofing & Cladding Manufacturers - Christchurch',
   currency: '$', // NZD
-  logoUrl: null,
-  logoDarkUrl: null,
-  brandColor: '#C8102E', // Roofline red
+  logoUrl: '/supplier-logos/roofline-canterbury.png',
+  logoDarkUrl: '/supplier-logos/roofline-canterbury.png',
+  brandColor: '#C8102E', // Roofline red (output accents)
+  headerColor: '#111111', // black header
+  logoWhiteBox: true,
   theme: {
     primary: '#111111', // Roofline black
     primaryHover: '#2A2A2A',

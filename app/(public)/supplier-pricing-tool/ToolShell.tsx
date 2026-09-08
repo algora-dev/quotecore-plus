@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 // Tool shell shared by every supplier instance route
 // (/supplier-pricing-tool/<slug>). Header, scoped theme remap, print rules.
@@ -15,12 +15,15 @@ function Header() {
   const headerLogo = config.logoDarkUrl ?? config.logoUrl;
 
   return (
-    <header className="border-b border-black/20" style={{ backgroundColor: config.brandColor }}>
+    <header className="border-b border-black/20" style={{ backgroundColor: config.headerColor ?? config.brandColor }}>
       <div className="mx-auto max-w-5xl px-4 py-3 md:py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex items-center gap-3">
           {headerLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={headerLogo} alt={config.name} className="h-9 w-auto object-contain" onError={e => { if (config.logoUrl && e.target instanceof HTMLImageElement && e.target.src !== config.logoUrl) e.target.src = config.logoUrl; }} />
+            <span className={`flex items-center justify-center ${config.logoWhiteBox ? 'rounded-lg bg-white px-2 py-1' : ''}`}>
+              {/* eslint-disable-next-line @nextjs/next/no-img-element */}
+              <img src={headerLogo} alt={config.name} className={`${config.logoWhiteBox ? 'h-8' : 'h-9'} w-auto object-contain`} onError={e => { if (config.logoUrl && e.target instanceof HTMLImageElement && e.target.src !== config.logoUrl) e.target.src = config.logoUrl; }} />
+            </span>
           ) : (
             <span
               className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold"

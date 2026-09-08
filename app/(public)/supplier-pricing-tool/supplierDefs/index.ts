@@ -40,6 +40,13 @@ export interface SupplierDefinition {
   logoUrl: string | null;
   logoDarkUrl: string | null;
   brandColor: string;
+  /** optional explicit header background - defaults to brandColor. Used
+   *  when a supplier wants a black header but coloured accents elsewhere
+   *  (e.g. Roofline black header + red output accents). */
+  headerColor?: string;
+  /** render the header logo inside a white rounded box (dark-background
+   *  logos that would disappear on a dark header). */
+  logoWhiteBox?: boolean;
   theme: SupplierTheme;
   poweredBy: boolean;
   discountPct: number;

@@ -50,6 +50,10 @@ export interface SupplierConfig {
   logoDarkUrl: string | null;
   /** supplier brand colour - drives output page accents/borders */
   brandColor: string;
+  /** optional explicit header background - defaults to brandColor */
+  headerColor?: string;
+  /** render the header logo inside a white rounded box (dark-bg logos) */
+  logoWhiteBox?: boolean;
   /** scoped theme palette - drives the tool shell CSS remap */
   theme: SupplierTheme;
   /** Powered by QuoteCore+ vs white-label */

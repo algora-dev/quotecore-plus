@@ -12,9 +12,11 @@ export const ROOFLINE_ROOFING = {
   demo: true,
   tagline: 'Roofing & Cladding Manufacturers - Christchurch',
   currency: '$', // NZD
-  logoUrl: null,
-  logoDarkUrl: null,
-  brandColor: '#C8102E', // Roofline red
+  logoUrl: '/supplier-logos/roofline-canterbury.png',
+  logoDarkUrl: '/supplier-logos/roofline-canterbury.png',
+  brandColor: '#C8102E', // Roofline red (output accents)
+  headerColor: '#111111', // black header
+  logoWhiteBox: true,
   theme: {
     primary: '#111111', // Roofline black
     primaryHover: '#2A2A2A',
@@ -42,6 +44,14 @@ export const ROOFLINE_ROOFING = {
     { id: 'rf-rd-055', name: 'Roofdeck 0.55g', code: 'RF-RD-055', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['roofdeck'], family: 'Roofdeck', unitPrice: 28.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 8.0, priceEditable: true },
     { id: 'rf-cg-040', name: 'Corrugate 0.40g', code: 'RF-CG-040', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['corrugate'], family: 'Corrugate', unitPrice: 22.5, packSize: null, defaultWastePct: 12, defaultLabourRate: 6.5, priceEditable: true, suggested: true },
     { id: 'rf-cg-055', name: 'Corrugate 0.55g', code: 'RF-CG-055', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['corrugate'], family: 'Corrugate', unitPrice: 27.5, packSize: null, defaultWastePct: 12, defaultLabourRate: 7.5, priceEditable: true },
+
+    // ---- Underlays (area, all roofs) ----
+    { id: 'rf-underlay-205', name: '205 Underlay', code: 'UND-RF-205', basis: 'area', groups: ['roofAreas'], component: 'underlay', roofTypes: ['all'], unitPrice: 5.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 5.0, priceEditable: true, suggested: true },
+    { id: 'rf-underlay-407', name: '407 Covertek Underlay', code: 'UND-RF-407', basis: 'area', groups: ['roofAreas'], component: 'underlay', roofTypes: ['all'], unitPrice: 15.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 5.0, priceEditable: true },
+
+    // ---- Screws / fixings (area, no labour) ----
+    { id: 'rf-screws-65', name: 'Screws (Fixings) - 65mm', code: 'FIX-RF-65', basis: 'area', groups: ['roofAreas'], component: 'fixing', roofTypes: ['all'], unitPrice: 2.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 0, priceEditable: true, suggested: true },
+    { id: 'rf-screws-50', name: 'Screws (Fixings) - 50mm', code: 'FIX-RF-50', basis: 'area', groups: ['roofAreas'], component: 'fixing', roofTypes: ['all'], unitPrice: 1.7, packSize: null, defaultWastePct: 10, defaultLabourRate: 0, priceEditable: true },
 
     // ---- Ridge (lineal, +0.25m per entry) ----
     { id: 'rf-ridge-rd', name: 'Ridge Flashing - Roofdeck', code: 'RDG-RF-RD', basis: 'lineal', groups: ['ridges'], component: 'ridge', roofTypes: ['roofdeck'], family: 'Roofdeck', unitPrice: 18.5, packSize: null, defaultWastePct: 0, defaultWasteMode: 'flat', defaultWasteFlat: 0.25, defaultLabourRate: 22.0, priceEditable: true, suggested: true },
