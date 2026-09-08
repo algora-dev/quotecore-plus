@@ -23,6 +23,8 @@ import { getSupplierDirectory, TEST_SUPPLIER_SLUGS } from '@/lib/supplier-direct
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: SITE_URL, changeFrequency: 'weekly', priority: 1.0 },
+    { url: `${SITE_URL}/research/google-earth-roof-measurement-accuracy`, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${SITE_URL}/research`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/blog`, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${SITE_URL}/roofing-quoting-software`, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE_URL}/roofing-estimating-software`, changeFrequency: 'monthly', priority: 0.9 },
