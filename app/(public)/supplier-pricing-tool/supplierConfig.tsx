@@ -11,7 +11,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { SupplierProduct } from './types';
-import type { Trade } from './tradeConfig';
+import type { Trade, BucketRow } from './tradeConfig';
 import type { SupplierTheme } from './supplierDefs';
 import { getSupplierDef, DEFAULT_SUPPLIER_SLUG } from './supplierDefs';
 
@@ -69,6 +69,9 @@ export interface SupplierConfig {
   /** real-world bucket examples for the measure step copy - supplier-specific
    *  (e.g. Roofline cladding: Weatherboard, Corrugate, Roofdeck) */
   bucketExamples?: readonly string[];
+  /** pre-seeded measurement rows per bucket on the parents step - overrides
+   *  the trade defaults (see tradeConfig.ts bucketRows) */
+  bucketRows?: readonly BucketRow[];
   /** trade pricing only shown to logged-in users */
   tradeRequiresLogin: boolean;
   /** feature blocks - flipping one off never breaks the others */

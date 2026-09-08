@@ -32,6 +32,19 @@ export const ROOFLINE_CLADDING = {
   poweredBy: true,
   discountPct: 12,
   bucketExamples: ['Weatherboard', 'Corrugate', 'Roofdeck'],
+  bucketRows: [
+    { name: 'Wall areas', basis: 'area' },
+    { name: 'Window/Door Head Flashing', basis: 'lineal' },
+    { name: 'Soffit Flashing', basis: 'lineal' },
+    { name: 'Base Flashing', basis: 'lineal' },
+    { name: 'Internal Corner Flashing', basis: 'lineal' },
+    { name: 'External Corner Flashing', basis: 'lineal' },
+    { name: 'Window/Door Jamb Flashing', basis: 'lineal' },
+    { name: 'Window Sill Flashing', basis: 'lineal' },
+    { name: 'Small Penetration', basis: 'point' },
+    { name: 'Medium Penetration', basis: 'point' },
+    { name: 'Large Penetration', basis: 'point' },
+  ],
   tradeRequiresLogin: true,
   features: {
     login: true,
@@ -58,5 +71,10 @@ export const ROOFLINE_CLADDING = {
     { id: 'rf-fl-base', name: 'Base Flashing', code: 'FLS-RF-BS', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], family: 'Weatherboard', unitPrice: 13.5, packSize: null, defaultWastePct: 0, defaultWasteMode: 'flat', defaultWasteFlat: 0.2, defaultLabourRate: 18.0, priceEditable: true },
     { id: 'rf-fl-soffit', name: 'Soffit Flashing', code: 'FLS-RF-SF', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], family: 'Weatherboard', unitPrice: 15.0, packSize: null, defaultWastePct: 0, defaultWasteMode: 'flat', defaultWasteFlat: 0.2, defaultLabourRate: 20.0, priceEditable: true },
     { id: 'rf-fl-soaker', name: 'Soaker Flashing', code: 'FLS-RF-SK', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], family: 'Weatherboard', unitPrice: 12.0, packSize: null, defaultWastePct: 0, defaultWasteMode: 'flat', defaultWasteFlat: 0.2, defaultLabourRate: 16.0, priceEditable: true },
+
+    // ---- Wall penetrations (counted, placeholder prices) ----
+    { id: 'rf-pen-s', name: 'Small Penetration', code: 'PEN-RF-S', basis: 'count', groups: ['areas'], component: 'ridge', roofTypes: ['all'], unitPrice: 25.0, packSize: null, defaultWastePct: 0, defaultLabourRate: 45.0, priceEditable: true },
+    { id: 'rf-pen-m', name: 'Medium Penetration', code: 'PEN-RF-M', basis: 'count', groups: ['areas'], component: 'ridge', roofTypes: ['all'], unitPrice: 45.0, packSize: null, defaultWastePct: 0, defaultLabourRate: 65.0, priceEditable: true },
+    { id: 'rf-pen-l', name: 'Large Penetration', code: 'PEN-RF-L', basis: 'count', groups: ['areas'], component: 'ridge', roofTypes: ['all'], unitPrice: 85.0, packSize: null, defaultWastePct: 0, defaultLabourRate: 95.0, priceEditable: true },
   ] as SupplierProduct[],
 } as const;

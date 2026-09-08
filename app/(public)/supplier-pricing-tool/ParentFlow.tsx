@@ -209,6 +209,7 @@ export function ParentFlow() {
             setJob={setJob}
             fromPlan={entryMode === 'measure'}
             bucketExamples={config.bucketExamples}
+            bucketRows={config.bucketRows}
             onBack={() => setStep(entryMode === 'measure' ? stationStep : 1)}
             onNext={() => setStep(productStepNum)}
           />

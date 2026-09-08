@@ -8,6 +8,13 @@
 export type Trade = 'roofing' | 'cladding' | 'flooring';
 export type TradeModel = 'groups' | 'parents';
 
+/** A pre-seeded measurement row shown under every bucket on the parents
+ *  step. name becomes the component name; basis drives the input shape. */
+export interface BucketRow {
+  name: string;
+  basis: 'area' | 'lineal' | 'point';
+}
+
 export interface TradeConfig {
   key: Trade;
   label: string;
@@ -29,6 +36,8 @@ export interface TradeConfig {
    *  can override with their own real product names (see bucketExamples on
    *  the supplier def). */
   bucketExamples: readonly string[];
+  /** default pre-seeded rows per bucket (supplier defs can override) */
+  bucketRows: readonly BucketRow[];
 }
 
 export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
@@ -43,6 +52,7 @@ export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
     allowHeight: false,
     angleLabel: 'Pitch',
     bucketExamples: [],
+    bucketRows: [],
   },
   cladding: {
     key: 'cladding',
@@ -56,6 +66,19 @@ export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
     allowHeight: true,
     angleLabel: 'Angle',
     bucketExamples: ['Weatherboard', 'Render', 'Brick', 'Paint'],
+    bucketRows: [
+      { name: 'Wall areas', basis: 'area' },
+      { name: 'Head Flashing', basis: 'lineal' },
+      { name: 'Soffit Flashing', basis: 'lineal' },
+      { name: 'Base Flashing', basis: 'lineal' },
+      { name: 'Internal Corner Flashing', basis: 'lineal' },
+      { name: 'External Corner Flashing', basis: 'lineal' },
+      { name: 'Jamb Flashing', basis: 'lineal' },
+      { name: 'Sill Flashing', basis: 'lineal' },
+      { name: 'Small Penetration', basis: 'point' },
+      { name: 'Medium Penetration', basis: 'point' },
+      { name: 'Large Penetration', basis: 'point' },
+    ],
   },
   flooring: {
     key: 'flooring',
@@ -69,6 +92,12 @@ export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
     allowHeight: false,
     angleLabel: 'Angle',
     bucketExamples: ['Carpet', 'Vinyl', 'Timber'],
+    bucketRows: [
+      { name: 'Floor areas', basis: 'area' },
+      { name: 'Skirting', basis: 'lineal' },
+      { name: 'Scotia / Trim', basis: 'lineal' },
+      { name: 'Transitions / Ramp', basis: 'lineal' },
+    ],
   },
 };
 
