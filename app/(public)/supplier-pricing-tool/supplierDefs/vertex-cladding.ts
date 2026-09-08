@@ -33,6 +33,7 @@ export const VERTEX_CLADDING = {
     quoteCoreConnect: true,
     convertToQuote: true,
     emailCapture: true,
+    pricingMode: true,
   },
   products: [
     // ---- Wall coverings (area, applied per parent area) ----

@@ -16,8 +16,8 @@ import { SupplierEnquiryModal } from './SupplierEnquiryModal';
 
 /** Convert-to-quote URL for the supplier quote builder (same contract as
  *  the roofing flow's buildConvertToQuoteUrl). */
-export function buildParentConvertToQuoteUrl(job: ParentJob, catalog: SupplierProduct[]): string {
-  const output = priceParentOutput(job, catalog);
+export function buildParentConvertToQuoteUrl(job: ParentJob, catalog: SupplierProduct[], includeLabour = true): string {
+  const output = priceParentOutput(job, catalog, includeLabour);
   const lines = output.lines.map(l => ({
     description: `${l.name} - ${l.bucketName} / ${l.componentName}`,
     qty: Math.round(l.purchaseQty * 100) / 100,
@@ -29,7 +29,7 @@ export function buildParentConvertToQuoteUrl(job: ParentJob, catalog: SupplierPr
       description: c.name,
       qty: Math.round(c.quantity * 100) / 100,
       unit: c.basis === 'area' ? 'm\u00B2' : c.basis === 'lineal' ? 'm' : 'ea',
-      rate: Math.round((c.unitPrice + c.labourRate) * 100) / 100,
+      rate: Math.round((c.unitPrice + (includeLabour ? c.labourRate : 0)) * 100) / 100,
     });
   }
   const params = new URLSearchParams();
@@ -123,9 +123,11 @@ function enquiryShim(job: ParentJob): MeasurementSet {
   };
 }
 
-export function ParentOutputActions({ job, catalog, onRestart, planImages }: {
+export function ParentOutputActions({ job, catalog, includeLabour = true, onRestart, planImages }: {
   job: ParentJob;
   catalog: SupplierProduct[];
+  /** false = supply-only pricing: labour zeroed in totals/actions */
+  includeLabour?: boolean;
   onRestart: () => void;
   /** Plan images from the takeoff station - pre-attached to the supplier enquiry. */
   planImages?: { name: string; dataUrl: string; annotated: boolean }[];
@@ -168,8 +170,8 @@ export function ParentOutputActions({ job, catalog, onRestart, planImages }: {
     }
   }
 
-  const quoteUrl = buildParentConvertToQuoteUrl(job, catalog);
-  const outputTotal = (() => { const o = priceParentOutput(job, catalog); return o.material + o.labour; })();
+  const quoteUrl = buildParentConvertToQuoteUrl(job, catalog, includeLabour);
+  const outputTotal = (() => { const o = priceParentOutput(job, catalog, includeLabour); return o.material + o.labour; })();
 
   // Tracking: what the user did with the output (convert / order / enquiry)
   function logAction(action: 'convert' | 'order' | 'enquiry') {
@@ -331,6 +333,7 @@ export function ParentOutputActions({ job, catalog, onRestart, planImages }: {
           measureSet={enquiryShim(job)}
           catalog={catalog}
           currency={supplierCfg.currency}
+          includeLabour={includeLabour}
           initialIntent={modal}
           presetImages={planImages}
           onClose={() => setModal(null)}

@@ -34,6 +34,7 @@ export const BURTON_ROOFING = {
     quoteCoreConnect: true,
     convertToQuote: true,
     emailCapture: true,
+    pricingMode: false,
   },
   products: [
     // ---- Roof coverings (area) - picking one sets roof type + family ----

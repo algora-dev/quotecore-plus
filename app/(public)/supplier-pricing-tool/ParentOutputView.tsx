@@ -11,13 +11,15 @@ import { componentTotal, CUSTOM_BASIS_UNIT } from './types';
 import { priceParentOutput } from './parentPricing';
 import { ParentOutputActions } from './ParentOutputActions';
 import { fmt } from './pricing';
+import { PricingModeChip } from './PricingModeChoice';
+import type { PricingMode } from './PricingModeChoice';
 import { useSupplierConfig } from './supplierConfig';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { logEvent } from './adminData';
 import type { TradeConfig } from './tradeConfig';
 
 export function ParentOutputView({
-  trade, job, catalog, baselineCatalog, showTrade, tradeLabel, currency, basePath, onBack, onAddCustom, onRestart, planImages,
+  trade, job, catalog, baselineCatalog, showTrade, tradeLabel, currency, basePath, includeLabour = true, pricingMode = null, onBack, onAddCustom, onRestart, planImages,
 }: {
   trade: TradeConfig;
   job: ParentJob;
@@ -27,6 +29,10 @@ export function ParentOutputView({
   tradeLabel: string | null;
   currency: string;
   basePath: string;
+  /** false = supply-only pricing: labour zeroed throughout */
+  includeLabour?: boolean;
+  /** chosen supply mode (shown as a chip on the output) */
+  pricingMode?: PricingMode | null;
   onBack: () => void;
   onAddCustom: () => void;
   onRestart: () => void;
@@ -34,7 +40,7 @@ export function ParentOutputView({
    *  send-to-supplier enquiry (annotated drawings + originals). */
   planImages?: { name: string; dataUrl: string; annotated: boolean }[];
 }) {
-  const totals = priceParentOutput(job, catalog);
+  const totals = priceParentOutput(job, catalog, includeLabour);
   const grand = totals.material + totals.labour;
   const baselineById = new Map(baselineCatalog.map(p => [p.id, p]));
   const { config: supplierCfg } = useSupplierConfig();
@@ -72,15 +78,18 @@ export function ParentOutputView({
             {tradeLabel ? ` - ${tradeLabel}` : ''}
           </span>
         </div>
+        {pricingMode && <div className="mt-2"><PricingModeChip mode={pricingMode} /></div>}
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <div className="text-xs text-slate-500">Materials</div>
             <div className="mt-1 text-xl font-semibold text-slate-900">{currency}{fmt(totals.material)}</div>
           </div>
+          {totals.labour > 0 && (
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <div className="text-xs text-slate-500">Labour</div>
             <div className="mt-1 text-xl font-semibold text-slate-900">{currency}{fmt(totals.labour)}</div>
           </div>
+          )}
           <div className="rounded-xl border border-blue-200 bg-blue-50/40 px-4 py-3">
             <div className="text-xs text-slate-500">Total (excl. tax)</div>
             <div className="mt-1 text-xl font-bold text-slate-900">{currency}{fmt(grand)}</div>
@@ -126,7 +135,7 @@ export function ParentOutputView({
                               <th className="py-1.5 pr-2 font-medium text-right">Purchase qty</th>
                               <th className="py-1.5 pr-2 font-medium text-right">Unit price</th>
                               <th className="py-1.5 pr-2 font-medium text-right">Material</th>
-                              <th className="py-1.5 font-medium text-right">Labour</th>
+                              {totals.labour > 0 && <th className="py-1.5 font-medium text-right">Labour</th>}
                             </tr>
                           </thead>
                           <tbody>
@@ -147,7 +156,9 @@ export function ParentOutputView({
                                     {saving && showTrade && <span className="ml-1 text-xs text-slate-400 line-through">{currency}{fmt(baseline!.unitPrice)}</span>}
                                   </td>
                                   <td className="py-2 pr-2 text-right font-medium text-slate-900">{currency}{fmt(l.lineTotal)}</td>
+                                  {totals.labour > 0 && (
                                   <td className="py-2 text-right text-slate-600">{l.labourTotal > 0 ? `${currency}${fmt(l.labourTotal)}` : '-'}</td>
+                                  )}
                                 </tr>
                               );
                             })}
@@ -177,8 +188,8 @@ export function ParentOutputView({
                   <span className="ml-2 text-xs text-slate-400">{fmt(c.quantity, 1)} {CUSTOM_BASIS_UNIT[c.basis]}</span>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium text-slate-900">{currency}{fmt(c.quantity * c.unitPrice + c.quantity * c.labourRate)}</div>
-                  <div className="text-xs text-slate-400">mat {currency}{fmt(c.quantity * c.unitPrice)} + labour {currency}{fmt(c.quantity * c.labourRate)}</div>
+                  <div className="font-medium text-slate-900">{currency}{fmt(c.quantity * c.unitPrice + (totals.labour > 0 ? c.quantity * c.labourRate : 0))}</div>
+                  {totals.labour > 0 && <div className="text-xs text-slate-400">mat {currency}{fmt(c.quantity * c.unitPrice)} + labour {currency}{fmt(c.quantity * c.labourRate)}</div>}
                 </div>
               </div>
             ))}
@@ -195,7 +206,7 @@ export function ParentOutputView({
 
       {/* End-of-flow options - same set as the roofing tool */}
       <div className="pb-8">
-        <ParentOutputActions job={job} catalog={catalog} onRestart={onRestart} />
+        <ParentOutputActions job={job} catalog={catalog} includeLabour={includeLabour} onRestart={onRestart} />
       </div>
     </div>
   );

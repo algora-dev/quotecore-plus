@@ -62,8 +62,8 @@ function entryPlanArea(measureSet: MeasurementSet, entryId: string): number {
   if (!e) return 0;
   return e.value * (e.quantity || 1);
 }
-export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: SupplierProduct[]): string {
-  const output = priceOutput(measureSet, catalog);
+export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: SupplierProduct[], includeLabour = true): string {
+  const output = priceOutput(measureSet, catalog, includeLabour);
   const lines = output.lines.map(l => ({
     description: l.entryLabel ? `${l.name} (${l.entryLabel})` : l.name,
     qty: Math.round(l.purchaseQty * 100) / 100,
@@ -76,7 +76,7 @@ export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: Supp
       description: c.name,
       qty: Math.round(c.quantity * 100) / 100,
       unit: CUSTOM_BASIS_UNIT[c.basis],
-      rate: Math.round((c.unitPrice + c.labourRate) * 100) / 100,
+      rate: Math.round((c.unitPrice + (includeLabour ? c.labourRate : 0)) * 100) / 100,
     });
   }
   const params = new URLSearchParams();
@@ -90,9 +90,11 @@ export function buildConvertToQuoteUrl(measureSet: MeasurementSet, catalog: Supp
 
 /** Actions card under the output: request supplier quote, order request,
  *  convert to customer quote (free quote generator), continue in QuoteCore+. */
-export function OutputActions({ measureSet, catalog, planImages }: {
+export function OutputActions({ measureSet, catalog, includeLabour = true, planImages }: {
   measureSet: MeasurementSet;
   catalog: SupplierProduct[];
+  /** false = supply-only pricing: labour zeroed in totals/actions */
+  includeLabour?: boolean;
   /** Plan images from the takeoff station - pre-attached to the supplier enquiry. */
   planImages?: { name: string; dataUrl: string; annotated: boolean }[];
 }) {
@@ -137,8 +139,8 @@ export function OutputActions({ measureSet, catalog, planImages }: {
     }
   }
 
-  const quoteUrl = buildConvertToQuoteUrl(measureSet, catalog);
-  const outputTotal = (() => { const o = priceOutput(measureSet, catalog); return o.material + o.labour; })();
+  const quoteUrl = buildConvertToQuoteUrl(measureSet, catalog, includeLabour);
+  const outputTotal = (() => { const o = priceOutput(measureSet, catalog, includeLabour); return o.material + o.labour; })();
 
   // Tracking: what the user did with the output (convert / order / enquiry)
   function logAction(action: 'convert' | 'order' | 'enquiry') {
@@ -304,6 +306,7 @@ export function OutputActions({ measureSet, catalog, planImages }: {
           measureSet={measureSet}
           catalog={catalog}
           currency={supplierCfg.currency}
+          includeLabour={includeLabour}
           initialIntent={modal}
           presetImages={planImages}
           onClose={() => setModal(null)}

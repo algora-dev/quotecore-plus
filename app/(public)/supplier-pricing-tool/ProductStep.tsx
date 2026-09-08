@@ -24,6 +24,7 @@ export function ProductStep({
   stepNum,
   totalSteps,
   hideNav = false,
+  includeLabour = true,
 }: {
   def: GroupDef;
   measureSet: MeasurementSet;
@@ -36,6 +37,8 @@ export function ProductStep({
   totalSteps: number;
   /** Fast mode: hide the per-group Back/Next nav (parent renders its own) */
   hideNav?: boolean;
+  /** false = supply-only pricing: hide labour inputs/previews */
+  includeLabour?: boolean;
 }) {
   const group = measureSet.groups[def.key];
   const [search, setSearch] = useState('');
@@ -212,6 +215,7 @@ export function ProductStep({
               def={def}
               measured={total}
               advanced={mode === 'advanced'}
+              showLabour={includeLabour}
               onEdit={() => setEditing(ap)}
               onRemove={() => removeApplied(ap.id)}
               onUpdate={patch => updateApplied(ap.id, patch)}
@@ -273,6 +277,7 @@ export function ProductStep({
                       def={def}
                       measured={entryPitched(measureSet, def.key, entry.id)}
                       advanced={mode === 'advanced'}
+                      showLabour={includeLabour}
                       onEdit={() => setEditing(ap)}
                       onRemove={() => removeApplied(ap.id)}
                       onUpdate={patch => updateApplied(ap.id, patch)}
@@ -322,6 +327,7 @@ export function ProductStep({
           p={catalog.find(x => x.id === editing.productId)!}
           def={def}
           cur={cur}
+          showLabour={includeLabour}
           onClose={() => setEditing(null)}
           onSave={patch => { updateApplied(editing.id, patch); setEditing(null); }}
         />
@@ -331,12 +337,14 @@ export function ProductStep({
 }
 
 /** One applied product row: name, qty, waste, live totals, edit/remove. */
-function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate, cur }: {
+function AppliedRow({ ap, p, def, measured, advanced, showLabour = true, onEdit, onRemove, onUpdate, cur }: {
   ap: AppliedProduct;
   p: SupplierProduct;
   def: GroupDef;
   measured: number;
   advanced: boolean;
+  /** false = supply-only pricing: hide labour previews */
+  showLabour?: boolean;
   onEdit: () => void;
   onRemove: () => void;
   onUpdate: (patch: Partial<AppliedProduct>) => void;
@@ -346,7 +354,7 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
   const purchaseQty = applyWaste(ap, calcQty);
   const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
   const mat = purchaseQty * unitPrice;
-  const lab = purchaseQty * (ap.labourRate || 0);
+  const lab = showLabour ? purchaseQty * (ap.labourRate || 0) : 0;
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white hover:bg-blue-50/40 hover:border-blue-200 px-3 py-2.5 transition flex-wrap">
@@ -357,7 +365,7 @@ function AppliedRow({ ap, p, def, measured, advanced, onEdit, onRemove, onUpdate
         </div>
         <div className="text-xs text-slate-400">
           {p.code} - {cur}{unitPrice.toFixed(2)}/{def.unit}
-          {ap.labourRate > 0 && <span> - labour {cur}{ap.labourRate.toFixed(2)}/{def.unit}</span>}
+          {showLabour && ap.labourRate > 0 && <span> - labour {cur}{ap.labourRate.toFixed(2)}/{def.unit}</span>}
         </div>
       </div>
       <label className="flex items-center gap-1.5 text-xs text-slate-500 flex-shrink-0">
@@ -494,11 +502,13 @@ function PickerRow({ p, def, cur, onPick, added }: { p: SupplierProduct; def: Gr
 
 /** Advanced product editor: labour rate, waste, qty override, price override
  *  (only when the supplier allows price edits on this product). */
-function ProductEditorModal({ ap, p, def, cur, onClose, onSave }: {
+function ProductEditorModal({ ap, p, def, cur, showLabour = true, onClose, onSave }: {
   ap: AppliedProduct;
   p: SupplierProduct;
   def: GroupDef;
   cur: string;
+  /** false = supply-only pricing: hide the labour rate input */
+  showLabour?: boolean;
   onClose: () => void;
   onSave: (patch: Partial<AppliedProduct>) => void;
 }) {
@@ -575,10 +585,12 @@ function ProductEditorModal({ ap, p, def, cur, onClose, onSave }: {
                 <p className="mt-0.5 text-[10px] text-slate-400">Area products use percentage waste only.</p>
               </div>
             )}
+            {showLabour && (
             <div>
               <label className="text-xs font-medium text-slate-600">Labour rate ({cur}/{def.unit})</label>
               <input type="number" min="0" step="0.1" value={labourRate} onChange={e => setLabourRate(e.target.value)} className={`${inputCls} mt-0.5 w-full`} />
             </div>
+            )}
             <div>
               <label className="text-xs font-medium text-slate-600">Quantity override ({def.unit})</label>
               <input type="number" min="0" step="any" value={qtyOverride} onChange={e => setQtyOverride(e.target.value)} placeholder="measured" className={`${inputCls} mt-0.5 w-full`} />

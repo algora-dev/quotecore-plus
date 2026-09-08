@@ -44,7 +44,7 @@ function effectiveQty(ap: AppliedProduct, measured: number): number {
   return ap.qtyOverride != null ? ap.qtyOverride : measured;
 }
 
-export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): OutputTotals {
+export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[], includeLabour = true): OutputTotals {
   const byId = new Map(catalog.map(p => [p.id, p]));
   const lines: OutputLine[] = [];
 
@@ -70,7 +70,7 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
     const purchaseQty = applyWaste({ ...ap, wasteMode: wasteModeFor(p, ap) }, calcQty);
     const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
     const lineTotal = Math.round(purchaseQty * unitPrice * 100) / 100;
-    const labourTotal = Math.round(purchaseQty * (ap.labourRate || 0) * 100) / 100;
+    const labourTotal = includeLabour ? Math.round(purchaseQty * (ap.labourRate || 0) * 100) / 100 : 0;
 
     lines.push({
       groupKey: ap.groupKey,
@@ -93,7 +93,7 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[]): Ou
 
   const round = (n: number) => Math.round(n * 100) / 100;
   const customMaterial = round(set.customComponents?.reduce((s, c) => s + c.quantity * c.unitPrice, 0) || 0);
-  const customLabour = round(set.customComponents?.reduce((s, c) => s + c.quantity * c.labourRate, 0) || 0);
+  const customLabour = includeLabour ? round(set.customComponents?.reduce((s, c) => s + c.quantity * c.labourRate, 0) || 0) : 0;
   return {
     material: round(lines.reduce((s, l) => s + l.lineTotal, 0)) + customMaterial,
     labour: round(lines.reduce((s, l) => s + l.labourTotal, 0)) + customLabour,

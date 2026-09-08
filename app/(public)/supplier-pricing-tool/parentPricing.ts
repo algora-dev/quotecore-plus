@@ -35,7 +35,7 @@ export interface ParentOutputTotals {
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
-export function priceParentOutput(job: ParentJob, catalog: SupplierProduct[]): ParentOutputTotals {
+export function priceParentOutput(job: ParentJob, catalog: SupplierProduct[], includeLabour = true): ParentOutputTotals {
   const byId = new Map(catalog.map(p => [p.id, p]));
   const lines: ParentOutputLine[] = [];
 
@@ -66,12 +66,12 @@ export function priceParentOutput(job: ParentJob, catalog: SupplierProduct[]): P
       purchaseQty,
       unitPrice,
       lineTotal: round(purchaseQty * unitPrice),
-      labourTotal: round(purchaseQty * (ap.labourRate || 0)),
+      labourTotal: includeLabour ? round(purchaseQty * (ap.labourRate || 0)) : 0,
     });
   }
 
   const customMaterial = round(job.customComponents.reduce((s, c) => s + c.quantity * c.unitPrice, 0));
-  const customLabour = round(job.customComponents.reduce((s, c) => s + c.quantity * c.labourRate, 0));
+  const customLabour = includeLabour ? round(job.customComponents.reduce((s, c) => s + c.quantity * c.labourRate, 0)) : 0;
 
   return {
     material: round(lines.reduce((s, l) => s + l.lineTotal, 0)) + customMaterial,

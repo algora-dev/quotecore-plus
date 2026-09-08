@@ -48,6 +48,8 @@ export interface SupplierDefinition {
     quoteCoreConnect: boolean;
     convertToQuote: boolean;
     emailCapture: boolean;
+    /** supply-mode choice at flow start (supply only vs supply + install) */
+    pricingMode: boolean;
   };
   products: SupplierProduct[];
   /** external endpoint overrides - defaults are same-origin relative paths.

@@ -28,6 +28,10 @@ export interface SupplierFeatures {
   convertToQuote: boolean;
   /** email-capture modal at the output (lead capture for the supplier) */
   emailCapture: boolean;
+  /** supply-mode choice at the start of the flow: "Supply only (materials)"
+   *  vs "Supply + install". When false the step is bypassed and the flow
+   *  behaves exactly as before (labour included where rates are set). */
+  pricingMode: boolean;
 }
 
 export interface SupplierConfig {

@@ -12,6 +12,8 @@ import { emptyMeasurementSet, GROUP_DEFS } from './types';
 import type { SupplierProduct } from './types';
 import { StepProgress } from './StepShell';
 import { EntryModeStep } from './EntryModeStep';
+import { PricingModeChoice, includeLabourFor } from './PricingModeChoice';
+import type { PricingMode } from './PricingModeChoice';
 import { MeasureEntryStep } from './MeasureEntryStep';
 import { ProductStep } from './ProductStep';
 import { OutputView } from './OutputView';
@@ -29,6 +31,7 @@ const FLOW_KEY = '***';
 interface PersistedFlow {
   entryMode: EntryMode | null;
   haveSubMode: HaveSubMode | null;
+  pricingMode: PricingMode | null;
   measureSet: MeasurementSet;
   mode: Mode;
   flowSpeed: 'guide' | 'fast';
@@ -52,6 +55,7 @@ export function PortalFlow() {
   const restored = readPersisted();
   const [entryMode, setEntryMode] = useState<EntryMode | null>(restored?.entryMode ?? null);
   const [haveSubMode, setHaveSubMode] = useState<HaveSubMode | null>(restored?.haveSubMode ?? null);
+  const [pricingMode, setPricingMode] = useState<PricingMode | null>(restored?.pricingMode ?? null);
   const [planFile, setPlanFile] = useState<File | null>(null);
   const [planUrl, setPlanUrl] = useState<string | null>(null);
   const [measureSet, setMeasureSet] = useState<MeasurementSet>(restored?.measureSet ?? emptyMeasurementSet());
@@ -72,10 +76,10 @@ export function PortalFlow() {
   // Persist after every change so Back/refresh/output-return never loses work
   useEffect(() => {
     try {
-      const p: PersistedFlow = { entryMode, haveSubMode, measureSet, mode, flowSpeed, step };
+      const p: PersistedFlow = { entryMode, haveSubMode, pricingMode, measureSet, mode, flowSpeed, step };
       window.sessionStorage.setItem(FLOW_KEY, JSON.stringify(p));
     } catch { /* ignore quota */ }
-  }, [entryMode, haveSubMode, measureSet, mode, flowSpeed, step]);
+  }, [entryMode, haveSubMode, pricingMode, measureSet, mode, flowSpeed, step]);
 
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
   const productDefs = populated;
@@ -86,6 +90,10 @@ export function PortalFlow() {
   // can never be satisfied - treat trade pricing as public in that case.
   const { config, basePath } = useSupplierConfig();
   const { user } = useFreeToolsAuth();
+  // Supply-mode choice (materials only vs materials + install). Bypassed
+  // (labour included) when the supplier config disables the feature.
+  const showPricingMode = config.features.pricingMode;
+  const includeLabour = showPricingMode ? includeLabourFor(pricingMode) : true;
   const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
   const trade = effectiveTrade(config, readAdminData(config.slug, config), user?.email);
   const catalog = useMemo<SupplierProduct[]>(() =>
@@ -128,6 +136,7 @@ export function PortalFlow() {
   function reset() {
     setEntryMode(null);
     setHaveSubMode(null);
+    setPricingMode(null);
     setPlanFile(null);
     if (planUrl) URL.revokeObjectURL(planUrl);
     setPlanUrl(null);
@@ -199,6 +208,9 @@ export function PortalFlow() {
             setEntryMode={setEntryMode}
             haveSubMode={haveSubMode}
             setHaveSubMode={setHaveSubMode}
+            pricingMode={pricingMode}
+            setPricingMode={setPricingMode}
+            showPricingMode={showPricingMode}
             planFile={planFile}
             setPlanFile={f => {
               if (planUrl) URL.revokeObjectURL(planUrl);
@@ -232,6 +244,7 @@ export function PortalFlow() {
             flowSpeed={flowSpeed}
             catalog={catalog}
             mode={mode}
+            includeLabour={includeLabour}
             onBack={() => setStep(1)}
             onNext={() => setStep(customStepNum)}
           />
@@ -249,6 +262,7 @@ export function PortalFlow() {
                 catalog={catalog}
                 setMeasureSet={setMeasureSet}
                 mode={mode}
+                includeLabour={includeLabour}
                 hideNav
                 onBack={() => setStep(2)}
                 onNext={() => {}}
@@ -278,6 +292,7 @@ export function PortalFlow() {
             catalog={catalog}
             setMeasureSet={setMeasureSet}
             mode={mode}
+            includeLabour={includeLabour}
             onBack={() => setStep(step - 1)}
             onNext={() => setStep(step + 1)}
             stepNum={productStepIdx + 1}
@@ -290,6 +305,7 @@ export function PortalFlow() {
           <CustomComponentsStep
             measureSet={measureSet}
             setMeasureSet={setMeasureSet}
+            includeLabour={includeLabour}
             onBack={() => setStep(customStepNum - 1)}
             onNext={() => setStep(outputStepNum)}
           />
@@ -302,6 +318,8 @@ export function PortalFlow() {
             baselineCatalog={config.products}
             showTrade={showTrade}
             tradeLabel={showTrade && trade.pct > 0 ? trade.label : null}
+            includeLabour={includeLabour}
+            pricingMode={showPricingMode ? pricingMode : null}
             onBack={() => setStep(customStepNum)}
             onAddCustom={() => setStep(customStepNum)}
             onRestart={reset}

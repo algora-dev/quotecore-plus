@@ -1,4 +1,4 @@
-﻿// Demo supplier definition: Apex Roofing - the generic FULL-DEMO roofing
+// Demo supplier definition: Apex Roofing - the generic FULL-DEMO roofing
 // build (blue/slate brand from the T3 Labs demo site). Same roofing flow
 // and catalog shape as Burton; Burton stays as the "real customer" example.
 
@@ -33,6 +33,7 @@ export const APEX_ROOFING = {
     quoteCoreConnect: true,
     convertToQuote: true,
     emailCapture: true,
+    pricingMode: true,
   },  products: [
     // ---- Roof coverings (area) - picking one sets roof type + family ----
     { id: 'cupa-r18', name: 'CUPA R18 Natural Spanish Slate 500x250mm', code: 'SLT-CU-R18', basis: 'area', groups: ['roofAreas'], component: 'covering', roofTypes: ['slate'], family: 'CUPA Slate', unitPrice: 48.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 21.0, priceEditable: true, suggested: true },

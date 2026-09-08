@@ -9,9 +9,11 @@ import type { EntryMode, HaveSubMode } from './types';
 import { useFreeToolsAuth } from '../_components/FreeToolsAuthProvider';
 import { useSupplierConfig } from './supplierConfig';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
+import { PricingModeChoice } from './PricingModeChoice';
+import type { PricingMode } from './PricingModeChoice';
 
 export function EntryModeStep({
-  entryMode, setEntryMode, haveSubMode, setHaveSubMode, planFile, setPlanFile, onNext,
+  entryMode, setEntryMode, haveSubMode, setHaveSubMode, planFile, setPlanFile, onNext, pricingMode, setPricingMode, showPricingMode,
 }: {
   entryMode: EntryMode | null;
   setEntryMode: (m: EntryMode | null) => void;
@@ -20,6 +22,10 @@ export function EntryModeStep({
   planFile: File | null;
   setPlanFile: (f: File | null) => void;
   onNext: () => void;
+  /** supply-mode choice (materials only vs materials + install) */
+  pricingMode: PricingMode | null;
+  setPricingMode: (m: PricingMode) => void;
+  showPricingMode: boolean;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const pdfPicker = usePdfPagePicker();
@@ -44,6 +50,7 @@ export function EntryModeStep({
   const canNext = entryMode === 'measure'
     ? planFile !== null
     : entryMode === 'have' && haveSubMode !== null;
+  const modeOk = !showPricingMode || pricingMode != null;
 
   function pick(mode: EntryMode) {
     // switching choice resets the dependent state
@@ -136,10 +143,15 @@ export function EntryModeStep({
         </div>
       )}
 
+      {/* Supply-mode choice: materials only vs materials + install */}
+      {showPricingMode && (
+        <PricingModeChoice pricingMode={pricingMode} setPricingMode={setPricingMode} />
+      )}
+
       <div className="flex justify-end">
         <button
           onClick={onNext}
-          disabled={!canNext}
+          disabled={!canNext || !modeOk}
           className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
         >
           {entryMode === 'measure' ? 'Proceed to measuring' : 'Next'}

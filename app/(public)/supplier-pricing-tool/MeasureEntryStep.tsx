@@ -27,7 +27,7 @@ const inputCls = 'mt-0.5 w-full rounded-lg border border-slate-300 px-3 py-2 tex
 
 export function MeasureEntryStep({
   measureSet, setMeasureSet, onBack, onNext, fromTakeoff = false, flowSpeed = 'fast',
-  catalog, mode = 'standard',
+  catalog, mode = 'standard', includeLabour = true,
 }: {
   measureSet: MeasurementSet;
   setMeasureSet: (s: MeasurementSet) => void;
@@ -40,6 +40,8 @@ export function MeasureEntryStep({
   /** catalog + mode: manual flow assigns products ON THE SAME page as entry */
   catalog?: SupplierProduct[];
   mode?: Mode;
+  /** false = supply-only pricing: hide labour inputs/previews */
+  includeLabour?: boolean;
 }) {
   const [guideIdx, setGuideIdx] = useState(0);
   const populated = GROUP_DEFS.filter(g => measureSet.groups[g.key].entries.length > 0);
@@ -94,6 +96,7 @@ export function MeasureEntryStep({
                 catalog={catalog}
                 setMeasureSet={setMeasureSet}
                 mode={mode}
+                includeLabour={includeLabour}
                 hideNav
                 onBack={onBack}
                 onNext={onNext}
@@ -122,6 +125,7 @@ export function MeasureEntryStep({
                   catalog={catalog}
                   setMeasureSet={setMeasureSet}
                   mode={mode}
+                  includeLabour={includeLabour}
                   hideNav
                   onBack={onBack}
                   onNext={onNext}

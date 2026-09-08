@@ -15,6 +15,8 @@ import { ParentProductStep } from './ParentProductStep';
 import { ParentOutputView } from './ParentOutputView';
 import { CustomComponentsStep } from './CustomComponentsStep';
 import { ParentTakeoffStation } from './ParentTakeoffStation';
+import { PricingModeChoice, includeLabourFor } from './PricingModeChoice';
+import type { PricingMode } from './PricingModeChoice';
 import { tradeConfigFor } from './tradeConfig';
 import type { TradeConfig } from './tradeConfig';
 import { tradeUnitPrice, useSupplierConfig } from './supplierConfig';
@@ -26,6 +28,7 @@ const FLOW_KEY = 'qc-spt-parentflow-v2';
 
 interface PersistedParentFlow {
   entryMode: 'measure' | 'have' | null;
+  pricingMode: PricingMode | null;
   step: number;
   mode: 'standard' | 'advanced';
   job: ParentJob;
@@ -51,6 +54,7 @@ export function ParentFlow() {
 
   const restored = readPersisted();
   const [entryMode, setEntryMode] = useState<'measure' | 'have' | null>(restored?.entryMode ?? null);
+  const [pricingMode, setPricingMode] = useState<PricingMode | null>(restored?.pricingMode ?? null);
   const [planUrl, setPlanUrl] = useState<string | null>(null);
   const [step, setStep] = useState(() => {
     // A restored measure flow at the station step has no plan file to
@@ -66,9 +70,9 @@ export function ParentFlow() {
 
   useEffect(() => {
     try {
-      window.sessionStorage.setItem(FLOW_KEY, JSON.stringify({ entryMode, step, mode, job } satisfies PersistedParentFlow));
+      window.sessionStorage.setItem(FLOW_KEY, JSON.stringify({ entryMode, pricingMode, step, mode, job } satisfies PersistedParentFlow));
     } catch { /* ignore quota */ }
-  }, [entryMode, step, mode, job]);
+  }, [entryMode, pricingMode, step, mode, job]);
 
   // Trade pricing parity with the roofing flow (customer tier beats blanket)
   const showTrade = (config.features.login && user != null) || !config.tradeRequiresLogin;
@@ -105,6 +109,7 @@ export function ParentFlow() {
 
   function reset() {
     setEntryMode(null);
+    setPricingMode(null);
     if (planUrl) URL.revokeObjectURL(planUrl);
     setPlanUrl(null);
     setJob(emptyParentJob());
@@ -155,6 +160,9 @@ export function ParentFlow() {
             trade={trade}
             entryMode={entryMode}
             setEntryMode={setEntryMode}
+            pricingMode={pricingMode}
+            setPricingMode={setPricingMode}
+            showPricingMode={config.features.pricingMode}
             planUrl={planUrl}
             setPlanUrl={setPlanUrl}
             onBackToChoice={() => { setEntryMode(null); setPlanUrl(null); }}
@@ -189,6 +197,7 @@ export function ParentFlow() {
             setJob={setJob}
             catalog={catalog}
             mode={mode}
+            includeLabour={config.features.pricingMode ? includeLabourFor(pricingMode) : true}
             currency={config.currency}
             trade={trade}
             onBack={() => setStep(measureStepNum)}
@@ -200,6 +209,7 @@ export function ParentFlow() {
           <CustomComponentsStep
             measureSet={customsShim}
             setMeasureSet={setCustomsShim}
+            includeLabour={config.features.pricingMode ? includeLabourFor(pricingMode) : true}
             onBack={() => setStep(productStepNum)}
             onNext={() => setStep(outputStepNum)}
           />
@@ -212,6 +222,8 @@ export function ParentFlow() {
             catalog={catalog}
             baselineCatalog={config.products}
             planImages={planImages ?? undefined}
+            includeLabour={config.features.pricingMode ? includeLabourFor(pricingMode) : true}
+            pricingMode={config.features.pricingMode ? pricingMode : null}
             showTrade={showTrade}
             tradeLabel={showTrade && tradeInfo.pct > 0 ? tradeInfo.label : null}
             currency={config.currency}
@@ -229,7 +241,7 @@ export function ParentFlow() {
 /** Step 1: two paths - measure from plans (upload PNG/JPG/PDF) or enter
  *  known measurements. The station handles multi-plan in-session. */
 function ParentEntryStep({
-  trade, entryMode, setEntryMode, planUrl, setPlanUrl, onBackToChoice, onNext,
+  trade, entryMode, setEntryMode, planUrl, setPlanUrl, onBackToChoice, onNext, pricingMode, setPricingMode, showPricingMode,
 }: {
   trade: TradeConfig;
   entryMode: 'measure' | 'have' | null;
@@ -238,6 +250,9 @@ function ParentEntryStep({
   setPlanUrl: (u: string | null) => void;
   onBackToChoice: () => void;
   onNext: () => void;
+  pricingMode: PricingMode | null;
+  setPricingMode: (m: PricingMode) => void;
+  showPricingMode: boolean;
 }) {
   const pdfPicker = usePdfPagePicker();
   const [fileName, setFileName] = useState<string | null>(null);
@@ -358,6 +373,11 @@ function ParentEntryStep({
         </div>
       </div>
 
+      {/* Supply-mode choice: materials only vs materials + install */}
+      {showPricingMode && (
+        <PricingModeChoice pricingMode={pricingMode} setPricingMode={setPricingMode} />
+      )}
+
       <div className="flex items-center justify-between">
         {entryMode ? (
           <button onClick={onBackToChoice} className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition">
@@ -366,7 +386,7 @@ function ParentEntryStep({
         ) : <span className="text-xs text-slate-400">Step 1 of 5</span>}
         <button
           onClick={onNext}
-          disabled={entryMode === null || (entryMode === 'measure' && !planUrl) || busy}
+          disabled={entryMode === null || (entryMode === 'measure' && !planUrl) || busy || (showPricingMode && pricingMode === null)}
           className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-40"
         >
           {entryMode === 'measure' ? 'Next: Measure your plans' : `Next: ${trade.areaLabel}`}

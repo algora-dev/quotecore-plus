@@ -25,6 +25,8 @@ export interface EnquiryModalProps {
   measureSet: import('./types').MeasurementSet;
   catalog: import('./types').SupplierProduct[];
   currency: string;
+  /** false = supply-only pricing: labour zeroed in the totals payload */
+  includeLabour?: boolean;
   /** 'quote' pre-selects detailed_quote, 'order' pre-selects order_request */
   initialIntent?: 'quote' | 'order';
   /** Plan images captured by the takeoff station (annotated drawings +
@@ -35,7 +37,7 @@ export interface EnquiryModalProps {
 }
 
 export function SupplierEnquiryModal({
-  supplierName, supplierSlug, measureSet, catalog, currency, initialIntent, presetImages, onClose,
+  supplierName, supplierSlug, measureSet, catalog, currency, includeLabour = true, initialIntent, presetImages, onClose,
 }: EnquiryModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -87,7 +89,7 @@ export function SupplierEnquiryModal({
   const nameValid = name.trim().length >= 2;
   const canSend = nameValid && emailValid && !sending;
 
-  const output = priceOutput(measureSet, catalog);
+  const output = priceOutput(measureSet, catalog, includeLabour);
   const cur = currency;
 
   /** Enriched totals payload: groups -> lines, respecting the toggles. */

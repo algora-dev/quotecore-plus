@@ -22,7 +22,7 @@ const BASIS_PRODUCT_BASIS: Record<ParentBasis, 'area' | 'lineal' | 'count'> = {
 const BASIS_LABEL: Record<ParentBasis, string> = { area: 'Area', lineal: 'Length', point: 'Item' };
 
 export function ParentProductStep({
-  job, setJob, catalog, mode, currency, trade, onBack, onNext,
+  job, setJob, catalog, mode, currency, trade, includeLabour = true, onBack, onNext,
 }: {
   job: ParentJob;
   setJob: (j: ParentJob) => void;
@@ -30,6 +30,8 @@ export function ParentProductStep({
   mode: 'standard' | 'advanced';
   currency: string;
   trade: TradeConfig;
+  /** false = supply-only pricing: hide labour inputs/previews */
+  includeLabour?: boolean;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -80,6 +82,7 @@ export function ParentProductStep({
                     setJob={setJob}
                     catalog={catalog}
                     mode={mode}
+                    includeLabour={includeLabour}
                     currency={currency}
                     pickerOpen={openPicker === comp.id}
                     onTogglePicker={() => setOpenPicker(openPicker === comp.id ? null : comp.id)}
@@ -107,7 +110,7 @@ export function ParentProductStep({
 }
 
 function ComponentRow({
-  comp, job, setJob, catalog, mode, currency, pickerOpen, onTogglePicker,
+  comp, job, setJob, catalog, mode, currency, includeLabour = true, pickerOpen, onTogglePicker,
 }: {
   comp: ParentJob['components'][number];
   job: ParentJob;
@@ -115,6 +118,8 @@ function ComponentRow({
   catalog: SupplierProduct[];
   mode: 'standard' | 'advanced';
   currency: string;
+  /** false = supply-only pricing: hide labour inputs/previews */
+  includeLabour?: boolean;
   pickerOpen: boolean;
   onTogglePicker: () => void;
 }) {
@@ -176,7 +181,7 @@ function ComponentRow({
                     <span className="ml-2 text-xs text-slate-400">
                       {currency}{product.unitPrice.toFixed(2)}/{unit}
                       {ap.wastePct > 0 && ` - ${ap.wastePct}% waste`}
-                      {ap.labourRate > 0 ? ` - ${currency}${ap.labourRate.toFixed(2)}/${unit} labour` : ''}
+                      {includeLabour && ap.labourRate > 0 ? ` - ${currency}${ap.labourRate.toFixed(2)}/${unit} labour` : ''}
                     </span>
                   </div>
                   <button onClick={() => removeApplied(ap.id)}
@@ -191,11 +196,13 @@ function ComponentRow({
                       <input type="number" min="0" max="100" step="0.5" value={ap.wastePct}
                         onChange={e => patchApplied(ap.id, { wastePct: parseFloat(e.target.value) || 0 })} className={inputCls} />
                     </div>
+                    {includeLabour && (
                     <div>
                       <label className="text-xs font-medium text-slate-600">Labour {currency}/{unit}</label>
                       <input type="number" min="0" step="0.5" value={ap.labourRate}
                         onChange={e => patchApplied(ap.id, { labourRate: parseFloat(e.target.value) || 0 })} className={inputCls} />
                     </div>
+                    )}
                     <div>
                       <label className="text-xs font-medium text-slate-600">Qty override ({unit})</label>
                       <input type="number" min="0" step="0.1" value={ap.qtyOverride ?? ''}

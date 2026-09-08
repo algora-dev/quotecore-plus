@@ -35,6 +35,7 @@ export const OAKLINE_FLOORING = {
     quoteCoreConnect: true,
     convertToQuote: true,
     emailCapture: true,
+    pricingMode: true,
   },
   products: [
     // ---- Floor coverings (area, applied per floor system) ----
