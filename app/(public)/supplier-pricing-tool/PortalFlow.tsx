@@ -145,6 +145,14 @@ export function PortalFlow() {
     try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
   }
 
+  // Header brand click restarts the flow (with a confirm in the header)
+  useEffect(() => {
+    const restart = () => reset();
+    window.addEventListener('qc-spt-restart', restart);
+    return () => window.removeEventListener('qc-spt-restart', restart);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function handleTakeoffFinish(set: MeasurementSet, planImages?: { name: string; dataUrl: string; annotated: boolean }[]) {
     setMeasureSet(set);
     setPlanImages(planImages ?? null);

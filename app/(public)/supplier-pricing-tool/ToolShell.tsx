@@ -16,17 +16,22 @@ function Header() {
 
   return (
     <header className="border-b border-black/20" style={{ backgroundColor: config.headerColor ?? config.brandColor }}>
-      <div className="mx-auto max-w-5xl px-4 py-3 md:py-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex items-center gap-3">
+      <div className="mx-auto max-w-5xl px-4 py-5 md:py-6 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <button
+          type="button"
+          title="Back to the start"
+          onClick={() => { if (window.confirm('Start a new job? This takes you back to the start of the flow and clears your current measurements and products.')) window.dispatchEvent(new CustomEvent('qc-spt-restart')); }}
+          className="flex items-center gap-4 cursor-pointer text-left"
+        >
           {headerLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <span className={`flex items-center justify-center ${config.logoWhiteBox ? 'rounded-lg bg-white px-2 py-1' : ''}`}>
+            <span className={`flex items-center justify-center ${config.logoWhiteBox ? 'rounded-lg bg-white px-2.5 py-1.5' : ''}`}>
               {/* eslint-disable-next-line @nextjs/next/no-img-element */}
-              <img src={headerLogo} alt={config.name} className={`${config.logoWhiteBox ? 'h-8' : 'h-9'} w-auto object-contain`} onError={e => { if (config.logoUrl && e.target instanceof HTMLImageElement && e.target.src !== config.logoUrl) e.target.src = config.logoUrl; }} />
+              <img src={headerLogo} alt={config.name} className={`${config.logoWhiteBox ? 'h-12' : 'h-12'} w-auto object-contain`} onError={e => { if (config.logoUrl && e.target instanceof HTMLImageElement && e.target.src !== config.logoUrl) e.target.src = config.logoUrl; }} />
             </span>
           ) : (
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold"
+              className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold"
               style={{ backgroundColor: '#fff', color: config.brandColor }}
             >
               {config.name.slice(0, 1).toUpperCase()}
@@ -34,18 +39,18 @@ function Header() {
           )}
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">{config.name}</span>
+              <span className="text-base md:text-lg font-semibold text-white">{config.name}</span>
               {config.demo && (
                 <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white/80" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }}>
                   Demo
                 </span>
               )}
             </div>
-            <div className="hidden sm:block text-xs text-white/60">
-              {config.tagline}{config.demo ? ' - demo only, not a real company' : ''}
+            <div className="hidden sm:block text-sm text-white/60">
+              {config.tagline}{config.demo && config.demoDisclaimer !== false ? ' - demo only, not a real company' : ''}
             </div>
           </div>
-        </div>
+        </button>
         <div className="flex items-center gap-3">
           {config.poweredBy && <span className="hidden md:inline text-xs text-white/60">Powered by QuoteCore+</span>}
           {config.features.adminPanel && (
@@ -100,6 +105,23 @@ function ThemeStyle() {
       .spt-scope .focus\\:border-blue-400:focus { border-color: ${t.accent}; }
       .spt-scope .shadow-\\[0_0_16px_rgba\\(37\\,99\\,235\\,0\\.5\\)\\] { box-shadow: 0 0 16px rgba(${hexToRgb(t.primary)}, ${glow}); }
       .spt-scope .hover\\:shadow-\\[0_0_12px_rgba\\(255\\,107\\,53\\,0\\.4\\)\\]:hover { box-shadow: 0 0 12px rgba(${hexToRgb(t.accent)}, 0.45); }
+      /* enquiry/lead modals + action tiles: follow the supplier theme */
+      .spt-scope .bg-blue-600 { background-color: ${t.accent}; }
+      .spt-scope .hover\:bg-blue-700:hover { background-color: ${t.accentHover}; }
+      .spt-scope .bg-blue-50\/50 { background-color: rgba(${hexToRgb(t.accent)}, 0.12); }
+      .spt-scope .bg-blue-50 { background-color: rgba(${hexToRgb(t.accent)}, ${wash}); }
+      .spt-scope .ring-blue-100 { --tw-ring-color: ${t.border}; }
+      .spt-scope .ring-blue-500\/40 { --tw-ring-color: rgba(${hexToRgb(t.accent)}, 0.4); }
+      .spt-scope .ring-blue-400\/40 { --tw-ring-color: rgba(${hexToRgb(t.accent)}, 0.4); }
+      .spt-scope .ring-blue-400 { --tw-ring-color: ${t.border}; }
+      .spt-scope .text-blue-400 { color: ${t.accent}; }
+      .spt-scope .text-blue-300 { color: ${t.accent}; }
+      .spt-scope .text-blue-700 { color: ${t.accent}; }
+      .spt-scope .bg-blue-500\/20 { background-color: rgba(${hexToRgb(t.accent)}, 0.2); }
+      .spt-scope .bg-blue-600\/20 { background-color: rgba(${hexToRgb(t.accent)}, 0.2); }
+      .spt-scope .border-blue-300 { border-color: ${t.borderHover}; }
+      .spt-scope .hover\:border-blue-300:hover { border-color: ${t.borderHover}; }
+      .spt-scope .border-blue-400 { border-color: ${t.accent}; }
       .spt-scope .pill-shimmer::before {
         background: linear-gradient(90deg, transparent 0%, transparent 40%, ${t.accent} 50%, transparent 60%, transparent 100%);
         background-size: 200% 100%;

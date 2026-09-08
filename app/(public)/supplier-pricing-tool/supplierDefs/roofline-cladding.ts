@@ -16,6 +16,7 @@ export const ROOFLINE_CLADDING = {
   brandColor: '#C8102E', // Roofline red (output accents)
   headerColor: '#111111', // black header
   logoWhiteBox: true,
+  demoDisclaimer: false,
   theme: {
     primary: '#111111', // Roofline black
     primaryHover: '#2A2A2A',

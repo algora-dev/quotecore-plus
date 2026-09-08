@@ -47,6 +47,9 @@ export interface SupplierDefinition {
   /** render the header logo inside a white rounded box (dark-background
    *  logos that would disappear on a dark header). */
   logoWhiteBox?: boolean;
+  /** show " - demo only, not a real company" after the tagline (default
+   *  true). False for demos of REAL companies (e.g. Roofline Canterbury). */
+  demoDisclaimer?: boolean;
   theme: SupplierTheme;
   poweredBy: boolean;
   discountPct: number;

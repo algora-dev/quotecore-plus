@@ -196,7 +196,7 @@ export function OutputActions({ measureSet, catalog, includeLabour = true, planI
         </button>
       )}
 
-      <div className="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
         <ActionTile
           icon={
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -216,19 +216,19 @@ export function OutputActions({ measureSet, catalog, includeLabour = true, planI
         />
         <ActionTile
           icon={
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
           }
-          title="Request supplier quote"
-          desc="Send this pricing to the supplier and ask for a formal quote."
+          title="Send to supplier"
+          desc={`Send this output with any supporting documents to ${supplierCfg.name} - request a quote or place an order.`}
           onClick={() => { logAction('enquiry'); setModal('quote'); }}
         />
         <ActionTile
           icon={
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
           }
-          title="Send order request"
-          desc="Place an order request for these products and quantities."
-          onClick={() => { logAction('order'); setModal('order'); }}
+          title="Send to supplier"
+          desc={`Send this output with any supporting documents to ${supplierCfg.name} - request a quote or place an order.`}
+          onClick={() => { logAction('enquiry'); setModal('quote'); }}
         />
       </div>
       {saveError && (

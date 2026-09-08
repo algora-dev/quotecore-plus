@@ -54,6 +54,8 @@ export interface SupplierConfig {
   headerColor?: string;
   /** render the header logo inside a white rounded box (dark-bg logos) */
   logoWhiteBox?: boolean;
+  /** show " - demo only, not a real company" after the tagline (default true) */
+  demoDisclaimer?: boolean;
   /** scoped theme palette - drives the tool shell CSS remap */
   theme: SupplierTheme;
   /** Powered by QuoteCore+ vs white-label */

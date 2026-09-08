@@ -117,6 +117,14 @@ export function ParentFlow() {
     try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
   }
 
+  // Header brand click restarts the flow (with a confirm in the header)
+  useEffect(() => {
+    const restart = () => reset();
+    window.addEventListener('qc-spt-restart', restart);
+    return () => window.removeEventListener('qc-spt-restart', restart);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   /** Station finished: merge its parents/entries/customs into the job and
    *  land on the measurement edit step so names/values can be reviewed. */
   function handleStationFinish(next: ParentJob, planImages?: { name: string; dataUrl: string; annotated: boolean }[]) {

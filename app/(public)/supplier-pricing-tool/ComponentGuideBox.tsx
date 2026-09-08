@@ -171,6 +171,9 @@ export function ComponentGuideBox({ componentKey, entries }: ComponentGuideBoxPr
           <p className="text-[11px] text-slate-400 mt-0.5">
             {GUIDE_DESC[componentKey] ?? `Example diagram showing where ${label.toLowerCase()} appear on a roof plan.`}
           </p>
+          <p className="mt-1 text-[10px] italic text-slate-400">
+            Example diagram only - it shows how this component typically appears in plan view on a roof. Your plan's layout can differ; it's just a visual guide if you're not sure what the component is.
+          </p>
           {typeof entries === 'number' && entries > 0 && (
             <p className="mt-0.5 text-[11px] font-medium text-blue-600">
               {entries} {entries === 1 ? 'entry' : 'entries'} added
