@@ -20,8 +20,8 @@ const ITEMS: AccordionItem[] = [
   {
     id: 'measure-from-plan',
     icon: 'M3 12l9-9 9 9M5 10v10h14V10',
-    heading: 'Need to measure a roof or job from plans?',
-    support: 'Upload your plans and measure everything digitally with your real pricing.',
+    heading: 'Need to measure a roof or job from plans or satellite imagery?',
+    support: 'Upload your plans or satellite imagery and measure everything digitally with your real pricing.',
     badge: 'Free · No signup',
     toolName: 'Free Roof Takeoff',
     benefits: [

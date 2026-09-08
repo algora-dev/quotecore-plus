@@ -104,6 +104,7 @@ const TRUST_POINTS = [
   'No signup required',
   'No credit card',
   'Metric, imperial & roofing squares',
+  'Upload plans or satellite imagery',
   'Nothing saved unless you continue in QuoteCore+',
 ];
 
