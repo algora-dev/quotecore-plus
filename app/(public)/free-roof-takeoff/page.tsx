@@ -151,6 +151,11 @@ export default function FreeRoofTakeoffPage() {
           The QuoteCore Plus free roof takeoff lets you upload a roof plan, set the drawing scale, and measure roof
           areas, ridges, hips, valleys, eaves and other roof dimensions directly in your browser. No signup required.
         </p>
+        <p className="mt-3 text-sm text-slate-600">
+          Wondering how accurate remote measuring is? See our{" "}
+          <a href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">Google Earth roof measurement accuracy study</a>{" "}
+          - 10 real roofs measured remotely, then verified on site.
+        </p>
         <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           {TRUST_POINTS.map(point => (
             <li key={point} className="flex items-center gap-1.5 text-xs font-medium text-slate-600">

@@ -38,7 +38,7 @@ export default function ResearchIndexPage() {
             <p className="text-xs font-semibold text-[#BD4A1A]">Field study · 10 roofs</p>
             <h2 className="mt-2 text-lg font-semibold text-slate-900">How Accurate Is Measuring a Roof With Google Earth?</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-600">
-              We remotely measured 10 real roofs using free aerial imagery and QuoteCore+, then physically verified every measurement on site. 3.52% average area variance, 136 component comparisons, full dataset published.
+              We remotely measured 10 real roofs using free aerial imagery and QuoteCore+, then physically verified every measurement on site. 3.52% average area error, 136 component comparisons, full dataset published.
             </p>
           </Link>
         </div>

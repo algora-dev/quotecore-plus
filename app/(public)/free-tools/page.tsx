@@ -93,6 +93,11 @@ export default function FreeToolsPage() {
           <p className="mt-3 text-xs md:text-sm text-slate-500 leading-relaxed">
             Use the free tools whenever you need them. If you want everything connected in one workspace, that is what QuoteCore+ is built for.
           </p>
+          <p className="mt-2 text-xs md:text-sm text-slate-500 leading-relaxed">
+            Curious how accurate the free remote takeoff workflow is? Read our{" "}
+            <Link href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">remote roof measurement study</Link>
+            , tested on 10 real roofs against physical site measurements.
+          </p>
           <Link href="/signup" className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E55A2B] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
             Explore QuoteCore+
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>

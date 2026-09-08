@@ -12,7 +12,7 @@ export default function RoofDetails({ roof, showImages = true }: { roof: StudyRo
       <div className="grid gap-4 md:grid-cols-2">
         <figure>
           <img
-            src={`/images/research/study/${roof.id.toLowerCase()}-takeoff.png`}
+            src={`/images/research/study/${roof.id.toLowerCase()}-takeoff.webp`}
             alt={`${roof.id} completed QuoteCore+ digital roof takeoff with all measured components`}
             width={1200}
             height={800}
@@ -23,7 +23,7 @@ export default function RoofDetails({ roof, showImages = true }: { roof: StudyRo
         </figure>
         <figure>
           <img
-            src={`/images/research/study/${roof.id.toLowerCase()}-street.png`}
+            src={`/images/research/study/${roof.id.toLowerCase()}-street.webp`}
             alt={`${roof.id} side-view street image used for the remote pitch estimate`}
             width={1200}
             height={800}
@@ -53,7 +53,7 @@ export default function RoofDetails({ roof, showImages = true }: { roof: StudyRo
               <th className="px-3 py-2 font-semibold">Digital</th>
               <th className="px-3 py-2 font-semibold">Physical</th>
               <th className="px-3 py-2 font-semibold">Difference</th>
-              <th className="px-3 py-2 font-semibold">Abs. variance</th>
+              <th className="px-3 py-2 font-semibold">Abs. error</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-zinc-700">

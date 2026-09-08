@@ -228,6 +228,11 @@ export default function DigitalRoofTakeoffPage() {
           <p className="mt-4 leading-7 text-zinc-600">
             The takeoff builder is connected to the quote builder. When you finish measuring, your numbers are already in the quote. Pitch, waste allowances, material quantities, and pricing all calculate automatically. No copy-pasting, no re-entry, no transcription errors.
           </p>
+          <p className="mt-4 leading-7 text-zinc-600">
+            Want proof remote measuring works? See our{" "}
+            <a href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#FF6B35] underline underline-offset-4">Google Earth roof measurement accuracy study</a>
+            , where we measured 10 roofs remotely and physically verified every result on site.
+          </p>
         </section>
 
         {/* Supported inputs and outputs */}
