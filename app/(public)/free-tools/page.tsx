@@ -19,9 +19,9 @@ export default function FreeToolsPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-slate-50 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
           <div className="relative mx-auto max-w-5xl px-2 md:px-6 pt-10 md:pt-14 pb-1 text-center">
-            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Roofing &amp; Construction Tools</h1>
+            <h1 className="text-xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">Free Takeoff, Estimating &amp; Quoting Tools for Contractors</h1>
             <p className="mt-3 text-sm md:text-base text-slate-500 max-w-2xl mx-auto px-2">
-              Measure roofs, calculate materials, build takeoffs, create quotes, invoices and purchase orders — all in one place, and free. What are you trying to solve? Tell us below and we&apos;ll take you straight to it.
+              Upload plans or images and measure them online - roof, siding/cladding or flooring - or start with measurements you already have from a site measure, satellite report or spreadsheet. Use reusable pricing logic to calculate materials, labor and waste, then create professional estimates, quotes, purchase orders and invoices. Core free tools can be used without an account. What are you trying to solve? Tell us below and we&apos;ll take you straight to it.
             </p>
           </div>
         </section>
@@ -32,9 +32,12 @@ export default function FreeToolsPage() {
         {/* SEO/GEO answer block */}
         <section className="mx-auto max-w-5xl px-2 md:px-6 pb-2">
           <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-5 py-4 text-center">
-            <h2 className="text-sm md:text-base font-semibold text-slate-900">What free tools does QuoteCore+ provide?</h2>
+            <h2 className="text-sm md:text-base font-semibold text-slate-900">Do real work before you sign up</h2>
             <p className="mt-1.5 text-xs md:text-sm leading-relaxed text-slate-600">
-              QuoteCore+ provides more than {Math.floor(TOOL_COUNT / 10) * 10} free online tools for roofing and construction, including digital roof takeoff, roof pitch and material calculators, construction calculators, quote generators, invoice generators and purchase order tools. Most tools can be used without creating an account.
+              Use your own plan or measurements, apply real pricing and custom components where supported, and get a usable result - no account required for the core tool. Move into the full app only when saving, reusable libraries and the connected quote-order-invoice workflow are useful. See the{" "}
+              <Link href="/free-construction-takeoff-tools" className="font-medium text-[#BD4A1A] underline underline-offset-4">high-value free takeoff tools</Link>{" "}
+              or{" "}
+              <Link href="/construction-takeoff-software" className="font-medium text-[#BD4A1A] underline underline-offset-4">construction takeoff software</Link>. QuoteCore+ provides more than {Math.floor(TOOL_COUNT / 10) * 10} free online construction takeoff tools, calculators, quote, invoice and purchase order generators for contractors and estimators.
             </p>
           </div>
         </section>
@@ -97,6 +100,13 @@ export default function FreeToolsPage() {
             Curious how accurate the free remote takeoff workflow is? Read our{" "}
             <Link href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">remote roof measurement study</Link>
             , tested on 10 real roofs against physical site measurements.
+          </p>
+          <p className="mt-2 text-xs md:text-sm text-slate-500 leading-relaxed">
+            Ready to compare full systems? See{" "}
+            <Link href="/construction-quoting-software" className="font-medium text-[#BD4A1A] underline underline-offset-4">contractor estimating &amp; quoting software</Link>,{" "}
+            <Link href="/roofing-estimating-software" className="font-medium text-[#BD4A1A] underline underline-offset-4">roofing estimating software</Link>{" "}
+            or{" "}
+            <Link href="/roofing-takeoff-software" className="font-medium text-[#BD4A1A] underline underline-offset-4">roofing takeoff software</Link>.
           </p>
           <Link href="/signup" className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-[#E55A2B] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] min-h-[44px]">
             Explore QuoteCore+

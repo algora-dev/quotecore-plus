@@ -5,17 +5,17 @@ import { hreflangLanguages } from '@/lib/seo/hreflang';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata = {
-  title: 'QuoteCore Plus Free Tools | Roofing & Construction Calculators',
+  title: 'Free Construction Takeoff, Estimating & Quoting Tools | QuoteCore+',
   description:
-    'Free professional roofing calculators, roof takeoff builder, quote generator, invoice generator, and purchase order generator. No signup required. Built by a roofer, for roofers.',
+    'Free construction takeoff, estimating and quoting tools. Upload plans and measure roof, siding/cladding and flooring online, or enter measurements you already have. Core tools need no signup.',
   alternates: {
     canonical: `${SITE_URL}/free-tools`,
     languages: hreflangLanguages('/free-tools'),
   },
   openGraph: {
-    title: 'QuoteCore Plus Free Tools | Roofing & Construction Calculators',
+    title: 'Free Construction Takeoff, Estimating & Quoting Tools | QuoteCore+',
     description:
-      'Free professional roofing calculators, roof takeoff builder, quote generator, invoice generator, and purchase order generator. No signup required.',
+      'Free construction takeoff, estimating and quoting tools. Upload plans and measure online, or enter measurements you already have. Core tools need no signup.',
     url: `${SITE_URL}/free-tools`,
     type: 'website',
     images: [{ url: '/logo.png', alt: 'QuoteCore+ Free Tools' }],

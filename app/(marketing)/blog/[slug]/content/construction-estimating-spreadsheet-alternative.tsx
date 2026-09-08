@@ -5,7 +5,7 @@ const link = 'font-medium text-[#BD4A1A] hover:underline';
 export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
-      <p><strong>What can you use instead of an Excel or Google Sheets estimate?</strong></p>
+      <p><strong>What can you use instead of an Excel or Google Sheets estimating spreadsheet?</strong></p>
       <p>
         For construction and trade estimating, the realistic alternatives are: a template-based
         estimating tool, a component system that reuses your pricing logic, or full estimating
@@ -67,6 +67,13 @@ export default function Post() {
       <p><strong>2. Component systems.</strong> You save your pricing logic — materials, labour, waste, pack rules — as reusable components, then enter each job&apos;s measurements. If a spreadsheet formula says <em>&quot;roof area × material allowance + waste + labour&quot;</em>, a component stores that same business logic once and re-applies it to every new measurement, with no formula rebuild.</p>
       <p><strong>3. Connected estimating software.</strong> A component system plus the surrounding workflow — quote, order, invoice, follow-up — kept attached to the same job instead of living in separate files.</p>
       <p>
+        Side by side, the mental model carries straight across:
+      </p>
+      <ul>
+        <li><strong>A spreadsheet row</strong> = one measurement + a formula + material cost + labor + waste + markup, rebuilt or copied for every job.</li>
+        <li><strong>A reusable component</strong> = the same measurement type and the same material / labor / waste / pricing logic, saved once and applied to any job&apos;s measurements — and its output can feed a quote, bid, proposal, order or invoice directly.</li>
+      </ul>
+      <p>
         Want the full walkthrough with numbers?{' '}
         <Link href="/blog/price-a-job-from-measurements" className={link}>
           See the measurements-to-pricing example
@@ -81,7 +88,7 @@ export default function Post() {
       </p>
       <ol>
         <li><strong>Reusable pricing:</strong> can rates, labour and product rules be saved once and reused on every job?</li>
-        <li><strong>Labour handling:</strong> does it price labour per m², per linear metre and per unit, the way you actually charge?</li>
+        <li><strong>Labour handling:</strong> does it price labor per m² / sq ft, per linear metre / linear foot and per unit, the way you actually charge?</li>
         <li><strong>Waste rules:</strong> can waste be applied per component (valleys vs plain field vs flashings) rather than one blanket percentage?</li>
         <li><strong>Measurement input:</strong> can you enter measurements directly, or ideally measure from uploaded plans?</li>
         <li><strong>Quote/document output:</strong> does the priced result convert into a professional customer document without rebuilding it in Word?</li>
@@ -108,7 +115,7 @@ export default function Post() {
         <li>rates change and need to stay consistent</li>
         <li>quotes are frequent</li>
         <li>more than one person estimates</li>
-        <li>you want outputs to flow into quotes, orders and invoices without copy/paste</li>
+        <li>you want outputs to flow into estimates, quotes, bids, proposals, orders and invoices without copy/paste</li>
       </ul>
 
       <hr />

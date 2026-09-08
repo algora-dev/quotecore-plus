@@ -8,12 +8,12 @@ import { buildFaqSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Flooring Takeoff Tool — Measure Floor Plans Online',
+  title: 'Free Flooring Takeoff & Estimating Tool — Measure Floor Plans Online | QuoteCore Plus',
   description:
-    'Upload your plans and measure floor areas free. Calibrate the scale, trace rooms, count planks, carpet, tile, underlay, skirting and scotia. Export quantities. No printing, no scale ruler.',
+    'Upload your plans and measure floor areas free. Calibrate the scale, trace rooms, count hardwood, LVP, carpet, tile, underlay, baseboard and quarter-round. Export quantities. No printing, no scale ruler.',
   alternates: { canonical: '/free-flooring-takeoff' },
   openGraph: {
-    title: 'Free Flooring Takeoff Tool — Measure Floor Plans Online',
+    title: 'Free Flooring Takeoff & Estimating Tool — Measure Floor Plans Online | QuoteCore Plus',
     description:
       'Calibrate the scale on your floor plan and measure floor areas, timber plank, carpet, tile, underlay, skirting and scotia directly on screen. Free, no signup required.',
     url: '/free-flooring-takeoff',
@@ -119,11 +119,12 @@ export default function FreeFlooringTakeoffPage() {
       {/* H1 + hero + trust strip (above the tool) */}
       <section className="mx-auto max-w-3xl px-4 pt-10 pb-6 text-center md:pt-14">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-          Free Flooring Takeoff Tool — Measure Your Plan Online
+          Free Flooring Takeoff &amp; Estimating Tool
         </h1>
         <p className="mt-4 text-base leading-relaxed text-slate-600">
-          Upload a floor plan, set the drawing scale, and measure floor areas, plank, carpet, tile, underlay, skirting
-          and scotia directly in your browser. Works for any floor covering. No signup required.
+          Upload a floor plan (PNG, JPG, WebP or PDF), set the drawing scale, and measure floor areas, timber or hardwood
+          plank, LVP and laminate, carpet, tile, underlay, skirting and scotia directly in your browser. Any floor
+          covering, any units. No signup required.
         </p>
         <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           {TRUST_POINTS.map(point => (
@@ -250,6 +251,12 @@ export default function FreeFlooringTakeoffPage() {
           stage directly in your browser - timber plank, carpet, tile, any material.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          <strong>Flooring takeoff for U.S. contractors:</strong> areas in square feet, baseboard and shoe molding /
+          quarter-round lengths in linear feet, transitions per unit. Whether you call the trim skirting or baseboard,
+          the flooring hardwood, LVP, vinyl plank, laminate or carpet - the same plan takeoff covers it, and the
+          measurements feed your flooring estimate directly.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Finished measuring? <strong>Turn your measurements into a quote</strong> with the{' '}
           <Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">free Measurement-to-Quote Tool</Link>, or
           send quantities straight to the{' '}
@@ -272,6 +279,7 @@ export default function FreeFlooringTakeoffPage() {
           <li><Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">Measurement-to-Quote Tool</Link> — turn these measurements into a priced quote</li>
           <li><Link href="/free-flooring-calculator" className="text-[#BD4A1A] underline underline-offset-2">Flooring Calculator</Link> — already know your dimensions</li>
           <li><Link href="/free-quote-generator" className="text-[#BD4A1A] underline underline-offset-2">Free Quote Generator</Link> — send the customer a quote</li>
+          <li><Link href="/construction-quoting-software" className="text-[#BD4A1A] underline underline-offset-2">Contractor estimating &amp; quoting software</Link> — the full connected workflow</li>
         </ul>
       </section>
 

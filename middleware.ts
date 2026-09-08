@@ -90,6 +90,8 @@ const PUBLIC_PATHS = [
   '/custom-solutions',
   '/free-trial',
   '/construction-quoting-software',
+  '/construction-takeoff-software',
+  '/free-construction-takeoff-tools', // Free high-value takeoff tool discovery page
   '/roofing-quoting-software',
   '/roofing-estimating-software',
   '/roofing-takeoff-software',

@@ -8,12 +8,12 @@ import { buildFaqSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Wall & Cladding Takeoff Tool — Measure Wall Plans Online',
+  title: 'Free Siding & Cladding Takeoff Tool — Measure Elevation Plans | QuoteCore Plus',
   description:
     'Upload your plans and measure wall, cladding, siding and façade areas free. Calibrate the scale, trace areas, deduct openings, export quantities. No printing, no scale ruler.',
   alternates: { canonical: '/free-cladding-takeoff' },
   openGraph: {
-    title: 'Free Wall & Cladding Takeoff Tool — Measure Wall Plans Online',
+    title: 'Free Siding & Cladding Takeoff Tool — Measure Elevation Plans | QuoteCore Plus',
     description:
       'Calibrate the scale on your plan or elevation and measure wall areas, cladding, trims, battens and openings directly on screen. Free, no signup required.',
     url: '/free-cladding-takeoff',
@@ -119,11 +119,12 @@ export default function FreeCladdingTakeoffPage() {
       {/* H1 + hero + trust strip (above the tool) */}
       <section className="mx-auto max-w-3xl px-4 pt-10 pb-6 text-center md:pt-14">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-          Free Wall &amp; Cladding Takeoff Tool — Measure Your Plan Online
+          Free Siding, Wall &amp; Cladding Takeoff Tool
         </h1>
         <p className="mt-4 text-base leading-relaxed text-slate-600">
-          Upload a wall elevation or plan, set the drawing scale, and measure wall areas, trims, battens and cladding
-          runs directly in your browser. Works for any wall or cladding material. No signup required.
+          Upload an elevation, wall plan or architectural drawing (PNG, JPG, WebP or PDF) and measure siding and cladding
+          areas, trims, openings, battens and other linear runs directly in your browser. Exterior walls, facades and
+          interior walls, any material. Square feet or square metres - no signup required.
         </p>
         <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           {TRUST_POINTS.map(point => (
@@ -275,6 +276,12 @@ export default function FreeCladdingTakeoffPage() {
           directly in your browser - external walls, internal walls, any material.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          <strong>A note on terminology:</strong> &ldquo;cladding&rdquo; is commonly searched as <strong>siding</strong>
+          in the U.S. and Canada, and this tool is designed for both workflows - a siding takeoff, elevation takeoff or
+          wall takeoff all follow the same steps here. Exterior wall areas in square feet or m², trims in linear feet or
+          metres, openings counted per unit.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Finished measuring? <strong>Turn your measurements into a quote</strong> with the{' '}
           <Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">free Measurement-to-Quote Tool</Link>, or
           send quantities straight to the{' '}
@@ -297,6 +304,7 @@ export default function FreeCladdingTakeoffPage() {
           <li><Link href="/free-wall-area-calculator" className="text-[#BD4A1A] underline underline-offset-2">Wall Area Calculator</Link> — already know your dimensions</li>
           <li><Link href="/free-paint-calculator" className="text-[#BD4A1A] underline underline-offset-2">Paint Calculator</Link> — paint quantities from wall areas</li>
           <li><Link href="/free-quote-generator" className="text-[#BD4A1A] underline underline-offset-2">Free Quote Generator</Link> — send the customer a quote</li>
+          <li><Link href="/construction-quoting-software" className="text-[#BD4A1A] underline underline-offset-2">Contractor estimating &amp; quoting software</Link> — the full connected workflow</li>
         </ul>
       </section>
 

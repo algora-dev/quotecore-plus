@@ -18,8 +18,9 @@ export default function DoneForYouBanner() {
           </h2>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
             Tell us how you&rsquo;re pricing and working now, and we&rsquo;ll
-            rebuild it inside QuoteCore+ for you — setup, training and ongoing
-            support included.
+            rebuild it inside QuoteCore+ for you — existing spreadsheets,
+            price lists, quote templates and reusable components, plus setup,
+            training and ongoing support included.
           </p>
         </div>
         <div className="flex flex-col items-center gap-2 lg:items-end">

@@ -6,16 +6,17 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        You have a PDF construction plan and you need to measure something on it — a floor area, a
-        wall, a run of pipe, a path length. This guide shows how to measure areas, lengths and
-        quantities directly from a PDF or image plan: calibrating the scale, handling irregular
-        shapes, deducting openings, and working across floor plans and elevations. You can follow
+        You have a PDF construction plan — a blueprint, drawing or plan set — and you need to measure something on it: a
+        floor area, a wall, a run of pipe, a path length. This guide shows how to measure areas, lengths and
+        quantities directly from a PDF or image plan (a construction takeoff): calibrating the scale, handling irregular
+        shapes, deducting openings, and working across floor plans, elevations and roof plans. You can follow
         along with the{' '}
         <Link href="/free-cladding-takeoff" className={link}>
           Free Wall &amp; Cladding Takeoff Tool
         </Link>{' '}
-        (measures any plan surface, despite the name) or the{' '}
-        <Link href="/free-roof-takeoff" className={link}>Free Roof Takeoff Tool</Link> for roof plans.
+        (measures any plan surface, despite the name), the{' '}
+        <Link href="/free-roof-takeoff" className={link}>Free Roof Takeoff Tool</Link> for roof plans, or the{' '}
+        <Link href="/free-flooring-takeoff" className={link}>Free Flooring Takeoff Tool</Link> for floor plans.
       </p>
       <p>
         <Link href="/free-cladding-takeoff" className={link}>
@@ -62,7 +63,8 @@ export default function Post() {
       <p>
         <strong>Worked example — a living room:</strong> a room measuring 5.2 m × 4.1 m on plan.
         Trace the four corners, close the polygon, and the tool returns{' '}
-        <strong>21.32 m²</strong>. Floor area, ceiling area and wall-footprint areas all come off
+        <strong>21.32 m²</strong> (about 17 ft × 13.5 ft ≈ 229 sq ft — the tool works in feet and
+        square feet too). Floor area, ceiling area and wall-footprint areas all come off
         the same trace.
       </p>
 
@@ -102,8 +104,8 @@ export default function Post() {
 
       <h2>Floor plans vs elevations</h2>
       <ul>
-        <li><strong>Floor plans</strong> give horizontal quantities: floor areas, room areas, wall lengths, partitions.</li>
-        <li><strong>Elevations</strong> give vertical quantities: wall areas, cladding zones, opening perimeters.</li>
+        <li><strong>Floor plans</strong> give horizontal quantities: floor areas, room areas, wall lengths, partitions, baseboard or skirting runs.</li>
+        <li><strong>Elevations</strong> give vertical quantities: wall areas, cladding or siding zones, trim and opening perimeters.</li>
       </ul>
       <p>
         Measure each on its own sheet, with its own calibration, and name every measurement after
@@ -138,6 +140,18 @@ export default function Post() {
         <li><strong>Cropping a screenshot after calibrating</strong> — it invalidates the scale.</li>
         <li><strong>Mixing metric and imperial</strong> — pick one system for the whole takeoff.</li>
       </ul>
+
+      <h2>What happens after measurement?</h2>
+      <p>
+        Once you have areas, lengths and quantities, the next step is pricing them. Reusable
+        components apply your material rates, labor, waste and pitch logic to any measurement set —
+        whether you measured it here, measured on site, or received it from a satellite or
+        third-party report. See the{' '}
+        <Link href="/measurement-to-quote-tool" className={link}>free Measurement-to-Quote tool</Link>{' '}
+        to turn quantities into a priced estimate, or see{" "}
+        <Link href="/construction-takeoff-software" className={link}>construction takeoff software</Link>{" "}
+        for the full measurement workflow across trades.
+      </p>
 
       <h2>Measure your plan now</h2>
       <p>

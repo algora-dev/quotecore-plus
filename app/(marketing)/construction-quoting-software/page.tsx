@@ -336,12 +336,24 @@ export default function ConstructionQuotingSoftwarePage() {
             </p>
 
             <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              Quoting software for contractors who work from measurements.
+              Estimating &amp; quoting software for contractors who work from measurements.
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:text-xl">
               Measure jobs with digital takeoff and AI Scan Assist, build priced quotes with Smart Components™, track customer approval, order materials, manage work, invoice and get paid - all in one connected workflow.
             </p>
+
+            {/* Two entry paths */}
+            <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
+              <a href="/free-roof-takeoff" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
+                <p className="text-sm font-semibold text-zinc-950">Start with a plan or image</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">Digital takeoff for roofs, walls and floors - manual, or AI-assisted where available. <span className="text-[#BD4A1A]">Try the free takeoff tools &rarr;</span></p>
+              </a>
+              <a href="/measurement-to-quote-tool" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
+                <p className="text-sm font-semibold text-zinc-950">Already have measurements?</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">Enter areas, lengths and quantities from a site measure or satellite report; reusable components apply material, labor and waste pricing. <span className="text-[#BD4A1A]">Open Measurement-to-Quote &rarr;</span></p>
+              </a>
+            </div>
 
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-4 text-left">
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#FF6B35]">
@@ -371,6 +383,11 @@ export default function ConstructionQuotingSoftwarePage() {
             </div>
 
             <p className="mt-3 text-sm text-zinc-400">No card required. 14 days free.</p>
+
+            <p className="mt-3 text-sm text-zinc-500">
+              Already have spreadsheets, price lists or quote templates?{" "}
+              <a href="/done-for-you-setup" className="font-medium text-[#BD4A1A] hover:underline">We can help configure the system around the way you already work.</a>
+            </p>
 
             <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-600">
               <span className="font-semibold text-zinc-950">Simple pricing:</span>
@@ -885,6 +902,26 @@ export default function ConstructionQuotingSoftwarePage() {
             <a href="/free-quote-generator" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Free quote generator</p>
               <p className="mt-1 text-sm text-zinc-600">Create a professional quote for free, no signup required.</p>
+            </a>
+            <a href="/free-roof-takeoff" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free roof takeoff tool</p>
+              <p className="mt-1 text-sm text-zinc-600">Measure a roof plan online, no signup.</p>
+            </a>
+            <a href="/measurement-to-quote-tool" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Measurement-to-Quote tool</p>
+              <p className="mt-1 text-sm text-zinc-600">Turn measurements into priced estimates, free.</p>
+            </a>
+            <a href="/roofing-takeoff-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Roofing takeoff software</p>
+              <p className="mt-1 text-sm text-zinc-600">Roof measurement software for PDF plans.</p>
+            </a>
+            <a href="/construction-takeoff-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Construction takeoff software</p>
+              <p className="mt-1 text-sm text-zinc-600">Measure PDF plans digitally across trades.</p>
+            </a>
+            <a href="/free-construction-takeoff-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
+              <p className="font-semibold text-zinc-950">Free takeoff tools</p>
+              <p className="mt-1 text-sm text-zinc-600">Roof, siding/cladding and flooring takeoffs - no signup.</p>
             </a>
             <a href="/roofing-quoting-software" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Roofing quoting software</p>

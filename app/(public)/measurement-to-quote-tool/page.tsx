@@ -10,11 +10,14 @@ export default function Page() {
     <>
       {/* Accessible summary (screen readers / crawlers) */}
       <section className="sr-only" aria-labelledby="mtq-capabilities">
-        <h2 id="mtq-capabilities">Free Measurement-to-Quote Tool</h2>
+        <h1 id="mtq-capabilities">Turn Measurements Into a Priced Estimate — Free</h1>
         <p>
-          Already have your measurements from a site measure, plan takeoff or estimating workflow?
-          Turn areas, lengths and quantities into materials, labour and pricing using reusable
-          components. Free to use, no signup required for the core workflow.
+          Already have your measurements from a site measure, PDF plan takeoff, aerial or satellite
+          measurement, a third-party report or an estimating spreadsheet? Enter areas, lengths and
+          quantities, and reusable components apply materials, labor, waste, pack logic and pricing
+          automatically - then turn the result into a professional estimate or quote. Free to use,
+          no signup required for the core workflow. A contractor estimating tool built for measured
+          work: roofing, siding/cladding, flooring and any trade where quantities drive pricing.
         </p>
         <h2>How it works</h2>
         <ul>
@@ -153,6 +156,14 @@ export default function Page() {
               <Link href="/free-roof-takeoff" className={link}>Free Roof Takeoff</Link>
             </li>
             <li className="rounded-xl border border-slate-200 bg-white px-5 py-4">
+              I need to measure walls, siding or cladding →{' '}
+              <Link href="/free-cladding-takeoff" className={link}>Free Siding &amp; Cladding Takeoff</Link>
+            </li>
+            <li className="rounded-xl border border-slate-200 bg-white px-5 py-4">
+              I need to measure a floor plan →{' '}
+              <Link href="/free-flooring-takeoff" className={link}>Free Flooring Takeoff</Link>
+            </li>
+            <li className="rounded-xl border border-slate-200 bg-white px-5 py-4">
               I need to measure and price a roof →{' '}
               <Link href="/free-roofing-takeoff-builder" className={link}>Roof Takeoff Builder</Link>
             </li>
@@ -171,11 +182,12 @@ export default function Page() {
             </li>
           </ul>
           <p className="mt-6 text-sm text-slate-600">
-            Works for roofing, cladding, flooring, fencing, decking, landscaping, concrete,
+            Works for roofing, cladding, siding, flooring, fencing, decking, landscaping, concrete,
             carpentry and any measured work where quantities drive pricing. Read{' '}
-            <Link href="/blog/price-a-job-from-measurements" className={link}>how to price a job from your measurements</Link>{' '}
-            or see{' '}
-            <Link href="/blog/construction-estimating-spreadsheet-alternative" className={link}>why contractors move on from estimating spreadsheets</Link>.
+            <Link href="/blog/price-a-job-from-measurements" className={link}>how to price a job from your measurements</Link>,{' '}
+            <Link href="/blog/how-to-measure-pdf-plans" className={link}>how to measure PDF plans online</Link>, or see{' '}
+            <Link href="/blog/construction-estimating-spreadsheet-alternative" className={link}>why contractors move on from estimating spreadsheets</Link>. Comparing full systems? See{' '}
+            <Link href="/construction-quoting-software" className={link}>QuoteCore+ contractor estimating &amp; quoting software</Link>.
           </p>
         </div>
       </section>

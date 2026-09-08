@@ -224,7 +224,7 @@ export default function HomePage() {
                   Measure the job. Calculate the price. Send the quote.
                 </h1>
                 <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  QuoteCore+ takes you from plan to priced quote — <a href="/features/digital-roof-takeoff" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">digital takeoff</a>, <a href="/features/ai-scan-assist" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</a> and <a href="/features/smart-components" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</a> turn roof measurements into materials, labour and accurate pricing. The same job then flows through to quote, order and invoice — no duplicated admin.
+                  QuoteCore+ takes you from plan to priced quote. Measure from an uploaded plan or image with <a href="/features/digital-roof-takeoff" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">digital takeoff</a> and <a href="/features/ai-scan-assist" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">AI Scan Assist</a>, or <a href="/measurement-to-quote-tool" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">start with measurements you already have</a> from a site measure, satellite report or spreadsheet. <a href="/features/smart-components" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Smart Components&#8482;</a> turn areas, lengths and quantities into materials, labour, waste and accurate pricing - and the same job then flows through to estimate, quote, order and invoice. No duplicated admin, for contractors and estimators in the US, Canada, UK, Australia and New Zealand.
                 </p>
 
                 {/* Pricing reassurance line */}
@@ -767,7 +767,15 @@ export default function HomePage() {
           <div className="flex flex-col items-center gap-3 text-center text-sm text-zinc-500">
             <p>
               Looking for free roofing tools?{" "}
-              <a href="/free-tools" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Try our calculators and generators.</a>
+              <a href="/free-roof-takeoff" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">Measure a roof plan free</a>{" "}
+              or <a href="/free-tools" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">browse all free takeoff, estimating and quoting tools</a>.
+            </p>
+            <p>
+              Comparing software?{" "}
+              <a href="/construction-quoting-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">contractor estimating &amp; quoting software</a>,{" "}
+              <a href="/roofing-estimating-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">roofing estimating software</a>,{" "}
+              <a href="/roofing-takeoff-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">roofing takeoff software</a>,{" "}
+              <a href="/construction-takeoff-software" className="font-medium text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">construction takeoff software</a>.
             </p>
             <p>
               Are you a roofing supplier?{" "}

@@ -180,6 +180,18 @@ export default function RoofingEstimatingSoftwarePage() {
             </div>
 
             <p className="mt-3 text-sm text-zinc-500">No credit card required.</p>
+
+            {/* Two entry paths */}
+            <div className="mx-auto mt-6 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
+              <a href="/free-roof-takeoff" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
+                <p className="text-sm font-semibold text-zinc-950">Measure the roof yourself</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">Upload a plan or image and measure roof areas, ridges, hips and valleys - in square feet, roofing squares or m². <span className="text-[#BD4A1A]">Try the free roof takeoff tool &rarr;</span></p>
+              </a>
+              <a href="/measurement-to-quote-tool" className="rounded-xl border border-zinc-200 bg-white px-5 py-4 transition-colors hover:border-[#FF6B35]/40">
+                <p className="text-sm font-semibold text-zinc-950">Already have the roof measurements?</p>
+                <p className="mt-1 text-sm leading-6 text-zinc-600">From a site measure, plan takeoff, aerial/satellite image or a third-party measurement report - Smart Components calculate materials, labor, waste, pitch and selling price. <span className="text-[#BD4A1A]">Open Measurement-to-Quote &rarr;</span></p>
+              </a>
+            </div>
           </div>
         </section>
 
@@ -197,6 +209,11 @@ export default function RoofingEstimatingSoftwarePage() {
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             QuoteCore+ replaces that process with a connected estimating workflow. Digital takeoff tools measure the roof. Smart Components&#8482; apply your stored materials, labour, waste and pricing rules automatically. The estimate becomes a quote without manual re-entry, and the same data carries through to material orders and invoices.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            However you measure - square feet, roofing squares or square metres, shingles, metal roofing or membrane, your own labor rates in dollars per square or per m² - the estimating rules are yours. Build your roofing estimate, then send it as a quote, bid or proposal without re-entering data. For the measurement side, see{' '}
+            <a href="/roofing-takeoff-software" className="text-[#BD4A1A] hover:underline">roofing takeoff software</a>; for the broader workflow,{' '}
+            <a href="/construction-quoting-software" className="text-[#BD4A1A] hover:underline">contractor estimating and quoting software</a>.
           </p>
         </section>
 

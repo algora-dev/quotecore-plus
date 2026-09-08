@@ -12,9 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = await getHost();
   const origin = canonicalOrigin(host);
   const path = '/measurement-to-quote-tool';
-  const title = 'Free Measurement-to-Quote Tool';
+  const title = 'Free Contractor Estimating Tool — Measurements to Pricing & Quotes | QuoteCore+';
   const description =
-    'Already have your measurements? Turn areas, lengths and quantities into materials, labour and pricing using reusable components. Free to use, no signup required.';
+    'Already have areas, lengths or quantities from a site measure, plan takeoff, aerial measurement, third-party report or spreadsheet? Reusable components apply materials, labor, waste and pricing automatically, then turn the result into a professional estimate or quote. Free, no signup for the core workflow.';
   return {
     title,
     description,

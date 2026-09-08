@@ -169,6 +169,14 @@ export default function RoofingTakeoffSoftwarePage() {
             </div>
 
             <p className="mt-3 text-sm text-zinc-500">No credit card required.</p>
+
+            {/* Free product bridge */}
+            <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-[#FF6B35]/30 bg-orange-50/50 px-5 py-4 text-left">
+              <p className="text-sm leading-6 text-zinc-700">
+                Want to try the measurement workflow first?{" "}
+                <a href="/free-roof-takeoff" className="font-semibold text-[#BD4A1A] hover:underline">Try the free roof takeoff tool - upload your own plan, no signup.</a>
+              </p>
+            </div>
           </div>
         </section>
 
@@ -186,6 +194,15 @@ export default function RoofingTakeoffSoftwarePage() {
           </p>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
             QuoteCore+ replaces that with digital takeoff tools and AI Scan Assist. Upload a plan, measure digitally or let AI detect roof geometry, and Smart Components&#8482; automatically apply materials, labour, waste and pricing. The takeoff becomes an estimate, and the estimate becomes a quote — all in one connected workflow.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            You may see this category called roof takeoff, roof measurement, roofing quantity takeoff or plan measurement software - and in the estimating stage, roofing estimating from plans. The distinction matters: <strong className="text-zinc-950">takeoff creates the measurements; estimating applies the pricing and material logic.</strong> This page covers the measurement side; for pricing see{' '}
+            <a href="/roofing-estimating-software" className="text-[#BD4A1A] hover:underline">roofing estimating software</a>, or{' '}
+            <a href="/measurement-to-quote-tool" className="text-[#BD4A1A] hover:underline">turn measurements you already have into pricing</a>.
+          </p>
+          <p className="mt-5 text-lg leading-8 text-zinc-600">
+            Whatever your plans and units - PDF drawings or blueprints, shingles, metal panels or membrane, square feet and roofing squares with pitch ratios like 6:12, or square metres with pitch degrees - the takeoff workflow is the same: calibrate, measure, verify, done. Measuring across other trades too? See{' '}
+            <a href="/construction-takeoff-software" className="text-[#BD4A1A] hover:underline">construction takeoff software for roofs, siding and floors</a>.
           </p>
         </section>
 
