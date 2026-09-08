@@ -43,7 +43,15 @@ const FreeToolsAuthContext = createContext<FreeToolsAuthState>({
   closeAuthModal: () => {},
 });
 
-export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
+/** Optional supplier theme for the auth modal (accent colours). When
+ *  omitted - e.g. the QuoteCore+ free tools - the modal keeps the QC+
+ *  orange. Supplier tools pass their def's theme so the modal matches. */
+export interface AuthTheme {
+  accent: string;
+  accentHover: string;
+}
+
+export function FreeToolsAuthProvider({ children, authTheme }: { children: ReactNode; authTheme?: AuthTheme }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -181,15 +189,29 @@ export function FreeToolsAuthProvider({ children }: { children: ReactNode }) {
     >
       {children}
       {isAuthModalOpen && (
-        <FreeToolsAuthModal
-          mode={modalMode}
-          onClose={closeAuthModal}
-          onModeChange={setModalMode}
-          signInWithGoogle={signInWithGoogle}
-          signInWithEmail={signInWithEmail}
-          signUpWithEmail={signUpWithEmail}
-          signInWithMagicLink={signInWithMagicLink}
-        />
+        <>
+          {authTheme && (
+            <style>{`
+              /* supplier-themed overrides for the auth modal: QC+ orange -> supplier accent */
+              .spt-auth-theme .bg-\\[\\#FF6B35\\] { background-color: ${authTheme.accent}; }
+              .spt-auth-theme .hover\\:bg-\\[\\#ff5722\\]:hover { background-color: ${authTheme.accentHover}; }
+              .spt-auth-theme .focus\\:border-\\[\\#FF6B35\\]:focus { border-color: ${authTheme.accent}; }
+              .spt-auth-theme .text-\\[\\#BD4A1A\\] { color: ${authTheme.accentHover}; }
+              .spt-auth-theme .hover\\:text-\\[\\#ff5722\\]:hover { color: ${authTheme.accentHover}; }
+            `}</style>
+          )}
+          <div className={authTheme ? 'spt-auth-theme' : undefined}>
+            <FreeToolsAuthModal
+              mode={modalMode}
+              onClose={closeAuthModal}
+              onModeChange={setModalMode}
+              signInWithGoogle={signInWithGoogle}
+              signInWithEmail={signInWithEmail}
+              signUpWithEmail={signUpWithEmail}
+              signInWithMagicLink={signInWithMagicLink}
+            />
+          </div>
+        </>
       )}
     </FreeToolsAuthContext.Provider>
   );

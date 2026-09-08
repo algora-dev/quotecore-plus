@@ -14,7 +14,7 @@ export default function SupplierDemoPage({ params }: { params: Promise<{ supplie
   const { supplierSlug } = use(params as Promise<{ supplierSlug: string }>);
   const def = getSupplierDef(supplierSlug);
   return (
-    <FreeToolsAuthProvider>
+    <FreeToolsAuthProvider authTheme={{ accent: def.theme.accent, accentHover: def.theme.accentHover }}>
       <SupplierConfigProvider slug={def.slug}>
         <ToolShell />
       </SupplierConfigProvider>
