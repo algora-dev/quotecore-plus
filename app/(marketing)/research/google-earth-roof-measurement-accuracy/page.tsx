@@ -188,15 +188,16 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
         <h2 className="text-2xl font-semibold tracking-tight">What we tested</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { n: "01", t: "Find the roof remotely", d: "Top-down aerial imagery used to create the remote roof plan." },
-            { n: "02", t: "Estimate pitch", d: "Available Street View / side / 3D imagery used with QuoteCore+'s Pitch Finder to estimate roof pitch (roof slope)." },
-            { n: "03", t: "Complete the digital takeoff", d: "The aerial image was calibrated and every visible roof area/component was manually measured in QuoteCore+'s free takeoff tool." },
-            { n: "04", t: "Measure the real roof", d: "The same roof was physically measured on site and compared against the frozen digital result." },
+            { n: "01", t: "Find the roof remotely", d: "Top-down aerial imagery used to create the remote roof plan.", img: "/images/research/study/method-01-aerial.webp", alt: "Google Earth aerial view of a residential roof used as the remote measurement source" },
+            { n: "02", t: "Estimate pitch", d: "Available Street View / side / 3D imagery used with QuoteCore+'s Pitch Finder to estimate roof pitch (roof slope).", img: "/images/research/study/method-02-pitch.webp", alt: "Street View side-view image of a study roof used to estimate pitch" },
+            { n: "03", t: "Complete the digital takeoff", d: "The aerial image was calibrated and every visible roof area/component was manually measured in QuoteCore+'s free takeoff tool.", img: "/images/research/study/method-03-takeoff.webp", alt: "Completed QuoteCore+ digital takeoff of a study roof with measured components" },
+            { n: "04", t: "Measure the real roof", d: "The same roof was physically measured on site and compared against the frozen digital result.", img: "/images/research/study/method-04-physical.webp", alt: "Roofer physically measuring a roof on site with a tape measure" },
           ].map((s) => (
             <div key={s.n} className="rounded-xl border border-slate-200 bg-white p-5">
               <p className="text-xs font-semibold text-[#FF6B35]">{s.n}</p>
               <h3 className="mt-2 font-semibold text-slate-900">{s.t}</h3>
               <p className="mt-1 text-sm text-zinc-600">{s.d}</p>
+              <img src={s.img} alt={s.alt} width={800} height={500} loading="lazy" className="mt-3 aspect-[8/5] w-full rounded-lg object-cover" />
             </div>
           ))}
         </div>
@@ -258,12 +259,15 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
         <p className="mt-2 text-sm text-zinc-600">Summary and full component-level measurements for each roof. NZ-05 and US-03 are featured in detail above.</p>
         <div className="mt-6 space-y-3">
           {studyRoofs.map((r) => (
-            <details key={r.id} className="rounded-xl border border-slate-200 bg-white">
-              <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-5 py-4 text-sm">
+            <details key={r.id} className="group rounded-xl border border-slate-200 bg-white transition-colors hover:border-[#FF6B35]/40 hover:bg-orange-50/40">
+              <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-5 py-4 text-sm [&::-webkit-details-marker]:hidden">
                 <span className="font-semibold text-slate-900">{r.id}</span>
                 <span className="text-zinc-600">· {r.country} · {r.complexity}</span>
                 {r.feature && <span className="rounded-full bg-[#FF6B35]/10 px-2.5 py-1 text-xs font-semibold text-[#FF6B35]">Featured above</span>}
                 <span className="text-zinc-600">Area error <strong className="text-slate-900">{r.area.variance.toFixed(2)}%</strong> · Pitch difference <strong className="text-slate-900">{Math.abs(r.digitalPitch - r.sitePitch).toFixed(1)}°</strong> · Time saved <strong className="text-slate-900">{r.timeSaved.toFixed(1)}%</strong></span>
+                <span className="ml-auto flex shrink-0 items-center gap-1.5 text-xs font-semibold text-[#FF6B35]">Full results
+                  <svg className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                </span>
               </summary>
               <div className="border-t border-slate-100 px-5 py-5">
                 <RoofDetails roof={r} />
