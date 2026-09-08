@@ -4,10 +4,11 @@ function fmt(n: number) {
   return Number.isInteger(n) ? n.toString() : n.toFixed(2);
 }
 
-export default function RoofDetails({ roof }: { roof: StudyRoof }) {
+export default function RoofDetails({ roof, showImages = true }: { roof: StudyRoof; showImages?: boolean }) {
   const pitchDiff = Math.abs(roof.digitalPitch - roof.sitePitch);
   return (
     <div>
+      {showImages && (
       <div className="grid gap-4 md:grid-cols-2">
         <figure>
           <img
@@ -32,6 +33,7 @@ export default function RoofDetails({ roof }: { roof: StudyRoof }) {
           <figcaption className="mt-1.5 text-xs text-zinc-600">Pitch-source side view ({roof.id})</figcaption>
         </figure>
       </div>
+      )}
 
       <dl className="mt-4 grid gap-3 rounded-lg bg-slate-50 p-4 text-xs sm:grid-cols-3">
         <div><dt className="text-zinc-600">Digital vs actual area</dt><dd className="font-semibold text-slate-900">{roof.area.digital} m² vs {roof.area.physical} m² ({roof.area.variance.toFixed(2)}%)</dd></div>

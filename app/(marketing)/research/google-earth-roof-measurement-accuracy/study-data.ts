@@ -634,7 +634,7 @@ export const studyRoofs: StudyRoof[] = [
   {
     "id": "NZ-05",
     "country": "New Zealand",
-    "complexity": "Complex",
+    "complexity": "Medium/Complex",
     "feature": true,
     "digitalTime": "3:13",
     "siteTime": "12:42",
@@ -1133,7 +1133,7 @@ export const studyRoofs: StudyRoof[] = [
   {
     "id": "US-03",
     "country": "United States",
-    "complexity": "Complex",
+    "complexity": "Medium/Complex",
     "feature": true,
     "digitalTime": "2:56",
     "siteTime": "7:42",
