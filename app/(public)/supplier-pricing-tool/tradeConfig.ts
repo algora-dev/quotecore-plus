@@ -25,6 +25,10 @@ export interface TradeConfig {
   allowHeight: boolean;
   /** angle field label */
   angleLabel: string;
+  /** default bucket-name examples for the measure step copy - supplier defs
+   *  can override with their own real product names (see bucketExamples on
+   *  the supplier def). */
+  bucketExamples: readonly string[];
 }
 
 export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
@@ -38,6 +42,7 @@ export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
     allowAngle: true,
     allowHeight: false,
     angleLabel: 'Pitch',
+    bucketExamples: [],
   },
   cladding: {
     key: 'cladding',
@@ -50,6 +55,7 @@ export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
     allowAngle: true,
     allowHeight: true,
     angleLabel: 'Angle',
+    bucketExamples: ['Weatherboard', 'Render', 'Brick', 'Paint'],
   },
   flooring: {
     key: 'flooring',
@@ -62,6 +68,7 @@ export const TRADE_CONFIGS: Record<Trade, TradeConfig> = {
     allowAngle: false,
     allowHeight: false,
     angleLabel: 'Angle',
+    bucketExamples: ['Carpet', 'Vinyl', 'Timber'],
   },
 };
 

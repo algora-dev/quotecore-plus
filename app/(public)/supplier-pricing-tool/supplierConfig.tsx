@@ -66,6 +66,9 @@ export interface SupplierConfig {
   poweredBy: boolean;
   /** blanket trade discount % off baseline prices */
   discountPct: number;
+  /** real-world bucket examples for the measure step copy - supplier-specific
+   *  (e.g. Roofline cladding: Weatherboard, Corrugate, Roofdeck) */
+  bucketExamples?: readonly string[];
   /** trade pricing only shown to logged-in users */
   tradeRequiresLogin: boolean;
   /** feature blocks - flipping one off never breaks the others */

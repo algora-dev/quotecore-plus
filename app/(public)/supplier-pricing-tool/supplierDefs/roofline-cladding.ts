@@ -31,6 +31,7 @@ export const ROOFLINE_CLADDING = {
   },
   poweredBy: true,
   discountPct: 12,
+  bucketExamples: ['Weatherboard', 'Corrugate', 'Roofdeck'],
   tradeRequiresLogin: true,
   features: {
     login: true,
@@ -43,6 +44,10 @@ export const ROOFLINE_CLADDING = {
   products: [
     // ---- Wall covering (area) ----
     { id: 'rf-wb-cs', name: 'Weatherboard (Colorsteel) 0.40g', code: 'RF-WB-CS', basis: 'area', groups: ['areas'], component: 'covering', roofTypes: ['all'], family: 'Weatherboard', unitPrice: 38.0, packSize: null, defaultWastePct: 10, defaultLabourRate: 34.0, priceEditable: true, suggested: true },
+    // Same material as the roofing versions (roofline-roofing.ts) - wall-
+    // mount labour is higher. 0.40g gauge only per Shaun 2026-09-08.
+    { id: 'rf-cgw-040', name: 'Corrugate (Wall) 0.40g', code: 'RF-CGW-040', basis: 'area', groups: ['areas'], component: 'covering', roofTypes: ['all'], family: 'Corrugate', unitPrice: 22.5, packSize: null, defaultWastePct: 12, defaultLabourRate: 8.5, priceEditable: true, suggested: true },
+    { id: 'rf-rdw-040', name: 'Roofdeck (Wall) 0.40g', code: 'RF-RDW-040', basis: 'area', groups: ['areas'], component: 'covering', roofTypes: ['all'], family: 'Roofdeck', unitPrice: 23.5, packSize: null, defaultWastePct: 10, defaultLabourRate: 9.0, priceEditable: true, suggested: true },
 
     // ---- Cladding flashings (lineal, Colorsteel, +0.2m per entry) ----
     { id: 'rf-fl-int-corner', name: 'Internal Corner Flashing', code: 'FLS-RF-IC', basis: 'lineal', groups: ['areas'], component: 'ridge', roofTypes: ['all'], family: 'Weatherboard', unitPrice: 14.5, packSize: null, defaultWastePct: 0, defaultWasteMode: 'flat', defaultWasteFlat: 0.2, defaultLabourRate: 18.0, priceEditable: true },
