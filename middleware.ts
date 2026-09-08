@@ -74,6 +74,7 @@ const PUBLIC_PATHS = [
   '/careers',       // Commission sales roles page (public)
   '/supplier-partnership', // Hidden supplier partnership page (email outreach, not in nav)
   '/supplier-pricing-tool', // Public supplier pricing tool (incl. /quote handoff page)
+  '/research',    // Original research/study pages (marketing)
   '/blog',
   '/resources',     // Resource hub pages (blog category hubs)
   '/pricing',
