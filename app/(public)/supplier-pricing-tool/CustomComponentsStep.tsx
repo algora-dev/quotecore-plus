@@ -191,7 +191,8 @@ export function CustomComponentsStep({
                 </button>
                 <button
                   onClick={onNext}
-                  className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition cursor-pointer"
+                  className="rounded-full border px-5 py-2.5 text-sm font-semibold transition cursor-pointer hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                  style={{ borderColor: supplierCfg.brandColor, color: supplierCfg.brandColor }}
                 >
                   No thanks, generate the output
                 </button>

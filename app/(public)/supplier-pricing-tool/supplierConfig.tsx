@@ -56,6 +56,10 @@ export interface SupplierConfig {
   logoWhiteBox?: boolean;
   /** show " - demo only, not a real company" after the tagline (default true) */
   demoDisclaimer?: boolean;
+  /** guide-me diagram indicative-line colour (default blue) */
+  guideLineColor?: string;
+  /** plain-language colour name for the guide copy ("indicated in red") */
+  guideLineColorName?: string;
   /** scoped theme palette - drives the tool shell CSS remap */
   theme: SupplierTheme;
   /** Powered by QuoteCore+ vs white-label */

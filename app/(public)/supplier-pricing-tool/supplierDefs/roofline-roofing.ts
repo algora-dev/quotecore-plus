@@ -18,6 +18,8 @@ export const ROOFLINE_ROOFING = {
   headerColor: '#111111', // black header
   logoWhiteBox: true,
   demoDisclaimer: false,
+  guideLineColor: '#C8102E', // red indicative lines in guide diagrams
+  guideLineColorName: 'red',
   theme: {
     primary: '#111111', // Roofline black
     primaryHover: '#2A2A2A',

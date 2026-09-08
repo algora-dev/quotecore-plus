@@ -1,5 +1,7 @@
 'use client';
 
+import { useSupplierConfig } from './supplierConfig';
+
 // Copied from app/(public)/free-roofing-takeoff-builder/ComponentGuideBox.tsx
 // and recoloured to the supplier tool's blue palette (per the tool's
 // copy-and-recolour convention). Adds a 'downpipe' case (counted drops at
@@ -9,6 +11,9 @@ interface ComponentGuideBoxProps {
   componentKey: string;
   entries?: number;
 }
+
+// Themed guide-line colour: falls back to blue when the supplier def
+// doesn't override it (light colours that won't read stay blue).
 
 const GUIDE_LABELS: Record<string, string> = {
   roof_area: 'Roof Area',
@@ -34,9 +39,9 @@ const GUIDE_DESC: Record<string, string> = {
 
 // Inline SVGs - same as the docs/component-guides/*.svg files
 // but embedded as React components for direct rendering
-function GuideSVG({ componentKey }: { componentKey: string }) {
+function GuideSVG({ componentKey, lineColor }: { componentKey: string; lineColor: string }) {
   const black = '#1e293b';
-  const blue = '#2563EB';
+  const blue = lineColor;
   const sw = 1.5;
   const ow = 3.5;
 
@@ -153,6 +158,9 @@ function GuideSVG({ componentKey }: { componentKey: string }) {
 }
 
 export function ComponentGuideBox({ componentKey, entries }: ComponentGuideBoxProps) {
+  const { config } = useSupplierConfig();
+  const lineColor = config.guideLineColor || '#2563EB';
+  const colourName = config.guideLineColorName || 'blue';
   const label = GUIDE_LABELS[componentKey];
   if (!label) return null;
   const isAreaComponent = componentKey === 'roof_area' || componentKey === 'underlay' || componentKey === 'fixings';
@@ -162,11 +170,11 @@ export function ComponentGuideBox({ componentKey, entries }: ComponentGuideBoxPr
     <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0 w-44 sm:w-56">
-          <GuideSVG componentKey={componentKey} />
+          <GuideSVG componentKey={componentKey} lineColor={lineColor} />
         </div>
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-600">
-            {label} <span className="text-blue-600 font-semibold">{isAreaComponent ? 'covers the entire roof area' : isCountComponent ? 'counted where water exits the spouting' : 'indicated in blue'}</span>
+            {label} <span className="text-blue-600 font-semibold">{isAreaComponent ? 'covers the entire roof area' : isCountComponent ? 'counted where water exits the spouting' : `indicated in ${colourName}`}</span>
           </p>
           <p className="text-[11px] text-slate-400 mt-0.5">
             {GUIDE_DESC[componentKey] ?? `Example diagram showing where ${label.toLowerCase()} appear on a roof plan.`}

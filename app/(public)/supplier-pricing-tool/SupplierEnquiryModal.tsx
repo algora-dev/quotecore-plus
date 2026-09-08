@@ -277,7 +277,7 @@ export function SupplierEnquiryModal({
                 <button
                   key={opt.value}
                   onClick={() => setIntent(opt.value)}
-                  className={`text-left rounded-lg border p-2.5 transition cursor-pointer ${intent === opt.value ? 'border-[#FF6B35] bg-orange-50/50' : 'border-slate-200 hover:border-slate-300'}`}
+                  className={`text-left rounded-lg border p-2.5 transition cursor-pointer ${intent === opt.value ? 'border-blue-400 bg-blue-50/50' : 'border-slate-200 hover:border-slate-300'}`}
                 >
                   <div className="text-xs font-semibold text-slate-900">{opt.label}</div>
                   <div className="text-[11px] text-slate-400 mt-0.5">{opt.desc}</div>
@@ -353,7 +353,7 @@ export function SupplierEnquiryModal({
               type="checkbox"
               checked={marketingConsent}
               onChange={(e) => setMarketingConsent(e.target.checked)}
-              className="mt-0.5 rounded border-slate-300 text-[#FF6B35] focus:ring-[#FF6B35]"
+              className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-xs text-slate-500">
               Send me product updates, deals, and news from {supplierName}. I can unsubscribe at any time.
@@ -379,7 +379,7 @@ export function SupplierEnquiryModal({
           <button
             onClick={handleSend}
             disabled={!canSend}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_16px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-700 hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {sending ? (
               <>

@@ -64,6 +64,8 @@ export function ParentFlow() {
   });
   const [mode, setMode] = useState<'standard' | 'advanced'>(restored?.mode ?? 'standard');
   const [job, setJob] = useState<ParentJob>(restored?.job ?? emptyParentJob());
+  // Header brand click: offer go-back vs restart instead of wiping
+  const [restartOpen, setRestartOpen] = useState(false);
   // Plan images captured at the takeoff station (annotated + originals) -
   // handed to the send-to-supplier enquiry as pre-attached files.
   const [planImages, setPlanImages] = useState<{ name: string; dataUrl: string; annotated: boolean }[] | null>(null);
@@ -117,13 +119,24 @@ export function ParentFlow() {
     try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
   }
 
-  // Header brand click restarts the flow (with a confirm in the header)
+  // Header brand click restarts the flow (choice modal keeps progress)
+  const hasProgress = step > 1
+    || job.parents.length > 0
+    || job.components.length > 0
+    || job.applied.length > 0
+    || job.customComponents.length > 0;
   useEffect(() => {
-    const restart = () => reset();
+    const restart = () => { if (hasProgress) setRestartOpen(true); };
     window.addEventListener('qc-spt-restart', restart);
     return () => window.removeEventListener('qc-spt-restart', restart);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasProgress]);
+  // Warn before closing the tab with a job in progress (browser prompt)
+  useEffect(() => {
+    if (!hasProgress) return;
+    const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', h);
+    return () => window.removeEventListener('beforeunload', h);
+  }, [hasProgress]);
 
   /** Station finished: merge its parents/entries/customs into the job and
    *  land on the measurement edit step so names/values can be reviewed. */
@@ -242,6 +255,30 @@ export function ParentFlow() {
           />
         )}
       </div>
+
+      {/* Header restart choice: keep the job or start fresh */}
+      {restartOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-200 shadow-xl p-6 text-center">
+            <h3 className="text-base font-bold text-slate-900">You have a job in progress</h3>
+            <p className="mt-1 text-sm text-slate-500">Everything is saved - your measurements, products and choices. Go back to carry on where you left off, or start fresh.</p>
+            <div className="mt-4 grid gap-2">
+              <button
+                onClick={() => setRestartOpen(false)}
+                className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 transition cursor-pointer"
+              >
+                Go back to my job
+              </button>
+              <button
+                onClick={() => { reset(); setRestartOpen(false); }}
+                className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 transition cursor-pointer"
+              >
+                Start a new job (clears everything)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

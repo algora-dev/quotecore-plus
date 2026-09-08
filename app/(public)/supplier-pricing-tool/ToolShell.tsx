@@ -20,7 +20,7 @@ function Header() {
         <button
           type="button"
           title="Back to the start"
-          onClick={() => { if (window.confirm('Start a new job? This takes you back to the start of the flow and clears your current measurements and products.')) window.dispatchEvent(new CustomEvent('qc-spt-restart')); }}
+          onClick={() => window.dispatchEvent(new CustomEvent('qc-spt-restart'))}
           className="flex items-center gap-4 cursor-pointer text-left"
         >
           {headerLogo ? (
@@ -122,6 +122,8 @@ function ThemeStyle() {
       .spt-scope .border-blue-300 { border-color: ${t.borderHover}; }
       .spt-scope .hover\:border-blue-300:hover { border-color: ${t.borderHover}; }
       .spt-scope .border-blue-400 { border-color: ${t.accent}; }
+      .spt-scope .focus\:ring-blue-500:focus { --tw-ring-color: ${t.accent}; }
+      .spt-scope .hover\:shadow-\[0\,0\,16px_rgba\(37\,99\,235\,0\.5\)\]:hover { box-shadow: 0 0 16px rgba(${hexToRgb(t.accent)}, ${glow}); }
       .spt-scope .pill-shimmer::before {
         background: linear-gradient(90deg, transparent 0%, transparent 40%, ${t.accent} 50%, transparent 60%, transparent 100%);
         background-size: 200% 100%;

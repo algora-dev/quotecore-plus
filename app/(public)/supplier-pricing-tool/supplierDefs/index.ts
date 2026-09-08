@@ -50,6 +50,13 @@ export interface SupplierDefinition {
   /** show " - demo only, not a real company" after the tagline (default
    *  true). False for demos of REAL companies (e.g. Roofline Canterbury). */
   demoDisclaimer?: boolean;
+  /** colour of the indicative lines in the guide-me vector diagrams.
+   *  Defaults to blue. Set per supplier when the theme colour stands out
+   *  on white (skip it for light colours that won't read). */
+  guideLineColor?: string;
+  /** plain-language name of that colour, used in the supporting text
+   *  ("indicated in red") so the copy always matches the diagram. */
+  guideLineColorName?: string;
   theme: SupplierTheme;
   poweredBy: boolean;
   discountPct: number;
