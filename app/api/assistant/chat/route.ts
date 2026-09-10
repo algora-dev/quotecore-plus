@@ -257,6 +257,7 @@ export async function POST(req: NextRequest) {
           onToolCall: (name) => send({ type: 'tool_call', tool: name }),
           onHighlight: mode === 'guide_me' ? (command) => send({ type: 'highlight', command }) : undefined,
           onGuideStart: mode === 'guide_me' ? (command) => send({ type: 'guide_start', command }) : undefined,
+          onNavigate: (command) => send({ type: 'navigate', command }),
           signal: ac.signal,
         });
 

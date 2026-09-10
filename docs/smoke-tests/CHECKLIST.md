@@ -546,3 +546,5 @@
 - [ ] Password-protected PDF shows friendly screenshot-instead message (no dead end)
 - [ ] Xero: Account > Integrations shows Connected (tenant name); quote Summary > Send to App > Export to Xero creates draft invoice (verify in Xero Contacts > All contacts > customer)
 - [ ] Dashboard: click Start measuring on the Measure a job card, fill job name + units, upload a plan/image, land on the takeoff canvas with the plan loaded (new digital quote created).
+- [ ] Quotes page: same Measure a job card shows above the list; full flow identical to dashboard (create -> land on takeoff canvas).
+- [ ] Q chat: ask "take me to quotes" / "where are my invoices" -> Q navigates the app there automatically (one short reply, no directions dump).

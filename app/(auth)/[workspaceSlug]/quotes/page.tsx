@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { QuotesList } from './QuotesList';
+import { MeasureJobButton } from '../MeasureJobModal';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { loadCompanyContext } from '@/app/lib/data/company-context';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 
 export default async function QuotesPage({
@@ -11,9 +14,10 @@ export default async function QuotesPage({
 }) {
   const { workspaceSlug } = await params;
   const profile = await requireCompanyContext();
+  const { company } = await loadCompanyContext();
   const supabase = await createSupabaseServerClient();
 
-  const [quotesRes, entitlements, usageRow] = await Promise.all([
+  const [quotesRes, entitlements, usageRow, componentCollections] = await Promise.all([
     supabase
       .from('quotes')
       .select('id, customer_name, job_name, status, quote_number, created_at, updated_at, job_status, viewed_at')
@@ -36,6 +40,12 @@ export default async function QuotesPage({
         .maybeSingle();
       return data;
     })(),
+    supabase
+      .from('component_collections')
+      .select('id, name, is_bootstrap')
+      .eq('company_id', profile.company_id)
+      .order('is_bootstrap', { ascending: false })
+      .order('name', { ascending: true }),
   ]);
 
   const rawQuotes = quotesRes.data ?? [];
@@ -65,6 +75,20 @@ export default async function QuotesPage({
   const percent = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   const nearLimit = percent >= 80;
   const atLimit = used >= limit;
+
+  const measureProps = {
+    workspaceSlug,
+    companyId: profile.company_id,
+    defaultMeasurementSystem: normalizeMeasurementSystem(company.default_measurement_system),
+    digitalTakeoffAvailable: entitlements.features.digital_takeoff,
+    monthlyQuoteAtCap: atLimit,
+    monthlyQuoteUsed: used,
+    monthlyQuoteLimit: limit,
+    effectivePlanCode: entitlements.effectivePlanCode,
+    defaultTrade: (company as { default_trade?: string }).default_trade ?? 'roofing',
+    componentCollections: componentCollections.data ?? [],
+    isOverStorage: entitlements.isOverStorage,
+  };
 
   return (
     <section className="space-y-4 md:space-y-5 px-0 md:px-0">
@@ -114,6 +138,8 @@ export default async function QuotesPage({
           </div>
         )}
       </div>
+
+      <MeasureJobButton {...measureProps} />
 
       <QuotesList
         quotes={quotes}

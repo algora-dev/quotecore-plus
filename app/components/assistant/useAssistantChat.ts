@@ -22,6 +22,7 @@ import {
   type ChatMessage,
   type GuideStartCommand,
   type HighlightCommand,
+  type NavigateCommand,
 } from '@/app/lib/assistant/protocol';
 
 export interface UiMessage {
@@ -60,6 +61,11 @@ export interface ActiveHighlight extends HighlightCommand {
   key: string;
 }
 
+/** A navigate command stamped with a key so the executor fires once. */
+export interface ActiveNavigate extends NavigateCommand {
+  key: string;
+}
+
 export function useAssistantChat() {
   // Rehydrate the thread from sessionStorage so a nav-triggered remount (e.g.
   // clicking a highlighted nav link mid-guide) doesn't wipe the conversation.
@@ -70,6 +76,7 @@ export function useAssistantChat() {
   const [status, setStatus] = useState<ChatStatus>('idle');
   const [highlight, setHighlight] = useState<ActiveHighlight | null>(null);
   const [guideStart, setGuideStart] = useState<ActiveGuideStart | null>(null);
+  const [navigate, setNavigate] = useState<ActiveNavigate | null>(null);
   const sessionIdRef = useRef<string | undefined>(persisted?.sessionId);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -93,6 +100,7 @@ export function useAssistantChat() {
     setStatus('idle');
     setHighlight(null);
     setGuideStart(null);
+    setNavigate(null);
     clearChat();
   }, [cancel]);
 
@@ -200,6 +208,12 @@ export function useAssistantChat() {
                 key: nextId('gs'),
               });
               break;
+            case 'navigate':
+              setNavigate({
+                ...event.command,
+                key: nextId('nav'),
+              });
+              break;
             case 'error':
               patchAssistant((m) => ({
                 ...m,
@@ -257,6 +271,7 @@ export function useAssistantChat() {
     status,
     highlight,
     guideStart,
+    navigate,
     clearGuideStart,
     pushAssistantMessage,
     send,

@@ -43,7 +43,28 @@ import type {
   ChatMessage,
   GuideStartCommand,
   HighlightCommand,
+  NavigateCommand,
 } from './protocol';
+
+/**
+ * NAVIGABLE PAGES - the ONLY destinations Q may route a user to via
+ * navigate_to. Keys are what the model passes; paths are slug-less in-app
+ * routes (the client prefixes its workspace slug). Mirrors the main nav +
+ * top resources destinations. Anything not listed is rejected server-side.
+ */
+const NAVIGABLE_PAGES: Record<string, { screenKey: string; path: string; label: string }> = {
+  dashboard: { screenKey: 'home', path: '/', label: 'Dashboard' },
+  quotes: { screenKey: 'quotes', path: '/quotes', label: 'Quotes' },
+  orders: { screenKey: 'material-orders', path: '/material-orders', label: 'Material Orders' },
+  resources: { screenKey: 'resources', path: '/resources', label: 'Resource Library' },
+  components: { screenKey: 'components', path: '/resources/components', label: 'Components' },
+  catalogs: { screenKey: 'catalogs', path: '/resources/catalogs', label: 'Catalogs' },
+  drawings: { screenKey: 'drawings', path: '/drawings', label: 'Drawings & Images' },
+  attachments: { screenKey: 'attachments', path: '/resources/attachments', label: 'Attachments' },
+  invoices: { screenKey: 'invoices', path: '/invoices', label: 'Invoices' },
+  account: { screenKey: 'account', path: '/account', label: 'Account settings' },
+  billing: { screenKey: 'account-billing', path: '/account?tab=billing', label: 'Billing' },
+};
 
 /** Trade label used for library lookups, derived from server context. */
 function tradeOf(ctx: AssistantServerContext): string {
@@ -90,6 +111,8 @@ export interface OrchestratorInput {
   onHighlight?: (command: HighlightCommand) => void;
   /** Tell the client step-engine to start guiding a confirmed workflow. */
   onGuideStart?: (command: GuideStartCommand) => void;
+  /** Route the user to a page they asked for (validated allowlist only). */
+  onNavigate?: (command: NavigateCommand) => void;
   signal?: AbortSignal;
 }
 
@@ -118,13 +141,14 @@ function buildSystemPrompt(
     '- get_workflow_step {workflowId, stepIndex}: one step + the next; YOU track stepIndex.',
     '- get_ui_element_details {elementId}: explain what a specific control does.',
     '- request_ui_highlight {elementId}: visually point at an on-screen control (only works if it is currently visible).',
+    '- navigate_to {destination}: take the user DIRECTLY to a page they asked for. Destinations (exact keys): dashboard, quotes, orders, resources, components, catalogs, drawings, attachments, invoices, account, billing. When the user asks to be taken somewhere ("take me to...", "get me to...", "where are my X settings?"), call navigate_to with the closest key and reply with ONE short sentence. If no key matches, just say where to find it instead.',
     'HIGHLIGHTING: only call request_ui_highlight with an elementId you got from a workflow step or that appears in get_current_context.visibleElementIds. NEVER claim something is highlighted unless request_ui_highlight ACTUALLY returned highlighted:true in THIS turn. If it returns highlighted:false (not on screen / not registered), or you did not call it, do NOT say "the highlighted X", "I’ve highlighted", "see the highlighted", or imply anything is glowing - instead name the control by its real label and say where it is (e.g. "the Resources link in the top nav"). Saying you highlighted something when you did not is a serious error. Do NOT retry a failed highlight. One highlight per step is enough. Treatments: pulse, glow, spotlight, arrow.',
     'NAVIGATION REQUESTS ("how do I get to the Quotes page?", "take me to material orders", "where are my account settings?", "where do I log out?"): the navigation controls are ALWAYS at the top of the app and are registered as:',
     '  Main nav (top-left area): nav-quotes (Quotes page), nav-orders (Orders / material orders page), nav-resources (Resource Library hub). Components, Drawings & Images, Catalogs, Attachments and templates all live UNDER Resources now (resources-card-components is the Components card on the /resources hub) - Components is NOT in the main nav anymore.',
     '  Top-RIGHT utility controls: nav-help ("Help" button, opens help/docs drawer), nav-alerts (notifications bell icon), nav-account (the "Account" link - opens account settings: company, security/password, notifications, billing, support), nav-logout ("Logout" button).',
     mode === 'guide_me'
-      ? 'These are NOT workflows - do NOT call find_workflows / get_workflow for a pure "get me to page X" / "where is X control" request. Step 1: call get_current_context to see what page the user is currently on. Step 2: if the target nav id (e.g. nav-quotes, nav-resources, nav-account) IS in visibleElementIds, call request_ui_highlight on it (treatment "pulse") and reply with ONE short sentence ("Click the highlighted Resources link in the top nav."). Step 3: if the target is NOT visible (user is on a different page or a sub-page that hides the main nav), tell the user where to find it by name and location in ONE sentence ("Click the Resources link in the top nav bar to get to the Drawings & Images page."). Do NOT spin through multiple tool calls or start a guide workflow. One highlight + one sentence maximum.'
-      : 'These are NOT workflows - do NOT call find_workflows / get_workflow for a pure "get me to page X" / "where is X control" request. In Respond mode you CANNOT highlight - just tell the user where to find it by name and location in ONE short sentence (e.g. "Click the Resources link in the top nav bar."). Do NOT call request_ui_highlight - it is not available. If the user wants to be shown visually, tell them to switch on Guide Me mode.',
+      ? 'These are NOT workflows - do NOT call find_workflows / get_workflow for a pure "get me to page X" / "where is X control" request. Step 1: if the target matches a navigate_to destination key, call navigate_to with it and reply with ONE short sentence - do not highlight, the user is taken straight there. Step 2 (target is a control like a specific button, or no key matches): call get_current_context to see what page the user is on. Step 3: if the target nav id (e.g. nav-quotes, nav-resources, nav-account) IS in visibleElementIds, call request_ui_highlight on it (treatment "pulse") and reply with ONE short sentence ("Click the highlighted Resources link in the top nav."). Step 4: if the target is NOT visible, tell the user where to find it by name and location in ONE sentence. Do NOT spin through multiple tool calls or start a guide workflow. One navigate/highlight + one sentence maximum.'
+      : 'These are NOT workflows - do NOT call find_workflows / get_workflow for a pure "get me to page X" / "where is X control" request. If the target matches a navigate_to destination key (dashboard, quotes, orders, resources, components, catalogs, drawings, attachments, invoices, account, billing), call navigate_to and reply with ONE short sentence. Otherwise tell the user where to find it by name and location in ONE short sentence. Do NOT call request_ui_highlight - it is not available in Respond mode. If the user wants to be shown visually, tell them to switch on Guide Me mode.',
     'CRITICAL - describe controls ACCURATELY: "Account" is a TEXT LINK/pill labelled "Account" in the top-right corner. There is NO profile avatar, NO profile photo, and NO user initials anywhere in this app. NEVER tell the user to click an avatar, profile picture, or their initials. Say "the Account link in the top-right".',
     'GETTING STARTED / "where do I start?" / "I\'m new" / "how do I set this up?": do NOT immediately dump a feature tour or pick a workflow. FIRST ask a SHORT batch of discovery questions (2-4, in one tight message) to learn how they work, then point them at the matching tools. Good questions: (1) What trade/industry are you in? (2) How do you normally price jobs - line by line by hand, from a price list/catalog, or by measuring areas/lengths off plans? (3) Do you send material orders to suppliers and/or invoices to customers? (4) Roughly how many quotes a month? Then map their answers to our tools: measures areas/plans -> Digital Measure + Components + Digital Takeoff; line-by-line or from a price list -> Standard/Component quotes + Catalogs; repeats the same items -> Components & Templates; orders suppliers -> Orders; bills customers -> Invoices; wants to chase quotes -> Auto Follow-ups. Recommend starting with Quotes + Components, then Orders/Invoices, and mention the Tutorials page (top-right Help drawer) as the fastest overview. Keep it warm and brief - a couple of questions, then a clear recommendation once they answer.',
     `Current screen: ${ctx.screenKey || 'unknown'}.`,
@@ -207,7 +231,8 @@ async function dispatchTool(
   rawArgs: string,
   ctx: AssistantServerContext,
   onHighlight?: (command: HighlightCommand) => void,
-  onGuideStart?: (command: GuideStartCommand) => void
+  onGuideStart?: (command: GuideStartCommand) => void,
+  onNavigate?: (command: NavigateCommand) => void
 ): Promise<{ ok: boolean; result: unknown }> {
   let args: Record<string, unknown> = {};
   try {
@@ -440,6 +465,40 @@ async function dispatchTool(
       };
     }
 
+    case 'navigate_to': {
+      const dest = String(args.destination ?? '').trim().toLowerCase();
+      const target = NAVIGABLE_PAGES[dest];
+      // Hard allowlist: the model can only pick from the published keys, and
+      // the client only ever receives a path from this table (never raw model
+      // output), so no arbitrary-route injection is possible.
+      if (!target) {
+        const keys = Object.keys(NAVIGABLE_PAGES).join(', ');
+        return {
+          ok: true,
+          result: {
+            navigated: false,
+            note: `Unknown destination "${dest}". Valid keys: ${keys}. If none match, just tell the user where to find it by name instead.`,
+          },
+        };
+      }
+      const command: NavigateCommand = {
+        type: 'navigate',
+        screenKey: target.screenKey,
+        path: target.path,
+        reason: `Taking you to ${target.label}`,
+      };
+      onNavigate?.(command);
+      return {
+        ok: true,
+        result: {
+          navigated: true,
+          destination: dest,
+          label: target.label,
+          note: `The user is being taken to ${target.label} automatically. Reply with ONE short sentence (e.g. "Taking you to ${target.label}.") and STOP. Do not give further directions.`,
+        },
+      };
+    }
+
     case 'begin_guide': {
       const workflowId = String(args.workflowId ?? '').trim();
       const wf = workflowId ? getWorkflowById(workflowId, trade) : null;
@@ -624,7 +683,8 @@ export async function runAssistantTurn(
             call.arguments,
             input.context,
             input.onHighlight,
-            input.onGuideStart
+            input.onGuideStart,
+            input.onNavigate
           );
           messages.push({
             role: 'tool',
@@ -659,7 +719,8 @@ export async function runAssistantTurn(
         call.arguments,
         input.context,
         input.onHighlight,
-        input.onGuideStart
+        input.onGuideStart,
+        input.onNavigate
       );
       messages.push({
         role: 'tool',
