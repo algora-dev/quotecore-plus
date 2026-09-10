@@ -16,6 +16,7 @@ import type { JobStatus } from './actions';
 import JSZip from 'jszip';
 import { addQuoteToZip, downloadBlob, sanitizeFilename } from './lib/quote-bundle';
 import { UpgradeModal } from '@/app/components/UpgradeModal';
+import { MeasureJobButton, type Props as MeasureJobButtonProps } from '../MeasureJobModal';
 import { RecipientStatusBadge, type RecipientStatus } from '@/app/components/RecipientStatusBadge';
 
 type Quote = {
@@ -67,6 +68,9 @@ interface Props {
    * letting the user fill out a form for nothing.
    */
   subscriptionActive: boolean;
+  /** Props for the compact "Measure a job" pill rendered next to New Quote.
+   *  Omitted -> button hidden (dashboard carries the prominent card instead). */
+  measureProps?: MeasureJobButtonProps;
 }
 
 const JOB_STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
@@ -204,6 +208,7 @@ export function QuotesList({
   subscriptionActive,
   monthlyQuoteLimit,
   effectivePlanCode,
+  measureProps,
 }: Props) {
   const [capUpgradeOpen, setCapUpgradeOpen] = useState(false);
   // Smoke #7 (2026-05-19): subscription-inactive (e.g. expired trial)
@@ -515,6 +520,7 @@ export function QuotesList({
         </div>
 
         <div className="flex gap-2">
+          {measureProps && <MeasureJobButton {...measureProps} variant="inline" />}
           {!subscriptionActive ? (
             <button
               type="button"

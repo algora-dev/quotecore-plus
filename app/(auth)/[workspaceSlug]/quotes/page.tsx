@@ -139,8 +139,6 @@ export default async function QuotesPage({
         )}
       </div>
 
-      <MeasureJobButton {...measureProps} />
-
       <QuotesList
         quotes={quotes}
         workspaceSlug={workspaceSlug}
@@ -149,6 +147,7 @@ export default async function QuotesPage({
         monthlyQuoteLimit={limit}
         effectivePlanCode={entitlements.effectivePlanCode}
         subscriptionActive={entitlements.isActive}
+        measureProps={measureProps}
       />
     </section>
   );

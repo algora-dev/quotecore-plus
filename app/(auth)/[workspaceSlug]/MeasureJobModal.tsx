@@ -12,7 +12,7 @@ import { UpgradeModal } from '@/app/components/UpgradeModal';
 
 type MeasurementChoice = 'metric' | 'imperial_ft' | 'imperial_rs';
 
-interface Props {
+export interface Props {
   workspaceSlug: string;
   companyId: string;
   defaultMeasurementSystem: MeasurementChoice;
@@ -24,6 +24,9 @@ interface Props {
   defaultTrade?: string;
   componentCollections?: Array<{ id: string; name: string; is_bootstrap: boolean }>;
   isOverStorage?: boolean;
+  /** 'card' = prominent dashboard banner (default). 'inline' = compact pill
+   *  for tight headers (Quotes page, next to New Quote). */
+  variant?: 'card' | 'inline';
 }
 
 const MEASUREMENT_OPTIONS: Array<{ value: MeasurementChoice; title: string; subtitle: string }> = [
@@ -46,6 +49,44 @@ export function MeasureJobButton(props: Props) {
 
   // Feature gate first: a plan without digital_takeoff never opens the modal.
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const handleClick = () => {
+    if (!props.digitalTakeoffAvailable) {
+      setUpgradeOpen(true);
+      return;
+    }
+    setOpen(true);
+  };
+
+  if (props.variant === 'inline') {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={handleClick}
+          title="Upload a plan or image, or measure over satellite imagery, to get quantities and pricing - then seamlessly convert it into a quote."
+          aria-label="Measure a job - upload a plan or image to measure, price, and convert it into a quote"
+          data-copilot="measure-job"
+          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m4 10V11m4 6V9M5 21h14" />
+          </svg>
+          Measure a job
+        </button>
+
+        {open && <MeasureJobModal {...props} onClose={() => setOpen(false)} />}
+
+        <UpgradeModal
+          open={upgradeOpen}
+          onClose={() => setUpgradeOpen(false)}
+          title="Digital takeoff requires a higher plan"
+          description="To measure jobs on the digital canvas please upgrade your account."
+          recommendedPlan="growth"
+        />
+      </>
+    );
+  }
 
   return (
     <>
