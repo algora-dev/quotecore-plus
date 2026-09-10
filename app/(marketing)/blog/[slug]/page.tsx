@@ -148,7 +148,7 @@ export default async function BlogPostPage({ params }: Props) {
       <div className="min-h-screen bg-white text-zinc-950">
         <BlogHeader backLabel="Back to blogs" backHref="/blog" />
         <main>
-        <article className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
+        <article className="mx-auto max-w-5xl px-6 py-20 lg:px-8">
           <p className="text-sm text-zinc-500">
             {new Date(post.date).toLocaleDateString('en-GB', {
               day: 'numeric',
