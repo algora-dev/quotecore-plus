@@ -249,17 +249,19 @@ function MeasureJobModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-5 my-8"
+        className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col"
       >
-        <div>
+        <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
           <h3 className="text-lg font-semibold text-slate-900">Measure a job</h3>
           <p className="text-sm text-slate-500 mt-0.5">
             Upload your plan or image and start measuring - quantities and pricing follow automatically.
           </p>
         </div>
+
+        <div className="px-6 py-5 space-y-5 overflow-y-auto">
 
         {createError && (
           <div
@@ -319,7 +321,7 @@ function MeasureJobModal({
           <p className="text-xs text-slate-500 mb-3">
             Pick now - this <strong>cannot be changed later</strong>. Default comes from your company settings.
           </p>
-          <div className="grid grid-cols-1 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {MEASUREMENT_OPTIONS.map((opt) => {
               const isActive = measurementSystem === opt.value;
               return (
@@ -457,7 +459,8 @@ function MeasureJobModal({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+        </div>
+        <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between flex-shrink-0 bg-white rounded-b-2xl">
           <button
             type="button"
             onClick={onClose}
