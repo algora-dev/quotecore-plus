@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import LazyYouTube from "@/components/LazyYouTube";
 
 export const metadata: Metadata = {
   title: "What Does a Roof Measurement or Quote Actually Cost? QuoteCore+ vs Per-Report Services",
@@ -106,6 +107,17 @@ export default function RoofMeasurementCostComparison() {
             All prices from official pricing pages, checked August 2026. Regional pricing may
             differ.
           </p>
+
+          <div className="not-prose mt-10">
+            <p className="text-sm font-semibold text-zinc-900">Is the free DIY approach accurate enough? We tested it on 10 real roofs.</p>
+            <p className="mt-1 text-sm text-zinc-600">Every remote measurement was verified on site. Watch the study, or read the <Link href="/research/google-earth-roof-measurement-accuracy" className="font-medium text-[#BD4A1A] underline underline-offset-4">full field study with the published dataset</Link>.</p>
+            <div className="mt-4 max-w-2xl">
+              <LazyYouTube
+                videoId="k-5FTjyK1wg"
+                title="How Accurate Is Measuring a Roof with Google Earth? We Tested 10 Real Roofs!"
+              />
+            </div>
+          </div>
 
           <h2 className="mt-14 text-2xl font-semibold">How QuoteCore+ works out to under $1 per quote</h2>
           <div className="prose prose-zinc mt-4 max-w-none prose-a:text-[#BD4A1A]">

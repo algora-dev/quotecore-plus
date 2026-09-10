@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
+import LazyYouTube from "@/components/LazyYouTube";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { buildPageMetadata } from "@/app/lib/seo";
 import { SITE_URL } from "@/lib/seo/site-url";
@@ -41,6 +42,17 @@ export default function ResearchIndexPage() {
               We remotely measured 10 real roofs using free aerial imagery and QuoteCore+, then physically verified every measurement on site. 3.52% average area error, 136 component comparisons, full dataset published.
             </p>
           </Link>
+        </div>
+        <div className="mt-10">
+          <p className="text-sm font-semibold text-slate-900">Watch the study</p>
+          <p className="mt-1 text-sm text-zinc-600">The full 10-roof test on video - every remote measurement compared against the physical roof.</p>
+          <div className="mt-4 max-w-2xl">
+            <LazyYouTube
+              videoId="k-5FTjyK1wg"
+              title="How Accurate Is Measuring a Roof with Google Earth? We Tested 10 Real Roofs!"
+            />
+          </div>
+          <p className="mt-4 text-sm text-zinc-600">More videos on the <a href="https://www.youtube.com/@quotecoreplus" target="_blank" rel="noopener noreferrer" className="font-medium text-[#FF6B35] underline underline-offset-4">QuoteCore+ YouTube channel</a>.</p>
         </div>
       </section>
       <SiteFooter />

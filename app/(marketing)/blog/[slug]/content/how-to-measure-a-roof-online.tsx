@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import LazyYouTube from "@/components/LazyYouTube";
 
 export default function Post() {
   return (
@@ -28,6 +29,15 @@ export default function Post() {
         This guide walks through the whole process on a computer step by step: getting your plan ready as an image,
         calibrating the scale, measuring each component, and turning the output into materials and a quote.
       </p>
+
+      <div className="not-prose my-8">
+        <p className="mb-3 text-sm font-semibold text-zinc-900">Watch the full walkthrough</p>
+        <LazyYouTube
+          videoId="RIKlvOG_xdc"
+          title="How to Measure a Roof from Google Maps for Free - Full Roof Takeoff + Quote"
+        />
+        <p className="mt-2 text-sm text-zinc-600">The complete process on video: find the roof, measure every component, and turn it into a quote - free.</p>
+      </div>
 
       <hr />
 

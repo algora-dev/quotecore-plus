@@ -7,6 +7,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import DemoCTACard from "@/components/DemoCTACard";
+import LazyYouTube from "@/components/LazyYouTube";
 
 export const metadata: Metadata = {
   title: "Digital Roof Takeoff Software",
@@ -181,6 +182,16 @@ export default function DigitalRoofTakeoffPage() {
               </div>
               <h3 className="mt-3 font-semibold text-slate-900">Auto-calculated everything</h3>
               <p className="mt-1 text-sm text-zinc-600">Pitch, pitch type, areas, waste, and quantities all update automatically. Draw what you see - the system does the math.</p>
+            </div>
+          </div>
+          <div className="mt-10">
+            <p className="text-sm font-semibold text-slate-900">See it done: full roof takeoff from Google Maps to a quote</p>
+            <p className="mt-1 text-sm text-zinc-600">A complete real-world takeoff and quote, measured for free from satellite imagery - the same workflow this feature powers.</p>
+            <div className="mt-4 max-w-2xl">
+              <LazyYouTube
+                videoId="RIKlvOG_xdc"
+                title="How to Measure a Roof from Google Maps for Free - Full Roof Takeoff + Quote"
+              />
             </div>
           </div>
         </section>

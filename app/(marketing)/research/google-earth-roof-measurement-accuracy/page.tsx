@@ -8,6 +8,7 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 import { buildPageMetadata } from "@/app/lib/seo";
 import { studyRoofs, type StudyRoof } from "./study-data";
 import RoofDetails from "./roof-details";
+import LazyYouTube from "@/components/LazyYouTube";
 
 const STUDY_PATH = "/research/google-earth-roof-measurement-accuracy";
 const CSV_PATH = "/downloads/quote-core-google-earth-roof-measurement-study-2026.csv";
@@ -102,6 +103,28 @@ const breadcrumbSchema = {
     { "@type": "ListItem", position: 2, name: "Research", item: `${SITE_URL}/research` },
     { "@type": "ListItem", position: 3, name: "Google Earth Roof Measurement Accuracy", item: `${SITE_URL}${STUDY_PATH}` },
   ],
+};
+
+const studyVideoSchema = {
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  name: "How Accurate Is Measuring a Roof with Google Earth? We Tested 10 Real Roofs!",
+  description: "We measured 10 real roofs remotely using Google Earth and free tools, then verified every measurement on site. Average roof-area error, pitch accuracy, component measurements and time saved - the full study on video.",
+  thumbnailUrl: [`https://i.ytimg.com/vi/k-5FTjyK1wg/hqdefault.jpg`],
+  uploadDate: "2026-09-10",
+  embedUrl: "https://www.youtube.com/embed/k-5FTjyK1wg",
+  contentUrl: "https://www.youtube.com/watch?v=k-5FTjyK1wg",
+};
+
+const tutorialVideoSchema = {
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  name: "How to Measure a Roof from Google Maps for Free - Full Roof Takeoff + Quote",
+  description: "Full walkthrough: measure a roof from Google Maps satellite imagery for free, complete a digital roof takeoff with all components, and turn it into a customer quote using QuoteCore+.",
+  thumbnailUrl: [`https://i.ytimg.com/vi/RIKlvOG_xdc/hqdefault.jpg`],
+  uploadDate: "2026-09-10",
+  embedUrl: "https://www.youtube.com/embed/RIKlvOG_xdc",
+  contentUrl: "https://www.youtube.com/watch?v=RIKlvOG_xdc",
 };
 
 function StatCard({ value, label, support }: { value: string; label: string; support: string }) {
@@ -221,6 +244,13 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
           <p className="mt-3 text-sm leading-7 text-zinc-700">
             Across 10 real roofs, remote satellite/aerial roof takeoffs produced roof-area measurements averaging <strong>3.52% absolute error</strong> compared with physical site measurements. <strong>9 of 10 roof areas were within 5%, and all 10 were within 10%.</strong> Across <strong>136 individual roof-component measurements, 83.8% were within 5% and 94.9% were within 10%.</strong> Remote pitch estimates averaged <strong>1.6° from the real pitch</strong>, while digital takeoffs required <strong>71.1% less measuring time - before travel time was included.</strong>
           </p>
+          <div className="mt-6">
+            <p className="mb-3 text-sm font-semibold text-slate-900">Watch the study: 10 roofs, every measurement compared</p>
+            <LazyYouTube
+              videoId="k-5FTjyK1wg"
+              title="How Accurate Is Measuring a Roof with Google Earth? We Tested 10 Real Roofs!"
+            />
+          </div>
         </div>
       </div></section>
 
@@ -425,7 +455,14 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
         <div className="rounded-2xl bg-black px-6 py-12 text-center sm:px-12">
           <h2 className="text-3xl font-semibold tracking-tight text-white">Don&apos;t take our word for it. Test it on your next roof.</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-zinc-400">Before you drive to your next reroof just to measure it, try the same process we used in this study. Find the property remotely, complete the takeoff for free, save your numbers, then compare them with what you find on site.</p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mx-auto mt-8 max-w-3xl">
+            <p className="mb-3 text-sm font-semibold text-white">Watch the full walkthrough: free roof takeoff from Google Maps to quote</p>
+            <LazyYouTube
+              videoId="RIKlvOG_xdc"
+              title="How to Measure a Roof from Google Maps for Free - Full Roof Takeoff + Quote"
+            />
+          </div>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <a href="/free-roof-takeoff" className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.5)]">Measure a Roof Free</a>
           </div>
           <p className="mt-4 text-xs text-zinc-500">Free · no card · no measurement-report fee</p>
@@ -500,7 +537,7 @@ export default function GoogleEarthRoofMeasurementStudyPage() {
       <SiteFooter />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify([articleSchema, datasetSchema, breadcrumbSchema]) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([articleSchema, datasetSchema, breadcrumbSchema, studyVideoSchema, tutorialVideoSchema]) }}
       />
     </>
   );
