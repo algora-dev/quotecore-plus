@@ -545,3 +545,4 @@
 - [ ] Image upload still capped at 10 MB; PDF accepted up to 50 MB
 - [ ] Password-protected PDF shows friendly screenshot-instead message (no dead end)
 - [ ] Xero: Account > Integrations shows Connected (tenant name); quote Summary > Send to App > Export to Xero creates draft invoice (verify in Xero Contacts > All contacts > customer)
+- [ ] Dashboard: click Start measuring on the Measure a job card, fill job name + units, upload a plan/image, land on the takeoff canvas with the plan loaded (new digital quote created).

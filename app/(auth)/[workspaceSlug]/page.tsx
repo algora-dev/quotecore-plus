@@ -3,6 +3,9 @@ import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
+import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { MeasureJobButton } from './MeasureJobModal';
 import { WelcomeModal } from './tutorials/WelcomeModal';
 import { DocDraftRestorer } from './DocDraftRestorer';
 import { TakeoffDraftNoteBanner } from './TakeoffDraftNoteBanner';
@@ -17,6 +20,19 @@ export default async function WorkspaceHome({
   const { company } = await loadCompanyContext();
   const profile = await getCurrentProfile();
   const supabase = await createSupabaseServerClient();
+
+  // Measure a job entry - same entitlement inputs as the new-quote page so
+  // the modal inherits identical gating/copy behaviour.
+  const defaultMeasurementSystem = normalizeMeasurementSystem(company.default_measurement_system);
+  const ent = await loadCompanyEntitlements(profile.company_id);
+  const monthlyQuoteAtCap = ent.monthlyQuoteUsed >= ent.monthlyQuoteLimit;
+  const { data: componentCollections } = await supabase
+    .from('component_collections')
+    .select('id, name, is_bootstrap')
+    .eq('company_id', profile.company_id)
+    .order('is_bootstrap', { ascending: false })
+    .order('name', { ascending: true });
+  const defaultTrade = (company as { default_trade?: string }).default_trade ?? 'roofing';
 
   // Load bell-visible alert count (same lifecycle as the bell icon:
   // bell_cleared_at IS NULL). This keeps the dashboard banner in sync with
@@ -165,6 +181,22 @@ export default async function WorkspaceHome({
           </div>
         </div>
       )}
+
+      {/* Measure-first entry (spec: docs/MEASURE_A_JOB_SPEC.md) - sits above
+          the action cards so "I just want to measure" is one click away. */}
+      <MeasureJobButton
+        workspaceSlug={workspaceSlug}
+        companyId={profile.company_id}
+        defaultMeasurementSystem={defaultMeasurementSystem}
+        digitalTakeoffAvailable={ent.features.digital_takeoff}
+        monthlyQuoteAtCap={monthlyQuoteAtCap}
+        monthlyQuoteUsed={ent.monthlyQuoteUsed}
+        monthlyQuoteLimit={ent.monthlyQuoteLimit}
+        effectivePlanCode={ent.effectivePlanCode}
+        defaultTrade={defaultTrade}
+        componentCollections={componentCollections ?? []}
+        isOverStorage={ent.isOverStorage}
+      />
 
       {/* Action cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 pb-20 md:pb-0">
