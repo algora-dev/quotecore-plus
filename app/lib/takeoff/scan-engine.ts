@@ -23,7 +23,7 @@ import {
   type AugmentedLine,
 } from './outlineGeometry';
 import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from './strokeStyle';
-import { mergeArtificialCollinearSplits, removeIslandMicroClusters } from './scanPostprocess';
+import { mergeArtificialCollinearSplits, removeIslandMicroClusters, findIsolatedClosedLoopLineIds } from './scanPostprocess';
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -626,6 +626,22 @@ export async function runScan3(params: {
   if (dashed3.size > 0) {
     console.log(`[scan-engine] scan3: dropped ${dashed3.size} dashed line(s): ${[...dashed3].join(', ')}`);
   }
+  // ── Isolated closed-loop demotion (annotation-box suspicion) ──
+  // A closed loop with no junction to the wider roof network is not real
+  // roof geometry: demote to uncertain (pink, deletable) - never trust, never
+  // delete silently.
+  const loopDemotions = findIsolatedClosedLoopLineIds(lines);
+  for (const rec of loopDemotions.records) {
+    console.log(`[scan-engine] scan3: annotation-box loop demoted (${rec.lineIds.join(',')}): ${rec.reason}`);
+  }
+  if (loopDemotions.ids.size > 0) {
+    finalClassifications = finalClassifications.map(c =>
+      loopDemotions.ids.has(c.line_id) && c.type !== 'uncertain'
+        ? { ...c, type: 'uncertain' as const, reason: 'Backend: part of an isolated closed loop with no junction to the roof network - likely a traced annotation box, marked uncertain for review' }
+        : c
+    );
+  }
+
   const keptLines = lines.filter(l => !dashed3.has(l.id));
   const keptClassifications = finalClassifications.filter(c => !dashed3.has(c.line_id));
 

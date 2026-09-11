@@ -42,7 +42,7 @@ import {
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
 import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
-import { mergeArtificialCollinearSplits, removeIslandMicroClusters } from '@/app/lib/takeoff/scanPostprocess';
+import { mergeArtificialCollinearSplits, removeIslandMicroClusters, findIsolatedClosedLoopLineIds } from '@/app/lib/takeoff/scanPostprocess';
 import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import {
   classifyOutlineVertices,
@@ -1270,6 +1270,24 @@ export async function POST(req: NextRequest) {
         console.log(`[ai-scan-v3:${requestId}] scan3: dropped ${dashedIds.size} dashed line(s): ${[...dashedIds].join(', ')}`);
         lines = lines.filter(l => !dashedIds.has(l.id));
         finalClassifications = finalClassifications.filter(c => !dashedIds.has(c.line_id));
+      }
+
+      // ── Isolated closed-loop demotion (annotation-box suspicion) ──
+      // Solid borders of plan annotation features (skylight/solar symbols)
+      // traced as long lines would otherwise be classified as ridges. A
+      // closed loop with no junction to the wider roof network is not real
+      // roof geometry: demote to uncertain (pink, deletable) - never trust,
+      // never delete silently.
+      const loopDemotions = findIsolatedClosedLoopLineIds(lines);
+      for (const rec of loopDemotions.records) {
+        console.log(`[ai-scan-v3:${requestId}] scan3: annotation-box loop demoted (${rec.lineIds.join(',')}): ${rec.reason}`);
+      }
+      if (loopDemotions.ids.size > 0) {
+        finalClassifications = finalClassifications.map(c =>
+          loopDemotions.ids.has(c.line_id) && c.type !== 'uncertain'
+            ? { ...c, type: 'uncertain' as const, reason: 'Backend: part of an isolated closed loop with no junction to the roof network - likely a traced annotation box, marked uncertain for review' }
+            : c
+        );
       }
 
       // Collinear split merge: undo artificial junctions (typically created

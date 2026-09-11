@@ -4,7 +4,7 @@
 // 3. T-junction-aware connectivity
 // Run: node --experimental-strip-types scripts/test-safe-refinement.mts
 import { filterAngleValid, validateConnectivity } from '../app/lib/takeoff/scan-engine.ts';
-import { mergeArtificialCollinearSplits } from '../app/lib/takeoff/scanPostprocess.ts';
+import { mergeArtificialCollinearSplits, findIsolatedClosedLoopLineIds } from '../app/lib/takeoff/scanPostprocess.ts';
 
 const L = (id: string, x1: number, y1: number, x2: number, y2: number) =>
   ({ id, start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, confidence: 0.5 });
@@ -90,4 +90,29 @@ for (const [name, a, b] of perms) {
 }
 
 console.log(`\n${pass} pass, ${fail} fail`);
-process.exit(fail > 0 ? 1 : 0);
+
+// ── 4. Isolated closed-loop demotion (annotation-box suspicion) ──
+{
+  // Large annotation box traced with LONG edges (survives micro-cluster
+  // removal because edges exceed 6% of the roof diagonal) but isolated from
+  // the roof network -> flagged for uncertain demotion.
+  const box = [L('B1', 200, 100, 500, 100), L('B2', 500, 100, 500, 180), L('B3', 500, 180, 200, 180), L('B4', 200, 180, 200, 100)];
+  const network = [L('R1', 50, 250, 750, 250)];
+  const isolated = findIsolatedClosedLoopLineIds([...box, ...network]);
+  check('isolated large closed loop flagged', box.every(b => isolated.ids.has(b.id)) && !isolated.ids.has('R1'));
+
+  // Same box, but a spur connects one box edge to the ridge network -> the
+  // loop now has a junction with the outside network -> NOT flagged.
+  const spur = L('S1', 350, 180, 350, 250);
+  const connected = findIsolatedClosedLoopLineIds([...box, ...network, spur]);
+  check('network-connected loop not flagged', connected.ids.size === 0);
+
+  // Real roof network (ridge + hips forming a tree, no cycle) -> not flagged.
+  const tree = [L('R2', 300, 200, 700, 200), L('H1', 300, 200, 120, 370), L('H2', 700, 200, 880, 370)];
+  const noLoop = findIsolatedClosedLoopLineIds(tree);
+  check('tree network without cycle not flagged', noLoop.ids.size === 0);
+}
+
+const finalFail = fail;
+console.log(`\nTOTAL: ${pass} pass, ${finalFail} fail`);
+process.exit(finalFail > 0 ? 1 : 0);
