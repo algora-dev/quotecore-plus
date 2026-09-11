@@ -7,23 +7,23 @@
 import OpenAI from 'openai';
 import sharp from 'sharp';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import type { Database } from '@/app/lib/supabase/database.types';
+import type { Database } from '../supabase/database.types';
 import {
   V3_SCAN1_SCHEMA, V3_SCAN2_SCHEMA, V3_SCAN3_SCHEMA,
   buildV3OutlinePrompt, buildV3LineDetectionPrompt, buildV3ClassificationPrompt,
   type V3Point, type V3Line, type V3Classification,
-} from '@/app/lib/takeoff/ai-prompt-v3';
+} from './ai-prompt-v3';
 import {
   renderOutlineOverlay, renderLineOverlay, renderCleanOverlay,
   renderScan2AuditOverlay, outlineToEdgeLines,
-} from '@/app/lib/takeoff/scanOverlay';
-import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
+} from './scanOverlay';
+import { perimeterAccountingPass } from './applyAiResults';
 import {
   classifyOutlineVertices, matchEndpointsToVertices, enforceHipValleyVertexRule,
   type AugmentedLine,
-} from '@/app/lib/takeoff/outlineGeometry';
-import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
-import { mergeArtificialCollinearSplits, removeIslandMicroClusters } from '@/app/lib/takeoff/scanPostprocess';
+} from './outlineGeometry';
+import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from './strokeStyle';
+import { mergeArtificialCollinearSplits, removeIslandMicroClusters } from './scanPostprocess';
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -120,7 +120,7 @@ export async function callVisionModel(
   schema: Record<string, unknown>,
   model: string,
   options: { reasoningEffort?: 'low' | 'medium' | 'high'; maxCompletionTokens: number },
-): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null }> {
+): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens: number | null } | null }> {
   const openai = getOpenAIClient();
   const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [{ type: 'text', text: prompt }];
   for (const img of images) {
@@ -139,7 +139,12 @@ export async function callVisionModel(
   if (!content) throw new Error('AI returned an empty response.');
   return {
     parsed: JSON.parse(content), responseId: response.id ?? null,
-    usage: response.usage ? { promptTokens: response.usage.prompt_tokens, completionTokens: response.usage.completion_tokens, totalTokens: response.usage.total_tokens } : null,
+    usage: response.usage ? {
+      promptTokens: response.usage.prompt_tokens,
+      completionTokens: response.usage.completion_tokens,
+      totalTokens: response.usage.total_tokens,
+      reasoningTokens: response.usage.completion_tokens_details?.reasoning_tokens ?? null,
+    } : null,
   };
 }
 
@@ -214,6 +219,10 @@ function nearestAllowedAngle(angle: number): number | null {
   return bestDiff <= ANGLE_TOLERANCE ? best : null;
 }
 
+// Snap is cosmetic cleanup only: never move an endpoint far enough to change
+// network topology (stays below the 10-15px tolerances used downstream).
+const MAX_SNAP_ENDPOINT_MOVEMENT_PX = 8;
+
 function snapLineToAngle(line: V3Line): V3Line {
   const angle = lineAngle(line.start, line.end);
   const targetAngle = nearestAllowedAngle(angle);
@@ -222,7 +231,12 @@ function snapLineToAngle(line: V3Line): V3Line {
   const length = Math.sqrt((line.end.x - line.start.x) ** 2 + (line.end.y - line.start.y) ** 2);
   const halfLen = length / 2, rad = targetAngle * Math.PI / 180;
   const dx = Math.cos(rad), dy = -Math.sin(rad);
-  return { ...line, start: { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) }, end: { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) } };
+  const snappedStart = { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) };
+  const snappedEnd = { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) };
+  const startMoved = Math.hypot(snappedStart.x - line.start.x, snappedStart.y - line.start.y);
+  const endMoved = Math.hypot(snappedEnd.x - line.end.x, snappedEnd.y - line.end.y);
+  if (startMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX || endMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX) return line;
+  return { ...line, start: snappedStart, end: snappedEnd };
 }
 
 export function filterAngleValid(lines: V3Line[]): { valid: V3Line[]; rejected: V3Line[] } {
@@ -257,8 +271,18 @@ export function validateConnectivity(lines: V3Line[], outlinePoints: V3Point[], 
     for (const ep of endpoints) { if (ep.lineId === ownLineId && ep.isStart === ownIsStart) continue; if (Math.sqrt((ep.x - p.x) ** 2 + (ep.y - p.y) ** 2) <= tolerance) return true; }
     return false;
   }
+  // T-junction awareness: an endpoint touching the BODY of another line counts
+  // as connected (same topology definition the micro-cluster filter trusts).
+  function pointNearOtherLineSegment(p: V3Point, ownLineId: string): boolean {
+    for (const other of lines) {
+      if (other.id === ownLineId) continue;
+      if (pointToSegmentDistance(p, other.start, other.end) <= tolerance) return true;
+    }
+    return false;
+  }
   for (const line of lines) {
-    if (pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true) || pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false)) connected.push(line);
+    if (pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true) || pointNearOtherLineSegment(line.start, line.id)
+      || pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false) || pointNearOtherLineSegment(line.end, line.id)) connected.push(line);
     else floating.push(line);
   }
   return { connected, floating };
@@ -315,13 +339,18 @@ export function getTokenLimits(reasoningEffort: 'low' | 'medium' | 'high') {
 
 // ── Usage logging ───────────────────────────────────────────────────────
 
-export function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string }) {
+export function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens?: number | null } | null; durationMs?: number }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
   const client = createServiceClient<Database>(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
   client.from('ai_scan_usage').insert({
     company_id: params.companyId, quote_id: params.quoteId, user_id: params.userId,
     page_id: params.pageId ?? null, success: params.success, model: params.model, error: params.error,
+    prompt_tokens: params.tokens?.promptTokens ?? null,
+    completion_tokens: params.tokens?.completionTokens ?? null,
+    total_tokens: params.tokens?.totalTokens ?? null,
+    reasoning_tokens: params.tokens?.reasoningTokens ?? null,
+    duration_ms: params.durationMs ?? null,
   }).then(() => {}, (err) => console.warn('[scan-engine] usage log failed:', err.message));
 }
 

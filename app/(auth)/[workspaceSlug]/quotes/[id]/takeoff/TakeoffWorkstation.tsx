@@ -10,6 +10,7 @@ import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-t
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
+import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
@@ -4318,7 +4319,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       }));
 
       // Points were deducted server-side on scan1; update local state.
-      const cost = aiQualityLevel === 'low' ? 2 : aiQualityLevel === 'medium' ? 4 : 8;
+      // Costs come from the shared canonical constant (2/6/12).
+      const cost = getAiScanPointCost(aiQualityLevel);
       setAiPoints(prev => prev ? { ...prev, used: prev.used + cost, remaining: Math.max(prev.remaining - cost, 0) } : null);
 
       scanCompleted = await runRemainingAiScans({
@@ -6042,8 +6044,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                       <div className="flex gap-1.5">
                         {([
                           { value: 'low', label: 'Low', hint: 'Small, simple roofs · 2 points' },
-                          { value: 'medium', label: 'Medium', hint: 'Medium size & complexity · 4 points' },
-                          { value: 'high', label: 'High', hint: 'Larger, complex roofs · 8 points' },
+                          { value: 'medium', label: 'Medium', hint: 'Medium size & complexity · 6 points' },
+                          { value: 'high', label: 'High', hint: 'Larger, complex roofs · 12 points' },
                         ] as const).map(opt => {
                           const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
                           const canAfford = !aiPoints || aiPoints.remaining >= cost;

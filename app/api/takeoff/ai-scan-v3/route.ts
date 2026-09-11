@@ -43,6 +43,7 @@ import {
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
 import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
 import { mergeArtificialCollinearSplits, removeIslandMicroClusters } from '@/app/lib/takeoff/scanPostprocess';
+import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import {
   classifyOutlineVertices,
   matchEndpointsToVertices,
@@ -377,6 +378,11 @@ function nearestAllowedAngle(angle: number): number | null {
   return bestDiff <= ANGLE_TOLERANCE ? best : null;
 }
 
+// Snap is cosmetic cleanup for small model jitter. It must never move an
+// endpoint far enough to change network topology (10-15px tolerances), so a
+// snapped result is only accepted when both endpoints stay within this bound.
+const MAX_SNAP_ENDPOINT_MOVEMENT_PX = 8;
+
 function snapLineToAngle(line: V3Line): V3Line {
   const angle = lineAngle(line.start, line.end);
   const targetAngle = nearestAllowedAngle(angle);
@@ -390,10 +396,22 @@ function snapLineToAngle(line: V3Line): V3Line {
   const dx = Math.cos(rad);
   const dy = -Math.sin(rad);
 
+  const snappedStart = { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) };
+  const snappedEnd = { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) };
+
+  // Endpoint-movement guard: long lines with a small angular correction can
+  // otherwise shift endpoints by 20-35px, silently breaking vertex matching
+  // and junction connectivity. Fall back to the model's original geometry.
+  const startMoved = Math.hypot(snappedStart.x - line.start.x, snappedStart.y - line.start.y);
+  const endMoved = Math.hypot(snappedEnd.x - line.end.x, snappedEnd.y - line.end.y);
+  if (startMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX || endMoved > MAX_SNAP_ENDPOINT_MOVEMENT_PX) {
+    return line;
+  }
+
   return {
     ...line,
-    start: { x: Math.round(midX - dx * halfLen), y: Math.round(midY - dy * halfLen) },
-    end: { x: Math.round(midX + dx * halfLen), y: Math.round(midY + dy * halfLen) },
+    start: snappedStart,
+    end: snappedEnd,
   };
 }
 
@@ -455,7 +473,12 @@ export function mergeCollinearSplitLines(
   const angleBetween = (a: V3Line, b: V3Line) => {
     const da = dirOf(a);
     const db = dirOf(b);
-    return Math.acos(Math.max(-1, Math.min(1, da.x * db.x + da.y * db.y))) * 180 / Math.PI;
+    const dot = Math.max(-1, Math.min(1, da.x * db.x + da.y * db.y));
+    const directed = Math.acos(dot) * 180 / Math.PI;
+    // Undirected: a segment has no semantic direction, and the far-endpoint
+    // continuation check already proves opposite extension, so compare the
+    // acute line angle (0..90) regardless of stored start/end ordering.
+    return Math.min(directed, 180 - directed);
   };
 
   const nearOutline = (p: V3Point): boolean => {
@@ -578,9 +601,21 @@ function validateConnectivity(
     return false;
   }
 
+  // T-junction awareness: an endpoint touching the BODY of another line counts
+  // as connected (same topology definition the micro-cluster filter trusts).
+  // Without this, a legitimate spur meeting the middle of a ridge is dropped
+  // as "floating" before later passes can protect it.
+  function pointNearOtherLineSegment(p: V3Point, ownLineId: string): boolean {
+    for (const other of lines) {
+      if (other.id === ownLineId) continue;
+      if (pointToSegmentDistance(p, other.start, other.end) <= tolerance) return true;
+    }
+    return false;
+  }
+
   for (const line of lines) {
-    const startConnected = pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true);
-    const endConnected = pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false);
+    const startConnected = pointNearOutline(line.start) || pointNearOtherEndpoint(line.start, line.id, true) || pointNearOtherLineSegment(line.start, line.id);
+    const endConnected = pointNearOutline(line.end) || pointNearOtherEndpoint(line.end, line.id, false) || pointNearOtherLineSegment(line.end, line.id);
     if (startConnected || endConnected) {
       connected.push(line);
     } else {
@@ -642,6 +677,7 @@ function logScanUsage(params: { companyId: string; quoteId: string; userId: stri
     completion_tokens: params.tokens?.completionTokens ?? null,
     total_tokens: params.tokens?.totalTokens ?? null,
     duration_ms: params.durationMs ?? null,
+    reasoning_tokens: params.tokens?.reasoningTokens ?? null,
   }).then(() => {}, (err) => console.warn('[ai-scan-v3] usage log failed:', err.message));
 }
 
@@ -717,8 +753,9 @@ export async function POST(req: NextRequest) {
     // Point cost per quality level: low=2, medium=4, high=8.
     // Points are deducted once on scan1 (the full cost). Scans 2+3 are
     // continuations of the same scan session - no additional deduction.
-    const POINT_COST: Record<string, number> = { low: 2, medium: 6, high: 12 };
-    const pointsToSpend = POINT_COST[qualityLevel] ?? 4;
+    // Canonical point costs (2/6/12) - shared constant, keep in sync with
+    // pointCost.ts and the SQL queue path (see parity checklist).
+    const pointsToSpend = getAiScanPointCost(qualityLevel);
 
     if (stage === 'scan1') {
       const admin = createServiceClient<Database>(

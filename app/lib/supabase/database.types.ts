@@ -269,12 +269,14 @@ export type Database = {
           company_id: string
           completion_tokens: number | null
           created_at: string
+          duration_ms: number | null
           error: string | null
           id: string
           model: string | null
           page_id: string | null
           prompt_tokens: number | null
           quote_id: string
+          reasoning_tokens: number | null
           success: boolean
           total_tokens: number | null
           user_id: string
@@ -283,12 +285,14 @@ export type Database = {
           company_id: string
           completion_tokens?: number | null
           created_at?: string
+          duration_ms?: number | null
           error?: string | null
           id?: string
           model?: string | null
           page_id?: string | null
           prompt_tokens?: number | null
           quote_id: string
+          reasoning_tokens?: number | null
           success: boolean
           total_tokens?: number | null
           user_id: string
@@ -297,12 +301,14 @@ export type Database = {
           company_id?: string
           completion_tokens?: number | null
           created_at?: string
+          duration_ms?: number | null
           error?: string | null
           id?: string
           model?: string | null
           page_id?: string | null
           prompt_tokens?: number | null
           quote_id?: string
+          reasoning_tokens?: number | null
           success?: boolean
           total_tokens?: number | null
           user_id?: string

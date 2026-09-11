@@ -50,7 +50,12 @@ export function mergeArtificialCollinearSplits(
   const angleBetween = (a: V3Line, b: V3Line) => {
     const da = dirOf(a);
     const db = dirOf(b);
-    return Math.acos(Math.max(-1, Math.min(1, da.x * db.x + da.y * db.y))) * 180 / Math.PI;
+    const dot = Math.max(-1, Math.min(1, da.x * db.x + da.y * db.y));
+    const directed = Math.acos(dot) * 180 / Math.PI;
+    // Undirected: a segment has no semantic direction, and the far-endpoint
+    // continuation check already proves opposite extension, so compare the
+    // acute line angle (0..90) regardless of stored start/end ordering.
+    return Math.min(directed, 180 - directed);
   };
   const nearOutline = (p: V3Point): boolean => {
     for (let i = 0; i < outlinePoints.length; i++) {
