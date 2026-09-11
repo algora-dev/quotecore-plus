@@ -42,6 +42,7 @@ const DASHED_MIN_LONGEST_GAP_SAMPLES = 3;
 const DASHED_MAX_GAP_CV = 1.5; // gaps should be somewhat regular (dashes, not random noise)
 
 const AMBIGUOUS_DUTY_CYCLE_MAX = 0.85; // borderline faint/broken strokes stay for review
+export const NEAR_EMPTY_DUTY_CYCLE = 0.05; // below this the trace shows essentially no ink
 
 function median(values: number[]): number | null {
   if (values.length === 0) return null;

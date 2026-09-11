@@ -22,7 +22,7 @@ import {
   classifyOutlineVertices, matchEndpointsToVertices, enforceHipValleyVertexRule,
   type AugmentedLine,
 } from '@/app/lib/takeoff/outlineGeometry';
-import { classifyCandidateStrokeStyles } from '@/app/lib/takeoff/strokeStyle';
+import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
 import { mergeArtificialCollinearSplits } from '@/app/lib/takeoff/scanPostprocess';
 
 // ── Types ───────────────────────────────────────────────────────────────
@@ -580,6 +580,17 @@ export async function runScan3(params: {
   // that survived the client round-trip.
   const strokeMap3 = await classifyCandidateStrokeStyles(processedBuffer, lines);
   const dashed3 = new Set([...strokeMap3.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+  // Near-empty ambiguous traces (ultra-fine dotted styles) are demoted to
+  // uncertain for review - never trusted as real components, never deleted.
+  const nearEmpty3 = new Set([...strokeMap3.entries()]
+    .filter(([, e]) => e.style === 'ambiguous' && e.dutyCycle <= NEAR_EMPTY_DUTY_CYCLE)
+    .map(([id]) => id));
+  if (nearEmpty3.size > 0) {
+    console.log(`[scan-engine] scan3: demoted ${nearEmpty3.size} near-empty stroke(s) to uncertain: ${[...nearEmpty3].join(', ')}`);
+  }
+  for (const c of finalClassifications) {
+    if (nearEmpty3.has(c.line_id) && c.type !== 'uncertain') c.type = 'uncertain';
+  }
   if (dashed3.size > 0) {
     console.log(`[scan-engine] scan3: dropped ${dashed3.size} dashed line(s): ${[...dashed3].join(', ')}`);
   }

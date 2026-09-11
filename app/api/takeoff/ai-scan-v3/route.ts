@@ -41,7 +41,7 @@ import {
   outlineToEdgeLines,
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
-import { classifyCandidateStrokeStyles } from '@/app/lib/takeoff/strokeStyle';
+import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
 import { mergeArtificialCollinearSplits } from '@/app/lib/takeoff/scanPostprocess';
 import {
   classifyOutlineVertices,
@@ -1197,6 +1197,20 @@ export async function POST(req: NextRequest) {
       // survived the client round-trip. Conflicts are logged for the benchmark.
       const strokeMap3 = await classifyCandidateStrokeStyles(processedBuffer, lines);
       const dashedIds = new Set([...strokeMap3.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+      // Near-empty ambiguous traces (ultra-fine dotted styles the classifier cannot
+      // confirm as dashed) must never be trusted as real components - demote any
+      // confident classification to uncertain for manual review instead of deleting.
+      const nearEmptyIds = new Set([...strokeMap3.entries()]
+        .filter(([, e]) => e.style === 'ambiguous' && e.dutyCycle <= NEAR_EMPTY_DUTY_CYCLE)
+        .map(([id]) => id));
+      if (nearEmptyIds.size > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan3: demoted ${nearEmptyIds.size} near-empty stroke(s) to uncertain: ${[...nearEmptyIds].join(', ')}`);
+        finalClassifications = finalClassifications.map(c =>
+          nearEmptyIds.has(c.line_id) && c.type !== 'uncertain'
+            ? { ...c, type: 'uncertain' as const, reason: `Backend: stroke shows almost no ink (duty<=${NEAR_EMPTY_DUTY_CYCLE}) - likely fine dotted plan line, marked uncertain for review` }
+            : c
+        );
+      }
       if (dashedIds.size > 0) {
         for (const id of dashedIds) {
           const cls = finalClassifications.find(c => c.line_id === id);
