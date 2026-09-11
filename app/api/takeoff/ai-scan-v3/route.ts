@@ -533,10 +533,10 @@ export function mergeCollinearSplitLines(
 // a dotted/dashed stroke is a low ink duty-cycle with repeated gaps.
 // Dotted lines are never real components - drop them entirely.
 
-const DOTTED_DUTY_CYCLE_MAX = 0.55;
+const DOTTED_DUTY_CYCLE_MAX = 0.65;
 const DOTTED_MIN_INK_RUNS = 2;
-const DOTTED_BAND_OFFSETS = [-3, -2, -1, 0, 1, 2, 3];
-const DOTTED_INK_LUMINANCE = 100;
+const DOTTED_BAND_OFFSETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
+const DOTTED_INK_LUMINANCE = 135;
 
 async function detectDottedLineIds(processedBuffer: Buffer, lines: V3Line[]): Promise<Set<string>> {
   const dotted = new Set<string>();
@@ -1222,6 +1222,14 @@ export async function POST(req: NextRequest) {
       // component. Drop entirely before merging, so phantom dotted junctions
       // disappear first.
       const dottedIds = await detectDottedLineIds(processedBuffer, lines);
+      // SAFETY: only drop dotted lines that were classified 'uncertain'.
+      // Real classified components (ridge/hip/valley/...) are NEVER deleted
+      // by the raster check - a traced path that drifted off the stroke must
+      // not eat genuine components.
+      const uncertainClassIds = new Set(finalClassifications.filter(c => c.type === 'uncertain').map(c => c.line_id));
+      for (const id of [...dottedIds]) {
+        if (!uncertainClassIds.has(id)) dottedIds.delete(id);
+      }
       if (dottedIds.size > 0) {
         console.log(`[ai-scan-v3:${requestId}] scan3: dropped ${dottedIds.size} dotted line(s): ${[...dottedIds].join(', ')}`);
         lines = lines.filter(l => !dottedIds.has(l.id));

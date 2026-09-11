@@ -5562,6 +5562,57 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     </div>
                   )}
 
+                  {/* Uncertain AI detections - pink, deletable, for manual review */}
+                  {(() => {
+                    const uncertainData = componentMeasurements.find(c => (c.componentId as string | undefined) === undefined);
+                    if (!uncertainData || uncertainData.measurements.length === 0) return null;
+                    return (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-[11px] font-semibold text-pink-600 uppercase tracking-wider">Uncertain (AI - needs review)</span>
+                          <span className="text-[11px] font-bold bg-pink-100 text-pink-700 rounded-full px-2 py-0.5">{uncertainData.measurements.length}</span>
+                        </div>
+                        <div className="bg-white rounded-xl border border-pink-200 overflow-hidden">
+                          <div className="flex">
+                            <div className="w-1.5 flex-shrink-0" style={{ backgroundColor: '#EC4899' }} />
+                            <div className="flex-1 min-w-0 p-3">
+                              <div className="text-[10px] text-pink-600 mb-1.5">Lines the AI could not confidently classify. Check the plan, delete any that are wrong, and draw the correct component manually.</div>
+                              <div className="space-y-1">
+                                {uncertainData.measurements.map((m) => (
+                                  <div key={m.id} className="flex items-center gap-1.5 text-xs text-gray-700">
+                                    <span className="flex-1">
+                                      {m.type === 'line' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
+                                      {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
+                                      {m.type !== 'line' && m.type !== 'area' && '1 item'}
+                                    </span>
+                                    <button
+                                      onClick={() => handleToggleMeasurementVisibility(uncertainData.componentId as string, m.id)}
+                                      className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
+                                      title={m.visible ? 'Hide' : 'Show'}
+                                    >
+                                      {m.visible ? (
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                      ) : (
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteMeasurement(uncertainData.componentId as string, m.id)}
+                                      className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
+                                      title="Delete uncertain line"
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Add Components */}
                   <div>
                     <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Add Components</span>
