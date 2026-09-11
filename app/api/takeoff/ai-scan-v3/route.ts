@@ -581,17 +581,19 @@ export async function POST(req: NextRequest) {
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 
     // Quality level from client (low / medium / high). Default: medium.
-    const effortMap = { low: 'low', medium: 'low', high: 'low' } as const;
+    const effortMap = { low: 'low', medium: 'low', high: 'high' } as const;
     const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
-    // Token limits: all tiers run low reasoning now, so use the standard
-    // limits everywhere (the bumped high-reasoning limits are no longer needed).
-    const tokenLimits = { scan1: 5000, scan2: 8000, scan3: 8000 };
+    // Token limits: high reasoning needs bumped limits (reasoning eats the
+    // output budget at high effort - known empty-response bug otherwise).
+    const tokenLimits = userReasoningEffort === 'high'
+      ? { scan1: 8000, scan2: 12000, scan3: 12000 }
+      : { scan1: 5000, scan2: 8000, scan3: 8000 };
 
     // ── AI Assist points quota ──────────────────────────────────────
     // Point cost per quality level: low=2, medium=4, high=8.
     // Points are deducted once on scan1 (the full cost). Scans 2+3 are
     // continuations of the same scan session - no additional deduction.
-    const POINT_COST: Record<string, number> = { low: 2, medium: 6, high: 10 };
+    const POINT_COST: Record<string, number> = { low: 2, medium: 6, high: 12 };
     const pointsToSpend = POINT_COST[qualityLevel] ?? 4;
 
     if (stage === 'scan1') {
