@@ -528,6 +528,69 @@ export function mergeCollinearSplitLines(
   return { lines: [...currentLines, ...edgeLines], classifications: currentClass, merges };
 }
 
+// ── Dotted-line raster detection (deterministic) ─────────────────────
+// Sample the pixels along each detected line. A solid stroke is ~90%+ ink;
+// a dotted/dashed stroke is a low ink duty-cycle with repeated gaps.
+// Dotted lines are never real components - drop them entirely.
+
+const DOTTED_DUTY_CYCLE_MAX = 0.55;
+const DOTTED_MIN_INK_RUNS = 2;
+const DOTTED_BAND_OFFSETS = [-3, -2, -1, 0, 1, 2, 3];
+const DOTTED_INK_LUMINANCE = 100;
+
+async function detectDottedLineIds(processedBuffer: Buffer, lines: V3Line[]): Promise<Set<string>> {
+  const dotted = new Set<string>();
+  try {
+    const { data, info } = await sharp(processedBuffer).greyscale().raw().toBuffer({ resolveWithObject: true });
+
+    for (const line of lines) {
+      if (line.id.startsWith('E')) continue;
+      const vx = line.end.x - line.start.x;
+      const vy = line.end.y - line.start.y;
+      const len = Math.hypot(vx, vy);
+      if (len < 8) continue;
+      // Perpendicular unit vector for the sampling band
+      const px = -vy / len;
+      const py = vx / len;
+
+      const minLumAt = (x: number, y: number): number => {
+        let min = 255;
+        for (const o of DOTTED_BAND_OFFSETS) {
+          const sx = Math.round(x + px * o);
+          const sy = Math.round(y + py * o);
+          if (sx < 0 || sy < 0 || sx >= info.width || sy >= info.height) continue;
+          const v = data[sy * info.width + sx];
+          if (v < min) min = v;
+        }
+        return min;
+      };
+
+      const n = Math.min(400, Math.max(20, Math.round(len / 2)));
+      let inkCount = 0;
+      let runs = 0;
+      let prevInk = false;
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const x = line.start.x + vx * t;
+        const y = line.start.y + vy * t;
+        const isInk = minLumAt(x, y) < DOTTED_INK_LUMINANCE;
+        if (isInk) {
+          inkCount++;
+          if (!prevInk) runs++;
+        }
+        prevInk = isInk;
+      }
+      const duty = inkCount / (n + 1);
+      if (duty > 0 && duty < DOTTED_DUTY_CYCLE_MAX && runs >= DOTTED_MIN_INK_RUNS) {
+        dotted.add(line.id);
+      }
+    }
+  } catch (err) {
+    console.warn('[ai-scan-v3] dotted-line detection failed:', err instanceof Error ? err.message : err);
+  }
+  return dotted;
+}
+
 // ── Connectivity validation ─────────────────────────────────────────────
 
 function pointToSegmentDistance(p: V3Point, a: V3Point, b: V3Point): number {
@@ -697,11 +760,11 @@ export async function POST(req: NextRequest) {
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 
     // Quality level from client (low / medium / high). Default: medium.
-    const effortMap = { low: 'low', medium: 'low', high: 'high' } as const;
+    const effortMap = { low: 'low', medium: 'low', high: 'medium' } as const;
     const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
-    // Token limits: high reasoning needs bumped limits (reasoning eats the
-    // output budget at high effort - known empty-response bug otherwise).
-    const tokenLimits = userReasoningEffort === 'high'
+    // Token limits: complex (high) tier gets bumped limits regardless of
+    // reasoning effort - complex plans produce more lines and longer output.
+    const tokenLimits = qualityLevel === 'high'
       ? { scan1: 8000, scan2: 12000, scan3: 12000 }
       : { scan1: 5000, scan2: 8000, scan3: 8000 };
 
@@ -1152,6 +1215,17 @@ export async function POST(req: NextRequest) {
             : c
         );
         console.log(`[ai-scan-v3:${requestId}] scan3: forced uncertain on ${scan3Floating.length} floating line(s)`);
+      }
+
+      // Dotted-line raster filter: sample pixels along each line; a low
+      // ink duty-cycle with repeated gaps = dotted plan line = never a
+      // component. Drop entirely before merging, so phantom dotted junctions
+      // disappear first.
+      const dottedIds = await detectDottedLineIds(processedBuffer, lines);
+      if (dottedIds.size > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan3: dropped ${dottedIds.size} dotted line(s): ${[...dottedIds].join(', ')}`);
+        lines = lines.filter(l => !dottedIds.has(l.id));
+        finalClassifications = finalClassifications.filter(c => !dottedIds.has(c.line_id));
       }
 
       // Collinear split merge: undo artificial junctions (typically created
