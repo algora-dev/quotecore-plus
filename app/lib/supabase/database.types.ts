@@ -267,35 +267,44 @@ export type Database = {
       ai_scan_usage: {
         Row: {
           company_id: string
+          completion_tokens: number | null
           created_at: string
           error: string | null
           id: string
           model: string | null
           page_id: string | null
+          prompt_tokens: number | null
           quote_id: string
           success: boolean
+          total_tokens: number | null
           user_id: string
         }
         Insert: {
           company_id: string
+          completion_tokens?: number | null
           created_at?: string
           error?: string | null
           id?: string
           model?: string | null
           page_id?: string | null
+          prompt_tokens?: number | null
           quote_id: string
           success: boolean
+          total_tokens?: number | null
           user_id: string
         }
         Update: {
           company_id?: string
+          completion_tokens?: number | null
           created_at?: string
           error?: string | null
           id?: string
           model?: string | null
           page_id?: string | null
+          prompt_tokens?: number | null
           quote_id?: string
           success?: boolean
+          total_tokens?: number | null
           user_id?: string
         }
         Relationships: [

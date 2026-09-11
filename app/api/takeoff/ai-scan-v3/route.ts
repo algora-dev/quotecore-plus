@@ -194,9 +194,9 @@ async function callVisionModel(
     });
   }
 
-  // reasoning_effort is only supported by o-series and GPT-5.x models.
+  // reasoning_effort is only supported by o-series and GPT-5.x/6.x models.
   // GPT-4.1 / 4o don't accept this parameter.
-  const supportsReasoningEffort = /^o\d|^gpt-5/i.test(model);
+  const supportsReasoningEffort = /^o\d|^gpt-[56]/i.test(model);
   const createParams: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
     model,
     max_completion_tokens: options.maxCompletionTokens,
@@ -506,7 +506,7 @@ function classificationsToComponents(
 
 // ── Usage logging ───────────────────────────────────────────────────────
 
-function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string }) {
+function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number } | null }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
@@ -514,6 +514,9 @@ function logScanUsage(params: { companyId: string; quoteId: string; userId: stri
   client.from('ai_scan_usage').insert({
     company_id: params.companyId, quote_id: params.quoteId, user_id: params.userId,
     page_id: params.pageId ?? null, success: params.success, model: params.model, error: params.error,
+    prompt_tokens: params.tokens?.promptTokens ?? null,
+    completion_tokens: params.tokens?.completionTokens ?? null,
+    total_tokens: params.tokens?.totalTokens ?? null,
   }).then(() => {}, (err) => console.warn('[ai-scan-v3] usage log failed:', err.message));
 }
 
@@ -562,11 +565,21 @@ export async function POST(req: NextRequest) {
 
     timer.mark('auth_done');
 
-    const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-
     // Quality level from client (low / medium / high). Default: medium.
     const qualityLevel = typeof body.qualityLevel === 'string' ? body.qualityLevel : 'medium';
-    const effortMap = { low: 'low', medium: 'medium', high: 'high' } as const;
+
+    // Model per quality level (updated 2026-09-11, Shaun's A/B test):
+    // low = GPT-5.6 Luna (fastest), medium = GPT-6 Astra on low reasoning,
+    // high = GPT-6 Astra on high reasoning.
+    const MODEL_BY_QUALITY: Record<string, string> = {
+      low: 'gpt-5.6-luna',
+      medium: 'gpt-6-astra',
+      high: 'gpt-6-astra',
+    };
+    const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
+
+    // Quality level from client (low / medium / high). Default: medium.
+    const effortMap = { low: 'low', medium: 'low', high: 'high' } as const;
     const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
     // Token limits: low/medium stay as-is, high gets bumped to avoid reasoning-eats-output bug.
     const tokenLimits = userReasoningEffort === 'high'
@@ -615,9 +628,9 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    const usage = (success: boolean, error?: string) => logScanUsage({
+    const usage = (success: boolean, error?: string, tokens?: { promptTokens: number; completionTokens: number; totalTokens: number } | null) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
-      pageId, success, model, error: error ? `${stage}: ${error}` : undefined,
+      pageId, success, model, error: error ? `${stage}: ${error}` : undefined, tokens,
     });
 
     // ══════════════════════════════════════════════════════════════════
@@ -717,7 +730,7 @@ export async function POST(req: NextRequest) {
           .eq('id', pageId).eq('quote_id', quoteId);
       }
 
-      usage(true);
+      usage(true, undefined, result.usage);
       logRequest({
         requestId, stage: 'scan1_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: { areas: roofAreasCanvas.length, vertices: roofAreasCanvas[0]?.points.length ?? 0, modelUsage: result.usage },
@@ -850,7 +863,7 @@ export async function POST(req: NextRequest) {
           .eq('id', pageId).eq('quote_id', quoteId);
       }
 
-      usage(true);
+      usage(true, undefined, result.usage);
       logRequest({
         requestId, stage: 'scan2_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, modelUsage: result.usage },
@@ -1019,7 +1032,7 @@ export async function POST(req: NextRequest) {
           .eq('id', pageId).eq('quote_id', quoteId);
       }
 
-      usage(true);
+      usage(true, undefined, result.usage);
       logRequest({
         requestId, stage: 'scan3_complete', timer, quality: userReasoningEffort, tokens: tokenLimits,
         extra: {
