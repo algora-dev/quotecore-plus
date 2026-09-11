@@ -3,442 +3,674 @@ import Link from "next/link";
 import BlogHeader from "@/components/BlogHeader";
 import SiteFooter from "@/components/SiteFooter";
 
+const BASE_URL = "https://quote-core.com";
+const SALES_RESOURCES_URL = "https://www.t3labs.tech/sales-resources";
+
+const QC = {
+  home: "/",
+  features: "/features",
+  pricing: "/pricing",
+  dfy: "/done-for-you-setup",
+  freeTools: "/free-tools",
+  tutorials: "/tutorials",
+  guides: "/resources/quotecore-guides",
+  digitalTakeoff: "/features/digital-roof-takeoff",
+  aiScan: "/features/ai-scan-assist",
+  smartComponents: "/features/smart-components",
+  qDocs: "/docs/help/copilot",
+};
+
 export const metadata: Metadata = {
-  title: "Commission-Only Sales Roles — Sell Construction Software Your Way | QuoteCore",
+  title: "QuoteCore+ Sales Guide | QuoteCore",
   description:
-    "Commission-based sales opportunities with QuoteCore+ and T3 Labs. Sell subscriptions to contractors, or refer high-ticket custom software projects. Flexible strategies, full asset library, one-to-one support. Apply today.",
-  alternates: { canonical: "https://quote-core.com/careers" },
+    "Sales guide for QuoteCore+ reps: who to target, what to listen for, how to qualify Done-For-You setup, self-serve referrals and free-tool opportunities.",
+  alternates: { canonical: `${BASE_URL}/careers` },
   openGraph: {
-    title: "Commission-Only Sales Roles — QuoteCore+ & T3 Labs",
+    title: "QuoteCore+ Sales Guide | QuoteCore",
     description:
-      "Sell QuoteCore+ subscriptions to contractors, or refer high-ticket custom software builds to T3 Labs. Uncapped commission, existing assets to use, one-to-one support.",
-    url: "https://quote-core.com/careers",
+      "A practical sales guide for selling QuoteCore+ to roofing and construction contractors.",
+    url: `${BASE_URL}/careers`,
     siteName: "QuoteCore+",
     type: "website",
   },
 };
 
+const targetSignals = [
+  "They quote regularly from plans, site measurements or measured quantities.",
+  "Pricing, labour, waste rules or product logic still live in spreadsheets.",
+  "They print plans, use a scale ruler or move measurements between tools.",
+  "They rebuild the same materials, labour or quote structure job after job.",
+  "Quoting takes evenings, weekends or too much owner time.",
+  "One person holds the pricing knowledge everyone relies on.",
+  "They like the idea of better software but do not have time to set it up.",
+  "They tried software before and the setup or migration killed the project.",
+];
+
+const discoveryQuestions = [
+  "How do you measure jobs now?",
+  "Where do your material prices, labour rates and waste rules live?",
+  "What do you actually build the final quote in?",
+  "Do you copy measurements or pricing between systems manually?",
+  "How long does a normal quote take from measurement to sending?",
+  "What part of changing software would be the biggest headache?",
+  "If somebody rebuilt your current quoting workflow for you, would switching become more realistic?",
+];
+
+const pathCards = [
+  {
+    number: "01",
+    eyebrow: "PRIMARY PATH",
+    title: "Done-For-You",
+    who: "They need a better system, but setup and migration will stop them.",
+    action:
+      "Show them that they do not have to rebuild everything themselves. We can configure their QuoteCore+ account around the agreed parts of the way they already measure, price and quote.",
+    next: "Open the Done-For-You page and move a qualified prospect toward the assisted fit-call or handoff process.",
+    href: QC.dfy,
+    cta: "Open Done-For-You setup",
+  },
+  {
+    number: "02",
+    eyebrow: "SECONDARY PATH",
+    title: "Self-serve",
+    who: "They like the product and are comfortable configuring it themselves.",
+    action:
+      "Show the product, the feature that matches their pain and the relevant tutorial. Then use the rep-specific signup link or code issued to you so an eligible signup can be attributed correctly.",
+    next: "Do not force Done-For-You onto a contractor who genuinely wants to self-serve.",
+    href: QC.pricing,
+    cta: "Open plans and trial",
+  },
+  {
+    number: "03",
+    eyebrow: "VALUE-FIRST PATH",
+    title: "Free tools",
+    who: "They are worried it is too technical, not ready to spend, or not ready to switch systems.",
+    action:
+      "The free tools combine a selection of the app's features and work exactly the same way. A prospect can test the system on their next real job for free, with no signup and nothing to pay. They can even keep using the free tools as their new workflow; the app joins everything together, saves it in one place and adds more.",
+    next: "If they are simply not interested, the free tools are still a clean, no-strings exit that solves real problems and teaches them how the app works.",
+    href: QC.freeTools,
+    cta: "Open free tools",
+  },
+];
+
+const resourceGroups = [
+  {
+    title: "They want the whole picture",
+    body: "Use this when the prospect wants to understand what QuoteCore+ actually does from measurement through quoting and the wider job workflow.",
+    links: [
+      ["Product overview", QC.home],
+      ["Feature overview", QC.features],
+    ],
+  },
+  {
+    title: "They still measure from paper or plans",
+    body: "Use this when the pain is printed plans, scale rulers, manual transfer or separate takeoff software.",
+    links: [
+      ["Digital Roof Takeoff", QC.digitalTakeoff],
+      ["AI Scan Assist", QC.aiScan],
+      ["Free tools", QC.freeTools],
+    ],
+  },
+  {
+    title: "Their quoting logic lives in spreadsheets",
+    body: "Use this when the same materials, labour, waste and pricing rules are being rebuilt on every job.",
+    links: [
+      ["Smart Components", QC.smartComponents],
+      ["Product guides", QC.guides],
+    ],
+  },
+  {
+    title: "They like it but switching sounds painful",
+    body: "This is the Done-For-You trigger. Do not bury it under more product features.",
+    links: [["Done-For-You setup", QC.dfy]],
+  },
+  {
+    title: "They want to learn it themselves",
+    body: "Use the tutorial library and in-app Q guidance to show that self-serve customers have a clear learning path.",
+    links: [
+      ["Tutorials", QC.tutorials],
+      ["Q in-app assistant docs", QC.qDocs],
+    ],
+  },
+  {
+    title: "They are not ready to buy",
+    body: "Send the free tool that matches the pain. They can quote a real job with it, free and without an account, so the demonstration does the selling for you.",
+    links: [["Free tools directory", QC.freeTools]],
+  },
+];
+
 const faqs = [
   {
-    q: "Is this a salaried job?",
-    a: "No. These are commission-only, self-employed opportunities. You earn when we earn — there is no base salary, no cap on commission, and no exclusivity required. It is designed for people who want control over how, when and what they sell.",
+    q: "Do I need to understand every QuoteCore+ feature?",
+    a: "No. You need to recognise the customer's current workflow, identify the pain and choose the right next step. Use the resource library when you need to show a specific feature.",
   },
   {
-    q: "What exactly would I be selling?",
-    a: "Two ways to earn from one team. QuoteCore+ is a multi-use subscription app for roofing and construction contractors — one platform covering takeoffs, quoting, ordering and invoicing. T3 Labs finds and fixes expensive business problems — manual processes, outdated systems, disconnected software, weak online sales workflows and repetitive staff admin — with whatever digital solution makes sense, from a website tool or workflow automation to a customer portal or complete bespoke software platform. You identify the problem; T3 Labs works out the solution. Many conversations open doors in both directions, so you can sell whichever fits the prospect.",
+    q: "When should I lead with Done-For-You?",
+    a: "When the contractor is a strong product fit but time, migration, pricing setup or learning a new system is the real objection. That is the main commercial opportunity this page is designed around.",
   },
   {
-    q: "How much can I earn?",
-    a: "It depends on the role and your agreed terms. Subscription sales earn a recurring share of monthly revenue, which compounds as your customer base grows. Custom software referrals are high-ticket projects — and depending on how the deal is structured, they can pay a one-off commission, a recurring share of monthly payments, or a mix of both. QuoteCore+ Done-For-You setup referrals (see quote-core.com/done-for-you-setup) pay a one-off 30% of the setup value — typically $150-$300+ per sale — on top of any subscription commission. Exact rates are agreed before you start.",
+    q: "What if they want to set everything up themselves?",
+    a: "Let them. Use the self-serve path, the relevant tutorials and the rep-specific link or code supplied to you. Do not create friction by forcing an assisted package onto someone who does not need it.",
   },
   {
-    q: "How do customers pay for T3 Labs custom projects?",
-    a: "Flexibly — there is no single pricing model. A customer can pay a larger upfront fee with lower ongoing monthly hosting and support costs, or pay less upfront with higher monthly payments for an agreed period. If a prospect understands the value but does not want to risk a lot of capital to find out if it works, the payment structure can usually be shaped around that. It makes these deals far easier to close.",
+    q: "What if they do not want to spend anything?",
+    a: "Give them a relevant free tool. The free tools are part of the sales system because they solve real problems and let prospects experience the QuoteCore+ approach before they are ready for the full app.",
   },
   {
-    q: "Can I earn recurring commission on custom projects, not just one-off payments?",
-    a: "Yes — it depends on how the deal is structured. You might take a smaller share of the upfront payment and a larger share of the ongoing monthly revenue, or a larger one-off payment with little or no recurring. Your commission structure can be matched to the deal and to how you prefer to earn.",
+    q: "Does AI Scan Assist replace checking the takeoff?",
+    a: "No. AI Scan Assist speeds up the first pass. The user reviews and adjusts the detected measurements and components before using the result.",
   },
   {
-    q: "Do I need sales experience?",
-    a: "Construction or trade industry knowledge matters more than a sales CV. If you understand contractors, estimators or trade suppliers — or you already have a network in the industry — you can sell this. If you are new to both, apply anyway and tell us your strategy; we care about fit and effort.",
-  },
-  {
-    q: "What support and materials do I get?",
-    a: "You get a full asset library: live product demos, free tools you can use as lead magnets, videos, case studies, brochures, pricing and competitor comparisons. Plus optional one-to-one calls to sharpen your pitch, and custom content built for your strategy on request. Use any of it, all of it, or none of it — your strategy is yours.",
-  },
-  {
-    q: "Can I sell both products?",
-    a: "Yes. The two products feed each other — a contractor using QuoteCore+ may want custom integrations; a business buying custom software may have contractors in their network who need QuoteCore+. Many of our best opportunities come from cross-conversations.",
-  },
-  {
-    q: "Where are these roles based?",
-    a: "Remote-first. Our products sell globally — QuoteCore+ serves the UK, US, NZ and AU markets, and T3 Labs builds for UK and international clients. You can work from anywhere.",
-  },
-  {
-    q: "How do I apply?",
-    a: "Use our contact form or email us directly with a short note about which role fits you, your relevant experience or network, and how you would approach selling. We respond to every genuine application.",
+    q: "What if the prospect actually needs a bespoke system?",
+    a: "Use the T3 Labs custom-solutions playbook instead. QuoteCore+ is the ready-made product path. Larger supplier, manufacturer or bespoke workflow opportunities belong in the main sales resources page.",
   },
 ];
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: faqs.map((f) => ({
-    "@type": "Question",
-    name: f.q,
-    acceptedAnswer: { "@type": "Answer", text: f.a },
-  })),
-};
-
-const breadcrumbLd = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: "https://quote-core.com" },
-    { "@type": "ListItem", position: 2, name: "Careers", item: "https://quote-core.com/careers" },
-  ],
-};
-
-function CheckIcon() {
+function PageLink({
+  href,
+  children,
+  className = "",
+}: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-    </svg>
+    <a href={href} className={`cursor-pointer ${className}`}>
+      {children}
+    </a>
   );
 }
 
-function ArrowIcon() {
+function CheckList({ items }: { items: string[] }) {
   return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" />
-    </svg>
+    <ul className="space-y-3">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-3 text-sm leading-7 text-slate-600">
+          <span className="mt-1 shrink-0 text-[#BD4A1A]" aria-hidden="true">✓</span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
-
-const roles = [
-  {
-    id: "saas",
-    tag: "Role 1 · Recurring revenue",
-    title: "SaaS Subscription Sales — QuoteCore+",
-    summary:
-      "Sell QuoteCore+ subscriptions to roofing and construction contractors. Every paying customer you bring in pays you a share of their subscription — every month they stay. Plus one-off commission boosters: sell a Done-For-You setup ($499-$999) and take 30% of the setup value.",
-    points: [
-      "Recurring commission on monthly subscriptions",
-      "One-off boosters: Done-For-You setups pay 30% commission — $150-$300+ per sale",
-      "Target market: roofers, builders, estimators, contractors (UK, US, NZ, AU)",
-      "Lead with free tools, demos, or direct outreach — your strategy",
-      "Compounds: your customer base keeps paying you as it grows",
-    ],
-  },
-  {
-    id: "custom",
-    tag: "Role 2 · High-ticket deals",
-    title: "Custom Software Sales — T3 Labs",
-    summary:
-      "Find businesses losing time, money or sales because of slow, manual, outdated or disconnected processes. You qualify the opportunity; T3 Labs works out what should be built. High-ticket projects — one closed deal can outweigh months of small sales.",
-    points: [
-      "High commission per closed project",
-      "Broad B2B market — any business with expensive friction",
-      "No technical background required",
-      "Flexible customer deal and payment structures",
-      "One-off or recurring commission depending on the deal",
-    ],
-  },
-  {
-    id: "hybrid",
-    tag: "Role 3 · Best of both",
-    title: "Hybrid Sales — QuoteCore+ + T3 Labs",
-    summary:
-      "Sell both. Contractor conversations open doors to custom software needs; business software conversations reveal contractors who need quoting tools. The two products feed each other — hybrid sellers earn recurring revenue and big one-off commissions.",
-    points: [
-      "Recurring subscription income + high-ticket project commissions",
-      "Cross-sell in both directions between the products",
-      "Most flexible role — shape it around your network",
-      "Best long-term earning potential for the right person",
-    ],
-  },
-];
-
-const assets = [
-  { title: "Live product & free tools", desc: "Free calculators, quote/invoice generators and a takeoff builder — genuinely useful tools you can demo or hand to prospects as lead magnets. They convert; that is why they exist." },
-  { title: "Demos & videos", desc: "Product demo videos, tutorials and a walkthrough of the full workflow, from plan upload to sent quote." },
-  { title: "Case studies & proof", desc: "The QuoteCore+ story and what it does for contractors — published, readable and ready to share." },
-  { title: "Competitor comparisons", desc: "Detailed comparison pages against the known alternatives in the market, maintained and kept current." },
-  { title: "Pricing & materials", desc: "Transparent pricing pages, brochures, screenshots and suggested copy for outreach and social." },
-  { title: "Custom content on request", desc: "Need a specific deck, landing page, video or demo environment for your strategy? Ask — we build it with you." },
-];
 
 export default function CareersPage() {
   return (
-    <div className="min-h-screen bg-white">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+    <main className="min-h-screen bg-white text-slate-900">
+      <style>{`
+        html { scroll-behavior: smooth; }
+        .qc-anchor { scroll-margin-top: 5.5rem; }
+        .qc-nav-scroll { scrollbar-width: none; }
+        .qc-nav-scroll::-webkit-scrollbar { display: none; }
+        .qc-card, .qc-button, .qc-link {
+          transition: transform .15s ease, border-color .15s ease, background-color .15s ease, color .15s ease, box-shadow .15s ease;
+        }
+        .qc-card:hover { transform: translateY(-2px); border-color: rgba(255,107,53,.4); box-shadow: 0 0 8px rgba(255,107,53,.08); }
+        .qc-button:hover { transform: translateY(-1px); background: #1a1a1a; box-shadow: 0 0 12px rgba(0,0,0,.25); }
+        .qc-link:hover { color: #BD4A1A; }
+        summary:focus-visible, a:focus-visible {
+          outline: 2px solid #BD4A1A;
+          outline-offset: 4px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          html { scroll-behavior: auto; }
+          .qc-card, .qc-button, .qc-link { transition: none; }
+          .qc-card:hover, .qc-button:hover { transform: none; }
+        }
+      `}</style>
+
       <BlogHeader />
-      <main className="pt-24 md:pt-28">
-        {/* Hero */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#BD4A1A]">
-              Commission-Only Sales Opportunities
-            </p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-950 sm:text-5xl">
-              Sell software that sells itself. Earn what you&apos;re worth.
-            </h1>
-            <p className="mt-5 text-lg leading-8 text-zinc-600">
-              We&apos;re building a small team of commission-based salespeople with two ways to earn from one team:
-              <strong className="text-zinc-900"> QuoteCore+</strong>, the multi-use quoting platform contractors
-              pay for monthly, and <strong className="text-zinc-900">T3 Labs</strong>, our custom software and
-              workflow solutions arm building high-ticket projects for construction businesses. Uncapped commission,
-              your strategy, real products already live and in production.
-            </p>
-            <p className="mt-4 text-base leading-7 text-zinc-600">
-              Sell QuoteCore+, T3 Labs solutions, or focus on the type of customer you already understand
-              best. There is no requirement to cover everything.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a
-                href="#apply"
-                className="inline-flex items-center gap-2 rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white transition hover:shadow-[0_0_24px_rgba(255,107,53,0.35)]"
-              >
-                Apply now
-                <ArrowIcon />
-              </a>
-              <a href="#roles" className="text-sm font-semibold text-[#BD4A1A] hover:underline">
-                See the roles
-              </a>
-            </div>
-            <p className="mt-3 text-sm text-zinc-500">Commission-only · Remote · Uncapped · No exclusivity required</p>
-          </div>
-          <ul className="mx-auto mt-10 flex max-w-4xl flex-wrap items-center justify-center gap-x-6 gap-y-2">
-            {[
-              "You choose your strategy",
-              "Full asset library included",
-              "One-to-one support calls",
-              "We build content you need",
-              "Remote — sell anywhere",
-              "You don't get paid unless we get paid",
-            ].map((p) => (
-              <li key={p} className="flex items-center gap-2 text-sm text-zinc-700">
-                <span className="text-[#FF6B35]">
-                  <CheckIcon />
-                </span>
-                {p}
-              </li>
-            ))}
-          </ul>
-        </section>
 
-        {/* Why it works */}
-        <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">One team. Two ways to earn.</h2>
-              <p className="mt-4 text-lg leading-8 text-zinc-600">
-                QuoteCore+ is a finished, multi-use product that keeps growing. T3 Labs is what we can build — custom
-                software, AI integrations, portals and workflow systems for construction businesses running on
-                outdated, disjointed processes. They feed each other: contractors who use QuoteCore+ sometimes need
-                custom tools, and businesses we build for often know contractors who need proper quoting software. As
-                a salesperson, every conversation can pay twice.
-              </p>
-            </div>
-            <div className="mt-12 grid gap-6 md:grid-cols-2">
-              <div className="rounded-2xl border border-zinc-200 bg-white p-8">
-                <h3 className="text-xl font-semibold text-zinc-950">QuoteCore+ — recurring revenue</h3>
-                <p className="mt-3 leading-7 text-zinc-600">
-                  A live, production quoting platform: digital plan takeoffs, AI-assisted measurement, reusable pricing
-                  components, quotes, orders and invoices. Contractors subscribe monthly. Your commission recurs every
-                  month they stay — steady income that compounds.
-                </p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white p-8">
-                <h3 className="text-xl font-semibold text-zinc-950">T3 Labs — finds and fixes expensive business problems</h3>
-                <p className="mt-3 leading-7 text-zinc-600">
-                  T3 Labs finds and fixes expensive business problems — manual processes, outdated systems,
-                  disconnected software, weak online sales workflows and repetitive staff admin — using whatever
-                  digital solution makes sense. You identify the opportunity; T3 Labs scopes, pitches and builds it.
-                  High-ticket projects with flexible payment structures: more upfront and less monthly, or the
-                  reverse — so capital risk never has to block a sale.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+      <nav className="qc-nav-scroll sticky top-0 z-40 flex w-[min(1180px,calc(100%-32px))] gap-1 overflow-x-auto border-b border-slate-200 bg-white/90 py-2.5 backdrop-blur mx-auto">
+        {[
+          ["target", "Who to target"],
+          ["qualify", "Qualify"],
+          ["paths", "3 paths"],
+          ["dfy", "DFY"],
+          ["resources", "Resources"],
+          ["credit", "Credit"],
+        ].map(([id, label]) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="qc-link cursor-pointer shrink-0 rounded-md px-2.5 py-1 text-xs font-semibold text-slate-500"
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
 
-        {/* Roles */}
-        <section id="roles" className="mt-20 scroll-mt-24 md:mt-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">The roles</h2>
-              <p className="mt-4 leading-7 text-zinc-600">
-                Three ways in — same products, different strategies. Pick the one that fits your network and how you
-                like to sell.
-              </p>
-            </div>
-            <div className="mt-12 grid gap-6 lg:grid-cols-3">
-              {roles.map((r) => (
-                <div key={r.id} id={r.id} className="flex scroll-mt-28 flex-col rounded-2xl border border-zinc-200 bg-white p-8 transition hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#BD4A1A]">{r.tag}</p>
-                  <h3 className="mt-3 text-xl font-semibold text-zinc-950">{r.title}</h3>
-                  <p className="mt-3 leading-7 text-zinc-600">{r.summary}</p>
-                  <ul className="mt-5 space-y-2.5">
-                    {r.points.map((pt) => (
-                      <li key={pt} className="flex items-start gap-2.5 text-sm leading-6 text-zinc-700">
-                        <span className="mt-0.5 text-[#FF6B35]">
-                          <CheckIcon />
-                        </span>
-                        {pt}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-auto pt-6">
-                    {r.id === "custom" ? (
-                      <a
-                        href="https://www.t3labs.tech/careers#sales-triggers"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline"
-                      >
-                        See what a good T3 Labs lead looks like
-                        <ArrowIcon />
-                      </a>
-                    ) : (
-                      <a href="#apply" className="inline-flex items-center gap-2 text-sm font-semibold text-[#BD4A1A] hover:underline">
-                        Apply for this role
-                        <ArrowIcon />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* You're not on your own */}
-        <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">Support if you want it — none of it required</h2>
-              <p className="mt-4 leading-7 text-zinc-600">
-                We only make money when you do, so making you effective is in our interest. But nothing here boxes you
-                in. If you have your own strategy and a proven formula, run it your way. Everything below is optional —
-                take what helps, ignore what doesn&apos;t. All that matters is that you&apos;re effective and you sell:
-              </p>
-            </div>
-            <ul className="mt-10 grid gap-3 sm:grid-cols-2">
-              {[
-                "Optional one-to-one calls to sharpen your strategy",
-                "Custom content built for your approach — decks, videos, landing pages",
-                "Technical backup on calls with serious prospects",
-                "Honest feedback on what is working across the team",
-                "A growing asset, tool and content library",
-                "Direct line to the founders — no layers of management",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-4 text-sm font-medium text-zinc-800">
-                  <span className="text-[#FF6B35]">
-                    <CheckIcon />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Assets */}
-        <section className="mt-20 md:mt-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-zinc-950">Everything you need is already built</h2>
-              <p className="mt-4 leading-7 text-zinc-600">
-                You are not selling a slide deck or a promise. Both products are live, in production and used by real
-                customers — and we have a library of material you can use from day one.
-              </p>
-            </div>
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {assets.map((a) => (
-                <div key={a.title} className="rounded-xl border border-zinc-200 bg-white p-6 transition hover:border-orange-200 hover:bg-orange-50/40">
-                  <h3 className="font-semibold text-zinc-950">{a.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-600">{a.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* How commission works */}
-        <section className="mt-20 bg-zinc-50 py-16 md:mt-28 md:py-20">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-950">How it works</h2>
-            <div className="mt-12 grid gap-6 md:grid-cols-3">
-              {[
-                {
-                  step: "01",
-                  title: "Talk to us",
-                  desc: "Tell us which role fits, what your network looks like and how you'd sell. Short conversation, no CV theatre.",
-                },
-                {
-                  step: "02",
-                  title: "Agree your terms",
-                  desc: "We agree commission rates, attribution and the support you need — in writing — before you sell anything.",
-                },
-                {
-                  step: "03",
-                  title: "Sell and earn",
-                  desc: "Use the assets, your strategy and our support. Commission is paid on the agreed schedule. No caps, no ceiling.",
-                },
-              ].map((s) => (
-                <div key={s.step} className="rounded-2xl border border-zinc-200 bg-white p-8">
-                  <span className="text-sm font-bold text-[#FF6B35]">{s.step}</span>
-                  <h3 className="mt-3 text-xl font-semibold text-zinc-950">{s.title}</h3>
-                  <p className="mt-2 leading-7 text-zinc-600">{s.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="mt-20 md:mt-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <h2 className="text-center text-3xl font-bold tracking-tight text-zinc-950">Frequently asked questions</h2>
-            <div className="mt-10 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 bg-white">
-              {faqs.map((f) => (
-                <details key={f.q} className="group p-6">
-                  <summary className="flex cursor-pointer items-center justify-between gap-4 font-semibold text-zinc-950 [&::-webkit-details-marker]:hidden">
-                    {f.q}
-                    <svg className="h-5 w-5 shrink-0 text-zinc-400 transition group-open:rotate-45" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                  </summary>
-                  <p className="mt-3 leading-7 text-zinc-600">{f.a}</p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Apply */}
-        <section id="apply" className="mt-20 scroll-mt-24 bg-zinc-50 py-16 md:mt-28 md:py-20">
-          <div className="mx-auto max-w-2xl px-4 text-center sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-950">Apply</h2>
-            <p className="mt-4 leading-8 text-zinc-600">
-              Send us a short message telling us which role fits you, your relevant experience or network, and how you
-              would approach selling. We respond to every genuine application.
-            </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 rounded-full bg-black px-7 py-3.5 text-sm font-semibold text-white transition hover:shadow-[0_0_24px_rgba(255,107,53,0.35)]"
-              >
-                Apply via contact form
-                <ArrowIcon />
-              </Link>
-              <a href="mailto:cece@t3labs.co.uk" className="text-sm font-semibold text-[#BD4A1A] hover:underline">
-                Or email cece@t3labs.co.uk
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Legal note */}
-        <section className="py-10">
-          <p className="text-center text-xs leading-5 text-zinc-400">
-            These are commission-only, self-employed opportunities — not employment. Commission, attribution and payout
-            rules are agreed in writing before you start. See our{" "}
-            <Link href="/terms" className="underline hover:text-zinc-600">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="underline hover:text-zinc-600">
-              Privacy Policy
-            </Link>
-            .
+      <section className="border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-16 sm:py-20">
+          <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#BD4A1A]">
+            QuoteCore+ sales guide
           </p>
-        </section>
-      </main>
+
+          <h1 className="mt-4 max-w-5xl text-3xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl">
+            Find contractors still quoting the hard way. Give them a better path.
+          </h1>
+
+          <p className="mt-6 max-w-4xl text-xl leading-8 text-slate-600">
+            QuoteCore+ helps roofing and construction businesses measure jobs, apply their own pricing logic, create quotes and carry the same job information through the wider workflow.
+          </p>
+
+          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-500">
+            Your job is to recognise the pain, qualify the contractor and choose the right next step: we set it up for them, they set it up themselves, or you leave them with a genuinely useful free tool.
+          </p>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {[
+              ["01", "Done-For-You", "Best opportunity", "They need it, but setup and migration will stop them."],
+              ["02", "Self-serve", "Easy referral", "They like it and are happy to configure it themselves."],
+              ["03", "Free tools", "Value-first exit", "They are not ready to buy, so give them something useful."],
+            ].map(([n, title, tag, body]) => (
+              <a
+                key={n}
+                href="#paths"
+                className="qc-card cursor-pointer rounded-2xl border border-slate-200 bg-white p-5"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-bold text-[#BD4A1A]">{n}</span>
+                  <span className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500">
+                    {tag}
+                  </span>
+                </div>
+                <h2 className="mt-5 text-xl font-semibold text-slate-900">{title}</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="target" className="qc-anchor border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">1. Who to target</p>
+          <h2 className="mt-3 max-w-4xl text-3xl font-bold text-slate-900">
+            Start with contractors who quote from measurements, plans and repeatable pricing.
+          </h2>
+          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+            Roofing is the easiest first conversation because QuoteCore+ was built around roofing workflows. The same model can also fit other measured trades where quantities, materials, labour and pricing need to become a professional quote.
+          </p>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6">
+              <h3 className="text-xl font-semibold text-slate-900">Strong first targets</h3>
+              <div className="mt-4">
+                <CheckList
+                  items={[
+                    "Roofing contractors and roofing estimators",
+                    "Owner-operated roofing businesses",
+                    "Small-to-mid construction and trade businesses",
+                    "Contractors quoting repeatedly from plans or measured quantities",
+                    "Measured trades such as cladding, flooring, fencing, decking and general building",
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-xl font-semibold text-slate-900">The pattern matters more than the trade</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                The strongest fit is a business where measurement becomes materials, labour and price, then somebody has to turn all of that into a quote. If those steps are disconnected, there is an opportunity.
+              </p>
+              <PageLink
+                href={QC.home}
+                className="qc-link mt-5 inline-flex text-sm font-semibold text-[#BD4A1A]"
+              >
+                Open QuoteCore+ overview →
+              </PageLink>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="qualify" className="qc-anchor border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">2. Qualify the pain</p>
+          <h2 className="mt-3 text-3xl font-bold text-slate-900">If you hear this, keep talking.</h2>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-xl font-semibold text-slate-900">Strong buying signals</h3>
+              <div className="mt-4">
+                <CheckList items={targetSignals} />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-xl font-semibold text-slate-900">Ask these, not twenty feature questions</h3>
+              <ol className="mt-4 space-y-3">
+                {discoveryQuestions.map((question, index) => (
+                  <li
+                    key={question}
+                    className="flex items-start gap-3 border-t border-slate-200 pt-3 first:border-0 first:pt-0"
+                  >
+                    <span className="text-xs font-bold text-[#BD4A1A]">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="text-sm leading-7 text-slate-600">{question}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6">
+            <p className="text-sm font-semibold text-slate-900">Question 7 is the Done-For-You qualifier.</p>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              If the contractor wants a better system but the idea of rebuilding their products, pricing, labour and templates is what stops them, do not keep explaining software. Move to the assisted setup path.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">3. What it replaces</p>
+          <h2 className="mt-3 text-3xl font-bold text-slate-900">Sell the workflow improvement, not a list of features.</h2>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-400">Disconnected workflow</p>
+              <p className="mt-4 text-xl font-semibold leading-8 text-slate-900">
+                Plan or site measure → calculator → spreadsheet → quote document → email → order → invoice
+              </p>
+            </div>
+
+            <div className="hidden text-xl font-bold text-[#BD4A1A] lg:block">→</div>
+
+            <div className="rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[.14em] text-[#BD4A1A]">QuoteCore+</p>
+              <p className="mt-4 text-xl font-semibold leading-8 text-slate-900">
+                Measure → Price → Quote → Send → Order → Invoice
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              ["Digital takeoff", "Measure from uploaded plans without printing and retyping."],
+              ["AI Scan Assist", "Speed up the first pass, then verify and adjust the result."],
+              ["Smart Components", "Save reusable material, labour, waste and pricing logic."],
+              ["Connected workflow", "Carry the same job information forward instead of rebuilding it."],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <h3 className="text-xl font-semibold text-slate-900">{title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="paths" className="qc-anchor border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">4. Choose the path</p>
+          <h2 className="mt-3 max-w-4xl text-3xl font-bold text-slate-900">Every qualified conversation should end in one of these three places.</h2>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-3">
+            {pathCards.map((path) => (
+              <div
+                key={path.number}
+                className={`qc-card rounded-2xl border p-6 ${
+                  path.number === "01"
+                    ? "border-[#FF6B35]/40 bg-[#FF6B35]/5"
+                    : "border-slate-200 bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs font-bold text-[#BD4A1A]">{path.number}</span>
+                  <span className="text-xs font-semibold uppercase tracking-[.12em] text-slate-400">
+                    {path.eyebrow}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-xl font-semibold text-slate-900">{path.title}</h3>
+                <p className="mt-3 text-sm font-semibold leading-7 text-slate-900">{path.who}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{path.action}</p>
+                <p className="mt-3 text-sm leading-7 text-slate-500">{path.next}</p>
+                <PageLink
+                  href={path.href}
+                  className="qc-link mt-6 inline-flex text-sm font-semibold text-[#BD4A1A]"
+                >
+                  {path.cta} →
+                </PageLink>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="dfy" className="qc-anchor border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">5. Primary opportunity</p>
+          <h2 className="mt-3 max-w-4xl text-3xl font-bold text-slate-900">
+            The customer wants the outcome. They do not want another setup project.
+          </h2>
+          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+            This is where Done-For-You matters. The pitch is not "learn our software." It is "show us how you already work and we will configure the agreed setup around that workflow, then teach you using your own account."
+          </p>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-[#FF6B35]/35 bg-[#FF6B35]/5 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[.14em] text-[#BD4A1A]">Done-For-You Estimating Setup</p>
+              <p className="mt-3 text-3xl font-bold text-slate-900">$499</p>
+              <p className="mt-1 text-xs text-slate-400">one-time</p>
+              <div className="mt-5">
+                <CheckList
+                  items={[
+                    "Up to 20 custom components",
+                    "Material pricing configured",
+                    "Labour rates added",
+                    "Waste rules where required",
+                    "QuoteCore+ account setup",
+                    "Personalised walkthrough and training",
+                    "6 months QuoteCore+ Pro included",
+                    "6 months setup and product support",
+                  ]}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <p className="text-xs font-semibold uppercase tracking-[.14em] text-slate-400">Complete Done-For-You Setup</p>
+              <p className="mt-3 text-3xl font-bold text-slate-900">$999</p>
+              <p className="mt-1 text-xs text-slate-400">one-time</p>
+              <div className="mt-5">
+                <CheckList
+                  items={[
+                    "Everything in the core setup",
+                    "Up to 60 custom components",
+                    "Larger material and pricing setup",
+                    "More complex labour and waste configuration",
+                    "Help organising larger pricing lists or catalogues",
+                    "More detailed workflow configuration",
+                    "Personalised training on their own setup",
+                    "6 months QuoteCore+ Pro included",
+                    "6 months setup and product support",
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+            <h3 className="text-xl font-semibold text-slate-900">What the rep does</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              Recognise the fit, uncover the setup objection, explain the Done-For-You path and make the handoff. You do not need to design the customer's component library, migrate their data or promise technical scope on the call.
+            </p>
+            <PageLink
+              href={QC.dfy}
+              className="qc-button mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white"
+            >
+              Open the live Done-For-You page →
+            </PageLink>
+          </div>
+        </div>
+      </section>
+
+      <section id="resources" className="qc-anchor border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">6. What should I show them?</p>
+          <h2 className="mt-3 text-3xl font-bold text-slate-900">Match the resource to the problem.</h2>
+          <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+            Do not dump a library of links on the prospect. Pick the one thing that proves the point you are discussing.
+          </p>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            {resourceGroups.map((group) => (
+              <div key={group.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                <h3 className="text-xl font-semibold text-slate-900">{group.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{group.body}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {group.links.map(([label, href]) => (
+                    <PageLink
+                      key={label}
+                      href={href}
+                      className="qc-link rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:border-orange-200 hover:bg-orange-50/40"
+                    >
+                      {label} →
+                    </PageLink>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6">
+            <h3 className="text-xl font-semibold text-slate-900">Free tools are a real sales path.</h3>
+            <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+              Two reasons they matter. First, they are a free, low-risk way to demonstrate the app: the core tools are built from the app's own features, work exactly the same way and can be used without an account, so a hesitant prospect can quote their next real job with the actual system before spending anything. Second, if they are not interested or not spending right now, they are a genuine no-strings parting gift that still solves problems and teaches how the app works.
+            </p>
+            <PageLink
+              href={QC.freeTools}
+              className="qc-link mt-4 inline-flex text-sm font-semibold text-[#BD4A1A]"
+            >
+              Browse the free tools directory →
+            </PageLink>
+          </div>
+        </div>
+      </section>
+
+      <section id="credit" className="qc-anchor border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">7. Attribution and earnings</p>
+          <h2 className="mt-3 max-w-4xl text-3xl font-bold text-slate-900">Make sure the sale can be credited to you.</h2>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-xl font-semibold text-slate-900">Self-serve customers</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Use the unique referral URL and matching code issued to you. The intended system is that either route can identify an eligible customer as your referral even if they return to QuoteCore+ from somewhere else.
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-900">
+                Only quote the customer discount, recurring commission rate and attribution rules that have been confirmed in your current rep terms.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <h3 className="text-xl font-semibold text-slate-900">Done-For-You sales</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Done-For-You setup is a separate one-off sale. Your applicable commission and payment timing should be confirmed in writing under the current QuoteCore+ rep terms before you sell it.
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-900">
+                This page deliberately does not hardcode a percentage that may change.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6">
+            <p className="text-sm font-semibold text-slate-900">Rep link or code not issued yet?</p>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              Do not invent one and do not promise tracking that is not active. Contact T3 Labs for the current referral process before sending a paid signup.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">8. Quick decision rule</p>
+          <h2 className="mt-3 text-3xl font-bold text-slate-900">Keep the sales conversation simple.</h2>
+
+          <div className="mt-7 rounded-3xl border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-6 sm:p-8">
+            <div className="grid gap-5 lg:grid-cols-3">
+              <div>
+                <p className="text-xs font-bold text-[#BD4A1A]">IF</p>
+                <p className="mt-2 text-xl font-semibold text-slate-900">They need it but setup is the objection</p>
+                <p className="mt-2 text-sm text-slate-600">→ Done-For-You</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#BD4A1A]">IF</p>
+                <p className="mt-2 text-xl font-semibold text-slate-900">They want to configure it themselves</p>
+                <p className="mt-2 text-sm text-slate-600">→ Rep link / code + self-serve</p>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#BD4A1A]">IF</p>
+                <p className="mt-2 text-xl font-semibold text-slate-900">They are not ready to buy</p>
+                <p className="mt-2 text-sm text-slate-600">→ Give them a useful free tool</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-slate-200">
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">9. Common questions</p>
+          <h2 className="mt-3 text-3xl font-bold text-slate-900">Keep these answers handy.</h2>
+
+          <div className="mt-7 divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-slate-50">
+            {faqs.map((faq) => (
+              <details key={faq.q} className="group p-5 sm:p-6">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-slate-900 [&::-webkit-details-marker]:hidden">
+                  {faq.q}
+                  <span className="shrink-0 text-xl text-[#BD4A1A] transition group-open:rotate-45" aria-hidden="true">+</span>
+                </summary>
+                <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div className="mx-auto w-[min(1180px,calc(100%-32px))] py-12 sm:py-20">
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:p-10">
+            <p className="text-xs font-semibold uppercase tracking-[.16em] text-[#BD4A1A]">Need a different kind of solution?</p>
+            <h2 className="mt-3 max-w-4xl text-3xl font-bold text-slate-900">
+              Larger supplier, manufacturer or bespoke workflow opportunity?
+            </h2>
+            <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">
+              T3 Labs, the company behind QuoteCore+, also builds custom pricing, estimating, customer tools, online sales assistants and internal systems. Use the main sales playbook when the problem is bigger than a ready-made QuoteCore+ fit.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <a
+                href={SALES_RESOURCES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="qc-button cursor-pointer inline-flex min-h-12 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white"
+              >
+                Open T3 Labs sales playbook
+              </a>
+
+              <PageLink
+                href={QC.dfy}
+                className="qc-link cursor-pointer inline-flex min-h-12 items-center justify-center rounded-full border border-slate-300 px-6 text-sm font-semibold text-slate-900"
+              >
+                Open Done-For-You setup
+              </PageLink>
+            </div>
+
+            <p className="mt-5 text-xs leading-5 text-slate-400">
+              Commercial terms, discounts, referral attribution and commission rules should always follow the current written rep agreement or QuoteCore+ rep terms supplied by T3 Labs.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <SiteFooter />
-    </div>
+    </main>
   );
 }
