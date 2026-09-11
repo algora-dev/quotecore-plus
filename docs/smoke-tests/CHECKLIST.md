@@ -548,3 +548,4 @@
 - [ ] Dashboard: click Start measuring on the Measure a job card, fill job name + units, upload a plan/image, land on the takeoff canvas with the plan loaded (new digital quote created).
 - [ ] Quotes page: same Measure a job card shows above the list; full flow identical to dashboard (create -> land on takeoff canvas).
 - [ ] Q chat: ask "take me to quotes" / "where are my invoices" -> Q navigates the app there automatically (one short reply, no directions dump).
+- [ ] AI Takeoff scan2: run a plan with dotted/dashed plan lines on Medium - confirm dashed lines are removed early (server log \scan2 stroke-style: removed N dashed\) and do not appear as components or pink uncertain lines

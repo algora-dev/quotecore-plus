@@ -22,6 +22,8 @@ import {
   classifyOutlineVertices, matchEndpointsToVertices, enforceHipValleyVertexRule,
   type AugmentedLine,
 } from '@/app/lib/takeoff/outlineGeometry';
+import { classifyCandidateStrokeStyles } from '@/app/lib/takeoff/strokeStyle';
+import { mergeArtificialCollinearSplits } from '@/app/lib/takeoff/scanPostprocess';
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -125,7 +127,7 @@ export async function callVisionModel(
     if (img.label) contentParts.push({ type: 'text', text: img.label });
     contentParts.push({ type: 'image_url', image_url: { url: img.dataUrl, detail: img.detail ?? 'high' } });
   }
-  const supportsReasoningEffort = /^o\d|^gpt-5/i.test(model);
+  const supportsReasoningEffort = /^o\d|^gpt-[56]/i.test(model);
   const createParams: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
     model, max_completion_tokens: options.maxCompletionTokens,
     messages: [{ role: 'user', content: contentParts }],
@@ -289,6 +291,22 @@ function classificationsToComponents(lines: V3Line[], outlinePoints: V3Point[], 
 
 // ── Token limits ────────────────────────────────────────────────────────
 
+/** Model routing - MUST match ai-scan-v3 route (single source of truth: MEMORY.md 2026-09-11). */
+export function getScanModel(quality: 'low' | 'medium' | 'high'): string {
+  const MODEL_BY_QUALITY: Record<string, string> = {
+    low: 'gpt-5.6-luna',
+    medium: 'gpt-6-astra',
+    high: 'gpt-6-astra',
+  };
+  return MODEL_BY_QUALITY[quality] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
+}
+
+/** Reasoning effort per quality tier: low=low, medium=low, high=medium. */
+export function getReasoningEffort(quality: 'low' | 'medium' | 'high'): 'low' | 'medium' {
+  const effortMap = { low: 'low', medium: 'low', high: 'medium' } as const;
+  return effortMap[quality] ?? 'medium';
+}
+
 export function getTokenLimits(reasoningEffort: 'low' | 'medium' | 'high') {
   return reasoningEffort === 'high'
     ? { scan1: 8000, scan2: 12000, scan3: 12000 }
@@ -323,9 +341,9 @@ export async function runScan1(params: {
   processedBuffer?: Buffer;
 }> {
   const { imageDataUrl, canvasWidth: canvasW, canvasHeight: canvasH, quality, quoteId, pageId, companyId, userId } = params;
-  const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-  const reasoningEffort = quality;
-  const tokenLimits = getTokenLimits(reasoningEffort);
+  const model = getScanModel(quality);
+  const reasoningEffort = getReasoningEffort(quality);
+  const tokenLimits = getTokenLimits(quality);
 
   const rawBuffer = Buffer.from(imageDataUrl.replace(/^data:[^;]+;base64,/, ''), 'base64');
   const processedBuffer = await preprocessImage(rawBuffer);
@@ -395,9 +413,9 @@ export async function runScan2(params: {
   stats?: { rawLines: number; finalLines: number; angleRejected: number; floating: number };
 }> {
   const { processedBuffer, canvasWidth: canvasW, canvasHeight: canvasH, outlinePointsCanvas, analysisDimensions, quality, quoteId, pageId, companyId, userId } = params;
-  const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-  const reasoningEffort = quality;
-  const tokenLimits = getTokenLimits(reasoningEffort);
+  const model = getScanModel(quality);
+  const reasoningEffort = getReasoningEffort(quality);
+  const tokenLimits = getTokenLimits(quality);
 
   const meta = await sharp(processedBuffer).metadata();
   const imgW = meta.width ?? analysisDimensions.width, imgH = meta.height ?? analysisDimensions.height;
@@ -445,10 +463,19 @@ export async function runScan2(params: {
     });
 
   const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
-  const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(rawLines);
+  // Early stroke-style filter: remove high-confidence dashed candidates BEFORE
+  // angle snap / connectivity / overlays (dotted lines are never components).
+  const strokeMap = await classifyCandidateStrokeStyles(processedBuffer, rawLines);
+  const dashedIds = new Set([...strokeMap.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+  if (dashedIds.size > 0) console.log(`[scan-engine] scan2 stroke-style: removed ${dashedIds.size} dashed candidate(s): ${[...dashedIds].join(', ')}`);
+  const strokeFiltered = rawLines.filter(l => !dashedIds.has(l.id));
+  const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(strokeFiltered);
   const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints);
-  const finalLines: V3Line[] = connectedLines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
-  console.log(`[scan-engine] scan2 postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} angleRejected=${angleRejectedLines.length} floating=${floatingLines.length}`);
+  // Pre-Scan-3 artificial split healing (classification-independent).
+  const heal = mergeArtificialCollinearSplits(connectedLines, outlinePoints);
+  if (heal.merges.length > 0) console.log(`[scan-engine] scan2 pre-heal: ${heal.merges.length} collinear merge(s)`);
+  const finalLines: V3Line[] = heal.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+  console.log(`[scan-engine] scan2 postprocess: raw=${rawLines.length} dashedRemoved=${dashedIds.size} angleValid=${angleValidLines.length} connected=${connectedLines.length} preHealed=${heal.merges.length} angleRejected=${angleRejectedLines.length} floating=${floatingLines.length}`);
 
   const canvasScaleX = canvasW / imgW, canvasScaleY = canvasH / imgH;
   const linesCanvas = finalLines.map(l => ({ ...l, start: scalePoint(l.start, canvasScaleX, canvasScaleY), end: scalePoint(l.end, canvasScaleX, canvasScaleY) }));
@@ -475,9 +502,9 @@ export async function runScan3(params: {
   enforcementCorrections?: Array<{ line_id: string; from: string; to: string; reason: string }>;
 }> {
   const { processedBuffer, canvasWidth: canvasW, canvasHeight: canvasH, outlinePointsCanvas, linesCanvas, analysisDimensions, quality, quoteId, pageId, companyId, userId } = params;
-  const model = process.env.AI_TAKEOFF_MODEL || 'gpt-5.6';
-  const reasoningEffort = quality;
-  const tokenLimits = getTokenLimits(reasoningEffort);
+  const model = getScanModel(quality);
+  const reasoningEffort = getReasoningEffort(quality);
+  const tokenLimits = getTokenLimits(quality);
 
   const meta = await sharp(processedBuffer).metadata();
   const imgW = meta.width ?? analysisDimensions.width, imgH = meta.height ?? analysisDimensions.height;
@@ -547,7 +574,19 @@ export async function runScan3(params: {
 
   const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
 
-  const components = classificationsToComponents(lines, outlinePoints, finalClassifications);
+  // Stroke-style raster safety net (parity with ai-scan-v3 route): dashed
+  // strokes are never components, regardless of semantic classification.
+  // Most dashed candidates were already removed in Scan 2; this catches any
+  // that survived the client round-trip.
+  const strokeMap3 = await classifyCandidateStrokeStyles(processedBuffer, lines);
+  const dashed3 = new Set([...strokeMap3.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+  if (dashed3.size > 0) {
+    console.log(`[scan-engine] scan3: dropped ${dashed3.size} dashed line(s): ${[...dashed3].join(', ')}`);
+  }
+  const keptLines = lines.filter(l => !dashed3.has(l.id));
+  const keptClassifications = finalClassifications.filter(c => !dashed3.has(c.line_id));
+
+  const components = classificationsToComponents(keptLines, outlinePoints, keptClassifications);
   const aiResult: AiScanResult = {
     scale: { detected: false, ratio: null, dimension_line: null },
     pitch: { detected: false, global_degrees: null },
@@ -576,7 +615,7 @@ export async function runScan3(params: {
       uncertain: canvasResult.components.uncertain.length,
       notes: canvasResult.notes,
     },
-    classificationDetails: finalClassifications,
+    classificationDetails: keptClassifications,
     enforcementCorrections: enforcementCorrections.length > 0 ? enforcementCorrections : undefined,
   };
 }

@@ -120,14 +120,14 @@ export function resolveSemanticKey(componentName: string): SemanticKey | null {
  */
 export function buildSystemComponentIds(
   components: { id: string; name: string; is_system?: boolean }[],
-): Record<SemanticKey, string> {
+): Partial<Record<SemanticKey, string>> {
   const map: Partial<Record<SemanticKey, string>> = {};
   for (const comp of components) {
     if (!comp.is_system) continue;
     const key = resolveSemanticKey(comp.name);
-    if (key) map[key] = comp.id;
+    if (key && key !== 'uncertain') map[key] = comp.id;
   }
-  return map as Record<SemanticKey, string>;
+  return map;
 }
 
 /**

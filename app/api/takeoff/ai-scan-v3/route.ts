@@ -41,6 +41,8 @@ import {
   outlineToEdgeLines,
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
+import { classifyCandidateStrokeStyles } from '@/app/lib/takeoff/strokeStyle';
+import { mergeArtificialCollinearSplits } from '@/app/lib/takeoff/scanPostprocess';
 import {
   classifyOutlineVertices,
   matchEndpointsToVertices,
@@ -181,7 +183,7 @@ async function callVisionModel(
   schema: Record<string, unknown>,
   model: string,
   options: { reasoningEffort?: 'low' | 'medium' | 'high'; maxCompletionTokens: number },
-): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number } | null }> {
+): Promise<{ parsed: unknown; responseId: string | null; usage: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens: number | null } | null }> {
   const contentParts: OpenAI.Chat.Completions.ChatCompletionContentPart[] = [
     { type: 'text', text: prompt },
   ];
@@ -227,6 +229,7 @@ async function callVisionModel(
       promptTokens: response.usage.prompt_tokens,
       completionTokens: response.usage.completion_tokens,
       totalTokens: response.usage.total_tokens,
+      reasoningTokens: response.usage.completion_tokens_details?.reasoning_tokens ?? null,
     } : null,
   };
 }
@@ -528,68 +531,9 @@ export function mergeCollinearSplitLines(
   return { lines: [...currentLines, ...edgeLines], classifications: currentClass, merges };
 }
 
-// ── Dotted-line raster detection (deterministic) ─────────────────────
-// Sample the pixels along each detected line. A solid stroke is ~90%+ ink;
-// a dotted/dashed stroke is a low ink duty-cycle with repeated gaps.
-// Dotted lines are never real components - drop them entirely.
-
-const DOTTED_DUTY_CYCLE_MAX = 0.65;
-const DOTTED_MIN_INK_RUNS = 2;
-const DOTTED_BAND_OFFSETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4];
-const DOTTED_INK_LUMINANCE = 135;
-
-async function detectDottedLineIds(processedBuffer: Buffer, lines: V3Line[]): Promise<Set<string>> {
-  const dotted = new Set<string>();
-  try {
-    const { data, info } = await sharp(processedBuffer).greyscale().raw().toBuffer({ resolveWithObject: true });
-
-    for (const line of lines) {
-      if (line.id.startsWith('E')) continue;
-      const vx = line.end.x - line.start.x;
-      const vy = line.end.y - line.start.y;
-      const len = Math.hypot(vx, vy);
-      if (len < 8) continue;
-      // Perpendicular unit vector for the sampling band
-      const px = -vy / len;
-      const py = vx / len;
-
-      const minLumAt = (x: number, y: number): number => {
-        let min = 255;
-        for (const o of DOTTED_BAND_OFFSETS) {
-          const sx = Math.round(x + px * o);
-          const sy = Math.round(y + py * o);
-          if (sx < 0 || sy < 0 || sx >= info.width || sy >= info.height) continue;
-          const v = data[sy * info.width + sx];
-          if (v < min) min = v;
-        }
-        return min;
-      };
-
-      const n = Math.min(400, Math.max(20, Math.round(len / 2)));
-      let inkCount = 0;
-      let runs = 0;
-      let prevInk = false;
-      for (let i = 0; i <= n; i++) {
-        const t = i / n;
-        const x = line.start.x + vx * t;
-        const y = line.start.y + vy * t;
-        const isInk = minLumAt(x, y) < DOTTED_INK_LUMINANCE;
-        if (isInk) {
-          inkCount++;
-          if (!prevInk) runs++;
-        }
-        prevInk = isInk;
-      }
-      const duty = inkCount / (n + 1);
-      if (duty > 0 && duty < DOTTED_DUTY_CYCLE_MAX && runs >= DOTTED_MIN_INK_RUNS) {
-        dotted.add(line.id);
-      }
-    }
-  } catch (err) {
-    console.warn('[ai-scan-v3] dotted-line detection failed:', err instanceof Error ? err.message : err);
-  }
-  return dotted;
-}
+      // Dotted-line raster detection (deterministic) - see lib/takeoff/strokeStyle.ts
+      // (moved to an early, evidence-based classifier that runs in Scan 2 before
+      // topology/overlays are built; this route-local duty-cycle detector was retired).
 
 // ── Connectivity validation ─────────────────────────────────────────────
 
@@ -686,7 +630,7 @@ function classificationsToComponents(
 
 // ── Usage logging ───────────────────────────────────────────────────────
 
-function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number } | null; durationMs?: number }) {
+function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens?: number | null } | null; durationMs?: number }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
@@ -751,7 +695,8 @@ export async function POST(req: NextRequest) {
 
     // Model per quality level (updated 2026-09-11, Shaun's A/B test):
     // low = GPT-5.6 Luna (fastest), medium = GPT-6 Astra on low reasoning,
-    // high = GPT-6 Astra on high reasoning.
+    // high = GPT-6 Astra on medium reasoning (complex plans).
+    // NOTE: medium tier = Astra LOW effort, high tier = Astra MEDIUM effort -
     const MODEL_BY_QUALITY: Record<string, string> = {
       low: 'gpt-5.6-luna',
       medium: 'gpt-6-astra',
@@ -810,7 +755,7 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    const usage = (success: boolean, error?: string, tokens?: { promptTokens: number; completionTokens: number; totalTokens: number } | null) => logScanUsage({
+    const usage = (success: boolean, error?: string, tokens?: { promptTokens: number; completionTokens: number; totalTokens: number; reasoningTokens?: number | null } | null) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
       pageId, success, model, error: error ? `${stage}: ${error}` : undefined, tokens,
       durationMs: timer.summary().total,
@@ -1015,13 +960,37 @@ export async function POST(req: NextRequest) {
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
 
       timer.mark('postprocess_start');
-      const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(rawLines);
+      // ── Early stroke-style classification (BEFORE angle snap / connectivity / overlays) ──
+      // Dotted/dashed plan lines are never roof components. Remove high-confidence
+      // dashed candidates here so they cannot create phantom junctions, split real
+      // components, or be redrawn as solid orange lines in the Scan 3 overlays.
+      // Borderline strokes stay as 'ambiguous' for review downstream.
+      const strokeMap = await classifyCandidateStrokeStyles(processedBuffer, rawLines);
+      const dashedRawIds = new Set([...strokeMap.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+      const ambiguousStrokeCount = [...strokeMap.values()].filter(e => e.style === 'ambiguous').length;
+      if (dashedRawIds.size > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan2 stroke-style: removed ${dashedRawIds.size} dashed candidate(s): ${[...dashedRawIds].map(id => {
+          const e = strokeMap.get(id);
+          return `${id}(duty=${e?.dutyCycle ?? '?'},gaps=${e?.gapRuns ?? '?'})`;
+        }).join(', ')}`);
+      }
+      const strokeFilteredLines = rawLines.filter(l => !dashedRawIds.has(l.id));
+
+      const { valid: angleValidLines, rejected: angleRejectedLines } = filterAngleValid(strokeFilteredLines);
       const { connected: connectedLines, floating: floatingLines } = validateConnectivity(angleValidLines, outlinePoints);
-      const scan2aLines: V3Line[] = connectedLines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+
+      // ── Pre-Scan-3 artificial split healing (classification-independent) ──
+      // After dashed removal, merge collinear fragments that meet where no other
+      // retained line terminates, so Scan 3 sees repaired continuous candidates.
+      const healResult = mergeArtificialCollinearSplits(connectedLines, outlinePoints);
+      if (healResult.merges.length > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan2 pre-heal: ${healResult.merges.length} collinear merge(s): ${healResult.merges.map(m => `${m.removed}->${m.kept}`).join(', ')}`);
+      }
+      const scan2aLines: V3Line[] = healResult.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
       const finalLines: V3Line[] = scan2aLines;
       timer.mark('postprocess_done');
 
-      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} angleValid=${angleValidLines.length} connected=${connectedLines.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
+      console.log(`[ai-scan-v3:${requestId}] scan2 postprocess: raw=${rawLines.length} dashedRemoved=${dashedRawIds.size} ambiguous=${ambiguousStrokeCount} angleValid=${angleValidLines.length} connected=${connectedLines.length} preHealed=${healResult.merges.length} rejected(angle)=${angleRejectedLines.length} floating=${floatingLines.length}`);
 
       const canvasScaleX = canvasW / imgW;
       const canvasScaleY = canvasH / imgH;
@@ -1039,7 +1008,7 @@ export async function POST(req: NextRequest) {
           analysisDimensions: { width: imgW, height: imgH },
           canvasDimensions: { width: canvasW, height: canvasH },
           notes,
-          stats: { rawLines: rawLines.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length },
+          stats: { rawLines: rawLines.length, dashedRemoved: dashedRawIds.size, ambiguousStrokes: ambiguousStrokeCount, preHealedMerges: healResult.merges.length, angleValid: angleValidLines.length, connected: connectedLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length },
         };
         await supabase.from('takeoff_pages')
           .update({ ai_scan_result: JSON.parse(JSON.stringify(scan2Data)) })
@@ -1068,7 +1037,7 @@ export async function POST(req: NextRequest) {
         data: { lines: linesCanvas, outlinePoints: outlineCanvas, notes },
         analysisDimensions: { width: imgW, height: imgH },
         canvasDimensions: { width: canvasW, height: canvasH },
-        summary: { rawLines: rawLines.length, finalLines: finalLines.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
+        summary: { rawLines: rawLines.length, finalLines: finalLines.length, dashedRemoved: dashedRawIds.size, preHealedMerges: healResult.merges.length, angleRejected: angleRejectedLines.length, floating: floatingLines.length, notes },
         debugImages: scan2DebugUrls,
       });
     }
@@ -1221,19 +1190,24 @@ export async function POST(req: NextRequest) {
       // ink duty-cycle with repeated gaps = dotted plan line = never a
       // component. Drop entirely before merging, so phantom dotted junctions
       // disappear first.
-      const dottedIds = await detectDottedLineIds(processedBuffer, lines);
-      // SAFETY: only drop dotted lines that were classified 'uncertain'.
-      // Real classified components (ridge/hip/valley/...) are NEVER deleted
-      // by the raster check - a traced path that drifted off the stroke must
-      // not eat genuine components.
-      const uncertainClassIds = new Set(finalClassifications.filter(c => c.type === 'uncertain').map(c => c.line_id));
-      for (const id of [...dottedIds]) {
-        if (!uncertainClassIds.has(id)) dottedIds.delete(id);
-      }
-      if (dottedIds.size > 0) {
-        console.log(`[ai-scan-v3:${requestId}] scan3: dropped ${dottedIds.size} dotted line(s): ${[...dottedIds].join(', ')}`);
-        lines = lines.filter(l => !dottedIds.has(l.id));
-        finalClassifications = finalClassifications.filter(c => !dottedIds.has(c.line_id));
+      // Stroke-style raster safety net (same classifier as Scan 2): any line that
+      // arrives here still raster-proven DASHED is dropped regardless of its
+      // semantic classification - dotted plan lines are never components. Most
+      // dashed candidates were already removed in Scan 2; this catches lines that
+      // survived the client round-trip. Conflicts are logged for the benchmark.
+      const strokeMap3 = await classifyCandidateStrokeStyles(processedBuffer, lines);
+      const dashedIds = new Set([...strokeMap3.entries()].filter(([, e]) => e.style === 'dashed').map(([id]) => id));
+      if (dashedIds.size > 0) {
+        for (const id of dashedIds) {
+          const cls = finalClassifications.find(c => c.line_id === id);
+          if (cls && cls.type !== 'uncertain') {
+            const e = strokeMap3.get(id);
+            console.warn(`[ai-scan-v3:${requestId}] scan3: raster-dashed line ${id} (duty=${e?.dutyCycle},gaps=${e?.gapRuns}) classified '${cls.type}' - dropping anyway (dashed strokes are never components)`);
+          }
+        }
+        console.log(`[ai-scan-v3:${requestId}] scan3: dropped ${dashedIds.size} dashed line(s): ${[...dashedIds].join(', ')}`);
+        lines = lines.filter(l => !dashedIds.has(l.id));
+        finalClassifications = finalClassifications.filter(c => !dashedIds.has(c.line_id));
       }
 
       // Collinear split merge: undo artificial junctions (typically created

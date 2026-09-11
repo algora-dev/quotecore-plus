@@ -83,8 +83,10 @@ export interface AiMeasurement {
   /** Semantic key - mirrors placeholderType but is the authoritative field
    *  for defensive validation (prevents Barge→Spouting ID mix). */
   semanticKey: SemanticKey;
-  /** The system component id for this placeholder type. */
-  componentId: string;
+  /** The system component id for this placeholder type.
+   *  Null for unresolved (uncertain) AI detections - they are review items,
+   *  not quote components, and must never be persisted as one. */
+  componentId: string | null;
   /** Parent roof area id (from point-in-polygon test). */
   quoteRoofAreaId: string | null;
   /** Always true for AI-created entries. */
@@ -101,8 +103,8 @@ export interface AiMeasurement {
  */
 export function validateMeasurementConsistency(
   semanticKey: SemanticKey,
-  componentId: string | undefined,
-  systemComponentIds: Record<SemanticKey, string>,
+  componentId: string | null,
+  systemComponentIds: Partial<Record<SemanticKey, string>>,
 ): boolean {
   // Uncertain lines have no system component - allow them through without validation
   if (semanticKey === 'uncertain') return true;
@@ -687,8 +689,9 @@ export function perimeterAccountingPass(
 export interface ApplyAiParams {
   aiData: AiScanData;
   calibrations: Calibration[];
-  /** Map of placeholder type → system component id (from the component fetch). */
-  systemComponentIds: Record<PlaceholderType, string>;
+  /** Map of placeholder type → system component id (from the component fetch).
+   *  Partial: 'uncertain' has no system component and maps to null. */
+  systemComponentIds: Partial<Record<PlaceholderType, string>>;
   /** Canvas dimensions (dynamic - canvas = processed image dimensions). */
   canvasWidth?: number;
   canvasHeight?: number;
@@ -757,8 +760,13 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
       const canvasPoints = entry.points.map(point => ({ ...point }));
       const value = computeLineValue(canvasPoints[0], canvasPoints[1], calibrations);
 
-      // Defensive validation: prevent Barge→Spouting ID mix
-      const componentId = systemComponentIds[ptype];
+      // Uncertain detections are review items, not quote components: they get
+      // an explicit null componentId (never a leaked runtime undefined).
+      const componentId = ptype === 'uncertain' ? null : (systemComponentIds[ptype] ?? null);
+      if (componentId === null && ptype !== 'uncertain') {
+        console.warn(`[AI Takeoff] No system component id for semantic key "${ptype}" - skipping its measurements`);
+        continue;
+      }
       if (!validateMeasurementConsistency(ptype, componentId, systemComponentIds)) {
         continue; // skip inconsistent measurement
       }

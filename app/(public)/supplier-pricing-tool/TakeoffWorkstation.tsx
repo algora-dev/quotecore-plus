@@ -4595,11 +4595,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // Group by semanticKey → componentId
     const byComponent = new Map<string, { measurements: typeof applied.measurements; semanticKey: SemanticKey }>();
     for (const m of applied.measurements) {
-      const existing = byComponent.get(m.componentId);
+      // Uncertain AI detections have a null componentId (review items, not
+      // quote components) - group them under an explicit review key.
+      const groupKey = m.componentId ?? `__review__${m.semanticKey}`;
+      const existing = byComponent.get(groupKey);
       if (existing) {
         existing.measurements.push(m);
       } else {
-        byComponent.set(m.componentId, { measurements: [m], semanticKey: m.semanticKey });
+        byComponent.set(groupKey, { measurements: [m], semanticKey: m.semanticKey });
       }
     }
 
