@@ -506,7 +506,7 @@ function classificationsToComponents(
 
 // ── Usage logging ───────────────────────────────────────────────────────
 
-function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number } | null }) {
+function logScanUsage(params: { companyId: string; quoteId: string; userId: string; pageId?: string | null; success: boolean; model: string; error?: string; tokens?: { promptTokens: number; completionTokens: number; totalTokens: number } | null; durationMs?: number }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return;
@@ -517,6 +517,7 @@ function logScanUsage(params: { companyId: string; quoteId: string; userId: stri
     prompt_tokens: params.tokens?.promptTokens ?? null,
     completion_tokens: params.tokens?.completionTokens ?? null,
     total_tokens: params.tokens?.totalTokens ?? null,
+    duration_ms: params.durationMs ?? null,
   }).then(() => {}, (err) => console.warn('[ai-scan-v3] usage log failed:', err.message));
 }
 
@@ -631,6 +632,7 @@ export async function POST(req: NextRequest) {
     const usage = (success: boolean, error?: string, tokens?: { promptTokens: number; completionTokens: number; totalTokens: number } | null) => logScanUsage({
       companyId: profile.company_id, quoteId, userId: profile.id,
       pageId, success, model, error: error ? `${stage}: ${error}` : undefined, tokens,
+      durationMs: timer.summary().total,
     });
 
     // ══════════════════════════════════════════════════════════════════
