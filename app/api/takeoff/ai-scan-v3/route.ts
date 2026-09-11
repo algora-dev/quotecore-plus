@@ -412,6 +412,122 @@ function filterAngleValid(lines: V3Line[]): { valid: V3Line[]; rejected: V3Line[
   return { valid, rejected };
 }
 
+// ── Collinear split merge (deterministic, post-Scan 3) ──────────────────
+// Two collinear segments meeting at a point where no other real line
+// terminates is an artificial junction (typically created by a dotted plan
+// line that Scan 2 treated as a break). Merge them back into one segment
+// and unify their classification. Genuine hip/valley changeovers always
+// happen at a real network junction (e.g. a ridge crossing), which this
+// rule deliberately leaves alone.
+
+const MERGE_ENDPOINT_TOLERANCE = 12;
+const MERGE_COLLINEAR_TOLERANCE = 3; // degrees
+
+export function mergeCollinearSplitLines(
+  lines: V3Line[],
+  outlinePoints: V3Point[],
+  classifications: Array<{ line_id: string; type: string; confidence: number; reason: string }>,
+): { lines: V3Line[]; classifications: Array<{ line_id: string; type: string; confidence: number; reason: string }>; merges: Array<{ kept: string; removed: string }> } {
+  let currentLines = lines.filter(l => !l.id.startsWith('E'));
+  const edgeLines = lines.filter(l => l.id.startsWith('E'));
+  let currentClass = classifications.map(c => ({ ...c }));
+  const merges: Array<{ kept: string; removed: string }> = [];
+
+  const classMap = () => new Map(currentClass.map(c => [c.line_id, c]));
+
+  const rank = (type: string): number => {
+    if (type === 'hip' || type === 'valley') return 3;
+    if (type === 'ridge') return 2;
+    if (type === 'uncertain') return 0;
+    return 1;
+  };
+
+  const dist = (a: V3Point, b: V3Point) => Math.hypot(a.x - b.x, a.y - b.y);
+  const dirOf = (l: V3Line) => {
+    const dx = l.end.x - l.start.x;
+    const dy = l.end.y - l.start.y;
+    const len = Math.hypot(dx, dy) || 1;
+    return { x: dx / len, y: dy / len };
+  };
+  const angleBetween = (a: V3Line, b: V3Line) => {
+    const da = dirOf(a);
+    const db = dirOf(b);
+    return Math.acos(Math.max(-1, Math.min(1, da.x * db.x + da.y * db.y))) * 180 / Math.PI;
+  };
+
+  const nearOutline = (p: V3Point): boolean => {
+    for (let i = 0; i < outlinePoints.length; i++) {
+      if (pointToSegmentDistance(p, outlinePoints[i], outlinePoints[(i + 1) % outlinePoints.length]) <= MERGE_ENDPOINT_TOLERANCE) return true;
+    }
+    return false;
+  };
+
+  let merged = true;
+  while (merged) {
+    merged = false;
+    const cmap = classMap();
+
+    outer: for (let i = 0; i < currentLines.length; i++) {
+      for (let j = i + 1; j < currentLines.length; j++) {
+        const a = currentLines[i];
+        bCandidate: for (const [ai, bi] of [[0, 0], [0, 1], [1, 0], [1, 1]] as const) {
+          const pa = ai === 0 ? a.start : a.end;
+          const B = currentLines[j];
+          const pb = bi === 0 ? B.start : B.end;
+          if (dist(pa, pb) > MERGE_ENDPOINT_TOLERANCE) continue bCandidate;
+
+          // Continuation check: far endpoints must be on opposite sides of the shared point
+          const farA = ai === 0 ? a.end : a.start;
+          const farB = bi === 0 ? B.end : B.start;
+          const vA = { x: farA.x - pa.x, y: farA.y - pa.y };
+          const vB = { x: farB.x - pb.x, y: farB.y - pb.y };
+          const lenA = Math.hypot(vA.x, vA.y) || 1;
+          const lenB = Math.hypot(vB.x, vB.y) || 1;
+          const dot = (vA.x * vB.x + vA.y * vB.y) / (lenA * lenB);
+          if (dot > -0.9985) continue bCandidate; // not a straight continuation
+
+          if (angleBetween(a, B) > MERGE_COLLINEAR_TOLERANCE) continue bCandidate;
+          if (nearOutline(pa)) continue bCandidate;
+
+          // Degree check: no other non-uncertain line endpoint at this junction
+          const clsB = cmap.get(B.id);
+          const clsA = cmap.get(a.id);
+          if (!clsA || !clsB) continue bCandidate;
+          const othersAtJunction = currentLines.some(other => {
+            if (other.id === a.id || other.id === B.id) return false;
+            const oc = cmap.get(other.id);
+            if (oc && oc.type === 'uncertain') return false;
+            return dist(other.start, pa) <= MERGE_ENDPOINT_TOLERANCE || dist(other.end, pa) <= MERGE_ENDPOINT_TOLERANCE;
+          });
+          if (othersAtJunction) continue bCandidate;
+
+          // Merge: keep `a`, extend to B's far endpoint
+          const newA: V3Line = {
+            ...a,
+            start: farA,
+            end: farB,
+            confidence: Math.min(a.confidence, B.confidence),
+          };
+          currentLines = currentLines.map(l => (l.id === a.id ? newA : l)).filter(l => l.id !== B.id);
+
+          // Unify classification: keep the higher-rank (hip/valley first), tie-break confidence
+          const keepA = rank(clsA.type) > rank(clsB.type) || (rank(clsA.type) === rank(clsB.type) && clsA.confidence >= clsB.confidence);
+          const keptClass = keepA ? clsA : clsB;
+          currentClass = currentClass
+            .filter(c => c.line_id !== a.id && c.line_id !== B.id)
+            .concat([{ ...keptClass, line_id: a.id, reason: `${keptClass.reason} [collinear merge of ${a.id}+${B.id}]` }]);
+
+          merges.push({ kept: a.id, removed: B.id });
+          merged = true;
+          break outer;
+        }
+      }
+    }
+  }
+
+  return { lines: [...currentLines, ...edgeLines], classifications: currentClass, merges };
+}
+
 // ── Connectivity validation ─────────────────────────────────────────────
 
 function pointToSegmentDistance(p: V3Point, a: V3Point, b: V3Point): number {
@@ -920,7 +1036,7 @@ export async function POST(req: NextRequest) {
       const outlinePoints: V3Point[] = outlinePointsCanvas.map(p => ({
         x: Math.round(p.x * scaleX), y: Math.round(p.y * scaleY),
       }));
-      const lines: V3Line[] = linesCanvas.map(l => ({
+      let lines: V3Line[] = linesCanvas.map(l => ({
         id: l.id,
         start: { x: Math.round(l.start.x * scaleX), y: Math.round(l.start.y * scaleY) },
         end: { x: Math.round(l.end.x * scaleX), y: Math.round(l.end.y * scaleY) },
@@ -1036,6 +1152,19 @@ export async function POST(req: NextRequest) {
             : c
         );
         console.log(`[ai-scan-v3:${requestId}] scan3: forced uncertain on ${scan3Floating.length} floating line(s)`);
+      }
+
+      // Collinear split merge: undo artificial junctions (typically created
+      // by dotted plan lines Scan 2 treated as breaks). A valley split into
+      // valley + hip at a phantom junction is merged back into one component.
+      const mergeResult = mergeCollinearSplitLines(lines, outlinePoints, finalClassifications);
+      if (mergeResult.merges.length > 0) {
+        console.log(`[ai-scan-v3:${requestId}] scan3: collinear merges: ${mergeResult.merges.length}`);
+        for (const m of mergeResult.merges) {
+          console.log(`[ai-scan-v3:${requestId}]   merged ${m.removed} into ${m.kept}`);
+        }
+        lines = mergeResult.lines;
+        finalClassifications = mergeResult.classifications as typeof finalClassifications;
       }
 
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];
