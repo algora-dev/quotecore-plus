@@ -42,7 +42,7 @@ import {
 } from '@/app/lib/takeoff/scanOverlay';
 import { perimeterAccountingPass } from '@/app/lib/takeoff/applyAiResults';
 import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
-import { mergeArtificialCollinearSplits } from '@/app/lib/takeoff/scanPostprocess';
+import { mergeArtificialCollinearSplits, removeIslandMicroClusters } from '@/app/lib/takeoff/scanPostprocess';
 import {
   classifyOutlineVertices,
   matchEndpointsToVertices,
@@ -986,7 +986,18 @@ export async function POST(req: NextRequest) {
       if (healResult.merges.length > 0) {
         console.log(`[ai-scan-v3:${requestId}] scan2 pre-heal: ${healResult.merges.length} collinear merge(s): ${healResult.merges.map(m => `${m.removed}->${m.kept}`).join(', ')}`);
       }
-      const scan2aLines: V3Line[] = healResult.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+
+      // ── Island micro-cluster removal ──
+      // Short fragments the model traces around dashed rectangular plan features
+      // (annotation boxes, symbols) form closed loops or isolated clusters that
+      // never join the real roof network - remove them before Scan 3.
+      const clusterResult = removeIslandMicroClusters(healResult.lines, outlinePoints);
+      if (clusterResult.removed.length > 0) {
+        for (const rec of clusterResult.removed) {
+          console.log(`[ai-scan-v3:${requestId}] scan2 micro-cluster: removed ${rec.removedIds.join(',')} (${rec.reason})`);
+        }
+      }
+      const scan2aLines: V3Line[] = clusterResult.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
       const finalLines: V3Line[] = scan2aLines;
       timer.mark('postprocess_done');
 

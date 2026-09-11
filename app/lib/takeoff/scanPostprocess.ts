@@ -108,3 +108,164 @@ export function mergeArtificialCollinearSplits(
 
   return { lines: current, merges };
 }
+
+// ── Island micro-cluster removal ────────────────────────────────────────
+// Short fragments the model invents around dashed rectangular plan features
+// (annotation boxes, skylight symbols, dimension jogs) form small closed or
+// near-closed clusters that never join the real roof network. No real internal
+// component (ridge/hip/valley/broken hip) is that small or that isolated.
+// A cluster is removed only when EVERY line in it is short relative to the roof
+// AND it has no junction with any retained structural (long) line.
+
+export interface ClusterRemovalRecord {
+  removedIds: string[];
+  reason: string;
+}
+
+const MICRO_CLUSTER_MAX_FRACTION = 0.06; // lines shorter than 6% of the roof diagonal
+
+export function removeIslandMicroClusters(
+  lines: V3Line[],
+  outlinePoints: V3Point[],
+): { lines: V3Line[]; removed: ClusterRemovalRecord[] } {
+  if (lines.length === 0) return { lines, removed: [] };
+
+  const outlineTolerance = 12;
+
+  // Roof size reference
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of outlinePoints) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const roofDiagonal = Math.hypot(maxX - minX, maxY - minY) || 1;
+  const maxLength = MICRO_CLUSTER_MAX_FRACTION * roofDiagonal;
+
+  const dist = (a: V3Point, b: V3Point) => Math.hypot(a.x - b.x, a.y - b.y);
+  const lineLen = (l: V3Line) => dist(l.start, l.end);
+
+  const pointToSegDist = (p: V3Point, a: V3Point, b: V3Point): number => {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return dist(p, a);
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  };
+  // Two lines are connected when any endpoint of one touches the OTHER LINE'S
+  // BODY (endpoint-to-segment) - this captures T-junctions where a short spur
+  // meets the middle of a long ridge, which endpoint-only matching misses.
+  const linesTouch = (a: V3Line, b: V3Line): boolean =>
+    pointToSegDist(a.start, b.start, b.end) <= PREMERGE_ENDPOINT_TOLERANCE
+    || pointToSegDist(a.end, b.start, b.end) <= PREMERGE_ENDPOINT_TOLERANCE
+    || pointToSegDist(b.start, a.start, a.end) <= PREMERGE_ENDPOINT_TOLERANCE
+    || pointToSegDist(b.end, a.start, a.end) <= PREMERGE_ENDPOINT_TOLERANCE;
+
+  const nearOutline = (p: V3Point): boolean => {
+    for (let i = 0; i < outlinePoints.length; i++) {
+      const a = outlinePoints[i];
+      const b = outlinePoints[(i + 1) % outlinePoints.length];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+      if (Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)) <= outlineTolerance) return true;
+    }
+    return false;
+  };
+
+  // Union-find over endpoint proximity
+  const parent = new Map<string, string>();
+  const find = (id: string): string => {
+    let root = id;
+    while (parent.get(root) !== root) root = parent.get(root)!;
+    return root;
+  };
+  const union = (a: string, b: string) => {
+    const ra = find(a), rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  };
+  for (const l of lines) parent.set(l.id, l.id);
+  for (let i = 0; i < lines.length; i++) {
+    for (let j = i + 1; j < lines.length; j++) {
+      if (linesTouch(lines[i], lines[j])) union(lines[i].id, lines[j].id);
+    }
+  }
+
+  const clusters = new Map<string, V3Line[]>();
+  for (const l of lines) {
+    const root = find(l.id);
+    const arr = clusters.get(root) ?? [];
+    arr.push(l);
+    clusters.set(root, arr);
+  }
+
+  const removedIds = new Set<string>();
+  const removed: ClusterRemovalRecord[] = [];
+  for (const cluster of clusters.values()) {
+    const allShort = cluster.every(l => lineLen(l) < maxLength);
+    if (!allShort) continue;
+
+    // A closed cycle of short lines = an annotation box/feature outline the
+    // model traced around. No real internal roof component network is a closed
+    // loop - ridges/hips/valleys form paths and trees. Removed even if the box
+    // happens to sit near the roof edge.
+    const hasCycle = clusterHasCycle(cluster);
+    if (hasCycle) {
+      for (const l of cluster) removedIds.add(l.id);
+      removed.push({
+        removedIds: cluster.map(l => l.id),
+        reason: `closed short-line loop (${cluster.length} line(s), all < ${Math.round(maxLength)}px - traced annotation box)`,
+      });
+      continue;
+    }
+
+    // Anchored to the roof outline anywhere? (e.g. short barges touching edges)
+    const touchesOutline = cluster.some(l => nearOutline(l.start) || nearOutline(l.end));
+    if (touchesOutline) continue;
+    for (const l of cluster) removedIds.add(l.id);
+    removed.push({
+      removedIds: cluster.map(l => l.id),
+      reason: `island micro-cluster (${cluster.length} line(s), all < ${Math.round(maxLength)}px, not connected to roof network or outline)`,
+    });
+  }
+
+  return { lines: lines.filter(l => !removedIds.has(l.id)), removed };
+}
+
+/** Does this cluster of lines contain a closed cycle (loop)? */
+function clusterHasCycle(cluster: V3Line[]): boolean {
+  // Endpoint clustering within the cluster
+  const endpointTol = PREMERGE_ENDPOINT_TOLERANCE;
+  const nodePoints: V3Point[] = [];
+  const nodeOf = (p: V3Point): number => {
+    for (let i = 0; i < nodePoints.length; i++) {
+      if (Math.hypot(p.x - nodePoints[i].x, p.y - nodePoints[i].y) <= endpointTol) return i;
+    }
+    nodePoints.push(p);
+    return nodePoints.length - 1;
+  };
+  const edges: Array<[number, number]> = [];
+  for (const l of cluster) {
+    const a = nodeOf(l.start);
+    const b = nodeOf(l.end);
+    if (a !== b) edges.push([a, b]);
+  }
+  if (edges.length === 0) return false;
+
+  // Union-find cycle detection: a cycle exists if adding an edge connects two
+  // nodes already in the same component.
+  const parent = new Map<number, number>();
+  const find = (x: number): number => {
+    let root = x;
+    while (parent.get(root) !== root) root = parent.get(root)!;
+    return root;
+  };
+  for (const [a, b] of edges) {
+    if (!parent.has(a)) parent.set(a, a);
+    if (!parent.has(b)) parent.set(b, b);
+    const ra = find(a), rb = find(b);
+    if (ra === rb) return true;
+    parent.set(ra, rb);
+  }
+  return false;
+}

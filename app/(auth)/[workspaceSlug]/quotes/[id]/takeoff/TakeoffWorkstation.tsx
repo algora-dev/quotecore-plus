@@ -5567,7 +5567,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
                   {/* Uncertain AI detections - pink, deletable, for manual review */}
                   {(() => {
-                    const uncertainData = componentMeasurements.find(c => (c.componentId as string | undefined) === undefined);
+                    // Uncertain AI detections now carry componentId === null and are
+                    // grouped under the explicit '__review__uncertain' key.
+                    const uncertainData = componentMeasurements.find(c => c.componentId === '__review__uncertain');
                     if (!uncertainData || uncertainData.measurements.length === 0) return null;
                     return (
                       <div>
@@ -5589,7 +5591,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       {m.type !== 'line' && m.type !== 'area' && '1 item'}
                                     </span>
                                     <button
-                                      onClick={() => handleToggleMeasurementVisibility(uncertainData.componentId as string, m.id)}
+                                      onClick={() => handleToggleMeasurementVisibility(uncertainData.componentId ?? '__review__uncertain', m.id)}
                                       className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
                                       title={m.visible ? 'Hide' : 'Show'}
                                     >
@@ -5600,7 +5602,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       )}
                                     </button>
                                     <button
-                                      onClick={() => handleDeleteMeasurement(uncertainData.componentId as string, m.id)}
+                                      onClick={() => handleDeleteMeasurement(uncertainData.componentId ?? '__review__uncertain', m.id)}
                                       className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
                                       title="Delete uncertain line"
                                     >

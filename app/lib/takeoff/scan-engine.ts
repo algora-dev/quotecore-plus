@@ -23,7 +23,7 @@ import {
   type AugmentedLine,
 } from '@/app/lib/takeoff/outlineGeometry';
 import { classifyCandidateStrokeStyles, NEAR_EMPTY_DUTY_CYCLE } from '@/app/lib/takeoff/strokeStyle';
-import { mergeArtificialCollinearSplits } from '@/app/lib/takeoff/scanPostprocess';
+import { mergeArtificialCollinearSplits, removeIslandMicroClusters } from '@/app/lib/takeoff/scanPostprocess';
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -474,7 +474,10 @@ export async function runScan2(params: {
   // Pre-Scan-3 artificial split healing (classification-independent).
   const heal = mergeArtificialCollinearSplits(connectedLines, outlinePoints);
   if (heal.merges.length > 0) console.log(`[scan-engine] scan2 pre-heal: ${heal.merges.length} collinear merge(s)`);
-  const finalLines: V3Line[] = heal.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
+  // Island micro-cluster removal (traced annotation boxes around dashed features).
+  const clusters = removeIslandMicroClusters(heal.lines, outlinePoints);
+  for (const rec of clusters.removed) console.log(`[scan-engine] scan2 micro-cluster: removed ${rec.removedIds.join(',')} (${rec.reason})`);
+  const finalLines: V3Line[] = clusters.lines.map((l, i) => ({ ...l, id: `L${i + 1}` }));
   console.log(`[scan-engine] scan2 postprocess: raw=${rawLines.length} dashedRemoved=${dashedIds.size} angleValid=${angleValidLines.length} connected=${connectedLines.length} preHealed=${heal.merges.length} angleRejected=${angleRejectedLines.length} floating=${floatingLines.length}`);
 
   const canvasScaleX = canvasW / imgW, canvasScaleY = canvasH / imgH;

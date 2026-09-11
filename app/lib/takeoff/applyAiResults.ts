@@ -606,17 +606,92 @@ export function perimeterAccountingPass(
       });
     }
 
+    // ── Ridge-ray projection fallback ──
+    // The model often returns the ridge endpoint slightly SHORT of the outline
+    // (truncated trace). Project along the ridge direction to the nearest
+    // intersecting perpendicular outline edge and treat the intersection as
+    // the gable centre. Without this, a short-by-more-than-tolerance ridge
+    // produces no barges at all and the whole gable edge becomes spouting.
+    const RAY_PROJECTION_MAX = 160; // px - max distance we'll extend a short ridge
+    const other = ridgeEndpoint === ridgeStart ? ridgeEnd : ridgeStart;
+    const rayDx = ridgeEndpoint.x - other.x;
+    const rayDy = ridgeEndpoint.y - other.y;
+    const rayLen = Math.hypot(rayDx, rayDy);
+    if (rayLen > 0) {
+      const rx = rayDx / rayLen, ry = rayDy / rayLen;
+      for (const edge of perimeterEdges) {
+        if (!isPerpendicularToRidge(edge.start, edge.end, ridgeStart, ridgeEnd)) continue;
+        const edgeLength = distance(edge.start, edge.end);
+        if (edgeLength < MIN_RUN_LENGTH * 2) continue;
+        // Ray-segment intersection: p + t*r = a + u*(b-a)
+        const ex = edge.end.x - edge.start.x, ey = edge.end.y - edge.start.y;
+        const denom = rx * ey - ry * ex;
+        if (Math.abs(denom) < 1e-9) continue; // parallel
+        const t = ((edge.start.x - ridgeEndpoint.x) * ey - (edge.start.y - ridgeEndpoint.y) * ex) / denom;
+        const u = ((edge.start.x - ridgeEndpoint.x) * ry - (edge.start.y - ridgeEndpoint.y) * rx) / denom;
+        if (t < 0 || t > RAY_PROJECTION_MAX || u < 0 || u > 1) continue;
+        const minimumParameter = MIN_RUN_LENGTH / edgeLength;
+        if (u <= minimumParameter || u >= 1 - minimumParameter) continue;
+        const gableCentre = pointOnEdge(edge.start, edge.end, u);
+        // The projected point must still be near where the ridge points (sanity:
+        // the gable centre should be roughly perpendicular-offset from the ridge
+        // endpoint, not far along the edge from the projection of the endpoint).
+        const endpointProjection = projectPointToEdge(ridgeEndpoint, edge.start, edge.end);
+        if (!endpointProjection
+          || Math.abs(endpointProjection.parameter - u) * edgeLength > RIDGE_ENDPOINT_TOLERANCE + t * 0.5) continue;
+        candidates.push({
+          offset: t,
+          barges: [
+            { points: [gableCentre, { ...edge.start }] },
+            { points: [gableCentre, { ...edge.end }] },
+          ],
+        });
+      }
+    }
+
     return candidates.sort((left, right) => left.offset - right.offset)[0] ?? null;
   }
 
   const generatedPerimeterBarges: AiLineEntry[] = [];
+  // A gable face is sometimes split into two collinear outline sub-edges by the
+  // vertex where a valley lands. Barge runs must continue across that vertex to
+  // the end of the gable face, otherwise the leftover sub-edge is mislabelled as
+  // spouting (spouting cannot exist on a gable edge where a valley terminates).
+  const COLLINEAR_DOT = 0.995;
+  function extendBargeAcrossCollinearVertices(bar: AiLineEntry): AiLineEntry {
+    let near = bar.points[0];
+    let far = bar.points[bar.points.length - 1];
+    for (let hop = 0; hop < 2; hop++) {
+      let extended = false;
+      for (const edge of perimeterEdges) {
+        const sharesStart = distance(edge.start, far) <= PERIMETER_TOLERANCE;
+        const sharesEnd = distance(edge.end, far) <= PERIMETER_TOLERANCE;
+        if (!sharesStart && !sharesEnd) continue;
+        const other = sharesStart ? edge.end : edge.start;
+        if (distance(other, far) < MIN_RUN_LENGTH) continue;
+        const d1x = far.x - near.x, d1y = far.y - near.y;
+        const d2x = other.x - far.x, d2y = other.y - far.y;
+        const l1 = Math.hypot(d1x, d1y) || 1, l2 = Math.hypot(d2x, d2y) || 1;
+        if ((d1x * d2x + d1y * d2y) / (l1 * l2) < COLLINEAR_DOT) continue;
+        near = far;
+        far = other;
+        extended = true;
+        break;
+      }
+      if (!extended) break;
+    }
+    return { points: [bar.points[0], { ...far }] };
+  }
   for (const ridge of corrected.ridges) {
     if (ridge.points.length < 2) continue;
     const ridgeStart = ridge.points[0];
     const ridgeEnd = ridge.points[ridge.points.length - 1];
     for (const ridgeEndpoint of [ridgeStart, ridgeEnd]) {
       const pair = findGableBargePair(ridgeEndpoint, ridgeStart, ridgeEnd);
-      if (pair) generatedPerimeterBarges.push(...pair.barges);
+      if (pair) generatedPerimeterBarges.push(
+        extendBargeAcrossCollinearVertices(pair.barges[0]),
+        extendBargeAcrossCollinearVertices(pair.barges[1]),
+      );
     }
   }
 
