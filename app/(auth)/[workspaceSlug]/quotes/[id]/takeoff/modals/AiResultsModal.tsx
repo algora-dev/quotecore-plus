@@ -132,6 +132,14 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
           })}
         </div>
 
+        {/* Uncertain components callout */}
+        {summary.uncertain > 0 && (
+          <div className="mb-4 p-3 bg-pink-50 border border-pink-200 rounded-lg text-xs text-pink-800">
+            ⚠️ The AI found <strong>{summary.uncertain} uncertain component{summary.uncertain === 1 ? '' : 's'}</strong> - shown in pink dashed lines on the plan.
+            Check these, delete any that are wrong, and add the correct component manually.
+          </div>
+        )}
+
         {/* Scale cross-check */}
         {scaleCheck?.warning && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">

@@ -87,9 +87,9 @@ export const AI_COMPONENT_REGISTRY: Record<SemanticKey, AiComponentDefinition> =
     key: 'uncertain',
     displayName: 'Uncertain',
     systemName: 'uncertain',
-    colour: '#94A3B8', // slate-400
+    colour: '#EC4899', // pink - intentionally loud so uncertain lines stand out for manual review
     dashed: true,
-    badgeClasses: 'bg-slate-100 text-slate-500',
+    badgeClasses: 'bg-pink-100 text-pink-700',
   },
 };
 

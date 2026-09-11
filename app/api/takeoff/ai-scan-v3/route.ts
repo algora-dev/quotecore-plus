@@ -45,6 +45,7 @@ import {
   classifyOutlineVertices,
   matchEndpointsToVertices,
   enforceHipValleyVertexRule,
+  enforceHipValleyAngleRule,
   type AugmentedLine,
 } from '@/app/lib/takeoff/outlineGeometry';
 
@@ -580,18 +581,17 @@ export async function POST(req: NextRequest) {
     const model = MODEL_BY_QUALITY[qualityLevel] || process.env.AI_TAKEOFF_MODEL || 'gpt-5.6-luna';
 
     // Quality level from client (low / medium / high). Default: medium.
-    const effortMap = { low: 'low', medium: 'low', high: 'high' } as const;
+    const effortMap = { low: 'low', medium: 'low', high: 'low' } as const;
     const userReasoningEffort = effortMap[qualityLevel as keyof typeof effortMap] || 'medium';
-    // Token limits: low/medium stay as-is, high gets bumped to avoid reasoning-eats-output bug.
-    const tokenLimits = userReasoningEffort === 'high'
-      ? { scan1: 8000, scan2: 12000, scan3: 12000 }
-      : { scan1: 5000, scan2: 8000, scan3: 8000 };
+    // Token limits: all tiers run low reasoning now, so use the standard
+    // limits everywhere (the bumped high-reasoning limits are no longer needed).
+    const tokenLimits = { scan1: 5000, scan2: 8000, scan3: 8000 };
 
     // ── AI Assist points quota ──────────────────────────────────────
     // Point cost per quality level: low=2, medium=4, high=8.
     // Points are deducted once on scan1 (the full cost). Scans 2+3 are
     // continuations of the same scan session - no additional deduction.
-    const POINT_COST: Record<string, number> = { low: 2, medium: 4, high: 8 };
+    const POINT_COST: Record<string, number> = { low: 2, medium: 6, high: 10 };
     const pointsToSpend = POINT_COST[qualityLevel] ?? 4;
 
     if (stage === 'scan1') {
@@ -1004,6 +1004,36 @@ export async function POST(req: NextRequest) {
             console.log(`[ai-scan-v3:${requestId}]   ${cor.line_id}: ${cor.from} → ${cor.to} (${cor.reason})`);
           }
         }
+        // Angle gate: hips/valleys must run ~45 deg to the corner edges.
+        // Demotes non-diagonal hips/valleys to uncertain (never relabels).
+        try {
+          const classified = classifyOutlineVertices(outlinePoints);
+          const angleGate = enforceHipValleyAngleRule(finalClassifications, augmentedLines, classified);
+          finalClassifications = angleGate.classifications as typeof classifications;
+          if (angleGate.corrections.length > 0) {
+            console.log(`[ai-scan-v3:${requestId}] scan3: angle gate corrections: ${angleGate.corrections.length}`);
+            for (const cor of angleGate.corrections) {
+              console.log(`[ai-scan-v3:${requestId}]   ${cor.line_id}: ${cor.from} → ${cor.to} (${cor.reason})`);
+            }
+            enforcementCorrections.push(...angleGate.corrections);
+          }
+        } catch (angleErr) {
+          console.warn(`[ai-scan-v3:${requestId}] angle gate skipped:`, angleErr instanceof Error ? angleErr.message : angleErr);
+        }
+      }
+
+      // Floating-line safety net: lines whose endpoints touch neither the
+      // outline nor another line endpoint are forced to uncertain (shown to
+      // the user for manual review) instead of being trusted or silently lost.
+      const { floating: scan3Floating } = validateConnectivity(allLines, outlinePoints);
+      if (scan3Floating.length > 0) {
+        const floatingIds = new Set(scan3Floating.map(l => l.id));
+        finalClassifications = finalClassifications.map(c =>
+          floatingIds.has(c.line_id) && c.type !== 'uncertain'
+            ? { ...c, type: 'uncertain' as const, reason: `Backend: line is not connected to the roof network - marked uncertain for manual review` }
+            : c
+        );
+        console.log(`[ai-scan-v3:${requestId}] scan3: forced uncertain on ${scan3Floating.length} floating line(s)`);
       }
 
       const notes = Array.isArray(raw.notes) ? raw.notes.filter((n): n is string => typeof n === 'string') : [];

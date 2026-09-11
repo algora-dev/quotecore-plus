@@ -105,6 +105,8 @@ Do not allow any returned segment to pass through a solid-line junction.
 
 Dotted lines, dashed lines, text, dimensions, symbols, hatching, and shading do not split or terminate solid roof lines.
 
+Never trace or return a dotted or dashed line as a segment, even if it looks structural or important. A dotted or dashed line crossing or meeting a solid line is NOT a junction and NOT a breakpoint - ignore it entirely and keep tracing the solid line straight through.
+
 If a solid line is briefly obscured by an annotation but clearly continues on the same path, trace it through.
 
 Include:
@@ -210,6 +212,7 @@ Do not invent IDs or missing geometry.
 
 ## CLASSIFICATION PRINCIPLES
 
+• Hips and valleys run diagonally: roughly 45 degrees to the roof's main edges (both diagonals count, like an X shape). A line that runs parallel or perpendicular to the roof's outline edges (horizontal or vertical relative to the roof) is never a hip or valley - classify it as its true role or uncertain.
 • Use endpoint locations and network connections first; use angle and length only as supporting evidence.
 • The start/end order of an L segment is arbitrary.
 • Treat an endpoint as touching an outline corner, edge or another line when the overlay visibly coincides within normal pixel tolerance; exact coordinate equality is not required.

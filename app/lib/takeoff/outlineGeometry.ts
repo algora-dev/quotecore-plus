@@ -164,7 +164,82 @@ function findNearestVertex(
   return nearest;
 }
 
-// ─── Part 3: Backend hip/valley enforcement ──────────────────────────────
+// ─── Part 4: Hip/valley 45-degree angle gate ─────────────────────────────
+
+/**
+ * Post-Scan 3 angle enforcement: hips and valleys must run diagonally
+ * (within tolerance of 45 degrees) relative to the outline edges meeting
+ * at the corner they terminate on. A hip/valley whose orientation is
+ * parallel or perpendicular to the corner's edges (i.e. horizontal or
+ * vertical relative to the roof) is demoted to 'uncertain'.
+ *
+ * Corner-relative (not image-axis) so it is rotation-invariant.
+ * Conservative: only demotes, never promotes or renames to another type.
+ */
+export function enforceHipValleyAngleRule(
+  classifications: Array<{ line_id: string; type: string; confidence: number; reason: string }>,
+  augmentedLines: AugmentedLine[],
+  vertices: ClassifiedVertex[],
+  toleranceDeg: number = 12,
+): { corrections: EnforcementCorrection[]; classifications: Array<{ line_id: string; type: string; confidence: number; reason: string }> } {
+  const vertexById = new Map<string, ClassifiedVertex>();
+  for (const v of vertices) vertexById.set(v.id, v);
+  const lineMap = new Map<string, AugmentedLine>();
+  for (const l of augmentedLines) lineMap.set(l.id, l);
+
+  const fold90 = (deg: number) => {
+    let d = Math.abs(deg) % 180;
+    if (d > 90) d = 180 - d;
+    return d;
+  };
+  const angleOf = (dx: number, dy: number) => Math.atan2(-dy, dx) * 180 / Math.PI;
+
+  const corrections: EnforcementCorrection[] = [];
+
+  const corrected = classifications.map(c => {
+    if (c.type !== 'hip' && c.type !== 'valley') return c;
+    const line = lineMap.get(c.line_id);
+    if (!line) return c;
+
+    // Find the outline vertex this line terminates on (if any)
+    const vertexId = line.startOutlineVertexId ?? line.endOutlineVertexId;
+    if (!vertexId) return c; // already handled by vertex rule
+    const vertex = vertexById.get(vertexId);
+    if (!vertex) return c;
+
+    // Incident outline edge directions at this vertex
+    const n = vertices.length;
+    const prev = vertices[(vertex.index - 1 + n) % n];
+    const next = vertices[(vertex.index + 1) % n];
+    const lineAngle = angleOf(line.end.x - line.start.x, line.end.y - line.start.y);
+    const edgeAngles = [
+      angleOf(vertex.x - prev.x, vertex.y - prev.y),
+      angleOf(next.x - vertex.x, next.y - vertex.y),
+    ];
+
+    // The line must be within tolerance of 45 degrees from BOTH incident
+    // edges (folded to 0-90). This covers both diagonals of an X shape.
+    const withinTolerance = edgeAngles.every(ea =>
+      Math.abs(fold90(lineAngle - ea) - 45) <= toleranceDeg
+    );
+
+    if (withinTolerance) return c;
+
+    corrections.push({
+      line_id: c.line_id,
+      from: c.type as 'hip' | 'valley',
+      to: 'uncertain',
+      reason: `Line is not diagonal (~45 deg) to the corner edges (tolerance ${toleranceDeg} deg)`,
+    });
+    return {
+      ...c,
+      type: 'uncertain',
+      reason: `Backend angle gate: ${c.type} demoted - line runs parallel/perpendicular to the corner edges, not ~45 deg`,
+    };
+  });
+
+  return { corrections, classifications: corrected };
+}
 
 /**
  * Post-Scan 3 enforcement: correct hip ↔ valley misclassifications using
