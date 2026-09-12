@@ -5586,7 +5586,39 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                               <div className="text-[10px] text-pink-600 mb-1.5">Lines the AI could not confidently classify. Check the plan, delete any that are wrong, and draw the correct component manually.</div>
                               <div className="space-y-1">
                                 {uncertainData.measurements.map((m) => (
-                                  <div key={m.id} className="flex items-center gap-1.5 text-xs text-gray-700">
+                                  <div
+                                    key={m.id}
+                                    className="flex items-center gap-1.5 text-xs text-gray-700 rounded-lg px-1.5 -mx-1.5 hover:bg-pink-50 transition-colors cursor-default"
+                                    onMouseEnter={() => {
+                                      const canvas = fabricRef.current;
+                                      if (!canvas || !m.canvasObjects) return;
+                                      m.canvasObjects.forEach((obj: any) => {
+                                        if (!obj.visible) return;
+                                        obj._origStrokeWidth = obj.strokeWidth;
+                                        obj.set('strokeWidth', (obj.strokeWidth || 2) + 4);
+                                        if (obj.selectable !== false) {
+                                          obj._origBorderColor = obj.borderColor;
+                                          obj.set('borderColor', '#EC4899');
+                                        }
+                                      });
+                                      canvas.renderAll();
+                                    }}
+                                    onMouseLeave={() => {
+                                      const canvas = fabricRef.current;
+                                      if (!canvas || !m.canvasObjects) return;
+                                      m.canvasObjects.forEach((obj: any) => {
+                                        if (obj._origStrokeWidth !== undefined) {
+                                          obj.set('strokeWidth', obj._origStrokeWidth);
+                                          delete obj._origStrokeWidth;
+                                        }
+                                        if (obj._origBorderColor !== undefined) {
+                                          obj.set('borderColor', obj._origBorderColor);
+                                          delete obj._origBorderColor;
+                                        }
+                                      });
+                                      canvas.renderAll();
+                                    }}
+                                  >
                                     <span className="flex-1">
                                       {m.type === 'line' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
                                       {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
