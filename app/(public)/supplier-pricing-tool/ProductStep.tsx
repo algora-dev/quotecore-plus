@@ -108,6 +108,7 @@ export function ProductStep({
         labourRate: p.defaultLabourRate,
         qtyOverride: null,
         priceOverride: null,
+        autoApplied: true,
       });
     }
     setMeasureSet({ ...measureSet, appliedProducts: next });
@@ -198,6 +199,19 @@ export function ProductStep({
             {family && (<span>{' - '}<span className="font-semibold text-slate-700">{family}</span>{' items highlighted as Recommended'}</span>)}
             {' - every product stays selectable'}
           </p>
+        )}
+
+        {groupApplied.some(ap => ap.autoApplied) && (
+          <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2.5">
+            <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-xs leading-relaxed text-slate-600">
+              <span className="font-semibold text-slate-800">Pre-attached for you.</span>{' '}
+              We have already attached the recommended product{groupApplied.filter(ap => ap.autoApplied).length > 1 ? 's' : ''} to these measurements -
+              you are seeing live totals, not a selection screen. Remove any with the <span className="font-medium text-slate-800">x</span>, or use <span className="font-medium text-slate-800">+ Add product</span> to swap or add more.
+            </p>
+          </div>
         )}
 
         {groupApplied.length === 0 && (
@@ -363,6 +377,9 @@ function AppliedRow({ ap, p, def, measured, advanced, showLabour = true, onEdit,
       <div className="min-w-0 flex-1">
         <div className="text-sm font-semibold text-slate-900 truncate">
           {p.name}
+          {ap.autoApplied && (
+            <span className="ml-2 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-blue-700">auto-attached</span>
+          )}
           {ap.qtyOverride != null && <span className="ml-2 text-xs font-normal text-[#1D4ED8]">qty overridden</span>}
         </div>
         <div className="text-xs text-slate-400">

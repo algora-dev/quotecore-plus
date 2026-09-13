@@ -184,6 +184,11 @@ export interface AppliedProduct {
   labourRate: number;          // $ per unit (0 = none)
   qtyOverride: number | null;  // replaces measured qty when set
   priceOverride: number | null; // only honoured if product.priceEditable
+  /** true while this entry was auto-attached by the tool (recommended
+   *  default for the measurement type) and the user has not touched it -
+   *  drives the "pre-attached" badge + explainer so users know a product
+   *  is already selected and can be removed, swapped or added to. */
+  autoApplied?: boolean;
 }
 
 /** Purchase qty after waste (percent OR flat length per wasteMode - never
