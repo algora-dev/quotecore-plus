@@ -90,7 +90,7 @@ export function PortalFlow() {
   // supplier config allows it; anonymous users always see baseline prices.
   // When the login feature is OFF nobody can log in, so trade-requires-login
   // can never be satisfied - treat trade pricing as public in that case.
-  const { config, basePath } = useSupplierConfig();
+  const { config, basePath, restartUrl } = useSupplierConfig();
   const { user } = useFreeToolsAuth();
   // Supply-mode choice (materials only vs materials + install). Bypassed
   // (labour included) when the supplier config disables the feature.
@@ -145,6 +145,8 @@ export function PortalFlow() {
     setMeasureSet(emptyMeasurementSet());
     setStep(1);
     try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
+    // Dual-trade brands (Roofline): restart lands on the trade-choice page
+    if (restartUrl) window.location.assign(restartUrl);
   }
 
   // Header brand click restarts the flow (choice modal keeps progress)

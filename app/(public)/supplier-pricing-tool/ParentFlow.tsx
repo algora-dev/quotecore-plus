@@ -48,7 +48,7 @@ function readPersisted(): PersistedParentFlow | null {
 }
 
 export function ParentFlow() {
-  const { config, basePath } = useSupplierConfig();
+  const { config, basePath, restartUrl } = useSupplierConfig();
   const trade: TradeConfig = tradeConfigFor(config.trade);
   const { user } = useFreeToolsAuth();
 
@@ -117,6 +117,8 @@ export function ParentFlow() {
     setJob(emptyParentJob());
     setStep(1);
     try { window.sessionStorage.removeItem(FLOW_KEY); } catch { /* ignore */ }
+    // Dual-trade brands (Roofline): restart lands on the trade-choice page
+    if (restartUrl) window.location.assign(restartUrl);
   }
 
   // Header brand click restarts the flow (choice modal keeps progress)

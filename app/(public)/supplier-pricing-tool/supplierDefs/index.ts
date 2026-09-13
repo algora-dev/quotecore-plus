@@ -79,6 +79,15 @@ export interface SupplierDefinition {
     draftsApi?: string;
     enquiryApi?: string;
   };
+  /** where "Start a new job" / restart sends the user. Defaults to an
+   *  in-place flow reset; set it for dual-trade brands (Roofline) so a
+   *  restart lands on the trade-choice page instead of the current trade. */
+  restartUrl?: string;
+}
+
+/** Restart target for a supplier slug (undefined = reset in place). */
+export function getRestartUrl(slug: string | undefined | null): string | undefined {
+  return SUPPLIER_DEFS.find(d => d.slug === slug)?.restartUrl;
 }
 
 export const SUPPLIER_DEFS: SupplierDefinition[] = [

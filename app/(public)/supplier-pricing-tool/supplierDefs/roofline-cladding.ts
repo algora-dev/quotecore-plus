@@ -19,6 +19,7 @@ export const ROOFLINE_CLADDING = {
   demoDisclaimer: false,
   guideLineColor: '#C8102E', // red indicative lines in guide diagrams
   guideLineColorName: 'red',
+  restartUrl: '/supplier-pricing-tool/roofline', // restart returns to the trade-choice page
   theme: {
     primary: '#111111', // Roofline black
     primaryHover: '#2A2A2A',

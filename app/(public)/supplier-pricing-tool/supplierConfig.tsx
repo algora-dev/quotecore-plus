@@ -13,7 +13,7 @@ import type { ReactNode } from 'react';
 import type { SupplierProduct } from './types';
 import type { Trade, BucketRow } from './tradeConfig';
 import type { SupplierTheme } from './supplierDefs';
-import { getSupplierDef, DEFAULT_SUPPLIER_SLUG } from './supplierDefs';
+import { getSupplierDef, getRestartUrl, DEFAULT_SUPPLIER_SLUG } from './supplierDefs';
 
 export type { SupplierTheme };
 
@@ -183,6 +183,9 @@ interface SupplierConfigContextValue {
   basePath: string;
   config: SupplierConfig;
   ready: boolean;
+  /** where "Start a new job" sends the user (dual-trade brands send it to
+   *  their trade-choice page; undefined = reset the flow in place). */
+  restartUrl?: string;
 }
 
 const SupplierConfigContext = createContext<SupplierConfigContextValue | null>(null);
@@ -207,7 +210,7 @@ export function SupplierConfigProvider({ slug, children }: { slug: string; child
   }, [slug]);
 
   return (
-    <SupplierConfigContext.Provider value={{ slug, basePath, config, ready }}>
+    <SupplierConfigContext.Provider value={{ slug, basePath, config, ready, restartUrl: getRestartUrl(slug) }}>
       {children}
     </SupplierConfigContext.Provider>
   );
@@ -235,7 +238,7 @@ export function useSupplierConfig(): SupplierConfigContextValue {
   }, [ctx]);
 
   if (ctx) return ctx;
-  return { slug: DEFAULT_SUPPLIER_SLUG, basePath: '/supplier-pricing-tool', config: fallbackConfig, ready: fallbackReady };
+  return { slug: DEFAULT_SUPPLIER_SLUG, basePath: '/supplier-pricing-tool', config: fallbackConfig, ready: fallbackReady, restartUrl: getRestartUrl(DEFAULT_SUPPLIER_SLUG) };
 }
 
 /** Trade price for a product under a config + effective discount pct
