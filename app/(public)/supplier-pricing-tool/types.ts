@@ -194,9 +194,11 @@ export interface AppliedProduct {
 /** Purchase qty after waste (percent OR flat length per wasteMode - never
  *  both) - single source of truth shared by the pricing engine and the live
  *  UI previews. */
-export function applyWaste(ap: { wastePct?: number; wasteFlat?: number; wasteMode?: 'percent' | 'flat' }, calcQty: number): number {
+export function applyWaste(ap: { wastePct?: number; wasteFlat?: number; wasteMode?: 'percent' | 'flat' }, calcQty: number, unitCount = 1): number {
   if (ap.wasteMode === 'flat') {
-    return calcQty + (ap.wasteFlat || 0);
+    // flat waste is a per-length cutting allowance: it applies to EVERY
+    // measurement entry covered by this application, not once off the total.
+    return calcQty + (ap.wasteFlat || 0) * Math.max(1, unitCount);
   }
   return calcQty * (1 + (ap.wastePct || 0) / 100);
 }

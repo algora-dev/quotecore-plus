@@ -67,7 +67,11 @@ export function priceOutput(set: MeasurementSet, catalog: SupplierProduct[], inc
     }
 
     const calcQty = effectiveQty(ap, measured);
-    const purchaseQty = applyWaste({ ...ap, wasteMode: wasteModeFor(p, ap) }, calcQty);
+    // flat waste counts once per measurement entry covered by this line
+    const unitCount = ap.entryId == null
+      ? group.entries.reduce((s, e) => s + (e.quantity || 1), 0)
+      : (group.entries.find(e => e.id === ap.entryId)?.quantity || 1);
+    const purchaseQty = applyWaste({ ...ap, wasteMode: wasteModeFor(p, ap) }, calcQty, unitCount);
     const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
     const lineTotal = Math.round(purchaseQty * unitPrice * 100) / 100;
     const labourTotal = includeLabour ? Math.round(purchaseQty * (ap.labourRate || 0) * 100) / 100 : 0;

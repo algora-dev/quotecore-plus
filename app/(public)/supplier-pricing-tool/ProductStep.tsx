@@ -230,6 +230,7 @@ export function ProductStep({
               p={p}
               def={def}
               measured={total}
+              unitCount={group.entries.reduce((s, e) => s + (e.quantity || 1), 0)}
               advanced={mode === 'advanced'}
               showLabour={includeLabour}
               onEdit={() => setEditing(ap)}
@@ -292,6 +293,7 @@ export function ProductStep({
                       p={p}
                       def={def}
                       measured={entryPitched(measureSet, def.key, entry.id)}
+                      unitCount={entry.quantity || 1}
                       advanced={mode === 'advanced'}
                       showLabour={includeLabour}
                       onEdit={() => setEditing(ap)}
@@ -344,6 +346,9 @@ export function ProductStep({
           def={def}
           cur={cur}
           showLabour={includeLabour}
+          unitCount={editing.entryId == null
+            ? group.entries.reduce((s, e) => s + (e.quantity || 1), 0)
+            : (group.entries.find(e => e.id === editing.entryId)?.quantity || 1)}
           onClose={() => setEditing(null)}
           onSave={patch => { updateApplied(editing.id, patch); setEditing(null); }}
         />
@@ -353,11 +358,13 @@ export function ProductStep({
 }
 
 /** One applied product row: name, qty, waste, live totals, edit/remove. */
-function AppliedRow({ ap, p, def, measured, advanced, showLabour = true, onEdit, onRemove, onUpdate, cur }: {
+function AppliedRow({ ap, p, def, measured, unitCount = 1, advanced, showLabour = true, onEdit, onRemove, onUpdate, cur }: {
   ap: AppliedProduct;
   p: SupplierProduct;
   def: GroupDef;
   measured: number;
+  /** how many measurement entries this line covers - flat waste applies per entry */
+  unitCount?: number;
   advanced: boolean;
   /** false = supply-only pricing: hide labour previews */
   showLabour?: boolean;
@@ -367,7 +374,7 @@ function AppliedRow({ ap, p, def, measured, advanced, showLabour = true, onEdit,
   cur: string;
 }) {
   const calcQty = ap.qtyOverride != null ? ap.qtyOverride : measured;
-  const purchaseQty = applyWaste(ap, calcQty);
+  const purchaseQty = applyWaste(ap, calcQty, unitCount);
   const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
   const mat = purchaseQty * unitPrice;
   const lab = showLabour ? purchaseQty * (ap.labourRate || 0) : 0;
@@ -521,13 +528,15 @@ function PickerRow({ p, def, cur, onPick, added }: { p: SupplierProduct; def: Gr
 
 /** Advanced product editor: labour rate, waste, qty override, price override
  *  (only when the supplier allows price edits on this product). */
-function ProductEditorModal({ ap, p, def, cur, showLabour = true, onClose, onSave }: {
+function ProductEditorModal({ ap, p, def, cur, showLabour = true, unitCount = 1, onClose, onSave }: {
   ap: AppliedProduct;
   p: SupplierProduct;
   def: GroupDef;
   cur: string;
   /** false = supply-only pricing: hide the labour rate input */
   showLabour?: boolean;
+  /** how many measurement entries this line covers - flat waste applies per entry */
+  unitCount?: number;
   onClose: () => void;
   onSave: (patch: Partial<AppliedProduct>) => void;
 }) {
@@ -545,7 +554,7 @@ function ProductEditorModal({ ap, p, def, cur, showLabour = true, onClose, onSav
   const labour = parseFloat(labourRate) || 0;
 
   const purchaseQty = wasteMode === 'flat'
-    ? (qty ?? 0) + wasteLen
+    ? (qty ?? 0) + wasteLen * Math.max(1, unitCount)
     : (qty ?? 0) * (1 + waste / 100);
   const unitPrice = price != null ? price : p.unitPrice;
   const mat = purchaseQty * unitPrice;

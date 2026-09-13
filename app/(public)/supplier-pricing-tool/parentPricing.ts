@@ -48,7 +48,11 @@ export function priceParentOutput(job: ParentJob, catalog: SupplierProduct[], in
 
     const measured = componentTotal(job, ap.componentId);
     const calcQty = ap.qtyOverride != null ? ap.qtyOverride : measured;
-    const purchaseQty = applyWaste(ap, calcQty);
+    // flat waste counts once per measurement entry on this component
+    const unitCount = job.entries
+      .filter(e => e.componentId === ap.componentId)
+      .reduce((s, e) => s + (e.quantity || 1), 0);
+    const purchaseQty = applyWaste(ap, calcQty, unitCount);
     const unitPrice = ap.priceOverride != null && p.priceEditable ? ap.priceOverride : p.unitPrice;
 
     lines.push({
