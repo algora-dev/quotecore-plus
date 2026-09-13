@@ -95,8 +95,10 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
   }));
 
   const wasteLabel = (l: { wastePct: number; wasteFlat: number; wasteMode?: 'percent' | 'flat' }) => {
-    if (l.wasteMode === 'flat') return l.wasteFlat > 0 ? `+${fmt(l.wasteFlat, 1)}` : '-';
-    return l.wastePct > 0 ? `${fmt(l.wastePct, 1)}%` : '-';
+    // plain-language label: the number itself (10.0% / +0.3) reads like a
+    // per-line addition and confused users once flat waste went per-entry.
+    const hasWaste = l.wasteMode === 'flat' ? l.wasteFlat > 0 : l.wastePct > 0;
+    return hasWaste ? 'incl. waste' : '-';
   };
 
   return (
