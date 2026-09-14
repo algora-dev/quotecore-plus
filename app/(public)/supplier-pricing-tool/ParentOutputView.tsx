@@ -62,6 +62,31 @@ export function ParentOutputView({
       currency,
       productCounts: counts,
     });
+    // Server-side proof-of-use (2026-09-14): one row + auto PDF per output.
+    // Fire-and-forget - never blocks or surfaces errors to the demo user.
+    void fetch('/api/free-tools/supplier-output-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        toolSlug: supplierCfg.slug,
+        supplierName: supplierCfg.name,
+        trade: tradeLabel ?? null,
+        currency,
+        material: totals.material,
+        labour: totals.labour,
+        lines: totals.lines.map(l => ({
+          groupLabel: l.bucketName,
+          entryLabel: l.componentName,
+          name: l.name,
+          code: l.code,
+          basisUnit: l.basisUnit,
+          purchaseQty: l.purchaseQty,
+          unitPrice: l.unitPrice,
+          lineTotal: l.lineTotal,
+        })),
+        customs: [],
+      }),
+    }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

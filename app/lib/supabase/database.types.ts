@@ -5797,6 +5797,45 @@ export type Database = {
           },
         ]
       }
+      supplier_tool_outputs: {
+        Row: {
+          created_at: string
+          currency: string | null
+          id: string
+          item_count: number | null
+          payload: Json | null
+          pdf_path: string | null
+          tool_slug: string
+          total_labour: number | null
+          total_material: number | null
+          trade: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          item_count?: number | null
+          payload?: Json | null
+          pdf_path?: string | null
+          tool_slug: string
+          total_labour?: number | null
+          total_material?: number | null
+          trade?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          item_count?: number | null
+          payload?: Json | null
+          pdf_path?: string | null
+          tool_slug?: string
+          total_labour?: number | null
+          total_material?: number | null
+          trade?: string | null
+        }
+        Relationships: []
+      }
       supplier_update_resolutions: {
         Row: {
           applied_fields: string[] | null

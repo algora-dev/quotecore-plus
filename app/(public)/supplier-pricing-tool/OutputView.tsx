@@ -57,6 +57,35 @@ export function OutputView({ measureSet, catalog, baselineCatalog, showTrade, tr
       currency: cur,
       productCounts: counts,
     });
+    // Server-side proof-of-use (2026-09-14): one row + auto PDF per output.
+    // Fire-and-forget - never blocks or surfaces errors to the demo user.
+    void fetch('/api/free-tools/supplier-output-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        toolSlug: supplierCfg.slug,
+        supplierName: supplierCfg.name,
+        trade: tradeLabel ?? null,
+        currency: cur,
+        material: output.material + output.customMaterial,
+        labour: output.labour + output.customLabour,
+        lines: output.lines.map(l => ({
+          groupLabel: l.groupLabel,
+          entryLabel: l.entryLabel,
+          name: l.name,
+          code: l.code,
+          basisUnit: l.basisUnit,
+          purchaseQty: l.purchaseQty,
+          unitPrice: l.unitPrice,
+          lineTotal: l.lineTotal,
+        })),
+        customs: output.customs.map(c => ({
+          name: c.name,
+          qty: c.quantity,
+          total: c.quantity * c.unitPrice,
+        })),
+      }),
+    }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const today = new Date().toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
