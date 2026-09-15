@@ -142,6 +142,13 @@ export default function Post() {
         </Link>
         .
       </p>
+      <p>
+        Moving beyond an estimating spreadsheet does not have to mean replacing Xero.{' '}
+        <Link href="/integrations/xero" className={link}>
+          See the QuoteCore+ Xero workflow
+        </Link>
+        .
+      </p>
     </div>
   );
 }

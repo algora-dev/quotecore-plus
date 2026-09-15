@@ -113,10 +113,6 @@ const limitations = [
     title: "No cutting lists",
     body: "QuoteCore+ calculates material quantities and pricing, not individual cutting schedules for each piece of material on site.",
   },
-  {
-    title: "No accounting integration",
-    body: "Takeoffs, estimates and invoices are created within QuoteCore+, but it does not sync with Xero, QuickBooks or other accounting software.",
-  },
 ];
 
 export default function RoofingTakeoffSoftwarePage() {
@@ -287,6 +283,22 @@ export default function RoofingTakeoffSoftwarePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Keep Xero for accounting */}
+        <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
+          <div className="rounded-[1.5rem] border border-[#FF6B35]/30 bg-orange-50/50 px-6 py-6 text-center">
+            <h2 className="text-2xl font-semibold sm:text-3xl">Keep Xero for accounting</h2>
+            <p className="mt-3 text-lg leading-8 text-zinc-600">
+              Connect your QuoteCore+ account to Xero, then open a quote summary and choose{" "}
+              <strong>Send to App &rarr; Xero</strong> to export its information as a
+              draft invoice with line items.{" "}
+              <a href="/integrations/xero" className="font-medium text-[#BD4A1A] hover:underline">
+                See how the Xero integration works
+              </a>
+              .
+            </p>
           </div>
         </section>
 

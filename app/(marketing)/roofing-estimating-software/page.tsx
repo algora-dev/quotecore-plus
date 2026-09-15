@@ -387,6 +387,14 @@ export default function RoofingEstimatingSoftwarePage() {
         {/* Related */}
         <section className="mx-auto max-w-4xl px-6 py-20 lg:px-8">
           <h2 className="text-3xl font-semibold sm:text-4xl">Related</h2>
+          <p className="mt-4 text-lg leading-8 text-zinc-600">
+            Already use Xero? Prepare the measurements and pricing in QuoteCore+, then
+            send quote information across.{" "}
+            <a href="/integrations/xero" className="font-medium text-[#BD4A1A] hover:underline">
+              See the QuoteCore+ Xero integration
+            </a>
+            .
+          </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <a
               href="/roofsnap-alternative"

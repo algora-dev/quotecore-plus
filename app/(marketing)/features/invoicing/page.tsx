@@ -256,8 +256,8 @@ export default function InvoicingPage() {
               <p className="mt-2 text-sm text-zinc-600">The invoice includes payment instructions, but QuoteCore+ does not process card or bank payments. Customers pay via bank transfer using the details on the invoice.</p>
             </div>
             <div className="rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-900">No accounting software integration</h3>
-              <p className="mt-2 text-sm text-zinc-600">Invoices are stored in QuoteCore+ but do not sync to Xero, QuickBooks, or other accounting platforms. Export invoice data manually if needed.</p>
+              <h3 className="font-semibold text-slate-900">No automatic accounting sync</h3>
+              <p className="mt-2 text-sm text-zinc-600">Invoices are stored in QuoteCore+ and are not continuously synchronised with accounting software. However, quotes can be exported to Xero as draft invoices with line items via <a href="/integrations/xero" className="font-medium text-[#BD4A1A] hover:underline">Send to App &rarr; Xero</a>.</p>
             </div>
           </div>
         </section>
