@@ -361,7 +361,7 @@ export default function XeroIntegrationPage() {
                 <img
                   src={img("quote-send-to-app.jpg")}
                   alt="QuoteCore+ quote summary with the Send to App button."
-                  width={1600}
+                  width={580}
                   className="w-full h-auto"
                   loading="lazy"
                 />
@@ -374,7 +374,7 @@ export default function XeroIntegrationPage() {
                 <img
                   src={img("send-to-app-modal.jpg")}
                   alt="Send to App window showing Export to Xero as the export destination."
-                  width={1600}
+                  width={500}
                   className="w-full h-auto"
                   loading="lazy"
                 />
@@ -388,13 +388,82 @@ export default function XeroIntegrationPage() {
                 <img
                   src={img("xero-export-success.jpg")}
                   alt="Confirmation that a draft invoice was created in Xero, with instructions to find it under Contacts."
-                  width={1600}
+                  width={480}
                   className="w-full h-auto"
                   loading="lazy"
                 />
                 <figcaption className="mt-2 px-4 pb-3 text-sm text-zinc-500">
                   A successful export creates a draft invoice in Xero, found under the
                   customer&rsquo;s contact (demonstration result).
+                </figcaption>
+              </figure>
+
+              <h3 id="find-the-export-in-xero">Find the exported data in Xero</h3>
+              <p>
+                The screenshots below show the complete journey from the Xero contacts
+                list to the exported draft invoice, using a demonstration job.
+              </p>
+              <p>
+                <strong>Step 1: open the customer&rsquo;s contact.</strong> In Xero, go to{" "}
+                <strong>Contacts &rarr; All contacts</strong> and find the contact named
+                after the quote&rsquo;s customer. Each export creates or updates this
+                contact record automatically.
+              </p>
+              <figure className={figureClass}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img("xero-contacts.jpg")}
+                  alt="Xero contacts list showing the contact created for the exported QuoteCore+ quote customer."
+                  width={1600}
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+                <figcaption className="mt-2 px-4 pb-3 text-sm text-zinc-500">
+                  The exported customer appears in Xero under Contacts, All contacts
+                  (demonstration organisation).
+                </figcaption>
+              </figure>
+              <p>
+                <strong>Step 2: check the contact&rsquo;s invoices.</strong> Open the
+                contact and stay on the <strong>Activity</strong> tab. Every export from
+                QuoteCore+ appears here as an invoice with a{" "}
+                <strong>Draft</strong> status and a reference in the form{" "}
+                <em>QuoteCore+ Quote &hellip;</em>, so you can tell which QuoteCore+ quote
+                each invoice came from.
+              </p>
+              <figure className={figureClass}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img("xero-contact-invoices.jpg")}
+                  alt="Xero contact Activity tab listing exported draft invoices with QuoteCore+ quote references."
+                  width={1600}
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+                <figcaption className="mt-2 px-4 pb-3 text-sm text-zinc-500">
+                  Exported invoices on the customer&rsquo;s Activity tab, each in Draft
+                  status with its QuoteCore+ quote reference (demonstration data).
+                </figcaption>
+              </figure>
+              <p>
+                <strong>Step 3: review the draft invoice.</strong> Open the draft invoice
+                to see the exported line items: each component from your quote carries
+                across with its description, quantity and price, and the subtotal matches
+                the priced quote you reviewed in QuoteCore+. When everything checks out,
+                approve and send it from Xero as part of your normal workflow.
+              </p>
+              <figure className={figureClass}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img("xero-draft-invoice.jpg")}
+                  alt="The exported draft invoice open in Xero, showing line items, quantities, prices and subtotal transferred from QuoteCore+."
+                  width={1600}
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+                <figcaption className="mt-2 px-4 pb-3 text-sm text-zinc-500">
+                  The exported draft invoice in Xero with its QuoteCore+ reference and
+                  line items, ready to review and approve (demonstration data).
                 </figcaption>
               </figure>
 
