@@ -37,14 +37,14 @@ export function FreeToolsSignupBanner() {
     <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 mb-6 print:hidden">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-slate-700">
-          Sign up free for higher AI limits and branding removal across QuoteCore+ tools
+          Save your work into QuoteCore+ - plans from $19/mo with a 30-day money-back guarantee
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => openAuthModal('signup')}
             className="rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#ff5722] transition whitespace-nowrap"
           >
-            Sign up free
+            Sign up
           </button>
           <button
             onClick={() => openAuthModal('signin')}

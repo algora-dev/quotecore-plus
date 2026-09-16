@@ -250,7 +250,7 @@ function FreeToolsAuthModal({
       >
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-semibold text-slate-900">
-            {mode === 'signup' ? 'Create your free account' : 'Log in'}
+            {mode === 'signup' ? 'Create your account' : 'Log in'}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -260,7 +260,7 @@ function FreeToolsAuthModal({
         </div>
         <p className="text-xs text-slate-500">
           {mode === 'signup'
-            ? 'Get full access to all tools, remove QuoteCore+ branding, and save your work.'
+            ? 'Create an account and pick a plan (from $19/mo, 30-day money-back guarantee) to save your work into QuoteCore+.'
             : 'Welcome back. Log in to access your saved tools.'}
         </p>
 
