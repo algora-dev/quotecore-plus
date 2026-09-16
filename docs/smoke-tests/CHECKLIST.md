@@ -1,5 +1,28 @@
 # Smoke Test Checklist
 
+### Pending verification (PAID-ONLY CHANGEOVER, pushed 2026-09-16, main `91eed806`)
+
+**TRIAL REMOVAL - APP + DOCS (test on app.quote-core.com once deployed)**
+- [ ] /signup: copy says "Plans from $19/mo · 30-day money-back guarantee · Cancel anytime" - zero mention of a free trial
+- [ ] Email signup + Google signup both still work end to end (account created, onboarding completes)
+- [ ] In-app: no trial countdown banner anywhere; billing panel shows plan cards + Stripe checkout only
+- [ ] Comped users (10 companies, incl. test/Fig Tree/ProTech/Mitch cook/GCR): log in -> full Pro access, no upgrade nagging
+- [ ] Free tools sweep (approx 15 tools): free-roof-takeoff, free-cladding-takeoff, measurement-to-quote-tool, takeoff-demo, free-quote-generator, free-invoice-generator, free-purchase-order-generator, free-margin-calculator, free-calculators (roofing/cladding/flooring/brick): every CTA reads as paid ("plans from $19/mo", "30-day money-back guarantee"), no "free trial" anywhere, no dead /free-trial links
+- [ ] SaveToAppButton flow from a free tool: still hands off to signup, copy mentions picking a plan
+- [ ] Docs site: /docs/account/trial now a "Plans & billing" page (same URL); zero trial mentions across docs except the changelog
+- [ ] KNOWN LEFTOVER (Ron's slice): /free-trial marketing page still live - to be retired/redirected to /pricing
+- [ ] KNOWN LEFTOVER (mine): /terms legal wording still references trial - awaiting Shaun's direction
+
+**PAYWALL + FREE-TOOLS FUNNEL (pushed 2026-09-16)**
+- [ ] New signup (email): signup -> onboarding -> paywall at /paywall (Starter/Pro/Pro Plus cards, 30-day money-back guarantee badge, "Need something bigger? Get in touch", "Done-For-You setup - $499/$999" links)
+- [ ] New signup (Google): same path, same paywall
+- [ ] Paywall "No thanks, I'll keep using the free tools" -> quote-core.com/free-tools, no account state written
+- [ ] Pay with a Stripe test card -> checkout success -> lands in workspace with the paid tier's features
+- [ ] Comped user (Pro until 16 Oct): logs in straight to workspace, never sees paywall; visiting /paywall directly redirects to workspace
+- [ ] Free tool results modal (quote/invoice/PO generators): "saved in your account once you sign up and pick a plan" caption + "Try the next tool" cross-sell row (quote->invoice->PO->quote chain)
+- [ ] Save-to-app handoff from a free tool with a fresh account -> signup -> paywall -> after payment the pending save lands in the workspace
+- [ ] Known behaviour: right after Stripe checkout, a very fast redirect can land on the paywall for a second before the webhook flips the account active (self-heals on refresh)
+
 ### Pending verification (test on quote-core.com main, 2026-09-04 — commits be60aea7, ed2ce178, 5152185d, 3781ddbc)
 
 **FLOORING TAKEOFF + GUIDE FLOWS + SUPPLIER IMAGES (2026-09-04)**

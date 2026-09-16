@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { getNextTool } from './next-tool';
 
 /**
  * Post-generation modal for free document tools.
@@ -27,6 +28,8 @@ interface PostGenerationModalProps {
   convertToInvoiceUrl?: string;
   /** Save to app handler - invoked when user clicks Save to App */
   onSaveToApp: () => void;
+  /** Current tool's route slug (for the next-tool cross-sell map) */
+  toolSlug?: string;
 }
 
 interface TooltipButtonProps {
@@ -108,6 +111,7 @@ export function PostGenerationModal({
   convertToOrderUrl,
   convertToInvoiceUrl,
   onSaveToApp,
+  toolSlug,
 }: PostGenerationModalProps) {
   const [visible, setVisible] = useState(false);
   const storageKey = `qcp:postgen:${toolType}`;
@@ -182,13 +186,34 @@ export function PostGenerationModal({
           )}
 
           {/* Save to App */}
-          <TooltipButton
-            label="Save to App"
-            tooltip="Save to QuoteCore+ (plans from $19/mo, 30-day money-back guarantee). Save, edit, send quotes and use all features of the app"
-            onClick={onSaveToApp}
-            variant="accent"
-            icon={saveIcon}
-          />
+          <div>
+            <TooltipButton
+              label="Save to App"
+              tooltip="Save to QuoteCore+ (plans from $19/mo, 30-day money-back guarantee). Save, edit, send quotes and use all features of the app"
+              onClick={onSaveToApp}
+              variant="accent"
+              icon={saveIcon}
+            />
+            <p className="mt-1.5 text-center text-xs text-slate-400">
+              Your {toolType} will be saved in your account once you sign up and pick a plan.
+            </p>
+          </div>
+
+          {/* Secondary cross-sell: suggested next free tool */}
+          {(() => {
+            const next = getNextTool(toolSlug, toolType);
+            return (
+              <a
+                href={next.href}
+                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition"
+              >
+                <span>Try the next tool: <span className="font-medium text-slate-900">{next.label}</span></span>
+                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7-7 7M5 12h16" />
+                </svg>
+              </a>
+            );
+          })()}
 
           {/* Maybe Later */}
           <button

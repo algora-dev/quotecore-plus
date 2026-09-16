@@ -1009,6 +1009,7 @@ function QuoteGeneratorForm() {
             {/* Post-generation modal */}
             <PostGenerationModal
               toolType="quote"
+              toolSlug="free-quote-generator"
               trigger={popupTrigger}
               resultLabel={`${formatMoney(total, sym)} quote`}
               resultDetails={`${lines.length} line item${lines.length !== 1 ? 's' : ''} for ${clientName || 'client'}`}

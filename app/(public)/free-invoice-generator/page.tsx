@@ -960,6 +960,7 @@ function InvoiceGeneratorForm() {
             {/* Post-generation modal */}
             <PostGenerationModal
               toolType="invoice"
+              toolSlug="free-invoice-generator"
               trigger={popupTrigger}
               resultLabel={`${formatMoney(total, sym)} invoice`}
               resultDetails={`${invoiceNumber} for ${clientName || 'client'}`}

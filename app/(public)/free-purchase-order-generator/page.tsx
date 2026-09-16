@@ -976,6 +976,7 @@ function POGeneratorForm() {
             {/* Post-generation modal */}
             <PostGenerationModal
               toolType="order"
+              toolSlug="free-purchase-order-generator"
               trigger={popupTrigger}
               resultLabel={`${formatMoney(total, sym)} purchase order`}
               resultDetails={`${poNumber} to ${supplierName || 'supplier'}`}

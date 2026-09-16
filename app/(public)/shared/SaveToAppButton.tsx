@@ -222,15 +222,16 @@ export function SaveToAppButton({ documentType, documentData }: SaveToAppButtonP
                 <>
                   You&apos;re signed in as <strong>{modal.email}</strong>{' '}
                   but haven&apos;t set up your QuoteCore+ workspace yet. Complete your
-                  sign up to save this {documentType} to your account, where you can
-                  edit it, send it to customers, and manage your business.
+                  sign up and pick a plan - this {documentType} will be saved in your
+                  account, where you can edit it, send it to customers, and manage
+                  your business.
                 </>
               ) : (
                 <>
                   Your email <strong>{modal.email}</strong>{' '}
-                  doesn&apos;t have a QuoteCore+ account yet. Sign up to save this{' '}
-                  {documentType} to your account, where you can edit it, send it to
-                  customers, and manage your business.
+                  doesn&apos;t have a QuoteCore+ account yet. Sign up and pick a plan -
+                  this {documentType} will be saved in your account, where you can
+                  edit it, send it to customers, and manage your business.
                 </>
               )}
             </p>

@@ -8,11 +8,10 @@ import Link from 'next/link';
  * free tool (detected via `ref=free-*` URL param).
  *
  * Reassures the user that:
- * - Sign up is free, no card needed
+ * - Their output is saved in their account once they sign up and pick a plan
  * - Paid plans from $19/mo with a 30-day money-back guarantee
  * - Their document is saved and waiting for them
  * - It only takes 1 minute
- * - No strings attached
  */
 
 interface FreeToolsWelcomeModalProps {
@@ -53,12 +52,12 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
   if (!visible) return null;
 
   const features = [
-    'No card needed - sign up in 1 minute',
-    'Full access on your chosen plan (30-day money-back guarantee)',
+    'Sign up in 1 minute, then pick your plan',
+    'Plans from $19/mo - 30-day money-back guarantee',
     'Save, edit, and send your documents',
     'Use all AI features inside the app',
     'Create unlimited quotes, orders, and invoices',
-    'No strings attached - cancel anytime',
+    'Cancel anytime from your account',
   ];
 
   return (
@@ -71,7 +70,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-slate-900">Sign up for free</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Create your account</h2>
           <p className="text-sm text-slate-500 mt-1">Your {docLabel} is saved and ready for you</p>
         </div>
 
@@ -85,7 +84,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
               <div>
                 <p className="text-sm font-medium text-slate-900">We&apos;ve saved your {docLabel}</p>
                 <p className="text-xs text-slate-600 mt-1">
-                  After you create your account, your {docLabel} will be loaded right into your workspace - ready to edit, send, or convert.
+                  After you sign up and pick a plan, your {docLabel} will be loaded right into your workspace - ready to edit, send, or convert.
                 </p>
               </div>
             </div>
@@ -114,7 +113,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
         </button>
 
         <p className="mt-3 text-center text-xs text-slate-400">
-          Takes 1 minute · No payment required
+          Takes 1 minute · Plans from $19/mo · 30-day money-back guarantee
         </p>
       </div>
 

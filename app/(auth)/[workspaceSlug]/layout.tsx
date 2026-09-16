@@ -41,6 +41,17 @@ export default async function WorkspaceLayout({
   // second DB round-trip.
   const entitlements = await loadCompanyEntitlements(company.id);
 
+  // ── PAID-UPFRONT GATE (2026-09-16) ────────────────────────────────
+  // Companies whose effective plan is inactive (never paid, canceled,
+  // no comp) never see the workspace - they're sent to the paywall
+  // until they subscribe or are manually comped. Paid/comped users pass
+  // through untouched. The paywall route lives OUTSIDE this layout so
+  // there is no redirect loop. Admin routes are not affected.
+  if (!entitlements.isActive) {
+    redirect('/paywall');
+  }
+  // ── END PAID-UPFRONT GATE ────────────────────────────────────────
+
   const _workspaceLabel = company.name ? company.name.slice(0, 10) : 'Workspace';
   const profile = await getCurrentProfile();
 
