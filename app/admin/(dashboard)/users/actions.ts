@@ -49,6 +49,7 @@ export interface SearchUserRow {
   companyId: string;
   companyName: string;
   planCode: string | null;
+  stripeSubscriptionId: string | null;
   subscriptionStatus: string | null;
   adminPaused: boolean;
   lastActiveAt: string | null;
@@ -103,7 +104,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
     // No query: return most recent accounts
     const { data: companies, error: coErr } = await admin
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused')
+      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
     if (coErr) return { ok: false, error: coErr.message };
@@ -133,6 +134,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
           companyName: co.name,
           planCode: co.plan_code,
           subscriptionStatus: co.subscription_status,
+          stripeSubscriptionId: co.stripe_subscription_id ?? null,
           adminPaused: co.admin_paused,
           lastActiveAt: activeMap.get(u.id) ?? null,
         });
@@ -151,12 +153,12 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   if (emailErr) return { ok: false, error: emailErr.message };
 
   const emailCompanyIds = (emailMatches ?? []).map((u) => u.company_id).filter(Boolean) as string[];
-  let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean }> = {};
+  let companiesById: Record<string, { id: string; name: string; plan_code: string | null; subscription_status: string | null; admin_paused: boolean; stripe_subscription_id: string | null }> = {};
 
   if (emailCompanyIds.length > 0) {
     const { data: cos } = await admin
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused')
+      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id')
       .in('id', emailCompanyIds);
     for (const c of cos ?? []) {
       companiesById[c.id] = c;
@@ -178,6 +180,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
       companyName: co?.name ?? 'Unknown',
       planCode: co?.plan_code ?? null,
       subscriptionStatus: co?.subscription_status ?? null,
+      stripeSubscriptionId: co?.stripe_subscription_id ?? null,
       adminPaused: co?.admin_paused ?? false,
       lastActiveAt: emailActiveMap.get(u.id) ?? null,
     };
@@ -187,7 +190,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
   if (users.length < limit) {
     const { data: coMatches } = await admin
       .from('companies')
-      .select('id, name, plan_code, subscription_status, admin_paused')
+      .select('id, name, plan_code, subscription_status, admin_paused, stripe_subscription_id')
       .ilike('name', `%${q}%`)
       .limit(limit);
 
@@ -215,6 +218,7 @@ export async function searchUsers(query: string, limit: number = 20, offset: num
             companyName: c.name,
             planCode: c.plan_code,
             subscriptionStatus: c.subscription_status,
+            stripeSubscriptionId: c.stripe_subscription_id ?? null,
             adminPaused: c.admin_paused,
             lastActiveAt: coActiveMap.get(u.id) ?? null,
           });

@@ -42,8 +42,17 @@ function formatLastActive(iso: string | null): string {
   return `${dateStr} (${days} days ago)`;
 }
 
-function PlanBadge({ code }: { code: string | null }) {
+function PlanBadge({ code, status, hasSub }: { code: string | null; status?: string | null; hasSub?: boolean }) {
   if (!code || code === 'premium') return null;
+  // Never-paid account (signed up, never picked/paid a plan): distinct amber
+  // "Unpaid" pill instead of the plan it defaulted to.
+  if (!hasSub && status === 'canceled' && (code === 'starter' || code === 'trial')) {
+    return (
+      <span className="rounded-full px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-700">
+        Unpaid
+      </span>
+    );
+  }
   const cls = PLAN_BADGE[code] ?? 'bg-slate-100 text-slate-600';
   return (
     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${cls}`}>
@@ -158,7 +167,7 @@ export function UsersPanel() {
                   <td className="px-4 py-3 font-medium text-slate-900">{u.email}</td>
                   <td className="px-4 py-3 text-slate-600">{u.fullName ?? <span className="text-slate-400">-</span>}</td>
                   <td className="px-4 py-3 text-slate-700">{u.companyName}</td>
-                  <td className="px-4 py-3"><PlanBadge code={u.planCode} /></td>
+                  <td className="px-4 py-3"><PlanBadge code={u.planCode} status={u.subscriptionStatus} hasSub={!!u.stripeSubscriptionId} /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
