@@ -26,6 +26,9 @@
  * yet need.
  */
 
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import type { CompanyEntitlements } from '@/app/lib/billing/entitlements';
 
@@ -64,6 +67,19 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
       ctaLabel: 'Manage storage',
       standardCta: true,
     };
+  }
+
+  // Admin override / comp grants full access even when the raw subscription
+  // status is canceled (e.g. never-paid accounts we comp or override from
+  // the admin panel). The effective plan is what counts - never show
+  // dunning/inactive banners for those accounts.
+  const overrideActive =
+    !!ent.adminOverridePlanCode &&
+    !!ent.adminOverrideUntil &&
+    new Date(ent.adminOverrideUntil).getTime() > Date.now();
+  const compActive = !!ent.compUntil && new Date(ent.compUntil).getTime() > Date.now();
+  if ((overrideActive || compActive) && ent.subscriptionStatus !== 'suspended') {
+    return null;
   }
 
   switch (ent.subscriptionStatus) {
@@ -149,8 +165,9 @@ const CTA_TONE_CLASSES: Record<Variant['tone'], string> = {
 };
 
 export function EntitlementBanner({ entitlements, workspaceSlug }: EntitlementBannerProps) {
+  const [dismissed, setDismissed] = useState(false);
   const variant = pickVariant(entitlements);
-  if (!variant) return null;
+  if (!variant || dismissed) return null;
 
   return (
     <div className={`border-b ${TONE_CLASSES[variant.tone]}`}>
@@ -159,17 +176,27 @@ export function EntitlementBanner({ entitlements, workspaceSlug }: EntitlementBa
           <span className="font-semibold">{variant.title}</span>{' '}
           <span className="opacity-90">{variant.description}</span>
         </div>
-        <Link
-          href={`/${workspaceSlug}/account?tab=billing`}
-          prefetch={false}
-          className={
-            variant.standardCta
-              ? 'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium text-white bg-black hover:bg-slate-800 transition-all'
-              : `inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`
-          }
-        >
-          {variant.ctaLabel}
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={`/${workspaceSlug}/account?tab=billing`}
+            prefetch={false}
+            className={
+              variant.standardCta
+                ? 'inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium text-white bg-black hover:bg-slate-800 transition-all'
+                : `inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold ${CTA_TONE_CLASSES[variant.tone]}`
+            }
+          >
+            {variant.ctaLabel}
+          </Link>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => setDismissed(true)}
+            className="inline-flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-sm opacity-60 transition hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
       </div>
     </div>
   );
