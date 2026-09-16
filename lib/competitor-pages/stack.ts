@@ -260,7 +260,7 @@ export const stackPage: CompetitorPageData = {
       {
         label: "Trying it out",
         competitor: "Free version (limited) or demo",
-        qc: "Free Lite plan forever + 14-day full-feature trial, no card",
+        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
       },
     ],
     scenarioNote:
@@ -359,7 +359,7 @@ export const stackPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Try the roofing-first alternative.",
-    body: "Upload your next roof plan and take it from measurement to quote in one workflow — browser-based, nothing to install, 14-day free trial.",
+    body: "Upload your next roof plan and take it from measurement to quote in one workflow — browser-based, nothing to install, free tools to try right now.",
     ctaLabel: "Start with your own roof plan",
   },
 };

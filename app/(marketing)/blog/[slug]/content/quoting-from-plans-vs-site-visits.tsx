@@ -54,7 +54,7 @@ export default function Post() {
         <li><strong>Reusable pricing rules</strong> — your material, labour and waste logic saved once and applied to every new set of measurements.</li>
         <li><strong>Quote output from the same data</strong> — a client-facing PDF quote generated from the takeoff, with no re-typing.</li>
       </ul>
-      <p>That&apos;s the workflow <Link href="/construction-quoting-software">quoting software for contractors</Link> is built around — and it&apos;s what turns a developer PDF received on Monday into a priced, professional quote sent Monday afternoon. You can trial the measurement side free with the <Link href="/free-roofing-takeoff-builder">Roof Takeoff Builder</Link> (no account needed), or <Link href="/free-trial">start a free 14-day QuoteCore+ trial</Link> for the full quote-to-invoice workflow.</p>
+      <p>That&apos;s the workflow <Link href="/construction-quoting-software">quoting software for contractors</Link> is built around — and it&apos;s what turns a developer PDF received on Monday into a priced, professional quote sent Monday afternoon. You can try the measurement side free with the <Link href="/free-roofing-takeoff-builder">Roof Takeoff Builder</Link> (no account needed), or <Link href="/free-trial">get started with QuoteCore+</Link> for the full quote-to-invoice workflow.</p>
 
       <hr />
 

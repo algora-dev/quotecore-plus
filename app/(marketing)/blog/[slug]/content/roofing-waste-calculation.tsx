@@ -119,7 +119,7 @@ export default function Post() {
       <p>Keep planned spares visible as a separate line where possible. That makes normal installation waste and customer-retained spare stock easier to understand.</p>
       <h3>How can I reduce roofing waste?</h3>
       <p>Improve measurement, plan sheet or roll layouts, reuse suitable offcuts, order correct lengths, protect materials in storage, and compare estimated waste with completed jobs.</p>
-      <p>Test your allowance with the <a href="/free-roofing-waste-calculator">free roofing waste calculator</a>, then use the <a href="/free-roofing-material-calculator">free roofing material calculator</a> to build the wider order quantity. To connect waste calculations, material ordering, and quoting in one workflow, start a <a href="/free-trial">free QuoteCore+ trial</a>.</p>
+      <p>Test your allowance with the <a href="/free-roofing-waste-calculator">free roofing waste calculator</a>, then use the <a href="/free-roofing-material-calculator">free roofing material calculator</a> to build the wider order quantity. To connect waste calculations, material ordering, and quoting in one workflow, get <a href="/free-trial">started with QuoteCore+</a>.</p>
     </div>
   );
 }

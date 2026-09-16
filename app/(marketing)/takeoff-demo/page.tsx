@@ -37,9 +37,9 @@ const FAQS = [
       'Yes. In the full QuoteCore+ app you upload your own roof plans (PDF or image), scan them with AI Scan Assist, measure manually, and price them with your own components. The demo uses a fixed sample plan so it needs no sign-in.',
   },
   {
-    question: 'What does the free trial include?',
+    question: 'How do I get the full app?',
     answer:
-      'The trial runs for 14 days with full features within the trial limits, including 20 AI Scan Assist points, and no credit card is required. After the trial the account moves to the free Lite plan unless you upgrade.',
+      'Our free tools work instantly with no signup. For the full workflow on your own plans, choose a paid plan from $19/month - every plan is backed by a 30-day money-back guarantee.',
   },
 ];
 
@@ -105,7 +105,7 @@ export default function TakeoffDemoPage() {
           <div className="mt-4">
             <YouTubeLite videoId="pqIfx-rOcmo" title="Create a Quote from Start to Finish with QuoteCore+" showTitle rounded />
           </div>
-            <TrialCTA label="Start a free 14-day trial — no card required" className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]" />
+            <TrialCTA label="Get started with QuoteCore+ - from $19/month" className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]" />
         </div>
       </section>
 
@@ -152,11 +152,11 @@ export default function TakeoffDemoPage() {
         </div>
       </section>
 
-      {/* Trial CTA */}
+      {/* Get started CTA */}
       <section className="mx-auto max-w-3xl px-4 py-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Take it into the full app</h2>
         <p className="mt-4 text-sm leading-relaxed text-slate-600">
-          This is the real workstation. Start a free 14-day trial — no card required.
+          This is the real workstation. Try the free tools with no signup, or start in the app from $19/month with a 30-day money-back guarantee.
         </p>
         <TrialCTA />
       </section>

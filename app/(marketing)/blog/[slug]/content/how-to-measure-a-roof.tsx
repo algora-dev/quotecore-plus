@@ -86,8 +86,8 @@ export default function Post() {
         version of this: you enter your plan dimensions manually (lengths and widths from your
         plans or site measurements), set the pitch, and it calculates roof area, ridges, hips,
         valleys, barges, underlay, and fixings with the correct pitch factors applied. For the
-        AI-assisted component scanning available in the app, <a href="/free-trial">try QuoteCore+
-        free</a>.
+        AI-assisted component scanning available in the app, <a href="/free-trial">get started with
+        QuoteCore+</a>.
       </p>
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
@@ -309,7 +309,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements — no signup required. Once you have your dimensions, the <Link href="/blog/how-to-do-a-roof-takeoff">full roof takeoff guide</Link> shows how to turn them into a component-by-component material list, and <Link href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</Link> compares the two approaches in detail. Or <a href="/free-trial">start your free QuoteCore+ trial</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. No card needed.
+        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements — no signup required. Once you have your dimensions, the <Link href="/blog/how-to-do-a-roof-takeoff">full roof takeoff guide</Link> shows how to turn them into a component-by-component material list, and <Link href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</Link> compares the two approaches in detail. Or <a href="/free-trial">get started with QuoteCore+</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. Plans start at $19/month with a 30-day money-back guarantee.
       </p>
     </div>
   );

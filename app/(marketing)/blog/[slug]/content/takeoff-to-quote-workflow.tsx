@@ -118,7 +118,7 @@ export default function Post() {
         When you want the full chain — takeoff, quote, order, invoice, follow-ups —
         that&rsquo;s{' '}
         <Link href="/free-trial" className={link}>
-          the free QuoteCore+ trial
+          QuoteCore+
         </Link>
         .
       </p>

@@ -14,7 +14,7 @@ export const roofSnapPage: CompetitorPageData = {
     title: "Looking for a RoofSnap alternative?",
     sub: "RoofSnap sells roof measurements and estimating tools. QuoteCore+ is roofing quoting software you run yourself — measure your own plans, apply your own pricing rules, and send quotes from one workflow.",
     primaryCta: { href: "/free-roofing-takeoff-builder", label: "Measure your next roof without ordering a report" },
-    ghostCta: { href: "/free-trial", label: "Start a free 14-day trial" },
+    ghostCta: { href: "/free-trial", label: "Get started with QuoteCore+" },
   },
   quickAnswer: {
     heading: "The short answer",
@@ -220,7 +220,7 @@ export const roofSnapPage: CompetitorPageData = {
       {
         label: "Getting started",
         competitor: "7-day free trial, then from $13/report",
-        qc: "Free Lite plan + 14-day full-feature trial, no card",
+        qc: "Free tools (no signup) + paid plans from $19/month, 30-day money-back guarantee",
       },
     ],
     scenarioNote:
@@ -290,7 +290,7 @@ export const roofSnapPage: CompetitorPageData = {
     {
       question: "How do I switch from RoofSnap to QuoteCore+?",
       answer:
-        "There's no import step you're waiting on — your RoofSnap subscription stays active while you rebuild your material pricing as Smart Components (most trades have their core set done in an afternoon). Then measure your next roof from its plan in QuoteCore+ and send the quote from there. Both can run side by side until you're confident, and the free Lite plan plus 14-day trial means switching costs nothing up front.",
+        "There's no import step you're waiting on — your RoofSnap subscription stays active while you rebuild your material pricing as Smart Components (most trades have their core set done in an afternoon). Then measure your next roof from its plan in QuoteCore+ and send the quote from there. Both can run side by side until you're confident, and the free tools mean switching costs nothing up front.",
     },
   ],
   related: [
@@ -320,7 +320,7 @@ export const roofSnapPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Own your quoting workflow.",
-    body: "Measure your own plans, apply your own pricing rules, and turn any roof into a priced quote in minutes. Free for 14 days.",
+    body: "Measure your own plans, apply your own pricing rules, and turn any roof into a priced quote in minutes. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
     ctaLabel: "Measure your next roof without a report",
   },
 };

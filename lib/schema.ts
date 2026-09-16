@@ -26,7 +26,7 @@ export function buildPricingOffers(currency: "USD" | "GBP" = "USD") {
       priceCurrency: currency,
       url: `${siteUrl}/pricing`,
       availability: "https://schema.org/InStock",
-      category: plan.isFree ? "Free trial or free plan" : "Subscription",
+      category: plan.isFree ? "Free plan" : "Subscription",
       description: `${plan.subtitle}. ${plan.features.join(", ")}.`,
     })),
   };

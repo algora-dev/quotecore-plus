@@ -27,16 +27,16 @@ interface ChatMessage {
 
 const quickQuestions = [
   "What is QuoteCore+?",
-  "How does the free trial work?",
+  "How do plans and pricing work?",
   "What are Smart Components?",
   "What free tools are available?",
   "How much does it cost?",
   "Can I talk to someone?",
 ];
 
-const trialCTA = {
-  label: "Start your free 14-day trial",
-  href: "/free-trial",
+const startCTA = {
+  label: "Start using QuoteCore+",
+  href: "/pricing",
 };
 
 const freeToolsCTA = {
@@ -54,19 +54,19 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       text: "QuoteCore+ is roofing quoting, takeoff and job workflow software. Upload a roof plan, AI Scan Assist identifies multiple roof areas plus ridges, hips, valleys, barges and spouting, you verify and adjust, then Smart Components calculate materials, labour and pricing. From a saved quote you can create, send and track quotes, orders and invoices - all from the same connected job. With preconfigured Smart Components, go from complex plan to quote in under 3 minutes for less than a dollar.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
       links: [
-        trialCTA,
+        startCTA,
         freeToolsCTA,
       ],
     };
   }
 
-  // ── Free Trial ─────────────────────────────────────────────────────
-  if (/(trial|free trial|14 day|14-day|sign up|signup|register|try it|test it|demo)/.test(message)) {
+  // ── Getting started / Plans ───────────────────────────────────────
+  if (/(trial|free trial|14 day|14-day|sign up|signup|register|try it|test it|demo|get started|start)/.test(message)) {
     return {
       sender: "assistant",
-      text: "The free trial gives you 14 days of full access to QuoteCore+ - every feature, including AI plan takeoff, Smart Components, quoting, material orders, and invoicing. You get 20 AI scan points included, which is enough to quote several real jobs. No credit card required, just sign up with your email. After the trial you can continue on the free Lite plan or upgrade when you're ready.",
+      text: "Getting started is simple. Our free tools - takeoff builder, roofing calculator, quote generator and more - work instantly in your browser with no signup. For the full connected workflow (AI plan takeoff, Smart Components, material orders and invoicing), choose a paid plan and start in the app today. Every paid plan is backed by a 30-day money-back guarantee.",
       links: [
-        trialCTA,
+        startCTA,
         { label: "See how it works", href: "/#how-it-works" },
       ],
     };
@@ -76,7 +76,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(price|pricing|cost|how much|plan|plans|tier|limit|upgrade|cancel|subscription|per month|per month|starter|lite|pro|premium)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ starts with a 14-day free trial with full access. After that: Lite (free, limited), Starter at $19/month for solo traders, Pro at $39/month for growing businesses, Pro Plus at $59/month for high-volume teams, and Premium (contact us for pricing). All paid plans include a free trial with no card required.",
+      text: "Plans start at $19/month for Starter (solo traders), Pro at $39/month for growing businesses, Pro Plus at $59/month for high-volume teams, and Premium (contact us for pricing). You pay up front and get full access on your chosen plan, backed by a 30-day money-back guarantee. Our free tools stay free forever - no signup needed.",
       link: { label: "See full pricing details", href: "/#pricing" },
     };
   }
@@ -88,7 +88,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       text: "Smart Components are reusable roofing components that bundle together materials, waste allowances, labour rates, and pricing rules. Build a component once - like a concrete tile roof with underlay, battens, and fixings - and reuse it on every quote. They ensure consistency across quotes and save you from re-entering the same materials each time.",
       links: [
         { label: "Try the Smart Component Creator (free)", href: "/free-smart-component-creator" },
-        trialCTA,
+        startCTA,
       ],
     };
   }
@@ -99,7 +99,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       text: "Components are reusable quote items you can save and reuse, including measurements, materials, labour, waste, and pricing rules. Smart Components take this further - they bundle a complete roofing assembly with all its materials and costs so you can drop it into a quote in seconds.",
       links: [
         { label: "Try the Smart Component Creator (free)", href: "/free-smart-component-creator" },
-        trialCTA,
+        startCTA,
       ],
     };
   }
@@ -111,7 +111,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       text: "We have a range of free tools that work in your browser, no signup required. Here's what's available:\n\n• Roof Takeoff Builder - build a complete takeoff with pitch calculations for all components\n• Roofing Calculator - pitch, rafters, hip/valley lengths, surface area, and material quantities\n• Smart Component Creator - build smart roofing components with materials, waste, and costs\n• Quote Generator - create professional quotes and download as PDF\n• Invoice Generator - create invoices with tax calculations, download as PDF\n• Purchase Order Generator - generate POs for suppliers, download as PDF\n\nPlus 30+ specialised roofing, construction, and concrete calculators.",
       links: [
         freeToolsCTA,
-        trialCTA,
+        startCTA,
       ],
     };
   }
@@ -142,10 +142,10 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(quote gen|make a quote|create.*quote|write.*quote|build.*quote|estimate gen)/.test(message)) {
     return {
       sender: "assistant",
-      text: "The Free Quote Generator creates professional, printable quotes with your logo, business details, and itemised line items. Download as PDF, no signup required. For the full connected workflow - takeoff to quote to material orders to invoicing - start a free trial.",
+      text: "The Free Quote Generator creates professional, printable quotes with your logo, business details, and itemised line items. Download as PDF, no signup required. For the full connected workflow - takeoff to quote to material orders to invoicing - start in the app.",
       links: [
         { label: "Try the Quote Generator", href: "/free-quote-generator" },
-        trialCTA,
+        startCTA,
       ],
     };
   }
@@ -187,9 +187,9 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(ai|ai takeoff|plan takeoff|upload.*plan|trace.*plan|ai.*scan|ai assist|ai scan)/.test(message)) {
     return {
       sender: "assistant",
-      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a roof plan and AI identifies multiple roof outlines/areas - you can name each area and assign different pitch, material and component systems. AI detects ridges/ridge capping, hips, valleys, barges and spouting within each area. Each detected element is a placeholder you can swap to any saved Smart Component via dropdown - quantities, labour, waste and pricing recalculate automatically. You review, correct and confirm everything, then add any components AI doesn't detect (flashings, downpipes, etc). Available in the 14-day free trial with 20 AI scan points included.",
+      text: "AI Scan Assist is an optional accelerator inside digital takeoff. Upload a roof plan and AI identifies multiple roof outlines/areas - you can name each area and assign different pitch, material and component systems. AI detects ridges/ridge capping, hips, valleys, barges and spouting within each area. Each detected element is a placeholder you can swap to any saved Smart Component via dropdown - quantities, labour, waste and pricing recalculate automatically. You review, correct and confirm everything, then add any components AI doesn't detect (flashings, downpipes, etc). Available in the app on all paid plans.",
       links: [
-        trialCTA,
+        startCTA,
         { label: "See how it works", href: "/#how-it-works" },
       ],
     };
@@ -199,9 +199,9 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(how do i|how to|can i|can you|do you have|does.*have|does.*support)/.test(message)) {
     return {
       sender: "assistant",
-      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need is to start a risk-free 14-day trial. No card needed, full feature access, and you get 20 AI scan points to test on real jobs. If you'd rather just try the free tools first, those work instantly without signing up.",
+      text: "QuoteCore+ handles the full workflow from measurement to payment - AI plan takeoff, Smart Components, quoting, material orders, invoicing, and customer acceptance tracking. The best way to see if it does what you need: try our free tools right now - no signup. If you like them, start in the paid app with a 30-day money-back guarantee.",
       links: [
-        trialCTA,
+        startCTA,
         freeToolsCTA,
       ],
     };
@@ -214,7 +214,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       text: "QuoteCore+ helps you build, preview, send, and track professional quotes. Upload a plan, AI traces it, Smart Components calculate materials, and the quote is pre-filled. You set pricing and terms, then send it. Customers can accept online and you get notified. From complex plan to quote in under 3 minutes for less than a dollar.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
       links: [
-        trialCTA,
+        startCTA,
         { label: "Try the Quote Generator (free)", href: "/free-quote-generator" },
       ],
     };
@@ -226,7 +226,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       sender: "assistant",
       text: "QuoteCore+ supports invoicing as part of the connected quote-to-getting-paid workflow. Accepted quotes become invoices with one click. You can also create standalone invoices.",
       links: [
-        trialCTA,
+        startCTA,
         { label: "Try the Invoice Generator (free)", href: "/free-invoice-generator" },
       ],
     };
@@ -238,7 +238,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       sender: "assistant",
       text: "QuoteCore+ turns accepted quotes into material orders automatically. No re-entering line items - the quote data flows straight into the order. You can also create standalone POs.",
       links: [
-        trialCTA,
+        startCTA,
         { label: "Try the PO Generator (free)", href: "/free-purchase-order-generator" },
       ],
     };
@@ -249,7 +249,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
     return {
       sender: "assistant",
       text: "QuoteCore+ includes quote templates, customer-facing quote templates, email templates, and labour sheet templates to speed up repeat work.",
-      link: trialCTA,
+      link: startCTA,
     };
   }
 
@@ -258,7 +258,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
     return {
       sender: "assistant",
       text: "QuoteCore+ sends automated follow-up emails on quotes, orders and invoices you've sent. Set up time-based triggers (e.g. send a follow-up 5 days after a quote is opened with no decision) or event-based triggers (e.g. when a quote is accepted, send a thank-you with deposit details after a 10-minute delay). You can add attachments, use saved email templates, and set cancellation conditions - so if a quote is accepted or declined, pending follow-ups cancel automatically.",
-      link: trialCTA,
+      link: startCTA,
     };
   }
 
@@ -268,7 +268,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       sender: "assistant",
       text: "QuoteCore+ is built for roofing contractors - roofers, roofing estimators and roofing business owners. It handles the pitches, angles and measurements roofing demands. It also works for construction, cladding, fencing, flooring and landscaping - any trade that measures and quotes jobs. If you're still quoting in spreadsheets, this will change how fast you get quotes out.",
       links: [
-        trialCTA,
+        startCTA,
         freeToolsCTA,
       ],
     };
@@ -280,7 +280,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
       sender: "assistant",
       text: "QuoteCore+ includes: AI plan takeoff, Smart Components (reusable roofing assemblies), quote builder with customer acceptance tracking, material orders, invoicing, follow-up reminders, supplier catalogs, templates, and a resource library. Everything connects - takeoff feeds the quote, the accepted quote becomes a material order, and the job flows through to invoicing.",
       sectionLink: { label: "See How it works", href: "/#how-it-works" },
-      link: trialCTA,
+      link: startCTA,
     };
   }
 
@@ -289,7 +289,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
     return {
       sender: "assistant",
       text: "QuoteCore+ lets you upload supplier price lists and use catalog items directly in quotes and orders. Map columns from your supplier's spreadsheet and the system applies pricing automatically.",
-      link: trialCTA,
+      link: startCTA,
     };
   }
 
@@ -298,7 +298,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
     return {
       sender: "assistant",
       text: "QuoteCore+ supports file attachments on quotes and in a reusable library. You can send attachments to customers with quotes.",
-      link: trialCTA,
+      link: startCTA,
     };
   }
 
@@ -333,9 +333,9 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/\bfree\b/.test(message)) {
     return {
       sender: "assistant",
-      text: "You can start with a risk-free 14-day trial - full access to every feature including AI takeoff, no card needed. After the trial, continue on the free Lite plan or upgrade. We also have free tools that work instantly without signing up: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator.",
+      text: "Our free tools work instantly in your browser with no signup: takeoff builder, roofing calculator, smart component creator, quote generator, invoice generator, and PO generator. For the full connected app, choose a paid plan - every plan is backed by a 30-day money-back guarantee.",
       links: [
-        trialCTA,
+        startCTA,
         freeToolsCTA,
       ],
     };
@@ -344,10 +344,10 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   // ── Fallback (doesn't know) ────────────────────────────────────────
   return {
     sender: "assistant",
-    text: "I'm not sure about that one. I'd recommend checking the docs library for detailed guides, or getting in touch and we'll get back to you. You can also start a free 14-day trial to explore the app firsthand.",
+    text: "I'm not sure about that one. I'd recommend checking the docs library for detailed guides, or getting in touch and we'll get back to you. You can also explore the free tools - they work instantly without signup.",
     links: [
       { label: "Open the docs library", href: `${docsBaseUrl}/docs` },
-      trialCTA,
+      freeToolsCTA,
     ],
     showContact: true,
   };
@@ -541,7 +541,7 @@ export default function SiteAssistant() {
                   <img src="/q.png" alt="Q assistant mascot" className="mx-auto h-16 w-16 rounded-full object-contain" />
                   <h2 className="mt-3 text-lg font-semibold text-zinc-800">Hey, I'm Q.</h2>
                   <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-zinc-500">
-                    Ask me about QuoteCore+, the free trial, Smart Components, our free tools, or pricing. I'll keep it short.
+                    Ask me about QuoteCore+, plans and pricing, Smart Components, our free tools, or how to get started. I'll keep it short.
                   </p>
                 </div>
 

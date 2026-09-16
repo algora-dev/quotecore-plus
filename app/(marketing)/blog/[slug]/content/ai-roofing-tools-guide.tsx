@@ -239,8 +239,8 @@ export default function Post() {
       <p>
         All three are free, no account needed. For the full AI takeoff pipeline with unlimited
         scans, the complete component library, and integrated quote building,{' '}
-        <a href="/free-trial">start a free 14-day trial</a>. Every feature is included - the AI
-        takeoff, the component library, the quote builder - all free for 14 days. No card required.
+        <a href="/free-trial">get started with QuoteCore+</a>. Every feature is included - the AI
+        takeoff, the component library, the quote builder - all available on paid plans backed by a 30-day money-back guarantee.
       </p>
 
       <hr />

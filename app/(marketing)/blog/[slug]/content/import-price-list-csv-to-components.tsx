@@ -108,9 +108,9 @@ export default function Post() {
         <Link href="/free-smart-component-creator" className={link}>
           free Smart Component Creator
         </Link>
-        , then import at scale when you start a{' '}
+        , then import at scale when you{' '}
         <Link href="/free-trial" className={link}>
-          free trial
+          get started with QuoteCore+
         </Link>
         .
       </p>

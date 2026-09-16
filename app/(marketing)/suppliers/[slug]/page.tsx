@@ -846,7 +846,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                 <h3 className="text-sm font-semibold text-zinc-950 mb-3">QuoteCore+</h3>
                 <ul className="space-y-2 text-sm">
                   <li><Link href="/roofing-quoting-software" className="text-[#BD4A1A] hover:underline">Roofing Quoting Software</Link></li>
-                  <li><Link href="/free-trial" className="text-[#BD4A1A] hover:underline">Start Free Trial</Link></li>
+                  <li><Link href="/free-trial" className="text-[#BD4A1A] hover:underline">Get started</Link></li>
                   <li><Link href="/suppliers" className="text-[#BD4A1A] hover:underline">Browse All Suppliers</Link></li>
                 </ul>
               </div>

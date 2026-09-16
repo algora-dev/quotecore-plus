@@ -304,7 +304,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.
+        Ready to quote faster? <a href="/free-trial">Get started with QuoteCore+ today</a>.
         No card needed. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>

@@ -189,8 +189,7 @@ export default function Post() {
       <h3>Option 3 — Save to QuoteCore+</h3>
       <p>
         Save components, measurements and pricing logic, then continue in the app across quotes,
-        material orders and invoices. A free account and 14-day trial are available — no card
-        required.
+        material orders and invoices. Paid plans start at $19/month with a 30-day money-back guarantee.
       </p>
 
       <h2>Frequently asked questions</h2>

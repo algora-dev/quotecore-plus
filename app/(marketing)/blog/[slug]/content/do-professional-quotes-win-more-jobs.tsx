@@ -151,7 +151,7 @@ export default function Post() {
         numbers are the evidence that matters. Explore more tools for the whole estimating workflow on the{' '}
         <Link href="/free-calculators">free calculators hub</Link> - and when you are ready to connect measurement,
         quoting, material orders and invoicing in one workflow, <Link href="/construction-quoting-software">construction quoting software</Link> like QuoteCore+ does the
-        rest - or <Link href="/free-trial">start a free trial</Link> and see for yourself.
+        rest - or <Link href="/free-trial">get started</Link> and see for yourself.
       </p>
 
       <hr />
@@ -190,7 +190,7 @@ export default function Post() {
 
       <p>
         <strong>Create a professional quote free</strong> with the <Link href="/free-quote-generator">QuoteCore+ quote generator</Link> - no
-        signup, no card, no limits. For the full workflow from measurement to material orders and invoicing, <Link href="/free-trial">start a free QuoteCore+ trial</Link>.
+        signup, no card, no limits. For the full workflow from measurement to material orders and invoicing, <Link href="/free-trial">get started with QuoteCore+</Link>.
       </p>
     </div>
   );

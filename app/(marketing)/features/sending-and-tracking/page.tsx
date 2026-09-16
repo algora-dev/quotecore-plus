@@ -36,7 +36,7 @@ const softwareSchema = {
   description: "Send quotes, orders and invoices directly from QuoteCore+. Track opens and reads. Configure time-based and event-based automated follow-ups with cancellation conditions.",
   url: `${SITE_URL}/features/sending-and-tracking`,
   publisher: { "@id": `${SITE_URL}/#organization` },
-  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "14-day free trial, no credit card required" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD", description: "Free tools with no signup; paid plans from $19/month with a 30-day money-back guarantee" },
 };
 
 const breadcrumbSchema = {
@@ -118,13 +118,13 @@ export default function SendingAndTrackingPage() {
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Start free trial
+                Get started
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
               </Link>
             </div>
-            <p className="mt-3 text-sm text-zinc-500">14-day trial, no card required</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools, no signup. 30-day money-back guarantee on paid plans.</p>
           </div>
         </section>
 
@@ -285,9 +285,9 @@ export default function SendingAndTrackingPage() {
         <section className="relative overflow-hidden bg-white py-16 sm:py-20">
           <div className="relative mx-auto max-w-5xl px-6 lg:px-8">
             <h2 className="text-3xl font-semibold sm:text-4xl">Stop chasing. Start tracking.</h2>
-            <p className="mt-4 text-base text-zinc-600">Send, track and follow up automatically. 14-day trial, no card required.</p>
+            <p className="mt-4 text-base text-zinc-600">Send, track and follow up automatically. 30-day money-back guarantee on paid plans.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF6B35] px-7 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#E55A28]">
-              Start free trial
+              Get started
             </a>
           </div>
         </section>

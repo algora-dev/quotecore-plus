@@ -102,7 +102,7 @@ export default function InvoicingPage() {
             </p>
             <div className="mt-6 flex gap-3">
               <a href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-                Start free trial
+                Get started
               </a>
               <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-7 py-2.5 text-sm font-medium text-slate-900 transition-colors hover:border-[#FF6B35]/40">
                 All features
@@ -308,7 +308,7 @@ export default function InvoicingPage() {
             </Link>
             <Link href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Pricing</h3>
-              <p className="mt-1 text-sm text-zinc-600">Compare plans and start a 14-day free trial.</p>
+              <p className="mt-1 text-sm text-zinc-600">Compare plans - paid from $19/month with a 30-day money-back guarantee.</p>
             </Link>
           </div>
         </section>
@@ -322,9 +322,9 @@ export default function InvoicingPage() {
         <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
             <h2 className="text-2xl font-semibold tracking-tight">Try invoicing free</h2>
-            <p className="mt-2 text-zinc-600">14 days, all features, no credit card required.</p>
+            <p className="mt-2 text-zinc-600">Free tools, no signup. 30-day money-back guarantee on paid plans.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Start free trial
+              Get started
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>

@@ -16,7 +16,7 @@ export const eagleViewPage: CompetitorPageData = {
     sub: "EagleView sells expertly produced aerial measurement reports. QuoteCore+ is quoting software where you measure your own plans — PDF takeoff, AI Scan Assist, automatic materials and pricing — and own the whole estimate. Different tools for different jobs.",
     qualifier: "Need another aerial measurement provider? QuoteCore+ isn't one. Already have plans or usable imagery and want to stop paying per report? That's where QuoteCore+ fits.",
     primaryCta: { href: "/free-roofing-takeoff-builder", label: "See what you can measure without buying another report" },
-    ghostCta: { href: "/free-trial", label: "Start a free 14-day trial" },
+    ghostCta: { href: "/free-trial", label: "Get started with QuoteCore+" },
   },
   quickAnswer: {
     heading: "The short answer",
@@ -309,6 +309,6 @@ export const eagleViewPage: CompetitorPageData = {
   ],
   finalCta: {
     heading: "Own the measurements. Own the margin.",
-    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote — all in one workflow. Free for 14 days.",
+    body: "Stop paying per roof. Measure your own plans, let Smart Components price them, and send the quote — all in one workflow. Free tools, no signup; paid plans from $19/month with a 30-day money-back guarantee.",
   },
 };

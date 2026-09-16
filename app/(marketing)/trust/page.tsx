@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/seo/site-url";
 export const metadata: Metadata = {
   title: "Trust and Security",
   description:
-    "How QuoteCore+ protects your data: encrypted storage, row-level security, 14-day free trial with no card, cancel anytime, and export your data anytime.",
+    "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, 30-day money-back guarantee on paid plans, cancel anytime, and export your data anytime.",
   alternates: {
     canonical: "https://quote-core.com/trust",
     languages: hreflangLanguages("/trust"),
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Trust and Security",
     description:
-      "How QuoteCore+ protects your data: encrypted storage, row-level security, 14-day free trial, cancel anytime, and export your data.",
+      "How QuoteCore+ protects your data: encrypted storage, row-level security, free tools with no signup, 30-day money-back guarantee, cancel anytime, and export your data.",
     url: "https://quote-core.com/trust",
     siteName: "QuoteCore+",
     type: "website",
@@ -56,10 +56,10 @@ const securityFacts = [
   },
 ];
 
-const trialFacts = [
+const planFacts = [
   {
-    title: "14-day free trial",
-    body: "All features unlocked. No credit card required to start. The trial does not automatically become a paid subscription.",
+    title: "30-day money-back guarantee",
+    body: "Pay up front and get full access on your chosen plan for 30 days. If it is not right for you, a refund is available after day 30 via a short request and questionnaire.",
   },
   {
     title: "Cancel anytime",
@@ -126,7 +126,7 @@ export default function TrustPage() {
               How QuoteCore+ protects your data and respects your business.
             </h1>
             <p className="mt-4 text-lg text-zinc-600">
-              Straightforward facts about security, trial terms, cancellation, and data ownership. No vague promises - just what we actually do.
+              Straightforward facts about security, plan terms, cancellation, and data ownership. No vague promises - just what we actually do.
             </p>
           </div>
         </section>
@@ -144,11 +144,11 @@ export default function TrustPage() {
           </div>
         </section>
 
-        {/* Trial and cancellation */}
+        {/* Plans and cancellation */}
         <section className="mx-auto max-w-3xl px-6 pb-16 lg:px-8">
-          <h2 className="text-2xl font-semibold tracking-tight">Trial and cancellation</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Plans, guarantee and cancellation</h2>
           <div className="mt-6 space-y-4">
-            {trialFacts.map((fact) => (
+            {planFacts.map((fact) => (
               <div key={fact.title} className="rounded-xl border border-slate-200 p-6">
                 <h3 className="font-semibold text-slate-900">{fact.title}</h3>
                 <p className="mt-2 text-sm text-zinc-600">{fact.body}</p>
@@ -203,7 +203,7 @@ export default function TrustPage() {
             </a>
             <a href="/terms" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Terms of service</h3>
-              <p className="mt-1 text-sm text-zinc-600">Trial terms, cancellation, refunds, data retention, and export.</p>
+              <p className="mt-1 text-sm text-zinc-600">Plan terms, cancellation, refunds, data retention, and export.</p>
             </a>
             <a href="/company" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Company</h3>
@@ -211,7 +211,7 @@ export default function TrustPage() {
             </a>
             <a href="/pricing" className="rounded-xl border border-slate-200 p-6 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <h3 className="font-semibold text-slate-900">Pricing</h3>
-              <p className="mt-1 text-sm text-zinc-600">Plans, trial limits, and billing details.</p>
+              <p className="mt-1 text-sm text-zinc-600">Plans, plan limits, and billing details.</p>
             </a>
           </div>
         </section>
@@ -219,10 +219,10 @@ export default function TrustPage() {
         {/* CTA */}
         <section className="mx-auto max-w-3xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Start your free trial</h2>
-            <p className="mt-2 text-zinc-600">14 days, all features, no credit card required. Cancel anytime.</p>
+            <h2 className="text-2xl font-semibold tracking-tight">Get started</h2>
+            <p className="mt-2 text-zinc-600">Free tools with no signup. Paid plans from $19/month with a 30-day money-back guarantee. Cancel anytime.</p>
             <a href="/free-trial" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Start free trial
+              Get started
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>

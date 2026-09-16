@@ -327,11 +327,11 @@ export default function Post() {
         acceptance tracking, saved pricing templates, team access - that is what QuoteCore+ does.
       </p>
       <p>
-        From complex plan to quote in under 3 minutes for less than a dollar. Every feature, no
-        card needed for the 14-day trial.
+        From complex plan to quote in under 3 minutes for less than a dollar. Full access on your
+        chosen plan, backed by a 30-day money-back guarantee.
       </p>
       <p>
-        <a href="/free-trial">Start your free QuoteCore+ trial</a>
+        <a href="/free-trial">Get started with QuoteCore+</a>
       </p>
       <p>
         Not sure if you need software yet? Read <a href="/blog/roofing-quoting-software-vs-spreadsheets">Roofing
@@ -379,8 +379,8 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.
-        No card needed. From complex plan to quote in under 3 minutes for less than a dollar.
+        Ready to quote faster? <a href="/free-trial">Get started with QuoteCore+ today</a>.
+        Plans from $19/month with a 30-day money-back guarantee. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>
   );

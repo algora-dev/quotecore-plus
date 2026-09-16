@@ -132,7 +132,7 @@ export default function Post() {
       <p>QuoteSmith helps with proposal writing.</p>
       <p>QuoteCore+ helps connect the job from measurement to quote, approval, material orders, job management and invoicing.</p>
       <p>For construction businesses that want to stop rebuilding the same job information across multiple places, QuoteCore+ is built for the wider workflow from first quote to invoice.</p>
-      <p>Before you make a decision, it is worth knowing <a href="/blog/quotecore-plus-reviews">what to expect from QuoteCore+ as a product and what the free trial actually gives you access to</a>.</p>
+      <p>Before you make a decision, it is worth knowing <a href="/blog/quotecore-plus-reviews">what to expect from QuoteCore+ as a product and what getting started actually gives you access to</a>.</p>
     </div>
   );
 }

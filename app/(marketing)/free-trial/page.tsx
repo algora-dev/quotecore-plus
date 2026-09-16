@@ -11,8 +11,8 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 import DemoCTACard from "@/components/DemoCTACard";
 
 export const metadata: Metadata = {
-  title: "Free 14-Day Trial - No Card Required",
-  description: "Try QuoteCore+ free for 14 days. Measure jobs, build professional quotes, track acceptances, and manage materials orders. No credit card needed.",
+  title: "Get Started with QuoteCore+ - Free Tools + Paid Plans",
+  description: "Start with free roofing tools, no signup. Then choose a paid QuoteCore+ plan from $19/month with a 30-day money-back guarantee. Free trial no longer needed - free tools are forever.",
   alternates: {
     canonical: "https://quote-core.com/free-trial",
     languages: hreflangLanguages("/free-trial"),
@@ -21,32 +21,32 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    question: "Do I need a credit card to sign up?",
-    answer: "No. Your free trial is completely free. We'll only ask for payment if you decide to upgrade.",
+    question: "Do you offer a free trial?",
+    answer: "We replaced the free trial with something better: permanent free tools and a money-back guarantee. Our free tools (takeoff builder, roofing calculator, quote generator and more) are free forever with no signup. For the full app, choose a paid plan - every plan is backed by a 30-day money-back guarantee, so you can try the full workflow with confidence.",
   },
   {
-    question: "How long is the trial?",
-    answer: "14 days from the date you sign up.",
+    question: "Do I need a credit card to use the free tools?",
+    answer: "No. The free tools work instantly in your browser with no signup and no card. You only pay if you choose a paid app plan.",
   },
   {
-    question: "What happens when the trial ends?",
-    answer: "You'll be automatically put on the Lite (Free) plan and be able to upgrade from there if you wish. All your saved data remains stored.",
+    question: "How does the 30-day money-back guarantee work?",
+    answer: "You pay up front for your chosen plan and get full access to every QuoteCore+ feature for 30 days. If it is not right for you, request a refund after day 30 via a short request and questionnaire and we will refund your payment.",
   },
   {
-    question: "Can I send real quotes to real customers during the trial?",
-    answer: "Yes. Quote, measure, and send to customers from day one.",
+    question: "Can I send real quotes to real customers?",
+    answer: "Yes. Quote, measure, and send to customers from day one on any paid plan.",
   },
   {
     question: "What if I need help?",
     answer: "You can chat to \"Q\" our smart assistant in the bottom right corner, check the <a href=\"/docs\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">docs</a>, or <a href=\"https://quote-core.com/contact\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">contact us here</a>.",
   },
   {
-    question: "What is included in the free trial?",
-    answer: "Your 14-day free trial gives you full access to every QuoteCore+ feature. That includes digital roof takeoff, AI Scan Assist (20 scan points), Smart Components, quote builder, sending and tracking with automated follow-ups, material ordering and invoicing. You can send real quotes, orders and invoices to real customers from day one and save everything to your account - nothing is locked.",
+    question: "What is included in the paid app?",
+    answer: "Paid plans include every QuoteCore+ feature: digital roof takeoff, AI Scan Assist, Smart Components, quote builder, sending and tracking with automated follow-ups, material ordering and invoicing. You can send real quotes, orders and invoices to real customers from day one - nothing is locked.",
   },
   {
     question: "How do I get started?",
-    answer: "Sign up takes less than 2 minutes. Once you're signed up, \"Q\" can walk you through everything by chatting to you, or by showing you. You can create components, upload pricing catalogs, images, convert previous quotes to our format, create new quotes, orders, invoices. Just go to the \"Resources\" page in the main navigation, then to the tutorials page to learn how everything works.",
+    answer: "Two ways: dive into the <a href=\"/free-tools\" class=\"text-[#BD4A1A] underline underline-offset-2 hover:text-[#FF6B35]\">free tools</a> right now with no signup, or choose a plan and start in the app. Once you are in, \"Q\" can walk you through everything by chatting to you, or by showing you. Just go to the \"Resources\" page in the main navigation, then to the tutorials page to learn how everything works.",
   },
   {
     question: "Who is QuoteCore+ for?",
@@ -123,7 +123,7 @@ export default function FreeTrialPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(buildBreadcrumbSchema([
             { name: "Home", url: `${siteUrl}/` },
-            { name: "Free Trial", url: `${siteUrl}/free-trial` },
+            { name: "Get started", url: `${siteUrl}/free-trial` },
           ])),
         }}
       />
@@ -134,27 +134,27 @@ export default function FreeTrialPage() {
       />
       <main className="min-h-screen bg-white text-zinc-950">
        <BlogHeader backLabel="Back to homepage" backHref="/" />
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Free Trial" }]} />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Get started" }]} />
 
         <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fff_0%,#fff7f2_52%,#fff_100%)]">
           <div className="relative mx-auto grid w-full max-w-7xl gap-10 px-6 py-12 lg:grid-cols-[1fr_0.68fr] lg:px-8 lg:py-16 xl:grid-cols-[0.98fr_0.58fr_0.95fr] xl:gap-8">
             <div className="xl:pt-6">
               <p className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#FF6B35] shadow-sm">
                 <span className="text-base leading-none">*</span>
-                14-day free trial
+                Free tools + paid plans
               </p>
               <h1 className="mt-6 max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-                Try QuoteCore+ free for 14 days.
+                Get started with QuoteCore+.
               </h1>
 
               <p className="mt-4 max-w-2xl text-xl font-semibold leading-snug text-zinc-700 sm:text-2xl">
-                Test the full quoting workflow.
+                Free tools, forever. No signup.
                 <br />
-                No card. No commitment.
+                Paid plans from $19/month.
               </p>
 
               <p className="mt-4 max-w-xl text-base leading-7 text-zinc-600 sm:text-lg">
-                See how fast you can go from roof plan to customer-ready quote before you spend a penny.
+                Try the free tools right now, then start in the app with a 30-day money-back guarantee.
               </p>
 
               <div className="mt-10 max-w-xl space-y-6 text-zinc-600 hidden" aria-hidden="true">
@@ -165,9 +165,9 @@ export default function FreeTrialPage() {
 
               <div className="mt-8 hidden max-w-xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_22px_70px_rgba(15,23,42,0.08)] sm:grid sm:grid-cols-3">
                 {[
-                  { title: "Full access", text: "All features included", icon: "lock" as const },
-                  { title: "14 days", text: "Risk-free trial", icon: "calendar" as const },
-                  { title: "Pause anytime", text: "No charges", icon: "pause" as const },
+                  { title: "Free tools", text: "No signup, forever", icon: "lock" as const },
+                  { title: "From $19/mo", text: "Choose your plan", icon: "calendar" as const },
+                  { title: "30-day guarantee", text: "Money-back promise", icon: "pause" as const },
                 ].map(({ title, text, icon }, index) => (
                   <div
                     key={title}

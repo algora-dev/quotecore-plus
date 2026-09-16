@@ -132,8 +132,8 @@ const faqs = [
     a: "QuoteCore+ is built for roofing first - the hardest trade to measure and quote. That same engine also handles construction and other measured trades.",
   },
   {
-    q: "Is there a free trial?",
-    a: "Yes. QuoteCore+ offers a 14-day free trial with no credit card required.",
+    q: "How do plans and free tools work?",
+    a: "The free tools are unlimited and need no signup. Paid plans start at $19/month with a 30-day money-back guarantee.",
   },
   {
     q: "What is the best roofing quoting software?",
@@ -242,11 +242,11 @@ export default function RoofingQuotingSoftwarePage() {
                 href="/free-trial"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Start your free 14-day trial
+                Get started with QuoteCore+
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">No credit card required.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. 30-day money-back guarantee.</p>
           </div>
         </section>
 
@@ -600,10 +600,10 @@ export default function RoofingQuotingSoftwarePage() {
             href="/free-trial"
             className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
-            Start your free 14-day trial
+            Get started with QuoteCore+
           </a>
 
-          <p className="mt-4 text-sm text-zinc-500">No card required. 14 days free. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+          <p className="mt-4 text-sm text-zinc-500">Free tools, no signup. 30-day money-back guarantee on paid plans. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />

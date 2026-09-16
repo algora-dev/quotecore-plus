@@ -8,13 +8,13 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 
 export const metadata: Metadata = {
   // Root layout appends "| QuoteCore+" via template - do NOT add brand suffix here (avoids suffix doubling)
-  title: "Contractor Estimating & Quoting Software for Construction — Free Trial",
+  title: "Contractor Estimating & Quoting Software for Construction",
   description:
-    "Contractor estimating and quoting software for trades — build estimates and quotes from measurements, with digital takeoff, Smart Components, material ordering and invoicing. Free plan and 14-day free trial.",
+    "Contractor estimating and quoting software for trades — build estimates and quotes from measurements, with digital takeoff, Smart Components, material ordering and invoicing. Free tools and paid plans from $19/month with a 30-day money-back guarantee.",
   openGraph: {
     title: "Contractor Estimating & Quoting Software | QuoteCore+",
     description:
-      "Contractor estimating and quoting software for trades — build estimates and quotes from measurements. Free plan and 14-day free trial.",
+      "Contractor estimating and quoting software for trades — build estimates and quotes from measurements. Free tools and paid plans from $19/month.",
     url: "/construction-quoting-software",
     siteName: "QuoteCore+",
     type: "website",
@@ -116,7 +116,7 @@ const faqSchema = {
       name: "Can I try it before paying?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. QuoteCore+ offers a 14-day free trial with no credit card required.",
+        text: "Yes. Our free tools work instantly with no signup, and every paid plan is backed by a 30-day money-back guarantee.",
       },
     },
     {
@@ -230,7 +230,7 @@ const faqs = [
   },
   {
     q: "Can I try it before paying?",
-    a: "Yes. QuoteCore+ offers a 14-day free trial with no credit card required.",
+    a: "Yes. Our free tools work instantly with no signup, and every paid plan is backed by a 30-day money-back guarantee.",
   },
   {
     q: "Who do I contact with questions?",
@@ -360,7 +360,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 Quick answer
               </p>
               <p className="text-sm leading-6 text-zinc-600">
-                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. QuoteCore+ starts free (Lite plan), with paid plans from $19/month and a 14-day free trial — so you can send your first professional quote before paying anything.
+                Quoting software for contractors turns measurements, labour and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. It is built for contractors, builders, roofers, plasterers and subcontractors who quote from measurements or plans. Try the free tools with no signup, then choose a paid plan from $19/month with a 30-day money-back guarantee — so you can move to a connected quoting workflow with confidence.
               </p>
             </div>
 
@@ -369,7 +369,7 @@ export default function ConstructionQuotingSoftwarePage() {
                 href="/free-trial"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Start free 14-day trial
+                Get started
               </a>
 
               <a
@@ -382,7 +382,7 @@ export default function ConstructionQuotingSoftwarePage() {
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-400">No card required. 14 days free.</p>
+            <p className="mt-3 text-sm text-zinc-400">Free tools forever. 30-day money-back guarantee on paid plans.</p>
 
             <p className="mt-3 text-sm text-zinc-500">
               Already have spreadsheets, price lists or quote templates?{" "}
@@ -447,7 +447,7 @@ export default function ConstructionQuotingSoftwarePage() {
         <section className="mx-auto max-w-4xl px-6 pb-16 lg:px-8">
           <div className="rounded-[2rem] border border-zinc-200 bg-zinc-50 px-7 py-8">
             <h2 className="text-2xl font-semibold text-zinc-950">How much does it cost?</h2>
-            <p className="mt-3 text-zinc-600">Simple monthly plans in USD. Start with a 14-day full-feature free trial — no credit card required.</p>
+            <p className="mt-3 text-zinc-600">Simple monthly plans in USD. Paid plans from $19/month, every one backed by a 30-day money-back guarantee.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-4">
               {[
                 { name: "Lite", price: "Free", note: "Core quoting" },
@@ -567,8 +567,8 @@ export default function ConstructionQuotingSoftwarePage() {
             ))}
           </div>
           <div className="mt-10 text-center">
-            <a href="/free-trial" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Start free 14-day trial</a>
-            <p className="mt-3 text-sm text-zinc-400">No card required. 14 days free.</p>
+            <a href="/free-trial" className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">Get started</a>
+            <p className="mt-3 text-sm text-zinc-400">Free tools forever. 30-day money-back guarantee on paid plans.</p>
           </div>
         </section>
 
@@ -952,10 +952,10 @@ export default function ConstructionQuotingSoftwarePage() {
             href="/free-trial"
             className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
-            Start your free 14-day trial
+            Get started
           </a>
 
-          <p className="mt-4 text-sm text-zinc-400">No card required. 14 days free. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
+          <p className="mt-4 text-sm text-zinc-400">Free tools forever. 30-day money-back guarantee on paid plans. <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a>.</p>
         </section>
 
         <SiteFooter />

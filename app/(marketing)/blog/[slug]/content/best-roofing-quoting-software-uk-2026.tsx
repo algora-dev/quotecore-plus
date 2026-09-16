@@ -44,7 +44,7 @@ export default function Post() {
               ["Workflow from quote to invoice", "Keeps the accepted quote connected through job management and invoicing"],
               ["Mobile-friendly", "Works on site, in a van, not just at a desk"],
               ["UK pricing and VAT", "Handles UK tax requirements without workarounds"],
-              ["Free trial", "Low-risk way to test before committing"],
+              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -69,7 +69,7 @@ export default function Post() {
       <p>Once the quote goes out, acceptance tracking runs automatically. You receive an alert by email and in your QuoteCore+ account when a quote is accepted or declined. Nothing gets lost in a pile of emails.</p>
       <p>From an accepted quote, you create material orders directly - including custom flashing details you can draw and store in the flashings drawer. The job then stays connected through job management and invoicing.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ has monthly plans and a 14-day free trial with no card required. <Link href="/pricing">See current pricing</Link>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ has monthly plans from £19/month, free tools with no signup, and a 30-day money-back guarantee on every plan. <Link href="/pricing">See current pricing</Link>.</p>
 
       <p><strong>Pros:</strong></p>
       <ul>
@@ -81,7 +81,7 @@ export default function Post() {
         <li>Material orders directly from accepted quotes</li>
         <li>Works across construction trades beyond roofing</li>
         <li>Built specifically for UK contractors and UK workflows</li>
-        <li>Free 14-day trial, no card required</li>
+        <li>Free tools with no signup; 30-day money-back guarantee on paid plans</li>
       </ul>
 
       <p><strong>Cons:</strong></p>
@@ -131,7 +131,7 @@ export default function Post() {
         />
       </div>
       
-      <p><a href="/free-trial">Start a free 14-day trial</a>. From complex plan to quote in under 3 minutes for less than a dollar.</p>
+      <p><a href="/free-trial">Get started with QuoteCore+</a>. From complex plan to quote in under 3 minutes for less than a dollar.</p>
 
       <hr />
 
@@ -335,7 +335,7 @@ export default function Post() {
               ["Job scheduling", "✅", "Basic", "Strong", "Strong", "Basic", "✅", "Basic"],
               ["Team management", "✅", "Basic", "Strong", "Strong", "Basic", "✅", "Basic"],
               ["Job costing", "Basic", "Basic", "✅", "✅", "Basic", "Strong", "Basic"],
-              ["Free trial", "✅ 2wk", "✅ free tier", "❌", "❌", "❌", "❌", "✅ free tier"],
+              ["Free option", "✅ free tools", "✅ free tier", "❌", "❌", "❌", "❌", "✅ free tier"],
               ["Starting price", "£19/mo", "Free/£29.99", "£29/user", "~£39/mo", "~£20/mo", "~£35/mo", "Free/£39.99"],
             ].map(([feature, ...values]) => (
               <tr key={feature}>
@@ -384,7 +384,7 @@ export default function Post() {
       <p>No. Modern quoting software is designed to be usable from day one. If you can use email and a computer, you can use most platforms on this list. The best ones require no setup beyond entering your pricing templates.</p>
 
       <h3>Is there free roofing quoting software for UK roofers?</h3>
-      <p>QuoteCore+ offers a 14-day free trial with no credit card required. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.</p>
+      <p>QuoteCore+ has free tools with no signup, and paid plans are backed by a 30-day money-back guarantee. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.</p>
 
       <h3>What should a professional roofing quote include?</h3>
       <p>A professional roofing quote should include: a clear scope of work, itemised materials and labour, scaffold costs as a separate line item, your company details and accreditations, a validity period, and a way for the customer to accept or decline. Quotes that include a breakdown of why costs are what they are - particularly scaffold - reduce the back-and-forth that slows down job acceptance.</p>

@@ -43,7 +43,7 @@ export default function CoffeeTermsPage() {
 
           <h2>4. No purchase required</h2>
           <p>No purchase is required to claim the coffee voucher.</p>
-          <p>You do not need to sign up for QuoteCore+, start a free trial, or become a paying customer to receive the voucher.</p>
+          <p>You do not need to sign up for QuoteCore+ or become a paying customer to receive the voucher.</p>
 
           <h2>5. Receiving the voucher</h2>
           <p>The coffee voucher will be sent after the completed call and feedback has been provided, using the contact details provided when booking.</p>

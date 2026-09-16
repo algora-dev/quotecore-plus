@@ -12,14 +12,14 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
   description:
-    "Compare QuoteCore+ plans from free to premium. 14-day full-feature trial, no credit card required. Takeoff, Smart Components, invoicing, and material ordering included.",
+    "Compare QuoteCore+ plans from free to premium. Paid plans from $19/month with a 30-day money-back guarantee. Takeoff, Smart Components, invoicing, and material ordering included.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
     languages: hreflangLanguages("/pricing"),
   },
   openGraph: {
     title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
-    description: "Compare QuoteCore+ plans from free to premium. 14-day full-feature trial, no credit card required.",
+    description: "Compare QuoteCore+ plans from free to premium. Paid plans from $19/month with a 30-day money-back guarantee.",
     url: "https://quote-core.com/pricing",
     siteName: "QuoteCore+",
     type: "website",
@@ -44,16 +44,16 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 
 const faqs = [
   {
-    question: "How long is the free trial?",
-    answer: "The Full trial runs for 14 days and unlocks all features within the trial limits shown on this page. You get 20 AI Scan Assist points to try AI roof plan scanning.",
+    question: "Do you offer a free trial?",
+    answer: "We replaced the free trial with something better: permanent free tools with no signup, and a 30-day money-back guarantee on every paid plan. Try the free tools, then start in the app knowing you can get your money back if it is not right for you.",
   },
   {
-    question: "Is a credit card required for the trial?",
-    answer: "No. QuoteCore+ does not require a credit card to start the 14-day trial.",
+    question: "How does the 30-day money-back guarantee work?",
+    answer: "You pay up front for your chosen plan and get full access for 30 days. If it is not right for you, request a refund after day 30 via a short request and questionnaire and we will refund your payment.",
   },
   {
-    question: "What happens after the trial?",
-    answer: "The account moves to the Lite free plan unless you choose to upgrade to a paid plan.",
+    question: "Can I use anything for free without paying?",
+    answer: "Yes. Our free tools - takeoff builder, roofing calculator, quote generator, invoice generator and more - are free forever with no signup. The connected app workflow (quotes to orders to invoicing) is part of the paid plans.",
   },
   {
     question: "Which currencies are shown?",
@@ -90,11 +90,11 @@ export default function PricingPage() {
             QuoteCore+ pricing for every stage of a roofing business.
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-zinc-600">
-            Start with the complete product for 14 days, no card required. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
+            Try the free tools with no signup, then choose a plan from $19/month - every paid plan is backed by a 30-day money-back guarantee. Compare each plan by its real quote, storage and AI Scan Assist limits before you choose.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/free-trial" className="inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]">
-              Start free trial
+              Get started
             </Link>
             <Link href="/features" className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-300 px-7 text-sm font-semibold text-zinc-900 transition-colors hover:border-zinc-500">
               Compare features
@@ -130,9 +130,9 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href={plan.contactUs ? "/contact" : "/free-trial"} className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${plan.featured ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
-                  {plan.contactUs ? "Contact us" : plan.isFree ? "Start free trial" : "Try this plan"}
-                </Link>
+                <a href={plan.contactUs ? "/contact" : "https://app.quote-core.com/signup?utm_source=pricing"} className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${plan.featured ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                  {plan.contactUs ? "Contact us" : plan.isFree ? "Get started" : "Choose this plan"}
+                </a>
               </article>
             ))}
           </div>
@@ -176,7 +176,7 @@ export default function PricingPage() {
             </a>
             <a href="/trust" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Trust and security</p>
-              <p className="mt-1 text-sm text-zinc-600">Trial terms, cancellation, data ownership.</p>
+              <p className="mt-1 text-sm text-zinc-600">Plan terms, cancellation, data ownership.</p>
             </a>
             <a href="/free-tools" className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5 transition-all hover:border-orange-200 hover:bg-orange-50/40">
               <p className="font-semibold text-zinc-950">Free tools</p>

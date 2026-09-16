@@ -201,7 +201,7 @@ export default function Post() {
 
       <p>
         Ready to try it? <Link href="/free-roof-takeoff">Measure your roof plan online free</Link> - upload, set the scale,
-        measure. No signup required. Or <Link href="/free-trial">start a free QuoteCore+ trial</Link> for AI-assisted scans,
+        measure. No signup required. Or <Link href="/free-trial">get started with QuoteCore+</Link> for AI-assisted scans,
         saved components, and the full measure-to-invoice workflow.
       </p>
     </div>

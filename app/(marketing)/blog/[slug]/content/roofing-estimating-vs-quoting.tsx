@@ -103,7 +103,7 @@ export default function Post() {
       <p>Not necessarily. QuoteCore+ handles both in one workflow — the estimate is built from takeoff measurements and Smart Components, and the quote is generated from the same data. See <Link href="/pricing">pricing plans</Link> for options.</p>
       <h3>What's included in a roofing estimate vs a quote?</h3>
       <p>An estimate typically includes material quantities, waste allowances, labour hours, rates, and a total cost. A quote includes the price the customer pays, scope of work, terms, payment schedule, and validity period. The quote may simplify or group the estimate's line items for presentation.</p>
-      <p>Ready to estimate and quote faster? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.</p>
+      <p>Ready to estimate and quote faster? <a href="/free-trial">Get started with QuoteCore+ today</a>.</p>
     </div>
   );
 }

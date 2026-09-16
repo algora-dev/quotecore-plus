@@ -20,22 +20,6 @@ export type PricingPlan = {
 
 export const pricingPlans: PricingPlan[] = [
   {
-    name: "Full trial",
-    displayName: "Full trial",
-    usd: "14 Days Free",
-    gbp: "14 Days Free",
-    schemaPriceUsd: 0,
-    schemaPriceGbp: 0,
-    originalUsd: null,
-    originalGbp: null,
-    subtitle: "A 14-day taste of everything",
-    features: ["10 quotes", "100 MB storage", "20 AI Assist scan points", "All features unlocked", "No credit card needed"],
-    featured: false,
-    comingSoon: false,
-    isFree: true,
-    includeInSchema: true,
-  },
-  {
     name: "Lite",
     displayName: "Lite",
     usd: "Free",
@@ -61,7 +45,7 @@ export const pricingPlans: PricingPlan[] = [
     originalUsd: "$40",
     originalGbp: "£30",
     subtitle: "For solo traders quoting regularly",
-    features: ["25 quotes", "500 MB storage", "All core features", "No card for trial"],
+    features: ["25 quotes", "500 MB storage", "All core features"],
     featured: false,
     comingSoon: false,
     isFree: false,

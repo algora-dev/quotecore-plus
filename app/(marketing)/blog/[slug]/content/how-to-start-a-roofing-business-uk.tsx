@@ -193,7 +193,7 @@ export default function Post() {
       <p>Measure the work, build a material schedule, estimate labour by activity, add access and waste, allocate overheads, then add the margin required for risk and profit. Review estimated versus actual cost after every job.</p>
       <h3>What software does a new roofing business need?</h3>
       <p>At minimum, you need reliable records for customers, quotes, orders, invoices, costs, and tax. Start simply, but avoid duplicating the same data across disconnected spreadsheets and documents.</p>
-      <p>Explore the <a href="/blog/best-free-tools-for-roofers">best free tools for roofers</a>, then start a <a href="/free-trial">free QuoteCore+ trial</a> when you are ready to connect the complete workflow.</p>
+      <p>Explore the <a href="/blog/best-free-tools-for-roofers">best free tools for roofers</a>, then get <a href="/free-trial">started with QuoteCore+</a> when you are ready to connect the complete workflow.</p>
     </div>
   );
 }

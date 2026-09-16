@@ -5,7 +5,7 @@ export default function Post() {
     <div className="prose prose-zinc max-w-none">
       <p>If you have come across QuoteCore+ and are trying to work out whether it is legitimate, whether it is worth trying, or whether it is right for your trade, this page should help.</p>
       <p>QuoteCore+ is a construction workflow platform designed to help businesses move from measurement to quote to managed job without relying on scattered spreadsheets, notes, folders and old templates.</p>
-      <p>It is still early in its journey, but it is a real platform with a working product, public business profiles, a free trial and a team actively onboarding construction businesses. See the <Link href="/pricing">pricing</Link> page for current plans.</p>
+      <p>It is still early in its journey, but it is a real platform with a working product, public business profiles, free tools and a team actively onboarding construction businesses. See the <Link href="/pricing">pricing</Link> page for current plans.</p>
 
       <hr />
 
@@ -23,8 +23,8 @@ export default function Post() {
       <p>You can check the main trust signals here:</p>
       <ul>
         <li>live website at quote-core.com</li>
-        <li><Link href="/free-trial">free 14-day trial</Link></li>
-        <li>no card required to start</li>
+        <li><Link href="/free-trial">free tools and paid plans from $19/month</Link></li>
+        <li>free tools with no signup</li>
         <li>public contact email</li>
         <li>founder call option with Shaun</li>
         <li>Terms &amp; Conditions and Privacy Policy</li>
@@ -112,10 +112,10 @@ export default function Post() {
 
       <hr />
 
-      <h2>What happens during the free trial?</h2>
-      <p>The free trial gives you a chance to test QuoteCore+ with a real workflow.</p>
+      <h2>What happens after you get started?</h2>
+      <p>Your first 30 days are the best chance to test QuoteCore+ with a real workflow — and every plan is backed by a 30-day money-back guarantee.</p>
       <p>The best way to try it is not to click around randomly. It is to take one job you would normally quote manually and run it through the platform.</p>
-      <p>A good trial process looks like this:</p>
+      <p>A good first-month process looks like this:</p>
       <ol>
         <li>Add a real job.</li>
         <li>Enter or upload the relevant job information.</li>

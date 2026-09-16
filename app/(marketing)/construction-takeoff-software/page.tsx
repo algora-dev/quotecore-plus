@@ -144,11 +144,11 @@ export default function ConstructionTakeoffSoftwarePage() {
                 href="/free-trial"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-300 bg-white px-8 py-3 text-base font-semibold text-zinc-900 transition-colors hover:border-[#FF6B35]/40"
               >
-                Start free trial
+                Get started
               </a>
             </div>
             <p className="mt-3 text-sm text-zinc-500">
-              Free tools need no signup. Trial includes every feature for 14 days, no card.
+              Free tools need no signup. Paid plans from $19/month with a 30-day money-back guarantee.
             </p>
           </div>
         </section>

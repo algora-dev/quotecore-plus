@@ -172,7 +172,7 @@ export default function Post() {
           href="/free-trial"
           className="mt-5 inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
         >
-          Start a free 14-day trial
+          Get started with QuoteCore+
         </Link>
       </div>
 

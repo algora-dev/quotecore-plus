@@ -634,7 +634,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
             )}
           </div>
           <p className="mt-3 text-sm text-zinc-500">
-            Browser-based, nothing to install. 14-day free trial, no credit card.
+            Browser-based, nothing to install. Free tools with no signup, and paid plans backed by a 30-day money-back guarantee.
           </p>
         </div>
       </section>
@@ -649,8 +649,8 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           <TrackedCta
             slug={slug}
             location="final_cta"
-            href="/free-trial"
-            label={data.finalCta.ctaLabel ?? "Start your free 14-day trial"}
+            href="/pricing"
+            label={data.finalCta.ctaLabel ?? "Get started with QuoteCore+"}
           />
           <TrackedCta
             slug={slug}

@@ -125,12 +125,12 @@ export default function AboutPage() {
           {/* CTA */}
           <div className="mt-10 rounded-[2rem] border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-8 text-center">
             <p className="text-xl font-semibold text-zinc-950">See it for yourself.</p>
-            <p className="mt-2 text-zinc-500">Two weeks free. No card required. Start quoting in minutes.</p>
+            <p className="mt-2 text-zinc-500">Free tools with no signup. Paid plans from $19/month with a 30-day money-back guarantee.</p>
             <a
               href="/free-trial"
               className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
-              Start your free trial
+              Get started
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <a href="/pricing" className="underline hover:text-zinc-900">See pricing</a> · <a href="/contact" className="underline hover:text-zinc-900">Contact us</a>

@@ -160,11 +160,11 @@ export default function RoofingTakeoffSoftwarePage() {
                 href="/free-trial"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-black px-8 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
               >
-                Start your free 14-day trial
+                Get started with QuoteCore+
               </a>
             </div>
 
-            <p className="mt-3 text-sm text-zinc-500">No credit card required.</p>
+            <p className="mt-3 text-sm text-zinc-500">Free tools with no signup. 30-day money-back guarantee.</p>
 
             {/* Free product bridge */}
             <div className="mx-auto mt-6 max-w-2xl rounded-xl border border-[#FF6B35]/30 bg-orange-50/50 px-5 py-4 text-left">
@@ -576,11 +576,11 @@ export default function RoofingTakeoffSoftwarePage() {
             href="/free-trial"
             className="mt-10 inline-flex min-h-12 items-center justify-center rounded-full bg-black px-10 py-3 text-base font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
           >
-            Start your free 14-day trial
+            Get started with QuoteCore+
           </a>
 
           <p className="mt-4 text-sm text-zinc-500">
-            No card required. 14 days free.{" "}
+            Free tools, no signup. 30-day money-back guarantee on paid plans.{" "}
             <a href="/pricing" className="underline hover:text-zinc-900">
               See pricing
             </a>

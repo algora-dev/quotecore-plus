@@ -94,7 +94,7 @@ export default function Post() {
       <p>Pitch itself does not directly increase waste, but steeper roofs can be harder to work on, which may increase breakage and cutting errors. Pitch does affect the total surface area — a steeper roof has more covering area than the plan area, which must be calculated correctly before applying waste.</p>
       <h3>Can software calculate waste automatically?</h3>
       <p>Yes. QuoteCore+ Smart Components&#8482; store waste rules by material type. When you measure a roof area or length, the component applies the correct waste percentage and produces the gross quantity automatically. This eliminates manual calculation errors and ensures consistent allowances across jobs. See <Link href="/roofing-estimating-software">roofing estimating software</Link> for more.</p>
-      <p>Ready to get waste under control? <a href="/free-trial">Start your free QuoteCore+ trial today</a>.</p>
+      <p>Ready to get waste under control? <a href="/free-trial">Get started with QuoteCore+ today</a>.</p>
     </div>
   );
 }

@@ -126,7 +126,7 @@ export default function CustomSolutionsPage() {
               <p className="mt-3 text-xs text-slate-500">
                 Or{' '}
                 <Link href="/free-trial" className="font-medium text-[#BD4A1A] hover:underline">
-                  start a free trial
+                  get started
                 </Link>{' '}
                 and try it with your own pricing.
               </p>

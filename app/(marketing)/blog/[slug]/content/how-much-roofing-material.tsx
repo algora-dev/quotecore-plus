@@ -205,7 +205,7 @@ export default function Post() {
       <p>
         And if you want the whole process connected - takeoff, material quantities, pricing, quote,
         material orders, job management, and invoicing in one workflow -
-        <a href="/free-trial">try QuoteCore+ free for 14 days</a>. From complex plan to quote in
+        <a href="/free-trial">get started with QuoteCore+</a>. From complex plan to quote in
         under 3 minutes for less than a dollar.
       </p>
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
@@ -272,7 +272,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? Explore <a href="/roofing-quoting-software">quoting software for contractors</a> or <a href="/free-trial">start your free QuoteCore+ trial today</a>.
+        Ready to quote faster? Explore <a href="/roofing-quoting-software">quoting software for contractors</a> or <a href="/free-trial">get started with QuoteCore+ today</a>.
         No card needed. From complex plan to quote in under 3 minutes for less than a dollar.
       </p>
     </div>

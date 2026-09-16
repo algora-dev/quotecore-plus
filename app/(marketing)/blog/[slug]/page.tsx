@@ -190,7 +190,7 @@ export default async function BlogPostPage({ params }: Props) {
                 href="/free-trial"
                 className="inline-flex items-center justify-center rounded-full bg-[#E55A28] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#BD4A1A]"
               >
-                Start free trial
+                Get started
               </a>
             </div>
           </div>

@@ -38,7 +38,7 @@ export default function Post() {
               ["US units support", "Squares, feet, inches - not just metric"],
               ["Mobile-friendly", "Works on site, in a truck, not just at a desk"],
               ["US pricing in USD", "Pricing and support for US suppliers and distributors"],
-              ["Free trial", "Low-risk way to test before committing"],
+              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -54,7 +54,7 @@ export default function Post() {
       <h2>The best quoting software for US contractors in 2026</h2>
 
       <h3>1. QuoteCore+ — Best for roofers and measured-trade quoting</h3>
-      <p><strong>Pricing:</strong> Free trial (20 AI scan points), Lite (free), Starter ($29/month), Pro ($59/month), Pro Plus ($99/month). All plans include digital takeoff and quoting.</p>
+      <p><strong>Pricing:</strong> Free tools with no signup; paid plans from $19/month. All plans include digital takeoff and quoting, and every plan is backed by a 30-day money-back guarantee.</p>
       <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site — including the wider <a href="/construction-quoting-software">construction quoting workflow</a> used by carpenters, plasterers, subcontractors and general contractors. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
       <p>The standout feature is <strong>Smart Components</strong> - reusable material assemblies that automatically calculate quantities from measurements. An asphalt shingle roof component might include shingles (by the square), underlayment, ice & water shield, drip edge, ridge cap, nails, and flashing - all calculated from one roof area entry with pitch applied. You build the component once, use it on every quote, and the maths is always consistent.</p>
       <p>QuoteCore+ stands out with <a href="/features/ai-scan-assist">AI Scan Assist</a>, which reads roof plans and identifies roof areas and flashings automatically — you verify and adjust, then carry everything into a priced quote.</p>
@@ -158,7 +158,7 @@ export default function Post() {
       <h2>How to choose</h2>
       <p>The right choice depends on your trade and workflow:</p>
       <ul>
-        <li><strong>Roofing, cladding, or measured trades:</strong> QuoteCore+ is the only option here with digital takeoff and component-based material calculations. <a href="/free-trial">Try it free</a>.</li>
+        <li><strong>Roofing, cladding, or measured trades:</strong> QuoteCore+ is the only option here with digital takeoff and component-based material calculations. <a href="/free-trial">Get started</a>.</li>
         <li><strong>Home service businesses (landscaping, cleaning, HVAC):</strong> Jobber for scheduling and dispatch.</li>
         <li><strong>General contractors needing estimating + PM:</strong> Contractor Foreman.</li>
         <li><strong>Remodelers wanting simple template quoting:</strong> Clear Estimates.</li>

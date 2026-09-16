@@ -58,7 +58,7 @@ export default function SiteFooter() {
               <Link href="/suppliers-info" className={linkClass}>For suppliers</Link>
               <Link href="/services" className={linkClass}>Services</Link>
               <Link href="/contact" className={linkClass}>Contact</Link>
-              <Link href="/free-trial" className={linkClass}>Start free trial</Link>
+              <Link href="/pricing" className={linkClass}>Get started</Link>
             </div>
           </nav>
           <nav aria-label="Legal and region">

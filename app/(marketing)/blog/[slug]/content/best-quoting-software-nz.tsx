@@ -35,7 +35,7 @@ export default function Post() {
               ["Invoicing", "✅", "✅", "✅", "✅", "✅", "✅"],
               ["Job scheduling", "✅", "Strong", "Strong", "Strong", "Basic", "Basic"],
               ["NZ-built / local presence", "✅", "✅", "✅", "AU/NZ", "AU", "NZ HQ"],
-              ["Free trial, no card", "✅ 14 days", "Limited", "❌", "❌", "Limited", "Via Xero"],
+              ["Free option", "✅ free tools", "Limited", "❌", "❌", "Limited", "Via Xero"],
             ].map(([feature, ...values]) => (
               <tr key={feature}>
                 <td className="px-3 py-2 font-medium text-zinc-800 text-xs">{feature}</td>
@@ -81,7 +81,7 @@ export default function Post() {
               ["Workflow from quote to job", "Keep the accepted quote connected to the job - not buried in email"],
               ["Mobile-friendly", "Works on site, in a ute, not just at a desk"],
               ["GST-ready", "Handles NZ tax requirements natively"],
-              ["Free trial", "Low-risk way to test before committing"],
+              ["Free trial or money-back guarantee", "Low-risk way to test before committing"],
             ].map(([feature, why]) => (
               <tr key={feature}>
                 <td className="px-4 py-3 font-medium text-zinc-800">{feature}</td>
@@ -108,7 +108,7 @@ export default function Post() {
       <p>Once the quote is sent, acceptance tracking runs automatically. You get a notification when a customer views or accepts the quote. No more chasing phone calls asking whether they received it.</p>
       <p>From an accepted quote, you generate a materials order directly - including custom details for specific job requirements. The job then moves into workflow management: tracked from first measurement to job completion in one place.</p>
 
-      <p><strong>Pricing:</strong> QuoteCore+ publishes transparent pricing on its <Link href="/pricing">pricing page</Link>: a free Lite plan, paid plans from $19/month (Starter) and $39/month (Pro) up to $59/month (Pro Plus), and a 14-day free trial of all features with no credit card required. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
+      <p><strong>Pricing:</strong> QuoteCore+ publishes transparent pricing on its <Link href="/pricing">pricing page</Link>: a free Lite plan, paid plans from $19/month (Starter) and $39/month (Pro) up to $59/month (Pro Plus). The free tools need no signup, and every paid plan is backed by a 30-day money-back guarantee. See how the plans compare side by side on the <Link href="/construction-quoting-software">construction quoting software hub</Link>.</p>
 
       <div className="not-prose my-8 aspect-video overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-100">
         <iframe
@@ -128,7 +128,7 @@ export default function Post() {
         <li>Professional quote output</li>
         <li>Quote acceptance notifications</li>
         <li>Works across construction trades - roofers, general builders, electricians, plumbers, and more</li>
-        <li>Free 14-day trial, no card required</li>
+        <li>Free tools with no signup; 30-day money-back guarantee on paid plans</li>
       </ul>
 
       <p><strong>Cons:</strong></p>
@@ -137,7 +137,7 @@ export default function Post() {
         <li>Newer platform - integration ecosystem still growing</li>
       </ul>
 
-      <p><a href="/free-trial">Start a free 14-day trial of QuoteCore+</a></p>
+      <p><a href="/free-trial">Get started with QuoteCore+</a></p>
 
       <p>QuoteCore+ also includes a <a href="/suppliers">supplier directory</a> where roofing and construction suppliers can publish their catalogues and get found by contractors and AI search:</p>
 
@@ -240,7 +240,7 @@ export default function Post() {
       <p>The right option depends on your trade and workflow. QuoteCore+ is the strongest choice for tradies who quote from plans and need a complete workflow from measurement to job completion. Tradify and Fergus are strong for team management and job tracking. ServiceM8 works well for high-volume service trades.</p>
 
       <h3>Is there free quoting software for NZ tradies?</h3>
-      <p>QuoteCore+ offers a 14-day free trial with no credit card required. Tradify has a trial period. Most platforms on this list require a paid subscription - the cost is typically recovered in the first month through time saved on admin and faster quote turnaround.</p>
+      <p>QuoteCore+ has free tools with no signup, and paid plans from $19/month backed by a 30-day money-back guarantee. Tradify has a trial period. Most platforms on this list require a paid subscription - the cost is typically recovered in the first month through time saved on admin and faster quote turnaround.</p>
 
       <h3>How much does quoting software cost for NZ tradespeople?</h3>
       <p>Most quoting platforms for NZ tradies range from approximately $39 to $79 per month for a sole trader or small team. Buildxact starts higher at around $149/month due to its more complex feature set.</p>
@@ -263,7 +263,7 @@ export default function Post() {
       <hr />
 
       <h2>Try the free tools before you decide</h2>
-      <p>Not ready to commit to a platform yet? Start with the <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> — enter your roof measurements and get instant material quantities and indicative pricing. No signup, no card, no download. Then when you are ready for the full quoting workflow, <Link href="/free-trial">start a 14-day free trial of QuoteCore+</Link>.</p>
+      <p>Not ready to commit to a platform yet? Start with the <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> — enter your roof measurements and get instant material quantities and indicative pricing. No signup, no card, no download. Then when you are ready for the full quoting workflow, <Link href="/free-trial">get started with QuoteCore+</Link>.</p>
 
     </div>
   );

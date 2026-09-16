@@ -234,13 +234,13 @@ export default function FeaturesHubPage() {
         {/* CTA */}
         <section className="mx-auto max-w-5xl px-6 pb-24 lg:px-8">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-8 py-10 text-center">
-            <h2 className="text-2xl font-semibold tracking-tight">Try all features free for 14 days</h2>
-            <p className="mt-2 text-zinc-600">No credit card required. Full access to every feature.</p>
+            <h2 className="text-2xl font-semibold tracking-tight">Get started with QuoteCore+</h2>
+            <p className="mt-2 text-zinc-600">Free tools with no signup. Paid plans from $19/month with a 30-day money-back guarantee.</p>
             <a
               href="/free-trial"
               className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-black px-7 py-2.5 text-sm font-semibold text-white transition-shadow hover:shadow-[0_0_18px_rgba(255,107,53,0.32)]"
             >
-              Start free trial
+              Get started
             </a>
             <p className="mt-4 text-sm text-zinc-500">
               <Link href="/pricing" className="underline hover:text-zinc-900">See pricing</Link>
