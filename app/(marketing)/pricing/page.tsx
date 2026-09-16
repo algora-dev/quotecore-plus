@@ -12,14 +12,14 @@ import { hreflangLanguages } from "@/lib/seo/hreflang";
 export const metadata: Metadata = {
   title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
   description:
-    "Compare QuoteCore+ plans from free to premium. Paid plans from $19/month with a 30-day money-back guarantee. Takeoff, Smart Components, invoicing, and material ordering included.",
+    "Compare QuoteCore+ paid plans from $19 to $59/month, each backed by a 30-day money-back guarantee. Takeoff, Smart Components, invoicing, and material ordering included.",
   alternates: {
     canonical: "https://quote-core.com/pricing",
     languages: hreflangLanguages("/pricing"),
   },
   openGraph: {
     title: "QuoteCore+ Pricing | Roofing & Construction Software Plans",
-    description: "Compare QuoteCore+ plans from free to premium. Paid plans from $19/month with a 30-day money-back guarantee.",
+    description: "Compare QuoteCore+ paid plans from $19 to $59/month with a 30-day money-back guarantee.",
     url: "https://quote-core.com/pricing",
     siteName: "QuoteCore+",
     type: "website",
@@ -65,7 +65,7 @@ const faqSchema = buildFaqSchema(faqs);
 
 // Card styling per tier — richer treatment on higher tiers draws the eye up-range
 function planStyles(plan: (typeof pricingPlans)[number]): string {
-  const premium = plan.name === "Pro Plus" || plan.name === "Premium";
+  const premium = plan.name === "Pro Plus";
   if (plan.featured) {
     return "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)] hover:border-[#BD4A1A] hover:shadow-[0_26px_64px_rgba(189,74,26,0.22)]";
   }

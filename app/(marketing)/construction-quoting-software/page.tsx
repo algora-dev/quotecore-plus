@@ -124,7 +124,7 @@ const faqSchema = {
       name: "How much does construction quoting software cost?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "QuoteCore+ plans range from free to $59/month. The free plan includes core quoting features. Paid plans add digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our pricing page for current plan details.",
+        text: "QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our pricing page for current plan details.",
       },
     },
     {
@@ -391,7 +391,7 @@ export default function ConstructionQuotingSoftwarePage() {
 
             <div className="mx-auto mt-8 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-600">
               <span className="font-semibold text-zinc-950">Simple pricing:</span>
-              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Free Lite plan</a>
+              <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Free tools</a>
               <span className="text-zinc-300">·</span>
               <a href="/pricing" className="hover:text-[#FF6B35] hover:underline">Starter $19/mo</a>
               <span className="text-zinc-300">·</span>
@@ -450,7 +450,6 @@ export default function ConstructionQuotingSoftwarePage() {
             <p className="mt-3 text-zinc-600">Simple monthly plans in USD. Paid plans from $19/month, every one backed by a 30-day money-back guarantee.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-4">
               {[
-                { name: "Lite", price: "Free", note: "Core quoting" },
                 { name: "Starter", price: "$19/mo", note: "Quoting + templates" },
                 { name: "Pro", price: "$39/mo", note: "Takeoff + AI Scan Assist" },
                 { name: "Pro Plus", price: "$59/mo", note: "Everything included" },
@@ -801,7 +800,7 @@ export default function ConstructionQuotingSoftwarePage() {
                       </>
                     ) : f.a === "cost-link" ? (
                       <>
-                        QuoteCore+ plans range from free to $59/month. The free plan includes core quoting features. Paid plans add digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our{" "}
+                        QuoteCore+ plans range from 19 to 59 dollars per month and all include the full feature set - digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. Plans also include digital takeoff, AI Scan Assist, material ordering, invoicing, and Smart Components. See our{" "}
                         <a href="/pricing" className="text-[#FF6B35] hover:underline">pricing page</a>{" "}
                         for current plan details.
                       </>

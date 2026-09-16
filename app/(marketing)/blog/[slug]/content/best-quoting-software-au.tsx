@@ -179,7 +179,7 @@ export default function Post() {
       <p>If you quote more than 3-4 jobs per week, quoting software will save you time. The break-even is usually within the first month. Even a free tool like QuoteCore+ Lite or a simple spreadsheet-to-PDF workflow is better than sending hand-written quotes.</p>
 
       <h3>Can I use QuoteCore+ for free?</h3>
-      <p>Yes. QuoteCore+ has a free Lite plan that includes digital takeoff and quoting. The <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> are also free to use without signing up.</p>
+      <p>Yes. QuoteCore+ has free tools (no signup) plus paid plans from $19/month that include digital takeoff and quoting. The <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> are also free to use without signing up.</p>
 
       <h3>Does quoting software handle GST?</h3>
       <p>All the tools listed above handle Australian GST (10%). The question is how well. QuoteCore+, SimPRO, AroFlo, and Tradify all handle GST on quotes and invoices. Xero handles it natively as an accounting platform.</p>

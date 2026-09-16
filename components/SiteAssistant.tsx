@@ -76,7 +76,7 @@ function getAnswer(rawMessage: string, docsBaseUrl: string): ChatMessage {
   if (/(price|pricing|cost|how much|plan|plans|tier|limit|upgrade|cancel|subscription|per month|per month|starter|lite|pro|premium)/.test(message)) {
     return {
       sender: "assistant",
-      text: "Plans start at $19/month for Starter (solo traders), Pro at $39/month for growing businesses, Pro Plus at $59/month for high-volume teams, and Premium (contact us for pricing). You pay up front and get full access on your chosen plan, backed by a 30-day money-back guarantee. Our free tools stay free forever - no signup needed.",
+      text: "Plans start at $19/month for Starter (solo traders), Pro at $39/month for growing businesses, and Pro Plus at $59/month for high-volume teams. You pay up front and get full access on your chosen plan, backed by a 30-day money-back guarantee. Our free tools stay free forever - no signup needed.",
       link: { label: "See full pricing details", href: "/#pricing" },
     };
   }

@@ -190,7 +190,7 @@ export const roofSnapPage: CompetitorPageData = {
       },
       {
         feature: "Pricing model",
-        qc: { status: "yes", note: "Subscription, quote-based tiers from free to $59/mo" },
+        qc: { status: "yes", note: "Subscription, quote-based tiers from $19 to $59/mo" },
         competitor: { status: "yes", note: "Per-report PAYG or per-user subscription ($105/mo monthly)" },
       },
     ],
@@ -270,7 +270,7 @@ export const roofSnapPage: CompetitorPageData = {
     {
       question: "Is QuoteCore+ cheaper than RoofSnap?",
       answer:
-        "For most solo roofers and small teams, yes. QuoteCore+ plans run from free to $59/mo total, while RoofSnap's monthly subscription is $105/mo per user ($52–78/mo per user annually). RoofSnap's per-report option ($13+) can be cheaper if you only order occasional reports — the comparison depends on how many roofs you quote per month.",
+        "For most solo roofers and small teams, yes. QuoteCore+ plans run from $19 to $59/mo total, while RoofSnap's monthly subscription is $105/mo per user ($52–78/mo per user annually). RoofSnap's per-report option ($13+) can be cheaper if you only order occasional reports — the comparison depends on how many roofs you quote per month.",
     },
     {
       question: "Does QuoteCore+ order aerial measurement reports like RoofSnap?",

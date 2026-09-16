@@ -362,7 +362,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
               <h3 className="text-lg font-semibold">QuoteCore+ pricing</h3>
               <ul className="mt-5 space-y-4">
                 <li className="flex items-baseline justify-between gap-4">
-                  <span className="font-medium text-zinc-900">Free Lite plan</span>
+                  <span className="font-medium text-zinc-900">Free tools</span>
                   <span className="shrink-0 font-semibold text-zinc-950">$0</span>
                 </li>
                 <li className="flex items-baseline justify-between gap-4">

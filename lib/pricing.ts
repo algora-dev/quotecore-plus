@@ -20,22 +20,6 @@ export type PricingPlan = {
 
 export const pricingPlans: PricingPlan[] = [
   {
-    name: "Lite",
-    displayName: "Lite",
-    usd: "Free",
-    gbp: "Free",
-    schemaPriceUsd: 0,
-    schemaPriceGbp: 0,
-    originalUsd: null,
-    originalGbp: null,
-    subtitle: "For individuals just getting started",
-    features: ["5 quotes", "50 MB storage"],
-    featured: false,
-    comingSoon: false,
-    isFree: true,
-    includeInSchema: true,
-  },
-  {
     name: "Starter",
     displayName: "Starter",
     usd: "$19",
@@ -82,23 +66,6 @@ export const pricingPlans: PricingPlan[] = [
     comingSoon: false,
     isFree: false,
     includeInSchema: true,
-  },
-  {
-    name: "Premium",
-    displayName: "Premium",
-    usd: "Contact Us",
-    gbp: "Contact Us",
-    schemaPriceUsd: 0,
-    schemaPriceGbp: 0,
-    originalUsd: null,
-    originalGbp: null,
-    subtitle: "Enterprise-level power for larger operations",
-    features: ["Higher limits", "More users", "Advanced features", "Dedicated support"],
-    featured: false,
-    comingSoon: false,
-    isFree: false,
-    includeInSchema: false,
-    contactUs: true,
   },
 ];
 

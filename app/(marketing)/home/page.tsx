@@ -63,7 +63,7 @@ const faqs = [
   {
     question: "How much do plans cost?",
     answer:
-      "Plans range from free to $59 per month. All paid plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
+      "Paid plans are $19, $39 or $59 per month. All plans include the full feature set - the difference is in usage limits like AI scan points and storage. See the pricing page for full details.",
   },
 ];
 
@@ -230,7 +230,7 @@ export default function HomePage() {
                 {/* Pricing reassurance line */}
                 <p className="mt-4 text-sm font-medium text-zinc-700">
                   <a href="/pricing" className="text-[#FF6B35] underline underline-offset-2 hover:text-[#E55A28]">
-                    Plans from free to $59/month
+                    Plans from $19 to $59/month
                   </a>
                   {" "}- free tools with no signup, paid plans from $19/month with a 30-day money-back guarantee.
                 </p>
@@ -736,7 +736,7 @@ export default function HomePage() {
                 </a>
               </div>
               <p className="mt-5 text-sm text-zinc-600">
-                Plans from free to $59/month. Free tools forever. 30-day money-back guarantee on paid plans.
+                Plans from $19 to $59/month. Free tools forever. 30-day money-back guarantee.
               </p>
             </div>
           </div>

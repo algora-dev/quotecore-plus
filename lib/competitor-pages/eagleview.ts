@@ -40,7 +40,7 @@ export const eagleViewPage: CompetitorPageData = {
     qcBestFor: [
       {
         title: "You want to stop paying per roof",
-        body: "QuoteCore+ is a subscription from free to $59/mo — no per-report fees, no matter how many roofs you measure.",
+        body: "QuoteCore+ is a subscription from $19 to $59/mo — no per-report fees, no matter how many roofs you measure.",
       },
       {
         title: "You already have the plans",
@@ -66,7 +66,7 @@ export const eagleViewPage: CompetitorPageData = {
     bullets: [
       { label: "Own the plan-based takeoff", detail: "Upload plans or images, measure roofing geometry yourself, and correct the result before pricing it.", positive: true },
       { label: "Turn measurement into a quote", detail: "Smart Components apply materials, waste, labour and margins; the same data continues to order and invoice.", positive: true },
-      { label: "Avoid a report fee where plans exist", detail: "QuoteCore+ plans run from free to $59/mo with no per-report charge.", positive: true },
+      { label: "Avoid a report fee where plans exist", detail: "QuoteCore+ plans run from $19 to $59/mo with no per-report charge.", positive: true },
       { label: "Aerial imagery and property intelligence", detail: "EagleView's core strength. QuoteCore+ does not provide flown reports, solar data, wall data or property intelligence.", positive: false },
       { label: "Remote or unsafe properties", detail: "When you cannot access the roof or need a measurement before visiting, an EagleView report may be exactly what you need.", positive: false },
     ],
@@ -183,7 +183,7 @@ export const eagleViewPage: CompetitorPageData = {
       },
       {
         feature: "Pricing model",
-        qc: { status: "yes", note: "Subscription from free to $59/mo" },
+        qc: { status: "yes", note: "Subscription from $19 to $59/mo" },
         competitor: { status: "yes", note: "Per report, $13.75–$105 typical range; volume tier discounts" },
       },
     ],
