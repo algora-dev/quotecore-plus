@@ -118,7 +118,7 @@ export default async function PaywallPage() {
               your component library, templates, and workflows for you. $499 / $999.
             </p>
             <Link
-              href="/custom-solutions"
+              href="/done-for-you-setup"
               prefetch={false}
               className="text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap"
             >
