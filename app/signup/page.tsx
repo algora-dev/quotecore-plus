@@ -44,6 +44,7 @@ function SignupFallback() {
 function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [showGuaranteeInfo, setShowGuaranteeInfo] = useState(false);
   const searchParams = useSearchParams();
   const refSlug = searchParams.get('ref');
   const draftId = searchParams.get('draft');
@@ -79,7 +80,63 @@ function SignupForm() {
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
           <h1 className="text-2xl font-semibold text-slate-900 mb-2 text-center">Create your account</h1>
-          <p className="text-slate-500 text-sm mb-6 text-center">Plans from $19/mo · 30-day money-back guarantee · Cancel anytime</p>
+          <div className="mb-6 flex items-center justify-center gap-1">
+            <p className="text-slate-500 text-sm text-center">Plans from $19/mo · 30-day money-back guarantee · Cancel anytime</p>
+            <button
+              type="button"
+              aria-label="How the 30-day money-back guarantee works"
+              onClick={() => setShowGuaranteeInfo(true)}
+              className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-slate-300 text-[10px] font-semibold text-slate-400 transition hover:border-orange-300 hover:text-orange-500 cursor-pointer"
+            >
+              i
+            </button>
+          </div>
+
+          {showGuaranteeInfo && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+              onMouseDown={(e) => { if (e.target === e.currentTarget) setShowGuaranteeInfo(false); }}
+            >
+              <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="text-lg font-semibold text-slate-900">How the 30-day money-back guarantee works</h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowGuaranteeInfo(false)}
+                    aria-label="Close"
+                    className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="mt-4 space-y-3 text-sm leading-relaxed text-slate-600">
+                  <p>
+                    <span className="font-semibold text-slate-900">1. Pick your plan.</span> After creating your account, choose Starter ($19/mo),
+                    Pro ($39/mo) or Pro Plus ($59/mo).
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-900">2. Use it fully for 30 days.</span> Every feature, no restrictions - measure, quote,
+                    send and track real jobs.
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-900">3. Not right for you? Get your money back.</span> If QuoteCore+ is not a fit, request a
+                    refund within 3 days after your first 30 days and we will refund your first month in full. Cancelling earlier? Contact us and we will
+                    sort it out.
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-900">No lock-in.</span> Cancel your subscription any time from your billing page.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowGuaranteeInfo(false)}
+                  className="mt-6 w-full rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] cursor-pointer"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Draft context banner */}
           {refLabel && draftId && (
