@@ -61,7 +61,7 @@ interface Props {
   effectivePlanCode: string;
   /**
    * Smoke #7 (2026-05-19): when the company's effective subscription is
-   * inactive (e.g. expired trial without a paid sub), block the New Quote
+   * inactive (e.g. canceled without payment), block the New Quote
    * entry point and open the subscription-blocked upgrade modal instead.
    * The DB-level guard (smoke #2 migration) refuses the actual mutation,
    * so this is a UX layer that surfaces the block cleanly rather than
@@ -211,7 +211,7 @@ export function QuotesList({
   measureProps,
 }: Props) {
   const [capUpgradeOpen, setCapUpgradeOpen] = useState(false);
-  // Smoke #7 (2026-05-19): subscription-inactive (e.g. expired trial)
+  // Smoke #7 (2026-05-19): subscription-inactive (e.g. canceled unpaid)
   // opens this modal when the user clicks New Quote. The DB-level guard
   // refuses the actual mutation anyway, so this is a clean UX surface
   // instead of letting the user fill out a form for nothing.
@@ -525,7 +525,7 @@ export function QuotesList({
             <button
               type="button"
               onClick={() => setSubBlockedOpen(true)}
-              title="Your trial period has ended - click for upgrade options"
+              title="Your subscription is inactive - click for plan options"
               data-copilot="new-quote"
               className="inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
             >
@@ -856,12 +856,12 @@ export function QuotesList({
         onClose={() => setCapUpgradeOpen(false)}
         title={`Monthly quote limit reached (${monthlyQuoteUsed}/${monthlyQuoteLimit})`}
         description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. Plan: ${effectivePlanCode}.`}
-        recommendedPlan={effectivePlanCode === 'trial' ? 'growth' : 'pro'}
+        recommendedPlan="pro"
       />
       <UpgradeModal
         open={subBlockedOpen}
         onClose={() => setSubBlockedOpen(false)}
-        title="Your trial period has ended"
+        title="Your subscription is inactive"
         description="You need to subscribe to a plan to create more quotes. Your existing quotes remain viewable on any plan."
         ctaLabel="View plans"
         recommendedPlan="starter"

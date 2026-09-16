@@ -66,7 +66,7 @@ export function ComponentList({
   flashingsFeatureEnabled: boolean;
   /**
    * Smoke #8 (2026-05-19): when the company's effective subscription is
-   * inactive (e.g. expired trial), block the + Add Component button at
+   * inactive (e.g. canceled without payment), block the + Add Component button at
    * the click layer. DB triggers refuse the actual insert too
    * (subscription_inactive via the H-04 cap trigger which fires P0001
    * before reaching the cap check), so this is purely UX.
@@ -1348,7 +1348,7 @@ export function ComponentList({
           </span>
           <span className="text-xs text-slate-500">
             {componentLimit !== null
-              ? `Smart Components on your ${effectivePlanCode === 'trial' ? 'trial' : effectivePlanCode} plan`
+              ? `Smart Components on your ${effectivePlanCode} plan`
               : 'Smart Components - unlimited on your plan'}
           </span>
         </div>
@@ -1763,7 +1763,7 @@ export function ComponentList({
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`Active Smart Component limit reached on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        title={`Active Smart Component limit reached on the ${effectivePlanCode} plan`}
         description={`You can store unlimited Smart Components, but only ${componentLimit ?? 0} can be active at once. Deactivate components you don't need, or upgrade to activate more.`}
         recommendedPlan="growth"
       />
@@ -1778,7 +1778,7 @@ export function ComponentList({
       <UpgradeModal
         open={subBlockedOpen}
         onClose={() => setSubBlockedOpen(false)}
-        title="Your trial period has ended"
+        title="Your subscription is inactive"
         description="You need to subscribe to a plan to create more Smart Components™. Your existing Smart Components™ remain viewable on any plan."
         ctaLabel="View plans"
         recommendedPlan="starter"

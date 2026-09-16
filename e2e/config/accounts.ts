@@ -1,4 +1,4 @@
-﻿/**
+/**
  * E2E Account Definitions
  *
  * Five ordinary (non-admin) accounts created through dev admin UI.
@@ -9,18 +9,18 @@
  */
 
 export interface E2EAccount {
-  /** Fixture name (e.g. "trial-a") */
+  /** Fixture name (e.g. "starter-b") */
   fixture: string;
   /** Email address (e2e-* prefix, quotecore.invalid domain preferred) */
   email: string;
-  /** Password loaded from env â€” never hardcoded */
+  /** Password loaded from env — never hardcoded */
   password: string;
   /** Workspace slug for direct URL access */
   workspaceSlug: string;
   /** Company name visible in UI */
   company: string;
-  /** Intended plan code */
-  plan: 'trial' | 'starter' | 'pro' | 'pro_plus';
+  /** Intended plan code (legacy 'trial' removed - paid-at-signup model) */
+  plan: 'starter' | 'pro' | 'pro_plus';
   /** Intended tests for this account */
   purpose: string;
 }
@@ -66,8 +66,8 @@ export function getAccounts(): E2EAccount[] {
       'E2E_TRIAL_A_PASSWORD',
       'E2E_TRIAL_A_SLUG',
       'E2E Trial Company A',
-      'trial',
-      'Trial restrictions and baseline flows'
+      'starter',
+      'Baseline workspace flows (legacy fixture name; account follows the paid-at-signup model)'
     ),
     loadAccount(
       'starter-b',
@@ -102,7 +102,7 @@ export function getAccounts(): E2EAccount[] {
       'E2E_ONBOARD_E_PASSWORD',
       'E2E_ONBOARD_E_SLUG',
       'E2E Onboarding User E',
-      'trial',
+      'starter',
       'Repeatable onboarding gate'
     ),
   ];

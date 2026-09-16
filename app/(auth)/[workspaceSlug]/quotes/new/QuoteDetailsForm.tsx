@@ -659,7 +659,7 @@ export function QuoteDetailsForm({
         onClose={() => setQuoteCapUpgradeOpen(false)}
         title={`Monthly quote limit reached (${monthlyQuoteUsed}/${monthlyQuoteLimit})`}
         description={`To create more quotes this month you need to upgrade your account tier, or wait until your quote limit resets next month. (${effectivePlanCode} plan)`}
-        recommendedPlan={effectivePlanCode === 'trial' ? 'growth' : 'pro'}
+        recommendedPlan="pro"
       />
 
       {/* PDF page picker modal (client-side pdfjs) */}

@@ -105,7 +105,7 @@ export function TradeLayoutShell({ config, children }: { config: TradeConfig; ch
                 Free Invoice Generator
               </Link>
               <Link href={signup} className="text-xs font-medium text-[#BD4A1A] hover:text-[#ff5722]">
-                Start free trial
+                Plans from /mo
               </Link>
             </div>
           </div>

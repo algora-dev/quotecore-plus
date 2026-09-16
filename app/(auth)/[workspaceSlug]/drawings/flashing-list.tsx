@@ -467,7 +467,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
       <UpgradeModal
         open={upgradeOpen}
         onClose={() => setUpgradeOpen(false)}
-        title={`${featureLabelSingular} library full on ${effectivePlanCode === 'trial' ? 'the free trial' : `the ${effectivePlanCode} plan`}`}
+        title={`${featureLabelSingular} library full on the ${effectivePlanCode} plan`}
         description={`You've reached your ${flashingLimit ?? 0} ${featureSingularLower} limit. Upgrade your plan to add more ${featureSingularLower} designs to your library.`}
         recommendedPlan="pro"
       />

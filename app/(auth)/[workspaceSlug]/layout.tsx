@@ -15,7 +15,6 @@ import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { EntitlementBanner } from '@/app/components/billing/EntitlementBanner';
-import { TrialRolledToFreeBanner } from '@/app/components/billing/TrialRolledToFreeBanner';
 import { GlobalAnnouncementBanner } from '@/app/components/GlobalAnnouncementBanner';
 import { ImpersonationBanner } from '@/app/components/ImpersonationBanner';
 import { UserImpersonationBanner } from '@/app/components/UserImpersonationBanner';
@@ -168,19 +167,6 @@ export default async function WorkspaceLayout({
             </header>
 
             <EntitlementBanner entitlements={entitlements} workspaceSlug={slug} />
-
-            {/* Trial -> Free roll-over notice. Shows once a trial has lapsed and
-                the account is effectively on Free (covers the window before the
-                daily cron flips stored status from 'trialing' to 'active' too).
-                Dismissible; reappears once per fresh login (sessionStorage). */}
-            {entitlements.effectivePlanCode === 'free' &&
-            entitlements.trialEndsAt &&
-            new Date(entitlements.trialEndsAt).getTime() < Date.now() ? (
-              <TrialRolledToFreeBanner
-                workspaceSlug={slug}
-                sessionTag={`${company.id}:${entitlements.trialEndsAt}`}
-              />
-            ) : null}
 
             <main className="mx-auto w-full max-w-6xl px-2 py-3 pb-20 md:px-6 md:py-10 md:pb-10">{children}</main>
             {/*

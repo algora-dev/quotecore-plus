@@ -55,8 +55,7 @@ export default async function QuoteSummaryPage({
     loadQuoteTaxes(id),
   ]);
 
-  // Activity card is a paid-tier feature. Trial keeps it (to drive upgrade
-  // pitch); Starter hides it; Growth+ has it. The flag is computed off the
+  // Activity card is a paid-tier feature. Starter hides it; Growth+ has it. The flag is computed off the
   // effective plan, so dunning-collapsed accounts (grace -> starter) hide
   // the card automatically.
   const entitlements = await loadCompanyEntitlements(quote.company_id);

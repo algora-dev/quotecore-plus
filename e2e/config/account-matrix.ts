@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Versioned Account & Fixture State Matrix
  *
  * Acceptance criterion 4.10: fixture-state drift produces a fixture-state error,
@@ -32,7 +32,7 @@ export const FIXTURE_MATRIX_VERSION = 1;
 export const FIXTURE_MATRIX: FixtureState[] = [
   {
     fixture: 'trial-a',
-    expectedPlan: 'Trial',
+    expectedPlan: 'Starter',
     onboardingComplete: true,
     expectedCompany: 'E2E Trial Company A',
     features: ['quotes', 'customers', 'invoices', 'orders', 'manual-takeoff'],
@@ -64,7 +64,7 @@ export const FIXTURE_MATRIX: FixtureState[] = [
   },
   {
     fixture: 'onboarding-e',
-    expectedPlan: 'Trial',
+    expectedPlan: 'Starter',
     onboardingComplete: false,
     expectedCompany: 'E2E Onboarding User E',
     features: ['onboarding'],

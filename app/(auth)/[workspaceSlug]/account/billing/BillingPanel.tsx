@@ -4,10 +4,9 @@
  * Billing tab - tier picker with View modals.
  *
  * Three jobs:
- *   1. Show the company's current plan + status + key dates (trial end,
- *      next period end, payment-failure timer).
- *   2. Render a card for every selectable plan. Trial is included and
- *      activates via a non-Stripe server action; Stripe plans go through
+ *   1. Show the company's current plan + status + key dates (next
+ *      period end, payment-failure timer).
+ *   2. Render a card for every selectable plan; Stripe plans go through
  *      Checkout. Coming-soon plans render as greyed-out cards.
  *   3. Provide a "View" modal per plan with the full feature breakdown.
  *      The modal has two buttons: Close + Purchase (which kicks off the
@@ -21,7 +20,6 @@ import {
   createCheckoutSession,
   createCustomerPortalSession,
   changePlan,
-  activateTrial,
   type BillingActionResult,
 } from './actions';
 
@@ -74,16 +72,11 @@ export interface BillingPlanInfo {
    */
   comingSoon: boolean;
   /**
-   * Stripe price configured for this environment. False for the trial
-   * tier (non-Stripe) and for tiers we haven't seeded yet. Drives the
+   * Stripe price configured for this environment. False for tiers we
+   * haven't seeded yet. Drives the
    * "Choose plan" button enabled state.
    */
   hasStripePrice: boolean;
-  /**
-   * True for the trial tier specifically. The card activates it via
-   * `activateTrial()` instead of Stripe checkout.
-   */
-  isTrial: boolean;
 }
 
 export interface BillingPanelProps {
@@ -95,10 +88,8 @@ export interface BillingPanelProps {
   subscriptionStatus: string;
   /** Whether the company already has a Stripe customer record. */
   hasStripeCustomer: boolean;
-  /** Whether the company has an ACTIVE Stripe subscription (drives trial-activate gating). */
+  /** Whether the company has an ACTIVE Stripe subscription (drives plan-switch gating). */
   hasActiveSubscription: boolean;
-  /** Trial end timestamp (ISO) if applicable. */
-  trialEndsAt: string | null;
   /** Current period end (ISO) when subscription is active. */
   currentPeriodEnd: string | null;
   /**
@@ -117,7 +108,7 @@ export interface BillingPanelProps {
   /** Storage usage. */
   storageUsedBytes: number;
   storageLimitBytes: number;
-  /** All available plans (including trial + coming-soon). */
+  /** All available plans (including coming-soon). */
   plans: BillingPlanInfo[];
 }
 
@@ -157,37 +148,6 @@ function formatDate(iso: string | null): string {
 }
 
 /**
- * Tri-state trial countdown.
- *   - `null` - not on a trial / no trial timestamp.
- *   - `{ state: 'ending-today', hoursLeft }` - trial ends within 24 hours.
- *   - `{ state: 'active', daysLeft }` - trial still has N>=1 days left.
- *   - `{ state: 'expired' }` - trial_ends_at is in the past.
- *
- * Replaces the old `trialDaysLeft` which clamped both “last day” and
- * “expired” at 0, conflating two very different UX states (smoke #1).
- */
-type TrialState =
-  | { state: 'active'; daysLeft: number }
-  | { state: 'ending-today'; hoursLeft: number }
-  | { state: 'expired' };
-
-function trialState(trialEndsAt: string | null): TrialState | null {
-  if (!trialEndsAt) return null;
-  const ends = new Date(trialEndsAt).getTime();
-  const now = Date.now();
-  const diffMs = ends - now;
-  if (diffMs <= 0) return { state: 'expired' };
-  const hoursLeft = diffMs / (60 * 60 * 1000);
-  if (hoursLeft <= 24) {
-    return { state: 'ending-today', hoursLeft: Math.max(1, Math.ceil(hoursLeft)) };
-  }
-  // Round UP so a sub at 13.5 days reads as “14 days”, matching the
-  // marketing promise and the user's mental model.
-  const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
-  return { state: 'active', daysLeft };
-}
-
-/**
  * Format a numeric cap with NULL = "Unlimited" and 0 = "-". Used inside
  * the View modal for component / flashing / order caps.
  */
@@ -206,7 +166,6 @@ export function BillingPanel(props: BillingPanelProps) {
   const [viewPlan, setViewPlan] = useState<BillingPlanInfo | null>(null);
 
   const checkoutFlag = searchParams.get('checkout');
-  const trialFlag = searchParams.get('trial');
   const changeFlag = searchParams.get('change');
 
   function handleResult(result: BillingActionResult) {
@@ -218,8 +177,8 @@ export function BillingPanel(props: BillingPanelProps) {
   }
 
   /**
-   * Single dispatch point for plan-card and modal-Purchase buttons. Routes
-   * trial -> activateTrial, paid -> Stripe checkout.
+   * Single dispatch point for plan-card and modal-Purchase buttons. All
+   * plans go through Stripe checkout.
    */
   function onChoose(plan: BillingPlanInfo) {
     if (plan.comingSoon) return;
@@ -227,9 +186,7 @@ export function BillingPanel(props: BillingPanelProps) {
     setError(null);
     setActivePlan(plan.code);
     startTransition(async () => {
-      const result = plan.isTrial
-        ? await activateTrial()
-        : await createCheckoutSession(plan.code);
+      const result = await createCheckoutSession(plan.code);
       handleResult(result);
       setActivePlan(null);
       setViewPlan(null);
@@ -248,7 +205,6 @@ export function BillingPanel(props: BillingPanelProps) {
     const params = new URLSearchParams(searchParams);
     params.delete('checkout');
     params.delete('session_id');
-    params.delete('trial');
     params.delete('change');
     const qs = params.toString();
     router.replace(qs ? `?${qs}` : '?', { scroll: false });
@@ -279,39 +235,14 @@ export function BillingPanel(props: BillingPanelProps) {
   const statusClass = statusBadgeClass[props.subscriptionStatus] || 'bg-slate-100 text-slate-700';
 
   // Pill label + colour (smoke #9, 2026-05-19). The raw
-  // subscription_status is too internal for a user-facing pill:
-  //   trialing + not expired → 'Trial Active' (blue)
-  //   trialing + expired (no paid sub) → 'Expired' (red)
-  //   anything else → humanised status name with default colour map
-  // trialExpiredNoSub is computed a few lines below; for tidiness keep the
-  // helper next to the badge map and recompute the predicate locally.
-  const _trialForPill = trialState(props.trialEndsAt);
-  const _isPillExpired =
-    props.subscriptionStatus === 'trialing'
-    && _trialForPill?.state === 'expired'
-    && !props.hasStripeCustomer;
-  const statusPillLabel: string =
-    props.subscriptionStatus === 'trialing'
-      ? _isPillExpired ? 'Expired' : 'Trial Active'
-      : props.subscriptionStatus.replace(/_/g, ' ');
-  const statusPillClass: string =
-    props.subscriptionStatus === 'trialing'
-      ? _isPillExpired ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-      : statusClass;
+  // subscription_status is too internal for a user-facing pill; humanise
+  // it. ('trialing' remains a valid legacy DB status - comped accounts.)
+  const statusPillLabel: string = props.subscriptionStatus.replace(/_/g, ' ');
+  const statusPillClass: string = statusClass;
 
   const storagePct = props.storageLimitBytes
     ? Math.min(100, Math.round((props.storageUsedBytes / props.storageLimitBytes) * 100))
     : 0;
-
-  const trial = trialState(props.trialEndsAt);
-  const isOnTrial = props.subscriptionStatus === 'trialing' && trial !== null;
-  // Distinguish “user is mid-trial right now” from “user was on a trial
-  // and it expired without a paid sub”. The status flag stays 'trialing'
-  // until the expire-trials cron flips it, but the user has effectively
-  // dropped to starter-effective - and (post-2026-05-19 migration
-  // 20260519120000) all writes are blocked too. We surface that as a hard
-  // expired-trial state in the UI.
-  const trialExpiredNoSub = isOnTrial && trial.state === 'expired' && !props.hasStripeCustomer;
 
   // “Cancelled - ending {date}” secondary pill. Renders alongside the
   // primary status pill when the user has scheduled cancellation at the
@@ -341,9 +272,7 @@ export function BillingPanel(props: BillingPanelProps) {
   const purchasedSortOrder =
     props.plans.find((p) => p.code === props.purchasedPlanCode)?.sortOrder ?? null;
   const showPlanDelta =
-    !trialExpiredNoSub
-    && props.effectivePlanCode !== props.purchasedPlanCode
-    && props.subscriptionStatus !== 'trialing'
+    props.effectivePlanCode !== props.purchasedPlanCode
     && effectiveSortOrder != null
     && purchasedSortOrder != null;
   const isEffectiveUpgrade =
@@ -368,7 +297,7 @@ export function BillingPanel(props: BillingPanelProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stripe / trial redirect banners */}
+      {/* Stripe redirect banners */}
       {changeFlag === 'upgraded' && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 md:p-4 flex items-start justify-between">
           <div>
@@ -419,29 +348,13 @@ export function BillingPanel(props: BillingPanelProps) {
           </button>
         </div>
       )}
-      {trialFlag === 'activated' && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 md:p-4 flex items-start justify-between">
-          <div>
-            <p className="text-sm font-medium text-blue-900">Trial activated.</p>
-            <p className="text-xs text-blue-700 mt-1">
-              You have 14 days to try every feature. After that you can pick a paid plan to keep going.
-            </p>
-          </div>
-          <button onClick={dismissBanner} className="text-xs text-blue-700 hover:underline">
-            Dismiss
-          </button>
-        </div>
-      )}
-
       {/* Current plan card */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Current plan</p>
             <h3 className="text-lg font-semibold text-slate-900 mt-1 capitalize">
-              {trialExpiredNoSub
-                ? 'Trial expired'
-                : props.effectivePlanCode.replace(/_/g, ' ')}
+              {props.effectivePlanCode.replace(/_/g, ' ')}
               {showPlanDelta && (
                 <span
                   className={`ml-2 text-sm font-normal ${
@@ -465,23 +378,6 @@ export function BillingPanel(props: BillingPanelProps) {
                 </span>
               )}
             </div>
-            {isOnTrial && trial.state === 'active' && (
-              <p className="mt-2 text-sm text-blue-700 font-medium">
-                {trial.daysLeft === 1
-                  ? '1 day left on your trial.'
-                  : `Trial ends in ${trial.daysLeft} days.`}
-              </p>
-            )}
-            {isOnTrial && trial.state === 'ending-today' && (
-              <p className="mt-2 text-sm text-amber-700 font-medium">
-                Trial ends today - choose a plan now to keep your data and continue using QuoteCore+.
-              </p>
-            )}
-            {trialExpiredNoSub && (
-              <p className="mt-2 text-sm text-red-700 font-medium">
-                Your trial has expired. Choose a plan now to keep your data and continue using QuoteCore+.
-              </p>
-            )}
           </div>
           {props.hasStripeCustomer && (
             <button
@@ -497,12 +393,6 @@ export function BillingPanel(props: BillingPanelProps) {
         </div>
 
         <dl className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          {props.trialEndsAt && isOnTrial && (
-            <div>
-              <dt className="text-xs text-slate-500">Trial ends</dt>
-              <dd className="font-medium text-slate-900">{formatDate(props.trialEndsAt)}</dd>
-            </div>
-          )}
           {props.currentPeriodEnd && (
             <div>
               <dt className="text-xs text-slate-500">Next billing</dt>
@@ -534,7 +424,7 @@ export function BillingPanel(props: BillingPanelProps) {
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
         <h3 className="text-base font-semibold text-slate-900">Plans</h3>
         <p className="text-sm text-slate-500 mt-1">
-          Click a plan to learn more. Trial is non-paid and runs for 14 days.
+          Click a plan to learn more. Every plan is backed by a 30-day money-back guarantee.
         </p>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {props.plans.map((plan) => {
@@ -549,20 +439,17 @@ export function BillingPanel(props: BillingPanelProps) {
             // and open a modal pointing the user at Manage Subscription so
             // they understand the path. The H-02 server-side guard still
             // refuses a fresh Checkout call as defence-in-depth.
-            const blockedByActiveSub = !plan.isTrial && props.hasActiveSubscription;
+            const blockedByActiveSub = props.hasActiveSubscription;
 
-            // Premium-style plan: no Stripe price, not coming soon, not trial.
+            // Premium-style plan: no Stripe price, not coming soon.
             // Shows "Contact Us" button that links to the support page.
-            const isContactUsPlan = !plan.comingSoon && !plan.isTrial && !plan.hasStripePrice;
+            const isContactUsPlan = !plan.comingSoon && !plan.hasStripePrice;
 
             const canChoose = !plan.comingSoon
               && !isCurrent
               && !isContactUsPlan
-              && (plan.isTrial
-                ? !props.hasActiveSubscription && !props.hasStripeCustomer
-                : plan.hasStripePrice);
+              && plan.hasStripePrice;
 
-            // Trial-specific button copy + reason for disabled state.
             const buttonLabel = isActive
               ? 'Redirecting…'
               : plan.comingSoon
@@ -571,10 +458,6 @@ export function BillingPanel(props: BillingPanelProps) {
               ? 'Your current plan'
               : isContactUsPlan
               ? 'Contact Us'
-              : plan.isTrial
-              ? props.hasStripeCustomer
-                ? 'Trial unavailable'
-                : 'Start 14-day trial'
               : blockedByActiveSub && plan.hasStripePrice
               ? `Switch to ${plan.displayName}`
               : plan.hasStripePrice
@@ -608,9 +491,9 @@ export function BillingPanel(props: BillingPanelProps) {
                   </div>
                   <p className="text-lg font-semibold text-slate-900 mt-1 flex items-baseline gap-2">
                     <span>
-                      {plan.isTrial ? 'Free' : plan.comingSoon ? '-' : formatPrice(plan.priceCentsMonthly)}
+                      {plan.comingSoon ? '-' : formatPrice(plan.priceCentsMonthly)}
                     </span>
-                    {!plan.isTrial && !plan.comingSoon && (() => {
+                    {!plan.comingSoon && (() => {
                       const original = formatOriginalPrice(plan.priceCentsMonthlyOriginal, plan.priceCentsMonthly);
                       return original ? (
                         <span className="text-sm font-medium text-slate-400 line-through">
@@ -661,9 +544,7 @@ export function BillingPanel(props: BillingPanelProps) {
                     }}
                     disabled={(!canChoose && !blockedByActiveSub && !isContactUsPlan) || pending}
                     title={
-                      plan.isTrial && props.hasStripeCustomer
-                        ? 'The free trial is only available to new accounts.'
-                        : blockedByActiveSub
+                      blockedByActiveSub
                         ? 'You already have an active subscription - click to manage.'
                         : plan.comingSoon
                         ? 'This tier is not available yet.'
@@ -671,15 +552,13 @@ export function BillingPanel(props: BillingPanelProps) {
                         ? 'You are already on this plan.'
                         : isContactUsPlan
                         ? 'Contact us to learn more about this plan.'
-                        : !plan.hasStripePrice && !plan.isTrial
+                        : !plan.hasStripePrice
                         ? 'This plan is not yet configured in Stripe for this environment.'
                         : undefined
                     }
                     className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
                       isContactUsPlan
                         ? 'bg-black text-white hover:bg-slate-800'
-                        : plan.isTrial
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-orange-600 text-white hover:bg-orange-700'
                     }`}
                   >
@@ -776,13 +655,11 @@ export function BillingPanel(props: BillingPanelProps) {
                 )}
                 <p className="text-xl font-semibold text-slate-900 mt-3 flex items-baseline gap-2">
                   <span>
-                    {viewPlan.isTrial
-                      ? 'Free (14 days)'
-                      : viewPlan.comingSoon
+                    {viewPlan.comingSoon
                       ? 'Pricing soon'
                       : formatPrice(viewPlan.priceCentsMonthly)}
                   </span>
-                  {!viewPlan.isTrial && !viewPlan.comingSoon && (() => {
+                  {!viewPlan.comingSoon && (() => {
                     const original = formatOriginalPrice(viewPlan.priceCentsMonthlyOriginal, viewPlan.priceCentsMonthly);
                     return original ? (
                       <span className="text-base font-medium text-slate-400 line-through">
@@ -908,17 +785,15 @@ export function BillingPanel(props: BillingPanelProps) {
                 // ALSO upgrade/downgrade. Active subscribers go through the
                 // in-app change flow (subscriptions.update via the confirm
                 // modal); fresh subscribers go through Checkout (onChoose).
-                const vBlockedByActiveSub = !viewPlan.isTrial && props.hasActiveSubscription;
+                const vBlockedByActiveSub = props.hasActiveSubscription;
                 const vIsCurrent = viewPlan.code === props.effectivePlanCode;
-                const vIsContactUsPlan = !viewPlan.comingSoon && !viewPlan.isTrial && !viewPlan.hasStripePrice;
+                const vIsContactUsPlan = !viewPlan.comingSoon && !viewPlan.hasStripePrice;
                 const vCanAct =
                   !viewPlan.comingSoon
                   && !vIsCurrent
                   && !vIsContactUsPlan
                   && !pending
-                  && (viewPlan.isTrial
-                    ? !props.hasStripeCustomer
-                    : viewPlan.hasStripePrice);
+                  && viewPlan.hasStripePrice;
                 const vIsUpgrade =
                   currentSortOrder != null ? viewPlan.sortOrder > currentSortOrder : true;
                 return (
@@ -940,22 +815,20 @@ export function BillingPanel(props: BillingPanelProps) {
                     }}
                     disabled={!vCanAct && !vBlockedByActiveSub && !vIsContactUsPlan}
                     title={
-                      viewPlan.isTrial && props.hasStripeCustomer
-                        ? 'The free trial is only available to new accounts.'
-                        : viewPlan.comingSoon
+                      viewPlan.comingSoon
                         ? 'This tier is not available yet.'
                         : vIsCurrent
                         ? 'You are already on this plan.'
                         : vIsContactUsPlan
                         ? 'Contact us to learn more about this plan.'
-                        : !viewPlan.hasStripePrice && !viewPlan.isTrial
+                        : !viewPlan.hasStripePrice
                         ? 'This plan is not yet configured in Stripe for this environment.'
                         : undefined
                     }
                     className={`px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-white ${
                       vIsContactUsPlan
                         ? 'bg-black hover:bg-slate-800'
-                        : viewPlan.isTrial ? 'bg-blue-600 hover:bg-blue-700' : 'bg-orange-600 hover:bg-orange-700'
+                        : 'bg-orange-600 hover:bg-orange-700'
                     }`}
                   >
                     {viewPlan.comingSoon
@@ -964,8 +837,6 @@ export function BillingPanel(props: BillingPanelProps) {
                       ? 'Current plan'
                       : vIsContactUsPlan
                       ? 'Contact Us'
-                      : viewPlan.isTrial
-                      ? props.hasStripeCustomer ? 'Trial unavailable' : 'Start trial'
                       : vBlockedByActiveSub
                       ? (vIsUpgrade ? `Upgrade to ${viewPlan.displayName}` : `Switch to ${viewPlan.displayName}`)
                       : 'Purchase'}

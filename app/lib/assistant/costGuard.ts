@@ -77,7 +77,7 @@ export async function checkCostBudget(
   // Per-plan monthly token budget (Pricing Tier v2). Reads the effective
   // plan's `monthly_ai_tokens`. NULL = unlimited (premium); a missing
   // lookup falls back to the flat COST_LIMITS ceiling so a DB blip never
-  // grants unlimited spend. Free 600k / Trial 1M / Starter 1.5M / Pro 3M.
+  // grants unlimited spend. Free 600k / Starter 1.5M / Pro 3M.
   const monthlyCap = await resolveMonthlyTokenCap(input.companyId);
   if (monthlyCap !== null && usage.monthlyCompanyTokens >= monthlyCap) {
     return { allowed: false, exceeded: 'monthlyCompany' };

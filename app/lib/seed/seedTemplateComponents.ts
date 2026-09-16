@@ -4,7 +4,7 @@
  * TRADE-AWARE (2026-06-08): we seed ONLY the components for the company's
  * selected default trade - Roofing (8) or Generic (9) - into the company's
  * default collection, not both. This matches user expectation ("components
- * based on the trade I picked") and keeps the count under the Starter/trial
+ * based on the trade I picked") and keeps the count under the Starter
  * component cap (10).
  *
  * CAP BYPASS (2026-06-08): seeding goes through the SECURITY DEFINER RPC

@@ -3,13 +3,12 @@
  *
  * Renders ABOVE every workspace page when the company's subscription needs
  * the user's attention. Stays SILENT when subscription_status is healthy
- * (active, no failures, no trial nearing end). The whole component returns
+ * (active, no failures). The whole component returns
  * null in that case, so layout impact is zero.
  *
  * Decisions are made on the SERVER (this is a server component). Banner
  * copy and severity derive from the entitlements snapshot:
  *
- *   - trialing + days_left <= 3:    soft amber "trial ending"
  *   - past_due:                     amber "payment failed; update card"
  *   - grace:                        amber "limited access; pay to restore"
  *   - pending_data_purge:           red "data will be removed in N days"
@@ -126,50 +125,10 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
         ctaLabel: 'View billing',
       };
     }
-    case 'trialing': {
-      // Smoke #1 (2026-05-19): three distinct states for a trialing
-      // company. daysUntil() returns whole days; we want hour-grained
-      // detection of the “ending today” window and a distinct expired
-      // state. Use the raw timestamp.
-      if (!ent.trialEndsAt) return null;
-      const ends = new Date(ent.trialEndsAt).getTime();
-      const now = Date.now();
-      const diffMs = ends - now;
-
-      // Expired: the account now rolls into the active FREE tier (no longer a
-      // hard read-only lock). The friendly, dismissible "you're on Free now"
-      // notice is handled by TrialRolledToFreeBanner, so this persistent banner
-      // stays silent for the expired-trial case to avoid a duplicate/red scare.
-      if (diffMs <= 0) {
-        return null;
-      }
-
-      const hoursLeft = diffMs / (60 * 60 * 1000);
-      if (hoursLeft <= 24) {
-        return {
-          tone: 'amber',
-          title: 'Trial ends today.',
-          description:
-            'Choose a plan now to keep your data and continue using QuoteCore+.',
-          ctaLabel: 'Choose a plan',
-        };
-      }
-
-      const daysLeft = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
-      if (daysLeft <= 3) {
-        return {
-          tone: 'amber',
-          title: `Trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
-          description:
-            'Pick a plan to keep your work, quotes and email sends after the trial ends.',
-          ctaLabel: 'Upgrade',
-        };
-      }
-
-      return null;
-    }
+    /* 'trialing' remains a valid legacy DB status (comped accounts only);
+       no banner is shown for it - trials no longer exist for new signups. */
     case 'active':
-    case 'trialing' /* unreached when no countdown */:
+    case 'trialing':
     default:
       return null;
   }

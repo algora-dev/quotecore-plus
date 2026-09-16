@@ -336,7 +336,7 @@ export default function FreeRoofTakeoffPage() {
           <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
             <strong className="text-slate-900">I want to go from measure to quote to job management.</strong> That&rsquo;s
             the full{' '}
-            <Link href="/free-trial" className="text-[#BD4A1A] underline underline-offset-2">QuoteCore+ workflow</Link>.
+            <Link href="/signup" className="text-[#BD4A1A] underline underline-offset-2">QuoteCore+ workflow</Link>.
           </li>
         </ul>
       </section>

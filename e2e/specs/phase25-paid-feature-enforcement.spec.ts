@@ -1,7 +1,7 @@
 /**
  * P2.5-02 — Server-side paid-feature enforcement (HARDENED)
  *
- * Hits API routes directly as trial and paid users.
+ * Hits API routes directly as baseline (unpaid) and paid users.
  * Asserts not just 4xx but also that NO side effects occur.
  *
  * @smoke @security @entitlements
@@ -29,7 +29,7 @@ async function dismissCookies(page: Page) {
 
 test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlements', () => {
 
-  test('trial user navigating to paid routes gets safe response', async ({ loginAs, assertNoServerErrors }) => {
+  test('baseline user navigating to paid routes gets safe response', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('trial-a');
 
     for (const route of PAID_ROUTES) {
@@ -42,7 +42,7 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
     }
   });
 
-  test('trial user cannot create quotes beyond trial limits', async ({ loginAs, assertNoServerErrors }) => {
+  test('baseline user cannot create quotes beyond plan limits', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('trial-a');
 
     await page.goto(`${BASE_URL}/${slug}/quotes`);
@@ -55,7 +55,7 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
     assertNoServerErrors();
   });
 
-  test('trial user direct URL to non-existent quote returns 404, not 500', async ({ loginAs, assertNoServerErrors }) => {
+  test('baseline user direct URL to non-existent quote returns 404, not 500', async ({ loginAs, assertNoServerErrors }) => {
     const { page, slug } = await loginAs('trial-a');
 
     await page.goto(`${BASE_URL}/${slug}/quotes/00000000-0000-0000-0000-000000000000`);
@@ -79,7 +79,7 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
     }
   });
 
-  test('trial user AI scan API returns 4xx, not 200 with results', async ({ loginAs, assertNoServerErrors }) => {
+  test('baseline user AI scan API returns 4xx, not 200 with results', async ({ loginAs, assertNoServerErrors }) => {
     const { page } = await loginAs('trial-a');
 
     const response = await page.request.post(
@@ -102,7 +102,7 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
     assertNoServerErrors();
   });
 
-  test('trial user AI scan API does not create a job or debit points', async ({ loginAs, assertNoServerErrors }) => {
+  test('baseline user AI scan API does not create a job or debit points', async ({ loginAs, assertNoServerErrors }) => {
     const { page } = await loginAs('trial-a');
 
     // Check AI quota before attempt
@@ -133,7 +133,7 @@ test.describe('P2.5-02: Server-side paid-feature enforcement @security @entitlem
     assertNoServerErrors();
   });
 
-  test('trial user document parse API is denied or quota-limited', async ({ loginAs, assertNoServerErrors }) => {
+  test('baseline user document parse API is denied or quota-limited', async ({ loginAs, assertNoServerErrors }) => {
     const { page } = await loginAs('trial-a');
 
     const response = await page.request.post(

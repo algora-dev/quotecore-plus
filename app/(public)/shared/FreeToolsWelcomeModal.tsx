@@ -9,7 +9,7 @@ import Link from 'next/link';
  *
  * Reassures the user that:
  * - Sign up is free, no card needed
- * - 14-day trial with full features
+ * - Paid plans from $19/mo with a 30-day money-back guarantee
  * - Their document is saved and waiting for them
  * - It only takes 1 minute
  * - No strings attached
@@ -54,7 +54,7 @@ export function FreeToolsWelcomeModal({ refSlug, hasDraft }: FreeToolsWelcomeMod
 
   const features = [
     'No card needed - sign up in 1 minute',
-    'Free 14-day trial with full features',
+    'Full access on your chosen plan (30-day money-back guarantee)',
     'Save, edit, and send your documents',
     'Use all AI features inside the app',
     'Create unlimited quotes, orders, and invoices',

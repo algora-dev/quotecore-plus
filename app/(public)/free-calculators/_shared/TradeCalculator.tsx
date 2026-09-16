@@ -226,7 +226,7 @@ export function TradeCalculator({ config }: { config: TradeConfig }) {
               onCta={shared.popupTrigger?.onCta}
               ctaText={shared.popupTrigger?.stage === 'smart-to-signup'
                 ? (!authUser
-                    ? 'Start free trial to save this component'
+                    ? 'Save to QuoteCore+ (plans from /mo)'
                     : tierInfo?.tier === 3
                       ? 'Save this component to your workspace'
                       : 'Complete your sign up to save this component')

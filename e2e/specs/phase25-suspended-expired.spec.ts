@@ -1,7 +1,7 @@
-﻿/**
- * P2.5-06 â€” Suspended/expired account enforcement after reload
+/**
+ * P2.5-06 — Suspended/expired account enforcement after reload
  *
- * For admin-prepared suspended/expired/trial-expired E2E states:
+ * For admin-prepared suspended/canceled-unpaid E2E states:
  * - start with a normal user session
  * - reload and direct-navigate to protected feature routes
  * - assert correct restriction state and safe denial
@@ -54,7 +54,7 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
     await page.goto(`${BASE_URL}/${slug}/quotes`);
     await page.waitForLoadState('networkidle');
 
-    // Should be restricted â€” either redirected, shown a suspension notice,
+    // Should be restricted — either redirected, shown a suspension notice,
     // or the "New Quote" button is absent/disabled
     const url = page.url();
 
@@ -76,7 +76,7 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
         if (await submitBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
           await submitBtn.click().catch(() => {});
           await page.waitForTimeout(2000);
-          // Should not have created a quote â€” either error or redirect
+          // Should not have created a quote — either error or redirect
         }
       }
     }
@@ -121,13 +121,13 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
     }
   });
 
-  test('expired trial account: read-only access to existing data', async ({ freshPage, assertNoServerErrors }) => {
-    test.skip(!HAS_EXPIRED_ACCOUNT, 'No expired trial E2E account configured');
+  test('canceled unpaid account: read-only access to existing data', async ({ freshPage, assertNoServerErrors }) => {
+    test.skip(!HAS_EXPIRED_ACCOUNT, 'No canceled-unpaid E2E account configured');
 
     const page = await freshPage();
     const slug = process.env.E2E_EXPIRED_SLUG!;
 
-    // Login as expired trial account
+    // Login as canceled unpaid account
     await page.goto(`${BASE_URL}/login`);
     await page.locator('input[name="email"]').fill(process.env.E2E_EXPIRED_EMAIL!);
     await page.locator('input[name="password"]').fill(process.env.E2E_EXPIRED_PASSWORD!);
@@ -142,8 +142,8 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
     assertNoServerErrors();
   });
 
-  test('expired trial account: no new mutations succeed', async ({ freshPage, assertNoServerErrors }) => {
-    test.skip(!HAS_EXPIRED_ACCOUNT, 'No expired trial E2E account configured');
+  test('canceled unpaid account: no new mutations succeed', async ({ freshPage, assertNoServerErrors }) => {
+    test.skip(!HAS_EXPIRED_ACCOUNT, 'No canceled-unpaid E2E account configured');
 
     const page = await freshPage();
     const slug = process.env.E2E_EXPIRED_SLUG!;
@@ -170,7 +170,7 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
     const status = mutationResponse.status();
     expect(status).toBeGreaterThanOrEqual(400);
     // Note: if the API returns 500 due to requireCompanyContext throwing
-    // for expired trials, that's a known issue. The key assertion is that
+    // for canceled accounts, that's a known issue. The key assertion is that
     // no mutation succeeded (not 200/201/202).
     expect(status).toBeLessThan(500);
   });
@@ -185,7 +185,7 @@ test.describe('P2.5-06: Suspended/expired account enforcement @entitlements @rea
     expect(page.url()).toContain(slug);
     expect(page.url()).toContain('/quotes');
 
-    // No 5xx â€” paid account is fully functional
+    // No 5xx — paid account is fully functional
     assertNoServerErrors();
   });
 });

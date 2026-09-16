@@ -203,7 +203,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'comparisons',
     title: 'QuoteCore+ Reviews: Is It Legit and Who Is It For?',
     description:
-      'Wondering if QuoteCore+ is legit? Here\u2019s what the platform does, who it is for, how the free trial works, and how it helps construction businesses manage the workflow from quote to material orders, job management and invoicing.',
+      'Wondering if QuoteCore+ is legit? Here\u2019s what the platform does, who it is for, how paid plans work, and how it helps construction businesses manage the workflow from quote to material orders, job management and invoicing.',
     date: '2026-05-27',
     lastModified: '2026-05-27',
   },
@@ -266,7 +266,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     category: 'comparisons',
     title: 'Best Quoting Software NZ (2026): 6 Tools Compared',
     description:
-      'Compare QuoteCore+, Tradify, Fergus and ServiceM8 on pricing, features and NZ trade fit. Free tools and free trial to get you quoting faster.',
+      'Compare QuoteCore+, Tradify, Fergus and ServiceM8 on pricing, features and NZ trade fit. Free tools and paid plans from $19/mo to get you quoting faster.',
     date: '2026-07-15',
     lastModified: '2026-08-28',
   },
@@ -301,7 +301,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
       { question: 'What is the best roofing quoting software for UK contractors in 2026?', answer: 'The best option depends on your workflow. QuoteCore+ is the strongest for contractors quoting from plans who need a full workflow from measurement to quote, material orders, job management and invoicing. Sleepless Tradesman is a strong choice for sole traders doing high volumes of repair work who want AI-assisted quoting from customer photos. Tradify works well for small teams that need job management alongside quoting.' },
       { question: 'How long does it take to send a roofing quote with software?', answer: 'With a platform like QuoteCore+, most contractors send their first quote within minutes of entering their measurements. The goal is to quote the same day as the site visit - ideally before leaving. The delay in most quoting processes is not measurement but the admin that comes after it.' },
       { question: 'Do I need to be technical to use roofing quoting software?', answer: 'No. Modern quoting software is designed to be usable from day one. If you can use email and a computer, you can use most platforms on this list. The best ones require no setup beyond entering your pricing templates.' },
-      { question: 'Is there free roofing quoting software for UK roofers?', answer: 'QuoteCore+ offers a 14-day free trial with no credit card required. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.' },
+      { question: 'Is there free roofing quoting software for UK roofers?', answer: 'QuoteCore+ offers free tools with no account required, and paid plans from $19/mo with a 30-day money-back guarantee. Sleepless Tradesman has a free tier with a limited number of quotes per month. Most other platforms on this list do not offer a free option, though some include a trial period.' },
       { question: 'What should a professional roofing quote include?', answer: 'A professional roofing quote should include: a clear scope of work, itemised materials and labour, scaffold costs as a separate line item, your company details and accreditations, a validity period, and a way for the customer to accept or decline.' },
       { question: 'Can roofing quoting software help me win more jobs?', answer: 'Yes - indirectly. Research suggests the first contractor to respond wins a significant proportion of competitive quote situations. Software that helps you quote faster, and that produces a more professional output, improves your position in both dimensions.' },
     ],
@@ -656,7 +656,7 @@ export const BLOG_POSTS: BlogPostMeta[] = [
     date: '2026-08-18',
     lastModified: '2026-08-18',
     faqs: [
-      { question: 'Is the QuoteCore+ Roof Pitch Calculator extension free?', answer: 'Yes. The extension is completely free with no paid tier, no trial limit and no account required. It installs from the Chrome Web Store like any other extension.' },
+      { question: 'Is the QuoteCore+ Roof Pitch Calculator extension free?', answer: 'Yes. The extension is completely free with no paid tier, no usage limit and no account required. It installs from the Chrome Web Store like any other extension.' },
       { question: 'Does the roof pitch calculator extension need an account?', answer: 'No. It is a self-contained popup calculator that opens when you click the toolbar icon. It does not ask for any personal details and does not connect to an account.' },
       { question: 'What data does the roof pitch extension access?', answer: 'None beyond its own popup. The extension does not request permissions to read your browsing history, tabs, or website data. It is a calculator that opens on click and closes when you are done.' },
       { question: 'Does the extension work in Edge, Brave, Arc or Opera?', answer: 'Yes. Any Chromium-based browser can install extensions from the Chrome Web Store, including Edge, Brave, Arc and Opera.' },

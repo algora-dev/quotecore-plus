@@ -79,7 +79,6 @@ const PLAN_EDITABLE_FIELDS = [
 const CRON_REGISTRY: CronJobInfo[] = [
   { name: 'prune_rate_limits', path: '/api/cron/prune-rate-limits', method: 'GET', source: 'vercel', schedule: 'Daily 4:17 AM' },
   { name: 'sweep_orphan_objects', path: '/api/cron/sweep-orphan-objects', method: 'GET', source: 'vercel', schedule: 'Daily 5:33 AM' },
-  { name: 'expire_trials', path: '/api/cron/expire-trials', method: 'GET', source: 'vercel', schedule: 'Daily 6:09 AM' },
   { name: 'process_billing_lifecycle', path: '/api/cron/process-billing-lifecycle', method: 'GET', source: 'vercel', schedule: 'Daily 6:22 AM' },
   { name: 'expire_quotes', path: '/api/cron/expire-quotes', method: 'GET', source: 'vercel', schedule: 'Every hour' },
   { name: 'dispatch_scheduled_messages', path: '/api/cron/dispatch-scheduled-messages', method: 'GET', source: 'supabase_pg_cron', schedule: 'Every 30 min (Vercel)' },

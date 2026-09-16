@@ -1040,7 +1040,7 @@ function POGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I manage suppliers in QuoteCore+?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ gives you a complete document and business management platform in one place - track and store all your purchase orders, quotes, and invoices, send automatic follow-ups to suppliers, and auto-update order statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), supplier database, and online order management. <Link href="/signup" className="text-[#BD4A1A] font-medium">Start a free trial &rarr;</Link></p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Yes. QuoteCore+ gives you a complete document and business management platform in one place - track and store all your purchase orders, quotes, and invoices, send automatic follow-ups to suppliers, and auto-update order statuses. You get Smart Components&#8482; for fast reusable line items, an advanced digital takeoff and measuring feature that works for all industries (roofing, construction, concrete, landscaping and more), supplier database, and online order management. <Link href="/signup" className="text-[#BD4A1A] font-medium">Plans from $19/mo &rarr;</Link></p></div>
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">Can I use different currencies?</summary>
@@ -1048,7 +1048,7 @@ function POGeneratorForm() {
               </details>
               <details className="rounded-xl border border-slate-200 bg-white">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-900 hover:text-[#BD4A1A] transition select-none">How do I remove the QuoteCore+ branding and create more free purchase orders?</summary>
-                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free purchase orders and remove the QuoteCore+ branding, or sign up to the full QuoteCore+ app for higher limits and loads of extra features with a free trial.</p></div>
+                <div className="px-4 pb-4"><p className="text-sm text-slate-600">Sign up at the top of the page to gain more free purchase orders and remove the QuoteCore+ branding, or subscribe to the full QuoteCore+ app (plans from $19/mo, 30-day money-back guarantee) for higher limits and loads of extra features.</p></div>
               </details>
             </div>
           </div>

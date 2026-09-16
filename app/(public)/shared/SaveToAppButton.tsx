@@ -264,7 +264,7 @@ export function SaveToAppButton({ documentType, documentData }: SaveToAppButtonP
                 }}
                 className="w-full text-center px-5 py-2.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all"
               >
-                {authUser ? 'Complete sign up' : 'Start free trial'}
+                {authUser ? 'Complete sign up' : 'Save to QuoteCore+'}
               </button>
               <button
                 onClick={closeModal}

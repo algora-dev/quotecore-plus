@@ -93,7 +93,7 @@ const faqLd = {
       name: 'Do I need to create an account?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'No account is needed. You can create and download a professional quote immediately. If you want to save quotes, track approvals, or import components from QuoteCore+, you can sign up for a free trial.',
+        text: 'No account is needed. You can create and download a professional quote immediately. If you want to save quotes, track approvals, or import components from QuoteCore+, you can subscribe (plans from $19/mo).',
       },
     },
     {
@@ -117,7 +117,7 @@ const faqLd = {
 
 const faqs = [
   { q: 'Is the quote generator really free?', a: 'Yes. Create unlimited quotes, download as PDF, and send to customers. No watermark, no hidden fees.' },
-  { q: 'Do I need to create an account?', a: 'No account is needed. Create and download a professional quote immediately. Sign up for a free trial if you want to save quotes, track approvals, or import components.' },
+  { q: 'Do I need to create an account?', a: 'No account is needed. Create and download a professional quote immediately. Subscribe (plans from $19/mo) if you want to save quotes, track approvals, or import components.' },
   { q: 'Can I add my logo and business details?', a: 'Yes. Add your business name, logo, contact details, tax rates, and terms. Your quote looks like it came from your own software.' },
   { q: 'What format is the downloaded quote?', a: 'Quotes download as a professional PDF document, ready to email or print.' },
 ];
