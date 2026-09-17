@@ -54,7 +54,7 @@ const faqs = [
   },
   {
     question: "What are Smart Components™?",
-    answer: "Smart Components™ are reusable parts of your quoting workflow. You can create components that include materials, labour, waste allowances, measurements, drawings, images, calculations and pricing rules, then reuse them in future quotes. They help each quote make the next quote faster.",
+    answer: "Think of a Smart Component as one row or line on a spreadsheet - it holds all the information about a product or service (materials, labour, waste allowances, measurements, drawings, images and pricing rules), including the complex calculations. The difference is that QuoteCore+ does the calculating for you, so you need no spreadsheet knowledge at all. If you currently price with a spreadsheet, you can upload it and convert your rows into Smart Components in bulk, then reuse them in every future quote.",
   },
 ];
 

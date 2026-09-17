@@ -12,7 +12,7 @@ const TOC = [
   { id: 'who-we-are', label: '1. Who we are' },
   { id: 'business-service', label: '2. Business service' },
   { id: 'accounts-and-workspaces', label: '3. Accounts and Workspaces' },
-  { id: 'trials-and-free-access', label: '4. Trials and free access' },
+  { id: 'trials-and-free-access', label: '4. Free access and paid Plans' },
   { id: 'paid-subscriptions', label: '5. Paid subscriptions' },
   { id: 'prices-and-plan-changes', label: '6. Prices and Plan changes' },
   { id: 'cancellation-and-refunds', label: '7. Cancellation and refunds' },
@@ -47,7 +47,7 @@ export default function TermsOfServicePage() {
         These Terms of Service (&ldquo;Terms&rdquo;) govern access to and use of the QuoteCore<span className="text-orange-500">+</span> websites, applications, free tools and related services.
       </p>
       <p>
-        Please read these Terms carefully. By creating an account, starting a trial, purchasing a subscription, accepting an invitation to a workspace, or otherwise using QuoteCore<span className="text-orange-500">+</span>, you agree to be bound by them.
+        Please read these Terms carefully. By creating an account, purchasing a subscription, accepting an invitation to a workspace, or otherwise using QuoteCore<span className="text-orange-500">+</span>, you agree to be bound by them.
       </p>
       <p>
         If you use QuoteCore<span className="text-orange-500">+</span> for a company, partnership, sole-trader business or other organisation, you confirm that you have authority to accept these Terms on its behalf. In that case, &ldquo;you&rdquo; and &ldquo;your&rdquo; refer to that organisation and its authorised users.
@@ -105,17 +105,11 @@ export default function TermsOfServicePage() {
       </ul>
       <p>Where reasonably possible, we will explain the restriction and provide a way to restore access.</p>
 
-      <h2 id="trials-and-free-access">4. Trials and free access</h2>
-      <p>We may offer free trials, free Plans or promotional access.</p>
-      <p>Unless stated otherwise at signup:</p>
-      <ul>
-        <li>the standard trial period is 14 days;</li>
-        <li>no payment details are required to begin the trial; and</li>
-        <li>the trial does not automatically become a paid subscription unless you actively select a paid Plan and authorise payment.</li>
-      </ul>
-      <p>At the end of a trial, access will move to a limited free state with restricted features, storage and usage limits. The applicable limits will be explained at signup or before the trial ends.</p>
-      <p>We may change or withdraw trials and free Plans for future users. Where reasonably possible, we will allow an existing trial to run for the period originally offered.</p>
-      <p>Free and trial access may have different storage, support, usage and feature limits from paid Plans.</p>
+      <h2 id="trials-and-free-access">4. Free access and paid Plans</h2>
+      <p>We do not offer a free trial of the app. Instead, we provide unlimited free access to our free tools, which run in your browser and do not require an account, signup or payment details.</p>
+      <p>The free tools let you use individual tools (such as the takeoff builder, roofing calculator, quote generator and others) at no cost. The app itself is the paid version: it combines all the tools in one place and adds extra features and capabilities, available on the paid Plans described in section 5. Every paid Plan is backed by the 30-day money-back guarantee described in those Terms or on the pricing page.</p>
+      <p>We believe this offers more value and less friction than a free trial: there is nothing to sign up for, no card required, and you only pay for the app if and when you choose a Plan.</p>
+      <p>We may change, add or withdraw free tools for future users. Free tools may have different support, usage and feature limits from paid Plans.</p>
 
       <h2 id="paid-subscriptions">5. Paid subscriptions</h2>
       <h3>5.1 Plans</h3>
@@ -573,7 +567,7 @@ export default function TermsOfServicePage() {
       <p>This exclusion does not apply where such loss is a direct and reasonably foreseeable result of a breach for which liability cannot lawfully be excluded.</p>
       <h3>23.2 General liability cap</h3>
       <p>Subject to sections 23.3 and 23.4, each party&apos;s total aggregate liability arising out of or relating to the Service or these Terms during any rolling 12-month period will not exceed the fees paid or payable by you for the Service during the 12 months immediately preceding the event giving rise to liability.</p>
-      <p>For a claim arising during a free trial or free Plan, our aggregate liability will not exceed NZD 100.</p>
+      <p>For a claim arising from use of the free tools or other unpaid access, our aggregate liability will not exceed NZD 100.</p>
       <h3>23.3 Data, confidentiality and security cap</h3>
       <p>Our total aggregate liability for breach of confidentiality, breach of applicable data-protection obligations, or a security incident caused by our failure to use reasonable safeguards will not exceed two times (2x) the fees paid or payable by you for the Service during the 12 months immediately preceding the event giving rise to liability.</p>
       <h3>23.4 Liability that is not limited</h3>

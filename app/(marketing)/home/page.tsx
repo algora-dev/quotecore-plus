@@ -87,7 +87,7 @@ export default function HomePage() {
     {
       number: "02",
       title: "Pricing",
-      body: "Smart Components allow you to store all your material, labour, waste, and pricing logic. Build them once, use them in every quote! Smart components let you digitally configure how you already work!",
+      body: "Smart Components allow you to store all your material, labour, waste, and pricing logic. Think of each one as a row on your current spreadsheet, except QuoteCore+ does the calculations for you. Build them once, use them in every quote!",
       images: [
         { src: "/how-it-works-smart-components-editor.png", label: "Component editor" },
       ],
@@ -352,7 +352,7 @@ export default function HomePage() {
                   <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>
                 </div>
                 <h3 className="mt-4 text-base font-semibold text-zinc-950">Smart Components&#8482;</h3>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">Reusable rules for materials, labour, waste, pricing and drawings. Build the logic once, reuse it on every job.</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">Like rows on your spreadsheet, but reusable: each Smart Component holds the materials, labour, waste, pricing and drawings for a job, and the app does the maths for you.</p>
               </div>
             </div>
           </div>
@@ -453,7 +453,7 @@ export default function HomePage() {
                   Smart Components&#8482;
                 </h2>
                 <p className="mt-5 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
-                  Smart Components™ store the materials, labour, waste allowances, pricing, formulas, and business rules behind the work you quote regularly. Build the logic once, then reuse it across every future job.
+                  Think of a Smart Component™ as one row or line on the spreadsheet you already use - it holds all the materials, labour, waste allowances, pricing, formulas and business rules for a product or service, including the complex calculations. The difference is QuoteCore+ does the calculating for you, so you need no spreadsheet knowledge at all. You can even upload your current spreadsheet and convert its rows into Smart Components in bulk. Build the logic once, then reuse it across every future job.
                 </p>
                 <p className="mt-4 text-base leading-7 text-zinc-600 sm:text-lg sm:leading-8">
                   Every quote starts from your own proven logic, not a blank page.
