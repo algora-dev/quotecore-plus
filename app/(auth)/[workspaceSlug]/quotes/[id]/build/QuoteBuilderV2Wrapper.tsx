@@ -63,18 +63,23 @@ export function QuoteBuilderV2Wrapper({ companyMeasurementSystem, companyDefault
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>(stepToPhase[props.initialStep] || 'areas');
 
-  // Sync with URL changes
-  // Sync the active phase from the URL search params. React 19 warns
-  // about setState inside effects - here the URL is an external source we
-  // mirror; the equality guard prevents render loops.
+  // Sync the active phase from the URL ONLY on browser back/forward
+  // navigation. Blanket syncing from searchParams caused a one-time phase
+  // reset a few seconds after page load (components snapping back to
+  // collapsed): in-app phase changes write the URL via raw
+  // history.replaceState, so the router's searchParams can hold a STALE
+  // ?step= value; when the router later re-emits it (prefetch settle,
+  // refresh, etc.) the effect yanked the phase back. popstate is the only
+  // legitimate reason the URL changes without handlePhaseChange running.
   useEffect(() => {
-    const step = searchParams.get('step') || 'roof-areas';
-    const newPhase = stepToPhase[step] || 'areas';
-    if (newPhase !== phase) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPhase(newPhase);
-    }
-  }, [searchParams, phase]);
+    const onPopState = () => {
+      const step = new URLSearchParams(window.location.search).get('step') || 'roof-areas';
+      const newPhase = stepToPhase[step] || 'areas';
+      setPhase(prev => (newPhase !== prev ? newPhase : prev));
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   // Handle phase changes from QuoteBuilder.
   // We update the URL via window.history.replaceState instead of router.push/replace.
