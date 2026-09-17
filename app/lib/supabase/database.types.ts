@@ -1970,7 +1970,7 @@ export type Database = {
           improvement_wish: string | null
           liked_features: string[]
           source: string
-          stopping_reason: string | null
+          stopping_reason: string[] | null
           stopping_reason_other: string | null
           wants_response: boolean
         }
@@ -1984,7 +1984,7 @@ export type Database = {
           improvement_wish?: string | null
           liked_features?: string[]
           source?: string
-          stopping_reason?: string | null
+          stopping_reason?: string[] | null
           stopping_reason_other?: string | null
           wants_response?: boolean
         }
@@ -1998,7 +1998,7 @@ export type Database = {
           improvement_wish?: string | null
           liked_features?: string[]
           source?: string
-          stopping_reason?: string | null
+          stopping_reason?: string[] | null
           stopping_reason_other?: string | null
           wants_response?: boolean
         }

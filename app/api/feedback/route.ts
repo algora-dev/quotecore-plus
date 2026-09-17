@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const VALID_REASONS = new Set([
@@ -58,11 +58,12 @@ export async function POST(req: NextRequest) {
       ? anythingStoppingRaw
       : null;
 
-  const stoppingReasonRaw = clean(body.stoppingReason, 50);
-  const stoppingReason =
-    anythingStopping === "yes" && VALID_REASONS.has(stoppingReasonRaw)
-      ? stoppingReasonRaw
-      : null;
+  const stoppingReasonsRaw = Array.isArray(body.stoppingReasons)
+    ? body.stoppingReasons
+    : [];
+  const stoppingReasons = stoppingReasonsRaw.filter(
+    (v): v is string => typeof v === "string" && VALID_REASONS.has(v)
+  );
 
   const stoppingReasonOther = clean(body.stoppingReasonOther, 2000) || null;
   const featureComment = clean(body.featureComment, 2000) || null;
@@ -99,9 +100,12 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         email,
         anything_stopping: anythingStopping,
-        stopping_reason: stoppingReason,
+        stopping_reason:
+          anythingStopping === "yes" && stoppingReasons.length > 0
+            ? stoppingReasons
+            : null,
         stopping_reason_other:
-          stoppingReason === "other" ? stoppingReasonOther : null,
+          stoppingReasons.includes("other") ? stoppingReasonOther : null,
         liked_features: likedFeatures,
         disliked_features: dislikedFeatures,
         feature_comment: featureComment,
@@ -164,3 +168,4 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+

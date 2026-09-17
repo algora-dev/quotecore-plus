@@ -7,7 +7,7 @@ export type FeedbackEntry = {
   email: string | null;
   wantsResponse: boolean;
   anythingStopping: string | null;
-  stoppingReason: string | null;
+  stoppingReason: string[] | null;
   stoppingReasonOther: string | null;
   likedFeatures: string[];
   dislikedFeatures: string[];
@@ -132,9 +132,13 @@ export function FeedbackList({ entries }: { entries: FeedbackEntry[] }) {
                       label="Anything stopping you?"
                       value={
                         e.anythingStopping === "yes"
-                          ? `Yes - ${REASON_LABELS[e.stoppingReason ?? "other"] ?? "Unknown"}${
-                              e.stoppingReasonOther ? `: ${e.stoppingReasonOther}` : ""
-                            }`
+                          ? `Yes - ${
+                              e.stoppingReason && e.stoppingReason.length > 0
+                                ? e.stoppingReason
+                                    .map((r) => REASON_LABELS[r] ?? r)
+                                    .join(", ")
+                                : "reason not given"
+                            }${e.stoppingReasonOther ? `: ${e.stoppingReasonOther}` : ""}`
                           : e.anythingStopping === "no"
                             ? "No, all good"
                             : "Skipped"

@@ -21,10 +21,6 @@ const FEATURES: { key: string; label: string }[] = [
     key: "catalog_converter",
     label: "Catalog (spreadsheet) to components converter",
   },
-  { key: "supplier_tools", label: "Supplier pricing tools & enquiries" },
-  { key: "orders_hub", label: "Orders hub & job tracking" },
-  { key: "pdf_quotes", label: "Instant branded PDF quotes" },
-  { key: "team_workspace", label: "Team workspace & roles" },
 ];
 
 const STOPPING_REASONS: { key: string; label: string }[] = [
@@ -75,7 +71,7 @@ function OptionButton({
 export function FeedbackForm() {
   const [step, setStep] = useState<Step>("stopping");
   const [anythingStopping, setAnythingStopping] = useState<"yes" | "no" | null>(null);
-  const [stoppingReason, setStoppingReason] = useState<string | null>(null);
+  const [stoppingReasons, setStoppingReasons] = useState<string[]>([]);
   const [stoppingReasonOther, setStoppingReasonOther] = useState("");
   const [liked, setLiked] = useState<string[]>([]);
   const [disliked, setDisliked] = useState<string[]>([]);
@@ -94,8 +90,10 @@ export function FeedbackForm() {
     setStep(value === "yes" ? "reason" : "liked");
   }
 
-  function pickReason(key: string) {
-    setStoppingReason(key);
+  function toggleReason(key: string) {
+    setStoppingReasons((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
   }
 
   function toggleFeature(list: string[], setList: (v: string[]) => void, key: string) {
@@ -112,7 +110,7 @@ export function FeedbackForm() {
         body: JSON.stringify({
           email: withEmail || null,
           anythingStopping,
-          stoppingReason,
+          stoppingReasons,
           stoppingReasonOther,
           likedFeatures: liked,
           dislikedFeatures: disliked,
@@ -181,14 +179,26 @@ export function FeedbackForm() {
           <h1 className="text-2xl font-semibold text-slate-900">
             What's getting in the way?
           </h1>
+          <p className="text-sm text-slate-500">Select as many as apply, or skip.</p>
           <div className="space-y-2">
             {STOPPING_REASONS.map((r) => (
-              <OptionButton key={r.key} selected={stoppingReason === r.key} onClick={() => pickReason(r.key)}>
-                {r.label}
+              <OptionButton key={r.key} selected={stoppingReasons.includes(r.key)} onClick={() => toggleReason(r.key)}>
+                <span className="flex items-center gap-3">
+                  <span
+                    className={`w-4 h-4 rounded-[4px] border flex-shrink-0 flex items-center justify-center text-[10px] font-bold ${
+                      stoppingReasons.includes(r.key)
+                        ? "bg-[#FF6B35] border-[#FF6B35] text-white"
+                        : "border-slate-300 bg-white text-transparent"
+                    }`}
+                  >
+                    ✓
+                  </span>
+                  {r.label}
+                </span>
               </OptionButton>
             ))}
           </div>
-          {stoppingReason === "other" && (
+          {stoppingReasons.includes("other") && (
             <textarea
               value={stoppingReasonOther}
               onChange={(e) => setStoppingReasonOther(e.target.value)}
@@ -209,7 +219,7 @@ export function FeedbackForm() {
             <button
               type="button"
               onClick={() => setStep("liked")}
-              disabled={!stoppingReason}
+              disabled={stoppingReasons.length === 0}
               className="inline-flex items-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] disabled:opacity-50"
             >
               Continue
