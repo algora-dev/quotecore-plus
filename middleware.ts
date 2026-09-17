@@ -124,6 +124,7 @@ const PUBLIC_PATHS = [
                    //  in the URL is the access gate.
   '/file',         // Hosted attachment downloads (token-gated). Already
                    //  HMAC-verified at the route level.
+  '/feedback',     // Public feedback questionnaire (email campaign + site-wide).
 ];
 
 // Paths reachable when the user has an AAL1 session but still needs to clear 2FA.
