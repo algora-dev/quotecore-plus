@@ -77,8 +77,23 @@ function pickVariant(ent: CompanyEntitlements): Variant | null {
     !!ent.adminOverridePlanCode &&
     !!ent.adminOverrideUntil &&
     new Date(ent.adminOverrideUntil).getTime() > Date.now();
-  const compActive = !!ent.compUntil && new Date(ent.compUntil).getTime() > Date.now();
+  const compUntilMs = ent.compUntil ? new Date(ent.compUntil).getTime() : null;
+  const compActive = compUntilMs !== null && compUntilMs > Date.now();
   if ((overrideActive || compActive) && ent.subscriptionStatus !== 'suspended') {
+    // Comped accounts (e.g. legacy trial users comped to Pro): warn during
+    // the final 14 days so expiry never comes as a surprise - at comp_until
+    // they drop to the paywall automatically. Admin overrides stay silent.
+    if (compActive && !overrideActive) {
+      const daysLeft = Math.ceil((compUntilMs! - Date.now()) / 86_400_000);
+      if (daysLeft <= 14) {
+        return {
+          tone: 'amber',
+          title: 'Free Pro access ending soon.',
+          description: `Your complimentary Pro access ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Choose a plan to keep full access - your quotes and data stay safe either way.`,
+          ctaLabel: 'View plans',
+        };
+      }
+    }
     return null;
   }
 

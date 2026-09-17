@@ -61,6 +61,32 @@ function PlanBadge({ code, status, hasSub }: { code: string | null; status?: str
   );
 }
 
+function CompBadge({ until }: { until: string }) {
+  const daysLeft = Math.ceil((new Date(until).getTime() - Date.now()) / 86_400_000);
+  if (daysLeft < 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium bg-red-100 text-red-700 border border-red-200">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+        Comp expired
+      </span>
+    );
+  }
+  const urgent = daysLeft <= 14;
+  return (
+    <span
+      title={`Comped until ${new Date(until).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${
+        urgent
+          ? 'bg-amber-100 text-amber-700 border-amber-200'
+          : 'bg-slate-100 text-slate-600 border-slate-200'
+      }`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${urgent ? 'bg-amber-500' : 'bg-slate-400'}`} />
+      Comp: {daysLeft} day{daysLeft === 1 ? '' : 's'}
+    </span>
+  );
+}
+
 export function UsersPanel() {
   const router = useRouter();
   const [search, setSearch] = useState('');
@@ -167,7 +193,14 @@ export function UsersPanel() {
                   <td className="px-4 py-3 font-medium text-slate-900">{u.email}</td>
                   <td className="px-4 py-3 text-slate-600">{u.fullName ?? <span className="text-slate-400">-</span>}</td>
                   <td className="px-4 py-3 text-slate-700">{u.companyName}</td>
-                  <td className="px-4 py-3"><PlanBadge code={u.planCode} status={u.subscriptionStatus} hasSub={!!u.stripeSubscriptionId} /></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <PlanBadge code={u.planCode} status={u.subscriptionStatus} hasSub={!!u.stripeSubscriptionId} />
+                      {u.compUntil && (
+                        <CompBadge until={u.compUntil} />
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
