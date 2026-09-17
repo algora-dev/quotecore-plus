@@ -111,19 +111,107 @@ export default async function PaywallPage() {
               Get in touch &rarr;
             </Link>
           </div>
+        </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-6 md:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition">
-            <p className="text-sm text-slate-700">
-              <span className="font-semibold text-slate-900">Done-For-You setup</span> - we build
-              your component library, templates, and workflows for you. $499 / $999.
+        {/* Done-For-You packages - two cards mirroring the marketing page.
+            Link-only (no checkout yet): buyers contact us first, so these
+            send them to /done-for-you-setup with everything they need. */}
+        <div className="mt-10">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+              Don&apos;t want to set it up yourself?
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Let us build your entire estimating system for you - and skip the setup risk
+              completely. Both packages include <span className="font-semibold text-slate-900">6 months of QuoteCore+ Pro ($240 value)</span> plus
+              hands-on support while you get up and running.
             </p>
-            <Link
-              href="/done-for-you-setup"
-              prefetch={false}
-              className="text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap"
-            >
-              Learn more &rarr;
-            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 max-w-3xl mx-auto">
+            {/* $499 - Done-For-You Estimating Setup */}
+            <div className="flex flex-col rounded-xl border-2 border-slate-200 bg-white p-6 hover:border-[#FF6B35] hover:shadow-lg transition-all">
+              <div className="flex items-baseline justify-between">
+                <h3 className="font-semibold text-slate-900">Done-For-You Setup</h3>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-slate-900">$499</span>
+                  <span className="text-xs text-slate-400"> one-off</span>
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                Best for smaller setups or a focused range of products and services.
+              </p>
+              <ul className="mt-4 space-y-2 flex-1">
+                {[
+                  'Up to 20 custom components built for you',
+                  'Your material pricing configured',
+                  'Labour & waste rules configured',
+                  'Personalised training + 6 months support',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                    <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                6 months QuoteCore+ Pro included
+              </div>
+              <Link
+                href="/done-for-you-setup"
+                prefetch={false}
+                className="mt-5 inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+              >
+                Learn more &rarr;
+              </Link>
+            </div>
+
+            {/* $999 - Complete Done-For-You Setup */}
+            <div className="flex flex-col rounded-xl border-2 border-[#FF6B35] bg-orange-50/40 p-6 hover:shadow-lg transition-all relative">
+              <span className="absolute -top-2.5 left-6 rounded-full bg-[#FF6B35] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                Most complete
+              </span>
+              <div className="flex items-baseline justify-between">
+                <h3 className="font-semibold text-slate-900">Complete Done-For-You</h3>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-slate-900">$999</span>
+                  <span className="text-xs text-slate-400"> one-off</span>
+                </div>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                Best for larger or more detailed estimating systems.
+              </p>
+              <ul className="mt-4 space-y-2 flex-1">
+                {[
+                  'Up to 60 custom components built for you',
+                  'Everything in the $499 setup, plus:',
+                  'Larger material & pricing setup',
+                  'Help organising larger catalogues',
+                  'Detailed workflow configuration',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
+                    <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#FF6B35]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 inline-flex items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                6 months QuoteCore+ Pro included
+              </div>
+              <Link
+                href="/done-for-you-setup"
+                prefetch={false}
+                className="mt-5 inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              >
+                Learn more &rarr;
+              </Link>
+            </div>
           </div>
         </div>
 
