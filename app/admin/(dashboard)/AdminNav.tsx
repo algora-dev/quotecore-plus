@@ -13,6 +13,7 @@ const ADMIN_NAV: { label: string; href: string; soon?: boolean }[] = [
   { label: 'Admin accounts', href: '/admin/admins' },
   { label: 'Support tickets', href: '/admin/support-tickets' },
   { label: 'Suppressions', href: '/admin/suppressions' },
+  { label: 'Feedback', href: '/admin/feedback' },
   { label: 'Users', href: '/admin/users' },
   { label: 'Free Tool Usage', href: '/admin/free-tool-usage' },
   { label: 'Roof Components', href: '/admin/roof-components' },

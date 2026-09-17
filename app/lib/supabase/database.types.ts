@@ -1026,7 +1026,7 @@ export type Database = {
           notify_on_recipient_view?: boolean
           onboarding_completed_at?: string | null
           payment_details?: Json | null
-          plan_code?: string
+          plan_code: string
           plan_started_at?: string
           seat_count?: number
           slug?: string | null
@@ -1037,7 +1037,7 @@ export type Database = {
           stripe_mode?: string | null
           stripe_price_id?: string | null
           stripe_subscription_id?: string | null
-          subscription_status?: string
+          subscription_status: string
           trial_ends_at?: string | null
           trial_started_at?: string | null
           updated_at?: string
@@ -1958,6 +1958,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feedback_submissions: {
+        Row: {
+          anything_stopping: string | null
+          created_at: string
+          disliked_features: string[]
+          email: string | null
+          feature_comment: string | null
+          id: string
+          improvement_wish: string | null
+          liked_features: string[]
+          source: string
+          stopping_reason: string | null
+          stopping_reason_other: string | null
+          wants_response: boolean
+        }
+        Insert: {
+          anything_stopping?: string | null
+          created_at?: string
+          disliked_features?: string[]
+          email?: string | null
+          feature_comment?: string | null
+          id?: string
+          improvement_wish?: string | null
+          liked_features?: string[]
+          source?: string
+          stopping_reason?: string | null
+          stopping_reason_other?: string | null
+          wants_response?: boolean
+        }
+        Update: {
+          anything_stopping?: string | null
+          created_at?: string
+          disliked_features?: string[]
+          email?: string | null
+          feature_comment?: string | null
+          id?: string
+          improvement_wish?: string | null
+          liked_features?: string[]
+          source?: string
+          stopping_reason?: string | null
+          stopping_reason_other?: string | null
+          wants_response?: boolean
+        }
+        Relationships: []
       }
       flashing_library: {
         Row: {

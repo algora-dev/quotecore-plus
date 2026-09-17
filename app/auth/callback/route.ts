@@ -127,6 +127,9 @@ export async function GET(request: Request) {
               slug: companySlug,
               default_currency: 'NZD',
               default_tax_rate: 15.0,
+              // Paid-only flow defaults (locked 2026-09-16)
+              plan_code: 'starter',
+              subscription_status: 'canceled',
             })
             .select('id, slug')
             .single();
