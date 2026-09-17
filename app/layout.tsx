@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieBanner } from "./components/CookieBanner";
+import Script from "next/script";
 import { PillShimmerScript } from "./components/PillShimmerScript";
 import { SITE_URL } from "@/lib/seo/site-url";
 import { htmlLang } from "@/lib/seo/dual-domain";
@@ -107,6 +108,14 @@ export default async function RootLayout({
         {/* Drives the .pill-shimmer hover animation: one full sweep per
             pointerenter, plays to completion even if hover ends mid-sweep. */}
         <PillShimmerScript />
+        {/* Microsoft Clarity analytics (heatmaps / session replay). */}
+        <Script id="ms-clarity" strategy="afterInteractive">
+          {`(function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "yjsu5zv8xr");`}
+        </Script>
       </body>
     </html>
   );
