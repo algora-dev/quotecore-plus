@@ -69,6 +69,59 @@ const faqs = [
   },
 ];
 
+function SmartComponentsShowcase() {
+  const [open, setOpen] = useState(false);
+  const alt = "Smart Components™ - spreadsheet rows mapped into a QuoteCore+ component library with pricing, labour and waste";
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-label="View the Smart Components spreadsheet import image larger"
+        className="block w-full cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-out hover:scale-[1.02]"
+      >
+        <img
+          loading="lazy"
+          decoding="async"
+          width={2048}
+          height={891}
+          src="/smart-components-mapping.png"
+          alt={alt}
+          className="h-auto w-full"
+        />
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Smart Components spreadsheet import"
+          onClick={() => setOpen(false)}
+        >
+          <div className="relative w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <img src="/smart-components-mapping.png" alt={alt} className="h-auto w-full rounded-xl bg-white shadow-2xl" />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Close image"
+              className="absolute -right-3 -top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black text-white shadow-lg hover:bg-zinc-800"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [activeStep, setActiveStep] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -503,39 +556,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right: overlapping laptop mockups */}
-              <div className="flex-1 flex items-center justify-center">
-                <div className="relative min-h-[190px] w-full max-w-xl sm:min-h-[260px] lg:min-h-[340px]">
-                  <div
-                    className="absolute left-1/2 top-0 w-full -translate-x-1/2 transition-transform duration-500 ease-out hover:scale-[1.03] hover:-translate-y-2 md:left-auto md:-right-8 md:-top-8 md:w-[102%] md:translate-x-0"
-                    style={{ zIndex: 1 }}
-                  >
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      width={1200}
-                      height={750}
-                      src="/smart-components-laptop-1.png"
-                      alt="Smart Components™ - component list"
-                      className="w-full h-auto"
-                    />
-                  </div>
-                  <div
-                    className="absolute -left-12 -bottom-28 hidden w-[82%] transition-transform duration-500 ease-out hover:scale-[1.03] hover:translate-y-[-8px] md:block"
-                    style={{ zIndex: 2 }}
-                  >
-                    <img
-                      loading="lazy"
-                      decoding="async"
-                      width={1200}
-                      height={750}
-                      src="/smart-components-laptop-2.png"
-                      alt="Smart Components™ - component editor"
-                      className="w-full h-auto"
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Right: spreadsheet-to-components image, click to enlarge */}
+              <SmartComponentsShowcase />
             </div>
           </div>
         </section>
