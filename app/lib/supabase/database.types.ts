@@ -545,18 +545,21 @@ export type Database = {
         Row: {
           company_id: string
           enabled: boolean
+          quota_monthly_turns: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           company_id: string
           enabled?: boolean
+          quota_monthly_turns?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           company_id?: string
           enabled?: boolean
+          quota_monthly_turns?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -801,6 +804,64 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_usage_events: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          model: string | null
+          run_id: string
+          status: string
+          tokens_in: number
+          tokens_out: number
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          run_id: string
+          status: string
+          tokens_in?: number
+          tokens_out?: number
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          run_id?: string
+          status?: string
+          tokens_in?: number
+          tokens_out?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_usage_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_usage_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: true
+            referencedRelation: "smart_assistant_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_usage_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -7285,6 +7346,14 @@ export type Database = {
           ok: boolean
           run_id: string
           status: string
+        }[]
+      }
+      sa_check_turn_quota: {
+        Args: { p_company_id: string }
+        Returns: {
+          allowed: boolean
+          cap: number
+          used: number
         }[]
       }
       sa_finish_run: {

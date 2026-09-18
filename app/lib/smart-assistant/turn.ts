@@ -42,6 +42,8 @@ export function refusalStatus(errorCode: string): number {
       return 401;
     case 'run_in_progress':
       return 409;
+    case 'quota_exceeded':
+      return 429;
     case 'flag_off':
       return 404;
     case 'conversation_not_found':
