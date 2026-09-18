@@ -40,13 +40,13 @@ const T = {
   phase1Exit: 5455,
   phase2Enter: 5855,
   // Main line holds alone, then the Phase 3 line appears underneath.
-  phase2Support: 7355,
+  phase2Support: 7605,
   // "you already" glows from halfway through the hold, fading out as the
   // intro exits — the fade IS the cue that the animation is ending.
-  p3Glow: 8255,
+  p3Glow: 8505,
   // Both lines hold so everything can be read...
-  phase2Exit: 9155,
-  finish: 9905,
+  phase2Exit: 9405,
+  finish: 10155,
 } as const;
 
 const WORDS = ["MEASURE", "PRICE", "QUOTE"] as const;
@@ -510,10 +510,10 @@ const nzahSceneCss = `
   /* ---------- Phase 1 supporting line ---------- */
   .nzah-p1-sub {
     margin: 1.75rem 0 0;
-    font-size: clamp(1rem, 2.2vw, 1.5rem);
+    font-size: clamp(1.05rem, 2.3vw, 1.6rem);
     font-weight: 600;
     line-height: 1.4;
-    color: #18181b;
+    color: #3f3f46;
     text-align: center;
     opacity: 0;
     transform: translateY(10px);
