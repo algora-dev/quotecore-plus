@@ -66,10 +66,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(body, { status: 200 });
   }
 
-  // Admitted. Execute and ALWAYS finish the run, even on pipeline failure.
+  // Admitted. Resolve the user's company for config + tool scoping.
+  const { data: profile } = await supabase
+    .from('users')
+    .select('company_id')
+    .eq('id', session.user.id)
+    .maybeSingle();
+  if (!profile?.company_id) {
+    return NextResponse.json({ error: 'No company context' }, { status: 403 });
+  }
+
+  // Execute and ALWAYS finish the run, even on pipeline failure.
   let pipeline: { content: string; tokensIn: number; tokensOut: number };
   try {
-    pipeline = await runPipeline(admit.runId, message);
+    pipeline = await runPipeline(admit.runId, message, {
+      supabase,
+      companyId: profile.company_id,
+      conversationId,
+    });
   } catch (err) {
     const errorCode = 'pipeline_error';
     await supabase.rpc('sa_finish_run', {

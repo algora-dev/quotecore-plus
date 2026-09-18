@@ -53,19 +53,33 @@ export function refusalStatus(errorCode: string): number {
   }
 }
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { runOrchestratorTurn } from './orchestrator';
+
+export interface PipelineContext {
+  supabase: SupabaseClient;
+  companyId: string;
+  conversationId: string;
+}
+
 /**
  * The assistant pipeline seam. Admitted runs MUST reach sa_finish_run even on
  * failure, or the conversation locks until the 5-minute stale sweep frees it.
- * Orchestrator port (protocol + bounded authority tools) replaces this stub.
+ * Executes the real orchestrator (config load, bounded authority, tool loop).
  */
 export async function runPipeline(
-  _runId: string,
-  _userMessage: string,
+  runId: string,
+  userMessage: string,
+  ctx: PipelineContext,
 ): Promise<{ content: string; tokensIn: number; tokensOut: number }> {
-  return {
-    content:
-      '(Smart Assistant is in early testing - the conversation engine is not connected yet.)',
-    tokensIn: 0,
-    tokensOut: 0,
-  };
+  const result = await runOrchestratorTurn({
+    supabase: ctx.supabase,
+    companyId: ctx.companyId,
+    conversationId: ctx.conversationId,
+    runId,
+    userMessage,
+  });
+  // Provider reports combined usage; split properly when the usage ledger
+  // lands (slice 7).
+  return { content: result.content, tokensIn: result.totalTokens, tokensOut: 0 };
 }
