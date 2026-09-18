@@ -7273,6 +7273,40 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: undefined
       }
+      sa_admit_run: {
+        Args: {
+          p_client_request_id: string
+          p_conversation_id: string
+          p_user_message: string
+        }
+        Returns: {
+          error_code: string
+          message_id: string
+          ok: boolean
+          run_id: string
+          status: string
+        }[]
+      }
+      sa_finish_run: {
+        Args: {
+          p_assistant_content?: string
+          p_error_code?: string
+          p_run_id: string
+          p_status: string
+          p_tokens_in?: number
+          p_tokens_out?: number
+        }
+        Returns: boolean
+      }
+      sa_get_state: {
+        Args: { p_conversation_id: string }
+        Returns: {
+          active_run_id: string
+          conversation_id: string
+          messages: Json
+          run_status: string
+        }[]
+      }
       sa_user_company_id: { Args: never; Returns: string }
       save_takeoff_atomic: {
         Args: { p_payload: Json; p_quote_id: string }
