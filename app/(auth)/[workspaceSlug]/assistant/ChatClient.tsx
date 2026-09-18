@@ -26,8 +26,10 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
   // (consistent quality across devices; the browser speech engine varied).
   const [listening, setListening] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [levels, setLevels] = useState<number[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const analyserCleanupRef = useRef<(() => void) | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   // Pending logical send per conversation: id + exact text. Retained across
   // unknown outcomes (network/5xx) so a retry replays idempotently; cleared
@@ -93,6 +95,34 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
       const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : undefined;
       const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
       chunksRef.current = [];
+      // Live waveform: AnalyserNode feeds real mic levels to the input strip
+      // while recording, so the user can see the phone is listening.
+      try {
+        const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          const src = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          src.connect(analyser);
+          const buf = new Uint8Array(analyser.frequencyBinCount);
+          let raf = 0;
+          const tick = () => {
+            analyser.getByteFrequencyData(buf);
+            const bars: number[] = [];
+            const step = Math.max(1, Math.floor(buf.length / 24));
+            for (let i = 0; i < 24; i++) bars.push(buf[i * step] / 255);
+            setLevels(bars);
+            raf = requestAnimationFrame(tick);
+          };
+          tick();
+          analyserCleanupRef.current = () => {
+            cancelAnimationFrame(raf);
+            try { ctx.close(); } catch { /* already closed */ }
+            setLevels([]);
+          };
+        }
+      } catch { /* waveform is cosmetic - recording still works without it */ }
       // Hard cap: stop automatically after 2 minutes.
       const cap = setTimeout(() => {
         if (recorder.state === 'recording') recorder.stop();
@@ -102,6 +132,8 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
       };
       recorder.onstop = async () => {
         clearTimeout(cap);
+        analyserCleanupRef.current?.();
+        analyserCleanupRef.current = null;
         stream.getTracks().forEach((t) => t.stop());
         setListening(false);
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
@@ -210,7 +242,7 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
   }
 
   return (
-    <div data-clarity-mask="true" className={embedded ? 'flex h-full w-full bg-white overflow-hidden' : 'flex h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-white overflow-hidden'}>
+    <div data-clarity-mask="true" className={embedded ? 'flex h-full w-full bg-white overflow-hidden' : 'flex h-[calc(100dvh-9rem)] rounded-xl border border-slate-200 bg-white overflow-hidden md:h-[calc(100vh-8rem)]'}>
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-slate-200">
         <div className="p-3">
@@ -318,6 +350,18 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
 
         <div className="border-t border-slate-200 bg-white p-3">
           <div className="flex items-end gap-2 rounded-2xl border border-slate-300 p-1.5 focus-within:border-orange-500">
+          {listening ? (
+            <div className="flex h-[52px] flex-1 items-center gap-[3px] px-2" aria-label="Recording - tap the mic to stop">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="w-[3px] flex-1 max-w-[3px] rounded-full bg-[#FF6B35]"
+                  style={{ height: `${Math.max(10, (levels[i] ?? 0.06) * 44)}px` }}
+                />
+              ))}
+              <span className="ml-2 shrink-0 text-xs font-semibold text-[#FF6B35]">Listening - tap mic to stop</span>
+            </div>
+          ) : (
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -332,29 +376,32 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
             maxLength={16000}
             rows={1}
             aria-label={`Message ${assistantName}`}
-            className="max-h-28 min-h-[42px] flex-1 resize-none border-0 bg-transparent px-2.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:opacity-50"
+            className="max-h-28 min-h-[52px] flex-1 resize-none border-0 bg-transparent px-2.5 py-3 text-base text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:opacity-50"
           />
+          )}
           <button
             type="button"
             onClick={() => void toggleMic()}
             disabled={transcribing}
             aria-label={listening ? 'Stop recording' : transcribing ? 'Transcribing' : 'Start voice input'}
             title={listening ? 'Tap to stop and transcribe' : transcribing ? 'Transcribing...' : 'Voice input'}
-            className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl transition-colors ${listening ? 'animate-pulse bg-[#FF6B35] text-white' : transcribing ? 'bg-slate-100 text-slate-400' : 'text-slate-400 hover:bg-slate-100'}`}
+            className={`flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl transition-all sm:h-11 sm:w-11 ${listening ? 'scale-105 bg-red-500 text-white shadow-lg' : transcribing ? 'bg-slate-100 text-slate-400' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+            style={{ height: 52, width: 52 }}
           >
             {transcribing ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4" /><circle cx="12" cy="12" r="4" /></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4" /><circle cx="12" cy="12" r="4" /></svg>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0014 0M12 17v4" /></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={listening ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0014 0M12 17v4" /></svg>
             )}
           </button>
           <button
             onClick={() => void send()}
             disabled={!activeId || busy || !input.trim()}
             aria-label="Send message"
-            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-black text-white transition hover:opacity-90 disabled:opacity-40"
+            className="flex shrink-0 items-center justify-center rounded-2xl bg-black text-white transition hover:opacity-90 disabled:opacity-40 sm:h-11 sm:w-11"
+            style={{ height: 52, width: 52 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
           </button>
           </div>
         </div>
