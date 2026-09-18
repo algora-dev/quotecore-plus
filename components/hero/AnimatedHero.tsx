@@ -90,24 +90,35 @@ export default function AnimatedHero() {
   }, []);
   const menuAlwaysRef = useRef(false);
 
+  const introWrapRef = useRef<HTMLDivElement>(null);
+
   const finishIntro = () => {
     if (animDone) return;
     setAnimDone(true);
     setMenuVisible(true);
-    // Only return the user to the top if they haven't scrolled into the page
-    // (e.g. they're already watching the video — leave them exactly there).
     if (window.scrollY < 200) {
+      // Still near the top: smooth handoff as designed.
       window.scrollTo({ top: 0, behavior: "smooth" });
+      timersRef.current.push(
+        window.setTimeout(() => {
+          document.body.classList.remove("qc-refined-hero-active");
+          setHeroGone(true);
+        }, 850)
+      );
+    } else {
+      // User has already scrolled into the page (e.g. down at the video).
+      // Collapse the in-flow intro synchronously and compensate the scroll
+      // offset so their on-screen position never changes — no jump, no yank.
+      const wrap = introWrapRef.current;
+      const h = wrap?.offsetHeight ?? window.innerHeight;
+      if (wrap) {
+        wrap.style.height = "0px";
+        wrap.style.overflow = "hidden";
+        window.scrollBy(0, -h);
+      }
+      document.body.classList.remove("qc-refined-hero-active");
+      setHeroGone(true);
     }
-    // Let the exit animation read, then remove the intro entirely —
-    // the homepage's own hero section follows. The intro is a fixed
-    // overlay, so removing it never shifts the page layout.
-    timersRef.current.push(
-      window.setTimeout(() => {
-        document.body.classList.remove("qc-refined-hero-active");
-        setHeroGone(true);
-      }, 850)
-    );
   };
 
   // Skip button: cancel remaining intro and drop straight into the page
@@ -213,9 +224,7 @@ export default function AnimatedHero() {
         <BlogHeader />
       </div>
 
-      {/* Fixed overlay: covers the viewport while playing, page flows beneath.
-          Removal at the end causes zero layout shift. */}
-      <div className={`nzah-intro-fixed ${introExit ? "nzah-intro-exit" : ""}`}>
+      <div ref={introWrapRef} className={introExit ? "nzah-intro-exit" : ""}>
         <section
           className="nzah-hero relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-white"
           aria-label="QuoteCore+ — measure, price and quote in one place"
@@ -377,14 +386,6 @@ const nzahShellCss = `
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     background-color: rgba(255, 255, 255, 0.72) !important;
-  }
-
-  /* Intro is a fixed overlay above the page (below the fixed menu) */
-  .nzah-intro-fixed {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    background: #fff;
   }
 
   /* Intro handoff: whole intro slides up and out (homepage hero follows) */

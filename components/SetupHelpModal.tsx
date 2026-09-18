@@ -8,7 +8,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Two paths: Done-For-You setup help, or free tools (no commitment).
  *
  * Trigger: 10s after the visitor first scrolls, OR 2s after the hero
- * video ends (whichever comes first). Never during the video.
+ * video ends (whichever comes first). Never during the video: playing
+ * the video showcase cancels any pending trigger.
  * Shows once per session; suppressed after close.
  * Homepage only (only rendered from home/page.tsx).
  */
@@ -69,9 +70,18 @@ export default function SetupHelpModal() {
     };
     window.addEventListener("qc:hero-video-ended", onVideoEnded);
 
+    // Path 3: visitor started watching the video showcase — cancel pending
+    // triggers so the modal never interrupts an active viewer.
+    const onVideoPlay = () => {
+      timers.forEach(clearTimeout);
+      timers.length = 0;
+    };
+    window.addEventListener("qc:video-play", onVideoPlay);
+
     return () => {
       window.removeEventListener("scroll", onFirstScroll);
       window.removeEventListener("qc:hero-video-ended", onVideoEnded);
+      window.removeEventListener("qc:video-play", onVideoPlay);
       timers.forEach(clearTimeout);
     };
   }, [show]);

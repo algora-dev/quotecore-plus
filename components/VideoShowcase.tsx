@@ -16,6 +16,8 @@ export default function VideoShowcase() {
 
   const startPlayback = () => {
     setPlaying(true);
+    // Let popups know a visitor is actively watching — don't interrupt them.
+    window.dispatchEvent(new Event("qc:video-play"));
   };
 
   return (
