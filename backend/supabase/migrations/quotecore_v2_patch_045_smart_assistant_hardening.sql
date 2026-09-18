@@ -105,7 +105,7 @@ BEGIN
   IF FOUND THEN
     -- Payload conflict: same id, different content (md5 legacy rows compatible).
     v_payload := md5(p_user_message);
-    IF r.payload_hash IS DISTINCT FROM v_payload THEN
+    IF v_existing_run.payload_hash IS DISTINCT FROM v_payload THEN
       RETURN QUERY SELECT false, 'refused', NULL::uuid, NULL::uuid, 'request_id_conflict';
     END IF;
     RETURN QUERY SELECT true, 'duplicate', v_existing_run.id, NULL::uuid, NULL::text;
