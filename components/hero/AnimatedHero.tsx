@@ -96,29 +96,16 @@ export default function AnimatedHero() {
     if (animDone) return;
     setAnimDone(true);
     setMenuVisible(true);
-    if (window.scrollY < 200) {
-      // Still near the top: smooth handoff as designed.
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      timersRef.current.push(
-        window.setTimeout(() => {
-          document.body.classList.remove("qc-refined-hero-active");
-          setHeroGone(true);
-        }, 850)
-      );
-    } else {
-      // User has already scrolled into the page (e.g. down at the video).
-      // Collapse the in-flow intro synchronously and compensate the scroll
-      // offset so their on-screen position never changes — no jump, no yank.
-      const wrap = introWrapRef.current;
-      const h = wrap?.offsetHeight ?? window.innerHeight;
-      if (wrap) {
-        wrap.style.height = "0px";
-        wrap.style.overflow = "hidden";
-        window.scrollBy(0, -h);
-      }
-      document.body.classList.remove("qc-refined-hero-active");
-      setHeroGone(true);
+    // NO programmatic scrolling — the user stays exactly where they are.
+    // The intro collapses to zero height instantly; the browser's native
+    // scroll anchoring keeps the visible content stable.
+    const wrap = introWrapRef.current;
+    if (wrap) {
+      wrap.style.height = "0px";
+      wrap.style.overflow = "hidden";
     }
+    document.body.classList.remove("qc-refined-hero-active");
+    setHeroGone(true);
   };
 
   // Skip button: cancel remaining intro and drop straight into the page
