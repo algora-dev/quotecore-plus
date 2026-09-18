@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { SmartAssistantConfigPanel, type ConfigDoc } from './SmartAssistantConfigPanel';
+import { AddToPhone } from './AddToPhone';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,11 +43,16 @@ export default async function SmartAssistantConfigPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">Smart Assistant</h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Configure your workspace assistant: identity, behaviour rules and
-          searchable knowledge documents.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900">Smart Assistant</h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Configure your workspace assistant: identity, behaviour rules and
+              searchable knowledge documents.
+            </p>
+          </div>
+          <AddToPhone />
+        </div>
       </div>
 
       <SmartAssistantConfigPanel
