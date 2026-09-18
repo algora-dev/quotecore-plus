@@ -7,15 +7,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *
  * Two paths: Done-For-You setup help, or free tools (no commitment).
  *
- * Trigger: 10s after the visitor first scrolls, OR 2s after the hero
- * video ends (whichever comes first). Never during the video: playing
- * the video showcase cancels any pending trigger.
+ * Trigger: 22.5s after the visitor first scrolls (lets the intro play and
+ * the user browse first), OR 2s after the hero video ends (whichever comes
+ * first). Never during the video: playing the video showcase cancels any
+ * pending trigger.
  * Shows once per session; suppressed after close.
  * Homepage only (only rendered from home/page.tsx).
  */
 
 const SESSION_KEY = "qc-setup-modal-shown";
-const SCROLL_DELAY_MS = 10_000;
+const SCROLL_DELAY_MS = 22_500;
 const VIDEO_ENDED_DELAY_MS = 2_000;
 
 function trackEvent(event: string, cta?: string) {
