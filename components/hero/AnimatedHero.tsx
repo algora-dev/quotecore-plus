@@ -94,9 +94,14 @@ export default function AnimatedHero() {
     if (animDone) return;
     setAnimDone(true);
     setMenuVisible(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Only return the user to the top if they haven't scrolled into the page
+    // (e.g. they're already watching the video — leave them exactly there).
+    if (window.scrollY < 200) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
     // Let the exit animation read, then remove the intro entirely —
-    // the homepage's own hero section follows.
+    // the homepage's own hero section follows. The intro is a fixed
+    // overlay, so removing it never shifts the page layout.
     timersRef.current.push(
       window.setTimeout(() => {
         document.body.classList.remove("qc-refined-hero-active");
@@ -208,7 +213,9 @@ export default function AnimatedHero() {
         <BlogHeader />
       </div>
 
-      <div className={introExit ? "nzah-intro-exit" : ""}>
+      {/* Fixed overlay: covers the viewport while playing, page flows beneath.
+          Removal at the end causes zero layout shift. */}
+      <div className={`nzah-intro-fixed ${introExit ? "nzah-intro-exit" : ""}`}>
         <section
           className="nzah-hero relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-white"
           aria-label="QuoteCore+ — measure, price and quote in one place"
@@ -370,6 +377,14 @@ const nzahShellCss = `
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     background-color: rgba(255, 255, 255, 0.72) !important;
+  }
+
+  /* Intro is a fixed overlay above the page (below the fixed menu) */
+  .nzah-intro-fixed {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: #fff;
   }
 
   /* Intro handoff: whole intro slides up and out (homepage hero follows) */

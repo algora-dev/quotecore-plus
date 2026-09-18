@@ -6,7 +6,7 @@ import { useState } from "react";
  * Hero video showcase — its own section below the Three Engines cards.
  * YouTube embed behind a styled play-button facade: user-initiated playback,
  * views count on the @quotecoreplus channel, and no 18.5MB local file in the
- * page weight. Fires qc:hero-video-ended when played (SetupHelpModal listens).
+ * page weight.
  */
 
 const VIDEO_ID = "fObCC5bL4Dg";
@@ -16,7 +16,6 @@ export default function VideoShowcase() {
 
   const startPlayback = () => {
     setPlaying(true);
-    window.dispatchEvent(new Event("qc:hero-video-ended"));
   };
 
   return (
