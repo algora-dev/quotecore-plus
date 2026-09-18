@@ -149,7 +149,7 @@ export function getLineOptions(key: SemanticKey): {
   const def = AI_COMPONENT_REGISTRY[key];
   const opts: { stroke: string; strokeWidth: number; strokeDashArray?: number[] } = {
     stroke: def.colour,
-    strokeWidth: 2,
+    strokeWidth: 2.6,
   };
   if (def.dashed) opts.strokeDashArray = SPOUTING_DASH_ARRAY;
   return opts;

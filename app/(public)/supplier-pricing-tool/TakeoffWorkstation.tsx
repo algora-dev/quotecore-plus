@@ -203,16 +203,16 @@ function computeCanvasDimensions(naturalWidth: number, naturalHeight: number): {
 
 // Color palette for components (10 highly distinct colors)
 const COLOR_PALETTE = [
-  '#ef4444', // red
-  '#3b82f6', // blue
-  '#10b981', // emerald-green
+  '#f87171', // bright red
+  '#d946ef', // fuchsia-pink (blue reserved for roof areas)
+  '#34d399', // bright emerald
   '#eab308', // yellow
-  '#8b5cf6', // purple
-  '#ec4899', // pink
-  '#14b8a6', // teal
+  '#a78bfa', // bright purple
+  '#f472b6', // bright pink
+  '#2dd4bf', // bright teal
   '#fb923c', // bright orange
-  '#6366f1', // indigo
-  '#a855f7', // vibrant purple
+  '#818cf8', // bright indigo
+  '#c084fc', // light purple
 ];
 
 interface CalibrationPoint {
@@ -2107,7 +2107,7 @@ export function TakeoffWorkstation({
       const componentId = capturedComponentId || selectedComponentId;
       if (!componentId) return;
 
-      const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#3b82f6';
+      const componentColor = componentColors.find(c => c.componentId === componentId)?.color || '#d946ef';
       
       // Remove in-progress vertex markers before adding the committed polygon.
       cleanupInProgressObjects();
@@ -2115,7 +2115,7 @@ export function TakeoffWorkstation({
       const polygon = new Polygon(pendingAreaPoints, {
         fill: `${componentColor}33`,
         stroke: componentColor,
-        strokeWidth: 1.7,
+        strokeWidth: 2.2,
         selectable: false,
         evented: false,
       });
@@ -3520,7 +3520,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           // Draw line (component color)
           const line = new Line([firstPoint.x, firstPoint.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1.7,
+            strokeWidth: 2.2,
             selectable: false,
             evented: false,
           });
@@ -3584,7 +3584,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           const prev = currentPoints[currentPoints.length - 1];
           const segLine = new Line([prev.x, prev.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1.7,
+            strokeWidth: 2.2,
             selectable: false,
             evented: false,
           });
@@ -3641,7 +3641,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           boxDragStartRef.current = newPoint;
           isBoxDraggingRef.current = true;
           // Create a preview rect (will be updated on mouse:move).
-          const componentColor = componentColorsRef.current.find(c => c.componentId === (activeAreaComponentIdRef.current ?? selectedComponentIdRef.current))?.color || '#3b82f6';
+          const componentColor = componentColorsRef.current.find(c => c.componentId === (activeAreaComponentIdRef.current ?? selectedComponentIdRef.current))?.color || '#d946ef';
           const rect = new Rect({
             left: newPoint.x,
             top: newPoint.y,
@@ -3743,7 +3743,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 setPendingVolumeComponentId(currentSelectedId);
                 setPendingVolumePoints([...currentPoints]);
                 // Draw a dashed preview polygon so the user sees the shape.
-                const compColor = componentColors.find(c => c.componentId === currentSelectedId)?.color || '#3b82f6';
+                const compColor = componentColors.find(c => c.componentId === currentSelectedId)?.color || '#d946ef';
                 const previewPoly = new Polygon(currentPoints, {
                   fill: `${compColor}22`,
                   stroke: compColor,
@@ -3776,7 +3776,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           left: newPoint.x,
           top: newPoint.y,
           radius: 3.75,
-          fill: isFirstPoint ? '#10b981' : '#3b82f6', // green first, blue rest
+          fill: isFirstPoint ? '#34d399' : '#d946ef', // green first, blue rest
           stroke: '#000',
           strokeWidth: 1,
           originX: 'center',
@@ -3979,7 +3979,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             setPendingVolumeCalibratedArea(areaCalibrated);
             setPendingVolumeComponentId(currentSelectedId);
             setPendingVolumePoints([...boxPoints]);
-            const compColor = componentColorsRef.current.find(c => c.componentId === currentSelectedId)?.color || '#3b82f6';
+            const compColor = componentColorsRef.current.find(c => c.componentId === currentSelectedId)?.color || '#d946ef';
             const previewPoly = new Polygon(boxPoints, {
               fill: `${compColor}22`,
               stroke: compColor,
