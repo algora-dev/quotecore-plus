@@ -62,6 +62,12 @@ export default async function WorkspaceHome({
   // only sets the draft cookie. The draft id alone is enough to import.
   const hasCalcDraft = Boolean(signupDraft);
 
+  // Smart Assistant dark-launch flag (service-written per company). Gates
+  // the dashboard card so flag-off companies never see the entry point.
+  const { data: smartAssistantOn } = await supabase.rpc('smart_assistant_enabled', {
+    p_company_id: profile.company_id,
+  });
+
   const actions = [
     {
       title: 'Job Manager',
@@ -84,6 +90,20 @@ export default async function WorkspaceHome({
         </svg>
       ),
     },
+    ...(smartAssistantOn
+      ? [
+          {
+            title: 'Smart Assistant',
+            description: 'Chat with your workspace data and knowledge',
+            href: `/${workspaceSlug}/assistant`,
+            icon: (
+              <svg className="w-6 h-6 text-[#FF6B35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+            ),
+          },
+        ]
+      : []),
     {
       title: 'Orders',
       description: 'Order materials for quoted or custom jobs',
