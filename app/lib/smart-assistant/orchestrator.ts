@@ -11,6 +11,7 @@
 // at all.
 
 import { runChatStep, type LlmMessage, type LlmToolSchema } from '@/app/lib/assistant/llmClient';
+import { READONLY_TOOLS } from './tools';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
@@ -110,10 +111,7 @@ export interface ToolContext {
 }
 
 export const TOOL_REGISTRY: Record<string, RegisteredTool> = {
-  // Slice 5: search_knowledge, list_quotes, get_quote, get_pricing,
-  // list_components, list_customers, get_invoice_status, get_order_status,
-  // calculate. Until then the model has no tools and must answer from
-  // conversation context only.
+  ...READONLY_TOOLS,
 };
 
 // ---------------------------------------------------------------------------
