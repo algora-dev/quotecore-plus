@@ -453,6 +453,53 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_configs: {
+        Row: {
+          company_id: string
+          config_updated_at: string
+          created_at: string
+          custom_rules: string[]
+          enabled: boolean
+          greeting: string
+          id: string
+          name: string
+          rule_toggles: Json
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          config_updated_at?: string
+          created_at?: string
+          custom_rules?: string[]
+          enabled?: boolean
+          greeting?: string
+          id?: string
+          name?: string
+          rule_toggles?: Json
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          config_updated_at?: string
+          created_at?: string
+          custom_rules?: string[]
+          enabled?: boolean
+          greeting?: string
+          id?: string
+          name?: string
+          rule_toggles?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_configs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistant_events: {
         Row: {
           company_id: string | null
@@ -490,6 +537,150 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "assistant_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_feature_flags: {
+        Row: {
+          company_id: string
+          enabled: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_feature_flags_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_feature_flags_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_knowledge_chunks: {
+        Row: {
+          chunk_index: number
+          company_id: string
+          content: string
+          content_hash: string | null
+          created_at: string
+          doc_id: string
+          embedding: string | null
+          id: string
+          token_count: number | null
+        }
+        Insert: {
+          chunk_index: number
+          company_id: string
+          content: string
+          content_hash?: string | null
+          created_at?: string
+          doc_id: string
+          embedding?: string | null
+          id?: string
+          token_count?: number | null
+        }
+        Update: {
+          chunk_index?: number
+          company_id?: string
+          content?: string
+          content_hash?: string | null
+          created_at?: string
+          doc_id?: string
+          embedding?: string | null
+          id?: string
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_knowledge_chunks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_knowledge_chunks_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "assistant_knowledge_docs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assistant_knowledge_docs: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          error: string | null
+          file_name: string
+          id: string
+          published_at: string | null
+          size_bytes: number | null
+          status: string
+          storage_path: string
+          withdrawn_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          file_name: string
+          id?: string
+          published_at?: string | null
+          size_bytes?: number | null
+          status?: string
+          storage_path: string
+          withdrawn_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          file_name?: string
+          id?: string
+          published_at?: string | null
+          size_bytes?: number | null
+          status?: string
+          storage_path?: string
+          withdrawn_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_knowledge_docs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_knowledge_docs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -4996,6 +5187,165 @@ export type Database = {
           },
         ]
       }
+      smart_assistant_conversations: {
+        Row: {
+          active_run_id: string | null
+          company_id: string
+          config_snapshot_at: string | null
+          created_at: string
+          id: string
+          last_active_at: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_run_id?: string | null
+          company_id: string
+          config_snapshot_at?: string | null
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_run_id?: string | null
+          company_id?: string
+          config_snapshot_at?: string | null
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_assistant_conversations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_assistant_conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_assistant_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          run_id: string | null
+          sources: Json | null
+          tool_calls: Json | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          run_id?: string | null
+          sources?: Json | null
+          tool_calls?: Json | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          run_id?: string | null
+          sources?: Json | null
+          tool_calls?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_assistant_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "smart_assistant_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_assistant_runs: {
+        Row: {
+          client_request_id: string
+          company_id: string
+          conversation_id: string
+          error_code: string | null
+          finished_at: string | null
+          id: string
+          payload_hash: string
+          started_at: string
+          status: string
+          tokens_in: number | null
+          tokens_out: number | null
+          user_id: string
+        }
+        Insert: {
+          client_request_id: string
+          company_id: string
+          conversation_id: string
+          error_code?: string | null
+          finished_at?: string | null
+          id?: string
+          payload_hash: string
+          started_at?: string
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id: string
+        }
+        Update: {
+          client_request_id?: string
+          company_id?: string
+          conversation_id?: string
+          error_code?: string | null
+          finished_at?: string | null
+          id?: string
+          payload_hash?: string
+          started_at?: string
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_assistant_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_assistant_runs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "smart_assistant_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_assistant_runs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_events: {
         Row: {
           actor_user_id: string | null
@@ -6827,6 +7177,20 @@ export type Database = {
           slug: string
         }[]
       }
+      match_sa_chunks: {
+        Args: {
+          p_company?: string
+          p_match_count?: number
+          p_query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          company_id: string
+          content: string
+          doc_id: string
+          similarity: number
+        }[]
+      }
       prune_rate_limits: { Args: never; Returns: number }
       public_supplier_catalogue: {
         Args: { p_limit?: number; p_offset?: number; p_slug: string }
@@ -6909,6 +7273,7 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: undefined
       }
+      sa_user_company_id: { Args: never; Returns: string }
       save_takeoff_atomic: {
         Args: { p_payload: Json; p_quote_id: string }
         Returns: undefined
@@ -6939,6 +7304,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      smart_assistant_enabled: {
+        Args: { p_company_id: string }
+        Returns: boolean
+      }
       submit_ai_scan_job: {
         Args: {
           p_canvas_height?: number

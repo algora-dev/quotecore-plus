@@ -20,6 +20,7 @@ const ADMIN_NAV: { label: string; href: string; soon?: boolean }[] = [
   { label: 'Suppliers', href: '/admin/suppliers' },
   { label: 'Supplier Applications', href: '/admin/supplier-applications' },
   { label: 'Rate limits', href: '/admin/rate-limits' },
+  { label: 'Smart Assistant', href: '/admin/smart-assistant' },
   { label: 'Settings', href: '/admin/settings' },
   { label: 'Companies', href: '/admin/companies', soon: true },
 ];
