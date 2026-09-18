@@ -22,11 +22,12 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  // Voice-to-text (Web Speech API, pause-tolerant via auto-restart - same
-  // pattern as the Apex Smart Assistant). Chrome/Edge/Safari support it.
+  // Voice input: push-to-talk recording -> server-side OpenAI transcription
+  // (consistent quality across devices; the browser speech engine varied).
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<{ stop: () => void; start: () => void } | null>(null);
-  const stoppedManuallyRef = useRef(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
   // Pending logical send per conversation: id + exact text. Retained across
   // unknown outcomes (network/5xx) so a retry replays idempotently; cleared
@@ -77,61 +78,64 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
     setMessages([]);
   }
 
-  const toggleListening = () => {
-    const w = window as unknown as { SpeechRecognition?: new () => unknown; webkitSpeechRecognition?: new () => unknown };
-    const SR = (w.SpeechRecognition ?? w.webkitSpeechRecognition) as (new () => {
-      lang: string; interimResults: boolean; continuous: boolean;
-      onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
-      onerror: (e: { error?: string }) => void;
-      onend: () => void;
-      start: () => void; stop: () => void;
-    }) | undefined;
-    if (!SR) {
-      setNotice('Voice input is not supported in this browser. Try Chrome, Edge or Safari.');
-      return;
-    }
+  const toggleMic = async () => {
+    if (transcribing) return;
     if (listening) {
-      stoppedManuallyRef.current = true;
-      recognitionRef.current?.stop();
-      setListening(false);
+      mediaRecorderRef.current?.stop();
       return;
     }
-    stoppedManuallyRef.current = false;
-    let finalText = '';
-    const buildRec = () => {
-      const rec = new SR();
-      rec.lang = 'en-GB';
-      rec.interimResults = true;
-      rec.continuous = true;
-      rec.onresult = (event) => {
-        finalText = '';
-        for (let i = 0; i < event.results.length; i++) finalText += event.results[i][0].transcript;
-        setInput(finalText.slice(0, 16000));
+    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices) {
+      setNotice('Voice input is not supported in this browser.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : undefined;
+      const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      chunksRef.current = [];
+      // Hard cap: stop automatically after 2 minutes.
+      const cap = setTimeout(() => {
+        if (recorder.state === 'recording') recorder.stop();
+      }, 120_000);
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
       };
-      rec.onerror = (event) => {
-        // "no-speech" is expected during pauses - onend handles the restart.
-        if (event?.error && event.error !== 'no-speech' && event.error !== 'aborted') setListening(false);
-      };
-      rec.onend = () => {
-        // The browser cuts recognition after a silence pause. Restart while
-        // the user has not stopped manually so thinking breaks do not end it.
-        if (stoppedManuallyRef.current) {
-          setListening(false);
+      recorder.onstop = async () => {
+        clearTimeout(cap);
+        stream.getTracks().forEach((t) => t.stop());
+        setListening(false);
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        if (blob.size === 0) return;
+        if (blob.size > 14 * 1024 * 1024) {
+          setNotice('Recording too long.');
           return;
         }
+        setTranscribing(true);
+        setNotice(null);
         try {
-          recognitionRef.current = buildRec();
-          recognitionRef.current.start();
+          const fd = new FormData();
+          fd.append('audio', blob, 'voice.webm');
+          const res = await fetch('/api/smart-assistant/transcribe', { method: 'POST', body: fd });
+          const data = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
+          if (!res.ok) {
+            setNotice(data.error ?? 'Transcription failed.');
+            return;
+          }
+          const text = (data.text ?? '').trim();
+          if (text) setInput((prev) => (prev ? `${prev} ${text}` : text));
         } catch {
-          setListening(false);
+          setNotice('Network error during transcription.');
+        } finally {
+          setTranscribing(false);
         }
       };
-      return rec;
-    };
-    const rec = buildRec();
-    recognitionRef.current = rec;
-    setListening(true);
-    rec.start();
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setListening(true);
+      setNotice(null);
+    } catch {
+      setNotice('Microphone permission was denied.');
+    }
   };
 
   async function send() {
@@ -250,20 +254,43 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && !busy && (
-            <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center text-sm text-slate-500">
-              {greeting || `Ask ${assistantName} about your quotes, pricing, customers, invoices or orders.`}
+            <div className="py-6">
+              <div className="mx-auto max-w-xs rounded-2xl border border-slate-200 bg-white px-4 py-5 text-center shadow-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF6B35]/15">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                  </span>
+                  <p className="text-sm font-bold text-slate-900">Ask {assistantName}</p>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                  {greeting || `Ask about your quotes, pricing, customers, invoices or orders.`}
+                </p>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                {['What quotes do I have?', 'How much is my corrugate per m2?', 'Any unread messages?'].map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => setInput(prompt)}
+                    disabled={!activeId}
+                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-xs text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    <span>{prompt}</span>
+                    <span className="shrink-0 text-slate-400">→</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {messages.map((m, i) =>
             m.role === 'user' ? (
               <div key={i} className="flex justify-end">
-                <div className="max-w-[80%] rounded-xl bg-slate-900 px-4 py-2 text-sm text-white whitespace-pre-wrap">
+                <div className="max-w-[85%] rounded-2xl rounded-br-md bg-slate-900 px-3.5 py-2.5 text-sm leading-relaxed text-white whitespace-pre-wrap">
                   {m.content}
                 </div>
               </div>
             ) : (
               <div key={i} className="flex justify-start">
-                <div className="max-w-[80%] rounded-xl border border-slate-200 px-4 py-2">
+                <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3.5 py-2.5 text-sm leading-relaxed text-slate-800 shadow-sm">
                   <SafeMessage content={m.content} />
                 </div>
               </div>
@@ -271,8 +298,12 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
           )}
           {busy && (
             <div className="flex justify-start">
-              <div className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-400">
-                {assistantName} is thinking...
+              <div className="rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-sm">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:120ms]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:240ms]" />
+                </span>
               </div>
             </div>
           )}
@@ -285,9 +316,9 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
           </div>
         )}
 
-        <div className="p-3 border-t border-slate-200 flex gap-2">
-          <input
-            type="text"
+        <div className="border-t border-slate-200 bg-white p-3">
+          <div className="flex items-end gap-2 rounded-2xl border border-slate-300 p-1.5 focus-within:border-orange-500">
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -299,24 +330,33 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
             placeholder={activeId ? `Message ${assistantName}...` : 'Start a new chat first'}
             disabled={!activeId || busy}
             maxLength={16000}
-            className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:opacity-50"
+            rows={1}
+            aria-label={`Message ${assistantName}`}
+            className="max-h-28 min-h-[42px] flex-1 resize-none border-0 bg-transparent px-2.5 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:opacity-50"
           />
           <button
             type="button"
-            onClick={toggleListening}
-            aria-label={listening ? 'Stop voice input' : 'Start voice input'}
-            title={listening ? 'Stop voice input' : 'Voice input'}
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${listening ? 'bg-[#FF6B35] text-white' : 'text-slate-400 hover:bg-slate-100'}`}
+            onClick={() => void toggleMic()}
+            disabled={transcribing}
+            aria-label={listening ? 'Stop recording' : transcribing ? 'Transcribing' : 'Start voice input'}
+            title={listening ? 'Tap to stop and transcribe' : transcribing ? 'Transcribing...' : 'Voice input'}
+            className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl transition-colors ${listening ? 'animate-pulse bg-[#FF6B35] text-white' : transcribing ? 'bg-slate-100 text-slate-400' : 'text-slate-400 hover:bg-slate-100'}`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0014 0M12 17v4" /></svg>
+            {transcribing ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4m0 12v4M2 12h4m12 0h4" /><circle cx="12" cy="12" r="4" /></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0014 0M12 17v4" /></svg>
+            )}
           </button>
           <button
             onClick={() => void send()}
             disabled={!activeId || busy || !input.trim()}
-            className="rounded-full bg-black px-5 py-2 text-sm text-white hover:shadow-[0_0_12px_rgba(0,0,0,0.25)] disabled:opacity-50"
+            aria-label="Send message"
+            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-black text-white transition hover:opacity-90 disabled:opacity-40"
           >
-            Send
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" /></svg>
           </button>
+          </div>
         </div>
       </div>
     </div>
