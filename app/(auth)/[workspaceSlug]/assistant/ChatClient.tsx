@@ -11,15 +11,22 @@ type Props = {
   assistantName: string;
   greeting: string;
   settingsHref: string;
+  /** Render inside the launcher panel instead of a standalone page. */
+  embedded?: boolean;
 };
 
-export function ChatClient({ initialConversations, assistantName, greeting, settingsHref }: Props) {
+export function ChatClient({ initialConversations, assistantName, greeting, settingsHref, embedded }: Props) {
   const [conversations, setConversations] = useState(initialConversations);
   const [activeId, setActiveId] = useState<string | null>(initialConversations[0]?.id ?? null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Voice-to-text (Web Speech API, pause-tolerant via auto-restart - same
+  // pattern as the Apex Smart Assistant). Chrome/Edge/Safari support it.
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<{ stop: () => void; start: () => void } | null>(null);
+  const stoppedManuallyRef = useRef(false);
   const endRef = useRef<HTMLDivElement>(null);
   // Pending logical send per conversation: id + exact text. Retained across
   // unknown outcomes (network/5xx) so a retry replays idempotently; cleared
@@ -69,6 +76,63 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
     setActiveId(result.id);
     setMessages([]);
   }
+
+  const toggleListening = () => {
+    const w = window as unknown as { SpeechRecognition?: new () => unknown; webkitSpeechRecognition?: new () => unknown };
+    const SR = (w.SpeechRecognition ?? w.webkitSpeechRecognition) as (new () => {
+      lang: string; interimResults: boolean; continuous: boolean;
+      onresult: (e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void;
+      onerror: (e: { error?: string }) => void;
+      onend: () => void;
+      start: () => void; stop: () => void;
+    }) | undefined;
+    if (!SR) {
+      setNotice('Voice input is not supported in this browser. Try Chrome, Edge or Safari.');
+      return;
+    }
+    if (listening) {
+      stoppedManuallyRef.current = true;
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    stoppedManuallyRef.current = false;
+    let finalText = '';
+    const buildRec = () => {
+      const rec = new SR();
+      rec.lang = 'en-GB';
+      rec.interimResults = true;
+      rec.continuous = true;
+      rec.onresult = (event) => {
+        finalText = '';
+        for (let i = 0; i < event.results.length; i++) finalText += event.results[i][0].transcript;
+        setInput(finalText.slice(0, 16000));
+      };
+      rec.onerror = (event) => {
+        // "no-speech" is expected during pauses - onend handles the restart.
+        if (event?.error && event.error !== 'no-speech' && event.error !== 'aborted') setListening(false);
+      };
+      rec.onend = () => {
+        // The browser cuts recognition after a silence pause. Restart while
+        // the user has not stopped manually so thinking breaks do not end it.
+        if (stoppedManuallyRef.current) {
+          setListening(false);
+          return;
+        }
+        try {
+          recognitionRef.current = buildRec();
+          recognitionRef.current.start();
+        } catch {
+          setListening(false);
+        }
+      };
+      return rec;
+    };
+    const rec = buildRec();
+    recognitionRef.current = rec;
+    setListening(true);
+    rec.start();
+  };
 
   async function send() {
     const text = input.trim();
@@ -142,7 +206,7 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
   }
 
   return (
-    <div data-clarity-mask="true" className="flex h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-white overflow-hidden">
+    <div data-clarity-mask="true" className={embedded ? 'flex h-full w-full bg-white overflow-hidden' : 'flex h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-white overflow-hidden'}>
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-slate-200">
         <div className="p-3">
@@ -175,12 +239,14 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
 
       {/* Thread */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-900">{assistantName}</span>
-          <a href={settingsHref} className="md:hidden text-xs text-slate-500">
-            Settings
-          </a>
-        </div>
+        {!embedded && (
+          <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-900">{assistantName}</span>
+            <a href={settingsHref} className="md:hidden text-xs text-slate-500">
+              Settings
+            </a>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {messages.length === 0 && !busy && (
@@ -235,6 +301,15 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
             maxLength={16000}
             className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:opacity-50"
           />
+          <button
+            type="button"
+            onClick={toggleListening}
+            aria-label={listening ? 'Stop voice input' : 'Start voice input'}
+            title={listening ? 'Stop voice input' : 'Voice input'}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${listening ? 'bg-[#FF6B35] text-white' : 'text-slate-400 hover:bg-slate-100'}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 10a7 7 0 0014 0M12 17v4" /></svg>
+          </button>
           <button
             onClick={() => void send()}
             disabled={!activeId || busy || !input.trim()}

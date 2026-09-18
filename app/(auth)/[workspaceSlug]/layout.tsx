@@ -11,6 +11,7 @@ import { HelpDrawerTrigger, HelpDrawerPanel } from '@/app/components/docs/HelpDr
 import { HelpDrawerProvider } from '@/app/components/docs/HelpDrawerContext';
 import { HelpDrawerLayout } from '@/app/components/docs/HelpDrawerLayout';
 import { AssistantWidget } from '@/app/components/assistant/AssistantWidget';
+import { SmartAssistantLauncher } from '@/app/components/smart-assistant/SmartAssistantLauncher';
 import { loadCompanyContext } from '@/app/lib/data/company-context';
 import { createSupabaseServerClient, getCurrentProfile } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
@@ -93,6 +94,37 @@ export default async function WorkspaceLayout({
     .eq('id', profile.id)
     .maybeSingle();
   const assistantEnabled = (assistantPref as { assistant_enabled?: boolean } | null)?.assistant_enabled ?? true;
+
+  // Smart Assistant (V1.5): flag-on companies get the launcher instead of
+  // the legacy Q widget. Conversations + config are fetched here so the
+  // embedded ChatClient has its initial state server-side.
+  const { data: smartAssistantOn } = await supabase.rpc('smart_assistant_enabled', {
+    p_company_id: company.id,
+  });
+  let smartAssistantProps: {
+    conversations: { id: string; title: string | null; last_active_at: string }[];
+    name: string;
+    greeting: string;
+  } | null = null;
+  if (smartAssistantOn) {
+    const [{ data: saConfig }, { data: saConvos }] = await Promise.all([
+      supabase
+        .from('assistant_configs')
+        .select('name, greeting, enabled')
+        .eq('company_id', company.id)
+        .maybeSingle(),
+      supabase
+        .from('smart_assistant_conversations')
+        .select('id, title, last_active_at')
+        .order('last_active_at', { ascending: false })
+        .limit(50),
+    ]);
+    smartAssistantProps = {
+      conversations: (saConvos ?? []) as { id: string; title: string | null; last_active_at: string }[],
+      name: saConfig?.enabled === false ? 'Assistant (disabled)' : (saConfig?.name ?? 'Smart Assistant'),
+      greeting: (saConfig as { greeting?: string } | null)?.greeting ?? '',
+    };
+  }
 
   // Global announcement banner (admin-controlled, localStorage dismissal)
   const announcement = await getAnnouncement();
@@ -180,18 +212,29 @@ export default async function WorkspaceLayout({
             <EntitlementBanner entitlements={entitlements} workspaceSlug={slug} />
 
             <main className="mx-auto w-full max-w-6xl px-2 py-3 pb-20 md:px-6 md:py-10 md:pb-10">{children}</main>
-            {/*
-              AI Assistant widget. Self-gates on NEXT_PUBLIC_AI_ASSISTANT_V1 -
-              renders nothing when the flag is off. This is now the SOLE
-              in-app help surface (legacy Copilot removed); the Help Drawer
-              remains as a deterministic docs fallback.
-            */}
-            <AssistantWidget
-              userId={profile.id}
-              companyId={company.id}
-              trade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
-              enabled={assistantEnabled}
-            />
+            {smartAssistantProps ? (
+              /* Smart Assistant launcher replaces the legacy Q widget for
+                 flag-on companies. */
+              <SmartAssistantLauncher
+                workspaceSlug={slug}
+                initialConversations={smartAssistantProps.conversations}
+                assistantName={smartAssistantProps.name}
+                greeting={smartAssistantProps.greeting}
+              />
+            ) : (
+              /*
+                AI Assistant widget. Self-gates on NEXT_PUBLIC_AI_ASSISTANT_V1 -
+                renders nothing when the flag is off. This is now the SOLE
+                in-app help surface (legacy Copilot removed); the Help Drawer
+                remains as a deterministic docs fallback.
+              */
+              <AssistantWidget
+                userId={profile.id}
+                companyId={company.id}
+                trade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
+                enabled={assistantEnabled}
+              />
+            )}
           </div>
         </HelpDrawerLayout>
       </HelpDrawerProvider>
