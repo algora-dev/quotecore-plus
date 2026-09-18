@@ -7,9 +7,9 @@ import BlogHeader from "@/components/BlogHeader";
  * Animated intro hero (v6) for the NZ homepage — 2026-09-18.
  *
  * Phase 1: MEASURE -> PRICE -> QUOTE (per-letter glow pulses, glowing
- * arrows) + "Measure once. Price and quote in one simple flow."
- * Phase 2: "Built by roofers. For roofing and construction businesses."
- * Phase 3: "Designed around the way you already work." (own beat, glow pulse)
+ * arrows) + "Your measurements create your price and quote automatically."
+ * Phase 2: "Built for roofing and construction."
+ * Phase 3: "Designed around the way you already measure and price." (own beat, glow pulse)
  *
  * After the intro slides up it disappears entirely — the homepage's own hero
  * section ("Built in New Zealand for measured trade work") is what follows.
@@ -218,9 +218,9 @@ export default function AnimatedHero() {
         >
           {/* Accessible reading equivalent */}
           <p className="sr-only">
-            Measure, price and quote. Measure once. Price and quote in one simple
-            flow. Built by roofers. For roofing and construction businesses.
-            Designed around the way you already work.
+            Measure, price and quote. Your measurements create your price and
+            quote automatically. Built for roofing and construction. Designed
+            around the way you already measure and price.
           </p>
 
           {/* Very subtle warm ambient glow */}
@@ -248,7 +248,7 @@ export default function AnimatedHero() {
                 className={`nzah-p1-sub ${supportLine ? "nzah-p1-sub-on" : ""}`}
                 aria-hidden="true"
               >
-                Measure once. Price and quote in one simple flow.
+                Your measurements create your price and quote automatically.
               </p>
             </div>
 
@@ -260,16 +260,14 @@ export default function AnimatedHero() {
               aria-hidden={!phase2Main}
             >
               <h2 className="nzah-p2-main">
-                Built by roofers.
-                <br />
-                For roofing and construction businesses.
+                Built for roofing and construction.
               </h2>
               <p
                 className={`nzah-p2-sub ${phase2Support ? "nzah-p2-sub-on" : ""} ${
                   p3Glow ? "nzah-p2-sub-glow" : ""
                 }`}
               >
-                Designed around the way you already work.
+                Designed around the way you already measure and price.
               </p>
             </div>
           </div>
