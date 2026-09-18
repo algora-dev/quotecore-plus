@@ -40,10 +40,10 @@ const T = {
   phase1Exit: 5455,
   phase2Enter: 5855,
   // Main line holds alone, then the Phase 3 line appears underneath.
-  phase2Support: 7605,
+  phase2Support: 7105,
   // "you already" glows from halfway through the hold, fading out as the
   // intro exits — the fade IS the cue that the animation is ending.
-  p3Glow: 8505,
+  p3Glow: 8255,
   // Both lines hold so everything can be read...
   phase2Exit: 9405,
   finish: 10155,

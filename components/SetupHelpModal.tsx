@@ -7,17 +7,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *
  * Two paths: Done-For-You setup help, or free tools (no commitment).
  *
- * Trigger: 22.5s after the visitor first scrolls (lets the intro play and
- * the user browse first), OR 2s after the hero video ends (whichever comes
- * first). Never during the video: playing the video showcase cancels any
- * pending trigger.
+ * Trigger: 25s after the visitor lands on the page (lets the intro play
+ * and browsing begin). Never during the video: playing the video showcase
+ * cancels the pending trigger.
  * Shows once per session; suppressed after close.
  * Homepage only (only rendered from home/page.tsx).
  */
 
 const SESSION_KEY = "qc-setup-modal-shown";
-const SCROLL_DELAY_MS = 22_500;
-const VIDEO_ENDED_DELAY_MS = 2_000;
+const PAGE_LOAD_DELAY_MS = 25_000;
 
 function trackEvent(event: string, cta?: string) {
   const payload = { event, cta };
@@ -58,20 +56,11 @@ export default function SetupHelpModal() {
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Path 1: 10s after first scroll
-    const onFirstScroll = () => {
-      window.removeEventListener("scroll", onFirstScroll);
-      timers.push(setTimeout(show, SCROLL_DELAY_MS));
-    };
-    window.addEventListener("scroll", onFirstScroll, { passive: true });
+    // Path 1: 25s after the visitor lands on the page — no scroll or any
+    // other action required.
+    timers.push(setTimeout(show, PAGE_LOAD_DELAY_MS));
 
-    // Path 2: 2s after hero video ends (fallback for non-scrollers)
-    const onVideoEnded = () => {
-      timers.push(setTimeout(show, VIDEO_ENDED_DELAY_MS));
-    };
-    window.addEventListener("qc:hero-video-ended", onVideoEnded);
-
-    // Path 3: visitor started watching the video showcase — cancel pending
+    // Path 2: visitor started watching the video showcase — cancel pending
     // triggers so the modal never interrupts an active viewer.
     const onVideoPlay = () => {
       timers.forEach(clearTimeout);
@@ -80,8 +69,6 @@ export default function SetupHelpModal() {
     window.addEventListener("qc:video-play", onVideoPlay);
 
     return () => {
-      window.removeEventListener("scroll", onFirstScroll);
-      window.removeEventListener("qc:hero-video-ended", onVideoEnded);
       window.removeEventListener("qc:video-play", onVideoPlay);
       timers.forEach(clearTimeout);
     };
