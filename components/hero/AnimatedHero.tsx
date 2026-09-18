@@ -34,16 +34,19 @@ const T = {
   word3Glow: 2535,
   // QUOTE pulse ends ~2975 — supporting text arrives almost immediately after
   supportLine: 3205,
-  // Supporting line holds ~2s; "automatically" pulses right before handoff
-  p1SubPulse: 4705,
-  phase1Exit: 5205,
-  phase2Enter: 5605,
-  // Main line holds alone, then the Phase 3 line appears underneath with its
-  // own glow pulse (same treatment as MEASURE/PRICE/QUOTE).
-  phase2Support: 7105,
+  // Supporting line holds ~2.25s; "automatically" glows from 4455 and
+  // fades right before the handoff
+  p1SubPulse: 4455,
+  phase1Exit: 5455,
+  phase2Enter: 5855,
+  // Main line holds alone, then the Phase 3 line appears underneath.
+  phase2Support: 7355,
+  // "you already" glows from halfway through the hold, fading out as the
+  // intro exits — the fade IS the cue that the animation is ending.
+  p3Glow: 8255,
   // Both lines hold so everything can be read...
-  phase2Exit: 8905,
-  finish: 9650,
+  phase2Exit: 9155,
+  finish: 9905,
 } as const;
 
 const WORDS = ["MEASURE", "PRICE", "QUOTE"] as const;
@@ -164,27 +167,29 @@ export default function AnimatedHero() {
     at(T.word3Enter, () => setEntered(3));
     at(T.word3Glow, () => pulse(2));
     at(T.supportLine, () => setSupportLine(true));
-    // "automatically" glow pulse, right before Phase 2 takes over
+    // "automatically" glow — comes in earlier, stays on, and fades out
+    // right before the section changes
     at(T.p1SubPulse, () => {
       setP1SubGlow(true);
       timersRef.current.push(
         window.setTimeout(() => {
           if (!cancelledRef.current) setP1SubGlow(false);
-        }, 460)
+        }, T.phase1Exit - 50 - T.p1SubPulse)
       );
     });
 
     // --- Phase 2 ---
     at(T.phase1Exit, () => setPhase1Gone(true));
     at(T.phase2Enter, () => setPhase2Main(true));
-    // --- Phase 3: own beat — enters with a glow pulse, then sits readable ---
-    at(T.phase2Support, () => {
-      setPhase2Support(true);
+    // --- Phase 3: own beat — enters plain, "you already" glows halfway
+    // through the hold, and its fade-out signals the end of the intro ---
+    at(T.phase2Support, () => setPhase2Support(true));
+    at(T.p3Glow, () => {
       setP3Glow(true);
       timersRef.current.push(
         window.setTimeout(() => {
           if (!cancelledRef.current) setP3Glow(false);
-        }, 900)
+        }, T.phase2Exit - T.p3Glow)
       );
     });
 
@@ -267,11 +272,15 @@ export default function AnimatedHero() {
                 Built for roofing and construction.
               </h2>
               <p
-                className={`nzah-p2-sub ${phase2Support ? "nzah-p2-sub-on" : ""} ${
-                  p3Glow ? "nzah-p2-sub-glow" : ""
-                }`}
+                className={`nzah-p2-sub ${phase2Support ? "nzah-p2-sub-on" : ""}`}
               >
-                Designed around the way you already measure and price.
+                Designed around the way{" "}
+                <span
+                  className={`nzah-letter ${p3Glow ? "nzah-letter-on" : ""}`}
+                >
+                  you already
+                </span>{" "}
+                measure and price.
               </p>
             </div>
           </div>
