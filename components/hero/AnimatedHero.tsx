@@ -34,15 +34,16 @@ const T = {
   word3Glow: 2535,
   // QUOTE pulse ends ~2975 — supporting text arrives almost immediately after
   supportLine: 3205,
-  // Supporting line holds ~1.5s
-  phase1Exit: 4705,
-  phase2Enter: 5105,
+  // Supporting line holds ~2s; "automatically" pulses right before handoff
+  p1SubPulse: 4705,
+  phase1Exit: 5205,
+  phase2Enter: 5605,
   // Main line holds alone, then the Phase 3 line appears underneath with its
   // own glow pulse (same treatment as MEASURE/PRICE/QUOTE).
-  phase2Support: 6605,
+  phase2Support: 7105,
   // Both lines hold so everything can be read...
-  phase2Exit: 8405,
-  finish: 9150,
+  phase2Exit: 8905,
+  finish: 9650,
 } as const;
 
 const WORDS = ["MEASURE", "PRICE", "QUOTE"] as const;
@@ -52,6 +53,7 @@ export default function AnimatedHero() {
   const [glowWord, setGlowWord] = useState(-1); // index currently pulsing
   const [arrows, setArrows] = useState(0); // 0..2
   const [supportLine, setSupportLine] = useState(false);
+  const [p1SubGlow, setP1SubGlow] = useState(false);
   const [phase1Gone, setPhase1Gone] = useState(false);
   const [phase2Main, setPhase2Main] = useState(false);
   const [phase2Support, setPhase2Support] = useState(false);
@@ -59,7 +61,6 @@ export default function AnimatedHero() {
   const [introExit, setIntroExit] = useState(false);
 
   const [menuVisible, setMenuVisible] = useState(false);
-  const [showSkip, setShowSkip] = useState(false);
   const [animDone, setAnimDone] = useState(false);
   const [heroGone, setHeroGone] = useState(false);
   const startedRef = useRef(false);
@@ -106,14 +107,6 @@ export default function AnimatedHero() {
     }
     document.body.classList.remove("qc-refined-hero-active");
     setHeroGone(true);
-  };
-
-  // Skip button: cancel remaining intro and drop straight into the page
-  const skipIntro = () => {
-    cancelledRef.current = true;
-    timersRef.current.forEach(clearTimeout);
-    setIntroExit(true);
-    finishIntro();
   };
 
   useEffect(() => {
@@ -171,6 +164,15 @@ export default function AnimatedHero() {
     at(T.word3Enter, () => setEntered(3));
     at(T.word3Glow, () => pulse(2));
     at(T.supportLine, () => setSupportLine(true));
+    // "automatically" glow pulse, right before Phase 2 takes over
+    at(T.p1SubPulse, () => {
+      setP1SubGlow(true);
+      timersRef.current.push(
+        window.setTimeout(() => {
+          if (!cancelledRef.current) setP1SubGlow(false);
+        }, 460)
+      );
+    });
 
     // --- Phase 2 ---
     at(T.phase1Exit, () => setPhase1Gone(true));
@@ -189,9 +191,6 @@ export default function AnimatedHero() {
     // --- Handoff: intro leaves, homepage hero follows ---
     at(T.phase2Exit, () => setIntroExit(true));
     at(T.finish, () => finishIntro());
-
-    // Reveal the skip button shortly after the sequence is underway
-    at(1200, () => setShowSkip(true));
 
     return () => {
       cancelledRef.current = true;
@@ -248,7 +247,12 @@ export default function AnimatedHero() {
                 className={`nzah-p1-sub ${supportLine ? "nzah-p1-sub-on" : ""}`}
                 aria-hidden="true"
               >
-                Your measurements create your price and quote automatically.
+                Your measurements create your price and quote{" "}
+                <span
+                  className={`nzah-letter ${p1SubGlow ? "nzah-letter-on" : ""}`}
+                >
+                  automatically.
+                </span>
               </p>
             </div>
 
@@ -271,24 +275,6 @@ export default function AnimatedHero() {
               </p>
             </div>
           </div>
-
-          {/* Skip button while the intro runs */}
-          {showSkip && (
-            <button
-              type="button"
-              onClick={skipIntro}
-              className="nzah-skip group"
-              aria-label="Skip intro"
-            >
-              <span className="nzah-skip-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M5 4l10 8-10 8V4z" fill="currentColor" stroke="none" />
-                  <path d="M19 5v14" />
-                </svg>
-              </span>
-              <span className="nzah-skip-label">Skip intro</span>
-            </button>
-          )}
 
           <style>{nzahSceneCss}</style>
         </section>
@@ -570,68 +556,7 @@ const nzahSceneCss = `
       0 0 28px rgba(255, 107, 53, 0.10);
   }
 
-  /* ---------- Skip button ---------- */
-  .nzah-skip {
-    position: absolute;
-    bottom: clamp(1.5rem, 5vh, 3.5rem);
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    z-index: 10;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0.5rem;
-    animation: nzahSkipIn 500ms ease both;
-  }
-  @keyframes nzahSkipIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  .nzah-skip-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 4.5rem;
-    height: 4.5rem;
-    border-radius: 9999px;
-    background: #FF6B35;
-    color: #fff;
-    box-shadow:
-      0 6px 24px rgba(255, 107, 53, 0.45),
-      0 0 0 6px rgba(255, 107, 53, 0.14);
-    transition:
-      transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 200ms ease,
-      background-color 200ms ease;
-  }
-  .nzah-skip-btn svg {
-    width: 1.75rem;
-    height: 1.75rem;
-    margin-left: 0.25rem;
-  }
-  .nzah-skip:hover .nzah-skip-btn,
-  .nzah-skip:focus-visible .nzah-skip-btn {
-    transform: scale(1.06);
-    background: #E55A28;
-    box-shadow:
-      0 8px 30px rgba(255, 107, 53, 0.55),
-      0 0 0 8px rgba(255, 107, 53, 0.18);
-  }
-  .nzah-skip:focus-visible .nzah-skip-btn {
-    outline: 2px solid #BD4A1A;
-    outline-offset: 4px;
-  }
-  .nzah-skip-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #52525b;
-  }
-
-  /* ---------- Mobile: vertical stack ---------- */
+  /* ---------- Phase 2 ---------- */
   @media (max-width: 640px) {
     .nzah-row {
       flex-direction: column;
