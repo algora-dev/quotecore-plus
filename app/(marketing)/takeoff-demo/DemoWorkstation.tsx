@@ -810,8 +810,8 @@ export function DemoWorkstation({
     if (areaMode && areaPoints.length > 0) {
       areaPoints.forEach(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 4,
-          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 5,
+          fill: '#fbbf24', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
@@ -822,8 +822,8 @@ export function DemoWorkstation({
     if (lineMode && linePoints.length > 0) {
       linePoints.forEach(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 4,
-          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 5,
+          fill: '#fbbf24', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
@@ -834,8 +834,8 @@ export function DemoWorkstation({
     if (multiLinealMode && multiLinealPoints.length > 0) {
       multiLinealPoints.forEach(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 4,
-          fill: '#f59e0b', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 5,
+          fill: '#fbbf24', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, evented: false, hasControls: false, hasBorders: false,
         });
@@ -1621,16 +1621,29 @@ export function DemoWorkstation({
       }
       // Remove from client state
       const deletedId = pendingDeleteAreaId;
+      const deletedArea = areaList.find(a => a.id === deletedId);
       setAreaList(prev => prev.filter(a => a.id !== deletedId));
-      // Remove canvas objects for this area
+      // Remove canvas objects for this area. Match the same way the sidebar
+      // does (quoteRoofAreaId / id / label) AND fall back to measurementId tags,
+      // because polygon object references are lost after redraws (this was the
+      // bug where deleting left the outline + fill on the canvas).
+      const deletedRaIds = new Set(
+        roofAreas
+          .filter(ra => ra.quoteRoofAreaId === deletedId || ra.id === deletedId ||
+            (deletedArea && ra.name === deletedArea.label))
+          .map(ra => ra.id)
+      );
       if (fabricRef.current) {
-        const toRemove = fabricRef.current.getObjects().filter((obj: any) =>
-          obj.measurementId && roofAreas.find(ra => ra.id === deletedId && ra.polygon === obj)
+        const canvas = fabricRef.current;
+        const toRemove = canvas.getObjects().filter((obj: any) =>
+          (obj.measurementId && deletedRaIds.has(obj.measurementId)) ||
+          roofAreas.some(ra => deletedRaIds.has(ra.id) &&
+            (ra.polygon === obj || ra.markers?.some(m => m === obj)))
         );
-        toRemove.forEach(obj => fabricRef.current!.remove(obj));
-        fabricRef.current?.renderAll();
+        toRemove.forEach(obj => canvas.remove(obj));
+        canvas.requestRenderAll();
       }
-      setRoofAreas(prev => prev.filter(ra => ra.id !== deletedId));
+      setRoofAreas(prev => prev.filter(ra => !deletedRaIds.has(ra.id)));
       // Clear cached state for this area
       areaCanvasStatesRef.current.delete(deletedId);
       // If the deleted area was active, switch to the first remaining area
@@ -1690,8 +1703,8 @@ export function DemoWorkstation({
       // Create polygon on canvas
       const polygon = new Polygon(pendingAreaPoints, {
         fill: 'rgba(59, 130, 246, 0.2)',
-        stroke: '#3b82f6',
-        strokeWidth: 1.25,
+        stroke: '#60a5fa',
+        strokeWidth: 1.7,
         selectable: false,
         evented: false,
       });
@@ -1960,7 +1973,7 @@ export function DemoWorkstation({
       const polygon = new Polygon(pendingAreaPoints, {
         fill: `${componentColor}33`,
         stroke: componentColor,
-        strokeWidth: 1.25,
+        strokeWidth: 1.7,
         selectable: false,
         evented: false,
       });
@@ -2027,18 +2040,32 @@ export function DemoWorkstation({
 
   const handleToggleAreaVisibility = (areaId: string) => {
     pushHistorySnapshot();
-    setRoofAreas(roofAreas.map(area => {
-      if (area.id === areaId) {
-        const newVisible = !area.visible;
-        if (area.polygon) {
-          area.polygon.set('visible', newVisible);
-        }
-        area.markers?.forEach(marker => marker.set('visible', newVisible));
-        fabricRef.current?.renderAll();
-        return { ...area, visible: newVisible };
+    // Match using the same criteria as the sidebar render (quoteRoofAreaId / id / label)
+    // so the toggle still resolves after an area has been saved and re-id'd.
+    const area = areaList.find(a => a.id === areaId);
+    const matches = roofAreas.filter(ra =>
+      ra.quoteRoofAreaId === areaId || ra.id === areaId || (area && ra.name === area.label)
+    );
+    if (matches.length === 0) return;
+    const newVisible = !matches[0].visible;
+    const matchIds = new Set(matches.map(ra => ra.id));
+    matches.forEach(ra => {
+      if (ra.polygon) {
+        ra.polygon.set('visible', newVisible);
       }
-      return area;
-    }));
+      ra.markers?.forEach(marker => marker.set('visible', newVisible));
+    });
+    // Belt-and-braces: toggle any canvas objects tagged with this area's id,
+    // covering polygons whose object reference was lost after a redraw.
+    if (fabricRef.current) {
+      fabricRef.current.getObjects().forEach((obj: any) => {
+        if (obj.measurementId && matchIds.has(obj.measurementId)) {
+          obj.set('visible', newVisible);
+        }
+      });
+      fabricRef.current.renderAll();
+    }
+    setRoofAreas(prev => prev.map(ra => matchIds.has(ra.id) ? { ...ra, visible: newVisible } : ra));
   };
   
   // P1-2: Central tool-switching helper. Uses the canonical toolForMeasurementType
@@ -3237,7 +3264,7 @@ export function DemoWorkstation({
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3,
+            radius: 3.75,
             fill: componentColor,
             stroke: '#000',
             strokeWidth: 1,
@@ -3257,7 +3284,7 @@ export function DemoWorkstation({
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3,
+            radius: 3.75,
             fill: componentColor,
             stroke: '#000',
             strokeWidth: 1,
@@ -3272,7 +3299,7 @@ export function DemoWorkstation({
           // Draw line (component color)
           const line = new Line([firstPoint.x, firstPoint.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1.25,
+            strokeWidth: 1.7,
             selectable: false,
             evented: false,
           });
@@ -3318,7 +3345,7 @@ export function DemoWorkstation({
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
-          radius: 3,
+          radius: 3.75,
           fill: isFirst ? '#f97316' : componentColor, // orange for first, component color for rest
           stroke: '#000',
           strokeWidth: 1,
@@ -3336,7 +3363,7 @@ export function DemoWorkstation({
           const prev = currentPoints[currentPoints.length - 1];
           const segLine = new Line([prev.x, prev.y, newPoint.x, newPoint.y], {
             stroke: componentColor,
-            strokeWidth: 1.25,
+            strokeWidth: 1.7,
             selectable: false,
             evented: false,
           });
@@ -3401,7 +3428,7 @@ export function DemoWorkstation({
             height: 0,
             fill: `${componentColor}22`,
             stroke: componentColor,
-            strokeWidth: 1.5,
+            strokeWidth: 2,
             strokeDashArray: [5, 4],
             selectable: false,
             evented: false,
@@ -3499,7 +3526,7 @@ export function DemoWorkstation({
                 const previewPoly = new Polygon(currentPoints, {
                   fill: `${compColor}22`,
                   stroke: compColor,
-                  strokeWidth: 1.5,
+                  strokeWidth: 2,
                   strokeDashArray: [5, 4],
                   selectable: false,
                   evented: false,
@@ -3527,7 +3554,7 @@ export function DemoWorkstation({
         const marker = new Circle({
           left: newPoint.x,
           top: newPoint.y,
-          radius: 3,
+          radius: 3.75,
           fill: isFirstPoint ? '#10b981' : '#3b82f6', // green first, blue rest
           stroke: '#000',
           strokeWidth: 1,
@@ -3553,7 +3580,7 @@ export function DemoWorkstation({
           const marker = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3.75,
+            radius: 4.75,
             fill: '#facc15',
             stroke: '#000',
             strokeWidth: 1,
@@ -3575,7 +3602,7 @@ export function DemoWorkstation({
           const marker2 = new Circle({
             left: newPoint.x,
             top: newPoint.y,
-            radius: 3.75,
+            radius: 4.75,
             fill: '#facc15',
             stroke: '#000',
             strokeWidth: 1,
@@ -3589,7 +3616,7 @@ export function DemoWorkstation({
           // Draw calibration line
           const line = new Line([point1.x, point1.y, point2.x, point2.y], {
             stroke: '#facc15', // yellow-400
-            strokeWidth: 1.875,
+            strokeWidth: 2.5,
             selectable: false,
             evented: false,
           });
@@ -3735,7 +3762,7 @@ export function DemoWorkstation({
             const previewPoly = new Polygon(boxPoints, {
               fill: `${compColor}22`,
               stroke: compColor,
-              strokeWidth: 1.5,
+              strokeWidth: 2,
               strokeDashArray: [5, 4],
               selectable: false,
               evented: false,
@@ -4320,7 +4347,7 @@ export function DemoWorkstation({
         ra.canvasPoints.map(p => ({ x: p.x, y: p.y })),
         {
           fill: 'rgba(59, 130, 246, 0.2)',
-          stroke: '#3b82f6',
+          stroke: '#60a5fa',
           strokeWidth: 2,
           selectable: false,
           objectCaching: false,
@@ -4332,8 +4359,8 @@ export function DemoWorkstation({
       // Vertex markers
       const markers = ra.canvasPoints.map(p => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 3,
-          fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
+          left: p.x, top: p.y, radius: 3.75,
+          fill: '#60a5fa', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: false, hasControls: false, hasBorders: false,
         });
@@ -4397,7 +4424,7 @@ export function DemoWorkstation({
         const newMeasurements: ComponentMeasurement[] = measurements.map((m: AiMeasurement) => {
           const [p1, p2] = m.canvasPoints;
           const marker1 = new Circle({
-            left: p1.x, top: p1.y, radius: 3,
+            left: p1.x, top: p1.y, radius: 3.75,
             fill: colour, stroke: '#000', strokeWidth: 1,
             originX: 'center', originY: 'center',
             selectable: false, hasControls: false, hasBorders: false,
@@ -4405,7 +4432,7 @@ export function DemoWorkstation({
           (marker1 as unknown as { measurementId: string }).measurementId = m.id;
 
           const marker2 = new Circle({
-            left: p2.x, top: p2.y, radius: 3,
+            left: p2.x, top: p2.y, radius: 3.75,
             fill: colour, stroke: '#000', strokeWidth: 1,
             originX: 'center', originY: 'center',
             selectable: false, hasControls: false, hasBorders: false,

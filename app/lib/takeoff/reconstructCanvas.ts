@@ -63,8 +63,8 @@ export function reconstructCanvas(
       area.points.map(p => ({ x: p.x, y: p.y })),
       {
         fill: 'rgba(59, 130, 246, 0.2)',
-        stroke: '#3b82f6',
-        strokeWidth: 2,
+        stroke: '#60a5fa',
+        strokeWidth: 2.7,
         selectable: false,
         objectCaching: false,
       },
@@ -75,7 +75,7 @@ export function reconstructCanvas(
 
     // Vertex markers
     const markers = area.points.map((p) => {
-      const marker = createMarker(p.x, p.y, '#3b82f6', area.id);
+      const marker = createMarker(p.x, p.y, '#60a5fa', area.id);
       canvas.add(marker);
       return marker;
     });
@@ -103,7 +103,7 @@ export function reconstructCanvas(
             const marker2 = createMarker(p2.x, p2.y, color, m.id);
             const line = new Line([p1.x, p1.y, p2.x, p2.y], {
               stroke: color,
-              strokeWidth: 2,
+              strokeWidth: 2.7,
               selectable: false,
                     hasControls: false,
               hasBorders: false,
@@ -122,7 +122,7 @@ export function reconstructCanvas(
               {
                 fill: color + '33', // semi-transparent
                 stroke: color,
-                strokeWidth: 2,
+                strokeWidth: 2.7,
                 selectable: false,
                         objectCaching: false,
               },
@@ -181,7 +181,7 @@ export function reconstructCanvas(
               const p2 = m.points[i];
               const line = new Line([p1.x, p1.y, p2.x, p2.y], {
                 stroke: color,
-                strokeWidth: 2,
+                strokeWidth: 2.7,
                 selectable: false,
                         hasControls: false,
                 hasBorders: false,
@@ -201,7 +201,7 @@ export function reconstructCanvas(
               {
                 fill: color + '33',
                 stroke: color,
-                strokeWidth: 2,
+                strokeWidth: 2.7,
                 strokeDashArray: [],
                 selectable: false,
                         objectCaching: false,
@@ -228,7 +228,7 @@ export function reconstructCanvas(
             const marker2 = createMarker(p2.x, p2.y, color, m.id);
             const line = new Line([p1.x, p1.y, p2.x, p2.y], {
               stroke: color,
-              strokeWidth: 2,
+              strokeWidth: 2.7,
               selectable: false,
                     hasControls: false,
               hasBorders: false,
@@ -270,7 +270,7 @@ function createMarker(x: number, y: number, color: string, measurementId: string
   const marker = new Circle({
     left: x,
     top: y,
-    radius: 3,
+    radius: 3.75,
     fill: color,
     stroke: '#000',
     strokeWidth: 1,
