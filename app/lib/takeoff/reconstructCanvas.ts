@@ -64,7 +64,7 @@ export function reconstructCanvas(
       {
         fill: 'rgba(59, 130, 246, 0.2)',
         stroke: '#60a5fa',
-        strokeWidth: 2.7,
+        strokeWidth: 1.7,
         selectable: false,
         objectCaching: false,
       },
@@ -103,7 +103,7 @@ export function reconstructCanvas(
             const marker2 = createMarker(p2.x, p2.y, color, m.id);
             const line = new Line([p1.x, p1.y, p2.x, p2.y], {
               stroke: color,
-              strokeWidth: 2.7,
+              strokeWidth: 1.7,
               selectable: false,
                     hasControls: false,
               hasBorders: false,
@@ -122,7 +122,7 @@ export function reconstructCanvas(
               {
                 fill: color + '33', // semi-transparent
                 stroke: color,
-                strokeWidth: 2.7,
+                strokeWidth: 1.7,
                 selectable: false,
                         objectCaching: false,
               },
@@ -181,7 +181,7 @@ export function reconstructCanvas(
               const p2 = m.points[i];
               const line = new Line([p1.x, p1.y, p2.x, p2.y], {
                 stroke: color,
-                strokeWidth: 2.7,
+                strokeWidth: 1.7,
                 selectable: false,
                         hasControls: false,
                 hasBorders: false,
@@ -201,7 +201,7 @@ export function reconstructCanvas(
               {
                 fill: color + '33',
                 stroke: color,
-                strokeWidth: 2.7,
+                strokeWidth: 1.7,
                 strokeDashArray: [],
                 selectable: false,
                         objectCaching: false,
@@ -228,7 +228,7 @@ export function reconstructCanvas(
             const marker2 = createMarker(p2.x, p2.y, color, m.id);
             const line = new Line([p1.x, p1.y, p2.x, p2.y], {
               stroke: color,
-              strokeWidth: 2.7,
+              strokeWidth: 1.7,
               selectable: false,
                     hasControls: false,
               hasBorders: false,

@@ -4348,7 +4348,7 @@ export function DemoWorkstation({
         {
           fill: 'rgba(59, 130, 246, 0.2)',
           stroke: '#60a5fa',
-          strokeWidth: 2,
+          strokeWidth: 1.7,
           selectable: false,
           objectCaching: false,
         },
@@ -6701,4 +6701,5 @@ export function DemoWorkstation({
 
 // Area Name Modal - isRoofing controls whether pitch is shown/required.
 // modalTitle + namePlaceholder are trade-config-driven.
+
 
