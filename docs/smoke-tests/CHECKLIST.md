@@ -572,3 +572,13 @@
 - [ ] Quotes page: same Measure a job card shows above the list; full flow identical to dashboard (create -> land on takeoff canvas).
 - [ ] Q chat: ask "take me to quotes" / "where are my invoices" -> Q navigates the app there automatically (one short reply, no directions dump).
 - [ ] AI Takeoff scan2: run a plan with dotted/dashed plan lines on Medium - confirm dashed lines are removed early (server log \scan2 stroke-style: removed N dashed\) and do not appear as components or pink uncertain lines
+
+## Smart Assistant (Phase 1, 2026-09-18)
+- [x] Cross-tenant: match_sa_chunks as other-company user with foreign p_company returns 0 rows (PASS)
+- [x] Private conversations: other user sees only own conversations; assistant_configs cross-tenant read returns 0 rows (PASS)
+- [x] Flag-off admission: unflagged company user gets flag_off refusal from sa_admit_run (PASS)
+- [x] Duplicate submit: same clientRequestId replays as duplicate, no second run (PASS)
+- [x] Busy: second turn while run active refused run_in_progress; finish frees slot (PASS)
+- [x] Usage ledger: finished run writes exactly one assistant_usage_events row with token counts (PASS)
+- [x] Poisoned doc: chunk with script-tag content is invisible cross-tenant; SafeMessage renders escaped (PASS)
+- [ ] Live UI pass on RS Roofing: enable toggle at /account/smart-assistant, send a real turn in /[workspaceSlug]/assistant (Shaun)

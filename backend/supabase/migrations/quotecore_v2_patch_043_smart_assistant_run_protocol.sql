@@ -122,7 +122,7 @@ BEGIN
     payload_hash, status
   ) VALUES (
     p_conversation_id, v_user, v_conversation.company_id, p_client_request_id,
-    encode(digest(p_user_message, 'sha256'), 'hex'), 'accepted'
+    md5(p_user_message), 'accepted'
   )
   RETURNING id INTO v_run_id;
 

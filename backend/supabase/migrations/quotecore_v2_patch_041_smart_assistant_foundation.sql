@@ -192,7 +192,9 @@ AS $$
   FROM public.assistant_knowledge_chunks c
   JOIN public.assistant_knowledge_docs d ON d.id = c.doc_id
   WHERE d.status = 'ready'
-    AND c.company_id = COALESCE(p_company, c.company_id)
+    -- Caller's company ALWAYS wins; a supplied p_company must match it.
+    AND c.company_id = public.sa_user_company_id()
+    AND (p_company IS NULL OR p_company = public.sa_user_company_id())
   ORDER BY c.embedding <=> p_query_embedding
   LIMIT LEAST(GREATEST(p_match_count, 1), 20)
 $$;
