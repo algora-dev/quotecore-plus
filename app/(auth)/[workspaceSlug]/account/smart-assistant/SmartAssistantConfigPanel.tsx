@@ -20,6 +20,7 @@ type Props = {
   initialGreeting: string;
   initialRules: string[];
   initialEnabled: boolean;
+  initialMembersCanManage: boolean;
   docs: ConfigDoc[];
 };
 
@@ -36,12 +37,14 @@ export function SmartAssistantConfigPanel({
   initialGreeting,
   initialRules,
   initialEnabled,
+  initialMembersCanManage,
   docs,
 }: Props) {
   const [name, setName] = useState(initialName);
   const [greeting, setGreeting] = useState(initialGreeting);
   const [rulesText, setRulesText] = useState(initialRules.join('\n'));
   const [enabled, setEnabled] = useState(initialEnabled);
+  const [membersCanManage, setMembersCanManage] = useState(initialMembersCanManage);
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -55,6 +58,7 @@ export function SmartAssistantConfigPanel({
         greeting,
         customRules: rulesText.split('\n'),
         enabled,
+        membersCanManage,
       });
       setFeedback({ ok: result.ok, text: result.ok ? result.message : result.error });
     });
@@ -120,6 +124,28 @@ export function SmartAssistantConfigPanel({
             <span
               className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
                 enabled ? 'translate-x-[22px]' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-900">Allow team members to manage</p>
+            <p className="text-xs text-slate-500">
+              When off, only the workspace owner or an admin can change these settings.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMembersCanManage(!membersCanManage)}
+            className={`relative h-6 w-11 rounded-full transition-colors ${
+              membersCanManage ? 'bg-emerald-500' : 'bg-slate-200'
+            }`}
+            aria-pressed={membersCanManage}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                membersCanManage ? 'translate-x-[22px]' : 'translate-x-0.5'
               }`}
             />
           </button>

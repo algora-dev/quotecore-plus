@@ -21,7 +21,7 @@ export default async function SmartAssistantConfigPage() {
   const [{ data: config }, { data: docs }] = await Promise.all([
     supabase
       .from('assistant_configs')
-      .select('name, greeting, custom_rules, enabled')
+      .select('name, greeting, custom_rules, enabled, members_can_manage')
       .eq('company_id', profile.company_id)
       .maybeSingle(),
     supabase
@@ -54,6 +54,7 @@ export default async function SmartAssistantConfigPage() {
         initialGreeting={config?.greeting ?? ''}
         initialRules={Array.isArray(config?.custom_rules) ? (config!.custom_rules as string[]) : []}
         initialEnabled={config?.enabled ?? false}
+        initialMembersCanManage={config?.members_can_manage ?? false}
         docs={configDocs}
       />
     </div>

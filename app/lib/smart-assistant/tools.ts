@@ -57,7 +57,7 @@ const searchKnowledge: RegisteredTool = {
     }
     return {
       found: true,
-      passages: rows.map((r) => ({ excerpt: r.content.slice(0, 800), relevance: Math.round(r.similarity * 100) })),
+      passages: rows.map((r) => ({ excerpt: r.content, relevance: Math.round(r.similarity * 100) })),
     };
   },
 };
@@ -293,88 +293,6 @@ const getOrderStatus: RegisteredTool = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// calculate - pure arithmetic, shunting-yard (no eval, no mathjs)
-// ---------------------------------------------------------------------------
-
-function safeCalculate(expression: string): number | null {
-  const tokens = expression.match(/(\d+\.?\d*|[+\-*/()])/g);
-  if (!tokens || tokens.join('') !== expression.replace(/\s+/g, '')) return null;
-  const prec: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
-  const out: (number | string)[] = [];
-  const ops: string[] = [];
-  let expectOperand = true;
-  for (const t of tokens) {
-    if (/^\d/.test(t)) {
-      if (!expectOperand) return null;
-      out.push(parseFloat(t));
-      expectOperand = false;
-    } else if (t === '(') {
-      ops.push(t);
-      expectOperand = true;
-    } else if (t === ')') {
-      while (ops.length && ops[ops.length - 1] !== '(') out.push(ops.pop() as string);
-      if (!ops.length) return null;
-      ops.pop();
-      expectOperand = false;
-    } else {
-      if (expectOperand && t !== '-') return null;
-      if (expectOperand && t === '-') {
-        out.push(0);
-      }
-      while (ops.length && prec[ops[ops.length - 1]] >= prec[t]) out.push(ops.pop() as string);
-      ops.push(t);
-      expectOperand = true;
-    }
-  }
-  while (ops.length) {
-    const op = ops.pop() as string;
-    if (op === '(') return null;
-    out.push(op);
-  }
-  const stack: number[] = [];
-  for (const item of out) {
-    if (typeof item === 'number') stack.push(item);
-    else {
-      const b = stack.pop();
-      const a = stack.pop();
-      if (a == null || b == null) return null;
-      if (item === '+') stack.push(a + b);
-      else if (item === '-') stack.push(a - b);
-      else if (item === '*') stack.push(a * b);
-      else if (item === '/') stack.push(b === 0 ? NaN : a / b);
-    }
-  }
-  const result = stack.pop();
-  return result != null && Number.isFinite(result) ? Math.round(result * 1e6) / 1e6 : null;
-}
-
-const calculate: RegisteredTool = {
-  schema: {
-    name: 'calculate',
-    description:
-      'Evaluate a plain arithmetic expression (numbers, + - * / and parentheses ONLY, no units or words). Use this for any maths; never compute in your reply.',
-    parameters: {
-      type: 'object',
-      properties: {
-        expression: { type: 'string', description: 'e.g. "12.5 * 48 + 300"' },
-      },
-      required: ['expression'],
-    },
-  },
-  handler: async (args) => {
-    const expression = asString(args.expression);
-    if (!expression || expression.length > 200) return { error: 'Invalid expression.' };
-    const result = safeCalculate(expression.replace(/\s+/g, ''));
-    if (result == null) {
-      return { error: 'Expression rejected. Only numbers, + - * / and parentheses are allowed.' };
-    }
-    return { expression, result };
-  },
-};
-
-// ---------------------------------------------------------------------------
-
 export const READONLY_TOOLS: Record<string, RegisteredTool> = {
   search_knowledge: searchKnowledge,
   list_quotes: listQuotes,
@@ -384,5 +302,4 @@ export const READONLY_TOOLS: Record<string, RegisteredTool> = {
   list_customers: listCustomers,
   get_invoice_status: getInvoiceStatus,
   get_order_status: getOrderStatus,
-  calculate,
 };

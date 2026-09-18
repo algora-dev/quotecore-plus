@@ -76,7 +76,11 @@ export interface ChatTurnResult {
   text: string;
   /** Tool calls the model requested (empty when it produced a final answer). */
   toolCalls: LlmToolCall[];
-  /** Best-effort token usage for this step (in+out). */
+  /** Prompt/input tokens for this step. */
+  tokensIn: number;
+  /** Completion/output tokens for this step. */
+  tokensOut: number;
+  /** Best-effort total token usage for this step (legacy field). */
   totalTokens: number;
 }
 
@@ -141,6 +145,8 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
   );
 
   let text = '';
+  let usageIn = 0;
+  let usageOut = 0;
   let usage = 0;
   // Accumulate streamed tool-call fragments by index.
   const toolAcc = new Map<
@@ -165,12 +171,16 @@ export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult>
         toolAcc.set(idx, cur);
       }
     }
-    if (chunk.usage) usage = chunk.usage.total_tokens ?? usage;
+    if (chunk.usage) {
+      usageIn = chunk.usage.prompt_tokens ?? usageIn;
+      usageOut = chunk.usage.completion_tokens ?? usageOut;
+      usage = chunk.usage.total_tokens ?? usage;
+    }
   }
 
   const toolCalls: LlmToolCall[] = [...toolAcc.values()]
     .filter((t) => t.name)
     .map((t) => ({ id: t.id, name: t.name, arguments: t.args || '{}' }));
 
-  return { text, toolCalls, totalTokens: usage };
+  return { text, toolCalls, tokensIn: usageIn, tokensOut: usageOut, totalTokens: usage };
 }

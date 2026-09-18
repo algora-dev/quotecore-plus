@@ -42,6 +42,8 @@ export function refusalStatus(errorCode: string): number {
       return 401;
     case 'run_in_progress':
       return 409;
+    case 'request_id_conflict':
+      return 409;
     case 'quota_exceeded':
       return 429;
     case 'flag_off':
@@ -81,7 +83,51 @@ export async function runPipeline(
     runId,
     userMessage,
   });
-  // Provider reports combined usage; split properly when the usage ledger
-  // lands (slice 7).
-  return { content: result.content, tokensIn: result.totalTokens, tokensOut: 0 };
+  return { content: result.content, tokensIn: result.tokensIn, tokensOut: result.tokensOut };
+}
+
+/** Usage already incurred when a pipeline fails mid-flight (never lost). */
+export interface PipelineFailure {
+  errorCode: string;
+  tokensIn: number;
+  tokensOut: number;
+}
+
+export function pipelineFailureDetails(err: unknown): PipelineFailure {
+  if (err instanceof Error && (err as Error & { tokensIn?: number }).tokensIn != null) {
+    const e = err as Error & { tokensIn: number; tokensOut: number; errorCode?: string };
+    return { errorCode: e.errorCode ?? 'pipeline_error', tokensIn: e.tokensIn, tokensOut: e.tokensOut };
+  }
+  return { errorCode: 'pipeline_error', tokensIn: 0, tokensOut: 0 };
+}
+
+/**
+ * Trusted finalization: SERVICE-ROLE client only. The browser user can request
+ * runs but can never certify model output, terminal state, or token usage.
+ * sa_finish_run is executable by service_role only (patch 045).
+ */
+export async function finishRunTrusted(
+  admin: import('@supabase/supabase-js').SupabaseClient,
+  input: {
+    runId: string;
+    status: 'completed' | 'failed';
+    assistantContent?: string;
+    errorCode?: string;
+    tokensIn: number;
+    tokensOut: number;
+  },
+): Promise<boolean> {
+  const { data, error } = await admin.rpc('sa_finish_run', {
+    p_run_id: input.runId,
+    p_status: input.status,
+    p_error_code: input.errorCode ?? undefined,
+    p_assistant_content: input.assistantContent ?? undefined,
+    p_tokens_in: input.tokensIn,
+    p_tokens_out: input.tokensOut,
+  });
+  if (error) {
+    console.error('[smart-assistant] trusted finish failed:', error.message);
+    return false;
+  }
+  return data === true;
 }

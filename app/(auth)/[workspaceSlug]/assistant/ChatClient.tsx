@@ -21,23 +21,30 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<string | null>(null);
+  // Pending logical send per conversation: id + exact text. Retained across
+  // unknown outcomes (network/5xx) so a retry replays idempotently; cleared
+  // on deterministic refusals.
+  const pendingRef = useRef<Map<string, { requestId: string; message: string }>>(new Map());
+  const stateVersionRef = useRef(0);
 
-  // Clarity exclusion: tag chat sessions so they can be filtered/excluded
-  // from recordings and heatmaps (transcript privacy).
+  // Clarity: DOM mask is the privacy control; the tag is analytics only.
   useEffect(() => {
     const w = window as unknown as { clarity?: (...args: unknown[]) => void };
-    w.clarity?.('setTag', 'smart_assistant', 'chat');
+    w.clarity?.('set', 'smart_assistant', 'chat');
     w.clarity?.('event', 'smart_assistant_chat_open');
   }, []);
 
   const loadState = useCallback(async (conversationId: string) => {
+    const version = ++stateVersionRef.current;
     const res = await fetch(`/api/smart-assistant/state?conversationId=${conversationId}`);
     if (!res.ok) {
-      setMessages([]);
+      if (version === stateVersionRef.current) setMessages([]);
       return;
     }
     const data = (await res.json()) as { messages: Message[]; run_status: string | null };
+    // Late responses from a previously-selected conversation never overwrite
+    // the currently visible thread.
+    if (version !== stateVersionRef.current) return;
     setMessages(
       (data.messages ?? []).filter((m) => m.role === 'user' || m.role === 'assistant'),
     );
@@ -66,8 +73,14 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
   async function send() {
     const text = input.trim();
     if (!text || busy || !activeId) return;
-    // One clientRequestId per logical send; retried sends reuse it.
-    if (!requestRef.current) requestRef.current = crypto.randomUUID();
+    const pending = pendingRef.current.get(activeId);
+    if (pending && pending.message !== text) {
+      setNotice('Finish or retry your pending message first.');
+      return;
+    }
+    // One logical send = one request id, retained across unknown outcomes.
+    const requestId = pending?.requestId ?? crypto.randomUUID();
+    if (!pending) pendingRef.current.set(activeId, { requestId, message: text });
     setInput('');
     setNotice(null);
     setBusy(true);
@@ -79,41 +92,57 @@ export function ChatClient({ initialConversations, assistantName, greeting, sett
         body: JSON.stringify({
           conversationId: activeId,
           message: text,
-          clientRequestId: requestRef.current,
+          clientRequestId: requestId,
         }),
       });
       if (res.status === 409) {
-        setNotice('The assistant is still working on your last message.');
-        setMessages((prev) => [...prev.slice(0, -1)]);
-        setInput(text);
+        const body = (await res.json().catch(() => ({}))) as { error_code?: string };
+        if (body.error_code === 'request_id_conflict') {
+          pendingRef.current.delete(activeId);
+          setNotice('Request conflict - please send your message again.');
+          setMessages((prev) => prev.slice(0, -1));
+          setInput(text);
+        } else {
+          setNotice('The assistant is still working on your last message.');
+          setMessages((prev) => prev.slice(0, -1));
+          setInput(text);
+        }
         return;
       }
       if (res.status === 429) {
+        pendingRef.current.delete(activeId);
         setNotice('Monthly assistant limit reached for this workspace.');
         return;
       }
-      if (!res.ok) {
+      if (res.status >= 400 && res.status < 500) {
+        pendingRef.current.delete(activeId);
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         setNotice(body.error ?? `Request failed (${res.status}).`);
         return;
       }
-      // Success (completed or duplicate): refetch authoritative state.
+      if (!res.ok) {
+        // Unknown outcome: keep the pending key so a retry replays idempotently.
+        setMessages((prev) => prev.slice(0, -1));
+        setInput(text);
+        setNotice('The reply did not complete - press Send again to retry safely.');
+        return;
+      }
+      pendingRef.current.delete(activeId);
       await loadState(activeId);
-      // Title new conversations from the first message.
       setConversations((prev) =>
         prev.map((c) => (c.id === activeId && !c.title ? { ...c, title: text.slice(0, 60) } : c)),
       );
     } catch {
-      setNotice('Network error - your message can be retried safely.');
+      setMessages((prev) => prev.slice(0, -1));
       setInput(text);
+      setNotice('Network error - press Send again to retry safely.');
     } finally {
-      requestRef.current = null;
       setBusy(false);
     }
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-white overflow-hidden">
+    <div data-clarity-mask="true" className="flex h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-white overflow-hidden">
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-slate-200">
         <div className="p-3">

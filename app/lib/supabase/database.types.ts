@@ -462,6 +462,7 @@ export type Database = {
           enabled: boolean
           greeting: string
           id: string
+          members_can_manage: boolean
           name: string
           rule_toggles: Json
           updated_at: string
@@ -474,6 +475,7 @@ export type Database = {
           enabled?: boolean
           greeting?: string
           id?: string
+          members_can_manage?: boolean
           name?: string
           rule_toggles?: Json
           updated_at?: string
@@ -486,6 +488,7 @@ export type Database = {
           enabled?: boolean
           greeting?: string
           id?: string
+          members_can_manage?: boolean
           name?: string
           rule_toggles?: Json
           updated_at?: string
@@ -808,13 +811,49 @@ export type Database = {
           },
         ]
       }
+      assistant_turn_reservations: {
+        Row: {
+          company_id: string
+          created_at: string
+          run_id: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          run_id: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          run_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assistant_turn_reservations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assistant_turn_reservations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistant_usage_events: {
         Row: {
           company_id: string
           created_at: string
           id: string
           model: string | null
-          run_id: string
+          run_id: string | null
           status: string
           tokens_in: number
           tokens_out: number
@@ -825,7 +864,7 @@ export type Database = {
           created_at?: string
           id?: string
           model?: string | null
-          run_id: string
+          run_id?: string | null
           status: string
           tokens_in?: number
           tokens_out?: number
@@ -836,7 +875,7 @@ export type Database = {
           created_at?: string
           id?: string
           model?: string | null
-          run_id?: string
+          run_id?: string | null
           status?: string
           tokens_in?: number
           tokens_out?: number
