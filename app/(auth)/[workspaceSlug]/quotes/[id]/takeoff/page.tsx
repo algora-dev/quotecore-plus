@@ -5,6 +5,7 @@ import { TakeoffPage } from './TakeoffPage';
 import { loadTakeoffHydrationData } from './actions';
 import { notFound } from 'next/navigation';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
+import { companyHasAiCalibration } from '@/app/lib/takeoff/calibrationFlag';
 
 export default async function Page({
   params,
@@ -29,6 +30,9 @@ export default async function Page({
 
   const ent = await loadCompanyEntitlements(profile.company_id);
   const isOverStorage = ent.isOverStorage;
+
+  // P2 AI-assisted calibration: per-company flag (defaults false until the P4 migration).
+  const aiCalibrationEnabled = await companyHasAiCalibration(profile.company_id);
 
   // AI Takeoff: load company trade + kill switch for the AI Assist button.
   const { data: companyRow } = await supabase
@@ -138,6 +142,7 @@ export default async function Page({
       allRoofAreas={allRoofAreas}
       aiTakeoffAvailable={aiTakeoffAvailable}
       aiAssistPoints={aiAssistPoints}
+      aiCalibrationEnabled={aiCalibrationEnabled}
     />
   );
 }

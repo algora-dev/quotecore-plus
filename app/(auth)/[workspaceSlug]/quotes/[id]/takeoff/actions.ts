@@ -24,7 +24,17 @@ interface TakeoffMeasurement {
    *  depth). Display-only - never feeds calculation (m.value is already the
    *  final product). Persisted to quote_takeoff_measurements.entry_inputs so
    *  re-entry hydration + re-save doesn't wipe it. */
-  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
+  /** P3/P4 (spec 10.3): attached-area entries also carry value_basis/plan_value
+   *  snapshots and the durable source_geometry_id provenance link; these DO
+   *  participate in calibration recomputation (no longer display-only). */
+  entryInputs?: {
+    height_m?: number | null;
+    depth_m?: number | null;
+    value_basis?: 'pitched' | 'plan';
+    plan_value?: number;
+    pitch_applied?: boolean;
+    source_geometry_id?: string;
+  } | null;
 }
 
 export async function saveTakeoffMeasurements(
@@ -46,6 +56,17 @@ export async function saveTakeoffMeasurements(
   /** Canvas-rework: calibration data to persist on the takeoff_pages row.
    *  Stored in scale_calibration JSONB so re-entry can restore the scale. */
   calibrations?: unknown,
+  /** P3 (spec 10.1): when true, calibration persistence is REQUIRED - a
+   *  failure returns COMMIT_FAILED instead of being swallowed. Used by the
+   *  AI-assisted calibration finish path so a failed commit is never
+   *  reported as success (the client rolls back its session state). */
+  requireCalibrationCommit?: boolean,
+  /** P4 (spec 11): versioned calibration envelope (calibrationCodec v1)
+   *  persisted to takeoff_pages.calibration_metadata. When supplied, the
+   *  legacy scale_calibration array is STILL written alongside it (rolling
+   *  deployment, spec 11.4) and the server-established image_revision is
+   *  stamped on the same row update. */
+  calibrationMetadata?: unknown,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const supabase = await createSupabaseServerClient();
 
@@ -313,7 +334,7 @@ export async function saveTakeoffMeasurements(
           // pitch set/changed AFTER attaching always corrects the numbers:
           //   basis 'pitched' -> plan x live pitch factor (roof sheets etc.)
           //   basis 'plan'    -> plan, no pitch
-          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan'; plan_value?: number; pitch_applied?: boolean } | null }).entryInputs;
+          const ei = (m as { entryInputs?: { value_basis?: 'pitched' | 'plan'; plan_value?: number; pitch_applied?: boolean; source_geometry_id?: string } | null }).entryInputs;
           const hasLiveBasis = m.type === 'area' && ei && (ei.value_basis === 'pitched' || ei.value_basis === 'plan') && typeof ei.plan_value === 'number' && ei.plan_value > 0;
           if (hasLiveBasis) {
             metricValue = toMetricArea(ei!.plan_value!);
@@ -342,11 +363,17 @@ export async function saveTakeoffMeasurements(
             // the calc audit + UI can report it faithfully per page/area.
             pitch_degrees: basisPlanOnly ? 0 : groupPitch,
             // v8: input reference snapshot (display only).
+            // P6 (deferred P4 item): the durable source-polygon link is preserved
+            // on EVERY branch, not only the live-basis branch, so attached entries
+            // keep their provenance even when the plan_value snapshot is absent
+            // (legacy attached entries). Hydration + recompute already prefer it.
             entry_inputs: hasLiveBasis
-              ? { ...(entryInputs ?? {}), value_basis: ei!.value_basis, plan_value: ei!.plan_value }
+              ? { ...(entryInputs ?? {}), value_basis: ei!.value_basis, plan_value: ei!.plan_value, ...(ei.source_geometry_id ? { source_geometry_id: ei.source_geometry_id } : {}) }
               : (pitchPreApplied
-                ? { ...(entryInputs ?? {}), pitch_applied: true }
-                : entryInputs),
+                ? { ...(entryInputs ?? {}), pitch_applied: true, ...(ei?.source_geometry_id ? { source_geometry_id: ei.source_geometry_id } : {}) }
+                : (ei?.source_geometry_id
+                  ? { ...(entryInputs ?? {}), source_geometry_id: ei.source_geometry_id }
+                  : entryInputs)),
           };
         });
 
@@ -440,18 +467,50 @@ export async function saveTakeoffMeasurements(
   }
 
   // Canvas-rework: persist calibration data to the takeoff_pages row so
-  // re-entry can restore the scale. Non-fatal: a failure here doesn't affect
-  // the save result (calibrations are session-level metadata, not transactional
-  // with the measurements).
+  // re-entry can restore the scale. Default NON-FATAL (legacy callers rely on
+  // measurements-only saves succeeding even if this row update fails).
+  // P3: with requireCalibrationCommit the failure is FATAL and surfaced as
+  // COMMIT_FAILED - the client rolls back to the prior state, so a failed
+  // calibration save can never be reported as success.
   if (currentPageId && calibrations != null) {
+    let calUpdateError: string | null = null;
     try {
-      await supabase
+      // P4 (spec 11.1/11.3): write the versioned envelope + server-established
+      // image revision in the SAME row update as the legacy array (rolling
+      // deployment: legacy readers keep working, spec 11.4). The image
+      // revision is established SERVER-side (sha256 content digest) - the
+      // client never supplies it. A null revision here just means the page
+      // has no resolvable storage object; the metadata envelope still saves.
+      let imageRevision: string | null = null;
+      if (calibrationMetadata != null) {
+        const { getCalibrationImageRevision } = await import('@/app/lib/takeoff/calibrationImageRevision');
+        imageRevision = await getCalibrationImageRevision(currentPageId);
+      }
+      const calUpdate: Record<string, unknown> = {
+        scale_calibration: calibrations,
+      };
+      if (calibrationMetadata != null) {
+        calUpdate.calibration_metadata = calibrationMetadata;
+        if (imageRevision) calUpdate.image_revision = imageRevision;
+      }
+      const { error: calError } = await supabase
         .from('takeoff_pages')
-        .update({ scale_calibration: calibrations as unknown as never })
+        .update(calUpdate as never)
         .eq('id', currentPageId)
         .eq('quote_id', quoteId);
+      if (calError) calUpdateError = calError.message;
     } catch (err) {
-      console.warn('[SaveTakeoff] Failed to persist calibrations:', err);
+      calUpdateError = err instanceof Error ? err.message : String(err);
+    }
+    if (calUpdateError) {
+      if (requireCalibrationCommit) {
+        console.error('[SaveTakeoff] COMMIT_FAILED: calibration persistence failed:', calUpdateError);
+        return {
+          success: false,
+          error: `COMMIT_FAILED: calibration could not be persisted (${calUpdateError}). No changes were kept - please retry.`,
+        };
+      }
+      console.warn('[SaveTakeoff] Failed to persist calibrations:', calUpdateError);
     }
   }
 
@@ -517,6 +576,12 @@ export interface TakeoffHydrationPage {
   imagePath: string | null;
   imageUrl: string | null; // signed URL, minted server-side
   scaleCalibration: unknown | null; // persisted calibration data for canvas reconstruction
+  /** P4 (spec 11.1): versioned calibration envelope (calibrationCodec v1).
+   *  Null = legacy row - read scaleCalibration instead. */
+  calibrationMetadata: unknown | null;
+  /** P4 (spec 5.3): server-established immutable source-image revision
+   *  (sha256 content digest + orientation version). Null = not established. */
+  imageRevision: string | null;
   /** AI Takeoff: stored scan result for "Reset AI Entries". */
   aiScanResult: unknown | null;
 }
@@ -536,8 +601,18 @@ export interface TakeoffHydrationMeasurement {
    *  measurements and legacy rows with no matching entry. */
   pitch: number | null;
   /** v8 (2026-07-08): user-entered height/depth reference values (metric)
-   *  saved with this measurement. Display-only passthrough. */
-  entryInputs: { height_m?: number | null; depth_m?: number | null } | null;
+   *  saved with this measurement. Display-only passthrough.
+   *  P4 (spec 10.3): attached-area entries also hydrate value_basis/plan_value
+   *  and the durable source_geometry_id provenance link (preferred by
+   *  calibration recompute over heuristic matching). */
+  entryInputs: {
+    height_m?: number | null;
+    depth_m?: number | null;
+    value_basis?: 'pitched' | 'plan';
+    plan_value?: number;
+    pitch_applied?: boolean;
+    source_geometry_id?: string;
+  } | null;
 }
 
 export interface TakeoffHydrationData {
@@ -569,11 +644,35 @@ export async function loadTakeoffHydrationData(
   if (!session) return null;
 
   // 2. Pages (ordered)
-  const { data: pages } = await supabase
+  // P4: read the new columns additively. Pre-migration DBs reject the
+  // expanded select (PGRST204), so fall back to the legacy select - hydration
+  // then just returns null metadata/revision and the legacy path is unchanged.
+  type HydratedPageRow = {
+    id: string;
+    page_order: number;
+    page_name: string | null;
+    image_storage_path: string | null;
+    scale_calibration: unknown;
+    calibration_metadata?: unknown;
+    image_revision?: string | null;
+    ai_scan_result?: unknown;
+  };
+  const pagesExpanded = await supabase
     .from('takeoff_pages')
-    .select('id, page_order, page_name, image_storage_path, scale_calibration, ai_scan_result')
+    .select('id, page_order, page_name, image_storage_path, scale_calibration, calibration_metadata, image_revision, ai_scan_result')
     .eq('quote_id', quoteId)
     .order('page_order', { ascending: true });
+  let pages: HydratedPageRow[] | null = null;
+  if (!pagesExpanded.error) {
+    pages = (pagesExpanded.data ?? null) as unknown as HydratedPageRow[] | null;
+  } else if (/calibration_metadata|image_revision|Could not find|does not exist/i.test(pagesExpanded.error.message)) {
+    const pagesLegacy = await supabase
+      .from('takeoff_pages')
+      .select('id, page_order, page_name, image_storage_path, scale_calibration, ai_scan_result')
+      .eq('quote_id', quoteId)
+      .order('page_order', { ascending: true });
+    pages = pagesLegacy.error ? null : ((pagesLegacy.data ?? null) as unknown as HydratedPageRow[] | null);
+  }
 
   const hydratedPages: TakeoffHydrationPage[] = await Promise.all(
     (pages ?? []).map(async (p) => {
@@ -591,8 +690,12 @@ export async function loadTakeoffHydrationData(
         pageName: p.page_name,
         imagePath: p.image_storage_path,
         imageUrl,
-        scaleCalibration: (p as { scale_calibration?: unknown }).scale_calibration ?? null,
-        aiScanResult: (p as { ai_scan_result?: unknown }).ai_scan_result ?? null,
+        scaleCalibration: p.scale_calibration ?? null,
+        // P4: versioned envelope + server-established image revision. Reading
+        // them is additive - pre-migration DBs return nulls for both.
+        calibrationMetadata: p.calibration_metadata ?? null,
+        imageRevision: p.image_revision ?? null,
+        aiScanResult: p.ai_scan_result ?? null,
       };
     }),
   );
@@ -658,7 +761,15 @@ export async function loadTakeoffHydrationData(
       quoteRoofAreaId: (m as { quote_roof_area_id?: string | null }).quote_roof_area_id ?? null,
       pitch,
       // v8: display-only passthrough so re-save doesn't wipe user H/D values.
-      entryInputs: (m as { entry_inputs?: { height_m?: number | null; depth_m?: number | null } | null }).entry_inputs ?? null,
+      // P4: value_basis/plan_value/source_geometry_id ride the same jsonb.
+      entryInputs: (m as { entry_inputs?: {
+        height_m?: number | null;
+        depth_m?: number | null;
+        value_basis?: 'pitched' | 'plan';
+        plan_value?: number;
+        pitch_applied?: boolean;
+        source_geometry_id?: string;
+      } | null }).entry_inputs ?? null,
     };
   });
 
@@ -1302,4 +1413,56 @@ export async function batchCreateAiRoofAreas(
     console.error('[batchCreateAiRoofAreas] Error:', err);
     return { ok: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
+}
+
+/** P3 (spec 10.1): calibration-only commit for pages with no measurements yet.
+ *  The measurement save path safe-skips empty pages, so initial calibration
+ *  persists through this verified, quote+page-scoped update. Unlike the legacy
+ *  non-fatal calibration write inside saveTakeoffMeasurements, failures here
+ *  are returned to the caller (surfaced as COMMIT_FAILED by the client).
+ *  P4 (spec 11): optionally also persists the versioned calibration_metadata
+ *  envelope and the server-established image_revision in the same update. */
+export async function persistPageCalibration(
+  quoteId: string,
+  pageId: string,
+  calibrations: unknown,
+  calibrationMetadata?: unknown,
+): Promise<{ success: true } | { success: false; error: string }> {
+  const supabase = await createSupabaseServerClient();
+
+  const { data: quote, error: quoteError } = await supabase
+    .from('quotes')
+    .select('company_id')
+    .eq('id', quoteId)
+    .single();
+  if (quoteError || !quote) {
+    return { success: false, error: 'Quote not found' };
+  }
+
+  // P4: server-established image revision (sha256 content digest), resolved
+  // from the page's storage object. Null just means no resolvable object.
+  let imageRevision: string | null = null;
+  if (calibrationMetadata != null) {
+    const { getCalibrationImageRevision } = await import('@/app/lib/takeoff/calibrationImageRevision');
+    imageRevision = await getCalibrationImageRevision(pageId);
+  }
+
+  const pageUpdate: Record<string, unknown> = {
+    scale_calibration: calibrations,
+  };
+  if (calibrationMetadata != null) {
+    pageUpdate.calibration_metadata = calibrationMetadata;
+    if (imageRevision) pageUpdate.image_revision = imageRevision;
+  }
+
+  const { error } = await supabase
+    .from('takeoff_pages')
+    .update(pageUpdate as never)
+    .eq('id', pageId)
+    .eq('quote_id', quoteId);
+  if (error) {
+    console.error('[persistPageCalibration] Error:', error);
+    return { success: false, error: error.message };
+  }
+  return { success: true };
 }

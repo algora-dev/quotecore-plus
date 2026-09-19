@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas, persistPageCalibration } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
@@ -32,6 +32,25 @@ import { PointMeasurementModal } from './modals/PointMeasurementModal';
 import { LineMeasurementModal } from './modals/LineMeasurementModal';
 import { CalibrationModal } from './modals/CalibrationModal';
 import { RoofPitchEstimatorModal } from './modals/RoofPitchEstimatorModal';
+// P2 AI-assisted calibration (flag-gated, mock proposals - see calibration/ folder)
+import { CalibrationChooser } from './calibration/CalibrationChooser';
+import { CalibrationReviewPanel } from './calibration/CalibrationReviewPanel';
+import type { WorkingUnit, CalibrationImageDescriptor, AcceptedReferenceDraft } from '@/app/lib/takeoff/calibrationTypes';
+import { convertToWorkingUnit } from '@/app/lib/takeoff/calibrationCandidates';
+import { buildSourceToScene } from '@/app/lib/takeoff/calibrationCoordinates';
+// P3: unit-normalised effective scale + deterministic recalibration recompute.
+import {
+  computeEffectiveCalibration,
+  effectiveScaleFromLegacyCalibrations,
+  type CalibrationReferenceInput,
+} from '@/app/lib/takeoff/calibration';
+import { computeCalibrationRecompute } from '@/app/lib/takeoff/calibrationRecompute';
+// P4: versioned calibration persistence codec (takeoff_pages.calibration_metadata).
+import {
+  decodeCalibrationMetadata,
+  encodeCalibrationMetadata,
+  type CalibrationMetadataV1,
+} from '@/app/lib/takeoff/calibrationCodec';
 
 // Extend Fabric.js Canvas type with custom properties
 declare module 'fabric' {
@@ -106,7 +125,17 @@ interface ComponentMeasurement {
    *  time (freestyle L×H height, volume_3d custom depth). READ-ONLY display
    *  reference - `value` is already the final product. Persisted via
    *  entry_inputs so re-entry doesn't wipe it. */
-  entryInputs?: { height_m?: number | null; depth_m?: number | null } | null;
+  entryInputs?: {
+    height_m?: number | null;
+    depth_m?: number | null;
+    /** P3 (spec 10.3): attached-entry provenance. value_basis + plan_value
+     *  snapshot and the source-polygon link participate in calibration
+     *  recompute - these are NOT display-only fields. */
+    value_basis?: 'plan' | 'pitched';
+    plan_value?: number;
+    pitch_applied?: boolean;
+    source_geometry_id?: string;
+  } | null;
   /** AI Takeoff: true if this measurement was created by the AI scan. */
   aiOrigin?: boolean;
 }
@@ -145,6 +174,8 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
+  /** P2 AI-assisted calibration: per-company flag read server-side. Mock mode - no live AI. */
+  aiCalibrationEnabled?: boolean;
 }
 
 const MAX_CANVAS_DIM = 2000; // Max longest edge for dynamic canvas sizing
@@ -195,7 +226,7 @@ interface Calibration {
 /** Serializable undo/redo snapshot. Contains only plain data - no Fabric refs.
  *  The canvas is rebuilt from this via redrawCanvasFromState(). */
 interface TakeoffSnapshot {
-  componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null; entryInputs?: { height_m?: number | null; depth_m?: number | null } | null }[] }[];
+  componentMeasurements: { componentId: string; expanded: boolean; measurements: { id: string; type: ComponentMeasurement['type']; value: number; points?: { x: number; y: number }[]; visible: boolean; fromPageId?: string | null; entryInputs?: ComponentMeasurement['entryInputs'] }[] }[];
   roofAreas: { id: string; name: string; points: { x: number; y: number }[]; area: number; pitch: number; visible: boolean }[];
   calibrations: Calibration[];
   calibrationPoints: CalibrationPoint[];
@@ -231,6 +262,7 @@ export function TakeoffWorkstation({
   allRoofAreas = [],
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
+  aiCalibrationEnabled = false,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -253,6 +285,19 @@ export function TakeoffWorkstation({
   const [showConfirmedFlash, setShowConfirmedFlash] = useState(false);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
+
+  // === P2 AI-assisted calibration (flag-gated, MOCK proposals - real search lands P6) ===
+  const [aiCalChooserOpen, setAiCalChooserOpen] = useState(false);
+  const [aiCalReviewOpen, setAiCalReviewOpen] = useState(false);
+  // P6: the review panel stays MOUNTED (hidden) once opened, so closing and
+  // reopening it within the session never resets decisions or the rescan
+  // budget (spec 7.1/7.2). Unmounted only on commit, explicit session end or
+  // switching to manual.
+  const [aiCalSessionLive, setAiCalSessionLive] = useState(false);
+  const aiCalShownForPageRef = useRef<string | null>(null); // chooser popup once per page-load
+  // P4: versioned calibration envelope (codec v1) per page DB id, created on
+  // AI-finish and persisted alongside the legacy array; restored on hydration.
+  const aiCalMetadataRef = useRef<Map<string, CalibrationMetadataV1>>(new Map());
 
   // Dynamic canvas dimensions - canvas matches the processed image dimensions.
   // No more fixed 800×600 with letterboxing. AI coordinates = canvas coordinates.
@@ -906,6 +951,18 @@ export function TakeoffWorkstation({
       const cal = p.scaleCalibration;
       if (Array.isArray(cal) && cal.length > 0) {
         pageCalibrationsRef.current.set(p.id, cal as Calibration[]);
+      }
+      // P4 (spec 11): prefer the versioned envelope when present. Decode via
+      // the codec (diagnostics surfaced to console in dev only); legacy rows
+      // without metadata keep the array path above, unchanged.
+      if (p.calibrationMetadata != null) {
+        const decoded = decodeCalibrationMetadata(p.calibrationMetadata);
+        if (decoded.kind === 'v1' && decoded.status === 'valid') {
+          aiCalMetadataRef.current.set(p.id, decoded.metadata);
+        }
+        if (process.env.NODE_ENV !== 'production' && decoded.diagnostics.length > 0) {
+          console.info('[Hydration] P4 calibration metadata diagnostics for page', p.id, decoded.diagnostics);
+        }
       }
     });
 
@@ -2035,10 +2092,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // recomputes from the LIVE area pitch at save time:
       //   basis 'pitched' -> plan x pitch factor   (roof sheets etc.)
       //   basis 'plan'    -> plan, no pitch        (flat/plan takeoff)
+      // P3 (spec 10.3): durable source-polygon link so recalibration can
+      // refresh this entry when its source area rescales.
       entryInputs: {
         value_basis: choice.basis,
         plan_value: choice.plan,
-      } as unknown as ComponentMeasurement['entryInputs'],
+        source_geometry_id: ra.id,
+      },
     };
     const compData = componentMeasurements.find(c => c.componentId === choice.componentId);
     if (compData) {
@@ -2159,14 +2219,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const currentCalibrations = calibrationsRef.current;
     if (!currentCalibrations.length || !canvas) return;
 
-    const avgScale = currentCalibrations.reduce((s, cal) => s + cal.scale, 0) / currentCalibrations.length;
+    // P3: unit-normalised effective scale (identical to a single calibration's
+    // own scale in the common case; correct for mixed feet/meters sets).
+    const effectiveScale = effectiveScaleFromLegacyCalibrations(currentCalibrations);
 
     // Sum all segment lengths in real-world units.
     let totalLength = 0;
     for (let i = 1; i < currentPoints.length; i++) {
       const dx = currentPoints[i].x - currentPoints[i - 1].x;
       const dy = currentPoints[i].y - currentPoints[i - 1].y;
-      totalLength += Math.sqrt(dx * dx + dy * dy) * avgScale;
+      totalLength += Math.sqrt(dx * dx + dy * dy) * effectiveScale;
     }
 
     const compId = selectedComponentIdRef.current;
@@ -2447,15 +2509,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // Returns true on success so the multi-page "Save & Upload another plan"
   // flow can chain the next step. The existing handleSaveTakeoff wraps this
   // and navigates to the Quote Builder on success.
-  const persistTakeoffData = async (): Promise<boolean> => {
-    return await handleSaveTakeoffCore(false);
+  // P3: opts.requireCalibrationCommit makes the calibration persistence fatal
+  // (COMMIT_FAILED) instead of non-fatal - used by the AI calibration finish path.
+  const persistTakeoffData = async (opts: { requireCalibrationCommit?: boolean } = {}): Promise<boolean> => {
+    return await handleSaveTakeoffCore(false, opts);
   };
 
   const handleSaveTakeoff = async () => {
     await handleSaveTakeoffCore(true);
   };
 
-  const handleSaveTakeoffCore = async (navigateAfter: boolean): Promise<boolean> => {
+  const handleSaveTakeoffCore = async (navigateAfter: boolean, opts: { requireCalibrationCommit?: boolean } = {}): Promise<boolean> => {
     console.log('[SaveTakeoff] Starting save for quote:', quote.id);
     console.log('[SaveTakeoff] Component measurements:', componentMeasurements.length);
     console.log('[SaveTakeoff] Roof areas:', roofAreas.length);
@@ -2688,6 +2752,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         activeSaveRoofAreaId,
         // Canvas-rework: persist calibrations so re-entry can restore scale.
         calibrations.length > 0 ? calibrations : null,
+        // P3: AI-finish recalibration requires a verified calibration commit.
+        opts.requireCalibrationCommit === true,
+        // P4: versioned calibration envelope for this page (codec v1), when the
+        // active calibration came from the AI-assisted flow. Null otherwise.
+        (currentPageDbId ? aiCalMetadataRef.current.get(currentPageDbId) : undefined) ?? undefined,
       );
 
       if (!saveResult.success) {
@@ -2714,6 +2783,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 authoritativeVersion,
                 activeSaveRoofAreaId,
                 calibrations.length > 0 ? calibrations : null,
+                opts.requireCalibrationCommit === true,
+                // P4: same versioned envelope on the stale-version retry.
+                (currentPageDbId ? aiCalMetadataRef.current.get(currentPageDbId) : undefined) ?? undefined,
               );
               if (retryResult.success) {
                 updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
@@ -3107,8 +3179,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
 
     // Convert to real-world units using calibration scale
-    const avgScale = currentCalibrations.reduce((s, cal) => s + cal.scale, 0) / currentCalibrations.length;
-    const realArea = pixelArea * avgScale * avgScale; // scale² for area
+    // P3: unit-normalised effective scale (replaces the raw mean).
+    const effectiveScale = effectiveScaleFromLegacyCalibrations(currentCalibrations);
+    const realArea = pixelArea * effectiveScale * effectiveScale; // scale² for area
     
     // Guard against NaN/Infinity (shouldn't happen with the empty check above, but belt-and-braces)
     if (!isFinite(realArea) || isNaN(realArea)) {
@@ -3371,11 +3444,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           );
           
           // Convert to real-world using calibration scale (use ref to avoid stale closure)
+          // P3: unit-normalised effective scale (replaces the raw mean).
           const currentCalibrations = calibrationsRef.current;
-          const avgScale = currentCalibrations.reduce((s, cal) => s + cal.scale, 0) / currentCalibrations.length;
-          const realDistance = pixelDistance * avgScale;
+          const effectiveScale = effectiveScaleFromLegacyCalibrations(currentCalibrations);
+          const realDistance = pixelDistance * effectiveScale;
           
-          console.log('[Line] Calculated:', { pixelDistance, avgScale, realDistance, calibrationCount: currentCalibrations.length });
+          console.log('[Line] Calculated:', { pixelDistance, effectiveScale, realDistance, calibrationCount: currentCalibrations.length });
           
           // Show confirmation modal
           setPendingLineMeasurement({ 
@@ -4827,12 +4901,185 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     roofAreaInstructionsDismissedRef.current = true;
   };
 
+  // === P2 AI-assisted calibration handlers (flag-gated, MOCK - replaced in P6) ===
+  const aiCalPageKey = pages[currentPageIndex]?.id ?? pages[currentPageIndex]?.url ?? String(currentPageIndex);
+  const aiCalWorkingUnit: WorkingUnit = quote.measurement_system === 'metric' ? 'meters' : 'feet';
+  // MOCK: identity source-to-scene on the processed canvas dims (no server revision yet).
+  const aiCalImage: CalibrationImageDescriptor = {
+    pageId: pages[currentPageIndex]?.id ?? `local-${currentPageIndex}`,
+    imageRevision: `mock-${aiCalPageKey}`,
+    sourceWidth: canvasDims.width,
+    sourceHeight: canvasDims.height,
+    sceneWidth: buildSourceToScene(canvasDims.width, canvasDims.height).sceneWidth,
+    sceneHeight: buildSourceToScene(canvasDims.width, canvasDims.height).sceneHeight,
+    sourceToScene: [1, 0, 0, 1, 0, 0],
+    coordinateFrame: 'takeoff-scene-v1',
+    geometryVersion: 1,
+  };
+
+  // Auto-popup the chooser once per page-load when flag on + page not calibrated.
+  useEffect(() => {
+    if (!aiCalibrationEnabled) return;
+    if (calibrationConfirmed || calibrations.length > 0) return;
+    if (aiCalShownForPageRef.current === aiCalPageKey) return;
+    aiCalShownForPageRef.current = aiCalPageKey;
+    setAiCalChooserOpen(true);
+  }, [aiCalibrationEnabled, calibrationConfirmed, calibrations.length, aiCalPageKey]);
+
+  // P3: accepted AI references -> EffectiveCalibration -> deterministic recompute
+  // of every scale-dependent value on THIS page (spec 10.1 finish sequence),
+  // then commit via the existing save mechanism. Any failure (preflight errors
+  // or COMMIT_FAILED persistence) restores the prior state - a failed
+  // calibration save is never reported as success.
+  const handleAiCalibrationComplete = useCallback(async (accepted: readonly AcceptedReferenceDraft[], workingUnit: WorkingUnit) => {
+    // 1. New effective calibration from the accepted references.
+    const refs: CalibrationReferenceInput[] = accepted.map((ref) => ({
+      id: ref.id,
+      sceneP1: ref.sceneP1,
+      sceneP2: ref.sceneP2,
+      confirmedDistance: ref.confirmedDistance,
+      confirmedUnit: ref.confirmedUnit,
+    }));
+    if (refs.length === 0) { setAiCalReviewOpen(false); return; }
+    const newEff = computeEffectiveCalibration(refs, workingUnit);
+
+    // 2. Old effective scale the current materialised values were drawn with.
+    const oldScale = calibrations.length > 0 ? effectiveScaleFromLegacyCalibrations(calibrations) : null;
+
+    // 3. Collect THIS page's records only (same hydration filter as the save path).
+    const pageId = pages[currentPageIndex]?.id ?? null;
+    const pageMeasurements = componentMeasurements.flatMap((c) => c.measurements)
+      .filter((m) => !m.fromPageId || !pageId || m.fromPageId === pageId);
+    const pageRoofAreas = roofAreas.filter((a) => !a.fromPageId || !pageId || a.fromPageId === pageId);
+
+    // 4. Deterministic recompute. Preflight errors block - never a partial apply.
+    const result = computeCalibrationRecompute({
+      measurements: pageMeasurements.map((m) => ({
+        id: m.id,
+        type: m.type,
+        value: m.value,
+        points: m.points ?? null,
+        entryInputs: m.entryInputs ?? null,
+        quoteRoofAreaId: m.quoteRoofAreaId ?? null,
+      })),
+      roofAreas: pageRoofAreas.map((a) => ({
+        id: a.id,
+        points: a.points,
+        area: a.area,
+        pitch: a.pitch,
+        quoteRoofAreaId: a.quoteRoofAreaId ?? null,
+      })),
+      oldScale,
+      newCalibration: newEff,
+    });
+    if (!result.ok) {
+      showAlert(
+        'Calibration not applied',
+        `${result.errors.length} measurement(s) on this page could not be rescaled. First issue: ${result.errors[0].message}. Resolve or remove them, then try again.`,
+        'error',
+      );
+      return;
+    }
+
+    // 5. Snapshot prior state for rollback, then apply in one in-session update.
+    const prevCalibrations = calibrations;
+    const prevConfirmed = calibrationConfirmed;
+    const prevComponents = componentMeasurements;
+    const prevRoofAreas = roofAreas;
+    pushHistorySnapshot();
+    const legacy = accepted.map((ref) => {
+      const pixelDistance = Math.hypot(ref.sceneP2.x - ref.sceneP1.x, ref.sceneP2.y - ref.sceneP1.y);
+      const dist = convertToWorkingUnit(ref.confirmedDistance, ref.confirmedUnit, workingUnit);
+      return {
+        id: ref.id,
+        point1: { ...ref.sceneP1 },
+        point2: { ...ref.sceneP2 },
+        pixelDistance,
+        actualDistance: dist,
+        unit: (workingUnit === 'meters' ? 'meters' : 'feet') as 'feet' | 'meters',
+        scale: dist / pixelDistance,
+      };
+    });
+    // P4 (spec 11.1): versioned envelope for takeoff_pages.calibration_metadata,
+    // persisted alongside the legacy array on commit. imageRevision is the
+    // session descriptor's value here; the server independently stamps the
+    // content-digest revision into takeoff_pages.image_revision on save.
+    const calMetadata = encodeCalibrationMetadata({
+      accepted,
+      workingUnit,
+      imageRevision: aiCalImage.imageRevision,
+      savedAt: new Date().toISOString(),
+    });
+    if (pageId) aiCalMetadataRef.current.set(pageId, calMetadata);
+    setAiCalReviewOpen(false);
+    setAiCalSessionLive(false);
+    setCalibrations(legacy);
+    setCalibrationConfirmed(true);
+    setShowCalibrationHelp(false);
+    const updateById = new Map(result.measurementUpdates.map((u) => [u.id, u]));
+    setComponentMeasurements(componentMeasurements.map((c) => ({
+      ...c,
+      measurements: c.measurements.map((m) => {
+        const u = updateById.get(m.id);
+        if (!u) return m;
+        // Attached entries: refresh the plan_value snapshot too (spec 10.3).
+        const entryInputs = u.planValue !== undefined && m.entryInputs
+          ? { ...m.entryInputs, plan_value: u.planValue }
+          : m.entryInputs;
+        return { ...m, value: u.value, entryInputs };
+      }),
+    })));
+    setRoofAreas(roofAreas.map((ra) => {
+      const u = result.roofAreaUpdates.find((x) => x.id === ra.id);
+      return u ? { ...ra, area: u.area } : ra;
+    }));
+    setIsDirty(true);
+
+    // 6. Persist via the existing save mechanism with a REQUIRED calibration
+    // commit; a failure surfaces COMMIT_FAILED and rolls the session back.
+    const rollback = (reason: string) => {
+      setCalibrations(prevCalibrations);
+      setCalibrationConfirmed(prevConfirmed);
+      setComponentMeasurements(prevComponents);
+      setRoofAreas(prevRoofAreas);
+      setIsDirty(true);
+      showAlert('Calibration not saved', reason, 'error');
+    };
+
+    if (pageMeasurements.length === 0 && pageRoofAreas.length === 0) {
+      // Calibration-only commit: the measurement save path safe-skips empty
+      // pages, so persist the page calibration directly (verified, fatal).
+      if (!pageId) {
+        rollback('COMMIT_FAILED: no takeoff page exists for this plan yet. Draw the calibration again after the page is created.');
+        return;
+      }
+      const res = await persistPageCalibration(quote.id, pageId, legacy, calMetadata);
+      if (!res.success) {
+        rollback(`COMMIT_FAILED: ${res.error}`);
+      } else {
+        pageCalibrationsRef.current.set(pageId, legacy.map((c) => ({ ...c })));
+      }
+      return;
+    }
+
+    const saved = await persistTakeoffData({ requireCalibrationCommit: true });
+    if (!saved) {
+      rollback('COMMIT_FAILED: the takeoff could not be saved with the new calibration. Prior measurements and scale were restored - try saving again.');
+    } else if (pageId) {
+      pageCalibrationsRef.current.set(pageId, legacy.map((c) => ({ ...c })));
+    }
+  }, [calibrations, calibrationConfirmed, componentMeasurements, roofAreas, pages, currentPageIndex, quote.id, aiCalImage]);
+
   const handleStartCalibration = () => {
     cleanupBoxDrag();
     // If recalibrating, clear confirmation
     if (calibrationConfirmed) {
       setCalibrationConfirmed(false);
       setCalibrations([]);
+      // P4: recalibration invalidates the pending versioned envelope for
+      // this page - a fresh commit writes a new one.
+      const pid = pages[currentPageIndex]?.id;
+      if (pid) aiCalMetadataRef.current.delete(pid);
     }
     setCalibrationMode(true);
     setCalibrationPoints([]);
@@ -4911,8 +5158,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const updatedCalibrations = [...calibrations, newCalibration];
     setCalibrations(updatedCalibrations);
     
-    // Calculate average scale
-    const _avgScale = updatedCalibrations.reduce((sum, cal) => sum + cal.scale, 0) / updatedCalibrations.length;
     setActiveCalibrationId(newCalibration.id);
     
     setCalibrationPoints([]);
@@ -5984,6 +6229,30 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           </div>
         </div>
       </div>
+
+      {/* P2 AI-assisted calibration: flag-gated additive branch. Flag off = never rendered,
+          every existing path identical. MOCK proposals only - real search lands P6. */}
+      {aiCalibrationEnabled && aiCalChooserOpen && !calibrationConfirmed && calibrations.length === 0 && (
+        <CalibrationChooser
+          image={aiCalImage}
+          onChooseAi={() => { setAiCalChooserOpen(false); setAiCalReviewOpen(true); setAiCalSessionLive(true); }}
+          onChooseManual={() => { setAiCalChooserOpen(false); handleStartCalibration(); }}
+          onClose={() => setAiCalChooserOpen(false)}
+        />
+      )}
+      {aiCalibrationEnabled && aiCalSessionLive && (
+        <div className={aiCalReviewOpen ? 'contents' : 'hidden'}>
+          <CalibrationReviewPanel
+            quoteId={quote.id}
+            image={aiCalImage}
+            workingUnit={aiCalWorkingUnit}
+            fabricRef={fabricRef}
+            onComplete={handleAiCalibrationComplete}
+            onCancel={() => setAiCalReviewOpen(false)}
+            onSwitchToManual={() => { setAiCalReviewOpen(false); setAiCalSessionLive(false); handleStartCalibration(); }}
+          />
+        </div>
+      )}
 
       {/* Calibration Modal */}
       {showCalibrationModal && (

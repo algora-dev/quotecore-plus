@@ -19,6 +19,7 @@
     "e2e:cleanup:dry-run": "node --eval \"console.log('Dry-run: no deletion performed. Manifest review only.')\"",
     "e2e:check-imports": "npx tsx e2e/scripts/check-imports.ts",
     "test:roof-takeoff": "node --import tsx --test \"app/(public)/free-roofing-takeoff-builder/*.test.ts\" \"app/lib/supplier-pricing/*.test.ts\"",
+    "test:calibration": "node --import tsx --test \"app/lib/takeoff/calibration*.test.ts\"",
     "prebuild": "node scripts/check-server-deps.mjs"
   },
   "dependencies": {
