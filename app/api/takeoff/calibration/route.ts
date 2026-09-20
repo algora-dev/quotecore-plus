@@ -120,7 +120,22 @@ export async function POST(req: NextRequest) {
     if (pageError || !page) {
       return errorResponse(404, 'PAGE_NOT_FOUND', 'Calibration page not found for this quote.');
     }
-    const storagePath = (page as { image_storage_path?: string | null }).image_storage_path;
+    let storagePath = (page as { image_storage_path?: string | null }).image_storage_path;
+    if (!storagePath) {
+      // Page-1 fallback: the first plan page stores its image in the quote's
+      // uploaded plan files, not takeoff_pages.image_storage_path (app
+      // convention since 2026-07-06). Use the OLDEST plan file, matching
+      // the build page's thumbnail resolution.
+      const { data: firstPlan } = await supabaseUser
+        .from('quote_files')
+        .select('storage_path')
+        .eq('quote_id', quoteId)
+        .eq('file_type', 'plan')
+        .order('uploaded_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      storagePath = (firstPlan as { storage_path?: string | null } | null)?.storage_path ?? null;
+    }
     if (!storagePath) {
       return errorResponse(409, 'UNSUPPORTED_IMAGE', 'This page has no calibrated source image.');
     }

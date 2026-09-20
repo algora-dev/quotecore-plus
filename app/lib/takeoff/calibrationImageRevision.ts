@@ -39,9 +39,38 @@ export async function getCalibrationImageRevision(
       .maybeSingle();
     if (pageError || !page) return null;
 
-    const path = (page as { image_storage_path?: string | null }).image_storage_path;
-    if (!path || typeof path !== 'string') return null;
+    const path = (page as { image_storage_path?: string | null; quote_id?: string }).image_storage_path
+      ?? null;
+    // Page-1 fallback: the first plan page stores its image in the quote's
+    // uploaded plan files, not takeoff_pages.image_storage_path (known app
+    // convention since 2026-07-06). Resolve the OLDEST plan file.
+    if (!path) {
+      const quoteId = (page as { quote_id?: string }).quote_id;
+      if (!quoteId) return null;
+      const { data: firstPlan, error: planErr } = await supabase
+        .from('quote_files')
+        .select('storage_path')
+        .eq('quote_id', quoteId)
+        .eq('file_type', 'plan')
+        .order('uploaded_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (planErr || !firstPlan) return null;
+      const planPath = (firstPlan as { storage_path?: string | null }).storage_path;
+      if (!planPath) return null;
+      return revisionForPath(planPath);
+    }
+    return revisionForPath(path);
+  } catch {
+    // Graceful degradation: calibration treats null as unavailable.
+    return null;
+  }
+}
 
+/** Compute (and cache) the content revision for a resolved storage path. */
+async function revisionForPath(path: string): Promise<string | null> {
+  try {
+    const supabase = await createSupabaseServerClient();
     const cached = revisionCache.get(path);
     if (cached) return cached;
 
@@ -56,7 +85,6 @@ export async function getCalibrationImageRevision(
     revisionCache.set(path, revision);
     return revision;
   } catch {
-    // Graceful degradation: calibration treats null as unavailable.
     return null;
   }
 }
