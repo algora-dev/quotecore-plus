@@ -45,6 +45,20 @@ import {
   type CalibrationReferenceInput,
 } from '@/app/lib/takeoff/calibration';
 import { computeCalibrationRecompute } from '@/app/lib/takeoff/calibrationRecompute';
+// Phase B (calibration hardening audit 2026-09-20): explicit commit contract,
+// metadata cache rollback, draft-until-commit recalibration, provenance stamping.
+import {
+  applyDraftCalibration,
+  cancelDraftRecalibration,
+  commitFailed,
+  commitSucceeded,
+  restoreMetadataEntry,
+  snapshotMetadataEntry,
+  stampSourceProvenance,
+  startDraftRecalibration,
+  type CalibrationCommitResult,
+  type DraftCalibrationState,
+} from '@/app/lib/takeoff/calibrationCommit';
 // P0-1/P0-5 (calibration hardening audit 2026-09-20): pure per-page
 // calibration resolution - a page only ever restores its OWN stored scale.
 import { resolvePageCalibration } from '@/app/lib/takeoff/calibrationPageState';
@@ -303,6 +317,11 @@ export function TakeoffWorkstation({
   // P4: versioned calibration envelope (codec v1) per page DB id, created on
   // AI-finish and persisted alongside the legacy array; restored on hydration.
   const aiCalMetadataRef = useRef<Map<string, CalibrationMetadataV1>>(new Map());
+  // 6.2 (calibration hardening audit 2026-09-20): active manual recalibration
+  // draft. Non-null only while recalibrating a confirmed page; holds the
+  // committed set for cancel-restore and tracks whether the first draft save
+  // already replaced it on screen.
+  const draftCalibrationRef = useRef<DraftCalibrationState<Calibration> | null>(null);
 
   // P0-2 (calibration hardening audit 2026-09-20): abort/close the active AI
   // calibration session before ANY page/area/image change. Overlay marker
@@ -4987,7 +5006,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // then commit via the existing save mechanism. Any failure (preflight errors
   // or COMMIT_FAILED persistence) restores the prior state - a failed
   // calibration save is never reported as success.
-  const handleAiCalibrationComplete = useCallback(async (accepted: readonly AcceptedReferenceDraft[], workingUnit: WorkingUnit) => {
+  const handleAiCalibrationComplete = useCallback(async (accepted: readonly AcceptedReferenceDraft[], workingUnit: WorkingUnit): Promise<CalibrationCommitResult> => {
     // 1. New effective calibration from the accepted references.
     const refs: CalibrationReferenceInput[] = accepted.map((ref) => ({
       id: ref.id,
@@ -4996,7 +5015,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       confirmedDistance: ref.confirmedDistance,
       confirmedUnit: ref.confirmedUnit,
     }));
-    if (refs.length === 0) { setAiCalReviewOpen(false); return; }
+    if (refs.length === 0) { setAiCalReviewOpen(false); return commitSucceeded(); }
     const newEff = computeEffectiveCalibration(refs, workingUnit);
 
     // 2. Old effective scale the current materialised values were drawn with.
@@ -5034,7 +5053,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         `${result.errors.length} measurement(s) on this page could not be rescaled. First issue: ${result.errors[0].message}. Resolve or remove them, then try again.`,
         'error',
       );
-      return;
+      return commitFailed('RECOMPUTE_BLOCKED', 'One or more measurements could not be rescaled, so the calibration was not applied.');
     }
 
     // 5. Snapshot prior state for rollback, then apply in one in-session update.
@@ -5042,6 +5061,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const prevConfirmed = calibrationConfirmed;
     const prevComponents = componentMeasurements;
     const prevRoofAreas = roofAreas;
+    // P0-7: snapshot the durable in-memory metadata entry BEFORE staging the
+    // new one, so a failed commit can restore it. Without this, a later
+    // ordinary save would persist metadata from a calibration the user was
+    // told had failed.
+    const prevMetaSnapshot = pageId ? snapshotMetadataEntry(aiCalMetadataRef.current, pageId) : null;
     pushHistorySnapshot();
     const legacy = accepted.map((ref) => {
       const pixelDistance = Math.hypot(ref.sceneP2.x - ref.sceneP1.x, ref.sceneP2.y - ref.sceneP1.y);
@@ -5067,22 +5091,28 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       savedAt: new Date().toISOString(),
     });
     if (pageId) aiCalMetadataRef.current.set(pageId, calMetadata);
-    setAiCalReviewOpen(false);
-    setAiCalSessionLive(false);
+    // P0-4: the review panel stays open until persistence succeeds; on
+    // failure COMMIT_FAILED returns the reducer to reviewing with the
+    // accepted references preserved (retry save without a new AI search).
     setCalibrations(legacy);
     setCalibrationConfirmed(true);
     setShowCalibrationHelp(false);
     const updateById = new Map(result.measurementUpdates.map((u) => [u.id, u]));
+    // 6.4: persist recomputation provenance - where the recompute resolved a
+    // dependent entry to a unique source geometry, stamp source_geometry_id
+    // onto entryInputs so it rides entry_inputs into the atomic save and the
+    // native column, and future recalibrations need not re-infer it.
+    const provenanceById = new Map(result.provenance.map((p) => [p.measurementId, p]));
     setComponentMeasurements(componentMeasurements.map((c) => ({
       ...c,
       measurements: c.measurements.map((m) => {
         const u = updateById.get(m.id);
         if (!u) return m;
         // Attached entries: refresh the plan_value snapshot too (spec 10.3).
-        const entryInputs = u.planValue !== undefined && m.entryInputs
-          ? { ...m.entryInputs, plan_value: u.planValue }
-          : m.entryInputs;
-        return { ...m, value: u.value, entryInputs };
+        const withPlan = u.planValue !== undefined && m.entryInputs
+          ? { ...m, value: u.value, entryInputs: { ...m.entryInputs, plan_value: u.planValue } }
+          : { ...m, value: u.value };
+        return stampSourceProvenance(withPlan, provenanceById.get(m.id));
       }),
     })));
     setRoofAreas(roofAreas.map((ra) => {
@@ -5093,49 +5123,58 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
     // 6. Persist via the existing save mechanism with a REQUIRED calibration
     // commit; a failure surfaces COMMIT_FAILED and rolls the session back.
-    const rollback = (reason: string) => {
+    const rollback = (reason: string): CalibrationCommitResult => {
       setCalibrations(prevCalibrations);
       setCalibrationConfirmed(prevConfirmed);
       setComponentMeasurements(prevComponents);
       setRoofAreas(prevRoofAreas);
       setIsDirty(true);
+      // P0-7: restore the previous durable metadata entry so a later ordinary
+      // save persists the OLD metadata, never the failed calibration's.
+      if (pageId && prevMetaSnapshot) restoreMetadataEntry(aiCalMetadataRef.current, prevMetaSnapshot);
       showAlert('Calibration not saved', reason, 'error');
+      return commitFailed('COMMIT_FAILED', reason);
+    };
+
+    const closeReviewPanel = () => {
+      setAiCalReviewOpen(false);
+      setAiCalSessionLive(false);
     };
 
     if (pageMeasurements.length === 0 && pageRoofAreas.length === 0) {
       // Calibration-only commit: the measurement save path safe-skips empty
       // pages, so persist the page calibration directly (verified, fatal).
       if (!pageId) {
-        rollback('COMMIT_FAILED: no takeoff page exists for this plan yet. Draw the calibration again after the page is created.');
-        return;
+        return rollback('COMMIT_FAILED: no takeoff page exists for this plan yet. Draw the calibration again after the page is created.');
       }
       const res = await persistPageCalibration(quote.id, pageId, legacy, calMetadata);
       if (!res.success) {
-        rollback(`COMMIT_FAILED: ${res.error}`);
-      } else {
-        pageCalibrationsRef.current.set(pageId, legacy.map((c) => ({ ...c })));
+        return rollback(`COMMIT_FAILED: ${res.error}`);
       }
-      return;
+      pageCalibrationsRef.current.set(pageId, legacy.map((c) => ({ ...c })));
+      closeReviewPanel();
+      return commitSucceeded();
     }
 
     const saved = await persistTakeoffData({ requireCalibrationCommit: true });
     if (!saved) {
-      rollback('COMMIT_FAILED: the takeoff could not be saved with the new calibration. Prior measurements and scale were restored - try saving again.');
-    } else if (pageId) {
+      return rollback('COMMIT_FAILED: the takeoff could not be saved with the new calibration. Prior measurements and scale were restored - try saving again.');
+    }
+    if (pageId) {
       pageCalibrationsRef.current.set(pageId, legacy.map((c) => ({ ...c })));
     }
+    closeReviewPanel();
+    return commitSucceeded();
   }, [calibrations, calibrationConfirmed, componentMeasurements, roofAreas, pages, currentPageIndex, quote.id, aiCalImage]);
 
   const handleStartCalibration = () => {
     cleanupBoxDrag();
-    // If recalibrating, clear confirmation
+    // 6.2 draft-until-commit: recalibrating no longer destroys the committed
+    // calibration, its confirmation or its metadata envelope up front. The
+    // committed set stays authoritative for display and measurements until a
+    // new draft is confirmed; Cancel discards the draft only.
     if (calibrationConfirmed) {
-      setCalibrationConfirmed(false);
-      setCalibrations([]);
-      // P4: recalibration invalidates the pending versioned envelope for
-      // this page - a fresh commit writes a new one.
-      const pid = pages[currentPageIndex]?.id;
-      if (pid) aiCalMetadataRef.current.delete(pid);
+      draftCalibrationRef.current = startDraftRecalibration(calibrations);
     }
     setCalibrationMode(true);
     setCalibrationPoints([]);
@@ -5145,6 +5184,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
   const handleConfirmCalibration = () => {
     pushHistorySnapshot();
+    // 6.2: confirming promotes the draft to committed (calibrations in state
+    // already hold the draft set) and invalidates any stale versioned metadata
+    // envelope for this page - a fresh commit writes a new one.
+    if (draftCalibrationRef.current) {
+      draftCalibrationRef.current = null;
+      const pid = pages[currentPageIndex]?.id;
+      if (pid) aiCalMetadataRef.current.delete(pid);
+    }
     console.log('[Calibration] Confirming... current state:', { calibrationConfirmed, showConfirmedFlash });
     setCalibrationConfirmed(true);
     setShowConfirmedFlash(true);
@@ -5171,6 +5218,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   };
 
   const handleCancelCalibration = () => {
+    // 6.2: cancel discards the DRAFT only; the committed calibration (never
+    // cleared when recalibration started) remains authoritative.
+    if (draftCalibrationRef.current) {
+      setCalibrations(cancelDraftRecalibration(draftCalibrationRef.current) as Calibration[]);
+      draftCalibrationRef.current = null;
+    }
     setCalibrationMode(false);
     setCalibrationPoints([]);
     setShowCalibrationModal(false);
@@ -5211,7 +5264,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       scale,
     };
     
-    const updatedCalibrations = [...calibrations, newCalibration];
+    let updatedCalibrations: Calibration[];
+    if (draftCalibrationRef.current) {
+      // 6.2: the first draft save replaces the committed set on screen;
+      // further drafts append, matching the original manual flow.
+      const applied = applyDraftCalibration(draftCalibrationRef.current, calibrations, newCalibration);
+      draftCalibrationRef.current = applied.draft;
+      updatedCalibrations = applied.calibrations;
+    } else {
+      updatedCalibrations = [...calibrations, newCalibration];
+    }
     setCalibrations(updatedCalibrations);
     
     setActiveCalibrationId(newCalibration.id);

@@ -25,6 +25,7 @@ import {
   type CalibrationSearchResponse,
 } from '@/app/lib/takeoff/calibrationApiClientCore';
 import { calibrationSearch, newCalibrationRequestId } from './calibrationApiClient';
+import { toCommitResult, type CalibrationCommitResult } from '@/app/lib/takeoff/calibrationCommit';
 import type {
   AcceptedReferenceDraft,
   CalibrationImageDescriptor,
@@ -39,8 +40,12 @@ export interface UseCalibrationControllerOptions {
   workingUnit: WorkingUnit;
   /** Injectable for tests; defaults to the real fetch wrapper. */
   searchExecutor?: CalibrationSearchExecutor;
-  /** Called with the accepted set when the user finishes (commit orchestration is P6). */
-  onFinish: (accepted: readonly AcceptedReferenceDraft[]) => void;
+  /** Called with the accepted set when the user finishes. MUST return an
+   *  explicit commit result; the controller dispatches COMMIT_SUCCEEDED only
+   *  on ok:true and keeps the review session (accepted references and
+   *  candidates) alive on failure so the user can retry the save without
+   *  another AI search (P0-4). */
+  onFinish: (accepted: readonly AcceptedReferenceDraft[]) => Promise<CalibrationCommitResult> | CalibrationCommitResult;
   onCancel: () => void;
 }
 
@@ -292,13 +297,40 @@ export function useCalibrationController(options: UseCalibrationControllerOption
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.reviews]);
 
-  // Wire completion: when the reducer reaches 'committing', hand the accepted set
-  // to the parent (atomic persistence orchestration stays with the workstation).
+  // P0-4 (calibration hardening audit 2026-09-20): await parent persistence
+  // before reporting success. COMMIT_SUCCEEDED is dispatched ONLY when the
+  // parent's onFinish resolves { ok: true }; any failure/throw dispatches
+  // COMMIT_FAILED, which returns the reducer to 'reviewing' with the accepted
+  // references and candidates preserved - retrying the save re-enters
+  // 'committing' with the SAME accepted set, no new AI search. The review
+  // session is never closed before persistence succeeds.
+  const commitInFlightRef = useRef(false);
   useEffect(() => {
-    if (state.phase === 'committing') {
-      onFinish(validAcceptedReferences(state));
-      rawDispatch({ type: 'COMMIT_SUCCEEDED' });
-    }
+    if (state.phase !== 'committing' || commitInFlightRef.current) return;
+    let cancelled = false;
+    commitInFlightRef.current = true;
+    Promise.resolve(onFinish(validAcceptedReferences(state)))
+      .then((result) => {
+        if (cancelled) return;
+        commitInFlightRef.current = false;
+        const normalised = toCommitResult(result);
+        if (normalised.ok) {
+          rawDispatch({ type: 'COMMIT_SUCCEEDED' });
+        } else {
+          rawDispatch({ type: 'COMMIT_FAILED', code: normalised.code, message: normalised.message });
+        }
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        commitInFlightRef.current = false;
+        const normalised = toCommitResult(err);
+        if (!normalised.ok) {
+          rawDispatch({ type: 'COMMIT_FAILED', code: normalised.code, message: normalised.message });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase]);
 

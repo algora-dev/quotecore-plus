@@ -16,6 +16,7 @@ import type {
 } from '@/app/lib/takeoff/calibrationTypes';
 import { evidenceCropsForDisplay } from '@/app/lib/takeoff/calibrationApiClientCore';
 import { useCalibrationController } from './useCalibrationController';
+import type { CalibrationCommitResult } from '@/app/lib/takeoff/calibrationCommit';
 import { disposeCalibrationOverlay, renderCalibrationOverlay } from './calibrationOverlay';
 import { CalibrationEvidenceZoom } from './CalibrationEvidenceZoom';
 
@@ -46,15 +47,26 @@ export function CalibrationReviewPanel({
   image: CalibrationImageDescriptor;
   workingUnit: WorkingUnit;
   fabricRef: RefObject<Canvas | null>;
-  /** Accepted set handed back to the workstation for the commit path. */
-  onComplete: (accepted: readonly AcceptedReferenceDraft[], workingUnit: WorkingUnit) => void;
+  /** Accepted set handed back to the workstation for the commit path.
+   *  P0-4: returns an explicit commit result - success is only reported after
+   *  persistence actually succeeded, so the panel stays open on failure. */
+  onComplete: (
+    accepted: readonly AcceptedReferenceDraft[],
+    workingUnit: WorkingUnit,
+  ) => Promise<CalibrationCommitResult> | CalibrationCommitResult;
   onCancel: () => void;
   onSwitchToManual: () => void;
 }) {
   const handleFinish = useCallback(
-    (accepted: readonly AcceptedReferenceDraft[]) => {
-      disposeCalibrationOverlay(fabricRef.current);
-      onComplete(accepted, workingUnit);
+    async (accepted: readonly AcceptedReferenceDraft[]): Promise<CalibrationCommitResult> => {
+      const result = await onComplete(accepted, workingUnit);
+      // P0-4: only tear the canvas overlay down once persistence has actually
+      // succeeded. On failure the reducer returns to 'reviewing' and the
+      // overlay re-renders for the retry.
+      if (result && result.ok) {
+        disposeCalibrationOverlay(fabricRef.current);
+      }
+      return result;
     },
     [fabricRef, onComplete, workingUnit],
   );

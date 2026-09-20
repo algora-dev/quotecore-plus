@@ -429,6 +429,29 @@ export async function saveTakeoffMeasurements(
     ...(m.quoteRoofAreaId ? { quote_roof_area_id: m.quoteRoofAreaId } : {}),
   }));
 
+  // P0-3 (calibration hardening audit 2026-09-20): the AI recalibration path
+  // persists measurements AND page calibration through the new
+  // save_takeoff_atomic_v2 RPC in ONE database transaction, so a failed
+  // calibration write can no longer leave recalibrated measurements behind.
+  // Legacy path (no metadata / non-fatal calibration) keeps using
+  // save_takeoff_atomic + the separate page update below, unchanged.
+  const useAtomicCalibrationRpc =
+    requireCalibrationCommit === true &&
+    !!currentPageId &&
+    calibrationMetadata != null &&
+    calibrations != null;
+  let calibrationBlock: Record<string, unknown> | null = null;
+  if (useAtomicCalibrationRpc && currentPageId) {
+    const { getCalibrationImageRevision } = await import('@/app/lib/takeoff/calibrationImageRevision');
+    const imageRevision = await getCalibrationImageRevision(currentPageId);
+    calibrationBlock = {
+      page_id: currentPageId,
+      scale_calibration: calibrations,
+      calibration_metadata: calibrationMetadata,
+      ...(imageRevision ? { image_revision: imageRevision } : {}),
+    };
+  }
+
   // Pass STORAGE PATHS to the RPC (Gerald audit pass 2). The RPC keeps
   // accepting the legacy *_url keys for one release so an in-flight deploy
   // doesn't drop snapshots, but we should never send them from new code.
@@ -444,6 +467,9 @@ export async function saveTakeoffMeasurements(
     measurements: measurementsPayload,
     roof_areas: roofAreasPayload,
     components: componentsPayload,
+    // P0-3: calibration block rides the same payload; v2 commits it with the
+    // measurements in one transaction.
+    ...(calibrationBlock ? { calibration: calibrationBlock } : {}),
   };
 
   // The RPC's `p_payload` parameter is typed `Json` by Postgres, which
@@ -455,7 +481,30 @@ export async function saveTakeoffMeasurements(
     p_quote_id: quoteId,
     p_payload: payload,
   } as unknown as { p_quote_id: string; p_payload: never };
-  const { error: rpcError } = await supabase.rpc('save_takeoff_atomic', rpcArgs);
+  let rpcName = calibrationBlock ? 'save_takeoff_atomic_v2' : 'save_takeoff_atomic';
+  const rpcFn = rpcName as 'save_takeoff_atomic';
+  let { error: rpcError } = await supabase.rpc(rpcFn, rpcArgs);
+
+  // Legacy fallback: when the v2 RPC is not deployed yet (migration not
+  // applied), strip the calibration block and retry through the original
+  // RPC + the separate (fatal-on-requireCalibrationCommit) page update.
+  // This keeps the pre-migration behaviour working when args/RPC are absent.
+  if (rpcError && rpcName === 'save_takeoff_atomic_v2') {
+    const fnMissing =
+      rpcError.code === 'PGRST202' ||
+      /could not find the function|does not exist/i.test(rpcError.message ?? '');
+    if (fnMissing) {
+      const { calibration: _strip, ...legacyPayload } = payload as Record<string, unknown>;
+      rpcName = 'save_takeoff_atomic';
+      const legacyArgs = {
+        p_quote_id: quoteId,
+        p_payload: legacyPayload,
+      } as unknown as { p_quote_id: string; p_payload: never };
+      rpcError = (await supabase.rpc('save_takeoff_atomic', legacyArgs)).error;
+      // Re-enable the legacy separate (fatal) page update below.
+      calibrationBlock = null;
+    }
+  }
 
   if (rpcError) {
     console.error('[SaveTakeoff] RPC error:', rpcError);
@@ -472,7 +521,9 @@ export async function saveTakeoffMeasurements(
   // P3: with requireCalibrationCommit the failure is FATAL and surfaced as
   // COMMIT_FAILED - the client rolls back to the prior state, so a failed
   // calibration save can never be reported as success.
-  if (currentPageId && calibrations != null) {
+  if (currentPageId && calibrations != null && !calibrationBlock) {
+    // Legacy path: separate page update. Skipped entirely when the v2 RPC
+    // already committed the calibration atomically with the measurements.
     let calUpdateError: string | null = null;
     try {
       // P4 (spec 11.1/11.3): write the versioned envelope + server-established
