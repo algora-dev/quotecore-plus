@@ -275,6 +275,56 @@ describe('race and lifecycle protection (spec 8.3)', () => {
   });
 });
 
+describe('P0-2 page/image change invalidation (audit 2026-09-20)', () => {
+  test('PAGE_CHANGED clears candidates, reviews and accepted draft state', () => {
+    let s = runSearch(boot());
+    s = accept(s);
+    assert.ok(s.candidates.length > 0);
+    assert.ok(s.accepted.length > 0);
+    const epochBefore = s.contextEpoch;
+    s = calibrationSessionReducer(s, { type: 'PAGE_CHANGED' });
+    assert.equal(s.phase, 'cancelled');
+    assert.equal(s.contextEpoch, epochBefore + 1);
+    assert.deepEqual(s.candidates, []);
+    assert.deepEqual(s.reviews, {});
+    assert.deepEqual(s.accepted, []);
+    assert.equal(s.activeCandidateId, null);
+    assert.equal(s.requestId, null);
+    assert.equal(s.pendingRound, null);
+    assert.equal(s.searchStrategy, null);
+    assert.equal(s.refineReferenceId, null);
+    assert.equal(s.error, null);
+  });
+
+  test('IMAGE_CHANGED clears an in-progress review exactly like PAGE_CHANGED', () => {
+    let s = runSearch(boot());
+    s = select(s, 'c2');
+    s = skip(s);
+    const epochBefore = s.contextEpoch;
+    s = calibrationSessionReducer(s, { type: 'IMAGE_CHANGED' });
+    assert.equal(s.phase, 'cancelled');
+    assert.equal(s.contextEpoch, epochBefore + 1);
+    assert.deepEqual(s.candidates, []);
+    assert.deepEqual(s.reviews, {});
+    assert.deepEqual(s.accepted, []);
+  });
+
+  test('a stale SEARCH_SUCCEEDED after PAGE_CHANGED is discarded (context epoch bumped)', () => {
+    let s = runSearchStarted(boot());
+    const staleCtx = ctx(s, 'req-1');
+    s = calibrationSessionReducer(s, { type: 'PAGE_CHANGED' });
+    s = calibrationSessionReducer(s, {
+      type: 'SEARCH_SUCCEEDED',
+      context: staleCtx,
+      round: 0,
+      candidates: [C1, C2, C3],
+    });
+    assert.equal(s.phase, 'cancelled', 'stale result dropped');
+    assert.deepEqual(s.candidates, []);
+    assert.equal(s.searchRoundsCompleted, 0, 'no round consumed by the stale result');
+  });
+});
+
 describe('editing and reconfirmation (spec 4.4 / 8.2)', () => {
   test('editing an accepted reference excludes it until reaccepted', () => {
     let s = runSearch(boot());

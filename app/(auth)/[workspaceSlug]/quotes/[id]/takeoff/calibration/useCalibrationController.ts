@@ -116,6 +116,27 @@ export function useCalibrationController(options: UseCalibrationControllerOption
   // Replay-safe retry (spec 12.4): network recovery reuses the SAME requestId.
   const retryArmRef = useRef<{ strategy: SearchStrategy; requestId: string } | null>(null);
 
+  // P0-2 (calibration hardening audit 2026-09-20): track the session image's
+  // pageId/revision. If the mounted panel is ever reused across a page or
+  // image change, abort the in-flight fetch, reset round/exclusion/retry
+  // bookkeeping and dispatch the matching reducer invalidation event so
+  // candidates/reviews never cross images.
+  const imagePageIdRef = useRef(image.pageId);
+  const imageRevisionRef = useRef(image.imageRevision);
+  useEffect(() => {
+    const pageChanged = imagePageIdRef.current !== image.pageId;
+    const imageChanged = imageRevisionRef.current !== image.imageRevision;
+    if (!pageChanged && !imageChanged) return;
+    imagePageIdRef.current = image.pageId;
+    imageRevisionRef.current = image.imageRevision;
+    abortRef.current?.abort();
+    roundTokenRef.current = undefined;
+    serverRevisionRef.current = null;
+    excludedRefIdsRef.current = [];
+    retryArmRef.current = null;
+    rawDispatch({ type: pageChanged ? 'PAGE_CHANGED' : 'IMAGE_CHANGED' });
+  }, [image.pageId, image.imageRevision]);
+
   // Dispose any in-flight request on unmount.
   useEffect(() => {
     return () => {

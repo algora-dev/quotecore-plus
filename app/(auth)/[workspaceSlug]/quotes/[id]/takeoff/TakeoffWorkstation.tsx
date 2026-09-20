@@ -45,6 +45,11 @@ import {
   type CalibrationReferenceInput,
 } from '@/app/lib/takeoff/calibration';
 import { computeCalibrationRecompute } from '@/app/lib/takeoff/calibrationRecompute';
+// P0-1/P0-5 (calibration hardening audit 2026-09-20): pure per-page
+// calibration resolution - a page only ever restores its OWN stored scale.
+import { resolvePageCalibration } from '@/app/lib/takeoff/calibrationPageState';
+// P0-2: overlay teardown when the AI calibration session is aborted on page switch.
+import { disposeCalibrationOverlay } from './calibration/calibrationOverlay';
 // P4: versioned calibration persistence codec (takeoff_pages.calibration_metadata).
 import {
   decodeCalibrationMetadata,
@@ -298,6 +303,17 @@ export function TakeoffWorkstation({
   // P4: versioned calibration envelope (codec v1) per page DB id, created on
   // AI-finish and persisted alongside the legacy array; restored on hydration.
   const aiCalMetadataRef = useRef<Map<string, CalibrationMetadataV1>>(new Map());
+
+  // P0-2 (calibration hardening audit 2026-09-20): abort/close the active AI
+  // calibration session before ANY page/area/image change. Overlay marker
+  // objects are removed by tag; review UI state is cleared; candidates never
+  // cross images (the controller's unmount also aborts any in-flight fetch).
+  const abortAiCalibrationSession = useCallback(() => {
+    disposeCalibrationOverlay(fabricRef.current);
+    setAiCalChooserOpen(false);
+    setAiCalReviewOpen(false);
+    setAiCalSessionLive(false);
+  }, []);
 
   // Dynamic canvas dimensions - canvas matches the processed image dimensions.
   // No more fixed 800×600 with letterboxing. AI coordinates = canvas coordinates.
@@ -874,6 +890,59 @@ export function TakeoffWorkstation({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [history, captureSnapshot]);
 
+  // P0-5 (calibration hardening audit 2026-09-20): page/calibration metadata
+  // hydration runs whenever the session has saved pages, even with ZERO
+  // measurements - a calibration-only page must still restore its pages, its
+  // per-page calibration arrays and the versioned metadata envelope on
+  // reload, and show as calibrated. Measurement/area hydration (the effect
+  // below) still requires measurements to exist.
+  const pageHydrationAppliedRef = useRef(false);
+  useEffect(() => {
+    if (pageHydrationAppliedRef.current) return;
+    if (!hydrationData || hydrationData.pages.length === 0) return;
+    pageHydrationAppliedRef.current = true;
+
+    // Restore pages list from DB (preserves IDs needed for scoped save).
+    setPages(
+      hydrationData.pages.map(p => ({
+        id: p.id,
+        url: p.imageUrl ?? planUrl,
+        name: p.pageName ?? `Page ${p.pageOrder}`,
+        order: p.pageOrder,
+      }))
+    );
+
+    // Per-page calibration store + P4 (spec 11) versioned metadata envelope.
+    hydrationData.pages.forEach(p => {
+      const cal = p.scaleCalibration;
+      if (Array.isArray(cal) && cal.length > 0) {
+        pageCalibrationsRef.current.set(p.id, cal as Calibration[]);
+      }
+      if (p.calibrationMetadata != null) {
+        const decoded = decodeCalibrationMetadata(p.calibrationMetadata);
+        if (decoded.kind === 'v1' && decoded.status === 'valid') {
+          aiCalMetadataRef.current.set(p.id, decoded.metadata);
+        }
+        if (process.env.NODE_ENV !== 'production' && decoded.diagnostics.length > 0) {
+          console.info('[Hydration] P4 calibration metadata diagnostics for page', p.id, decoded.diagnostics);
+        }
+      }
+    });
+
+    // Restore the initially-active page's OWN calibration (page index 0 at
+    // mount; the measurement-hydration effect below may retarget the active
+    // page and override this with that page's own stored calibration).
+    const initial = resolvePageCalibration(pageCalibrationsRef.current, hydrationData.pages[0]?.id ?? null);
+    if (initial.source === 'page') {
+      setCalibrations(initial.calibrations);
+      setCalibrationConfirmed(true);
+      setShowCalibrationHelp(false);
+      console.info('[Hydration] Restored', initial.calibrations.length, 'calibrations for initial page');
+    }
+  // Intentionally only runs once on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // P1-1a C-01: One-shot hydration from server-loaded DB state.
   // Restores componentMeasurements panel data + pages list from the last saved session.
   // Canvas shapes are NOT reconstructed here (P1-1b); values show in the panel.
@@ -881,18 +950,6 @@ export function TakeoffWorkstation({
     if (hydrationAppliedRef.current) return;
     if (!hydrationData || hydrationData.measurements.length === 0) return;
     hydrationAppliedRef.current = true;
-
-    // Restore pages list from DB (preserves IDs needed for scoped save).
-    if (hydrationData.pages.length > 0) {
-      setPages(
-        hydrationData.pages.map(p => ({
-          id: p.id,
-          url: p.imageUrl ?? planUrl, // fall back to route-level planUrl if signed URL failed
-          name: p.pageName ?? `Page ${p.pageOrder}`,
-          order: p.pageOrder,
-        }))
-      );
-    }
 
     // Fix 2: Group measurements by quoteRoofAreaId for per-area restore.
     // Pre-Batch-5 data (null quoteRoofAreaId) goes to first area.
@@ -947,24 +1004,6 @@ export function TakeoffWorkstation({
       );
     });
     setAreaPages(nextAreaPages);
-    hydrationData.pages.forEach(p => {
-      const cal = p.scaleCalibration;
-      if (Array.isArray(cal) && cal.length > 0) {
-        pageCalibrationsRef.current.set(p.id, cal as Calibration[]);
-      }
-      // P4 (spec 11): prefer the versioned envelope when present. Decode via
-      // the codec (diagnostics surfaced to console in dev only); legacy rows
-      // without metadata keep the array path above, unchanged.
-      if (p.calibrationMetadata != null) {
-        const decoded = decodeCalibrationMetadata(p.calibrationMetadata);
-        if (decoded.kind === 'v1' && decoded.status === 'valid') {
-          aiCalMetadataRef.current.set(p.id, decoded.metadata);
-        }
-        if (process.env.NODE_ENV !== 'production' && decoded.diagnostics.length > 0) {
-          console.info('[Hydration] P4 calibration metadata diagnostics for page', p.id, decoded.diagnostics);
-        }
-      }
-    });
 
     // Display active area's data.
     // Fix (2026-07-04): if the initially-selected area has no saved data
@@ -1101,7 +1140,9 @@ export function TakeoffWorkstation({
     if (isExistingAreaMode) return;
     // Fix (2026-07-04): never show on re-entry to a saved takeoff. The user
     // already has saved areas - they can use "+ New Area" or upload a plan.
-    if (hydrationData && hydrationData.measurements.length > 0) return;
+    // P0-5 (audit 2026-09-20): also suppress for calibration-only saved pages
+    // (pages exist, zero measurements) - reload must not re-show this popup.
+    if (hydrationData && (hydrationData.measurements.length > 0 || hydrationData.pages.length > 0)) return;
     // RC-3 fix (2026-07-05): if the user already started drawing, never pop
     // this modal on top of their drawing (or on top of the AreaNameModal).
     // areaMode in the deps means the cleanup cancels the pending timer the
@@ -1126,6 +1167,10 @@ export function TakeoffWorkstation({
 
     // Discard any in-progress drawing before switching areas
     discardInProgressDrawing();
+
+    // P0-2 (audit 2026-09-20): the active AI calibration session cannot
+    // follow the area/page switch - close it and strip its overlay markers.
+    abortAiCalibrationSession();
 
     // Parent/child plans (2026-07-05): stamp un-stamped (freshly drawn)
     // measurements with the page they were drawn on before caching, and
@@ -1295,12 +1340,15 @@ export function TakeoffWorkstation({
           setCalibrationPoints([]);
           setCalibrationConfirmed(true);
           setShowCalibrationHelp(false);
-        } else if (calibrations.length > 0) {
-          // Fix (2026-07-05): inherit current scale for legacy pages with no
-          // stored calibration (see handleSwitchPage).
-          pageCalibrationsRef.current.set(pid, calibrations.map(c => ({ ...c })));
-          setCalibrationConfirmed(true);
-          setShowCalibrationHelp(false);
+        } else {
+          // P0-1 (audit 2026-09-20): the target page has NO stored calibration
+          // - never inherit the outgoing page's scale and never write another
+          // page's calibration into pageCalibrationsRef. Enter the
+          // uncalibrated state; the user picks manual or AI calibration here.
+          setCalibrations([]);
+          setCalibrationPoints([]);
+          setCalibrationConfirmed(false);
+          setShowCalibrationHelp(true);
         }
       }
       break;
@@ -1322,6 +1370,10 @@ export function TakeoffWorkstation({
 
     // Discard any in-progress drawing before switching pages
     discardInProgressDrawing();
+
+    // P0-2 (audit 2026-09-20): abort the active AI calibration session before
+    // the image changes - in-flight fetch, overlay markers and review state.
+    abortAiCalibrationSession();
 
     const currentPid = pages[currentPageIndex]?.id ?? null;
     // Stamp fresh drawings with the page they were drawn on so the redraw
@@ -1402,17 +1454,12 @@ export function TakeoffWorkstation({
       setCalibrationPoints([]);
       setCalibrationConfirmed(true);
       setShowCalibrationHelp(false);
-    } else if (calibrations.length > 0) {
-      // Fix (2026-07-05): no stored scale for this page (legacy data whose
-      // calibration was never persisted). Inherit the current plan's scale
-      // instead of forcing a recalibration - the user can still hit
-      // "Recalibrate" if the plans genuinely differ.
-      pageCalibrationsRef.current.set(targetPageId, calibrations.map(c => ({ ...c })));
-      setCalibrationPoints([]);
-      setCalibrationConfirmed(true);
-      setShowCalibrationHelp(false);
-      console.info('[SwitchPage] No stored calibration for page', targetPageId, '- inherited current scale');
     } else {
+      // P0-1 (audit 2026-09-20): no stored calibration for the target page -
+      // never inherit the outgoing page's scale. Calibration restore must
+      // only ever come from this page's own stored calibration (the resolver
+      // semantics; see calibrationPageState.ts). Start uncalibrated instead.
+      console.info('[SwitchPage] No stored calibration for page', targetPageId, '- starting uncalibrated');
       setCalibrations([]);
       setCalibrationPoints([]);
       setCalibrationConfirmed(false);
@@ -2893,7 +2940,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               versionCursor, cachedAreaId,
               // Fix (2026-07-05): persist the flushed page's calibration when
               // we have it (cached per page); fall back to null (no change).
-              (pid ? pageCalibrationsRef.current.get(pid) : null) ?? cachedState.calibrations ?? null,
+              // P0-1 (audit 2026-09-20): for a KNOWN page id use only that
+              // page's own stored calibration - never the area cache's array
+              // (it may belong to a different page). The cache fallback is
+              // kept only for legacy unstamped rows (pid == null).
+              (pid
+                ? (pageCalibrationsRef.current.get(pid) ?? null)
+                : (cachedState.calibrations ?? null)),
             );
             if (flushResult.success) {
               versionCursor += 1; // each successful flush bumps the DB version
@@ -3056,6 +3109,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       await finalizeTakeoffPageImage(newPageId, mint.storagePath);
       // 7+8. Parent/child plans (2026-07-05): switch canvas client-side.
       // createObjectURL is immediate and doesn't require re-signing.
+      // P0-2 (audit 2026-09-20): the AI calibration session belongs to the
+      // outgoing image - close it and strip overlay markers before the swap.
+      abortAiCalibrationSession();
       const objectUrl = URL.createObjectURL(uploadAnotherFile);
       const newPage = { id: newPageId, url: objectUrl, name: newPageName, order: pages.length + 1 };
       const updatedPages = [...pages, newPage];
@@ -6243,6 +6299,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       {aiCalibrationEnabled && aiCalSessionLive && (
         <div className={aiCalReviewOpen ? 'contents' : 'hidden'}>
           <CalibrationReviewPanel
+            // P0-2 (audit 2026-09-20): key by page id so React can never reuse
+            // a stale controller/panel instance across a page change.
+            key={aiCalImage.pageId}
             quoteId={quote.id}
             image={aiCalImage}
             workingUnit={aiCalWorkingUnit}
