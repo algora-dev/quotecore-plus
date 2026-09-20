@@ -12,6 +12,7 @@ import {
 import type { DemoFinishPayload } from './DemoWorkstation';
 import { DemoQuoteView } from './DemoQuoteView';
 import { trackEvent } from '@/lib/analytics';
+import { trackFreeToolEvent } from '@/app/(public)/lib/trackFreeToolEvent';
 
 type DemoDevice = 'desktop' | 'tablet' | 'mobile';
 
@@ -62,6 +63,7 @@ export function DemoTakeoff() {
   const enter = useCallback((mode: 'scan' | 'manual') => {
     trackEvent('demo_start', { mode });
     trackEvent(mode === 'scan' ? 'demo_scan_used' : 'demo_measure_used');
+    trackFreeToolEvent('start', undefined, mode === 'scan' ? 'demo-takeoff-ai' : 'demo-takeoff-manual');
     setRun(r => r + 1);
     setStage({ phase: 'takeoff', mode, run: run + 1, startedAt: Date.now() });
   }, [run]);
@@ -93,6 +95,7 @@ export function DemoTakeoff() {
 
   const finish = useCallback((payload: DemoFinishPayload, mode: 'scan' | 'manual') => {
     trackEvent('demo_quote_viewed', { mode });
+    trackFreeToolEvent('output', undefined, mode === 'scan' ? 'demo-takeoff-ai' : 'demo-takeoff-manual');
     setStage(s => ({ phase: 'quote', payload, run: s.phase === 'takeoff' ? s.run : 0, startedAt: s.phase === 'takeoff' ? s.startedAt : Date.now() }));
   }, []);
 

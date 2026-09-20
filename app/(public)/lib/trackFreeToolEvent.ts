@@ -12,6 +12,7 @@ const BUILD_RE = /(concrete|slab|footing|rebar|trench|construction|landscaping|p
 const toolCode = (() => {
   if (typeof window === 'undefined') return null;
   const p = window.location.pathname;
+  if (p.startsWith('/takeoff-demo')) return 'demo-takeoff-manual'; // overridden by caller when AI variant
   if (p.startsWith('/free-roofing-takeoff-builder')) return 'takeoff-builder';
   if (p.startsWith('/free-roof-takeoff')) return 'roof-takeoff';
   if (p.startsWith('/free-cladding-takeoff')) return 'cladding-takeoff';
@@ -39,10 +40,15 @@ const toolCode = (() => {
  * Log a completed meaningful action to free_tool_usage.
  * action examples: 'output' | 'generate' | 'result' - stored in document_type.
  */
-export function trackFreeToolEvent(action: string, extra?: Record<string, string | number | null>) {
-  if (!toolCode || typeof window === 'undefined') return;
+export function trackFreeToolEvent(
+  action: string,
+  extra?: Record<string, string | number | null>,
+  toolOverride?: string,
+) {
+  const code = toolOverride ?? toolCode;
+  if (!code || typeof window === 'undefined') return;
   try {
-    const body = JSON.stringify({ toolCode, action, ...(extra ?? {}) });
+    const body = JSON.stringify({ toolCode: code, action, ...(extra ?? {}) });
     if (navigator.sendBeacon) {
       navigator.sendBeacon(ENDPOINT, new Blob([body], { type: 'application/json' }));
     } else {
