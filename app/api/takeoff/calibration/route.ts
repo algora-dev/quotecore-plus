@@ -61,12 +61,16 @@ function errorResponse(status: number, code: string, error: string, extra?: Reco
   return NextResponse.json({ success: false, code, error, ...extra }, { status });
 }
 
-/** Narrow typed shim: the generated Database types predate patch_049 RPCs. */
+/** Narrow typed shim: the generated Database types predate patch_049 RPCs.
+ *  Returns a function that invokes supabase.rpc(fn, params) so call sites can
+ *  do rpcByName(client, 'cal_admit_run')({ ...params }). */
 function rpcByName(
   supabase: SupabaseClient,
   fn: 'cal_admit_run' | 'cal_finish_run' | 'cal_verify_refine_parent',
-): SupabaseClient['rpc'] {
-  return (supabase as unknown as { rpc: (f: string) => SupabaseClient['rpc'] }).rpc(fn);
+): (params: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> {
+  return (params) => (supabase as unknown as {
+    rpc: (f: string, p?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  }).rpc(fn, params);
 }
 
 function visionErrorHttp(code: string): number {
