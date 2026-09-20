@@ -34,7 +34,7 @@ export async function getCalibrationImageRevision(
 
     const { data: page, error: pageError } = await supabase
       .from('takeoff_pages')
-      .select('image_storage_path')
+      .select('image_storage_path, quote_id')
       .eq('id', pageId)
       .maybeSingle();
     if (pageError || !page) return null;
