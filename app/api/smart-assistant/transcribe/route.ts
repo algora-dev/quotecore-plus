@@ -27,11 +27,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Not available' }, { status: 404 });
   }
 
+  // Reject oversized uploads before parsing multipart: formData() throws
+  // on huge bodies, which would hide the 413 behind a 400.
+  const contentLength = Number(req.headers.get('content-length') ?? '0');
+  if (contentLength > MAX_BYTES + 64 * 1024) {
+    return NextResponse.json({ error: 'Recording too long' }, { status: 413 });
+  }
+
   let form: FormData;
   try {
     form = await req.formData();
   } catch {
-    return NextResponse.json({ error: 'Audio upload required' }, { status: 400 });
+    // Parsing can also blow up on oversized/chunked bodies without a usable
+    // content-length: report 413 in that case, 400 otherwise.
+    return NextResponse.json(
+      { error: contentLength > 0 ? 'Recording too long' : 'Audio upload required' },
+      { status: contentLength > 0 && contentLength > MAX_BYTES ? 413 : 400 },
+    );
   }
 
   const file = form.get('audio');

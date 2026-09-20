@@ -20,6 +20,7 @@
     "e2e:check-imports": "npx tsx e2e/scripts/check-imports.ts",
     "test:roof-takeoff": "node --import tsx --test \"app/(public)/free-roofing-takeoff-builder/*.test.ts\" \"app/lib/supplier-pricing/*.test.ts\"",
     "test:calibration": "node --import tsx --test \"app/lib/takeoff/calibration*.test.ts\"",
+    "test:assistant": "node scripts/test-smart-assistant.mjs",
     "prebuild": "node scripts/check-server-deps.mjs"
   },
   "dependencies": {
