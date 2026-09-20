@@ -6,11 +6,17 @@ import type { CalibrationImageDescriptor } from '@/app/lib/takeoff/calibrationTy
 
 export function CalibrationChooser({
   image,
+  title,
+  description,
   onChooseAi,
   onChooseManual,
   onClose,
 }: {
   image: CalibrationImageDescriptor;
+  /** Optional copy overrides (6.1: the toolbar Recalibrate entry reuses this
+   *  popup with recalibration copy). */
+  title?: string;
+  description?: string;
   onChooseAi: () => void;
   onChooseManual: () => void;
   onClose: () => void;
@@ -19,11 +25,10 @@ export function CalibrationChooser({
   return (
     <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
-        <h3 className="text-lg font-semibold text-slate-900">Calibrate this plan</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{title ?? 'Calibrate this plan'}</h3>
         <p className="text-sm text-slate-500 mt-2">
-          Choose a clear, long dimension or scale bar. AI will suggest up to three
-          measurements. Check the marker positions and distance; one correct
-          measurement is enough.
+          {description ??
+            'Choose a clear, long dimension or scale bar. AI will suggest up to three measurements. Check the marker positions and distance; one correct measurement is enough.'}
         </p>
         <div className="mt-5 grid gap-3">
           <button

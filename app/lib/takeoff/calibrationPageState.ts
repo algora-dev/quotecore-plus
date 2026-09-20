@@ -36,11 +36,26 @@ export interface PageCalibrationResolution<T extends PageCalibrationLike = PageC
 }
 
 /**
+ * P0-6 (calibration hardening audit 2026-09-20): should a decoded AI metadata
+ * envelope be trusted for this page? The envelope's imageRevision must match
+ * the page's authoritative server-established revision when that revision is
+ * known. A mismatch means the envelope was computed against a different
+ * source image (for example after a re-upload) - it must NOT be silently
+ * trusted. A null page revision (pre-migration row) cannot contradict the
+ * envelope, so the envelope stays trusted in that case.
+ */
+export function shouldTrustCalibrationMetadata(
+  metadataImageRevision: string,
+  pageImageRevision: string | null,
+): boolean {
+  if (pageImageRevision == null) return true;
+  return metadataImageRevision === pageImageRevision;
+}
+
+/**
  * Resolve the calibration state a destination page should show.
  * - Page has its own stored calibration -> restore it (confirmed).
- * - Page has none (or pageId is null) -> uncalibrated entry state: empty
- *   calibrations, not confirmed, calibration help visible. The current/outgoing
- *   page's calibration is NEVER consulted and NEVER written for the target.
+ * - Page has none (or pageId is null) -> uncalibrated entry state.
  */
 export function resolvePageCalibration<T extends PageCalibrationLike>(
   store: PageCalibrationStore<T>,

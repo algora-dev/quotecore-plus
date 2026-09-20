@@ -12,7 +12,15 @@ export type WorkingUnit = 'meters' | 'feet';
 
 export interface CalibrationImageDescriptor {
   pageId: string;
-  imageRevision: string;       // server-established identity of immutable source
+  /** Authoritative server content-digest revision of the immutable source
+   *  image (sha256 hash). Null when the client does not know it yet (the
+   *  search response carries it and the controller tracks it separately).
+   *  NEVER a client-side fabricated value (P0-6). */
+  imageRevision: string | null;
+  /** Client render-frame identity (page + canvas raster this scene shows).
+   *  Used ONLY for client-side mapping and reducer context guards - never
+   *  persisted and never confused with the authoritative source revision. */
+  frameKey: string;
   sourceWidth: number;         // after orientation normalisation
   sourceHeight: number;
   sceneWidth: number;

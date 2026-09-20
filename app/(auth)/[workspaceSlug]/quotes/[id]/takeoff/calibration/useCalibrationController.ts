@@ -34,12 +34,49 @@ import type {
 
 export type CalibrationSearchExecutor = typeof calibrationSearch;
 
+/** How a controller session should start (P0-6/6.1 audit 2026-09-20).
+ *  - new: fresh calibration on an uncalibrated page.
+ *  - replace: recalibrate a calibrated page; the committed calibration stays
+ *    active until the replacement commit succeeds (draft-until-commit, 6.2).
+ *  - edit: reopen a calibrated page with its committed references preloaded
+ *    as accepted drafts so the user can adjust/reconfirm them. */
+export type CalibrationStartMode =
+  | { kind: 'new' }
+  | { kind: 'replace' }
+  | { kind: 'edit'; initialAccepted: AcceptedReferenceDraft[] };
+
+/** Pure mapping from a start mode to the reducer's start event. Exported for
+ *  regression tests of the controller's session-start contract (6.1). */
+export function initialCalibrationStartEvent(
+  mode: CalibrationStartMode,
+  quoteId: string,
+  image: CalibrationImageDescriptor,
+): CalibrationSessionEvent {
+  switch (mode.kind) {
+    case 'replace':
+      return { type: 'START_REPLACE', quoteId, image, baseCalibrationRevision: 0 };
+    case 'edit':
+      return {
+        type: 'START_EDIT',
+        quoteId,
+        image,
+        baseCalibrationRevision: 0,
+        initialAccepted: mode.initialAccepted,
+      };
+    default:
+      return { type: 'START_NEW', quoteId, image, baseCalibrationRevision: 0 };
+  }
+}
+
 export interface UseCalibrationControllerOptions {
   quoteId: string;
   image: CalibrationImageDescriptor;
   workingUnit: WorkingUnit;
   /** Injectable for tests; defaults to the real fetch wrapper. */
   searchExecutor?: CalibrationSearchExecutor;
+  /** Session start mode (6.1): new, replace (draft-until-commit recalibration)
+   *  or edit (committed references preloaded as drafts). Defaults to new. */
+  startMode?: CalibrationStartMode;
   /** Called with the accepted set when the user finishes. MUST return an
    *  explicit commit result; the controller dispatches COMMIT_SUCCEEDED only
    *  on ok:true and keeps the review session (accepted references and
@@ -67,6 +104,10 @@ export interface CalibrationController {
   lastSearch: CalibrationSearchOutcome | null;
   /** Retry classification of the most recent failure (drives the retry button). */
   lastFailure: { recoverable: boolean; code: string | null } | null;
+  /** Authoritative server image revision from the most recent successful
+   *  search response (never a client-fabricated value). Null before the first
+   *  success (P0-6). */
+  serverImageRevision: string | null;
   /** Starts the initial search or the armed rescan. */
   startSearch: () => void;
   /** Network recovery: re-issues the SAME requestId (spec 12.4). */
@@ -96,21 +137,24 @@ const IDLE_UNINITIALISED: CalibrationSessionState = {
 export function useCalibrationController(options: UseCalibrationControllerOptions): CalibrationController {
   const { quoteId, image, workingUnit, onFinish, onCancel } = options;
   const searchExecutor = options.searchExecutor ?? calibrationSearch;
+  const startMode = options.startMode ?? { kind: 'new' } as CalibrationStartMode;
 
   const [state, rawDispatch] = useReducer(calibrationSessionReducer, IDLE_UNINITIALISED);
 
   // Start the session lazily on first mount so the controller can be rendered
-  // unconditionally by the panel (flag already gated by the parent).
+  // unconditionally by the panel (flag already gated by the parent). The start
+  // event reflects the requested session mode (6.1: new/replace/edit).
   const startedRef = useRef(false);
   if (!startedRef.current) {
     startedRef.current = true;
-    rawDispatch({ type: 'START_NEW', quoteId, image, baseCalibrationRevision: 0 });
+    rawDispatch(initialCalibrationStartEvent(startMode, quoteId, image));
   }
 
   const abortRef = useRef<AbortController | null>(null);
   const [searchTick, setSearchTick] = useState(1); // 1 = auto-start the initial search on mount
   const [lastSearch, setLastSearch] = useState<CalibrationSearchOutcome | null>(null);
   const [lastFailure, setLastFailure] = useState<{ recoverable: boolean; code: string | null } | null>(null);
+  const [serverImageRevision, setServerImageRevision] = useState<string | null>(null);
 
   // Round-1 authorisation minted by a successful round-0 search (server HMAC token).
   const roundTokenRef = useRef<string | undefined>(undefined);
@@ -128,19 +172,24 @@ export function useCalibrationController(options: UseCalibrationControllerOption
   // candidates/reviews never cross images.
   const imagePageIdRef = useRef(image.pageId);
   const imageRevisionRef = useRef(image.imageRevision);
+  const imageFrameKeyRef = useRef(image.frameKey);
   useEffect(() => {
     const pageChanged = imagePageIdRef.current !== image.pageId;
-    const imageChanged = imageRevisionRef.current !== image.imageRevision;
+    const imageChanged =
+      imageFrameKeyRef.current !== image.frameKey ||
+      (image.imageRevision != null && imageRevisionRef.current !== image.imageRevision);
     if (!pageChanged && !imageChanged) return;
     imagePageIdRef.current = image.pageId;
     imageRevisionRef.current = image.imageRevision;
+    imageFrameKeyRef.current = image.frameKey;
     abortRef.current?.abort();
     roundTokenRef.current = undefined;
     serverRevisionRef.current = null;
     excludedRefIdsRef.current = [];
     retryArmRef.current = null;
+    setServerImageRevision(null);
     rawDispatch({ type: pageChanged ? 'PAGE_CHANGED' : 'IMAGE_CHANGED' });
-  }, [image.pageId, image.imageRevision]);
+  }, [image.pageId, image.imageRevision, image.frameKey]);
 
   // Dispose any in-flight request on unmount.
   useEffect(() => {
@@ -185,7 +234,7 @@ export function useCalibrationController(options: UseCalibrationControllerOption
     const context = {
       quoteId: st.quoteId,
       pageId: st.image.pageId,
-      imageRevision: st.image.imageRevision,
+      frameKey: st.image.frameKey,
       sessionId: st.sessionId,
       requestId,
       contextEpoch: st.contextEpoch,
@@ -233,6 +282,9 @@ export function useCalibrationController(options: UseCalibrationControllerOption
 
         // Round-0 success mints the single round-1 authorisation.
         if (response.roundToken) roundTokenRef.current = response.roundToken;
+        // P0-6: surface the authoritative server revision to the commit path
+        // (metadata envelope) - never a client-fabricated value.
+        setServerImageRevision(response.imageRevision);
 
         let candidates = response.candidates;
         if (candidates.length > 0) {
@@ -350,9 +402,10 @@ export function useCalibrationController(options: UseCalibrationControllerOption
       rescanRemaining: selectRescanRemaining(state),
       lastSearch,
       lastFailure,
+      serverImageRevision,
       startSearch: () => setSearchTick((t) => t + 1),
       retrySearch,
     }),
-    [state, dispatch, workingUnit, lastSearch, lastFailure, retrySearch],
+    [state, dispatch, workingUnit, lastSearch, lastFailure, serverImageRevision, retrySearch],
   );
 }

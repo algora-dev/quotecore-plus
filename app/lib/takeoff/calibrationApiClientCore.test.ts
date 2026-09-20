@@ -16,6 +16,7 @@ function clientImage(overrides: Partial<CalibrationImageDescriptor> = {}): Calib
   return {
     pageId: 'page-1',
     imageRevision: 'client-rev',
+    frameKey: 'client-frame-1',
     sourceWidth: 1000,
     sourceHeight: 500,
     sceneWidth: 1000,
@@ -146,8 +147,9 @@ test('uniform scale maps server source pixels into the client scene frame', () =
   assert.deepEqual(c.sceneP1, { x: 50, y: 25 });
   assert.deepEqual(c.sceneP2, { x: 550, y: 25 });
   assert.equal(c.scenePixelLength, 500);
-  // Client session revision stamp (reducer frame guard) applied.
-  assert.equal(c.imageRevision, 'client-rev');
+  // P0-6: the authoritative server revision is preserved VERBATIM - client
+  // frame mapping never rewrites it (the frame guard keys on frameKey).
+  assert.equal(c.imageRevision, 'sha256-abc-on1');
   // Server identity + evidence preserved verbatim.
   assert.equal(c.referenceId, serverCandidate().referenceId);
   assert.equal(c.evidence.crops?.length, 3);

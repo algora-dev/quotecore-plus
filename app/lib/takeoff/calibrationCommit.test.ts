@@ -32,6 +32,7 @@ import type { CalibrationImageDescriptor } from './calibrationTypes';
 const IMAGE: CalibrationImageDescriptor = {
   pageId: 'page-1',
   imageRevision: 'rev-1',
+  frameKey: 'frame-1',
   sourceWidth: 4000,
   sourceHeight: 3000,
   sceneWidth: 2000,
@@ -47,7 +48,7 @@ function ctx(state: CalibrationSessionState, requestId: string): SessionContext 
   return {
     quoteId: 'quote-1',
     pageId: state.image.pageId,
-    imageRevision: state.image.imageRevision,
+    frameKey: state.image.frameKey,
     sessionId: state.sessionId,
     requestId,
     contextEpoch: state.contextEpoch,

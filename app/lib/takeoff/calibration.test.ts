@@ -123,3 +123,42 @@ test('full precision retained: 6.4205 m is not rounded', () => {
   const e = computeEffectiveCalibration([ref('p', 0, 0, 1000, 0, 6.4205, 'm')], 'meters');
   assert.ok(Math.abs(e.scale - 0.0064205) < 1e-15);
 });
+
+// 6.3 (audit 2026-09-20): AI-scan value computation must use the canonical
+// unit-normalised effective scale, never a raw arithmetic mean of cal.scale.
+import { effectiveScaleFromLegacyCalibrations } from './calibration';
+import { computeAreaValue, computeLineValue } from './applyAiResults';
+import type { Calibration } from './reconstructTypes';
+
+function legacyCal(id: string, unit: 'feet' | 'meters', actualDistance: number): Calibration {
+  return {
+    id,
+    point1: { x: 0, y: 0 },
+    point2: { x: 1000, y: 0 },
+    pixelDistance: 1000,
+    actualDistance,
+    unit,
+    scale: actualDistance / 1000,
+  };
+}
+
+test('computeLineValue uses the canonical effective scale for a mixed-unit calibration set', () => {
+  const cals = [legacyCal('a', 'feet', 100), legacyCal('b', 'meters', 10)];
+  const canonical = effectiveScaleFromLegacyCalibrations(cals);
+  const rawMean = cals.reduce((s, c) => s + c.scale, 0) / cals.length;
+  assert.notEqual(canonical, rawMean, 'mixed-unit raw mean is not the domain maths');
+
+  const value = computeLineValue({ x: 0, y: 0 }, { x: 500, y: 0 }, cals);
+  assert.ok(Math.abs(value - 500 * canonical) < 1e-12);
+  assert.notEqual(value, 500 * rawMean);
+});
+
+test('computeAreaValue uses the canonical effective scale squared', () => {
+  const cals = [legacyCal('a', 'meters', 20), legacyCal('b', 'meters', 10)];
+  const canonical = effectiveScaleFromLegacyCalibrations(cals);
+  const area = computeAreaValue(
+    [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 100 }, { x: 0, y: 100 }],
+    cals,
+  );
+  assert.ok(Math.abs(area - 10000 * canonical * canonical) < 1e-9);
+});

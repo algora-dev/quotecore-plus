@@ -20,6 +20,8 @@ import { encodeCalibrationMetadata, decodeCalibrationMetadata } from './calibrat
 const IMAGE: CalibrationImageDescriptor = {
   pageId: 'page-1',
   imageRevision: 'rev-1',
+  frameKey: 'frame-1',
+  frameKey: 'frame-1',
   sourceWidth: 4000,
   sourceHeight: 3000,
   sceneWidth: 2000,
@@ -38,7 +40,7 @@ function ctx(state: CalibrationSessionState, requestId: string): SessionContext 
   return {
     quoteId: 'quote-1',
     pageId: state.image.pageId,
-    imageRevision: state.image.imageRevision,
+    frameKey: state.image.frameKey,
     sessionId: state.sessionId,
     requestId,
     contextEpoch: state.contextEpoch,
@@ -237,12 +239,12 @@ describe('race and lifecycle protection (spec 8.3)', () => {
     assert.equal(s.candidates.length, 0);
   });
 
-  test('mismatched requestId / pageId / imageRevision results are discarded', () => {
+  test('mismatched requestId / pageId / frameKey results are discarded', () => {
     let s = runSearchStarted(boot());
     for (const bad of [
       { ...ctx(s, 'req-other') },
       { ...ctx(s, 'req-1'), pageId: 'page-2' },
-      { ...ctx(s, 'req-1'), imageRevision: 'rev-9' },
+      { ...ctx(s, 'req-1'), frameKey: 'frame-9' },
     ]) {
       s = calibrationSessionReducer(s, { type: 'SEARCH_SUCCEEDED', context: bad, round: 0, candidates: [C1] });
     }
@@ -253,6 +255,24 @@ describe('race and lifecycle protection (spec 8.3)', () => {
     const wrongRev = makeCandidate({ id: 'cx', imageRevision: 'rev-other' });
     const s = runSearch(boot(), 'req-1', [wrongRev, C1]);
     assert.deepEqual(s.candidates.map((c) => c.id), ['c1']);
+  });
+
+  test('P0-6: candidates keep their server revision and pass when the descriptor revision is unknown', () => {
+    // The client does not know the authoritative revision up front (null) -
+    // candidates keep their server revision verbatim and remain usable; the
+    // controller guards cross-response consistency separately.
+    const unknownImage: CalibrationImageDescriptor = { ...IMAGE, imageRevision: null };
+    const s0 = calibrationSessionReducer({} as CalibrationSessionState, {
+      type: 'START_NEW', quoteId: 'quote-1', image: unknownImage, baseCalibrationRevision: 0,
+    });
+    const s = runSearch(s0, 'req-1', [C1]);
+    assert.deepEqual(s.candidates.map((c) => c.id), ['c1']);
+    assert.equal(s.candidates[0].imageRevision, 'rev-1', 'server revision preserved verbatim, never rewritten');
+  });
+
+  test('P0-6: a known descriptor revision still filters mismatched candidates', () => {
+    const s = runSearch(boot(), 'req-1', [makeCandidate({ id: 'cx', imageRevision: 'sha256-zzz-on1' })]);
+    assert.deepEqual(s.candidates.map((c) => c.id), [], 'mismatched authoritative revision filtered');
   });
 
   test('CANCEL invalidates outstanding request context', () => {

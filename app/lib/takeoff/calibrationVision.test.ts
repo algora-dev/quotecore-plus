@@ -46,6 +46,7 @@ const scene = buildSourceToScene(SOURCE_W, SOURCE_H);
 const image: CalibrationImageDescriptor = {
   pageId: PAGE_ID,
   imageRevision: IMAGE_REVISION,
+  frameKey: 'server-frame-1',
   sourceWidth: SOURCE_W,
   sourceHeight: SOURCE_H,
   sceneWidth: scene.sceneWidth,

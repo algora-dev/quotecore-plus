@@ -7,7 +7,7 @@
 // Run: node --import tsx --test app/lib/takeoff/calibrationPageState.test.ts
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolvePageCalibration, type PageCalibrationLike } from './calibrationPageState';
+import { resolvePageCalibration, shouldTrustCalibrationMetadata, type PageCalibrationLike } from './calibrationPageState';
 
 function cal(id: string, scale: number, x: number): PageCalibrationLike {
   return {
@@ -101,3 +101,18 @@ describe('P0-5 calibration-only hydration', () => {
     assert.equal(r.calibrations[0].scale, 0.1);
   });
 });
+
+describe('P0-6 metadata hydration trust gate', () => {
+  test('matching revision is trusted', () => {
+    assert.equal(shouldTrustCalibrationMetadata('sha256-abc-on1', 'sha256-abc-on1'), true);
+  });
+
+  test('mismatched revision is NOT trusted (envelope from a different source image)', () => {
+    assert.equal(shouldTrustCalibrationMetadata('sha256-old-on1', 'sha256-new-on1'), false);
+  });
+
+  test('unknown page revision (pre-migration row) cannot contradict the envelope', () => {
+    assert.equal(shouldTrustCalibrationMetadata('sha256-abc-on1', null), true);
+  });
+});
+

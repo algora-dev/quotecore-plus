@@ -11,6 +11,7 @@
  */
 
 import type { Calibration } from './reconstructTypes';
+import { effectiveScaleFromLegacyCalibrations } from './calibration';
 import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS, type SemanticKey, SPOUTING_DASH_ARRAY, getSemanticColour, getLineOptions } from './aiComponentRegistry';
 
 // ── Constants (canvas dimensions are now dynamic - passed as params) ───────
@@ -329,8 +330,9 @@ export function computeLineValue(
 ): number {
   if (calibrations.length === 0) return 0;
   const pixelDistance = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-  const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
-  return pixelDistance * avgScale;
+  // 6.3 (audit 2026-09-20): canonical unit-normalised effective scale - the
+  // raw arithmetic mean of cal.scale values is NOT the domain maths.
+  return pixelDistance * effectiveScaleFromLegacyCalibrations(calibrations);
 }
 
 /**
@@ -343,8 +345,9 @@ export function computeAreaValue(
 ): number {
   if (calibrations.length === 0 || points.length < 3) return 0;
   const pixelArea = shoelaceArea(points);
-  const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
-  return pixelArea * avgScale * avgScale;
+  // 6.3: canonical unit-normalised effective scale (see computeLineValue).
+  const effectiveScale = effectiveScaleFromLegacyCalibrations(calibrations);
+  return pixelArea * effectiveScale * effectiveScale;
 }
 
 function shoelaceArea(points: CanvasPoint[]): number {
@@ -391,8 +394,8 @@ export function computeScaleCheck(
   // AI says this pixel length = real_length (in unit)
   const aiScale = dl.real_length / pixelLength; // units per pixel
 
-  // User calibration (average)
-  const userScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / calibrations.length;
+  // 6.3: canonical unit-normalised effective scale (see computeLineValue).
+  const userScale = effectiveScaleFromLegacyCalibrations(calibrations);
 
   const discrepancyPct = Math.abs(aiScale - userScale) / userScale * 100;
 

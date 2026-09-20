@@ -28,11 +28,13 @@ import type {
 import { computeEffectiveCalibration, MAX_ACCEPTED_REFERENCES } from './calibration';
 import { parseDistanceSuggestion } from './calibrationCandidates';
 
-/** Full context guard captured when a search starts and revalidated on completion (spec 8.3). */
+/** Full context guard captured when a search starts and revalidated on completion (spec 8.3).
+ *  The frame key identifies the CLIENT render frame (mapping identity); the
+ *  authoritative image revision lives on the candidates themselves (P0-6). */
 export interface SessionContext {
   quoteId: string;
   pageId: string;
-  imageRevision: string;
+  frameKey: string;
   sessionId: string | null;
   requestId: string;
   contextEpoch: number;
@@ -148,7 +150,7 @@ function contextMatches(state: CalibrationSessionState, ctx: SessionContext): bo
   return (
     ctx.quoteId === state.quoteId &&
     ctx.pageId === state.image.pageId &&
-    ctx.imageRevision === state.image.imageRevision &&
+    ctx.frameKey === state.image.frameKey &&
     ctx.sessionId === state.sessionId &&
     ctx.contextEpoch === state.contextEpoch
   );
@@ -272,6 +274,18 @@ function validateAcceptance(
   };
 }
 
+/** Whether a candidate's authoritative server image revision is usable for
+ *  this session's image. When the descriptor does not know the authoritative
+ *  revision yet (null), the controller's cross-response consistency check
+ *  guards it instead - candidates keep their server revision verbatim (P0-6). */
+function candidateRevisionUsable(
+  state: CalibrationSessionState,
+  candidate: CalibrationCandidate,
+): boolean {
+  if (state.image.imageRevision == null) return true;
+  return candidate.imageRevision === state.image.imageRevision;
+}
+
 function applyAcceptance(
   state: CalibrationSessionState,
   finish: boolean,
@@ -280,7 +294,7 @@ function applyAcceptance(
   if (!candidate) {
     return { ...state, error: { code: 'no_active_candidate', message: 'Select a measurement first.' } };
   }
-  if (candidate.imageRevision !== state.image.imageRevision) {
+  if (!candidateRevisionUsable(state, candidate)) {
     return { ...state, error: { code: 'image_mismatch', message: 'Candidate belongs to a different image.' } };
   }
   const review = reviewFor(state, candidate.id);
@@ -359,8 +373,8 @@ function applySearchSucceeded(
   ) {
     return state;
   }
-  // Only candidates for the current immutable image revision are usable.
-  const usable = candidates.filter((c) => c.imageRevision === state.image.imageRevision);
+  // Only candidates for the session's authoritative image revision are usable.
+  const usable = candidates.filter((c) => candidateRevisionUsable(state, c));
   // Display at most 3 minus slots already occupied by accepted references.
   const slots = Math.max(0, MAX_ACCEPTED_REFERENCES - state.accepted.length);
   const shown = usable.slice(0, slots);

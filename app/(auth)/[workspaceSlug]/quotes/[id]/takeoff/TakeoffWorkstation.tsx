@@ -32,9 +32,10 @@ import { PointMeasurementModal } from './modals/PointMeasurementModal';
 import { LineMeasurementModal } from './modals/LineMeasurementModal';
 import { CalibrationModal } from './modals/CalibrationModal';
 import { RoofPitchEstimatorModal } from './modals/RoofPitchEstimatorModal';
-// P2 AI-assisted calibration (flag-gated, mock proposals - see calibration/ folder)
+// P2/P6 AI-assisted calibration (flag-gated, live search via /api/takeoff/calibration)
 import { CalibrationChooser } from './calibration/CalibrationChooser';
 import { CalibrationReviewPanel } from './calibration/CalibrationReviewPanel';
+import type { CalibrationStartMode } from './calibration/useCalibrationController';
 import type { WorkingUnit, CalibrationImageDescriptor, AcceptedReferenceDraft } from '@/app/lib/takeoff/calibrationTypes';
 import { convertToWorkingUnit } from '@/app/lib/takeoff/calibrationCandidates';
 import { buildSourceToScene } from '@/app/lib/takeoff/calibrationCoordinates';
@@ -61,7 +62,7 @@ import {
 } from '@/app/lib/takeoff/calibrationCommit';
 // P0-1/P0-5 (calibration hardening audit 2026-09-20): pure per-page
 // calibration resolution - a page only ever restores its OWN stored scale.
-import { resolvePageCalibration } from '@/app/lib/takeoff/calibrationPageState';
+import { resolvePageCalibration, shouldTrustCalibrationMetadata } from '@/app/lib/takeoff/calibrationPageState';
 // P0-2: overlay teardown when the AI calibration session is aborted on page switch.
 import { disposeCalibrationOverlay } from './calibration/calibrationOverlay';
 // P4: versioned calibration persistence codec (takeoff_pages.calibration_metadata).
@@ -141,7 +142,7 @@ interface ComponentMeasurement {
    *  re-assigns earlier measurements to it. */
   quoteRoofAreaId?: string | null;
   /** v8 (2026-07-08): user-entered height/depth (metric) captured at draw
-   *  time (freestyle L×H height, volume_3d custom depth). READ-ONLY display
+   *  time (freestyle L×-H height, volume_3d custom depth). READ-ONLY display
    *  reference - `value` is already the final product. Persisted via
    *  entry_inputs so re-entry doesn't wipe it. */
   entryInputs?: {
@@ -193,7 +194,7 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
-  /** P2 AI-assisted calibration: per-company flag read server-side. Mock mode - no live AI. */
+  /** P2/P6 AI-assisted calibration: per-company flag read server-side. */
   aiCalibrationEnabled?: boolean;
 }
 
@@ -305,9 +306,17 @@ export function TakeoffWorkstation({
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(true);
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
-  // === P2 AI-assisted calibration (flag-gated, MOCK proposals - real search lands P6) ===
+  // === P2/P6 AI-assisted calibration (flag-gated, live search via the calibration API) ===
   const [aiCalChooserOpen, setAiCalChooserOpen] = useState(false);
   const [aiCalReviewOpen, setAiCalReviewOpen] = useState(false);
+  // 6.1: toolbar Calibrate/Recalibrate entry chooser (AI vs manual). Independent
+  // of the page-entry chooser so it reopens the AI flow even after the initial
+  // popup was dismissed with "Not now".
+  const [aiCalToolbarChooserOpen, setAiCalToolbarChooserOpen] = useState(false);
+  // 6.1: how the next AI review session starts (new / replace / edit) and a
+  // nonce that remounts the controller/panel for each deliberate session start.
+  const [aiCalStartMode, setAiCalStartMode] = useState<CalibrationStartMode>({ kind: 'new' });
+  const [aiCalSessionNonce, setAiCalSessionNonce] = useState(0);
   // P6: the review panel stays MOUNTED (hidden) once opened, so closing and
   // reopening it within the session never resets decisions or the rescan
   // budget (spec 7.1/7.2). Unmounted only on commit, explicit session end or
@@ -330,12 +339,13 @@ export function TakeoffWorkstation({
   const abortAiCalibrationSession = useCallback(() => {
     disposeCalibrationOverlay(fabricRef.current);
     setAiCalChooserOpen(false);
+    setAiCalToolbarChooserOpen(false);
     setAiCalReviewOpen(false);
     setAiCalSessionLive(false);
   }, []);
 
   // Dynamic canvas dimensions - canvas matches the processed image dimensions.
-  // No more fixed 800×600 with letterboxing. AI coordinates = canvas coordinates.
+  // No more fixed 800×-600 with letterboxing. AI coordinates = canvas coordinates.
   const [canvasDims, setCanvasDims] = useState({ width: 800, height: 600 });
 
   // AI Takeoff state
@@ -510,7 +520,7 @@ export function TakeoffWorkstation({
     basis: 'pitched' | 'plan';
   }>(null);
 
-  // Volume (L × W × D) - depth prompt state.
+  // Volume (L ×- W ×- D) - depth prompt state.
   // Fires after the area polygon is closed for a volume_3d component.
   const [showVolumeDepthPrompt, setShowVolumeDepthPrompt] = useState(false);
   const [volumeDepthInput, setVolumeDepthInput] = useState('');
@@ -940,7 +950,18 @@ export function TakeoffWorkstation({
       if (p.calibrationMetadata != null) {
         const decoded = decodeCalibrationMetadata(p.calibrationMetadata);
         if (decoded.kind === 'v1' && decoded.status === 'valid') {
-          aiCalMetadataRef.current.set(p.id, decoded.metadata);
+          // P0-6: never silently trust an envelope whose revision does not
+          // match the page's authoritative server revision - it was computed
+          // against a different source image.
+          if (shouldTrustCalibrationMetadata(decoded.metadata.imageRevision, p.imageRevision ?? null)) {
+            aiCalMetadataRef.current.set(p.id, decoded.metadata);
+          } else if (process.env.NODE_ENV !== 'production') {
+            console.info(
+              '[Hydration] Ignoring stale AI calibration metadata for page', p.id,
+              '- envelope revision', decoded.metadata.imageRevision,
+              '!= page revision', p.imageRevision,
+            );
+          }
         }
         if (process.env.NODE_ENV !== 'production' && decoded.diagnostics.length > 0) {
           console.info('[Hydration] P4 calibration metadata diagnostics for page', p.id, decoded.diagnostics);
@@ -2668,10 +2689,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // componentMeasurements are hydrated from other pages and excluded above.
       //
       // Contract (M-02 Gerald audit 2026-05-29):
-      //  – We do NOT advance the session version (no RPC call).
-      //  – We do NOT clear isDirty (no data was actually committed here).
-      //  – We only navigate if the caller explicitly requests it.
-      //  – This branch must NEVER be used when there are local unsaved changes
+      //  - We do NOT advance the session version (no RPC call).
+      //  - We do NOT clear isDirty (no data was actually committed here).
+      //  - We only navigate if the caller explicitly requests it.
+      //  - This branch must NEVER be used when there are local unsaved changes
       //    (those would have a null/undefined fromPageId and would NOT be filtered).
       if (allMeasurements.length === 0) {
         console.log('[SaveTakeoff] Safe skip - no new measurements for current page. Not a full save.');
@@ -4976,13 +4997,25 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     roofAreaInstructionsDismissedRef.current = true;
   };
 
-  // === P2 AI-assisted calibration handlers (flag-gated, MOCK - replaced in P6) ===
+  // === P2/P6 AI-assisted calibration handlers (flag-gated) ===
   const aiCalPageKey = pages[currentPageIndex]?.id ?? pages[currentPageIndex]?.url ?? String(currentPageIndex);
   const aiCalWorkingUnit: WorkingUnit = quote.measurement_system === 'metric' ? 'meters' : 'feet';
-  // MOCK: identity source-to-scene on the processed canvas dims (no server revision yet).
+  // P0-6 (audit 2026-09-20): the descriptor separates the two identities that
+  // were previously conflated into a fabricated revision string:
+  // - imageRevision: the AUTHORITATIVE server content-digest revision, taken
+  //   from the hydrated takeoff_pages row when known (null otherwise - the
+  //   search response carries it and the controller tracks it).
+  // - frameKey: the client render-frame identity (page + canvas raster), used
+  //   only for client-side mapping and reducer context guards.
+  // The metadata envelope written on commit always carries the server revision
+  // from the search response, never a client value.
+  const aiCalPageId = pages[currentPageIndex]?.id ?? `local-${currentPageIndex}`;
+  const aiCalPageServerRevision =
+    hydrationData?.pages.find((p) => p.id === aiCalPageId)?.imageRevision ?? null;
   const aiCalImage: CalibrationImageDescriptor = {
-    pageId: pages[currentPageIndex]?.id ?? `local-${currentPageIndex}`,
-    imageRevision: `mock-${aiCalPageKey}`,
+    pageId: aiCalPageId,
+    imageRevision: aiCalPageServerRevision,
+    frameKey: `client-${aiCalPageKey}`,
     sourceWidth: canvasDims.width,
     sourceHeight: canvasDims.height,
     sceneWidth: buildSourceToScene(canvasDims.width, canvasDims.height).sceneWidth,
@@ -4991,6 +5024,51 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     coordinateFrame: 'takeoff-scene-v1',
     geometryVersion: 1,
   };
+
+  // 6.1: build the start mode for an AI session opened from the toolbar
+  // (Calibrate/Recalibrate) on the CURRENT page. Uncalibrated page -> new.
+  // Calibrated page with a trusted, revision-matching metadata envelope ->
+  // edit (committed references preloaded as drafts; committed calibration
+  // stays active until the replacement commit succeeds). Calibrated page
+  // without usable metadata -> replace (draft-until-commit from scratch).
+  const buildAiCalStartMode = (): CalibrationStartMode => {
+    const pageId = pages[currentPageIndex]?.id ?? null;
+    const calibrated = calibrationConfirmed && calibrations.length > 0;
+    if (!pageId || !calibrated) return { kind: 'new' };
+    const meta = aiCalMetadataRef.current.get(pageId);
+    if (
+      meta &&
+      shouldTrustCalibrationMetadata(
+        meta.imageRevision,
+        hydrationData?.pages.find((p) => p.id === pageId)?.imageRevision ?? null,
+      )
+    ) {
+      const initialAccepted: AcceptedReferenceDraft[] = meta.references.map((ref) => ({
+        id: ref.id,
+        source: ref.source,
+        candidateId: ref.candidateId,
+        referenceId: ref.referenceId,
+        candidateRevision: ref.candidateRevision,
+        sceneP1: { ...ref.sceneP1 },
+        sceneP2: { ...ref.sceneP2 },
+        confirmedDistance: ref.confirmedDistance,
+        confirmedUnit: ref.confirmedUnit,
+        originalLabelText: ref.originalLabelText,
+        valueCorrected: ref.valueCorrected,
+      }));
+      if (initialAccepted.length > 0) return { kind: 'edit', initialAccepted };
+    }
+    return { kind: 'replace' };
+  };
+
+  // 6.1: open a fresh AI review session (remounting the controller via the
+  // nonce key so each deliberate start gets a clean reducer state).
+  const openAiReviewSession = useCallback((mode: CalibrationStartMode) => {
+    setAiCalStartMode(mode);
+    setAiCalSessionNonce((n) => n + 1);
+    setAiCalReviewOpen(true);
+    setAiCalSessionLive(true);
+  }, []);
 
   // Auto-popup the chooser once per page-load when flag on + page not calibrated.
   useEffect(() => {
@@ -5006,7 +5084,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // then commit via the existing save mechanism. Any failure (preflight errors
   // or COMMIT_FAILED persistence) restores the prior state - a failed
   // calibration save is never reported as success.
-  const handleAiCalibrationComplete = useCallback(async (accepted: readonly AcceptedReferenceDraft[], workingUnit: WorkingUnit): Promise<CalibrationCommitResult> => {
+  const handleAiCalibrationComplete = useCallback(async (
+    accepted: readonly AcceptedReferenceDraft[],
+    workingUnit: WorkingUnit,
+    commitContext: { serverImageRevision: string | null },
+  ): Promise<CalibrationCommitResult> => {
     // 1. New effective calibration from the accepted references.
     const refs: CalibrationReferenceInput[] = accepted.map((ref) => ({
       id: ref.id,
@@ -5081,13 +5163,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       };
     });
     // P4 (spec 11.1): versioned envelope for takeoff_pages.calibration_metadata,
-    // persisted alongside the legacy array on commit. imageRevision is the
-    // session descriptor's value here; the server independently stamps the
-    // content-digest revision into takeoff_pages.image_revision on save.
+    // persisted alongside the legacy array on commit. P0-6: imageRevision is
+    // ALWAYS the authoritative server content-digest revision (from the search
+    // response; fallback to the hydrated row). The server independently
+    // re-stamps takeoff_pages.image_revision on save - a client-fabricated
+    // revision is never written. The non-empty fallback only applies if a
+    // commit somehow runs without any server response and the row has no
+    // stored revision (pre-migration); it is clearly marked, and the hydration
+    // trust gate ignores such envelopes once a real revision is known.
+    const envelopeRevision =
+      commitContext?.serverImageRevision ?? aiCalPageServerRevision ?? 'server-revision-unavailable';
     const calMetadata = encodeCalibrationMetadata({
       accepted,
       workingUnit,
-      imageRevision: aiCalImage.imageRevision,
+      imageRevision: envelopeRevision,
       savedAt: new Date().toISOString(),
     });
     if (pageId) aiCalMetadataRef.current.set(pageId, calMetadata);
@@ -5165,7 +5254,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
     closeReviewPanel();
     return commitSucceeded();
-  }, [calibrations, calibrationConfirmed, componentMeasurements, roofAreas, pages, currentPageIndex, quote.id, aiCalImage]);
+  }, [calibrations, calibrationConfirmed, componentMeasurements, roofAreas, pages, currentPageIndex, quote.id, aiCalPageServerRevision]);
 
   const handleStartCalibration = () => {
     cleanupBoxDrag();
@@ -5339,7 +5428,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             if (!selectedComponentId && roofAreas.length > 0) {
               guidance = 'Create a custom box shape area, click and hold, drag then release to set the area';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Click and drag to draw the footprint (L × W). Release to set the area, then enter the depth.';
+              guidance = 'Click and drag to draw the footprint (L ×- W). Release to set the area, then enter the depth.';
             } else {
               guidance = 'Create a custom box shape area, click and hold, drag then release to set the area.';
             }
@@ -5347,7 +5436,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             if (!selectedComponentId) {
               guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
+              guidance = 'Draw the footprint (L ×- W). Close the shape on the first point, then enter the depth in the prompt.';
             } else {
               guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point.';
             }
@@ -5550,7 +5639,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   <div className="text-green-400 font-bold mb-2 flex items-center gap-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m4.5 12.75 6 6 9-13.5" /></svg> Confirmed</div>
                   <div className="text-xs text-gray-600 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
-                    {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
+                    {effectiveScaleFromLegacyCalibrations(calibrations).toFixed(4)} {calibrations[0].unit}/px
                   </div>
                 </div>
               ) : (
@@ -5560,7 +5649,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 <div className="p-3 rounded-xl bg-white border border-orange-400">
                   <div className="text-xs text-gray-600 mb-1">Average Scale</div>
                   <div className="font-bold text-gray-700">
-                    {(calibrations.reduce((sum, cal) => sum + cal.scale, 0) / calibrations.length).toFixed(4)} {calibrations[0].unit}/px
+                    {effectiveScaleFromLegacyCalibrations(calibrations).toFixed(4)} {calibrations[0].unit}/px
                   </div>
                   <div className="text-xs text-gray-600 mt-1">
                     Based on {calibrations.length} measurement{calibrations.length > 1 ? 's' : ''}
@@ -5722,7 +5811,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                           const compData = componentMeasurements.find(c => c.componentId === id);
                           const isSelected = selectedComponentId === comp.id;
                           const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
-                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line ×H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length ×H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line ×H' : mt || '';
+                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line ×-H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length ×-H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line ×-H' : mt || '';
                           return (
                             <div
                               key={comp.id}
@@ -5892,10 +5981,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                           >
                                             <span className="flex-1">
                                               {(m.type === 'line' || m.type === 'multi_lineal') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'}`}
-                                              {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
+                                              {m.type === 'multi_lineal_lxh' && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
                                               {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                               {m.type === 'point' && `1 item`}
-                                              {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×h`}
+                                              {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
                                               {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                             </span>
                                             <button
@@ -5914,7 +6003,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                               className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
                                               title="Delete measurement"
                                             >
-                                              ×
+                                              ×-
                                             </button>
                                           </div>
                                         ))}
@@ -6003,7 +6092,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
                                       title="Delete uncertain line"
                                     >
-                                      ×
+                                      ×-
                                     </button>
                                   </div>
                                 ))}
@@ -6127,7 +6216,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             {/* Tools - Fix 7: Calibrate, Area, Line, Point. Sub-tools conditional. */}
             <div className="flex gap-2 items-center">
               <button
-                onClick={handleStartCalibration}
+                onClick={() => {
+                  // 6.1: with AI calibration enabled, the toolbar entry opens the
+                  // AI-vs-manual chooser instead of jumping straight to manual.
+                  // Without the flag, manual calibration starts directly.
+                  if (aiCalibrationEnabled) {
+                    setAiCalToolbarChooserOpen(true);
+                  } else {
+                    handleStartCalibration();
+                  }
+                }}
                 data-copilot="takeoff-tool-calibrate"
                 className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 ${
                   calibrationMode ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-500'
@@ -6261,7 +6359,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               never blocks the canvas where the user needs to click. Drag from
               the grip handle on the left; buttons remain clickable. */}
           {multiLinealMode && multiLinealPoints.length >= 1 && (() => {
-            const avgScale = calibrations.reduce((s, cal) => s + cal.scale, 0) / (calibrations.length || 1);
+            // 6.3: canonical unit-normalised effective scale (raw averaging is not the domain maths).
+            const avgScale = effectiveScaleFromLegacyCalibrations(calibrations);
             let runningTotal = 0;
             for (let i = 1; i < multiLinealPoints.length; i++) {
               const dx = multiLinealPoints[i].x - multiLinealPoints[i - 1].x;
@@ -6348,25 +6447,53 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         </div>
       </div>
 
-      {/* P2 AI-assisted calibration: flag-gated additive branch. Flag off = never rendered,
-          every existing path identical. MOCK proposals only - real search lands P6. */}
+      {/* P2/P6 AI-assisted calibration: flag-gated additive branch. Flag off = never
+          rendered, every existing path identical. Live search via the calibration API. */}
       {aiCalibrationEnabled && aiCalChooserOpen && !calibrationConfirmed && calibrations.length === 0 && (
         <CalibrationChooser
           image={aiCalImage}
-          onChooseAi={() => { setAiCalChooserOpen(false); setAiCalReviewOpen(true); setAiCalSessionLive(true); }}
+          onChooseAi={() => { setAiCalChooserOpen(false); openAiReviewSession({ kind: 'new' }); }}
           onChooseManual={() => { setAiCalChooserOpen(false); handleStartCalibration(); }}
           onClose={() => setAiCalChooserOpen(false)}
+        />
+      )}
+      {/* 6.1: toolbar Calibrate/Recalibrate chooser. Reuses the same popup
+          pattern with recalibration copy; available on ALREADY-calibrated pages
+          and reopenable at any time (no once-per-page-load gate). The manual
+          path edits a draft (6.2) - the committed calibration is only replaced
+          on confirm. */}
+      {aiCalibrationEnabled && aiCalToolbarChooserOpen && (
+        <CalibrationChooser
+          image={aiCalImage}
+          title={calibrationConfirmed && calibrations.length > 0 ? 'Recalibrate this plan' : 'Calibrate this plan'}
+          description={
+            calibrationConfirmed && calibrations.length > 0
+              ? 'Recalibrate with AI or by hand. The current calibration stays active until you confirm the new one.'
+              : undefined
+          }
+          onChooseAi={() => {
+            setAiCalToolbarChooserOpen(false);
+            openAiReviewSession(buildAiCalStartMode());
+          }}
+          onChooseManual={() => {
+            setAiCalToolbarChooserOpen(false);
+            handleStartCalibration();
+          }}
+          onClose={() => setAiCalToolbarChooserOpen(false)}
         />
       )}
       {aiCalibrationEnabled && aiCalSessionLive && (
         <div className={aiCalReviewOpen ? 'contents' : 'hidden'}>
           <CalibrationReviewPanel
             // P0-2 (audit 2026-09-20): key by page id so React can never reuse
-            // a stale controller/panel instance across a page change.
-            key={aiCalImage.pageId}
+            // a stale controller/panel instance across a page change. The
+            // nonce additionally remounts per deliberate session start (6.1:
+            // reopen from the toolbar always gets a fresh session).
+            key={`${aiCalImage.pageId}:${aiCalSessionNonce}`}
             quoteId={quote.id}
             image={aiCalImage}
             workingUnit={aiCalWorkingUnit}
+            startMode={aiCalStartMode}
             fabricRef={fabricRef}
             onComplete={handleAiCalibrationComplete}
             onCancel={() => setAiCalReviewOpen(false)}
@@ -6549,7 +6676,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         </div>
       )}
 
-      {/* Volume (L × W × D) depth prompt - fires after area polygon is closed for a volume_3d component */}
+      {/* Volume (L ×- W ×- D) depth prompt - fires after area polygon is closed for a volume_3d component */}
       {showVolumeDepthPrompt && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 w-80 border border-gray-200 shadow-xl">
@@ -6647,7 +6774,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
                   {areaAttachChoice.pitch > 0
-                    ? `Plan ${areaAttachChoice.plan.toFixed(2)} × pitch factor at ${areaAttachChoice.pitch.toFixed(1)}° - use for roof sheets, underlay, battens (recommended)`
+                    ? `Plan ${areaAttachChoice.plan.toFixed(2)} ×- pitch factor at ${areaAttachChoice.pitch.toFixed(1)}° - use for roof sheets, underlay, battens (recommended)`
                     : 'No pitch set on this area - same as plan. Set a pitch first for a pitched value.'}
                 </p>
               </button>

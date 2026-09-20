@@ -427,6 +427,11 @@ export interface NormaliseDetectionResult {
 export function normaliseDetection(input: NormaliseDetectionInput): NormaliseDetectionResult {
   const { detection, image, analysisImages, searchRound } = input;
   const notes: string[] = [];
+  // P0-6: candidates always carry the authoritative server revision; a
+  // null revision here is a caller bug, never a reason to fabricate one.
+  if (image.imageRevision == null) {
+    throw new Error('normaliseDetection: image.imageRevision must be the authoritative server revision');
+  }
   if (detection.suitability !== 'suitable') {
     return { status: 'unsuitable_image', candidates: [], notes: [detection.suitabilityReason].filter(Boolean) };
   }
@@ -465,6 +470,11 @@ function hypothesisToCandidate(
   input: NormaliseDetectionInput,
   notes: string[],
 ): RankableCandidate | null {
+  // P0-6: candidates always carry the authoritative server revision; a null
+  // revision here is a caller bug, never a reason to fabricate one.
+  if (image.imageRevision == null) {
+    throw new Error('hypothesisToCandidate: image.imageRevision must be the authoritative server revision');
+  }
   // Refinement pass: only hypotheses refining a supplied parent are usable (spec 6.7).
   if (input.allowedParentTokens != null) {
     if (h.parentReferenceToken == null || !input.allowedParentTokens.has(h.parentReferenceToken)) {
@@ -883,6 +893,8 @@ export async function runCalibrationSearch(args: RunCalibrationSearchArgs): Prom
   const image: CalibrationImageDescriptor = {
     pageId: args.pageId,
     imageRevision,
+    // P0-6: server frame identity (authoritative revision known here).
+    frameKey: `server-${args.pageId}-${imageRevision}`,
     sourceWidth: prepared.sourceWidth,
     sourceHeight: prepared.sourceHeight,
     sceneWidth: scene.sceneWidth,

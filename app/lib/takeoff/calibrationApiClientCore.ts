@@ -204,11 +204,11 @@ export type MapCandidatesResult =
  * scale from server-source pixels to client-scene pixels, guarded by an aspect
  * check: an anisotropic mismatch fails honestly rather than stretching points.
  *
- * referenceId/imageRevision identity: the server referenceId is preserved
- * verbatim (cross-round physical identity lives in the server frame); the
- * candidate's imageRevision is re-stamped with the client session descriptor's
- * revision key so the reducer's frame guard accepts it. The authoritative
- * server revision is validated for consistency by the controller separately.
+ * referenceId/imageRevision identity: both are preserved VERBATIM from the
+ * server payload (P0-6). The candidate's imageRevision is the authoritative
+ * server content-digest revision - client frame mapping never rewrites it.
+ * Only the scene coordinates and scenePixelLength are recomputed into the
+ * client render frame; the reducer's frame guard keys on the client frameKey.
  */
 export function mapCandidatesToClientFrame(
   candidates: readonly ServerCalibrationCandidate[],
@@ -237,7 +237,8 @@ export function mapCandidatesToClientFrame(
       sceneP1,
       sceneP2,
       scenePixelLength: Math.hypot(sceneP2.x - sceneP1.x, sceneP2.y - sceneP1.y),
-      imageRevision: clientImage.imageRevision,
+      // P0-6: keep the authoritative server imageRevision verbatim - the
+      // client render frame is a mapping concern, not an identity concern.
     };
   });
   return { ok: true, candidates: mapped };

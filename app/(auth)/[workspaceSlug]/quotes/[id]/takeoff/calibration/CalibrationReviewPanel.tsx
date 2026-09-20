@@ -5,7 +5,7 @@
 // skip, one deliberate rescan, disagreement warning, estimate framing.
 // P6: LIVE search via the authenticated calibration API client; real evidence
 // crops rendered from the immutable source image.
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { Canvas } from 'fabric';
 import type { RefObject } from 'react';
 import type {
@@ -15,7 +15,7 @@ import type {
   WorkingUnit,
 } from '@/app/lib/takeoff/calibrationTypes';
 import { evidenceCropsForDisplay } from '@/app/lib/takeoff/calibrationApiClientCore';
-import { useCalibrationController } from './useCalibrationController';
+import { useCalibrationController, type CalibrationStartMode } from './useCalibrationController';
 import type { CalibrationCommitResult } from '@/app/lib/takeoff/calibrationCommit';
 import { disposeCalibrationOverlay, renderCalibrationOverlay } from './calibrationOverlay';
 import { CalibrationEvidenceZoom } from './CalibrationEvidenceZoom';
@@ -39,6 +39,7 @@ export function CalibrationReviewPanel({
   image,
   workingUnit,
   fabricRef,
+  startMode,
   onComplete,
   onCancel,
   onSwitchToManual,
@@ -47,19 +48,51 @@ export function CalibrationReviewPanel({
   image: CalibrationImageDescriptor;
   workingUnit: WorkingUnit;
   fabricRef: RefObject<Canvas | null>;
-  /** Accepted set handed back to the workstation for the commit path.
-   *  P0-4: returns an explicit commit result - success is only reported after
-   *  persistence actually succeeded, so the panel stays open on failure. */
+  /** Session start mode (6.1): new (uncalibrated page), replace (draft-until-commit
+   *  recalibration) or edit (committed references preloaded as drafts). */
+  startMode?: CalibrationStartMode;
+  /** Commit context handed back with the accepted set. imageRevision is the
+   *  authoritative server revision from the search response (P0-6) - the
+   *  metadata envelope must carry it, never a client-fabricated value. */
   onComplete: (
     accepted: readonly AcceptedReferenceDraft[],
     workingUnit: WorkingUnit,
+    context: { serverImageRevision: string | null },
   ) => Promise<CalibrationCommitResult> | CalibrationCommitResult;
   onCancel: () => void;
   onSwitchToManual: () => void;
 }) {
+  // P0-6/P0-4: the controller captures onFinish once at mount; delegate to the
+  // latest handleFinish through a ref so commits always use current state.
+  const onFinishLatestRef = useRef<
+    (accepted: readonly AcceptedReferenceDraft[]) => Promise<CalibrationCommitResult>
+  >(async () => {
+    throw new Error('CalibrationReviewPanel: onFinish invoked before mount completed');
+  });
+
+  const controller = useCalibrationController({
+    quoteId,
+    image,
+    workingUnit,
+    startMode,
+    onFinish: (accepted) => onFinishLatestRef.current(accepted),
+    onCancel: useCallback(() => {
+      disposeCalibrationOverlay(fabricRef.current);
+      onCancel();
+    }, [fabricRef, onCancel]),
+  });
+
+  const { state, dispatch, activeCandidate, draftEffective, validAccepted, rescanRemaining, lastSearch, lastFailure, retrySearch, serverImageRevision } = controller;
+  // Latest authoritative server revision reachable by the memoised handleFinish
+  // (P0-6).
+  const serverRevisionRef = useRef(serverImageRevision);
+  serverRevisionRef.current = serverImageRevision;
+
   const handleFinish = useCallback(
     async (accepted: readonly AcceptedReferenceDraft[]): Promise<CalibrationCommitResult> => {
-      const result = await onComplete(accepted, workingUnit);
+      const result = await onComplete(accepted, workingUnit, {
+        serverImageRevision: serverRevisionRef.current,
+      });
       // P0-4: only tear the canvas overlay down once persistence has actually
       // succeeded. On failure the reducer returns to 'reviewing' and the
       // overlay re-renders for the retry.
@@ -70,19 +103,8 @@ export function CalibrationReviewPanel({
     },
     [fabricRef, onComplete, workingUnit],
   );
+  onFinishLatestRef.current = handleFinish;
 
-  const controller = useCalibrationController({
-    quoteId,
-    image,
-    workingUnit,
-    onFinish: handleFinish,
-    onCancel: useCallback(() => {
-      disposeCalibrationOverlay(fabricRef.current);
-      onCancel();
-    }, [fabricRef, onCancel]),
-  });
-
-  const { state, dispatch, activeCandidate, draftEffective, validAccepted, rescanRemaining, lastSearch, lastFailure, retrySearch } = controller;
   const activeReview = activeCandidate ? state.reviews[activeCandidate.id] : undefined;
   const workingLabel = workingUnit === 'meters' ? 'm' : 'ft';
 
