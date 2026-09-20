@@ -42,6 +42,12 @@ function parseUnitWord(raw: string | null | undefined): DistanceUnit | null {
   return UNIT_WORDS[key] ?? null;
 }
 
+/** P1-11 (audit 2026-09-20): public unit-word normalisation so partial OCR
+ *  states can pre-fill the unit when the number is unreadable. */
+export function normaliseUnitWord(raw: string | null | undefined): DistanceUnit | null {
+  return parseUnitWord(raw);
+}
+
 const DECIMAL = String.raw`\d+(?:\.\d+)?`;
 const FRACTION = String.raw`\d+\s+\d+\/\d+|\d+\/\d+`;
 const FEET_MARK = String.raw`(?:'|ft|feet|foot|ft\.|feet\.)`;
@@ -59,6 +65,16 @@ const INCHES_ONLY_RE = new RegExp(String.raw`^(${DECIMAL})\s*${INCH_MARK}$`, 'i'
 const NUMBER_UNIT_RE = new RegExp(String.raw`^(${DECIMAL})\s*([a-zA-Z']+)$`, 'i');
 const BARE_NUMBER_RE = new RegExp(String.raw`^(${DECIMAL})$`);
 const BARE_FRACTION_RE = new RegExp(String.raw`^(${FRACTION})$`);
+
+/** P1-11: strict bare-number/fraction parse (no unit attached). Returns the
+ *  numeric value when the text is ONLY a number, else null. */
+export function parseBareNumber(text: string | null | undefined): number | null {
+  const value = text?.trim() ?? '';
+  if (value.length === 0) return null;
+  if (BARE_NUMBER_RE.test(value)) return Number(value);
+  if (BARE_FRACTION_RE.test(value)) return parseFractionValue(value);
+  return null;
+}
 
 function parseFractionValue(text: string): number | null {
   const mixed = text.match(/^(\d+)\s+(\d+)\/(\d+)$/);

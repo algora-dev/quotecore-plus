@@ -43,7 +43,7 @@ if (!process.env.OPENAI_API_KEY) {
   process.exit(1);
 }
 
-const { runCalibrationSearch, DETECTOR_VERSION } = await import(
+const { runCalibrationSearch, runTargetedRefinement, DETECTOR_VERSION } = await import(
   pathToFileURL(path.join(repoRoot, 'app/lib/takeoff/calibrationVision.ts')).href
 );
 
@@ -104,10 +104,12 @@ const fixtures = [
   { name: 'blank-negative', buffer: await renderFixture(FIXTURE_BLANK, 'blank-negative'), expected: { candidates: 0 } },
 ];
 
+const refineMode = process.argv.includes('--refine');
+
 const results = [];
 let totalTokens = 0;
 
-for (const fx of fixtures) {
+for (const fx of refineMode ? [] : fixtures) {
   const t0 = Date.now();
   try {
     const result = await runCalibrationSearch({
@@ -183,3 +185,41 @@ console.log(`detector: ${DETECTOR_VERSION}`);
 console.log(JSON.stringify(results, null, 2));
 console.log(`total model tokens: ${totalTokens}`);
 console.log('DONE');
+
+// ── Targeted-refine mode (Phase E P1-9): ONE refinement call against known
+// ground-truth parent geometry; no discovery. Run: node --import tsx
+// scripts/smoke-ai-calibration.mjs --refine (1 model call).
+if (refineMode) {
+  const buffer = await renderFixture(FIXTURE_DIM_LINE, 'dim-line-6.42m');
+  const t0 = Date.now();
+  const result = await runTargetedRefinement({
+    sourceBuffer: buffer,
+    pageId: 'smoke-refine',
+    imageRevision: 'smoke-rev-refine',
+    parents: [{
+      // Ground truth from the fixture SVG: arrows/ticks at (300,1450) and
+      // (1900,1450); the "6.42 m" label sits around (1100,1400).
+      sourceP1: { x: 300, y: 1450 },
+      sourceP2: { x: 1900, y: 1450 },
+      labelCentre: { x: 1100, y: 1400 },
+      revision: 1,
+    }],
+  });
+  const best = result.candidates[0];
+  console.log('\n=== AI calibration targeted-refine smoke (1 model call) ===');
+  console.log(JSON.stringify({
+    status: result.status,
+    notes: result.notes,
+    ms: Date.now() - t0,
+    tokens: result.modelUsage?.totalTokens ?? null,
+    candidates: result.candidates.map((c) => ({
+      revision: c.revision,
+      searchRound: c.searchRound,
+      sourceSpan: Math.round(Math.hypot(c.sourceP2.x - c.sourceP1.x, c.sourceP2.y - c.sourceP1.y)),
+      suggested: `${c.suggestedDistance ?? '?'} ${c.suggestedUnit ?? '?'}`,
+      valueState: c.valueState,
+    })),
+    continuity: best != null ? 'refined result passed P1-8 continuity validation' : 'no candidate (continuity rejected or model omitted)',
+  }, null, 2));
+  console.log('DONE');
+}

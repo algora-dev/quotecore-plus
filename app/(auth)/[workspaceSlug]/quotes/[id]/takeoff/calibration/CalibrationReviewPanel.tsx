@@ -15,6 +15,7 @@ import type {
   WorkingUnit,
 } from '@/app/lib/takeoff/calibrationTypes';
 import { evidenceCropsForDisplay } from '@/app/lib/takeoff/calibrationApiClientCore';
+import { valueStateCopy } from '@/app/lib/takeoff/calibrationValueCopy';
 import { useCalibrationController, type CalibrationStartMode } from './useCalibrationController';
 import type { CalibrationCommitResult } from '@/app/lib/takeoff/calibrationCommit';
 import { disposeCalibrationOverlay, renderCalibrationOverlay } from './calibrationOverlay';
@@ -185,6 +186,9 @@ export function CalibrationReviewPanel({
 
   const needsDistance = activeCandidate != null && activeCandidate.suggestedDistance == null;
   const enteredDistance = activeReview?.enteredDistance ?? '';
+  // P1-11: value hint adapts to the partial-read state instead of a generic
+  // "could not read the distance" for every partial.
+  const valueHint = activeCandidate ? valueStateCopy(activeCandidate) : '';
   const enteredUnit = activeReview?.enteredUnit ?? activeCandidate?.suggestedUnit ?? null;
   const activeDecision = activeCandidate ? state.reviews[activeCandidate.id]?.decision ?? 'unreviewed' : null;
   const canRefineActive = activeCandidate != null && activeDecision === 'skipped' && rescanRemaining > 0 && state.accepted.length < 3;
@@ -258,19 +262,9 @@ export function CalibrationReviewPanel({
                 <p className="text-sm font-semibold text-slate-900">
                   Are these markers on the two ends of this measurement?
                 </p>
-                {needsDistance ? (
-                  <p className="text-sm text-slate-500">
-                    I found the measurement endpoints, but could not read the distance.
-                    Enter the distance shown between these points and choose its unit.
-                  </p>
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    AI read: <span className="font-semibold text-slate-700">
-                      {activeCandidate.suggestedDistance} {activeCandidate.suggestedUnit}
-                    </span>
-                    . Check the printed distance, or correct it below.
-                  </p>
-                )}
+                {valueHint ? (
+                  <p className="text-sm text-slate-500">{valueHint}</p>
+                ) : null}
 
                 <div className="flex gap-2">
                   <input

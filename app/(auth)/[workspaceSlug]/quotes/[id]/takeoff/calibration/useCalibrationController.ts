@@ -241,11 +241,20 @@ export function useCalibrationController(options: UseCalibrationControllerOption
     };
     rawDispatch({ type: 'SEARCH_STARTED', context, round, strategy: armed });
 
-    // Find-different rescans exclude every physical reference the user skipped
-    // in this session (spec 7.2: do not turn every displayed candidate into a
-    // rejection; only explicit skips are excluded).
+    // Find-different rescans exclude EVERY previously displayed physical
+    // reference (P1-10, Phase E audit 2026-09-20) - not just explicitly
+    // skipped ones - plus accepted references (they stay preserved in the
+    // accepted set and are never re-proposed). Server-side matching is
+    // geometry-tolerant, so small coordinate jitter still matches.
     const excluded = armed === 'different_references' ? excludedRefIdsRef.current : [];
-    const refineIds = armed === 'refine_reference' && st.refineReferenceId ? [st.refineReferenceId] : undefined;
+    // P1-9: targeted refine echoes the server-signed candidate token bound to
+    // the original geometry; the quantised referenceId stays as a legacy
+    // fallback only.
+    const refineCandidate = armed === 'refine_reference' && st.refineReferenceId
+      ? st.candidates.find((c) => c.referenceId === st.refineReferenceId)
+      : null;
+    const refineTokens = refineCandidate?.refineToken ? [refineCandidate.refineToken] : undefined;
+    const refineIds = armed === 'refine_reference' && st.refineReferenceId && !refineTokens ? [st.refineReferenceId] : undefined;
 
     const body: CalibrationSearchRequestBody = {
       action: armed === 'refine_reference' ? 'refine' : 'search',
@@ -256,6 +265,7 @@ export function useCalibrationController(options: UseCalibrationControllerOption
       requestId,
       ...(round === 1 && roundTokenRef.current ? { roundToken: roundTokenRef.current } : {}),
       ...(excluded.length > 0 ? { excludeReferenceIds: excluded } : {}),
+      ...(refineTokens ? { refineTokens } : {}),
       ...(refineIds ? { refineReferenceIds: refineIds } : {}),
     };
 
@@ -337,17 +347,20 @@ export function useCalibrationController(options: UseCalibrationControllerOption
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTick, searchExecutor]);
 
-  // Track skipped physical references for later find-different exclusion.
+  // P1-10 (Phase E audit 2026-09-20): accumulate EVERY displayed physical
+  // reference (reviewed or not) plus accepted references into the exclusion
+  // set for later find-different rescans. A displayed-but-unreviewed
+  // reference must not come back as a "different" one, and accepted
+  // references stay in the accepted set, never re-proposed.
   useEffect(() => {
-    const skipped = state.candidates
-      .filter((c) => state.reviews[c.id]?.decision === 'skipped')
-      .map((c) => c.referenceId);
-    if (skipped.length > 0) {
-      const merged = new Set([...excludedRefIdsRef.current, ...skipped]);
-      excludedRefIdsRef.current = [...merged];
+    const displayed = state.candidates.map((c) => c.referenceId);
+    const accepted = state.accepted
+      .map((a) => a.referenceId)
+      .filter((v): v is string => typeof v === 'string');
+    if (displayed.length + accepted.length > 0) {
+      excludedRefIdsRef.current = [...new Set([...excludedRefIdsRef.current, ...displayed, ...accepted])];
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.reviews]);
+  }, [state.candidates, state.accepted]);
 
   // P0-4 (calibration hardening audit 2026-09-20): await parent persistence
   // before reporting success. COMMIT_SUCCEEDED is dispatched ONLY when the

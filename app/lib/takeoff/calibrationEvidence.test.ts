@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import { attachEvidenceCrops, mergeCandidateCrops, orientSource, type EvidenceCandidate } from './calibrationEvidence';
+import { attachEvidenceCrops, labelCropCentre, mergeCandidateCrops, orientSource, type EvidenceCandidate } from './calibrationEvidence';
 
 async function tinyPng(width = 400, height = 300): Promise<Buffer> {
   return sharp({ create: { width, height, channels: 3, background: '#7fb2ff' } }).png().toBuffer();
@@ -85,4 +85,35 @@ test('attachEvidenceCrops: candidate geometry is never conditioned on crops', as
   const got = out.candidates[0] as { valueState: string; sourceP1: { x: number } };
   assert.equal(got.valueState, 'readable');
   assert.equal(got.sourceP1.x, 1);
+});
+
+// -- P1-12 (Phase E audit 2026-09-20): label crop centring ---------------
+
+test('labelCropCentre: prefers the detected label evidence centre over the midpoint', () => {
+  const candidate: EvidenceCandidate = {
+    sourceP1: { x: 100, y: 100 },
+    sourceP2: { x: 300, y: 200 },
+    evidence: { sourceLabelCentre: { x: 402, y: 96 } },
+  };
+  assert.deepEqual(labelCropCentre(candidate), { x: 402, y: 96 });
+});
+
+test('labelCropCentre: falls back to the span midpoint when no label evidence exists', () => {
+  const noEvidence: EvidenceCandidate = { sourceP1: { x: 100, y: 100 }, sourceP2: { x: 300, y: 200 } };
+  assert.deepEqual(labelCropCentre(noEvidence), { x: 200, y: 150 });
+  const nullCentre: EvidenceCandidate = {
+    sourceP1: { x: 100, y: 100 },
+    sourceP2: { x: 300, y: 200 },
+    evidence: { sourceLabelCentre: null },
+  };
+  assert.deepEqual(labelCropCentre(nullCentre), { x: 200, y: 150 });
+});
+
+test('labelCropCentre: non-finite label centre falls back to the midpoint', () => {
+  const bad: EvidenceCandidate = {
+    sourceP1: { x: 100, y: 100 },
+    sourceP2: { x: 300, y: 200 },
+    evidence: { sourceLabelCentre: { x: Number.NaN, y: 96 } },
+  };
+  assert.deepEqual(labelCropCentre(bad), { x: 200, y: 150 });
 });

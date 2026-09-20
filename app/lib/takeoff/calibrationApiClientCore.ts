@@ -31,6 +31,9 @@ export interface CalibrationSearchRequestBody {
   excludeReferenceIds?: readonly string[];
   /** Physical references to re-localise at higher detail (refine strategy). */
   refineReferenceIds?: readonly string[];
+  /** P1-9 (Phase E audit 2026-09-20): server-signed candidate refine tokens
+   *  for a targeted refine (no rediscovery). Preferred over refineReferenceIds. */
+  refineTokens?: readonly string[];
 }
 
 /** Server candidate payload: CalibrationCandidate plus optional evidence crops. */

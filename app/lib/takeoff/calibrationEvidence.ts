@@ -49,6 +49,26 @@ export interface EvidenceCandidate {
   evidence?: Record<string, unknown>;
 }
 
+/**
+ * P1-12 (Phase E audit 2026-09-20): the label evidence crop centres on the
+ * DETECTED label evidence (labelBox mapped to source raster pixels,
+ * evidence.sourceLabelCentre) when available; the span midpoint is only the
+ * fallback when no label evidence exists. Pure.
+ */
+export function labelCropCentre(candidate: EvidenceCandidate): CropPoint {
+  const centre = (candidate.evidence as { sourceLabelCentre?: CropPoint | null } | undefined)?.sourceLabelCentre;
+  if (
+    centre != null
+    && Number.isFinite(centre.x) && Number.isFinite(centre.y)
+  ) {
+    return centre;
+  }
+  return {
+    x: (candidate.sourceP1.x + candidate.sourceP2.x) / 2,
+    y: (candidate.sourceP1.y + candidate.sourceP2.y) / 2,
+  };
+}
+
 export interface EvidenceCropOutcome {
   crops: Array<{ kind: EvidenceCropKind; dataUri: string }>;
   failed: number;
@@ -89,13 +109,7 @@ export async function attachEvidenceCrops(
     const wanted: Array<{ kind: EvidenceCropKind; centre: CropPoint }> = [
       { kind: 'endpoint-a', centre: c.sourceP1 },
       { kind: 'endpoint-b', centre: c.sourceP2 },
-      {
-        kind: 'label',
-        centre: {
-          x: (c.sourceP1.x + c.sourceP2.x) / 2,
-          y: (c.sourceP1.y + c.sourceP2.y) / 2,
-        },
-      },
+      { kind: 'label', centre: labelCropCentre(c) },
     ];
     const crops: Array<{ kind: EvidenceCropKind; dataUri: string }> = [];
     for (const w of wanted) {

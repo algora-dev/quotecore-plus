@@ -35,9 +35,15 @@ import {
   CalibrationVisionError,
   DETECTOR_VERSION,
   runCalibrationSearch,
+  runTargetedRefinement,
   signRoundToken,
   verifyRoundToken,
 } from '@/app/lib/takeoff/calibrationVision';
+import {
+  signCandidateRefineToken,
+  verifyCandidateRefineToken,
+  type CandidateRefinePayload,
+} from '@/app/lib/takeoff/calibrationRefine';
 import {
   calibrationRefusalHttp,
   computeCalibrationPayloadHash,
@@ -58,7 +64,7 @@ function errorResponse(status: number, code: string, error: string, extra?: Reco
 /** Narrow typed shim: the generated Database types predate patch_049 RPCs. */
 function rpcByName(
   supabase: SupabaseClient,
-  fn: 'cal_admit_run' | 'cal_finish_run',
+  fn: 'cal_admit_run' | 'cal_finish_run' | 'cal_verify_refine_parent',
 ): SupabaseClient['rpc'] {
   return (supabase as unknown as { rpc: (f: string) => SupabaseClient['rpc'] }).rpc(fn);
 }
@@ -147,6 +153,25 @@ export async function POST(req: NextRequest) {
     const excludeReferenceIds = Array.isArray(body.excludeReferenceIds)
       ? body.excludeReferenceIds.filter((v): v is string => typeof v === 'string').slice(0, 10)
       : undefined;
+    const refineTokens = Array.isArray(body.refineTokens)
+      ? body.refineTokens.filter((v): v is string => typeof v === 'string' && v.length <= 2048).slice(0, 3)
+      : undefined;
+
+    // P1-9: targeted refine uses server-signed candidate tokens (bound to the
+    // ledger run). Verified BEFORE any charge: pure signature + page/revision
+    // binding, then the ledger run must exist and have succeeded for this
+    // company (cal_verify_refine_parent, patch_050).
+    let targetedParents: Array<{ token: string; payload: CandidateRefinePayload }> | null = null;
+    if (action === 'refine' && refineTokens && refineTokens.length > 0) {
+      targetedParents = [];
+      for (const token of refineTokens) {
+        const verdict = verifyCandidateRefineToken(token, pageId, imageRevision);
+        if (!verdict.valid) {
+          return errorResponse(409, 'REQUEST_CONFLICT', `Refine not authorised (${verdict.reason}). Start a new calibration search.`);
+        }
+        targetedParents.push({ token, payload: verdict.payload });
+      }
+    }
 
     // 6) HMAC round token: additional binding layer for round 1 / refine
     //    (P1-5: dedicated secret in production). The LEDGER remains the
@@ -163,7 +188,7 @@ export async function POST(req: NextRequest) {
 
     const payloadHash = computeCalibrationPayloadHash({
       quoteId, pageId, action, round, strategy, imageRevision,
-      refineReferenceIds, excludeReferenceIds,
+      refineReferenceIds, excludeReferenceIds, refineTokens,
     });
 
     // 7) Resolve + orient the authorised source bytes BEFORE any charge
@@ -187,6 +212,19 @@ export async function POST(req: NextRequest) {
 
     // 8) Atomic admission + point reservation in the ledger (P1-1/P1-2/P1-3).
     console.log(`[calibration:${pageId}] search_start action=${action} round=${round} strategy=${strategy} requestId=${requestId}`);
+
+    // P1-9 ledger binding: every refine token's parent run must exist, belong
+    // to this company, and have succeeded (pre-charge, so a bad token costs
+    // nothing).
+    if (targetedParents) {
+      for (const runId of [...new Set(targetedParents.map((p) => p.payload.runId))]) {
+        const { data: okRun, error: verifyError } = await rpcByName(supabaseUser, 'cal_verify_refine_parent')({ p_run_id: runId } as never);
+        if (verifyError || okRun !== true) {
+          console.warn(`[calibration:${pageId}] refine_parent_rejected run=${runId} err=${verifyError?.message ?? 'not found'}`);
+          return errorResponse(409, 'REQUEST_CONFLICT', 'Refine not authorised (parent run). Start a new calibration search.');
+        }
+      }
+    }
 
     const { data: admitData, error: admitError } = await rpcByName(supabaseUser, 'cal_admit_run')({
       p_quote_id: quoteId,
@@ -234,6 +272,7 @@ export async function POST(req: NextRequest) {
     }
 
     // accepted
+    const admittedRunId = decision.runId;
     admitted = { runId: decision.runId, pointsRemaining: decision.pointsRemaining };
     console.log(`[calibration:${pageId}] points_charged points=${CALIBRATION_SEARCH_POINT_COST} remaining_after=${admitted.pointsRemaining} run=${admitted.runId}`);
 
@@ -256,19 +295,55 @@ export async function POST(req: NextRequest) {
     };
 
     try {
-      const result = await runCalibrationSearch({
-        sourceBuffer: oriented.buffer,
-        pageId,
-        imageRevision,
-        round,
-        strategy: action === 'refine' ? 'refine_reference' : strategy,
-        refineReferenceIds,
-        excludeReferenceIds,
-      });
+      // P1-9: targeted refine = ONE refinement call against the ORIGINAL
+      // geometry from the signed token; no discovery rediscovery.
+      const result = targetedParents
+        ? await runTargetedRefinement({
+          sourceBuffer: oriented.buffer,
+          pageId,
+          imageRevision,
+          parents: targetedParents.map((p) => ({
+            sourceP1: p.payload.sourceP1,
+            sourceP2: p.payload.sourceP2,
+            labelCentre: p.payload.labelCentre,
+            revision: p.payload.revision,
+          })),
+        })
+        : await runCalibrationSearch({
+          sourceBuffer: oriented.buffer,
+          pageId,
+          imageRevision,
+          round,
+          strategy: action === 'refine' ? 'refine_reference' : strategy,
+          refineReferenceIds,
+          excludeReferenceIds,
+        });
 
       // Round-0 success mints the HMAC binding token; round-1 never does
       // (and even a replayed round-0 token cannot beat the ledger budget).
       const roundTokenOut = round === 0 ? signRoundToken(pageId, imageRevision) : undefined;
+
+      // P1-9: round-0 candidates carry server-signed refine tokens binding
+      // the original geometry to this ledger run, so a targeted "improve these
+      // points" never has to rediscover or re-match by quantised id.
+      if (round === 0 && result.candidates.length > 0) {
+        result.candidates = result.candidates.map((c, i) => ({
+          ...c,
+          refineToken: signCandidateRefineToken({
+            runId: admittedRunId,
+            idx: i,
+            pageId,
+            imageRevision,
+            sourceP1: c.sourceP1,
+            sourceP2: c.sourceP2,
+            labelCentre: c.evidence.sourceLabelCentre ?? {
+              x: (c.sourceP1.x + c.sourceP2.x) / 2,
+              y: (c.sourceP1.y + c.sourceP2.y) / 2,
+            },
+            revision: c.revision,
+          }),
+        }));
+      }
 
       // P1-4: crops are optional UX built from the already-oriented source;
       // dims are always valid because orientation happened pre-charge.

@@ -14,6 +14,10 @@ export interface CalibrationPayloadIdentity {
   imageRevision: string;
   refineReferenceIds?: readonly string[];
   excludeReferenceIds?: readonly string[];
+  /** P1-9 (Phase E audit 2026-09-20): server-signed candidate refine tokens
+   *  (targeted refine). Part of request identity so a retried request with a
+   *  different candidate cannot collide with the original attempt's id. */
+  refineTokens?: readonly string[];
 }
 
 /** Deterministic hash of the request identity (sorted keys, stable arrays). */
@@ -27,6 +31,7 @@ export function computeCalibrationPayloadHash(identity: CalibrationPayloadIdenti
     imageRevision: identity.imageRevision,
     refineReferenceIds: [...(identity.refineReferenceIds ?? [])].sort(),
     excludeReferenceIds: [...(identity.excludeReferenceIds ?? [])].sort(),
+    refineTokens: [...(identity.refineTokens ?? [])].sort(),
   };
   return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }

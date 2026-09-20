@@ -8,7 +8,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildRefinementPrompt,
   computeReferenceId,
+  matchesExcludedReference,
   normaliseDetection,
   selectRefinementHypotheses,
   signRoundToken,
@@ -190,7 +192,23 @@ test('valueState: readable parse wins; unit-known/value-missing -> needs_distanc
 
   const noUnit = normalise(makeDetection([makeHypothesis({ distanceValueText: '6420', unitText: null })])).candidates[0];
   assert.equal(noUnit.valueState, 'needs_unit');
-  assert.equal(noUnit.suggestedDistance, null);
+  // P1-11: the clearly-read number is PRESERVED for prefill.
+  assert.equal(noUnit.suggestedDistance, 6420);
+  assert.equal(noUnit.suggestedUnit, null);
+});
+
+test('valueState: partial unit read is preserved (P1-11)', () => {
+  const noNumber = normalise(makeDetection([makeHypothesis({ distanceValueText: null, unitText: 'mm' })])).candidates[0];
+  assert.equal(noNumber.valueState, 'needs_distance');
+  assert.equal(noNumber.suggestedDistance, null);
+  assert.equal(noNumber.suggestedUnit, 'mm');
+});
+
+test('valueState: unparseable combined text falls back to needs_both without guessing', () => {
+  const garbage = normalise(makeDetection([makeHypothesis({ distanceValueText: 'approx six', unitText: '??' })])).candidates[0];
+  assert.equal(garbage.valueState, 'needs_both');
+  assert.equal(garbage.suggestedDistance, null);
+  assert.equal(garbage.suggestedUnit, null);
 });
 
 // ── Ranking: span, not printed number (R04 / spec 6.6 step 6) ───────────
@@ -265,7 +283,8 @@ test('referenceId: order-independent and jitter-stable, distinct for different g
   assert.notEqual(a, other);
 });
 
-// ── Refinement selection & revision bumping ─────────────────────────────
+// ── Refinement selection & revision bumping ─────────────────────────
+
 
 test('selection: top three by span chosen for refinement; excluded physical references skipped', () => {
   const detection = makeDetection([
@@ -304,6 +323,106 @@ test('refinement: hypotheses refining an unsupplied parent are dropped', () => {
 test('discovery candidates start at revision 1', () => {
   const result = normalise(makeDetection([makeHypothesis()]));
   assert.equal(result.candidates[0].revision, 1);
+});
+
+// ── Geometry-tolerant exclusion (P1-10, Phase E audit 2026-09-20) ─────
+
+test('exclusion: jitter across a quantisation bin boundary still matches the excluded id', () => {
+  // Original: p1=(110,100) p2=(1600,100) -> midpoint x 855 -> bin 86.
+  const original = computeReferenceId({ x: 110, y: 100 }, { x: 1600, y: 100 });
+  // Jitter: midpoint x 854.5 -> bin 85 (different bin, so the exact id differs),
+  // span 1493 -> bin 149 vs 149. Both are within the one-bin neighbourhood.
+  const jittered = computeReferenceId({ x: 104, y: 102 }, { x: 1605, y: 99 });
+  assert.notEqual(original, jittered, 'test setup: ids must differ to prove tolerance');
+  assert.equal(matchesExcludedReference({ x: 104, y: 102 }, { x: 1605, y: 99 }, [original]), true);
+
+  const result = normalise(
+    makeDetection([makeHypothesis({ p1: { inputImageId: 'overview-0', x: 104, y: 102 }, p2: { inputImageId: 'overview-0', x: 1605, y: 99 } })]),
+    { excludeReferenceIds: [original] },
+  );
+  assert.equal(result.status, 'no_candidates');
+  assert.ok(result.notes.some((n) => n.includes('excluded_physical_reference')));
+});
+
+test('exclusion: a genuinely different dimension is not excluded', () => {
+  const original = computeReferenceId({ x: 110, y: 100 }, { x: 1600, y: 100 });
+  assert.equal(matchesExcludedReference({ x: 110, y: 900 }, { x: 1600, y: 900 }, [original]), false);
+  const result = normalise(
+    makeDetection([makeHypothesis({ p1: { inputImageId: 'overview-0', x: 55, y: 450 }, p2: { inputImageId: 'overview-0', x: 800, y: 450 } })]),
+    { excludeReferenceIds: [original] },
+  );
+  assert.equal(result.status, 'candidates');
+});
+
+// ── Parent continuity validation inside normalisation (P1-8) ──────────
+
+test('continuity: legitimate refinement passes, jump to a different dimension is dropped', () => {
+  const parentGeometry = { sceneP1: { x: 100, y: 100 }, sceneP2: { x: 800, y: 100 } };
+  const base = {
+    image,
+    analysisImages: [overviewDescriptor],
+    searchRound: 1 as const,
+    allowedParentTokens: new Set(['parent-1']),
+    baseRevisionByToken: { 'parent-1': 1 },
+    parentGeometryByToken: { 'parent-1': parentGeometry },
+  };
+
+  // Legit: scene coords match overview coords in this fixture (uniform 0.5
+  // source->scene scale), endpoints nudged a few pixels along the same span.
+  const legit = normaliseDetection({
+    detection: makeDetection([makeHypothesis({
+      parentReferenceToken: 'parent-1',
+      p1: { inputImageId: 'overview-0', x: 103, y: 102 },
+      p2: { inputImageId: 'overview-0', x: 798, y: 98 },
+    })]),
+    ...base,
+  });
+  assert.equal(legit.candidates.length, 1);
+  assert.equal(legit.candidates[0].revision, 2);
+
+  // Jump: a different parallel dimension entirely (scene y=900).
+  const jump = normaliseDetection({
+    detection: makeDetection([makeHypothesis({
+      parentReferenceToken: 'parent-1',
+      p1: { inputImageId: 'overview-0', x: 100, y: 900 },
+      p2: { inputImageId: 'overview-0', x: 800, y: 900 },
+    })]),
+    ...base,
+  });
+  assert.equal(jump.candidates.length, 0);
+  assert.ok(jump.notes.some((n) => n.includes('refinement_continuity_rejected')));
+});
+
+// ── Label evidence centre in source pixels (P1-12) ────────────────────
+
+test('sourceLabelCentre: detected labelBox maps to source raster pixels; absent labelBox stays null', () => {
+  const withBox = normalise(makeDetection([makeHypothesis({
+    labelBox: { inputImageId: 'overview-0', x: 900, y: 650, width: 200, height: 60 },
+  })])).candidates[0];
+  // Overview 2000x1500 -> source 4000x3000 (scale 2): centre (1000,680) -> source (2000,1360).
+  assert.deepEqual(withBox.evidence.sourceLabelCentre, { x: 2000, y: 1360 });
+
+  const withoutBox = normalise(makeDetection([makeHypothesis()])).candidates[0];
+  assert.equal(withoutBox.evidence.sourceLabelCentre, null);
+});
+
+// ── Refinement prompt grouping (P1-7) ──────────────────────────────────
+
+test('refinement prompt: explicit parent-to-crop groups, cross-group use forbidden', () => {
+  const crops = [1, 2, 3].map((n) => ({
+    inputImageId: `h0-${n === 1 ? 'endpoint-a' : n === 2 ? 'endpoint-b' : 'label'}`,
+    imageRevision: IMAGE_REVISION,
+    width: 256,
+    height: 256,
+    analysisToSource: [1, 0, 0, 1, 0, 0] as const,
+    purpose: (n === 1 ? 'endpoint-a' : n === 2 ? 'endpoint-b' : 'label') as 'endpoint-a',
+  }));
+  const prompt = buildRefinementPrompt(overviewDescriptor, crops, [
+    { parentToken: 'tok-9', cropIds: ['h0-endpoint-a', 'h0-endpoint-b', 'h0-label'] },
+  ]);
+  assert.match(prompt, /parent tok-9: use ONLY these crops -> h0-endpoint-a, h0-endpoint-b, h0-label/);
+  assert.match(prompt, /ONLY the crops in that/);
+  assert.match(prompt, /Never mix crops from different groups/);
 });
 
 // ── Round tokens (stateless rescan budget) ──────────────────────────────
