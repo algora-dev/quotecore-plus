@@ -85,6 +85,46 @@ export function CalibrationReviewPanel({
   });
 
   const { state, dispatch, activeCandidate, draftEffective, validAccepted, rescanRemaining, lastSearch, lastFailure, retrySearch, serverImageRevision } = controller;
+  // Draggable panel (owner UX feedback 2026-09-20): grab by header, drag
+  // anywhere; stays above the canvas via the fixed-position z-30 shell.
+  const [panelPos, setPanelPos] = useState<{ x: number; y: number } | null>(null);
+  const dragRef = useRef<{ dx: number; dy: number } | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const onPointerDownHeader = useCallback((e: React.PointerEvent) => {
+    // Never capture a drag that starts on an interactive header control.
+    if ((e.target as HTMLElement).closest('button, a, input, select')) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    dragRef.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }, []);
+  const onPointerMoveHeader = useCallback((e: React.PointerEvent) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const x = Math.max(8, Math.min(window.innerWidth - 80, e.clientX - drag.dx));
+    const y = Math.max(8, Math.min(window.innerHeight - 80, e.clientY - drag.dy));
+    setPanelPos({ x, y });
+  }, []);
+  const onPointerUpHeader = useCallback(() => {
+    dragRef.current = null;
+  }, []);
+  const headerDragProps = {
+    onPointerDown: onPointerDownHeader,
+    onPointerMove: onPointerMoveHeader,
+    onPointerUp: onPointerUpHeader,
+  };
+  const panelClassName = panelPos
+    ? 'fixed z-30 w-80 max-h-[calc(100vh-16px)] bg-white rounded-xl border border-slate-200 shadow-xl flex flex-col overflow-hidden'
+    : 'fixed top-24 right-4 bottom-24 w-80 z-30 bg-white rounded-xl border border-slate-200 shadow-xl flex flex-col overflow-hidden';
+  const panelStyle = panelPos ? { left: panelPos.x, top: panelPos.y } : undefined;
+  // Evidence crops stay available but out of the way (owner feedback):
+  // collapsed behind a small text link, reset per candidate.
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const activeCandidateId = activeCandidate?.id ?? '';
+  useEffect(() => {
+    setEvidenceOpen(false);
+  }, [activeCandidateId]);
   // UX-4: the disagreement resolution block can be dismissed to review or
   // remove a reference; it reappears whenever the accepted set changes.
   const [disagreementDismissed, setDisagreementDismissed] = useState(false);
@@ -170,8 +210,11 @@ export function CalibrationReviewPanel({
   // Unavailable without a server page image: honest guidance + manual fallback (spec 4.6).
   if (isLocalPage(image.pageId)) {
     return (
-      <div className="fixed top-24 right-4 bottom-24 w-80 z-30 bg-white rounded-xl border border-slate-200 shadow-xl flex flex-col overflow-hidden">
-        <div className="px-4 pt-4 pb-3 border-b border-slate-100">
+      <div ref={panelRef} className={panelClassName} style={panelStyle}>
+        <div
+          {...headerDragProps}
+          className="px-4 pt-4 pb-3 border-b border-slate-100 cursor-move touch-none"
+        >
           <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">AI calibration</h3>
         </div>
         <div className="flex-1 px-4 py-4">
@@ -193,10 +236,8 @@ export function CalibrationReviewPanel({
 
   const needsDistance = activeCandidate != null && activeCandidate.suggestedDistance == null;
   const enteredDistance = activeReview?.enteredDistance ?? '';
-  // P1-11: value hint adapts to the partial-read state instead of a generic
-  // "could not read the distance" for every partial.
-  const valueHint = activeCandidate ? valueStateCopy(activeCandidate) : '';
   const enteredUnit = activeReview?.enteredUnit ?? activeCandidate?.suggestedUnit ?? null;
+  const ocrSucceeded = activeCandidate?.valueState === 'readable';
   const activeDecision = activeCandidate ? state.reviews[activeCandidate.id]?.decision ?? 'unreviewed' : null;
   const canRefineActive = activeCandidate != null && activeDecision === 'skipped' && rescanRemaining > 0 && state.accepted.length < 3;
   const crops = evidenceCropsForDisplay(activeCandidate);
@@ -209,8 +250,11 @@ export function CalibrationReviewPanel({
       : 'No usable measurement endpoints found. Try one more search, calibrate manually, or use a clearer image with an explicit distance.';
 
   return (
-    <div className="fixed top-24 right-4 bottom-24 w-80 z-30 bg-white rounded-xl border border-slate-200 shadow-xl flex flex-col overflow-hidden">
-      <div className="px-4 pt-4 pb-3 border-b border-slate-100">
+    <div ref={panelRef} className={panelClassName} style={panelStyle}>
+      <div
+        {...headerDragProps}
+        className="px-4 pt-4 pb-3 border-b border-slate-100 cursor-move touch-none"
+      >
         <h3 className="text-sm font-bold uppercase tracking-wide text-slate-900">
           AI calibration
         </h3>
@@ -274,11 +318,8 @@ export function CalibrationReviewPanel({
                 <p className="text-sm font-semibold text-slate-900">
                   Are these markers on the two ends of this measurement?
                 </p>
-                {valueHint ? (
-                  <p className="text-sm text-slate-500">{valueHint}</p>
-                ) : null}
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                   <input
                     inputMode="decimal"
                     value={enteredDistance}
@@ -290,7 +331,7 @@ export function CalibrationReviewPanel({
                       })
                     }
                     placeholder={needsDistance ? 'e.g. 6.42' : String(activeCandidate.suggestedDistance)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base md:text-sm focus:border-orange-500 focus:outline-none"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-3xl font-bold text-slate-900 focus:border-orange-500 focus:outline-none"
                   />
                   <select
                     value={enteredUnit ?? ''}
@@ -301,7 +342,7 @@ export function CalibrationReviewPanel({
                         unit: (e.target.value || null) as DistanceUnit | null,
                       })
                     }
-                    className="rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                    className="rounded-lg border border-slate-300 px-2 py-3 text-sm focus:border-orange-500 focus:outline-none"
                   >
                     <option value="">unit</option>
                     {UNIT_OPTIONS.map((u) => (
@@ -309,8 +350,25 @@ export function CalibrationReviewPanel({
                     ))}
                   </select>
                 </div>
+                <p className="text-xs text-slate-500">
+                  {ocrSucceeded
+                    ? 'AI read this number from the plan'
+                    : 'Enter the number shown on the plan'}
+                </p>
+                {!ocrSucceeded && valueStateCopy(activeCandidate) ? (
+                  <p className="text-xs text-slate-400">{valueStateCopy(activeCandidate)}</p>
+                ) : null}
 
-                <CalibrationEvidenceZoom crops={crops} />
+                <div>
+                  <button
+                    type="button"
+                    className="text-xs text-slate-500 underline hover:text-slate-800"
+                    onClick={() => setEvidenceOpen((v) => !v)}
+                  >
+                    {evidenceOpen ? 'Hide evidence' : 'Show evidence'}
+                  </button>
+                  {evidenceOpen && <div className="mt-2"><CalibrationEvidenceZoom crops={crops} /></div>}
+                </div>
 
                 <div className="space-y-2">
                   <button

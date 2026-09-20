@@ -35,25 +35,28 @@ interface Style {
 
 const ACTIVE: Style = {
   stroke: '#2563eb',
-  strokeWidth: 3,
-  markerRadius: 9,
-  markerStrokeWidth: 3,
+  strokeWidth: 4,
+  markerRadius: 10,
+  markerStrokeWidth: 4,
   dash: undefined,
   opacity: 1,
   labelFill: '#2563eb',
   labelFontSize: 16,
   labelOpacity: 1,
 };
+// Owner UX feedback 2026-09-20: the selected tab's candidate must dominate -
+// non-selected unreviewed candidates dim to ~30% so the bright active line
+// and markers are unmistakable on the canvas.
 const PASSIVE: Style = {
   stroke: '#94a3b8',
   strokeWidth: 2,
   markerRadius: 6,
   markerStrokeWidth: 2,
   dash: [8, 6],
-  opacity: 0.75,
+  opacity: 0.3,
   labelFill: '#64748b',
   labelFontSize: 13,
-  labelOpacity: 0.8,
+  labelOpacity: 0.3,
 };
 const ACCEPTED: Style = {
   stroke: '#059669',

@@ -6655,8 +6655,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         </div>
       )}
 
-      {/* Initial Calibration Help */}
-      {showCalibrationHelp && calibrations.length === 0 && (
+      {/* Initial Calibration Help - defers while the AI/manual chooser is open
+          (owner feedback 2026-09-20): never render the two z-50 modals stacked. */}
+      {showCalibrationHelp && calibrations.length === 0 &&
+        !(aiCalibrationEnabled && (aiCalChooserOpen || aiCalToolbarChooserOpen)) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 md:p-6 max-w-md border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">📐 Calibrate Your Plan</h2>
