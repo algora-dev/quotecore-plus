@@ -25,15 +25,15 @@ export function CalibrationModal({
   const canAddAnother = calibrationNumber < 3;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96 border border-gray-200">
-        <h2 className="text-xl font-semibold mb-2">
+    <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-6 w-96 border border-slate-200 shadow-xl">
+        <h2 className="text-xl font-semibold mb-2 text-slate-900">
           Calibration {calibrationNumber} of 3
         </h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-slate-500 mb-4">
           {calibrationNumber === 1
-            ? 'At least 1 calibration required. More = better accuracy.'
-            : `Add ${3 - calibrationNumber + 1} more for best accuracy, or skip.`}
+            ? 'One correct calibration is all you need to start measuring.'
+            : `Add up to ${3 - calibrationNumber + 1} more for best accuracy, or use this one as your only calibration.`}
         </p>
         <div className="space-y-4">
           <div>
@@ -43,7 +43,7 @@ export function CalibrationModal({
               step="0.01"
               value={distance}
               onChange={(e) => setDistance(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
               placeholder="e.g. 10.5"
               autoFocus
               required
@@ -54,7 +54,7 @@ export function CalibrationModal({
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value as 'feet' | 'meters')}
-              className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+              className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
             >
               <option value="feet">Feet</option>
               <option value="meters">Meters</option>
@@ -64,39 +64,28 @@ export function CalibrationModal({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
+              className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full"
             >
               Cancel
             </button>
-            {canAddAnother && calibrationNumber > 1 && (
-              <button
-                type="button"
-                onClick={() => handleSubmit(false)}
-                className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
-                disabled={!distance || parseFloat(distance) <= 0}
-              >
-                Skip
-              </button>
-            )}
-            {canAddAnother ? (
+            {canAddAnother && (
               <button
                 type="button"
                 onClick={() => handleSubmit(true)}
-                className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full"
                 disabled={!distance || parseFloat(distance) <= 0}
               >
-                Save & Add Another
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => handleSubmit(false)}
-                className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-                disabled={!distance || parseFloat(distance) <= 0}
-              >
-                Save
+                Save &amp; add another
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => handleSubmit(false)}
+              className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              disabled={!distance || parseFloat(distance) <= 0}
+            >
+              Use this calibration
+            </button>
           </div>
         </div>
       </div>

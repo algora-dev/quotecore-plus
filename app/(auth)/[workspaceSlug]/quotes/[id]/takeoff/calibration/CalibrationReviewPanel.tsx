@@ -5,7 +5,7 @@
 // skip, one deliberate rescan, disagreement warning, estimate framing.
 // P6: LIVE search via the authenticated calibration API client; real evidence
 // crops rendered from the immutable source image.
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Canvas } from 'fabric';
 import type { RefObject } from 'react';
 import type {
@@ -15,7 +15,8 @@ import type {
   WorkingUnit,
 } from '@/app/lib/takeoff/calibrationTypes';
 import { evidenceCropsForDisplay } from '@/app/lib/takeoff/calibrationApiClientCore';
-import { valueStateCopy } from '@/app/lib/takeoff/calibrationValueCopy';
+import { calibrationStatusCopy, disagreementResolutionCopy, valueStateCopy } from '@/app/lib/takeoff/calibrationValueCopy';
+import { DISAGREEMENT_WARNING_THRESHOLD_PCT } from '@/app/lib/takeoff/calibration';
 import { useCalibrationController, type CalibrationStartMode } from './useCalibrationController';
 import type { CalibrationCommitResult } from '@/app/lib/takeoff/calibrationCommit';
 import { disposeCalibrationOverlay, renderCalibrationOverlay } from './calibrationOverlay';
@@ -84,6 +85,13 @@ export function CalibrationReviewPanel({
   });
 
   const { state, dispatch, activeCandidate, draftEffective, validAccepted, rescanRemaining, lastSearch, lastFailure, retrySearch, serverImageRevision } = controller;
+  // UX-4: the disagreement resolution block can be dismissed to review or
+  // remove a reference; it reappears whenever the accepted set changes.
+  const [disagreementDismissed, setDisagreementDismissed] = useState(false);
+  const acceptedIdsKey = state.accepted.map((a) => a.id).join(',');
+  useEffect(() => {
+    setDisagreementDismissed(false);
+  }, [acceptedIdsKey]);
   // Latest authoritative server revision reachable by the memoised handleFinish
   // (P0-6).
   const serverRevisionRef = useRef(serverImageRevision);
@@ -107,7 +115,6 @@ export function CalibrationReviewPanel({
   onFinishLatestRef.current = handleFinish;
 
   const activeReview = activeCandidate ? state.reviews[activeCandidate.id] : undefined;
-  const workingLabel = workingUnit === 'meters' ? 'm' : 'ft';
 
   // Render the whole candidate set + selection state whenever review state changes.
   const overlayKey = JSON.stringify({
@@ -243,7 +250,12 @@ export function CalibrationReviewPanel({
                   className={btnGhost}
                   onClick={() => dispatch({ type: 'REQUEST_RESCAN', strategy: 'different_references' })}
                 >
-                  Search again - {rescanRemaining} remaining
+                  Find different measurements
+                  <span className="block text-xs font-normal text-slate-500">
+                    {rescanRemaining === 1
+                      ? 'One additional AI search is available'
+                      : `${rescanRemaining} additional AI searches are available`}
+                  </span>
                 </button>
               )}
               <button type="button" className={btnGhost} onClick={onSwitchToManual}>
@@ -327,24 +339,60 @@ export function CalibrationReviewPanel({
               </div>
             )}
 
-            {validAccepted.length > 0 && draftEffective && (
+            {validAccepted.length > 0 && draftEffective && (() => {
+              // UX-2: plain-language status only; the exact scale goes to the
+              // debug console, never the user-facing panel.
+              console.debug(
+                '[Calibration] effective scale',
+                draftEffective.scale.toFixed(6),
+                `${draftEffective.unit}/px from`,
+                draftEffective.validCalibrationCount,
+                'accepted reference(s)',
+              );
+              const status = calibrationStatusCopy({
+                acceptedCount: draftEffective.validCalibrationCount,
+                disagreeing: Boolean(draftEffective.disagreementWarning),
+              });
+              const showDisagreementBlock =
+                Boolean(draftEffective.disagreementWarning) && !disagreementDismissed;
+              return (
               <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 space-y-2">
-                <p className="text-sm text-slate-700">
-                  Estimated scale:{' '}
-                  <span className="font-semibold">
-                    {draftEffective.scale.toFixed(4)} {workingLabel}/px
-                  </span>{' '}
-                  from {draftEffective.validCalibrationCount} accepted measurement
-                  {draftEffective.validCalibrationCount > 1 ? 's' : ''}. This is an
-                  estimate - check it against the plan before pricing.
-                </p>
-                {draftEffective.disagreementWarning && (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1 inline-flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                    {draftEffective.disagreementWarning}
-                  </p>
+                <p className="text-sm font-semibold text-slate-900">{status.headline}</p>
+                <p className="text-sm text-slate-600">{status.detail}</p>
+                {showDisagreementBlock && (
+                  <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                    <p className="text-xs text-amber-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-white px-2.5 py-1 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        Measurements disagree
+                      </span>
+                    </p>
+                    <p className="text-xs text-amber-700">
+                      {disagreementResolutionCopy(
+                        draftEffective.scaleRangePct,
+                        DISAGREEMENT_WARNING_THRESHOLD_PCT,
+                      )}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        className={btnAccent}
+                        onClick={() => dispatch({ type: 'FINISH_ACCEPTED' })}
+                      >
+                        Use these measurements anyway
+                      </button>
+                      <button
+                        type="button"
+                        className={btnGhost}
+                        onClick={() => setDisagreementDismissed(true)}
+                      >
+                        Review/remove one
+                      </button>
+                    </div>
+                  </div>
                 )}
                 <div className="flex flex-col gap-2 pt-1">
+                  {!showDisagreementBlock && (
                   <button
                     type="button"
                     className={btnAccent}
@@ -353,6 +401,7 @@ export function CalibrationReviewPanel({
                     Use {validAccepted.length} accepted measurement
                     {validAccepted.length > 1 ? 's' : ''}
                   </button>
+                  )}
                   {state.accepted.map((ref) => (
                     <div
                       key={ref.id}
@@ -376,7 +425,8 @@ export function CalibrationReviewPanel({
                   ))}
                 </div>
               </div>
-            )}
+              );
+            })()}
 
             <div className="space-y-2 border-t border-slate-100 pt-3">
               {state.accepted.length < 3 && (
@@ -388,7 +438,12 @@ export function CalibrationReviewPanel({
                     dispatch({ type: 'REQUEST_RESCAN', strategy: 'different_references' })
                   }
                 >
-                  Search again - {rescanRemaining} remaining
+                  Find different measurements
+                  <span className="block text-xs font-normal text-slate-500">
+                    {rescanRemaining === 1
+                      ? 'One additional AI search is available'
+                      : `${rescanRemaining} additional AI searches are available`}
+                  </span>
                 </button>
               )}
               {canRefineActive && activeCandidate && (

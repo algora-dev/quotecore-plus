@@ -4,6 +4,45 @@
 // distance" for every partial read.
 import type { CalibrationCandidate } from './calibrationTypes';
 
+/**
+ * Plain-language calibration status (audit Section 7, UX-2 2026-09-20): the
+ * user-facing panel never shows a raw pixels-per-unit number. The exact scale
+ * stays available to debug contexts only.
+ */
+export interface CalibrationStatusInput {
+  acceptedCount: number;
+  /** True when accepted references disagree beyond the warning threshold. */
+  disagreeing: boolean;
+}
+
+export interface CalibrationStatusCopy {
+  headline: string;
+  detail: string;
+}
+
+export function calibrationStatusCopy(input: CalibrationStatusInput): CalibrationStatusCopy {
+  const n = input.acceptedCount;
+  const measurements = `${n} measurement${n === 1 ? '' : 's'} accepted`;
+  if (n <= 1) {
+    return { headline: measurements, detail: 'Calibration ready.' };
+  }
+  return input.disagreeing
+    ? { headline: measurements, detail: 'They disagree, so the scale may be off.' }
+    : { headline: measurements, detail: 'They agree closely.' };
+}
+
+/**
+ * Disagreement resolution copy (audit Section 7, UX-4): states plainly that the
+ * system will average the accepted measurements, with two choices that never
+ * block finishing.
+ */
+export function disagreementResolutionCopy(scaleRangePct: number, thresholdPct: number): string {
+  return (
+    `Your ${scaleRangePct.toFixed(2)}% difference is above the ${thresholdPct}% tolerance, ` +
+    'so we will average the accepted measurements to one scale.'
+  );
+}
+
 export type PartialValueCandidate = Pick<
   CalibrationCandidate,
   'valueState' | 'suggestedDistance' | 'suggestedUnit' | 'sourceLabelText'

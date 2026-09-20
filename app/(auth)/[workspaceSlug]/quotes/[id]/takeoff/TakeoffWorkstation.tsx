@@ -5285,6 +5285,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     setCalibrationConfirmed(true);
     setShowConfirmedFlash(true);
     setCalibrationMode(false); // Turn off calibration mode!
+    // UX-2: exact pixels-per-unit stays in the debug console only.
+    console.debug(
+      '[Calibration] effective scale (debug)',
+      effectiveScaleFromLegacyCalibrations(calibrations).toFixed(6),
+      `${calibrations[0]?.unit ?? 'm'}/px from`,
+      calibrations.length,
+      'measurement(s)',
+    );
     
     // Remove all calibration lines and markers from canvas
     if (fabricRef.current) {
@@ -5639,7 +5647,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   <div className="text-green-400 font-bold mb-2 flex items-center gap-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m4.5 12.75 6 6 9-13.5" /></svg> Confirmed</div>
                   <div className="text-xs text-gray-600 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
-                    {effectiveScaleFromLegacyCalibrations(calibrations).toFixed(4)} {calibrations[0].unit}/px
+                    Calibration ready
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    Based on {calibrations.length} measurement{calibrations.length > 1 ? 's' : ''}
                   </div>
                 </div>
               ) : (
@@ -5647,10 +5658,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               <div className="space-y-2">
                 {/* Average Scale Display */}
                 <div className="p-3 rounded-xl bg-white border border-orange-400">
-                  <div className="text-xs text-gray-600 mb-1">Average Scale</div>
-                  <div className="font-bold text-gray-700">
-                    {effectiveScaleFromLegacyCalibrations(calibrations).toFixed(4)} {calibrations[0].unit}/px
-                  </div>
+                  <div className="text-xs text-gray-600 mb-1">Scale</div>
+                  <div className="font-bold text-gray-700">Calibration ready</div>
                   <div className="text-xs text-gray-600 mt-1">
                     Based on {calibrations.length} measurement{calibrations.length > 1 ? 's' : ''}
                   </div>
@@ -5660,7 +5669,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {calibrations.map((cal, idx) => (
                   <div key={cal.id} className="p-2 rounded-xl text-sm bg-gray-100">
                     <div className="font-medium">#{idx + 1}: {cal.actualDistance} {cal.unit}</div>
-                    <div className="text-xs text-gray-600">{cal.scale.toFixed(4)} {cal.unit}/px</div>
                   </div>
                 ))}
 

@@ -6,7 +6,7 @@
 // excluded from history/exports (the workstation snapshots never include them
 // because they are removed before any state capture and never added to
 // measurement records). NO changes to global Fabric defaults.
-import { Circle, Line, type Canvas, type FabricObject } from 'fabric';
+import { Circle, Line, Text, type Canvas, type FabricObject } from 'fabric';
 import type { CalibrationCandidate, CandidateReview } from '@/app/lib/takeoff/calibrationTypes';
 
 /** Tag applied to every object this module adds (custom property, not colour). */
@@ -27,6 +27,10 @@ interface Style {
   markerStrokeWidth: number;
   dash: number[] | undefined;
   opacity: number;
+  /** Candidate number label styling (audit Section 7, UX-1). */
+  labelFill: string;
+  labelFontSize: number;
+  labelOpacity: number;
 }
 
 const ACTIVE: Style = {
@@ -36,6 +40,9 @@ const ACTIVE: Style = {
   markerStrokeWidth: 3,
   dash: undefined,
   opacity: 1,
+  labelFill: '#2563eb',
+  labelFontSize: 16,
+  labelOpacity: 1,
 };
 const PASSIVE: Style = {
   stroke: '#94a3b8',
@@ -44,6 +51,9 @@ const PASSIVE: Style = {
   markerStrokeWidth: 2,
   dash: [8, 6],
   opacity: 0.75,
+  labelFill: '#64748b',
+  labelFontSize: 13,
+  labelOpacity: 0.8,
 };
 const ACCEPTED: Style = {
   stroke: '#059669',
@@ -52,6 +62,9 @@ const ACCEPTED: Style = {
   markerStrokeWidth: 2.5,
   dash: undefined,
   opacity: 0.95,
+  labelFill: '#059669',
+  labelFontSize: 14,
+  labelOpacity: 1,
 };
 const SKIPPED: Style = {
   stroke: '#cbd5e1',
@@ -60,6 +73,9 @@ const SKIPPED: Style = {
   markerStrokeWidth: 1.5,
   dash: [3, 5],
   opacity: 0.45,
+  labelFill: '#94a3b8',
+  labelFontSize: 12,
+  labelOpacity: 0.35,
 };
 
 function styleFor(candidateId: string, input: OverlayRenderInput): Style {
@@ -100,7 +116,7 @@ export function renderCalibrationOverlay(
   if (!canvas) return;
   disposeCalibrationOverlay(canvas);
 
-  for (const c of input.candidates) {
+  input.candidates.forEach((c, candidateIndex) => {
     const style = styleFor(c.id, input);
     const line = makeTagged(
       new Line(
@@ -153,6 +169,26 @@ export function renderCalibrationOverlay(
       canvas.add(cross1);
       canvas.add(cross2);
     }
-  }
+
+    // Candidate number label (UX-1): matches the review panel's 1/2/3 badges.
+    // Drawn above the line midpoint, styled with the same state palette.
+    const midX = (c.sceneP1.x + c.sceneP2.x) / 2;
+    const midY = (c.sceneP1.y + c.sceneP2.y) / 2;
+    const label = makeTagged(
+      new Text(String(candidateIndex + 1), {
+        left: midX,
+        top: midY - style.markerRadius - 14,
+        fill: style.labelFill,
+        fontSize: style.labelFontSize,
+        fontWeight: 'bold',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        textAlign: 'center',
+        originX: 'center',
+        originY: 'bottom',
+        opacity: style.labelOpacity,
+      }),
+    );
+    canvas.add(label);
+  });
   canvas.requestRenderAll();
 }

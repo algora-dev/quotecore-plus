@@ -54,7 +54,8 @@ interface Props {
   aiTakeoffAvailable?: boolean;
   /** AI Assist points: current usage for UI display. */
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
-  /** P2 AI-assisted calibration per-company flag. Mock mode - no live AI. */
+  /** P2 AI-assisted calibration per-company flag (live integration via the
+   *  authenticated calibration API client). */
   aiCalibrationEnabled?: boolean;
 }
 
