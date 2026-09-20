@@ -82,6 +82,7 @@ export type CalibrationVisionErrorCode =
   | 'INVALID_MODEL_OUTPUT'
   | 'UNSUPPORTED_IMAGE'
   | 'IMAGE_PREP_FAILED'
+  | 'TOKEN_SECRET_MISSING'
   | 'PROVIDER_ERROR';
 
 export class CalibrationVisionError extends Error {
@@ -640,9 +641,22 @@ const ROUND_TOKEN_VERSION = 'v1';
 export const ROUND_TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60;
 
 function roundTokenSecret(): string {
-  const secret = process.env.CALIBRATION_TOKEN_SECRET || process.env.OPENAI_API_KEY;
-  if (!secret) throw new CalibrationVisionError('IMAGE_PREP_FAILED', 'Missing token signing secret');
-  return secret;
+  // P1-5 (audit 2026-09-20): the dedicated secret is the only production
+  // source. OPENAI_API_KEY remains an explicitly DEV-ONLY fallback so local
+  // environments without CALIBRATION_TOKEN_SECRET keep working; production
+  // fails fast with a clear error instead of silently signing with a key
+  // that has an unrelated blast radius.
+  const dedicated = process.env.CALIBRATION_TOKEN_SECRET;
+  if (dedicated) return dedicated;
+  if (process.env.NODE_ENV === 'production') {
+    throw new CalibrationVisionError(
+      'TOKEN_SECRET_MISSING',
+      'CALIBRATION_TOKEN_SECRET is required in production',
+    );
+  }
+  const devFallback = process.env.OPENAI_API_KEY;
+  if (!devFallback) throw new CalibrationVisionError('IMAGE_PREP_FAILED', 'Missing token signing secret');
+  return devFallback;
 }
 
 export function signRoundToken(
