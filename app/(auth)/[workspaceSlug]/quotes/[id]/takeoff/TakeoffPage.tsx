@@ -4,6 +4,7 @@ import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
 import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
 import { useTakeoffViewMode } from '@/app/lib/takeoff/precision/useTakeoffViewMode';
+import { usePrecisionTouchHarness } from '@/app/lib/takeoff/precision/PrecisionTouchHarness';
 
 const TakeoffWorkstation = dynamic(
   () => import('./TakeoffWorkstation').then(mod => ({ default: mod.TakeoffWorkstation })),
@@ -91,6 +92,11 @@ export function TakeoffPage({
   // (mode always 'desktop') so the desktop presentation is unchanged.
   const { mode, preference, setPreference } = useTakeoffViewMode(takeoffTouchEnabled);
   const touchActive = takeoffTouchEnabled && mode === 'mobile-touch';
+  // M3: precision gesture harness (disposable geometry; spec §13 M3). Mounted
+  // ONLY in touch presentation — the overlay surface is the single gesture
+  // owner above the workstation canvas; desktop/flag-off paths never see it.
+  const { overlay: precisionOverlay, rail: precisionRail, bottom: precisionBottom } =
+    usePrecisionTouchHarness(touchActive);
 
   const workstation = (
     <TakeoffWorkstation
@@ -132,6 +138,9 @@ export function TakeoffPage({
       viewPreference={preference}
       onViewPreferenceChange={setPreference}
       compactNotices={takeoffCompactNotices}
+      overlay={precisionOverlay}
+      rail={precisionRail}
+      bottom={precisionBottom}
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
     >
       {workstation}

@@ -38,6 +38,14 @@ interface TouchWorkspaceShellProps {
   onViewPreferenceChange: (preference: WorkspaceViewPreference) => void;
   /** Compact required-notice lines (entitlement/impersonation), §3.4/L08. */
   compactNotices?: readonly string[];
+  /** M3: interaction-surface overlay mounted in the canvas slot (touch only). */
+  overlay?: ReactNode;
+  /** M3: right-rail content (point controller + view controls); replaces the
+   *  M2 placeholder rail when provided. */
+  rail?: ReactNode;
+  /** M3: bottom-strip content (hint / draft / undo-redo); replaces the M2
+   *  placeholder strip when provided. */
+  bottom?: ReactNode;
   /** Back navigation target (quote page). */
   backHref: string;
 }
@@ -93,6 +101,9 @@ export function TouchWorkspaceShell({
   viewPreference,
   onViewPreferenceChange,
   compactNotices = [],
+  overlay,
+  rail,
+  bottom,
   backHref,
 }: TouchWorkspaceShellProps) {
   const router = useRouter();
@@ -195,6 +206,7 @@ export function TouchWorkspaceShell({
         {/* Canvas slot — stable mount position for the workstation. */}
         <div className={active ? 'relative min-w-0 flex-1 overflow-hidden rounded-xl bg-slate-950' : 'contents'}>
           {children}
+          {active && overlay}
           {/* Portrait hint — dismissible, no CSS rotation (§3.2). */}
           {active && showPortraitHint && (
             <div className="absolute inset-x-2 top-2 z-10 flex items-center gap-2 rounded-xl bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-lg">
@@ -213,40 +225,53 @@ export function TouchWorkspaceShell({
           )}
         </div>
 
-        {/* Right rail — M2: view controls; four-button point controller M3. */}
+        {/* Right rail — M3: point controller + view controls when the harness
+            provides them; M2 view-only placeholders otherwise. */}
         <div
-          className={active ? 'flex w-[120px] shrink-0 flex-col items-stretch gap-2' : 'hidden'}
-          aria-label="View controls"
+          className={active ? 'flex w-[120px] shrink-0 flex-col items-stretch gap-2 overflow-y-auto' : 'hidden'}
+          aria-label="Point and view controls"
         >
-          <div className="text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-            View
-          </div>
-          <TouchButton label="Fit plan to view" disabled>
-            Fit plan
-          </TouchButton>
-          <TouchButton label="Zoom in" disabled>
-            Zoom in
-          </TouchButton>
-          <TouchButton label="Zoom out" disabled>
-            Zoom out
-          </TouchButton>
-          <TouchButton label="Move plan" disabled>
-            Move plan
-          </TouchButton>
+          {active && rail ? (
+            rail
+          ) : (
+            <>
+              <div className="text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                View
+              </div>
+              <TouchButton label="Fit plan to view" disabled>
+                Fit plan
+              </TouchButton>
+              <TouchButton label="Zoom in" disabled>
+                Zoom in
+              </TouchButton>
+              <TouchButton label="Zoom out" disabled>
+                Zoom out
+              </TouchButton>
+              <TouchButton label="Move plan" disabled>
+                Move plan
+              </TouchButton>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Bottom strip — context hint / draft status / undo-redo placeholders. */}
+      {/* Bottom strip — context hint / draft status / undo-redo. */}
       <div className={active ? 'flex h-12 shrink-0 items-center gap-2 px-2 text-[11px] text-slate-400' : 'hidden'}>
-        <span className="min-w-0 truncate">Tap to place a point. Drag elsewhere to adjust.</span>
-        <span className="flex-1" />
-        <span className="rounded-full bg-white/10 px-2.5 py-1 text-slate-300">Draft</span>
-        <TouchButton label="Undo" disabled>
-          Undo
-        </TouchButton>
-        <TouchButton label="Redo" disabled>
-          Redo
-        </TouchButton>
+        {active && bottom ? (
+          bottom
+        ) : (
+          <>
+            <span className="min-w-0 truncate">Tap to place a point. Drag elsewhere to adjust.</span>
+            <span className="flex-1" />
+            <span className="rounded-full bg-white/10 px-2.5 py-1 text-slate-300">Draft</span>
+            <TouchButton label="Undo" disabled>
+              Undo
+            </TouchButton>
+            <TouchButton label="Redo" disabled>
+              Redo
+            </TouchButton>
+          </>
+        )}
       </div>
 
       {/* Menu sheet — workspace view control always reachable (§3.1). */}
