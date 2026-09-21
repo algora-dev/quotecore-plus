@@ -52,6 +52,7 @@ import { useCalibrationController, type CalibrationStartMode } from '@/app/(auth
 import { persistPageCalibration } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/actions';
 import { EndpointControllerRail, type CalibrationWizardStep } from './EndpointControllerRail';
 import { CalibrationSheet } from './CalibrationSheet';
+import { logTakeoffEvent } from './takeoffDiagnostics';
 import {
   buildCalibrationCommit,
   calibrationDescriptorFromSource,
@@ -173,7 +174,11 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
         new Date().toISOString(),
       );
       const res = await persistPageCalibration(quoteId, page.id, payload.legacy, payload.metadata);
-      if (!res.success) return commitFailed('COMMIT_FAILED', `The calibration could not be saved: ${res.error}`);
+      if (!res.success) {
+        logTakeoffEvent('calibration.commit.failed', { error: res.error });
+        return commitFailed('COMMIT_FAILED', `The calibration could not be saved: ${res.error}`);
+      }
+      logTakeoffEvent('calibration.commit.succeeded', { pageId: page.id });
       // M7: the workstation (single data owner) must learn the new scale in
       // THIS session — otherwise outline saves silently no-op until reload.
       // A server refresh re-hydrates the page (including calibrationMetadata)

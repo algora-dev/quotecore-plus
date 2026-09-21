@@ -9,6 +9,33 @@ import type { ReactNode } from 'react';
 import type { GesturePhase } from './precisionGestureMachine';
 import type { NudgeDirection, NudgeStepPx } from './pointNavigation';
 
+/** M9 compact icon button for the view controls (owner prescription):
+ *  square icon target, 48px tall, full label via aria-label + title. */
+function RailIconButton({
+  onClick,
+  label,
+  children,
+  disabled,
+}: {
+  onClick: () => void;
+  label: string;
+  children: ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex h-12 min-w-12 flex-1 items-center justify-center rounded-full text-lg font-semibold transition-colors disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
 function RailButton({
   onClick,
   label,
@@ -66,7 +93,6 @@ export interface PointControllerRailProps {
   onFitPlan: () => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onMovePlan: () => void;
 }
 
 export function PointControllerRail(props: PointControllerRailProps) {
@@ -161,22 +187,26 @@ export function PointControllerRail(props: PointControllerRailProps) {
         </div>
       )}
 
-      {/* View controls: separate, explicitly labelled zoom (§3.5). */}
+      {/* View controls (M9 owner prescription): compact — Fit plan + zoom ±
+          icon buttons in one row. 'Move plan' is REMOVED entirely: panning is
+          already a one-finger drag gesture. */}
       <div className="mt-1 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-400">
         View
       </div>
-      <RailButton onClick={props.onFitPlan} label="Fit plan to view">
-        Fit plan
-      </RailButton>
-      <RailButton onClick={props.onZoomIn} label="Zoom in">
-        Zoom in
-      </RailButton>
-      <RailButton onClick={props.onZoomOut} label="Zoom out">
-        Zoom out
-      </RailButton>
-      <RailButton onClick={props.onMovePlan} label="Move plan (disarms point movement)">
-        Move plan
-      </RailButton>
+      <div className="flex gap-2 rounded-full border border-white/10 bg-white/5 p-1" role="group" aria-label="View controls">
+        <RailIconButton onClick={props.onFitPlan} label="Fit plan to view">
+          {/* Heroicons arrows-pointing-out outline. */}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+            <path d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+          </svg>
+        </RailIconButton>
+        <RailIconButton onClick={props.onZoomIn} label="Zoom in">
+          +
+        </RailIconButton>
+        <RailIconButton onClick={props.onZoomOut} label="Zoom out">
+          −
+        </RailIconButton>
+      </div>
     </div>
   );
 }

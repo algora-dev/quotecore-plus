@@ -622,3 +622,20 @@ html[data-takeoff-immersive='touch'] [data-takeoff-chrome='header'],
 html[data-takeoff-immersive='touch'] [data-takeoff-chrome='assistant'] {
   display: none;
 }
+
+/* Mobile takeoff M9: pressed/active feedback for EVERY interactive control in
+   the touch presentation (owner prescription 2026-09-21). Scoped to the
+   immersive attribute — desktop/flag-off presentations are untouched. The
+   paired haptic (navigator.vibrate(10), no-op where unsupported) is applied
+   by the delegated pointerdown listener in TouchWorkspaceShell. */
+html[data-takeoff-immersive='touch'] button:not(:disabled):active,
+html[data-takeoff-immersive='touch'] select:not(:disabled):active,
+html[data-takeoff-immersive='touch'] a:not(:disabled):active {
+  transform: scale(0.96);
+  filter: brightness(1.15);
+}
+/* Inputs (text/select fields) read as pressed without the scale jump so the
+   caret does not visibly shift while typing. */
+html[data-takeoff-immersive='touch'] input:not(:disabled):active {
+  filter: brightness(1.15);
+}

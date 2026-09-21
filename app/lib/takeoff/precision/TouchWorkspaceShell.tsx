@@ -29,6 +29,11 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useImmersiveTakeoffAttribute } from './immersiveWorkspace';
 import type { WorkspaceViewPreference } from './viewMode';
+import {
+  installTakeoffDiagnostics,
+  logTakeoffEvent,
+  sendTakeoffDiagnostics,
+} from './takeoffDiagnostics';
 
 export type TakeoffTool = 'calibrate' | 'outline';
 
@@ -68,7 +73,12 @@ const VIEW_OPTIONS: readonly { value: WorkspaceViewPreference; label: string }[]
   { value: 'mobile-touch', label: 'Mobile / touch' },
 ];
 
-/** 48×48 minimum touch target button (§3.3), design-system rounded-full. */
+/** 48×48 minimum touch target button (§3.3), design-system rounded-full.
+ *  M9: press feedback (scale + brightness, CSS in globals.css scoped to the
+ *  immersive attribute) and haptics (navigator.vibrate(10) where supported,
+ *  silent no-op otherwise) are applied document-wide while the touch
+ *  workspace is active — see the delegated listener in the shell — so every
+ *  interactive control gets them, not only TouchButton. */
 function TouchButton({
   onClick,
   children,
@@ -117,7 +127,45 @@ export function TouchWorkspaceShell({
   const [backGuardOpen, setBackGuardOpen] = useState(false);
   const [portraitHintDismissed, setPortraitHintDismissed] = useState(false);
   const [showPortraitHint, setShowPortraitHint] = useState(false);
+  // M9: owner-run diagnostics — 'Send diagnostics' in the hamburger menu.
+  const [diagState, setDiagState] = useState<
+    { kind: 'idle' } | { kind: 'sending' } | { kind: 'sent'; id: string } | { kind: 'failed'; error: string }
+  >({ kind: 'idle' });
   useImmersiveTakeoffAttribute(active);
+
+  // M9: diagnostics capture hooks (window errors, unhandled rejections,
+  // failed fetches) — installed once per page; intentionally never removed.
+  useEffect(() => {
+    if (!active) return;
+    installTakeoffDiagnostics();
+  }, [active]);
+
+  // M9 TOUCH FEEL: haptic feedback for every enabled button in the touch
+  // presentation via one delegated capture-phase listener — navigator.vibrate
+  // is a no-op on platforms without support (iOS Safari), never throws.
+  useEffect(() => {
+    if (!active) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      const btn = target?.closest?.('button');
+      if (btn instanceof HTMLButtonElement && !btn.disabled) {
+        try {
+          navigator.vibrate?.(10);
+        } catch {
+          /* no-op where unsupported */
+        }
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
+    return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true });
+  }, [active]);
+
+  const handleSendDiagnostics = useCallback(async () => {
+    setDiagState({ kind: 'sending' });
+    logTakeoffEvent('diagnostics.send.requested');
+    const result = await sendTakeoffDiagnostics();
+    setDiagState(result.ok ? { kind: 'sent', id: result.id } : { kind: 'failed', error: result.error });
+  }, []);
 
   // Portrait detection via matchMedia (no orientation lock; §3.2). Dismissal
   // persists for the session only.
@@ -250,11 +298,23 @@ export function TouchWorkspaceShell({
             aria-label="Workspace menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className={`h-10 w-10 shrink-0 rounded-full text-sm font-semibold transition-colors ${
+            className={`h-10 w-10 shrink-0 rounded-full transition-colors ${
               menuOpen ? 'bg-white text-slate-900' : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
             }`}
           >
-            ⋯
+            {/* M9 (owner prescription): standard hamburger menu icon. */}
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
           </button>
         </div>
 
@@ -299,6 +359,27 @@ export function TouchWorkspaceShell({
               <div className="text-center text-[11px] text-slate-500">
                 Saved on this device for takeoff only.
               </div>
+              {/* M9: owner-run diagnostics — POST the recent-events buffer and
+                  surface the stored reference id. */}
+              <TouchButton
+                label="Send diagnostics"
+                disabled={diagState.kind === 'sending'}
+                onClick={() => {
+                  void handleSendDiagnostics();
+                }}
+              >
+                {diagState.kind === 'sending' ? 'Sending…' : 'Send diagnostics'}
+              </TouchButton>
+              {diagState.kind === 'sent' && (
+                <div role="status" className="rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-2 text-[11px] text-emerald-200">
+                  Diagnostics sent — ref {diagState.id.slice(0, 8)}.
+                </div>
+              )}
+              {diagState.kind === 'failed' && (
+                <div role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 px-2.5 py-2 text-[11px] text-red-200">
+                  {diagState.error}
+                </div>
+              )}
               <TouchButton label="Back to quote" onClick={handleBack}>
                 Back
               </TouchButton>

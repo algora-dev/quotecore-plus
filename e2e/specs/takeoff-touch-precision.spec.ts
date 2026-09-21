@@ -314,8 +314,10 @@ test.describe('M7 touch presentation @touch', () => {
     await page.getByRole('button', { name: 'Save outline changes' }).click();
     await expect(useOutline).toBeVisible({ timeout: 15_000 });
     await useOutline.click();
-    // Create goes through the EXISTING handleSaveArea flow → area chip appears.
+    // M9: the confirm must ACT — an area chip appears, no failure banner.
     await expect(page.getByRole('button', { name: /Area \d{4}/ }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Save failed')).toHaveCount(0);
+    await expect(page.getByText('Set the scale first', { exact: false })).toHaveCount(0);
 
     // ── Reload → reopen → edit in place (O05, patch_052 RPC, REAL dev DB) ─
     await page.goto(`${BASE_URL}/${slug}/quotes/${quoteId}/takeoff`);
@@ -369,6 +371,21 @@ test.describe('M7 touch presentation @touch', () => {
     //    in touchAiOutline.test.ts; the disabled-state render is covered by
     //    the manual-advance path below in spirit).
     await expect(page.getByRole('button', { name: 'Scan outline with AI' })).toHaveCount(0);
+
+    // ── M9: uncalibrated-state coherence. Dismissing calibration advances
+    //    the flow to the outline phase WITHOUT a scale — the rail must now
+    //    lead with a clear Calibrate action (full text, never truncated),
+    //    block new manual outlines, and keep the AI scan gated.
+    await domClickByLabel(page, 'Close calibration');
+    await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('This page has no scale yet.', { exact: false })).toBeVisible();
+    const newOutlineBtn = page.getByRole('button', { name: 'New manual outline' });
+    await expect(newOutlineBtn).toBeDisabled();
+    // M9: the scan chip renders but is HARD-GATED while uncalibrated.
+    await expect(page.getByRole('button', { name: 'Scan outline with AI' })).toBeDisabled();
+    // The Calibrate action returns the flow to the calibration phase.
+    await domClickByLabel(page, 'Calibrate this page');
+    await expect(page.locator('[data-testid="calibration-interaction-surface"]')).toBeVisible({ timeout: 30_000 });
 
     await calibrateManually(page);
 
@@ -467,5 +484,11 @@ test.describe('M7 touch presentation @touch', () => {
     await page.getByRole('button', { name: 'Edit points', exact: true }).click();
     // Imported draft opens with 4 editable AI-origin points (R02).
     await expect(page.getByText(/4 points|Point \d of 4/)).toBeVisible({ timeout: 15_000 });
+
+    // ── M9: owner diagnostics — hamburger menu hosts 'Send diagnostics'; the
+    //    POST lands in the real dev DB and the menu shows the stored ref id.
+    await domClickByLabel(page, 'Workspace menu');
+    await domClickByLabel(page, 'Send diagnostics');
+    await expect(page.getByText('Diagnostics sent — ref', { exact: false })).toBeVisible({ timeout: 30_000 });
   });
 });

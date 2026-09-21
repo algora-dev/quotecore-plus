@@ -354,3 +354,56 @@ Decisions or deviations, with reason:
 5. `next.config.ts` gains `devIndicators: false` â€” the Next dev-tools badge sits in the bottom-right corner and intercepted the full-bleed touch layout's floating sheet buttons (calibration Done) in the local e2e harness. DEV-ONLY setting; production builds are unaffected. The touch spec also hides `nextjs-portal` overlays defensively (test chrome, not app UI).
 
 Known risks / blockers: none blocking. Owner should re-test on iPhone.
+
+---
+
+## Phase M9 — Dead-button fixes, touch feedback, rail polish, owner diagnostics (2026-09-21)
+
+Owner live iPhone test (19:23, M8 rail build): tapping 'Use outline' in the name/pitch modal did NOTHING; 'Keep editing' ? edit ? 'Save' also appeared dead; the outline rail showed 'Set the scale first — calibrate this page before scanning an outline' (truncated) while a drawn outline + enabled Save existed and AI scan was disabled.
+
+Status: complete. Desktop/flag-off paths untouched.
+
+### ROOT CAUSE (real-DB Playwright evidence, pre-fix repro)
+
+A dedicated loopback repro (fresh quote on the real dev Supabase ? touch takeoff ? DISMISS calibration ? draw manual outline ? Close ? tap 'Use outline') proved the silent no-op: ZERO app requests fired by the tap, zero console/page errors, zero visible error text, no area created, modal stayed open. Two defects combine:
+
+1. **The flow can advance to the outline phase without a scale.** CalibrationSheet's Done/Close dispatches the controller cancel ? `onExit` ? `setTouchTool('outline')` even when nothing was saved. The page is then uncalibrated with outline controls active (the incoherent rail state the owner screenshotted).
+2. **`confirmCreate` failed silently** (`if (!adapter || !s || !scale) return;` and two more bare returns) — the dead 'Use outline' button. `doSave` did set a `saveError`, but the hint chain ranked the uncalibrated scan-gate message ABOVE `saveError`, so the Save failure was masked — 'Save does NOTHING'.
+
+### Fixes
+
+- `TouchOutlineEditor.tsx` — every failure path in `confirmCreate`/`doSave` now sets a visible error (role=alert banner in the rail) and keeps the form open; the hint is a status line only (errors render as dedicated banners that can never be masked); uncalibrated outline phase is COHERENT: the rail leads with a full-text (never truncated) amber 'This page has no scale yet…' banner + accent 'Calibrate this page' action, '+ New outline' is disabled until a scale exists, AI scan stays gated.
+- `TakeoffPage.tsx` — passes `onCalibrate` (returns the flow to the calibration phase); `outlineEditor` moved below the `touchTool` state (lint: no use-before-declare).
+
+### Touch feel (owner prescription)
+
+- globals.css: scoped to `html[data-takeoff-immersive='touch']` — every enabled button/select/link gets `:active { transform: scale(0.96); filter: brightness(1.15) }`; inputs brightness-only.
+- `TouchWorkspaceShell.tsx`: one delegated capture-phase `pointerdown` listener fires `navigator.vibrate(10)` for every enabled button (silent no-op where unsupported, e.g. iOS Safari). Covers every control at once.
+
+### Rail polish (owner prescription)
+
+- Menu button: standard hamburger icon (Heroicons bars-3 outline) replaces '?'.
+- `PointControllerRail.tsx`: view controls compacted to one row — 'Fit plan' (arrows-pointing-out icon) + '+' + '-'; **'Move plan' removed entirely** (pan is a one-finger gesture); `onMovePlan` prop deleted (harness + editor call sites updated).
+
+### Owner diagnostics (M9)
+
+- `precision/takeoffDiagnostics.ts` — in-memory ring buffer (200 events): user actions (save/scan/calibrate/diagnostics, with reasons), window errors, unhandled rejections, failed fetches (URL + status; fetch wrapper installed once per page while touch workspace active). `sendTakeoffDiagnostics()` POSTs the snapshot.
+- `TouchWorkspaceShell.tsx` hamburger menu: 'Send diagnostics' item; success shows 'Diagnostics sent — ref <id8>' so the owner just says "diagnostics sent".
+- `app/api/takeoff-diagnostics/route.ts` — auth-required POST; company resolved from the session user; service-role insert; 256KB payload cap; returns the row id.
+- `quotecore_v2_patch_054_takeoff_diagnostics.sql` — additive table `takeoff_diagnostics` (company_id, user_id, user_agent, payload jsonb, created_at; index company+created DESC); RLS enabled, member SELECT own company (user_belongs_to_company), NO client-insert policy (service-role only). **Applied to Supabase** (Management API, standing permission). `database.types.ts` extended accordingly.
+
+### Gates
+
+- `npm run build` ? success; `npm run test:precision` ? 146 pass / 0 fail; `npm run test:calibration` ? 223 pass / 0 fail; eslint on all touched files ? 0 problems.
+- `npx playwright test -c playwright.touch.config.ts` -> 4 passed / 0 failed (2 x touch-chromium, 2 x touch-webkit; M9-extended journeys: uncalibrated rail coherence incl. Calibrate action returning to calibration, Use-outline -> area saved with no failure banner, Send diagnostics end-to-end against the real dev DB).
+
+### Deviations
+
+1. RLS read policy is membership-based (`user_belongs_to_company`) rather than an explicit owner/admin-role check — the repo's established own-company pattern (patch_046/051); service-role-only writes stand.
+2. Press feedback is document-scoped CSS + a delegated haptic listener rather than per-`TouchButton` wrappers — covers every control (including sheet/rail/dialog buttons) with one mechanism; `TouchButton` documents it.
+3. The uncalibrated outline phase remains reachable (via dismissing calibration) rather than being hard-blocked — it now leads with the Calibrate action and cannot create anything unsaved-able.
+
+### Known risks / follow-ups
+
+- Haptics are no-ops on iOS Safari (Web Vibration API unsupported) — the visual pressed state still fires.
+- Diagnostics rows are unbounded in count (dev/support tool; no retention job) — prune if the table grows.

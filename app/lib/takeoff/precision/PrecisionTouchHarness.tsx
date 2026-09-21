@@ -425,10 +425,6 @@ export function usePrecisionTouchHarness(active: boolean): PrecisionTouchHarness
       onFitPlan={() => viewport.width > 0 && setCamera(fitCamera(HARNESS_SCENE, viewport))}
       onZoomIn={() => zoomAroundCentre(ZOOM_STEP)}
       onZoomOut={() => zoomAroundCentre(1 / ZOOM_STEP)}
-      onMovePlan={() =>
-        // §5.4: Move plan temporarily disarms — never discards selection/draft.
-        applyCommand((s) => selectVertex(s, s.selection.vertexId, false))
-      }
     />
   ) : null;
 

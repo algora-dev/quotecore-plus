@@ -81,6 +81,7 @@ import {
   type SceneDescriptor,
 } from './sceneViewport';
 import { usePrecisionPointerInput } from './usePrecisionPointerInput';
+import { logTakeoffEvent } from './takeoffDiagnostics';
 
 /** What the workstation exposes to the touch presentation (M5 bridge). The
  *  workstation owns ALL state; the editor only reads through the adapter and
@@ -157,6 +158,9 @@ export function useTouchOutlineEditor(
   active: boolean,
   getAdapter: () => TouchOutlineAdapter | null,
   backHref?: string,
+  /** M9: when the page is uncalibrated the outline rail leads with a Calibrate
+   *  action; this callback returns the flow to the calibration phase. */
+  onCalibrate?: () => void,
 ): TouchOutlineEditorParts {
   const router = useRouter();
   const surfaceRef = useRef<HTMLDivElement | null>(null);
@@ -503,15 +507,20 @@ export function useTouchOutlineEditor(
   );
 
   const doSave = useCallback(async () => {
+    logTakeoffEvent('outline.save.requested');
     const adapter = adapterRef.current;
     const s = sessionRef.current;
     const context = adapter?.getEditContext();
     if (!adapter || !s || !context || !scale) {
-      // M7: never fail silently — the user must know WHY nothing happened
+      // M7/M9: never fail silently — the user must know WHY nothing happened
       // (missing scale in particular: calibrate this page first).
-      if (adapter && s && context && !scale) {
-        setSaveState('failed');
-        setSaveError('Set the scale first — tap Calibrate, then save the outline.');
+      setSaveState('failed');
+      if (!adapter || !s || !context) {
+        setSaveError('Could not save — the takeoff session is not ready. Reload the page and try again.');
+        logTakeoffEvent('outline.save.rejected', { reason: 'session-not-ready' });
+      } else {
+        setSaveError('Set the scale first — calibrate this page before saving an outline.');
+        logTakeoffEvent('outline.save.rejected', { reason: 'uncalibrated' });
       }
       return;
     }
@@ -528,6 +537,7 @@ export function useTouchOutlineEditor(
             ? (result.issues?.find((i) => i.severity === 'blocking')?.message ?? 'Fix the outline first.')
             : 'Nothing to save.',
       );
+      logTakeoffEvent('outline.save.blocked', { reason: result.reason });
       return;
     }
     const intent = result.intent;
@@ -567,6 +577,7 @@ export function useTouchOutlineEditor(
       } else {
         setSaveState('failed');
         setSaveError(r.staleVersion ? `${r.error} Your edits are kept.` : r.error); // O13
+        logTakeoffEvent('outline.save.update.failed', { staleVersion: r.staleVersion ?? false, error: r.error });
       }
       return;
     }
@@ -577,15 +588,35 @@ export function useTouchOutlineEditor(
 
   const confirmCreate = useCallback(
     (name: string, pitch: number) => {
+      logTakeoffEvent('outline.create.confirmed', { name, pitch });
       const adapter = adapterRef.current;
       const s = sessionRef.current;
-      if (!adapter || !s || !scale) return;
-      // M8: the post-accept prompt hands the accepted draft points (manual
-      // close or AI import) straight to the EXISTING create flow
-      // (adapter.createOutline → handleSaveArea) — mobile-created areas are
-      // identical to desktop-created ones (name/pitch semantics, §8.1).
-      if (!s.draft.closed) return;
-      if (review && review.blocking.length > 0) return; // invalid outline never saves
+      const context = adapter?.getEditContext();
+      // M9 (owner live-test 2026-09-21): EVERY failure path must act or
+      // visibly report — the old silent `return`s here were the dead
+      // 'Use outline' button. The form stays open so the user sees the
+      // reason and keeps their entered name/pitch.
+      const fail = (message: string, reason: string) => {
+        setSaveState('failed');
+        setSaveError(message);
+        logTakeoffEvent('outline.create.rejected', { reason });
+      };
+      if (!adapter || !s || !context) {
+        fail('Could not save — the takeoff session is not ready. Reload the page and try again.', 'session-not-ready');
+        return;
+      }
+      if (!scale) {
+        fail('Set the scale first — calibrate this page before saving an outline.', 'uncalibrated');
+        return;
+      }
+      if (!s.draft.closed) {
+        fail('Close the outline first (tap Close outline), then confirm.', 'not-closed');
+        return;
+      }
+      if (review && review.blocking.length > 0) {
+        fail(review.blocking[0].message, 'blocking-validation'); // invalid outline never saves
+        return;
+      }
       adapter.createOutline(name, pitch, s.draft.vertices.map((v) => ({ ...v.point })));
       setShowCreateForm(false);
       setSession(null); // draft consumed by the create flow
@@ -633,6 +664,7 @@ export function useTouchOutlineEditor(
     const context = adapter?.getEditContext();
     if (!adapter || !context) return;
     const s = sessionRef.current;
+    logTakeoffEvent('outline.scan.requested');
     setScanState('scanning');
     setScanError(null);
     setScanCandidates(null);
@@ -658,6 +690,7 @@ export function useTouchOutlineEditor(
         setScanState('idle'); // user cancelled — no error message (R13 spirit)
         return;
       }
+      logTakeoffEvent('outline.scan.failed', { error: result.error });
       setScanState('error');
       setScanError(result.error); // AI failure never blocks manual work (R01/O17)
       return;
@@ -970,6 +1003,11 @@ export function useTouchOutlineEditor(
   // ─── area selection + lifecycle + status (§3.5/§11.1) — M8: lives in the rail */
 
   const areas = adapterRef.current?.getAreas() ?? [];
+  // M9: uncalibrated outline phase (owner live-test: dismissing calibration
+  // still advanced the flow). The rail leads with a clear Calibrate action
+  // and new outlines are blocked until a scale exists — the state can no
+  // longer be incoherent.
+  const uncalibrated = scale == null;
   const statusLabel =
     saveState === 'saving' ? 'Saving…'
     : saveState === 'saved' ? 'Saved'
@@ -978,11 +1016,12 @@ export function useTouchOutlineEditor(
 
   const scanGate = outlineScanCalibrationGate(scale);
 
+  // M9: the hint is a STATUS line, never an error sink that another state
+  // can mask — save/scan errors render as dedicated role=alert banners below
+  // (the old ordering let the uncalibrated scan-gate message hide the save
+  // error, which is why Save looked like a no-op in the owner test).
   const hint =
-    scanError ? scanError
-    : scanState === 'scanning' ? 'Scanning for a roof outline…'
-    : scanGate.allowed === false ? scanGate.message
-    : saveError ? saveError
+    scanState === 'scanning' ? 'Scanning for a roof outline…'
     : review && review.blocking.length > 0 ? review.blocking[0].message
     : review?.planArea != null
       ? `Plan area ${review.planArea.toFixed(2)} ${scale?.unit === 'meters' ? 'm²' : 'ft²'}`
@@ -1027,12 +1066,15 @@ export function useTouchOutlineEditor(
         onFitPlan={() => viewport.width > 0 && setCamera(fitCamera(scene, viewport))}
         onZoomIn={() => zoomAroundCentre(ZOOM_STEP)}
         onZoomOut={() => zoomAroundCentre(1 / ZOOM_STEP)}
-        onMovePlan={() => applyCommand((s) => selectVertex(s, s.selection.vertexId, false))}
       />
 
       {/* M8: outline tab panel — area chips + lifecycle + status live in the
           rail (owner prescription: everything in the rail, per-tab controls). */}
       <OutlinePanel
+        uncalibrated={uncalibrated}
+        onCalibrate={onCalibrate}
+        saveError={saveError}
+        scanError={scanError}
         areas={areas}
         statusLabel={statusLabel}
         statusTone={
@@ -1169,6 +1211,14 @@ function OutlinePanel(props: {
   statusLabel: string;
   statusTone: 'idle' | 'saving' | 'saved' | 'failed';
   hint: string;
+  /** M9: true when the page has no completed calibration — the rail leads
+   *  with a Calibrate action and new outlines are blocked. */
+  uncalibrated: boolean;
+  onCalibrate?: () => void;
+  /** M9: dedicated visible error banners (role=alert) — failures can never
+   *  be silent, and the hint can never mask them. */
+  saveError: string | null;
+  scanError: string | null;
   activeGeometryId: string | null;
   onSwitchArea: (area: SavedOutlineRecord) => void;
   onNew: () => void;
@@ -1199,6 +1249,39 @@ function OutlinePanel(props: {
       : `Scan outline with AI — uses ${props.scanInfo?.cost} AI points.`;
   return (
     <div className="mt-2 flex w-full flex-col gap-2 border-t border-white/10 pt-2" aria-label="Outline areas and actions">
+      {/* M9 uncalibrated-state coherence (owner live-test): the rail LEADS
+          with a clear Calibrate action — full text, never truncated — and new
+          outlines are blocked until a scale exists. */}
+      {props.uncalibrated && (
+        <div
+          role="alert"
+          className="flex flex-col gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-2.5 py-2"
+          aria-label="Calibration required"
+        >
+          <span className="text-[11px] leading-snug text-amber-200">
+            This page has no scale yet. Calibrate it first — outlines need a scale to measure area.
+          </span>
+          <button
+            type="button"
+            aria-label="Calibrate this page"
+            disabled={!props.onCalibrate}
+            onClick={props.onCalibrate}
+            className="h-12 min-w-12 rounded-full bg-[#FF6B35] px-3 text-xs font-semibold text-white disabled:opacity-40"
+          >
+            Calibrate this page
+          </button>
+        </div>
+      )}
+      {props.scanError && (
+        <div role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 px-2.5 py-2 text-[11px] leading-snug text-red-200">
+          {props.scanError}
+        </div>
+      )}
+      {props.saveError && (
+        <div role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 px-2.5 py-2 text-[11px] leading-snug text-red-200">
+          {props.saveError}
+        </div>
+      )}
       <span
         className={`rounded-full px-2.5 py-1 text-center text-[11px] font-semibold ${
           props.statusTone === 'saved'
@@ -1235,8 +1318,10 @@ function OutlinePanel(props: {
         <button
           type="button"
           aria-label="New manual outline"
+          disabled={props.uncalibrated}
+          title={props.uncalibrated ? 'Calibrate this page before drawing outlines.' : undefined}
           onClick={props.onNew}
-          className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
+          className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20 disabled:opacity-40"
         >
           + New outline
         </button>

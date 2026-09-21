@@ -107,12 +107,6 @@ export function TakeoffPage({
   const [outlineAdapter, setOutlineAdapter] = useState<TouchOutlineAdapter | null>(null);
   const registerAdapter = useCallback((a: TouchOutlineAdapter) => setOutlineAdapter(a), []);
   const backHref = `/${workspaceSlug}/quotes/${quoteId}`;
-  const outlineEditor = useTouchOutlineEditor(touchActive, () => outlineAdapter, backHref);
-  const harness = usePrecisionTouchHarness(touchActive && outlineAdapter == null);
-  const { overlay: precisionOverlay, rail: precisionRail } =
-    outlineAdapter != null
-      ? { overlay: outlineEditor.overlay, rail: outlineEditor.rail }
-      : { overlay: harness.overlay, rail: harness.rail };
 
   // M4→M8 (16:59): flow-driven calibration phase — see the touchTool state
   // below; both hooks stay mounted so phase transitions preserve drafts (C16).
@@ -166,6 +160,20 @@ export function TakeoffPage({
     pageHasDependents,
     onExit: () => setTouchTool('outline'),
   });
+
+  const outlineEditor = useTouchOutlineEditor(
+    touchActive,
+    () => outlineAdapter,
+    backHref,
+    // M9: uncalibrated outline rail leads with a Calibrate action that
+    // returns the flow to the calibration phase.
+    () => setTouchTool('calibrate'),
+  );
+  const harness = usePrecisionTouchHarness(touchActive && outlineAdapter == null);
+  const { overlay: precisionOverlay, rail: precisionRail } =
+    outlineAdapter != null
+      ? { overlay: outlineEditor.overlay, rail: outlineEditor.rail }
+      : { overlay: harness.overlay, rail: harness.rail };
 
   const workstation = (
     <TakeoffWorkstation
