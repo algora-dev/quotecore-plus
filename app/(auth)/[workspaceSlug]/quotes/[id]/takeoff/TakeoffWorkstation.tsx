@@ -13,6 +13,10 @@ import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemCompone
 import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
 import type { TouchOutlineAdapter } from '@/app/lib/takeoff/precision/TouchOutlineEditor';
+import type {
+  AiOutlineScanInfo,
+  AiOutlineScanResult,
+} from '@/app/lib/takeoff/precision/touchAiOutline';
 import { outlineDependentRecompute } from '@/app/lib/takeoff/precision/touchOutlines';
 import type { RecomputeMeasurementRecord } from '@/app/lib/takeoff/calibrationRecompute';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
@@ -3353,8 +3357,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     calibrations: Calibration[];
     canvasDims: { width: number; height: number };
     pageImageRevision: string | null;
+    currentImageUrl: string | null;
+    ai: { available: boolean; blocked: boolean; qualityLevel: 'low' | 'medium' | 'high' } | null;
     handleSaveArea: (name: string, pitch?: number, pointsOverride?: { x: number; y: number }[]) => void;
   } | null>(null);
+  // M6 (O11): touch context epoch — bumped on page switch / image-revision
+  // change / touch-scan cancellation so stale client/AI work is discarded
+  // rather than silently applied. Safe for M5 saves: it only changes in
+  // situations that already invalidate the M1 stale-context boundary.
+  const touchContextEpochRef = useRef(0);
+  const touchEpochKeyRef = useRef<string | null>(null);
+  const touchOutlineScanAbortRef = useRef<AbortController | null>(null);
 
   const touchOutlineAdapterRef = useRef<TouchOutlineAdapter | null>(null);
   if (touchOutlineAdapterRef.current == null) {
@@ -3385,7 +3398,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           imageRevision: touchOutlineLiveRef.current?.pageImageRevision ?? null,
           coordinateFrame: 'takeoff-scene-v1' as const,
           sessionVersion: sessionVersionRef.current ?? 0,
-          contextEpoch: 0,
+          contextEpoch: touchContextEpochRef.current,
         };
       },
       getScale: () => {
@@ -3497,6 +3510,116 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       createOutline: (name, pitch, points) => {
         touchOutlineLiveRef.current?.handleSaveArea(name, pitch, points);
       },
+      // ── M6: AI outline scan (touch) — scan1 ONLY (O10), same billing as
+      // desktop (owner decision 2026-09-21: full scan1 charge, no cheaper
+      // outline-only variant). Client orchestration only: the same
+      // authorised endpoint, entitlement gating and server-side ledger as
+      // the desktop pipeline — this path just STOPS after the outline stage
+      // and never converts AI internal lines/classification into data.
+      getAiOutlineScanInfo: (): AiOutlineScanInfo | null => {
+        const ai = touchOutlineLiveRef.current?.ai ?? null;
+        if (!ai || !ai.available) return null; // unentitled: manual journey only (R01/O17)
+        return {
+          available: true,
+          blocked: ai.blocked,
+          cost: getAiScanPointCost(ai.qualityLevel),
+          qualityLevel: ai.qualityLevel,
+        };
+      },
+      startOutlineOnlyScan: async (): Promise<AiOutlineScanResult> => {
+        const live = touchOutlineLiveRef.current;
+        const pageId = currentPageIdRef.current;
+        if (!quote) return { ok: false, error: 'Quote unavailable.' };
+        if (!pageId) return { ok: false, error: 'No active page.' };
+        if (!fabricRef.current?.backgroundImage) {
+          return { ok: false, error: 'No plan image loaded.' };
+        }
+        const imageUrl = live?.currentImageUrl ?? null;
+        if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
+        const qualityLevel = live?.ai?.qualityLevel ?? 'medium';
+        const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
+
+        const abortController = new AbortController();
+        touchOutlineScanAbortRef.current = abortController;
+        try {
+          const imgResponse = await fetch(imageUrl, { signal: abortController.signal });
+          if (!imgResponse.ok) {
+            return { ok: false, error: 'Failed to load plan image for AI scan.' };
+          }
+          const imgBlob = await imgResponse.blob();
+          const reader = new FileReader();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const handleAbort = () => reader.abort();
+            abortController.signal.addEventListener('abort', handleAbort, { once: true });
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.onabort = () => reject(new DOMException('Scan cancelled.', 'AbortError'));
+            reader.readAsDataURL(imgBlob);
+          });
+          const compressed = await compressImageForAiScan(dataUrl);
+          // O10: the touch action requests ONLY the existing authorised scan1
+          // (outline) stage — scan2/scan3 never auto-run here.
+          const response = await fetch(aiScanEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              stage: 'scan1',
+              image: compressed.dataUrl,
+              imageMime: compressed.mime,
+              quoteId: quote.id,
+              pageId,
+              canvasDimensions: dims,
+              qualityLevel,
+            }),
+            signal: abortController.signal,
+          });
+          const result = await response
+            .json()
+            .catch(() => ({ success: false, error: `Server returned HTTP ${response.status}` }));
+          if (!response.ok || !result.success) {
+            if (response.status === 402 && result.pointsExhausted) {
+              setAiPoints(prev =>
+                prev ? { ...prev, remaining: result.pointsRemaining ?? 0, isBlocked: true } : null,
+              );
+              return { ok: false, error: 'Out of AI points — draw the outline manually.', pointsExhausted: true };
+            }
+            let errMsg = result.error || `AI scan failed (HTTP ${response.status}).`;
+            if (response.status === 413) {
+              errMsg = 'Your plan image is too large for AI Assist. Please try a smaller or compressed image, or draw the outline manually.';
+            }
+            return { ok: false, error: errMsg };
+          }
+          if (!result.data?.roof_areas?.length) {
+            return {
+              ok: false,
+              error: result.summary?.notes?.[0] || 'No usable roof outline was detected.',
+            };
+          }
+          // Billing identical to desktop: mirror the server-side scan1
+          // deduction locally with the SAME canonical cost (O10).
+          const cost = getAiScanPointCost(qualityLevel);
+          setAiPoints(prev =>
+            prev
+              ? { ...prev, used: prev.used + cost, remaining: Math.max(prev.remaining - cost, 0) }
+              : null,
+          );
+          return { ok: true, data: result.data };
+        } catch (err) {
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            return { ok: false, error: 'cancelled', cancelled: true };
+          }
+          return { ok: false, error: err instanceof Error ? err.message : 'Network error.' };
+        } finally {
+          if (touchOutlineScanAbortRef.current === abortController) {
+            touchOutlineScanAbortRef.current = null;
+          }
+        }
+      },
+      cancelOutlineOnlyScan: () => {
+        touchOutlineScanAbortRef.current?.abort();
+        touchOutlineScanAbortRef.current = null;
+        touchContextEpochRef.current += 1; // O11: invalidate any in-flight result
+      },
     };
   }
   // Keep the live-state mirror current and re-register the (stable) adapter
@@ -3504,12 +3627,32 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   useEffect(() => {
     const pageId = currentPageIdRef.current;
     const hydratedPage = hydrationData?.pages.find((p) => p.id === pageId) ?? null;
+    const pageImageRevision = hydratedPage?.imageRevision ?? null;
+    // M6 (O11): bump the touch context epoch when the page identity or the
+    // immutable image revision changes — in-flight scan results and open
+    // drafts are invalidated instead of silently applied. The first
+    // observation seeds the key without bumping.
+    const epochKey = `${pageId ?? 'none'}|${pageImageRevision ?? 'none'}`;
+    if (touchEpochKeyRef.current == null) {
+      touchEpochKeyRef.current = epochKey;
+    } else if (touchEpochKeyRef.current !== epochKey) {
+      touchEpochKeyRef.current = epochKey;
+      touchContextEpochRef.current += 1;
+    }
     touchOutlineLiveRef.current = {
       roofAreas,
       componentMeasurements,
       calibrations,
       canvasDims,
-      pageImageRevision: hydratedPage?.imageRevision ?? null,
+      pageImageRevision,
+      currentImageUrl: pages[currentPageIndex]?.url ?? planUrlRef.current,
+      ai: aiTakeoffAvailable
+        ? {
+            available: true,
+            blocked: aiPoints?.isBlocked ?? false,
+            qualityLevel: aiQualityLevel,
+          }
+        : null,
       handleSaveArea,
     };
     if (onTouchOutlineAdapter) onTouchOutlineAdapter(touchOutlineAdapterRef.current!);

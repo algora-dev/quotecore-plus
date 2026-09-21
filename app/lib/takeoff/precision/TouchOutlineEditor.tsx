@@ -64,6 +64,15 @@ import {
   type SavedOutlineRecord,
 } from './touchOutlines';
 import {
+  aiOutlineCandidatesFromScanData,
+  beginImportedOutlineDraft,
+  resolveAiOutlineApplication,
+  type AiOutlineCandidate,
+  type AiOutlineScanInfo,
+  type AiOutlineScanResult,
+  type AiOutlineScanStart,
+} from './touchAiOutline';
+import {
   fitCamera,
   pinchCamera,
   scenePointToViewport,
@@ -92,6 +101,14 @@ export interface TouchOutlineAdapter {
   /** Create-new save: the EXISTING handleSaveArea flow (name/pitch fields,
    *  area-row creation, owner stamping). */
   createOutline(name: string, pitch: number, points: ScenePoint[]): void;
+  /** M6: touch AI outline scan availability, or null when unentitled —
+   *  the manual journey never depends on it (R01/O17). */
+  getAiOutlineScanInfo(): AiOutlineScanInfo | null;
+  /** M6: run the OUTLINE-ONLY scan (authorised scan1 stage, same billing as
+   *  desktop; scans 2/3 never auto-run, O10). */
+  startOutlineOnlyScan(): Promise<AiOutlineScanResult>;
+  /** M6: cancel the in-flight scan (aborts + invalidates via the epoch, O11). */
+  cancelOutlineOnlyScan(): void;
 }
 
 export interface TouchOutlineEditorParts {
@@ -110,6 +127,16 @@ type SwitchTarget = { kind: 'area'; area: SavedOutlineRecord } | { kind: 'new' }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
+type ScanState = 'idle' | 'scanning' | 'error';
+
+/** Snapshot taken when an AI outline scan starts (O11): page identity +
+ *  context epoch from the M1 EditContext, plus enough draft state to detect
+ *  manual edits made while the request was in flight. */
+interface ScanStartSnapshot extends AiOutlineScanStart {
+  revision: number;
+  undoDepth: number;
+}
+
 const ZOOM_STEP = 1.25;
 
 export function useTouchOutlineEditor(
@@ -127,6 +154,15 @@ export function useTouchOutlineEditor(
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<SwitchTarget | null>(null);
+
+  // ── M6: AI outline scan → editable imported draft (§8.2, O04/O10/O11) ──
+  const [scanState, setScanState] = useState<ScanState>('idle');
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [scanCandidates, setScanCandidates] = useState<AiOutlineCandidate[] | null>(null);
+  const [scanCandidateIndex, setScanCandidateIndex] = useState(0);
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [createDefaults, setCreateDefaults] = useState<{ name: string; pitch: number } | null>(null);
+  const scanStartRef = useRef<ScanStartSnapshot | null>(null);
 
   const [camera, setCamera] = useState<Camera | null>(null);
   const cameraRef = useRef<Camera | null>(camera);
@@ -381,6 +417,9 @@ export function useTouchOutlineEditor(
     setSaveState('idle');
     setSaveError(null);
     setShowCreateForm(false);
+    setScanCandidates(null); // M6: leaving the imported draft closes the offer
+    setOfferOpen(false);
+    setCreateDefaults(null);
   }, []);
 
   const startNewDraft = useCallback(() => {
@@ -392,6 +431,9 @@ export function useTouchOutlineEditor(
     setSaveState('idle');
     setSaveError(null);
     setShowCreateForm(false);
+    setScanCandidates(null);
+    setOfferOpen(false);
+    setCreateDefaults(null);
   }, []);
 
   const cancelDraft = useCallback(() => {
@@ -400,6 +442,12 @@ export function useTouchOutlineEditor(
     setSaveState('idle');
     setSaveError(null);
     setShowCreateForm(false);
+    // M6: cancelling an imported draft also drops the AI offer (§8.2 —
+    // cancelling never destroys saved geometry, only the unsaved import).
+    setScanCandidates(null);
+    setScanCandidateIndex(0);
+    setOfferOpen(false);
+    setCreateDefaults(null);
   }, []);
 
   /** Switching selection with a dirty draft: Save/Discard/Stay (O16). */
@@ -497,6 +545,116 @@ export function useTouchOutlineEditor(
     [scale, scene],
   );
 
+  // ── M6: AI outline scan lifecycle (§8.2, O04/O10/O11) ────────────────────
+
+  const scanInfo = adapterRef.current?.getAiOutlineScanInfo() ?? null;
+
+  /** Import one detected candidate INTO the M5 edit draft (origin
+   *  'imported') and present the edit-or-continue offer (§8.2). The offer
+   *  is re-presentable: after Continue, the saved area appears as a normal
+   *  chip whose points stay editable via the same M5 re-entry path. */
+  const importCandidate = useCallback(
+    (candidate: AiOutlineCandidate, all: AiOutlineCandidate[], index: number, context: EditContext) => {
+      setSession(beginImportedOutlineDraft(candidate, context));
+      setSelectionMode('idle');
+      setSaveState('idle');
+      setSaveError(null);
+      setShowCreateForm(false);
+      setScanCandidates(all);
+      setScanCandidateIndex(index);
+      setOfferOpen(true);
+      setCreateDefaults({ name: candidate.name, pitch: candidate.pitch });
+    },
+    [],
+  );
+
+  const startScan = useCallback(async () => {
+    const adapter = adapterRef.current;
+    const context = adapter?.getEditContext();
+    if (!adapter || !context || scanState === 'scanning') return;
+    const s = sessionRef.current;
+    setScanState('scanning');
+    setScanError(null);
+    setScanCandidates(null);
+    setOfferOpen(false);
+    // O11 snapshot: page identity + epoch + draft state at scan start.
+    scanStartRef.current = {
+      pageId: context.pageId,
+      imageRevision: context.imageRevision,
+      contextEpoch: context.contextEpoch,
+      revision: s?.draft.localGeometryRevision ?? -1,
+      undoDepth: s?.history.undo.length ?? 0,
+    };
+    const result = await adapter.startOutlineOnlyScan();
+    const started = scanStartRef.current;
+    scanStartRef.current = null;
+    const current = adapter.getEditContext();
+    if (!started || !current) {
+      setScanState('idle');
+      return; // scan was reset (unmount/cancel) — discard silently
+    }
+    if (!result.ok) {
+      if (result.cancelled) {
+        setScanState('idle'); // user cancelled — no error message (R13 spirit)
+        return;
+      }
+      setScanState('error');
+      setScanError(result.error); // AI failure never blocks manual work (R01/O17)
+      return;
+    }
+    // O11: manual edits, page switch, image revision change or cancellation
+    // during the request DISCARD the result with an explicit message —
+    // never a silent apply over human work.
+    const cur = sessionRef.current;
+    const manualEdits =
+      (cur?.draft.localGeometryRevision ?? -1) !== started.revision ||
+      (cur?.history.undo.length ?? 0) !== started.undoDepth;
+    const decision = resolveAiOutlineApplication(
+      started,
+      {
+        pageId: current.pageId,
+        imageRevision: current.imageRevision,
+        contextEpoch: current.contextEpoch,
+      },
+      manualEdits,
+    );
+    if (decision.action === 'discard') {
+      setScanState('error');
+      setScanError(decision.message);
+      return;
+    }
+    const candidates = aiOutlineCandidatesFromScanData(result.data);
+    if (candidates.length === 0) {
+      setScanState('error');
+      setScanError('No usable roof outline was detected. Draw the outline manually.');
+      return;
+    }
+    setScanState('idle');
+    importCandidate(candidates[0], candidates, 0, current);
+  }, [importCandidate, scanState]);
+
+  /** Continue: accept the imported outline AS-IS through the same M5
+   *  create-new terminal path (adapter.createOutline → handleSaveArea).
+   *  No duplicate rows, no AI internal components committed. */
+  const acceptImportedAsIs = useCallback(() => {
+    const adapter = adapterRef.current;
+    const s = sessionRef.current;
+    if (!adapter || !s || !createDefaults) return;
+    adapter.createOutline(
+      createDefaults.name,
+      createDefaults.pitch,
+      s.draft.vertices.map((v) => ({ ...v.point })),
+    );
+    setSession(null);
+    setSelectionMode('idle');
+    setSaveState('saved');
+    setSaveError(null);
+    setScanCandidates(null);
+    setScanCandidateIndex(0);
+    setOfferOpen(false);
+    setCreateDefaults(null);
+  }, [createDefaults]);
+
   // ─── overlay (single gesture owner; desktop never mounts it) ─────────────
 
   const overlay = active ? (
@@ -588,10 +746,71 @@ export function useTouchOutlineEditor(
         </div>
       )}
 
+      {/* M6 §8.2: AI outline offer — "AI found this outline. Edit points or
+          Continue." Continue accepts as-is through the same M5 create path;
+          Edit points keeps the already-imported draft open; Discard restores
+          the pre-scan state. Multiple detected roofs are switchable chips. */}
+      {offerOpen && scanCandidates && (
+        <div
+          role="dialog"
+          aria-label="AI outline found"
+          className="absolute inset-x-2 bottom-2 z-20 rounded-xl bg-slate-800/95 p-3 text-xs text-slate-100 shadow-lg"
+        >
+          <div className="mb-1 font-semibold">AI found this outline</div>
+          <div className="mb-2 text-slate-300">Edit points or Continue.</div>
+          {scanCandidates.length > 1 && (
+            <div className="mb-2 flex flex-wrap gap-1" role="group" aria-label="Detected outlines">
+              {scanCandidates.map((c, i) => (
+                <button
+                  key={`${c.name}-${i}`}
+                  type="button"
+                  disabled={dirty}
+                  title={dirty ? 'Save or cancel your edits before switching AI outlines.' : undefined}
+                  onClick={() => {
+                    const context = adapterRef.current?.getEditContext();
+                    if (!context) return;
+                    importCandidate(c, scanCandidates, i, context);
+                  }}
+                  className={`h-10 rounded-full px-3 text-[11px] font-medium disabled:opacity-40 ${
+                    i === scanCandidateIndex ? 'bg-white text-slate-900' : 'border border-white/20 text-white'
+                  }`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="h-12 min-w-12 flex-1 rounded-full bg-[#FF6B35] px-3 text-xs font-semibold text-white"
+              onClick={acceptImportedAsIs}
+            >
+              Continue
+            </button>
+            <button
+              type="button"
+              className="h-12 min-w-12 flex-1 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white"
+              onClick={() => setOfferOpen(false)}
+            >
+              Edit points
+            </button>
+            <button
+              type="button"
+              className="h-12 min-w-12 flex-1 rounded-full border border-white/20 px-3 text-xs font-semibold text-slate-200"
+              onClick={cancelDraft}
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* §8.1: name/pitch confirmation for a NEW outline (existing flow). */}
       {showCreateForm && (
         <CreateOutlineForm
-          defaultName={`Area ${new Date().getFullYear()}`}
+          defaultName={createDefaults?.name ?? `Area ${new Date().getFullYear()}`}
+          defaultPitch={createDefaults?.pitch ?? 0}
           onCancel={() => setShowCreateForm(false)}
           onConfirm={confirmCreate}
         />
@@ -653,7 +872,9 @@ export function useTouchOutlineEditor(
     : 'Draft';
 
   const hint =
-    saveError ? saveError
+    scanError ? scanError
+    : scanState === 'scanning' ? 'Scanning for a roof outline…'
+    : saveError ? saveError
     : review && review.blocking.length > 0 ? review.blocking[0].message
     : review?.planArea != null
       ? `Plan area ${review.planArea.toFixed(2)} ${scale?.unit === 'meters' ? 'm²' : 'ft²'}`
@@ -702,6 +923,35 @@ export function useTouchOutlineEditor(
         >
           + New
         </button>
+        {/* M6: AI outline scan — entitled only; the displayed cost matches
+            the backend scan1 charge (O10). Absence/unentitlement never
+            blocks the manual journey (R01/O17). */}
+        {scanInfo?.available && (
+          <button
+            type="button"
+            aria-label="Scan outline with AI"
+            disabled={scanState === 'scanning' || scanInfo.blocked}
+            title={scanInfo.blocked ? 'Out of AI points — draw the outline manually.' : `Scan outline with AI — uses ${scanInfo.cost} AI points.`}
+            onClick={() => {
+              void startScan();
+            }}
+            className="h-8 whitespace-nowrap rounded-full border border-[#FF6B35]/60 px-2.5 text-[11px] font-medium text-[#FF6B35] disabled:opacity-40"
+          >
+            {scanState === 'scanning' ? 'Scanning…' : `AI scan · ${scanInfo.cost} pts`}
+          </button>
+        )}
+        {scanState === 'scanning' && (
+          <button
+            type="button"
+            aria-label="Cancel AI scan"
+            onClick={() => {
+              adapterRef.current?.cancelOutlineOnlyScan(); // abort + epoch bump (O11)
+            }}
+            className="h-8 whitespace-nowrap rounded-full border border-white/20 px-2.5 text-[11px] font-medium text-white"
+          >
+            Cancel scan
+          </button>
+        )}
       </div>
       {session && (
         <>
@@ -779,15 +1029,18 @@ export function useTouchOutlineEditor(
 /** §8.1: required name/pitch confirmation before the create save. */
 function CreateOutlineForm({
   defaultName,
+  defaultPitch = 0,
   onCancel,
   onConfirm,
 }: {
   defaultName: string;
+  /** M6: prefill from the imported AI candidate (name/pitch kept as-is). */
+  defaultPitch?: number;
   onCancel: () => void;
   onConfirm: (name: string, pitch: number) => void;
 }) {
   const [name, setName] = useState(defaultName);
-  const [pitch, setPitch] = useState('0');
+  const [pitch, setPitch] = useState(String(defaultPitch));
   return (
     <div
       role="dialog"
