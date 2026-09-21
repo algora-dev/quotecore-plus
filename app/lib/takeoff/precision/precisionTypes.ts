@@ -40,7 +40,15 @@ export type EditContext = Readonly<{
  *  entries) per the M0 gap review integration map. */
 export type EditTarget =
   | { kind: 'calibration'; referenceDraftId: string }
-  | { kind: 'outline'; geometryId: string; quoteRoofAreaId: string | null }
+  | {
+      kind: 'outline';
+      geometryId: string;
+      quoteRoofAreaId: string | null;
+      /** M5 (spec §8.2/§8.3): where the draft's points came from. Manual and
+       *  imported (M6 AI) outlines share the IDENTICAL draft/save path — the
+       *  origin is provenance only, never a behaviour switch. */
+      origin?: 'manual' | 'imported';
+    }
   | { kind: 'component-line'; measurementId: string; componentId: string;
       quoteRoofAreaId: string | null };
 

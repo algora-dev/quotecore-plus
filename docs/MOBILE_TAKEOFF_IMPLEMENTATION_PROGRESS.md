@@ -187,3 +187,45 @@ Commands run and results: `npm run test:precision` ? 110 pass; `npm run test:cal
 Decisions or deviations, with reason: reducer-first (per M1ï¿½M3 pattern); touch calibration sheet mount deferred to the presentation phase that consumes `touchCalibration.ts`.
 Known risks / blockers: none blocking M5.
 Next phase entry conditions: M5 manual outlines + update-in-place persistence.
+
+---
+
+## Phase M5 — Manual outlines and update-in-place editing of saved outlines
+
+Base commit: `e0edf0f4` (M4). Result commit: this commit (not pushed — owner reviews).
+NOTE: the M4 work was found UNCOMMITTED in the working tree at task start (the assumed HEAD `e3860c25` did not exist). It was verified green (test:precision 110, test:calibration 223) and committed first as its own checkpoint `e0edf0f4` (M4 progress entry above was written at that point).
+Status: complete per the M5 task scope.
+Existing modules reused:
+- M1 `precisionEditor` (saveEdit boundary, commands) — the ONLY geometry mutator; `touchOutlines` orchestrates around it.
+- `calibrationRecompute.computeCalibrationRecompute` — constant-scale source-linked recompute (O07); no new measurement formulas.
+- `calibration.calibratedArea/calibratedLength`, `effectiveScaleFromLegacyCalibrations` (workstation adapter scale source).
+- M3 gesture stack unchanged: `usePrecisionPointerInput`, `pointNavigation`, `PointControllerRail`, `sceneViewport`.
+- `handleSaveArea` — STILL the only create-new path (now accepts an optional points override; additive, desktop callers unchanged).
+- House RPC patterns: `save_takeoff_atomic` ownership/advisory-lock/version guard, patch_048 grant/revoke style.
+New / changed modules:
+- `app/lib/takeoff/precision/touchOutlines.ts` (+test) — pure M5 layer: draft construction (manual open-path §8.1 / saved re-entry §8.5; `origin: 'manual' | 'imported'` is provenance-only so M6 AI import plugs in with zero behavioural change), target-aware validation review with plan-area preview, save intents (`update-in-place` for persisted geometry IDs with `retrySafe: true`; `create-new` otherwise), constant-scale dependent recompute, failure classification (O13), dirty-draft exit guard + exit resolution (O16, cancel never rolls back an approved checkpoint).
+- `backend/supabase/migrations/quotecore_v2_patch_052_takeoff_area_update.sql` — ADDITIVE `update_takeoff_area_geometry_v1` RPC: ownership check, per-quote advisory lock + optimistic `session_version` guard (STALE_TAKEOFF_VERSION), server-side geometry validation (=3 distinct finite bounded points, =200 points, nonzero shoelace area, proper self-intersection check — all BEFORE any write), area value re-derived SERVER-side from the page's own calibration scale (metadata envelope preferred, legacy mean fallback, ft?m conversion to the row's stored unit), UPDATE-in-place of the existing area measurement row (never delete+insert), source-linked dependent entries (source_geometry_id / native column / unique area match) recomputed from the new polygon at constant scale with pitch applied once (pitch from the quote_roof_area_entries insertion-order zip, 0 fallback — same as the TS service), session version incremented, returns {ok, value, session_version}. NOT applied to Supabase — parent applies.
+- `actions.ts` — `updateTakeoffAreaGeometry` server action wrapping the RPC (structured `staleVersion` result, never reports unacknowledged work as saved).
+- `precisionTypes.ts` — additive optional `origin` on the outline EditTarget.
+- `TouchOutlineEditor.tsx` — live touch outline editing (harness successor once the adapter registers): manual tap-to-place open path + explicit Close (no double-tap/first-point hit), saved-area chips for re-entry (points editable only in that draft), M3 rail editing, plan-area/validation status strip with Draft/Saving/Saved/Save-failed states (§11.1), name/pitch confirmation for creates, dirty-draft switch guard (Save/Discard/Stay) + beforeunload.
+- `TouchWorkspaceShell.tsx` — Back exit guard sheet (Save/Discard/Stay) driven by the editor's `exitGuard` (O16).
+- `TakeoffWorkstation.tsx` — `TouchOutlineAdapter` bridge (stable object, live-state mirror ref, registered every render): page-scoped saved areas, EditContext (quote/page/imageRevision/sessionVersion), effective scale, scene descriptor, `updateOutline` (calls the action, applies the server-acknowledged value + O07 client mirror of source-linked dependents, bumps session version, redraws), `createOutline` (existing handleSaveArea with points override). The workstation remains the single data owner (R14). `handleSaveArea` gained an optional `pointsOverride` parameter (new-area flow unchanged for all existing callers).
+- `TakeoffPage.tsx` — mounts the outline editor in touch presentation once the adapter registers (M3 harness remains the fallback until then); exit guard wired into the shell.
+Schema / compatibility impact: one ADDITIVE migration (patch_052, new function only, no table changes, no drops) shipped but NOT applied. No existing RPC/table behaviour changed.
+Requirements and test IDs covered (pure layer): O03 (open path + explicit Close + min-3), O05 (update intent keeps geometryId/quoteRoofAreaId/sessionVersion; create-new routing for client-local ids), O06 (bowtie/collinear drafts block save, stay editable, undo repairs; plan-area null while invalid), O07 (source-linked + unique-area-match entries recomputed from NEW points at constant scale, pitch applied once, disambiguation vs scale-ratio proven, independent line/point-count untouched), O12 (retry yields the identical update intent — UPDATE-by-id is idempotent, no duplicate row possible), O13 (STALE_TAKEOFF_VERSION classification + stale-context boundary rejection; draft preserved), O16 (guard dirtiness; stay/discard/save resolution; approved-checkpoint-not-rolled-back), R13 (cancel restores the exact saved base), §8.3 origin-agnostic draft/save path (M6 prep). O01 desktop-parity/PDF journey and browser-level runs remain M7 surfaces (unchanged harness policy).
+Commands run and results:
+- `npm run test:precision` ? 127 pass / 0 fail (110 + 17 new).
+- `npm run test:calibration` ? 223 pass / 0 fail (unchanged).
+- `npx eslint app/lib/takeoff/precision/**` ? 0 problems. TakeoffWorkstation/actions lint errors verified PRE-EXISTING via stash diff (10 M5 vs 12 baseline on the workstation — none introduced).
+- `npm run build` (`next build`) ? success.
+- `npx tsc --noEmit` ? only pre-existing errors (public takeoff-builder tests, calibrationCommit/session/vision tests, pointNavigation.test) — none in M5 files; `next build` type-check passes.
+Evidence paths: `touchOutlines.test.ts`, `quotecore_v2_patch_052_takeoff_area_update.sql`, this commit.
+Physical / live-service tests not run: patch_052 not applied to Supabase (parent applies) — RPC behaviour is code-reviewed only; real-DB integration (O12/O13/O14/O15 against a live database) deferred to the parent's apply + M7 failure-injection pass. Playwright browser runs unchanged (deployed-host harness policy, M7).
+Decisions or deviations, with reason:
+1. M4 was committed first as its own checkpoint (see NOTE above) — the task's assumed base commit did not exist.
+2. Dependent-entry recomputation happens SERVER-side in the RPC (authoritative, O07) and is mirrored client-side in the adapter so the local panel matches until the next full save — the workstation's later page-scoped delete+insert save rewrites exactly the acknowledged values.
+3. `quote_roof_areas` / `quote_roof_area_entries` are deliberately NOT written by the RPC: labels/pitch/ownership are preserved (§8.5) and the insertion-order pitch zip stays valid because an UPDATE cannot reorder rows.
+4. Exit guard covers Back navigation, tool/area switching and beforeunload; a full in-workstation page-switch interception (every setCurrentPageIndex call site) is deferred to M7 with the browser lifecycle pass — noted as a known gap, not silently claimed.
+5. O12/O13/O14/O15 live-database proof requires the applied migration; pure-layer semantics are fully tested now.
+Known risks / blockers: none blocking M6. Dirty-guard on workstation-internal page switching pending (see deviation 4).
+Next phase entry conditions (M6): outline-only AI import plugs into `beginSavedOutlineEdit(..., origin: 'imported')` / `beginManualOutlineDraft` with no further draft/save changes.

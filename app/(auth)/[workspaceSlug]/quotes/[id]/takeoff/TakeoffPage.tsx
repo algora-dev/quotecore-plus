@@ -1,11 +1,15 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
 import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
 import { useTakeoffViewMode } from '@/app/lib/takeoff/precision/useTakeoffViewMode';
 import { usePrecisionTouchHarness } from '@/app/lib/takeoff/precision/PrecisionTouchHarness';
+import {
+  useTouchOutlineEditor,
+  type TouchOutlineAdapter,
+} from '@/app/lib/takeoff/precision/TouchOutlineEditor';
 import { useTouchCalibration, type TouchCalibrationPageInfo } from '@/app/lib/takeoff/precision/TouchCalibrationWorkspace';
 
 const TakeoffWorkstation = dynamic(
@@ -94,11 +98,20 @@ export function TakeoffPage({
   // (mode always 'desktop') so the desktop presentation is unchanged.
   const { mode, preference, setPreference } = useTakeoffViewMode(takeoffTouchEnabled);
   const touchActive = takeoffTouchEnabled && mode === 'mobile-touch';
-  // M3: precision gesture harness (disposable geometry; spec §13 M3). Mounted
-  // ONLY in touch presentation — the overlay surface is the single gesture
-  // owner above the workstation canvas; desktop/flag-off paths never see it.
+  // M5: the workstation registers its outline bridge adapter (stable object,
+  // re-registered every render — setState bails out on the identical
+  // reference). While it is present the LIVE outline editor (manual creation,
+  // re-entry editing, update-in-place saves) replaces the disposable M3
+  // harness; until registration the harness keeps the touch surface usable.
+  const [outlineAdapter, setOutlineAdapter] = useState<TouchOutlineAdapter | null>(null);
+  const registerAdapter = useCallback((a: TouchOutlineAdapter) => setOutlineAdapter(a), []);
+  const backHref = `/${workspaceSlug}/quotes/${quoteId}`;
+  const outlineEditor = useTouchOutlineEditor(touchActive, () => outlineAdapter, backHref);
+  const harness = usePrecisionTouchHarness(touchActive && outlineAdapter == null);
   const { overlay: precisionOverlay, rail: precisionRail, bottom: precisionBottom } =
-    usePrecisionTouchHarness(touchActive);
+    outlineAdapter != null
+      ? { overlay: outlineEditor.overlay, rail: outlineEditor.rail, bottom: outlineEditor.bottom }
+      : { overlay: harness.overlay, rail: harness.rail, bottom: harness.bottom };
 
   // M4: touch calibration tool — replaces the point grid while calibrating
   // (spec §7). Switching tools mid-edit preserves both drafts (C16): the
@@ -152,6 +165,7 @@ export function TakeoffPage({
       aiTakeoffAvailable={aiTakeoffAvailable}
       aiAssistPoints={aiAssistPoints}
       aiCalibrationEnabled={aiCalibrationEnabled}
+      onTouchOutlineAdapter={registerAdapter}
     />
   );
 
@@ -195,6 +209,7 @@ export function TakeoffPage({
         )
       }
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
+      exitGuard={outlineEditor.exitGuard}
     >
       {workstation}
     </TouchWorkspaceShell>

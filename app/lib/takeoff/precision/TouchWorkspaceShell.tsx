@@ -48,6 +48,13 @@ interface TouchWorkspaceShellProps {
   bottom?: ReactNode;
   /** Back navigation target (quote page). */
   backHref: string;
+  /** M5/O16: dirty-draft exit guard. When dirty, Back shows a
+   *  Save/Discard/Stay sheet instead of navigating away. */
+  exitGuard?: {
+    dirty: boolean;
+    onSave: () => void;
+    onDiscard: () => void;
+  };
 }
 
 const VIEW_OPTIONS: readonly { value: WorkspaceViewPreference; label: string }[] = [
@@ -105,9 +112,11 @@ export function TouchWorkspaceShell({
   rail,
   bottom,
   backHref,
+  exitGuard,
 }: TouchWorkspaceShellProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [backGuardOpen, setBackGuardOpen] = useState(false);
   const [portraitHintDismissed, setPortraitHintDismissed] = useState(false);
   const [showPortraitHint, setShowPortraitHint] = useState(false);
   useImmersiveTakeoffAttribute(active);
@@ -132,6 +141,15 @@ export function TouchWorkspaceShell({
   }, [active, portraitHintDismissed]);
 
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  const handleBack = useCallback(() => {
+    // O16: a dirty outline draft is resolved BEFORE navigation (§11.5).
+    if (exitGuard?.dirty) {
+      setBackGuardOpen(true);
+      return;
+    }
+    router.push(backHref);
+  }, [exitGuard, router, backHref]);
 
   // Desktop presentation: root keeps the EXACT original widening classes and
   // every intermediate wrapper is display:contents — layout bit-for-bit.
@@ -158,7 +176,7 @@ export function TouchWorkspaceShell({
         <button
           type="button"
           aria-label="Back to quote"
-          onClick={() => router.push(backHref)}
+          onClick={handleBack}
           className="inline-flex h-12 min-w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
         >
           Back
@@ -273,6 +291,48 @@ export function TouchWorkspaceShell({
           </>
         )}
       </div>
+
+      {/* O16: dirty-draft Back guard — Save / Discard / Stay. */}
+      {active && backGuardOpen && exitGuard?.dirty && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center p-4" role="dialog" aria-label="Unsaved outline edits">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBackGuardOpen(false)} aria-hidden="true" />
+          <div className="relative w-72 rounded-2xl border border-white/10 bg-slate-800 p-4 shadow-xl">
+            <div className="mb-1 text-sm font-semibold text-white">Unsaved outline edits</div>
+            <div className="mb-3 text-xs text-slate-300">
+              Save them before leaving, or discard to restore the saved outline.
+            </div>
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                className="h-12 rounded-full bg-[#FF6B35] px-4 text-xs font-semibold text-white"
+                onClick={() => {
+                  setBackGuardOpen(false);
+                  exitGuard.onSave();
+                }}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className="h-12 rounded-full border border-white/20 bg-white/10 px-4 text-xs font-semibold text-white"
+                onClick={() => {
+                  setBackGuardOpen(false);
+                  exitGuard.onDiscard();
+                }}
+              >
+                Discard and leave
+              </button>
+              <button
+                type="button"
+                className="h-12 rounded-full px-4 text-xs font-semibold text-slate-300"
+                onClick={() => setBackGuardOpen(false)}
+              >
+                Stay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Menu sheet — workspace view control always reachable (§3.1). */}
       {active && menuOpen && (

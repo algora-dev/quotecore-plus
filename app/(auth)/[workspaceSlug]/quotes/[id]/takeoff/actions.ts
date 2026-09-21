@@ -1517,3 +1517,94 @@ export async function persistPageCalibration(
   }
   return { success: true };
 }
+
+// -- M5: update-in-place roof-area geometry edit (patch_052) ----------------
+
+export interface UpdateTakeoffAreaGeometryInput {
+  quoteId: string;
+  /** Durable quote_takeoff_measurements row id of the area-type polygon. */
+  measurementId: string;
+  /** Page the polygon lives on (ownership + scale resolution). */
+  pageId: string;
+  /** New outline points in the page's scene frame (takeoff-scene-v1). */
+  points: { x: number; y: number }[];
+  /** Client's last-read takeoff session version (optimistic guard, O13). */
+  sessionVersion: number | null;
+}
+
+export type UpdateTakeoffAreaGeometryResult =
+  | {
+      success: true;
+      /** Server-derived area value (measurement_value, row's unit). */
+      value: number;
+      sessionVersion: number | null;
+    }
+  | {
+      success: false;
+      error: string;
+      /** True when the failure is a session-version conflict (O13): the
+       *  client must offer reload/review and KEEP the user's draft � never
+       *  force-overwrite. */
+      staleVersion?: boolean;
+    };
+
+/**
+ * Mobile takeoff M5 (spec �8.5/�11.3): updates an EXISTING saved roof area's
+ * geometry by measurement id through the additive patch_052 RPC � never
+ * delete+insert, never a duplicate row. The RPC re-validates geometry,
+ * re-derives the area from the page's own calibration scale server-side,
+ * recomputes source-linked dependent entries at constant scale (O07) and
+ * guards concurrency with the same optimistic session-version check as every
+ * other save (O13). Idempotent by construction (UPDATE by id): a retry after
+ * a lost save response re-applies the same geometry (O12).
+ */
+export async function updateTakeoffAreaGeometry(
+  input: UpdateTakeoffAreaGeometryInput,
+): Promise<UpdateTakeoffAreaGeometryResult> {
+  const supabase = await createSupabaseServerClient();
+
+  // Ownership pre-check mirroring saveTakeoffMeasurements (clear error before
+  // the RPC; RLS still applies inside it).
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('company_id')
+    .eq('id', input.quoteId)
+    .maybeSingle();
+  if (!quote) {
+    return { success: false, error: 'Quote not found.' };
+  }
+
+  // The generated RPC name union does not know the patch_052 function yet —
+  // cast once at the boundary (same pattern as saveTakeoffMeasurements v2).
+  const rpcFn = 'update_takeoff_area_geometry_v1' as 'save_takeoff_atomic';
+  const { data, error } = await supabase.rpc(rpcFn, {
+    p_quote_id: input.quoteId,
+    p_measurement_id: input.measurementId,
+    p_page_id: input.pageId,
+    p_points: input.points,
+    p_session_version: input.sessionVersion,
+  } as unknown as { p_quote_id: string; p_payload: never });
+
+  if (error) {
+    const message = error.message ?? String(error);
+    if (/STALE_TAKEOFF_VERSION/i.test(message)) {
+      return {
+        success: false,
+        error: 'Takeoff edited elsewhere. Reload to review � your edits are kept.',
+        staleVersion: true,
+      };
+    }
+    console.error('[updateTakeoffAreaGeometry] RPC error:', message);
+    return { success: false, error: message };
+  }
+
+  const result = (Array.isArray(data) ? data[0] : data) as unknown as
+    | { ok?: boolean; value?: number | string; session_version?: number | null }
+    | null;
+  return {
+    success: true,
+    value: result?.value != null ? Number(result.value) : 0,
+    sessionVersion:
+      result?.session_version != null ? Number(result.session_version) : null,
+  };
+}

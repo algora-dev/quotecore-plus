@@ -5,13 +5,16 @@ import Link from 'next/link';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
-import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas, persistPageCalibration } from './actions';
+import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas, persistPageCalibration, updateTakeoffAreaGeometry } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
+import type { TouchOutlineAdapter } from '@/app/lib/takeoff/precision/TouchOutlineEditor';
+import { outlineDependentRecompute } from '@/app/lib/takeoff/precision/touchOutlines';
+import type { RecomputeMeasurementRecord } from '@/app/lib/takeoff/calibrationRecompute';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
 import { reconstructCanvas } from '@/app/lib/takeoff/reconstructCanvas';
@@ -196,6 +199,9 @@ interface Props {
   aiAssistPoints?: { used: number; limit: number; remaining: number; isBlocked: boolean } | null;
   /** P2/P6 AI-assisted calibration: per-company flag read server-side. */
   aiCalibrationEnabled?: boolean;
+  /** M5: registers the touch-outline bridge adapter (single data owner stays
+   *  this workstation — the touch presentation only reads/calls back, R14). */
+  onTouchOutlineAdapter?: (adapter: TouchOutlineAdapter) => void;
 }
 
 const MAX_CANVAS_DIM = 2000; // Max longest edge for dynamic canvas sizing
@@ -283,6 +289,7 @@ export function TakeoffWorkstation({
   aiTakeoffAvailable = false,
   aiAssistPoints = null,
   aiCalibrationEnabled = false,
+  onTouchOutlineAdapter,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1701,9 +1708,12 @@ export function TakeoffWorkstation({
     canvas.requestRenderAll();
   }, []);
 
-  const handleSaveArea = (name: string, pitch?: number) => {
+  const handleSaveArea = (name: string, pitch?: number, pointsOverride?: { x: number; y: number }[]) => {
+    // M5: pointsOverride lets the touch outline editor hand a completed manual
+    // outline to the EXISTING create flow (owner fields/name/pitch unchanged).
+    const sourcePoints = pointsOverride ?? pendingAreaPoints;
     pushHistorySnapshot();
-    const calculatedArea = calculatePolygonArea(pendingAreaPoints);
+    const calculatedArea = calculatePolygonArea(sourcePoints);
 
     // Route by pendingComponentId first (captured at polygon-close time).
     // This is immune to selectedComponentId being cleared by canvas deselection.
@@ -1717,7 +1727,7 @@ export function TakeoffWorkstation({
       cleanupInProgressObjects();
       const areaId = `area-${Date.now()}`;
       // Create polygon on canvas
-      const polygon = new Polygon(pendingAreaPoints, {
+      const polygon = new Polygon(sourcePoints, {
         fill: 'rgba(59, 130, 246, 0.2)',
         stroke: '#3b82f6',
         strokeWidth: 1.25,
@@ -1739,7 +1749,7 @@ export function TakeoffWorkstation({
       const newArea: RoofArea = {
         id: areaId,
         name: name || 'Area',
-        points: pendingAreaPoints,
+        points: sourcePoints,
         area: calculatedArea,
         pitch: pitch,
         visible: true,
@@ -3331,6 +3341,179 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // So fromPageId at draw time was always null. This ref stays in sync so
   // draw-time handlers can read the real current page id.
   const currentPageIdRef = useRef<string | null>(null);
+
+  // ── M5: touch-outline bridge adapter ─────────────────────────────────────
+  // The workstation stays the SINGLE data owner (R14): the touch outline
+  // editor reads state through this adapter and calls back. No parallel
+  // measurement data path exists. The adapter object is stable; every method
+  // reads the latest committed state through touchOutlineLiveRef.
+  const touchOutlineLiveRef = useRef<{
+    roofAreas: RoofArea[];
+    componentMeasurements: ComponentWithMeasurements[];
+    calibrations: Calibration[];
+    canvasDims: { width: number; height: number };
+    pageImageRevision: string | null;
+    handleSaveArea: (name: string, pitch?: number, pointsOverride?: { x: number; y: number }[]) => void;
+  } | null>(null);
+
+  const touchOutlineAdapterRef = useRef<TouchOutlineAdapter | null>(null);
+  if (touchOutlineAdapterRef.current == null) {
+    touchOutlineAdapterRef.current = {
+      getAreas: () => {
+        const live = touchOutlineLiveRef.current;
+        const pageId = currentPageIdRef.current;
+        if (!live) return [];
+        // Page-scoped: only THIS page's polygons are selectable/editable
+        // (multi-page ownership, O09).
+        return live.roofAreas
+          .filter((ra) => !ra.fromPageId || !pageId || ra.fromPageId === pageId)
+          .map((ra) => ({
+            geometryId: ra.id,
+            name: ra.name,
+            pitch: ra.pitch,
+            quoteRoofAreaId: ra.quoteRoofAreaId ?? null,
+            fromPageId: ra.fromPageId ?? null,
+            points: ra.points.map((p) => ({ ...p })),
+          }));
+      },
+      getEditContext: () => {
+        const pageId = currentPageIdRef.current;
+        if (!pageId) return null;
+        return {
+          quoteId: quote.id,
+          pageId,
+          imageRevision: touchOutlineLiveRef.current?.pageImageRevision ?? null,
+          coordinateFrame: 'takeoff-scene-v1' as const,
+          sessionVersion: sessionVersionRef.current ?? 0,
+          contextEpoch: 0,
+        };
+      },
+      getScale: () => {
+        const calibrations = touchOutlineLiveRef.current?.calibrations ?? [];
+        if (calibrations.length === 0) return null;
+        try {
+          return {
+            scale: effectiveScaleFromLegacyCalibrations(calibrations),
+            unit: calibrations[0]?.unit ?? 'feet',
+          };
+        } catch {
+          return null;
+        }
+      },
+      getScene: () => {
+        const dims = touchOutlineLiveRef.current?.canvasDims ?? { width: 2000, height: 1700 };
+        return {
+          width: dims.width,
+          height: dims.height,
+          imageRevision: touchOutlineLiveRef.current?.pageImageRevision ?? null,
+        };
+      },
+      updateOutline: async (intent) => {
+        const live = touchOutlineLiveRef.current;
+        const pageId = currentPageIdRef.current;
+        if (!live || !pageId) return { ok: false, error: 'No page selected.' };
+        const target = live.roofAreas.find((ra) => ra.id === intent.geometryId);
+        const result = await updateTakeoffAreaGeometry({
+          quoteId: quote.id,
+          measurementId: intent.geometryId,
+          pageId,
+          points: intent.points.map((p) => ({ x: p.x, y: p.y })),
+          sessionVersion: sessionVersionRef.current,
+        });
+        if (!result.success) {
+          return { ok: false, error: result.error, staleVersion: result.staleVersion ?? false };
+        }
+        const serverValue = result.value;
+        const serverVersion = result.sessionVersion;
+        // Acknowledged save: apply the server-derived values to OUR state so
+        // the next full save (delete+insert per page) rewrites exactly what
+        // the RPC committed — no silent rollback of the approved checkpoint.
+        setRoofAreas((prev) =>
+          prev.map((ra) =>
+            ra.id === intent.geometryId
+              ? { ...ra, points: intent.points.map((p) => ({ ...p })), area: serverValue }
+              : ra,
+          ),
+        );
+        // O07 client mirror: source-linked dependent entries follow the new
+        // polygon; independent entries untouched (server recomputed the same
+        // values — this keeps the local panel consistent until the next save).
+        const scale = touchOutlineAdapterRef.current?.getScale();
+        if (scale && target) {
+          const deps: RecomputeMeasurementRecord[] = [];
+          live.componentMeasurements.forEach((comp) => {
+            comp.measurements.forEach((m) => {
+              if (m.fromPageId && pageId && m.fromPageId !== pageId) return;
+              deps.push({
+                id: m.id,
+                type: m.type as RecomputeMeasurementRecord['type'],
+                value: m.value,
+                points: m.points ?? null,
+                quoteRoofAreaId: m.quoteRoofAreaId ?? null,
+                entryInputs: (m.entryInputs as RecomputeMeasurementRecord['entryInputs']) ?? null,
+              });
+            });
+          });
+          const rec = outlineDependentRecompute({
+            edited: {
+              geometryId: intent.geometryId,
+              points: intent.points,
+              pitch: target.pitch,
+              quoteRoofAreaId: target.quoteRoofAreaId ?? null,
+            },
+            scale,
+            dependents: { measurements: deps },
+          });
+          if (rec.ok) {
+            const byId = new Map(rec.measurementUpdates.map((u) => [u.id, u]));
+            setComponentMeasurements((prev) =>
+              prev.map((comp) => ({
+                ...comp,
+                measurements: comp.measurements.map((m) => {
+                  const u = byId.get(m.id);
+                  if (!u) return m;
+                  return {
+                    ...m,
+                    value: u.value,
+                    entryInputs: {
+                      ...(m.entryInputs ?? {}),
+                      value_basis: m.entryInputs?.value_basis ?? 'plan',
+                      plan_value: u.planValue ?? m.entryInputs?.plan_value,
+                    },
+                  };
+                }),
+              })),
+            );
+          }
+        }
+        if (serverVersion != null) {
+          updateSessionVersion(() => serverVersion);
+        } else {
+          updateSessionVersion((prev) => (prev != null ? prev + 1 : 1));
+        }
+        setRedrawNonce((n) => n + 1); // rebuild canvas polygons from state
+        return { ok: true };
+      },
+      createOutline: (name, pitch, points) => {
+        touchOutlineLiveRef.current?.handleSaveArea(name, pitch, points);
+      },
+    };
+  }
+  // Keep the live-state mirror current and re-register the (stable) adapter
+  // every render so the presentation always reaches the latest owner state.
+  useEffect(() => {
+    const pageId = currentPageIdRef.current;
+    const hydratedPage = hydrationData?.pages.find((p) => p.id === pageId) ?? null;
+    touchOutlineLiveRef.current = {
+      roofAreas,
+      componentMeasurements,
+      calibrations,
+      canvasDims,
+      pageImageRevision: hydratedPage?.imageRevision ?? null,
+      handleSaveArea,
+    };
+    if (onTouchOutlineAdapter) onTouchOutlineAdapter(touchOutlineAdapterRef.current!);
+  });
   // Captures the component ID at the moment area mode is activated for a component.
   // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
   // events that fire on the same click that closes the polygon.
