@@ -97,7 +97,27 @@ export default async function Page({
     .single();
 
   if (!planFile) {
-    notFound();
+    // Recovery state (bug 2026-09-21): the quote exists but its plan file
+    // record is missing - the measure-first creation chain (create quote ->
+    // storage.move -> saveFileMetadata) was interrupted before committing.
+    // Returning 404 here left these quotes permanently unreachable.
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16">
+        <div className="rounded-xl border border-dashed border-slate-200 px-6 py-12 text-center">
+          <h2 className="text-base font-semibold text-slate-900">No plan attached yet</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            This job was created but its plan file did not finish attaching. Open
+            the quote and upload the plan to start measuring.
+          </p>
+          <a
+            href={`/${workspaceSlug}/quotes/${quoteId}`}
+            className="mt-5 inline-flex items-center rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            Open quote
+          </a>
+        </div>
+      </div>
+    );
   }
 
   // Load components from component library (includes is_system rows so

@@ -256,7 +256,13 @@ function MeasureJobModal({
       }
 
       const quoteId = result.quoteId;
-      if (!quoteId) return;
+      if (!quoteId) {
+        // Defensive: never leave the button stuck on 'Starting...' if a
+        // creation result arrives ok but without an id (bug 2026-09-21).
+        setCreateError({ message: 'Job was created but its ID is missing. Check your Quotes list.', showUpgrade: false });
+        setCreating(false);
+        return;
+      }
 
       // Move the pending upload into the quote prefix and save metadata -
       // same post-creation steps as the digital path in QuoteDetailsForm.
