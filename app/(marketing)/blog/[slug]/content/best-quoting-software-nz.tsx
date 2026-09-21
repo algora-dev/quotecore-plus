@@ -4,6 +4,17 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
 
+      <div className="not-prose mb-6 rounded-xl border border-zinc-200 bg-orange-50/40 px-4 py-3 text-sm text-zinc-800">
+        <strong className="font-semibold text-zinc-950">In New Zealand?</strong>{" "}
+        <a
+          href="https://www.quote-core.co.nz"
+          className="font-medium text-[#BD4A1A] underline underline-offset-2 hover:text-[#a03f16]"
+        >
+          QuoteCore+ NZ — NZD pricing, GST-inclusive quoting
+        </a>{" "}
+        built specifically for Kiwi tradies.
+      </div>
+
       <p><strong>Quick answer:</strong> Quoting software for contractors turns measurements, labour, and material prices into a professional, priced quote — without spreadsheets or re-typed numbers. For NZ tradies in 2026, the strongest options are QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact, and Xero Projects. This guide compares all six on pricing, features, and NZ-specific fit.</p>
 
       <p><em>Last updated: September 2026. Competitor pricing sourced from each provider's published NZD rates at time of writing — always check with the vendor for current pricing.</em></p>

@@ -264,11 +264,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'best-quoting-software-nz',
     category: 'comparisons',
-    title: 'Best Quoting Software NZ (2026): 6 Tools Compared',
+    title: 'Best Quoting Software NZ 2026 — Pricing Compared',
     description:
-      'Compare QuoteCore+, Tradify, Fergus and ServiceM8 on pricing, features and NZ trade fit. Free tools and paid plans from $19/mo to get you quoting faster.',
+      'Six quoting tools for NZ tradies compared on NZD pricing, GST and features: QuoteCore+, Tradify, Fergus, ServiceM8, Buildxact and Xero — from free to $149/mo, side by side.',
     date: '2026-07-15',
-    lastModified: '2026-08-28',
+    lastModified: '2026-09-21',
   },
   {
     slug: 'best-quoting-software-au',
@@ -554,11 +554,11 @@ export const BLOG_POSTS: BlogPostMeta[] = [
   {
     slug: 'how-to-follow-up-on-a-quote',
     category: 'contractor-business',
-    title: 'How to Follow Up on a Quote: Timing + Message Examples',
+    title: 'How to Follow Up on a Quote and Win More Jobs',
     description:
-      'When to follow up after sending a quote, what to say, and practical follow-up message examples for contractors — without sounding pushy.',
+      'The follow-up timing that doubles quote acceptance, plus copy-paste message templates for contractors — follow up without sounding pushy or desperate.',
     date: '2026-07-31',
-    lastModified: '2026-08-30',
+    lastModified: '2026-09-21',
     video: {
       videoId: 'AHXhlOuRAvw',
       title: 'Automatic Quote Follow-Ups and Customer Tracking in QuoteCore+',
