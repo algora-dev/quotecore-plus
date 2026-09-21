@@ -95,7 +95,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
 
   return (
     <div
-      className="absolute inset-x-2 bottom-2 z-20 max-h-[70%] overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/95 p-3 shadow-xl"
+      className="absolute inset-x-2 bottom-2 z-20 max-h-[70%] w-auto max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/95 p-3 shadow-xl"
       role="region"
       aria-label="Calibration"
     >

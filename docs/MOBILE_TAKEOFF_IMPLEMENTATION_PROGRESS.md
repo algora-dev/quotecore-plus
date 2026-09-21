@@ -312,3 +312,15 @@ Decisions or deviations, with reason:
 5. Deferred (unchanged from M2-M6): patch_052 O14/O15 live failure injection; WebKit/iOS on-device; keyboard-arrow nudging (§5.7 optional); PDF-page raster path in touch calibration (planUrl image only); the `this.lower` class of issues is fixed but broader Fabric lifecycle refactoring remains out of scope.
 Known risks / blockers: portrait bottom-strip crowding on 412px viewports (chips scroll under the session action buttons — visible in the browser run; needs a UI pass after owner feedback); recalibration-with-dependents still desktop-gated (C13); touch shell Save button is a placeholder (saves happen per-draft; a global touch save remains M8-adjacent polish).
 Next phase entry conditions (M8): owner device sign-off or explicit risk acceptance; then linear components on the same A/B primitive.
+
+## M7.1 - Owner live-test UX fixes (2026-09-21)
+
+First owner iPhone test surfaced four UX defects; fixed directly (subagent run died early, work completed by parent):
+
+1. CalibrationSheet capped at max-w-md so it no longer spans full width or covers the right controller rail.
+2. Calibration unit select now defaults from the workspace working unit (ft for feet, else m) - sheet is valid on open; the 'Choose the unit printed on the plan' warning no longer fires on a placeholder.
+3. Bottom-strip context hint widened to max-w-[60%] (was 34%, truncated to 'Sele...' at phone widths).
+4. Portrait 'turn your phone sideways' hint raised to z-40 so it renders above sheets.
+
+Gates: eslint clean, test:precision 143/143, test:calibration 223/223, next build pass. Desktop/flag-off paths untouched (class-level changes in touch components only).
+

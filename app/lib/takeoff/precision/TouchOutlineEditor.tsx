@@ -1019,7 +1019,7 @@ export function useTouchOutlineEditor(
 
   const bottom = active ? (
     <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-slate-400">
-      <span className="min-w-0 max-w-[34%] truncate" aria-live="polite">{hint}</span>
+      <span className="min-w-0 max-w-[60%] truncate" aria-live="polite">{hint}</span>
       <span
         className={`rounded-full px-2.5 py-1 ${
           saveState === 'saved'

@@ -225,9 +225,10 @@ export function TouchWorkspaceShell({
         <div className={active ? 'relative min-w-0 flex-1 overflow-hidden rounded-xl bg-slate-950' : 'contents'}>
           {children}
           {active && overlay}
-          {/* Portrait hint — dismissible, no CSS rotation (§3.2). */}
+          {/* Portrait hint - dismissible, no CSS rotation (§3.2). z-40 keeps it
+              visible above sheets/modals (owner test 2026-09-21). */}
           {active && showPortraitHint && (
-            <div className="absolute inset-x-2 top-2 z-10 flex items-center gap-2 rounded-xl bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-lg">
+            <div className="absolute inset-x-2 top-2 z-40 flex items-center gap-2 rounded-xl bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-lg">
               <span className="min-w-0 flex-1">
                 Turn your phone sideways for more drawing space. You can continue in portrait.
               </span>

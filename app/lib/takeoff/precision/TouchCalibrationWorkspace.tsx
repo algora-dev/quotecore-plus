@@ -223,8 +223,10 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
   const manualPairReady = pointA != null && pointB != null;
 
   // Sheet inputs (§7.2: typed values survive endpoint edits / switching).
+  // M7.1: unit defaults from the workspace working unit (owner test — the
+  // placeholder-only select made the sheet immediately invalid on open).
   const [distanceText, setDistanceText] = useState('');
-  const [unit, setUnit] = useState<DistanceUnit | null>(null);
+  const [unit, setUnit] = useState<DistanceUnit | null>(workingUnit === 'feet' ? 'ft' : 'm');
 
   // ── Camera + gesture surface (M3 stack) ───────────────────────────────────
   const surfaceRef = useRef<HTMLDivElement | null>(null);
