@@ -11,6 +11,7 @@ import {
   type TouchOutlineAdapter,
 } from '@/app/lib/takeoff/precision/TouchOutlineEditor';
 import { useTouchCalibration, type TouchCalibrationPageInfo } from '@/app/lib/takeoff/precision/TouchCalibrationWorkspace';
+import { decodeCalibrationMetadata } from '@/app/lib/takeoff/calibrationCodec';
 
 const TakeoffWorkstation = dynamic(
   () => import('./TakeoffWorkstation').then(mod => ({ default: mod.TakeoffWorkstation })),
@@ -108,15 +109,13 @@ export function TakeoffPage({
   const backHref = `/${workspaceSlug}/quotes/${quoteId}`;
   const outlineEditor = useTouchOutlineEditor(touchActive, () => outlineAdapter, backHref);
   const harness = usePrecisionTouchHarness(touchActive && outlineAdapter == null);
-  const { overlay: precisionOverlay, rail: precisionRail, bottom: precisionBottom } =
+  const { overlay: precisionOverlay, rail: precisionRail } =
     outlineAdapter != null
-      ? { overlay: outlineEditor.overlay, rail: outlineEditor.rail, bottom: outlineEditor.bottom }
-      : { overlay: harness.overlay, rail: harness.rail, bottom: harness.bottom };
+      ? { overlay: outlineEditor.overlay, rail: outlineEditor.rail }
+      : { overlay: harness.overlay, rail: harness.rail };
 
-  // M4: touch calibration tool — replaces the point grid while calibrating
-  // (spec §7). Switching tools mid-edit preserves both drafts (C16): the
-  // harness and calibration hooks stay mounted, only the rendered parts swap.
-  const [touchTool, setTouchTool] = useState<'outline' | 'calibrate'>('outline');
+  // M4→M8 (16:59): flow-driven calibration phase — see the touchTool state
+  // below; both hooks stay mounted so phase transitions preserve drafts (C16).
   const calibrationPage: TouchCalibrationPageInfo | null = useMemo(() => {
     const p = hydrationData?.pages?.[0] ?? null;
     if (p) {
@@ -137,12 +136,33 @@ export function TakeoffPage({
       (allRoofAreas?.length ?? 0) > 0,
     [hydrationData, calibrationPage?.id, allRoofAreas],
   );
+  // M4→M8 (16:59 refinement): FLOW-DRIVEN steps — no step-switching UI.
+  // A page without an accepted calibration starts in the calibration phase;
+  // completing (or dismissing) calibration advances to the outline controls.
+  // Re-entry on an already-calibrated page goes straight to outline.
+  const [touchTool, setTouchTool] = useState<'outline' | 'calibrate'>(() => {
+    if (!calibrationPage) return 'outline';
+    const decoded = decodeCalibrationMetadata(
+      calibrationPage.calibrationMetadata ?? calibrationPage.scaleCalibration,
+    );
+    const refs =
+      decoded.kind === 'v1'
+        ? decoded.metadata.references
+        : decoded.kind === 'legacy'
+          ? decoded.references
+          : [];
+    return refs.length > 0 ? 'outline' : 'calibrate';
+    // Initial only: the flow (calibration Done) drives later transitions.
+  });
   const calib = useTouchCalibration({
     active: touchActive && touchTool === 'calibrate',
     quoteId: quote.id,
     planUrl,
     page: calibrationPage,
-    aiEnabled: aiCalibrationEnabled === true,
+    // M8 (owner prescription 2026-09-21): MANUAL-ONLY calibration in the
+    // touch view — the AI calibration entry is hidden here; desktop is
+    // unchanged.
+    aiEnabled: false,
     pageHasDependents,
     onExit: () => setTouchTool('outline'),
   });
@@ -188,34 +208,34 @@ export function TakeoffPage({
   // `w-[125%] -ml-[12.5%]` widening classes, intermediates are
   // display:contents, strips hidden. Desktop layout is unchanged, and the
   // workstation stays mounted when the user switches Desktop ↔ Mobile/touch.
+  // M8: rail shows ONLY the current step's controls (16:59 refinement); a
+  // compact step label sits at the rail top (shell).
+  const calibStatusLine = calib.saved
+    ? 'Scale saved.'
+    : 'Set the scale: place two points on a known distance.';
+
+  const outlineRailContent = (
+    <div className="flex flex-col gap-2">{precisionRail}</div>
+  );
+  const calibrateRailContent = (
+    <div className="flex flex-col gap-2">
+      {calib.rail}
+      <div className="rounded-full bg-white/10 px-2.5 py-1 text-center text-[11px] text-slate-300" aria-live="polite">
+        {calibStatusLine}
+      </div>
+    </div>
+  );
+
   return (
     <TouchWorkspaceShell
       active={touchActive}
       planLabel={initialPageName ?? 'Plan'}
-      step={touchTool === 'calibrate' ? 'calibrate' : 'outline'}
+      railTitle={touchTool === 'calibrate' ? 'Calibration' : 'Outline'}
       viewPreference={preference}
       onViewPreferenceChange={setPreference}
       compactNotices={takeoffCompactNotices}
       overlay={touchTool === 'calibrate' ? calib.overlay : precisionOverlay}
-      rail={touchTool === 'calibrate' ? calib.rail : precisionRail}
-      bottom={
-        touchTool === 'calibrate' ? (
-          calib.bottom
-        ) : (
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            {precisionBottom}
-            <span className="flex-1" />
-            <button
-              type="button"
-              aria-label="Calibrate this plan"
-              onClick={() => setTouchTool('calibrate')}
-              className="h-12 rounded-full bg-[#FF6B35] px-4 text-xs font-semibold text-white hover:bg-[#e55a28]"
-            >
-              Calibrate
-            </button>
-          </div>
-        )
-      }
+      railContent={touchTool === 'calibrate' ? calibrateRailContent : outlineRailContent}
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
       exitGuard={outlineEditor.exitGuard}
     >

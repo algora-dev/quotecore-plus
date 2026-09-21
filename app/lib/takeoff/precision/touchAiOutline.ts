@@ -177,6 +177,30 @@ export function resolveAiOutlineApplication(
   return { action: 'apply' };
 }
 
+// ─── M8: calibration-complete HARD GATE (owner prescription 2026-09-21) ───
+
+/** Decision for the AI outline scan action before it may be offered/run. */
+export type OutlineScanGate =
+  | { allowed: true }
+  | { allowed: false; reason: 'uncalibrated'; message: string };
+
+/**
+ * M8 hard gate: the AI outline scan is UNAVAILABLE until the current page
+ * has a completed calibration (effective scale). The owner managed to scan
+ * before finishing calibration on a live iPhone — that must be impossible.
+ * `scale` is the adapter's effective page scale (null = uncalibrated).
+ */
+export function outlineScanCalibrationGate(scale: { scale: number } | null): OutlineScanGate {
+  if (scale == null || !Number.isFinite(scale.scale) || scale.scale <= 0) {
+    return {
+      allowed: false,
+      reason: 'uncalibrated',
+      message: 'Set the scale first — calibrate this page before scanning an outline.',
+    };
+  }
+  return { allowed: true };
+}
+
 // ─── Adapter contracts (workstation ⇄ touch editor; IO stays adapter-side) ─
 
 /** Entitlement/availability snapshot for the touch outline scan. `null`/

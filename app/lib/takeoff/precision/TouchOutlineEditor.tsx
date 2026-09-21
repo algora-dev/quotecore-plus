@@ -66,6 +66,7 @@ import {
 import {
   aiOutlineCandidatesFromScanData,
   beginImportedOutlineDraft,
+  outlineScanCalibrationGate,
   resolveAiOutlineApplication,
   type AiOutlineCandidate,
   type AiOutlineScanInfo,
@@ -579,18 +580,21 @@ export function useTouchOutlineEditor(
       const adapter = adapterRef.current;
       const s = sessionRef.current;
       if (!adapter || !s || !scale) return;
-      const context = adapter.getEditContext();
-      if (!context) return;
-      const result = outlineSaveIntent(s, context, scale, {
-        sceneWidth: scene.width,
-        sceneHeight: scene.height,
-      });
-      if (!result.ok || result.intent.kind !== 'create-new') return;
-      adapter.createOutline(name, pitch, result.intent.points.map((p) => ({ ...p })));
+      // M8: the post-accept prompt hands the accepted draft points (manual
+      // close or AI import) straight to the EXISTING create flow
+      // (adapter.createOutline → handleSaveArea) — mobile-created areas are
+      // identical to desktop-created ones (name/pitch semantics, §8.1).
+      if (!s.draft.closed) return;
+      if (review && review.blocking.length > 0) return; // invalid outline never saves
+      adapter.createOutline(name, pitch, s.draft.vertices.map((v) => ({ ...v.point })));
       setShowCreateForm(false);
       setSession(null); // draft consumed by the create flow
       setSelectionMode('idle');
       setSaveState('saved');
+      setScanCandidates(null);
+      setScanCandidateIndex(0);
+      setOfferOpen(false);
+      setCreateDefaults(null);
       // M7: resolve a pending external exit the same way as the
       // update-in-place path — only after the create actually committed
       // through the existing flow.
@@ -598,7 +602,7 @@ export function useTouchOutlineEditor(
       setPendingSwitch(null);
       if (pending?.kind === 'external') pending.proceed();
     },
-    [scale, scene],
+    [scale, review],
   );
 
   // ── M6: AI outline scan lifecycle (§8.2, O04/O10/O11) ────────────────────
@@ -695,6 +699,10 @@ export function useTouchOutlineEditor(
     const adapter = adapterRef.current;
     const context = adapter?.getEditContext();
     if (!adapter || !context || scanState === 'scanning') return;
+    // M8 HARD GATE (owner prescription 2026-09-21): scanning before the page
+    // has a completed calibration must be impossible — enforce at the action
+    // itself, not only the button.
+    if (!outlineScanCalibrationGate(adapter.getScale()).allowed) return;
     if (dirty) {
       setPendingScanReplace(true);
       return;
@@ -702,27 +710,15 @@ export function useTouchOutlineEditor(
     await runScan();
   }, [dirty, runScan, scanState]);
 
-  /** Continue: accept the imported outline AS-IS through the same M5
-   *  create-new terminal path (adapter.createOutline → handleSaveArea).
-   *  No duplicate rows, no AI internal components committed. */
+  /** M8 post-accept flow: Continue presents the SAME name/pitch prompt as
+   *  the manual journey (desktop takeoff semantics) — the AI candidate's
+   *  name/pitch prefill it, but the user confirms. The confirm then accepts
+   *  as-is through the same M5 create-new terminal path
+   *  (adapter.createOutline → handleSaveArea). No duplicate rows, no AI
+   *  internal components committed. */
   const acceptImportedAsIs = useCallback(() => {
-    const adapter = adapterRef.current;
-    const s = sessionRef.current;
-    if (!adapter || !s || !createDefaults) return;
-    adapter.createOutline(
-      createDefaults.name,
-      createDefaults.pitch,
-      s.draft.vertices.map((v) => ({ ...v.point })),
-    );
-    setSession(null);
-    setSelectionMode('idle');
-    setSaveState('saved');
-    setSaveError(null);
-    setScanCandidates(null);
-    setScanCandidateIndex(0);
-    setOfferOpen(false);
-    setCreateDefaults(null);
-  }, [createDefaults]);
+    setShowCreateForm(true);
+  }, []);
 
   // ─── overlay (single gesture owner; desktop never mounts it) ─────────────
 
@@ -956,57 +952,36 @@ export function useTouchOutlineEditor(
   const canPrev = neighbourIndex(ids.length, draft?.closed ?? false, selectedIndex, -1) != null || selectedIndex < 0;
   const canNext = neighbourIndex(ids.length, draft?.closed ?? false, selectedIndex, 1) != null || selectedIndex < 0;
 
-  const rail = active ? (
-    <PointControllerRail
-      counterLabel={
-        selectedIndex >= 0 ? `Point ${selectedIndex + 1} of ${ids.length}` : `${ids.length} points`
-      }
-      armedCue={
-        session == null
-          ? 'Pick an outline below'
-          : selectedId == null
-            ? 'No point selected'
-            : session.selection.moveArmed
-              ? 'Drag anywhere to move · release to set'
-              : 'Point set'
-      }
-      onPrevious={() => navigate(-1)}
-      onNext={() => navigate(1)}
-      canPrevious={canPrev && ids.length > 0}
-      canNext={canNext && ids.length > 0}
-      onInsert={() => selectedId && applyCommand((s) => insertAfter(s, selectedId))}
-      canInsert={canInsertAfter(ids.length, draft?.closed ?? false, selectedIndex)}
-      onDelete={() => selectedId && applyCommand((s) => deleteVertex(s, selectedId))}
-      canDelete={canDeleteVertex(ids.length, draft?.closed ?? false, selectedIndex)}
-      gesturePhase={gesturePhase}
-      onAdjust={() => selectedId && applyCommand((s) => selectVertex(s, selectedId, true))}
-      canAdjust={selectedId != null}
-      fineOpen={fineOpen}
-      onToggleFine={() => setFineOpen((v) => !v)}
-      onNudge={onNudge}
-      nudgeStep={nudgeStep}
-      onNudgeStepChange={setNudgeStep}
-      onDoneFine={() => setFineOpen(false)}
-      onFitPlan={() => viewport.width > 0 && setCamera(fitCamera(scene, viewport))}
-      onZoomIn={() => zoomAroundCentre(ZOOM_STEP)}
-      onZoomOut={() => zoomAroundCentre(1 / ZOOM_STEP)}
-      onMovePlan={() => applyCommand((s) => selectVertex(s, s.selection.vertexId, false))}
-    />
-  ) : null;
+  // M8 post-accept flow (§8.1): closing a NEW outline accepts it — prompt
+  // for name + pitch immediately through the same desktop data path. Saved
+  // outlines (update-in-place) keep their name/pitch and are not prompted.
+  const closeOutlineAndPrompt = useCallback(() => {
+    const s = sessionRef.current;
+    if (s == null) return;
+    const res = closeOutline(s);
+    if (res.rejected != null) return;
+    setSession(res.session);
+    const geometryId = s.target.kind === 'outline' ? s.target.geometryId : '';
+    if (!isPersistedOutlineGeometryId(geometryId)) {
+      setShowCreateForm(true);
+    }
+  }, []);
 
-  // ─── bottom strip: area selection + lifecycle + status (§3.5/§11.1) ──────
+  // ─── area selection + lifecycle + status (§3.5/§11.1) — M8: lives in the rail */
 
   const areas = adapterRef.current?.getAreas() ?? [];
   const statusLabel =
     saveState === 'saving' ? 'Saving…'
     : saveState === 'saved' ? 'Saved'
     : saveState === 'failed' ? 'Save failed'
-    : dirty ? 'Draft'
     : 'Draft';
+
+  const scanGate = outlineScanCalibrationGate(scale);
 
   const hint =
     scanError ? scanError
     : scanState === 'scanning' ? 'Scanning for a roof outline…'
+    : scanGate.allowed === false ? scanGate.message
     : saveError ? saveError
     : review && review.blocking.length > 0 ? review.blocking[0].message
     : review?.planArea != null
@@ -1017,126 +992,88 @@ export function useTouchOutlineEditor(
           ? 'Select a point, then drag or nudge.'
           : 'Pick an outline to edit, or start a new one.';
 
-  const bottom = active ? (
-    <div className="flex min-w-0 flex-1 items-center gap-2 text-[11px] text-slate-400">
-      <span className="min-w-0 max-w-[60%] truncate" aria-live="polite">{hint}</span>
-      <span
-        className={`rounded-full px-2.5 py-1 ${
+  const rail = active ? (
+    <>
+      <PointControllerRail
+        counterLabel={
+          selectedIndex >= 0 ? `Point ${selectedIndex + 1} of ${ids.length}` : `${ids.length} points`
+        }
+        armedCue={
+          session == null
+            ? 'Pick an outline below'
+            : selectedId == null
+              ? 'No point selected'
+              : session.selection.moveArmed
+                ? 'Drag anywhere to move · release to set'
+                : 'Point set'
+        }
+        onPrevious={() => navigate(-1)}
+        onNext={() => navigate(1)}
+        canPrevious={canPrev && ids.length > 0}
+        canNext={canNext && ids.length > 0}
+        onInsert={() => selectedId && applyCommand((s) => insertAfter(s, selectedId))}
+        canInsert={canInsertAfter(ids.length, draft?.closed ?? false, selectedIndex)}
+        onDelete={() => selectedId && applyCommand((s) => deleteVertex(s, selectedId))}
+        canDelete={canDeleteVertex(ids.length, draft?.closed ?? false, selectedIndex)}
+        gesturePhase={gesturePhase}
+        onAdjust={() => selectedId && applyCommand((s) => selectVertex(s, selectedId, true))}
+        canAdjust={selectedId != null}
+        fineOpen={fineOpen}
+        onToggleFine={() => setFineOpen((v) => !v)}
+        onNudge={onNudge}
+        nudgeStep={nudgeStep}
+        onNudgeStepChange={setNudgeStep}
+        onDoneFine={() => setFineOpen(false)}
+        onFitPlan={() => viewport.width > 0 && setCamera(fitCamera(scene, viewport))}
+        onZoomIn={() => zoomAroundCentre(ZOOM_STEP)}
+        onZoomOut={() => zoomAroundCentre(1 / ZOOM_STEP)}
+        onMovePlan={() => applyCommand((s) => selectVertex(s, s.selection.vertexId, false))}
+      />
+
+      {/* M8: outline tab panel — area chips + lifecycle + status live in the
+          rail (owner prescription: everything in the rail, per-tab controls). */}
+      <OutlinePanel
+        areas={areas}
+        statusLabel={statusLabel}
+        statusTone={
           saveState === 'saved'
-            ? 'bg-emerald-500/20 text-emerald-300'
+            ? 'saved'
             : saveState === 'failed'
-              ? 'bg-red-500/20 text-red-300'
+              ? 'failed'
               : saveState === 'saving'
-                ? 'bg-amber-500/20 text-amber-300'
-                : 'bg-white/10 text-slate-300'
-        }`}
-      >
-        {statusLabel}
-      </span>
-      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto" role="group" aria-label="Saved outlines">
-        {areas.map((a) => (
-          <button
-            key={a.geometryId ?? a.name}
-            type="button"
-            onClick={() => requestSwitch({ kind: 'area', area: a })}
-            className={`h-8 whitespace-nowrap rounded-full px-2.5 text-[11px] font-medium ${
-              isPersistedOutlineGeometryId(a.geometryId) && a.geometryId === (session?.target.kind === 'outline' ? session.target.geometryId : null)
-                ? 'bg-white text-slate-900'
-                : 'border border-white/20 text-white'
-            }`}
-          >
-            {a.name}
-          </button>
-        ))}
-        <button
-          type="button"
-          aria-label="New manual outline"
-          onClick={() => requestSwitch({ kind: 'new' })}
-          className="h-8 whitespace-nowrap rounded-full border border-white/20 px-2.5 text-[11px] font-medium text-white"
-        >
-          + New
-        </button>
-        {/* M6: AI outline scan — entitled only; the displayed cost matches
-            the backend scan1 charge (O10). Absence/unentitlement never
-            blocks the manual journey (R01/O17). */}
-        {scanInfo?.available && (
-          <button
-            type="button"
-            aria-label="Scan outline with AI"
-            disabled={scanState === 'scanning' || scanInfo.blocked}
-            title={scanInfo.blocked ? 'Out of AI points — draw the outline manually.' : `Scan outline with AI — uses ${scanInfo.cost} AI points.`}
-            onClick={() => {
-              void startScan();
-            }}
-            className="h-8 whitespace-nowrap rounded-full border border-[#FF6B35]/60 px-2.5 text-[11px] font-medium text-[#FF6B35] disabled:opacity-40"
-          >
-            {scanState === 'scanning' ? 'Scanning…' : `AI scan · ${scanInfo.cost} pts`}
-          </button>
-        )}
-        {scanState === 'scanning' && (
-          <button
-            type="button"
-            aria-label="Cancel AI scan"
-            onClick={() => {
-              adapterRef.current?.cancelOutlineOnlyScan(); // abort + epoch bump (O11)
-            }}
-            className="h-8 whitespace-nowrap rounded-full border border-white/20 px-2.5 text-[11px] font-medium text-white"
-          >
-            Cancel scan
-          </button>
-        )}
-      </div>
-      {session && (
-        <>
-          <button
-            type="button"
-            aria-label="Undo"
-            onClick={() => setSession((s) => (s == null ? s : undo(s).session))}
-            className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
-          >
-            Undo
-          </button>
-          <button
-            type="button"
-            aria-label="Redo"
-            onClick={() => setSession((s) => (s == null ? s : redo(s).session))}
-            className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
-          >
-            Redo
-          </button>
-          {!draft?.closed && (
-            <button
-              type="button"
-              aria-label="Close outline"
-              onClick={() => applyCommand((s) => closeOutline(s))}
-              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
-            >
-              Close
-            </button>
-          )}
-          <button
-            type="button"
-            aria-label="Save outline changes"
-            disabled={saveState === 'saving' || (review?.blocking.length ?? 0) > 0 || !dirty}
-            onClick={() => {
-              void doSave();
-            }}
-            className="h-12 min-w-12 rounded-full bg-[#FF6B35] px-3 text-xs font-semibold text-white disabled:opacity-40"
-          >
-            Save
-          </button>
-          <button
-            type="button"
-            aria-label="Cancel outline edit and restore the saved outline"
-            onClick={cancelDraft}
-            className="h-12 min-w-12 rounded-full border border-white/20 px-3 text-xs font-semibold text-slate-200"
-          >
-            Cancel
-          </button>
-        </>
-      )}
-    </div>
+                ? 'saving'
+                : 'idle'
+        }
+        hint={hint}
+        activeGeometryId={session?.target.kind === 'outline' ? session.target.geometryId : null}
+        onSwitchArea={(a) => requestSwitch({ kind: 'area', area: a })}
+        onNew={() => requestSwitch({ kind: 'new' })}
+        scanInfo={scanInfo}
+        scanGate={scanGate}
+        scanState={scanState}
+        onStartScan={() => {
+          void startScan();
+        }}
+        onCancelScan={() => adapterRef.current?.cancelOutlineOnlyScan()}
+        sessionActive={session != null}
+        draftClosed={draft?.closed ?? false}
+        canUndo={session != null && session.history.undo.length > 0}
+        canRedo={session != null && session.history.redo.length > 0}
+        onUndo={() => setSession((s) => (s == null ? s : undo(s).session))}
+        onRedo={() => setSession((s) => (s == null ? s : redo(s).session))}
+        onCloseOutline={closeOutlineAndPrompt}
+        canSave={saveState !== 'saving' && (review?.blocking.length ?? 0) === 0 && dirty}
+        onSave={() => {
+          void doSave();
+        }}
+        onCancel={cancelDraft}
+      />
+    </>
   ) : null;
+
+  // M8: the shell bottom strip no longer exists — the outline panel is part
+  // of the rail (kept as null for API compatibility with older consumers).
+  const bottom: ReactNode = null;
 
   return {
     overlay,
@@ -1220,6 +1157,167 @@ function CreateOutlineForm({
           Keep editing
         </button>
       </div>
+    </div>
+  );
+}
+
+/** M8: the Outline tab's rail panel — saved-area chips, new/scan actions,
+ *  compact undo/redo icons, close/save/cancel lifecycle and the small draft
+ *  status. Vertical, internally scrollable (the shell scrolls the rail). */
+function OutlinePanel(props: {
+  areas: SavedOutlineRecord[];
+  statusLabel: string;
+  statusTone: 'idle' | 'saving' | 'saved' | 'failed';
+  hint: string;
+  activeGeometryId: string | null;
+  onSwitchArea: (area: SavedOutlineRecord) => void;
+  onNew: () => void;
+  scanInfo: AiOutlineScanInfo | null;
+  scanGate: { allowed: true } | { allowed: false; message: string };
+  scanState: 'idle' | 'scanning' | 'error';
+  onStartScan: () => void;
+  onCancelScan: () => void;
+  sessionActive: boolean;
+  draftClosed: boolean;
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  onCloseOutline: () => void;
+  canSave: boolean;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const scanDisabled =
+    props.scanState === 'scanning' ||
+    (props.scanInfo?.blocked ?? false) ||
+    !props.scanGate.allowed;
+  const scanTitle = !props.scanGate.allowed
+    ? props.scanGate.message
+    : props.scanInfo?.blocked
+      ? 'Out of AI points — draw the outline manually.'
+      : `Scan outline with AI — uses ${props.scanInfo?.cost} AI points.`;
+  return (
+    <div className="mt-2 flex w-full flex-col gap-2 border-t border-white/10 pt-2" aria-label="Outline areas and actions">
+      <span
+        className={`rounded-full px-2.5 py-1 text-center text-[11px] font-semibold ${
+          props.statusTone === 'saved'
+            ? 'bg-emerald-500/20 text-emerald-300'
+            : props.statusTone === 'failed'
+              ? 'bg-red-500/20 text-red-300'
+              : props.statusTone === 'saving'
+                ? 'bg-amber-500/20 text-amber-300'
+                : 'bg-white/10 text-slate-300'
+        }`}
+        aria-live="polite"
+      >
+        {props.statusLabel}
+      </span>
+      <span className="text-center text-[11px] leading-snug text-slate-300" aria-live="polite">
+        {props.hint}
+      </span>
+
+      <div className="flex flex-col gap-1" role="group" aria-label="Saved outlines">
+        {props.areas.map((a) => (
+          <button
+            key={a.geometryId ?? a.name}
+            type="button"
+            onClick={() => props.onSwitchArea(a)}
+            className={`h-10 min-w-0 truncate rounded-full px-2.5 text-[11px] font-medium ${
+              isPersistedOutlineGeometryId(a.geometryId) && a.geometryId === props.activeGeometryId
+                ? 'bg-white text-slate-900'
+                : 'border border-white/20 text-white'
+            }`}
+          >
+            {a.name}
+          </button>
+        ))}
+        <button
+          type="button"
+          aria-label="New manual outline"
+          onClick={props.onNew}
+          className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
+        >
+          + New outline
+        </button>
+        {/* M6: AI outline scan — entitled only (O10). M8 HARD GATE: disabled
+            until the page has a completed calibration (owner prescription). */}
+        {props.scanInfo?.available && (
+          <button
+            type="button"
+            aria-label="Scan outline with AI"
+            disabled={scanDisabled}
+            title={scanTitle}
+            onClick={props.onStartScan}
+            className="h-12 min-w-12 rounded-full border border-[#FF6B35]/60 px-3 text-xs font-semibold text-[#FF6B35] disabled:opacity-40"
+          >
+            {props.scanState === 'scanning' ? 'Scanning…' : `AI scan · ${props.scanInfo.cost} pts`}
+          </button>
+        )}
+        {props.scanState === 'scanning' && (
+          <button
+            type="button"
+            aria-label="Cancel AI scan"
+            onClick={props.onCancelScan}
+            className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
+          >
+            Cancel scan
+          </button>
+        )}
+      </div>
+
+      {props.sessionActive && (
+        <div className="flex flex-col gap-2">
+          {/* M8: compact undo/redo icons (owner prescription). */}
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="History">
+            <button
+              type="button"
+              aria-label="Undo"
+              disabled={!props.canUndo}
+              onClick={props.onUndo}
+              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-40"
+            >
+              ↶
+            </button>
+            <button
+              type="button"
+              aria-label="Redo"
+              disabled={!props.canRedo}
+              onClick={props.onRedo}
+              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-40"
+            >
+              ↷
+            </button>
+          </div>
+          {!props.draftClosed && (
+            <button
+              type="button"
+              aria-label="Close outline"
+              onClick={props.onCloseOutline}
+              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20"
+            >
+              Close outline
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label="Save outline changes"
+            disabled={!props.canSave}
+            onClick={props.onSave}
+            className="h-12 min-w-12 rounded-full bg-[#FF6B35] px-3 text-xs font-semibold text-white disabled:opacity-40"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            aria-label="Cancel outline edit and restore the saved outline"
+            onClick={props.onCancel}
+            className="h-12 min-w-12 rounded-full border border-white/20 px-3 text-xs font-semibold text-slate-200"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 }

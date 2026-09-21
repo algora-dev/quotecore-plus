@@ -56,6 +56,27 @@ async function loginAs(page: Page, fixture: string): Promise<string> {
   ).map((c) => ({ ...c, domain: 'localhost', path: '/' }));
   await page.context().addCookies(cookies);
 
+  // M8: the Next.js dev overlay portal (dev-mode indicator/error toasts) can
+  // intercept pointer events over the full-bleed touch layout. It is test
+  // chrome, not app UI — hide it for the whole session.
+  await page.addInitScript(() => {
+    const start = () => {
+      const root = document.documentElement;
+      if (!root) {
+        setTimeout(start, 10);
+        return;
+      }
+      const hide = () =>
+        document.querySelectorAll('nextjs-portal').forEach((p) => {
+          const el = p as HTMLElement;
+          el.style.display = 'none';
+          el.style.pointerEvents = 'none';
+        });
+      new MutationObserver(hide).observe(root, { childList: true, subtree: true });
+    };
+    start();
+  });
+
   await page.goto(`${BASE_URL}/${account.workspaceSlug}`);
   if (page.url().includes('/login')) throw new Error(`session injection failed for ${fixture}`);
   return account.workspaceSlug;
@@ -66,7 +87,8 @@ async function loginAs(page: Page, fixture: string): Promise<string> {
 async function domClickByLabel(page: Page, ariaLabel: string) {
   await page.evaluate((label) => {
     const btn = Array.from(document.querySelectorAll(`button[aria-label="${label}"]`)).find(
-      (b) => b.offsetParent !== null,
+      // getClientRects (not offsetParent — null for fixed-position buttons).
+      (b) => (b as HTMLElement).getClientRects().length > 0,
     );
     if (!(btn instanceof HTMLButtonElement)) throw new Error(`button ${label} not found`);
     btn.click();
@@ -149,13 +171,16 @@ async function createDigitalQuote(page: Page, slug: string, label: string): Prom
 async function openTakeoffTouch(page: Page, slug: string, quoteId: string) {
   await page.goto(`${BASE_URL}/${slug}/quotes/${quoteId}/takeoff`);
   await page.waitForLoadState('domcontentloaded');
-  // Touch presentation (Auto on an emulated phone): shell top strip appears
-  // once the workstation registers its adapter (M5).
+  // Touch presentation (Auto on an emulated phone): the rail appears once the
+  // workstation registers its adapter (M5). M8 (16:59): fresh quotes start
+  // in the CALIBRATION phase (flow-driven; no step-switching tabs).
   await expect(
-    page.getByRole('button', { name: 'Back to quote' }),
+    page.getByRole('button', { name: 'Workspace menu' }),
     'Auto should resolve the touch presentation for a coarse-pointer phone viewport',
   ).toBeVisible({ timeout: 60_000 });
-  await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 60_000 });
+  await expect(
+    page.locator('[data-testid="calibration-interaction-surface"], [data-testid="outline-editor-surface"]'),
+  ).toBeVisible({ timeout: 60_000 });
   await dismissCookies(page);
   await dismissModals(page);
 }
@@ -167,7 +192,8 @@ async function calibrateManually(page: Page) {
   if (await helpBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
     await helpBtn.click();
   }
-  await page.getByRole('button', { name: 'Calibrate this plan' }).click();
+  // M8 (16:59): a fresh page is ALREADY in the calibration phase — the flow
+  // drives the control set; there is no step-switching UI to click.
   await expect(page.locator('[data-testid="calibration-interaction-surface"]')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('region', { name: 'Calibration' })).toBeVisible();
   await page.getByRole('button', { name: 'Set the scale manually with two points' }).click();
@@ -253,13 +279,14 @@ test.describe('M7 touch presentation @touch', () => {
     const quoteId = await createDigitalQuote(page, slug, 'Journey');
     await openTakeoffTouch(page, slug, quoteId);
 
-    // ── L06/L07 (assertable in emulation) ─────────────────────────────────
+    // ── Calibration (C01 browser tier) — M8: fresh pages open HERE; the
+    // outline controls appear once the flow advances (16:59). ────────────
+    await calibrateManually(page);
+
+    // ── L06/L07 (assertable in emulation — outline phase) ────────────
     await assert48pxGrid(page);
     // L07: armed vs set states are text-distinguishable, not colour-only.
     await expect(page.getByText('Pick an outline below')).toBeVisible();
-
-    // ── Calibration (C01 browser tier) ────────────────────────────────────
-    await calibrateManually(page);
 
     // ── Outline: manual draw → close → save (O01/O03) ─────────────────────
     await page.getByRole('button', { name: 'New manual outline' }).click();
@@ -273,12 +300,18 @@ test.describe('M7 touch presentation @touch', () => {
     await page.getByRole('button', { name: 'Close outline' }).click();
     await expect(page.getByText('Point 4 of 4')).toBeVisible(); // closed review
 
+    // M8 post-accept flow: closing a NEW outline immediately prompts for the
+    // roof-area NAME + PITCH (same desktop semantics/data path, §8.1).
+    const useOutline = page.getByRole('button', { name: 'Use outline', exact: true });
+    await expect(useOutline).toBeVisible({ timeout: 15_000 });
+    // Keep editing to exercise the review rail, then save via Save → form.
+    await page.getByRole('button', { name: 'Keep editing' }).click();
+
     // L07: selection + armed cue text after Adjust.
     await page.getByRole('button', { name: 'Adjust point (re-arm for dragging)' }).click();
     await expect(page.getByText('Drag anywhere to move · release to set')).toBeVisible();
 
     await page.getByRole('button', { name: 'Save outline changes' }).click();
-    const useOutline = page.getByRole('button', { name: 'Use outline', exact: true });
     await expect(useOutline).toBeVisible({ timeout: 15_000 });
     await useOutline.click();
     // Create goes through the EXISTING handleSaveArea flow → area chip appears.
@@ -287,7 +320,10 @@ test.describe('M7 touch presentation @touch', () => {
     // ── Reload → reopen → edit in place (O05, patch_052 RPC, REAL dev DB) ─
     await page.goto(`${BASE_URL}/${slug}/quotes/${quoteId}/takeoff`);
     await page.waitForLoadState('domcontentloaded');
-    await expect(page.getByRole('button', { name: 'Back to quote' })).toBeVisible({ timeout: 60_000 });
+    // M8: the page is calibrated now — re-entry lands straight in the
+    // outline phase (flow-driven).
+    await expect(page.getByRole('button', { name: 'Workspace menu' })).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 60_000 });
     await dismissCookies(page);
     await dismissModals(page);
     const chip = page.getByRole('button', { name: /Area \d{4}/ }).first();
@@ -326,19 +362,29 @@ test.describe('M7 touch presentation @touch', () => {
     const slug = await loginAs(page, 'paid-c');
     const quoteId = await createDigitalQuote(page, slug, 'Guards');
     await openTakeoffTouch(page, slug, quoteId);
+
+    // ── M8 HARD GATE (flow-driven, 16:59): while the page is uncalibrated the
+    //    flow never reaches the outline controls at all — the AI scan offer
+    //    is not merely disabled, it is unreachable (gate logic is pure-tested
+    //    in touchAiOutline.test.ts; the disabled-state render is covered by
+    //    the manual-advance path below in spirit).
+    await expect(page.getByRole('button', { name: 'Scan outline with AI' })).toHaveCount(0);
+
     await calibrateManually(page);
 
     // ── L01/L02-ish: explicit Desktop round-trip; preference stored locally ─
     await page.getByRole('button', { name: 'Workspace menu' }).click();
     await page.getByRole('radio', { name: 'Desktop' }).click();
-    await expect(page.getByRole('button', { name: 'Back to quote' })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Workspace menu' })).toBeHidden();
     const stored = await page.evaluate(() => window.localStorage.getItem('quotecore.takeoff.view-mode.v1'));
     expect(stored).toContain('desktop');
     // M7 escape hatch: desktop presentation keeps a way back to touch.
     // (force: the oversized Fabric upper-canvas sits under the button visually
     //  but Playwright's hit-target check reports it as intercepting.)
-    await page.getByRole('button', { name: 'Switch to touch workspace' }).click({ force: true });
-    await expect(page.getByRole('button', { name: 'Back to quote' })).toBeVisible({ timeout: 15_000 });
+    // M8: DOM click — the oversized Fabric upper-canvas covers the button's
+    // coordinates on phone viewports (a force click dispatches to the canvas).
+    await domClickByLabel(page, 'Switch to touch workspace');
+    await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 15_000 });
 
     // ── L03: 568×320 landscape floor stays operable, data unchanged ───────
     await page.getByRole('button', { name: 'New manual outline' }).click();
@@ -351,6 +397,9 @@ test.describe('M7 touch presentation @touch', () => {
     await page.setViewportSize({ width: 568, height: 320 });
     await expect(page.getByText(/3 points|Point \d of 3/)).toBeVisible(); // draft survives resize (R11)
     await page.getByRole('button', { name: 'Close outline' }).click();
+    // M8: the post-accept name/pitch prompt appears — keep editing for the
+    // dirty-guard section below.
+    await page.getByRole('button', { name: 'Keep editing' }).click();
     await page.setViewportSize({ width: 412, height: 915 });
 
     // ── O16: dirty-draft exit guards ──────────────────────────────────────
@@ -363,10 +412,13 @@ test.describe('M7 touch presentation @touch', () => {
     await page.mouse.move(box!.x + box!.width * 0.54, box!.y + box!.height * 0.5, { steps: 6 });
     await page.mouse.up();
 
-    // Back guard (shell sheet).
+    // Back guard (Menu → Back, shell sheet).
+    await page.getByRole('button', { name: 'Workspace menu' }).click();
     await page.getByRole('button', { name: 'Back to quote' }).click();
     await expect(page.getByRole('dialog', { name: 'Unsaved outline edits' })).toBeVisible();
     await page.getByRole('button', { name: 'Stay', exact: true }).click();
+    // M8: Back lives in the Menu panel — close it to see the outline draft.
+    await page.getByRole('button', { name: 'Workspace menu' }).click();
     await expect(page.getByText(/3 points|Point \d of 3/)).toBeVisible(); // draft kept
 
     // Switch guard (area/new switching).

@@ -10,6 +10,7 @@ import {
   aiOutlineCandidatesFromScanData,
   beginImportedOutlineDraft,
   outlineOnlyScanCharge,
+  outlineScanCalibrationGate,
   resolveAiOutlineApplication,
   type AiOutlineCandidate,
   type AiOutlineScanStart,
@@ -224,4 +225,24 @@ test('O11: manual edits take precedence over other staleness reasons', () => {
   assert.equal(d.action, 'discard');
   if (d.action !== 'discard') return;
   assert.equal(d.reason, 'manual-edits');
+});
+
+// ─── M8: calibration-complete hard gate (owner prescription 2026-09-21) ────
+
+test('M8 gate: scan is blocked while the page is uncalibrated (null scale)', () => {
+  const g = outlineScanCalibrationGate(null);
+  assert.equal(g.allowed, false);
+  if (g.allowed) return;
+  assert.equal(g.reason, 'uncalibrated');
+  assert.ok(g.message.length > 0); // surfaced reason, never silent
+});
+
+test('M8 gate: non-finite / non-positive scales also block (defensive)', () => {
+  assert.equal(outlineScanCalibrationGate({ scale: Number.NaN }).allowed, false);
+  assert.equal(outlineScanCalibrationGate({ scale: 0 }).allowed, false);
+  assert.equal(outlineScanCalibrationGate({ scale: -0.01 }).allowed, false);
+});
+
+test('M8 gate: a completed calibration (positive finite scale) allows the scan', () => {
+  assert.deepEqual(outlineScanCalibrationGate({ scale: 0.01 }), { allowed: true });
 });
