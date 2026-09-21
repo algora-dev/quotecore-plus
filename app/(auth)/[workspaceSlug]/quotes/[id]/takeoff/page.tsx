@@ -6,6 +6,7 @@ import { loadTakeoffHydrationData } from './actions';
 import { notFound } from 'next/navigation';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { companyHasAiCalibration } from '@/app/lib/takeoff/calibrationFlag';
+import { companyHasTakeoffTouch } from '@/app/lib/takeoff/takeoffTouchFlag';
 
 export default async function Page({
   params,
@@ -33,6 +34,18 @@ export default async function Page({
 
   // P2 AI-assisted calibration: per-company flag (defaults false until the P4 migration).
   const aiCalibrationEnabled = await companyHasAiCalibration(profile.company_id);
+
+  // M2: mobile takeoff touch workspace dark-launch flag (patch_051 pattern).
+  const takeoffTouchEnabled = await companyHasTakeoffTouch(profile.company_id);
+
+  // M2 §3.4/L08: compact required-notice lines for the touch top strip. The
+  // full banners in layout.tsx remain untouched; the touch shell surfaces the
+  // same required facts compactly while immersive.
+  const takeoffCompactNotices: string[] = [];
+  if (isOverStorage) takeoffCompactNotices.push('Storage limit reached');
+  if ('isBeingImpersonated' in profile && profile.isBeingImpersonated) {
+    takeoffCompactNotices.push('Impersonation active');
+  }
 
   // AI Takeoff: load company trade + kill switch for the AI Assist button.
   const { data: companyRow } = await supabase
@@ -143,6 +156,8 @@ export default async function Page({
       aiTakeoffAvailable={aiTakeoffAvailable}
       aiAssistPoints={aiAssistPoints}
       aiCalibrationEnabled={aiCalibrationEnabled}
+      takeoffTouchEnabled={takeoffTouchEnabled}
+      takeoffCompactNotices={takeoffCompactNotices}
     />
   );
 }

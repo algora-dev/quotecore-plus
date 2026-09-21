@@ -57,3 +57,40 @@ Known risks / blockers:
 - Outline update-in-place RPC does not exist yet (gap review §6 Q1) — `outline-geometry-update` route in the SavePlan is an intent the M5 adapter must back with a real transactional path (or approved rebuild-on-save semantics).
 - Repo-wide lint failures are pre-existing and out of M1 scope.
 Next phase entry conditions (M2): pure command layer proven (this phase); M2 wires the touch shell + view-mode preference without changing measurement behaviour.
+
+---
+
+## Phase M2 — Stable touch workspace shell and manual view switching
+
+Base commit: `24f4c6e3`. Result commit: this commit (not pushed — owner reviews).
+Status: complete per the M2 task scope (shell + view switching + scene/viewport split + flag; NO M3 gestures, NO M4/M5 calibration/outline flows).
+Existing modules reused:
+- `calibrationFlag.ts` (patch_046) — the exact server-flag pattern copied for `takeoffTouchFlag.ts` (real table + RLS read-own, service-role writes, absence = disabled, never throws).
+- `calibrationCoordinates.ts` — `MAX_CANVAS_DIM` (2000), `Affine2D`, `applyAffine`, `composeAffine`, `invertAffine` reused for the scene/viewport split; no coordinate convention redefined (§10.2 one-transform-owner).
+- M1 `app/lib/takeoff/precision/` module home, `test:precision` script (new tests auto-included).
+New / changed modules:
+- `app/lib/takeoff/precision/viewMode.ts` (+test) — PURE §3.1 logic: Auto heuristic (coarse primary pointer via `(pointer: coarse)` matchMedia + shorter layout-viewport edge ≤ 820 CSS px; UA string and PWA display-mode never used — L02), explicit-preference-always-wins resolution, versioned takeoff-only localStorage key `quotecore.takeoff.view-mode.v1` with shared session-memory fallback (storage failures non-fatal), layout-viewport-only capability reader (visual viewport/keyboard deliberately invisible — L04).
+- `app/lib/takeoff/precision/sceneViewport.ts` (+test) — §2.1 trap 1 / §10 split: `SceneDescriptor` (source-derived, 2000 long-edge cap, feeds AI `canvasDimensions` semantics), `ViewportSize`, `Camera`, scene↔viewport affines, interaction-surface-rect composition (`sceneToClient`), fit camera, pinch camera (§5.4 anchor formula with clamped-zoom translation recompute), linear-part-only remote-drag delta. R11 invariant proven by tests: scene dims and stored geometry identical across desktop/568×320 landscape/portrait viewports and arbitrary cameras; DPR never enters scene math.
+- `app/lib/takeoff/precision/useTakeoffViewMode.ts` — client hook; Auto resolved ONCE at entry (frozen decision → no oscillation on hybrid/keyboard events); explicit switch persists + resolves immediately.
+- `app/lib/takeoff/precision/TouchWorkspaceShell.tsx` — §3.3 shell: top strip (Back / plan label / Calibrate›Outline›Components / compact-notice pill / Save / Menu with the view control), right rail M2 placeholder (Fit plan / Zoom ± / Move plan — disabled; four-button point controller is M3), bottom strip (context hint / Draft / Undo-Redo placeholders). 48×48 targets, 8px gaps, safe-area insets both landscape sides + bottom, `100dvh`, works at 568×320, dismissible portrait hint via `matchMedia('(orientation: portrait)')` — NO CSS rotation, NO orientation lock.
+- `app/lib/takeoff/precision/immersiveWorkspace.tsx` — §3.4 contract: context + `useImmersiveTakeoffAttribute` owning `html[data-takeoff-immersive="touch"]` set/cleanup; globals.css hides ONLY `data-takeoff-chrome` (header, assistant launcher) under that attribute; entitlement/impersonation banners stay in DOM and are additionally surfaced compactly in the top strip (`takeoffCompactNotices` from page.tsx) — L08.
+- `app/lib/takeoff/takeoffTouchFlag.ts` + `backend/supabase/migrations/quotecore_v2_patch_051_takeoff_touch_flag.sql` — `takeoff_touch_feature_flags` table mirroring patch_046 exactly (additive, RLS select-own, service-role-only `set_takeoff_touch_flag` RPC, absence = disabled). NOT applied to Supabase yet — flag default-off everywhere.
+- `TakeoffPage.tsx` — integration point (see below); `page.tsx` reads the flag + builds compact notices; `layout.tsx` gains ONLY `data-takeoff-chrome` attributes/wrappers (zero behavioural change); `globals.css` gains the attribute-scoped hide rules.
+Integration approach chosen: **single-workstation alternative presentation layer** (gap-review recommendation), NOT a second workstation. `TakeoffPage` renders the EXACT original `w-[125%] -ml-[12.5%]` wrapper when the flag is off (no new code paths, desktop bit-for-bit). When the flag is on, `TouchWorkspaceShell` wraps the same workstation: its DOM skeleton (root → mid row → canvas slot → children) is ALWAYS mounted with strips merely `hidden` in desktop presentation, so Desktop ↔ Mobile/touch switching never remounts the workstation (§11.5), and desktop presentation keeps the exact widening classes on the root with `display:contents` intermediates (layout-identical; extra zero-effect wrapper divs are the only DOM delta vs pre-M2 — accepted deviation).
+Schema / compatibility impact: one ADDITIVE migration file (patch_051) shipped but not applied; no existing table touched; flag absence = disabled for every company.
+Requirements and test IDs covered: L01 (Auto fixtures + explicit-wins + persistence round-trip + malformed-value fallback), L02 (PWA display-mode never flips), L04 (layout-viewport-only inputs; frozen Auto), L03 geometry subset (fit at 568×320 landscape + portrait; scene invariance across viewport/camera switches), L08 mechanism (attribute set/cleanup + compact notices), §5.4 pinch anchor + clamp math, §17.4 E delta invariance.
+Commands run and results:
+- `npm run test:precision` → 74 pass / 0 fail (49 M1 + 25 new).
+- `npm run test:calibration` → 202 pass / 0 fail (unchanged).
+- `npx eslint` on all new/changed files → 0 problems.
+- `npm run build` → success.
+Evidence paths: viewMode.test.ts, sceneViewport.test.ts; this commit.
+Physical / live-service tests not run: Playwright e2e (harness targets the deployed dev host only, so uncommitted code cannot be covered); L03/L05/L08 browser-level checks deferred to M3 alongside the spec-required touch E2E projects. Desktop regression (L09) coverage statement: existing suites `e2e/specs/phase-d-quote-takeoff-persistence.spec.ts`, `phase26-multi-page-takeoff.spec.ts`, `takeoff-ai-ui.spec.ts` cover desktop takeoff on the dev host; with the flag off this commit's code path is the original wrapper (verified by code inspection + build), so those suites remain authoritative. Playwright touch projects NOT added (non-trivial vs deployed-host harness — deferred to M3 as permitted).
+Decisions or deviations, with reason:
+1. Integration choice documented above (single workstation, stable skeleton, `contents` intermediates).
+2. Auto decision frozen at entry (no resize listener at all) — spec §3.1 permits retaining the initial presentation; manual switch covers misdetection. Explicit switches re-resolve immediately.
+3. View-mode resolution deferred one microtask post-mount (react-hooks/set-state-in-effect lint) — one-shot external-system sync, not derived cascading state; phones see desktop skeleton for the first frame (workstation itself is `ssr:false` dynamic anyway, so no user-visible canvas flash).
+4. Compact required notices are computed server-side in page.tsx (storage-over-limit, impersonation) rather than read from layout banners — layout.tsx stays server-rendered and untouched behaviourally; M3+ can extend the notice list if other required notices exist.
+5. patch_051 not applied to the database: absence-of-row = disabled keeps every company on desktop until the owner deliberately enables the rollout.
+Known risks / blockers: none blocking M3. Right-rail/bottom-strip actions are disabled placeholders by design (M3 wires the camera + point controller). L02/L03/L05 browser assertions pending M3 e2e.
+Next phase entry conditions (M3): gesture machine + Pointer Events single-owner adapter against this shell; the `sceneViewport` camera math here is its foundation.

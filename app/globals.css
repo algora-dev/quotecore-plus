@@ -610,3 +610,15 @@ a,
     width: 100vw !important;
   }
 }
+
+/* Mobile takeoff immersive touch workspace (M2, spec 2026-09-21 s3.4).
+   Scoped to the <html data-takeoff-immersive="touch"> attribute set only while
+   the touch workspace is mounted (immersiveWorkspace.tsx owns set + cleanup).
+   Hides nonessential app chrome (global header, assistant launcher) in touch
+   view and restores it on exit. Required entitlement/impersonation banners are
+   NOT tagged and stay in the DOM; the touch top strip additionally surfaces
+   them compactly (L08). No effect on any other route or on desktop. */
+html[data-takeoff-immersive='touch'] [data-takeoff-chrome='header'],
+html[data-takeoff-immersive='touch'] [data-takeoff-chrome='assistant'] {
+  display: none;
+}

@@ -154,7 +154,7 @@ export default async function WorkspaceLayout({
             {'isBeingImpersonated' in profile && profile.isBeingImpersonated && (
               <UserImpersonationBanner />
             )}
-            <header className="border-b border-slate-200 bg-white shadow-sm">
+            <header data-takeoff-chrome="header" className="border-b border-slate-200 bg-white shadow-sm">
               {/* Mobile header (below md): Logo | Bell | Inbox | Help | Hamburger */}
               <MobileHeader
                 workspaceSlug={slug}
@@ -215,12 +215,14 @@ export default async function WorkspaceLayout({
             {smartAssistantProps ? (
               /* Smart Assistant launcher replaces the legacy Q widget for
                  flag-on companies. */
+              <div data-takeoff-chrome="assistant">
               <SmartAssistantLauncher
                 workspaceSlug={slug}
                 initialConversations={smartAssistantProps.conversations}
                 assistantName={smartAssistantProps.name}
                 greeting={smartAssistantProps.greeting}
               />
+              </div>
             ) : (
               /*
                 AI Assistant widget. Self-gates on NEXT_PUBLIC_AI_ASSISTANT_V1 -
@@ -228,12 +230,14 @@ export default async function WorkspaceLayout({
                 in-app help surface (legacy Copilot removed); the Help Drawer
                 remains as a deterministic docs fallback.
               */
+              <div data-takeoff-chrome="assistant">
               <AssistantWidget
                 userId={profile.id}
                 companyId={company.id}
                 trade={(company as { default_trade?: string }).default_trade ?? 'roofing'}
                 enabled={assistantEnabled}
               />
+              </div>
             )}
           </div>
         </HelpDrawerLayout>
