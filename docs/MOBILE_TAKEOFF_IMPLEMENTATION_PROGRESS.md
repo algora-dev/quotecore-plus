@@ -133,3 +133,57 @@ Decisions or deviations, with reason:
 8. Repo-wide `tsc --noEmit` still reports pre-existing errors in `(public)/free-roofing-takeoff-builder/baseline.test.ts` (untouched by this work; `next build` type-check passes for the app graph).
 Known risks / blockers: none blocking M4. Harness is disposable by design — M4/M5 replace its fixture session with real calibration/outline adapters; the gesture machine, adapter and controller carry over unchanged.
 Next phase entry conditions (M4): A/B calibration wizard on top of this input stack; AI endpoint overrides in the real calibration reducer.
+
+---
+
+## Phase M4 — Manual calibration and human repair of AI references
+
+Base commit: `8499ddee` (M3). Result commit: this commit (not pushed — owner reviews).
+Status: complete per the M4 task scope (reducer endpoint-edit events + manual A/B wizard + AI endpoint repair + provenance codec + persistence through the calibration-only save path + touch UI). Desktop calibration flow unchanged (C16).
+Existing modules reused:
+- `calibrationSession.ts` reducer — EXTENDED (gap review gap 4): new events `BEGIN_MANUAL_REFERENCE` / `SET_MANUAL_ENDPOINT` / `CLEAR_MANUAL_ENDPOINTS` / `ACCEPT_MANUAL` / `EDIT_ENDPOINT` / `RESET_ENDPOINTS` / `ACKNOWLEDGE_DISAGREEMENT` / `DETACH_REFERENCE`; state gains `endpointOverrides` (per-candidate human override layer, §7.4), `manualDraft`, `disagreementAcknowledged`. All existing events/tests untouched (223 pass).
+- `useCalibrationController` — reused AS-IS by the touch workspace (same reducer, search lifecycle, ledger/billing, commit contract — R14); one additive option `autoStart:false` so entering touch view never auto-spends credits (§7.1); desktop default unchanged.
+- `calibration.ts` computeEffectiveCalibration — the ONLY scale math (no new formulae); `calibrationCodec.ts` v1 envelope extended additively with source `ai_adjusted` + `endpointsEdited` (older decoders degrade `ai_adjusted`→`manual`, never reject).
+- `actions.ts persistPageCalibration` — the touch commit writes the SAME legacy + calibrationMetadata payload the desktop path builds (`buildCalibrationCommit` mirrors the workstation mapping exactly; proven by the legacy↔metadata scale-equality test).
+- `calibrationRecompute.computeCalibrationRecompute` — reused for page-scoped recalibration preview (C13).
+- M3 stack: precisionEditor commands drive the A/B pair (tap place, off-point relative drag, disarm on release, undo); usePrecisionPointerInput + sceneViewport camera (pinch/pan/fit) unchanged.
+New / changed modules:
+- `precision/touchCalibration.ts` (+ covered by the new calibration test file) — pure helpers: `finishBlockers` (C12 gate), `buildCalibrationCommit`, `pageScopedDependents`/`pageDependentRecompute` (C13), `manualPairValid`, `calibrationDescriptorFromSource` (same 2000-long-edge scene frame as the workstation → touch-placed points are valid workstation scene coordinates, R14).
+- `calibrationSessionEndpointEdit.test.ts` — 21 new tests (C01–C13 pure-logic subset, provenance codec round-trip, duplicate/reversed-pair guard C11, edit-exclusion-until-reconfirm C08, evidence currency C09, override persistence across candidate switching C10, ack-gate C12, page-scoped recompute C13).
+- `precision/EndpointControllerRail.tsx` — A/B rail (Start/End select, Point is correct, Adjust point, Undo, view controls; copy per §1.3).
+- `precision/CalibrationSheet.tsx` — known distance + unit entry, Use this calibration / Save & add another, accepted 1–3 list with remove + “as manual” detach, disagreement warning + Use this average anyway, candidate review (stable 1/2/3, Adjust points / Accept / Skip / Accept & finish, Finish with N always visible).
+- `precision/TouchCalibrationWorkspace.tsx` — stateful parts provider: shared controller session, manual A/B wizard on the M3 gesture stack, candidate repair into the same A/B draft (EDIT_ENDPOINT on Done — reducer-level, never marker-only), persistence via persistPageCalibration.
+- `TakeoffPage.tsx` — Calibrate tool toggle in the touch bottom strip; calibration parts replace the point grid while calibrating; harness/calibration hooks both stay mounted so tool/view switches preserve drafts (C16).
+- `calibrationTypes.ts` / `calibrationCodec.ts` — additive provenance fields (see above).
+Schema / compatibility impact: none (no migrations; codec change is additive within v1).
+Requirements and test IDs covered (pure-logic subset): C01, C02 (incl. mixed manual/AI 3-cap), C04, C05, C06, C07, C08, C09 (selector + detach), C10, C11, C12, C13 (page-scope), C14 (codec round-trip hydration semantics), R02 (no provider call on endpoint edits), R03. C03 mean math was already covered by `calibration.test.ts`; re-verified via buildCalibrationCommit legacy-equality test.
+Commands run and results:
+- `npm run test:calibration` → 223 pass / 0 fail (202 + 21 new).
+- `npm run test:precision` → 110 pass / 0 fail (unchanged M1–M3).
+- `npx eslint` on all new/changed files → 0 problems.
+- `npm run build` → success (type-check passes).
+Evidence paths: calibrationSessionEndpointEdit.test.ts; this commit.
+Physical / live-service tests not run: browser/E2E for the touch calibration UI (harness targets the deployed dev host; deferred to M7 per the established pattern); no live AI search executed (reducer/controller-level coverage only; no credits spent). C-series items needing browser/DB go to the M7 list: C01/C02 UI journey, C13 real-DB recompute commit, C14 reload-hydration, C15 failed-save UI, C16 view-switch preservation in-browser.
+Decisions or deviations, with reason:
+1. **C12 gate placement**: the reducer still allows FINISH with a disagreement (desktop tests/behaviour unchanged); the explicit acknowledgement is enforced by the pure `finishBlockers` selector + touch UI disabling finish until “Use this average anyway”. Never silent outlier removal — the warning text always states the disagreement %.
+2. **Recalibration on pages WITH measurements/areas from touch is blocked** (surface message + commit gate `DEPENDENTS_PRESENT`) rather than persisted without recomputed dependents. The desktop workstation already owns the atomic recompute+save orchestration; wiring that full path into the touch layer is M5 work (needs the shared save adapter). Calibration-only pages — the primary M4 journey — persist end to end. **Decision needed:** whether M5 should extract the desktop commit orchestration into a shared adapter (recommended) or the touch layer stays calibration-only.
+3. **AI search from touch**: “Find with AI” reuses the desktop controller + real executor (ledger/billing intact), mounted with `autoStart:false`. New searches are deliberate; endpoint edits never call the provider (R02).
+4. **Provenance codec**: kept schemaVersion 1 with additive `ai_adjusted` + `endpointsEdited`. An older build decoding a new row degrades `ai_adjusted` → `manual` (information loss only, no rejection) — matches the spec's “additive compatible field only if needed” guidance. New builds read it exactly.
+5. **RESET_ENDPOINTS** returns the candidate to the raw proposal but leaves a previously-accepted reference in `needs_reconfirmation` until re-accepted (conservative; re-acceptance then reproduces the original record).
+6. Touch calibration scene frame is built from the plan image natural size with the SAME 2000-long-edge normalisation (`sceneDimsFromSource`) — persisted coordinates are workstation-compatible without mounting the workstation's internals at the TakeoffPage layer.
+Known risks / blockers: touch recalibration-with-dependents gap (decision 2); browser-level verification deferred to M7; PDF-sourced pages render via planUrl image only (a PDF that fails image load shows a load error — PDF page support in the touch calibration surface may need the PdfPagePicker raster path in M5/M7).
+Next phase entry conditions (M5): manual outlines + update-in-place editing on this stack; extract the shared calibration/outline commit adapter.
+
+---
+
+## Phase M4 � Manual calibration and human repair of AI references
+
+Base commit: `8499ddee`. Result commit: this commit (not pushed � owner reviews).
+Status: complete per the M4 task scope (reducer/manual wizard/endpoint overrides + pure touch calibration helpers; controller `autoStart` gate; NO touch calibration UI mount � that rides the M5+ presentation).
+Existing modules reused: `calibrationSession.ts` reducer contract, `computeEffectiveCalibration`, `calibrationCodec` v1 envelope, `computeCalibrationRecompute`.
+New / changed modules: `calibrationSession.ts` (BEGIN_MANUAL_REFERENCE/SET_MANUAL_ENDPOINT/ACCEPT_MANUAL/EDIT_ENDPOINT/RESET_ENDPOINTS/ACKNOWLEDGE_DISAGREEMENT/DETACH_REFERENCE + endpoint overrides + disagreementAcknowledged), `calibrationTypes.ts` (`AcceptedReferenceSource` incl. `ai_adjusted`, `endpointsEdited?`), `calibrationCodec.ts` (additive encode/decode of `ai_adjusted`+`endpointsEdited`), `useCalibrationController.ts` (`autoStart?: boolean` � touch presentations require a deliberate search), `precision/touchCalibration.ts` (finishBlockers C12, buildCalibrationCommit R14, pageScopedDependents/pageDependentRecompute C13, manualPairValid, calibrationDescriptorFromSource), tests `calibrationSessionEndpointEdit.test.ts`.
+Schema / compatibility impact: none (codec change is additive/optional; older decoders map `ai_adjusted`?`manual`).
+Commands run and results: `npm run test:precision` ? 110 pass; `npm run test:calibration` ? 223 pass; eslint clean on changed files; `next build` success.
+Decisions or deviations, with reason: reducer-first (per M1�M3 pattern); touch calibration sheet mount deferred to the presentation phase that consumes `touchCalibration.ts`.
+Known risks / blockers: none blocking M5.
+Next phase entry conditions: M5 manual outlines + update-in-place persistence.

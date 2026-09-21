@@ -1,10 +1,12 @@
 'use client';
 import dynamic from 'next/dynamic';
+import { useMemo, useState } from 'react';
 import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
 import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
 import { useTakeoffViewMode } from '@/app/lib/takeoff/precision/useTakeoffViewMode';
 import { usePrecisionTouchHarness } from '@/app/lib/takeoff/precision/PrecisionTouchHarness';
+import { useTouchCalibration, type TouchCalibrationPageInfo } from '@/app/lib/takeoff/precision/TouchCalibrationWorkspace';
 
 const TakeoffWorkstation = dynamic(
   () => import('./TakeoffWorkstation').then(mod => ({ default: mod.TakeoffWorkstation })),
@@ -98,6 +100,40 @@ export function TakeoffPage({
   const { overlay: precisionOverlay, rail: precisionRail, bottom: precisionBottom } =
     usePrecisionTouchHarness(touchActive);
 
+  // M4: touch calibration tool — replaces the point grid while calibrating
+  // (spec §7). Switching tools mid-edit preserves both drafts (C16): the
+  // harness and calibration hooks stay mounted, only the rendered parts swap.
+  const [touchTool, setTouchTool] = useState<'outline' | 'calibrate'>('outline');
+  const calibrationPage: TouchCalibrationPageInfo | null = useMemo(() => {
+    const p = hydrationData?.pages?.[0] ?? null;
+    if (p) {
+      return {
+        id: initialPageId ?? p.id,
+        imageRevision: p.imageRevision,
+        calibrationMetadata: p.calibrationMetadata,
+        scaleCalibration: p.scaleCalibration,
+      };
+    }
+    return initialPageId
+      ? { id: initialPageId, imageRevision: null, calibrationMetadata: null, scaleCalibration: null }
+      : null;
+  }, [hydrationData, initialPageId]);
+  const pageHasDependents = useMemo(
+    () =>
+      (hydrationData?.measurements?.some((m) => m.pageId === calibrationPage?.id) ?? false) ||
+      (allRoofAreas?.length ?? 0) > 0,
+    [hydrationData, calibrationPage?.id, allRoofAreas],
+  );
+  const calib = useTouchCalibration({
+    active: touchActive && touchTool === 'calibrate',
+    quoteId: quote.id,
+    planUrl,
+    page: calibrationPage,
+    aiEnabled: aiCalibrationEnabled === true,
+    pageHasDependents,
+    onExit: () => setTouchTool('outline'),
+  });
+
   const workstation = (
     <TakeoffWorkstation
       workspaceSlug={workspaceSlug}
@@ -134,13 +170,30 @@ export function TakeoffPage({
     <TouchWorkspaceShell
       active={touchActive}
       planLabel={initialPageName ?? 'Plan'}
-      step="calibrate"
+      step={touchTool === 'calibrate' ? 'calibrate' : 'outline'}
       viewPreference={preference}
       onViewPreferenceChange={setPreference}
       compactNotices={takeoffCompactNotices}
-      overlay={precisionOverlay}
-      rail={precisionRail}
-      bottom={precisionBottom}
+      overlay={touchTool === 'calibrate' ? calib.overlay : precisionOverlay}
+      rail={touchTool === 'calibrate' ? calib.rail : precisionRail}
+      bottom={
+        touchTool === 'calibrate' ? (
+          calib.bottom
+        ) : (
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {precisionBottom}
+            <span className="flex-1" />
+            <button
+              type="button"
+              aria-label="Calibrate this plan"
+              onClick={() => setTouchTool('calibrate')}
+              className="h-12 rounded-full bg-[#FF6B35] px-4 text-xs font-semibold text-white hover:bg-[#e55a28]"
+            >
+              Calibrate
+            </button>
+          </div>
+        )
+      }
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
     >
       {workstation}

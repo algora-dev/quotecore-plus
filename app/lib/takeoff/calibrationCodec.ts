@@ -12,6 +12,7 @@ import {
 import { convertToWorkingUnit } from './calibrationCandidates';
 import type {
   AcceptedReferenceDraft,
+  AcceptedReferenceSource,
   DistanceUnit,
   EffectiveCalibration,
   Point,
@@ -23,7 +24,10 @@ export const CALIBRATION_METADATA_SCHEMA_VERSION = 1 as const;
 /** Serialisable accepted reference as stored in the envelope. */
 export interface StoredReferenceV1 {
   id: string;
-  source: 'manual' | 'ai_confirmed';
+  /** M4: 'ai_adjusted' = AI-origin reference whose endpoints a human moved
+   *  before acceptance (spec §7.4 rule 5). Additive value: older decoders map
+   *  it to 'manual' (graceful information loss, never a decode failure). */
+  source: AcceptedReferenceSource;
   candidateId: string | null;
   referenceId: string | null;
   candidateRevision: number | null;
@@ -33,6 +37,9 @@ export interface StoredReferenceV1 {
   confirmedUnit: DistanceUnit;
   originalLabelText: string | null;
   valueCorrected: boolean;
+  /** M4 (spec §7.4 rule 5): human endpoint edit provenance. Optional so
+   *  pre-M4 envelopes decode unchanged. */
+  endpointsEdited?: boolean;
   /** Recomputed cache only - decoders must recompute, never trust (spec 11.2). */
   pixelDistanceCache: number;
   scaleCache: number;
@@ -145,6 +152,7 @@ export function encodeCalibrationMetadata(
       confirmedUnit: ref.confirmedUnit,
       originalLabelText: ref.originalLabelText,
       valueCorrected: ref.valueCorrected,
+      endpointsEdited: ref.endpointsEdited ?? false,
       pixelDistanceCache: px,
       scaleCache: dist / px, // cache only - decoders recompute from primitives
     };
@@ -226,7 +234,10 @@ function decodeV1(
     }
     accepted.push({
       id: o.id as string,
-      source: o.source === 'ai_confirmed' ? 'ai_confirmed' : 'manual',
+      source:
+        o.source === 'ai_confirmed' || o.source === 'ai_adjusted'
+          ? (o.source as AcceptedReferenceSource)
+          : 'manual',
       candidateId: typeof o.candidateId === 'string' ? o.candidateId : null,
       referenceId: typeof o.referenceId === 'string' ? o.referenceId : null,
       candidateRevision: isFiniteNumber(o.candidateRevision) ? (o.candidateRevision as number) : null,
@@ -236,6 +247,7 @@ function decodeV1(
       confirmedUnit: o.confirmedUnit as DistanceUnit,
       originalLabelText: typeof o.originalLabelText === 'string' ? o.originalLabelText : null,
       valueCorrected: o.valueCorrected === true,
+      endpointsEdited: o.endpointsEdited === true || o.source === 'ai_adjusted',
     });
   });
 

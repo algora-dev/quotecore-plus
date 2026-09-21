@@ -84,6 +84,11 @@ export interface UseCalibrationControllerOptions {
    *  another AI search (P0-4). */
   onFinish: (accepted: readonly AcceptedReferenceDraft[]) => Promise<CalibrationCommitResult> | CalibrationCommitResult;
   onCancel: () => void;
+  /** M4 (mobile spec §7.1): when false the initial search is NOT armed on
+   *  mount — the touch presentation requires a deliberate "Find with AI"
+   *  press so credits are never auto-spent by entering touch view. Defaults
+   *  true (desktop behaviour unchanged). */
+  autoStart?: boolean;
 }
 
 export interface CalibrationSearchOutcome {
@@ -132,6 +137,9 @@ const IDLE_UNINITIALISED: CalibrationSessionState = {
   pendingRound: null,
   searchStrategy: null,
   refineReferenceId: null,
+  endpointOverrides: {},
+  manualDraft: null,
+  disagreementAcknowledged: false,
 };
 
 export function useCalibrationController(options: UseCalibrationControllerOptions): CalibrationController {
@@ -140,6 +148,7 @@ export function useCalibrationController(options: UseCalibrationControllerOption
   const startMode = options.startMode ?? { kind: 'new' } as CalibrationStartMode;
 
   const [state, rawDispatch] = useReducer(calibrationSessionReducer, IDLE_UNINITIALISED);
+  const autoStart = options.autoStart ?? true;
 
   // Start the session lazily on first mount so the controller can be rendered
   // unconditionally by the panel (flag already gated by the parent). The start
@@ -219,6 +228,7 @@ export function useCalibrationController(options: UseCalibrationControllerOption
   // are dropped even if abort failed to stop the server request.
   useEffect(() => {
     const st = state;
+    if (!autoStart && searchTick === 1) return; // deliberate search only (M4/§7.1)
     const retryArm = retryArmRef.current;
     retryArmRef.current = null;
     const armed: SearchStrategy | null =
@@ -345,7 +355,7 @@ export function useCalibrationController(options: UseCalibrationControllerOption
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTick, searchExecutor]);
+  }, [searchTick, searchExecutor, autoStart]);
 
   // P1-10 (Phase E audit 2026-09-20): accumulate EVERY displayed physical
   // reference (reviewed or not) plus accepted references into the exclusion

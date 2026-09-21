@@ -150,9 +150,11 @@ export interface CandidateReview {
   rejectedReason: 'endpoints' | 'wrong_reference' | 'unsure' | null;
 }
 
+export type AcceptedReferenceSource = 'manual' | 'ai_confirmed' | 'ai_adjusted';
+
 export interface AcceptedReferenceDraft {
   id: string;
-  source: 'manual' | 'ai_confirmed';
+  source: AcceptedReferenceSource;
   candidateId: string | null;
   referenceId: string | null;
   candidateRevision: number | null;
@@ -162,6 +164,10 @@ export interface AcceptedReferenceDraft {
   confirmedUnit: DistanceUnit;
   originalLabelText: string | null;
   valueCorrected: boolean;
+  /** M4 (spec §7.4 rule 5): true when a human moved at least one endpoint of
+   *  an AI-origin reference. Additive/optional so existing persisted rows and
+   *  the v1 codec stay compatible. */
+  endpointsEdited?: boolean;
 }
 
 export interface CalibrationReviewState {
