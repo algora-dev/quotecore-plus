@@ -263,3 +263,52 @@ Decisions or deviations, with reason:
 5. Epoch is bumped in the live-sync effect on page/image-revision change â€” the first observation seeds without bumping so normal M5 sessions never see a spurious epoch change.
 Known risks / blockers: none blocking M7. Live-provider response-contract smoke outstanding (disclosed above). Scan replaces the current draft only when no edits happened DURING the scan (a dirty draft at scan start is allowed to be replaced by an explicit user scan action â€” the Â§8.2 guarantee covers edits made during the request).
 Next phase entry conditions (M7): regression/device verification; browser projects; live failure-injection.
+
+---
+
+## Phase M7 — Regression, browser/device verification and owner handoff
+
+Base commit: `de7ef0a4` (M6). Result commit: this commit (not pushed — owner reviews).
+Status: complete per the M7 task scope (gap-closing fixes, browser-level pass on Chromium + WebKit against a LOCAL dev server + the REAL dev Supabase, desktop regression, owner iPhone checklist, evidence-tier report). Physical-device and live-provider evidence intentionally NOT claimed.
+Existing modules reused: M2 shell, M3 gesture stack (machine + Pointer Events adapter + rail), M4 calibration workspace, M5 touchOutlines/adapter, M6 touchAiOutline; `saveTakeoffMeasurements`, `createNewTakeoffArea`, `persistPageCalibration`, patch_046 flag pattern.
+New / changed modules:
+- `usePrecisionPointerInput.ts` — TWO M7 correctness fixes discovered by the browser pass: (1) listeners now attach/re-attach by ELEMENT IDENTITY after every render (the outline overlay mounts late — only after the workstation registers its adapter — and REMOUNTS on tool switches; the old dep-driven effect silently bound nothing or a detached element, so every tap/drag was ignored); (2) presses beginning on DOM controls inside the overlay (sheets/dialogs/forms) no longer engage pointer capture — capture stole their clicks (T09 violation: the Use-outline confirm button never fired).
+- `TouchOutlineEditor.tsx` — ResizeObserver by element identity (same late-mount/remount class of bug — viewport stayed 0×0); overlay renders its OWN plan raster at its own camera (`bg-slate-950`, opaque) via new adapter `getImageUrl()` — marker/plan alignment is by construction, independent of the desktop Fabric canvas; `doSave` no longer fails silently without scale (visible error instead); `requestExternalExit(label, proceed)` + `SwitchTarget 'external'` (workstation-internal switches route through the SAME Save/Discard/Stay guard); M7 pre-scan dirty guard (`pendingScanReplace`: replace/cancel dialog) before an AI scan may replace unsaved edits.
+- `TouchCalibrationWorkspace.ts` — successful calibration commit triggers `router.refresh()` so the workstation (scale owner) sees the new scale in the SAME session.
+- `TakeoffWorkstation.tsx` — adapter `getScale` falls back to the page's OWN hydrated calibration (router.refresh delivers it without a reload); `getImageUrl()`; workstation-internal USER page/area switches (`handleSwitchArea`, `handleSwitchPage`, `handleConfirmSaveAndUploadAnother`) consult the touch dirty-draft guard first (M5 deviation-4 gap closed; flag-off/desktop path unchanged — L09); new-area creation persists its measurement row IMMEDIATELY (touch users cannot reach desktop "Finish and Save", so reload lost the outline — O01); Fabric canvas init gains StrictMode-safe dispose + disposed-guard (dev-only double-mount created a second Canvas on the same element; the orphaned instance then threw `this.lower` and poisoned every later fabricRef call, incl. handleSaveArea).
+- `TouchWorkspaceShell.tsx` — desktop presentation gains a discoverable "Mobile / touch view" escape button (an explicit Desktop choice previously had NO in-app way back to touch).
+- `TakeoffPage.tsx` — wires the touch exit guard into the workstation.
+- `backend/supabase/migrations/quotecore_v2_patch_053_takeoff_pages_update_grant.sql` — REAL release blocker found by the browser pass: `takeoff_pages` had no UPDATE grant for `authenticated`/`anon` (grants for SELECT/INSERT/DELETE + all four RLS policies existed) ? `persistPageCalibration` failed with "permission denied for table takeoff_pages" for EVERY user, everywhere (not touch-specific). APPLIED to Supabase (additive grant, pre-authorised standing permission).
+- `playwright.touch.config.ts` + `e2e/config/localGuard.ts` — dedicated LOOPBACK-ONLY harness (guards http://localhost:<port> and nothing else) with named projects `touch-chromium` (Pixel 7) and `touch-webkit` (iPhone 14 Pro) driving a local `next dev` server (AI_TAKEOFF_ENABLED=true; the provider endpoint is route-mocked). The deployed-host main config is untouched except excluding `@touch` from its mutation project (those specs can only run locally).
+- `e2e/specs/takeoff-touch-precision.spec.ts` (@touch) — the browser pass (see below). Login is a Supabase password-grant + `sb-qcp-auth` cookie injection (UI logins are rate-limited; no deployed-host origin is ever touched).
+- `docs/MOBILE_TAKEOFF_OWNER_IPHONE_CHECKLIST.md` — plain-English owner test checklist (§15.2 adapted) incl. FAIL+screenshot guidance.
+Also applied to Supabase (data, dev DB): patches 051 (touch flag table) + 052 (update-in-place RPC) applied; touch flag ENABLED for the four ordinary E2E companies; `default_trade='roofing'` set for e2e-paid-c + e2e-starter-b (AI chip visibility). No production company has the flag.
+Schema / compatibility impact: patch_053 (additive GRANT, applied). No other schema changes, no new dependencies.
+Requirements and test IDs covered (browser tier, proven this phase): C01 (A?adjust?B?adjust?distance?unit?save?proceeds), C16 (view/tool switching preserves drafts, no remount), O01 (manual journey end-to-end incl. reload), O03 (explicit Close, no precision hit), O05 (reopen?edit?save updates the same target — patch_052 RPC against the REAL dev DB, no duplicate), O16 (Back guard + switch guard + Stay preserves the draft), O04 (mocked scan1 ? imported editable draft), O10 (scan stops after scan1; cost displayed from the canonical constant), L01 (Auto?touch on phone viewport; explicit preference wins + persists — `quotecore.takeoff.view-mode.v1`), L02 (PWA display-mode never consulted; browser tab suffices), L03 (568×320 landscape operable, draft survives resize — R11), L06 (2×2 grid =48×48, non-overlapping, zoom separately labelled), L07 (armed/set/selected states text-distinguishable), plus the M7 pre-scan dirty guard and the workstation-internal switch guard.
+Commands run and results:
+- `npx playwright test -c playwright.touch.config.ts` ? 4 passed / 0 failed (2 × touch-chromium, 2 × touch-webkit; each runs the full create-quote?calibrate?draw?save?reload?reopen?edit?save journey + guards + mocked scan against local dev + real dev DB).
+- `npm run test:precision` ? 143 pass / 0 fail.
+- `npm run test:calibration` ? 223 pass / 0 fail.
+- `npm run test:roof-takeoff` ? 46 pass / 0 fail.
+- `npx eslint` on every new/changed file ? 0 problems (TakeoffWorkstation pre-existing 10 errors/66 problems verified identical at baseline via stash).
+- `npm run build` ? success.
+Evidence paths: this commit; playwright traces/videos under test-results/ + playwright-report/touch-html (run artefacts, not committed).
+SPEC §14.7 EVIDENCE TIERS (honest):
+- Pure tests: PASS (143 + 223 + 46; commands above).
+- Controller / mocked API: PASS (reducer/controller tests in the calibration suite; browser scan1 route-mocked — no provider called, no credits spent).
+- Real DB transaction tests: PASS (partial) — calibration commit (persistPageCalibration), create-area persistence and patch_052 update-in-place all verified against the real dev Supabase in the browser pass. Full failure-injection (O14 mid-transaction abort, O15 RPC bypass) NOT re-run this phase — RPC-side validation is covered by patch_052 code review + M5 pure tests; disclose as outstanding.
+- Chromium touch browser: PASS (2/2).
+- WebKit browser: PASS (2/2).
+- Real iOS browser / PWA: NOT RUN — no hardware available to the agent; owner checklist issued.
+- Real Android browser / PWA: NOT RUN.
+- Real provider integration: NOT RUN (scan1 route-mocked; live smoke still needs funded access).
+- Owner usability review: PENDING (checklist at docs/MOBILE_TAKEOFF_OWNER_IPHONE_CHECKLIST.md).
+Physical / live-service tests not run: everything in §15.1 (remote-drag with a real finger, two-finger pinch, OS gesture cancellation, real rotation, software keyboard, safe-area, fullscreen denial, background/return, PWA install), live AI provider smoke, O14/O15 failure injection against a live DB.
+Decisions or deviations, with reason:
+1. Named touch projects were added to a NEW loopback-guarded config instead of the deployed-host main config: the main harness aborts on localhost by design (mutation safety) and can never cover uncommitted code; the new harness guards localhost-and-nothing-else so the two can never be crossed. Main config additionally excludes @touch.
+2. Emulation honestly ? device: all browser results are touch-emulation evidence; §15 items stay open for the owner.
+3. Five real defects found and FIXED during the pass (pointer-listener late/remount attach, capture-steals-control-clicks, missing takeoff_pages UPDATE grant, touch-created outlines never persisting (no reachable save), silent no-scale save) plus the StrictMode Fabric double-init and missing desktop?touch escape hatch. The Fabric StrictMode fix affects only dev-mode double-mounting; production behaviour is unchanged.
+4. Database changes made under the standing pre-authorisation: patches 051/052/053 applied; E2E-company flag rows + roofing trade set. Nothing enabled for production companies.
+5. Deferred (unchanged from M2-M6): patch_052 O14/O15 live failure injection; WebKit/iOS on-device; keyboard-arrow nudging (§5.7 optional); PDF-page raster path in touch calibration (planUrl image only); the `this.lower` class of issues is fixed but broader Fabric lifecycle refactoring remains out of scope.
+Known risks / blockers: portrait bottom-strip crowding on 412px viewports (chips scroll under the session action buttons — visible in the browser run; needs a UI pass after owner feedback); recalibration-with-dependents still desktop-gated (C13); touch shell Save button is a placeholder (saves happen per-draft; a global touch save remains M8-adjacent polish).
+Next phase entry conditions (M8): owner device sign-off or explicit risk acceptance; then linear components on the same A/B primitive.

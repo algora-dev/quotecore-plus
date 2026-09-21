@@ -99,12 +99,25 @@ export function usePrecisionPointerInput(
     envRef.current = env;
   });
 
+  // M7: attach/re-attach by ELEMENT IDENTITY, checked after every render.
+  // Rationale: the surface can mount LATE (outline overlay mounts only after
+  // the workstation registers its adapter, while `active` was already true)
+  // and can REMOUNT (the outline overlay unmounts while the calibration tool
+  // is active and remounts afterwards). A dependency-driven effect never
+  // re-runs in those cases, leaving the listeners bound to null or to a
+  // detached element — every tap/drag silently ignored. Tracking the attached
+  // element makes re-attachment automatic and idempotent.
+  const attachedSurfaceRef = useRef<HTMLElement | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => {
-    if (!active) return;
-    const surface = surfaceRef.current;
-    if (!surface) return;
+    const attach = () => {
+      if (!active) return;
+      const surface = surfaceRef.current;
+      if (!surface || attachedSurfaceRef.current === surface) return;
+      cleanupRef.current?.();
+      attachedSurfaceRef.current = surface;
 
-    surface.style.touchAction = 'none'; // ONLY this surface (§5.6)
+      surface.style.touchAction = 'none'; // ONLY this surface (§5.6)
 
     const toSurfacePoint = (ev: PointerEvent): Point => {
       const rect = surface.getBoundingClientRect();
@@ -222,6 +235,12 @@ export function usePrecisionPointerInput(
     };
 
     const onPointerDown = (ev: PointerEvent) => {
+      // T09 (M7 fix): DOM controls (sheets, dialogs, forms) mounted INSIDE the
+      // overlay must own their input. Engaging pointer capture for a press on
+      // such a control would retarget the whole pointer sequence — including
+      // the click — to the surface, so button handlers would never fire.
+      // Only presses that begin on the surface itself own the gesture.
+      if (ev.target !== surface) return;
       if (ev.button !== 0 && ev.pointerType === 'mouse') return; // explicit mouse-left rule (§5.6)
       try {
         surface.setPointerCapture(ev.pointerId);
@@ -260,7 +279,7 @@ export function usePrecisionPointerInput(
     const ro = new ResizeObserver(() => dispatch({ type: 'layoutInterrupt' }));
     ro.observe(surface);
 
-    return () => {
+    const detach = () => {
       surface.removeEventListener('pointerdown', onPointerDown);
       surface.removeEventListener('pointermove', onPointerMove);
       surface.removeEventListener('pointerup', onPointerUp);
@@ -274,7 +293,27 @@ export function usePrecisionPointerInput(
       frozenRef.current = null;
       setPhase('idle');
     };
-  }, [active, surfaceRef]);
+    cleanupRef.current = detach;
+    };
+
+    if (active) {
+      attach();
+    } else {
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+      attachedSurfaceRef.current = null;
+    }
+  });
+
+  // Final unmount: dispose owned listeners/captures/RAF (T16).
+  useEffect(
+    () => () => {
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+      attachedSurfaceRef.current = null;
+    },
+    [],
+  );
 
   return phase;
 }

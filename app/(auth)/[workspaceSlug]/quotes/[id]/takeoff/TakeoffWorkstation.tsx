@@ -206,6 +206,15 @@ interface Props {
   /** M5: registers the touch-outline bridge adapter (single data owner stays
    *  this workstation — the touch presentation only reads/calls back, R14). */
   onTouchOutlineAdapter?: (adapter: TouchOutlineAdapter) => void;
+  /** M7 (O16, closing the M5 deviation-4 gap): when provided (touch view
+   *  active with a live outline editor), user-initiated page/area switches
+   *  and upload-another consult this guard so a dirty touch draft is never
+   *  silently invalidated by a page change. Undefined = legacy behaviour,
+   *  bit-for-bit (L09). */
+  touchExitGuard?: {
+    isDirty: () => boolean;
+    request: (label: string, proceed: () => void) => void;
+  };
 }
 
 const MAX_CANVAS_DIM = 2000; // Max longest edge for dynamic canvas sizing
@@ -294,6 +303,7 @@ export function TakeoffWorkstation({
   aiAssistPoints = null,
   aiCalibrationEnabled = false,
   onTouchOutlineAdapter,
+  touchExitGuard,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1216,6 +1226,15 @@ export function TakeoffWorkstation({
   const handleSwitchArea = useCallback(async (targetAreaId: string, targetPageId?: string) => {
     if (targetAreaId === activeAreaId) return;
 
+    // M7 (O16): a dirty touch outline draft is resolved through the shared
+    // guard BEFORE the page/area context changes under it.
+    if (touchExitGuardRef.current?.isDirty()) {
+      touchExitGuardRef.current.request('Switch roof area', () => {
+        void handleSwitchArea(targetAreaId, targetPageId);
+      });
+      return;
+    }
+
     // Discard any in-progress drawing before switching areas
     discardInProgressDrawing();
 
@@ -1418,6 +1437,15 @@ export function TakeoffWorkstation({
   const handleSwitchPage = useCallback(async (targetPageId: string) => {
     const targetIndex = pages.findIndex(p => p.id === targetPageId);
     if (targetIndex < 0 || targetIndex === currentPageIndex) return;
+
+    // M7 (O16): guard the touch dirty draft before the page context (and
+    // with it the edit context epoch) changes under an open draft.
+    if (touchExitGuardRef.current?.isDirty()) {
+      touchExitGuardRef.current.request('Switch plan page', () => {
+        void handleSwitchPage(targetPageId);
+      });
+      return;
+    }
 
     // Discard any in-progress drawing before switching pages
     discardInProgressDrawing();
@@ -1894,6 +1922,33 @@ export function TakeoffWorkstation({
               setActiveAreaId(newDbAreaId);
               activeAreaIdRef.current = newDbAreaId; // sync ref for canvas handlers
               setActiveSaveRoofAreaId(newDbAreaId);
+              // M7 (O01 touch journey): a touch-created outline cannot reach the
+              // desktop "Finish and Save" (the touch shell's Save is not the
+              // workstation save), so the new polygon's measurement row must
+              // persist IMMEDIATELY — otherwise reload loses the outline.
+              // Mirrors the outgoing-area auto-save pattern exactly.
+              try {
+                const pageDbId = pages[currentPageIndex]?.id ?? null;
+                const persistNew = await saveTakeoffMeasurements(
+                  quote.id,
+                  [{
+                    componentId: null, type: 'area' as const, value: stampedNewArea.area,
+                    pitch: stampedNewArea.pitch, name: stampedNewArea.name,
+                    points: stampedNewArea.points, visible: true, pageId: pageDbId,
+                    quoteRoofAreaId: newDbAreaId,
+                  }],
+                  outgoingCalibrations[0]?.unit || 'feet',
+                  undefined, undefined,
+                  pageDbId, sessionVersionRef.current,
+                  newDbAreaId,
+                  outgoingCalibrations.length > 0 ? outgoingCalibrations : null,
+                );
+                if (persistNew.success) {
+                  updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+                }
+              } catch (persistErr) {
+                console.warn('[handleSaveArea] New-area immediate persist failed (will flush on next save):', persistErr);
+              }
               // Reset Phase 6 state
               setPendingNewAreaIsExisting(false);
               setPendingNewAreaTargetId(null);
@@ -3101,6 +3156,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (uploadAnotherTarget === 'existing' && !uploadAnotherAreaId) {
       setUploadAnotherError('Please select an area to add measurements to.'); return;
     }
+    // M7 (O16): uploading another plan switches the active page afterwards —
+    // resolve a dirty touch draft through the shared guard first.
+    if (touchExitGuardRef.current?.isDirty()) {
+      touchExitGuardRef.current.request('Upload another plan', () => {
+        void handleConfirmSaveAndUploadAnother();
+      });
+      return;
+    }
     // Phase 7: no name validation for 'new' - name collected after drawing
     setIsUploadingPage(true);
     try {
@@ -3369,7 +3432,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const touchEpochKeyRef = useRef<string | null>(null);
   const touchOutlineScanAbortRef = useRef<AbortController | null>(null);
 
+  // M7 (O16): the touch dirty-draft guard supplied by TakeoffPage. Kept in a
+  // ref so the guarded handlers (page switch, area switch, upload-another)
+  // always consult the latest guard object without re-creating callbacks.
+  const touchExitGuardRef = useRef<
+    { isDirty: () => boolean; request: (label: string, proceed: () => void) => void } | null
+  >(null);
+  touchExitGuardRef.current = touchExitGuard ?? null;
+
   const touchOutlineAdapterRef = useRef<TouchOutlineAdapter | null>(null);
+  // M7: hydration snapshot for the adapter's scale fallback — a calibration
+  // saved by the touch calibration layer updates the SERVER data (and, via
+  // router.refresh, this prop) even though the workstation's own `calibrations`
+  // state only restores on mount/reload.
+  const touchHydrationRef = useRef<typeof hydrationData>(hydrationData);
+  touchHydrationRef.current = hydrationData;
   if (touchOutlineAdapterRef.current == null) {
     touchOutlineAdapterRef.current = {
       getAreas: () => {
@@ -3403,15 +3480,33 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       },
       getScale: () => {
         const calibrations = touchOutlineLiveRef.current?.calibrations ?? [];
-        if (calibrations.length === 0) return null;
-        try {
-          return {
-            scale: effectiveScaleFromLegacyCalibrations(calibrations),
-            unit: calibrations[0]?.unit ?? 'feet',
-          };
-        } catch {
-          return null;
+        if (calibrations.length > 0) {
+          try {
+            return {
+              scale: effectiveScaleFromLegacyCalibrations(calibrations),
+              unit: calibrations[0]?.unit ?? 'feet',
+            };
+          } catch {
+            return null;
+          }
         }
+        // M7 fallback: read the page's OWN hydrated calibration so a scale
+        // saved in THIS session (touch calibration → router.refresh) is
+        // visible to outline saves without a full reload.
+        const pageId = currentPageIdRef.current;
+        const hp = touchHydrationRef.current?.pages?.find((p) => p.id === pageId) ?? null;
+        const legacy = hp?.scaleCalibration;
+        if (Array.isArray(legacy) && legacy.length > 0) {
+          try {
+            return {
+              scale: effectiveScaleFromLegacyCalibrations(legacy),
+              unit: legacy[0]?.unit ?? 'feet',
+            };
+          } catch {
+            return null;
+          }
+        }
+        return null;
       },
       getScene: () => {
         const dims = touchOutlineLiveRef.current?.canvasDims ?? { width: 2000, height: 1700 };
@@ -3421,6 +3516,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           imageRevision: touchOutlineLiveRef.current?.pageImageRevision ?? null,
         };
       },
+      // M7: the touch overlay renders its own plan raster at its own camera.
+      getImageUrl: () => touchOutlineLiveRef.current?.currentImageUrl ?? null,
       updateOutline: async (intent) => {
         const live = touchOutlineLiveRef.current;
         const pageId = currentPageIdRef.current;
@@ -3735,10 +3832,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
     fabricRef.current = canvas;
 
+    // M7 local-dev fix: React StrictMode (dev only) unmounts/remounts the
+    // component once on mount. Without cleanup the remount created a SECOND
+    // Canvas on the same DOM element; the orphaned first instance then threw
+    // ("Cannot destructure property 'el' of 'this.lower'") inside its image
+    // onload, breaking every later fabricRef call — including the touch
+    // adapter's handleSaveArea — for the whole local session. Disposing on
+    // unmount + a disposed guard restores the one-instance invariant.
+    let canvasDisposed = false;
+
     // Load roof plan image using native Image (handles CORS automatically)
     const imgElement = new Image();
     imgElement.crossOrigin = 'anonymous';
     imgElement.onload = () => {
+      if (canvasDisposed) return;
       // Dynamic canvas sizing: canvas = processed image dimensions, flush top-left.
       const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
       canvas.setDimensions({ width: dims.width, height: dims.height });
@@ -4345,6 +4452,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // (e.g. a Next route remount) gets a fresh canvas. We don't reset on
       // re-renders - those are exactly what we're guarding against.
       canvasInitedRef.current = false;
+      // M7 local-dev fix (StrictMode): dispose the Fabric instance so a dev
+      // remount never stacks a second Canvas on the same DOM element.
+      canvasDisposed = true;
+      if (fabricRef.current === canvas) fabricRef.current = null;
+      try { void canvas.dispose(); } catch { /* already gone */ }
       // Clean up AI scan on unmount
       if (aiAbortRef.current) aiAbortRef.current.abort();
     };

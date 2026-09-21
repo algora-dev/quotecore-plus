@@ -66,7 +66,9 @@ export default defineConfig({
     {
       name: 'mutation',
       testMatch: /.*\.spec\.ts/,
-      grepInvert: /@read-only|@mobile/,
+      // M7: @touch specs run only under playwright.touch.config.ts (local
+      // loopback harness) — never against the deployed host.
+      grepInvert: /@read-only|@mobile|@touch/,
     },
     {
       name: 'read-only',

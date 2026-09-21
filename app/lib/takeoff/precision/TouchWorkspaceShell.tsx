@@ -334,6 +334,22 @@ export function TouchWorkspaceShell({
         </div>
       )}
 
+      {/* M7 (§3.1): desktop presentation keeps a discoverable way BACK to the
+          touch workspace — without this an explicit Desktop choice on a phone
+          had no in-UI return path (the shell strips that host the Menu are
+          hidden in desktop presentation). Fixed-position so the desktop
+          layout itself is unchanged. */}
+      {!active && (
+        <button
+          type="button"
+          aria-label="Switch to touch workspace"
+          onClick={() => onViewPreferenceChange('mobile-touch')}
+          className="fixed bottom-4 right-4 z-[9999] inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-lg hover:bg-orange-50"
+        >
+          Mobile / touch view
+        </button>
+      )}
+
       {/* Menu sheet — workspace view control always reachable (§3.1). */}
       {active && menuOpen && (
         <div className="absolute inset-0 z-20 flex items-start justify-end p-2" role="dialog" aria-label="Workspace menu">

@@ -166,6 +166,14 @@ export function TakeoffPage({
       aiAssistPoints={aiAssistPoints}
       aiCalibrationEnabled={aiCalibrationEnabled}
       onTouchOutlineAdapter={registerAdapter}
+      touchExitGuard={
+        touchActive
+          ? {
+              isDirty: () => outlineEditor.exitGuard.dirty,
+              request: (label, proceed) => outlineEditor.requestExternalExit(label, proceed),
+            }
+          : undefined
+      }
     />
   );
 

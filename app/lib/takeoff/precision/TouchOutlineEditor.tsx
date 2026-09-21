@@ -93,6 +93,10 @@ export interface TouchOutlineAdapter {
   getScale(): { scale: number; unit: 'feet' | 'meters' } | null;
   /** Scene descriptor (2000-cap long edge) of the current plan image. */
   getScene(): SceneDescriptor;
+  /** M7: signed plan image URL for the current page (the touch overlay
+   *  renders its own raster at its own camera — alignment with the plan is
+   *  by construction, independent of the desktop Fabric canvas below). */
+  getImageUrl(): string | null;
   /** Update-in-place save: routes to actions.ts updateTakeoffAreaGeometry
    *  and applies the acknowledged result to the workstation's own state. */
   updateOutline(intent: Extract<OutlineSaveIntent, { kind: 'update-in-place' }>): Promise<
@@ -121,9 +125,18 @@ export interface TouchOutlineEditorParts {
     onSave: () => void;
     onDiscard: () => void;
   };
+  /** M7 (O16, M5 deviation-4 close): route workstation-internal page/area
+   * switches through the SAME dirty-draft guard. When a touch outline
+   * draft is dirty, `requestExternalExit` opens the Save/Discard/Stay sheet
+   * and runs `proceed` only after the user resolves it (save success or
+   * discard); when clean it runs `proceed` immediately. */
+  requestExternalExit: (label: string, proceed: () => void) => void;
 }
 
-type SwitchTarget = { kind: 'area'; area: SavedOutlineRecord } | { kind: 'new' };
+type SwitchTarget =
+  | { kind: 'area'; area: SavedOutlineRecord }
+  | { kind: 'new' }
+  | { kind: 'external'; label: string; proceed: () => void };
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'failed';
 
@@ -154,6 +167,7 @@ export function useTouchOutlineEditor(
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<SwitchTarget | null>(null);
+  const pendingSwitchRef = useRef<SwitchTarget | null>(pendingSwitch);
 
   // ── M6: AI outline scan → editable imported draft (§8.2, O04/O10/O11) ──
   const [scanState, setScanState] = useState<ScanState>('idle');
@@ -163,6 +177,9 @@ export function useTouchOutlineEditor(
   const [offerOpen, setOfferOpen] = useState(false);
   const [createDefaults, setCreateDefaults] = useState<{ name: string; pitch: number } | null>(null);
   const scanStartRef = useRef<ScanStartSnapshot | null>(null);
+  // M7 pre-scan dirty guard (§8.2): true while the replace/cancel dialog is
+  // open because the current draft has unsaved edits.
+  const [pendingScanReplace, setPendingScanReplace] = useState(false);
 
   const [camera, setCamera] = useState<Camera | null>(null);
   const cameraRef = useRef<Camera | null>(camera);
@@ -170,6 +187,7 @@ export function useTouchOutlineEditor(
     sessionRef.current = session;
     cameraRef.current = camera;
     adapterRef.current = getAdapter();
+    pendingSwitchRef.current = pendingSwitch;
   });
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [fineOpen, setFineOpen] = useState(false);
@@ -196,17 +214,24 @@ export function useTouchOutlineEditor(
   }, [active, dirty]);
 
   // Viewport measurement + fit (M3 pattern).
+  // M7: observe by element identity (checked after every render) — the
+  // overlay surface can mount late and remount on tool switches, and a
+  // dependency-driven effect would keep observing a detached element.
+  const roAttachedRef = useRef<Element | null>(null);
+  const roCleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => {
-    if (!active) return;
     const el = surfaceRef.current;
-    if (!el) return;
+    if (!active || !el || roAttachedRef.current === el) return;
+    roCleanupRef.current?.();
+    roAttachedRef.current = el;
     const ro = new ResizeObserver(() => {
       const rect = el.getBoundingClientRect();
       setViewport({ width: rect.width, height: rect.height });
     });
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [active]);
+    roCleanupRef.current = () => ro.disconnect();
+  });
+  useEffect(() => () => { roCleanupRef.current?.(); }, []);
 
   useEffect(() => {
     if (!active) return;
@@ -266,7 +291,7 @@ export function useTouchOutlineEditor(
         return s?.selection.moveArmed ? s.selection.vertexId : null;
       },
       canAppend: () => sessionRef.current != null && !sessionRef.current.draft.closed,
-      getCamera: () => cameraRef.current ?? fitCamera(scene, viewport),
+      getCamera: () => cameraRef.current ?? (viewport.width > 0 ? fitCamera(scene, viewport) : { zoom: 1, tx: 0, ty: 0 }),
       getScenePoint: (id: string) =>
         sessionRef.current?.draft.vertices.find((v) => v.id === id)?.point ?? null,
     }),
@@ -450,6 +475,19 @@ export function useTouchOutlineEditor(
     setCreateDefaults(null);
   }, []);
 
+  /** M7 (O16): workstation-internal switches (page dropdown, area switcher,
+   *  upload-another) route through the same guard as area/new switching. */
+  const requestExternalExit = useCallback(
+    (label: string, proceed: () => void) => {
+      if (dirty) {
+        setPendingSwitch({ kind: 'external', label, proceed });
+        return;
+      }
+      proceed();
+    },
+    [dirty],
+  );
+
   /** Switching selection with a dirty draft: Save/Discard/Stay (O16). */
   const requestSwitch = useCallback(
     (target: { kind: 'area'; area: SavedOutlineRecord } | { kind: 'new' }) => {
@@ -467,7 +505,15 @@ export function useTouchOutlineEditor(
     const adapter = adapterRef.current;
     const s = sessionRef.current;
     const context = adapter?.getEditContext();
-    if (!adapter || !s || !context || !scale) return;
+    if (!adapter || !s || !context || !scale) {
+      // M7: never fail silently — the user must know WHY nothing happened
+      // (missing scale in particular: calibrate this page first).
+      if (adapter && s && context && !scale) {
+        setSaveState('failed');
+        setSaveError('Set the scale first — tap Calibrate, then save the outline.');
+      }
+      return;
+    }
     const result = outlineSaveIntent(s, context, scale, {
       sceneWidth: scene.width,
       sceneHeight: scene.height,
@@ -513,6 +559,10 @@ export function useTouchOutlineEditor(
         );
         setSaveState('saved');
         setPendingSwitch(null);
+        // M7: an external action (workstation page/area switch) that was
+        // gated on this save proceeds only AFTER the acknowledged commit.
+        const pending = pendingSwitchRef.current;
+        if (pending?.kind === 'external') pending.proceed();
       } else {
         setSaveState('failed');
         setSaveError(r.staleVersion ? `${r.error} Your edits are kept.` : r.error); // O13
@@ -541,6 +591,12 @@ export function useTouchOutlineEditor(
       setSession(null); // draft consumed by the create flow
       setSelectionMode('idle');
       setSaveState('saved');
+      // M7: resolve a pending external exit the same way as the
+      // update-in-place path — only after the create actually committed
+      // through the existing flow.
+      const pending = pendingSwitchRef.current;
+      setPendingSwitch(null);
+      if (pending?.kind === 'external') pending.proceed();
     },
     [scale, scene],
   );
@@ -568,10 +624,10 @@ export function useTouchOutlineEditor(
     [],
   );
 
-  const startScan = useCallback(async () => {
+  const runScan = useCallback(async () => {
     const adapter = adapterRef.current;
     const context = adapter?.getEditContext();
-    if (!adapter || !context || scanState === 'scanning') return;
+    if (!adapter || !context) return;
     const s = sessionRef.current;
     setScanState('scanning');
     setScanError(null);
@@ -631,7 +687,20 @@ export function useTouchOutlineEditor(
     }
     setScanState('idle');
     importCandidate(candidates[0], candidates, 0, current);
-  }, [importCandidate, scanState]);
+  }, [importCandidate]);
+
+  /** M7 pre-scan dirty guard (§8.2): an explicit scan may replace the current
+   *  draft, but never silently over unsaved edits — ask replace/cancel first. */
+  const startScan = useCallback(async () => {
+    const adapter = adapterRef.current;
+    const context = adapter?.getEditContext();
+    if (!adapter || !context || scanState === 'scanning') return;
+    if (dirty) {
+      setPendingScanReplace(true);
+      return;
+    }
+    await runScan();
+  }, [dirty, runScan, scanState]);
 
   /** Continue: accept the imported outline AS-IS through the same M5
    *  create-new terminal path (adapter.createOutline → handleSaveArea).
@@ -657,13 +726,32 @@ export function useTouchOutlineEditor(
 
   // ─── overlay (single gesture owner; desktop never mounts it) ─────────────
 
+  const imageUrl = adapterRef.current?.getImageUrl() ?? null;
+
   const overlay = active ? (
     <div
       ref={surfaceRef}
       data-testid="outline-editor-surface"
-      className="absolute inset-0 z-10"
+      className="absolute inset-0 z-10 overflow-hidden bg-slate-950"
       style={{ touchAction: 'none' }}
     >
+      {/* M7: the overlay renders its OWN plan raster at its own camera —
+          alignment between image and markers is by construction and never
+          depends on the desktop Fabric canvas underneath (which may be
+          panned/zoomed independently or unavailable). */}
+      {camera && imageUrl && (
+        <div
+          className="pointer-events-none absolute left-0 top-0"
+          style={{
+            transform: `translate(${camera.tx}px, ${camera.ty}px) scale(${camera.zoom})`,
+            transformOrigin: '0 0',
+            width: scene.width,
+            height: scene.height,
+          }}
+        >
+          <img src={imageUrl} alt="Plan page" draggable={false} className="h-full w-full select-none" />
+        </div>
+      )}
       {camera && draft && (
         <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
           <polygon
@@ -707,11 +795,18 @@ export function useTouchOutlineEditor(
         </svg>
       )}
 
-      {/* O16: dirty-draft switch guard — Save / Discard / Stay. */}
+      {/* O16: dirty-draft switch guard — Save / Discard / Stay. Also hosts
+          M7 external switches (workstation page/area switch, upload-another)
+          and the M7 pre-scan replace guard shares this slot via
+          pendingScanReplace below. */}
       {pendingSwitch && (
         <div className="absolute inset-x-2 bottom-2 z-20 rounded-xl bg-slate-800/95 p-3 text-xs text-slate-100 shadow-lg">
           <div className="mb-2 font-semibold">Unsaved outline edits</div>
-          <div className="mb-2 text-slate-300">Save them before switching, or discard to restore the saved outline.</div>
+          <div className="mb-2 text-slate-300">
+            {pendingSwitch.kind === 'external'
+              ? `Save them before continuing (“${pendingSwitch.label}”), or discard to restore the saved outline.`
+              : 'Save them before switching, or discard to restore the saved outline.'}
+          </div>
           <div className="flex gap-2">
             <button
               type="button"
@@ -730,7 +825,8 @@ export function useTouchOutlineEditor(
                 cancelDraft();
                 setPendingSwitch(null);
                 if (target.kind === 'area') openAreaDraft(target.area);
-                else startNewDraft();
+                else if (target.kind === 'new') startNewDraft();
+                else target.proceed();
               }}
             >
               Discard
@@ -741,6 +837,43 @@ export function useTouchOutlineEditor(
               onClick={() => setPendingSwitch(null)}
             >
               Stay
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* M7 (§8.2 pre-scan guard): starting an AI outline scan while a touch
+          outline draft has unsaved edits asks replace/cancel — the scan
+          result replaces the CURRENT draft, so an unacknowledged replacement
+          must be explicit, never automatic. */}
+      {pendingScanReplace && (
+        <div
+          role="dialog"
+          aria-label="Replace unsaved outline edits"
+          className="absolute inset-x-2 bottom-2 z-20 rounded-xl bg-slate-800/95 p-3 text-xs text-slate-100 shadow-lg"
+        >
+          <div className="mb-1 font-semibold">Unsaved outline edits</div>
+          <div className="mb-2 text-slate-300">
+            Scanning replaces your current outline draft. Replace it and scan, or cancel to keep editing.
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="h-12 min-w-12 flex-1 rounded-full bg-[#FF6B35] px-3 text-xs font-semibold text-white"
+              onClick={() => {
+                setPendingScanReplace(false);
+                cancelDraft();
+                void runScan();
+              }}
+            >
+              Replace and scan
+            </button>
+            <button
+              type="button"
+              className="h-12 min-w-12 flex-1 rounded-full border border-white/20 px-3 text-xs font-semibold text-slate-200"
+              onClick={() => setPendingScanReplace(false)}
+            >
+              Cancel
             </button>
           </div>
         </div>
@@ -1009,6 +1142,7 @@ export function useTouchOutlineEditor(
     overlay,
     rail,
     bottom,
+    requestExternalExit,
     exitGuard: {
       dirty,
       onSave: () => {

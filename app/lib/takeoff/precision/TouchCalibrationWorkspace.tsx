@@ -18,6 +18,7 @@
 // is not wired here yet (M5) — never a silent partial write.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Point } from '../calibrationTypes';
 import type { AcceptedReferenceDraft, DistanceUnit, WorkingUnit } from '../calibrationTypes';
 import {
@@ -152,6 +153,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
     [existing.refs],
   );
 
+  const router = useRouter();
   // ── Persistence through the EXISTING calibration-only save path (§7.6) ────
   const commit = useCallback(
     async (accepted: readonly AcceptedReferenceDraft[]): Promise<CalibrationCommitResult> => {
@@ -172,10 +174,14 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
       );
       const res = await persistPageCalibration(quoteId, page.id, payload.legacy, payload.metadata);
       if (!res.success) return commitFailed('COMMIT_FAILED', `The calibration could not be saved: ${res.error}`);
+      // M7: the workstation (single data owner) must learn the new scale in
+      // THIS session — otherwise outline saves silently no-op until reload.
+      // A server refresh re-hydrates the page (including calibrationMetadata)
+      // without remounting any client state.
+      router.refresh();
       return commitSucceeded();
     },
-    [page, pageHasDependents, quoteId, workingUnit],
-  );
+    [page, pageHasDependents, quoteId, workingUnit, router]);
 
   const controller = useCalibrationController({
     quoteId,
