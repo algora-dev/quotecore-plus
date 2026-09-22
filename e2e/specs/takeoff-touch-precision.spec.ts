@@ -66,10 +66,16 @@ async function calibrateManually(page: Page) {
   await sheet.locator('select').selectOption('m');
   await tapControl(page, page.getByRole('button', { name: 'Use this calibration and finish' }), 'Use this calibration and finish');
 
-  // U0: entry-phase-race dead-end recovery — when the first-ever entry
-  // raced the page-1 row creation, the commit fails ("No takeoff page
-  // exists for this plan yet"). Reload (the row now exists) and redo once.
-  if (!(await page.getByText('Scale saved.', { exact: false }).isVisible({ timeout: 8000 }).catch(() => false))) {
+  // U1 (2026-09-22): with the N1/N2 fixes the commit succeeds FIRST TRY and
+  // the flow auto-advances to the outline phase (unmounting the calibration
+  // rail + its "Scale saved." line). Success = acknowledged save OR the flow
+  // having advanced to the outline surface.
+  const savedOrAdvanced = async (timeout = 8000) =>
+    await Promise.race([
+      page.getByText('Scale saved.', { exact: false }).waitFor({ timeout }).then(() => 'saved' as const, () => 'timeout' as const),
+      page.locator('[data-testid="outline-editor-surface"]').waitFor({ timeout }).then(() => 'advanced' as const, () => 'timeout' as const),
+    ]);
+  if ((await savedOrAdvanced()) === 'timeout') {
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
     await waitForTouchWorkspace(page);
@@ -93,7 +99,13 @@ async function calibrateManually(page: Page) {
     await sheet2.locator('select').selectOption('m');
     await tapControl(page, page.getByRole('button', { name: 'Use this calibration and finish' }), 'Use this calibration and finish (retry)');
   }
-  await expect(page.getByText('Scale saved.', { exact: false })).toBeVisible({ timeout: 30_000 });
+  const outcome = await savedOrAdvanced(30_000);
+  if (outcome === 'advanced') {
+    // Flow already advanced past calibration: the surface IS the outline
+    // editor. No Close-calibration step exists in this state.
+    await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 30_000 });
+    return;
+  }
   await page.waitForTimeout(2500);
   await tapControl(page, page.getByRole('button', { name: 'Close calibration' }), 'Close calibration');
   await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 30_000 });

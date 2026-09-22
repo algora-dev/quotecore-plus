@@ -26,8 +26,10 @@
 // carries the exact original `w-[125%] -ml-[12.5%]` widening classes — the
 // desktop layout is bit-for-bit (extra contents-divs only, no layout effect).
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useImmersiveTakeoffAttribute } from './immersiveWorkspace';
+import { useVisualViewportBounds } from './useVisualViewportBounds';
 import type { WorkspaceViewPreference } from './viewMode';
 import {
   installTakeoffDiagnostics,
@@ -124,6 +126,17 @@ export function TouchWorkspaceShell({
 }: TouchWorkspaceShellProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  // U1: portal-mounted controls need a post-mount flag (SSR safety).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  // U1 (plan section 3.2): pin the overlay root to the VISUAL viewport, not
+  // just the 100dvh layout-viewport assumption. Null = unsupported/pre-mount,
+  // CSS fallback stays in place. Bounds are consumed HERE only - never passed
+  // into scene-camera maths or saved geometry.
+  const viewportBounds = useVisualViewportBounds(active);
   const [backGuardOpen, setBackGuardOpen] = useState(false);
   const [portraitHintDismissed, setPortraitHintDismissed] = useState(false);
   const [showPortraitHint, setShowPortraitHint] = useState(false);
@@ -184,6 +197,27 @@ export function TouchWorkspaceShell({
     return () => mq!.removeEventListener('change', update);
   }, [active, portraitHintDismissed]);
 
+  // U1 (plan section 3.2): lock underlying page scrolling while the immersive
+  // touch presentation is active. Pre-existing styles and scroll position are
+  // saved and restored on EVERY exit path (cleanup runs on unmount, mode
+  // switch and flag-off). No permanent global CSS lock.
+  useEffect(() => {
+    if (!active) return;
+    const doc = document.documentElement;
+    const body = document.body;
+    const htmlPrev = { overflow: doc.style.overflow, scrollRestorationUnused: undefined };
+    const bodyPrev = { overflow: body.style.overflow };
+    const prevScrollY = window.scrollY;
+    const prevScrollX = window.scrollX;
+    doc.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    return () => {
+      doc.style.overflow = htmlPrev.overflow;
+      body.style.overflow = bodyPrev.overflow;
+      window.scrollTo(prevScrollX, prevScrollY);
+    };
+  }, [active]);
+
   const handleBack = useCallback(() => {
     // O16: a dirty outline draft is resolved BEFORE navigation (§11.5).
     if (exitGuard?.dirty) {
@@ -204,19 +238,45 @@ export function TouchWorkspaceShell({
       }
       style={
         active
-          ? {
-              paddingLeft: 'env(safe-area-inset-left, 0px)',
-              paddingRight: 'env(safe-area-inset-right, 0px)',
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-              height: '100dvh',
-            }
+          ? viewportBounds
+            ? {
+                // Visual-viewport pinning (U1 section 3.2): the root occupies
+                // exactly the usable rectangle; safe-area insets still apply.
+                position: 'fixed',
+                top: `${viewportBounds.top}px`,
+                left: `${viewportBounds.left}px`,
+                width: `${viewportBounds.width}px`,
+                height: `${viewportBounds.height}px`,
+                paddingLeft: 'env(safe-area-inset-left, 0px)',
+                paddingRight: 'env(safe-area-inset-right, 0px)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              }
+            : {
+                paddingLeft: 'env(safe-area-inset-left, 0px)',
+                paddingRight: 'env(safe-area-inset-right, 0px)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                height: '100dvh',
+              }
           : undefined
       }
     >
       {/* Canvas slot — FULL-BLEED (M8): every pixel left of the rail, full
           height. Stable mount position for the workstation. */}
       <div className={active ? 'relative min-w-0 flex-1 overflow-hidden bg-slate-950' : 'contents'}>
-        {children}
+        {/* U1 (plan section 3.1): opaque, isolated touch presentation. While
+            active, the mounted desktop workstation subtree stays laid out
+            (Fabric dimensions/effects keep their mount contract - M8 3.4) but
+            is invisible and noninteractive, so its fixed-position dialogs,
+            toolbars and the oversized canvas can NEVER bleed through or
+            intercept touch input. visibility (not display:none) preserves
+            layout so the canvas never loses its measured size. */}
+        <div
+          className={active ? 'invisible pointer-events-none absolute inset-0' : 'contents'}
+          aria-hidden={active || undefined}
+          inert={active || undefined}
+        >
+          {children}
+        </div>
         {active && overlay}
         {/* Portrait hint — dismissible, FLOATS over the canvas (M8), no CSS
             rotation (§3.2). z-40 keeps it visible above sheets/modals. */}
@@ -391,18 +451,22 @@ export function TouchWorkspaceShell({
       </div>
 
       {/* M7 (§3.1): desktop presentation keeps a discoverable way BACK to the
-          touch workspace — the rail that hosts the Menu is hidden in desktop
-          presentation. Fixed-position so the desktop layout is unchanged. */}
-      {!active && (
-        <button
-          type="button"
-          aria-label="Switch to touch workspace"
-          onClick={() => onViewPreferenceChange('mobile-touch')}
-          className="fixed bottom-4 right-4 z-[9999] inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-lg hover:bg-orange-50"
-        >
-          Mobile / touch view
-        </button>
-      )}
+          touch workspace - the rail that hosts the Menu is hidden in desktop
+          presentation. U1: portal-mounted to document.body so no ancestor
+          stacking context or the oversized Fabric canvas can cover or
+          intercept it (U0 finding 4iii). */}
+      {!active && mounted &&
+        createPortal(
+          <button
+            type="button"
+            aria-label="Switch to touch workspace"
+            onClick={() => onViewPreferenceChange('mobile-touch')}
+            className="fixed bottom-4 right-4 z-[9999] inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-lg hover:bg-orange-50"
+          >
+            Mobile / touch view
+          </button>,
+          document.body
+        )}
     </div>
   );
 }

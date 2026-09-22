@@ -188,9 +188,18 @@ export function useCalibrationController(options: UseCalibrationControllerOption
       imageFrameKeyRef.current !== image.frameKey ||
       (image.imageRevision != null && imageRevisionRef.current !== image.imageRevision);
     if (!pageChanged && !imageChanged) return;
+    // U0 N1 fill-in (2026-09-22): on first-ever entry the touch page-1 row is
+    // created client-side AFTER the calibration session starts, so pageId goes
+    // placeholder -> real uuid mid-session. That is the SAME page, never a
+    // page switch: absorb the id (and its frameKey/revision landing) without
+    // aborting or exiting, otherwise the calibration silently resets while
+    // the user is mid-reference (M7-T1 regression, U0 finding N2 chain).
+    const placeholderFillIn =
+      pageChanged && imagePageIdRef.current === 'unknown-page' && image.pageId !== 'unknown-page';
     imagePageIdRef.current = image.pageId;
     imageRevisionRef.current = image.imageRevision;
     imageFrameKeyRef.current = image.frameKey;
+    if (placeholderFillIn) return;
     abortRef.current?.abort();
     roundTokenRef.current = undefined;
     serverRevisionRef.current = null;

@@ -215,6 +215,11 @@ interface Props {
     isDirty: () => boolean;
     request: (label: string, proceed: () => void) => void;
   };
+  /** U0 N1/N2 fix: reports the page-1 id once ensurePage1 resolves it, so the
+   *  touch calibration phase can use the page on first-ever entry when the
+   *  server render had no takeoff_pages row yet. Never called on re-entries
+   *  where hydrationData already provided the id. */
+  onPage1Resolved?: (pageId: string) => void;
 }
 
 const MAX_CANVAS_DIM = 2000; // Max longest edge for dynamic canvas sizing
@@ -304,6 +309,7 @@ export function TakeoffWorkstation({
   aiCalibrationEnabled = false,
   onTouchOutlineAdapter,
   touchExitGuard,
+  onPage1Resolved,
 }: Props) {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -656,6 +662,7 @@ export function TakeoffWorkstation({
       try {
         const result = await initializeTakeoffPage(quote.id);
         if (!cancelled && result.ok && result.pageId) {
+          onPage1ResolvedRef.current?.(result.pageId);
           setPages(prev => {
             const updated = [...prev];
             if (updated[0] && !updated[0].id) {
@@ -1003,6 +1010,29 @@ export function TakeoffWorkstation({
   // Intentionally only runs once on mount.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // U1 (2026-09-22): sync a touch-committed calibration into local state.
+  // The touch calibration path persists via persistPageCalibration +
+  // router.refresh(); the server re-hydrates this component with the saved
+  // calibration, but the one-shot effect above never re-runs, so `calibrations`
+  // stayed empty and the desktop presentation wrongly showed the first-time
+  // "Calibrate Your Plan" help modal over an already-calibrated page (and
+  // covered the only way back to the touch view on a phone). Guarded adoption:
+  // only when there is NO local calibration state to clobber (the user's
+  // in-progress desktop calibration always wins over the server copy).
+  useEffect(() => {
+    if (!hydrationData || hydrationData.pages.length === 0) return;
+    if (calibrations.length > 0 || calibrationPoints.length > 0) return;
+    const activeId = currentPageIdRef.current ?? hydrationData.pages[0]?.id ?? null;
+    const p = hydrationData.pages.find(pg => pg.id === activeId) ?? hydrationData.pages[0];
+    const cal = p?.scaleCalibration;
+    if (Array.isArray(cal) && cal.length > 0) {
+      pageCalibrationsRef.current.set(p.id, cal as Calibration[]);
+      setCalibrations(cal as Calibration[]);
+      setCalibrationConfirmed(true);
+      setShowCalibrationHelp(false);
+    }
+  }, [hydrationData, calibrations.length, calibrationPoints.length]);
 
   // P1-1a C-01: One-shot hydration from server-loaded DB state.
   // Restores componentMeasurements panel data + pages list from the last saved session.
@@ -3439,6 +3469,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     { isDirty: () => boolean; request: (label: string, proceed: () => void) => void } | null
   >(null);
   touchExitGuardRef.current = touchExitGuard ?? null;
+
+  // U0 N1/N2: page-1 resolution callback supplied by TakeoffPage. Ref pattern
+  // matches touchExitGuardRef so the mount effect below never re-runs for it.
+  const onPage1ResolvedRef = useRef<((pageId: string) => void) | null>(null);
+  onPage1ResolvedRef.current = onPage1Resolved ?? null;
 
   const touchOutlineAdapterRef = useRef<TouchOutlineAdapter | null>(null);
   // M7: hydration snapshot for the adapter's scale fallback — a calibration

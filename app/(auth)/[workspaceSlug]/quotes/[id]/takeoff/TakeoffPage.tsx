@@ -110,6 +110,13 @@ export function TakeoffPage({
 
   // M4→M8 (16:59): flow-driven calibration phase — see the touchTool state
   // below; both hooks stay mounted so phase transitions preserve drafts (C16).
+  // U0 N1/N2 fix: on first-ever entry the server render has no takeoff_pages
+  // row yet (page-1 is created client-side by the workstation's ensurePage1),
+  // so hydrationData alone cannot feed the calibration phase. The workstation
+  // reports the resolved page id back up here (onPage1Resolved); until then a
+  // fresh page is treated as uncalibrated (touchTool starts in 'calibrate'),
+  // and the calibration phase re-derives its page info once the id lands.
+  const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
   const calibrationPage: TouchCalibrationPageInfo | null = useMemo(() => {
     const p = hydrationData?.pages?.[0] ?? null;
     if (p) {
@@ -120,10 +127,11 @@ export function TakeoffPage({
         scaleCalibration: p.scaleCalibration,
       };
     }
-    return initialPageId
-      ? { id: initialPageId, imageRevision: null, calibrationMetadata: null, scaleCalibration: null }
+    const fallbackId = initialPageId ?? resolvedPage1Id;
+    return fallbackId
+      ? { id: fallbackId, imageRevision: null, calibrationMetadata: null, scaleCalibration: null }
       : null;
-  }, [hydrationData, initialPageId]);
+  }, [hydrationData, initialPageId, resolvedPage1Id]);
   const pageHasDependents = useMemo(
     () =>
       (hydrationData?.measurements?.some((m) => m.pageId === calibrationPage?.id) ?? false) ||
@@ -135,7 +143,11 @@ export function TakeoffPage({
   // completing (or dismissing) calibration advances to the outline controls.
   // Re-entry on an already-calibrated page goes straight to outline.
   const [touchTool, setTouchTool] = useState<'outline' | 'calibrate'>(() => {
-    if (!calibrationPage) return 'outline';
+    // U0 N1: a page that does not exist yet is a brand-new (uncalibrated)
+    // page - the flow starts in calibration, never the uncalibrated outline
+    // phase. This kills the entry race where the touch flow opened in outline
+    // with the desktop help modal bleeding through.
+    if (!calibrationPage) return 'calibrate';
     const decoded = decodeCalibrationMetadata(
       calibrationPage.calibrationMetadata ?? calibrationPage.scaleCalibration,
     );
@@ -194,6 +206,7 @@ export function TakeoffPage({
       aiAssistPoints={aiAssistPoints}
       aiCalibrationEnabled={aiCalibrationEnabled}
       onTouchOutlineAdapter={registerAdapter}
+      onPage1Resolved={setResolvedPage1Id}
       touchExitGuard={
         touchActive
           ? {

@@ -136,7 +136,14 @@ async function calibrateHonestly(page: import('@playwright/test').Page, runId: s
   // whole session), the commit dead-ends: "No takeoff page exists for this
   // plan yet." — every subsequent attempt resets the wizard. A page reload
   // is the only recovery. Capture, then reload and redo.
-  const saved = await page.getByText('Scale saved.', { exact: false }).isVisible({ timeout: 8000 }).catch(() => false);
+  // U1 (2026-09-22): with the N1/N2 fixes the calibration commit now succeeds
+  // FIRST TRY and the flow auto-advances to the outline phase, which unmounts
+  // the calibration rail (and its "Scale saved." status line). Success is
+  // therefore EITHER the acknowledged save OR the flow having advanced.
+  const saved = await Promise.race([
+    page.getByText('Scale saved.', { exact: false }).waitFor({ timeout: 8000 }).then(() => true, () => false),
+    page.getByText('Pick an outline below').waitFor({ timeout: 8000 }).then(() => true, () => false),
+  ]).catch(() => false);
   if (!saved) {
     await evidenceShot(page, runId, 'calibration-commit-deadend');
     const errText = await page.evaluate(() => {
