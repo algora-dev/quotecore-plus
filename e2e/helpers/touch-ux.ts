@@ -188,7 +188,17 @@ export async function tapControl(page: Page, locator: Locator, label: string): P
       }
       return null;
     });
-    if (!point) throw err; // fully covered — genuine dead end
+    if (!point) {
+      // Cookie banner fully covering the control (lazy-mounts after settle in
+      // WebKit): dismiss it with a REAL tap and retry once - never force.
+      if (await dismissCookiesHonestly(page)) {
+        const retried = await assertContainment(page, locator, label);
+        journal({ kind: 'cookie-banner-retry', label, interceptor: err.message, viewport: page.viewportSize() });
+        await locator.first().tap();
+        return { ...retried, requiredScroll: false } as ContainmentReport;
+      }
+      throw err; // fully covered - genuine dead end
+    }
     journal({ kind: 'partial-coverage-tap', label, interceptor: err.message, point, viewport: page.viewportSize() });
     const partial: ContainmentReport = {
       label,
