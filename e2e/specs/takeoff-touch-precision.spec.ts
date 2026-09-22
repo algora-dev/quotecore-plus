@@ -193,12 +193,9 @@ test.describe('M7 touch presentation @touch', () => {
 
     await tapControl(page, page.getByRole('button', { name: 'Save outline changes' }), 'Save outline changes');
     await expect(useOutline).toBeVisible({ timeout: 15_000 });
-    // U5: name/pitch inputs start EMPTY (owner 2026-09-22) - the create is
-    // blocked until a real pitch is entered. Type it like a user would.
-    const pitchInput = page
-      .getByRole('dialog', { name: 'Name and pitch for the new outline' })
-      .locator('input[inputmode="decimal"]');
-    await pitchInput.fill('25');
+    // U5: name/pitch inputs start EMPTY (owner 2026-09-22) and pitch is a
+    // keyboard-free stepper - set it with the 30 degree preset chip.
+    await page.getByRole('dialog', { name: 'Name and pitch for the new outline' }).getByRole('button', { name: 'Set pitch to 30 degrees' }).tap();
     await tapControl(page, useOutline, 'Use outline');
     await expect(page.getByRole('button', { name: /Area \d{4}/ }).first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText('Save failed')).toHaveCount(0);

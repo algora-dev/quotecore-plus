@@ -1222,20 +1222,27 @@ function CreateOutlineForm({
   busy?: boolean;
 }) {
   const [name, setName] = useState(defaultName || '');
-  // U5-fix (owner 2026-09-22): NO pre-filled defaults on mobile - the
-  // pre-filled "0"/"Area 2026" put the cursor behind existing text and
-  // produced "250"-style entries. Empty input, placeholder guidance only.
-  const [pitch, setPitch] = useState('');
+  // U5-fix (owner 2026-09-22 keyboard feedback): NO OS keyboard for pitch -
+  // the iOS keyboard covers 3/4 of a landscape phone and its bars cannot be
+  // hidden by a web page. Pitch is chosen with on-canvas controls only:
+  // -/+ stepper (5 degree steps) and common-pitch preset chips.
+  const [pitch, setPitch] = useState<number | null>(_defaultPitch > 0 ? _defaultPitch : null);
   const [pitchError, setPitchError] = useState<string | null>(null);
+  const PITCH_PRESETS = [15, 22.5, 30, 35, 40, 45] as const;
+  const nudgePitch = (delta: number) => {
+    setPitchError(null);
+    setPitch((p) => {
+      const base = p ?? 0;
+      return Math.min(85, Math.max(0, Math.round((base + delta) * 10) / 10));
+    });
+  };
   const confirm = () => {
-    const trimmed = pitch.trim();
-    const p = Number.parseFloat(trimmed);
-    if (trimmed === '' || !Number.isFinite(p) || p < 0 || p >= 90) {
-      setPitchError('Enter the roof pitch in degrees, 0 to 90 (e.g. 35).');
+    if (pitch == null) {
+      setPitchError('Choose the roof pitch (tap a preset or use - / +).');
       return;
     }
     setPitchError(null);
-    onConfirm(name.trim() || defaultName, p);
+    onConfirm(name.trim() || defaultName, pitch);
   };
   return (
     <FloatingCanvasSheet label="Name and pitch for the new outline" dialog className="max-w-md text-xs text-slate-100">
@@ -1246,23 +1253,63 @@ function CreateOutlineForm({
           <input
             value={name}
             placeholder="e.g. Main roof"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            enterKeyHint="done"
             onChange={(e) => setName(e.target.value)}
             className="h-10 min-w-0 flex-1 rounded-lg border border-white/20 bg-slate-900 px-2 text-white placeholder:text-slate-500 focus:border-orange-500 focus:outline-none"
           />
         </label>
-        <label className="flex items-center gap-2">
+      </div>
+      {/* Pitch stepper: keyboard-free (see comment above). */}
+      <div className="mb-2 flex flex-col gap-2">
+        <div className="flex items-center gap-2">
           <span className="w-14 shrink-0 text-slate-400">Pitch °</span>
-          <input
-            inputMode="decimal"
-            value={pitch}
-            placeholder="e.g. 25"
-            onChange={(e) => {
-              setPitch(e.target.value);
-              setPitchError(null);
-            }}
-            className="h-10 w-24 rounded-lg border border-white/20 bg-slate-900 px-2 text-white placeholder:text-slate-500 focus:border-orange-500 focus:outline-none"
-          />
-        </label>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <button
+              type="button"
+              aria-label="Decrease pitch by 5 degrees"
+              onClick={() => nudgePitch(-5)}
+              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-lg font-semibold text-white"
+            >
+              −
+            </button>
+            <span
+              className="min-w-16 flex-1 rounded-full bg-white/10 px-3 py-2.5 text-center text-sm font-semibold text-white"
+              aria-live="polite"
+            >
+              {pitch == null ? 'Tap a pitch' : `${pitch}°`}
+            </span>
+            <button
+              type="button"
+              aria-label="Increase pitch by 5 degrees"
+              onClick={() => nudgePitch(5)}
+              className="h-12 min-w-12 rounded-full border border-white/20 bg-white/10 px-3 text-lg font-semibold text-white"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Common pitch presets">
+          {PITCH_PRESETS.map((p) => (
+            <button
+              key={p}
+              type="button"
+              aria-label={`Set pitch to ${p} degrees`}
+              aria-pressed={pitch === p}
+              onClick={() => {
+                setPitchError(null);
+                setPitch(p);
+              }}
+              className={`h-12 min-w-12 rounded-full px-3 text-xs font-semibold ${
+                pitch === p ? 'bg-white text-slate-900' : 'border border-white/20 text-white'
+              }`}
+            >
+              {p}°
+            </button>
+          ))}
+        </div>
       </div>
       {pitchError && (
         <div className="mb-2 rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-200" role="alert">
