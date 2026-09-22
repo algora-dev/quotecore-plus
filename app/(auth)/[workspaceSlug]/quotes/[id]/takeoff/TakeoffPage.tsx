@@ -1,6 +1,6 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
 import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
@@ -172,6 +172,34 @@ export function TakeoffPage({
     pageHasDependents,
     onExit: () => setTouchTool('outline'),
   });
+
+  // U3 (UX20): automatic advance after an ACKNOWLEDGED scale - no required
+  // Done button, no fixed delay. Advance only when the commit succeeded AND
+  // the refreshed server data actually carries the saved references (the
+  // live outline owner then sees the acknowledged scale). Fires once per
+  // completed calibration; re-entry from the outline Calibrate action is
+  // unaffected.
+  const calibrationAdvanceRef = useRef(false);
+  const calibrationPageHasSavedRefs = useMemo(() => {
+    const decoded = decodeCalibrationMetadata(
+      calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration,
+    );
+    return (
+      (decoded.kind === 'v1' ? decoded.metadata.references.length : decoded.kind === 'legacy' ? decoded.references.length : 0) > 0
+    );
+  }, [calibrationPage?.calibrationMetadata, calibrationPage?.scaleCalibration]);
+  useEffect(() => {
+    if (touchTool !== 'calibrate') {
+      calibrationAdvanceRef.current = false;
+      return;
+    }
+    if (!calib.saved || !calibrationPageHasSavedRefs) return;
+    if (calibrationAdvanceRef.current) return;
+    calibrationAdvanceRef.current = true;
+    // Deferred out of the synchronous effect body (react-hooks
+    // set-state-in-effect): advance in its own microtask.
+    queueMicrotask(() => setTouchTool('outline'));
+  }, [touchTool, calib.saved, calibrationPageHasSavedRefs]);
 
   const outlineEditor = useTouchOutlineEditor(
     touchActive,

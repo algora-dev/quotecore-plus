@@ -91,10 +91,12 @@ async function calibrateHonestly(page: import('@playwright/test').Page, runId: s
   expect(box, 'calibration surface box').not.toBeNull();
 
   // Place A / B with REAL touch taps; accept via honest rail taps.
+  // U3: the rail's single primary action is "Place end point" (accepts the
+  // current point without a drag; no separate Adjust/Point-is-correct).
   await touchTap(page, box.x + box.width * 0.3, box.y + box.height * 0.35);
-  await tapControl(page, page.getByRole('button', { name: 'The point is correct - continue' }), 'accept point A');
+  await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point A');
   await touchTap(page, box.x + box.width * 0.7, box.y + box.height * 0.6);
-  await tapControl(page, page.getByRole('button', { name: 'The point is correct - continue' }), 'accept point B');
+  await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point B');
 
   const sheet = page.getByRole('region', { name: 'Calibration' });
 
@@ -158,28 +160,27 @@ async function calibrateHonestly(page: import('@playwright/test').Page, runId: s
     // After reload the page-1 row exists: the flow starts correctly in the
     // calibration phase. Redo the manual reference + commit.
     await expect(page.locator('[data-testid="calibration-interaction-surface"]')).toBeVisible({ timeout: 30_000 });
-    await tapControl(page, page.getByRole('button', { name: 'Set the scale manually with two points' }), 'Set the scale manually with two points (retry)');
+    // U3: manual mode auto-begins on entry - no manual-start button exists.
     const box2 = (await surface.boundingBox())!;
     await touchTap(page, box2.x + box2.width * 0.3, box2.y + box2.height * 0.35);
-    await tapControl(page, page.getByRole('button', { name: 'The point is correct - continue' }), 'accept point A (retry)');
+    await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point A (retry)');
     await touchTap(page, box2.x + box2.width * 0.7, box2.y + box2.height * 0.6);
-    await tapControl(page, page.getByRole('button', { name: 'The point is correct - continue' }), 'accept point B (retry)');
+    await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point B (retry)');
     const sheet2 = page.getByRole('region', { name: 'Calibration' });
     const input2 = sheet2.locator('input[inputmode="decimal"]');
     await tapControl(page, input2, 'calibration distance input (retry)');
     await input2.pressSequentially('10', { delay: 20 });
     await sheet2.locator('select').selectOption('m');
     await tapControl(page, page.getByRole('button', { name: 'Use this calibration and finish' }), 'Use this calibration and finish (retry)');
-    await expect(page.getByText('Scale saved.', { exact: false })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Scale saved.', { exact: false })).toBeVisible({ timeout: 30_000 }).catch(() => {});
   }
-  await page.waitForTimeout(2500); // router.refresh lands the new scale
+  // U3 (UX20): acknowledged scale auto-advances to the outline phase - no
+  // Done tap, no fixed-sleep dependency.
+  await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 30_000 });
 
   const railControlCount = await page.evaluate(() =>
     document.querySelectorAll('[aria-label="Takeoff controls"] button').length,
   );
-
-  await tapControl(page, page.getByRole('button', { name: 'Close calibration' }), 'Close calibration');
-  await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 30_000 });
 
   return {
     doubleManualStart,

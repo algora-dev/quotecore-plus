@@ -1,7 +1,8 @@
 'use client';
 // Mobile takeoff M4: calibration A/B endpoint rail (spec §3.3/§7.2).
 // Replaces the M3 point grid while calibrating: Start/End endpoint selection,
-// "Point is correct" to advance without a drag, Adjust to re-arm. Customer
+// "Place end point" to accept the current point without a drag (U3: no
+// separate Adjust button - selecting Start/End re-arms). Customer
 // copy per §1.3 (Start, End, Point — no "vertex"/"m/px" jargon). 48×48
 // targets, states not colour-only (labels + status text), presentational only.
 
@@ -54,8 +55,6 @@ export interface EndpointControllerRailProps {
   onSelectA: () => void;
   onSelectB: () => void;
   canSelectB: boolean;
-  onAdjust: () => void;
-  canAdjust: boolean;
   gesturePhase: GesturePhase;
   onFitPlan: () => void;
   onZoomIn: () => void;
@@ -66,10 +65,11 @@ export interface EndpointControllerRailProps {
 
 export function EndpointControllerRail(props: EndpointControllerRailProps) {
   const midGesture = props.gesturePhase !== 'idle' && props.gesturePhase !== 'cancelled';
+  // U3 (plan 5.1): state-driven copy - one clear next action per state.
   const stepCopy: Record<CalibrationWizardStep, string> = {
-    'place-a': 'Tap the plan to place the start point.',
-    'adjust-a': 'Drag anywhere to adjust the start point.',
-    'place-b': 'Tap the plan to place the end point.',
+    'place-a': 'Tap the start of a known distance.',
+    'adjust-a': 'Drag away from the point to adjust.',
+    'place-b': 'Tap the other end.',
     'adjust-b': 'Drag anywhere to adjust the end point.',
     review: 'Check the distance, or tap Start/End to adjust.',
   };
@@ -113,17 +113,11 @@ export function EndpointControllerRail(props: EndpointControllerRailProps) {
 
       <RailButton
         onClick={props.onPointIsCorrect}
-        label="The point is correct - continue"
+        label="Place end point"
+        variant="accent"
         disabled={!props.canPointIsCorrect || midGesture}
       >
-        Point is correct
-      </RailButton>
-      <RailButton
-        onClick={props.onAdjust}
-        label="Adjust point (re-arm for dragging)"
-        disabled={!props.canAdjust || midGesture}
-      >
-        Adjust point
+        Place end point
       </RailButton>
       <RailButton onClick={props.onUndo} label="Undo last point change" disabled={!props.canUndo || midGesture}>
         Undo

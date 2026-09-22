@@ -365,7 +365,9 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
     : vertices.length === 0
       ? 'place-a'
       : vertices.length === 1
-        ? 'adjust-a'
+        ? abSession.selection.moveArmed
+          ? 'adjust-a'
+          : 'place-b'
         : 'review';
 
   const selectEndpoint = useCallback(
@@ -398,6 +400,29 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
     );
   }, [dispatch, page?.id, page?.imageRevision]);
 
+  // U3 (UX17): entering the calibration step on an uncalibrated page begins
+  // manual placement IMMEDIATELY - no second "Set scale manually" button, no
+  // desktop chooser underneath. Dispatched once per deliberate entry (the
+  // phase flips to 'manual', so this never refires on re-renders, viewport
+  // changes, saves or rehydration - it would clear the manual draft).
+  const autoBeginArmedRef = useRef(true);
+  useEffect(() => {
+    if (!active || !scene) return;
+    if (!autoBeginArmedRef.current) return;
+    if (pageHasDependents) return;
+    if (state.phase !== 'idle' && state.phase !== 'cancelled') return;
+    if (state.accepted.length > 0) return;
+    autoBeginArmedRef.current = false;
+    // Deferred out of the synchronous effect body (react-hooks
+    // set-state-in-effect): begin placement in its own microtask.
+    queueMicrotask(() => onBeginManual());
+    // Re-arm only on a deliberate exit from the calibration step (re-entry
+    // is a new manual intent).
+  }, [active, scene, state.phase, state.accepted.length, pageHasDependents, onBeginManual]);
+  useEffect(() => {
+    if (!active) autoBeginArmedRef.current = true;
+  }, [active]);
+
   const onAcceptManual = useCallback(
     (finish: boolean) => {
       const s = abRef.current;
@@ -407,8 +432,25 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
       dispatch({ type: 'SET_MANUAL_ENDPOINT', which: 'p1', point: p1 });
       dispatch({ type: 'SET_MANUAL_ENDPOINT', which: 'p2', point: p2 });
       dispatch({ type: 'ACCEPT_MANUAL', distance: distanceText, unit, finish });
+      if (!finish) {
+        // U3 (plan 5.2): "Add another reference" accepts this pair into the
+        // session and starts the NEXT Start placement - reset only the next
+        // pair/input; accepted references and the unit survive.
+        setAbSession(
+          beginEditCmd(
+            { kind: 'calibration', referenceDraftId: 'manual-ab' },
+            {
+              quoteId: 'calibration', pageId: page?.id ?? 'page', imageRevision: page?.imageRevision ?? 'rev',
+              coordinateFrame: 'takeoff-scene-v1', sessionVersion: 0, contextEpoch: 0,
+            },
+            [],
+            false,
+          ),
+        );
+        setDistanceText('');
+      }
     },
-    [dispatch, distanceText, unit],
+    [dispatch, distanceText, unit, page?.id, page?.imageRevision],
   );
 
   const onAdjustCandidatePoints = useCallback(() => {
@@ -576,10 +618,6 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
         onSelectA={() => selectEndpoint('a')}
         onSelectB={() => selectEndpoint('b')}
         canSelectB={vertices.length >= 2}
-        onAdjust={() =>
-          setAbSession((s) => (s.selection.vertexId ? selectVertexCmd(s, s.selection.vertexId, true).session : s))
-        }
-        canAdjust={selected != null}
         gesturePhase={gesturePhase}
         onFitPlan={() => scene && viewport.width > 0 && setCamera(fitCamera(scene, viewport))}
         onZoomIn={() => zoomAroundCentre(ZOOM_STEP)}
@@ -596,9 +634,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
           ? 'Saving calibration…'
           : state.phase === 'completed'
             ? 'Scale saved.'
-            : saved
-              ? 'Scale set. Tap Done to continue.'
-              : 'Set the scale: place two points on a known distance.'}
+            : 'Set the scale: place two points on a known distance.'}
       </span>
     </div>
   ) : null;

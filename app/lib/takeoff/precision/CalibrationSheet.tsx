@@ -253,12 +253,20 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
             Use this calibration
           </SheetButton>
           <SheetButton
-            label="Save and add another reference"
+            label="Add another reference"
             disabled={capReached || props.acknowledgementRequired}
             onClick={() => props.onAcceptManual(false)}
           >
-            Save & add another
+            Add another reference
           </SheetButton>
+        </div>
+      )}
+
+      {/* U3 (plan 5.2): honest in-session acknowledgement - "Reference N
+          added" describes what exists (session), never server persistence. */}
+      {state.phase === 'manual' && accepted.length > 0 && !props.manualPairReady && !props.repairMode && (
+        <div className="mb-2 text-center text-[11px] text-slate-300" aria-live="polite">
+          {`Reference ${accepted.length} added`}
         </div>
       )}
 
@@ -272,18 +280,12 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
         </div>
       )}
 
-      {/* Manual entry start / AI search / finish row. */}
+      {/* Manual entry start / finish row.
+          U3 (UX17): NO "Set scale manually" button - an uncalibrated page
+          auto-begins manual placement; a deliberate cancel exits, never a
+          "Done" that implies success. */}
       <div className="flex flex-wrap items-center gap-1">
-        {state.phase !== 'manual' && !props.repairMode && (
-          <SheetButton
-            label="Set the scale manually with two points"
-            onClick={props.onBeginManual}
-            disabled={capReached}
-          >
-            Set scale manually
-          </SheetButton>
-        )}
-        {props.aiEnabled && state.candidates.length === 0 && state.phase !== 'searching' && props.canSearch && (
+        {props.aiEnabled && state.candidates.length === 0 && state.phase !== 'searching' && props.canSearch && state.phase !== 'manual' && !props.repairMode && (
           <SheetButton label="Find measurements with AI" onClick={props.onFindWithAi}>
             Find with AI
           </SheetButton>
@@ -293,7 +295,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
             Searching…
           </span>
         )}
-        {validCount >= 1 && state.phase !== 'committing' && (
+        {validCount >= 1 && state.phase !== 'committing' && state.phase !== 'manual' && (
           <SheetButton
             label={`Finish with ${validCount} reference${validCount === 1 ? '' : 's'}`}
             variant="accent"
@@ -314,8 +316,8 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
             }/px`}
           </span>
         )}
-        <SheetButton label="Close calibration" onClick={props.onExit}>
-          Done
+        <SheetButton label="Cancel calibration" onClick={props.onExit}>
+          Cancel
         </SheetButton>
       </div>
 
