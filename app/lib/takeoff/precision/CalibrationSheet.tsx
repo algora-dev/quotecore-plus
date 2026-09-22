@@ -8,6 +8,7 @@
 import type { ReactNode } from 'react';
 import type { DistanceUnit } from '../calibrationTypes';
 import type { CalibrationController } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/useCalibrationController';
+import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 
 const UNITS: readonly DistanceUnit[] = ['m', 'cm', 'mm', 'ft', 'in', 'yd'];
 
@@ -94,11 +95,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
   const effective = controller.draftEffective;
 
   return (
-    <div
-      className="absolute inset-x-2 bottom-2 z-20 max-h-[70%] w-auto max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/95 p-3 shadow-xl"
-      role="region"
-      aria-label="Calibration"
-    >
+    <FloatingCanvasSheet label="Calibration" className="max-h-[70%]">
       {/* Accepted references (1-3, mixed origins, R03). */}
       {accepted.length > 0 && (
         <div className="mb-2 flex flex-wrap items-center gap-1" aria-live="polite">
@@ -328,6 +325,6 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
           workspace view to Desktop to recalibrate so every measurement is updated together.
         </div>
       )}
-    </div>
+    </FloatingCanvasSheet>
   );
 }

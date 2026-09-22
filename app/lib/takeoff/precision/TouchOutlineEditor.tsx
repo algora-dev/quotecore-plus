@@ -82,6 +82,7 @@ import {
 } from './sceneViewport';
 import { usePrecisionPointerInput } from './usePrecisionPointerInput';
 import { logTakeoffEvent } from './takeoffDiagnostics';
+import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 
 /** What the workstation exposes to the touch presentation (M5 bridge). The
  *  workstation owns ALL state; the editor only reads through the adapter and
@@ -829,8 +830,8 @@ export function useTouchOutlineEditor(
           and the M7 pre-scan replace guard shares this slot via
           pendingScanReplace below. */}
       {pendingSwitch && (
-        <div className="absolute inset-x-2 bottom-2 z-20 rounded-xl bg-slate-800/95 p-3 text-xs text-slate-100 shadow-lg">
-          <div className="mb-2 font-semibold">Unsaved outline edits</div>
+        <FloatingCanvasSheet label="Unsaved outline edits" dialog modal className="text-xs text-slate-100">
+          <div className="mb-2 font-semibold text-xs text-slate-100">Unsaved outline edits</div>
           <div className="mb-2 text-slate-300">
             {pendingSwitch.kind === 'external'
               ? `Save them before continuing (“${pendingSwitch.label}”), or discard to restore the saved outline.`
@@ -868,7 +869,7 @@ export function useTouchOutlineEditor(
               Stay
             </button>
           </div>
-        </div>
+        </FloatingCanvasSheet>
       )}
 
       {/* M7 (§8.2 pre-scan guard): starting an AI outline scan while a touch
@@ -876,12 +877,8 @@ export function useTouchOutlineEditor(
           result replaces the CURRENT draft, so an unacknowledged replacement
           must be explicit, never automatic. */}
       {pendingScanReplace && (
-        <div
-          role="dialog"
-          aria-label="Replace unsaved outline edits"
-          className="absolute inset-x-2 bottom-2 z-20 rounded-xl bg-slate-800/95 p-3 text-xs text-slate-100 shadow-lg"
-        >
-          <div className="mb-1 font-semibold">Unsaved outline edits</div>
+        <FloatingCanvasSheet label="Replace unsaved outline edits" dialog modal className="text-xs text-slate-100">
+          <div className="mb-1 font-semibold text-xs text-slate-100">Unsaved outline edits</div>
           <div className="mb-2 text-slate-300">
             Scanning replaces your current outline draft. Replace it and scan, or cancel to keep editing.
           </div>
@@ -905,7 +902,7 @@ export function useTouchOutlineEditor(
               Cancel
             </button>
           </div>
-        </div>
+        </FloatingCanvasSheet>
       )}
 
       {/* M6 §8.2: AI outline offer — "AI found this outline. Edit points or
@@ -913,12 +910,8 @@ export function useTouchOutlineEditor(
           Edit points keeps the already-imported draft open; Discard restores
           the pre-scan state. Multiple detected roofs are switchable chips. */}
       {offerOpen && scanCandidates && (
-        <div
-          role="dialog"
-          aria-label="AI outline found"
-          className="absolute inset-x-2 bottom-2 z-20 rounded-xl bg-slate-800/95 p-3 text-xs text-slate-100 shadow-lg"
-        >
-          <div className="mb-1 font-semibold">AI found this outline</div>
+        <FloatingCanvasSheet label="AI outline found" dialog className="text-xs text-slate-100">
+          <div className="mb-1 font-semibold text-xs text-slate-100">AI found this outline</div>
           <div className="mb-2 text-slate-300">Edit points or Continue.</div>
           {scanCandidates.length > 1 && (
             <div className="mb-2 flex flex-wrap gap-1" role="group" aria-label="Detected outlines">
@@ -965,7 +958,7 @@ export function useTouchOutlineEditor(
               Discard
             </button>
           </div>
-        </div>
+        </FloatingCanvasSheet>
       )}
 
       {/* §8.1: name/pitch confirmation for a NEW outline (existing flow). */}
@@ -1155,12 +1148,8 @@ function CreateOutlineForm({
   const [name, setName] = useState(defaultName);
   const [pitch, setPitch] = useState(String(defaultPitch));
   return (
-    <div
-      role="dialog"
-      aria-label="Name and pitch for the new outline"
-      className="absolute inset-x-2 bottom-2 z-20 rounded-xl bg-slate-800/95 p-3 text-xs text-slate-100 shadow-lg"
-    >
-      <div className="mb-2 font-semibold">Use outline</div>
+    <FloatingCanvasSheet label="Name and pitch for the new outline" dialog className="max-w-md text-xs text-slate-100">
+      <div className="mb-2 font-semibold text-xs text-slate-100">Use outline</div>
       <div className="mb-2 flex flex-col gap-2">
         <label className="flex items-center gap-2">
           <span className="w-14 shrink-0 text-slate-400">Name</span>
@@ -1199,7 +1188,7 @@ function CreateOutlineForm({
           Keep editing
         </button>
       </div>
-    </div>
+    </FloatingCanvasSheet>
   );
 }
 
