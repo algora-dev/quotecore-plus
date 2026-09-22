@@ -368,19 +368,20 @@ export function TouchWorkspaceShell({
             aria-expanded={menuOpen}
             disabled={busy}
             onClick={() => setMenuOpen((v) => !v)}
-            className={`h-12 w-12 shrink-0 rounded-full transition-colors ${
-              menuOpen ? 'bg-white text-slate-900' : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+            className={`h-12 w-12 shrink-0 rounded-full transition-all duration-100 active:scale-110 ${
+              menuOpen ? 'bg-white/10 text-white' : 'text-[#FF6B35] hover:text-[#ff7f4f]'
             }`}
           >
-            {/* M9 (owner prescription): standard hamburger menu icon. */}
+            {/* Polish 2026-09-22 (owner): bare orange hamburger - no circle,
+                slightly larger, with press feedback so taps feel deliberate. */}
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth={2}
+              strokeWidth={2.5}
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-5 w-5"
+              className="h-7 w-7"
               aria-hidden="true"
             >
               <path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />

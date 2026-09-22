@@ -21,13 +21,21 @@ export function CalibrationCanvas({ bindSurface, camera, scene, planUrl, spans, 
         const stroke = span.muted ? '#94a3b8' : '#FF6B35';
         return <g key={span.id} opacity={span.muted ? 0.6 : 1}>
           {points.length === 2 && <>
-            <line x1={points[0].x} y1={points[0].y} x2={points[1].x} y2={points[1].y} stroke="#0f172a" strokeWidth={5} />
-            <line x1={points[0].x} y1={points[0].y} x2={points[1].x} y2={points[1].y} stroke={stroke} strokeWidth={2} strokeDasharray={span.muted ? '6 4' : undefined} />
+            {/* Polish 2026-09-22 (owner): thinner dashed span, smaller dashes
+                with wider gaps and slight transparency so printed dimensions
+                (e.g. 9.15) stay readable underneath the overlay line. */}
+            <line x1={points[0].x} y1={points[0].y} x2={points[1].x} y2={points[1].y} stroke="#0f172a" strokeWidth={3} />
+            <line x1={points[0].x} y1={points[0].y} x2={points[1].x} y2={points[1].y} stroke={stroke} strokeWidth={1.5}
+              strokeDasharray={span.muted ? '2 7' : '4 8'} opacity={0.8} />
           </>}
           {points.map((p, index) => <g key={index} data-testid={span.muted ? undefined : `calibration-point-${index}`}>
-            <circle cx={p.x} cy={p.y} r={7} fill="#0f172a" />
+            {/* Polish 2026-09-22 (owner): no filled disc - thin ring plus a
+                segmented crosshair with a clear centre gap, so the exact plan
+                junction under the point stays visible for accurate placement. */}
+            <circle cx={p.x} cy={p.y} r={6.5} fill="none" stroke={span.muted ? '#fff' : stroke} strokeWidth={2} />
             {!span.muted && selected === index && <circle cx={p.x} cy={p.y} r={14} fill="none" stroke={stroke} strokeWidth={2.5} strokeDasharray={armed ? '5 3' : undefined} />}
-            <path d={`M${p.x - 5} ${p.y}h10 M${p.x} ${p.y - 5}v10`} stroke={span.muted ? '#fff' : stroke} strokeWidth={2} />
+            <path d={`M${p.x - 11} ${p.y}h5 M${p.x + 6} ${p.y}h5 M${p.x} ${p.y - 11}v5 M${p.x} ${p.y + 6}v5`}
+              stroke={span.muted ? '#fff' : stroke} strokeWidth={2} />
             <text x={p.x + 16} y={p.y - 10} fill={stroke} stroke="#0f172a" strokeWidth={3} paintOrder="stroke" fontSize={12} fontWeight={700}>
               {span.label ?? (index === 0 ? 'Start' : 'End')}
             </text>

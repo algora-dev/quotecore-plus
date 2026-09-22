@@ -8,8 +8,9 @@ export function RailAction({ children, label, onClick, disabled, primary = false
   primary?: boolean; className?: string;
 }) {
   return <button type="button" aria-label={label} onClick={onClick} disabled={disabled}
-    className={`select-none touch-manipulation min-h-12 min-w-12 w-full shrink-0 rounded-xl px-2 py-2 text-sm font-semibold leading-tight disabled:opacity-40 ${primary
-      ? 'bg-[#FF6B35] text-white' : 'border border-white/20 bg-white/10 text-white'} ${className}`}>{children}</button>;
+    className={`select-none touch-manipulation min-h-12 min-w-12 w-full shrink-0 rounded-xl px-2 py-2 text-sm font-semibold leading-tight transition-all duration-100 active:scale-[1.04] disabled:opacity-40 disabled:active:scale-100 ${primary
+      ? 'bg-[#FF6B35] text-white active:scale-[1.06] active:brightness-110'
+      : 'border border-white/20 bg-white/10 text-white active:border-[#FF6B35] active:bg-[#FF6B35]/25'} ${className}`}>{children}</button>;
 }
 
 /** Primary actions stay outside the scrolling explanatory/options area. */
