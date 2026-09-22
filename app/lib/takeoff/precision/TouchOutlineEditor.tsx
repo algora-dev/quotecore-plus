@@ -87,6 +87,10 @@ import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 /** What the workstation exposes to the touch presentation (M5 bridge). The
  *  workstation owns ALL state; the editor only reads through the adapter and
  *  calls back. No parallel data path (R14). */
+export type TouchCreateResult =
+  | { ok: true; geometryId: string; quoteRoofAreaId: string }
+  | { ok: false; message: string; retryable: boolean };
+
 export interface TouchOutlineAdapter {
   /** Saved roof areas visible on the CURRENT page (page-scoped by the owner). */
   getAreas(): SavedOutlineRecord[];
@@ -105,9 +109,11 @@ export interface TouchOutlineAdapter {
   updateOutline(intent: Extract<OutlineSaveIntent, { kind: 'update-in-place' }>): Promise<
     { ok: true } | { ok: false; error: string; staleVersion?: boolean }
   >;
-  /** Create-new save: the EXISTING handleSaveArea flow (name/pitch fields,
-   *  area-row creation, owner stamping). */
-  createOutline(name: string, pitch: number, points: ScenePoint[]): void;
+  /** U4 (plan 6.4): create-new save RETURNS an awaited result tied to
+   *  completion of the EXISTING handleSaveArea orchestration (DB area row
+   *  + immediate measurement persist) - never to scheduling it. No second
+   *  persistence engine; retryable failures resume the existing area id. */
+  createOutline(name: string, pitch: number, points: ScenePoint[]): Promise<TouchCreateResult>;
   /** M6: touch AI outline scan availability, or null when unentitled —
    *  the manual journey never depends on it (R01/O17). */
   getAiOutlineScanInfo(): AiOutlineScanInfo | null;
@@ -171,6 +177,12 @@ export function useTouchOutlineEditor(
   const [selectionMode, setSelectionMode] = useState<'idle' | 'creating'>('idle');
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+  // U4: mirrored ref so async confirmCreate can read the CURRENT saving
+  // state without re-subscribing (stale-closure safe duplicate guard).
+  const saveStateRef = useRef<SaveState>('idle');
+  useEffect(() => {
+    saveStateRef.current = saveState;
+  }, [saveState]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [pendingSwitch, setPendingSwitch] = useState<SwitchTarget | null>(null);
   const pendingSwitchRef = useRef<SwitchTarget | null>(pendingSwitch);
@@ -588,13 +600,13 @@ export function useTouchOutlineEditor(
   }, [scale, scene]);
 
   const confirmCreate = useCallback(
-    (name: string, pitch: number) => {
+    async (name: string, pitch: number) => {
       logTakeoffEvent('outline.create.confirmed', { name, pitch });
       const adapter = adapterRef.current;
       const s = sessionRef.current;
       const context = adapter?.getEditContext();
       // M9 (owner live-test 2026-09-21): EVERY failure path must act or
-      // visibly report — the old silent `return`s here were the dead
+      // visibly report - the old silent `return`s here were the dead
       // 'Use outline' button. The form stays open so the user sees the
       // reason and keeps their entered name/pitch.
       const fail = (message: string, reason: string) => {
@@ -603,11 +615,11 @@ export function useTouchOutlineEditor(
         logTakeoffEvent('outline.create.rejected', { reason });
       };
       if (!adapter || !s || !context) {
-        fail('Could not save — the takeoff session is not ready. Reload the page and try again.', 'session-not-ready');
+        fail('Could not save - the takeoff session is not ready. Reload the page and try again.', 'session-not-ready');
         return;
       }
       if (!scale) {
-        fail('Set the scale first — calibrate this page before saving an outline.', 'uncalibrated');
+        fail('Set the scale first - calibrate this page before saving an outline.', 'uncalibrated');
         return;
       }
       if (!s.draft.closed) {
@@ -618,7 +630,34 @@ export function useTouchOutlineEditor(
         fail(review.blocking[0].message, 'blocking-validation'); // invalid outline never saves
         return;
       }
-      adapter.createOutline(name, pitch, s.draft.vertices.map((v) => ({ ...v.point })));
+      if (saveStateRef.current === 'saving') return; // U4: no duplicate create
+      // U4 (plan 6.4): TRUTHFUL SAVE - 'saving' is entered BEFORE the call and
+      // resolves only when the EXISTING create/persist orchestration
+      // acknowledges completion. The form stays open, fields/points are kept,
+      // and a pending external exit resumes only after acknowledgement.
+      setSaveState('saving');
+      setSaveError(null);
+      let result: TouchCreateResult;
+      try {
+        result = await adapter.createOutline(name, pitch, s.draft.vertices.map((v) => ({ ...v.point })));
+      } catch (err) {
+        result = {
+          ok: false,
+          message: err instanceof Error ? err.message : 'The outline could not be saved.',
+          retryable: true,
+        };
+      }
+      if (!result.ok) {
+        setSaveState('failed');
+        setSaveError(
+          result.retryable
+            ? `${result.message} Your outline is kept - tap Use outline to retry.`
+            : result.message,
+        );
+        logTakeoffEvent('outline.create.failed', { error: result.message, retryable: result.retryable });
+        return; // draft + details preserved; no pending-leave/switch proceeds
+      }
+      logTakeoffEvent('outline.create.succeeded', { geometryId: result.geometryId });
       setShowCreateForm(false);
       setSession(null); // draft consumed by the create flow
       setSelectionMode('idle');
@@ -628,7 +667,7 @@ export function useTouchOutlineEditor(
       setOfferOpen(false);
       setCreateDefaults(null);
       // M7: resolve a pending external exit the same way as the
-      // update-in-place path — only after the create actually committed
+      // update-in-place path - only after the create actually committed
       // through the existing flow.
       const pending = pendingSwitchRef.current;
       setPendingSwitch(null);
@@ -784,12 +823,24 @@ export function useTouchOutlineEditor(
       )}
       {camera && draft && (
         <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+          {/* U4 (plan 6.2): dual-contrast outline - a dark casing under the
+              light stroke keeps the path readable on white plans AND dark
+              imagery. Open drafts stay open (no premature closing edge). */}
           <polygon
             points={vertexViewportPoints.map((p) => `${p.x},${p.y}`).join(' ')}
             fill={draft.closed ? 'rgba(255,107,53,0.08)' : 'none'}
-            stroke="rgba(255,255,255,0.7)"
+            stroke="rgba(15,23,42,0.85)"
+            strokeWidth={5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+          <polygon
+            points={vertexViewportPoints.map((p) => `${p.x},${p.y}`).join(' ')}
+            fill={draft.closed ? 'rgba(255,107,53,0.08)' : 'none'}
+            stroke="rgba(255,255,255,0.9)"
             strokeWidth={2}
             strokeLinejoin="round"
+            strokeLinecap="round"
           />
           {selectedIndex >= 0 && vertexViewportPoints.length > 1 && (() => {
             const n = vertexViewportPoints.length;
@@ -807,6 +858,9 @@ export function useTouchOutlineEditor(
             const isInvalid = review?.blocking.some((issue) => issue.vertexIds?.includes(ids[i]));
             return (
               <g key={ids[i]}>
+                {/* U4: dark casing + light/accent centre - precise centre at
+                    the true vertex, readable on white plans and dark imagery. */}
+                <circle cx={p.x} cy={p.y} r={7} fill="rgba(15,23,42,0.85)" />
                 {isSelected && (
                   <circle cx={p.x} cy={p.y} r={14} fill="none" stroke="#FF6B35" strokeWidth={2.5} strokeDasharray={isArmed ? '5 3' : 'none'} />
                 )}
@@ -968,6 +1022,7 @@ export function useTouchOutlineEditor(
           defaultPitch={createDefaults?.pitch ?? 0}
           onCancel={() => setShowCreateForm(false)}
           onConfirm={confirmCreate}
+          busy={saveState === 'saving'}
         />
       )}
     </div>
@@ -1132,21 +1187,37 @@ export function useTouchOutlineEditor(
   };
 }
 
-/** §8.1: required name/pitch confirmation before the create save. */
+/** §8.1: required name/pitch confirmation before the create save.
+ *  U4: honest pitch validation (0 <= pitch < 90, no silent parseFloat->0)
+ *  and a busy state - the form stays open until persistence acknowledges. */
 function CreateOutlineForm({
   defaultName,
   defaultPitch = 0,
   onCancel,
   onConfirm,
+  busy,
 }: {
   defaultName: string;
   /** M6: prefill from the imported AI candidate (name/pitch kept as-is). */
   defaultPitch?: number;
   onCancel: () => void;
   onConfirm: (name: string, pitch: number) => void;
+  /** U4: true while the create is being awaited - disables submit. */
+  busy?: boolean;
 }) {
   const [name, setName] = useState(defaultName);
   const [pitch, setPitch] = useState(String(defaultPitch));
+  const [pitchError, setPitchError] = useState<string | null>(null);
+  const confirm = () => {
+    const trimmed = pitch.trim();
+    const p = Number.parseFloat(trimmed);
+    if (trimmed === '' || !Number.isFinite(p) || p < 0 || p >= 90) {
+      setPitchError('Enter the roof pitch in degrees, 0 to 90 (e.g. 35).');
+      return;
+    }
+    setPitchError(null);
+    onConfirm(name.trim() || defaultName, p);
+  };
   return (
     <FloatingCanvasSheet label="Name and pitch for the new outline" dialog className="max-w-md text-xs text-slate-100">
       <div className="mb-2 font-semibold text-xs text-slate-100">Use outline</div>
@@ -1164,28 +1235,35 @@ function CreateOutlineForm({
           <input
             inputMode="decimal"
             value={pitch}
-            onChange={(e) => setPitch(e.target.value)}
+            onChange={(e) => {
+              setPitch(e.target.value);
+              setPitchError(null);
+            }}
             className="h-10 w-24 rounded-lg border border-white/20 bg-slate-900 px-2 text-white focus:border-orange-500 focus:outline-none"
           />
         </label>
       </div>
+      {pitchError && (
+        <div className="mb-2 rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-[11px] text-red-200" role="alert">
+          {pitchError}
+        </div>
+      )}
       <div className="flex gap-2">
         <button
           type="button"
-          className="h-12 min-w-12 flex-1 rounded-full bg-[#FF6B35] px-3 text-xs font-semibold text-white"
-          onClick={() => {
-            const p = Number.parseFloat(pitch);
-            onConfirm(name.trim() || defaultName, Number.isFinite(p) && p >= 0 && p < 90 ? p : 0);
-          }}
+          className="h-12 min-w-12 flex-1 rounded-full bg-[#FF6B35] px-3 text-xs font-semibold text-white disabled:opacity-40"
+          disabled={busy}
+          onClick={confirm}
         >
-          Use outline
+          {busy ? 'Saving…' : 'Use outline'}
         </button>
         <button
           type="button"
-          className="h-12 min-w-12 flex-1 rounded-full border border-white/20 px-3 text-xs font-semibold text-slate-200"
+          className="h-12 min-w-12 flex-1 rounded-full border border-white/20 px-3 text-xs font-semibold text-slate-200 disabled:opacity-40"
+          disabled={busy}
           onClick={onCancel}
         >
-          Keep editing
+          {busy ? 'Saving…' : 'Keep editing'}
         </button>
       </div>
     </FloatingCanvasSheet>

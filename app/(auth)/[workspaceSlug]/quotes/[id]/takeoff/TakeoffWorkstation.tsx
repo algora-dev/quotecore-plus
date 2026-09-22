@@ -12,7 +12,7 @@ import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaRes
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
-import type { TouchOutlineAdapter } from '@/app/lib/takeoff/precision/TouchOutlineEditor';
+import type { TouchOutlineAdapter, TouchCreateResult } from '@/app/lib/takeoff/precision/TouchOutlineEditor';
 import type {
   AiOutlineScanInfo,
   AiOutlineScanResult,
@@ -1770,7 +1770,12 @@ export function TakeoffWorkstation({
     canvas.requestRenderAll();
   }, []);
 
-  const handleSaveArea = (name: string, pitch?: number, pointsOverride?: { x: number; y: number }[]) => {
+  const handleSaveArea = (
+    name: string,
+    pitch?: number,
+    pointsOverride?: { x: number; y: number }[],
+    onResult?: (r: TouchCreateResult) => void,
+  ) => {
     // M5: pointsOverride lets the touch outline editor hand a completed manual
     // outline to the EXISTING create flow (owner fields/name/pitch unchanged).
     const sourcePoints = pointsOverride ?? pendingAreaPoints;
@@ -1847,6 +1852,16 @@ export function TakeoffWorkstation({
         (async () => {
           try {
             const result = await createNewTakeoffArea(quote.id, name || undefined);
+            if (!(result.ok && result.areaId)) {
+              // U4: surfaced, never a silent hang - the touch create awaits
+              // this outcome.
+              onResult?.({
+                ok: false,
+                message: 'Could not create the roof area row.',
+                retryable: true,
+              });
+              return;
+            }
             if (result.ok && result.areaId) {
               const finalLabel = result.label || name || 'Area';
               const newDbAreaId = result.areaId;
@@ -1959,25 +1974,56 @@ export function TakeoffWorkstation({
               // Mirrors the outgoing-area auto-save pattern exactly.
               try {
                 const pageDbId = pages[currentPageIndex]?.id ?? null;
+                // U4 (plan 6.4): the touch create awaits THIS persist - the
+                // payload is captured for a partial-success retry that
+                // resumes the SAME area id instead of creating a duplicate
+                // roof-area row.
+                const persistPayload = [{
+                  componentId: null as string | null, type: 'area' as const, value: stampedNewArea.area,
+                  pitch: stampedNewArea.pitch, name: stampedNewArea.name,
+                  points: stampedNewArea.points, visible: true, pageId: pageDbId,
+                  quoteRoofAreaId: newDbAreaId,
+                }];
+                const persistArgs = {
+                  unit: outgoingCalibrations[0]?.unit || 'feet',
+                  pageDbId,
+                  calibrations: outgoingCalibrations.length > 0 ? outgoingCalibrations : null,
+                };
                 const persistNew = await saveTakeoffMeasurements(
                   quote.id,
-                  [{
-                    componentId: null, type: 'area' as const, value: stampedNewArea.area,
-                    pitch: stampedNewArea.pitch, name: stampedNewArea.name,
-                    points: stampedNewArea.points, visible: true, pageId: pageDbId,
-                    quoteRoofAreaId: newDbAreaId,
-                  }],
-                  outgoingCalibrations[0]?.unit || 'feet',
+                  persistPayload,
+                  persistArgs.unit,
                   undefined, undefined,
-                  pageDbId, sessionVersionRef.current,
+                  persistArgs.pageDbId, sessionVersionRef.current,
                   newDbAreaId,
-                  outgoingCalibrations.length > 0 ? outgoingCalibrations : null,
+                  persistArgs.calibrations,
                 );
                 if (persistNew.success) {
                   updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
+                  onResult?.({ ok: true, geometryId: stampedNewArea.id, quoteRoofAreaId: newDbAreaId });
+                } else {
+                  touchCreateRetryRef.current = async (): Promise<TouchCreateResult> => {
+                    const r = await saveTakeoffMeasurements(
+                      quote.id, persistPayload, persistArgs.unit, undefined, undefined,
+                      persistArgs.pageDbId, sessionVersionRef.current, newDbAreaId, persistArgs.calibrations,
+                    );
+                    return r.success
+                      ? { ok: true, geometryId: stampedNewArea.id, quoteRoofAreaId: newDbAreaId }
+                      : { ok: false, message: 'The outline still could not be saved.', retryable: true };
+                  };
+                  onResult?.({
+                    ok: false,
+                    message: 'The outline was created but could not be saved yet.',
+                    retryable: true,
+                  });
                 }
               } catch (persistErr) {
                 console.warn('[handleSaveArea] New-area immediate persist failed (will flush on next save):', persistErr);
+                onResult?.({
+                  ok: false,
+                  message: 'The outline was created but could not be saved yet.',
+                  retryable: true,
+                });
               }
               // Reset Phase 6 state
               setPendingNewAreaIsExisting(false);
@@ -1990,6 +2036,11 @@ export function TakeoffWorkstation({
             }
           } catch (err) {
             console.warn('[handleSaveArea] Failed to create DB area row:', err);
+            onResult?.({
+              ok: false,
+              message: 'Could not create the roof area: ' + (err instanceof Error ? err.message : 'unknown error'),
+              retryable: false,
+            });
           }
         })();
       } else if (pendingNewAreaIsExisting && pendingNewAreaTargetId) {
@@ -3452,8 +3503,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     pageImageRevision: string | null;
     currentImageUrl: string | null;
     ai: { available: boolean; blocked: boolean; qualityLevel: 'low' | 'medium' | 'high' } | null;
-    handleSaveArea: (name: string, pitch?: number, pointsOverride?: { x: number; y: number }[]) => void;
+    handleSaveArea: (
+      name: string,
+      pitch?: number,
+      pointsOverride?: { x: number; y: number }[],
+      onResult?: (r: TouchCreateResult) => void,
+    ) => void;
   } | null>(null);
+  // U4 (plan 6.4): partial-success retry - when a touch create made the DB
+  // area row but the immediate measurement persist failed, the retry
+  // re-persists with the SAME ids instead of creating a duplicate area.
+  const touchCreateRetryRef = useRef<(() => Promise<TouchCreateResult>) | null>(null);
   // M6 (O11): touch context epoch — bumped on page switch / image-revision
   // change / touch-scan cancellation so stale client/AI work is discarded
   // rather than silently applied. Safe for M5 saves: it only changes in
@@ -3639,8 +3699,32 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         setRedrawNonce((n) => n + 1); // rebuild canvas polygons from state
         return { ok: true };
       },
-      createOutline: (name, pitch, points) => {
-        touchOutlineLiveRef.current?.handleSaveArea(name, pitch, points);
+      createOutline: async (name, pitch, points): Promise<TouchCreateResult> => {
+        // U4 (plan 6.4): partial-success retry FIRST - resume persisting the
+        // EXISTING area instead of creating a duplicate row.
+        const retry = touchCreateRetryRef.current;
+        if (retry) {
+          touchCreateRetryRef.current = null;
+          return retry();
+        }
+        return new Promise<TouchCreateResult>((resolve) => {
+          let settled = false;
+          // Defensive timeout: if the create orchestration never reports
+          // (unexpected branch), fail retryably instead of hanging on
+          // 'Saving...' forever.
+          const t = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              resolve({ ok: false, message: 'Saving took too long - try again.', retryable: true });
+            }
+          }, 60_000);
+          touchOutlineLiveRef.current?.handleSaveArea(name, pitch, points, (r) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(t);
+            resolve(r);
+          });
+        });
       },
       // ── M6: AI outline scan (touch) — scan1 ONLY (O10), same billing as
       // desktop (owner decision 2026-09-21: full scan1 charge, no cheaper
