@@ -150,7 +150,7 @@ export function TakeoffPage({
     aiEnabled: false, // Retain the current mobile manual-first feature policy.
     pageHasDependents,
     defaultWorkingUnit: normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? 'meters' : 'feet',
-    pitch, onPitchChange: setPitch, onCommitted, onExit: () => router.push(backHref),
+    onCommitted, onExit: () => router.push(backHref),
   });
   const outlineEditor = useTouchOutlineEditor(
     touchActive && touchTool === 'outline', () => outlineAdapter, backHref,

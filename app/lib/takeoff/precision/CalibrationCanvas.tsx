@@ -29,12 +29,13 @@ export function CalibrationCanvas({ bindSurface, camera, scene, planUrl, spans, 
               strokeDasharray={span.muted ? '2 7' : '4 8'} opacity={0.8} />
           </>}
           {points.map((p, index) => <g key={index} data-testid={span.muted ? undefined : `calibration-point-${index}`}>
-            {/* Polish 2026-09-22 (owner): no filled disc - thin ring plus a
-                segmented crosshair with a clear centre gap, so the exact plan
-                junction under the point stays visible for accurate placement. */}
-            <circle cx={p.x} cy={p.y} r={6.5} fill="none" stroke={span.muted ? '#fff' : stroke} strokeWidth={2} />
+            {/* Polish 2026-09-22 (owner round 2): smaller centre - the ring is
+                tiny and the crosshair segments cross through it toward the
+                middle, leaving only a very small transparent gap so the exact
+                junction lines up precisely. */}
+            <circle cx={p.x} cy={p.y} r={3.5} fill="none" stroke={span.muted ? '#fff' : stroke} strokeWidth={1.75} />
             {!span.muted && selected === index && <circle cx={p.x} cy={p.y} r={14} fill="none" stroke={stroke} strokeWidth={2.5} strokeDasharray={armed ? '5 3' : undefined} />}
-            <path d={`M${p.x - 11} ${p.y}h5 M${p.x + 6} ${p.y}h5 M${p.x} ${p.y - 11}v5 M${p.x} ${p.y + 6}v5`}
+            <path d={`M${p.x - 11} ${p.y}h6.5 M${p.x + 4.5} ${p.y}h6.5 M${p.x} ${p.y - 11}v6.5 M${p.x} ${p.y + 4.5}v6.5`}
               stroke={span.muted ? '#fff' : stroke} strokeWidth={2} />
             <text x={p.x + 16} y={p.y - 10} fill={stroke} stroke="#0f172a" strokeWidth={3} paintOrder="stroke" fontSize={12} fontWeight={700}>
               {span.label ?? (index === 0 ? 'Start' : 'End')}

@@ -11,11 +11,13 @@ test.describe('Keyboardless precision @touch', () => {
   test('manual calibration, exact pitch, manual outline, save to builder and reload', async ({ page }) => {
     test.setTimeout(360_000);
     const { slug, quoteId, takeoffUrl } = await enterKeyboardlessTakeoff(page, `${RUN}-manual`);
+    // Owner round 2 (2026-09-22): pitch is NOT offered during calibration -
+    // it is set on the outline finish screen where the roof area is created.
+    await addCalibrationReference(page); await confirmCalibration(page);
+    await manualRectangle(page); await tapNamed(page, 'Done');
     await tapNamed(page, 'Type roof pitch, currently 25 degrees', true);
     await enterRailNumber(page, '32.5'); await tapNamed(page, 'Confirm pitch');
     await tapNamed(page, 'Increase pitch by one degree', true);
-    await addCalibrationReference(page); await confirmCalibration(page);
-    await manualRectangle(page); await tapNamed(page, 'Done');
     await expect(page.getByRole('button', { name: 'Type roof pitch, currently 33.5 degrees' })).toBeVisible();
     await expectNoCanvasTextInputs(page);
     await tapNamed(page, 'Save & finish');
