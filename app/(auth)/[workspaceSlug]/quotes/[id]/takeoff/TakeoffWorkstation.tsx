@@ -12,6 +12,7 @@ import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaRes
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
 import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
+import { createSingleFlight } from '@/app/lib/takeoff/precision/touchSaveFlight';
 import type { TouchOutlineAdapter, TouchCreateResult } from '@/app/lib/takeoff/precision/TouchOutlineEditor';
 import type {
   AiOutlineScanInfo,
@@ -482,11 +483,11 @@ export function TakeoffWorkstation({
   // read a stale sessionVersion from closure. The ref is always current.
   const sessionVersionRef = useRef<number | null>(hydrationData?.sessionVersion ?? null);
   const updateSessionVersion = useCallback((updater: (prev: number | null) => number | null) => {
-    setSessionVersion(prev => {
-      const next = updater(prev);
-      sessionVersionRef.current = next;
-      return next;
-    });
+    // Publish synchronously before another awaited save reads the version.
+    // A React state updater may run later or be replayed in Strict Mode.
+    const next = updater(sessionVersionRef.current);
+    sessionVersionRef.current = next;
+    setSessionVersion(next);
   }, []);
   // Sync ref whenever sessionVersion state changes from external sources
   // (e.g. hydration, getTakeoffSessionVersion sync).
@@ -1784,7 +1785,7 @@ export function TakeoffWorkstation({
 
     // Route by pendingComponentId first (captured at polygon-close time).
     // This is immune to selectedComponentId being cleared by canvas deselection.
-    const capturedComponentId = pendingComponentId; // save before consuming
+    const capturedComponentId = onResult ? null : pendingComponentId; // Touch creates a roof, not a stale desktop component.
     const isComponentArea = !!capturedComponentId;
     setPendingComponentId(null); // consume it
 
@@ -1830,6 +1831,38 @@ export function TakeoffWorkstation({
         fromPageId: currentPageIdRef.current, // stamp page at draw time (ref - stale-closure fix)
       };
       
+      // Touch Save & finish must also acknowledge pre-created/existing-area
+      // branches. Keep the original page/area snapshot; never replace another
+      // page's measurements or create a second parent row on a retry.
+      const persistTouchArea = (targetAreaId: string, prior: Parameters<typeof saveTakeoffMeasurements>[1]) => {
+        const pageAtStart = newArea.fromPageId;
+        const sourceUrl = touchOutlineLiveRef.current?.currentImageUrl;
+        const perform = async (nextName: string, nextPitch: number, nextPoints: { x: number; y: number }[]): Promise<TouchCreateResult> => {
+          if (!pageAtStart || currentPageIdRef.current !== pageAtStart || sourceUrl !== touchOutlineLiveRef.current?.currentImageUrl) {
+            return { ok: false, message: 'The plan changed while saving. Reopen this roof before continuing.', retryable: false };
+          }
+          try {
+            const value = calculatePolygonArea(nextPoints);
+            if (!(value > 0)) return { ok: false, message: 'A valid calibrated roof area is required.', retryable: true };
+            const result = await saveTakeoffMeasurements(quote.id, [...prior, {
+              componentId: null, type: 'area', value, pitch: nextPitch, name: nextName,
+              points: nextPoints, visible: true, pageId: pageAtStart, quoteRoofAreaId: targetAreaId,
+            }], calibrationsRef.current[0]?.unit ?? 'meters', undefined, undefined,
+            pageAtStart, sessionVersionRef.current, targetAreaId, calibrationsRef.current,
+            false, aiCalMetadataRef.current.get(pageAtStart));
+            if (!result.success) return { ok: false, message: result.error, retryable: true };
+            updateSessionVersion(prev => (prev ?? 0) + 1);
+            setRoofAreas(prev => prev.map(area => area.id === newArea.id
+              ? { ...area, name: nextName, pitch: nextPitch, points: nextPoints, area: value, quoteRoofAreaId: targetAreaId } : area));
+            return { ok: true, geometryId: newArea.id, quoteRoofAreaId: targetAreaId };
+          } catch (error) {
+            return { ok: false, message: error instanceof Error ? error.message : 'The roof could not be saved.', retryable: true };
+          }
+        };
+        touchCreateRetryRef.current = perform;
+        return perform(name, pitch, sourcePoints);
+      };
+
       setRoofAreas([...roofAreas, newArea]);
       setShowAreaNamePrompt(false);
       setPendingAreaPoints([]);
@@ -1855,11 +1888,11 @@ export function TakeoffWorkstation({
             if (!(result.ok && result.areaId)) {
               // U4: surfaced, never a silent hang - the touch create awaits
               // this outcome.
-              onResult?.({
-                ok: false,
-                message: 'Could not create the roof area row.',
-                retryable: true,
-              });
+              if (onResult) {
+                setRoofAreas(prev => prev.filter(area => area.id !== newArea.id));
+                fabricRef.current?.remove(polygon);
+              }
+              onResult?.({ ok: false, message: result.error ?? 'Could not create the roof area row.', retryable: true });
               return;
             }
             if (result.ok && result.areaId) {
@@ -1967,63 +2000,25 @@ export function TakeoffWorkstation({
               setActiveAreaId(newDbAreaId);
               activeAreaIdRef.current = newDbAreaId; // sync ref for canvas handlers
               setActiveSaveRoofAreaId(newDbAreaId);
-              // M7 (O01 touch journey): a touch-created outline cannot reach the
-              // desktop "Finish and Save" (the touch shell's Save is not the
-              // workstation save), so the new polygon's measurement row must
-              // persist IMMEDIATELY — otherwise reload loses the outline.
-              // Mirrors the outgoing-area auto-save pattern exactly.
-              try {
-                const pageDbId = pages[currentPageIndex]?.id ?? null;
-                // U4 (plan 6.4): the touch create awaits THIS persist - the
-                // payload is captured for a partial-success retry that
-                // resumes the SAME area id instead of creating a duplicate
-                // roof-area row.
-                const persistPayload = [{
-                  componentId: null as string | null, type: 'area' as const, value: stampedNewArea.area,
-                  pitch: stampedNewArea.pitch, name: stampedNewArea.name,
-                  points: stampedNewArea.points, visible: true, pageId: pageDbId,
-                  quoteRoofAreaId: newDbAreaId,
-                }];
-                const persistArgs = {
-                  unit: outgoingCalibrations[0]?.unit || 'feet',
-                  pageDbId,
-                  calibrations: outgoingCalibrations.length > 0 ? outgoingCalibrations : null,
-                };
-                const persistNew = await saveTakeoffMeasurements(
-                  quote.id,
-                  persistPayload,
-                  persistArgs.unit,
-                  undefined, undefined,
-                  persistArgs.pageDbId, sessionVersionRef.current,
-                  newDbAreaId,
-                  persistArgs.calibrations,
-                );
-                if (persistNew.success) {
-                  updateSessionVersion(prev => (prev != null ? prev + 1 : 1));
-                  onResult?.({ ok: true, geometryId: stampedNewArea.id, quoteRoofAreaId: newDbAreaId });
-                } else {
-                  touchCreateRetryRef.current = async (): Promise<TouchCreateResult> => {
-                    const r = await saveTakeoffMeasurements(
-                      quote.id, persistPayload, persistArgs.unit, undefined, undefined,
-                      persistArgs.pageDbId, sessionVersionRef.current, newDbAreaId, persistArgs.calibrations,
-                    );
-                    return r.success
-                      ? { ok: true, geometryId: stampedNewArea.id, quoteRoofAreaId: newDbAreaId }
-                      : { ok: false, message: 'The outline still could not be saved.', retryable: true };
-                  };
-                  onResult?.({
-                    ok: false,
-                    message: 'The outline was created but could not be saved yet.',
-                    retryable: true,
-                  });
+              if (onResult) {
+                const result = await persistTouchArea(newDbAreaId, []);
+                onResult(result);
+              } else {
+                // Preserve the desktop new-area immediate-persist path.
+                try {
+                  const pageDbId = pages[currentPageIndex]?.id ?? null;
+                  const persisted = await saveTakeoffMeasurements(quote.id, [{
+                    componentId: null, type: 'area', value: stampedNewArea.area,
+                    pitch: stampedNewArea.pitch, name: stampedNewArea.name,
+                    points: stampedNewArea.points, visible: true, pageId: pageDbId,
+                    quoteRoofAreaId: newDbAreaId,
+                  }], outgoingCalibrations[0]?.unit || 'feet', undefined, undefined,
+                  pageDbId, sessionVersionRef.current, newDbAreaId,
+                  outgoingCalibrations.length > 0 ? outgoingCalibrations : null);
+                  if (persisted.success) updateSessionVersion(prev => (prev ?? 0) + 1);
+                } catch (error) {
+                  console.warn('[handleSaveArea] New-area immediate persist failed:', error);
                 }
-              } catch (persistErr) {
-                console.warn('[handleSaveArea] New-area immediate persist failed (will flush on next save):', persistErr);
-                onResult?.({
-                  ok: false,
-                  message: 'The outline was created but could not be saved yet.',
-                  retryable: true,
-                });
               }
               // Reset Phase 6 state
               setPendingNewAreaIsExisting(false);
@@ -2036,11 +2031,10 @@ export function TakeoffWorkstation({
             }
           } catch (err) {
             console.warn('[handleSaveArea] Failed to create DB area row:', err);
-            onResult?.({
-              ok: false,
-              message: 'Could not create the roof area: ' + (err instanceof Error ? err.message : 'unknown error'),
-              retryable: false,
-            });
+            const uncertain: TouchCreateResult = { ok: false,
+              message: 'Could not confirm the roof creation. Check the quote after reloading before creating another roof.', retryable: false };
+            if (onResult && !touchCreateRetryRef.current) touchCreateRetryRef.current = async () => uncertain;
+            onResult?.(uncertain);
           }
         })();
       } else if (pendingNewAreaIsExisting && pendingNewAreaTargetId) {
@@ -2113,6 +2107,29 @@ export function TakeoffWorkstation({
         viaNewAreaFlowRef.current = false; // RC-5: consume the flow flag
         // Do NOT reset isExistingAreaMode here - it stays true so the save
         // filter at `!isExistingAreaMode` includes only new polygon areas.
+      }
+
+      if (onResult && (pendingNewAreaIsExisting || isExistingAreaMode)) {
+        if (!drawTimeAreaId) {
+          onResult({ ok: false, message: 'No target roof area was selected. Reopen the takeoff.', retryable: false });
+        } else {
+          const cache = drawTimeAreaId !== activeAreaId ? areaCanvasStatesRef.current.get(drawTimeAreaId) : null;
+          const priorComponents = cache?.componentMeasurements ?? (drawTimeAreaId === activeAreaId ? componentMeasurements : []);
+          const priorAreas = cache?.roofAreas ?? (drawTimeAreaId === activeAreaId ? roofAreas : []);
+          const pageId = newArea.fromPageId;
+          const owns = (row: { fromPageId?: string | null; quoteRoofAreaId?: string | null }) =>
+            (!row.fromPageId || row.fromPageId === pageId) && (!row.quoteRoofAreaId || row.quoteRoofAreaId === drawTimeAreaId);
+          const prior: Parameters<typeof saveTakeoffMeasurements>[1] = [];
+          priorComponents.forEach((component: ComponentWithMeasurements) => component.measurements.filter(owns).forEach(m => prior.push({
+            componentId: component.componentId, type: m.type, value: m.value, points: m.points,
+            visible: m.visible, pageId, quoteRoofAreaId: drawTimeAreaId, entryInputs: m.entryInputs ?? null,
+          })));
+          priorAreas.filter(owns).filter((area: RoofArea) => area.id !== newArea.id).forEach((area: RoofArea) => prior.push({
+            componentId: null, type: 'area', value: area.area, pitch: area.pitch, name: area.name,
+            points: area.points, visible: area.visible, pageId, quoteRoofAreaId: drawTimeAreaId,
+          }));
+          void persistTouchArea(drawTimeAreaId, prior).then(onResult);
+        }
       }
 
       // Signal copilot that a roof area was created
@@ -3496,6 +3513,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // measurement data path exists. The adapter object is stable; every method
   // reads the latest committed state through touchOutlineLiveRef.
   const touchOutlineLiveRef = useRef<{
+    pageId: string | null;
     roofAreas: RoofArea[];
     componentMeasurements: ComponentWithMeasurements[];
     calibrations: Calibration[];
@@ -3513,7 +3531,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // U4 (plan 6.4): partial-success retry - when a touch create made the DB
   // area row but the immediate measurement persist failed, the retry
   // re-persists with the SAME ids instead of creating a duplicate area.
-  const touchCreateRetryRef = useRef<(() => Promise<TouchCreateResult>) | null>(null);
+  const touchCreateRetryRef = useRef<((name: string, pitch: number, points: { x: number; y: number }[]) => Promise<TouchCreateResult>) | null>(null);
+  const touchCreateFlight = useRef(createSingleFlight<TouchCreateResult>());
+  const touchBridgeListeners = useRef(new Set<() => void>());
   // M6 (O11): touch context epoch — bumped on page switch / image-revision
   // change / touch-scan cancellation so stale client/AI work is discarded
   // rather than silently applied. Safe for M5 saves: it only changes in
@@ -3544,6 +3564,29 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   touchHydrationRef.current = hydrationData;
   if (touchOutlineAdapterRef.current == null) {
     touchOutlineAdapterRef.current = {
+      subscribe: (listener) => { touchBridgeListeners.current.add(listener); return () => { touchBridgeListeners.current.delete(listener); }; },
+      applyConfirmedCalibration: (pageId, payload) => {
+        if (currentPageIdRef.current !== pageId) return false;
+        const refs = payload.legacy.map(ref => ({ ...ref })) as Calibration[];
+        pageCalibrationsRef.current.set(pageId, refs);
+        aiCalMetadataRef.current.set(pageId, payload.metadata);
+        calibrationsRef.current = refs;
+        setCalibrations(refs); setCalibrationConfirmed(true); setShowCalibrationHelp(false);
+        // Keyboardless fix (2026-09-22): the desktop "Calibration complete"
+        // instructions modal auto-opens once calibrationConfirmed flips true
+        // (effect above). When calibration came from the TOUCH ACK the user
+        // already has the touch rail guidance, and the modal would otherwise
+        // cover the portal-mounted Switch-to-touch button on desktop.
+        setShowRoofAreaInstructions(false);
+        roofAreaInstructionsDismissedRef.current = true;
+        setCalibrationPoints([]); setCalibrationMode(false); setShowCalibrationModal(false);
+        const revision = payload.metadata.imageRevision || null;
+        const key = `${pageId}|${revision ?? 'none'}`;
+        if (touchEpochKeyRef.current !== key) { touchEpochKeyRef.current = key; touchContextEpochRef.current += 1; }
+        if (touchOutlineLiveRef.current) touchOutlineLiveRef.current = { ...touchOutlineLiveRef.current, pageId, calibrations: refs, pageImageRevision: revision };
+        touchBridgeListeners.current.forEach(listener => listener());
+        return true;
+      },
       getAreas: () => {
         const live = touchOutlineLiveRef.current;
         const pageId = currentPageIdRef.current;
@@ -3574,7 +3617,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         };
       },
       getScale: () => {
-        const calibrations = touchOutlineLiveRef.current?.calibrations ?? [];
+        const activePage = currentPageIdRef.current;
+        const calibrations = activePage ? pageCalibrationsRef.current.get(activePage)
+          ?? (touchOutlineLiveRef.current?.pageId === activePage ? touchOutlineLiveRef.current.calibrations : []) : [];
         if (calibrations.length > 0) {
           try {
             return {
@@ -3699,33 +3744,19 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         setRedrawNonce((n) => n + 1); // rebuild canvas polygons from state
         return { ok: true };
       },
-      createOutline: async (name, pitch, points): Promise<TouchCreateResult> => {
-        // U4 (plan 6.4): partial-success retry FIRST - resume persisting the
-        // EXISTING area instead of creating a duplicate row.
-        const retry = touchCreateRetryRef.current;
-        if (retry) {
-          touchCreateRetryRef.current = null;
-          return retry();
+      createOutline: (name, pitch, points): Promise<TouchCreateResult> => touchCreateFlight.current.run(async () => {
+        const live = touchOutlineLiveRef.current;
+        if (!live || !currentPageIdRef.current || live.calibrations.length === 0) {
+          return { ok: false, message: 'The calibrated plan is not ready.', retryable: true };
         }
-        return new Promise<TouchCreateResult>((resolve) => {
-          let settled = false;
-          // Defensive timeout: if the create orchestration never reports
-          // (unexpected branch), fail retryably instead of hanging on
-          // 'Saving...' forever.
-          const t = setTimeout(() => {
-            if (!settled) {
-              settled = true;
-              resolve({ ok: false, message: 'Saving took too long - try again.', retryable: true });
-            }
-          }, 60_000);
-          touchOutlineLiveRef.current?.handleSaveArea(name, pitch, points, (r) => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(t);
-            resolve(r);
-          });
+        const retry = touchCreateRetryRef.current;
+        // A retry keeps the SAME parent id but uses the user's current edit.
+        const result = retry ? await retry(name, pitch, points) : await new Promise<TouchCreateResult>((resolve, reject) => {
+          try { live.handleSaveArea(name, pitch, points, resolve); } catch (error) { reject(error); }
         });
-      },
+        if (result.ok) touchCreateRetryRef.current = null;
+        return result;
+      }),
       // ── M6: AI outline scan (touch) — scan1 ONLY (O10), same billing as
       // desktop (owner decision 2026-09-21: full scan1 charge, no cheaper
       // outline-only variant). Client orchestration only: the same
@@ -3738,8 +3769,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         return {
           available: true,
           blocked: ai.blocked,
-          cost: getAiScanPointCost(ai.qualityLevel),
-          qualityLevel: ai.qualityLevel,
+          cost: getAiScanPointCost('low'),
+          qualityLevel: 'low',
         };
       },
       startOutlineOnlyScan: async (): Promise<AiOutlineScanResult> => {
@@ -3752,7 +3783,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         }
         const imageUrl = live?.currentImageUrl ?? null;
         if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
-        const qualityLevel = live?.ai?.qualityLevel ?? 'medium';
+        const qualityLevel = 'low' as const; // Touch outline-only default; desktop choice is unchanged.
         const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
 
         const abortController = new AbortController();
@@ -3834,7 +3865,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       cancelOutlineOnlyScan: () => {
         touchOutlineScanAbortRef.current?.abort();
         touchOutlineScanAbortRef.current = null;
-        touchContextEpochRef.current += 1; // O11: invalidate any in-flight result
+        // The touch editor invalidates its scan token. Cancelling a scan
+        // must not invalidate the existing human draft's edit context.
       },
     };
   }
@@ -3843,7 +3875,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   useEffect(() => {
     const pageId = currentPageIdRef.current;
     const hydratedPage = hydrationData?.pages.find((p) => p.id === pageId) ?? null;
-    const pageImageRevision = hydratedPage?.imageRevision ?? null;
+    const pageImageRevision = (pageId ? aiCalMetadataRef.current.get(pageId)?.imageRevision : null) || hydratedPage?.imageRevision || null;
     // M6 (O11): bump the touch context epoch when the page identity or the
     // immutable image revision changes — in-flight scan results and open
     // drafts are invalidated instead of silently applied. The first
@@ -3855,13 +3887,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       touchEpochKeyRef.current = epochKey;
       touchContextEpochRef.current += 1;
     }
+    const priorLive = touchOutlineLiveRef.current;
+    const currentImageUrl = pages[currentPageIndex]?.url ?? planUrlRef.current;
+    const changed = !priorLive || priorLive.pageId !== pageId || priorLive.roofAreas !== roofAreas ||
+      priorLive.componentMeasurements !== componentMeasurements || priorLive.calibrations !== calibrations ||
+      priorLive.canvasDims !== canvasDims || priorLive.pageImageRevision !== pageImageRevision || priorLive.currentImageUrl !== currentImageUrl ||
+      !!priorLive.ai !== !!aiTakeoffAvailable || !!priorLive.ai?.blocked !== (aiTakeoffAvailable ? !!aiPoints?.isBlocked : false);
     touchOutlineLiveRef.current = {
+      pageId,
       roofAreas,
       componentMeasurements,
       calibrations,
       canvasDims,
       pageImageRevision,
-      currentImageUrl: pages[currentPageIndex]?.url ?? planUrlRef.current,
+      currentImageUrl,
       ai: aiTakeoffAvailable
         ? {
             available: true,
@@ -3872,6 +3911,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       handleSaveArea,
     };
     if (onTouchOutlineAdapter) onTouchOutlineAdapter(touchOutlineAdapterRef.current!);
+    if (changed) touchBridgeListeners.current.forEach(listener => listener());
   });
   // Captures the component ID at the moment area mode is activated for a component.
   // Unlike selectedComponentIdRef, this is NOT cleared by Fabric canvas deselection
@@ -3898,6 +3938,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     activeAreaIdRef.current = activeAreaId;
     // Stale-closure fix (2026-07-05): keep currentPageIdRef in sync so
     // canvas handlers (bound once) always see the real current page id.
+    // Keyboardless fix (2026-09-22): pages/currentPageIndex MUST be deps - in
+    // the touch flow none of the other deps change, so after ensurePage1 fills
+    // the page id this effect never re-ran and currentPageIdRef stayed null,
+    // which rejected applyConfirmedCalibration and stranded the flow.
     currentPageIdRef.current = pages[currentPageIndex]?.id ?? null;
     // Fallback: sync activeAreaComponentIdRef from state after render.
     // applyToolForType sets this synchronously (M-01 Gerald audit 2026-05-29),
@@ -3908,7 +3952,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // Only set if not already set synchronously (avoid overwriting with stale state).
       activeAreaComponentIdRef.current = selectedComponentId;
     }
-  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, areaSubTool, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode, pendingNewAreaIsExisting, pendingNewAreaTargetId, activeAreaId]);
+  }, [calibrationMode, calibrationPoints, calibrations, areaMode, areaPoints, areaSubTool, lineMode, linePoints, pointMode, multiLinealMode, multiLinealPoints, selectedComponentId, componentColors, isExistingAreaMode, pendingNewAreaIsExisting, pendingNewAreaTargetId, activeAreaId, pages, currentPageIndex]);
 
   // Stable ref for the signed plan URL. The signed URL is regenerated on
   // every server render (it embeds a fresh JWT), so reading it directly

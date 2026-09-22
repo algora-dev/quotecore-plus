@@ -1,11 +1,14 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { normalizeMeasurementSystem } from '@/app/lib/types';
+import type { CalibrationCommitPayload } from '@/app/lib/takeoff/precision/touchCalibration';
+import { DEFAULT_ROOF_PITCH } from '@/app/lib/takeoff/precision/touchNumberEntry';
 import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
 import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
 import { useTakeoffViewMode } from '@/app/lib/takeoff/precision/useTakeoffViewMode';
-import { usePrecisionTouchHarness } from '@/app/lib/takeoff/precision/PrecisionTouchHarness';
 import {
   useTouchOutlineEditor,
   type TouchOutlineAdapter,
@@ -95,126 +98,64 @@ export function TakeoffPage({
   takeoffTouchEnabled = false,
   takeoffCompactNotices = [],
 }: Props) {
-  // M2 view-mode resolution (§3.1). While the flag is off this hook is inert
-  // (mode always 'desktop') so the desktop presentation is unchanged.
+  const router = useRouter();
   const { mode, preference, setPreference } = useTakeoffViewMode(takeoffTouchEnabled);
   const touchActive = takeoffTouchEnabled && mode === 'mobile-touch';
-  // M5: the workstation registers its outline bridge adapter (stable object,
-  // re-registered every render — setState bails out on the identical
-  // reference). While it is present the LIVE outline editor (manual creation,
-  // re-entry editing, update-in-place saves) replaces the disposable M3
-  // harness; until registration the harness keeps the touch surface usable.
   const [outlineAdapter, setOutlineAdapter] = useState<TouchOutlineAdapter | null>(null);
-  const registerAdapter = useCallback((a: TouchOutlineAdapter) => setOutlineAdapter(a), []);
+  const registerAdapter = useCallback((adapter: TouchOutlineAdapter) => setOutlineAdapter(adapter), []);
+  const [, refreshBridge] = useState(0);
+  useEffect(() => outlineAdapter?.subscribe?.(() => refreshBridge((n) => n + 1)), [outlineAdapter]);
   const backHref = `/${workspaceSlug}/quotes/${quoteId}`;
-
-  // M4→M8 (16:59): flow-driven calibration phase — see the touchTool state
-  // below; both hooks stay mounted so phase transitions preserve drafts (C16).
-  // U0 N1/N2 fix: on first-ever entry the server render has no takeoff_pages
-  // row yet (page-1 is created client-side by the workstation's ensurePage1),
-  // so hydrationData alone cannot feed the calibration phase. The workstation
-  // reports the resolved page id back up here (onPage1Resolved); until then a
-  // fresh page is treated as uncalibrated (touchTool starts in 'calibrate'),
-  // and the calibration phase re-derives its page info once the id lands.
+  // Match the desktop Finish and Save destination, not the quote detail page.
+  const finishHref = `/${workspaceSlug}/quotes/${quoteId}/build?step=roof-areas`;
+  const [pitch, setPitch] = useState(DEFAULT_ROOF_PITCH);
   const [resolvedPage1Id, setResolvedPage1Id] = useState<string | null>(null);
+  const [confirmedCalibration, setConfirmedCalibration] = useState<{ pageId: string; payload: CalibrationCommitPayload } | null>(null);
+  const activePageId = outlineAdapter?.getEditContext()?.pageId ?? initialPageId ?? resolvedPage1Id ?? hydrationData?.pages[0]?.id ?? null;
   const calibrationPage: TouchCalibrationPageInfo | null = useMemo(() => {
-    const p = hydrationData?.pages?.[0] ?? null;
-    if (p) {
-      return {
-        id: initialPageId ?? p.id,
-        imageRevision: p.imageRevision,
-        calibrationMetadata: p.calibrationMetadata,
-        scaleCalibration: p.scaleCalibration,
-      };
-    }
-    const fallbackId = initialPageId ?? resolvedPage1Id;
-    return fallbackId
-      ? { id: fallbackId, imageRevision: null, calibrationMetadata: null, scaleCalibration: null }
-      : null;
-  }, [hydrationData, initialPageId, resolvedPage1Id]);
-  const pageHasDependents = useMemo(
-    () =>
-      (hydrationData?.measurements?.some((m) => m.pageId === calibrationPage?.id) ?? false) ||
-      (allRoofAreas?.length ?? 0) > 0,
-    [hydrationData, calibrationPage?.id, allRoofAreas],
-  );
-  // M4→M8 (16:59 refinement): FLOW-DRIVEN steps — no step-switching UI.
-  // A page without an accepted calibration starts in the calibration phase;
-  // completing (or dismissing) calibration advances to the outline controls.
-  // Re-entry on an already-calibrated page goes straight to outline.
+    if (!activePageId) return null;
+    const acknowledged = confirmedCalibration?.pageId === activePageId ? confirmedCalibration.payload : null;
+    // Never relabel page one's calibration as the newly uploaded page's scale.
+    const page = hydrationData?.pages.find((p) => p.id === activePageId);
+    return { id: activePageId,
+      imageRevision: acknowledged?.metadata.imageRevision || page?.imageRevision || null,
+      calibrationMetadata: acknowledged?.metadata ?? page?.calibrationMetadata ?? null,
+      scaleCalibration: acknowledged?.legacy ?? page?.scaleCalibration ?? null };
+  }, [activePageId, hydrationData, confirmedCalibration]);
+  const pageHasDependents = (hydrationData?.measurements?.some((m) => !m.pageId || m.pageId === activePageId) ?? false)
+    || (outlineAdapter?.getAreas().length ?? 0) > 0;
   const [touchTool, setTouchTool] = useState<'outline' | 'calibrate'>(() => {
-    // U0 N1: a page that does not exist yet is a brand-new (uncalibrated)
-    // page - the flow starts in calibration, never the uncalibrated outline
-    // phase. This kills the entry race where the touch flow opened in outline
-    // with the desktop help modal bleeding through.
-    if (!calibrationPage) return 'calibrate';
-    const decoded = decodeCalibrationMetadata(
-      calibrationPage.calibrationMetadata ?? calibrationPage.scaleCalibration,
-    );
-    const refs =
-      decoded.kind === 'v1'
-        ? decoded.metadata.references
-        : decoded.kind === 'legacy'
-          ? decoded.references
-          : [];
-    return refs.length > 0 ? 'outline' : 'calibrate';
-    // Initial only: the flow (calibration Done) drives later transitions.
+    const decoded = decodeCalibrationMetadata(calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration);
+    const count = decoded.kind === 'v1' ? decoded.metadata.references.length : decoded.kind === 'legacy' ? decoded.references.length : 0;
+    return count > 0 ? 'outline' : 'calibrate';
   });
-  const calib = useTouchCalibration({
-    active: touchActive && touchTool === 'calibrate',
-    quoteId: quote.id,
-    planUrl,
-    page: calibrationPage,
-    // M8 (owner prescription 2026-09-21): MANUAL-ONLY calibration in the
-    // touch view — the AI calibration entry is hidden here; desktop is
-    // unchanged.
-    aiEnabled: false,
-    pageHasDependents,
-    onExit: () => setTouchTool('outline'),
-  });
-
-  // U3 (UX20): automatic advance after an ACKNOWLEDGED scale - no required
-  // Done button, no fixed delay. Advance only when the commit succeeded AND
-  // the refreshed server data actually carries the saved references (the
-  // live outline owner then sees the acknowledged scale). Fires once per
-  // completed calibration; re-entry from the outline Calibrate action is
-  // unaffected.
-  const calibrationAdvanceRef = useRef(false);
-  const calibrationPageHasSavedRefs = useMemo(() => {
-    const decoded = decodeCalibrationMetadata(
-      calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration,
-    );
-    return (
-      (decoded.kind === 'v1' ? decoded.metadata.references.length : decoded.kind === 'legacy' ? decoded.references.length : 0) > 0
-    );
-  }, [calibrationPage?.calibrationMetadata, calibrationPage?.scaleCalibration]);
+  const onCommitted = useCallback((pageId: string, payload: CalibrationCommitPayload) => {
+    setConfirmedCalibration({ pageId, payload });
+  }, []);
+  // The server ACK is adopted into the existing measurement owner before
+  // advancing. No router.refresh race and no dependency on a second DB read.
   useEffect(() => {
-    if (touchTool !== 'calibrate') {
-      calibrationAdvanceRef.current = false;
-      return;
+    if (!confirmedCalibration || !outlineAdapter) return;
+    if (touchTool !== 'calibrate') return; // already advanced
+    // Keyboardless fix (2026-09-22): retryable. The workstation's page id can
+    // land AFTER the ACK (ensurePage1 race), so re-attempt when the active
+    // page id changes instead of one-shotting on the ACK alone.
+    if (outlineAdapter.applyConfirmedCalibration?.(confirmedCalibration.pageId, confirmedCalibration.payload)) {
+      queueMicrotask(() => setTouchTool('outline'));
     }
-    if (!calib.saved || !calibrationPageHasSavedRefs) return;
-    if (calibrationAdvanceRef.current) return;
-    calibrationAdvanceRef.current = true;
-    // Deferred out of the synchronous effect body (react-hooks
-    // set-state-in-effect): advance in its own microtask.
-    queueMicrotask(() => setTouchTool('outline'));
-  }, [touchTool, calib.saved, calibrationPageHasSavedRefs]);
-
+  }, [confirmedCalibration, outlineAdapter, activePageId, touchTool]);
+  const calib = useTouchCalibration({
+    active: touchActive && touchTool === 'calibrate', quoteId: quote.id,
+    planUrl: outlineAdapter?.getImageUrl() ?? planUrl, page: calibrationPage,
+    aiEnabled: false, // Retain the current mobile manual-first feature policy.
+    pageHasDependents,
+    defaultWorkingUnit: normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? 'meters' : 'feet',
+    pitch, onPitchChange: setPitch, onCommitted, onExit: () => router.push(backHref),
+  });
   const outlineEditor = useTouchOutlineEditor(
-    touchActive,
-    () => outlineAdapter,
-    backHref,
-    // M9: uncalibrated outline rail leads with a Calibrate action that
-    // returns the flow to the calibration phase.
-    () => setTouchTool('calibrate'),
+    touchActive && touchTool === 'outline', () => outlineAdapter, backHref,
+    () => setTouchTool('calibrate'), { finishHref, pitch, onPitchChange: setPitch },
   );
-  const harness = usePrecisionTouchHarness(touchActive && outlineAdapter == null);
-  const { overlay: precisionOverlay, rail: precisionRail } =
-    outlineAdapter != null
-      ? { overlay: outlineEditor.overlay, rail: outlineEditor.rail }
-      : { overlay: harness.overlay, rail: harness.rail };
-
   const workstation = (
     <TakeoffWorkstation
       workspaceSlug={workspaceSlug}
@@ -238,8 +179,11 @@ export function TakeoffPage({
       touchExitGuard={
         touchActive
           ? {
-              isDirty: () => outlineEditor.exitGuard.dirty,
-              request: (label, proceed) => outlineEditor.requestExternalExit(label, proceed),
+              isDirty: () => touchTool === 'calibrate' ? calib.exitGuard.dirty || calib.busy : outlineEditor.exitGuard.dirty || outlineEditor.busy,
+              request: (label: string, proceed: () => void) => {
+                // The hidden desktop cannot interrupt a calibration/commit.
+                if (touchTool !== 'calibrate') outlineEditor.requestExternalExit(label, proceed);
+              },
             }
           : undefined
       }
@@ -259,22 +203,6 @@ export function TakeoffPage({
   // workstation stays mounted when the user switches Desktop ↔ Mobile/touch.
   // M8: rail shows ONLY the current step's controls (16:59 refinement); a
   // compact step label sits at the rail top (shell).
-  const calibStatusLine = calib.saved
-    ? 'Scale saved.'
-    : 'Set the scale: place two points on a known distance.';
-
-  const outlineRailContent = (
-    <div className="flex flex-col gap-2">{precisionRail}</div>
-  );
-  const calibrateRailContent = (
-    <div className="flex flex-col gap-2">
-      {calib.rail}
-      <div className="rounded-full bg-white/10 px-2.5 py-1 text-center text-[11px] text-slate-300" aria-live="polite">
-        {calibStatusLine}
-      </div>
-    </div>
-  );
-
   return (
     <TouchWorkspaceShell
       active={touchActive}
@@ -283,10 +211,12 @@ export function TakeoffPage({
       viewPreference={preference}
       onViewPreferenceChange={setPreference}
       compactNotices={takeoffCompactNotices}
-      overlay={touchTool === 'calibrate' ? calib.overlay : precisionOverlay}
-      railContent={touchTool === 'calibrate' ? calibrateRailContent : outlineRailContent}
+      overlay={touchTool === 'calibrate' ? calib.overlay : outlineEditor.overlay}
+      railContent={touchTool === 'calibrate' ? calib.rail : outlineEditor.rail}
+      wideRail={touchTool === 'calibrate' ? calib.wideRail : outlineEditor.wideRail}
+      busy={touchTool === 'calibrate' ? calib.busy : outlineEditor.busy}
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
-      exitGuard={outlineEditor.exitGuard}
+      exitGuard={touchTool === 'calibrate' ? calib.exitGuard : outlineEditor.exitGuard}
     >
       {workstation}
     </TouchWorkspaceShell>

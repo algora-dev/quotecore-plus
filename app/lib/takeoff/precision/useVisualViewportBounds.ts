@@ -67,15 +67,22 @@ export function useVisualViewportBounds(active: boolean): VisualViewportBounds |
         setBounds(readBounds(vv));
       });
     };
-    // Initial reading happens inside the same rAF coalescing so the first
-    // paint of the touch shell never jumps (L04: no oscillation).
+    // Keyboardless fix (2026-09-22): WebKit does not reliably fire the
+    // visualViewport 'resize' event when the window/viewport itself changes
+    // size (Playwright setViewportSize, desktop-mode window resizes), which
+    // left the shell pinned to stale bounds and pushed the rail off-screen.
+    // Observe the window resize as well and re-read the live vv rect.
     update();
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
     return () => {
       cancelAnimationFrame(raf);
       vv.removeEventListener('resize', update);
       vv.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
     };
   }, [active]);
 

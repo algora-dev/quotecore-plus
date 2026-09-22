@@ -84,29 +84,10 @@ export interface ContainmentReport {
   requiredScroll?: boolean;
 }
 
-/** Assert + report containment for an important control:
- *  1. rect inside the usable (layout) viewport,
- *  2. elementFromPoint at centre + 4 near-corners resolves INSIDE the target,
- *  3. no element with dialog/region semantics OUTSIDE the target intercepts. */
-export async function assertContainment(page: Page, locator: Locator, label: string): Promise<ContainmentReport> {
-  const target = locator.first();
-  await expect(target, `${label}: must be visible`).toBeVisible();
-  const box = await target.boundingBox();
-  const vp = page.viewportSize() ?? { width: 0, height: 0 };
-  expect(box, `${label}: bounding box`).not.toBeNull();
-
-  const insideViewport =
-    box!.x >= 0 && box!.y >= 0 && box!.x + box!.width <= vp.width && box!.y + box!.height <= vp.height;
-
-  const pad = 5;
-  const pts = [
-    { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 },
-    { x: box!.x + pad, y: box!.y + pad },
-    { x: box!.x + box!.width - pad, y: box!.y + pad },
-    { x: box!.x + pad, y: box!.y + box!.height - pad },
-    { x: box!.x + box!.width - pad, y: box!.y + box!.height - pad },
-  ];
-  const results = await Promise.all(
+/** elementFromPoint containment probe at the given points. Extracted so
+ *  assertContainment can re-run it within a short settle window. */
+async function hitTestPoints(target: Locator, pts: Array<{ x: number; y: number }>) {
+  return Promise.all(
     pts.map(async (p) => {
       const hit = await target.evaluate((root, pt) => {
         const el = document.elementFromPoint(pt.x, pt.y);
@@ -121,6 +102,49 @@ export async function assertContainment(page: Page, locator: Locator, label: str
       return { x: Math.round(p.x), y: Math.round(p.y), ...hit };
     }),
   );
+}
+
+/** Assert + report containment for an important control:
+ *  1. rect inside the usable (layout) viewport,
+ *  2. elementFromPoint at centre + 4 near-corners resolves INSIDE the target,
+ *  3. no element with dialog/region semantics OUTSIDE the target intercepts. */
+export async function assertContainment(page: Page, locator: Locator, label: string): Promise<ContainmentReport> {
+  const target = locator.first();
+  await expect(target, `${label}: must be visible`).toBeVisible();
+  let box = await target.boundingBox();
+  const vp = page.viewportSize() ?? { width: 0, height: 0 };
+  expect(box, `${label}: bounding box`).not.toBeNull();
+
+  const pad = 5;
+  // Keyboardless fix (2026-09-22): corner probes fall OUTSIDE rounded (pill)
+  // controls - browsers hit-test within border-radius, so elementFromPoint at
+  // a pill's corner resolves to whatever sits beneath (e.g. the desktop Fabric
+  // canvas under the portal Switch-to-touch button). Edge MIDPOINTS lie on
+  // the shape for any border-radius, so probe centre + 4 edge midpoints.
+  const pointsFor = (b: { x: number; y: number; width: number; height: number }) => [
+    { x: b.x + b.width / 2, y: b.y + b.height / 2 },
+    { x: b.x + b.width / 2, y: b.y + pad },
+    { x: b.x + b.width / 2, y: b.y + b.height - pad },
+    { x: b.x + pad, y: b.y + b.height / 2 },
+    { x: b.x + b.width - pad, y: b.y + b.height / 2 },
+  ];
+  const viewportOk = (b: { x: number; y: number; width: number; height: number }) =>
+    b.x >= 0 && b.y >= 0 && b.x + b.width <= vp.width && b.y + b.height <= vp.height;
+  // Keyboardless fix (2026-09-22): two settle races need a short bounded retry
+  // instead of an instant fail: (a) right after a desktop<->touch switch the
+  // Fabric upper-canvas can sit above portal controls for a frame; (b) right
+  // after a viewport resize the shell's pinned bounds update a frame later,
+  // so an immediate assertion reads the old geometry (WebKit 568x320). The
+  // tap itself still happens only on a genuinely hittable, in-viewport target.
+  const deadline = Date.now() + 2000;
+  let results = await hitTestPoints(target, pointsFor(box!));
+  while ((!viewportOk(box!) || results.some((r) => !r.ok)) && Date.now() < deadline) {
+    await page.waitForTimeout(100);
+    box = await target.boundingBox();
+    if (!box) break;
+    results = await hitTestPoints(target, pointsFor(box));
+  }
+  const insideViewport = box ? viewportOk(box) : false;
 
   // Any intercepting element carrying sheet/dialog semantics that is NOT part
   // of the target subtree is a foreign sheet hit.
@@ -212,7 +236,20 @@ export async function tapControl(page: Page, locator: Locator, label: string): P
     return { ...partial, tapped: true } as ContainmentReport;
   });
   if (!(report as ContainmentReport & { tapped?: boolean }).tapped) {
-    await locator.first().tap();
+    // Keyboardless fix (2026-09-22): WebKit occasionally loops locator.tap's
+    // actionability poll ("visible, enabled and stable") on a settled control
+    // and times out, while the same entry passes standalone every time. On a
+    // tap timeout, fall back to a REAL touchscreen tap at the control's
+    // settled centre - the same honest input path used for canvas taps.
+    try {
+      await locator.first().tap();
+    } catch (err) {
+      if (!/Timeout .*exceeded/i.test(String(err))) throw err;
+      const b = await locator.first().boundingBox();
+      if (!b) throw err;
+      journal({ kind: 'webkit-tap-timeout-fallback', label, box: b, viewport: page.viewportSize() });
+      await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
+    }
   }
   return report;
 }

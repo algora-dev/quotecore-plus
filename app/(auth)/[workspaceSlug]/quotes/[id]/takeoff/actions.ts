@@ -1202,6 +1202,11 @@ export async function createNewTakeoffArea(
     const profile = await requireCompanyContext();
     const admin = createAdminClient();
 
+    // Admin writes bypass RLS, so authorise the quote explicitly first.
+    const { data: ownedQuote, error: ownershipError } = await admin.from('quotes')
+      .select('id').eq('id', quoteId).eq('company_id', profile.company_id).maybeSingle();
+    if (ownershipError || !ownedQuote) return { ok: false, error: 'Quote not found or access denied.' };
+
     // Load all existing area labels for this quote.
     const { data: existing } = await admin
       .from('quote_roof_areas')
@@ -1478,7 +1483,7 @@ export async function persistPageCalibration(
   pageId: string,
   calibrations: unknown,
   calibrationMetadata?: unknown,
-): Promise<{ success: true } | { success: false; error: string }> {
+): Promise<{ success: true; imageRevision: string | null } | { success: false; error: string }> {
   const supabase = await createSupabaseServerClient();
 
   const { data: quote, error: quoteError } = await supabase
@@ -1502,20 +1507,27 @@ export async function persistPageCalibration(
     scale_calibration: calibrations,
   };
   if (calibrationMetadata != null) {
-    pageUpdate.calibration_metadata = calibrationMetadata;
+    // Keep the envelope and page column on the same server-resolved frame.
+    // The client must never mint an image revision from presentation state.
+    pageUpdate.calibration_metadata = imageRevision && typeof calibrationMetadata === 'object' && !Array.isArray(calibrationMetadata)
+      ? { ...calibrationMetadata, imageRevision }
+      : calibrationMetadata;
     if (imageRevision) pageUpdate.image_revision = imageRevision;
   }
 
-  const { error } = await supabase
+  const { data: updatedPage, error } = await supabase
     .from('takeoff_pages')
     .update(pageUpdate as never)
     .eq('id', pageId)
-    .eq('quote_id', quoteId);
+    .eq('quote_id', quoteId)
+    .select('id')
+    .maybeSingle();
   if (error) {
     console.error('[persistPageCalibration] Error:', error);
     return { success: false, error: error.message };
   }
-  return { success: true };
+  if (!updatedPage) return { success: false, error: 'The plan could not be updated. Check access and reload.' };
+  return { success: true, imageRevision };
 }
 
 // -- M5: update-in-place roof-area geometry edit (patch_052) ----------------

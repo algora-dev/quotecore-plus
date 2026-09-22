@@ -1,226 +1,99 @@
-/**
- * U0 (2026-09-22) — HONEST UX-tier reproduction + baseline suite.
- *
- * Implements review spec §9.1/§9.2/§9.3 for phase U0 of
- * mobile-takeoff-ux-review-2026-09-22:
- *  - real "Measure a job" entry, real taps (locator.tap / touchscreen.tap),
- *    containment + elementFromPoint hit-target checks before every measured
- *    action, no evaluate-clicks, no force, no hidden overlays;
- *  - reproduction attempts for the 7 owner findings (2026-09-21 handoff);
- *  - desktop + flag-off baselines so later phases can prove nothing changed;
- *  - bounded layout diagnostics (§9.3) written OUTSIDE the repo.
- *
- * Emulation tiers only (touch-chromium / touch-webkit); multi-touch gestures
- * use Chromium CDP touch events. NOT physical-device evidence.
- *
- * Runs ONLY via `npx playwright test -c playwright.touch.config.ts`.
- *
- * @touch @ux
- */
+/** Keyboardless touch UX regression suite. Browser emulation only.
+ * Authenticated Measure-a-job entry, real hit-tested taps, no automatic
+ * retries/reloads to mask a failed journey. Original entry-failure and
+ * desktop/flag-off baseline cases are retained below. @touch @ux */
 import { test, expect } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  BASE_URL,
-  cdpTouchPan,
-  cdpTouchPinch,
-  captureLayoutDiagnostics,
-  evidenceShot,
-  isChromium,
-  loginAs,
-  measureAJobEntry,
-  settleDashboard,
-  tapControl,
-  touchTap,
-  waitForTouchWorkspace,
-} from '../helpers/touch-ux';
-
-const RUN = `u0ux-${Date.now().toString(36)}`;
-
-/** ── Shared honest calibration journey (measured, tapped for real) ─────── */
-
-interface CalibrationFindings {
-  doubleManualStart: boolean;
-  dragHandlePresent: boolean;
-  sheetCoversPlanFraction: number | null;
-  railControlCount: number;
-}
-
-/** Owner finding 4 evidence + honest dismissal: the DESKTOP workstation's
- *  first-time "Calibrate Your Plan" help modal renders over the touch
- *  workspace on every uncalibrated entry (and re-appears after reload). */
-async function dismissDesktopHelpModal(page: import('@playwright/test').Page, runId: string, tag: string): Promise<void> {
-  const desktopHelpModal = page.getByRole('heading', { name: 'Calibrate Your Plan' });
-  if (await desktopHelpModal.isVisible({ timeout: 2500 }).catch(() => false)) {
-    await evidenceShot(page, runId, `desktop-help-modal-bleedthrough-${tag}`);
-    test.info().annotations.push({ type: 'finding-4-desktop-help-modal-over-touch', description: `reproduced (${tag})` });
-    await tapControl(page, page.getByRole('button', { name: /got it, let's calibrate/i }), 'desktop help modal Got it');
-    await page.waitForTimeout(500);
-  }
-}
-
-async function calibrateHonestly(page: import('@playwright/test').Page, runId: string): Promise<CalibrationFindings> {
-  // ── U0 REPRODUCTION CAPTURE: first-ever entry state ──────────────────
-  // The desktop workstation mounts UNDER the touch shell; its first-time
-  // "Calibrate Your Plan" help modal can bleed through (owner finding 4),
-  // and the touch flow can land in the OUTLINE phase because the page-1
-  // takeoff_pages row only exists after the workstation's mount effect —
-  // the server render that decides the initial phase races it.
-  await dismissDesktopHelpModal(page, runId, 'entry');
-
-  const calibSurface = page.locator('[data-testid="calibration-interaction-surface"]');
-  if (!(await calibSurface.isVisible({ timeout: 3000 }).catch(() => false))) {
-    // Entry-phase race: touch landed in the uncalibrated OUTLINE phase.
-    await evidenceShot(page, runId, 'entry-phase-race-outline-uncalibrated');
-    test.info().annotations.push({ type: 'u0-new-entry-phase-race', description: 'Measure-a-job first entry: touch flow starts in OUTLINE phase (page-1 row not yet in hydration)' });
-    await tapControl(page, page.getByRole('button', { name: 'Calibrate this page' }), 'Calibrate this page (recovery)');
-  }
-
-  await expect(calibSurface).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('region', { name: 'Calibration' })).toBeVisible();
-
-  // Owner finding 5: is a SECOND manual-start step required on entry?
-  const beginManual = page.getByRole('button', { name: 'Set the scale manually with two points' });
-  const doubleManualStart = await beginManual.isVisible({ timeout: 3000 }).catch(() => false);
-  if (doubleManualStart) {
-    await tapControl(page, beginManual, 'Set the scale manually with two points');
-  }
-
-  const surface = page.locator('[data-testid="calibration-interaction-surface"]');
-  const box = (await surface.boundingBox())!;
-  expect(box, 'calibration surface box').not.toBeNull();
-
-  // Place A / B with REAL touch taps; accept via honest rail taps.
-  // U3: the rail's single primary action is "Place end point" (accepts the
-  // current point without a drag; no separate Adjust/Point-is-correct).
-  await touchTap(page, box.x + box.width * 0.3, box.y + box.height * 0.35);
-  await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point A');
-  await touchTap(page, box.x + box.width * 0.7, box.y + box.height * 0.6);
-  await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point B');
-
-  const sheet = page.getByRole('region', { name: 'Calibration' });
-
-  // Owner finding 1: how much of the readable plan does the fixed sheet
-  // cover, and does it have ANY drag affordance?
-  const coversPlanFraction = await page.evaluate(() => {
-    const sheet = document.querySelector('[aria-label="Calibration"]');
-    const surface = document.querySelector('[data-testid="calibration-interaction-surface"]');
-    if (!sheet || !surface) return null;
-    const s = sheet.getBoundingClientRect();
-    const c = surface.getBoundingClientRect();
-    const ix = Math.max(0, Math.min(s.right, c.right) - Math.max(s.left, c.left));
-    const iy = Math.max(0, Math.min(s.bottom, c.bottom) - Math.max(s.top, c.top));
-    return Math.round((ix * iy) / (c.width * c.height) * 100);
-  });
-  const dragHandlePresent = await page.evaluate(() => {
-    const sheet = document.querySelector('[aria-label="Calibration"]');
-    if (!sheet) return false;
-    return Boolean(
-      sheet.querySelector('[aria-label*="drag" i], [data-testid*="handle"], [class*="handle" i], [class*="drag" i]'),
-    );
-  });
-  await evidenceShot(page, runId, 'calibration-sheet-review');
-  await captureLayoutDiagnostics(page, 'calibration-review', runId);
-
-  // Distance entry: real tap + real keyboard; unit via control API after a
-  // containment check (selectOption is data entry, not reachability proof).
-  const distanceInput = sheet.locator('input[inputmode="decimal"]');
-  await tapControl(page, distanceInput, 'calibration distance input');
-  await distanceInput.pressSequentially('10', { delay: 20 });
-  const unitSelect = sheet.locator('select');
-  await tapControl(page, unitSelect, 'calibration unit select');
-  await unitSelect.selectOption('m');
-
-  const finish = page.getByRole('button', { name: 'Use this calibration and finish' });
-  await tapControl(page, finish, 'Use this calibration and finish');
-
-  // U0 REPRODUCTION: with the entry-phase race (calibrationPage null for the
-  // whole session), the commit dead-ends: "No takeoff page exists for this
-  // plan yet." — every subsequent attempt resets the wizard. A page reload
-  // is the only recovery. Capture, then reload and redo.
-  // U1 (2026-09-22): with the N1/N2 fixes the calibration commit now succeeds
-  // FIRST TRY and the flow auto-advances to the outline phase, which unmounts
-  // the calibration rail (and its "Scale saved." status line). Success is
-  // therefore EITHER the acknowledged save OR the flow having advanced.
-  const saved = await Promise.race([
-    page.getByText('Scale saved.', { exact: false }).waitFor({ timeout: 8000 }).then(() => true, () => false),
-    page.getByText('Pick an outline below').waitFor({ timeout: 8000 }).then(() => true, () => false),
-  ]).catch(() => false);
-  if (!saved) {
-    await evidenceShot(page, runId, 'calibration-commit-deadend');
-    const errText = await page.evaluate(() => {
-      const el = document.querySelector('[aria-label="Calibration"]');
-      return el ? (el.textContent ?? '').slice(0, 400) : null;
-    });
-    test.info().annotations.push({ type: 'u0-new-calibration-commit-deadend', description: errText ?? 'no error text found' });
-    await page.reload();
-    await page.waitForLoadState('domcontentloaded');
-    await waitForTouchWorkspace(page);
-    await dismissDesktopHelpModal(page, runId, 'after-reload');
-    // After reload the page-1 row exists: the flow starts correctly in the
-    // calibration phase. Redo the manual reference + commit.
-    await expect(page.locator('[data-testid="calibration-interaction-surface"]')).toBeVisible({ timeout: 30_000 });
-    // U3: manual mode auto-begins on entry - no manual-start button exists.
-    const box2 = (await surface.boundingBox())!;
-    await touchTap(page, box2.x + box2.width * 0.3, box2.y + box2.height * 0.35);
-    await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point A (retry)');
-    await touchTap(page, box2.x + box2.width * 0.7, box2.y + box2.height * 0.6);
-    await tapControl(page, page.getByRole('button', { name: 'Place end point' }), 'accept point B (retry)');
-    const sheet2 = page.getByRole('region', { name: 'Calibration' });
-    const input2 = sheet2.locator('input[inputmode="decimal"]');
-    await tapControl(page, input2, 'calibration distance input (retry)');
-    await input2.pressSequentially('10', { delay: 20 });
-    await sheet2.locator('select').selectOption('m');
-    await tapControl(page, page.getByRole('button', { name: 'Use this calibration and finish' }), 'Use this calibration and finish (retry)');
-    await expect(page.getByText('Scale saved.', { exact: false })).toBeVisible({ timeout: 30_000 }).catch(() => {});
-  }
-  // U3 (UX20): acknowledged scale auto-advances to the outline phase - no
-  // Done tap, no fixed-sleep dependency.
-  await expect(page.locator('[data-testid="outline-editor-surface"]')).toBeVisible({ timeout: 30_000 });
-
-  const railControlCount = await page.evaluate(() =>
-    document.querySelectorAll('[aria-label="Takeoff controls"] button').length,
-  );
-
-  return {
-    doubleManualStart,
-    dragHandlePresent,
-    sheetCoversPlanFraction: coversPlanFraction,
-    railControlCount,
-  };
-}
-
-/** ── Tests ─────────────────────────────────────────────────────────────── */
-
+import { BASE_URL, cdpTouchPan, cdpTouchPinch, captureLayoutDiagnostics, evidenceShot, isChromium,
+  loginAs, measureAJobEntry, settleDashboard, tapControl, touchTap, assertContainment, touchDrag } from '../helpers/touch-ux';
+import { enterKeyboardlessTakeoff, addCalibrationReference, confirmCalibration, imagePoint,
+  enterRailNumber, tapNamed, expectNoCanvasTextInputs, mockRoofScan } from '../helpers/keyboardless-takeoff';
+const RUN = `rail-ux-${Date.now().toString(36)}`;
 test.describe.configure({ mode: 'serial' });
-
-test.describe('U0 honest touch UX @touch @ux', () => {
-  test('U0-A: Measure-a-job entry, Starting-state, calibration findings 1/5/7', async ({ page }) => {
-    test.setTimeout(360_000);
-    await page.setViewportSize({ width: 915, height: 412 }); // owner: landscape phone
-    const slug = await loginAs(page, 'paid-c');
-    const errors: string[] = [];
-    page.on('pageerror', (e) => errors.push(String(e)));
-
-    const entry = await measureAJobEntry(page, slug, `${RUN} A Entry`, `${RUN}-A`);
-    await waitForTouchWorkspace(page);
-    await captureLayoutDiagnostics(page, 'entry-touch-workspace', `${RUN}-A`);
-    await evidenceShot(page, `${RUN}-A`, 'touch-workspace-calibration-entry');
-
-    expect(entry.entryEvidence.submitButtonCount, 'one submit control in the entry modal').toBe(1);
-
-    const findings = await calibrateHonestly(page, `${RUN}-A`);
-    test.info().annotations.push(
-      { type: 'finding-5-double-manual-start', description: String(findings.doubleManualStart) },
-      { type: 'finding-1-drag-handle-present', description: String(findings.dragHandlePresent) },
-      { type: 'finding-1-sheet-covers-plan-percent', description: String(findings.sheetCoversPlanFraction) },
-      { type: 'finding-7-rail-control-count-at-calibration', description: String(findings.railControlCount) },
-    );
-
-    const appErrors = errors.filter((e) => !/clarity\.ms/.test(e));
-    expect(appErrors, `page errors: ${appErrors.join(' | ')}`).toEqual([]);
+test.describe('Keyboardless UX @touch @ux', () => {
+  test('landing fits the page and cannot accidentally create calibration A', async ({ page }) => {
+    test.setTimeout(300_000);
+    await enterKeyboardlessTakeoff(page, `${RUN}-landing`);
+    const surface = page.getByTestId('calibration-interaction-surface');
+    const frame = (await surface.boundingBox())!, image = (await page.getByAltText('Plan page', { exact: true }).boundingBox())!;
+    expect(image.x).toBeGreaterThanOrEqual(frame.x); expect(image.y).toBeGreaterThanOrEqual(frame.y);
+    expect(image.x + image.width).toBeLessThanOrEqual(frame.x + frame.width + 1);
+    expect(image.y + image.height).toBeLessThanOrEqual(frame.y + frame.height + 1);
+    const p = await imagePoint(page, 0.5, 0.5); await touchTap(page, p.x, p.y);
+    await expect(page.getByTestId('calibration-point-0')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Calibrate Your Plan' })).toBeHidden();
+    if (isChromium(page)) {
+      await cdpTouchPan(page, p, { x: p.x + 20, y: p.y + 15 });
+      await cdpTouchPinch(page, p, 70, 110);
+      await expect(page.getByTestId('calibration-point-0')).toHaveCount(0);
+    }
+    await assertContainment(page, page.getByRole('button', { name: 'Ready to place calibration points' }), 'Ready remains reachable after pan/pinch');
+    await tapNamed(page, 'Fit plan to view', true); await expectNoCanvasTextInputs(page);
+    await captureLayoutDiagnostics(page, 'landing', RUN); await evidenceShot(page, RUN, 'landing');
   });
-
+  test('568x320: keypad targets, unit override, error and orientation recovery', async ({ page }) => {
+    test.setTimeout(300_000);
+    await enterKeyboardlessTakeoff(page, `${RUN}-keypad`);
+    await page.setViewportSize({ width: 568, height: 320 });
+    await tapNamed(page, 'Ready to place calibration points');
+    const a = await imagePoint(page, 0.2, 0.5), b = await imagePoint(page, 0.8, 0.5);
+    await touchTap(page, a.x, a.y); await tapNamed(page, 'Confirm first point');
+    await touchTap(page, b.x, b.y); await tapNamed(page, 'Confirm second point');
+    await tapNamed(page, 'Confirm distance'); await expect(page.getByRole('alert').first()).toBeVisible();
+    await tapNamed(page, 'Change calibration unit, currently m'); await tapNamed(page, 'Use mm for calibration');
+    await enterRailNumber(page, '9150');
+    const labels = ['Digit 1', 'Digit 0', 'Decimal point', 'Backspace', 'Clear number', 'Confirm distance'];
+    for (const label of labels) {
+      const target = page.getByRole('button', { name: label, exact: true });
+      await assertContainment(page, target, label);
+      const box = (await target.boundingBox())!; expect(box.width).toBeGreaterThanOrEqual(48); expect(box.height).toBeGreaterThanOrEqual(48);
+    }
+    await expectNoCanvasTextInputs(page); await evidenceShot(page, RUN, 'small-keypad');
+    await page.setViewportSize({ width: 390, height: 844 });
+    const hint = page.getByRole('button', { name: 'Dismiss turn-phone hint' });
+    if (await hint.isVisible()) await tapControl(page, hint, 'Dismiss portrait hint');
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.getByLabel('Entered distance', { exact: true })).toHaveText('9150');
+    await tapNamed(page, 'Confirm distance'); await confirmCalibration(page);
+  });
+  test('AI edit: remote movement, four controls, dirty exit and cancellation', async ({ page }) => {
+    test.setTimeout(300_000);
+    await enterKeyboardlessTakeoff(page, `${RUN}-editing`);
+    await addCalibrationReference(page); await confirmCalibration(page); await mockRoofScan(page);
+    await tapNamed(page, 'AI Scan Assist'); await expect(page.getByTestId('outline-point-0')).toBeVisible({ timeout: 45_000 });
+    await tapNamed(page, 'Edit points');
+    for (const name of ['Previous vertex', 'Next vertex', 'Insert vertex after selected', 'Delete selected vertex']) {
+      await assertContainment(page, page.getByRole('button', { name, exact: true }), name);
+    }
+    await tapNamed(page, 'Next vertex'); await tapNamed(page, 'Insert vertex after selected');
+    await expect(page.getByRole('button', { name: 'Rearm selected outline point' })).toContainText('of 5');
+    await tapNamed(page, 'Delete selected vertex');
+    const p = await imagePoint(page, 0.5, 0.5);
+    await touchDrag(page, p, { x: p.x + 12, y: p.y + 8 });
+    if (!isChromium(page)) test.info().annotations.push({ type: 'synthetic-drag', description: 'WebKit mouse fallback; not physical touch proof.' });
+    await tapNamed(page, 'Workspace menu'); await tapNamed(page, 'Back to quote', true);
+    await expect(page.getByRole('dialog', { name: 'Unsaved takeoff edits' })).toBeVisible();
+    await tapControl(page, page.getByRole('button', { name: 'Stay', exact: true }), 'Stay with draft');
+    await tapNamed(page, 'Workspace menu');
+    await expect(page.getByTestId('outline-point-0')).toBeVisible();
+    const selectedBeforeSwitch = await page.getByRole('button', { name: 'Rearm selected outline point' }).textContent();
+    await tapNamed(page, 'Workspace menu');
+    const desktopChoice = page.getByRole('radio', { name: 'Desktop', exact: true });
+    await assertContainment(page, desktopChoice, 'Desktop view choice'); await desktopChoice.tap();
+    await expect(page.getByTestId('outline-editor-surface')).toHaveCount(0);
+    // Desktop's oversized layout viewport must not hide this return control.
+    await tapNamed(page, 'Switch to touch workspace');
+    await expect(page.getByTestId('outline-point-0')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Rearm selected outline point' })).toHaveText(selectedBeforeSwitch!);
+    await tapNamed(page, 'Cancel outline', true);
+    await expect(page.getByRole('dialog', { name: 'Unsaved outline', exact: true })).toBeVisible();
+    await tapControl(page, page.getByRole('button', { name: 'Discard and continue', exact: true }), 'Discard draft');
+    await expect(page.getByRole('button', { name: 'Manual Outline', exact: true })).toBeEnabled();
+    await mockRoofScan(page, 2500); await tapNamed(page, 'AI Scan Assist'); await tapNamed(page, 'Cancel scan');
+    await page.waitForTimeout(3000);
+    await expect(page.getByTestId('outline-point-0')).toHaveCount(0);
+  });
   test('U0-B: entry failure path — no stuck/stacked Starting (verifies a03ce9cd)', async ({ page }) => {
     test.setTimeout(240_000);
     await page.setViewportSize({ width: 915, height: 412 });
@@ -277,133 +150,6 @@ test.describe('U0 honest touch UX @touch @ux', () => {
     await expect(submit).toHaveText(/start measuring/i, { timeout: 15_000 });
     await expect(nameInput).toHaveValue(`${RUN} B failpath`);
     await evidenceShot(page, RUN, 'entry-failure-recovered');
-  });
-
-  test('U0-C: pan/pinch rail containment + desktop bleed-through (findings 2/4, CDP touch)', async ({ page }) => {
-    test.setTimeout(360_000);
-    test.skip(!isChromium(page), 'CDP multi-touch is Chromium-only; WebKit pan is covered by the M7 suite (labelled synthetic)');
-    await page.setViewportSize({ width: 915, height: 412 });
-    const slug = await loginAs(page, 'paid-c');
-    await measureAJobEntry(page, slug, `${RUN} C Pan`, `${RUN}-C`);
-    await waitForTouchWorkspace(page);
-    await calibrateHonestly(page, `${RUN}-C`);
-
-    const rail = page.locator('[aria-label="Takeoff controls"]');
-
-    const railFullyContained = async () => {
-      const b = await rail.boundingBox();
-      const vp = page.viewportSize()!;
-      return b != null && b.x >= 0 && b.y >= 0 && b.x + b.width <= vp.width && b.y + b.height <= vp.height;
-    };
-    expect(await railFullyContained(), 'rail inside viewport before gestures').toBe(true);
-
-    const extremes: Array<[string, () => Promise<void>]> = [
-      ['pan-far-left', () => cdpTouchPan(page, { x: 300, y: 200 }, { x: -600, y: 200 })],
-      ['pan-far-right', () => cdpTouchPan(page, { x: 300, y: 200 }, { x: 900, y: 200 })],
-      ['pan-far-up', () => cdpTouchPan(page, { x: 300, y: 200 }, { x: 300, y: -400 })],
-      ['pan-far-down', () => cdpTouchPan(page, { x: 300, y: 200 }, { x: 300, y: 600 })],
-      ['pinch-out', () => cdpTouchPinch(page, { x: 300, y: 200 }, 80, 500)],
-      ['pinch-in', () => cdpTouchPinch(page, { x: 300, y: 200 }, 400, 40)],
-    ];
-    for (const [name, gesture] of extremes) {
-      await gesture();
-      await page.waitForTimeout(250);
-      const contained = await railFullyContained();
-      test.info().annotations.push({ type: `finding-2-${name}-rail-contained`, description: String(contained) });
-      await evidenceShot(page, `${RUN}-C`, name);
-      await captureLayoutDiagnostics(page, name, `${RUN}-C`);
-      // Owner finding 2 reproduction = rail NOT fully contained/visible after
-      // a gesture. U0 records the truth; U1 must make this assertion pass.
-      // (No expect() here: this is the reproduction attempt, not the fixed gate.)
-    }
-
-    // Owner finding 4: desktop UI bleed-through. Sample hit targets across
-    // the canvas area: every hit must belong to the touch shell, never a
-    // desktop panel/control ("+ New Area", Fabric canvas, desktop panels).
-    const bleed = await page.evaluate(() => {
-      const shell = document.querySelector('div.fixed.inset-0.z-50');
-      const hits: string[] = [];
-      for (let fx = 0.1; fx <= 0.95; fx += 0.15) {
-        for (let fy = 0.1; fy <= 0.95; fy += 0.2) {
-          const el = document.elementFromPoint(innerWidth * fx, innerHeight * fy);
-          if (!el) continue;
-          if (shell && shell.contains(el)) continue;
-          const t = el as HTMLElement;
-          hits.push(`${t.tagName.toLowerCase()} ${t.getAttribute('aria-label') ?? ''} ${(typeof t.className === 'string' ? t.className : '').slice(0, 60)}`.trim());
-        }
-      }
-      const newAreaVisible = Array.from(document.querySelectorAll('button')).some(
-        (b) => /new area/i.test(b.textContent ?? '') && (b as HTMLElement).getClientRects().length > 0,
-      );
-      return { foreignHits: [...new Set(hits)].slice(0, 12), newAreaVisible };
-    });
-    test.info().annotations.push({ type: 'finding-4-foreign-hits', description: JSON.stringify(bleed.foreignHits) });
-    test.info().annotations.push({ type: 'finding-4-new-area-visible', description: String(bleed.newAreaVisible) });
-    await evidenceShot(page, `${RUN}-C`, 'bleed-check-final');
-  });
-
-  test('U0-D: AI outline review affordances + marker visibility (finding 6)', async ({ page }) => {
-    test.setTimeout(360_000);
-    await page.setViewportSize({ width: 915, height: 412 });
-    const slug = await loginAs(page, 'paid-c');
-    await measureAJobEntry(page, slug, `${RUN} D AI`, `${RUN}-D`);
-    await waitForTouchWorkspace(page);
-    await calibrateHonestly(page, `${RUN}-D`);
-
-    // Route-mocked provider (no credits): same mock shape as the M7 suite.
-    await page.route('**/api/takeoff/ai-scan-v3*', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            roof_areas: [
-              {
-                name: 'AI Detected Roof',
-                pitch_degrees: 20,
-                points: [
-                  { x: 500, y: 600 },
-                  { x: 1400, y: 620 },
-                  { x: 1420, y: 1350 },
-                  { x: 520, y: 1380 },
-                ],
-              },
-            ],
-          },
-          summary: { notes: [] },
-        }),
-      }),
-    );
-
-    await tapControl(page, page.getByRole('button', { name: 'Scan outline with AI' }), 'Scan outline with AI');
-    await expect(page.getByRole('dialog', { name: 'AI outline found' })).toBeVisible({ timeout: 45_000 });
-    await evidenceShot(page, `${RUN}-D`, 'ai-offer');
-    await captureLayoutDiagnostics(page, 'ai-offer', `${RUN}-D`);
-
-    await tapControl(page, page.getByRole('button', { name: 'Edit points', exact: true }), 'AI offer Edit points');
-    await expect(page.getByText(/4 points|Point \d of 4/)).toBeVisible({ timeout: 15_000 });
-
-    // Marker visibility evidence (owner finding 6): unselected points are
-    // white 3px-radius circles — record the actual rendered markers.
-    const markers = await page.evaluate(() => {
-      const svg = document.querySelector('[data-testid="outline-editor-surface"] svg');
-      if (!svg) return null;
-      return Array.from(svg.querySelectorAll('circle'))
-        .slice(0, 12)
-        .map((c) => ({ r: c.getAttribute('r'), fill: c.getAttribute('fill'), stroke: c.getAttribute('stroke') }));
-    });
-    test.info().annotations.push({ type: 'finding-6-marker-styles', description: JSON.stringify(markers) });
-    await evidenceShot(page, `${RUN}-D`, 'ai-points-edit');
-
-    // Acceptance affordances: Continue/Edit points exist by design; the
-    // owner complaint is visibility/clarity — screenshots are the evidence.
-    const affordances = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('[aria-label="Takeoff controls"] button'))
-        .map((b) => b.getAttribute('aria-label') ?? '')
-        .filter(Boolean),
-    );
-    test.info().annotations.push({ type: 'finding-6-rail-affordances', description: JSON.stringify(affordances) });
   });
 
   test('U0-E: desktop baseline (flag ON, desktop viewport — unchanged evidence)', async ({ page }) => {

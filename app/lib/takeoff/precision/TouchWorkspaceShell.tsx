@@ -5,7 +5,7 @@
 // FULL-BLEED CANVAS: edge-to-edge, full height. No top strip and no bottom
 // strip — the plan canvas gets every pixel that is not the control rail.
 //
-// Single RIGHT-SIDE RAIL (~160px ≈ 35–40% of a 568px phone landscape width,
+// Single RIGHT-SIDE RAIL (208px normally, 272px during number entry,
 // still operable at 568×320) showing ONLY the current step's controls: the
 // flow itself drives which control set is rendered (calibration phase →
 // calibration controls; advances to outline controls once calibration
@@ -42,6 +42,8 @@ export type TakeoffTool = 'calibrate' | 'outline';
 interface TouchWorkspaceShellProps {
   /** True = touch presentation; false = desktop presentation (unchanged layout). */
   active: boolean;
+  wideRail?: boolean;
+  busy?: boolean;
   /** All takeoff chrome + the workstation as children (stable mount slot). */
   children: ReactNode;
   /** e.g. "Plan page 1". */
@@ -66,6 +68,7 @@ interface TouchWorkspaceShellProps {
     dirty: boolean;
     onSave: () => void;
     onDiscard: () => void;
+    saveLabel?: string;
   };
 }
 
@@ -113,6 +116,8 @@ function TouchButton({
 
 export function TouchWorkspaceShell({
   active,
+  wideRail = false,
+  busy = false,
   children,
   planLabel,
   railTitle,
@@ -136,7 +141,9 @@ export function TouchWorkspaceShell({
   // just the 100dvh layout-viewport assumption. Null = unsupported/pre-mount,
   // CSS fallback stays in place. Bounds are consumed HERE only - never passed
   // into scene-camera maths or saved geometry.
-  const viewportBounds = useVisualViewportBounds(active);
+  // Keep observing in desktop mode too: its deliberately oversized layout
+  // viewport must not push the return-to-touch button off a phone screen.
+  const viewportBounds = useVisualViewportBounds(active || mounted);
   const [backGuardOpen, setBackGuardOpen] = useState(false);
   const [portraitHintDismissed, setPortraitHintDismissed] = useState(false);
   const [showPortraitHint, setShowPortraitHint] = useState(false);
@@ -219,13 +226,14 @@ export function TouchWorkspaceShell({
   }, [active]);
 
   const handleBack = useCallback(() => {
+    if (busy) return;
     // O16: a dirty outline draft is resolved BEFORE navigation (§11.5).
     if (exitGuard?.dirty) {
       setBackGuardOpen(true);
       return;
     }
     router.push(backHref);
-  }, [exitGuard, router, backHref]);
+  }, [exitGuard, router, backHref, busy]);
 
   // Desktop presentation: root keeps the EXACT original widening classes and
   // every intermediate wrapper is display:contents — layout bit-for-bit.
@@ -297,12 +305,12 @@ export function TouchWorkspaceShell({
         )}
         {/* O16: dirty-draft Back guard — Save / Discard / Stay. */}
         {active && backGuardOpen && exitGuard?.dirty && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center p-4" role="dialog" aria-label="Unsaved outline edits">
+          <div className="absolute inset-0 z-30 flex items-center justify-center p-4" role="dialog" aria-label="Unsaved takeoff edits">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBackGuardOpen(false)} aria-hidden="true" />
             <div className="relative w-72 rounded-2xl border border-white/10 bg-slate-800 p-4 shadow-xl">
-              <div className="mb-1 text-sm font-semibold text-white">Unsaved outline edits</div>
+              <div className="mb-1 text-sm font-semibold text-white">Unsaved takeoff edits</div>
               <div className="mb-3 text-xs text-slate-300">
-                Save them before leaving, or discard to restore the saved outline.
+                Return to finish your current step, or discard your unsaved changes.
               </div>
               <div className="flex flex-col gap-1">
                 <button
@@ -313,7 +321,7 @@ export function TouchWorkspaceShell({
                     exitGuard.onSave();
                   }}
                 >
-                  Save
+                  {exitGuard.saveLabel ?? 'Save'}
                 </button>
                 <button
                   type="button"
@@ -343,10 +351,11 @@ export function TouchWorkspaceShell({
           controls; content scrolls internally so the rail can never overflow
           the screen. */}
       <div
-        className={active ? 'flex w-40 shrink-0 flex-col border-l border-white/10 bg-slate-900' : 'hidden'}
+        className={active ? 'flex min-h-0 shrink-0 flex-col border-l border-white/10 bg-slate-900' : 'hidden'}
+        style={active ? { width: wideRail ? 272 : 208, maxWidth: 'calc(100% - 96px)' } : undefined}
         aria-label="Takeoff controls"
       >
-        <div className="flex shrink-0 items-center gap-1 p-2">
+        <div className={wideRail ? 'hidden' : 'flex shrink-0 items-center gap-1 p-1'}>
           <span
             aria-live="polite"
             className="min-w-0 flex-1 truncate rounded-full bg-white/10 px-2.5 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-300"
@@ -357,8 +366,9 @@ export function TouchWorkspaceShell({
             type="button"
             aria-label="Workspace menu"
             aria-expanded={menuOpen}
+            disabled={busy}
             onClick={() => setMenuOpen((v) => !v)}
-            className={`h-10 w-10 shrink-0 rounded-full transition-colors ${
+            className={`h-12 w-12 shrink-0 rounded-full transition-colors ${
               menuOpen ? 'bg-white text-slate-900' : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
             }`}
           >
@@ -378,7 +388,7 @@ export function TouchWorkspaceShell({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
+        <div className={`min-h-0 flex-1 px-2 pb-2 ${menuOpen ? 'overflow-y-auto' : 'overflow-hidden'} ${wideRail ? 'pt-2' : ''}`}>
           {menuOpen ? (
             <div className="flex flex-col gap-2" aria-label="Workspace menu">
               <div className="truncate rounded-full bg-white/10 px-2.5 py-1 text-center text-[11px] font-medium text-slate-300" title={planLabel}>
@@ -402,6 +412,7 @@ export function TouchWorkspaceShell({
                     type="button"
                     role="radio"
                     aria-checked={viewPreference === option.value}
+                    disabled={busy}
                     onClick={() => {
                       onViewPreferenceChange(option.value);
                       setMenuOpen(false);
@@ -440,7 +451,7 @@ export function TouchWorkspaceShell({
                   {diagState.error}
                 </div>
               )}
-              <TouchButton label="Back to quote" onClick={handleBack}>
+              <TouchButton label="Back to quote" disabled={busy} onClick={handleBack}>
                 Back
               </TouchButton>
             </div>
@@ -460,6 +471,11 @@ export function TouchWorkspaceShell({
           <button
             type="button"
             aria-label="Switch to touch workspace"
+            style={viewportBounds ? {
+              top: viewportBounds.top + viewportBounds.height - 16,
+              left: viewportBounds.left + viewportBounds.width - 16,
+              right: 'auto', bottom: 'auto', transform: 'translate(-100%, -100%)',
+            } : undefined}
             onClick={() => onViewPreferenceChange('mobile-touch')}
             className="fixed bottom-4 right-4 z-[9999] inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-lg hover:bg-orange-50"
           >
