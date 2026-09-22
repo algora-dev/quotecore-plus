@@ -1116,6 +1116,22 @@ export function useTouchOutlineEditor(
         onZoomOut={() => zoomAroundCentre(1 / ZOOM_STEP)}
       />
 
+      {/* U5-fix (owner 2026-09-22: post-save dead end): after an
+          acknowledged save with no active draft, the primary next action is
+          advancing to the quote builder with the new area. */}
+      {saveState === 'saved' && session == null && (
+        <button
+          type="button"
+          aria-label="Go to quote builder"
+          onClick={() => {
+            logTakeoffEvent('outline.advance.to_quote', {});
+            if (backHref) router.push(backHref);
+          }}
+          className="h-12 min-w-12 w-full rounded-full bg-[#FF6B35] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#e55a28]"
+        >
+          Go to quote builder
+        </button>
+      )}
       {/* M8: outline tab panel — area chips + lifecycle + status live in the
           rail (owner prescription: everything in the rail, per-tab controls). */}
       <OutlinePanel
@@ -1192,7 +1208,7 @@ export function useTouchOutlineEditor(
  *  and a busy state - the form stays open until persistence acknowledges. */
 function CreateOutlineForm({
   defaultName,
-  defaultPitch = 0,
+  defaultPitch: _defaultPitch = 0,
   onCancel,
   onConfirm,
   busy,
@@ -1205,8 +1221,11 @@ function CreateOutlineForm({
   /** U4: true while the create is being awaited - disables submit. */
   busy?: boolean;
 }) {
-  const [name, setName] = useState(defaultName);
-  const [pitch, setPitch] = useState(String(defaultPitch));
+  const [name, setName] = useState(defaultName || '');
+  // U5-fix (owner 2026-09-22): NO pre-filled defaults on mobile - the
+  // pre-filled "0"/"Area 2026" put the cursor behind existing text and
+  // produced "250"-style entries. Empty input, placeholder guidance only.
+  const [pitch, setPitch] = useState('');
   const [pitchError, setPitchError] = useState<string | null>(null);
   const confirm = () => {
     const trimmed = pitch.trim();
@@ -1226,8 +1245,9 @@ function CreateOutlineForm({
           <span className="w-14 shrink-0 text-slate-400">Name</span>
           <input
             value={name}
+            placeholder="e.g. Main roof"
             onChange={(e) => setName(e.target.value)}
-            className="h-10 min-w-0 flex-1 rounded-lg border border-white/20 bg-slate-900 px-2 text-white focus:border-orange-500 focus:outline-none"
+            className="h-10 min-w-0 flex-1 rounded-lg border border-white/20 bg-slate-900 px-2 text-white placeholder:text-slate-500 focus:border-orange-500 focus:outline-none"
           />
         </label>
         <label className="flex items-center gap-2">
@@ -1235,11 +1255,12 @@ function CreateOutlineForm({
           <input
             inputMode="decimal"
             value={pitch}
+            placeholder="e.g. 25"
             onChange={(e) => {
               setPitch(e.target.value);
               setPitchError(null);
             }}
-            className="h-10 w-24 rounded-lg border border-white/20 bg-slate-900 px-2 text-white focus:border-orange-500 focus:outline-none"
+            className="h-10 w-24 rounded-lg border border-white/20 bg-slate-900 px-2 text-white placeholder:text-slate-500 focus:border-orange-500 focus:outline-none"
           />
         </label>
       </div>

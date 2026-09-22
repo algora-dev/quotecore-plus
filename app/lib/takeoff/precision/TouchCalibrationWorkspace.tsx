@@ -155,9 +155,19 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
   );
 
   const router = useRouter();
+  // U5-fix (owner diagnostics 2026-09-22: two calibration.commit.succeeded 4s
+  // apart): a double-tap on "Use this calibration" can dispatch the finish
+  // path twice before the phase flips to committing. Deduplicate concurrent
+  // and repeat commits per mounted calibration session.
+  const commitInFlightRef = useRef(false);
   // ── Persistence through the EXISTING calibration-only save path (§7.6) ────
   const commit = useCallback(
     async (accepted: readonly AcceptedReferenceDraft[]): Promise<CalibrationCommitResult> => {
+      if (commitInFlightRef.current) {
+        // A commit is already running (or already succeeded) - return success
+        // WITHOUT re-persisting so the reducer can still complete cleanly.
+        return commitSucceeded();
+      }
       if (!page) return commitFailed('COMMIT_FAILED', 'No takeoff page exists for this plan yet.');
       if (pageHasDependents) {
         // C13 safety gate: dependent values must be recomputed atomically with
@@ -167,6 +177,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
           'This page already has measurements. Switch the workspace view to Desktop and recalibrate there so every measurement is updated together.',
         );
       }
+      commitInFlightRef.current = true;
       const payload = buildCalibrationCommit(
         accepted,
         workingUnit,
@@ -175,6 +186,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
       );
       const res = await persistPageCalibration(quoteId, page.id, payload.legacy, payload.metadata);
       if (!res.success) {
+        commitInFlightRef.current = false; // failure may be retried
         logTakeoffEvent('calibration.commit.failed', { error: res.error });
         return commitFailed('COMMIT_FAILED', `The calibration could not be saved: ${res.error}`);
       }
@@ -184,6 +196,8 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
       // A server refresh re-hydrates the page (including calibrationMetadata)
       // without remounting any client state.
       router.refresh();
+      // Success keeps the latch set for this mounted session: an already-
+      // acknowledged calibration never persists twice.
       return commitSucceeded();
     },
     [page, pageHasDependents, quoteId, workingUnit, router]);
@@ -242,17 +256,26 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
   });
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
 
+  // U5-fix (owner 2026-09-22: blank canvas until tapped): the surface mounts
+  // LATE (only after the plan image resolves and `scene` exists), so a
+  // dependency-driven effect never attaches the observer. Attach/re-attach by
+  // ELEMENT IDENTITY (same pattern as TouchOutlineEditor) so the viewport
+  // measurement always exists and the camera fits on first render.
+  const calibSurfaceElRef = useRef<HTMLDivElement | null>(null);
+  const calibRoCleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!active) return;
     const el = surfaceRef.current;
-    if (!el) return;
+    if (!el || calibSurfaceElRef.current === el) return;
+    calibRoCleanupRef.current?.();
+    calibSurfaceElRef.current = el;
     const ro = new ResizeObserver(() => {
       const rect = el.getBoundingClientRect();
       setViewport({ width: rect.width, height: rect.height });
     });
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [active]);
+    calibRoCleanupRef.current = () => ro.disconnect();
+  });
 
   const fitZoom = useMemo(
     () => (viewport.width > 0 && scene ? fitCamera(scene, viewport).zoom : 0.1),

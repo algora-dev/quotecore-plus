@@ -111,14 +111,16 @@ export function EndpointControllerRail(props: EndpointControllerRailProps) {
         </RailButton>
       </div>
 
-      <RailButton
-        onClick={props.onPointIsCorrect}
-        label="Place end point"
-        variant="accent"
-        disabled={!props.canPointIsCorrect || midGesture}
-      >
-        Place end point
-      </RailButton>
+      {props.canPointIsCorrect && (
+        <RailButton
+          onClick={props.onPointIsCorrect}
+          label="Place end point"
+          variant="accent"
+          disabled={midGesture}
+        >
+          Place end point
+        </RailButton>
+      )}
       <RailButton onClick={props.onUndo} label="Undo last point change" disabled={!props.canUndo || midGesture}>
         Undo
       </RailButton>

@@ -295,7 +295,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
             Searching…
           </span>
         )}
-        {validCount >= 1 && state.phase !== 'committing' && state.phase !== 'manual' && (
+        {validCount >= 1 && state.phase !== 'committing' && state.phase !== 'manual' && state.phase !== 'completed' && (
           <SheetButton
             label={`Finish with ${validCount} reference${validCount === 1 ? '' : 's'}`}
             variant="accent"
