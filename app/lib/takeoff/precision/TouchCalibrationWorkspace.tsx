@@ -527,6 +527,22 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
     [viewport, zoomBounds, scene],
   );
 
+  // U5 (owner 2026-09-22): when the distance input gains focus the OS
+  // keyboard covers most of the screen - recentre the drawn reference line
+  // into the visible top-left strip so the user can read the measurement
+  // they are typing. Pan/zoom stay available in that strip.
+  const centerReferenceOnFocus = useCallback(() => {
+    const s = abRef.current;
+    const p1 = s.draft.vertices[0]?.point;
+    const p2 = s.draft.vertices[1]?.point;
+    const cam = cameraRef.current;
+    if (!p1 || !p2 || !cam || viewport.width <= 0 || viewport.height <= 0) return;
+    const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    const targetX = viewport.width * 0.3;
+    const targetY = viewport.height * 0.3;
+    setCamera({ zoom: cam.zoom, tx: targetX - cam.zoom * mid.x, ty: targetY - cam.zoom * mid.y });
+  }, [viewport.width, viewport.height]);
+
   // ── Parts ────────────────────────────────────────────────────────────────
   const overlay =
     active && scene ? (
@@ -606,6 +622,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
           manualPairReady={manualPairReady && state.phase === 'manual'}
           onAcceptManual={onAcceptManual}
           onBeginManual={onBeginManual}
+          onDistanceFocus={centerReferenceOnFocus}
           onFinishAccepted={() => dispatch({ type: 'FINISH_ACCEPTED' })}
           onAcknowledgeDisagreement={() => dispatch({ type: 'ACKNOWLEDGE_DISAGREEMENT' })}
           onRemoveAccepted={(id) => dispatch({ type: 'REMOVE_ACCEPTED', id })}

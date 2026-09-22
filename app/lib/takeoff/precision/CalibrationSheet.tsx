@@ -57,6 +57,10 @@ export interface CalibrationSheetProps {
    *  endpoint edits and candidate switching, §7.2). */
   distanceText: string;
   onDistanceTextChange: (value: string) => void;
+  /** U5 (owner 2026-09-22): the distance input gained focus - the workspace
+   *  recentres the drawn reference line into the visible strip so the user
+   *  can read the measurement they are typing. */
+  onDistanceFocus?: () => void;
   unit: DistanceUnit | null;
   onUnitChange: (unit: DistanceUnit) => void;
   /** Manual wizard: both endpoints placed and ready for the distance review. */
@@ -223,6 +227,7 @@ export function CalibrationSheet(props: CalibrationSheetProps) {
               inputMode="decimal"
               value={props.distanceText}
               onChange={(e) => props.onDistanceTextChange(e.target.value)}
+              onFocus={() => props.onDistanceFocus?.()}
               placeholder="e.g. 6.42"
               className="h-12 w-28 rounded-lg border border-white/20 bg-white/10 px-3 text-sm text-white focus:border-orange-500 focus:outline-none"
             />

@@ -183,6 +183,27 @@ export function FloatingCanvasSheet({
     setOffset(clamp(target));
   }, [clamp, offset]);
 
+  // ── U5-fix (owner 2026-09-22): dock to the visible strip when an input
+  // inside the sheet gains focus. The OS keyboard covers most of a landscape
+  // phone; the top-left corner is the reliably visible strip (rail sits
+  // right). The user can still drag it anywhere afterwards. ─────────────
+  useEffect(() => {
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target;
+      if (
+        t instanceof HTMLInputElement ||
+        t instanceof HTMLSelectElement ||
+        t instanceof HTMLTextAreaElement
+      ) {
+        dockTo('top');
+      }
+    };
+    sheet.addEventListener('focusin', onFocusIn);
+    return () => sheet.removeEventListener('focusin', onFocusIn);
+  });
+
   return (
     <div
       className={`absolute inset-x-2 bottom-2 z-20 w-auto max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/95 shadow-xl ${className}`}

@@ -1203,9 +1203,26 @@ export function useTouchOutlineEditor(
   };
 }
 
+/** Minimal Web Speech shape (iOS Safari supports webkitSpeechRecognition).
+ *  Same free browser API the T3 Labs assistant uses for voice-to-text. */
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  start(): void;
+  stop(): void;
+  onresult: ((ev: { resultIndex: number; results: ArrayLike<{ 0: { transcript: string } }> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+}
+
 /** §8.1: required name/pitch confirmation before the create save.
  *  U4: honest pitch validation (0 <= pitch < 90, no silent parseFloat->0)
- *  and a busy state - the form stays open until persistence acknowledges. */
+ *  and a busy state - the form stays open until persistence acknowledges.
+ *  U5 (owner 2026-09-22): name entry is VOICE-FIRST - a big mic button (tap
+ *  to listen, tap to stop) with an ABC button that summons the keyboard on
+ *  demand; the input is readonly until ABC so the keyboard never opens
+ *  uninvited. */
 function CreateOutlineForm({
   defaultName,
   defaultPitch: _defaultPitch = 0,
@@ -1222,6 +1239,50 @@ function CreateOutlineForm({
   busy?: boolean;
 }) {
   const [name, setName] = useState(defaultName || '');
+  // U5 (owner 2026-09-22): VOICE-FIRST name entry. The input is readonly
+  // until ABC is pressed, so the OS keyboard never opens uninvited; the mic
+  // uses the browser's free Web Speech API (same as the T3 Labs assistant).
+  const [keyboardMode, setKeyboardMode] = useState(false);
+  const [listening, setListening] = useState(false);
+  const recRef = useRef<SpeechRecognitionLike | null>(null);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const speechCtor = (): (new () => SpeechRecognitionLike) | null => {
+    if (typeof window === 'undefined') return null;
+    const w = window as unknown as {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
+    return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+  };
+  const [micSupported] = useState(() => speechCtor() != null);
+  const toggleMic = () => {
+    if (listening) {
+      recRef.current?.stop();
+      return;
+    }
+    const Ctor = speechCtor();
+    if (!Ctor) return;
+    try {
+      const rec = new Ctor();
+      rec.lang = 'en-GB';
+      rec.interimResults = true;
+      rec.continuous = false;
+      rec.onresult = (ev) => {
+        let text = '';
+        for (let i = ev.resultIndex; i < ev.results.length; i++) text += ev.results[i][0].transcript;
+        setName(text.trim());
+      };
+      rec.onend = () => setListening(false);
+      rec.onerror = () => setListening(false);
+      recRef.current = rec;
+      setListening(true);
+      rec.start();
+    } catch {
+      setListening(false);
+    }
+  };
+  // Never leave a recognition session running behind an unmounted form.
+  useEffect(() => () => recRef.current?.stop(), []);
   // U5-fix (owner 2026-09-22 keyboard feedback): NO OS keyboard for pitch -
   // the iOS keyboard covers 3/4 of a landscape phone and its bars cannot be
   // hidden by a web page. Pitch is chosen with on-canvas controls only:
@@ -1248,11 +1309,14 @@ function CreateOutlineForm({
     <FloatingCanvasSheet label="Name and pitch for the new outline" dialog className="max-w-md text-xs text-slate-100">
       <div className="mb-2 font-semibold text-xs text-slate-100">Use outline</div>
       <div className="mb-2 flex flex-col gap-2">
-        <label className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <span className="w-14 shrink-0 text-slate-400">Name</span>
           <input
+            ref={nameInputRef}
             value={name}
             placeholder="e.g. Main roof"
+            readOnly={!keyboardMode}
+            aria-label="Area name"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -1260,7 +1324,43 @@ function CreateOutlineForm({
             onChange={(e) => setName(e.target.value)}
             className="h-10 min-w-0 flex-1 rounded-lg border border-white/20 bg-slate-900 px-2 text-white placeholder:text-slate-500 focus:border-orange-500 focus:outline-none"
           />
-        </label>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-14 shrink-0" aria-hidden="true" />
+          {micSupported && (
+            <button
+              type="button"
+              aria-label={listening ? 'Stop voice input' : 'Name by voice'}
+              aria-pressed={listening}
+              onClick={toggleMic}
+              className={`inline-flex h-12 min-w-12 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-colors ${
+                listening
+                  ? 'animate-pulse bg-[#FF6B35] text-white'
+                  : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true" className="h-4 w-4">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4" />
+              </svg>
+              {listening ? 'Listening - tap to stop' : 'Say the name'}
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label="Type the name with the keyboard"
+            aria-pressed={keyboardMode}
+            onClick={() => {
+              setKeyboardMode(true);
+              queueMicrotask(() => nameInputRef.current?.focus());
+            }}
+            className={`inline-flex h-12 min-w-12 flex-1 items-center justify-center rounded-full px-3 text-xs font-semibold transition-colors ${
+              keyboardMode ? 'bg-white text-slate-900' : 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+            }`}
+          >
+            ABC
+          </button>
+        </div>
       </div>
       {/* Pitch stepper: keyboard-free (see comment above). */}
       <div className="mb-2 flex flex-col gap-2">
