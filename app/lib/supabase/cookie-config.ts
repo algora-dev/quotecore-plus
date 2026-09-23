@@ -51,9 +51,14 @@ export function authCookieDomain(hostname: string | null | undefined): string | 
 export function authCookieOptions(hostname: string | null | undefined): {
   name: string;
   domain?: string;
+  /** F5: persistent sessions (180 days). Without a maxAge the auth cookies
+   *  are session-scoped and die every time the browser/PWA closes - the
+   *  mobile "logged out again" pain. The session itself still rotates and
+   *  refreshes server-side; explicit logout clears the cookies as before. */
+  maxAge: number;
 } {
   const domain = authCookieDomain(hostname);
-  return { name: AUTH_COOKIE_NAME, ...(domain ? { domain } : {}) };
+  return { name: AUTH_COOKIE_NAME, maxAge: 60 * 60 * 24 * 180, ...(domain ? { domain } : {}) };
 }
 
 /**
