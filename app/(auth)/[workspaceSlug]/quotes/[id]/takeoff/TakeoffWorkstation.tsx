@@ -383,6 +383,10 @@ export function TakeoffWorkstation({
   const [aiScanError, setAiScanError] = useState<string | null>(null);
   const [aiScanRaw, setAiScanRaw] = useState<AiScanData | null>(null);
   const [aiScanStage, setAiScanStage] = useState<'outline' | 'lines' | 'classify'>('outline');
+  // M10 P5: staged AI scan - scan1 applies the outline for review and
+  // mouse correction before scans 2+3 run on the corrected points
+  // (desktop parity with the touch flow).
+  const [aiStagedPageId, setAiStagedPageId] = useState<string | null>(null);
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // AI Assist points: track locally so we can update after a scan without a page reload.
@@ -4977,6 +4981,43 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       handleFinishMultiLineal();
     };
     canvas.on('mouse:dblclick', handleDblClick);
+    // M10 P5: AI outline vertex correction - dragging an AI area vertex
+    // rebuilds its polygon and updates state, so the staged component scan
+    // runs on the corrected points.
+    canvas.on('object:modified', (opt) => {
+      const target = opt.target as unknown as { measurementId?: string; vertexIndex?: number } | null;
+      if (!target || target.vertexIndex == null || !target.measurementId) return;
+      const areaId = target.measurementId;
+      const siblingMarkers = canvas.getObjects().filter(o => {
+        const tagged = o as unknown as { measurementId?: string; vertexIndex?: number };
+        return tagged.measurementId === areaId && tagged.vertexIndex != null;
+      }) as unknown as Array<{ left?: number; top?: number; vertexIndex: number }>;
+      const points = [...siblingMarkers]
+        .sort((a, b) => a.vertexIndex - b.vertexIndex)
+        .map(m => ({ x: m.left ?? 0, y: m.top ?? 0 }));
+      if (points.length < 3) return;
+      const old = canvas.getObjects().find(o => {
+        const tagged = o as unknown as { measurementId?: string; type?: string };
+        return tagged.measurementId === areaId && tagged.type === 'polygon';
+      });
+      if (old) canvas.remove(old);
+      const polygon = new Polygon(points, {
+        fill: 'rgba(59, 130, 246, 0.2)',
+        stroke: '#3b82f6',
+        strokeWidth: 1.25,
+        selectable: false,
+        evented: false,
+      });
+      (polygon as unknown as { measurementId: string }).measurementId = areaId;
+      canvas.add(polygon);
+      canvas.sendObjectToBack(polygon);
+      canvas.renderAll();
+      setRoofAreas(prev => prev.map(ra => ra.id === areaId || ra.quoteRoofAreaId === areaId
+        ? { ...ra, points, polygon, area: calculatePolygonArea(points) }
+        : ra));
+      setAreaList(prev => prev.map(a => a.id === areaId ? { ...a, area: calculatePolygonArea(points) } : a));
+      setIsDirty(true);
+    });
     return () => { canvas.off('mouse:dblclick', handleDblClick); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [multiLinealMode]);
@@ -5354,6 +5395,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     setAiScanError(null);
     setAiResults(null);
     setAiScanRaw(null);
+    setAiStagedPageId(null);
     let scanCompleted = false;
 
     try {
@@ -5426,15 +5468,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       const cost = getAiScanPointCost(aiQualityLevel);
       setAiPoints(prev => prev ? { ...prev, used: prev.used + cost, remaining: Math.max(prev.remaining - cost, 0) } : null);
 
-      scanCompleted = await runRemainingAiScans({
-        outlineData: result.data,
+      // M10 P5: STAGED pipeline - scan1 completes the scan action and opens
+      // the results modal with the outline (components empty). The user
+      // reviews and corrects the outline on the canvas, then "Detect
+      // components" continues with scans 2+3 on the CORRECTED points
+      // (handleContinueAiScan).
+      setAiScanRaw(result.data);
+      setAiResults({
+        summary: result.summary,
+        scaleCheck: result.data?.scaleCheck ?? null,
+        droppedCount: 0,
         areas: areaInfos,
-        imageDataUrl: scanImage,
-        analysisDimensions: result.analysisDimensions ?? { width: canvasDims.width, height: canvasDims.height },
-        pageId,
-        qualityLevel: aiQualityLevel,
-        abortController,
       });
+      setAiStagedPageId(pageId);
+      scanCompleted = true;
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         // User cancelled - no error message needed
@@ -5464,6 +5511,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     pageId,
     qualityLevel,
     abortController,
+    silent = false,
   }: {
     outlineData: Pick<AiScanData, 'roof_areas'>;
     areas: AiResultsArea[];
@@ -5472,8 +5520,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     pageId: string;
     qualityLevel: 'low' | 'medium' | 'high';
     abortController: AbortController;
-  }): Promise<boolean> => {
-    if (!quote) return false;
+    /** P5 staged continuation: skip the results modal, return the scan3 data. */
+    silent?: boolean;
+  }): Promise<{ completed: boolean; data?: AiScanData }> => {
+    if (!quote) return { completed: false };
 
     const confirmedAreas = outlineData.roof_areas;
     setAiScanStage('lines');
@@ -5498,7 +5548,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
       if (!scan2Response.ok || !scan2Result.success) {
         setAiScanError(scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).`);
-        return false;
+        return { completed: false };
       }
 
       const detectedLines = scan2Result.data?.lines ?? [];
@@ -5529,23 +5579,96 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const violations = Array.isArray(result.topologyViolations)
           ? ` ${result.topologyViolations.join(' ')}` : '';
         setAiScanError(`${result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}`);
-        return false;
+        return { completed: false };
       }
 
-      setAiScanRaw(result.data);
-      setAiResults({
-        summary: result.summary,
-        scaleCheck: result.data?.scaleCheck ?? null,
-        droppedCount: 0,
-        areas,
-      });
-      return true;
+      if (!silent) {
+        setAiScanRaw(result.data);
+        setAiResults({
+          summary: result.summary,
+          scaleCheck: result.data?.scaleCheck ?? null,
+          droppedCount: 0,
+          areas,
+        });
+      }
+      return { completed: true, data: result.data as AiScanData };
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        return false;
+        return { completed: false };
       }
       setAiScanError(`Classification failed: ${error instanceof Error ? error.message : 'Network error.'}`);
-      return false;
+      return { completed: false };
+    }
+  };
+
+  // ── M10 P5: staged continuation - detect components on the corrected outline ──
+  const handleContinueAiScan = async () => {
+    if (aiScanning || !quote) return;
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const pageId = pages[currentPageIndex]?.id ?? null;
+    if (!pageId || aiStagedPageId !== pageId) return;
+    // Corrected outline: the staged AI areas' CURRENT canvas points (the
+    // user may have dragged vertices after applying the outline).
+    const stagedAreas = roofAreas.filter(ra => ra.fromPageId === pageId && ra.quoteRoofAreaId);
+    if (stagedAreas.length === 0) { setAiScanError('The AI outline is no longer on this page.'); return; }
+    const outlineData = {
+      roof_areas: stagedAreas.map(ra => ({
+        name: ra.name,
+        pitch_degrees: ra.pitch ?? null,
+        points: ra.points.map(p => ({ x: p.x, y: p.y })),
+      })),
+    };
+    const currentPage = pages[currentPageIndex];
+    const imageUrl = currentPage?.url ?? planUrlRef.current;
+    if (!imageUrl) { setAiScanError('No plan image URL available.'); return; }
+    const abortController = new AbortController();
+    aiAbortRef.current = abortController;
+    setAiScanning(true);
+    setAiScanStage('lines');
+    setAiScanError(null);
+    try {
+      const imgResponse = await fetch(imageUrl, { signal: abortController.signal });
+      if (!imgResponse.ok) { setAiScanError('Failed to load plan image for AI scan.'); return; }
+      const imgBlob = await imgResponse.blob();
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const handleAbort = () => reader.abort();
+        abortController.signal.addEventListener('abort', handleAbort, { once: true });
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.onabort = () => reject(new DOMException('Scan cancelled.', 'AbortError'));
+        reader.readAsDataURL(imgBlob);
+      });
+      const compressed = await compressImageForAiScan(dataUrl);
+      const areasForRun: AiResultsArea[] = stagedAreas.map((ra, idx) => ({
+        index: idx,
+        name: ra.name,
+        pitch: ra.pitch ?? null,
+        vertexCount: ra.points.length,
+      }));
+      const outcome = await runRemainingAiScans({
+        outlineData,
+        areas: areasForRun,
+        imageDataUrl: compressed.dataUrl,
+        analysisDimensions: { width: canvasDims.width, height: canvasDims.height },
+        pageId,
+        qualityLevel: aiQualityLevel,
+        abortController,
+        silent: true,
+      });
+      if (!outcome.completed || !outcome.data) return; // errors set inside
+      // Apply ONLY the components: the outline areas are already applied.
+      await handleApplyAiResults({}, { areasAlreadyApplied: true, aiDataOverride: outcome.data });
+      setAiStagedPageId(null);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setAiScanError(err instanceof Error ? err.message : 'Network error.');
+    } finally {
+      if (aiAbortRef.current === abortController) {
+        setAiScanning(false);
+        aiAbortRef.current = null;
+      }
     }
   };
 
@@ -5664,9 +5787,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   };
 
   // ── AI Takeoff: apply results to canvas ───────────────────────────
-  const handleApplyAiResults = async (areaOverrides: Record<number, { name: string; pitch: number }>) => {
+  const handleApplyAiResults = async (areaOverrides: Record<number, { name: string; pitch: number }>, opts: { areasAlreadyApplied?: boolean; aiDataOverride?: AiScanData } = {}) => {
     const canvas = fabricRef.current;
-    if (!canvas || !aiScanRaw) return;
+    const rawAiData = opts.aiDataOverride ?? aiScanRaw;
+    if (!canvas || !rawAiData) return;
 
     const bgImage = canvas.backgroundImage as unknown as { width?: number; height?: number } | null;
     if (!bgImage || !bgImage.width || !bgImage.height) {
@@ -5684,7 +5808,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     }
 
     const applied = applyAiResults({
-      aiData: aiScanRaw,
+      aiData: rawAiData,
       calibrations,
       systemComponentIds,
       canvasWidth: canvasDims.width,
@@ -5701,6 +5825,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       };
     });
 
+    // Build a mapping: AI area index -> real DB area ID (hoisted: the P5
+    // staged-continuation branch below also writes into it)
+    const areaIdMap = new Map<number, string>();
+    let newRoofAreas: RoofArea[] = [];
+    if (!opts.areasAlreadyApplied) {
     let realAreaIds: string[];
     if (areaInputs.length > 0) {
       const createResult = await batchCreateAiRoofAreas(quote.id, areaInputs);
@@ -5713,12 +5842,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       realAreaIds = [];
     }
 
-    // Build a mapping: AI area index → real DB area ID
-    const areaIdMap = new Map<number, string>();
     realAreaIds.forEach((id, idx) => areaIdMap.set(idx, id));
 
     // 1. Add roof areas to React state + canvas, using REAL DB IDs
-    const newRoofAreas: RoofArea[] = applied.roofAreas.map((ra: AiRoofAreaResult, idx: number) => {
+    newRoofAreas = applied.roofAreas.map((ra: AiRoofAreaResult, idx: number) => {
       const realId = areaIdMap.get(idx) ?? ra.id;
       const override = areaOverrides[idx];
       const pitch = override?.pitch ?? ra.pitch;
@@ -5738,15 +5865,19 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       (polygon as unknown as { measurementId: string }).measurementId = realId;
       canvas.add(polygon);
 
-      // Vertex markers
-      const markers = ra.canvasPoints.map(p => {
+      // Vertex markers - M10 P5: draggable so the user can correct the AI
+      // outline with the mouse between the outline scan and the component
+      // scans (the object:modified handler rebuilds the polygon).
+      const markers = ra.canvasPoints.map((p, vertexIndex) => {
         const marker = new Circle({
-          left: p.x, top: p.y, radius: 3,
+          left: p.x, top: p.y, radius: 4,
           fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
-          selectable: false, hasControls: false, hasBorders: false,
+          selectable: true, evented: true, hasControls: false, hasBorders: false,
+          hoverCursor: 'move',
         });
         (marker as unknown as { measurementId: string }).measurementId = realId;
+        (marker as unknown as { measurementId: string; vertexIndex: number }).vertexIndex = vertexIndex;
         canvas.add(marker);
         return marker;
       });
@@ -5777,6 +5908,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           area: ra.area,
         })),
       ]);
+    }
+    } else {
+      // M10 P5 staged continuation: areas are already on the canvas - map AI
+      // area indices to the EXISTING DB area ids so components attach right.
+      const stagedAreas = roofAreas.filter(ra => ra.fromPageId === (pages[currentPageIndex]?.id ?? null) && ra.quoteRoofAreaId);
+      stagedAreas.forEach((ra, idx) => { if (ra.quoteRoofAreaId) areaIdMap.set(idx, ra.quoteRoofAreaId); });
     }
 
     // 2. Add component measurements to React state + canvas
@@ -8218,6 +8355,28 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         </div>
       )}
 
+      {/* M10 P5: staged scan - outline applied, continue to components */}
+      {aiStagedPageId === (pages[currentPageIndex]?.id ?? null) && !aiScanning && !aiResults && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-white rounded-2xl border border-gray-200 shadow-xl px-4 py-3 max-w-sm text-center">
+          <h3 className="text-sm font-semibold text-slate-900">AI outline applied</h3>
+          <p className="text-xs text-slate-500 mt-1">Drag the blue points to correct the outline, then continue. Components are detected on your corrected outline.</p>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button
+              onClick={handleContinueAiScan}
+              className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e55a28] transition-colors"
+            >
+              Detect components
+            </button>
+            <button
+              onClick={() => setAiStagedPageId(null)}
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* AI Takeoff: error toast */}
       {aiScanError && !aiScanning && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-red-600 text-white text-xs px-4 py-2 rounded-full shadow-lg animate-fade-in">
@@ -8242,6 +8401,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           onDiscard={() => {
             setAiResults(null);
             setAiScanRaw(null);
+            setAiStagedPageId(null);
           }}
         />
       )}
