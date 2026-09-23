@@ -8,16 +8,21 @@ export function RailAction({ children, label, onClick, disabled, primary = false
   primary?: boolean; className?: string;
 }) {
   return <button type="button" aria-label={label} onClick={onClick} disabled={disabled}
-    className={`select-none touch-manipulation min-h-12 min-w-12 w-full shrink-0 rounded-xl px-2 py-2 text-sm font-semibold leading-tight transition-all duration-100 active:scale-[1.04] disabled:opacity-40 disabled:active:scale-100 ${primary
-      ? 'bg-[#FF6B35] text-white active:scale-[1.06] active:brightness-110'
-      : 'border border-white/20 bg-white/10 text-white active:border-[#FF6B35] active:bg-[#FF6B35]/25'} ${className}`}>{children}</button>;
+    // M11 r3 (owner 2026-09-23): disabled buttons stay READABLE - muted fill
+    // plus visible border/text instead of the old 40% opacity wash-out that
+    // made "Close shape & save" nearly invisible on the draw screen.
+    className={`select-none touch-manipulation min-h-12 min-w-12 w-full shrink-0 rounded-xl px-2 py-2 text-sm font-semibold leading-tight transition-all duration-100 active:scale-[1.04] disabled:active:scale-100 ${primary
+      ? 'bg-[#FF6B35] text-white active:scale-[1.06] active:brightness-110 disabled:bg-[#FF6B35]/50 disabled:text-white'
+      : 'border border-white/20 bg-white/10 text-white active:border-[#FF6B35] active:bg-[#FF6B35]/25 disabled:border-white/25 disabled:bg-white/5 disabled:text-slate-300'} ${className}`}>{children}</button>;
 }
 
-/** Primary actions stay outside the scrolling explanatory/options area. */
-export function RailTask({ children, footer, label }: { children: ReactNode; footer?: ReactNode; label: string }) {
-  return <section aria-label={label} className="flex h-full min-h-0 flex-col gap-2">
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pr-0.5">{children}</div>
-    {footer && <div className="flex shrink-0 flex-col gap-2 border-t border-white/10 bg-slate-900 pt-2">{footer}</div>}
+/** M11 r3 (owner 2026-09-23): ONE PANEL - the footer mechanism is gone.
+ * Every control (including primary actions) lives inside the single
+ * scrollable panel so the user scrolls and sees everything that matters;
+ * nothing is ever pinned over or above the rail content. */
+export function RailTask({ children, label }: { children: ReactNode; label: string }) {
+  return <section aria-label={label} className="flex h-full min-h-0 flex-col">
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-2 pb-3 pr-0.5">{children}</div>
   </section>;
 }
 

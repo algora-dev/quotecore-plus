@@ -62,6 +62,11 @@ export interface TouchComponentGroup {
   colour: string;
   /** Number of entries in this group. */
   count: number;
+  /** M11 r3 (owner 2026-09-23): false = swatch-only on the grid (attached or
+   * custom components - long customer names wreck the layout); scan defaults
+   * + uncertain keep their short names. The detail page always names the
+   * component. Decorated by useTouchComponents. */
+  named?: boolean;
 }
 
 /** A component the user can open and draw entries for (F4: ANY library

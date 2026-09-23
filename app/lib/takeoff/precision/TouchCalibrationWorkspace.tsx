@@ -227,10 +227,11 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
   const error = localError ?? state.error?.message ?? image.error;
   let rail: ReactNode;
   if (unitPicker) {
-    rail = <RailTask label="Calibration units" footer={<RailAction onClick={() => setUnitPicker(false)}>Back</RailAction>}>
+    rail = <RailTask label="Calibration units">
       <RailNotice>Use the unit printed on the plan. This does not change the quote&rsquo;s working units.</RailNotice>
       <div className="grid grid-cols-2 gap-2">{UNITS.map((value) => <RailAction key={value} label={`Use ${value} for calibration`}
         primary={unit === value} onClick={() => { setUnit(value); setUnitPicker(false); }}>{value}</RailAction>)}</div>
+      <RailAction onClick={() => setUnitPicker(false)}>Back</RailAction>
     </RailTask>;
   } else if (step === 'distance') {
     rail = <NumericRail kind="distance" value={distanceText} onChange={setDistanceText} unit={unit} onChangeUnit={() => setUnitPicker(true)}
@@ -239,8 +240,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
     // Polish 2026-09-22 (owner round 2): landing rail = view controls, explainer
     // and Ready only. Roof pitch deliberately NOT here - it belongs to the
     // outline finish step where the roof area is actually created.
-    rail = <RailTask label="Find a measurement" footer={<RailAction primary label="Ready to place calibration points" disabled={!ready}
-      onClick={beginReference}>Ready</RailAction>}>
+    rail = <RailTask label="Find a measurement">
       {views}
       <RailNotice>Find a known measurement printed on the plan. Move the plan and pinch to zoom, then tap Ready.</RailNotice>
       {image.error && <><RailNotice error>{image.error}</RailNotice><RailAction onClick={image.retry}>Retry image</RailAction></>}
@@ -251,6 +251,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
         dispatch({ type: 'START_NEW', quoteId, image: descriptor, baseCalibrationRevision: 0 });
         setStep('ai'); controller.startSearch();
       }}>Find measurements with AI</RailAction>}
+      <RailAction primary label="Ready to place calibration points" disabled={!ready} onClick={beginReference}>Ready</RailAction>
     </RailTask>;
   } else if (step === 'start' || step === 'end') {
     // Polish 2026-09-22 (owner round 2): no Start/End selector buttons and no
@@ -259,8 +260,7 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
     // point is placed.
     const index = step === 'start' ? 0 : 1;
     const placed = pair.draft.vertices[index] != null;
-    rail = <RailTask label="Calibration point controls" footer={<RailAction primary onClick={confirmPoint} disabled={!placed || midGesture}
-      label={step === 'start' ? 'Confirm first point' : 'Confirm second point'}>{step === 'start' ? 'Confirm first point' : 'Confirm second point'}</RailAction>}>
+    rail = <RailTask label="Calibration point controls">
       {views}
       <RailNotice>{placed
         ? 'Press away from the point and drag to fine-tune it, then release to set it. The more accurate your placement, the more accurate your measurements.'
@@ -268,9 +268,11 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
           ? 'Tap one end of the measurement to place the first point.'
           : 'Now tap the other end of the same measurement to place the second point.'}</RailNotice>
       {error && <RailNotice error>{error}</RailNotice>}
+      <RailAction primary onClick={confirmPoint} disabled={!placed || midGesture}
+        label={step === 'start' ? 'Confirm first point' : 'Confirm second point'}>{step === 'start' ? 'Confirm first point' : 'Confirm second point'}</RailAction>
     </RailTask>;
   } else if (step === 'ai') {
-    rail = <RailTask label="AI calibration review" footer={<RailAction onClick={() => setStep('find')}>Use manual instead</RailAction>}>
+    rail = <RailTask label="AI calibration review">
       <RailNotice>{state.phase === 'searching' ? 'Finding measurements...' : 'Choose a suggestion. You can move both points and correct its value.'}</RailNotice>
       {error && <RailNotice error>{error}</RailNotice>}
       {state.candidates.map((candidate, index) => <RailAction key={candidate.id} onClick={() => {
@@ -281,11 +283,10 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
         setUnit(state.reviews[candidate.id]?.enteredUnit ?? candidate.suggestedUnit ?? unit); setStep('start');
       }}>Measurement {index + 1}</RailAction>)}
       {!!state.accepted.length && <RailAction onClick={() => setStep('references')}>Review accepted references</RailAction>}
+      <RailAction onClick={() => setStep('find')}>Use manual instead</RailAction>
     </RailTask>;
   } else {
-    rail = <RailTask label="Confirm calibration" footer={<RailAction primary onClick={finish}
-      disabled={busy || !controller.validAccepted.length || blockers.acknowledgementRequired || pageHasDependents || !!localError}
-      label="Confirm calibration and continue">{busy ? 'Saving calibration...' : 'Confirm calibration'}</RailAction>}>
+    rail = <RailTask label="Confirm calibration">
       <RailNotice>{state.accepted.length ? `${state.accepted.length} of 3 references ready. One is enough.` : 'This reference could not be added. Check its points and distance.'}</RailNotice>
       {error && <RailNotice error>{error}</RailNotice>}
       {state.accepted.map((ref, index) => <div key={ref.id} className="flex items-center gap-1 text-xs">
@@ -297,6 +298,9 @@ export function useTouchCalibration(options: UseTouchCalibrationOptions): TouchC
       {state.accepted.length < 3 && <RailAction disabled={busy} label="Calibrate another length" onClick={() => { setStep('find'); setPair(createPair()); setDistanceText(''); }}>Calibrate another length</RailAction>}
       {error && <RailAction disabled={busy} onClick={() => selectPoint(1)}>Check this reference</RailAction>}
       {aiEnabled && state.candidates.length > 0 && state.accepted.length < 3 && <RailAction disabled={busy} onClick={() => setStep('ai')}>Other AI measurements</RailAction>}
+      <RailAction primary onClick={finish}
+        disabled={busy || !controller.validAccepted.length || blockers.acknowledgementRequired || pageHasDependents || !!localError}
+        label="Confirm calibration and continue">{busy ? 'Saving calibration...' : 'Confirm calibration'}</RailAction>
     </RailTask>;
   }
   const spans: CalibrationSpan[] = [

@@ -116,7 +116,13 @@ export function useTouchComponents(
   const refreshFromAdapter = useCallback(() => {
     const current = adapterRef.current();
     setEntries(current?.getComponentEntries?.() ?? []);
-    setGroups(current?.getComponentGroups?.() ?? []);
+    // M11 r3: scan defaults + uncertain keep their names on the grid;
+    // attached/custom components show the swatch only (the detail page
+    // always carries the full component name).
+    setGroups((current?.getComponentGroups?.() ?? []).map(g => ({
+      ...g,
+      named: g.key === 'uncertain' || componentIsSystemPlaceholder(g.componentId, componentsRef.current),
+    })));
   }, []);
 
   const cancelDraw = useCallback(() => {

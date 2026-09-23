@@ -28,12 +28,11 @@ export interface TouchOutlineRailProps {
 
 export function TouchOutlineRail(p: TouchOutlineRailProps) {
   const editing = p.stage === 'draw' || p.stage === 'edit';
-  const footer = (() => {
+  // M11 r3: ONE PANEL - stage actions render at the END of the scrollable
+  // content (finish-stage buttons are already inline in the flow above).
+  const stageButtons = (() => {
     if (p.stage === 'saving') return <RailAction primary disabled>Saving roof...</RailAction>;
     if (p.stage === 'scanning') return <RailAction onClick={p.onCancelScan}>Cancel scan</RailAction>;
-    // M11 (owner 2026-09-23): the finish-stage actions live INSIDE the
-    // scrollable rail (below the pitch they depend on) - no pinned footer
-    // overlay hiding the pitch above the fold.
     if (p.stage === 'finish') return null;
     if (p.stage === 'edit' || p.stage === 'ai-review') return <RailAction primary disabled={!p.ready || !!p.validation || p.gestureBusy} onClick={p.onDone}>Done</RailAction>;
     if (p.stage === 'draw') return <div className="flex flex-col gap-1">
@@ -42,7 +41,7 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
     </div>;
     return null;
   })();
-  return <RailTask label="Roof outline controls" footer={footer}>
+  return <RailTask label="Roof outline controls">
     {p.error && <RailNotice error>{p.error}</RailNotice>}
     {!p.calibrated ? <><RailNotice>Calibrate this plan before drawing or scanning.</RailNotice><RailAction primary onClick={p.onCalibrate}>Calibrate plan</RailAction></>
       : p.stage === 'choose' ? <>
@@ -53,7 +52,6 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
           <RailNotice>{p.scanInfo.blocked ? 'No AI points available. Manual outlining is always available.' : `Uses ${p.scanInfo.cost} AI Assist points. You can edit the result.`}</RailNotice>
         </> : <RailNotice>AI Scan Assist is not enabled for this account. Draw manually to continue.</RailNotice>}
         {p.viewControls}
-        <PitchControl pitch={p.pitch} onChange={p.onPitchChange} onType={p.onTypePitch} />
         {p.areas.length > 0 && <details><summary className="min-h-12 py-3 text-xs">Existing roof outlines</summary>
           <div className="flex flex-col gap-1">{p.areas.map((area, index) => <RailAction key={area.geometryId ?? `saved-area-${index}`} onClick={() => p.onArea(area)}>{area.name}</RailAction>)}</div>
         </details>}
@@ -116,5 +114,6 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
             {p.viewControls}
             <RailAction disabled={p.gestureBusy} onClick={p.onCancel}>Cancel outline</RailAction>
           </>}
+    {stageButtons && <div className="flex flex-col gap-1 pt-1">{stageButtons}</div>}
   </RailTask>;
 }

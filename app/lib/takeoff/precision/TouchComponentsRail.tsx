@@ -19,7 +19,7 @@ export interface TouchAttachOption { id: string; name: string; collectionId: str
 /** Saved outlines offered by "use an existing roof area" (area components). */
 export interface TouchRoofAreaOption { geometryId: string; name: string; label: string }
 
-const SELECT_CLASS = 'min-h-12 w-full rounded-xl border border-white/20 bg-white/10 px-2 text-sm font-semibold text-white';
+const SELECT_CLASS = 'min-h-[72px] w-full rounded-xl border border-white/20 bg-white/10 px-2 text-base font-semibold text-white';
 
 export interface TouchComponentsRailProps {
   phase: TouchComponentsPhase;
@@ -91,17 +91,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
       point: 'Tap the plan to place the item. To fine-tune, press anywhere and drag - the marker follows at a distance so your thumb never covers it.',
     };
     if (p.drawActive) {
-      return <RailTask label={`Draw ${detailName} entry`} footer={<div className="flex flex-col gap-1">
-        {p.drawMode === 'polygon'
-          ? <>
-            <RailAction primary disabled={p.polygonCount < 3} onClick={p.onClosePolygon}>Close shape &amp; save</RailAction>
-            <RailAction disabled={p.polygonCount === 0} onClick={p.onUndoPolygonPoint}>Undo last corner</RailAction>
-          </>
-          : <RailAction primary disabled={!p.draftReady} onClick={p.onConfirmPoint}>
-            {p.drawMode === 'point' ? 'Confirm &amp; save item' : p.drawSlot === 0 ? 'Confirm point' : 'Confirm point &amp; save entry'}
-          </RailAction>}
-        <RailAction onClick={p.onCancelDraw}>Cancel new entry</RailAction>
-      </div>}>
+      return <RailTask label={`Draw ${detailName} entry`}>
         <RailAction label="Back to all components" onClick={p.onBackFromDetail}>&#8249; All components</RailAction>
         <div className="flex items-center gap-2 px-1 py-1">
           <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailColour }} />
@@ -110,6 +100,17 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
         <RailNotice>{drawCopy[p.drawMode]}</RailNotice>
         {p.viewControls}
         <RailNotice>Drag empty space to pan. Pinch to zoom.</RailNotice>
+        <div className="flex flex-col gap-1 pt-1">
+          {p.drawMode === 'polygon'
+            ? <>
+              <RailAction primary disabled={p.polygonCount < 3} onClick={p.onClosePolygon}>Close shape &amp; save</RailAction>
+              <RailAction disabled={p.polygonCount === 0} onClick={p.onUndoPolygonPoint}>Undo last corner</RailAction>
+            </>
+            : <RailAction primary disabled={!p.draftReady} onClick={p.onConfirmPoint}>
+              {p.drawMode === 'point' ? 'Confirm & save item' : p.drawSlot === 0 ? 'Confirm point' : 'Confirm point & save entry'}
+            </RailAction>}
+          <RailAction onClick={p.onCancelDraw}>Cancel new entry</RailAction>
+        </div>
       </RailTask>;
     }
     // Group the attach options by library for one tappable select.
@@ -123,9 +124,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
       if (unfiled.length) groups.push({ id: null, name: 'Uncategorised', options: unfiled });
       return groups;
     })();
-    return <RailTask label={`${detailName} entries`} footer={
-      <RailAction primary onClick={p.onBackFromDetail}>Done</RailAction>
-    }>
+    return <RailTask label={`${detailName} entries`}>
       <RailAction label="Back to all components" onClick={p.onBackFromDetail}>&#8249; All components</RailAction>
       <div className="flex items-center gap-2 px-1 py-1">
         <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailColour }} />
@@ -173,11 +172,13 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
           </div>
         </div>)}
       </div>
+      <RailAction primary onClick={p.onBackFromDetail}>Done</RailAction>
     </RailTask>;
   }
 
-  // ── Main view ────────────────────────────────────────────────────────
-  const footer = (() => {
+  // M11 r3: ONE PANEL - the main-view actions render at the END of the
+  // scrollable content, nothing pinned.
+  const stageActions = (() => {
     if (p.phase === 'scanning') return <RailAction onClick={p.onCancelScan}>Cancel scan</RailAction>;
     if (p.phase === 'disclaimer') return <RailAction primary disabled>Confirm the notice to continue</RailAction>;
     if (p.phase === 'error') return <div className="flex flex-col gap-1">
@@ -187,7 +188,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
     if (p.saving) return <RailAction primary disabled>Saving...</RailAction>;
     return <RailAction primary onClick={p.onSaveContinue}>Save &amp; continue</RailAction>;
   })();
-  return <RailTask label="Components step" footer={footer}>
+  return <RailTask label="Components step">
     {p.error && <RailNotice error>{p.error}</RailNotice>}
     {p.phase === 'scanning' ? <>
       <ScanProgress label={p.scanStage === 'lines' ? 'Detecting components' : 'Classifying components'} />
@@ -215,13 +216,18 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
           {p.groups.length > 0 && <RailNotice>Tap a colour to open that component and its entries.</RailNotice>}
           {p.groups.length > 0 && <div className="grid grid-cols-2 gap-1">
             {p.groups.map(g => <button key={g.key} type="button" aria-pressed={false}
+              aria-label={g.named === false ? g.displayName : undefined}
               onClick={() => p.onOpenDetail(g.key)}
               className="flex min-h-12 w-full items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2 py-2 text-xs font-semibold text-white transition-all duration-100 active:scale-[1.04]">
               <span aria-hidden className="h-6 w-6 shrink-0 rounded-lg border border-black/30" style={{ backgroundColor: g.colour }} />
-              <span className="flex-1 text-left leading-tight">{g.displayName}</span>
+              {/* M11 r3 (owner 2026-09-23): attached/custom components show the
+                  swatch only on the grid - long customer names wreck the
+                  layout. The full name lives on the detail page. */}
+              <span className="flex-1 text-left leading-tight">{g.named === false ? '' : g.displayName}</span>
               <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11px]">{g.count}</span>
             </button>)}
           </div>}
         </>}
+    {stageActions && <div className="flex flex-col gap-1 pt-1">{stageActions}</div>}
   </RailTask>;
 }
