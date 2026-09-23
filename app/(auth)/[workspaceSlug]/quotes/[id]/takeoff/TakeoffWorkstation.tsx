@@ -3558,6 +3558,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     markers: Circle[];
   }>>([]);
   const touchComponentIsolatedRef = useRef<string | null>(null);
+  // P4: latest-ref to the persist function (recreated each render) so the
+  // stable adapter always calls the fresh closure over component state.
+  const touchPersistTakeoffRef = useRef(persistTakeoffData);
+  touchPersistTakeoffRef.current = persistTakeoffData;
 
   // M7 (O16): the touch dirty-draft guard supplied by TakeoffPage. Kept in a
   // ref so the guarded handlers (page switch, area switch, upload-another)
@@ -4007,6 +4011,46 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchComponentEntriesRef.current = [];
         touchComponentIsolatedRef.current = null;
         touchBridgeListeners.current.forEach(listener => listener());
+      },
+      // P4: persist the reviewed entries through the standard save path.
+      // Entries map to system components (uncertain detections are
+      // review-only and never become quote components); hidden entries
+      // persist with visible=false (excluded from the quote, kept on the
+      // plan), deletions simply never reach the DB.
+      persistReviewedComponents: async (): Promise<{ ok: true } | { ok: false; error: string }> => {
+        try {
+          const systemComponentIds = buildSystemComponentIds(components);
+          const pageId = currentPageIdRef.current;
+          const savedArea = [...(touchOutlineAdapterRef.current?.getAreas() ?? [])]
+            .filter(a => a.quoteRoofAreaId)
+            .pop();
+          const areaId = savedArea?.quoteRoofAreaId ?? null;
+          const byComponent = new Map<string, ComponentMeasurement[]>();
+          for (const e of touchComponentEntriesRef.current) {
+            const componentId = systemComponentIds[e.key] ?? null;
+            if (!componentId) continue; // uncertain/no system component: review-only
+            const list = byComponent.get(componentId) ?? [];
+            list.push({
+              id: e.id,
+              type: 'line' as const,
+              value: e.value,
+              points: e.points.map(p => ({ x: p.x, y: p.y })),
+              visible: !e.hidden,
+              fromPageId: pageId,
+              quoteRoofAreaId: areaId,
+            });
+            byComponent.set(componentId, list);
+          }
+          if (byComponent.size > 0) {
+            setComponentMeasurements(prev => [...prev, ...[...byComponent.entries()].map(([componentId, measurements]) => ({ componentId, measurements, expanded: true }))]);
+          }
+          const saved = await touchPersistTakeoffRef.current?.();
+          if (saved === false) return { ok: false, error: 'The save did not complete. Check your connection and try again.' };
+          touchBridgeListeners.current.forEach(listener => listener());
+          return { ok: true };
+        } catch (err) {
+          return { ok: false, error: err instanceof Error ? err.message : 'The save failed.' };
+        }
       },
       cancelComponentScan: () => {
         touchComponentScanAbortRef.current?.abort();

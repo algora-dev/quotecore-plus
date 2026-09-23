@@ -59,6 +59,8 @@ export function useTouchComponents(
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState('');
   const [componentId, setComponentId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   // P3b: + New entry drawing state.
   const [drawSlot, setDrawSlot] = useState<0 | 1 | null>(null);
   const [draft, setDraft] = useState<{ p1: EntryDraftPoint | null; p2: EntryDraftPoint | null }>({ p1: null, p2: null });
@@ -211,15 +213,15 @@ export function useTouchComponents(
     setComponentId(null);
   }, []);
 
-  // P3: picking a component opens its group's detail view when one exists.
+  // P3: picking a component opens its group's detail view - ANY of the six
+  // system types opens (empty manual groups included), others only when a
+  // matching group was already detected.
   const onComponentChange = useCallback((id: string) => {
     setComponentId(id);
     const comp = options.components.find(c => c.id === id);
     if (!comp) return;
     const semantic = resolveSemanticKey(comp.name);
-    if (!semantic) return;
-    const has = (adapterRef.current()?.getComponentGroups?.() ?? []).some(g => g.key === semantic);
-    if (has) onOpenDetail(semantic);
+    if (semantic) onOpenDetail(semantic);
   }, [options.components, onOpenDetail]);
 
   const onAcceptDisclaimer = useCallback(() => setPhase('review'), []);
@@ -234,9 +236,33 @@ export function useTouchComponents(
   }, [cancelDraw]);
   const onRetry = useCallback(() => { void runScan(); }, [runScan]);
   const onCancelScan = useCallback(() => { adapterRef.current()?.cancelComponentScan?.(); }, []);
-  const onSaveContinue = useCallback(() => {
-    logTakeoffEvent('components.save.continue');
-    router.push(options.finishHref);
+  // P4: persist the reviewed entries through the standard save path, then
+  // navigate to the quote builder. Failures keep the user here with their
+  // entries intact.
+  const onSaveContinue = useCallback(async () => {
+    if (savingRef.current) return;
+    const current = adapterRef.current();
+    savingRef.current = true;
+    setSaving(true);
+    setError(null);
+    logTakeoffEvent('components.save.requested');
+    try {
+      const result = await current?.persistReviewedComponents?.();
+      if (result && !result.ok) {
+        setError(result.error);
+        logTakeoffEvent('components.save.failed', { error: result.error });
+        return;
+      }
+      logTakeoffEvent('components.save.succeeded');
+      router.push(options.finishHref);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'The save failed. Your entries are kept.';
+      setError(message);
+      logTakeoffEvent('components.save.failed', { error: message });
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }, [router, options.finishHref]);
 
   const filteredComponents = libraryId
@@ -255,7 +281,7 @@ export function useTouchComponents(
     selectedLibraryId={libraryId} selectedComponentId={componentId}
     detailKey={detailKey} detailEntries={detailEntries}
     highlightedEntryId={highlighted} unitLabel={unitLabel}
-    drawSlot={drawSlot} draftReady={draftReady} viewControls={drawViewControls}
+    drawSlot={drawSlot} draftReady={draftReady} viewControls={drawViewControls} saving={saving}
     onLibraryChange={onLibraryChange} onComponentChange={onComponentChange}
     onOpenDetail={onOpenDetail} onBackFromDetail={onBackFromDetail}
     onHighlight={onHighlight} onHideToggle={onHideToggle} onDeleteEntry={onDeleteEntry}
@@ -282,5 +308,5 @@ export function useTouchComponents(
       </FloatingCanvasSheet>
     ) : null;
 
-  return { rail, overlay, busy: phase === 'scanning', dirty: phase === 'scanning' };
+  return { rail, overlay, busy: phase === 'scanning' || saving, dirty: phase === 'scanning' || saving };
 }

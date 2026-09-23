@@ -56,6 +56,7 @@ export interface TouchOutlineAdapter {
   deleteComponentEntry?(id: string): void;
   highlightComponentEntry?(id: string | null): void;
   setIsolatedComponentGroup?(key: string | null): void;
+  persistReviewedComponents?(): Promise<{ ok: true } | { ok: false; error: string }>;
   clearComponentOverlay?(): void;
 }
 export interface TouchOutlineEditorParts {

@@ -5,6 +5,7 @@
 // the plan, hide/show, delete. + New entry drawing lands with P3b.
 import type { ReactNode } from 'react';
 import { RailAction, RailNotice, RailTask, ScanProgress } from './TouchRailControls';
+import { AI_COMPONENT_REGISTRY, type SemanticKey } from '../aiComponentRegistry';
 import type { TouchComponentEntry, TouchComponentGroup, TouchComponentScanStage } from './touchComponents';
 
 export type TouchComponentsPhase = 'scanning' | 'disclaimer' | 'review' | 'error';
@@ -31,6 +32,7 @@ export interface TouchComponentsRailProps {
   onStartNewEntry: () => void;
   onConfirmPoint: () => void;
   onCancelDraw: () => void;
+  saving: boolean;
   onLibraryChange: (id: string) => void;
   onComponentChange: (id: string) => void;
   onOpenDetail: (key: string) => void;
@@ -47,7 +49,8 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
   // ── Component detail view (one group's entries) ─────────────────────
   if (p.detailKey && p.phase === 'review') {
     const detailGroup = p.groups.find(g => g.key === p.detailKey);
-    const detailName = detailGroup?.displayName ?? p.detailEntries[0]?.displayName ?? 'Component';
+    const registryDef = AI_COMPONENT_REGISTRY[p.detailKey as SemanticKey];
+    const detailName = detailGroup?.displayName ?? registryDef?.displayName ?? p.detailEntries[0]?.displayName ?? 'Component';
     if (p.drawSlot != null) {
       return <RailTask label={`Draw ${detailName} entry`} footer={<div className="flex flex-col gap-1">
         <RailAction primary disabled={!p.draftReady} onClick={p.onConfirmPoint}>Confirm point</RailAction>
@@ -106,6 +109,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
       <RailAction primary onClick={p.onRetry}>Retry scan</RailAction>
       <RailAction onClick={p.onSaveContinue}>Continue without components</RailAction>
     </div>;
+    if (p.saving) return <RailAction primary disabled>Saving...</RailAction>;
     return <RailAction primary onClick={p.onSaveContinue}>Save &amp; continue</RailAction>;
   })();
   return <RailTask label="Components step" footer={footer}>
@@ -117,7 +121,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
       : p.phase === 'error' ? <RailNotice>The component scan did not complete. Retry it, or continue to the quote builder.</RailNotice>
         : <>
           {p.groups.length === 0 ? <RailNotice>{p.manualMode
-            ? 'Add components manually. Drawing entries lands in the next step - finish to the quote builder for now.'
+            ? 'Add components manually: pick a component below (Ridge, Hip, Valley...) to open its page and draw entries. Save & continue when done.'
             : 'The scan found no components. You can continue to the quote builder, or retry after checking the plan image.'}</RailNotice>
             : <RailNotice>Tap a colour to open that component and its entries.</RailNotice>}
           <div className="space-y-1">
