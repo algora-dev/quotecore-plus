@@ -3,6 +3,7 @@
 // component dropdowns, colour swatch grid. Detail view (tap a swatch or pick
 // a matching component): that group's entries - tap to highlight the line on
 // the plan, hide/show, delete. + New entry drawing lands with P3b.
+import type { ReactNode } from 'react';
 import { RailAction, RailNotice, RailTask, ScanProgress } from './TouchRailControls';
 import type { TouchComponentEntry, TouchComponentGroup, TouchComponentScanStage } from './touchComponents';
 
@@ -23,6 +24,13 @@ export interface TouchComponentsRailProps {
   detailEntries: TouchComponentEntry[];
   highlightedEntryId: string | null;
   unitLabel: string;
+  /** P3b: active draft slot while drawing, or null when not drawing. */
+  drawSlot: 0 | 1 | null;
+  draftReady: boolean;
+  viewControls: ReactNode;
+  onStartNewEntry: () => void;
+  onConfirmPoint: () => void;
+  onCancelDraw: () => void;
   onLibraryChange: (id: string) => void;
   onComponentChange: (id: string) => void;
   onOpenDetail: (key: string) => void;
@@ -40,6 +48,23 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
   if (p.detailKey && p.phase === 'review') {
     const detailGroup = p.groups.find(g => g.key === p.detailKey);
     const detailName = detailGroup?.displayName ?? p.detailEntries[0]?.displayName ?? 'Component';
+    if (p.drawSlot != null) {
+      return <RailTask label={`Draw ${detailName} entry`} footer={<div className="flex flex-col gap-1">
+        <RailAction primary disabled={!p.draftReady} onClick={p.onConfirmPoint}>Confirm point</RailAction>
+        <RailAction onClick={p.onCancelDraw}>Cancel new entry</RailAction>
+      </div>}>
+        <RailAction label="Back to all components" onClick={p.onBackFromDetail}>&#8249; All components</RailAction>
+        <div className="flex items-center gap-2 px-1 py-1">
+          <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailGroup?.colour ?? '#ffffff' }} />
+          <div className="text-base font-semibold text-white">{detailName}</div>
+        </div>
+        <RailNotice>{p.drawSlot === 0
+          ? 'Tap the plan to set the START point. Drag near it to fine-tune, then Confirm point.'
+          : 'Now set the END point the same way, then Confirm point to save the entry.'}</RailNotice>
+        {p.viewControls}
+        <RailNotice>Drag empty space to pan. Pinch to zoom.</RailNotice>
+      </RailTask>;
+    }
     return <RailTask label={`${detailName} entries`} footer={
       <RailAction primary onClick={p.onBackFromDetail}>Done</RailAction>
     }>
@@ -48,8 +73,9 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
         <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailGroup?.colour ?? '#ffffff' }} />
         <div className="text-base font-semibold text-white">{detailName}</div>
       </div>
+      <RailAction primary={p.detailEntries.length === 0} onClick={p.onStartNewEntry}>+ New entry</RailAction>
       {p.detailEntries.length === 0
-        ? <RailNotice>No entries yet. Drawing new entries lands in the next build step.</RailNotice>
+        ? <RailNotice>No entries yet. Tap + New entry to draw one.</RailNotice>
         : <RailNotice>Tap an entry to highlight its line on the plan. Hide keeps it greyed on the plan but out of the quote.</RailNotice>}
       <div className="flex flex-col gap-1">
         {p.detailEntries.map((e, index) => <div key={e.id}

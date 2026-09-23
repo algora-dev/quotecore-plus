@@ -3553,6 +3553,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     key: SemanticKey;
     value: number;
     hidden: boolean;
+    points: { x: number; y: number }[];
     line: Line;
     markers: Circle[];
   }>>([]);
@@ -3900,6 +3901,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           colour: getSemanticColour(e.key),
           value: e.value,
           hidden: e.hidden,
+          points: e.points,
         })),
       setIsolatedComponentGroup: (key: string | null) => {
         const canvas = fabricRef.current;
@@ -3942,6 +3944,45 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           canvas.renderAll();
         }
         touchBridgeListeners.current.forEach(listener => listener());
+      },
+      // P3b: add a manually drawn lineal entry (tap/drag/confirm flow).
+      addComponentEntry: (key: SemanticKey, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null => {
+        const canvas = fabricRef.current;
+        const scale = touchOutlineAdapterRef.current?.getScale() ?? null;
+        if (!canvas) return null;
+        const lineOpts = getLineOptions(key);
+        const id = crypto.randomUUID();
+        const line = new Line([p1.x, p1.y, p2.x, p2.y], {
+          stroke: lineOpts.stroke,
+          strokeWidth: lineOpts.strokeWidth,
+          strokeDashArray: lineOpts.strokeDashArray,
+          selectable: false,
+          evented: false,
+          hasControls: false,
+          hasBorders: false,
+        });
+        (line as unknown as { measurementId: string }).measurementId = id;
+        const colour = getSemanticColour(key);
+        const markers = [p1, p2].map(p => {
+          const marker = new Circle({
+            left: p.x, top: p.y, radius: 3,
+            fill: colour, stroke: '#000', strokeWidth: 1,
+            originX: 'center', originY: 'center',
+            selectable: false, evented: false, hasControls: false, hasBorders: false,
+          });
+          (marker as unknown as { measurementId: string }).measurementId = id;
+          return marker;
+        });
+        const visible = touchComponentIsolatedRef.current == null || touchComponentIsolatedRef.current === key;
+        line.set({ visible });
+        for (const marker of markers) marker.set({ visible });
+        canvas.add(line, ...markers);
+        canvas.renderAll();
+        const value = scale ? Math.round(Math.hypot(p2.x - p1.x, p2.y - p1.y) * scale.scale * 100) / 100 : 0;
+        const points = [{ x: p1.x, y: p1.y }, { x: p2.x, y: p2.y }];
+        touchComponentEntriesRef.current.push({ id, key, value, hidden: false, points, line, markers });
+        touchBridgeListeners.current.forEach(listener => listener());
+        return { id, key, displayName: AI_COMPONENT_REGISTRY[key].displayName, colour, value, hidden: false, points };
       },
       highlightComponentEntry: (id: string | null) => {
         const canvas = fabricRef.current;
@@ -4096,7 +4137,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 return marker;
               });
               drawCanvas.add(line, ...markers);
-              touchComponentEntriesRef.current.push({ id: m.id, key: m.semanticKey, value: m.value, hidden: false, line, markers });
+              touchComponentEntriesRef.current.push({ id: m.id, key: m.semanticKey, value: m.value, hidden: false, points: [{ x: p1.x, y: p1.y }, { x: p2.x, y: p2.y }], line, markers });
             }
             drawCanvas.renderAll();
           }

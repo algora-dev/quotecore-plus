@@ -29,6 +29,8 @@ export interface TouchComponentEntry {
   /** Real-world length in calibration units (AiMeasurement.value). */
   value: number;
   hidden: boolean;
+  /** Canvas-space endpoints [start, end] (context rendering + draw preview). */
+  points: { x: number; y: number }[];
 }
 
 export type TouchComponentScanResult =

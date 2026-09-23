@@ -1,15 +1,18 @@
 'use client';
-// M10 P2/P3: touch components step lifecycle - auto-starts the AI component
-// scan (scan2+scan3 continuations on the corrected outline) for AI mode,
-// gates the results behind the D2 disclaimer, owns the component detail view
-// (isolation, entry highlight, hide, delete) and routes Save & continue.
-// Manual mode skips the scan and lands directly in the review rail.
+// M10 P2/P3/P3b: touch components step lifecycle - auto-starts the AI
+// component scan (scan2+scan3 continuations on the corrected outline) for AI
+// mode, gates the results behind the D2 disclaimer, owns the component detail
+// view (isolation, entry highlight, hide, delete) and the + New entry
+// tap/drag/confirm drawing flow. Manual mode skips the scan and lands
+// directly in the review rail.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TouchOutlineAdapter } from './TouchOutlineEditor';
 import { TouchComponentsRail, type TouchComponentsPhase } from './TouchComponentsRail';
+import { EntryDrawCanvas, type EntryDraftPoint } from './EntryDrawCanvas';
+import { usePrecisionCamera } from './usePrecisionCamera';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
-import { RailAction } from './TouchRailControls';
+import { RailAction, RailViewControls } from './TouchRailControls';
 import {
   COMPONENT_SCAN_DISCLAIMER,
   componentGroupSummary,
@@ -17,7 +20,7 @@ import {
   type TouchComponentGroup,
   type TouchComponentScanStage,
 } from './touchComponents';
-import { resolveSemanticKey } from '../aiComponentRegistry';
+import { resolveSemanticKey, type SemanticKey } from '../aiComponentRegistry';
 import { logTakeoffEvent } from './takeoffDiagnostics';
 
 export interface TouchComponentsOptions {
@@ -56,12 +59,25 @@ export function useTouchComponents(
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState('');
   const [componentId, setComponentId] = useState<string | null>(null);
+  // P3b: + New entry drawing state.
+  const [drawSlot, setDrawSlot] = useState<0 | 1 | null>(null);
+  const [draft, setDraft] = useState<{ p1: EntryDraftPoint | null; p2: EntryDraftPoint | null }>({ p1: null, p2: null });
   const startedRef = useRef(false);
+
+  const scene = adapter?.getScene() ?? null;
+  const imageUrl = adapter?.getImageUrl() ?? null;
+  const view = usePrecisionCamera(active && drawSlot != null, scene, 'components-entry-draw');
+  const { camera, setCamera, fit, zoomBy, zoomBounds, bindSurface } = view;
 
   const refreshFromAdapter = useCallback(() => {
     const current = adapterRef.current();
     setEntries(current?.getComponentEntries?.() ?? []);
     setGroups(current?.getComponentGroups?.() ?? []);
+  }, []);
+
+  const cancelDraw = useCallback(() => {
+    setDrawSlot(null);
+    setDraft({ p1: null, p2: null });
   }, []);
 
   const runScan = useCallback(async () => {
@@ -107,7 +123,8 @@ export function useTouchComponents(
     setEntries([]);
     setDetailKey(null);
     setHighlighted(null);
-  }, [active]);
+    cancelDraw();
+  }, [active, cancelDraw]);
 
   // Clear canvas isolation + entry highlight when the step deactivates.
   useEffect(() => {
@@ -121,17 +138,19 @@ export function useTouchComponents(
 
   // Detail view: the group is isolated on the canvas while it is open.
   const onOpenDetail = useCallback((key: string) => {
+    cancelDraw();
     adapterRef.current()?.setIsolatedComponentGroup?.(key);
     adapterRef.current()?.highlightComponentEntry?.(null);
     setDetailKey(key);
     setHighlighted(null);
-  }, []);
+  }, [cancelDraw]);
   const onBackFromDetail = useCallback(() => {
+    cancelDraw();
     adapterRef.current()?.setIsolatedComponentGroup?.(null);
     adapterRef.current()?.highlightComponentEntry?.(null);
     setDetailKey(null);
     setHighlighted(null);
-  }, []);
+  }, [cancelDraw]);
   const onHighlight = useCallback((id: string | null) => {
     adapterRef.current()?.highlightComponentEntry?.(id);
     setHighlighted(id);
@@ -145,6 +164,47 @@ export function useTouchComponents(
     setHighlighted(prev => (prev === id ? null : prev));
     refreshFromAdapter();
   }, [refreshFromAdapter]);
+
+  // P3b: + New entry drawing (tap place, drag refine, confirm per point).
+  const onStartNewEntry = useCallback(() => {
+    setDraft({ p1: null, p2: null });
+    setDrawSlot(0);
+    logTakeoffEvent('components.entry.draw.started');
+  }, []);
+  const onTapPlace = useCallback((point: EntryDraftPoint) => {
+    if (drawSlot === 0) setDraft(d => ({ ...d, p1: point }));
+    else if (drawSlot === 1) setDraft(d => ({ ...d, p2: point }));
+  }, [drawSlot]);
+  const onDraftMove = useCallback((slot: 0 | 1, point: EntryDraftPoint) => {
+    setDraft(d => (slot === 0 ? { ...d, p1: point } : { ...d, p2: point }));
+  }, []);
+  const onPanBy = useCallback((dx: number, dy: number) => {
+    setCamera(cam => (cam ? { ...cam, tx: cam.tx + dx, ty: cam.ty + dy } : cam));
+  }, [setCamera]);
+  const onZoomAt = useCallback((factor: number, vx: number, vy: number) => {
+    setCamera(cam => {
+      if (!cam) return cam;
+      const zoom = Math.min(zoomBounds.max, Math.max(zoomBounds.min, cam.zoom * factor));
+      const sx = (vx - cam.tx) / cam.zoom;
+      const sy = (vy - cam.ty) / cam.zoom;
+      return { zoom, tx: vx - sx * zoom, ty: vy - sy * zoom };
+    });
+  }, [setCamera, zoomBounds]);
+  const onConfirmPoint = useCallback(() => {
+    if (drawSlot === 0) {
+      if (!draft.p1) return;
+      setDrawSlot(1);
+      return;
+    }
+    if (drawSlot === 1 && draft.p1 && draft.p2 && detailKey) {
+      const entry = adapterRef.current()?.addComponentEntry?.(detailKey as SemanticKey, draft.p1, draft.p2);
+      if (entry) {
+        logTakeoffEvent('components.entry.draw.saved', { key: entry.key, value: entry.value });
+        cancelDraw();
+        refreshFromAdapter();
+      }
+    }
+  }, [drawSlot, draft, detailKey, cancelDraw, refreshFromAdapter]);
 
   const onLibraryChange = useCallback((id: string) => {
     setLibraryId(id);
@@ -164,13 +224,14 @@ export function useTouchComponents(
 
   const onAcceptDisclaimer = useCallback(() => setPhase('review'), []);
   const onDiscardResults = useCallback(() => {
+    cancelDraw();
     adapterRef.current()?.clearComponentOverlay?.();
     setGroups([]);
     setEntries([]);
     setDetailKey(null);
     setHighlighted(null);
     setPhase('review');
-  }, []);
+  }, [cancelDraw]);
   const onRetry = useCallback(() => { void runScan(); }, [runScan]);
   const onCancelScan = useCallback(() => { adapterRef.current()?.cancelComponentScan?.(); }, []);
   const onSaveContinue = useCallback(() => {
@@ -183,6 +244,8 @@ export function useTouchComponents(
     : options.components;
   const detailEntries = detailKey ? entries.filter(e => e.key === detailKey) : [];
   const unitLabel = adapter?.getScale()?.unit === 'meters' ? 'm' : 'ft';
+  const draftReady = drawSlot === 0 ? !!draft.p1 : drawSlot === 1 ? !!draft.p2 : false;
+  const drawViewControls = <RailViewControls onFit={fit} onZoomIn={() => zoomBy(1.25)} onZoomOut={() => zoomBy(0.8)} disabled={!camera} />;
 
   const rail = active ? <TouchComponentsRail
     phase={phase} scanStage={scanStage} error={error} groups={groups}
@@ -192,23 +255,32 @@ export function useTouchComponents(
     selectedLibraryId={libraryId} selectedComponentId={componentId}
     detailKey={detailKey} detailEntries={detailEntries}
     highlightedEntryId={highlighted} unitLabel={unitLabel}
+    drawSlot={drawSlot} draftReady={draftReady} viewControls={drawViewControls}
     onLibraryChange={onLibraryChange} onComponentChange={onComponentChange}
     onOpenDetail={onOpenDetail} onBackFromDetail={onBackFromDetail}
     onHighlight={onHighlight} onHideToggle={onHideToggle} onDeleteEntry={onDeleteEntry}
+    onStartNewEntry={onStartNewEntry} onConfirmPoint={onConfirmPoint} onCancelDraw={cancelDraw}
     onRetry={onRetry} onCancelScan={onCancelScan}
     onSaveContinue={onSaveContinue} /> : null;
 
-  const overlay = active && phase === 'disclaimer' ? (
-    <FloatingCanvasSheet label="AI component scan results" dialog modal>
-      <div className="space-y-2 text-sm text-white">
-        <div className="text-base font-semibold">Component scan complete</div>
-        <p>{componentGroupSummary(groups)}.</p>
-        <p>{COMPONENT_SCAN_DISCLAIMER}</p>
-        <RailAction primary onClick={onAcceptDisclaimer}>I understand - review results</RailAction>
-        <RailAction onClick={onDiscardResults}>Discard results</RailAction>
-      </div>
-    </FloatingCanvasSheet>
-  ) : null;
+  const overlay = !active ? null
+    : drawSlot != null && phase === 'review' ? (
+      <EntryDrawCanvas bindSurface={bindSurface} camera={camera} scene={scene} imageUrl={imageUrl}
+        groupColour={detailEntries[0]?.colour ?? '#FF6B35'}
+        contextLines={detailEntries.map(e => e.points)}
+        draft={draft} activeSlot={drawSlot}
+        onTapPlace={onTapPlace} onDraftMove={onDraftMove} onPanBy={onPanBy} onZoomAt={onZoomAt} error={null} />
+    ) : phase === 'disclaimer' ? (
+      <FloatingCanvasSheet label="AI component scan results" dialog modal>
+        <div className="space-y-2 text-sm text-white">
+          <div className="text-base font-semibold">Component scan complete</div>
+          <p>{componentGroupSummary(groups)}.</p>
+          <p>{COMPONENT_SCAN_DISCLAIMER}</p>
+          <RailAction primary onClick={onAcceptDisclaimer}>I understand - review results</RailAction>
+          <RailAction onClick={onDiscardResults}>Discard results</RailAction>
+        </div>
+      </FloatingCanvasSheet>
+    ) : null;
 
   return { rail, overlay, busy: phase === 'scanning', dirty: phase === 'scanning' };
 }

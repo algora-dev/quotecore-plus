@@ -23,6 +23,7 @@ import { TouchOutlineRail, type OutlineFinishChoice } from './TouchOutlineRail';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 import { RailAction, RailViewControls } from './TouchRailControls';
 import { OUTLINE_SCAN_DISCLAIMER, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage } from './touchComponents';
+import type { SemanticKey } from '../aiComponentRegistry';
 import { logTakeoffEvent } from './takeoffDiagnostics';
 
 export type TouchCreateResult =
@@ -50,6 +51,7 @@ export interface TouchOutlineAdapter {
   cancelComponentScan?(): void;
   getComponentGroups?(): TouchComponentGroup[];
   getComponentEntries?(): TouchComponentEntry[];
+  addComponentEntry?(key: SemanticKey, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null;
   setEntryHidden?(id: string, hidden: boolean): void;
   deleteComponentEntry?(id: string): void;
   highlightComponentEntry?(id: string | null): void;
