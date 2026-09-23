@@ -19,7 +19,7 @@ import type {
   AiOutlineScanResult,
 } from '@/app/lib/takeoff/precision/touchAiOutline';
 import { outlineDependentRecompute } from '@/app/lib/takeoff/precision/touchOutlines';
-import { groupsFromMeasurements, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage } from '@/app/lib/takeoff/precision/touchComponents';
+import { groupsFromEntries, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage, type TouchComponentTarget } from '@/app/lib/takeoff/precision/touchComponents';
 import type { RecomputeMeasurementRecord } from '@/app/lib/takeoff/calibrationRecompute';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
@@ -3568,13 +3568,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const touchComponentScanAbortRef = useRef<AbortController | null>(null);
   // Per-entry overlay records (P3 review granularity: hide, delete and
   // highlight operate on individual lineal entries; groups derive live).
-  const touchComponentEntriesRef = useRef<Array<{
-    id: string;
-    key: SemanticKey;
-    value: number;
-    hidden: boolean;
-    points: { x: number; y: number }[];
-  }>>([]);
+  const touchComponentEntriesRef = useRef<TouchComponentEntry[]>([]);
+  // F4: stable palette colour per custom component (session-scoped).
+  const touchComponentColoursRef = useRef<Map<string, string>>(new Map());
   // P4: latest-ref to the persist function (recreated each render) so the
   // stable adapter always calls the fresh closure over component state.
   const touchPersistTakeoffRef = useRef(persistTakeoffData);
@@ -3912,18 +3908,25 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // scans 2+3 are free continuations). The user-corrected SAVED
       // outline feeds scan2, so line detection runs on the human-verified
       // polygon - better input than the desktop raw-outline feed.
-      getComponentGroups: (): TouchComponentGroup[] =>
-        groupsFromMeasurements(touchComponentEntriesRef.current.map(e => ({ semanticKey: e.key }))),
-      getComponentEntries: (): TouchComponentEntry[] =>
-        touchComponentEntriesRef.current.map(e => ({
-          id: e.id,
-          key: e.key,
-          displayName: AI_COMPONENT_REGISTRY[e.key].displayName,
-          colour: getSemanticColour(e.key),
-          value: e.value,
-          hidden: e.hidden,
-          points: e.points,
-        })),
+      getComponentGroups: (): TouchComponentGroup[] => groupsFromEntries(touchComponentEntriesRef.current),
+      getComponentEntries: (): TouchComponentEntry[] => touchComponentEntriesRef.current.map(e => ({ ...e })),
+      // F4: resolve ANY library component into an openable/drawable target -
+      // system types keep registry name/colour; customs get a stable palette
+      // colour. This is what makes the dropdown open every component's page.
+      getComponentTarget: (componentId: string): TouchComponentTarget | null => {
+        const comp = components.find(c => c.id === componentId);
+        if (!comp) return null;
+        const semantic = comp.is_system ? resolveSemanticKey(comp.name) : null;
+        if (semantic) {
+          return { componentId, key: semantic, displayName: AI_COMPONENT_REGISTRY[semantic].displayName, colour: getSemanticColour(semantic) };
+        }
+        let colour = touchComponentColoursRef.current.get(componentId);
+        if (!colour) {
+          colour = COLOR_PALETTE[touchComponentColoursRef.current.size % COLOR_PALETTE.length];
+          touchComponentColoursRef.current.set(componentId, colour);
+        }
+        return { componentId, key: null, displayName: comp.name, colour };
+      },
       setEntryHidden: (id: string, hidden: boolean) => {
         const e = touchComponentEntriesRef.current.find(entry => entry.id === id);
         if (!e) return;
@@ -3937,17 +3940,26 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchComponentEntriesRef.current.splice(idx, 1);
         touchBridgeListeners.current.forEach(listener => listener());
       },
-      // F1/P3b: add a manually drawn lineal entry. Data-only: the touch
-      // overlay canvas renders it - the fabric canvas is INVISIBLE in touch
-      // presentation, so the touch flow never draws to it.
-      addComponentEntry: (key: SemanticKey, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null => {
+      // F1/P3b/F4: add a manually drawn lineal entry for ANY component
+      // target. Data-only: the touch overlay canvas renders it.
+      addComponentEntry: (target: TouchComponentTarget, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null => {
         const scale = touchOutlineAdapterRef.current?.getScale() ?? null;
         const id = crypto.randomUUID();
         const value = scale ? Math.round(Math.hypot(p2.x - p1.x, p2.y - p1.y) * scale.scale * 100) / 100 : 0;
         const points = [{ x: p1.x, y: p1.y }, { x: p2.x, y: p2.y }];
-        touchComponentEntriesRef.current.push({ id, key, value, hidden: false, points });
+        const entry: TouchComponentEntry = {
+          id,
+          key: target.componentId,
+          componentId: target.componentId,
+          displayName: target.displayName,
+          colour: target.colour,
+          value,
+          hidden: false,
+          points,
+        };
+        touchComponentEntriesRef.current.push(entry);
         touchBridgeListeners.current.forEach(listener => listener());
-        return { id, key, displayName: AI_COMPONENT_REGISTRY[key].displayName, colour: getSemanticColour(key), value, hidden: false, points };
+        return { ...entry };
       },
       clearComponentOverlay: () => {
         touchComponentEntriesRef.current = [];
@@ -3960,7 +3972,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // deletions never reach the DB.
       persistReviewedComponents: async (): Promise<{ ok: true } | { ok: false; error: string }> => {
         try {
-          const systemComponentIds = buildSystemComponentIds(components);
           const pageId = currentPageIdRef.current;
           const savedArea = [...(touchOutlineAdapterRef.current?.getAreas() ?? [])]
             .filter(a => a.quoteRoofAreaId)
@@ -3968,10 +3979,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           const areaId = savedArea?.quoteRoofAreaId ?? null;
           const extraMeasurements: Array<ComponentMeasurement & { componentId: string }> = [];
           for (const e of touchComponentEntriesRef.current) {
-            const componentId = systemComponentIds[e.key] ?? null;
-            if (!componentId) continue; // uncertain/no system component: review-only
+            if (!e.componentId) continue; // uncertain detections: review-only
             extraMeasurements.push({
-              componentId,
+              componentId: e.componentId,
               id: e.id,
               type: 'line' as const,
               value: e.value,
@@ -4091,7 +4101,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           // never drawn to from the touch flow.
           touchComponentEntriesRef.current = applied.measurements.map(m => ({
             id: m.id,
-            key: m.semanticKey,
+            key: m.componentId ?? 'uncertain',
+            componentId: m.componentId ?? null,
+            displayName: AI_COMPONENT_REGISTRY[m.semanticKey].displayName,
+            colour: getSemanticColour(m.semanticKey),
             value: m.value,
             hidden: false,
             points: m.canvasPoints.map(p => ({ x: p.x, y: p.y })),

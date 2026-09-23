@@ -22,8 +22,7 @@ import { OutlineCanvas } from './OutlineCanvas';
 import { TouchOutlineRail, type OutlineFinishChoice } from './TouchOutlineRail';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 import { RailAction, RailViewControls } from './TouchRailControls';
-import { OUTLINE_SCAN_DISCLAIMER, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage } from './touchComponents';
-import type { SemanticKey } from '../aiComponentRegistry';
+import { OUTLINE_SCAN_DISCLAIMER, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage, type TouchComponentTarget } from './touchComponents';
 import { logTakeoffEvent } from './takeoffDiagnostics';
 
 export type TouchCreateResult =
@@ -51,7 +50,10 @@ export interface TouchOutlineAdapter {
   cancelComponentScan?(): void;
   getComponentGroups?(): TouchComponentGroup[];
   getComponentEntries?(): TouchComponentEntry[];
-  addComponentEntry?(key: SemanticKey, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null;
+  /** F4: resolve ANY library component into an openable/drawable target
+   *  (system types keep registry styling; customs get palette colours). */
+  getComponentTarget?(componentId: string): TouchComponentTarget | null;
+  addComponentEntry?(target: TouchComponentTarget, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null;
   setEntryHidden?(id: string, hidden: boolean): void;
   deleteComponentEntry?(id: string): void;
   persistReviewedComponents?(): Promise<{ ok: true } | { ok: false; error: string }>;

@@ -5,7 +5,6 @@
 // the plan, hide/show, delete. + New entry drawing lands with P3b.
 import type { ReactNode } from 'react';
 import { RailAction, RailNotice, RailTask, ScanProgress } from './TouchRailControls';
-import { AI_COMPONENT_REGISTRY, type SemanticKey } from '../aiComponentRegistry';
 import type { TouchComponentEntry, TouchComponentGroup, TouchComponentScanStage } from './touchComponents';
 
 export type TouchComponentsPhase = 'scanning' | 'disclaimer' | 'review' | 'error';
@@ -22,6 +21,10 @@ export interface TouchComponentsRailProps {
   selectedComponentId: string | null;
   /** Open component detail (P3) or null for the main view. */
   detailKey: string | null;
+  detailName: string | null;
+  detailColour: string | null;
+  /** False only for the review-only 'uncertain' group (no + New drawing). */
+  canDrawNew: boolean;
   detailEntries: TouchComponentEntry[];
   highlightedEntryId: string | null;
   unitLabel: string;
@@ -49,8 +52,8 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
   // ── Component detail view (one group's entries) ─────────────────────
   if (p.detailKey && p.phase === 'review') {
     const detailGroup = p.groups.find(g => g.key === p.detailKey);
-    const registryDef = AI_COMPONENT_REGISTRY[p.detailKey as SemanticKey];
-    const detailName = detailGroup?.displayName ?? registryDef?.displayName ?? p.detailEntries[0]?.displayName ?? 'Component';
+    const detailName = p.detailName ?? detailGroup?.displayName ?? p.detailEntries[0]?.displayName ?? 'Component';
+    const detailColour = p.detailColour ?? detailGroup?.colour ?? '#ffffff';
     if (p.drawSlot != null) {
       return <RailTask label={`Draw ${detailName} entry`} footer={<div className="flex flex-col gap-1">
         <RailAction primary disabled={!p.draftReady} onClick={p.onConfirmPoint}>Confirm point</RailAction>
@@ -58,7 +61,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
       </div>}>
         <RailAction label="Back to all components" onClick={p.onBackFromDetail}>&#8249; All components</RailAction>
         <div className="flex items-center gap-2 px-1 py-1">
-          <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailGroup?.colour ?? '#ffffff' }} />
+          <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailColour }} />
           <div className="text-base font-semibold text-white">{detailName}</div>
         </div>
         <RailNotice>{p.drawSlot === 0
@@ -73,12 +76,14 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
     }>
       <RailAction label="Back to all components" onClick={p.onBackFromDetail}>&#8249; All components</RailAction>
       <div className="flex items-center gap-2 px-1 py-1">
-        <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailGroup?.colour ?? '#ffffff' }} />
+        <span aria-hidden className="h-4 w-4 shrink-0 rounded border border-black/30" style={{ backgroundColor: detailColour }} />
         <div className="text-base font-semibold text-white">{detailName}</div>
       </div>
-      <RailAction primary={p.detailEntries.length === 0} onClick={p.onStartNewEntry}>+ New entry</RailAction>
+      {p.canDrawNew && <RailAction primary={p.detailEntries.length === 0} onClick={p.onStartNewEntry}>+ New entry</RailAction>}
       {p.detailEntries.length === 0
-        ? <RailNotice>No entries yet. Tap + New entry to draw one.</RailNotice>
+        ? <RailNotice>{p.canDrawNew
+          ? 'No entries yet. Tap + New entry to draw one.'
+          : 'Uncertain detections - review only. Tap an entry to highlight it; delete anything wrong. These never reach the quote.'}</RailNotice>
         : <RailNotice>Tap an entry to highlight its line on the plan. Hide keeps it greyed on the plan but out of the quote.</RailNotice>}
       <div className="flex flex-col gap-1">
         {p.detailEntries.map((e, index) => <div key={e.id}

@@ -1,10 +1,10 @@
 'use client';
-// M10 F1/F2/F3: touch components step lifecycle. The plan is the source of
-// truth: ComponentsCanvas (plan raster + saved outline + every entry) stays
-// mounted for the WHOLE step - scan, disclaimer, review, detail and the
-// + New entry drawing (remote-move gestures so the thumb never covers the
-// point). Isolation and highlight are hook-local render state; the adapter
-// holds data only (the fabric canvas is invisible in touch presentation).
+// M10 F1/F2/F3/F4: touch components step lifecycle. The plan is the source
+// of truth: ComponentsCanvas (plan raster + saved outline + every entry)
+// stays mounted for the WHOLE step - scan, disclaimer, review, detail and
+// the + New entry drawing (remote-move gestures). Isolation and highlight
+// are hook-local render state; the adapter holds data only. F4: ANY
+// library component opens its own drawable page via getComponentTarget.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TouchOutlineAdapter } from './TouchOutlineEditor';
@@ -19,8 +19,8 @@ import {
   type TouchComponentEntry,
   type TouchComponentGroup,
   type TouchComponentScanStage,
+  type TouchComponentTarget,
 } from './touchComponents';
-import { resolveSemanticKey, type SemanticKey } from '../aiComponentRegistry';
 import { logTakeoffEvent } from './takeoffDiagnostics';
 
 export interface TouchComponentsOptions {
@@ -55,8 +55,8 @@ export function useTouchComponents(
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<TouchComponentGroup[]>([]);
   const [entries, setEntries] = useState<TouchComponentEntry[]>([]);
-  const [detailKey, setDetailKey] = useState<string | null>(null);
-  const [isolated, setIsolated] = useState<string | null>(null);
+  // F4: the open component page - ANY library component, not just system types.
+  const [detail, setDetail] = useState<TouchComponentTarget | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState('');
   const [componentId, setComponentId] = useState<string | null>(null);
@@ -65,6 +65,10 @@ export function useTouchComponents(
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const startedRef = useRef(false);
+
+  const detailKey = detail?.componentId ?? null;
+  const isolated = detailKey;
+  const canDrawNew = !!detail && detail.componentId !== 'uncertain';
 
   const scene = adapter?.getScene() ?? null;
   const imageUrl = adapter?.getImageUrl() ?? null;
@@ -131,8 +135,7 @@ export function useTouchComponents(
     setError(null);
     setGroups([]);
     setEntries([]);
-    setDetailKey(null);
-    setIsolated(null);
+    setDetail(null);
     setHighlighted(null);
     cancelDraw();
   }, [active, cancelDraw]);
@@ -141,14 +144,21 @@ export function useTouchComponents(
   // groups); nothing touches the adapter.
   const onOpenDetail = useCallback((key: string) => {
     cancelDraw();
-    setDetailKey(key);
-    setIsolated(key);
+    setDetail(prev => {
+      if (prev && prev.componentId === key) return prev;
+      const current = adapterRef.current();
+      // Swatch groups first; F4 fallback resolves ANY component id (this is
+      // also how dropdown picks and swatch taps share one code path).
+      const target = current?.getComponentTarget?.(key);
+      if (target) return target;
+      // Review-only 'uncertain' group: no component id, never persisted.
+      return { componentId: key, key: null, displayName: 'Uncertain', colour: '#EC4899' };
+    });
     setHighlighted(null);
   }, [cancelDraw]);
   const onBackFromDetail = useCallback(() => {
     cancelDraw();
-    setDetailKey(null);
-    setIsolated(null);
+    setDetail(null);
     setHighlighted(null);
   }, [cancelDraw]);
   const onHighlight = useCallback((id: string | null) => { setHighlighted(id); }, []);
@@ -189,35 +199,36 @@ export function useTouchComponents(
     });
   }, [setCamera, zoomBounds]);
   const onConfirmPoint = useCallback(() => {
+    if (!detail) return;
     if (drawSlot === 0) {
       if (!draft.p1) return;
       setDrawSlot(1);
       return;
     }
-    if (drawSlot === 1 && draft.p1 && draft.p2 && detailKey) {
-      const entry = adapterRef.current()?.addComponentEntry?.(detailKey as SemanticKey, draft.p1, draft.p2);
+    if (drawSlot === 1 && draft.p1 && draft.p2) {
+      const entry = adapterRef.current()?.addComponentEntry?.(detail, draft.p1, draft.p2);
       if (entry) {
-        logTakeoffEvent('components.entry.draw.saved', { key: entry.key, value: entry.value });
+        logTakeoffEvent('components.entry.draw.saved', { component: entry.displayName, value: entry.value });
         cancelDraw();
         refreshFromAdapter();
       }
     }
-  }, [drawSlot, draft, detailKey, cancelDraw, refreshFromAdapter]);
+  }, [drawSlot, draft, detail, cancelDraw, refreshFromAdapter]);
 
   const onLibraryChange = useCallback((id: string) => {
     setLibraryId(id);
     setComponentId(null);
   }, []);
 
-  // Picking a component opens its group's detail view - ANY of the six
-  // system types opens (empty manual groups included).
+  // F4: picking ANY component opens its page (empty manual groups included).
   const onComponentChange = useCallback((id: string) => {
     setComponentId(id);
-    const comp = options.components.find(c => c.id === id);
-    if (!comp) return;
-    const semantic = resolveSemanticKey(comp.name);
-    if (semantic) onOpenDetail(semantic);
-  }, [options.components, onOpenDetail]);
+    const target = adapterRef.current()?.getComponentTarget?.(id);
+    if (!target) return;
+    cancelDraw();
+    setDetail(target);
+    setHighlighted(null);
+  }, [cancelDraw]);
 
   const onAcceptDisclaimer = useCallback(() => setPhase('review'), []);
   const onDiscardResults = useCallback(() => {
@@ -225,8 +236,7 @@ export function useTouchComponents(
     adapterRef.current()?.clearComponentOverlay?.();
     setGroups([]);
     setEntries([]);
-    setDetailKey(null);
-    setIsolated(null);
+    setDetail(null);
     setHighlighted(null);
     setPhase('review');
   }, [cancelDraw]);
@@ -274,7 +284,9 @@ export function useTouchComponents(
     libraries={options.collections}
     components={filteredComponents}
     selectedLibraryId={libraryId} selectedComponentId={componentId}
-    detailKey={detailKey} detailEntries={detailEntries}
+    detailKey={detailKey} detailName={detail?.displayName ?? null} detailColour={detail?.colour ?? null}
+    canDrawNew={canDrawNew}
+    detailEntries={detailEntries}
     highlightedEntryId={highlighted} unitLabel={unitLabel}
     drawSlot={drawSlot} draftReady={draftReady} viewControls={drawViewControls} saving={saving}
     onLibraryChange={onLibraryChange} onComponentChange={onComponentChange}
