@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { stepPitch } from './touchNumberEntry';
 
 export function RailAction({ children, label, onClick, disabled, primary = false, className = '' }: {
@@ -48,4 +48,31 @@ export function PitchControl({ pitch, onChange, onType, disabled = false }: {
     </div>
     <div className="text-[11px] text-slate-400">Tap the number to type. Arrows change 1°.</div>
   </div>;
+}
+
+/** M10: scan progress - orange bar with animated label while a scan stage
+ * runs. The API gives no streaming progress, so the bar creeps smoothly
+ * toward 90% by elapsed time and never claims completion early; the stage
+ * label carries the moving dots. Unmounts when the scan ends. */
+export function ScanProgress({ label }: { label: string }) {
+  const [pct, setPct] = useState(6);
+  const [dots, setDots] = useState(1);
+  useEffect(() => {
+    const startedAt = performance.now();
+    const timer = window.setInterval(() => {
+      const elapsed = performance.now() - startedAt;
+      setPct(6 + 84 * (1 - Math.exp(-elapsed / 11000)));
+      setDots((d) => (d % 3) + 1);
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, []);
+  return (
+    <div role="status" aria-live="polite" className="space-y-2 rounded-xl bg-white/5 px-2 py-2">
+      <div className="text-xs font-semibold text-white">{label}{'.'.repeat(dots)}</div>
+      <div className="h-2 overflow-hidden rounded-full bg-white/15">
+        <div className="h-full rounded-full bg-[#FF6B35] transition-[width] duration-300 ease-linear"
+          style={{ width: `${Math.min(pct, 90).toFixed(1)}%` }} />
+      </div>
+    </div>
+  );
 }

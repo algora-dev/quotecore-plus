@@ -19,7 +19,7 @@ import { pointIsOnPlan } from './touchCalibrationFlow';
 import { DEFAULT_ROOF_NAME, DEFAULT_ROOF_PITCH, parseRailNumber } from './touchNumberEntry';
 import { NumericRail } from './NumericRail';
 import { OutlineCanvas } from './OutlineCanvas';
-import { TouchOutlineRail } from './TouchOutlineRail';
+import { TouchOutlineRail, type OutlineFinishChoice } from './TouchOutlineRail';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 import { RailAction, RailViewControls } from './TouchRailControls';
 import { logTakeoffEvent } from './takeoffDiagnostics';
@@ -49,7 +49,10 @@ export interface TouchOutlineEditorParts {
   exitGuard: { dirty: boolean; onSave: () => void; onDiscard: () => void; saveLabel?: string };
   requestExternalExit: (label: string, proceed: () => void) => void;
 }
-interface EditorOptions { finishHref?: string; pitch?: number; onPitchChange?: (pitch: number) => void }
+interface EditorOptions { finishHref?: string; pitch?: number; onPitchChange?: (pitch: number) => void;
+  /** M10: called instead of navigating away when the user chooses a
+   * components path on the finish screen (outline is already saved). */
+  onEnterComponents?: (mode: 'ai' | 'manual') => void }
 interface PendingLeave { label: string; proceed: () => void }
 
 export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOutlineAdapter | null,
@@ -206,7 +209,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
     if (selectedId) apply((s) => selectVertex(s, selectedId, false));
     setError(null); setStage('finish');
   };
-  const save = async () => {
+  const save = async (choice: OutlineFinishChoice = 'finish') => {
     if (busyRef.current) return;
     const live = currentRef.current;
     const currentAdapter = live.adapter;
@@ -240,7 +243,10 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       clear();
       const leave = currentRef.current.pendingLeave;
       setPendingLeave(null);
-      if (leave) leave.proceed();
+      // M10 fork: entering the components step keeps the user in the touch
+      // flow (outline already saved); a stale pendingLeave is dropped.
+      if (choice !== 'finish') options.onEnterComponents?.(choice === 'components-ai' ? 'ai' : 'manual');
+      else if (leave) leave.proceed();
       else if (options.finishHref) router.push(options.finishHref);
       else if (backHref) router.push(backHref);
     } catch (err) {
@@ -322,7 +328,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       onConfirmPoint={() => selectedId && apply((s) => selectVertex(s, selectedId, false))}
       onClose={() => apply(closeOutline)} onDone={done}
       onEdit={() => { setStage('editing'); const id = selectedId ?? ids[0]; if (id) apply((s) => selectVertex(s, id, true)); }}
-      onCancel={() => requestLeave('Discard this outline', clear)} onSave={() => { void save(); }}
+      onCancel={() => requestLeave('Discard this outline', clear)} onSave={(choice) => { void save(choice); }}
       onPitchChange={onPitchChange} onTypePitch={() => setPitchEntry(String(pitch))} />;
   const overlay = active ? <OutlineCanvas bindSurface={view.bindSurface} camera={camera} scene={scene}
     imageUrl={imageUrl} session={stale ? null : session} selectedIndex={selectedIndex} error={raster.error}>

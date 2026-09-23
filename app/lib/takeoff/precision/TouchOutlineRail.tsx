@@ -1,8 +1,12 @@
 'use client';
 import type { ReactNode } from 'react';
-import { PitchControl, RailAction, RailNotice, RailTask } from './TouchRailControls';
+import { PitchControl, RailAction, RailNotice, RailTask, ScanProgress } from './TouchRailControls';
 import type { AiOutlineScanInfo } from './touchAiOutline';
 import type { SavedOutlineRecord } from './touchOutlines';
+
+/** M10: the choice made on the outline finish screen. 'components-*'
+ * saves the outline then stays in the touch flow (components step). */
+export type OutlineFinishChoice = 'finish' | 'components-ai' | 'components-manual';
 
 export interface TouchOutlineRailProps {
   stage: 'choose' | 'draw' | 'edit' | 'ai-review' | 'finish' | 'saving' | 'scanning';
@@ -18,7 +22,7 @@ export interface TouchOutlineRailProps {
   onPrevious: () => void; onNext: () => void; onInsert: () => void; onDelete: () => void;
   onRearm: () => void; onUndo: () => void; onRedo: () => void; onConfirmPoint: () => void;
   onClose: () => void; onDone: () => void; onEdit: () => void; onCancel: () => void;
-  onSave: () => void; onPitchChange: (value: number) => void; onTypePitch: () => void;
+  onSave: (choice: OutlineFinishChoice) => void; onPitchChange: (value: number) => void; onTypePitch: () => void;
 }
 
 export function TouchOutlineRail(p: TouchOutlineRailProps) {
@@ -26,7 +30,14 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
   const footer = (() => {
     if (p.stage === 'saving') return <RailAction primary disabled>Saving roof...</RailAction>;
     if (p.stage === 'scanning') return <RailAction onClick={p.onCancelScan}>Cancel scan</RailAction>;
-    if (p.stage === 'finish') return <RailAction primary disabled={!p.ready || !!p.validation} onClick={p.onSave}>Save &amp; finish</RailAction>;
+    if (p.stage === 'finish') {
+      const aiReady = !!p.scanInfo && !p.scanInfo.blocked;
+      return <div className="flex flex-col gap-1">
+        {aiReady && <RailAction primary disabled={!p.ready || !!p.validation} onClick={() => p.onSave('components-ai')}>AI scan components</RailAction>}
+        <RailAction primary={!aiReady} disabled={!p.ready || !!p.validation} onClick={() => p.onSave('components-manual')}>Add components manually</RailAction>
+        <RailAction disabled={!p.ready || !!p.validation} onClick={() => p.onSave('finish')}>Save &amp; finish</RailAction>
+      </div>;
+    }
     if (p.stage === 'edit' || p.stage === 'ai-review') return <RailAction primary disabled={!p.ready || !!p.validation || p.gestureBusy} onClick={p.onDone}>Done</RailAction>;
     if (p.stage === 'draw') return <div className="flex flex-col gap-1">
       {p.armed && <RailAction primary disabled={p.gestureBusy} onClick={p.onConfirmPoint}>Confirm point</RailAction>}
@@ -49,10 +60,14 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
         {p.areas.length > 0 && <details><summary className="min-h-12 py-3 text-xs">Existing roof outlines</summary>
           <div className="flex flex-col gap-1">{p.areas.map((area, index) => <RailAction key={area.geometryId ?? `saved-area-${index}`} onClick={() => p.onArea(area)}>{area.name}</RailAction>)}</div>
         </details>}
-      </> : p.stage === 'scanning' ? <RailNotice>Scanning the roof outline. Your calibration and draft are kept until the scan succeeds.</RailNotice>
+      </> : p.stage === 'scanning' ? <>
+            <ScanProgress label="Scanning the roof outline" />
+            <RailNotice>Your calibration and draft are kept until the scan succeeds.</RailNotice>
+          </>
         : p.stage === 'saving' ? <RailNotice>Saving the roof area. Please keep this page open. You will return to the quote builder after it is saved.</RailNotice>
           : p.stage === 'finish' ? <>
             <div className="text-base font-semibold">{p.savedArea?.name || 'Main Roof'}</div>
+            <RailNotice>Add components before you finish, or save and go straight to the quote builder.</RailNotice>
             {p.planArea && <RailNotice>{p.planArea}</RailNotice>}
             {p.savedArea ? <RailNotice>Pitch {p.savedArea.pitch}°. The saved roof&rsquo;s name and pitch are retained.</RailNotice>
               : <PitchControl pitch={p.pitch} onChange={p.onPitchChange} onType={p.onTypePitch} />}

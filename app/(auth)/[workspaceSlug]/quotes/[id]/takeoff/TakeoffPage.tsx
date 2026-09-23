@@ -8,6 +8,7 @@ import { DEFAULT_ROOF_PITCH } from '@/app/lib/takeoff/precision/touchNumberEntry
 import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
 import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
+import { RailAction, RailNotice, RailTask } from '@/app/lib/takeoff/precision/TouchRailControls';
 import { useTakeoffViewMode } from '@/app/lib/takeoff/precision/useTakeoffViewMode';
 import {
   useTouchOutlineEditor,
@@ -124,11 +125,17 @@ export function TakeoffPage({
   }, [activePageId, hydrationData, confirmedCalibration]);
   const pageHasDependents = (hydrationData?.measurements?.some((m) => !m.pageId || m.pageId === activePageId) ?? false)
     || (outlineAdapter?.getAreas().length ?? 0) > 0;
-  const [touchTool, setTouchTool] = useState<'outline' | 'calibrate'>(() => {
+  const [touchTool, setTouchTool] = useState<'outline' | 'calibrate' | 'components'>(() => {
     const decoded = decodeCalibrationMetadata(calibrationPage?.calibrationMetadata ?? calibrationPage?.scaleCalibration);
     const count = decoded.kind === 'v1' ? decoded.metadata.references.length : decoded.kind === 'legacy' ? decoded.references.length : 0;
     return count > 0 ? 'outline' : 'calibrate';
   });
+  // M10: component phase entry mode chosen on the outline finish screen.
+  const [componentsMode, setComponentsMode] = useState<'ai' | 'manual'>('ai');
+  const enterComponents = useCallback((mode: 'ai' | 'manual') => {
+    setComponentsMode(mode);
+    setTouchTool('components');
+  }, []);
   const onCommitted = useCallback((pageId: string, payload: CalibrationCommitPayload) => {
     setConfirmedCalibration({ pageId, payload });
   }, []);
@@ -154,8 +161,21 @@ export function TakeoffPage({
   });
   const outlineEditor = useTouchOutlineEditor(
     touchActive && touchTool === 'outline', () => outlineAdapter, backHref,
-    () => setTouchTool('calibrate'), { finishHref, pitch, onPitchChange: setPitch },
+    () => setTouchTool('calibrate'), { finishHref, pitch, onPitchChange: setPitch, onEnterComponents: enterComponents },
   );
+  // M10 P1: components step skeleton. Fork plumbing is live; the AI
+  // component scan + review rail land in P2-P4
+  // (docs/MOBILE_COMPONENT_SCAN_PLAN.md).
+  const componentsRail = touchTool === 'components' ? (
+    <RailTask label="Components step" footer={
+      <RailAction primary onClick={() => router.push(finishHref)}>Save &amp; continue</RailAction>
+    }>
+      <RailNotice>Your roof outline is saved.</RailNotice>
+      <RailNotice>{componentsMode === 'ai'
+        ? 'AI component scanning is the next build step. Continue to the quote builder for now.'
+        : 'Manual component entry is the next build step. Continue to the quote builder for now.'}</RailNotice>
+    </RailTask>
+  ) : null;
   const workstation = (
     <TakeoffWorkstation
       workspaceSlug={workspaceSlug}
@@ -207,16 +227,16 @@ export function TakeoffPage({
     <TouchWorkspaceShell
       active={touchActive}
       planLabel={initialPageName ?? 'Plan'}
-      railTitle={touchTool === 'calibrate' ? 'Calibration' : 'Outline'}
+      railTitle={touchTool === 'calibrate' ? 'Calibration' : touchTool === 'components' ? 'Components' : 'Outline'}
       viewPreference={preference}
       onViewPreferenceChange={setPreference}
       compactNotices={takeoffCompactNotices}
-      overlay={touchTool === 'calibrate' ? calib.overlay : outlineEditor.overlay}
-      railContent={touchTool === 'calibrate' ? calib.rail : outlineEditor.rail}
-      wideRail={touchTool === 'calibrate' ? calib.wideRail : outlineEditor.wideRail}
-      busy={touchTool === 'calibrate' ? calib.busy : outlineEditor.busy}
+      overlay={touchTool === 'calibrate' ? calib.overlay : touchTool === 'components' ? null : outlineEditor.overlay}
+      railContent={touchTool === 'calibrate' ? calib.rail : touchTool === 'components' ? componentsRail : outlineEditor.rail}
+      wideRail={touchTool === 'calibrate' ? calib.wideRail : touchTool === 'components' ? true : outlineEditor.wideRail}
+      busy={touchTool === 'calibrate' ? calib.busy : touchTool === 'components' ? false : outlineEditor.busy}
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
-      exitGuard={touchTool === 'calibrate' ? calib.exitGuard : outlineEditor.exitGuard}
+      exitGuard={touchTool === 'calibrate' ? calib.exitGuard : touchTool === 'components' ? undefined : outlineEditor.exitGuard}
     >
       {workstation}
     </TouchWorkspaceShell>
