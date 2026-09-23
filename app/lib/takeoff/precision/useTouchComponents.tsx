@@ -1,9 +1,9 @@
 'use client';
-// M10 P2: touch components step lifecycle - auto-starts the AI component
+// M10 P2/P3: touch components step lifecycle - auto-starts the AI component
 // scan (scan2+scan3 continuations on the corrected outline) for AI mode,
-// gates the results behind the D2 disclaimer, owns isolation + dropdown
-// selection state, and routes Save & continue. Manual mode skips the scan
-// and lands directly in the (currently empty) review rail.
+// gates the results behind the D2 disclaimer, owns the component detail view
+// (isolation, entry highlight, hide, delete) and routes Save & continue.
+// Manual mode skips the scan and lands directly in the review rail.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TouchOutlineAdapter } from './TouchOutlineEditor';
@@ -13,6 +13,7 @@ import { RailAction } from './TouchRailControls';
 import {
   COMPONENT_SCAN_DISCLAIMER,
   componentGroupSummary,
+  type TouchComponentEntry,
   type TouchComponentGroup,
   type TouchComponentScanStage,
 } from './touchComponents';
@@ -50,10 +51,18 @@ export function useTouchComponents(
   const [scanStage, setScanStage] = useState<TouchComponentScanStage>('lines');
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<TouchComponentGroup[]>([]);
-  const [isolated, setIsolated] = useState<string | null>(null);
+  const [entries, setEntries] = useState<TouchComponentEntry[]>([]);
+  const [detailKey, setDetailKey] = useState<string | null>(null);
+  const [highlighted, setHighlighted] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState('');
   const [componentId, setComponentId] = useState<string | null>(null);
   const startedRef = useRef(false);
+
+  const refreshFromAdapter = useCallback(() => {
+    const current = adapterRef.current();
+    setEntries(current?.getComponentEntries?.() ?? []);
+    setGroups(current?.getComponentGroups?.() ?? []);
+  }, []);
 
   const runScan = useCallback(async () => {
     const current = adapterRef.current();
@@ -75,10 +84,10 @@ export function useTouchComponents(
       logTakeoffEvent('components.scan.failed', { error: result.error });
       return;
     }
-    setGroups(current.getComponentGroups?.() ?? []);
+    refreshFromAdapter();
     setPhase('disclaimer');
     logTakeoffEvent('components.scan.succeeded');
-  }, []);
+  }, [refreshFromAdapter]);
 
   // AI mode: auto-start the component scan once when the step activates.
   useEffect(() => {
@@ -95,27 +104,54 @@ export function useTouchComponents(
     setScanStage('lines');
     setError(null);
     setGroups([]);
-    setIsolated(null);
+    setEntries([]);
+    setDetailKey(null);
+    setHighlighted(null);
   }, [active]);
 
-  // Clear canvas isolation when the step deactivates.
+  // Clear canvas isolation + entry highlight when the step deactivates.
   useEffect(() => {
     if (!active) return;
-    return () => { adapterRef.current()?.setIsolatedComponentGroup?.(null); };
+    return () => {
+      const current = adapterRef.current();
+      current?.setIsolatedComponentGroup?.(null);
+      current?.highlightComponentEntry?.(null);
+    };
   }, [active]);
 
-  const onIsolate = useCallback((key: string | null) => {
+  // Detail view: the group is isolated on the canvas while it is open.
+  const onOpenDetail = useCallback((key: string) => {
     adapterRef.current()?.setIsolatedComponentGroup?.(key);
-    setIsolated(key);
+    adapterRef.current()?.highlightComponentEntry?.(null);
+    setDetailKey(key);
+    setHighlighted(null);
   }, []);
+  const onBackFromDetail = useCallback(() => {
+    adapterRef.current()?.setIsolatedComponentGroup?.(null);
+    adapterRef.current()?.highlightComponentEntry?.(null);
+    setDetailKey(null);
+    setHighlighted(null);
+  }, []);
+  const onHighlight = useCallback((id: string | null) => {
+    adapterRef.current()?.highlightComponentEntry?.(id);
+    setHighlighted(id);
+  }, []);
+  const onHideToggle = useCallback((id: string, hidden: boolean) => {
+    adapterRef.current()?.setEntryHidden?.(id, hidden);
+    refreshFromAdapter();
+  }, [refreshFromAdapter]);
+  const onDeleteEntry = useCallback((id: string) => {
+    adapterRef.current()?.deleteComponentEntry?.(id);
+    setHighlighted(prev => (prev === id ? null : prev));
+    refreshFromAdapter();
+  }, [refreshFromAdapter]);
 
   const onLibraryChange = useCallback((id: string) => {
     setLibraryId(id);
     setComponentId(null);
   }, []);
 
-  // P2: picking a component isolates its semantic group when one was
-  // detected (the per-component detail page lands in P3).
+  // P3: picking a component opens its group's detail view when one exists.
   const onComponentChange = useCallback((id: string) => {
     setComponentId(id);
     const comp = options.components.find(c => c.id === id);
@@ -123,14 +159,16 @@ export function useTouchComponents(
     const semantic = resolveSemanticKey(comp.name);
     if (!semantic) return;
     const has = (adapterRef.current()?.getComponentGroups?.() ?? []).some(g => g.key === semantic);
-    if (has) onIsolate(semantic);
-  }, [options.components, onIsolate]);
+    if (has) onOpenDetail(semantic);
+  }, [options.components, onOpenDetail]);
 
   const onAcceptDisclaimer = useCallback(() => setPhase('review'), []);
   const onDiscardResults = useCallback(() => {
     adapterRef.current()?.clearComponentOverlay?.();
     setGroups([]);
-    setIsolated(null);
+    setEntries([]);
+    setDetailKey(null);
+    setHighlighted(null);
     setPhase('review');
   }, []);
   const onRetry = useCallback(() => { void runScan(); }, [runScan]);
@@ -143,15 +181,21 @@ export function useTouchComponents(
   const filteredComponents = libraryId
     ? options.components.filter(c => (c.collection_id ?? null) === libraryId)
     : options.components;
+  const detailEntries = detailKey ? entries.filter(e => e.key === detailKey) : [];
+  const unitLabel = adapter?.getScale()?.unit === 'meters' ? 'm' : 'ft';
 
   const rail = active ? <TouchComponentsRail
-    phase={phase} scanStage={scanStage} error={error} groups={groups} isolated={isolated}
+    phase={phase} scanStage={scanStage} error={error} groups={groups}
     manualMode={modeRef.current === 'manual'}
     libraries={options.collections}
     components={filteredComponents}
     selectedLibraryId={libraryId} selectedComponentId={componentId}
+    detailKey={detailKey} detailEntries={detailEntries}
+    highlightedEntryId={highlighted} unitLabel={unitLabel}
     onLibraryChange={onLibraryChange} onComponentChange={onComponentChange}
-    onIsolate={onIsolate} onRetry={onRetry} onCancelScan={onCancelScan}
+    onOpenDetail={onOpenDetail} onBackFromDetail={onBackFromDetail}
+    onHighlight={onHighlight} onHideToggle={onHideToggle} onDeleteEntry={onDeleteEntry}
+    onRetry={onRetry} onCancelScan={onCancelScan}
     onSaveContinue={onSaveContinue} /> : null;
 
   const overlay = active && phase === 'disclaimer' ? (

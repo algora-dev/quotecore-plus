@@ -9,7 +9,7 @@ import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, i
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
 import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
-import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey } from '@/app/lib/takeoff/aiComponentRegistry';
+import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey, AI_COMPONENT_REGISTRY } from '@/app/lib/takeoff/aiComponentRegistry';
 import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
 import { createSingleFlight } from '@/app/lib/takeoff/precision/touchSaveFlight';
@@ -19,7 +19,7 @@ import type {
   AiOutlineScanResult,
 } from '@/app/lib/takeoff/precision/touchAiOutline';
 import { outlineDependentRecompute } from '@/app/lib/takeoff/precision/touchOutlines';
-import { groupsFromMeasurements, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage } from '@/app/lib/takeoff/precision/touchComponents';
+import { groupsFromMeasurements, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage } from '@/app/lib/takeoff/precision/touchComponents';
 import type { RecomputeMeasurementRecord } from '@/app/lib/takeoff/calibrationRecompute';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
@@ -3546,8 +3546,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // layer grouped by semantic key - desktop componentMeasurements state
   // stays untouched until the P4 save wiring.
   const touchComponentScanAbortRef = useRef<AbortController | null>(null);
-  const touchComponentOverlayRef = useRef<Map<string, { lines: Line[]; markers: Circle[] }>>(new Map());
-  const touchComponentGroupsRef = useRef<TouchComponentGroup[]>([]);
+  // Per-entry overlay records (P3 review granularity: hide, delete and
+  // highlight operate on individual lineal entries; groups derive live).
+  const touchComponentEntriesRef = useRef<Array<{
+    id: string;
+    key: SemanticKey;
+    value: number;
+    hidden: boolean;
+    line: Line;
+    markers: Circle[];
+  }>>([]);
   const touchComponentIsolatedRef = useRef<string | null>(null);
 
   // M7 (O16): the touch dirty-draft guard supplied by TakeoffPage. Kept in a
@@ -3882,30 +3890,81 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // scans 2+3 are free continuations). The user-corrected SAVED
       // outline feeds scan2, so line detection runs on the human-verified
       // polygon - better input than the desktop raw-outline feed.
-      getComponentGroups: (): TouchComponentGroup[] => touchComponentGroupsRef.current,
+      getComponentGroups: (): TouchComponentGroup[] =>
+        groupsFromMeasurements(touchComponentEntriesRef.current.map(e => ({ semanticKey: e.key }))),
+      getComponentEntries: (): TouchComponentEntry[] =>
+        touchComponentEntriesRef.current.map(e => ({
+          id: e.id,
+          key: e.key,
+          displayName: AI_COMPONENT_REGISTRY[e.key].displayName,
+          colour: getSemanticColour(e.key),
+          value: e.value,
+          hidden: e.hidden,
+        })),
       setIsolatedComponentGroup: (key: string | null) => {
         const canvas = fabricRef.current;
         touchComponentIsolatedRef.current = key;
         if (!canvas) return;
-        for (const [groupKey, objs] of touchComponentOverlayRef.current) {
-          const visible = key == null || groupKey === key;
-          for (const line of objs.lines) line.set({ visible });
-          for (const marker of objs.markers) marker.set({ visible });
+        for (const e of touchComponentEntriesRef.current) {
+          const visible = key == null || e.key === key;
+          e.line.set({ visible });
+          for (const marker of e.markers) marker.set({ visible });
+        }
+        canvas.renderAll();
+      },
+      setEntryHidden: (id: string, hidden: boolean) => {
+        const canvas = fabricRef.current;
+        const e = touchComponentEntriesRef.current.find(entry => entry.id === id);
+        if (!e) return;
+        e.hidden = hidden;
+        const colour = getSemanticColour(e.key);
+        if (hidden) {
+          // Hidden = excluded from totals/quote but stays faint grey on canvas.
+          e.line.set({ stroke: '#94A3B8', opacity: 0.5 });
+          for (const marker of e.markers) marker.set({ fill: '#94A3B8', opacity: 0.5 });
+        } else {
+          e.line.set({ stroke: colour, opacity: 1 });
+          for (const marker of e.markers) marker.set({ fill: colour, opacity: 1 });
+        }
+        canvas?.renderAll();
+        touchBridgeListeners.current.forEach(listener => listener());
+      },
+      deleteComponentEntry: (id: string) => {
+        const canvas = fabricRef.current;
+        const idx = touchComponentEntriesRef.current.findIndex(entry => entry.id === id);
+        if (idx < 0) return;
+        const removed = touchComponentEntriesRef.current.splice(idx, 1);
+        const e = removed[0];
+        if (!e) return;
+        if (canvas) {
+          canvas.remove(e.line);
+          for (const marker of e.markers) canvas.remove(marker);
+          canvas.renderAll();
+        }
+        touchBridgeListeners.current.forEach(listener => listener());
+      },
+      highlightComponentEntry: (id: string | null) => {
+        const canvas = fabricRef.current;
+        if (!canvas) return;
+        for (const e of touchComponentEntriesRef.current) {
+          const highlighted = id != null && e.id === id;
+          const lineOpts = getLineOptions(e.key);
+          if (!e.hidden) e.line.set({ strokeWidth: highlighted ? 4.5 : lineOpts.strokeWidth });
+          for (const marker of e.markers) marker.set({ radius: highlighted ? 5 : 3 });
         }
         canvas.renderAll();
       },
       clearComponentOverlay: () => {
         const canvas = fabricRef.current;
         if (canvas) {
-          for (const objs of touchComponentOverlayRef.current.values()) {
-            for (const line of objs.lines) canvas.remove(line);
-            for (const marker of objs.markers) canvas.remove(marker);
+          for (const e of touchComponentEntriesRef.current) {
+            canvas.remove(e.line);
+            for (const marker of e.markers) canvas.remove(marker);
           }
+          canvas.renderAll();
         }
-        touchComponentOverlayRef.current = new Map();
-        touchComponentGroupsRef.current = [];
+        touchComponentEntriesRef.current = [];
         touchComponentIsolatedRef.current = null;
-        canvas?.renderAll();
         touchBridgeListeners.current.forEach(listener => listener());
       },
       cancelComponentScan: () => {
@@ -4007,15 +4066,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           const drawCanvas = fabricRef.current;
           if (drawCanvas) {
-            for (const objs of touchComponentOverlayRef.current.values()) {
-              for (const line of objs.lines) drawCanvas.remove(line);
-              for (const marker of objs.markers) drawCanvas.remove(marker);
+            for (const e of touchComponentEntriesRef.current) {
+              drawCanvas.remove(e.line);
+              for (const marker of e.markers) drawCanvas.remove(marker);
             }
-            touchComponentOverlayRef.current = new Map();
+            touchComponentEntriesRef.current = [];
             for (const m of applied.measurements) {
               const lineOpts = getLineOptions(m.semanticKey);
               const [p1, p2] = m.canvasPoints;
-              const entry = touchComponentOverlayRef.current.get(m.semanticKey) ?? { lines: [], markers: [] };
               const line = new Line([p1.x, p1.y, p2.x, p2.y], {
                 stroke: lineOpts.stroke,
                 strokeWidth: lineOpts.strokeWidth,
@@ -4038,13 +4096,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 return marker;
               });
               drawCanvas.add(line, ...markers);
-              entry.lines.push(line);
-              entry.markers.push(...markers);
-              touchComponentOverlayRef.current.set(m.semanticKey, entry);
+              touchComponentEntriesRef.current.push({ id: m.id, key: m.semanticKey, value: m.value, hidden: false, line, markers });
             }
             drawCanvas.renderAll();
           }
-          touchComponentGroupsRef.current = groupsFromMeasurements(applied.measurements);
           // Respect any isolation that was active before a re-scan.
           touchOutlineAdapterRef.current?.setIsolatedComponentGroup?.(touchComponentIsolatedRef.current);
           touchBridgeListeners.current.forEach(listener => listener());

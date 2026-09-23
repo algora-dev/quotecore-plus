@@ -20,6 +20,17 @@ export interface TouchComponentGroup {
   count: number;
 }
 
+/** One lineal entry inside a component group (review granularity, P3). */
+export interface TouchComponentEntry {
+  id: string;
+  key: SemanticKey;
+  displayName: string;
+  colour: string;
+  /** Real-world length in calibration units (AiMeasurement.value). */
+  value: number;
+  hidden: boolean;
+}
+
 export type TouchComponentScanResult =
   | { ok: true; data: unknown }
   | { ok: false; error: string; cancelled?: boolean };
