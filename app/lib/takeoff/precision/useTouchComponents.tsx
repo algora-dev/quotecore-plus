@@ -55,6 +55,10 @@ export interface TouchComponentsParts {
   overlay: ReactNode;
   busy: boolean;
   dirty: boolean;
+  /** M11: unsaved component entries exist (scan results, draws or attached
+   * roof areas) - used by the shell's Exit-to-quote guard so leaving the
+   * step can never silently vaporise a draft again. */
+  hasEntries: boolean;
 }
 
 export function useTouchComponents(
@@ -338,23 +342,27 @@ export function useTouchComponents(
   const onSaveContinue = useCallback(async () => {
     if (savingRef.current) return;
     const current = adapterRef.current();
+    // M11 instrumentation: the entry count travels with every save event so
+    // diagnostics can prove whether a save ran with rows or against an empty
+    // draft (the 2026-09-23 vanishing-components investigation).
+    const rows = current?.getComponentEntries?.().filter(e => e.componentId).length ?? 0;
     savingRef.current = true;
     setSaving(true);
     setError(null);
-    logTakeoffEvent('components.save.requested');
+    logTakeoffEvent('components.save.requested', { rows });
     try {
       const result = await current?.persistReviewedComponents?.();
       if (result && !result.ok) {
         setError(result.error);
-        logTakeoffEvent('components.save.failed', { error: result.error });
+        logTakeoffEvent('components.save.failed', { error: result.error, rows });
         return;
       }
-      logTakeoffEvent('components.save.succeeded');
+      logTakeoffEvent('components.save.succeeded', { rows });
       router.push(options.finishHref);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'The save failed. Your entries are kept.';
       setError(message);
-      logTakeoffEvent('components.save.failed', { error: message });
+      logTakeoffEvent('components.save.failed', { error: message, rows });
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -458,5 +466,5 @@ export function useTouchComponents(
     </ComponentsCanvas>
   );
 
-  return { rail, overlay, busy: phase === 'scanning' || saving, dirty: phase === 'scanning' || saving };
+  return { rail, overlay, busy: phase === 'scanning' || saving, dirty: phase === 'scanning' || saving, hasEntries: entries.length > 0 };
 }

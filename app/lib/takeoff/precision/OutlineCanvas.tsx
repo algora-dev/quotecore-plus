@@ -33,12 +33,21 @@ export function OutlineCanvas(props: {
       <polyline points={path(line)} fill={session.draft.closed ? 'rgba(255,107,53,0.08)' : 'none'} stroke="#0f172a" strokeWidth={5} strokeLinejoin="round" />
       <polyline points={path(line)} fill="none" stroke="white" strokeWidth={2} strokeLinejoin="round" />
       <polyline points={path(neighbours)} fill="none" stroke="#FF6B35" strokeWidth={4} />
-      {points.map((p, index) => <g key={session.draft.vertices[index].id} data-testid={`outline-point-${index}`}>
-        <circle cx={p.x} cy={p.y} r={7} fill="#0f172a" />
-        {index === selectedIndex && <circle cx={p.x} cy={p.y} r={14} fill="none" stroke="#FF6B35" strokeWidth={2.5}
-          strokeDasharray={session.selection.moveArmed ? '5 3' : undefined} />}
-        <circle cx={p.x} cy={p.y} r={3} fill={index === selectedIndex ? '#FF6B35' : 'white'} />
-      </g>)}
+      {points.map((p, index) => {
+        const active = index === selectedIndex;
+        const stroke = active ? '#FF6B35' : '#ffffff';
+        return <g key={session.draft.vertices[index].id} data-testid={`outline-point-${index}`}>
+          {/* M11 (owner 2026-09-23): calibration-style crosshair - hollow ring
+              + gap-to-centre segments so the plan stays visible underneath.
+              Selected vertex is orange (armed adds the dashed ring), matching
+              the pointer used everywhere else in the touch flow. */}
+          <circle cx={p.x} cy={p.y} r={3.5} fill="none" stroke={stroke} strokeWidth={1.75} />
+          <path d={`M${p.x - 11} ${p.y}h6.5 M${p.x + 4.5} ${p.y}h6.5 M${p.x} ${p.y - 11}v6.5 M${p.x} ${p.y + 4.5}v6.5`}
+            stroke={stroke} strokeWidth={2} />
+          {active && <circle cx={p.x} cy={p.y} r={14} fill="none" stroke="#FF6B35" strokeWidth={2.5}
+            strokeDasharray={session.selection.moveArmed ? '5 3' : undefined} />}
+        </g>;
+      })}
     </svg>}
     {(!scene || props.error) && <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-white" role={props.error ? 'alert' : 'status'}>
       {props.error ?? 'Loading your plan...'}

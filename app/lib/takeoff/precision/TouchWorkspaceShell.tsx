@@ -456,8 +456,11 @@ export function TouchWorkspaceShell({
                   {diagState.error}
                 </div>
               )}
-              <TouchButton label="Back to quote" disabled={busy} onClick={handleBack}>
-                Back
+              {/* M11 (owner 2026-09-23): "Back" implied navigating within the
+                  takeoff, but it exits the whole flow - renamed, and each step
+                  now provides a dirty guard so exits warn about unsaved work. */}
+              <TouchButton label="Exit to quote" disabled={busy} onClick={handleBack}>
+                Exit to quote
               </TouchButton>
             </div>
           ) : (

@@ -31,18 +31,10 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
   const footer = (() => {
     if (p.stage === 'saving') return <RailAction primary disabled>Saving roof...</RailAction>;
     if (p.stage === 'scanning') return <RailAction onClick={p.onCancelScan}>Cancel scan</RailAction>;
-    if (p.stage === 'finish') {
-      const aiReady = !!p.scanInfo && !p.scanInfo.blocked;
-      // M11 (owner 2026-09-23): a NEW outline cannot advance (components or
-      // finish) until the pitch is explicitly confirmed. A saved outline
-      // already carries its confirmed pitch.
-      const pitchGate = !!p.savedArea || p.pitchConfirmed;
-      return <div className="flex flex-col gap-1">
-        {aiReady && <RailAction primary disabled={!p.ready || !!p.validation || !pitchGate} onClick={() => p.onSave('components-ai')}>AI scan components</RailAction>}
-        <RailAction primary={!aiReady} disabled={!p.ready || !!p.validation || !pitchGate} onClick={() => p.onSave('components-manual')}>Add components manually</RailAction>
-        <RailAction disabled={!p.ready || !!p.validation || !pitchGate} onClick={() => p.onSave('finish')}>Save &amp; finish</RailAction>
-      </div>;
-    }
+    // M11 (owner 2026-09-23): the finish-stage actions live INSIDE the
+    // scrollable rail (below the pitch they depend on) - no pinned footer
+    // overlay hiding the pitch above the fold.
+    if (p.stage === 'finish') return null;
     if (p.stage === 'edit' || p.stage === 'ai-review') return <RailAction primary disabled={!p.ready || !!p.validation || p.gestureBusy} onClick={p.onDone}>Done</RailAction>;
     if (p.stage === 'draw') return <div className="flex flex-col gap-1">
       {p.armed && <RailAction primary disabled={p.gestureBusy} onClick={p.onConfirmPoint}>Confirm point</RailAction>}
@@ -82,6 +74,18 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
                 </RailAction>
                 {!p.pitchConfirmed && <RailNotice>Confirm the pitch above to unlock the next step.</RailNotice>}
               </>}
+            {/* M11: the three next-step actions sit right below the pitch -
+                one scroll: set pitch, confirm it, then choose the next step. */}
+            {(() => {
+              const aiReady = !!p.scanInfo && !p.scanInfo.blocked;
+              const pitchGate = !!p.savedArea || p.pitchConfirmed;
+              const disabled = !p.ready || !!p.validation || !pitchGate;
+              return <div className="flex flex-col gap-1 pt-1">
+                {aiReady && <RailAction primary disabled={disabled} onClick={() => p.onSave('components-ai')}>AI scan components</RailAction>}
+                <RailAction primary={!aiReady} disabled={disabled} onClick={() => p.onSave('components-manual')}>Add components manually</RailAction>
+                <RailAction disabled={disabled} onClick={() => p.onSave('finish')}>Save &amp; finish</RailAction>
+              </div>;
+            })()}
             <RailAction onClick={p.onEdit}>Edit outline</RailAction>
           </> : <>
             {p.stage === 'ai-review' && <>

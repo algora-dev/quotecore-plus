@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { loginAction, resendConfirmationAction, sendLoginLinkAction, type LoginResult } from './actions';
 import { GoogleSignInButton } from '@/app/components/auth/GoogleSignInButton';
+import { AuthSessionDebugPing } from '@/app/components/auth/AuthSessionDebugPing';
 import { TroubleSigningInPanel } from './TroubleSigningInPanel';
 import { PublicFooter } from '@/app/components/PublicFooter';
 import { PasswordField } from '@/app/components/ui/PasswordField';
@@ -14,6 +15,9 @@ import { marketingUrl } from '@/lib/app-url';
 export default function LoginPage() {
   return (
     <Suspense>
+      {/* patch_055: one cold-start telemetry ping per browser session
+          (temporary - remove once the iOS PWA logout issue is resolved). */}
+      <AuthSessionDebugPing />
       <LoginForm />
     </Suspense>
   );

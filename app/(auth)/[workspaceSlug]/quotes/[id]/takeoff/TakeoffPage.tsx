@@ -195,7 +195,9 @@ export function TakeoffPage({
       touchExitGuard={
         touchActive
           ? {
-              isDirty: () => touchTool === 'calibrate' ? calib.exitGuard.dirty || calib.busy : outlineEditor.exitGuard.dirty || outlineEditor.busy,
+              isDirty: () => touchTool === 'calibrate' ? calib.exitGuard.dirty || calib.busy
+                : touchTool === 'components' ? componentsStep.busy || componentsStep.hasEntries
+                : outlineEditor.exitGuard.dirty || outlineEditor.busy,
               request: (label: string, proceed: () => void) => {
                 // The hidden desktop cannot interrupt a calibration/commit.
                 if (touchTool !== 'calibrate') outlineEditor.requestExternalExit(label, proceed);
@@ -232,7 +234,20 @@ export function TakeoffPage({
       wideRail={touchTool === 'calibrate' ? calib.wideRail : touchTool === 'components' ? true : outlineEditor.wideRail}
       busy={touchTool === 'calibrate' ? calib.busy : touchTool === 'components' ? componentsStep.busy : outlineEditor.busy}
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
-      exitGuard={touchTool === 'calibrate' ? calib.exitGuard : touchTool === 'components' ? undefined : outlineEditor.exitGuard}
+      exitGuard={touchTool === 'calibrate' ? calib.exitGuard
+        : touchTool === 'components' ? {
+            // M11: unsaved component entries (scan results, draws, attached
+            // roof areas) can never be silently vaporised by Exit again - the
+            // shell shows the same Save/Discard/Stay sheet the outline uses.
+            dirty: componentsStep.busy || componentsStep.hasEntries,
+            onSave: () => {},
+            onDiscard: () => {
+              outlineAdapter?.clearComponentOverlay?.();
+              router.push(backHref);
+            },
+            saveLabel: 'Return to components',
+          }
+        : outlineEditor.exitGuard}
     >
       {workstation}
     </TouchWorkspaceShell>
