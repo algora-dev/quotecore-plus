@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Logo or banner ÔÇö image validation
+    // Logo or banner - image validation
     const declaredOk = declared === 'image/png' || declared === 'image/jpeg' || declared === 'image/webp';
     if (!declaredOk) {
       return NextResponse.json(

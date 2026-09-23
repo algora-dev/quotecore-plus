@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-05
 **From:** Ron
-**Priority:** Blocking ÔÇö can't build the UI until the DB columns exist and types are regen'd
+**Priority:** Blocking - can't build the UI until the DB columns exist and types are regen'd
 
 ## What I Need You To Do
 
@@ -17,7 +17,7 @@ ALTER TABLE supplier_profiles
   ADD COLUMN IF NOT EXISTS price_list_content_type text;
 ```
 
-These are all nullable ÔÇö no default values needed. Existing suppliers just have nulls.
+These are all nullable - no default values needed. Existing suppliers just have nulls.
 
 ### 2. Update the `public_supplier_read` RPC
 
@@ -29,7 +29,7 @@ The RPC needs to return the new columns so the public supplier page can render t
 - `price_list_uploaded_at`
 - `price_list_content_type`
 
-**Important ÔÇö price list visibility:** The `price_list_url`, `price_list_filename`, `price_list_uploaded_at`, and `price_list_content_type` fields should only be returned when:
+**Important - price list visibility:** The `price_list_url`, `price_list_filename`, `price_list_uploaded_at`, and `price_list_content_type` fields should only be returned when:
 - `public_catalogue_enabled = true` AND
 - `publication_state IN ('published', 'unlisted')`
 
@@ -94,7 +94,7 @@ This gives me the typed columns so I can build the UI without `any` casts.
 
 ## Why
 
-Shaun wants suppliers to be able to fully build their own public page from the dashboard: logo, banner, location, contact details, description, and a downloadable price list file (PDF/CSV). The public supplier page already renders most of this ÔÇö we just need the new columns for banner and price list, plus the storage bucket for file uploads.
+Shaun wants suppliers to be able to fully build their own public page from the dashboard: logo, banner, location, contact details, description, and a downloadable price list file (PDF/CSV). The public supplier page already renders most of this - we just need the new columns for banner and price list, plus the storage bucket for file uploads.
 
 ## Timeline
 
