@@ -22,6 +22,7 @@ import { OutlineCanvas } from './OutlineCanvas';
 import { TouchOutlineRail, type OutlineFinishChoice } from './TouchOutlineRail';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 import { RailAction, RailViewControls } from './TouchRailControls';
+import { OUTLINE_SCAN_DISCLAIMER, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage } from './touchComponents';
 import { logTakeoffEvent } from './takeoffDiagnostics';
 
 export type TouchCreateResult =
@@ -43,6 +44,13 @@ export interface TouchOutlineAdapter {
   getAiOutlineScanInfo(): AiOutlineScanInfo | null;
   startOutlineOnlyScan(): Promise<AiOutlineScanResult>;
   cancelOutlineOnlyScan(): void;
+  /** M10 P2: scan2+scan3 continuations on the saved, corrected outline.
+   * Server billing: free - points were deducted once on scan1. */
+  startComponentScan?(onStage?: (stage: TouchComponentScanStage) => void): Promise<TouchComponentScanResult>;
+  cancelComponentScan?(): void;
+  getComponentGroups?(): TouchComponentGroup[];
+  setIsolatedComponentGroup?(key: string | null): void;
+  clearComponentOverlay?(): void;
 }
 export interface TouchOutlineEditorParts {
   overlay: ReactNode; rail: ReactNode; bottom: ReactNode; wideRail: boolean; busy: boolean;
@@ -77,6 +85,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
   const [candidates, setCandidates] = useState<AiOutlineCandidate[]>([]);
   const [candidateIndex, setCandidateIndex] = useState(0);
   const [pitchEntry, setPitchEntry] = useState<string | null>(null);
+  const [aiNoticeOpen, setAiNoticeOpen] = useState(false);
   const [localPitch, setLocalPitch] = useState(DEFAULT_ROOF_PITCH);
   const pitch = options.pitch ?? localPitch;
   const onPitchChange = options.onPitchChange ?? setLocalPitch;
@@ -259,6 +268,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
     const next = beginImportedOutlineDraft(all[index], ctx);
     setSession(next); sessionRef.current = next; setSavedArea(null);
     setCandidates(all); setCandidateIndex(index); setStage('ai-review'); setError(null);
+    setAiNoticeOpen(true); // D1: one AI-notice per imported scan.
     // Deliberately do not use the model's name or pitch: user's chosen pitch wins.
   };
   const runScan = async () => {
@@ -340,6 +350,13 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
           const next = pendingLeave.proceed; setPendingLeave(null); clear(); next();
         }}>Discard and continue</RailAction>
         <RailAction disabled={saving} onClick={() => setPendingLeave(null)}>Stay</RailAction>
+      </div>
+    </FloatingCanvasSheet>}
+    {aiNoticeOpen && <FloatingCanvasSheet label="AI scan notice" dialog modal>
+      <div className="space-y-2 text-sm text-white">
+        <div className="text-base font-semibold">AI outline ready to check</div>
+        <p>{OUTLINE_SCAN_DISCLAIMER}</p>
+        <RailAction primary onClick={() => setAiNoticeOpen(false)}>Got it</RailAction>
       </div>
     </FloatingCanvasSheet>}
   </OutlineCanvas> : null;

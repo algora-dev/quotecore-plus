@@ -62,6 +62,9 @@ test.describe('Keyboardless UX @touch @ux', () => {
     await enterKeyboardlessTakeoff(page, `${RUN}-editing`);
     await addCalibrationReference(page); await confirmCalibration(page); await mockRoofScan(page);
     await tapNamed(page, 'AI Scan Assist'); await expect(page.getByTestId('outline-point-0')).toBeVisible({ timeout: 45_000 });
+    // M10 P2 (D1): the AI scan notice opens with the imported outline -
+    // dismiss it the way a user would before editing.
+    await tapControl(page, page.getByRole('button', { name: 'Got it', exact: true }), 'Dismiss AI scan notice');
     await tapNamed(page, 'Edit points');
     for (const name of ['Previous vertex', 'Next vertex', 'Insert vertex after selected', 'Delete selected vertex']) {
       await assertContainment(page, page.getByRole('button', { name, exact: true }), name);

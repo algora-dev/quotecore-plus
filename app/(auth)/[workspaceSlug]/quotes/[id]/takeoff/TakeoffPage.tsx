@@ -8,7 +8,7 @@ import { DEFAULT_ROOF_PITCH } from '@/app/lib/takeoff/precision/touchNumberEntry
 import type { QuoteRow } from '@/app/lib/types';
 import type { TakeoffHydrationData } from './actions';
 import { TouchWorkspaceShell } from '@/app/lib/takeoff/precision/TouchWorkspaceShell';
-import { RailAction, RailNotice, RailTask } from '@/app/lib/takeoff/precision/TouchRailControls';
+import { useTouchComponents } from '@/app/lib/takeoff/precision/useTouchComponents';
 import { useTakeoffViewMode } from '@/app/lib/takeoff/precision/useTakeoffViewMode';
 import {
   useTouchOutlineEditor,
@@ -163,19 +163,14 @@ export function TakeoffPage({
     touchActive && touchTool === 'outline', () => outlineAdapter, backHref,
     () => setTouchTool('calibrate'), { finishHref, pitch, onPitchChange: setPitch, onEnterComponents: enterComponents },
   );
-  // M10 P1: components step skeleton. Fork plumbing is live; the AI
-  // component scan + review rail land in P2-P4
-  // (docs/MOBILE_COMPONENT_SCAN_PLAN.md).
-  const componentsRail = touchTool === 'components' ? (
-    <RailTask label="Components step" footer={
-      <RailAction primary onClick={() => router.push(finishHref)}>Save &amp; continue</RailAction>
-    }>
-      <RailNotice>Your roof outline is saved.</RailNotice>
-      <RailNotice>{componentsMode === 'ai'
-        ? 'AI component scanning is the next build step. Continue to the quote builder for now.'
-        : 'Manual component entry is the next build step. Continue to the quote builder for now.'}</RailNotice>
-    </RailTask>
-  ) : null;
+  // M10 P2: components step - AI component scan (scan2+scan3
+  // continuations on the corrected outline) + review rail with colour
+  // swatches (docs/MOBILE_COMPONENT_SCAN_PLAN.md).
+  const componentsStep = useTouchComponents(
+    touchActive && touchTool === 'components',
+    () => outlineAdapter,
+    { finishHref, mode: componentsMode, components, collections: collections ?? [] },
+  );
   const workstation = (
     <TakeoffWorkstation
       workspaceSlug={workspaceSlug}
@@ -231,10 +226,10 @@ export function TakeoffPage({
       viewPreference={preference}
       onViewPreferenceChange={setPreference}
       compactNotices={takeoffCompactNotices}
-      overlay={touchTool === 'calibrate' ? calib.overlay : touchTool === 'components' ? null : outlineEditor.overlay}
-      railContent={touchTool === 'calibrate' ? calib.rail : touchTool === 'components' ? componentsRail : outlineEditor.rail}
+      overlay={touchTool === 'calibrate' ? calib.overlay : touchTool === 'components' ? componentsStep.overlay : outlineEditor.overlay}
+      railContent={touchTool === 'calibrate' ? calib.rail : touchTool === 'components' ? componentsStep.rail : outlineEditor.rail}
       wideRail={touchTool === 'calibrate' ? calib.wideRail : touchTool === 'components' ? true : outlineEditor.wideRail}
-      busy={touchTool === 'calibrate' ? calib.busy : touchTool === 'components' ? false : outlineEditor.busy}
+      busy={touchTool === 'calibrate' ? calib.busy : touchTool === 'components' ? componentsStep.busy : outlineEditor.busy}
       backHref={`/${workspaceSlug}/quotes/${quoteId}`}
       exitGuard={touchTool === 'calibrate' ? calib.exitGuard : touchTool === 'components' ? undefined : outlineEditor.exitGuard}
     >

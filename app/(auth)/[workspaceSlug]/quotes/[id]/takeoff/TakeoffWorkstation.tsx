@@ -19,6 +19,7 @@ import type {
   AiOutlineScanResult,
 } from '@/app/lib/takeoff/precision/touchAiOutline';
 import { outlineDependentRecompute } from '@/app/lib/takeoff/precision/touchOutlines';
+import { groupsFromMeasurements, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage } from '@/app/lib/takeoff/precision/touchComponents';
 import type { RecomputeMeasurementRecord } from '@/app/lib/takeoff/calibrationRecompute';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
@@ -3541,6 +3542,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   const touchContextEpochRef = useRef(0);
   const touchEpochKeyRef = useRef<string | null>(null);
   const touchOutlineScanAbortRef = useRef<AbortController | null>(null);
+  // M10 P2: AI component scan (touch). The overlay is a dedicated fabric
+  // layer grouped by semantic key - desktop componentMeasurements state
+  // stays untouched until the P4 save wiring.
+  const touchComponentScanAbortRef = useRef<AbortController | null>(null);
+  const touchComponentOverlayRef = useRef<Map<string, { lines: Line[]; markers: Circle[] }>>(new Map());
+  const touchComponentGroupsRef = useRef<TouchComponentGroup[]>([]);
+  const touchComponentIsolatedRef = useRef<string | null>(null);
 
   // M7 (O16): the touch dirty-draft guard supplied by TakeoffPage. Kept in a
   // ref so the guarded handlers (page switch, area switch, upload-another)
@@ -3867,6 +3875,190 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchOutlineScanAbortRef.current = null;
         // The touch editor invalidates its scan token. Cancelling a scan
         // must not invalidate the existing human draft's edit context.
+      },
+      // ── M10 P2: AI component scan (touch) ───────────────────────────
+      // scan2 (line detection) + scan3 (classification) continuations of
+      // the ALREADY-PAID scan1 session (the route deducts once on scan1;
+      // scans 2+3 are free continuations). The user-corrected SAVED
+      // outline feeds scan2, so line detection runs on the human-verified
+      // polygon - better input than the desktop raw-outline feed.
+      getComponentGroups: (): TouchComponentGroup[] => touchComponentGroupsRef.current,
+      setIsolatedComponentGroup: (key: string | null) => {
+        const canvas = fabricRef.current;
+        touchComponentIsolatedRef.current = key;
+        if (!canvas) return;
+        for (const [groupKey, objs] of touchComponentOverlayRef.current) {
+          const visible = key == null || groupKey === key;
+          for (const line of objs.lines) line.set({ visible });
+          for (const marker of objs.markers) marker.set({ visible });
+        }
+        canvas.renderAll();
+      },
+      clearComponentOverlay: () => {
+        const canvas = fabricRef.current;
+        if (canvas) {
+          for (const objs of touchComponentOverlayRef.current.values()) {
+            for (const line of objs.lines) canvas.remove(line);
+            for (const marker of objs.markers) canvas.remove(marker);
+          }
+        }
+        touchComponentOverlayRef.current = new Map();
+        touchComponentGroupsRef.current = [];
+        touchComponentIsolatedRef.current = null;
+        canvas?.renderAll();
+        touchBridgeListeners.current.forEach(listener => listener());
+      },
+      cancelComponentScan: () => {
+        touchComponentScanAbortRef.current?.abort();
+        touchComponentScanAbortRef.current = null;
+      },
+      startComponentScan: async (onStage?: (stage: TouchComponentScanStage) => void): Promise<TouchComponentScanResult> => {
+        const live = touchOutlineLiveRef.current;
+        const pageId = currentPageIdRef.current;
+        if (!quote) return { ok: false, error: 'Quote unavailable.' };
+        if (!pageId) return { ok: false, error: 'No active page.' };
+        const canvas = fabricRef.current;
+        if (!canvas?.backgroundImage) return { ok: false, error: 'No plan image loaded.' };
+        const calibrationsNow = live?.calibrations ?? null;
+        if (!calibrationsNow) return { ok: false, error: 'Calibrate the plan before scanning components.' };
+        // Corrected outline: the most recent saved outline on the bridge.
+        const saved = [...(touchOutlineAdapterRef.current?.getAreas() ?? [])]
+          .filter(a => a.points.length >= 3)
+          .pop();
+        if (!saved) return { ok: false, error: 'Save the roof outline before scanning components.' };
+        const outlinePoints = saved.points.map(p => ({ x: p.x, y: p.y }));
+        const imageUrl = live?.currentImageUrl ?? null;
+        if (!imageUrl) return { ok: false, error: 'No plan image URL available.' };
+        const qualityLevel = 'low' as const; // Touch default; desktop choice unchanged.
+        const dims = live?.canvasDims ?? { width: 2000, height: 1700 };
+        const abortController = new AbortController();
+        touchComponentScanAbortRef.current = abortController;
+        try {
+          const imgResponse = await fetch(imageUrl, { signal: abortController.signal });
+          if (!imgResponse.ok) return { ok: false, error: 'Failed to load plan image for AI scan.' };
+          const imgBlob = await imgResponse.blob();
+          const reader = new FileReader();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const handleAbort = () => reader.abort();
+            abortController.signal.addEventListener('abort', handleAbort, { once: true });
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.onabort = () => reject(new DOMException('Scan cancelled.', 'AbortError'));
+            reader.readAsDataURL(imgBlob);
+          });
+          const compressed = await compressImageForAiScan(dataUrl);
+          // scan2: line detection on the corrected outline (canvas space).
+          onStage?.('lines');
+          const scan2Response = await fetch(aiScanEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              stage: 'scan2',
+              image: compressed.dataUrl,
+              imageMime: 'image/png',
+              canvasDimensions: dims,
+              quoteId: quote.id,
+              pageId,
+              outlinePoints,
+              analysisDimensions: dims,
+              qualityLevel,
+            }),
+            signal: abortController.signal,
+          });
+          const scan2Result = await scan2Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan2Response.status}` }));
+          if (!scan2Response.ok || !scan2Result.success) {
+            return { ok: false, error: scan2Result.error || `Line detection failed (HTTP ${scan2Response.status}).` };
+          }
+          const detectedLines = scan2Result.data?.lines ?? [];
+          // scan3: classification of the detected lines.
+          onStage?.('classify');
+          const scan3Response = await fetch(aiScanEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              stage: 'scan3',
+              image: compressed.dataUrl,
+              imageMime: 'image/png',
+              canvasDimensions: dims,
+              quoteId: quote.id,
+              pageId,
+              outlinePoints,
+              lines: detectedLines,
+              analysisDimensions: dims,
+              qualityLevel,
+            }),
+            signal: abortController.signal,
+          });
+          const scan3Result = await scan3Response.json().catch(() => ({ success: false, error: `Server returned HTTP ${scan3Response.status}` }));
+          if (!scan3Response.ok || !scan3Result.success) {
+            const violations = Array.isArray(scan3Result.topologyViolations) ? ` ${scan3Result.topologyViolations.join(' ')}` : '';
+            return { ok: false, error: `${scan3Result.error || `AI scan failed (HTTP ${scan3Response.status}).`}${violations}` };
+          }
+          // Shared post-processing (perimeter accounting, snapping,
+          // clustering, calibration lengths) then a dedicated overlay
+          // layer grouped by semantic key.
+          const systemComponentIds = buildSystemComponentIds(components);
+          const applied = applyAiResults({
+            aiData: scan3Result.data,
+            calibrations: calibrationsNow,
+            systemComponentIds,
+            canvasWidth: dims.width,
+            canvasHeight: dims.height,
+          });
+          const drawCanvas = fabricRef.current;
+          if (drawCanvas) {
+            for (const objs of touchComponentOverlayRef.current.values()) {
+              for (const line of objs.lines) drawCanvas.remove(line);
+              for (const marker of objs.markers) drawCanvas.remove(marker);
+            }
+            touchComponentOverlayRef.current = new Map();
+            for (const m of applied.measurements) {
+              const lineOpts = getLineOptions(m.semanticKey);
+              const [p1, p2] = m.canvasPoints;
+              const entry = touchComponentOverlayRef.current.get(m.semanticKey) ?? { lines: [], markers: [] };
+              const line = new Line([p1.x, p1.y, p2.x, p2.y], {
+                stroke: lineOpts.stroke,
+                strokeWidth: lineOpts.strokeWidth,
+                strokeDashArray: lineOpts.strokeDashArray,
+                selectable: false,
+                evented: false,
+                hasControls: false,
+                hasBorders: false,
+              });
+              (line as unknown as { measurementId: string }).measurementId = m.id;
+              const colour = getSemanticColour(m.semanticKey);
+              const markers = [p1, p2].map(p => {
+                const marker = new Circle({
+                  left: p.x, top: p.y, radius: 3,
+                  fill: colour, stroke: '#000', strokeWidth: 1,
+                  originX: 'center', originY: 'center',
+                  selectable: false, evented: false, hasControls: false, hasBorders: false,
+                });
+                (marker as unknown as { measurementId: string }).measurementId = m.id;
+                return marker;
+              });
+              drawCanvas.add(line, ...markers);
+              entry.lines.push(line);
+              entry.markers.push(...markers);
+              touchComponentOverlayRef.current.set(m.semanticKey, entry);
+            }
+            drawCanvas.renderAll();
+          }
+          touchComponentGroupsRef.current = groupsFromMeasurements(applied.measurements);
+          // Respect any isolation that was active before a re-scan.
+          touchOutlineAdapterRef.current?.setIsolatedComponentGroup?.(touchComponentIsolatedRef.current);
+          touchBridgeListeners.current.forEach(listener => listener());
+          return { ok: true, data: scan3Result.data };
+        } catch (err) {
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            return { ok: false, error: 'cancelled', cancelled: true };
+          }
+          return { ok: false, error: err instanceof Error ? err.message : 'Network error.' };
+        } finally {
+          if (touchComponentScanAbortRef.current === abortController) {
+            touchComponentScanAbortRef.current = null;
+          }
+        }
       },
     };
   }
