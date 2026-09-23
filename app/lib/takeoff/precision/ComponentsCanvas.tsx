@@ -1,11 +1,12 @@
 'use client';
-// M10 P3b: entry-draw canvas - the tap/drag/confirm point-to-point surface
-// for drawing a new lineal component entry. Mirrors the OutlineCanvas
-// pattern (camera-transformed raster + SVG overlay in viewport space) with
-// its own simplified pointer handling: a tap places the active point,
-// dragging near a draft point moves it, dragging empty space pans, two
-// fingers pinch. Confirmation is explicit (rail button), so gestures never
-// need rollback - releasing simply stops moving.
+// M10 F1/F2: the ONE canvas for the whole touch components step - the plan
+// raster, the saved roof outline and every component entry stay visible at
+// all times (scan, review, detail, draw): the plan is the source of truth
+// and NEVER goes blank. Also hosts the + New entry drawing with the
+// outline-editor interaction model: tap places the point, pressing anywhere
+// else and dragging moves it at an offset (remote move - the thumb never
+// covers the point), release holds, Confirm locks. Calibration-style
+// crosshair markers.
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { scenePointToViewport, type Camera, type SceneDescriptor } from './sceneViewport';
 
@@ -16,22 +17,34 @@ const TAP_SLOP_PX = 8;
 
 interface GestureState {
   pointers: Map<number, { x: number; y: number; startX: number; startY: number }>;
-  mode: 'undecided' | 'point' | 'pan' | 'pinch';
+  mode: 'undecided' | 'point' | 'remote' | 'pan' | 'pinch';
   slot: 0 | 1;
+  offset: { x: number; y: number };
   pinchDist: number;
   left: number;
   top: number;
 }
 
-export function EntryDrawCanvas(props: {
+export interface CanvasEntry {
+  id: string;
+  key: string;
+  colour: string;
+  hidden: boolean;
+  points: { x: number; y: number }[];
+}
+
+export function ComponentsCanvas(props: {
   bindSurface: (node: HTMLDivElement | null) => void;
   camera: Camera | null;
   scene: SceneDescriptor | null;
   imageUrl: string | null;
-  groupColour: string;
-  contextLines: { x: number; y: number }[][];
+  /** Saved roof outline polygon (scene space) - always rendered. */
+  outlinePoints: { x: number; y: number }[];
+  entries: CanvasEntry[];
+  isolatedKey: string | null;
+  highlightedId: string | null;
+  drawSlot: 0 | 1 | null;
   draft: { p1: EntryDraftPoint | null; p2: EntryDraftPoint | null };
-  activeSlot: 0 | 1;
   onTapPlace: (scenePoint: EntryDraftPoint) => void;
   onDraftMove: (slot: 0 | 1, scenePoint: EntryDraftPoint) => void;
   onPanBy: (dx: number, dy: number) => void;
@@ -55,21 +68,20 @@ export function EntryDrawCanvas(props: {
     }
     return null;
   };
+  const activeSlot = props.drawSlot ?? 0;
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     if (!gesture.current) {
       const rect = e.currentTarget.getBoundingClientRect();
-      gesture.current = { pointers: new Map(), mode: 'undecided', slot: 0, pinchDist: 0, left: rect.left, top: rect.top };
+      gesture.current = { pointers: new Map(), mode: 'undecided', slot: 0, offset: { x: 0, y: 0 }, pinchDist: 0, left: rect.left, top: rect.top };
     }
     const g = gesture.current;
     const local = { x: e.clientX - g.left, y: e.clientY - g.top };
     g.pointers.set(e.pointerId, { x: local.x, y: local.y, startX: local.x, startY: local.y });
-    if (g.pointers.size === 2) {
+    if (g.pointers.size >= 2) {
       const [a, b] = [...g.pointers.values()];
       g.pinchDist = Math.hypot(a.x - b.x, a.y - b.y);
-      g.mode = 'pinch';
-    } else if (g.pointers.size > 2) {
       g.mode = 'pinch';
     }
   };
@@ -94,10 +106,30 @@ export function EntryDrawCanvas(props: {
       return;
     }
     if (g.mode === 'undecided' && Math.hypot(now.x - prev.startX, now.y - prev.startY) > TAP_SLOP_PX) {
-      const slot = draftSlotAt(now.x, now.y);
-      if (slot != null) { g.mode = 'point'; g.slot = slot; } else { g.mode = 'pan'; }
+      const nearSlot = draftSlotAt(now.x, now.y);
+      if (props.drawSlot != null && nearSlot != null) {
+        // Direct drag on a draft point.
+        g.mode = 'point';
+        g.slot = nearSlot;
+      } else if (props.drawSlot != null) {
+        // Remote move (outline-editor model): press AWAY from the point and
+        // drag - the point keeps the press offset so the thumb never covers
+        // it.
+        g.mode = 'remote';
+        g.slot = activeSlot;
+        const p = activeSlot === 0 ? props.draft.p1 : props.draft.p2;
+        if (p && camera) {
+          const v = scenePointToViewport(camera, p);
+          g.offset = { x: v.x - now.x, y: v.y - now.y };
+        } else {
+          g.mode = 'pan';
+        }
+      } else {
+        g.mode = 'pan';
+      }
     }
     if (g.mode === 'point') props.onDraftMove(g.slot, toScene(now.x, now.y));
+    else if (g.mode === 'remote') props.onDraftMove(g.slot, toScene(now.x + g.offset.x, now.y + g.offset.y));
     else if (g.mode === 'pan') props.onPanBy(dx, dy);
   };
   const endPointer = (e: ReactPointerEvent<HTMLDivElement>, cancelled: boolean) => {
@@ -109,11 +141,10 @@ export function EntryDrawCanvas(props: {
       if (g.pointers.size < 2) {
         g.mode = 'undecided';
         g.pinchDist = 0;
+        for (const [, p] of g.pointers) g.pointers.set(e.pointerId, { ...p, startX: p.x, startY: p.y });
         for (const [id, p] of g.pointers) g.pointers.set(id, { ...p, startX: p.x, startY: p.y });
       }
     } else if (!cancelled && g.mode === 'undecided' && g.pointers.size === 0 && start) {
-      // A clean tap (under the slop) places the active draft point at the
-      // START position, so a micro-jitter at lift-off never offsets it.
       props.onTapPlace(toScene(start.startX, start.startY));
     }
     if (g.pointers.size === 0) gesture.current = null;
@@ -122,7 +153,9 @@ export function EntryDrawCanvas(props: {
   const vp = (p: { x: number; y: number }) => (camera ? scenePointToViewport(camera, p) : p);
   const d1 = props.draft.p1 ? vp(props.draft.p1) : null;
   const d2 = props.draft.p2 ? vp(props.draft.p2) : null;
-  return <div ref={props.bindSurface} data-testid="entry-draw-surface"
+  const outlinePath = props.outlinePoints.map(p => vp(p));
+  const visibleEntries = props.entries.filter(e => props.isolatedKey == null || e.key === props.isolatedKey);
+  return <div ref={props.bindSurface} data-testid="components-canvas"
     className="absolute inset-0 z-10 overflow-hidden bg-slate-950" style={{ touchAction: 'none' }}
     onPointerDown={onPointerDown} onPointerMove={onPointerMove}
     onPointerUp={(e) => endPointer(e, false)} onPointerCancel={(e) => endPointer(e, true)}>
@@ -131,20 +164,31 @@ export function EntryDrawCanvas(props: {
       <img src={props.imageUrl} alt="Plan page" draggable={false} className="h-full w-full select-none" />
     </div>}
     {camera && <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-      {props.contextLines.map((line, index) => line.length === 2
-        && <line key={`ctx-${index}`} x1={vp(line[0]).x} y1={vp(line[0]).y} x2={vp(line[1]).x} y2={vp(line[1]).y}
-          stroke={props.groupColour} strokeWidth={2} opacity={0.35} />)}
+      {/* Source-of-truth roof outline - always visible. */}
+      {outlinePath.length >= 3 && <>
+        <polygon points={outlinePath.map(p => `${p.x},${p.y}`).join(' ')} fill="rgba(59, 130, 246, 0.08)" stroke="#3b82f6" strokeWidth={2} strokeLinejoin="round" />
+        {outlinePath.map((p, i) => <circle key={`o-${i}`} cx={p.x} cy={p.y} r={2.5} fill="#3b82f6" />)}
+      </>}
+      {/* Component entries (registry colours; hidden = grey; highlight = thick). */}
+      {visibleEntries.map(e => e.points.length === 2 && (() => {
+        const a = vp(e.points[0]);
+        const b = vp(e.points[1]);
+        const highlighted = props.highlightedId === e.id;
+        const stroke = e.hidden ? '#94A3B8' : e.colour;
+        return <g key={e.id} opacity={e.hidden ? 0.5 : 1}>
+          <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={stroke} strokeWidth={highlighted ? 4.5 : 2.6} strokeLinecap="round" />
+          <circle cx={a.x} cy={a.y} r={highlighted ? 5 : 3} fill={stroke} />
+          <circle cx={b.x} cy={b.y} r={highlighted ? 5 : 3} fill={stroke} />
+        </g>;
+      })())}
+      {/* Draft entry + calibration-style crosshairs. */}
       {d1 && d2 && <line x1={d1.x} y1={d1.y} x2={d2.x} y2={d2.y} stroke="#FF6B35" strokeWidth={2.5} strokeDasharray="6 4" />}
-      {d1 && <g data-testid="entry-draft-1">
-        <circle cx={d1.x} cy={d1.y} r={7} fill="#0f172a" />
-        {props.activeSlot === 0 && <circle cx={d1.x} cy={d1.y} r={14} fill="none" stroke="#FF6B35" strokeWidth={2.5} strokeDasharray="5 3" />}
-        <circle cx={d1.x} cy={d1.y} r={3} fill="#FF6B35" />
-      </g>}
-      {d2 && <g data-testid="entry-draft-2">
-        <circle cx={d2.x} cy={d2.y} r={7} fill="#0f172a" />
-        {props.activeSlot === 1 && <circle cx={d2.x} cy={d2.y} r={14} fill="none" stroke="#FF6B35" strokeWidth={2.5} strokeDasharray="5 3" />}
-        <circle cx={d2.x} cy={d2.y} r={3} fill="#FF6B35" />
-      </g>}
+      {[d1, d2].map((d, idx) => d && <g key={`draft-${idx}`} data-testid={`entry-draft-${idx + 1}`}>
+        <line x1={d.x - 18} y1={d.y} x2={d.x + 18} y2={d.y} stroke="#FF6B35" strokeWidth={1.5} opacity={0.9} />
+        <line x1={d.x} y1={d.y - 18} x2={d.x} y2={d.y + 18} stroke="#FF6B35" strokeWidth={1.5} opacity={0.9} />
+        <circle cx={d.x} cy={d.y} r={8} fill="none" stroke="#FF6B35" strokeWidth={2} strokeDasharray={props.drawSlot === idx ? '5 3' : undefined} />
+        <circle cx={d.x} cy={d.y} r={2.5} fill="#FF6B35" />
+      </g>)}
     </svg>}
     {(!props.scene || props.error) && <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-white" role={props.error ? 'alert' : 'status'}>
       {props.error ?? 'Loading your plan...'}

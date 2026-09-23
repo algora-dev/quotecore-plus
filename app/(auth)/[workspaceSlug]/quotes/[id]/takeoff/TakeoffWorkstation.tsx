@@ -2770,7 +2770,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // and navigates to the Quote Builder on success.
   // P3: opts.requireCalibrationCommit makes the calibration persistence fatal
   // (COMMIT_FAILED) instead of non-fatal - used by the AI calibration finish path.
-  const persistTakeoffData = async (opts: { requireCalibrationCommit?: boolean } = {}): Promise<boolean> => {
+  const persistTakeoffData = async (opts: { requireCalibrationCommit?: boolean; extraMeasurements?: Array<ComponentMeasurement & { componentId: string }> } = {}): Promise<boolean> => {
     return await handleSaveTakeoffCore(false, opts);
   };
 
@@ -2778,7 +2778,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     await handleSaveTakeoffCore(true);
   };
 
-  const handleSaveTakeoffCore = async (navigateAfter: boolean, opts: { requireCalibrationCommit?: boolean } = {}): Promise<boolean> => {
+  const handleSaveTakeoffCore = async (navigateAfter: boolean, opts: { requireCalibrationCommit?: boolean; extraMeasurements?: Array<ComponentMeasurement & { componentId: string }> } = {}): Promise<boolean> => {
     console.log('[SaveTakeoff] Starting save for quote:', quote.id);
     console.log('[SaveTakeoff] Component measurements:', componentMeasurements.length);
     console.log('[SaveTakeoff] Roof areas:', roofAreas.length);
@@ -2827,6 +2827,22 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         });
       });
       
+      // F3: touch component rows go STRAIGHT into the payload - React state
+      // timing cannot drop them (the race that emptied the Parts phase in
+      // iPhone testing: setComponentMeasurements + immediate persist read
+      // the PREVIOUS render's state).
+      for (const m of opts.extraMeasurements ?? []) {
+        allMeasurements.push({
+          componentId: m.componentId,
+          type: m.type,
+          value: m.value,
+          points: m.points,
+          visible: m.visible,
+          quoteRoofAreaId: m.quoteRoofAreaId ?? activeAreaId ?? activeSaveRoofAreaId,
+          entryInputs: m.entryInputs ?? null,
+        });
+      }
+
       // Add area measurements.
       // RC-6 fix (2026-07-05): the RPC now scopes its delete by page_id, so we
       // must re-send ALL current-page roof areas (hydrated + newly drawn).
@@ -3558,10 +3574,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     value: number;
     hidden: boolean;
     points: { x: number; y: number }[];
-    line: Line;
-    markers: Circle[];
   }>>([]);
-  const touchComponentIsolatedRef = useRef<string | null>(null);
   // P4: latest-ref to the persist function (recreated each render) so the
   // stable adapter always calls the fresh closure over component state.
   const touchPersistTakeoffRef = useRef(persistTakeoffData);
@@ -3911,116 +3924,40 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           hidden: e.hidden,
           points: e.points,
         })),
-      setIsolatedComponentGroup: (key: string | null) => {
-        const canvas = fabricRef.current;
-        touchComponentIsolatedRef.current = key;
-        if (!canvas) return;
-        for (const e of touchComponentEntriesRef.current) {
-          const visible = key == null || e.key === key;
-          e.line.set({ visible });
-          for (const marker of e.markers) marker.set({ visible });
-        }
-        canvas.renderAll();
-      },
       setEntryHidden: (id: string, hidden: boolean) => {
-        const canvas = fabricRef.current;
         const e = touchComponentEntriesRef.current.find(entry => entry.id === id);
         if (!e) return;
+        // F1: data-only - the touch overlay canvas renders the grey state.
         e.hidden = hidden;
-        const colour = getSemanticColour(e.key);
-        if (hidden) {
-          // Hidden = excluded from totals/quote but stays faint grey on canvas.
-          e.line.set({ stroke: '#94A3B8', opacity: 0.5 });
-          for (const marker of e.markers) marker.set({ fill: '#94A3B8', opacity: 0.5 });
-        } else {
-          e.line.set({ stroke: colour, opacity: 1 });
-          for (const marker of e.markers) marker.set({ fill: colour, opacity: 1 });
-        }
-        canvas?.renderAll();
         touchBridgeListeners.current.forEach(listener => listener());
       },
       deleteComponentEntry: (id: string) => {
-        const canvas = fabricRef.current;
         const idx = touchComponentEntriesRef.current.findIndex(entry => entry.id === id);
         if (idx < 0) return;
-        const removed = touchComponentEntriesRef.current.splice(idx, 1);
-        const e = removed[0];
-        if (!e) return;
-        if (canvas) {
-          canvas.remove(e.line);
-          for (const marker of e.markers) canvas.remove(marker);
-          canvas.renderAll();
-        }
+        touchComponentEntriesRef.current.splice(idx, 1);
         touchBridgeListeners.current.forEach(listener => listener());
       },
-      // P3b: add a manually drawn lineal entry (tap/drag/confirm flow).
+      // F1/P3b: add a manually drawn lineal entry. Data-only: the touch
+      // overlay canvas renders it - the fabric canvas is INVISIBLE in touch
+      // presentation, so the touch flow never draws to it.
       addComponentEntry: (key: SemanticKey, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null => {
-        const canvas = fabricRef.current;
         const scale = touchOutlineAdapterRef.current?.getScale() ?? null;
-        if (!canvas) return null;
-        const lineOpts = getLineOptions(key);
         const id = crypto.randomUUID();
-        const line = new Line([p1.x, p1.y, p2.x, p2.y], {
-          stroke: lineOpts.stroke,
-          strokeWidth: lineOpts.strokeWidth,
-          strokeDashArray: lineOpts.strokeDashArray,
-          selectable: false,
-          evented: false,
-          hasControls: false,
-          hasBorders: false,
-        });
-        (line as unknown as { measurementId: string }).measurementId = id;
-        const colour = getSemanticColour(key);
-        const markers = [p1, p2].map(p => {
-          const marker = new Circle({
-            left: p.x, top: p.y, radius: 3,
-            fill: colour, stroke: '#000', strokeWidth: 1,
-            originX: 'center', originY: 'center',
-            selectable: false, evented: false, hasControls: false, hasBorders: false,
-          });
-          (marker as unknown as { measurementId: string }).measurementId = id;
-          return marker;
-        });
-        const visible = touchComponentIsolatedRef.current == null || touchComponentIsolatedRef.current === key;
-        line.set({ visible });
-        for (const marker of markers) marker.set({ visible });
-        canvas.add(line, ...markers);
-        canvas.renderAll();
         const value = scale ? Math.round(Math.hypot(p2.x - p1.x, p2.y - p1.y) * scale.scale * 100) / 100 : 0;
         const points = [{ x: p1.x, y: p1.y }, { x: p2.x, y: p2.y }];
-        touchComponentEntriesRef.current.push({ id, key, value, hidden: false, points, line, markers });
+        touchComponentEntriesRef.current.push({ id, key, value, hidden: false, points });
         touchBridgeListeners.current.forEach(listener => listener());
-        return { id, key, displayName: AI_COMPONENT_REGISTRY[key].displayName, colour, value, hidden: false, points };
-      },
-      highlightComponentEntry: (id: string | null) => {
-        const canvas = fabricRef.current;
-        if (!canvas) return;
-        for (const e of touchComponentEntriesRef.current) {
-          const highlighted = id != null && e.id === id;
-          const lineOpts = getLineOptions(e.key);
-          if (!e.hidden) e.line.set({ strokeWidth: highlighted ? 4.5 : lineOpts.strokeWidth });
-          for (const marker of e.markers) marker.set({ radius: highlighted ? 5 : 3 });
-        }
-        canvas.renderAll();
+        return { id, key, displayName: AI_COMPONENT_REGISTRY[key].displayName, colour: getSemanticColour(key), value, hidden: false, points };
       },
       clearComponentOverlay: () => {
-        const canvas = fabricRef.current;
-        if (canvas) {
-          for (const e of touchComponentEntriesRef.current) {
-            canvas.remove(e.line);
-            for (const marker of e.markers) canvas.remove(marker);
-          }
-          canvas.renderAll();
-        }
         touchComponentEntriesRef.current = [];
-        touchComponentIsolatedRef.current = null;
         touchBridgeListeners.current.forEach(listener => listener());
       },
-      // P4: persist the reviewed entries through the standard save path.
-      // Entries map to system components (uncertain detections are
-      // review-only and never become quote components); hidden entries
-      // persist with visible=false (excluded from the quote, kept on the
-      // plan), deletions simply never reach the DB.
+      // P4/F3: persist the reviewed entries through the standard save path.
+      // Rows go STRAIGHT into the save payload (extraMeasurements) - the
+      // P4 state-timing race sent an empty components list to the RPC.
+      // Hidden entries persist with visible=false (excluded from the quote);
+      // deletions never reach the DB.
       persistReviewedComponents: async (): Promise<{ ok: true } | { ok: false; error: string }> => {
         try {
           const systemComponentIds = buildSystemComponentIds(components);
@@ -4029,12 +3966,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             .filter(a => a.quoteRoofAreaId)
             .pop();
           const areaId = savedArea?.quoteRoofAreaId ?? null;
-          const byComponent = new Map<string, ComponentMeasurement[]>();
+          const extraMeasurements: Array<ComponentMeasurement & { componentId: string }> = [];
           for (const e of touchComponentEntriesRef.current) {
             const componentId = systemComponentIds[e.key] ?? null;
             if (!componentId) continue; // uncertain/no system component: review-only
-            const list = byComponent.get(componentId) ?? [];
-            list.push({
+            extraMeasurements.push({
+              componentId,
               id: e.id,
               type: 'line' as const,
               value: e.value,
@@ -4043,12 +3980,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               fromPageId: pageId,
               quoteRoofAreaId: areaId,
             });
-            byComponent.set(componentId, list);
           }
-          if (byComponent.size > 0) {
-            setComponentMeasurements(prev => [...prev, ...[...byComponent.entries()].map(([componentId, measurements]) => ({ componentId, measurements, expanded: true }))]);
-          }
-          const saved = await touchPersistTakeoffRef.current?.();
+          const saved = await touchPersistTakeoffRef.current?.({ extraMeasurements });
           if (saved === false) return { ok: false, error: 'The save did not complete. Check your connection and try again.' };
           touchBridgeListeners.current.forEach(listener => listener());
           return { ok: true };
@@ -4153,44 +4086,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             canvasWidth: dims.width,
             canvasHeight: dims.height,
           });
-          const drawCanvas = fabricRef.current;
-          if (drawCanvas) {
-            for (const e of touchComponentEntriesRef.current) {
-              drawCanvas.remove(e.line);
-              for (const marker of e.markers) drawCanvas.remove(marker);
-            }
-            touchComponentEntriesRef.current = [];
-            for (const m of applied.measurements) {
-              const lineOpts = getLineOptions(m.semanticKey);
-              const [p1, p2] = m.canvasPoints;
-              const line = new Line([p1.x, p1.y, p2.x, p2.y], {
-                stroke: lineOpts.stroke,
-                strokeWidth: lineOpts.strokeWidth,
-                strokeDashArray: lineOpts.strokeDashArray,
-                selectable: false,
-                evented: false,
-                hasControls: false,
-                hasBorders: false,
-              });
-              (line as unknown as { measurementId: string }).measurementId = m.id;
-              const colour = getSemanticColour(m.semanticKey);
-              const markers = [p1, p2].map(p => {
-                const marker = new Circle({
-                  left: p.x, top: p.y, radius: 3,
-                  fill: colour, stroke: '#000', strokeWidth: 1,
-                  originX: 'center', originY: 'center',
-                  selectable: false, evented: false, hasControls: false, hasBorders: false,
-                });
-                (marker as unknown as { measurementId: string }).measurementId = m.id;
-                return marker;
-              });
-              drawCanvas.add(line, ...markers);
-              touchComponentEntriesRef.current.push({ id: m.id, key: m.semanticKey, value: m.value, hidden: false, points: [{ x: p1.x, y: p1.y }, { x: p2.x, y: p2.y }], line, markers });
-            }
-            drawCanvas.renderAll();
-          }
-          // Respect any isolation that was active before a re-scan.
-          touchOutlineAdapterRef.current?.setIsolatedComponentGroup?.(touchComponentIsolatedRef.current);
+          // F1: data-only records - the touch overlay canvas renders them.
+          // The fabric canvas is invisible in touch presentation and is
+          // never drawn to from the touch flow.
+          touchComponentEntriesRef.current = applied.measurements.map(m => ({
+            id: m.id,
+            key: m.semanticKey,
+            value: m.value,
+            hidden: false,
+            points: m.canvasPoints.map(p => ({ x: p.x, y: p.y })),
+          }));
           touchBridgeListeners.current.forEach(listener => listener());
           return { ok: true, data: scan3Result.data };
         } catch (err) {

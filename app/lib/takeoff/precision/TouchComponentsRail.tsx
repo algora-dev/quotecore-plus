@@ -62,7 +62,7 @@ export function TouchComponentsRail(p: TouchComponentsRailProps) {
           <div className="text-base font-semibold text-white">{detailName}</div>
         </div>
         <RailNotice>{p.drawSlot === 0
-          ? 'Tap the plan to set the START point. Drag near it to fine-tune, then Confirm point.'
+          ? 'Tap the plan to set the START point. To fine-tune, press anywhere and drag - the point follows at a distance so your thumb never covers it. Confirm when happy.'
           : 'Now set the END point the same way, then Confirm point to save the entry.'}</RailNotice>
         {p.viewControls}
         <RailNotice>Drag empty space to pan. Pinch to zoom.</RailNotice>

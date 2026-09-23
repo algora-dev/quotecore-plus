@@ -1,15 +1,15 @@
 'use client';
-// M10 P2/P3/P3b: touch components step lifecycle - auto-starts the AI
-// component scan (scan2+scan3 continuations on the corrected outline) for AI
-// mode, gates the results behind the D2 disclaimer, owns the component detail
-// view (isolation, entry highlight, hide, delete) and the + New entry
-// tap/drag/confirm drawing flow. Manual mode skips the scan and lands
-// directly in the review rail.
+// M10 F1/F2/F3: touch components step lifecycle. The plan is the source of
+// truth: ComponentsCanvas (plan raster + saved outline + every entry) stays
+// mounted for the WHOLE step - scan, disclaimer, review, detail and the
+// + New entry drawing (remote-move gestures so the thumb never covers the
+// point). Isolation and highlight are hook-local render state; the adapter
+// holds data only (the fabric canvas is invisible in touch presentation).
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { TouchOutlineAdapter } from './TouchOutlineEditor';
 import { TouchComponentsRail, type TouchComponentsPhase } from './TouchComponentsRail';
-import { EntryDrawCanvas, type EntryDraftPoint } from './EntryDrawCanvas';
+import { ComponentsCanvas, type EntryDraftPoint } from './ComponentsCanvas';
 import { usePrecisionCamera } from './usePrecisionCamera';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 import { RailAction, RailViewControls } from './TouchRailControls';
@@ -56,20 +56,28 @@ export function useTouchComponents(
   const [groups, setGroups] = useState<TouchComponentGroup[]>([]);
   const [entries, setEntries] = useState<TouchComponentEntry[]>([]);
   const [detailKey, setDetailKey] = useState<string | null>(null);
+  const [isolated, setIsolated] = useState<string | null>(null);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState('');
   const [componentId, setComponentId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const savingRef = useRef(false);
-  // P3b: + New entry drawing state.
   const [drawSlot, setDrawSlot] = useState<0 | 1 | null>(null);
   const [draft, setDraft] = useState<{ p1: EntryDraftPoint | null; p2: EntryDraftPoint | null }>({ p1: null, p2: null });
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const startedRef = useRef(false);
 
   const scene = adapter?.getScene() ?? null;
   const imageUrl = adapter?.getImageUrl() ?? null;
-  const view = usePrecisionCamera(active && drawSlot != null, scene, 'components-entry-draw');
+  // F1: one camera for the WHOLE step - the canvas never unmounts, so the
+  // plan (source of truth) is visible during the scan, review, detail and
+  // drawing alike.
+  const view = usePrecisionCamera(active, scene, 'components');
   const { camera, setCamera, fit, zoomBy, zoomBounds, bindSurface } = view;
+  // F1: the saved outline polygon - always rendered on the canvas.
+  const outlinePoints = (() => {
+    const saved = [...(adapter?.getAreas() ?? [])].filter(a => a.points.length >= 3).pop();
+    return saved ? saved.points.map(p => ({ x: p.x, y: p.y })) : [];
+  })();
 
   const refreshFromAdapter = useCallback(() => {
     const current = adapterRef.current();
@@ -124,39 +132,26 @@ export function useTouchComponents(
     setGroups([]);
     setEntries([]);
     setDetailKey(null);
+    setIsolated(null);
     setHighlighted(null);
     cancelDraw();
   }, [active, cancelDraw]);
 
-  // Clear canvas isolation + entry highlight when the step deactivates.
-  useEffect(() => {
-    if (!active) return;
-    return () => {
-      const current = adapterRef.current();
-      current?.setIsolatedComponentGroup?.(null);
-      current?.highlightComponentEntry?.(null);
-    };
-  }, [active]);
-
-  // Detail view: the group is isolated on the canvas while it is open.
+  // Detail view: isolation is a canvas RENDER state (the overlay hides other
+  // groups); nothing touches the adapter.
   const onOpenDetail = useCallback((key: string) => {
     cancelDraw();
-    adapterRef.current()?.setIsolatedComponentGroup?.(key);
-    adapterRef.current()?.highlightComponentEntry?.(null);
     setDetailKey(key);
+    setIsolated(key);
     setHighlighted(null);
   }, [cancelDraw]);
   const onBackFromDetail = useCallback(() => {
     cancelDraw();
-    adapterRef.current()?.setIsolatedComponentGroup?.(null);
-    adapterRef.current()?.highlightComponentEntry?.(null);
     setDetailKey(null);
+    setIsolated(null);
     setHighlighted(null);
   }, [cancelDraw]);
-  const onHighlight = useCallback((id: string | null) => {
-    adapterRef.current()?.highlightComponentEntry?.(id);
-    setHighlighted(id);
-  }, []);
+  const onHighlight = useCallback((id: string | null) => { setHighlighted(id); }, []);
   const onHideToggle = useCallback((id: string, hidden: boolean) => {
     adapterRef.current()?.setEntryHidden?.(id, hidden);
     refreshFromAdapter();
@@ -167,7 +162,8 @@ export function useTouchComponents(
     refreshFromAdapter();
   }, [refreshFromAdapter]);
 
-  // P3b: + New entry drawing (tap place, drag refine, confirm per point).
+  // F2: + New entry drawing - tap places, press-anywhere-and-drag moves the
+  // point at an offset (remote move), Confirm locks. See ComponentsCanvas.
   const onStartNewEntry = useCallback(() => {
     setDraft({ p1: null, p2: null });
     setDrawSlot(0);
@@ -213,9 +209,8 @@ export function useTouchComponents(
     setComponentId(null);
   }, []);
 
-  // P3: picking a component opens its group's detail view - ANY of the six
-  // system types opens (empty manual groups included), others only when a
-  // matching group was already detected.
+  // Picking a component opens its group's detail view - ANY of the six
+  // system types opens (empty manual groups included).
   const onComponentChange = useCallback((id: string) => {
     setComponentId(id);
     const comp = options.components.find(c => c.id === id);
@@ -231,14 +226,14 @@ export function useTouchComponents(
     setGroups([]);
     setEntries([]);
     setDetailKey(null);
+    setIsolated(null);
     setHighlighted(null);
     setPhase('review');
   }, [cancelDraw]);
   const onRetry = useCallback(() => { void runScan(); }, [runScan]);
   const onCancelScan = useCallback(() => { adapterRef.current()?.cancelComponentScan?.(); }, []);
-  // P4: persist the reviewed entries through the standard save path, then
-  // navigate to the quote builder. Failures keep the user here with their
-  // entries intact.
+  // F3: persist runs the standard save path with the touch rows injected
+  // straight into the payload; failures keep the user here with entries.
   const onSaveContinue = useCallback(async () => {
     if (savingRef.current) return;
     const current = adapterRef.current();
@@ -289,24 +284,27 @@ export function useTouchComponents(
     onRetry={onRetry} onCancelScan={onCancelScan}
     onSaveContinue={onSaveContinue} /> : null;
 
-  const overlay = !active ? null
-    : drawSlot != null && phase === 'review' ? (
-      <EntryDrawCanvas bindSurface={bindSurface} camera={camera} scene={scene} imageUrl={imageUrl}
-        groupColour={detailEntries[0]?.colour ?? '#FF6B35'}
-        contextLines={detailEntries.map(e => e.points)}
-        draft={draft} activeSlot={drawSlot}
-        onTapPlace={onTapPlace} onDraftMove={onDraftMove} onPanBy={onPanBy} onZoomAt={onZoomAt} error={null} />
-    ) : phase === 'disclaimer' ? (
-      <FloatingCanvasSheet label="AI component scan results" dialog modal>
-        <div className="space-y-2 text-sm text-white">
-          <div className="text-base font-semibold">Component scan complete</div>
-          <p>{componentGroupSummary(groups)}.</p>
-          <p>{COMPONENT_SCAN_DISCLAIMER}</p>
-          <RailAction primary onClick={onAcceptDisclaimer}>I understand - review results</RailAction>
-          <RailAction onClick={onDiscardResults}>Discard results</RailAction>
-        </div>
-      </FloatingCanvasSheet>
-    ) : null;
+  // F1: the canvas is mounted for the ENTIRE step - the plan (raster +
+  // outline + entries) is the source of truth and never goes blank. The
+  // disclaimer sheet rides on top of it.
+  const overlay = !active ? null : (
+    <ComponentsCanvas bindSurface={bindSurface} camera={camera} scene={scene} imageUrl={imageUrl}
+      outlinePoints={outlinePoints} entries={entries} isolatedKey={isolated}
+      highlightedId={highlighted} drawSlot={drawSlot} draft={draft}
+      onTapPlace={onTapPlace} onDraftMove={onDraftMove} onPanBy={onPanBy} onZoomAt={onZoomAt} error={null}>
+      {phase === 'disclaimer' && (
+        <FloatingCanvasSheet label="AI component scan results" dialog modal>
+          <div className="space-y-2 text-sm text-white">
+            <div className="text-base font-semibold">Component scan complete</div>
+            <p>{componentGroupSummary(groups)}.</p>
+            <p>{COMPONENT_SCAN_DISCLAIMER}</p>
+            <RailAction primary onClick={onAcceptDisclaimer}>I understand - review results</RailAction>
+            <RailAction onClick={onDiscardResults}>Discard results</RailAction>
+          </div>
+        </FloatingCanvasSheet>
+      )}
+    </ComponentsCanvas>
+  );
 
   return { rail, overlay, busy: phase === 'scanning' || saving, dirty: phase === 'scanning' || saving };
 }

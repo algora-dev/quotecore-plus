@@ -54,8 +54,6 @@ export interface TouchOutlineAdapter {
   addComponentEntry?(key: SemanticKey, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null;
   setEntryHidden?(id: string, hidden: boolean): void;
   deleteComponentEntry?(id: string): void;
-  highlightComponentEntry?(id: string | null): void;
-  setIsolatedComponentGroup?(key: string | null): void;
   persistReviewedComponents?(): Promise<{ ok: true } | { ok: false; error: string }>;
   clearComponentOverlay?(): void;
 }
