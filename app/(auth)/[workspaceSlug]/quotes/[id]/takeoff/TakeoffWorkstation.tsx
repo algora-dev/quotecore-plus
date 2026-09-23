@@ -18,8 +18,8 @@ import type {
   AiOutlineScanInfo,
   AiOutlineScanResult,
 } from '@/app/lib/takeoff/precision/touchAiOutline';
-import { outlineDependentRecompute } from '@/app/lib/takeoff/precision/touchOutlines';
-import { groupsFromEntries, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage, type TouchComponentTarget } from '@/app/lib/takeoff/precision/touchComponents';
+import { outlineDependentRecompute, type SavedOutlineRecord } from '@/app/lib/takeoff/precision/touchOutlines';
+import { drawModeForMeasurementType, groupsFromEntries, polygonAreaCanvas, type TouchComponentEntry, type TouchComponentGroup, type TouchComponentScanResult, type TouchComponentScanStage, type TouchComponentTarget } from '@/app/lib/takeoff/precision/touchComponents';
 import type { RecomputeMeasurementRecord } from '@/app/lib/takeoff/calibrationRecompute';
 import { usePdfPagePicker } from '@/app/components/PdfPagePicker';
 import { PitchInput } from '@/app/components/PitchInput';
@@ -93,7 +93,7 @@ declare module 'fabric' {
 interface Component {
   id: string;
   name: string;
-  measurement_type?: string; // matches ComponentLibraryRow field name
+  measurement_type?: string | null; // matches ComponentLibraryRow field name (nullable in DB)
   /** Named library (component_collections.id) this component belongs to. Null = unfiled. */
   collection_id?: string | null;
   /** @deprecated alias kept for any callers that used the old name */
@@ -3918,14 +3918,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         if (!comp) return null;
         const semantic = comp.is_system ? resolveSemanticKey(comp.name) : null;
         if (semantic) {
-          return { componentId, key: semantic, displayName: AI_COMPONENT_REGISTRY[semantic].displayName, colour: getSemanticColour(semantic) };
+          return { componentId, key: semantic, displayName: AI_COMPONENT_REGISTRY[semantic].displayName, colour: getSemanticColour(semantic), measurementType: comp.measurement_type ?? null, isSystem: !!comp.is_system };
         }
         let colour = touchComponentColoursRef.current.get(componentId);
         if (!colour) {
           colour = COLOR_PALETTE[touchComponentColoursRef.current.size % COLOR_PALETTE.length];
           touchComponentColoursRef.current.set(componentId, colour);
         }
-        return { componentId, key: null, displayName: comp.name, colour };
+        return { componentId, key: null, displayName: comp.name, colour, measurementType: comp.measurement_type ?? null, isSystem: !!comp.is_system };
       },
       setEntryHidden: (id: string, hidden: boolean) => {
         const e = touchComponentEntriesRef.current.find(entry => entry.id === id);
@@ -3940,13 +3940,34 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         touchComponentEntriesRef.current.splice(idx, 1);
         touchBridgeListeners.current.forEach(listener => listener());
       },
-      // F1/P3b/F4: add a manually drawn lineal entry for ANY component
-      // target. Data-only: the touch overlay canvas renders it.
-      addComponentEntry: (target: TouchComponentTarget, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null => {
+      // F1/P3b/F4 + M11: add a drawn entry for ANY component target. The
+      // point count follows the component's measurement type: two points =
+      // lineal length, 3+ points = polygon area, one point = item count.
+      // Data-only: the touch overlay canvas renders it.
+      addComponentEntry: (target: TouchComponentTarget, pts: { x: number; y: number }[]): TouchComponentEntry | null => {
         const scale = touchOutlineAdapterRef.current?.getScale() ?? null;
         const id = crypto.randomUUID();
-        const value = scale ? Math.round(Math.hypot(p2.x - p1.x, p2.y - p1.y) * scale.scale * 100) / 100 : 0;
-        const points = [{ x: p1.x, y: p1.y }, { x: p2.x, y: p2.y }];
+        const round2 = (n: number) => Math.round(n * 100) / 100;
+        const mode = drawModeForMeasurementType(target.measurementType);
+        let kind: TouchComponentEntry['kind'] = 'line';
+        let value = 0;
+        let points: { x: number; y: number }[];
+        if (mode === 'point') {
+          if (!pts.length) return null;
+          kind = 'point';
+          value = 1;
+          points = [{ x: pts[0].x, y: pts[0].y }];
+        } else if (mode === 'polygon') {
+          if (pts.length < 3) return null;
+          kind = 'area';
+          value = scale ? round2(polygonAreaCanvas(pts) * scale.scale * scale.scale) : 0;
+          points = pts.map(p => ({ x: p.x, y: p.y }));
+        } else {
+          if (pts.length < 2) return null;
+          kind = 'line';
+          value = scale ? round2(Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y) * scale.scale) : 0;
+          points = [{ x: pts[0].x, y: pts[0].y }, { x: pts[1].x, y: pts[1].y }];
+        }
         const entry: TouchComponentEntry = {
           id,
           key: target.componentId,
@@ -3954,8 +3975,56 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           displayName: target.displayName,
           colour: target.colour,
           value,
+          kind,
           hidden: false,
           points,
+        };
+        touchComponentEntriesRef.current.push(entry);
+        touchBridgeListeners.current.forEach(listener => listener());
+        return { ...entry };
+      },
+      // M11: attach a real product - re-key every entry of the AI
+      // placeholder group to the chosen component (name/colour follow;
+      // the persist path then writes the REAL component id, priced in the
+      // builder). Desktop parity with handleReplacePlaceholder.
+      reassignComponentGroup: (fromComponentId: string, toComponentId: string): void => {
+        const target = touchOutlineAdapterRef.current?.getComponentTarget?.(toComponentId);
+        if (!target) return;
+        let changed = false;
+        for (const e of touchComponentEntriesRef.current) {
+          if (e.componentId !== fromComponentId) continue;
+          e.key = toComponentId;
+          e.componentId = toComponentId;
+          e.displayName = target.displayName;
+          e.colour = target.colour;
+          changed = true;
+        }
+        if (changed) touchBridgeListeners.current.forEach(listener => listener());
+      },
+      // M11: attach a SAVED roof area to an area component - no redraw on
+      // mobile. Mirrors the desktop area-attach persist shape: the entry
+      // carries no canvas geometry, entryInputs hold the basis + plan
+      // snapshot + source link, and saveTakeoffMeasurements recomputes the
+      // value from the LIVE pitch at save time.
+      addRoofAreaEntry: (target: TouchComponentTarget, area: SavedOutlineRecord): TouchComponentEntry | null => {
+        const scale = touchOutlineAdapterRef.current?.getScale() ?? null;
+        if (!scale || !area.quoteRoofAreaId) return null;
+        const round2 = (n: number) => Math.round(n * 100) / 100;
+        const plan = polygonAreaCanvas(area.points.map(p => ({ x: p.x, y: p.y }))) * scale.scale * scale.scale;
+        const pitched = plan * (area.pitch ? rafterPitchFactor(area.pitch) : 1);
+        const entry: TouchComponentEntry = {
+          id: crypto.randomUUID(),
+          key: target.componentId,
+          componentId: target.componentId,
+          displayName: target.displayName,
+          colour: target.colour,
+          value: round2(pitched),
+          kind: 'area',
+          hidden: false,
+          points: area.points.map(p => ({ x: p.x, y: p.y })),
+          fromRoofAreaId: area.geometryId ?? undefined,
+          quoteRoofAreaId: area.quoteRoofAreaId,
+          planValue: round2(plan),
         };
         touchComponentEntriesRef.current.push(entry);
         touchBridgeListeners.current.forEach(listener => listener());
@@ -3980,16 +4049,60 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           const extraMeasurements: Array<ComponentMeasurement & { componentId: string }> = [];
           for (const e of touchComponentEntriesRef.current) {
             if (!e.componentId) continue; // uncertain detections: review-only
-            extraMeasurements.push({
-              componentId: e.componentId,
-              id: e.id,
-              type: 'line' as const,
-              value: e.value,
-              points: e.points.map(p => ({ x: p.x, y: p.y })),
-              visible: !e.hidden,
-              fromPageId: pageId,
-              quoteRoofAreaId: areaId,
-            });
+            // M11: rows follow the entry kind. Attached roof-area entries
+            // persist exactly like the desktop area-attach flow (no canvas
+            // geometry, entryInputs basis + plan snapshot + source link) so
+            // the save path recomputes from the LIVE pitch.
+            if (e.kind === 'area' && e.fromRoofAreaId) {
+              extraMeasurements.push({
+                componentId: e.componentId,
+                id: e.id,
+                type: 'area' as const,
+                value: e.value,
+                points: [],
+                visible: !e.hidden,
+                fromPageId: pageId,
+                quoteRoofAreaId: e.quoteRoofAreaId ?? areaId,
+                entryInputs: {
+                  value_basis: 'pitched',
+                  plan_value: e.planValue ?? e.value,
+                  source_geometry_id: e.fromRoofAreaId,
+                },
+              });
+            } else if (e.kind === 'area') {
+              extraMeasurements.push({
+                componentId: e.componentId,
+                id: e.id,
+                type: 'area' as const,
+                value: e.value,
+                points: e.points.map(p => ({ x: p.x, y: p.y })),
+                visible: !e.hidden,
+                fromPageId: pageId,
+                quoteRoofAreaId: areaId,
+              });
+            } else if (e.kind === 'point') {
+              extraMeasurements.push({
+                componentId: e.componentId,
+                id: e.id,
+                type: 'point' as const,
+                value: e.value,
+                points: e.points.map(p => ({ x: p.x, y: p.y })),
+                visible: !e.hidden,
+                fromPageId: pageId,
+                quoteRoofAreaId: areaId,
+              });
+            } else {
+              extraMeasurements.push({
+                componentId: e.componentId,
+                id: e.id,
+                type: 'line' as const,
+                value: e.value,
+                points: e.points.map(p => ({ x: p.x, y: p.y })),
+                visible: !e.hidden,
+                fromPageId: pageId,
+                quoteRoofAreaId: areaId,
+              });
+            }
           }
           const saved = await touchPersistTakeoffRef.current?.({ extraMeasurements });
           if (saved === false) return { ok: false, error: 'The save did not complete. Check your connection and try again.' };
@@ -4106,6 +4219,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             displayName: AI_COMPONENT_REGISTRY[m.semanticKey].displayName,
             colour: getSemanticColour(m.semanticKey),
             value: m.value,
+            kind: 'line' as const,
             hidden: false,
             points: m.canvasPoints.map(p => ({ x: p.x, y: p.y })),
           }));

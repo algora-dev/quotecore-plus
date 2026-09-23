@@ -34,6 +34,7 @@ interface Component {
   name: string;
   collection_id?: string | null;
   is_system?: boolean;
+  measurement_type?: string | null;
 }
 
 interface ComponentCollection {

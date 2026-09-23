@@ -53,7 +53,15 @@ export interface TouchOutlineAdapter {
   /** F4: resolve ANY library component into an openable/drawable target
    *  (system types keep registry styling; customs get palette colours). */
   getComponentTarget?(componentId: string): TouchComponentTarget | null;
-  addComponentEntry?(target: TouchComponentTarget, p1: { x: number; y: number }, p2: { x: number; y: number }): TouchComponentEntry | null;
+  /** M11: the points drive the entry kind - two points (lineal), 3+ points
+   *  (area polygon) or one point (count/item placement). */
+  addComponentEntry?(target: TouchComponentTarget, points: { x: number; y: number }[]): TouchComponentEntry | null;
+  /** M11: attach a real product - re-key every entry of the placeholder
+   *  group to the chosen component (name/colour follow). */
+  reassignComponentGroup?(fromComponentId: string, toComponentId: string): void;
+  /** M11: attach a saved roof area to an area component instead of
+   *  redrawing it (pitched value; recomputed live at save time). */
+  addRoofAreaEntry?(target: TouchComponentTarget, area: SavedOutlineRecord): TouchComponentEntry | null;
   setEntryHidden?(id: string, hidden: boolean): void;
   deleteComponentEntry?(id: string): void;
   persistReviewedComponents?(): Promise<{ ok: true } | { ok: false; error: string }>;
@@ -94,8 +102,12 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
   const [pitchEntry, setPitchEntry] = useState<string | null>(null);
   const [aiNoticeOpen, setAiNoticeOpen] = useState(false);
   const [localPitch, setLocalPitch] = useState(DEFAULT_ROOF_PITCH);
+  // M11 (owner 2026-09-23): the finish screen gates the components fork +
+  // Save & finish behind an explicit pitch confirmation (new outlines).
+  const [pitchConfirmed, setPitchConfirmed] = useState(false);
   const pitch = options.pitch ?? localPitch;
   const onPitchChange = options.onPitchChange ?? setLocalPitch;
+  const onPitchChangeAndUnconfirm = useCallback((value: number) => { onPitchChange(value); setPitchConfirmed(false); }, [onPitchChange]);
   const [pendingLeave, setPendingLeave] = useState<PendingLeave | null>(null);
   const busyRef = useRef(false);
   const presentationMounted = useRef(active);
@@ -196,6 +208,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
   const clear = () => {
     setSession(null); sessionRef.current = null; setSavedArea(null); setStage('editing');
     setCandidates([]); setCandidateIndex(0); setError(null); setPitchEntry(null);
+    setPitchConfirmed(false);
   };
   const requestLeave = (label: string, proceed: () => void) => {
     if (busyRef.current || scanning) { setError('Please wait for the current operation to finish.'); return; }
@@ -332,7 +345,9 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       canDelete={canDeleteVertex(ids.length, draft?.closed ?? false, selectedIndex)}
       canUndo={!!session?.history.undo.length} canRedo={!!session?.history.redo.length}
       planArea={review?.planArea == null ? null : `Plan area ${review.planArea.toFixed(2)} ${scale?.unit === 'meters' ? 'm²' : 'ft²'}`}
-      savedArea={savedArea} areas={adapter?.getAreas() ?? []} pitch={pitch} scanInfo={adapter?.getAiOutlineScanInfo() ?? null}
+      savedArea={savedArea} areas={adapter?.getAreas() ?? []} pitch={pitch} pitchConfirmed={pitchConfirmed}
+      onConfirmPitch={() => setPitchConfirmed(true)}
+      scanInfo={adapter?.getAiOutlineScanInfo() ?? null}
       candidateCount={candidates.length} candidateIndex={candidateIndex} viewControls={viewControls}
       onManual={startManual} onArea={openArea} onCalibrate={onCalibrate}
       onScan={() => requestLeave('Replace the draft with an AI scan', () => { void runScan(); })} onCancelScan={cancelScan}
@@ -346,7 +361,7 @@ export function useTouchOutlineEditor(active: boolean, getAdapter: () => TouchOu
       onClose={() => apply(closeOutline)} onDone={done}
       onEdit={() => { setStage('editing'); const id = selectedId ?? ids[0]; if (id) apply((s) => selectVertex(s, id, true)); }}
       onCancel={() => requestLeave('Discard this outline', clear)} onSave={(choice) => { void save(choice); }}
-      onPitchChange={onPitchChange} onTypePitch={() => setPitchEntry(String(pitch))} />;
+      onPitchChange={onPitchChangeAndUnconfirm} onTypePitch={() => setPitchEntry(String(pitch))} />;
   const overlay = active ? <OutlineCanvas bindSurface={view.bindSurface} camera={camera} scene={scene}
     imageUrl={imageUrl} session={stale ? null : session} selectedIndex={selectedIndex} error={raster.error}>
     {pendingLeave && <FloatingCanvasSheet label="Unsaved outline" dialog modal>

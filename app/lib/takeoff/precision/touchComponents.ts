@@ -10,12 +10,26 @@
 // (not just the six system types) can be opened, drawn and persisted
 // against its real id - custom components arrive in the quote builder
 // priced, with no placeholder mapping.
+//
+// M11 (2026-09-23 owner pass): entries carry a KIND so the drawing tool
+// follows the component's measurement type - lineal = two points, area =
+// polygon, count/item = single placement. AI-scan system groups are
+// placeholders: the detail page offers "attach real component" (desktop
+// parity) and area components can reuse a saved roof area instead of a
+// redraw.
 import type { SemanticKey } from '../aiComponentRegistry';
 
 /** Client-side stage labels for the two continuation scans. */
 export type TouchComponentScanStage = 'lines' | 'classify';
 
-/** One lineal entry inside a component group (review granularity, P3/F4). */
+/** How an entry is measured (mirrors the desktop tool choice). */
+export type TouchEntryKind = 'line' | 'area' | 'point';
+
+/** Which drawing interaction the touch flow uses for a component. */
+export type TouchDrawMode = 'line' | 'polygon' | 'point';
+
+/** One entry inside a component group (review granularity, P3/F4).
+ * M11: kind decides value semantics + rendering + persist row type. */
 export interface TouchComponentEntry {
   id: string;
   /** Group key: the component_library id, or 'uncertain' for review-only detections. */
@@ -24,11 +38,20 @@ export interface TouchComponentEntry {
   componentId: string | null;
   displayName: string;
   colour: string;
-  /** Real-world length in calibration units (AiMeasurement.value). */
+  /** line = length in calibration units; area = unit^2; point = 1 (count). */
   value: number;
+  /** Measurement kind (M11). Scan lineal entries default to 'line'. */
+  kind: TouchEntryKind;
   hidden: boolean;
-  /** Canvas-space endpoints [start, end]. */
+  /** Canvas-space points: 2 endpoints (line), polygon vertices (area), or 1 point. */
   points: { x: number; y: number }[];
+  /** Area entries attached to a saved roof area: the source outline's
+   * geometryId (persisted as entryInputs.source_geometry_id). */
+  fromRoofAreaId?: string;
+  /** DB quote_roof_areas id for attached entries (persist stamp). */
+  quoteRoofAreaId?: string | null;
+  /** Plan-space area snapshot for attached entries (entryInputs.plan_value). */
+  planValue?: number;
 }
 
 /** One colour swatch group in the components rail. */
@@ -37,19 +60,24 @@ export interface TouchComponentGroup {
   componentId: string | null;
   displayName: string;
   colour: string;
-  /** Number of line entries in this group. */
+  /** Number of entries in this group. */
   count: number;
 }
 
 /** A component the user can open and draw entries for (F4: ANY library
  * component; system types keep their registry name and colour, customs get
- * a stable palette colour). */
+ * a stable palette colour). M11 adds measurement type + system flag so the
+ * rail can branch the draw tool and show placeholder attach. */
 export interface TouchComponentTarget {
   componentId: string;
   /** Semantic key when this is a system type; null for custom components. */
   key: SemanticKey | null;
   displayName: string;
   colour: string;
+  /** component_library.measurement_type (nullable). */
+  measurementType?: string | null;
+  /** System components (AI placeholders) offer "attach real component". */
+  isSystem?: boolean;
 }
 
 export type TouchComponentScanResult =
@@ -63,6 +91,34 @@ export const COMPONENT_SCAN_DISCLAIMER =
 /** Short D1 notice shown after the AI outline scan imports. */
 export const OUTLINE_SCAN_DISCLAIMER =
   'This outline came from an AI scan. AI results are a best guess - check the points and adjust anything that looks off before you save.';
+
+/** M11: second post-scan education modal (owner 2026-09-23): scan-assist
+ * defaults are placeholders - attach a real product before finishing. */
+export const PLACEHOLDER_ATTACH_NOTICE =
+  'The scan measures with default (placeholder) components - they have no pricing. Open each colour, check its lines, then use "Attach real component" to swap in a product from your library. Anything still attached to a default when you save will reach the quote without a price.';
+
+/** M11: pick the touch drawing interaction from the component's
+ * measurement type (mirrors the desktop applyToolForType branching). */
+export function drawModeForMeasurementType(measurementType?: string | null): TouchDrawMode {
+  const mt = (measurementType ?? '').toLowerCase();
+  if (mt === 'area' || mt === 'irregular_area') return 'polygon';
+  if (mt === 'count' || mt === 'quantity' || mt === 'fixed' || mt === 'hours_days') return 'point';
+  return 'line'; // lineal, linear, curved_line, multi_lineal*, LxH, volume, unknown
+}
+
+/** M11: unit suffix for an entry row ("m"/"ft", "m2"/"ft2", each). */
+export function unitSuffixForKind(kind: TouchEntryKind, unit: 'meters' | 'feet'): string {
+  if (kind === 'area') return unit === 'meters' ? 'm²' : 'ft²';
+  if (kind === 'point') return '';
+  return unit === 'meters' ? 'm' : 'ft';
+}
+
+/** M11: true when the group's component is a seeded AI system placeholder. */
+export function componentIsSystemPlaceholder(componentId: string | null,
+  components: { id: string; is_system?: boolean }[]): boolean {
+  if (!componentId) return false;
+  return !!components.find(c => c.id === componentId)?.is_system;
+}
 
 /** "3 x Ridges, 2 x Valley" style summary for the D2 disclaimer. */
 export function componentGroupSummary(groups: TouchComponentGroup[]): string {
@@ -91,4 +147,16 @@ export function groupsFromEntries(entries: TouchComponentEntry[]): TouchComponen
     groups.push(group);
   }
   return groups;
+}
+
+/** Shoelace polygon area in canvas units (used for drawn area entries). */
+export function polygonAreaCanvas(points: { x: number; y: number }[]): number {
+  if (points.length < 3) return 0;
+  let sum = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    sum += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(sum) / 2;
 }

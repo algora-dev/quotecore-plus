@@ -15,7 +15,8 @@ export interface TouchOutlineRailProps {
   canPrevious: boolean; canNext: boolean; canInsert: boolean; canDelete: boolean;
   canUndo: boolean; canRedo: boolean; planArea: string | null;
   savedArea: SavedOutlineRecord | null; areas: SavedOutlineRecord[];
-  pitch: number; scanInfo: AiOutlineScanInfo | null; candidateCount: number; candidateIndex: number;
+  pitch: number; pitchConfirmed: boolean; onConfirmPitch: () => void;
+  scanInfo: AiOutlineScanInfo | null; candidateCount: number; candidateIndex: number;
   viewControls: ReactNode;
   onManual: () => void; onScan: () => void; onCancelScan: () => void; onCalibrate?: () => void;
   onArea: (area: SavedOutlineRecord) => void; onCandidate: (index: number) => void;
@@ -32,10 +33,14 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
     if (p.stage === 'scanning') return <RailAction onClick={p.onCancelScan}>Cancel scan</RailAction>;
     if (p.stage === 'finish') {
       const aiReady = !!p.scanInfo && !p.scanInfo.blocked;
+      // M11 (owner 2026-09-23): a NEW outline cannot advance (components or
+      // finish) until the pitch is explicitly confirmed. A saved outline
+      // already carries its confirmed pitch.
+      const pitchGate = !!p.savedArea || p.pitchConfirmed;
       return <div className="flex flex-col gap-1">
-        {aiReady && <RailAction primary disabled={!p.ready || !!p.validation} onClick={() => p.onSave('components-ai')}>AI scan components</RailAction>}
-        <RailAction primary={!aiReady} disabled={!p.ready || !!p.validation} onClick={() => p.onSave('components-manual')}>Add components manually</RailAction>
-        <RailAction disabled={!p.ready || !!p.validation} onClick={() => p.onSave('finish')}>Save &amp; finish</RailAction>
+        {aiReady && <RailAction primary disabled={!p.ready || !!p.validation || !pitchGate} onClick={() => p.onSave('components-ai')}>AI scan components</RailAction>}
+        <RailAction primary={!aiReady} disabled={!p.ready || !!p.validation || !pitchGate} onClick={() => p.onSave('components-manual')}>Add components manually</RailAction>
+        <RailAction disabled={!p.ready || !!p.validation || !pitchGate} onClick={() => p.onSave('finish')}>Save &amp; finish</RailAction>
       </div>;
     }
     if (p.stage === 'edit' || p.stage === 'ai-review') return <RailAction primary disabled={!p.ready || !!p.validation || p.gestureBusy} onClick={p.onDone}>Done</RailAction>;
@@ -70,7 +75,13 @@ export function TouchOutlineRail(p: TouchOutlineRailProps) {
             <RailNotice>Add components before you finish, or save and go straight to the quote builder.</RailNotice>
             {p.planArea && <RailNotice>{p.planArea}</RailNotice>}
             {p.savedArea ? <RailNotice>Pitch {p.savedArea.pitch}°. The saved roof&rsquo;s name and pitch are retained.</RailNotice>
-              : <PitchControl pitch={p.pitch} onChange={p.onPitchChange} onType={p.onTypePitch} />}
+              : <>
+                <PitchControl pitch={p.pitch} onChange={p.onPitchChange} onType={p.onTypePitch} />
+                <RailAction primary={!p.pitchConfirmed} disabled={p.pitchConfirmed} onClick={p.onConfirmPitch}>
+                  {p.pitchConfirmed ? 'Pitch confirmed ✓' : `Confirm pitch ${p.pitch}°`}
+                </RailAction>
+                {!p.pitchConfirmed && <RailNotice>Confirm the pitch above to unlock the next step.</RailNotice>}
+              </>}
             <RailAction onClick={p.onEdit}>Edit outline</RailAction>
           </> : <>
             {p.stage === 'ai-review' && <>

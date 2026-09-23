@@ -1,34 +1,54 @@
 'use client';
-// M10 F1/F2/F3/F4: touch components step lifecycle. The plan is the source
-// of truth: ComponentsCanvas (plan raster + saved outline + every entry)
-// stays mounted for the WHOLE step - scan, disclaimer, review, detail and
-// the + New entry drawing (remote-move gestures). Isolation and highlight
-// are hook-local render state; the adapter holds data only. F4: ANY
-// library component opens its own drawable page via getComponentTarget.
+// M10 F1/F2/F3/F4 + M11 (2026-09-23): touch components step lifecycle. The
+// plan is the source of truth: ComponentsCanvas (plan raster + saved
+// outline + every entry) stays mounted for the WHOLE step - scan,
+// disclaimer, review, detail and drawing (remote-move gestures).
+// Isolation and highlight are hook-local render state; the adapter holds
+// data only. F4: ANY library component opens its own drawable page via
+// getComponentTarget. M11: the draw interaction follows the component's
+// measurement type (lineal = two points, area = polygon, count = single
+// placement), AI placeholder groups can attach a real product
+// (reassignComponentGroup), area components can reuse a saved roof area
+// (addRoofAreaEntry), and a second post-scan modal teaches the attach step.
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { rafterPitchFactor } from '@/app/lib/pricing/engine';
 import type { TouchOutlineAdapter } from './TouchOutlineEditor';
-import { TouchComponentsRail, type TouchComponentsPhase } from './TouchComponentsRail';
+import { TouchComponentsRail, type TouchAttachOption, type TouchComponentsPhase, type TouchRoofAreaOption } from './TouchComponentsRail';
 import { ComponentsCanvas, type EntryDraftPoint } from './ComponentsCanvas';
 import { usePrecisionCamera } from './usePrecisionCamera';
 import { FloatingCanvasSheet } from './FloatingCanvasSheet';
 import { RailAction, RailViewControls } from './TouchRailControls';
 import {
   COMPONENT_SCAN_DISCLAIMER,
+  PLACEHOLDER_ATTACH_NOTICE,
   componentGroupSummary,
+  componentIsSystemPlaceholder,
+  drawModeForMeasurementType,
+  polygonAreaCanvas,
   type TouchComponentEntry,
   type TouchComponentGroup,
   type TouchComponentScanStage,
   type TouchComponentTarget,
+  type TouchDrawMode,
 } from './touchComponents';
 import { logTakeoffEvent } from './takeoffDiagnostics';
 
 export interface TouchComponentsOptions {
   finishHref: string;
   mode: 'ai' | 'manual';
-  components: { id: string; name: string; collection_id?: string | null }[];
+  components: { id: string; name: string; collection_id?: string | null; is_system?: boolean; measurement_type?: string | null }[];
   collections: { id: string; name: string }[];
 }
+
+/** Active drawing draft. Line = two confirm-locked endpoints; polygon =
+ * tap-appended corners (the last one is remote-movable); point = one
+ * remote-movable marker. */
+type DrawState =
+  | { mode: 'line'; slot: 0 | 1; p1: EntryDraftPoint | null; p2: EntryDraftPoint | null }
+  | { mode: 'polygon'; pts: EntryDraftPoint[] }
+  | { mode: 'point'; p: EntryDraftPoint | null }
+  | null;
 
 export interface TouchComponentsParts {
   rail: ReactNode;
@@ -48,6 +68,8 @@ export function useTouchComponents(
   adapterRef.current = getAdapter;
   const modeRef = useRef(options.mode);
   modeRef.current = options.mode;
+  const componentsRef = useRef(options.components);
+  componentsRef.current = options.components;
   const activeRef = useRef(active);
   activeRef.current = active;
   const [phase, setPhase] = useState<TouchComponentsPhase>(options.mode === 'ai' ? 'scanning' : 'review');
@@ -60,8 +82,8 @@ export function useTouchComponents(
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [libraryId, setLibraryId] = useState('');
   const [componentId, setComponentId] = useState<string | null>(null);
-  const [drawSlot, setDrawSlot] = useState<0 | 1 | null>(null);
-  const [draft, setDraft] = useState<{ p1: EntryDraftPoint | null; p2: EntryDraftPoint | null }>({ p1: null, p2: null });
+  const [draw, setDraw] = useState<DrawState>(null);
+  const [attachNoticeOpen, setAttachNoticeOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const startedRef = useRef(false);
@@ -69,6 +91,8 @@ export function useTouchComponents(
   const detailKey = detail?.componentId ?? null;
   const isolated = detailKey;
   const canDrawNew = !!detail && detail.componentId !== 'uncertain';
+  const drawMode: TouchDrawMode = detail ? drawModeForMeasurementType(detail.measurementType) : 'line';
+  const detailIsPlaceholder = componentIsSystemPlaceholder(detail?.componentId ?? null, options.components);
 
   const scene = adapter?.getScene() ?? null;
   const imageUrl = adapter?.getImageUrl() ?? null;
@@ -82,6 +106,8 @@ export function useTouchComponents(
     const saved = [...(adapter?.getAreas() ?? [])].filter(a => a.points.length >= 3).pop();
     return saved ? saved.points.map(p => ({ x: p.x, y: p.y })) : [];
   })();
+  const scale = adapter?.getScale() ?? null;
+  const unitSystem: 'meters' | 'feet' = scale?.unit === 'feet' ? 'feet' : 'meters';
 
   const refreshFromAdapter = useCallback(() => {
     const current = adapterRef.current();
@@ -90,8 +116,7 @@ export function useTouchComponents(
   }, []);
 
   const cancelDraw = useCallback(() => {
-    setDrawSlot(null);
-    setDraft({ p1: null, p2: null });
+    setDraw(null);
   }, []);
 
   const runScan = useCallback(async () => {
@@ -137,6 +162,7 @@ export function useTouchComponents(
     setEntries([]);
     setDetail(null);
     setHighlighted(null);
+    setAttachNoticeOpen(false);
     cancelDraw();
   }, [active, cancelDraw]);
 
@@ -172,19 +198,74 @@ export function useTouchComponents(
     refreshFromAdapter();
   }, [refreshFromAdapter]);
 
-  // F2: + New entry drawing - tap places, press-anywhere-and-drag moves the
-  // point at an offset (remote move), Confirm locks. See ComponentsCanvas.
+  // M11: attach a real product to the open AI placeholder group - the
+  // adapter re-keys every entry to the chosen component (desktop parity).
+  const onAttachComponent = useCallback((toComponentId: string) => {
+    const current = adapterRef.current();
+    const from = detail?.componentId;
+    if (!current?.reassignComponentGroup || !from || from === toComponentId) return;
+    current.reassignComponentGroup(from, toComponentId);
+    const target = current.getComponentTarget?.(toComponentId) ?? null;
+    if (target) setDetail(target);
+    setComponentId(toComponentId);
+    setHighlighted(null);
+    refreshFromAdapter();
+    logTakeoffEvent('components.placeholder.attached', { from, to: toComponentId });
+  }, [detail, refreshFromAdapter]);
+
+  // M11: area component + saved outline - attach the roof area instead of
+  // redrawing it (pitched value; the save path recomputes from live pitch).
+  const onAttachRoofArea = useCallback((geometryId: string) => {
+    const current = adapterRef.current();
+    const area = current?.getAreas?.().find(a => a.geometryId === geometryId);
+    if (!current?.addRoofAreaEntry || !area || !detail) return;
+    const entry = current.addRoofAreaEntry(detail, area);
+    if (entry) {
+      refreshFromAdapter();
+      logTakeoffEvent('components.entry.roofarea.attached', { component: detail.displayName });
+    }
+  }, [detail, refreshFromAdapter]);
+
+  // Drawing - the interaction follows the component's measurement type.
   const onStartNewEntry = useCallback(() => {
-    setDraft({ p1: null, p2: null });
-    setDrawSlot(0);
-    logTakeoffEvent('components.entry.draw.started');
-  }, []);
+    if (!detail) return;
+    const mode = drawModeForMeasurementType(detail.measurementType);
+    setDraw(mode === 'line' ? { mode, slot: 0, p1: null, p2: null }
+      : mode === 'polygon' ? { mode, pts: [] }
+        : { mode, p: null });
+    logTakeoffEvent('components.entry.draw.started', { component: detail.displayName, mode });
+  }, [detail]);
+
+  const saveEntry = useCallback((target: TouchComponentTarget, points: EntryDraftPoint[]) => {
+    const entry = adapterRef.current()?.addComponentEntry?.(target, points);
+    if (entry) {
+      logTakeoffEvent('components.entry.draw.saved', { component: entry.displayName, mode: entry.kind, value: entry.value });
+      cancelDraw();
+      refreshFromAdapter();
+    }
+    return entry;
+  }, [cancelDraw, refreshFromAdapter]);
+
   const onTapPlace = useCallback((point: EntryDraftPoint) => {
-    if (drawSlot === 0) setDraft(d => ({ ...d, p1: point }));
-    else if (drawSlot === 1) setDraft(d => ({ ...d, p2: point }));
-  }, [drawSlot]);
+    setDraw(d => {
+      if (!d) return d;
+      if (d.mode === 'line') return d.slot === 0 ? { ...d, p1: point } : { ...d, p2: point };
+      if (d.mode === 'polygon') return { ...d, pts: [...d.pts, point] };
+      return { ...d, p: point };
+    });
+  }, []);
+  // slot semantics per mode: line 0/1 -> p1/p2; polygon -> last corner;
+  // point -> the marker.
   const onDraftMove = useCallback((slot: 0 | 1, point: EntryDraftPoint) => {
-    setDraft(d => (slot === 0 ? { ...d, p1: point } : { ...d, p2: point }));
+    setDraw(d => {
+      if (!d) return d;
+      if (d.mode === 'line') return slot === 0 ? { ...d, p1: point } : { ...d, p2: point };
+      if (d.mode === 'polygon') {
+        if (!d.pts.length) return d;
+        return { ...d, pts: [...d.pts.slice(0, -1), point] };
+      }
+      return { ...d, p: point };
+    });
   }, []);
   const onPanBy = useCallback((dx: number, dy: number) => {
     setCamera(cam => (cam ? { ...cam, tx: cam.tx + dx, ty: cam.ty + dy } : cam));
@@ -199,21 +280,25 @@ export function useTouchComponents(
     });
   }, [setCamera, zoomBounds]);
   const onConfirmPoint = useCallback(() => {
-    if (!detail) return;
-    if (drawSlot === 0) {
-      if (!draft.p1) return;
-      setDrawSlot(1);
+    if (!detail || !draw) return;
+    if (draw.mode === 'line') {
+      if (draw.slot === 0) {
+        if (!draw.p1) return;
+        setDraw({ ...draw, slot: 1 });
+        return;
+      }
+      if (draw.p1 && draw.p2) saveEntry(detail, [draw.p1, draw.p2]);
       return;
     }
-    if (drawSlot === 1 && draft.p1 && draft.p2) {
-      const entry = adapterRef.current()?.addComponentEntry?.(detail, draft.p1, draft.p2);
-      if (entry) {
-        logTakeoffEvent('components.entry.draw.saved', { component: entry.displayName, value: entry.value });
-        cancelDraw();
-        refreshFromAdapter();
-      }
-    }
-  }, [drawSlot, draft, detail, cancelDraw, refreshFromAdapter]);
+    if (draw.mode === 'point' && draw.p) saveEntry(detail, [draw.p]);
+  }, [draw, detail, saveEntry]);
+  const onUndoPolygonPoint = useCallback(() => {
+    setDraw(d => (d?.mode === 'polygon' ? { ...d, pts: d.pts.slice(0, -1) } : d));
+  }, []);
+  const onClosePolygon = useCallback(() => {
+    if (!detail || !draw || draw.mode !== 'polygon' || draw.pts.length < 3) return;
+    saveEntry(detail, draw.pts);
+  }, [draw, detail, saveEntry]);
 
   const onLibraryChange = useCallback((id: string) => {
     setLibraryId(id);
@@ -230,7 +315,12 @@ export function useTouchComponents(
     setHighlighted(null);
   }, [cancelDraw]);
 
-  const onAcceptDisclaimer = useCallback(() => setPhase('review'), []);
+  const onAcceptDisclaimer = useCallback(() => {
+    setPhase('review');
+    // M11: teach the attach step when the scan produced placeholders.
+    const hasPlaceholder = groups.some(g => componentIsSystemPlaceholder(g.componentId, componentsRef.current));
+    if (modeRef.current === 'ai' && hasPlaceholder) setAttachNoticeOpen(true);
+  }, [groups]);
   const onDiscardResults = useCallback(() => {
     cancelDraw();
     adapterRef.current()?.clearComponentOverlay?.();
@@ -238,6 +328,7 @@ export function useTouchComponents(
     setEntries([]);
     setDetail(null);
     setHighlighted(null);
+    setAttachNoticeOpen(false);
     setPhase('review');
   }, [cancelDraw]);
   const onRetry = useCallback(() => { void runScan(); }, [runScan]);
@@ -273,9 +364,33 @@ export function useTouchComponents(
   const filteredComponents = libraryId
     ? options.components.filter(c => (c.collection_id ?? null) === libraryId)
     : options.components;
+  const attachOptions: TouchAttachOption[] = options.components
+    .filter(c => !c.is_system)
+    .map(c => ({ id: c.id, name: c.name, collectionId: c.collection_id ?? null }));
+  // Saved outlines (persisted ones only) offered for area reuse, with the
+  // pitched value the entry will carry (recomputed live at save time).
+  const roofAreas: TouchRoofAreaOption[] = (() => {
+    const areas = adapter?.getAreas() ?? [];
+    return areas
+      .filter(a => a.points.length >= 3 && !!a.geometryId && !!a.quoteRoofAreaId)
+      .map(a => {
+        const plan = scale ? polygonAreaCanvas(a.points.map(p => ({ x: p.x, y: p.y }))) * scale.scale * scale.scale : 0;
+        const pitched = plan * (a.pitch ? rafterPitchFactor(a.pitch) : 1);
+        const unit2 = unitSystem === 'meters' ? 'm²' : 'ft²';
+        return {
+          geometryId: a.geometryId as string,
+          name: a.name,
+          label: `${pitched.toFixed(1)} ${unit2}${a.pitch ? ` (pitch ${Math.round(a.pitch)}°)` : ''}`,
+        };
+      });
+  })();
   const detailEntries = detailKey ? entries.filter(e => e.key === detailKey) : [];
-  const unitLabel = adapter?.getScale()?.unit === 'meters' ? 'm' : 'ft';
-  const draftReady = drawSlot === 0 ? !!draft.p1 : drawSlot === 1 ? !!draft.p2 : false;
+  const draftReady = (() => {
+    if (!draw) return false;
+    if (draw.mode === 'line') return draw.slot === 0 ? !!draw.p1 : !!draw.p2;
+    if (draw.mode === 'point') return !!draw.p;
+    return false;
+  })();
   const drawViewControls = <RailViewControls onFit={fit} onZoomIn={() => zoomBy(1.25)} onZoomOut={() => zoomBy(0.8)} disabled={!camera} />;
 
   const rail = active ? <TouchComponentsRail
@@ -286,23 +401,39 @@ export function useTouchComponents(
     selectedLibraryId={libraryId} selectedComponentId={componentId}
     detailKey={detailKey} detailName={detail?.displayName ?? null} detailColour={detail?.colour ?? null}
     canDrawNew={canDrawNew}
+    detailIsPlaceholder={detailIsPlaceholder}
+    attachOptions={attachOptions}
+    onAttachComponent={onAttachComponent}
+    drawMode={drawMode}
+    roofAreas={roofAreas}
+    onAttachRoofArea={onAttachRoofArea}
     detailEntries={detailEntries}
-    highlightedEntryId={highlighted} unitLabel={unitLabel}
-    drawSlot={drawSlot} draftReady={draftReady} viewControls={drawViewControls} saving={saving}
+    highlightedEntryId={highlighted} unitSystem={unitSystem}
+    drawActive={draw != null} drawSlot={draw?.mode === 'line' ? draw.slot : null}
+    polygonCount={draw?.mode === 'polygon' ? draw.pts.length : 0}
+    draftReady={draftReady} viewControls={drawViewControls} saving={saving}
     onLibraryChange={onLibraryChange} onComponentChange={onComponentChange}
     onOpenDetail={onOpenDetail} onBackFromDetail={onBackFromDetail}
     onHighlight={onHighlight} onHideToggle={onHideToggle} onDeleteEntry={onDeleteEntry}
-    onStartNewEntry={onStartNewEntry} onConfirmPoint={onConfirmPoint} onCancelDraw={cancelDraw}
+    onStartNewEntry={onStartNewEntry} onConfirmPoint={onConfirmPoint}
+    onUndoPolygonPoint={onUndoPolygonPoint} onClosePolygon={onClosePolygon} onCancelDraw={cancelDraw}
     onRetry={onRetry} onCancelScan={onCancelScan}
     onSaveContinue={onSaveContinue} /> : null;
 
   // F1: the canvas is mounted for the ENTIRE step - the plan (raster +
   // outline + entries) is the source of truth and never goes blank. The
   // disclaimer sheet rides on top of it.
+  const canvasDraft = draw?.mode === 'line'
+    ? { p1: draw.p1, p2: draw.p2 }
+    : draw?.mode === 'point'
+      ? { p1: draw.p, p2: null }
+      : { p1: null, p2: null };
   const overlay = !active ? null : (
     <ComponentsCanvas bindSurface={bindSurface} camera={camera} scene={scene} imageUrl={imageUrl}
       outlinePoints={outlinePoints} entries={entries} isolatedKey={isolated}
-      highlightedId={highlighted} drawSlot={drawSlot} draft={draft}
+      highlightedId={highlighted} drawMode={draw?.mode ?? null}
+      drawSlot={draw?.mode === 'line' ? draw.slot : draw?.mode === 'point' ? 0 : null}
+      draft={canvasDraft} polygonDraft={draw?.mode === 'polygon' ? draw.pts : []}
       onTapPlace={onTapPlace} onDraftMove={onDraftMove} onPanBy={onPanBy} onZoomAt={onZoomAt} error={null}>
       {phase === 'disclaimer' && (
         <FloatingCanvasSheet label="AI component scan results" dialog modal>
@@ -312,6 +443,15 @@ export function useTouchComponents(
             <p>{COMPONENT_SCAN_DISCLAIMER}</p>
             <RailAction primary onClick={onAcceptDisclaimer}>I understand - review results</RailAction>
             <RailAction onClick={onDiscardResults}>Discard results</RailAction>
+          </div>
+        </FloatingCanvasSheet>
+      )}
+      {attachNoticeOpen && (
+        <FloatingCanvasSheet label="Attach your products" dialog modal>
+          <div className="space-y-2 text-sm text-white">
+            <div className="text-base font-semibold">Scan-assist default components</div>
+            <p>{PLACEHOLDER_ATTACH_NOTICE}</p>
+            <RailAction primary onClick={() => setAttachNoticeOpen(false)}>Got it</RailAction>
           </div>
         </FloatingCanvasSheet>
       )}

@@ -355,7 +355,11 @@ export function TouchWorkspaceShell({
         style={active ? { width: wideRail ? 272 : 208, maxWidth: 'calc(100% - 96px)' } : undefined}
         aria-label="Takeoff controls"
       >
-        <div className={wideRail ? 'hidden' : 'flex shrink-0 items-center gap-1 p-1'}>
+        {/* M8 rail header - ALWAYS visible (M11 fix 2026-09-23): the step
+            label + hamburger (menu/diagnostics) were being hidden whenever a
+            step used the wide rail, which stranded owners in the components
+            step with no menu. */}
+        <div className="flex shrink-0 items-center gap-1 p-1">
           <span
             aria-live="polite"
             className="min-w-0 flex-1 truncate rounded-full bg-white/10 px-2.5 py-2 text-center text-[11px] font-semibold uppercase tracking-wide text-slate-300"
