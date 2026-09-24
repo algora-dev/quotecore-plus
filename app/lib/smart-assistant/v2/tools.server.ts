@@ -28,22 +28,25 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
     const readableKinds = ENTITY_KINDS.filter(kind => access.permissions[ENTITY_SECTIONS[kind]] !== 'hidden');
     const tools: Record<string, RegisteredTool> = {
         find_records: {
-            schema: { name: 'find_records', description: 'Find authorised quotes, separate drafts, material orders, invoices, library components or quote-derived customer contacts. Fuzzy names and exact numbers. Up to ten matches. Disambiguate instead of guessing. Results create real Open buttons.',
-                parameters: { type: 'object', properties: { kind: { type: 'string', enum: ['all', ...readableKinds] }, query: { type: 'string', maxLength: 120 } }, required: ['kind', 'query'], additionalProperties: false } },
+            schema: { name: 'find_records', description: 'Find authorised quotes, separate drafts, material orders, invoices, library components or quote-derived customer contacts. Fuzzy names and exact numbers; up to ten matches. OMIT the query (with a kind) to list that record kind NEWEST FIRST - use that for "most recent / latest / last" requests, then read or open the first result directly. Results create real Open buttons.',
+                parameters: { type: 'object', properties: { kind: { type: 'string', enum: ['all', ...readableKinds] }, query: { type: 'string', maxLength: 120 } }, required: ['kind'], additionalProperties: false } },
             handler: async (args) => {
                 await guard();
-                if (typeof args.kind !== 'string' || !['all', ...ENTITY_KINDS].includes(args.kind) || typeof args.query !== 'string' || args.query.length > 120)
+                const rawQuery = typeof args.query === 'string' ? args.query : '';
+                if (typeof args.kind !== 'string' || !['all', ...ENTITY_KINDS].includes(args.kind) || rawQuery.length > 120)
                     return { error: 'Choose a valid record type and a short search.' };
-                const hits = await searchRecords(input.supabase, access, args.kind as SearchKind, args.query.trim());
+                const query = rawQuery.trim();
+                const recency = !query;
+                const hits = await searchRecords(input.supabase, access, args.kind as SearchKind, query);
                 const options: RecordOption[] = hits.map(({ kind, id, label, detail }) => ({ kind, id, label, detail }));
                 const sections = hits.map((hit) => hit.section);
                 // Customer hits are derived from quotes. Require their source section too.
                 for (const hit of hits)
                     if (hit.kind === 'customer')
                         sections.push(hit.fields.source_status === 'draft' ? 'draft_quotes' : 'quotes');
-                const cardId = await emit(sections, { kind: 'records', title: hits.length ? 'Matching records' : 'No matching records', options, autoOpen: false,
-                    note: args.kind === 'customer' ? 'Contacts are read from permitted quotes; there is no separate customer profile page.' : 'Matches are suggestions. Choose the correct item; do not assume a fuzzy first result is correct.' });
-                return { records: hits, cardId, ambiguous: hits.length > 1, note: 'Only quote numbers, record values and dates in this result are verified. No approximate total calculation.' };
+                const cardId = await emit(sections, { kind: 'records', title: hits.length ? (recency ? 'Newest records' : 'Matching records') : 'No matching records', options, autoOpen: false,
+                    note: args.kind === 'customer' ? 'Contacts are read from permitted quotes; there is no separate customer profile page.' : recency ? 'Ordered newest first. The first row is the newest permitted record of this kind.' : 'Matches are suggestions. Choose the correct item; do not assume a fuzzy first result is correct.' });
+                return { records: hits, cardId, newestFirst: recency, ambiguous: !recency && hits.length > 1, note: recency ? 'Ordered newest first by last update. For a "most recent" request the first record is the answer; open it directly.' : 'Only quote numbers, record values and dates in this result are verified. No approximate total calculation.' };
             },
         },
         read_record: {
@@ -149,7 +152,10 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         'SMART ASSISTANT V2 CONTRACT:',
         'Use only tools available in this turn. Permissions are enforced on every read and action.',
         'Draft quotes and other quotes have separate permissions. Customer contacts are derived from authorised source quotes, not a separate customer directory.',
-        'If several records match, show options and ask which. Never select the highest fuzzy score as proof of identity.',
+        'A direct command with an obvious answer must be executed in this turn, not interrogated. For "most recent / latest / last X" requests call find_records with that kind and NO query (returns newest first), then immediately open_record the first result and state its date and that it is the newest permitted match. Ask a follow-up question only when records genuinely tie, such as the same name with no ordering cue.',
+        'When the user asked for a specific name or number, never guess between similar fuzzy matches; show the options and ask.',
+        'If a search with a descriptive query returns no matches, retry once with an empty query (newest-first list of that kind) before telling the user nothing was found.',
+        'When a records card is displayed, never re-list the same records in your text reply. Reply with one short sentence; the card is the interface.',
         'Use current_record for "this quote". Use open_record only for an explicit unambiguous request to open or show a record; do not repeatedly navigate while the user is trying to chat.',
         'Cards, destinations and action identities are produced by server code. Never invent a URL, confirmation token, record ID or claim that navigation proves human approval.',
         'Do not send, finalise, publish, withdraw or delete anything. No arbitrary database or HTTP tool exists.',

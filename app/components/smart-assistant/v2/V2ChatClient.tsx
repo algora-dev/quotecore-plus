@@ -317,16 +317,21 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
     const orphanCards = snapshot?.cards.filter(c => !replies.has(c.runId)) ?? [];
     return <div className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true">
     <header className={s.header}><QcButton autoFocus aria-label="Assistant menu" aria-expanded={menu} onClick={() => setMenu(!menu)}>☰ <span className="sr-only">Menu</span></QcButton><QcButton onClick={() => { voice.cancel(); setMenu(false); onHide(); }}>Hide</QcButton></header>
-    {menu && <nav className={s.menu} aria-label="Assistant menu"><div className={s.actions}>
-      <QcButton disabled={busy || unresolved} onClick={() => void newChat()}>New conversation</QcButton>
-      <QcButton aria-pressed={mode === 'voice'} onClick={() => changeMode(mode === 'voice' ? 'text' : 'voice')}>{mode === 'voice' ? 'Prefer text input' : 'Prefer voice notes'}</QcButton>
-      <QcButton onClick={() => { voice.cancel(); router.push(settingsHref); onHide(); }}>Assistant settings</QcButton>
-      {conversations.slice(0, 12).map(c => <QcButton key={c.id} disabled={busy || unresolved} aria-current={active === c.id ? 'page' : undefined} onClick={() => { voice.cancel(); setActive(c.id); setInput(''); setMenu(false); }}>{c.title || `Conversation ${new Date(c.last_active_at).toLocaleDateString()}`}</QcButton>)}
-    </div></nav>}
+    {menu && <nav className={s.menu} aria-label="Assistant menu">
+      <div className={s.menuRow}>
+        <QcButton size="sm" disabled={busy || unresolved} onClick={() => void newChat()}>New chat</QcButton>
+        <QcButton size="sm" aria-pressed={mode === 'voice'} onClick={() => changeMode(mode === 'voice' ? 'text' : 'voice')}>{mode === 'voice' ? 'Prefer text' : 'Prefer voice'}</QcButton>
+        <QcButton size="sm" onClick={() => { voice.cancel(); router.push(settingsHref); onHide(); }}>Settings</QcButton>
+      </div>
+      <p className={s.detail}>Recent conversations</p>
+      <div className={s.convList}>
+        {conversations.slice(0, 12).map(c => <QcButton key={c.id} className={s.convRow} disabled={busy || unresolved} aria-current={active === c.id ? 'page' : undefined} onClick={() => { voice.cancel(); setActive(c.id); setInput(''); setMenu(false); }}>{c.title || `Conversation ${new Date(c.last_active_at).toLocaleDateString()}`}</QcButton>)}
+      </div>
+    </nav>}
     <div className={s.messages} ref={scroll} onScroll={() => { const el = scroll.current; if (el)
         nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100; }} aria-label="Conversation">
       {!snapshot?.messages.length && <><h2>{assistantName}</h2><p>{greeting || 'Tell me what you need to find or change. I will ask you to review important actions.'}</p><div className={s.actions}>
-        {(snapshot?.access ?? access).permissions.draft_quotes !== 'hidden' && <QcButton disabled={busy || locked} onClick={() => void send('Show me my recent draft quotes.')}>Find a draft quote</QcButton>}
+        {(snapshot?.access ?? access).permissions.draft_quotes !== 'hidden' && <QcButton disabled={busy || locked} onClick={() => void send('Open my most recent draft.')}>Open my latest draft</QcButton>}
         {access.phases.p2 && <QcButton disabled={busy || locked} onClick={() => void send('What needs my attention today?')}>What needs attention?</QcButton>}
       </div>{access.historyAfter && <p className={s.detail}>Earlier messages may be withheld after an access change.</p>}</>}
       {snapshot?.messages.map(m => <div key={m.id}><div className={`${s.message} ${m.role === 'user' ? s.user : ''}`}><SafeMessage content={m.content}/></div>
