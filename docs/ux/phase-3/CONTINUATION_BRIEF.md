@@ -1,6 +1,6 @@
 # QuoteCore+ | Fresh-chat continuation brief
 
-Read alongside the LATEST integrated code ZIP and UI standard v2.3. Update this file with Gavin's next integration result before continuing. Current Phase 3 is a candidate, not yet owner-approved in-browser.
+Read alongside the LATEST integrated code ZIP and UI standard v2.3. **INTEGRATION RESULT 2026-09-24 (Gavin): Phase 3 integrated at commit 4c7ba900, deployed to quotecore-plus-testing, and owner-approved in browser the same evening.** Owner quote: the sidebar edge tab is "really nice" and overall Phase 3 "everything on it is great"; Job Spaces works but reads "a little busy" - a future pass should simplify the list presentation without removing capabilities. P3-LIST-01 is RESOLVED in code (authoritative company-scoped non-draft head-count feeds an honest partial-load warning when the unpaginated read cap is exceeded). Quotes and Drafts are unchanged and verified (QuotesList byte-identical). Next baseline for the external agent: quotecore-plus-phase3-integrated-2026-09-24.zip (contains UX phases 1+2AB+3 and Smart Assistant V2 P0-P4 code; the assistant UI/behaviour is under separate owner-led iteration by Gavin - do not restyle or restructure assistant-owned files without a new explicit instruction).
 
 ## Product and goal
 
@@ -25,7 +25,7 @@ Job Space should remain extendable for future project scheduling/tasks/team but 
 
 ## Open items to reconcile with Gavin's next update
 
-- P3-LIST-01: existing quote/revision reads are unpaginated. Verify/full-wire large-tenant completeness before claiming every job is present. UI has optional authoritative nonDraftCount and partial/error states.
+- P3-LIST-01: RESOLVED 2026-09-24 (see integration result above). The UI keeps its optional nonDraftCount and partial/error states.
 - JOB-01: linked orders/invoices was deferred by integrator; do not fabricate associations.
 - HOME-01 already wired. No rework needed in this phase.
 - Historical G01 remains behaviour-locked; reconcile G02/G03/G05 retest status with latest owner/integration evidence rather than inferring fixes.
