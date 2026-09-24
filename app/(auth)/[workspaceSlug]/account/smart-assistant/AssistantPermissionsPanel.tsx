@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useRef, useState } from 'react';
+import { useCapability } from '@/app/components/smart-assistant/v2/useCapability';
 import { AssistantButton } from '@/app/components/smart-assistant/ui/AssistantButton';
 import tokens from '@/app/components/smart-assistant/ui/assistant-v2.tokens.module.css';
 import styles from '@/app/components/smart-assistant/ui/assistant-v2.module.css';
@@ -16,6 +17,8 @@ import {
 import { loadAssistantSectionPermissions, saveAssistantSectionPermissions } from './permission-actions';
 
 export function AssistantPermissionsPanel({ initialState }: { initialState: PermissionResult }) {
+  const capability=useCapability();
+  const activeV2=capability.access?.phases.p1===true;
   const id = useId();
   const [state, setState] = useState(initialState);
   const [snapshot, setSnapshot] = useState<PermissionSnapshot | null>(initialState.ok ? initialState.snapshot : null);
@@ -72,12 +75,11 @@ export function AssistantPermissionsPanel({ initialState }: { initialState: Perm
     <section className={`${tokens.scope} ${styles.panel}`} data-qc-ui="v2" data-clarity-mask="true" data-testid="sa-v2-permissions" aria-labelledby={`${id}-heading`}>
       <div className={styles.header}>
         <h2 id={`${id}-heading`} className={styles.heading}>Assistant access</h2>
-        <span className={styles.badge}>V2 setup</span>
+        <span className={styles.badge}>{activeV2?'V2 active':'V2 setup'}</span>
       </div>
-      <p className={styles.intro}>Prepare what your assistant can access in each part of QuoteCore+.</p>
+      <p className={styles.intro}>Choose what your assistant can access in each part of QuoteCore+.</p>
       <div className={styles.notice}>
-        <p><strong>Prepared settings, not active restrictions yet.</strong></p>
-        <p>These choices are saved for V2. The current read-only assistant is unchanged: Hidden does not hide data from V1, and Edit does not enable actions. V2 tools will enforce these permissions when released.</p>
+        {activeV2?<><p><strong>These permissions control V2 tools.</strong></p><p>Hidden removes a section from new assistant reads. Edit permits only supported actions in enabled phases and still requires confirmation. It does not grant general app permissions or enable email, billing or settings changes.</p></>:<><p><strong>{capability.error?'V2 availability could not be verified.':'Prepared settings until V2 is enabled.'}</strong></p><p>These choices are saved for V2. The legacy V1 assistant does not enforce section permissions. Edit alone does not enable actions; your administrator must enable the relevant V2 phase.</p></>}
       </div>
       <p className={styles.help}>Hidden: no access. View: read only. Edit: read and make changes with the required confirmation. Draft quotes have their own setting.</p>
 
@@ -127,7 +129,7 @@ export function AssistantPermissionsPanel({ initialState }: { initialState: Perm
       )}
 
       <div role="status" aria-live="polite" aria-atomic="true">
-        {saved && state.ok && <p className={styles.notice} data-tone="success">Permissions saved for V2. The current assistant is unchanged.</p>}
+        {saved && state.ok && <p className={styles.notice} data-tone="success">Permissions saved. Enabled V2 tools check the new permissions on their next request.</p>}
         {dirty && <p className={styles.help}>You have unsaved permission changes.</p>}
       </div>
       {snapshot && state.ok && (

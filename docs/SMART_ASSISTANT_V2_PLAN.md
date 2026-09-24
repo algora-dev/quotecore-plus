@@ -1,3 +1,13 @@
+# Batch amendment: P1-P4 implementation (2026-09-24)
+
+The owner has now authorised building P1, P2, P3 and P4 as one delivery, while the integrator enables and validates them one at a time. The authoritative baseline is integrated P0 at `40d5607d`, not the older main snapshot mentioned in earlier handoff documents.
+
+Read `SMART_ASSISTANT_P1_P4_IMPLEMENTATION.md` and `SMART_ASSISTANT_P1_P4_ACCEPTANCE.md` for the exact implemented surface, file map, limits and deployment gates. Nine permission sections include **Draft quotes** separately; accepted P0 defaults are unchanged.
+
+The original vision below is retained for traceability. Its immediate-mutate/auto-revert and voice-confirm descriptions are NOT implemented in this batch. A safer propose-first, requester-button option has been coded behind unpopulated service-only policy prerequisites, pending the decisions explicitly left open by the P0 integrator. Do not represent this as silently approved policy or enable P3/P4 without recording approval. P5-P7 remain later phases.
+
+---
+
 # Smart Assistant V2 Plan (draft for owner review)
 
 Date: 2026-09-24. Status: DRAFT - awaiting Shaun's review before any build.
