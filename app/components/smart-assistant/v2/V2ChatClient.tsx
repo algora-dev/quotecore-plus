@@ -312,9 +312,12 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         }
     };
     const canConfirm = (action: ActionView) => { const live = snapshot?.access ?? access; return live.phases.p3 && (action.actionKind !== 'draft_create' || live.phases.p4) && action.sections.every(section => live.permissions[section] === 'edit'); };
-    const cardsFor = (runId: string | null) => snapshot?.cards.filter(c => c.runId === runId) ?? [];
+    // Owner direction: show the answer and its final click options only.
+    // Intermediate lookup cards from the same run are trail noise and get hidden.
+    const lastCardOnly = (cards: ConversationCard[]) => cards.length > 1 ? [cards[cards.length - 1]] : cards;
+    const cardsFor = (runId: string | null) => lastCardOnly(snapshot?.cards.filter(c => c.runId === runId) ?? []);
     const replies = new Set(snapshot?.messages.filter(m => m.role === 'assistant').map(m => m.runId));
-    const orphanCards = snapshot?.cards.filter(c => !replies.has(c.runId)) ?? [];
+    const orphanCards = lastCardOnly(snapshot?.cards.filter(c => !replies.has(c.runId)) ?? []);
     return <div className={s.root} data-qc-ui="v2" data-clarity-mask="true" data-sa-v2="true">
     <header className={s.header}><QcButton autoFocus aria-label="Assistant menu" aria-expanded={menu} onClick={() => setMenu(!menu)}>☰ <span className="sr-only">Menu</span></QcButton><QcButton onClick={() => { voice.cancel(); setMenu(false); onHide(); }}>Hide</QcButton></header>
     {menu && <nav className={s.menu} aria-label="Assistant menu">

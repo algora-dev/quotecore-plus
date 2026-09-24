@@ -125,10 +125,17 @@ function toOpenAiMessages(
 }
 
 export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult> {
+  // Reasoning models (gpt-5 family) burn max_completion_tokens on hidden
+  // reasoning before any visible text. Low effort keeps tool-use quality while
+  // cutting latency and avoiding empty completions that starve the budget.
+  const reasoning = MODEL_CONFIG.chatModel.startsWith('gpt-5')
+    ? { reasoning_effort: 'low' as const }
+    : {};
   const stream = await client().chat.completions.create(
     {
       model: MODEL_CONFIG.chatModel,
       max_completion_tokens: MODEL_LIMITS.maxOutputTokens,
+      ...reasoning,
       messages: toOpenAiMessages(input.messages),
       tools: input.tools.map((t) => ({
         type: 'function' as const,

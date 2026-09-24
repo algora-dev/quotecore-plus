@@ -115,10 +115,14 @@ export function useVoiceNote(visible: boolean, onText: (text: string) => void, o
             if (current === generation.current) {
                 cancel();
                 const name = error instanceof DOMException ? error.name : '';
+                const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+                const isIOS = /iPad|iPhone|iPod/.test(ua) || (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
                 const standalone = typeof window !== 'undefined' && (window.matchMedia?.('(display-mode: standalone)').matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true);
                 if (name === 'NotAllowedError' || name === 'SecurityError')
-                    handlers.current.onError('Microphone permission was denied. Allow microphone access for this site (iPhone: Settings, then Safari or Apps, then Microphone) and try again. You can also use Type.');
-                else if (standalone)
+                    handlers.current.onError(isIOS
+                        ? 'Microphone permission was denied. Allow microphone access for this site (iPhone: Settings, then Safari or Apps, then Microphone) and try again. You can also use Type.'
+                        : 'Microphone permission was denied. Allow it for this site using the padlock or tune icon in the browser address bar, then try again. You can also use Type.');
+                else if (standalone && isIOS)
                     handlers.current.onError('Voice input is not available in the installed home-screen app on iPhone. Open this site in the Safari browser app for voice notes, or use Type.');
                 else if (name === 'NotFoundError' || name === 'OverconstrainedError')
                     handlers.current.onError('No microphone was found on this device. Use Type instead.');

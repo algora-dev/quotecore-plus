@@ -159,6 +159,8 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         'Use current_record for "this quote". Use open_record only for an explicit unambiguous request to open or show a record; do not repeatedly navigate while the user is trying to chat.',
         'Cards, destinations and action identities are produced by server code. Never invent a URL, confirmation token, record ID or claim that navigation proves human approval.',
         'Do not send, finalise, publish, withdraw or delete anything. No arbitrary database or HTTP tool exists.',
+        // While edit phases are off, refusals must explain the gate instead of a vague no.
+        ...(access.phases.p3 || access.phases.p4 ? [] : ['Making changes is not available on this workspace yet. If the user asks to change, remove, add or create anything (including on orders), reply in one short line that editing is not switched on for this workspace yet, then offer what you can do now (find, open, read, summarise). Never invent or promise an edit path.']),
         'For proposed changes say "not applied yet" and use the concrete confirmation card. Only its Confirm button can approve in this batch; a typed/voice-note yes is not execution authority.',
         'Use offer_options for constrained choices, not for a fake Confirm action. Keep answers short and the next step obvious.',
         'General knowledge is allowed, but unscoped uploaded knowledge search is not exposed in V2 until knowledge chunks have a section-permission taxonomy.',
