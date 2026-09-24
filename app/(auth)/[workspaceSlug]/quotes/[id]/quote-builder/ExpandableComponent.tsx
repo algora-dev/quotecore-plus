@@ -1,5 +1,7 @@
 'use client';
-import { useState, useRef, Fragment } from 'react';
+import { useState, useRef, useId, Fragment } from 'react';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { entryLabel, addMoreLabel, measurementTypeLabel } from '@/app/lib/types';
 import { linearInputToMetric, areaInputToMetric } from '@/app/lib/measurements/conversions';
@@ -51,6 +53,7 @@ export function ExpandableComponent({
   onSplitEntries?: (compId: string) => Promise<void>;
   copilotId?: string;
 }) {
+  const controlId = useId();
   // Phase 6.5: combine/split UX. Linear-shaped measurement types only.
   // database.types.ts is stale on the Phase 2 is_combined column; cast.
   const LINEAR_LIKE_TYPES = new Set([
@@ -252,25 +255,18 @@ export function ExpandableComponent({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 overflow-hidden" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
-      <div
-        className="flex items-center gap-2 md:gap-3 px-3 py-2.5 md:py-2 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <span className="text-xs text-slate-400 flex-shrink-0">{expanded ? '▼' : '▶'}</span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-sm text-slate-900 truncate">{comp.name}</span>
-            <span className="text-xs text-slate-400 whitespace-nowrap hidden sm:inline">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)}</span>
-          </div>
-          <span className="text-xs text-slate-500 md:hidden">
-            {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
+    <div data-qc-component="C20" className="qb-component" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
+      <div className="qb-component-heading">
+        <button type="button" id={`${controlId}-toggle`} className="qb-component-toggle"
+          aria-expanded={expanded} aria-controls={`${controlId}-panel`}
+          onClick={() => setExpanded(!expanded)}>
+          <svg aria-hidden="true" className="qb-disclosure-icon" data-expanded={expanded} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="m9 5 7 7-7 7" /></svg>
+          <span className="qb-component-name">
+            <span>{comp.name}</span>
+            <span className="qb-component-meta">{measurementTypeLabel(comp.measurement_type as any, quote.measurement_system)} · {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}</span>
           </span>
-        </div>
-        <span className="text-xs text-slate-500 whitespace-nowrap hidden md:inline">
-          {compEntries.length} {compEntries.length === 1 ? 'entry' : 'entries'}
-        </span>
-        <span className="text-xs text-slate-500 w-14 md:w-20 text-right whitespace-nowrap">
+          <span className="qb-component-quantity">
+            <span className="qb-mini-label">Quantity</span>
           {comp.priced_quantity != null ? (() => {
             const priced = Number(comp.priced_quantity);
             const packSnap = comp.pack_size_snapshot != null ? Number(comp.pack_size_snapshot) : null;
@@ -278,45 +274,41 @@ export function ExpandableComponent({
             const fractional = packSnap && !isNaN(packSnap) && packSnap > 0 ? actual / packSnap : actual;
             return <>{priced.toFixed(0)} <span className="italic text-slate-400">({fractional.toFixed(2)})</span></>;
           })() : displayValue(comp.final_quantity ?? 0)}
-        </span>
-        <span className="text-xs font-medium w-14 md:w-20 text-right whitespace-nowrap">{formatCurrency(totalCost, currency)}</span>
-        <button
-          onClick={e => {
+          </span>
+          <span className="qb-component-cost"><span className="qb-mini-label">Item + labour</span>{formatCurrency(totalCost, currency)}</span>
+        </button>
+        <QcButton size="sm" className="qc-icon-button qc-icon-danger" aria-label={`Remove ${comp.name}`}
+          title={`Remove ${comp.name}`} onClick={e => {
             e.stopPropagation();
             onRemove(comp.id);
-          }}
-          className="w-8 h-8 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-        </button>
+          }}>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M5 6l1 14h12l1-14M9 6V3h6v3M10 10v6m4-6v6" /></svg>
+        </QcButton>
       </div>
 
       {expanded && (
-        <div className="border-t border-slate-200 px-3 py-2 space-y-2">
-          <div className="flex items-center gap-2 text-xs flex-wrap">
-            <span className="text-slate-500">Input:</span>
+        <div id={`${controlId}-panel`} aria-labelledby={`${controlId}-toggle`} className="qb-component-body">
+          <div className="qb-setting-row">
+            <span className="qc-label">Input:</span>
             {(['calculated', 'final'] as InputMode[]).map(mode => (
-              <button
+              <QcButton
                 key={mode}
                 onClick={() => onUpdateSettings(comp.id, { input_mode: mode })}
-                className={`px-2 py-0.5 rounded text-xs ${
-                  comp.input_mode === mode
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                }`}
+                size="sm" aria-pressed={comp.input_mode === mode} className="qc-choice"
               >
                 {mode === 'calculated' ? 'Plan' : 'Actual'}
-              </button>
+              </QcButton>
             ))}
           </div>
 
           {roofAreas.length > 1 && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500">Area:</span>
-              <select
+            <div className="qb-setting-row">
+              <span className="qc-label">Area:</span>
+              <QcSelect
+                aria-label={`Area for ${comp.name}`}
                 value={comp.quote_roof_area_id ?? ''}
                 onChange={e => onUpdateSettings(comp.id, { quote_roof_area_id: e.target.value || null })}
-                className="px-2 py-0.5 text-xs border border-slate-300 rounded"
+                className="qb-assigned-area"
               >
                 <option value="">None</option>
                 {roofAreas.map(a => (
@@ -324,35 +316,28 @@ export function ExpandableComponent({
                     {a.label} ({(a.calc_pitch_degrees ?? 0).toFixed(1)}°)
                   </option>
                 ))}
-              </select>
+              </QcSelect>
             </div>
           )}
 
           {hasPitch && comp.input_mode === 'calculated' && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500">Pitch:</span>
-              <button
+            <div className="qb-setting-row">
+              <span className="qc-label">Pitch:</span>
+              <QcButton
                 onClick={() => onUpdateSettings(comp.id, { use_custom_pitch: false })}
-                className={`px-2 py-0.5 rounded text-xs ${
-                  !comp.use_custom_pitch
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                }`}
+                size="sm" aria-pressed={!comp.use_custom_pitch} className="qc-choice"
               >
                 Area ({areaPitch.toFixed(1)}°)
-              </button>
-              <button
+              </QcButton>
+              <QcButton
                 onClick={() => onUpdateSettings(comp.id, { use_custom_pitch: true })}
-                className={`px-2 py-0.5 rounded text-xs ${
-                  comp.use_custom_pitch
-                    ? 'bg-slate-900 text-white'
-                    : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                }`}
+                size="sm" aria-pressed={comp.use_custom_pitch} className="qc-choice"
               >
                 Custom
-              </button>
+              </QcButton>
               {comp.use_custom_pitch && (
                 <PitchInput
+                  appearance="v2"
                   degrees={comp.custom_pitch_degrees}
                   onSave={(deg) => onUpdateSettings(comp.id, { custom_pitch_degrees: deg })}
                   compact
@@ -363,12 +348,12 @@ export function ExpandableComponent({
           )}
 
           {isAreaBased && roofArea && onUseRoofArea && (
-            <button
+            <QcButton
               onClick={() => onUseRoofArea(comp.id, roofArea.computed_sqm ?? 0)}
-              className="text-xs text-emerald-600 hover:text-emerald-800 font-medium"
+              size="sm" variant="ghost"
             >
               → Use {compTradeLabels.areaSingularLabel.toLowerCase()} total ({formatArea(roofArea.computed_sqm ?? 0, quote.measurement_system)})
-            </button>
+            </QcButton>
           )}
 
           {compEntries.map((entry, idx) => {
@@ -377,13 +362,13 @@ export function ExpandableComponent({
               ? ((entry as unknown as { combined_from?: unknown[] }).combined_from ?? []).length
               : 0;
             return (
-              <div key={entry.id} className="flex items-center gap-2 text-xs">
-                <span className="text-slate-400 w-6">#{idx + 1}</span>
-                <span className="text-slate-700">
+              <div key={entry.id} className="qb-entry-row">
+                <span className="qb-entry-number">#{idx + 1}</span>
+                <span className="qb-entry-value">
                   {displayValue(entry.raw_value)}
                 </span>
                 {isCombined && (
-                  <span className="text-orange-600 font-medium text-[10px] bg-orange-50 px-1.5 py-0.5 rounded">
+                  <span className="qb-combined-label">
                     combined from {sourceCount}
                   </span>
                 )}
@@ -405,23 +390,25 @@ export function ExpandableComponent({
                   const valuesDiffer = Math.abs(entry.value_after_waste - entry.raw_value) > 1e-6;
                   if (!hasWaste && refParts.length === 0) return null;
                   return (
-                    <span className="text-slate-400">
+                    <span className="qb-entry-detail">
                       {(hasWaste || valuesDiffer) && <>→ {displayValue(entry.value_after_waste)}{' '}</>}
                       {hasWaste ? (
-                        <span className="text-slate-300">- Incl waste{refParts.length > 0 ? ` (${refParts.join(' · ')})` : ''}</span>
+                        <span className="qb-entry-detail">- Incl waste{refParts.length > 0 ? ` (${refParts.join(' · ')})` : ''}</span>
                       ) : (
-                        <span className="text-slate-300">- ({refParts.join(' · ')})</span>
+                        <span className="qb-entry-detail">- ({refParts.join(' · ')})</span>
                       )}
                     </span>
                   );
                 })()}
                 {!isCombined && (
-                  <button
+                  <QcButton
+                    aria-label={`Remove entry ${idx + 1} from ${comp.name}`}
+                    title="Remove entry"
                     onClick={() => onRemoveEntry(entry.id, comp.id)}
-                    className="ml-auto w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                    size="sm" className="qc-icon-button qc-icon-danger qb-entry-remove"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                  </button>
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                  </QcButton>
                 )}
               </div>
             );
@@ -429,22 +416,22 @@ export function ExpandableComponent({
 
           {/* Phase 6.5: combine / split lineal entries */}
           {(showCombineButton || showSplitButton) && (
-            <div className="flex items-center gap-2 mt-1 pt-1 border-t border-slate-100">
+            <div className="qb-entry-tools">
               {showCombineButton && (
-                <button
+                <QcButton
                   onClick={() => onCombineEntries?.(comp.id)}
-                  className="text-xs text-orange-600 hover:text-orange-800 font-medium"
+                  size="sm" variant="ghost"
                 >
-                  ⇋ Combine into total length + waste
-                </button>
+                  Combine into total length + waste
+                </QcButton>
               )}
               {showSplitButton && (
-                <button
+                <QcButton
                   onClick={() => onSplitEntries?.(comp.id)}
-                  className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+                  size="sm" variant="ghost"
                 >
-                  ⇅ Split back into individual lengths
-                </button>
+                  Split back into individual lengths
+                </QcButton>
               )}
             </div>
           )}
@@ -452,26 +439,28 @@ export function ExpandableComponent({
           {adding ? (
             isLxhFreestyle ? (
               // Length × Height freestyle: L and H inputs (unchanged).
-              <div className="space-y-1 mt-1">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="qb-entry-editor">
+                <div className="qb-entry-inputs">
                   {([
                     { label: 'L', val: lxhFsL, set: setLxhFsL },
                     { label: 'H', val: lxhFsH, set: setLxhFsH },
                   ] as { label: string; val: string; set: (v: string) => void }[]).map(({ label: lbl, val, set }) => (
-                    <>
+                    <Fragment key={lbl}>
                       <span key={`${lbl}-lbl`} className="text-xs text-slate-500 w-4">{lbl}</span>
-                      <input
+                      <QcInput
+                      aria-label={`${lbl === 'L' ? 'Length' : lbl === 'W' ? 'Width' : lbl === 'H' ? 'Height' : 'Depth'} (${getUnitLabel('lineal', quote.measurement_system)})`}
                         key={lbl}
                         ref={lbl === 'L' ? lxhFsRef : undefined}
                         type="number"
+                        inputMode="decimal"
                         step="0.01"
                         value={val}
                         onChange={e => set(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') void handleSubmitLxhFreestyle(); }}
                         placeholder="0"
-                        className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                        className="qb-dimension-input"
                       />
-                    </>
+                    </Fragment>
                   ))}
                   <span className="text-xs text-slate-400">{getUnitLabel('lineal' as 'lineal', quote.measurement_system)}</span>
                 </div>
@@ -481,48 +470,48 @@ export function ExpandableComponent({
                         linearInputToMetric(Number(lxhFsH), quote.measurement_system)).toFixed(2)} m²
                   </p>
                 )}
-                <div className="flex gap-2">
-                  <button onClick={() => void handleSubmitLxhFreestyle()}
+                <div className="qb-entry-actions">
+                  <QcButton onClick={() => void handleSubmitLxhFreestyle()}
                     disabled={!lxhFsL || !lxhFsH || Number(lxhFsL) <= 0 || Number(lxhFsH) <= 0}
-                    className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                    size="sm" variant="primary">
                     Add
-                  </button>
-                  <button onClick={() => { setAdding(false); setLxhFsL(''); setLxhFsH(''); }}
-                    className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                  </QcButton>
+                  <QcButton onClick={() => { setAdding(false); setLxhFsL(''); setLxhFsH(''); }}
+                    size="sm" variant="ghost">Done</QcButton>
                 </div>
               </div>
             ) : hasEntryModeToggle ? (
               // Toggleable entry: area/volume/lxh types with direct or dims mode
-              <div className="space-y-1 mt-1">
+              <div className="qb-entry-editor">
                 {/* Entry mode toggle */}
-                <div className="flex items-center gap-1">
+                <div className="qc-choice-group">
                   {(() => {
                     let modes: { key: 'direct' | 'dims' | 'volume' | 'area_depth'; label: string; title: string }[] = [];
                     if (isAreaType) {
                       modes = [
-                        { key: 'direct', label: 'Area', title: 'Enter total area (m²)' },
-                        { key: 'dims', label: 'W × L', title: 'Width × Length = area (m²)' },
+                        { key: 'direct', label: 'Area', title: `Enter total area (${getUnitLabel('area', quote.measurement_system)})` },
+                        { key: 'dims', label: 'W × L', title: `Width × Length = area (${getUnitLabel('area', quote.measurement_system)})` },
                       ];
                     } else if (isVolumePreset) {
                       modes = [
-                        { key: 'direct', label: 'Area', title: 'Area squared × preset depth = volume' },
+                        { key: 'direct', label: 'Area', title: 'Area × preset depth = volume' },
                         { key: 'dims', label: 'W × L', title: 'Width × Length × preset depth = volume' },
-                        { key: 'volume', label: 'Volume', title: 'Enter total cubic volume (m³)' },
+                        { key: 'volume', label: 'Volume', title: `Enter total cubic volume (${getUnitLabel('volume_3d', quote.measurement_system)})` },
                       ];
                     } else if (isVolume3d) {
                       modes = [
-                        { key: 'direct', label: 'Volume', title: 'Enter total cubic volume (m³)' },
-                        { key: 'dims', label: 'L × W × D', title: 'Length × Width × Depth = volume (m³)' },
-                        { key: 'area_depth', label: 'Area + Depth', title: 'Area squared × custom depth = volume (m³)' },
+                        { key: 'direct', label: 'Volume', title: `Enter total cubic volume (${getUnitLabel('volume_3d', quote.measurement_system)})` },
+                        { key: 'dims', label: 'L × W × D', title: `Length × Width × Depth = volume (${getUnitLabel('volume_3d', quote.measurement_system)})` },
+                        { key: 'area_depth', label: 'Area + Depth', title: `Area × custom depth = volume (${getUnitLabel('volume_3d', quote.measurement_system)})` },
                       ];
                     } else if (isLxhPreset) {
                       modes = [
-                        { key: 'direct', label: 'Length', title: 'Length × preset height = area (m²)' },
-                        { key: 'dims', label: 'L × H', title: 'Length × Height = area (m²)' },
+                        { key: 'direct', label: 'Length', title: `Length × preset height = area (${getUnitLabel('area', quote.measurement_system)})` },
+                        { key: 'dims', label: 'L × H', title: `Length × Height = area (${getUnitLabel('area', quote.measurement_system)})` },
                       ];
                     }
                     return modes.map(m => (
-                      <button
+                      <QcButton
                         key={m.key}
                         title={m.title}
                         onClick={() => {
@@ -542,14 +531,10 @@ export function ExpandableComponent({
                             }
                           }, 50);
                         }}
-                        className={`px-2 py-0.5 rounded text-xs ${
-                          entryMode === m.key
-                            ? 'bg-slate-900 text-white'
-                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                        }`}
+                        size="sm" aria-pressed={entryMode === m.key} className="qc-choice"
                       >
                         {m.label}
-                      </button>
+                      </QcButton>
                     ));
                   })()}
                 </div>
@@ -558,7 +543,7 @@ export function ExpandableComponent({
                   isVolume3d ? (
                     // Volume 3D (L × W × D): three separate dimension inputs.
                     <>
-                      <div className="flex items-center gap-2">
+                      <div className="qb-entry-inputs">
                         {[
                           { label: 'L', val: vol3dL, set: setVol3dL },
                           { label: 'W', val: vol3dW, set: setVol3dW },
@@ -566,15 +551,17 @@ export function ExpandableComponent({
                         ].map(({ label: lbl, val, set }) => (
                           <Fragment key={lbl}>
                             <span className="text-xs text-slate-500 w-4">{lbl}</span>
-                            <input
+                            <QcInput
+                      aria-label={`${lbl === 'L' ? 'Length' : lbl === 'W' ? 'Width' : lbl === 'H' ? 'Height' : 'Depth'} (${getUnitLabel('lineal', quote.measurement_system)})`}
                               ref={lbl === 'L' ? vol3dRef : undefined}
                               type="number"
+                        inputMode="decimal"
                               step="0.01"
                               value={val}
                               onChange={e => set(e.target.value)}
                               onKeyDown={e => { if (e.key === 'Enter') void handleSubmitVolume3d(); }}
                               placeholder="0"
-                              className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                              className="qb-dimension-input"
                             />
                           </Fragment>
                         ))}
@@ -587,40 +574,44 @@ export function ExpandableComponent({
                               linearInputToMetric(Number(vol3dD), quote.measurement_system)).toFixed(3)} m³
                         </p>
                       )}
-                      <div className="flex gap-2">
-                        <button onClick={() => void handleSubmitVolume3d()}
+                      <div className="qb-entry-actions">
+                        <QcButton onClick={() => void handleSubmitVolume3d()}
                           disabled={!vol3dL || !vol3dW || !vol3dD || Number(vol3dL) <= 0 || Number(vol3dW) <= 0 || Number(vol3dD) <= 0}
-                          className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                          size="sm" variant="primary">
                           Add
-                        </button>
-                        <button onClick={() => { setAdding(false); setVol3dL(''); setVol3dW(''); setVol3dD(''); }}
-                          className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                        </QcButton>
+                        <QcButton onClick={() => { setAdding(false); setVol3dL(''); setVol3dW(''); setVol3dD(''); }}
+                          size="sm" variant="ghost">Done</QcButton>
                       </div>
                     </>
                   ) : (
                     // Dimension entry: W×H (area, volume preset) or L×H (length_x_height)
                     <>
-                      <div className="flex items-center gap-2">
+                      <div className="qb-entry-inputs">
                         <span className="text-xs text-slate-500 w-4">{isLxhPreset ? 'L' : 'W'}</span>
-                        <input
+                        <QcInput
+                      aria-label={`${isLxhPreset ? 'Length' : 'Width'} (${getUnitLabel('lineal', quote.measurement_system)})`}
                           ref={dimRef}
                           type="number"
+                        inputMode="decimal"
                           step="0.01"
                           value={dimA}
                           onChange={e => setDimA(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') void handleSubmitDims(); }}
                           placeholder="0"
-                          className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                          className="qb-dimension-input"
                         />
                         <span className="text-xs text-slate-500 w-4">{isLxhPreset ? 'H' : 'L'}</span>
-                        <input
+                        <QcInput
+                      aria-label={`${isLxhPreset ? 'Height' : 'Length'} (${getUnitLabel('lineal', quote.measurement_system)})`}
                           type="number"
+                        inputMode="decimal"
                           step="0.01"
                           value={dimB}
                           onChange={e => setDimB(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') void handleSubmitDims(); }}
                           placeholder="0"
-                          className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                          className="qb-dimension-input"
                         />
                         <span className="text-xs text-slate-400">{getUnitLabel('lineal' as 'lineal', quote.measurement_system)}</span>
                       </div>
@@ -631,23 +622,25 @@ export function ExpandableComponent({
                           {isVolumePreset && ' (× depth → volume)'}
                         </p>
                       )}
-                      <div className="flex gap-2">
-                        <button onClick={() => void handleSubmitDims()}
+                      <div className="qb-entry-actions">
+                        <QcButton onClick={() => void handleSubmitDims()}
                           disabled={!dimA || !dimB || Number(dimA) <= 0 || Number(dimB) <= 0}
-                          className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                          size="sm" variant="primary">
                           Add
-                        </button>
-                        <button onClick={() => { setAdding(false); setDimA(''); setDimB(''); }}
-                          className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                        </QcButton>
+                        <QcButton onClick={() => { setAdding(false); setDimA(''); setDimB(''); }}
+                          size="sm" variant="ghost">Done</QcButton>
                       </div>
                     </>
                   )
                 ) : entryMode === 'volume' && isVolumePreset ? (
                   // Volume (Preset Depth) - direct volume mode: enter m³, bypass preset depth.
-                  <div className="flex items-center gap-2">
-                    <input
+                  <div className="qb-entry-inputs">
+                    <QcInput
+                      aria-label={`Volume (${getUnitLabel('volume_3d', quote.measurement_system)})`}
                       ref={inputRef}
                       type="number"
+                        inputMode="decimal"
                       step="0.01"
                       value={inputValue}
                       onChange={e => setInputValue(e.target.value)}
@@ -656,46 +649,50 @@ export function ExpandableComponent({
                         if (e.key === 'Escape') { setAdding(false); setInputValue(''); }
                       }}
                       placeholder="Enter volume"
-                      className="w-32 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                      className="qb-value-input"
                     />
                     <span className="text-xs text-slate-400">{getUnitLabel('volume_3d' as 'volume_3d', quote.measurement_system)}</span>
-                    <button
+                    <QcButton
                       onClick={() => void handleSubmitDirectVolume()}
-                      className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
+                      size="sm" variant="primary"
                     >
                       Add
-                    </button>
-                    <button
+                    </QcButton>
+                    <QcButton
                       onClick={() => { setAdding(false); setInputValue(''); }}
-                      className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700"
+                      size="sm" variant="ghost"
                     >
                       Done
-                    </button>
+                    </QcButton>
                   </div>
                 ) : entryMode === 'area_depth' && isVolume3d ? (
                   // Volume (m³) - area + custom depth mode: area² × depth = m³.
                   <>
-                    <div className="flex items-center gap-2">
+                    <div className="qb-entry-inputs">
                       <span className="text-xs text-slate-500">Area</span>
-                      <input
+                      <QcInput
+                      aria-label={`Area (${getUnitLabel('area', quote.measurement_system)})`}
                         ref={adAreaRef}
                         type="number"
+                        inputMode="decimal"
                         step="0.01"
                         value={adArea}
                         onChange={e => setAdArea(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') { if (adDepth) void handleSubmitAreaDepth(); else { (e.target as HTMLInputElement).blur(); } } }}
                         placeholder="0"
-                        className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                        className="qb-dimension-input"
                       />
                       <span className="text-xs text-slate-500">Depth</span>
-                      <input
+                      <QcInput
+                      aria-label={`Depth (${getUnitLabel('lineal', quote.measurement_system)})`}
                         type="number"
+                        inputMode="decimal"
                         step="0.01"
                         value={adDepth}
                         onChange={e => setAdDepth(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') void handleSubmitAreaDepth(); }}
                         placeholder="0"
-                        className="w-20 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                        className="qb-dimension-input"
                       />
                     </div>
                     {adArea && adDepth && Number(adArea) > 0 && Number(adDepth) > 0 && (
@@ -704,22 +701,24 @@ export function ExpandableComponent({
                             linearInputToMetric(Number(adDepth), quote.measurement_system)).toFixed(3)} m³
                       </p>
                     )}
-                    <div className="flex gap-2">
-                      <button onClick={() => void handleSubmitAreaDepth()}
+                    <div className="qb-entry-actions">
+                      <QcButton onClick={() => void handleSubmitAreaDepth()}
                         disabled={!adArea || !adDepth || Number(adArea) <= 0 || Number(adDepth) <= 0}
-                        className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-40 transition-all">
+                        size="sm" variant="primary">
                         Add
-                      </button>
-                      <button onClick={() => { setAdding(false); setAdArea(''); setAdDepth(''); }}
-                        className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700">Done</button>
+                      </QcButton>
+                      <QcButton onClick={() => { setAdding(false); setAdArea(''); setAdDepth(''); }}
+                        size="sm" variant="ghost">Done</QcButton>
                     </div>
                   </>
                 ) : (
                   // Direct single-value entry
-                  <div className="flex items-center gap-2">
-                    <input
+                  <div className="qb-entry-inputs">
+                    <QcInput
+                      aria-label={`${label} (${displayUnit})`}
                       ref={inputRef}
                       type="number"
+                        inputMode="decimal"
                       step="0.01"
                       value={inputValue}
                       onChange={e => setInputValue(e.target.value)}
@@ -734,32 +733,34 @@ export function ExpandableComponent({
                         }
                       }}
                       placeholder={`Enter ${isVolume3d ? 'volume' : isAreaType || isVolumePreset ? 'area' : isLxhPreset ? 'length' : label}`}
-                      className="w-32 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                      className="qb-value-input"
                     />
                     <span className="text-xs text-slate-400">{displayUnit}</span>
-                    <button
+                    <QcButton
                       onClick={() => isVolume3d ? void handleSubmitVolume3d() : handleSubmitEntry()}
-                      className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
+                      size="sm" variant="primary"
                     >
                       Add
-                    </button>
-                    <button
+                    </QcButton>
+                    <QcButton
                       onClick={() => {
                         setAdding(false);
                         setInputValue('');
                       }}
-                      className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700"
+                      size="sm" variant="ghost"
                     >
                       Done
-                    </button>
+                    </QcButton>
                   </div>
                 )}
               </div>
             ) : (
-            <div className="flex items-center gap-2 mt-1">
-              <input
+            <div className="qb-entry-inputs">
+              <QcInput
+                      aria-label={`${label} (${displayUnit})`}
                 ref={inputRef}
                 type="number"
+                        inputMode="decimal"
                 step="0.01"
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
@@ -771,33 +772,33 @@ export function ExpandableComponent({
                   }
                 }}
                 placeholder={`Enter ${label}`}
-                className="w-32 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                className="qb-value-input"
               />
               <span className="text-xs text-slate-400">{unit}</span>
-              <button
+              <QcButton
                 onClick={handleSubmitEntry}
-                className="px-3 py-1 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)]"
+                size="sm" variant="primary"
               >
                 Add
-              </button>
-              <button
+              </QcButton>
+              <QcButton
                 onClick={() => {
                   setAdding(false);
                   setInputValue('');
                 }}
-                className="px-2 py-0.5 text-xs text-slate-500 hover:text-slate-700"
+                size="sm" variant="ghost"
               >
                 Done
-              </button>
+              </QcButton>
             </div>
             )
           ) : (
-            <button
+            <QcButton
               onClick={startAdding}
-              className="text-xs text-orange-600 hover:text-blue-800 font-medium mt-1"
+              size="sm" variant="ghost"
             >
               + {addLabel}
-            </button>
+            </QcButton>
           )}
         </div>
       )}

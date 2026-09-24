@@ -1,0 +1,490 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QuoteCore+ Phase 1 - static visual reference</title><style>
+*{box-sizing:border-box}body{margin:0;background:#F6F7F9;color:#303641;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer}h1,h2,h3,p{margin:0}a{color:inherit}[hidden]{display:none!important}main{margin:auto}svg{width:20px;height:20px}.flex{display:flex;align-items:center;justify-content:space-between}.text-slate-400{color:#596273}.ref-bar{padding:12px 32px;background:#191B20;color:#fff;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:12px;line-height:20px}.ref-bar strong{font-size:14px}.ref-bar button{color:#fff;background:transparent;border:1px solid #919AA9;border-radius:8px;padding:6px 12px;min-height:40px}.ref-shell{padding:20px 32px;background:white;border-bottom:1px solid #DDE1E7;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}.ref-logo{font-size:22px;font-weight:650;color:#191B20;letter-spacing:-.7px}.ref-logo span{color:#FF641F}.ref-nav{font-size:13px;display:flex;gap:24px}.ref-nav .active{color:#191B20;font-weight:600}.ref-margin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ref-percent{position:absolute;right:14px;top:10px}.ref-note{max-width:1440px;margin:auto;padding:0 32px 32px;font-size:12px;color:#596273}.qb-review-table td:not(:first-child),.qb-review-table th:not(:first-child){text-align:right}@media(max-width:767px){.ref-bar{padding:12px 16px}.ref-shell{padding:16px}.ref-nav{gap:16px}.ref-margin-grid{grid-template-columns:1fr}.ref-note{padding:0 16px 24px}}
+/* QuoteCore Plus UI standard 2.0.0. GENERATED from tokens.json.
+   Phase 1 opt-in implementation. Unmigrated pages keep their own styles.
+   Apply data-qc-ui="v2" to migrated root AND corresponding portal root. */
+:where([data-qc-ui="v2"]), [data-qc-ui="v2"]::backdrop {
+  --qc-color-orange-core: #FF6B35;
+  --qc-color-orange-vivid: #FF641F;
+  --qc-color-orange-bright: #FF8A3D;
+  --qc-color-orange-light: #FFB36B;
+  --qc-color-orange-tint: #FFE6D2;
+  --qc-color-orange-wash: #FFF4EB;
+  --qc-color-orange-ink: #B63D0A;
+  --qc-color-ink: #191B20;
+  --qc-color-text: #303641;
+  --qc-color-muted: #596273;
+  --qc-color-canvas: #F6F7F9;
+  --qc-color-surface: #FFFFFF;
+  --qc-color-surface-subtle: #F0F2F5;
+  --qc-color-border: #DDE1E7;
+  --qc-color-control-border: #7C8798;
+  --qc-color-success-ink: #087443;
+  --qc-color-success-bg: #EAF8F0;
+  --qc-color-info-ink: #1D58B3;
+  --qc-color-info-bg: #EEF5FF;
+  --qc-color-warning-ink: #825000;
+  --qc-color-warning-bg: #FFF5DD;
+  --qc-color-danger: #C72B3D;
+  --qc-color-danger-hover: #AC2032;
+  --qc-color-danger-bg: #FFF0F2;
+  --qc-color-neutral-bg: #EDF0F4;
+  --qc-color-disabled-bg: #E5E8ED;
+  --qc-color-disabled-ink: #667080;
+  --qc-color-workstation-bg: #141820;
+  --qc-color-workstation-text: #F8FAFC;
+  --qc-bg-app: var(--qc-color-canvas);
+  --qc-bg-surface: var(--qc-color-surface);
+  --qc-bg-subtle: var(--qc-color-surface-subtle);
+  --qc-text-primary: var(--qc-color-ink);
+  --qc-text-body: var(--qc-color-text);
+  --qc-text-secondary: var(--qc-color-muted);
+  --qc-text-link: var(--qc-color-orange-ink);
+  --qc-border-divider: var(--qc-color-border);
+  --qc-border-control: var(--qc-color-control-border);
+  --qc-action-primary-start: var(--qc-color-orange-vivid);
+  --qc-action-primary-mid: var(--qc-color-orange-bright);
+  --qc-action-primary-end: var(--qc-color-orange-light);
+  --qc-action-primary-text: var(--qc-color-ink);
+  --qc-action-secondary-bg: var(--qc-color-ink);
+  --qc-action-secondary-text: var(--qc-color-surface);
+  --qc-selected-bg: var(--qc-color-orange-wash);
+  --qc-selected-text: var(--qc-color-orange-ink);
+  --qc-focus-ring: var(--qc-color-orange-ink);
+  --qc-focus-gap: var(--qc-color-surface);
+  --qc-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --qc-font-size-body: 0.875rem;
+  --qc-line-body: 1.5;
+  --qc-radius-control: 12px;
+  --qc-radius-card: 16px;
+  --qc-radius-dialog: 20px;
+  --qc-radius-pill: 999px;
+  --qc-radius-small: 8px;
+  --qc-space-1: 4px;
+  --qc-space-2: 8px;
+  --qc-space-3: 12px;
+  --qc-space-4: 16px;
+  --qc-space-5: 20px;
+  --qc-space-6: 24px;
+  --qc-space-8: 32px;
+  --qc-space-10: 40px;
+  --qc-space-12: 48px;
+  --qc-control-sm: 32px;
+  --qc-control-md: 40px;
+  --qc-control-lg: 48px;
+  --qc-touch-min: 44px;
+  --qc-sidebar-expanded: 232px;
+  --qc-sidebar-rail: 64px;
+  --qc-topbar: 56px;
+  --qc-width-focused: 800px;
+  --qc-width-wide: 1440px;
+  --qc-width-editor: 1600px;
+  --qc-motion-fast: 120ms;
+  --qc-motion-standard: 180ms;
+  --qc-motion-panel: 220ms;
+  --qc-ease: cubic-bezier(0.2, 0, 0, 1);
+  --qc-gradient-primary: linear-gradient(135deg, #FF641F 0%, #FF8A3D 55%, #FFB36B 100%);
+  --qc-gradient-primary-hover: linear-gradient(135deg, #FF6B35 0%, #FF923D 55%, #FFBC7A 100%);
+  --qc-gradient-primary-pressed: linear-gradient(135deg, #F95F1D 0%, #FF8033 55%, #FFA85C 100%);
+  --qc-gradient-wash: linear-gradient(135deg, #FFF4EB 0%, #FFE6D2 100%);
+  --qc-shadow-raised: 0 2px 8px rgba(25, 27, 32, 0.06);
+  --qc-shadow-floating: 0 10px 32px rgba(25, 27, 32, 0.12), 0 2px 8px rgba(25, 27, 32, 0.06);
+  --qc-shadow-dialog: 0 20px 56px rgba(25, 27, 32, 0.16), 0 4px 12px rgba(25, 27, 32, 0.06);
+  --qc-glow-hover: 0 4px 14px rgba(255, 107, 53, 0.20);
+  --qc-glass-a-tint: rgba(246, 247, 249, 0.55);
+  --qc-glass-a-blur: 12px;
+  --qc-glass-a-saturation: 1.05;
+  --qc-glass-a-fallback: rgba(246, 247, 249, 0.94);
+  --qc-glass-b-bg: rgba(255, 255, 255, 0.90);
+  --qc-glass-b-border: rgba(255, 255, 255, 0.86);
+  --qc-glass-b-blur: 16px;
+  --qc-glass-b-saturation: 1.12;
+  --qc-glass-b-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.80);
+  --qc-glass-dialog-bg: rgba(255, 255, 255, 0.98);
+  --qc-z-content: 0;
+  --qc-z-sticky: 20;
+  --qc-z-nav: 30;
+  --qc-z-popover: 40;
+  --qc-z-assistant: 45;
+  --qc-z-modal-backdrop: 60;
+  --qc-z-modal: 61;
+  --qc-z-modal-popover: 62;
+  --qc-z-toast: 70;
+  --qc-z-critical: 80;
+}
+
+/* G-A: lightly frosted background. G-B remains a separate control treatment. */
+[data-qc-ui='v2'].qc-dialog {
+  position: fixed; inset: 0; width: calc(100% - 32px); max-width: 440px;
+  height: fit-content; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px);
+  overflow-y: auto; overscroll-behavior: contain; margin: auto; padding: 24px;
+  color: var(--qc-text-body); background: var(--qc-glass-dialog-bg);
+  border: 1px solid var(--qc-glass-b-border); border-radius: var(--qc-radius-dialog);
+  box-shadow: var(--qc-shadow-dialog); font-family: var(--qc-font-sans);
+}
+[data-qc-ui='v2'].qc-dialog:not([open]) { display: none; }
+[data-qc-ui='v2'].qc-dialog[data-qc-size='md'] { max-width: 640px; }
+[data-qc-ui='v2'].qc-dialog[data-qc-size='lg'] { max-width: 880px; }
+[data-qc-ui='v2'].qc-dialog::backdrop { background: var(--qc-glass-a-fallback); }
+[data-qc-ui='v2'] .qc-dialog-header h2 { margin: 0; font-size: 20px; line-height: 28px; font-weight: 600; color: var(--qc-text-primary); }
+[data-qc-ui='v2'] .qc-dialog-header p { margin: 12px 0 0; font-size: 14px; line-height: 22px; color: var(--qc-text-secondary); white-space: pre-line; overflow-wrap: anywhere; }
+[data-qc-ui='v2'] .qc-dialog-body { margin-top: 20px; }
+[data-qc-ui='v2'] .qc-dialog-body:first-child { margin-top: 0; }
+[data-qc-ui='v2'] .qc-dialog-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  [data-qc-ui='v2'].qc-dialog::backdrop { background: var(--qc-glass-a-tint); -webkit-backdrop-filter: blur(var(--qc-glass-a-blur)) saturate(var(--qc-glass-a-saturation)); backdrop-filter: blur(var(--qc-glass-a-blur)) saturate(var(--qc-glass-a-saturation)); }
+}
+@media (max-width:767px) {
+  [data-qc-ui='v2'].qc-dialog { padding: 20px; max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  [data-qc-ui='v2'] .qc-dialog-footer > .qc-button { flex: 1 1 auto; }
+}
+@media (prefers-reduced-transparency:reduce), (forced-colors:active) {
+  [data-qc-ui='v2'].qc-dialog::backdrop { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--qc-glass-a-fallback); }
+  [data-qc-ui='v2'].qc-dialog { background: var(--qc-bg-surface); box-shadow: none; }
+}
+
+/* Opt-in adapters for existing fields and upload/create flows. No server concerns. */
+:where([data-qc-ui='v2']) .qc-choice-group { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--qc-bg-subtle); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); max-width: 100%; }
+:where([data-qc-ui='v2']) .qc-choice { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; padding: 6px 12px; border: 1px solid transparent; border-radius: var(--qc-radius-small); background: var(--qc-bg-surface); color: var(--qc-text-secondary); font: inherit; font-size: 13px; line-height: 20px; font-weight: 600; cursor: pointer; }
+:where([data-qc-ui='v2']) .qc-choice[aria-pressed='true'] { background: var(--qc-selected-bg); color: var(--qc-selected-text); border-color: var(--qc-color-orange-ink); }
+:where([data-qc-ui='v2']) .qc-pitch-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+:where([data-qc-ui='v2']) .qc-pitch-value { width: 112px; }
+:where([data-qc-ui='v2']) .qc-pitch label { font-size: 13px; font-weight: 600; color: var(--qc-text-primary); }
+:where([data-qc-ui='v2']) .qc-pitch :where(span.text-slate-400,span.text-\[11px\]) { font-size: 12px; line-height: 18px; color: var(--qc-text-secondary); }
+[data-qc-ui='v2'].qc-upload { display: grid; gap: 12px; }
+:where([data-qc-ui='v2']) .qc-upload-zone { position: relative; border: 1px dashed var(--qc-border-control); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); padding: 24px; text-align: center; cursor: pointer; }
+:where([data-qc-ui='v2']) .qc-upload-zone .text-slate-400 { color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-upload-zone svg { width: 32px; height: 32px; color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-upload-dragging { border-color: var(--qc-color-orange-ink); background: var(--qc-selected-bg); }
+:where([data-qc-ui='v2']) .qc-upload-pending { cursor: progress; }
+:where([data-qc-ui='v2']) .qc-notice-danger { color: var(--qc-color-danger); background: var(--qc-color-danger-bg); }
+/* Preserve one existing form and every native field name. Styling is local to v2. */
+[data-qc-ui='v2'].qc-create-component-dialog { padding: 0; }
+:where([data-qc-ui='v2']) .qc-form-adapter { min-width: 0; }
+:where([data-qc-ui='v2']) .qc-form-adapter > div:first-child { padding: 24px; }
+:where([data-qc-ui='v2']) .qc-form-adapter > form { padding: 20px 24px 24px; }
+:where([data-qc-ui='v2']) .qc-form-adapter :where(label,.text-slate-400,.text-slate-500) { color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-form-adapter label { display: block; font-size: 13px; line-height: 20px; font-weight: 600; margin-bottom: 6px; }
+:where([data-qc-ui='v2']) .qc-form-adapter label.flex { display: flex; }
+:where([data-qc-ui='v2']) .qc-form-adapter :where(input:not([type='checkbox']):not([type='hidden']),select,textarea) { width: 100%; min-width: 0; min-height: var(--qc-control-md); padding: 8px 12px; border: 1px solid var(--qc-border-control); border-radius: var(--qc-radius-control); background: var(--qc-bg-surface); color: var(--qc-text-primary); font: inherit; font-size: 14px; line-height: 20px; }
+:where([data-qc-ui='v2']) .qc-form-adapter input[type='checkbox'] { accent-color: var(--qc-color-orange-ink); width: 18px; height: 18px; }
+:where([data-qc-ui='v2']) .qc-form-adapter button:not(.qc-button) { min-width: 32px; min-height: 32px; }
+:where([data-qc-ui='v2']) .qc-form-adapter button[aria-label='Close'] { display: inline-flex; align-items: center; justify-content: center; border-radius: var(--qc-radius-control); width: 40px; height: 40px; }
+:where([data-qc-ui='v2']) .qc-form-adapter input::placeholder, :where([data-qc-ui='v2']) .qc-form-adapter textarea::placeholder { color: var(--qc-text-secondary); opacity: 1; }
+:where([data-qc-ui='v2']) .qc-form-adapter [type='submit']:disabled { background: var(--qc-color-disabled-bg); color: var(--qc-color-disabled-ink); border-color: var(--qc-border-divider); opacity: 1; }
+@media (max-width:767px), (pointer:coarse) {
+  :where([data-qc-ui='v2']) .qc-choice { min-height: 44px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter :where(button,input:not([type='checkbox']):not([type='hidden']),select,textarea) { min-height: 44px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter :where(input:not([type='checkbox']),select,textarea) { font-size: 16px; line-height: 24px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter button[aria-label='Close'] { width: 44px; height: 44px; }
+}
+@media (max-width:479px) {
+  :where([data-qc-ui='v2']) .qc-form-adapter > div:first-child { padding: 20px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter > form { padding: 16px 20px 20px; }
+  :where([data-qc-ui='v2']) .qc-form-adapter .grid-cols-2 { grid-template-columns: minmax(0,1fr); }
+  :where([data-qc-ui='v2']) .qc-form-adapter .col-span-2 { grid-column: span 1 / span 1; }
+  :where([data-qc-ui='v2']) .qc-form-adapter form > div:last-child { flex-wrap: wrap; }
+}
+@media (forced-colors:active) {
+  :where([data-qc-ui='v2']) .qc-choice[aria-pressed='true'] { border: 2px solid Highlight; }
+  :where([data-qc-ui='v2']) .qc-upload-zone { border-color: ButtonText; }
+}
+
+
+
+
+
+/* Only opted-in application surfaces. Nothing in this file resets the live shell. */
+:where([data-qc-ui='v2']) { color: var(--qc-text-body); font-family: var(--qc-font-sans); font-size: var(--qc-font-size-body); line-height: var(--qc-line-body); color-scheme: light; }
+:where([data-qc-ui='v2']) .qc-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--qc-space-2);
+  min-height: var(--qc-control-md); padding: var(--qc-space-2) var(--qc-space-4);
+  border: 1px solid var(--qc-border-control); border-radius: var(--qc-radius-control);
+  background: var(--qc-bg-surface); color: var(--qc-text-primary); text-decoration: none;
+  font: inherit; font-weight: 600; font-size: 14px; line-height: 20px; text-align: center;
+  cursor: pointer; flex-shrink: 0; max-width: 100%; overflow-wrap: anywhere;
+  transition: background-color var(--qc-motion-fast), border-color var(--qc-motion-fast), box-shadow var(--qc-motion-fast);
+}
+:where([data-qc-ui='v2']) .qc-button[data-qc-size='sm'] { min-height: var(--qc-control-sm); padding: 4px 12px; font-size: 13px; }
+:where([data-qc-ui='v2']) .qc-button[data-qc-size='lg'] { min-height: var(--qc-control-lg); padding: 12px 20px; }
+:where([data-qc-ui='v2']) .qc-button[data-qc-variant='primary'] { background: var(--qc-gradient-primary); border-color: var(--qc-action-primary-start); color: var(--qc-action-primary-text); box-shadow: var(--qc-glass-b-highlight); }
+:where([data-qc-ui='v2']) .qc-button[data-qc-variant='secondary'] { background: var(--qc-action-secondary-bg); color: var(--qc-action-secondary-text); border-color: var(--qc-action-secondary-bg); }
+:where([data-qc-ui='v2']) .qc-button[data-qc-variant='danger'] { background: var(--qc-color-danger); border-color: var(--qc-color-danger); color: var(--qc-color-surface); }
+:where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass'] { background: var(--qc-bg-surface); box-shadow: var(--qc-glass-b-highlight), var(--qc-shadow-raised); }
+:where([data-qc-ui='v2']) .qc-button:active:not(:disabled) { box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
+:where([data-qc-ui='v2']) .qc-button[data-qc-variant='primary']:active:not(:disabled) { background: var(--qc-gradient-primary-pressed); }
+:where([data-qc-ui='v2']) .qc-button:disabled { cursor: not-allowed; background: var(--qc-color-disabled-bg); border-color: var(--qc-color-border); color: var(--qc-color-disabled-ink); box-shadow: none; opacity: 1; }
+:where([data-qc-ui='v2']) .qc-button svg { width: 18px; height: 18px; flex-shrink: 0; }
+:where([data-qc-ui='v2']) .qc-icon-button { width: var(--qc-control-md); min-width: var(--qc-control-md); padding: 8px; border-color: transparent; background: transparent; }
+:where([data-qc-ui='v2']) .qc-icon-danger { color: var(--qc-color-danger); }
+:where([data-qc-ui='v2']) .qc-success-action { background: var(--qc-color-success-ink); color: var(--qc-color-surface); border-color: var(--qc-color-success-ink); }
+:where([data-qc-ui='v2']) .qc-field { display: grid; gap: var(--qc-space-2); min-width: 0; }
+:where([data-qc-ui='v2']) .qc-label { display: block; color: var(--qc-text-primary); font-size: 14px; font-weight: 600; }
+:where([data-qc-ui='v2']) .qc-help { color: var(--qc-text-secondary); font-size: 13px; line-height: 20px; margin: 0; }
+:where([data-qc-ui='v2']) .qc-input, :where([data-qc-ui='v2']) .qc-select {
+  min-height: var(--qc-control-md); min-width: 0; border: 1px solid var(--qc-border-control);
+  border-radius: var(--qc-radius-control); padding: 8px 12px; background: var(--qc-bg-surface);
+  color: var(--qc-text-primary); font: inherit; font-size: 14px; line-height: 20px;
+}
+:where([data-qc-ui='v2']) .qc-input { font-variant-numeric: tabular-nums; }
+:where([data-qc-ui='v2']) .qc-select { padding-right: 32px; max-width: 100%; }
+:where([data-qc-ui='v2']) .qc-input::placeholder { color: var(--qc-text-secondary); opacity: 1; }
+:where([data-qc-ui='v2']) .qc-input:disabled, :where([data-qc-ui='v2']) .qc-select:disabled { background: var(--qc-color-disabled-bg); color: var(--qc-color-disabled-ink); cursor: not-allowed; }
+:where([data-qc-ui='v2']) .qc-input[aria-invalid='true'] { border-color: var(--qc-color-danger); }
+:where([data-qc-ui='v2']) .qc-check { width: 18px; height: 18px; accent-color: var(--qc-color-orange-ink); flex-shrink: 0; }
+:where([data-qc-ui='v2']) .qc-check-label { display: flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; cursor: pointer; }
+:where([data-qc-ui='v2']) .qc-surface { min-width: 0; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); padding: var(--qc-space-6); }
+:where([data-qc-ui='v2']) .qc-notice { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); color: var(--qc-text-body); background: var(--qc-bg-subtle); font-size: 13px; line-height: 20px; }
+:where([data-qc-ui='v2']) .qc-notice > svg { width: 20px; height: 20px; flex-shrink: 0; }
+:where([data-qc-ui='v2']) .qc-notice[data-qc-tone='warning'] { color: var(--qc-color-warning-ink); background: var(--qc-color-warning-bg); }
+:where([data-qc-ui='v2']) .qc-notice[data-qc-tone='danger'] { color: var(--qc-color-danger); background: var(--qc-color-danger-bg); }
+:where([data-qc-ui='v2']) .qc-notice[data-qc-tone='info'] { color: var(--qc-color-info-ink); background: var(--qc-color-info-bg); }
+:where([data-qc-ui='v2']) .qc-notice[data-qc-tone='success'] { color: var(--qc-color-success-ink); background: var(--qc-color-success-bg); }
+:where([data-qc-ui='v2']) .qc-status { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--qc-radius-pill); background: var(--qc-color-neutral-bg); color: var(--qc-text-secondary); font-size: 12px; font-weight: 600; line-height: 18px; white-space: nowrap; }
+:where([data-qc-ui='v2']) .qc-status[data-qc-tone='success'] { color: var(--qc-color-success-ink); background: var(--qc-color-success-bg); }
+:where([data-qc-ui='v2']) .qc-status[data-qc-tone='warning'] { color: var(--qc-color-warning-ink); background: var(--qc-color-warning-bg); }
+:where([data-qc-ui='v2']) .qc-status[data-qc-tone='info'] { color: var(--qc-color-info-ink); background: var(--qc-color-info-bg); }
+:where([data-qc-ui='v2']) .qc-stepper { padding: 8px; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); box-shadow: var(--qc-glass-b-highlight); }
+:where([data-qc-ui='v2']) .qc-stepper ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+:where([data-qc-ui='v2']) .qc-stepper button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px; border: 1px solid transparent; border-radius: var(--qc-radius-control); color: var(--qc-text-secondary); background: transparent; font: inherit; text-align: left; }
+:where([data-qc-ui='v2']) .qc-stepper button[aria-current='step'] { color: var(--qc-selected-text); background: var(--qc-selected-bg); border-color: var(--qc-color-orange-tint); }
+:where([data-qc-ui='v2']) .qc-step-number { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex-shrink: 0; font-size: 13px; font-weight: 600; background: var(--qc-bg-subtle); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-pill); }
+:where([data-qc-ui='v2']) [aria-current='step'] .qc-step-number { background: var(--qc-gradient-primary); color: var(--qc-action-primary-text); border-color: var(--qc-color-orange-vivid); }
+:where([data-qc-ui='v2']) .qc-step-copy { display: grid; gap: 2px; min-width: 0; }
+:where([data-qc-ui='v2']) .qc-step-label { font-weight: 600; color: inherit; }
+:where([data-qc-ui='v2']) .qc-step-description { font-size: 12px; color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-money-summary { background: var(--qc-bg-surface); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); padding: 24px; font-variant-numeric: tabular-nums; }
+:where([data-qc-ui='v2']) .qc-money-summary h2 { font-size: 16px; line-height: 24px; font-weight: 600; color: var(--qc-text-primary); margin: 0 0 20px; }
+:where([data-qc-ui='v2']) .qc-money-rows { display: grid; gap: 12px; margin: 0; }
+:where([data-qc-ui='v2']) .qc-money-rows > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+:where([data-qc-ui='v2']) .qc-money-rows dt { color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qc-money-rows dd { margin: 0; color: var(--qc-text-primary); text-align: right; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qc-money-total { margin: 20px 0 12px; padding-top: 16px; border-top: 1px solid var(--qc-border-divider); }
+:where([data-qc-ui='v2']) .qc-money-total > div { display: grid; gap: 8px; }
+:where([data-qc-ui='v2']) .qc-money-total dt { font-weight: 600; }
+:where([data-qc-ui='v2']) .qc-money-total dd { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; color: var(--qc-text-primary); overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) :where(button,a,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; box-shadow: 0 0 0 2px var(--qc-focus-gap); }
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :where([data-qc-ui='v2']) .qc-stepper, :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass'] { background: var(--qc-glass-b-bg); -webkit-backdrop-filter: blur(var(--qc-glass-b-blur)) saturate(var(--qc-glass-b-saturation)); backdrop-filter: blur(var(--qc-glass-b-blur)) saturate(var(--qc-glass-b-saturation)); }
+}
+@media (hover:hover) {
+  :where([data-qc-ui='v2']) .qc-button:hover:not(:disabled) { background: var(--qc-selected-bg); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='primary']:hover:not(:disabled) { background: var(--qc-gradient-primary-hover); box-shadow: var(--qc-glass-b-highlight), var(--qc-glow-hover); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='secondary']:hover:not(:disabled) { background: var(--qc-color-text); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='danger']:hover:not(:disabled) { background: var(--qc-color-danger-hover); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass']:hover:not(:disabled) { background: rgba(255,255,255,.96); }
+  :where([data-qc-ui='v2']) .qc-button.qc-success-action:hover:not(:disabled) { background: var(--qc-color-success-ink); }
+  :where([data-qc-ui='v2']) .qc-icon-danger:hover:not(:disabled) { background: var(--qc-color-danger-bg); }
+  :where([data-qc-ui='v2']) .qc-stepper button:hover { border-color: var(--qc-border-control); }
+}
+@media (max-width:767px), (pointer:coarse) {
+  :where([data-qc-ui='v2']) .qc-button, :where([data-qc-ui='v2']) .qc-button[data-qc-size='sm'], :where([data-qc-ui='v2']) .qc-input, :where([data-qc-ui='v2']) .qc-select { min-height: var(--qc-touch-min); }
+  :where([data-qc-ui='v2']) .qc-icon-button { min-width: var(--qc-touch-min); width: var(--qc-touch-min); }
+  :where([data-qc-ui='v2']) .qc-input, :where([data-qc-ui='v2']) .qc-select { font-size: 16px; line-height: 24px; }
+}
+@media (max-width:767px) {
+  :where([data-qc-ui='v2']) .qc-surface { padding: 16px; }
+  :where([data-qc-ui='v2']) .qc-stepper { overflow-x: auto; padding: 4px; }
+  :where([data-qc-ui='v2']) .qc-stepper ol { gap: 4px; }
+  :where([data-qc-ui='v2']) .qc-stepper button { flex-direction: column; justify-content: flex-start; gap: 6px; padding: 8px 4px; min-height: 72px; text-align: center; font-size: 12px; line-height: 18px; }
+  :where([data-qc-ui='v2']) .qc-step-number { width: 28px; height: 28px; }
+  :where([data-qc-ui='v2']) .qc-step-description { display: none; }
+  :where([data-qc-ui='v2']) .qc-money-summary { padding: 16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  :where([data-qc-ui='v2']) .qc-button, :where([data-qc-ui='v2']) .qc-stepper button { transition: none; }
+}
+@media (prefers-reduced-transparency:reduce), (forced-colors:active) {
+  :where([data-qc-ui='v2']) .qc-stepper, :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass'] { background: var(--qc-bg-surface); backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none; }
+}
+@media (forced-colors:active) {
+  :where([data-qc-ui='v2']) .qc-button, :where([data-qc-ui='v2']) .qc-input, :where([data-qc-ui='v2']) .qc-select { forced-color-adjust: auto; background: Canvas; color: CanvasText; border: 1px solid ButtonText; }
+  :where([data-qc-ui='v2']) .qc-button:disabled { color: GrayText; border-color: GrayText; }
+  :where([data-qc-ui='v2']) :where(button,a,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid Highlight; }
+  :where([data-qc-ui='v2']) .qc-stepper button[aria-current='step'] { border: 2px solid Highlight; }
+}
+
+/* Phase 1 only. The existing server pages and global navigation are untouched.
+   This narrowly scoped parent rule expands ONLY a main with this direct child.
+   Next keeps imported CSS between routes, so never style a bare main or body. */
+main:has(> [data-qc-ui='v2'][data-qc-page='quote-builder']) {
+  max-width: 1440px; width: 100%; padding: 32px clamp(16px, 3vw, 40px) 112px;
+}
+[data-qc-ui='v2'][data-qc-page='quote-builder'] { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+:where([data-qc-ui='v2']) .qb-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+:where([data-qc-ui='v2']) .qb-header > :first-child { flex: 1 1 320px; min-width: 0; }
+:where([data-qc-ui='v2']) .qb-header-meta { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; padding-top: 32px; }
+:where([data-qc-ui='v2']) .qb-header-meta .qc-status { margin-bottom: 8px; text-transform: capitalize; }
+:where([data-qc-ui='v2']) .qb-back-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: var(--qc-text-secondary); text-decoration: none; font-size: 13px; margin: -4px 0 12px; }
+:where([data-qc-ui='v2']) .qb-back-link svg { width: 16px; height: 16px; }
+:where([data-qc-ui='v2']) .qb-eyebrow { font-size: 12px; line-height: 18px; font-weight: 600; color: var(--qc-text-secondary); letter-spacing: .03em; margin: 0 0 6px; }
+:where([data-qc-ui='v2']) .qb-title { font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -.025em; color: var(--qc-text-primary); margin: 0; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-name-heading { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 12px 20px; }
+:where([data-qc-ui='v2']) .qb-name-heading > div { min-width: 0; }
+:where([data-qc-ui='v2']) .qb-job-reference { font-size: 14px; color: var(--qc-text-secondary); margin: 4px 0 0; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-edit-name { flex-shrink: 0; }
+:where([data-qc-ui='v2']) .qb-name-edit { max-width: 600px; }
+:where([data-qc-ui='v2']) .qb-currency { display: grid; gap: 6px; max-width: 100%; }
+:where([data-qc-ui='v2']) .qb-currency-select { max-width: 260px; }
+:where([data-qc-ui='v2']) .qb-tools { display: flex; flex-wrap: wrap; gap: 12px; }
+:where([data-qc-ui='v2']) .qb-work-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; align-items: start; }
+:where([data-qc-ui='v2']) .qb-step-content { min-width: 0; }
+:where([data-qc-ui='v2']) .qb-phase-heading { margin: 0 0 20px; }
+:where([data-qc-ui='v2']) .qb-phase-heading h2 { font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -.02em; color: var(--qc-text-primary); margin: 0 0 6px; }
+:where([data-qc-ui='v2']) .qb-phase-heading > p:last-child { color: var(--qc-text-secondary); font-size: 14px; line-height: 22px; margin: 0; max-width: 68ch; }
+:where([data-qc-ui='v2']) .qb-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+:where([data-qc-ui='v2']) .qb-group-title { font-size: 16px; line-height: 24px; font-weight: 600; color: var(--qc-text-primary); margin: 0; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-group-meta { font-size: 13px; line-height: 20px; font-weight: 400; color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qb-inline-form { min-width: 0; display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+:where([data-qc-ui='v2']) .qb-grow { flex: 1 1 220px; min-width: 0; }
+:where([data-qc-ui='v2']) .qb-full-width { width: 100%; }
+:where([data-qc-ui='v2']) .qb-add-area, :where([data-qc-ui='v2']) .qb-library { display: grid; grid-template-columns: minmax(0,1fr); gap: 10px; }
+:where([data-qc-ui='v2']) .qb-library { border-top: 1px solid var(--qc-border-divider); padding-top: 16px; }
+:where([data-qc-ui='v2']) .qb-step-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 8px 0 4px; }
+:where([data-qc-ui='v2']) .qb-step-actions-end { justify-content: flex-end; }
+:where([data-qc-ui='v2']) .qb-area-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+:where([data-qc-ui='v2']) .qb-area-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+:where([data-qc-ui='v2']) .qb-area-quantity { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--qc-text-primary); }
+:where([data-qc-ui='v2']) .qb-area-footer { display: flex; justify-content: flex-end; border-top: 1px solid var(--qc-border-divider); padding-top: 16px; }
+:where([data-qc-ui='v2']) .qb-angle-warning { margin: 8px 0 0; color: var(--qc-color-warning-ink); background: var(--qc-color-warning-bg); border-radius: var(--qc-radius-small); padding: 8px 12px; font-size: 13px; }
+:where([data-qc-ui='v2']) .qb-measurement-row { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 16px; padding: 16px; background: var(--qc-bg-subtle); border-radius: var(--qc-radius-control); }
+:where([data-qc-ui='v2']) .qb-dimension-field { display: grid; gap: 6px; flex: 1 1 112px; min-width: 0; }
+:where([data-qc-ui='v2']) .qb-multiply { min-height: 40px; display: flex; align-items: center; color: var(--qc-text-secondary); }
+/* Collapsible components retain their identity, state and complete entry editor. */
+:where([data-qc-ui='v2']) .qb-component { min-width: 0; background: var(--qc-bg-surface); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); }
+:where([data-qc-ui='v2']) .qb-component-heading { display: flex; align-items: center; padding-right: 8px; gap: 4px; }
+:where([data-qc-ui='v2']) .qb-component-toggle { display: grid; grid-template-columns: 18px minmax(0,1fr) minmax(72px,auto) minmax(96px,auto); align-items: center; gap: 12px; padding: 16px; min-height: 76px; flex: 1 1 0; min-width: 0; background: transparent; border: 0; border-radius: var(--qc-radius-control); color: var(--qc-text-primary); font: inherit; text-align: left; cursor: pointer; }
+:where([data-qc-ui='v2']) .qb-disclosure-icon { width: 16px; height: 16px; color: var(--qc-text-secondary); transition: transform var(--qc-motion-fast); }
+:where([data-qc-ui='v2']) .qb-disclosure-icon[data-expanded='true'] { transform: rotate(90deg); }
+:where([data-qc-ui='v2']) .qb-component-name { min-width: 0; display: grid; gap: 4px; font-weight: 600; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-component-meta, :where([data-qc-ui='v2']) .qb-mini-label { font-size: 12px; line-height: 18px; color: var(--qc-text-secondary); font-weight: 400; }
+:where([data-qc-ui='v2']) .qb-mini-label { display: block; margin-bottom: 4px; }
+:where([data-qc-ui='v2']) .qb-component-quantity, :where([data-qc-ui='v2']) .qb-component-cost { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-component-quantity .text-slate-400 { color: var(--qc-text-secondary); font-weight: 400; }
+:where([data-qc-ui='v2']) .qb-component-body { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-top: 1px solid var(--qc-border-divider); }
+:where([data-qc-ui='v2']) .qb-component-body .text-slate-400 { color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qb-setting-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+:where([data-qc-ui='v2']) .qb-setting-row > .qc-label { flex: 0 0 48px; }
+:where([data-qc-ui='v2']) .qb-assigned-area { max-width: 100%; }
+:where([data-qc-ui='v2']) .qb-entry-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-height: 44px; border-bottom: 1px solid var(--qc-border-divider); padding: 8px 0; }
+:where([data-qc-ui='v2']) .qb-entry-number { min-width: 24px; font-size: 12px; color: var(--qc-text-secondary); font-variant-numeric: tabular-nums; }
+:where([data-qc-ui='v2']) .qb-entry-value { color: var(--qc-text-primary); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-entry-detail { color: var(--qc-text-secondary); font-size: 12px; line-height: 18px; margin-left: 4px; }
+:where([data-qc-ui='v2']) .qb-entry-remove { margin-left: auto; flex-shrink: 0; }
+:where([data-qc-ui='v2']) .qb-combined-label { font-size: 12px; color: var(--qc-color-info-ink); }
+:where([data-qc-ui='v2']) .qb-entry-tools, :where([data-qc-ui='v2']) .qb-entry-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+:where([data-qc-ui='v2']) .qb-entry-editor { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; background: var(--qc-bg-subtle); border-radius: var(--qc-radius-control); }
+:where([data-qc-ui='v2']) .qb-entry-inputs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; width: 100%; }
+:where([data-qc-ui='v2']) .qb-dimension-input { width: 100px; max-width: 100%; }
+:where([data-qc-ui='v2']) .qb-value-input { width: 144px; max-width: 100%; }
+/* Files stay a compact, discoverable disclosure; preview/delete/upload remain intact. */
+:where([data-qc-ui='v2']) .qb-files { min-width: 0; }
+:where([data-qc-ui='v2']) .qb-files-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 0; color: var(--qc-text-secondary); background: transparent; border: 0; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+:where([data-qc-ui='v2']) .qb-files-body { margin-top: 8px; padding: 20px; border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-card); background: var(--qc-bg-surface); }
+:where([data-qc-ui='v2']) .qb-file-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px; background: var(--qc-bg-subtle); border: 1px solid var(--qc-border-divider); border-radius: var(--qc-radius-control); }
+:where([data-qc-ui='v2']) .qb-file-row > .flex-1 { flex: 1 1 140px; min-width: 0; }
+:where([data-qc-ui='v2']) .qb-file-icon { width: 28px; height: 28px; color: var(--qc-text-secondary); }
+:where([data-qc-ui='v2']) .qb-file-name { font-size: 13px; font-weight: 600; color: var(--qc-text-primary); overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-file-link { display: inline-flex; align-items: center; min-height: 40px; padding: 8px; color: var(--qc-text-link); text-decoration: underline; text-underline-offset: 3px; font-size: 13px; }
+/* Read-only review: retain every quantity, rounding and override indicator. */
+:where([data-qc-ui='v2']) .qb-review-scroll { margin-top: 16px; max-width: 100%; }
+:where([data-qc-ui='v2']) .qb-review-table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
+:where([data-qc-ui='v2']) .qb-review-table :where(th,td) { padding: 12px 10px; border-bottom: 1px solid var(--qc-border-divider); vertical-align: top; }
+:where([data-qc-ui='v2']) .qb-review-table th { color: var(--qc-text-secondary); font-size: 12px; font-weight: 600; }
+:where([data-qc-ui='v2']) .qb-review-table :where(th,td):first-child { padding-left: 0; min-width: 170px; max-width: 340px; white-space: normal; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-review-table :where(th,td):last-child { padding-right: 0; }
+:where([data-qc-ui='v2']) .qb-review-table tbody tr:last-child td { border-bottom: 0; }
+:where([data-qc-ui='v2']) .qb-review-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; align-items: start; }
+:where([data-qc-ui='v2']) .qb-margins { display: flex; flex-direction: column; gap: 20px; }
+:where([data-qc-ui='v2']) .qb-margin-field { min-width: 0; }
+:where([data-qc-ui='v2']) .qb-percent-input { position: relative; }
+:where([data-qc-ui='v2']) .qb-percent-input .qc-input { padding-right: 40px; }
+:where([data-qc-ui='v2']) .qb-margin-preview { margin-top: 8px; color: var(--qc-color-success-ink); }
+:where([data-qc-ui='v2']) .qb-review-totals { display: flex; flex-direction: column; gap: 12px; font-variant-numeric: tabular-nums; }
+:where([data-qc-ui='v2']) .qb-review-totals > .flex { gap: 12px; }
+:where([data-qc-ui='v2']) .qb-review-totals > .flex > span:last-child { text-align: right; overflow-wrap: anywhere; }
+:where([data-qc-ui='v2']) .qb-review-totals .text-emerald-600 { color: var(--qc-color-success-ink); }
+:where([data-qc-ui='v2']) .qb-review-totals > div:last-child { margin-top: 4px; padding-top: 16px; font-size: 20px; line-height: 28px; color: var(--qc-text-primary); }
+:where([data-qc-ui='v2']) .qb-override { display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--qc-text-link); }
+:where([data-qc-ui='v2']) .qb-override svg { width: 12px; height: 12px; }
+@media (min-width:1280px) {
+  :where([data-qc-ui='v2']) .qb-work-grid { grid-template-columns: minmax(0,1fr) 300px; gap: 28px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail { grid-column: 2; grid-row: 1; }
+  :where([data-qc-ui='v2']) .qb-step-content { grid-column: 1; grid-row: 1; }
+  [data-qc-ui='v2'][data-qc-phase='review'] .qb-work-grid { grid-template-columns: minmax(0,1fr); }
+  :where([data-qc-ui='v2']) .qb-review-grid { grid-template-columns: minmax(0,1fr) 380px; }
+}
+@media (min-width:1280px) and (min-height:760px) {
+  :where([data-qc-ui='v2']) .qb-totals-rail { position: sticky; top: 24px; }
+}
+@media (min-width:768px) and (max-width:1279px) {
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-summary { display: grid; grid-template-columns: minmax(0,1fr) minmax(140px,auto); column-gap: 32px; padding: 20px 24px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-summary h2 { margin-bottom: 12px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-rows { grid-column: 1; grid-row: 2; grid-template-columns: repeat(3,minmax(0,1fr)); }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-rows > div { flex-direction: column; gap: 4px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-total { grid-column: 2; grid-row: 1 / 3; border-top: 0; border-left: 1px solid var(--qc-border-divider); margin: 0; padding: 0 0 0 24px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-help { grid-column: 1 / -1; margin-top: 12px; }
+}
+@media (max-width:767px) {
+  main:has(> [data-qc-ui='v2'][data-qc-page='quote-builder']) { padding: 20px 16px 104px; }
+  [data-qc-ui='v2'][data-qc-page='quote-builder'] { gap: 20px; }
+  :where([data-qc-ui='v2']) .qb-header { gap: 12px; }
+  :where([data-qc-ui='v2']) .qb-header-meta { width: 100%; padding-top: 0; justify-content: space-between; align-items: center; }
+  :where([data-qc-ui='v2']) .qb-header-meta .qc-status { margin-bottom: 0; }
+  :where([data-qc-ui='v2']) .qb-title { font-size: 24px; line-height: 32px; }
+  :where([data-qc-ui='v2']) .qb-back-link, :where([data-qc-ui='v2']) .qb-files-toggle, :where([data-qc-ui='v2']) .qb-file-link { min-height: 44px; }
+  :where([data-qc-ui='v2']) .qb-name-heading { gap: 12px; }
+  :where([data-qc-ui='v2']) .qb-currency { flex: 1 1 180px; }
+  :where([data-qc-ui='v2']) .qb-currency-select { width: 100%; }
+  :where([data-qc-ui='v2']) .qb-work-grid { gap: 20px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-summary h2 { font-size: 14px; margin-bottom: 12px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-rows { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-rows > div { flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-rows dd { text-align: left; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-total { margin: 12px 0 8px; padding-top: 12px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-total > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  :where([data-qc-ui='v2']) .qb-totals-rail .qc-money-total dd { font-size: 22px; line-height: 30px; text-align: right; }
+  :where([data-qc-ui='v2']) .qb-phase-heading h2 { font-size: 20px; line-height: 28px; }
+  :where([data-qc-ui='v2']) .qb-component-toggle { grid-template-columns: 16px minmax(0,1fr) minmax(0,1fr); gap: 8px; padding: 14px 10px; }
+  :where([data-qc-ui='v2']) .qb-component-name { grid-column: 2 / 4; }
+  :where([data-qc-ui='v2']) .qb-component-quantity { grid-column: 2; text-align: left; }
+  :where([data-qc-ui='v2']) .qb-component-cost { grid-column: 3; text-align: right; }
+  :where([data-qc-ui='v2']) .qb-component-heading { align-items: flex-start; }
+  :where([data-qc-ui='v2']) .qb-component-heading > .qc-icon-button { margin-top: 8px; }
+  :where([data-qc-ui='v2']) .qb-component-body { padding: 16px; }
+  :where([data-qc-ui='v2']) .qb-entry-editor, :where([data-qc-ui='v2']) .qb-measurement-row { padding: 12px; }
+  :where([data-qc-ui='v2']) .qb-dimension-input { width: 88px; }
+  :where([data-qc-ui='v2']) .qb-multiply { min-height: 44px; }
+  :where([data-qc-ui='v2']) .qb-area-tools { gap: 8px; }
+  :where([data-qc-ui='v2']) .qb-files-body { padding: 16px; }
+  :where([data-qc-ui='v2']) .qb-review-grid { gap: 16px; }
+  :where([data-qc-ui='v2']) .qb-step-actions > form { max-width: 100%; }
+}
+@media (max-width:389px) {
+  :where([data-qc-ui='v2']) .qb-inline-form > .qc-button { width: 100%; }
+  :where([data-qc-ui='v2']) .qb-component-cost, :where([data-qc-ui='v2']) .qb-component-quantity { font-size: 13px; }
+}
+@media (hover:hover) {
+  :where([data-qc-ui='v2']) .qb-component-toggle:hover { background: var(--qc-bg-subtle); }
+  :where([data-qc-ui='v2']) .qb-back-link:hover, :where([data-qc-ui='v2']) .qb-files-toggle:hover { color: var(--qc-text-link); }
+}
+@media (prefers-reduced-motion:reduce) {
+  :where([data-qc-ui='v2']) .qb-disclosure-icon { transition: none; }
+}
+@media (forced-colors:active) {
+  :where([data-qc-ui='v2']) .qb-component, :where([data-qc-ui='v2']) .qb-file-row { border-color: CanvasText; }
+}
+
+/* The takeoff shortcut and file disclosure share one compact context row. */
+:where([data-qc-ui='v2']) .qb-context-tools { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 16px; }
+:where([data-qc-ui='v2']) .qb-context-tools > .qb-files { min-width: 0; flex: 1 1 130px; }
+:where([data-qc-ui='v2']) .qb-context-tools > .qb-files[data-expanded='true'] { flex-basis: 100%; }
+</style></head><body><div class="ref-bar"><div><strong>Phase 1 / static visual reference</strong><br>Real implementation CSS. Illustrative data, not the running app. Controls do not save.</div><button id="show-glass">View frosted confirmation</button></div><header class="ref-shell"><div class="ref-logo">QuoteCore<span>+</span></div><nav class="ref-nav" aria-label="Existing navigation illustration"><span class="active">Quotes</span><span>Orders</span><span>Invoices</span><span>Resources</span></nav></header><main><section data-qc-ui="v2" data-qc-page="quote-builder" data-qc-phase="components" class="qb-workspace"><header class="qb-header"><div><a href="#" class="qb-back-link"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="m14 7-5 5 5 5M9 12h11"/></svg>Quotes</a><p class="qb-eyebrow">Quote builder</p><div class="qb-name-heading"><div><h1 class="qb-title">John Smith</h1><p class="qb-job-reference">10 Smith Street, Christchurch</p></div><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="sm" ><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="m15 5 4 4M4 16 16 4a2.8 2.8 0 0 1 4 4L8 20H4v-4Z"/></svg>Edit details</button></div></div><div class="qb-header-meta"><div class="qb-currency"><label class="qc-label" for="currency">Currency:</label><select id="currency" class="qc-select qb-currency-select"><option>NZD (Company Default)</option></select></div><span class="qc-status">draft</span></div></header><div class="qb-context-tools"><div class="qb-tools"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="glass" data-qc-size="md" ><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M14 3H5v18h14V8l-5-5M14 3v5h5M8 13h8M8 17h5"/></svg>Edit Digital Take-off</button></div><div class="qb-files"><button class="qb-files-toggle"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/></svg>Plans &amp; Files (1)</button></div></div><nav class="qc-stepper" aria-label="Quote builder steps"><ol><li><button type="button" data-preview-step="areas" ><span class="qc-step-number" aria-hidden="true">1</span><span class="qc-step-copy"><span class="qc-step-label">Roof Areas</span><span class="qc-step-description">Define your areas</span></span></button></li><li><button type="button" data-preview-step="components" aria-current=step><span class="qc-step-number" aria-hidden="true">2</span><span class="qc-step-copy"><span class="qc-step-label">Components</span><span class="qc-step-description">Measurements and pricing</span></span></button></li><li><button type="button" data-preview-step="extras" ><span class="qc-step-number" aria-hidden="true">3</span><span class="qc-step-copy"><span class="qc-step-label">Extras</span><span class="qc-step-description">Other items and services</span></span></button></li><li><button type="button" data-preview-step="review" ><span class="qc-step-number" aria-hidden="true">4</span><span class="qc-step-copy"><span class="qc-step-label">Review</span><span class="qc-step-description">Margins and confirmation</span></span></button></li></ol></nav><div class="qb-work-grid" data-preview-panel="areas" hidden><aside class="qb-totals-rail"><section class="qc-money-summary" aria-label="Current quote"><h2>Current quote</h2><dl class="qc-money-rows"><div><dt>Roof area</dt><dd>250.00 m²</dd></div><div><dt>Item Cost</dt><dd>NZ$8,000.00</dd></div><div><dt>Labour</dt><dd>NZ$4,000.00</dd></div></dl><dl class="qc-money-total"><div><dt>Quote total</dt><dd>NZ$16,560.00</dd></div></dl><p class="qc-help">Uses the saved margin settings. Check margins in Review before confirming.</p></section></aside><div class="qb-step-content"><header class="qb-phase-heading"><p class="qb-eyebrow">Step 1 of 4</p><h2>Roof Areas</h2><p>Add an area, enter its measurements and confirm it before continuing.</p></header><div class="qb-stack"><div class="qc-surface qb-area-card qb-stack"><div class="qb-area-heading"><h3 class="qb-group-title">Main Roof</h3><div class="qb-area-tools"><span class="qb-area-quantity">250.00 m² @ 25°</span><span class="qc-status" data-qc-tone="success">Confirmed</span><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="sm" >Edit</button><button class="qc-button qc-icon-button qc-icon-danger" aria-label="Remove Main Roof" data-static-action><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M5 6l1 14h12l1-14M9 6V3h6v3M10 10v6m4-6v6"/></svg></button></div></div></div><div class="qc-surface qb-add-area"><label class="qc-label" for="new-area">Add another area</label><div class="qb-inline-form"><input id="new-area" class="qc-input qb-grow" placeholder="e.g. Main Roof, Garage"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="md" disabled>Add Roof Area</button></div><p class="qc-help">Use a clear name such as Main Roof or Garage. Measurements belong to the area you create.</p></div><div class="qb-step-actions qb-step-actions-end"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="primary" data-qc-size="md" data-preview-step="components">Next: Components →</button></div></div></div></div><div class="qb-work-grid" data-preview-panel="components" ><aside class="qb-totals-rail"><section class="qc-money-summary" aria-label="Current quote"><h2>Current quote</h2><dl class="qc-money-rows"><div><dt>Roof area</dt><dd>250.00 m²</dd></div><div><dt>Item Cost</dt><dd>NZ$8,000.00</dd></div><div><dt>Labour</dt><dd>NZ$4,000.00</dd></div></dl><dl class="qc-money-total"><div><dt>Quote total</dt><dd>NZ$16,560.00</dd></div></dl><p class="qc-help">Uses the saved margin settings. Check margins in Review before confirming.</p></section></aside><div class="qb-step-content"><header class="qb-phase-heading"><p class="qb-eyebrow">Step 2 of 4</p><h2>Components</h2><p>Choose your Smart Components, then add or check their measurements.</p></header><div class="qb-stack"><div class="qc-surface qb-stack"><h3 class="qb-group-title">Main Roof <span class="qb-group-meta">(250.00 m² @ 25°)</span></h3><div class="qb-component"><div class="qb-component-heading"><button type="button" class="qb-component-toggle" aria-expanded="true" aria-controls="sample-component-1" data-preview-disclosure><svg aria-hidden="true" class="qb-disclosure-icon" data-expanded="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m9 5 7 7-7 7"/></svg><span class="qb-component-name"><span>Corrugated roofing</span><span class="qb-component-meta">Area (m²) · 1 entry</span></span><span class="qb-component-quantity"><span class="qb-mini-label">Quantity</span>250.00 m²</span><span class="qb-component-cost"><span class="qb-mini-label">Item + labour</span>NZ$10,000.00</span></button><button type="button" class="qc-button qc-icon-button qc-icon-danger" aria-label="Remove Corrugated roofing" data-static-action><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M5 6l1 14h12l1-14M9 6V3h6v3M10 10v6m4-6v6"/></svg></button></div><div id="sample-component-1" class="qb-component-body" ><div class="qb-setting-row"><span class="qc-label">Input:</span><button type="button" class="qc-button qc-choice" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="sm" aria-pressed="true">Plan</button><button type="button" class="qc-button qc-choice" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="sm" aria-pressed="false">Actual</button></div><div class="qb-setting-row"><span class="qc-label">Pitch:</span><button type="button" class="qc-choice" aria-pressed="true">Area (25.0°)</button><button type="button" class="qc-choice" aria-pressed="false">Custom</button></div><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="sm" >Use roof area total (250.00 m²)</button><div class="qb-entry-row"><span class="qb-entry-number">#1</span><span class="qb-entry-value">226.58 m²</span><span class="qb-entry-detail">→ 250.00 m² - (25°)</span><button class="qc-button qc-icon-button qc-icon-danger qb-entry-remove" aria-label="Remove entry 1" data-static-action><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M5 6l1 14h12l1-14M9 6V3h6v3M10 10v6m4-6v6"/></svg></button></div><div class="qb-entry-editor"><div class="qc-choice-group"><button class="qc-choice" aria-pressed="false">Area</button><button class="qc-choice" aria-pressed="true">W × L</button></div><div class="qb-entry-inputs"><label for="entry-w">W</label><input id="entry-w" type="number" class="qc-input qb-dimension-input" placeholder="0" inputmode="decimal"><span>×</span><label for="entry-l">L</label><input id="entry-l" type="number" class="qc-input qb-dimension-input" placeholder="0" inputmode="decimal"><span class="qc-help">m</span></div><div class="qb-entry-actions"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="primary" data-qc-size="sm" >Add</button><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="sm" >Done</button></div></div></div></div><div class="qb-component"><div class="qb-component-heading"><button type="button" class="qb-component-toggle" aria-expanded="false" aria-controls="sample-component-2" data-preview-disclosure><svg aria-hidden="true" class="qb-disclosure-icon" data-expanded="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m9 5 7 7-7 7"/></svg><span class="qb-component-name"><span>Roofing underlay</span><span class="qb-component-meta">Area (m²) · 1 entry</span></span><span class="qb-component-quantity"><span class="qb-mini-label">Quantity</span>6 <span class="text-slate-400">(5.00)</span></span><span class="qb-component-cost"><span class="qb-mini-label">Item + labour</span>NZ$1,200.00</span></button><button type="button" class="qc-button qc-icon-button qc-icon-danger" aria-label="Remove Roofing underlay" data-static-action><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M5 6l1 14h12l1-14M9 6V3h6v3M10 10v6m4-6v6"/></svg></button></div><div id="sample-component-2" class="qb-component-body" hidden><p class="qc-help">Static specimen. Open this component in the app preview to exercise its actual controls.</p></div></div><div class="qb-component"><div class="qb-component-heading"><button type="button" class="qb-component-toggle" aria-expanded="false" aria-controls="sample-component-3" data-preview-disclosure><svg aria-hidden="true" class="qb-disclosure-icon" data-expanded="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m9 5 7 7-7 7"/></svg><span class="qb-component-name"><span>Ridge flashing</span><span class="qb-component-meta">Linear: Single (m) · 2 entries</span></span><span class="qb-component-quantity"><span class="qb-mini-label">Quantity</span>20.00 m</span><span class="qb-component-cost"><span class="qb-mini-label">Item + labour</span>NZ$800.00</span></button><button type="button" class="qc-button qc-icon-button qc-icon-danger" aria-label="Remove Ridge flashing" data-static-action><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M5 6l1 14h12l1-14M9 6V3h6v3M10 10v6m4-6v6"/></svg></button></div><div id="sample-component-3" class="qb-component-body" hidden><p class="qc-help">Static specimen. Open this component in the app preview to exercise its actual controls.</p></div></div><div class="qb-library"><label for="library" class="qc-label">Add from your pricing library</label><div class="qb-inline-form"><select id="library" class="qc-select qb-grow"><option>Choose a Smart Component...</option><option>+ Create new Smart Component™</option><option>Corrugated roofing</option></select><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="md" disabled><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>Add component</button></div></div></div><div class="qb-step-actions"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="md" data-preview-step="areas">← Roof Areas</button><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="primary" data-qc-size="md" data-preview-step="extras">Next: Extras →</button></div></div></div></div><div class="qb-work-grid" data-preview-panel="extras" hidden><aside class="qb-totals-rail"><section class="qc-money-summary" aria-label="Current quote"><h2>Current quote</h2><dl class="qc-money-rows"><div><dt>Roof area</dt><dd>250.00 m²</dd></div><div><dt>Item Cost</dt><dd>NZ$8,000.00</dd></div><div><dt>Labour</dt><dd>NZ$4,000.00</dd></div></dl><dl class="qc-money-total"><div><dt>Quote total</dt><dd>NZ$16,560.00</dd></div></dl><p class="qc-help">Uses the saved margin settings. Check margins in Review before confirming.</p></section></aside><div class="qb-step-content"><header class="qb-phase-heading"><p class="qb-eyebrow">Step 3 of 4</p><h2>Extras</h2><p>Add saved extras for the other items and services this quote needs.</p></header><div class="qb-stack"><div class="qc-surface qb-stack"><h3 class="qb-group-title">Extras</h3><div class="qc-notice"><p>Choose saved extras below, or create a Smart Component to reuse later. Fully custom lines are added in the customer quote editor after this builder.</p></div><div class="qb-library"><label class="qc-label" for="extra-library">Add from your pricing library</label><div class="qb-inline-form"><select id="extra-library" class="qc-select qb-grow"><option>Choose a Smart Component...</option><option>Delivery fee</option><option>+ Create new Smart Component™</option></select><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="md" disabled>Add component</button></div></div></div><div class="qb-step-actions"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="md" data-preview-step="components">← Smart Components™</button><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="primary" data-qc-size="md" data-preview-step="review">Next: Review →</button></div></div></div></div><div class="qb-work-grid" data-preview-panel="review" hidden><div class="qb-step-content"><header class="qb-phase-heading"><p class="qb-eyebrow">Step 4 of 4</p><h2>Review</h2><p>Check the quantities, costs and margins before confirming your quote.</p></header><div class="qb-stack"><div class="qc-surface qb-review-card"><h3 class="qb-group-title">Main Roof <span class="qb-group-meta">250.00 m² @ 25°</span></h3><div class="qb-review-scroll"><div style="overflow-x:auto" tabindex="0" aria-label="Quote quantities and costs"><table class="qb-review-table"><thead><tr><th>Component</th><th>Entries</th><th>Total Qty</th><th>Item Cost</th><th>Labour</th><th>Total</th></tr></thead><tbody><tr><td>Corrugated roofing</td><td>1</td><td>250.00 m²</td><td>NZ$7,000.00</td><td>NZ$3,000.00</td><td>NZ$10,000.00</td></tr><tr><td>Roofing underlay</td><td>1</td><td>6 (5.00)</td><td>NZ$600.00</td><td>NZ$600.00</td><td>NZ$1,200.00</td></tr><tr><td>Ridge flashing</td><td>2</td><td>20.00 m</td><td>NZ$400.00</td><td>NZ$400.00</td><td>NZ$800.00</td></tr></tbody></table></div></div></div><div class="qb-review-grid"><div class="qc-surface qb-margins"><div><h3 class="qb-group-title">Profit margins</h3><p class="qc-help">Adjust your margins here. Changes are saved when you confirm this quote.</p></div><div class="ref-margin-grid"><div class="qb-margin-field"><label class="qc-check-label"><input type="checkbox" class="qc-check" checked>Item Cost Margin</label><div class="qb-percent-input"><input class="qc-input qb-full-width" aria-label="Item Cost Margin percentage" type="number" value="20"><span class="ref-percent">%</span></div><p class="qc-help qb-margin-preview">+NZ$1,600.00 profit</p></div><div class="qb-margin-field"><label class="qc-check-label"><input type="checkbox" class="qc-check" checked>Labour Margin</label><div class="qb-percent-input"><input class="qc-input qb-full-width" aria-label="Labour Margin percentage" type="number" value="20"><span class="ref-percent">%</span></div><p class="qc-help qb-margin-preview">+NZ$800.00 profit</p></div></div><div class="qc-notice"><p class="qc-help"><strong>Customer visibility:</strong> Choose what customers see in the customer quote editor. Review the customer document before sending.</p></div></div><div class="qc-surface qb-review-totals"><h3 class="qb-group-title">Quote breakdown</h3><p class="qc-help">Margin previews reflect your entries. Tax and grand total below use saved margins until you confirm.</p><div class="flex"><span>Total Item Cost</span><span>NZ$8,000.00</span></div><div class="flex"><span>Total Labour</span><span>NZ$4,000.00</span></div><div class="flex"><span>Total Margin</span><span>NZ$2,400.00</span></div><div class="flex"><span>Subtotal</span><span>NZ$14,400.00</span></div><div class="flex"><span>Tax (15%)</span><span>NZ$2,160.00</span></div><div class="flex"><span>Grand Total</span><span>NZ$16,560.00</span></div></div></div><p class="qc-help">A dot marks a value overridden from its template default.</p><div class="qb-step-actions"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="md" data-preview-step="extras">← Back to Extras</button><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="primary" data-qc-size="md" data-static-action>Confirm Quote →</button></div></div></div></div></section></main><p class="ref-note">This specimen checks layout and token application only. The existing global header is illustrated, not redesigned. The production components, permissions, calculations and routing must be tested in Gavin’s isolated app preview.</p><dialog data-qc-ui="v2" class="qc-dialog" id="glass-example" aria-labelledby="glass-title"><header class="qc-dialog-header"><h2 id="glass-title">Remove roof area?</h2><p>Remove "Main Roof"? Every component attached to this area, including entries and document lines, will also be deleted. This cannot be undone.</p></header><div class="qc-dialog-footer"><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="ghost" data-qc-size="md" data-close-glass>Cancel</button><button type="button" class="qc-button" data-qc-component="C01" data-qc-variant="danger" data-qc-size="md" data-close-glass>Remove area + components</button></div></dialog><script>
+const workspace=document.querySelector('.qb-workspace');
+function phase(key){workspace.dataset.qcPhase=key;document.querySelectorAll('[data-preview-panel]').forEach(p=>p.hidden=p.dataset.previewPanel!==key);document.querySelectorAll('.qc-stepper [data-preview-step]').forEach(b=>{if(b.dataset.previewStep===key)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});}
+document.querySelectorAll('[data-preview-step]').forEach(b=>b.addEventListener('click',()=>phase(b.dataset.previewStep)));
+document.querySelectorAll('[data-preview-disclosure]').forEach(b=>b.addEventListener('click',()=>{const p=document.getElementById(b.getAttribute('aria-controls'));p.hidden=!p.hidden;b.setAttribute('aria-expanded',String(!p.hidden));b.querySelector('svg').dataset.expanded=String(!p.hidden)}));
+const modal=document.querySelector('#glass-example');document.querySelector('#show-glass').onclick=()=>{modal.showModal();modal.querySelector('button').focus()};document.querySelectorAll('[data-close-glass]').forEach(b=>b.onclick=()=>modal.close());
+if(location.hash.slice(1)&&document.querySelector('[data-preview-panel="'+location.hash.slice(1)+'"]'))phase(location.hash.slice(1));
+</script></body></html>

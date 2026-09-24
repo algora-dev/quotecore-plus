@@ -1,0 +1,68 @@
+{
+  "version": "Phase1 redo / 2026-09-24",
+  "status": "STATIC_REVIEWED_RUNTIME_PENDING",
+  "sourceCommit": "20b3f54c",
+  "scope": "Existing four-step quote builder only",
+  "designArchiveSha256": "937ef076eb1ebc7704fa6ddb33109c6b20618b9e68645ce023f4cac6715d0a2f",
+  "sourceArchiveSha256": "0f2dc0328341d1c4c7e90fe55d6b1c56fbb34fc7023c9d9168d6ea9820728508",
+  "authorityOrder": [
+    "AGENT_BRIEF.md",
+    "DATABASE_AND_SERVICES.md",
+    "Approved QuoteCore-Plus-UX-Handoff-v2.0 visual tokens/contracts",
+    "DESIGN_CHANGES.md and phase1 component adapters"
+  ],
+  "components": [
+    {
+      "id": "C01/C02",
+      "source": "app/components/ui/v2/QcButton.tsx",
+      "status": "IMPLEMENTED_STATIC_ONLY"
+    },
+    {
+      "id": "C04/C05/C06",
+      "source": "app/components/ui/v2/QcField.tsx",
+      "status": "IMPLEMENTED_STATIC_ONLY"
+    },
+    {
+      "id": "C13/C18/C30",
+      "source": "app/components/ui/v2/QcSurface.tsx",
+      "status": "IMPLEMENTED_STATIC_ONLY"
+    },
+    {
+      "id": "C27/C29",
+      "source": "app/components/ui/v2/QcDialog.tsx",
+      "status": "IMPLEMENTED_STATIC_ONLY"
+    },
+    {
+      "id": "C34",
+      "source": "app/components/ui/v2/QcWorkflowStepper.tsx",
+      "status": "IMPLEMENTED_STATIC_ONLY"
+    },
+    {
+      "id": "C35",
+      "source": "app/components/ui/v2/QcMoneySummary.tsx",
+      "status": "IMPLEMENTED_STATIC_ONLY"
+    },
+    {
+      "id": "C20",
+      "source": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder/ExpandableComponent.tsx",
+      "status": "DOMAIN_ADAPTER"
+    },
+    {
+      "id": "C15",
+      "source": "app/(auth)/[workspaceSlug]/quotes/[id]/quote-builder.tsx",
+      "status": "PRESERVED_TABLE_ADAPTER"
+    },
+    {
+      "id": "C36",
+      "source": "app/(auth)/[workspaceSlug]/quotes/[id]/FilesManager.tsx",
+      "status": "DOMAIN_ADAPTER"
+    },
+    {
+      "id": "C37",
+      "source": "app/components/FileUploader.tsx",
+      "status": "OPT_IN_ADAPTER"
+    }
+  ],
+  "protected": "See root brief. No action, API, lib, service, config, package or test changes.",
+  "requiredNext": "Gavin integrates coherent UI delta into isolated clone, runs full checks, deploys preview, obtains Phase1 owner approval."
+}

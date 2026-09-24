@@ -1,5 +1,7 @@
 'use client';
-import { useTransition } from 'react';
+import { useTransition, useId } from 'react';
+import { QcSelect } from '@/app/components/ui/v2/QcField';
+import { useQcFeedback } from '@/app/components/ui/v2/useQcFeedback';
 import { updateQuoteCurrency } from '../actions';
 import { useRouter } from 'next/navigation';
 import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
@@ -12,6 +14,8 @@ interface Props {
 }
 
 export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurrency, workspaceSlug: _workspaceSlug }: Props) {
+  const { notify, ask, feedback } = useQcFeedback();
+  const selectId = useId();
   const effectiveCurrency = currentCurrency || companyDefaultCurrency;
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -19,15 +23,21 @@ export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurre
   async function handleChange(newCurrency: string) {
     // Warn if changing away from company default
     if (newCurrency !== companyDefaultCurrency) {
-      const confirmed = window.confirm(
-        `⚠️ Warning: Changing Currency\n\n` +
-        `Your component library prices are in ${companyDefaultCurrency}.\n` +
-        `Changing this quote to ${newCurrency} will only change the display symbol.\n\n` +
-        `Prices will NOT be converted automatically.\n\n` +
-        `Recommended: Keep quotes in ${companyDefaultCurrency} or manually adjust component rates if needed.\n\n` +
-        `Change anyway?`
-      );
-      
+      const confirmed = await ask({
+        title: 'Change currency?',
+        description: `Your component library prices are in ${companyDefaultCurrency}.
+` +
+          `Changing this quote to ${newCurrency} changes the display symbol only.
+
+` +
+          `Prices will NOT be converted automatically.
+
+` +
+          `Keep quotes in ${companyDefaultCurrency}, or manually adjust component rates if needed.`,
+        confirmLabel: 'Change currency',
+        cancelLabel: `Keep ${effectiveCurrency}`,
+      });
+
       if (!confirmed) return;
     }
     
@@ -39,23 +49,25 @@ export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurre
         router.refresh();
       } catch (err) {
         console.error('Failed to update currency:', err);
-        alert('Failed to update currency. Please try again.');
+        await notify('Failed to update currency. Please try again.');
       }
     });
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <label htmlFor="currency-selector" className="text-sm font-medium text-slate-700" title="Currency display format (prices are NOT auto-converted)">
+    <>
+    {feedback}
+    <div className="qb-currency">
+      <label htmlFor={selectId} className="qc-label" title="Currency display format (prices are NOT auto-converted)">
         Currency:
       </label>
-      <select
-        id="currency-selector"
+      <QcSelect
+        id={selectId}
         value={effectiveCurrency}
         onChange={(e) => handleChange(e.target.value)}
         disabled={isPending}
-        className="px-3 py-2 text-sm rounded-full border border-slate-300 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
-        title="⚠️ Changes display symbol only - prices are NOT converted"
+        className="qb-currency-select"
+        title="Changes display symbol only - prices are NOT converted"
       >
         {/* Show company default with indicator */}
         <option value={companyDefaultCurrency}>
@@ -74,11 +86,12 @@ export function CurrencySelector({ quoteId, currentCurrency, companyDefaultCurre
               ))}
           </optgroup>
         ))}
-      </select>
+      </QcSelect>
       
       {isPending && (
-        <span className="text-xs text-slate-500">Updating...</span>
+        <span className="qc-help" role="status">Updating...</span>
       )}
     </div>
+    </>
   );
 }

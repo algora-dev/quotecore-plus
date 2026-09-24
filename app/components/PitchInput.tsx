@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
+import './ui/v2/qc.css';
 import {
   type PitchInputMode,
   PITCH_INPUT_MODE_LABELS,
@@ -35,6 +36,8 @@ function storePitchMode(mode: PitchInputMode) {
 }
 
 export function PitchInput(props: {
+  /** Phase 1-only presentation; does not alter pitch conversion or write timing. */
+  appearance?: 'v2';
   /** Current pitch in degrees (controlled from parent / DB). */
   degrees: number | null | undefined;
   /** Called with degrees when the user commits a value. */
@@ -52,7 +55,8 @@ export function PitchInput(props: {
   /** autoFocus the input. */
   autoFocus?: boolean;
 }) {
-  const { degrees, onSave, label, required, showMax, className, compact, autoFocus } = props;
+  const { degrees, onSave, label, required, showMax, className, compact, autoFocus, appearance } = props;
+  const inputId = useId();
   const [mode, setMode] = useState<PitchInputMode>('degrees');
   // Restore the user's last-selected mode (report also reads this).
   useEffect(() => {
@@ -81,24 +85,26 @@ export function PitchInput(props: {
   }
 
   return (
-    <div className={className}>
+    <div data-qc-ui={appearance === 'v2' ? 'v2' : undefined} className={appearance === 'v2' ? `qc-pitch ${className ?? ''}` : className}>
       {label && (
         <div className="flex items-center gap-2 mb-1">
-          <label className={compact ? 'text-xs text-slate-500' : 'text-sm font-medium text-slate-700'}>
+          <label htmlFor={inputId} className={compact ? 'text-xs text-slate-500' : 'text-sm font-medium text-slate-700'}>
             {label}
             {!required && <span className="text-slate-400 font-normal ml-1">(optional)</span>}
           </label>
         </div>
       )}
-      <div className="flex items-center gap-2">
+      <div className={appearance === 'v2' ? 'qc-pitch-row' : 'flex items-center gap-2'}>
         {/* Mode toggle */}
-        <div className="flex rounded-full border border-slate-200 overflow-hidden shrink-0">
+        <div className={appearance === 'v2' ? 'qc-choice-group' : 'flex rounded-full border border-slate-200 overflow-hidden shrink-0'} role="group" aria-label="Pitch input units">
           {(Object.keys(PITCH_INPUT_MODE_LABELS) as PitchInputMode[]).map((m) => (
             <button
               key={m}
               type="button"
+              aria-pressed={mode === m}
+              aria-label={PITCH_INPUT_MODE_LABELS[m]}
               onClick={() => { setMode(m); storePitchMode(m); }}
-              className={`px-2 py-1 text-[11px] font-medium transition-colors ${
+              className={appearance === 'v2' ? 'qc-choice' : `px-2 py-1 text-[11px] font-medium transition-colors ${
                 mode === m
                   ? 'bg-slate-900 text-white'
                   : 'bg-white text-slate-500 hover:bg-slate-50'
@@ -110,6 +116,9 @@ export function PitchInput(props: {
         </div>
         {/* Input */}
         <input
+          id={inputId}
+          aria-label={label || `Pitch in ${PITCH_INPUT_MODE_LABELS[mode]}`}
+          inputMode="decimal"
           type="number"
           step={mode === 'degrees' ? '0.5' : mode === 'ratio' ? '1' : '0.5'}
           min="0"
@@ -119,7 +128,7 @@ export function PitchInput(props: {
           onKeyDown={(e) => { if (e.key === 'Enter') commit(); }}
           placeholder={pitchPlaceholder(mode)}
           autoFocus={autoFocus}
-          className={`${compact ? 'w-16 px-1 py-0.5 text-xs' : 'w-24 px-2 py-1 text-sm'} border border-slate-300 rounded focus:outline-none focus:border-slate-500`}
+          className={appearance === 'v2' ? 'qc-input qc-pitch-value' : `${compact ? 'w-16 px-1 py-0.5 text-xs' : 'w-24 px-2 py-1 text-sm'} border border-slate-300 rounded focus:outline-none focus:border-slate-500`}
         />
         <span className="text-[11px] text-slate-400">{pitchSuffix(mode)}</span>
         {showMax && <span className="text-[11px] text-slate-400">max 80°</span>}

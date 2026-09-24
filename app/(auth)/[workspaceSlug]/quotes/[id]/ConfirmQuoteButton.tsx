@@ -3,6 +3,7 @@
 import { confirmQuoteAndRedirect, saveConfirmedQuoteAndRedirect } from '../actions';
 import type { QuoteStatus } from '@/app/lib/types';
 import { useRef, useState } from 'react';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
 
 interface Props {
   quoteId: string;
@@ -37,15 +38,15 @@ export function ConfirmQuoteButton({ quoteId, workspaceSlug, quoteStatus, onBefo
 
   return (
     <form ref={formRef} action={action}>
-      <button
+      <QcButton
         type="submit"
         data-copilot="quote-confirm"
         disabled={pending}
         onClick={onBeforeSubmit ? handleClick : undefined}
-        className="px-6 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-60"
+        variant="primary" pending={pending}
       >
         {pending ? 'Saving…' : buttonText}
-      </button>
+      </QcButton>
     </form>
   );
 }

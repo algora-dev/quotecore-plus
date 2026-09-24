@@ -1,5 +1,8 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useId } from 'react';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcInput } from '@/app/components/ui/v2/QcField';
+import { QcStatusBadge } from '@/app/components/ui/v2/QcSurface';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { formatArea, formatLinear } from '@/app/lib/measurements/displayHelpers';
@@ -27,6 +30,7 @@ export function RoofAreaCard({
   onRemoveEntry: (entryId: string, areaId: string) => Promise<void>;
   onRemove: (id: string) => void;
 }) {
+  const fieldId = useId();
   const [adding, setAdding] = useState(false);
   const [widthInput, setWidthInput] = useState('');
   const [lengthInput, setLengthInput] = useState('');
@@ -78,44 +82,47 @@ export function RoofAreaCard({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 space-y-3">
+    <div className="qc-surface qb-area-card qb-stack">
       {area.is_locked ? (
         <>
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold text-slate-900 text-sm md:text-base">{area.label}</h3>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-sm font-medium text-orange-600">
+          <div className="qb-area-heading">
+            <h3 className="qb-group-title">{area.label}</h3>
+            <div className="qb-area-tools">
+              <span className="qb-area-quantity">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
                 {area.calc_pitch_degrees ? ` @ ${area.calc_pitch_degrees}°` : ''}
               </span>
-              <button
+              <QcStatusBadge tone="success">Confirmed</QcStatusBadge>
+              <QcButton
+                aria-label={`Edit ${area.label}`}
                 onClick={() => onToggleLock(area.id, false)}
-                className="px-2 py-1 text-xs rounded border border-slate-300 hover:bg-slate-50 min-h-[44px] flex items-center"
+                size="sm"
               >
                 Edit
-              </button>
-              <button onClick={() => onRemove(area.id)} className="w-8 h-8 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-              </button>
+              </QcButton>
+              <QcButton aria-label={`Remove ${area.label}`} title={`Remove ${area.label}`} onClick={() => onRemove(area.id)} size="sm" className="qc-icon-button qc-icon-danger">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              </QcButton>
             </div>
           </div>
         </>
       ) : (
         <>
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold text-slate-900 text-sm md:text-base">{area.label}</h3>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-sm font-medium text-orange-600">
+          <div className="qb-area-heading">
+            <h3 className="qb-group-title">{area.label}</h3>
+            <div className="qb-area-tools">
+              <span className="qb-area-quantity">
                 {formatArea(area.computed_sqm ?? 0, quote.measurement_system)}
               </span>
-              <button onClick={() => onRemove(area.id)} className="w-8 h-8 md:w-7 md:h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-              </button>
+              <QcButton aria-label={`Remove ${area.label}`} title={`Remove ${area.label}`} onClick={() => onRemove(area.id)} size="sm" className="qc-icon-button qc-icon-danger">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              </QcButton>
             </div>
           </div>
           <div>
               {areaPitchVisible && <div className="mb-2" data-copilot="quote-pitch">
                 <PitchInput
+                  appearance="v2"
                   degrees={area.calc_pitch_degrees}
                   onSave={(deg) => {
                     onUpdate(area.id, {
@@ -132,32 +139,37 @@ export function RoofAreaCard({
                   className="block"
                 />
                 {(area.calc_pitch_degrees ?? 0) >= 60 && (
-                  <p className="mt-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                  <p className="qb-angle-warning">
                     High angle ({area.calc_pitch_degrees}°): calculated quantities get very large near vertical. Double-check the value is correct.
                   </p>
                 )}
               </div>}
               {entries.map((entry, idx) => (
-                <div key={entry.id} className="flex items-center gap-2 text-xs mb-1">
-                  <span className="text-slate-400 w-6 flex-shrink-0">#{idx + 1}</span>
-                  <span className="text-slate-700 min-w-0">
+                <div key={entry.id} className="qb-entry-row">
+                  <span className="qb-entry-number">#{idx + 1}</span>
+                  <span className="qb-entry-value">
                     {formatLinear(entry.width_m, quote.measurement_system)} × {formatLinear(entry.length_m, quote.measurement_system)} = {formatArea(entry.sqm, quote.measurement_system)}
                     {entry.pitch_degrees != null && entry.pitch_degrees > 0 && (
-                      <span className="text-slate-400 ml-1">@ {entry.pitch_degrees}°</span>
+                      <span className="qb-entry-detail">@ {entry.pitch_degrees}°</span>
                     )}
                   </span>
-                  <button
+                  <QcButton
+                    aria-label={`Remove measurement ${idx + 1} from ${area.label}`}
+                    title="Remove measurement"
                     onClick={() => onRemoveEntry(entry.id, area.id)}
-                    className="ml-auto w-8 h-8 md:w-6 md:h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                    size="sm" className="qc-icon-button qc-icon-danger qb-entry-remove"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                  </button>
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                  </QcButton>
                 </div>
               ))}
               {adding ? (
-                <div className="flex flex-wrap items-center gap-2 mt-2" data-copilot="quote-measurement-inputs">
-                  <input
+                <div className="qb-measurement-row" data-copilot="quote-measurement-inputs">
+                  <div className="qb-dimension-field">
+                    <label htmlFor={`${fieldId}-width`} className="qc-label">Width ({normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? 'm' : 'ft'})</label>
+                  <QcInput
                     ref={widthRef}
+                    id={`${fieldId}-width`}
                     type="number"
                     step="0.01"
                     value={widthInput}
@@ -173,10 +185,14 @@ export function RoofAreaCard({
                         setLengthInput('');
                       }
                     }}
-                    className="w-24 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    className="qb-full-width"
                   />
-                  <span className="text-xs text-slate-400">×</span>
-                  <input
+                  </div>
+                  <span className="qb-multiply" aria-hidden="true">×</span>
+                  <div className="qb-dimension-field">
+                    <label htmlFor={`${fieldId}-length`} className="qc-label">Length ({normalizeMeasurementSystem(quote.measurement_system) === 'metric' ? 'm' : 'ft'})</label>
+                  <QcInput
+                    id={`${fieldId}-length`}
                     type="number"
                     step="0.01"
                     value={lengthInput}
@@ -192,43 +208,44 @@ export function RoofAreaCard({
                         setLengthInput('');
                       }
                     }}
-                    className="w-24 px-2 py-1.5 text-base md:text-xs border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                    className="qb-full-width"
                   />
-                  <button
+                  </div>
+                  <QcButton
                     onClick={handleSubmit}
-                    className="px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.5)] min-h-[44px]"
+                    variant="primary"
                   >
                     Add
-                  </button>
-                  <button
+                  </QcButton>
+                  <QcButton
                     onClick={() => {
                       setAdding(false);
                       setWidthInput('');
                       setLengthInput('');
                     }}
-                    className="px-2 py-1 text-xs text-slate-500 hover:text-slate-700 min-h-[44px] flex items-center"
+                    variant="ghost"
                   >
                     Done
-                  </button>
+                  </QcButton>
                 </div>
               ) : (
-                <button
+                <QcButton
                   onClick={startAdding}
                   data-copilot="quote-add-measurement"
-                  className="text-xs text-orange-600 hover:text-blue-800 font-medium mt-1"
+                  variant="ghost"
                 >
                   + Add area measurement
-                </button>
+                </QcButton>
               )}
             </div>
-          <div className="flex justify-end pt-2">
-            <button
+          <div className="qb-area-footer">
+            <QcButton
               onClick={() => onToggleLock(area.id, true)}
               data-copilot="quote-confirm-area"
-              className="px-4 py-2 text-sm font-medium rounded-full bg-emerald-600 text-white hover:bg-emerald-700 min-h-[44px]"
+              className="qc-success-action"
             >
-              Confirm
-            </button>
+              Confirm area
+            </QcButton>
           </div>
         </>
       )}
