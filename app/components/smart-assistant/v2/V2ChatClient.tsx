@@ -270,7 +270,9 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         catch (error) {
             if (mounted.current) {
                 setNotice(error instanceof Error ? error.message : 'Connection interrupted. Retry the same message.');
-                setInput(text);
+                // Do NOT re-fill the composer on failure: the message is already in
+                // the thread and the Retry same message button covers an idempotent
+                // retry. Re-filling tripled the text visually (thread + composer).
             }
             await refresh(id);
         }

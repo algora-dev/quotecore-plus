@@ -58,3 +58,6 @@ Owner: Shaun. Integrator: Gavin. Status: Smart Assistant V2 P1 (find / read / na
 ## Return format
 
 Full integrated archive (same structure as received), root RETURN_NOTES.md, updated brief docs. Gavin integrates, builds, tests, and deploys the testing preview. Owner approves before anything reaches main.
+## Addendum (19:15 screenshot diagnosis)
+
+Owner screenshot (18:34, pre-fix build) showed the failure-retry pile-up: two identical stored user messages from two failed runs, the same text re-filled into the composer, an error banner and Refresh button - one request visually tripled. Integrator fix (2026-09-24): failed turns no longer re-fill the composer (the Retry same message button already handles idempotent retry); the underlying run failures were the gpt-5 reasoning-budget bug, also fixed. Remaining polish for the external agent: on ANY failure, consider collapsing consecutive stored user messages from failed retries into a single retryable entry in the thread view, and shorten the failure notice to one line.
