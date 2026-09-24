@@ -32,13 +32,22 @@ export const dynamic = 'force-dynamic';
  *       is deferred to phase 2 because it needs additional safety guards
  *       (export-before-delete, admin override, dry-run mode).
  *
- * Disputes auto-close is handled by a separate sweep in this same cron:
- *
  *   PASS 4 - DISPUTE AUTO-CLOSE
  *     - support_tickets with category='payment_dispute' AND
  *       auto_close_at < now() AND status NOT IN ('resolved','closed').
  *     - Resolve the ticket. The dispute itself remains "in dispute" at
  *       Stripe until the bank rules; this is just our internal SLA.
+ *
+ *   PASS 5 - COMP EXPIRY NOTICES (2026-09-24)
+ *     - Companies with comp_until set and no Stripe subscription.
+ *     - T-7 and T-1 warning emails, then an expiry-day notice.
+ *     - Every send writes a subscription_events marker row so the daily
+ *       cron never double-sends (idempotent across missed runs via a
+ *       3-day expiry catch-up window).
+ *     - Plan enforcement itself lives in company_effective_plan_code()
+ *       (patch_056): comp expired + no Stripe sub collapses to 'free'.
+ *       This pass only communicates; it never changes plan state.
+ *     - Internal summary email to info@quote-core.com on expiry day.
  *
  * Every transition writes a subscription_events row for the audit trail.
  */
@@ -71,6 +80,9 @@ export async function GET(request: Request) {
     advanced_to_suspended: 0,
     canceled: 0,
     disputes_closed: 0,
+    comp_warned_7d: 0,
+    comp_warned_1d: 0,
+    comp_expired_notified: 0,
   };
 
   // ----- PASS 1: dunning curve -----
@@ -223,6 +235,156 @@ export async function GET(request: Request) {
       if (error) continue;
       summary.disputes_closed += 1;
     }
+  }
+
+  // ----- PASS 5: comp expiry notices -----
+  // Communication only; plan collapse is enforced by company_effective_plan_code (patch_056).
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const isoIn = (days: number) => new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+
+  async function compEventExists(companyId: string, eventType: string): Promise<boolean> {
+    const { data } = await admin
+      .from('subscription_events')
+      .select('id')
+      .eq('company_id', companyId)
+      .eq('event_type', eventType)
+      .limit(1);
+    return (data ?? []).length > 0;
+  }
+
+  async function ownerEmail(companyId: string): Promise<string | null> {
+    const { data } = await admin
+      .from('users')
+      .select('email')
+      .eq('company_id', companyId)
+      .eq('role', 'owner')
+      .order('created_at', { ascending: true })
+      .limit(1);
+    return data?.[0]?.email ?? null;
+  }
+
+  async function sendCompEmail(to: string, subject: string, html: string): Promise<boolean> {
+    if (!RESEND_API_KEY) return false;
+    try {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: 'QuoteCore+ <info@quote-core.com>', to, subject, html }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  function compEmailHtml(heading: string, bodyText: string, cta: boolean): string {
+    return `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+      <h2 style="margin:0 0 16px;">${heading}</h2>
+      <p style="color:#303641;line-height:1.6;">${bodyText}</p>
+      ${cta ? `<p style="margin:24px 0;"><a href="https://app.quote-core.com" style="background:#FF6B35;color:#191B20;padding:12px 24px;border-radius:999px;text-decoration:none;font-weight:600;display:inline-block;">Keep my Pro features</a></p>` : ''}
+      <p style="color:#596273;font-size:13px;line-height:1.5;margin-top:28px;">QuoteCore+ - measure, quote and manage roofing jobs in one place.<br/><a href="https://quote-core.com" style="color:#B63D0A;">quote-core.com</a></p>
+    </div>`;
+  }
+
+  const expiryDate = (compUntil: string) =>
+    new Date(compUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+
+  const compTargets = await admin
+    .from('companies')
+    .select('id, name, comp_until, stripe_subscription_id')
+    .not('comp_until', 'is', null)
+    .is('stripe_subscription_id', null)
+    .gte('comp_until', isoIn(-3)) // 3-day catch-up window past expiry
+    .lte('comp_until', isoIn(7))
+    .limit(200);
+
+  const expiredNow: string[] = [];
+  for (const row of compTargets.data ?? []) {
+    const isTestAccount = row.name === 'test'; // internal test company: events yes, emails no
+    const until = row.comp_until as string; // narrowed: query filters comp_until not-null
+    const nowMs = Date.now();
+    const untilMs = new Date(until).getTime();
+    const daysLeft = (untilMs - nowMs) / (24 * 60 * 60 * 1000);
+
+    if (daysLeft > 1 && daysLeft <= 7) {
+      if (!(await compEventExists(row.id, 'comp_warning_7d'))) {
+        const email = isTestAccount ? null : await ownerEmail(row.id);
+        if (email) {
+          await sendCompEmail(
+            email,
+            `Your QuoteCore+ Pro access ends on ${expiryDate(until)}`,
+            compEmailHtml(
+              'Your complimentary Pro period is ending',
+              `You have been enjoying QuoteCore+ Pro at no cost since the launch of our new plans. Your complimentary Pro period ends on <strong>${expiryDate(until)}</strong>. After that, your account moves to the Free plan: you keep full access to view, download and export your quotes and data, but Pro features such as creating new quotes, takeoff tools and the assistant switch off. To keep everything exactly as it is, subscribe any time before then - Starter, Pro or Pro Plus are available under Settings &rarr; Billing.`,
+              true,
+            ),
+          );
+        }
+        await admin.from('subscription_events').insert({
+          company_id: row.id,
+          event_type: 'comp_warning_7d',
+          to_status: 'active',
+          notes: `Comp expiry T-7 notice (email ${email && !isTestAccount ? 'sent' : isTestAccount ? 'skipped: test account' : 'skipped: no owner email or RESEND unset'}).`,
+        });
+        summary.comp_warned_7d += 1;
+      }
+    } else if (daysLeft > 0 && daysLeft <= 1) {
+      if (!(await compEventExists(row.id, 'comp_warning_1d'))) {
+        const email = isTestAccount ? null : await ownerEmail(row.id);
+        if (email) {
+          await sendCompEmail(
+            email,
+            `Your QuoteCore+ Pro access ends tomorrow`,
+            compEmailHtml(
+              'Final reminder: your Pro access ends tomorrow',
+              `Your complimentary QuoteCore+ Pro period ends <strong>tomorrow, ${expiryDate(until)}</strong>. Subscribe today under Settings &rarr; Billing to keep creating quotes and using takeoff tools without interruption. Your existing data stays safe and exportable on the Free plan either way.`,
+              true,
+            ),
+          );
+        }
+        await admin.from('subscription_events').insert({
+          company_id: row.id,
+          event_type: 'comp_warning_1d',
+          to_status: 'active',
+          notes: `Comp expiry T-1 notice (email ${email && !isTestAccount ? 'sent' : isTestAccount ? 'skipped: test account' : 'skipped: no owner email or RESEND unset'}).`,
+        });
+        summary.comp_warned_1d += 1;
+      }
+    } else if (daysLeft <= 0) {
+      if (!(await compEventExists(row.id, 'comp_expired'))) {
+        const email = isTestAccount ? null : await ownerEmail(row.id);
+        if (email) {
+          await sendCompEmail(
+            email,
+            'Your QuoteCore+ Pro access has ended',
+            compEmailHtml(
+              'Your complimentary Pro period has ended',
+              `Your complimentary QuoteCore+ Pro period has now ended, and your account is on the Free plan. You can still view, download and export every quote and all your data at any time. If you want Pro features back - new quotes, takeoff tools, the assistant - subscribe under Settings &rarr; Billing whenever you are ready. It takes about a minute.`,
+            false,
+          ),
+          );
+        }
+        await admin.from('subscription_events').insert({
+          company_id: row.id,
+          event_type: 'comp_expired',
+          to_status: 'active',
+          notes: `Comp expired; effective plan collapses to free via company_effective_plan_code (patch_056). Email ${email && !isTestAccount ? 'sent' : isTestAccount ? 'skipped: test account' : 'skipped: no owner email or RESEND unset'}.`,
+        });
+        summary.comp_expired_notified += 1;
+        if (!isTestAccount) expiredNow.push(row.name);
+      }
+    }
+  }
+
+  if (expiredNow.length > 0 && RESEND_API_KEY) {
+    await sendCompEmail(
+      'info@quote-core.com',
+      'Comps expired today',
+      `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+        <p>${expiredNow.length} comped compan${expiredNow.length === 1 ? 'y has' : 'ies have'} moved to the Free plan today:</p>
+        <ul>${expiredNow.map((n) => `<li>${n}</li>`).join('')}</ul>
+      </div>`,
+    );
   }
 
   return NextResponse.json({ ok: true, summary });
