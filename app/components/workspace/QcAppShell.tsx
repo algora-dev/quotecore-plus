@@ -57,7 +57,7 @@ export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, i
     <aside id="qc-sidebar" className="qc-sidebar" data-takeoff-chrome="sidebar" aria-label="Workspace sidebar">
       <div className="qc-sidebar-brand">
         <Link href={`/${workspaceSlug}`} prefetch={false} className="qc-brand" aria-label="QuoteCore Plus home">
-          <img src="/logo.png" alt="QuoteCore Plus" /><span className="qc-brand-compact" aria-hidden="true">Q<span>+</span></span>
+          <img src="/logo.png" alt="QuoteCore Plus" /><img src="/q-mark.png" alt="" aria-hidden="true" className="qc-brand-compact" />
         </Link>
         <QcButton variant="ghost" className="qc-icon-button qc-sidebar-toggle" aria-label={mode === 'expanded' ? 'Collapse navigation' : 'Expand navigation'}
           title={mode === 'expanded' ? 'Collapse navigation' : 'Expand navigation'} aria-controls="qc-sidebar" aria-expanded={mode === 'expanded'}
