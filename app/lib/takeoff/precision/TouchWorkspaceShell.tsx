@@ -485,7 +485,7 @@ export function TouchWorkspaceShell({
               right: 'auto', bottom: 'auto', transform: 'translate(-100%, -100%)',
             } : undefined}
             onClick={() => onViewPreferenceChange('mobile-touch')}
-            className="fixed bottom-4 right-4 z-[9999] inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-lg hover:bg-orange-50"
+            className="fixed bottom-4 right-4 z-[9999] hidden pointer-coarse:inline-flex h-12 items-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-lg hover:bg-orange-50"
           >
             Mobile / touch view
           </button>,

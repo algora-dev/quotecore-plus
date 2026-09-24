@@ -23,13 +23,20 @@ export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = f
 }) {
   const enabled = useContext(HostedDialogPresentation);
   const nameId = useId();
+  // In the enabled (native dialog) presentation the legacy wrapper classes are
+  // viewport-overlay mechanics (fixed inset-0 backdrop/centering) that break
+  // hit-testing inside a native <dialog>: content painted outside the dialog
+  // box cannot receive pointer events, which made lower form rows (confirm
+  // buttons) unclickable. Strip overlay/positioning utilities; keep the rest.
+  const overlayMechanics = new Set(['fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black/50', 'bg-black/40', 'z-40', 'z-50', 'z-[60]']);
+  const retained = className.split(/\s+/).filter(Boolean).filter((cls) => !overlayMechanics.has(cls) && !/^z-\d+$/.test(cls) && !/^inset-/.test(cls)).join(' ');
   if (!enabled) return <div {...legacyProps} className={className}>{children}</div>;
   return <QcDialog open labelledBy={nameId} size={size}
     pending={pending || !onRequestClose} onRequestClose={onRequestClose ?? (() => {})}
     className="qc-hosted-dialog">
     <span id={nameId} className="qc-hosted-dialog-name">{label}</span>
     <div {...legacyProps} role={undefined} aria-modal={undefined} aria-labelledby={undefined}
-      data-qc-component="C53" className={`qc-hosted-dialog-content ${className}`}>
+      data-qc-component="C53" className={`qc-hosted-dialog-content ${retained}`}>
       {children}
     </div>
   </QcDialog>;

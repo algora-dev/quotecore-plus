@@ -38,7 +38,7 @@
 .qc-takeoff-workstation .qc-takeoff-area { border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-surface); padding:4px; }
 .qc-takeoff-workstation .qc-takeoff-area[data-selected='true'] { background:var(--qc-selected-bg); border-color:var(--qc-color-orange-ink); }
 .qc-takeoff-workstation .qc-takeoff-area-row { display:flex; align-items:flex-start; gap:4px; }
-.qc-takeoff-workstation .qc-takeoff-area-select { flex:1; min-width:0; display:grid; gap:4px; padding:8px; border:0; border-radius:var(--qc-radius-control); text-align:left; cursor:pointer; color:var(--qc-text-primary); }
+.qc-takeoff-workstation .qc-takeoff-area-select { flex:1; min-width:0; display:grid; gap:4px; padding:8px; border:1px solid var(--qc-border-divider); background:var(--qc-bg-subtle); border-radius:var(--qc-radius-control); text-align:left; cursor:pointer; color:var(--qc-text-primary); }
 .qc-takeoff-workstation .qc-takeoff-area-name { font-weight:600; overflow-wrap:anywhere; }
 .qc-takeoff-workstation .qc-takeoff-area-meta { display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:12px; color:var(--qc-text-secondary); font-variant-numeric:tabular-nums; }
 .qc-takeoff-workstation .qc-takeoff-row-actions { display:flex; align-items:center; gap:0; padding-top:4px; }
@@ -56,13 +56,13 @@
 .qc-takeoff-workstation .qc-takeoff-component-colour { width:4px; }
 .qc-takeoff-workstation .qc-takeoff-component-body { padding:10px; }
 .qc-takeoff-workstation .qc-takeoff-component-header { display:flex; align-items:flex-start; gap:4px; }
-.qc-takeoff-workstation .qc-takeoff-component-select { display:grid; gap:2px; flex:1; min-width:0; border:1px solid transparent; border-radius:var(--qc-radius-small); padding:2px; text-align:left; cursor:pointer; }
+.qc-takeoff-workstation .qc-takeoff-component-select { display:grid; gap:2px; flex:1; min-width:0; border:1px solid var(--qc-border-divider); background:var(--qc-bg-subtle); border-radius:var(--qc-radius-small); padding:2px; text-align:left; cursor:pointer; }
 .qc-takeoff-workstation .qc-takeoff-component-name { font-size:14px; line-height:20px; font-weight:600; color:var(--qc-text-primary); overflow-wrap:anywhere; }
 .qc-takeoff-workstation .qc-takeoff-component-meta { font-size:12px; line-height:18px; color:var(--qc-text-secondary); }
-.qc-takeoff-workstation .qc-takeoff-measurement-disclosure { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:32px; padding:4px 2px; margin-top:4px; border:0; border-radius:var(--qc-radius-small); font-size:12px; font-weight:550; text-align:left; color:var(--qc-text-secondary); cursor:pointer; }
+.qc-takeoff-workstation .qc-takeoff-measurement-disclosure { display:flex; align-items:center; justify-content:space-between; width:100%; min-height:32px; padding:4px 2px; margin-top:4px; border:0; border-radius:var(--qc-radius-small); background:var(--qc-bg-subtle); font-size:12px; font-weight:550; text-align:left; color:var(--qc-text-secondary); cursor:pointer; }
 .qc-takeoff-workstation .qc-takeoff-measurement-disclosure svg { width:14px; height:14px; transform:rotate(90deg); }
 .qc-takeoff-workstation .qc-takeoff-measurement-disclosure[aria-expanded='true'] svg { transform:rotate(-90deg); }
-.qc-takeoff-workstation .qc-takeoff-measurement-details > .space-y-1 { max-height:144px; overflow-y:auto; scrollbar-width:thin; overscroll-behavior:contain; }
+.qc-takeoff-workstation .qc-takeoff-measurement-details > .space-y-1 { scrollbar-width:thin; }
 .qc-takeoff-workstation .qc-takeoff-measurement-details > div:first-child { font-size:12px; line-height:18px; color:var(--qc-text-secondary); text-transform:none; letter-spacing:normal; }
 .qc-takeoff-workstation .qc-takeoff-measurement-row { min-height:32px; font-size:13px; line-height:20px; font-variant-numeric:tabular-nums; border-radius:var(--qc-radius-small); padding-left:2px; }
 .qc-takeoff-workstation .qc-takeoff-measurement-row .qc-button { min-width:32px; min-height:32px; width:32px; height:32px; padding:4px; border-color:transparent; }
@@ -70,7 +70,7 @@
 .qc-takeoff-workstation .qc-takeoff-needs-component { padding:4px 6px; margin-bottom:6px; border-radius:var(--qc-radius-small); background:var(--qc-color-warning-bg); color:var(--qc-color-warning-ink); font-size:12px; line-height:18px; font-weight:550; }
 .qc-takeoff-workstation .qc-takeoff-library { padding:12px; border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-subtle); }
 .qc-takeoff-workstation .qc-takeoff-library[hidden] { display:none; }
-.qc-takeoff-workstation .qc-takeoff-library > .space-y-1 { max-height:264px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+.qc-takeoff-workstation .qc-takeoff-library > .space-y-1 { scrollbar-width:thin; }
 .qc-takeoff-workstation .qc-takeoff-library .qc-button { text-align:left; justify-content:space-between; font-weight:400; padding:8px; border-color:var(--qc-border-divider); }
 .qc-takeoff-workstation .qc-takeoff-library .qc-button > span { width:24px; height:24px; border:0; background:var(--qc-selected-bg); color:var(--qc-selected-text); }
 .qc-takeoff-workstation .qc-takeoff-library input { padding-left:32px; }
