@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialogScope, QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -60,20 +61,21 @@ export function MeasureJobButton(props: Props) {
 
   if (props.variant === 'inline') {
     return (
-      <>
-        <button
+      <QcHostedDialogScope enabled>
+        <QcHostedButton variant="ghost"
           type="button"
           onClick={handleClick}
-          title="Upload a plan or image, or measure over satellite imagery, to get quantities and pricing - then seamlessly convert it into a quote."
+          title="Upload a plan or image, measure the job, then continue to pricing and your quote."
           aria-label="Measure a job - upload a plan or image to measure, price, and convert it into a quote"
           data-copilot="measure-job"
+          data-qc-ui="v2"
           className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)]"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m4 10V11m4 6V9M5 21h14" />
           </svg>
           Measure a job
-        </button>
+        </QcHostedButton>
 
         {open && <MeasureJobModal {...props} onClose={() => setOpen(false)} />}
 
@@ -84,12 +86,12 @@ export function MeasureJobButton(props: Props) {
           description="To measure jobs on the digital canvas please upgrade your account."
           recommendedPlan="growth"
         />
-      </>
+      </QcHostedDialogScope>
     );
   }
 
   return (
-    <>
+    <QcHostedDialogScope enabled>
       <div className="rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-white p-4 md:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3 md:gap-4">
@@ -106,7 +108,7 @@ export function MeasureJobButton(props: Props) {
               </p>
             </div>
           </div>
-          <button
+          <QcHostedButton variant="secondary"
             type="button"
             onClick={() => {
               if (!props.digitalTakeoffAvailable) {
@@ -118,7 +120,7 @@ export function MeasureJobButton(props: Props) {
             className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] min-h-[44px]"
           >
             Start measuring
-          </button>
+          </QcHostedButton>
         </div>
       </div>
 
@@ -131,7 +133,7 @@ export function MeasureJobButton(props: Props) {
         description="To measure jobs on the digital canvas please upgrade your account."
         recommendedPlan="growth"
       />
-    </>
+    </QcHostedDialogScope>
   );
 }
 
@@ -296,7 +298,7 @@ function MeasureJobModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+    <QcHostedDialog label="Measure a job" size="lg" className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] flex flex-col"
@@ -304,7 +306,7 @@ function MeasureJobModal({
         <div className="px-6 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
           <h3 className="text-lg font-semibold text-slate-900">Measure a job</h3>
           <p className="text-sm text-slate-500 mt-0.5">
-            Upload your plan or image and start measuring - quantities and pricing follow automatically.
+            Upload a plan or image, calibrate a known distance, then measure. Continue to pricing when you finish.
           </p>
         </div>
 
@@ -338,6 +340,7 @@ function MeasureJobModal({
           </label>
           <input
             type="text"
+            aria-label="Job name (required)"
             value={jobName}
             onChange={(e) => setJobName(e.target.value)}
             placeholder="e.g., 123 Main St re-roof"
@@ -353,6 +356,7 @@ function MeasureJobModal({
           </label>
           <input
             type="text"
+            aria-label="Customer name (optional)"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="e.g., John Smith"
@@ -372,7 +376,7 @@ function MeasureJobModal({
             {MEASUREMENT_OPTIONS.map((opt) => {
               const isActive = measurementSystem === opt.value;
               return (
-                <button
+                <QcHostedButton variant="ghost" aria-pressed={isActive} data-qc-choice="true"
                   key={opt.value}
                   type="button"
                   onClick={() => {
@@ -406,7 +410,7 @@ function MeasureJobModal({
                       </span>
                     )}
                   </div>
-                </button>
+                </QcHostedButton>
               );
             })}
           </div>
@@ -420,6 +424,7 @@ function MeasureJobModal({
               <div>
                 <label className="block text-xs text-slate-600 mb-1">Industry</label>
                 <select
+                  aria-label="Industry"
                   value={selectedTrade}
                   onChange={e => setSelectedTrade(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-orange-500"
@@ -446,6 +451,7 @@ function MeasureJobModal({
                   <p className="text-xs text-slate-500 py-2">No collections found. Go to Components to create one.</p>
                 ) : (
                   <select
+                    aria-label="Component collection"
                     value={selectedCollectionId}
                     onChange={e => setSelectedCollectionId(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:border-orange-500"
@@ -464,7 +470,7 @@ function MeasureJobModal({
         )}
 
         {/* Plan upload - required, same signed-upload path as the digital flow */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+        <div className="qc-takeoff-entry-upload bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
           <div>
             <h4 className="text-sm font-semibold text-slate-900 mb-1">Upload Plan / Image <span className="text-red-500">*</span></h4>
             <p className="text-xs text-slate-600 mb-3">
@@ -480,7 +486,7 @@ function MeasureJobModal({
                 </svg>
                 <span className="text-sm text-green-900 font-medium truncate">{pendingPlan?.fileName}</span>
               </div>
-              <button
+              <QcHostedButton variant="ghost"
                 type="button"
                 onClick={() => {
                   setPlanUploaded(false);
@@ -489,7 +495,7 @@ function MeasureJobModal({
                 className="text-xs font-medium text-slate-500 hover:text-slate-800 flex-shrink-0"
               >
                 Replace
-              </button>
+              </QcHostedButton>
             </div>
           ) : (
             <FileUploader
@@ -508,14 +514,14 @@ function MeasureJobModal({
         {/* Actions */}
         </div>
         <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between flex-shrink-0 bg-white rounded-b-2xl">
-          <button
+          <QcHostedButton variant="ghost"
             type="button"
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
           >
             Cancel
-          </button>
-          <button
+          </QcHostedButton>
+          <QcHostedButton variant="primary"
             type="submit"
             disabled={creating || !jobName.trim() || !planUploaded}
             aria-busy={creating}
@@ -532,12 +538,12 @@ function MeasureJobModal({
               </svg>
             )}
             {creating ? 'Starting…' : 'Start measuring'}
-          </button>
+          </QcHostedButton>
         </div>
 
         {/* Confirm: switching away from the company default */}
         {pendingSystemSwitch && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+          <QcHostedDialog label="Switch measurement system?" size="sm" className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
             <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
               <h4 className="text-lg font-semibold text-slate-900">Switch measurement system?</h4>
               <p className="text-sm text-slate-600">
@@ -549,14 +555,14 @@ function MeasureJobModal({
                 This <strong>cannot be changed</strong> after the job is created. Are you sure?
               </p>
               <div className="flex gap-3 justify-end">
-                <button
+                <QcHostedButton variant="ghost"
                   type="button"
                   onClick={() => setPendingSystemSwitch(null)}
                   className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
                 >
                   Cancel
-                </button>
-                <button
+                </QcHostedButton>
+                <QcHostedButton variant="secondary"
                   type="button"
                   onClick={() => {
                     setMeasurementSystem(pendingSystemSwitch);
@@ -565,10 +571,10 @@ function MeasureJobModal({
                   className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
                 >
                   Yes, use this
-                </button>
+                </QcHostedButton>
               </div>
             </div>
-          </div>
+          </QcHostedDialog>
         )}
 
         <UpgradeModal
@@ -582,6 +588,6 @@ function MeasureJobModal({
         {/* PDF page picker modal (client-side pdfjs) */}
         {pdfPicker.modal}
       </form>
-    </div>
+    </QcHostedDialog>
   );
 }

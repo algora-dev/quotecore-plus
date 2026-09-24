@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 
 import { useState } from 'react';
 import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS } from '@/app/lib/takeoff/aiComponentRegistry';
@@ -57,21 +58,21 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
 
   if (summary.unreadable) {
     return (
-      <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
+      <QcHostedDialog label="Review AI measurements" size="lg" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
         <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md border border-gray-200 shadow-xl">
-          <h2 className="text-lg font-semibold mb-2">⚠️ Image unreadable</h2>
+          <h2 className="text-lg font-semibold mb-2">Image unreadable</h2>
           <p className="text-sm text-slate-500 mb-4">
             The AI couldn&apos;t analyse this plan image. This usually means the image is too low quality,
             rotated at an unusual angle, or doesn&apos;t contain a recognisable roof plan.
           </p>
-          <button
+          <QcHostedButton variant="secondary"
             onClick={onDiscard}
             className="w-full py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
           >
             Close
-          </button>
+          </QcHostedButton>
         </div>
-      </div>
+      </QcHostedDialog>
     );
   }
 
@@ -108,7 +109,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   });
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
+    <QcHostedDialog label="Review AI measurements" size="lg" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
       <div className="bg-white rounded-2xl p-4 md:p-6 max-w-lg border border-gray-200 shadow-xl max-h-[85vh] overflow-y-auto">
         <h2 className="text-lg font-semibold mb-1">AI Assist Results</h2>
         <p className="text-xs text-slate-500 mb-4">
@@ -135,7 +136,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
         {/* Uncertain components callout */}
         {summary.uncertain > 0 && (
           <div className="mb-4 p-3 bg-pink-50 border border-pink-200 rounded-lg text-xs text-pink-800">
-            ⚠️ The AI found <strong>{summary.uncertain} uncertain component{summary.uncertain === 1 ? '' : 's'}</strong> - shown in pink dashed lines on the plan.
+            The AI found <strong>{summary.uncertain} uncertain component{summary.uncertain === 1 ? '' : 's'}</strong> - shown in pink dashed lines on the plan.
             Check these, delete any that are wrong, and add the correct component manually.
           </div>
         )}
@@ -143,14 +144,14 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
         {/* Scale cross-check */}
         {scaleCheck?.warning && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-            ⚠️ {scaleCheck.warning}
+            {scaleCheck.warning}
           </div>
         )}
 
         {/* Apply pitch to all */}
         {areas.length > 1 && (
           <div className="flex gap-2 items-center mb-3 p-2 bg-orange-50/50 border border-orange-100 rounded-lg">
-            <input
+            <input aria-label="Pitch for all areas, degrees"
               type="number"
               min={0}
               max={89}
@@ -165,12 +166,12 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
               Apply this pitch to all areas
             </span>
             {applyPitchToAll && (
-              <button
+              <QcHostedButton variant="ghost"
                 onClick={() => setApplyPitchToAll('')}
                 className="text-xs text-slate-400 hover:text-slate-600 ml-auto"
               >
                 Clear
-              </button>
+              </QcHostedButton>
             )}
           </div>
         )}
@@ -188,7 +189,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-slate-500 w-12 shrink-0">Name:</label>
-                      <input
+                      <input aria-label={`Name of AI area ${area.index + 1}`}
                         type="text"
                         value={edit?.name ?? ''}
                         placeholder="Enter area name"
@@ -205,7 +206,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
                     </div>
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-slate-500 w-12 shrink-0">Pitch:</label>
-                      <input
+                      <input aria-label={`Pitch of AI area ${area.index + 1}, degrees}`}
                         type="number"
                         min={0}
                         max={89}
@@ -249,22 +250,22 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
 
         {/* Actions */}
         <div className="flex gap-2">
-          <button
+          <QcHostedButton variant="ghost"
             onClick={onDiscard}
             className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
           >
             Discard
-          </button>
-          <button
+          </QcHostedButton>
+          <QcHostedButton variant="secondary"
             onClick={() => onApply(buildOverrides())}
             disabled={!acknowledged || !allValid}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Apply to Canvas
-          </button>
+          </QcHostedButton>
         </div>
       </div>
-    </div>
+    </QcHostedDialog>
   );
 }
 

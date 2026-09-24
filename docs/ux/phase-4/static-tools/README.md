@@ -1,0 +1,5 @@
+# Optional static reference helpers
+
+These new documentation helpers are not project test/config replacements and are not a package-install request. `node docs/ux/phase-4/check-static.cjs --baseline /path/to/incoming/quotecore-plus` validates exact supplied-file hashes, TSX syntax and source expressions with the existing TypeScript dependency. The baseline path is optional; without it source checks use the stored evidence/hashes.
+
+The fixture renderer and CSS generator use already available TypeScript/Tailwind; the browser scripts need Python Playwright plus a local Chromium path (`/usr/bin/chromium` in the authoring container; adapt that path locally). They never launch Next or use production services. `render_fixture.cjs`, then `fixture_css.cjs`, then `check_fixture.py` and `feedback_checks.py` recreate the static references. Regeneration updates fixture provenance and may change raster hashes. It cannot certify React mounting, focus lifecycle, touch mode, canvas accuracy or storage. The exact recorded outputs belong to the returned candidate, not an app build.

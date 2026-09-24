@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 
 /**
  * PdfPagePicker - client-side PDF page selection via pdfjs-dist.
@@ -138,7 +139,7 @@ function PageThumb({
   }, [visible, rendered, failed, doc, pageNumber]);
 
   return (
-    <button
+    <QcHostedButton aria-pressed={selected} aria-label={`Page ${pageNumber}`} data-qc-choice="thumbnail" variant="ghost"
       ref={wrapRef}
       type="button"
       onClick={onClick}
@@ -156,7 +157,7 @@ function PageThumb({
         )}
       </div>
       <span className={`text-xs font-medium ${selected ? 'text-[#BD4A1A]' : 'text-slate-500'}`}>Page {pageNumber}</span>
-    </button>
+    </QcHostedButton>
   );
 }
 
@@ -235,7 +236,7 @@ export function usePdfPagePicker() {
     if (state.kind === 'idle') return null;
 
     return (
-      <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+      <QcHostedDialog label="Choose a PDF plan page" size="md" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 mx-4 max-h-[90vh] flex flex-col">
           {state.kind === 'loading' && (
             <>
@@ -257,13 +258,13 @@ export function usePdfPagePicker() {
                 <p className="text-sm text-slate-600">{state.message}</p>
               </div>
               <div className="px-6 pb-5 flex justify-end">
-                <button
+                <QcHostedButton variant="secondary"
                   type="button"
                   onClick={() => finish(null)}
                   className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all"
                 >
                   OK
-                </button>
+                </QcHostedButton>
               </div>
             </>
           )}
@@ -275,7 +276,7 @@ export function usePdfPagePicker() {
                   <h2 className="text-lg font-semibold text-slate-900">Choose a plan page</h2>
                   <p className="text-xs text-slate-500 mt-0.5 truncate max-w-xs">{state.fileName} · {state.doc.numPages} {state.doc.numPages === 1 ? 'page' : 'pages'}</p>
                 </div>
-                <button
+                <QcHostedButton variant="ghost"
                   type="button"
                   onClick={() => finish(null)}
                   disabled={converting}
@@ -285,7 +286,7 @@ export function usePdfPagePicker() {
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                </button>
+                </QcHostedButton>
               </div>
 
               <div className="px-6 py-5 overflow-y-auto flex-1">
@@ -308,27 +309,27 @@ export function usePdfPagePicker() {
               </div>
 
               <div className="px-6 pb-5 pt-3 border-t border-slate-100 flex gap-3 justify-end">
-                <button
+                <QcHostedButton variant="ghost"
                   type="button"
                   onClick={() => finish(null)}
                   disabled={converting}
                   className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-all"
                 >
                   Cancel
-                </button>
-                <button
+                </QcHostedButton>
+                <QcHostedButton variant="secondary"
                   type="button"
                   onClick={confirmPage}
                   disabled={selectedPage === null || converting}
                   className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30 disabled:opacity-50 disabled:hover:shadow-none"
                 >
                   {converting ? 'Converting…' : 'Use this page'}
-                </button>
+                </QcHostedButton>
               </div>
             </>
           )}
         </div>
-      </div>
+      </QcHostedDialog>
     );
   })();
 

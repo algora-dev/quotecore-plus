@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 
 /**
  * Roof Pitch Estimator modal.
@@ -300,14 +301,14 @@ export function RoofPitchEstimatorModal({
   const iconBtn = 'rounded-full border border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50 px-2.5 py-1 text-sm font-bold leading-none transition';
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <QcHostedDialog label="Estimate roof pitch" size="lg" className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="text-lg font-semibold text-slate-900">{heading}</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition" aria-label="Close">
+          <QcHostedButton variant="ghost" onClick={onClose} className="text-slate-400 hover:text-slate-700 transition" aria-label="Close">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+          </QcHostedButton>
         </div>
 
         {/* body */}
@@ -325,8 +326,8 @@ export function RoofPitchEstimatorModal({
                 <p>- centred on the target roof area</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => fileRef.current?.click()} className={`${btn} bg-black text-white hover:bg-slate-800`}>Upload Image</button>
-                <button onClick={() => setStep('level')} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Image Tips</button>
+                <QcHostedButton variant="secondary" onClick={() => fileRef.current?.click()} className={`${btn} bg-black text-white hover:bg-slate-800`}>Upload Image</QcHostedButton>
+                <QcHostedButton variant="ghost" onClick={() => setStep('level')} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Image Tips</QcHostedButton>
               </div>
               <input ref={fileRef} type="file" accept="image/*" className="hidden"
                 onChange={e => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
@@ -342,11 +343,11 @@ export function RoofPitchEstimatorModal({
                 <div className="text-xs text-slate-500">{tipFor(step === 'level' ? levelPts.length : pts.length)}</div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => setZoom(z => Math.max(MIN_ZOOM, +(z - 0.5).toFixed(2)))} className={iconBtn} aria-label="Zoom out">−</button>
+                <QcHostedButton variant="ghost" onClick={() => setZoom(z => Math.max(MIN_ZOOM, +(z - 0.5).toFixed(2)))} className={iconBtn} aria-label="Zoom out">−</QcHostedButton>
                 <span className="text-xs text-slate-500 tabular-nums w-12 text-center">{Math.round(zoom * 100)}%</span>
-                <button onClick={() => setZoom(z => Math.min(MAX_ZOOM, +(z + 0.5).toFixed(2)))} className={iconBtn} aria-label="Zoom in">+</button>
+                <QcHostedButton variant="ghost" onClick={() => setZoom(z => Math.min(MAX_ZOOM, +(z + 0.5).toFixed(2)))} className={iconBtn} aria-label="Zoom in">+</QcHostedButton>
                 {zoom !== 1 && (
-                  <button onClick={() => setZoom(1)} className="text-xs text-slate-500 hover:text-slate-700 underline">Reset</button>
+                  <QcHostedButton variant="ghost" onClick={() => setZoom(1)} className="text-xs text-slate-500 hover:text-slate-700 underline">Reset</QcHostedButton>
                 )}
                 <span className="text-[11px] text-slate-400">scroll to zoom - right-click or scroll-bars to pan</span>
               </div>
@@ -366,18 +367,18 @@ export function RoofPitchEstimatorModal({
               </div>
               {step === 'level' && (
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={applyLevel} disabled={levelPts.length !== 2}
+                  <QcHostedButton variant="secondary" onClick={applyLevel} disabled={levelPts.length !== 2}
                     className={`${btn} bg-black text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed`}>
                     Level Image
-                  </button>
-                  <button onClick={() => { setLevelPts([]); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Reset</button>
-                  <button onClick={() => { setLevelPts([]); setStep('mode'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Skip - Image Already Level</button>
+                  </QcHostedButton>
+                  <QcHostedButton variant="ghost" onClick={() => { setLevelPts([]); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Reset</QcHostedButton>
+                  <QcHostedButton variant="ghost" onClick={() => { setLevelPts([]); setStep('mode'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Skip - Image Already Level</QcHostedButton>
                 </div>
               )}
               {step === 'measure' && (
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={resetMeasure} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Clear Points</button>
-                  <button onClick={() => setStep('mode')} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Change Mode</button>
+                  <QcHostedButton variant="ghost" onClick={resetMeasure} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Clear Points</QcHostedButton>
+                  <QcHostedButton variant="ghost" onClick={() => setStep('mode')} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Change Mode</QcHostedButton>
                 </div>
               )}
             </div>
@@ -387,20 +388,20 @@ export function RoofPitchEstimatorModal({
             <div className="space-y-4">
               <p className="text-sm text-slate-600">How much of the roof can you see clearly?</p>
               <div className="grid gap-3 sm:grid-cols-2">
-                <button onClick={() => { setMode('two'); setPts([]); setStep('measure'); }}
+                <QcHostedButton variant="ghost" onClick={() => { setMode('two'); setPts([]); setStep('measure'); }}
                   className="text-left rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/40 p-4 transition">
                   <div className="font-medium text-sm text-slate-900">Two roof planes</div>
                   <TwoPlaneDiagram />
                   <p className="text-xs text-slate-600 mt-2">Both sides visible and they look like the same pitch (gable / regular hip ends). 3 clicks.</p>
-                </button>
-                <button onClick={() => { setMode('single'); setPts([]); setStep('measure'); }}
+                </QcHostedButton>
+                <QcHostedButton variant="ghost" onClick={() => { setMode('single'); setPts([]); setStep('measure'); }}
                   className="text-left rounded-xl border border-slate-200 hover:border-orange-300 hover:bg-orange-50/40 p-4 transition">
                   <div className="font-medium text-sm text-slate-900">Single roof plane</div>
                   <SinglePlaneDiagram />
                   <p className="text-xs text-slate-600 mt-2">Only one plane visible, different pitches, or mono-pitch / skillion. 2 clicks.</p>
-                </button>
+                </QcHostedButton>
               </div>
-              <button onClick={() => setStep('level')} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Back to levelling</button>
+              <QcHostedButton variant="ghost" onClick={() => setStep('level')} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Back to levelling</QcHostedButton>
             </div>
           )}
 
@@ -428,17 +429,17 @@ export function RoofPitchEstimatorModal({
               </div>
               <div className="flex flex-wrap gap-2">
                 {onApply && (
-                  <button onClick={() => onApply(result.avgDeg)}
-                    className={`${btn} bg-black text-white hover:bg-slate-800`}>Use This Pitch</button>
+                  <QcHostedButton variant="secondary" onClick={() => onApply(result.avgDeg)}
+                    className={`${btn} bg-black text-white hover:bg-slate-800`}>Use This Pitch</QcHostedButton>
                 )}
-                <button onClick={resetMeasure} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Edit Points</button>
-                <button onClick={() => { setPts([]); setResult(null); setStep('mode'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Measure Another Plane</button>
-                <button onClick={() => { setWorkingUrl(null); setImgSize(null); imgElRef.current = null; setResult(null); setStep('intro'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Try Another Image</button>
+                <QcHostedButton variant="ghost" onClick={resetMeasure} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Edit Points</QcHostedButton>
+                <QcHostedButton variant="ghost" onClick={() => { setPts([]); setResult(null); setStep('mode'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Measure Another Plane</QcHostedButton>
+                <QcHostedButton variant="ghost" onClick={() => { setWorkingUrl(null); setImgSize(null); imgElRef.current = null; setResult(null); setStep('intro'); }} className={`${btn} border border-slate-300 text-slate-600 hover:border-slate-400`}>Try Another Image</QcHostedButton>
               </div>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </QcHostedDialog>
   );
 }

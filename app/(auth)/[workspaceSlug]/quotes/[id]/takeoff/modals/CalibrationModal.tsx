@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 import { useState } from 'react';
 
 export function CalibrationModal({
@@ -25,7 +26,7 @@ export function CalibrationModal({
   const canAddAnother = calibrationNumber < 3;
 
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+    <QcHostedDialog label="Set the calibration distance" size="md" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 w-96 border border-slate-200 shadow-xl">
         <h2 className="text-xl font-semibold mb-2 text-slate-900">
           Calibration {calibrationNumber} of 3
@@ -38,7 +39,7 @@ export function CalibrationModal({
         <div className="space-y-4">
           <div>
             <label className="block text-sm mb-2">Distance</label>
-            <input
+            <input aria-label="Known distance"
               type="number"
               step="0.01"
               value={distance}
@@ -51,7 +52,7 @@ export function CalibrationModal({
           </div>
           <div>
             <label className="block text-sm mb-2">Unit</label>
-            <select
+            <select aria-label="Distance unit"
               value={unit}
               onChange={(e) => setUnit(e.target.value as 'feet' | 'meters')}
               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
@@ -61,34 +62,34 @@ export function CalibrationModal({
             </select>
           </div>
           <div className="flex gap-2 justify-end">
-            <button
+            <QcHostedButton variant="ghost"
               type="button"
               onClick={onCancel}
               className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full"
             >
               Cancel
-            </button>
+            </QcHostedButton>
             {canAddAnother && (
-              <button
+              <QcHostedButton variant="ghost"
                 type="button"
                 onClick={() => handleSubmit(true)}
                 className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full"
                 disabled={!distance || parseFloat(distance) <= 0}
               >
                 Save &amp; add another
-              </button>
+              </QcHostedButton>
             )}
-            <button
+            <QcHostedButton variant="secondary"
               type="button"
               onClick={() => handleSubmit(false)}
               className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               disabled={!distance || parseFloat(distance) <= 0}
             >
               Use this calibration
-            </button>
+            </QcHostedButton>
           </div>
         </div>
       </div>
-    </div>
+    </QcHostedDialog>
   );
 }

@@ -2,6 +2,10 @@
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { QcHostedButton, QcHostedDialog, QcHostedDialogScope } from '@/app/components/ui/v2/QcHostedDialog';
+import { QcCanvasToolbar, QcCanvasToolGroup, QcToolButton } from '@/app/components/ui/v2/QcCanvasChrome';
+import { QcIcon } from '@/app/components/ui/v2/QcIcon';
+import { QcStatusBadge } from '@/app/components/ui/v2/QcSurface';
 import { Canvas, FabricImage, Line, Circle, Polygon, Triangle, Rect } from 'fabric';
 import type { QuoteRow } from '@/app/lib/types';
 import { normalizeMeasurementSystem } from '@/app/lib/types';
@@ -176,6 +180,8 @@ interface ComponentWithMeasurements {
 }
 
 interface Props {
+  /** Presentation only. False for the mounted desktop owner under touch. */
+  desktopAppearance?: boolean;
   workspaceSlug: string;
   quote: QuoteRow;
   planUrl: string;
@@ -293,6 +299,7 @@ interface TakeoffSnapshot {
 }
 
 export function TakeoffWorkstation({
+  desktopAppearance = true,
   workspaceSlug,
   quote,
   planUrl,
@@ -314,6 +321,7 @@ export function TakeoffWorkstation({
   onPage1Resolved,
 }: Props) {
   const router = useRouter();
+  const [componentLibraryOpen, setComponentLibraryOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Zoom ownership: when set, the zoom was applied by auto-fit (initial load,
   // page switch, Fit to Screen or window resize) and the window-resize
@@ -6489,41 +6497,39 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   };
 
   return (
-    <>
+    <QcHostedDialogScope enabled={desktopAppearance}>
     <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="-my-8 h-[calc(120vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden">
-      {/* Back link sits above the canvas card so it never crowds the header */}
-      <Link
-        href={`/${workspaceSlug}/quotes/${quote.id}`}
-        className="mb-2 text-sm text-slate-500 hover:text-slate-800 self-start"
-      >
-        <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg> Back to quote
-      </Link>
-      <div className="flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden min-h-0">
-        {/* Header: title + action buttons only - no nav links */}
-        <div className="bg-white border-b border-gray-200 px-2 md:px-6 py-2 md:py-3 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">{quote.customer_name} - Digital Takeoff</h1>
-        <div className="flex items-center gap-2">
-          {/* P1-3: Save current takeoff + upload another plan image. */}
-          <button
-            onClick={openSaveAndUploadAnotherPlan}
-            disabled={isSaving || isUploadingPage}
-            className="px-3 py-2 bg-black hover:bg-slate-900 text-white rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.45)]"
-            title={isSaving || isUploadingPage ? 'Please wait - saving in progress' : 'Save current measurements, then upload a new plan to keep measuring'}
-          >
-            {isSaving || isUploadingPage ? 'Saving…' : 'Upload another plan or image'}
-          </button>
-          <button
-            onClick={handleSaveTakeoff}
-            disabled={calibrations.length === 0 || isSaving}
-            data-copilot="takeoff-save"
-            className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(249,115,22,0.5)]"
-            title={calibrations.length === 0 ? 'Calibrate the plan first' : ''}
-          >
-            {isSaving ? 'Saving...' : 'Finish and Save'}
-          </button>
-        </div>
-      </div>
+    <div data-qc-ui={desktopAppearance ? 'v2' : undefined}
+      data-qc-component={desktopAppearance ? 'C54' : undefined}
+      data-qc-takeoff={desktopAppearance ? 'desktop' : 'legacy-hidden'}
+      className={`-my-8 h-[calc(120vh-116px)] bg-gray-50 text-gray-900 flex flex-col p-2 md:p-4 overflow-hidden ${desktopAppearance ? 'qc-takeoff-workstation' : ''}`}>
+      <div className="qc-takeoff-surface flex-1 flex flex-col bg-white rounded-xl shadow-lg overflow-hidden min-h-0">
+        <header className="qc-takeoff-header">
+          <div className="qc-takeoff-identity">
+            <Link href={`/${workspaceSlug}/quotes/${quote.id}`} className="qc-takeoff-back"
+              aria-label="Back to quote" title="Back to quote"><QcIcon name="back" /></Link>
+            <div>
+              <span className="qc-takeoff-eyebrow">Digital takeoff</span>
+              <h1>{quote.customer_name}</h1>
+            </div>
+          </div>
+          <div className="qc-takeoff-header-actions">
+            <QcHostedButton onClick={openSaveAndUploadAnotherPlan}
+              disabled={isSaving || isUploadingPage} size="sm" className="qc-takeoff-upload"
+              title={isSaving || isUploadingPage ? 'Please wait - saving in progress' : 'Save current measurements, then upload a new plan to keep measuring'}>
+              <QcIcon name="upload" />{isSaving || isUploadingPage ? 'Saving…' : 'Upload another plan'}
+            </QcHostedButton>
+            <div className="qc-takeoff-finish">
+              <QcHostedButton onClick={handleSaveTakeoff}
+                disabled={calibrations.length === 0 || isSaving}
+                data-copilot="takeoff-save" variant="primary" size="sm" aria-busy={isSaving}
+                title={calibrations.length === 0 ? 'Calibrate the plan first' : 'Save and continue to Measurements & Pricing'}>
+                {isSaving ? 'Saving…' : 'Finish & save'}<QcIcon name="arrow" />
+              </QcHostedButton>
+              <span>Next: Measurements &amp; Pricing</span>
+            </div>
+          </div>
+        </header>
 
       {/* Plan indicator + dynamic tool guidance bar */}
       {(() => {
@@ -6536,19 +6542,19 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         } else if (areaMode) {
           if (areaSubTool === 'rect') {
             if (!selectedComponentId && roofAreas.length > 0) {
-              guidance = 'Create a custom box shape area, click and hold, drag then release to set the area';
+              guidance = 'Click and drag a rectangle. Release to set the area';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Click and drag to draw the footprint (L ×- W). Release to set the area, then enter the depth.';
+              guidance = 'Click and drag to draw the footprint (L × W). Release to set the area, then enter the depth.';
             } else {
-              guidance = 'Create a custom box shape area, click and hold, drag then release to set the area.';
+              guidance = 'Click and drag a rectangle. Release to set the area.';
             }
           } else {
             if (!selectedComponentId) {
-              guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point';
+              guidance = 'Click at least three points. Click the first point again to close the area';
             } else if (selCompType === 'volume_3d') {
-              guidance = 'Draw the footprint (L ×- W). Close the shape on the first point, then enter the depth in the prompt.';
+              guidance = 'Draw the footprint (L × W). Close the shape on the first point, then enter the depth in the prompt.';
             } else {
-              guidance = 'Draw the area point by point (at least 3 points), to close the area - click back on the first point.';
+              guidance = 'Click at least three points. Click the first point again to close the area.';
             }
           }
         } else if (lineMode) {
@@ -6558,29 +6564,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         } else if (pointMode) {
           guidance = 'Click on the plan to count this item. Each click adds one.';
         }
-        if (!guidance && pages.length <= 1) return null;
+        // Stable status row: never resize the canvas when a drawing tool changes.
         return (
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border-b border-gray-50">
-            {pages.length > 1 && (
-              <>
-                <span className="text-xs text-slate-500">Plan</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500 text-white">
-                  {currentPageIndex + 1} of {pages.length}
-                </span>
-                <span className="text-xs text-slate-400 mr-1">{pages[currentPageIndex]?.name}</span>
-                {guidance && <span className="text-xs text-slate-300">·</span>}
-              </>
-            )}
-            {guidance && (
-              <span className="text-xs text-slate-500 italic flex items-center gap-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-orange-400">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="16" x2="12" y2="12"/>
-                  <line x1="12" y1="8" x2="12.01" y2="8"/>
-                </svg>
-                {guidance}
-              </span>
-            )}
+          <div className="qc-takeoff-context">
+            <div className="qc-takeoff-plan-context">
+              <QcIcon name="file" />
+              <span title={pages[currentPageIndex]?.name || 'Current plan'}>{pages[currentPageIndex]?.name || 'Current plan'}</span>
+              {pages.length > 1 && <span className="qc-takeoff-page-count">{currentPageIndex + 1} of {pages.length}</span>}
+              <QcStatusBadge tone={calibrationMode ? 'warning' : calibrationConfirmed ? 'success' : 'neutral'}>
+                {calibrationMode ? 'Calibrating' : calibrationConfirmed ? 'Calibrated' : 'Needs calibration'}
+              </QcStatusBadge>
+            </div>
+            <p className="qc-takeoff-guidance">{guidance || (calibrationConfirmed
+              ? 'Select a component to measure, or choose Area to draw.'
+              : 'Set a known distance before measuring this plan.')}</p>
           </div>
         );
       })()}
@@ -6590,7 +6587,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           but stays inside the workstation - saves current measurements,
           uploads the new plan, then reloads to mode=new-page with the new page.*/}
       {showUploadAnotherModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+        <QcHostedDialog label="Upload another plan or image" size="md" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-2 md:p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-1">Upload another plan or image</h2>
@@ -6617,10 +6614,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-slate-900">Add to existing area</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      This plan becomes a numbered slot under the selected area. Just calibrate and measure - everything rolls into that area.
+                      Keep the new plan with this area. Calibrate it before adding measurements.
                     </p>
                     {uploadAnotherTarget === 'existing' && (
-                      <select
+                      <select aria-label="Area for the new plan"
                         value={uploadAnotherAreaId}
                         onChange={e => setUploadAnotherAreaId(e.target.value)}
                         className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -6654,7 +6651,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Create new area for this upload</p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Calibrate the new plan, then draw the area boundary - you'll name it when you close the shape. No extra clicks needed.
+                      Calibrate this plan, then draw and name its area.
                     </p>
                   </div>
                 </div>
@@ -6665,13 +6662,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {uploadAnotherFile ? (
                   <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
                     <span className="text-xs text-slate-700 flex-1 truncate">{uploadAnotherFile.name}</span>
-                    <button
+                    <QcHostedButton variant="ghost"
                       type="button"
                       onClick={() => setUploadAnotherFile(null)}
                       className="text-xs text-red-500 hover:text-red-700 flex-shrink-0"
                     >
                       Remove
-                    </button>
+                    </QcHostedButton>
                   </div>
                 ) : (
                   <label className="flex items-center justify-center gap-2 w-full px-3 py-2 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-orange-400 transition-colors">
@@ -6679,10 +6676,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span className="text-xs text-slate-500">Choose plan (PDF up to 50 MB or image up to 10 MB)</span>
-                    <input
+                    <input aria-label="Choose another plan or image"
                       type="file"
                       accept="image/*,application/pdf"
-                      className="hidden"
+                      className="sr-only"
                       onChange={async e => {
                         const raw = e.target.files?.[0] || null;
                         e.target.value = '';
@@ -6708,44 +6705,44 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               )}
 
               <div className="flex gap-3 pt-2">
-                <button
+                <QcHostedButton variant="ghost"
                   type="button"
                   onClick={() => setShowUploadAnotherModal(false)}
                   disabled={isUploadingPage}
                   className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
-                </button>
-                <button
+                </QcHostedButton>
+                <QcHostedButton variant="secondary"
                   type="button"
                   onClick={handleConfirmSaveAndUploadAnother}
                   disabled={isUploadingPage}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50"
                 >
                   {isUploadingPage ? 'Saving…' : 'Upload plan'}
-                </button>
+                </QcHostedButton>
               </div>
             </div>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
-      <div className="flex-1 overflow-hidden min-h-0 grid grid-cols-[320px_1fr]">
+      <div className="qc-takeoff-body flex-1 overflow-hidden min-h-0 grid grid-cols-[320px_1fr]">
         {/* Left Sidebar - Calibration, Roof Areas & Components */}
-        <div className="bg-white border-r border-gray-200 overflow-y-auto flex flex-col min-h-0" data-copilot="takeoff-sidebar">
+        <aside aria-label="Areas and components" className="qc-takeoff-panel bg-white border-r border-gray-200 overflow-y-auto flex flex-col min-h-0" data-copilot="takeoff-sidebar">
           <div className="p-4 space-y-5">
 
           {/* Calibration Section - Show if: not confirmed, calibration mode, or showing flash */}
           {(!calibrationConfirmed || calibrationMode || showConfirmedFlash) && (
             <div>
-              <h2 className="text-sm font-bold mb-3 text-gray-900 uppercase tracking-wide">Calibration</h2>
+              <h2 className="text-sm font-bold mb-3 text-gray-900 uppercase tracking-wide">Calibrate this plan</h2>
               {calibrations.length === 0 ? (
-                <div className="text-sm text-gray-700 font-medium bg-amber-50 border border-amber-200 rounded-xl p-3">
-                  ⚠️ Calibrate first to continue
+                <div className="qc-takeoff-calibration-hint">
+                  Set a known distance to start measuring.
                 </div>
               ) : showConfirmedFlash ? (
                 /* Flash green confirmation briefly */
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 animate-pulse">
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300">
                   <div className="text-green-400 font-bold mb-2 flex items-center gap-1"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m4.5 12.75 6 6 9-13.5" /></svg> Confirmed</div>
                   <div className="text-xs text-gray-600 mb-1">Scale</div>
                   <div className="font-bold text-green-400">
@@ -6775,12 +6772,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 ))}
 
                 {/* Confirm Button */}
-                <button
+                <QcHostedButton variant="secondary"
                   onClick={handleConfirmCalibration}
                   className="w-full px-3 py-2 bg-black hover:bg-slate-800 text-white rounded-full text-sm font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
                 >
                   <svg className="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m4.5 12.75 6 6 9-13.5" /></svg> Confirm Calibration
-                </button>
+                </QcHostedButton>
               </div>
               )}
             </div>
@@ -6791,15 +6788,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-gray-900">{quoteIsGeneric ? 'Areas' : 'Roof Areas'}</h2>
-                <button
+                <QcHostedButton variant="ghost"
                   onClick={handleCreateNewArea}
                   disabled={false}
-                  className="inline-flex items-center gap-1 rounded-full bg-[#FF6B35] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_12px_rgba(255,107,53,0.45)] transition hover:bg-orange-600 animate-pulse"
+                  className="qc-takeoff-new-area" size="sm"
                   title="Create a new area"
                 >
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                  New Area
-                </button>
+                  New area
+                </QcHostedButton>
               </div>
               <div className="space-y-2">
                 {areaList.map(area => {
@@ -6818,53 +6815,43 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   else { displayUnit = 'm'+'\u00b2'; }
                   const isActive = area.id === activeAreaId;
                   return (
-                    <div
-                      key={area.id}
-                      onClick={() => handleSwitchArea(area.id)}
-                      className={`w-full text-left px-3 py-2 rounded-xl border transition-all cursor-pointer ${
-                        isActive ? 'border-[#FF6B35] bg-orange-50 shadow-[0_0_0_1px_rgba(255,107,53,0.15)]' : 'border-gray-200 hover:border-gray-300 bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900 truncate">{area.label}</span>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          {isActive && <span className="w-2 h-2 rounded-full bg-[#FF6B35]" />}
-                          {matchingAreas.length > 0 && (
-                            <>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleToggleAreaVisibility(area.id); }}
-                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                                title={matchingAreas[0].visible ? 'Hide' : 'Show'}
-                              >
-                                {matchingAreas[0].visible ? (
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                ) : (
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
-                                )}
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDeleteArea(area.id); }}
-                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                                title="Delete area"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
-                              </button>
-                            </>
-                          )}
+                    <div key={area.id} className="qc-takeoff-area" data-selected={isActive}>
+                      <div className="qc-takeoff-area-row">
+                        <button type="button" onClick={() => handleSwitchArea(area.id)}
+                          className="qc-takeoff-area-select" aria-pressed={isActive} title={area.label}>
+                          <span className="qc-takeoff-area-name">{area.label}</span>
+                          <span className="qc-takeoff-area-meta">
+                            {displayValue > 0 && <span>{displayValue.toFixed(2)} {displayUnit}</span>}
+                            {isActive && <span className="qc-takeoff-selected-label"><QcIcon name="check" />Active</span>}
+                          </span>
+                        </button>
+                        <div className="qc-takeoff-row-actions">
+                          {matchingAreas.length > 0 && <>
+                            <button type="button"
+                              onClick={(e) => { e.stopPropagation(); handleToggleAreaVisibility(area.id); }}
+                              className="qc-takeoff-icon-action" aria-label={`${matchingAreas[0].visible ? 'Hide' : 'Show'} ${area.label}`}
+                              aria-pressed={matchingAreas[0].visible} title={matchingAreas[0].visible ? 'Hide area' : 'Show area'}>
+                              <QcIcon name="eye" />
+                            </button>
+                            <button type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteArea(area.id); }}
+                              className="qc-takeoff-icon-action qc-takeoff-danger" aria-label={`Delete ${area.label}`} title="Delete area">
+                              <QcIcon name="trash" />
+                            </button>
+                          </>}
                         </div>
                       </div>
-                      {displayValue > 0 && <span className="text-xs text-gray-500">{displayValue.toFixed(2)} {displayUnit}</span>}
                       {/* Parent/child plans (2026-07-05): numbered chips, one
                           per plan attached to this area. Click = view that
                           plan's image + drawings. Components stay parent-level. */}
                       {(areaPages[area.id]?.length ?? 0) > 1 && (
-                        <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                        <div className="qc-takeoff-plan-chips flex items-center gap-1 mt-1.5 flex-wrap">
                           <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mr-0.5">Plans</span>
                           {areaPages[area.id].map((pid, i) => {
                             const pIdx = pages.findIndex(p => p.id === pid);
                             const isCurrentChip = isActive && pIdx === currentPageIndex;
                             return (
-                              <button
+                              <QcHostedButton variant={isCurrentChip ? 'secondary' : 'ghost'}
                                 key={pid}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -6879,10 +6866,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                     ? 'bg-slate-900 text-white border-slate-900'
                                     : 'bg-white text-gray-600 border-gray-300 hover:border-orange-300 hover:text-orange-600'
                                 }`}
+                                aria-pressed={isCurrentChip}
+                                aria-label={`View plan ${i + 1} for ${area.label}`}
                                 title={`View plan ${i + 1} for ${area.label}`}
                               >
                                 {i + 1}
-                              </button>
+                              </QcHostedButton>
                             );
                           })}
                         </div>
@@ -6900,17 +6889,122 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
           {calibrationConfirmed && (
             <div className="border-t border-gray-200 pt-4">
-              <h2 className="text-sm font-bold mb-4 text-gray-900" data-copilot="takeoff-components-heading">Components</h2>
+              <div className="qc-takeoff-section-header">
+                <h2 data-copilot="takeoff-components-heading">Components</h2>
+                {displayComponents.length > 0 && <QcHostedButton size="sm"
+                  aria-controls="qc-takeoff-component-library"
+                  aria-expanded={componentLibraryOpen || activeComponentIds.length === 0}
+                  onClick={() => setComponentLibraryOpen(!componentLibraryOpen)}>
+                  <QcIcon name="plus" />Add component
+                </QcHostedButton>}
+              </div>
               {displayComponents.length === 0 ? (
                 <div className="text-sm text-gray-500">No components in library</div>
               ) : (
                 <div className="space-y-5">
 
+                  {/* Add Components */}
+                  <div id="qc-takeoff-component-library" className="qc-takeoff-library"
+                    onFocusCapture={() => setComponentLibraryOpen(true)}
+                    hidden={!componentLibraryOpen && activeComponentIds.length > 0}>
+
+                    {/* Library selector */}
+                    {collections.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[11px] font-medium text-gray-500 mb-1.5">Select Library</p>
+                        <select
+                          value={selectedLibraryId}
+                          onChange={(e) => setSelectedLibraryId(e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none bg-white text-gray-700"
+                          aria-label="Filter components by library"
+                        >
+                           <option value={ALL_LIBRARIES}>All Components</option>
+                          {collections.map((c) => (
+                             <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Search field */}
+                    <div className="relative mb-3">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                      <input
+                        type="text"
+                        aria-label="Search components"
+                        placeholder="Search components…"
+                        value={componentSearch}
+                        onChange={(e) => setComponentSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none bg-white text-gray-700 placeholder-gray-400"
+                      />
+                    </div>
+
+                    {/* Available component list */}
+                    {(() => {
+                      const available = displayComponents
+                        .filter(comp => !activeComponentIds.includes(comp.id))
+                        .filter(comp => !comp.is_system)
+                        .filter(comp =>
+                          selectedLibraryId === ALL_LIBRARIES
+                            ? true
+                            : (comp.collection_id ?? null) === selectedLibraryId,
+                        )
+                        .filter(comp =>
+                          componentSearch.trim() === ''
+                            ? true
+                            : comp.name.toLowerCase().includes(componentSearch.toLowerCase()),
+                        );
+                      if (available.length === 0) {
+                        return (
+                          <p className="text-xs text-gray-400 py-2">
+                            {componentSearch.trim() !== ''
+                              ? 'No matches.'
+                              : selectedLibraryId === ALL_LIBRARIES
+                              ? 'All components are already active.'
+                              : 'No components in this library.'}
+                          </p>
+                        );
+                      }
+                      return (
+                        <div className="space-y-1">
+                          {available.map((comp) => (
+                            <QcHostedButton variant="ghost"
+                              key={comp.id}
+                              type="button"
+                              onClick={() => handleAddComponent(comp.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-gray-200 bg-white transition-all group text-left"
+                              aria-label={`Add ${comp.name}`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm text-gray-700 group-hover:text-gray-900 block">{comp.name}</span>
+                                {selectedLibraryId === ALL_LIBRARIES && comp.collection_id && (
+                                  <span className="text-xs text-gray-400">{collections.find(c => c.id === comp.collection_id)?.name ?? ''}</span>
+                                )}
+                              </div>
+                              <span
+                                className="w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold transition-all flex-shrink-0 border-2 border-[#FF6B35] text-[#FF6B35] group-hover:bg-[#FF6B35] group-hover:text-white"
+                                aria-hidden="true"
+                              >
+                                +
+                              </span>
+                            </QcHostedButton>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Info tip */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-xl flex items-start gap-2">
+                      <svg className="flex-shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                      <p className="text-xs text-gray-500 italic">Choose a component, then measure on the plan. The matching tool is selected for you.</p>
+                    </div>
+                  </div>
+
                   {/* Active Components */}
                   {activeComponentIds.length > 0 && (
                     <div>
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Active Components</span>
+                        <span className="qc-takeoff-section-caption">Active in this area</span>
                         <span className="text-[11px] font-bold bg-gray-200 text-gray-600 rounded-full px-2 py-0.5">{activeComponentIds.length}</span>
                       </div>
                       <div className="space-y-2">
@@ -6921,72 +7015,50 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                           const compData = componentMeasurements.find(c => c.componentId === id);
                           const isSelected = selectedComponentId === comp.id;
                           const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
-                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line ×-H' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length ×-H' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line ×-H' : mt || '';
+                          const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line × height' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length × height' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line × height' : mt || '';
                           return (
-                            <div
-                              key={comp.id}
-                              className={`bg-white rounded-xl border overflow-hidden transition-all ${
-                                isSelected
-                                  ? 'border-[#FF6B35] shadow-[0_0_0_1px_rgba(255,107,53,0.2),0_0_8px_rgba(255,107,53,0.1)]'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
+                            <div key={comp.id} className="qc-takeoff-component" data-selected={isSelected}>
                               <div className="flex">
-                                {/* Colored left bar - full height */}
-                                <div
-                                  className="w-1.5 flex-shrink-0"
-                                  style={{ backgroundColor: assignment?.color || '#94a3b8' }}
-                                />
-                                {/* Card body */}
-                                <div className="flex-1 min-w-0 p-3">
-                                  {/* Header row */}
-                                  <div
-                                    className="flex items-start gap-2 cursor-pointer"
-                                    onClick={() => {
+                                <div className="qc-takeoff-component-colour w-1.5 flex-shrink-0" style={{ backgroundColor: assignment?.color || '#94a3b8' }} />
+                                <div className="qc-takeoff-component-body flex-1 min-w-0 p-3">
+                                  <div className="qc-takeoff-component-header">
+                                    <button type="button" className="qc-takeoff-component-select" aria-pressed={isSelected}
+                                      onClick={() => {
                                       setSelectedComponentId(comp.id);
                                       // P1-2: auto-switch tool when clicking an active component.
                                       // Pass comp.id so activeAreaComponentIdRef is set synchronously.
                                       applyToolForType(mt, comp.id);
-                                    }}
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <div className="text-sm text-gray-900">{comp.name}</div>
-                                    </div>
-                                    <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
-                                      {/* Measurement count badge */}
-                                      {compData && compData.measurements.length > 0 && (
-                                        <span className="text-xs bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 font-medium tabular-nums">{compData.measurements.length}</span>
-                                      )}
-                                      {compData && compData.measurements.length > 0 && (
-                                        <button
-                                          onClick={(e) => {
+                                    }}>
+                                      <span className="qc-takeoff-component-name">{comp.name}
+                                        {isSelected && <span className="qc-takeoff-selected-label"><QcIcon name="check" />Selected</span>}
+                                      </span>
+                                      <span className="qc-takeoff-component-meta">{typeLabel || 'Measurement'}
+                                        {compData && compData.measurements.length > 0 && <> · {compData.measurements.length} measurement{compData.measurements.length === 1 ? '' : 's'}</>}
+                                      </span>
+                                    </button>
+                                    <button type="button"
+                                      onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemoveComponent(comp.id);
+                                        }}
+                                      className="qc-takeoff-icon-action qc-takeoff-danger" aria-label={`Remove ${comp.name}`} title="Remove component">
+                                      <QcIcon name="trash" />
+                                    </button>
+                                  </div>
+                                  {compData && compData.measurements.length > 0 && (
+                                    <button type="button"
+                                      onClick={(e) => {
                                             e.stopPropagation();
                                             setComponentMeasurements(componentMeasurements.map(c =>
                                               c.componentId === id ? { ...c, expanded: !c.expanded } : c
                                             ));
                                           }}
-                                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-                                          title={compData?.expanded ? 'Collapse' : 'Expand'}
-                                        >
-                                          {compData?.expanded
-                                            ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="18 15 12 9 6 15"/></svg>
-                                            : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9"/></svg>
-                                          }
-                                        </button>
-                                      )}
-                                      {/* Trash - remove component */}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRemoveComponent(comp.id);
-                                        }}
-                                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                                        title="Remove component"
-                                      >
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                                      </button>
-                                    </div>
-                                  </div>
+                                      className="qc-takeoff-measurement-disclosure" aria-expanded={compData.expanded}
+                                      aria-controls={`takeoff-measurements-${comp.id}`}>
+                                      {compData.expanded ? 'Hide measurements' : 'Show measurements'}
+                                      <QcIcon name="chevron" />
+                                    </button>
+                                  )}
 
                                   {/* Use an existing roof area as this component's entry
                                       (area-type components only; requires at least
@@ -7004,6 +7076,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                           }
                                         }}
                                         defaultValue=""
+                                        aria-label={`Use an existing area for ${comp.name}`}
                                         className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
                                       >
                                         <option value="">Use an existing area…</option>
@@ -7017,18 +7090,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                   )}
 
                                   {/* AI Placeholder: Attach real component */}
+                                  {comp.is_system && compData && compData.measurements.length > 0 && (
+                                    <div className="qc-takeoff-needs-component mt-2">AI measurement · Needs component</div>
+                                  )}
                                   {comp.is_system && compData && compData.measurements.length > 0 && (() => {
                                     const semanticKey = resolveSemanticKey(comp.name);
                                     if (!semanticKey) return null;
                                     // Show ALL non-system components so the user has full library access
                                     const compatibleComps = displayComponents
                                       .filter(c => !c.is_system);
-                                    if (compatibleComps.length === 0) return null;
+                                    if (compatibleComps.length === 0) return <p className="text-xs text-gray-500 mt-2">No library components are available to attach. Add a component to your library, then return here.</p>;
                                     return (
                                       <div className="mt-2 mb-1">
-                                        <div className="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1">
-                                          ⚡ AI Placeholder - attach a real component
-                                        </div>
                                         <select
                                           onChange={(e) => {
                                             if (e.target.value) {
@@ -7037,6 +7110,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                             }
                                           }}
                                           defaultValue=""
+                                          aria-label={`Attach a component to ${comp.name}`}
                                           className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
                                         >
                                           <option value="">Attach component…</option>
@@ -7052,13 +7126,13 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
                                   {/* Measurements list (expanded) */}
                                   {compData && compData.expanded && compData.measurements.length > 0 && (
-                                    <div className="mt-2 pt-2 border-t border-gray-100">
+                                    <div id={`takeoff-measurements-${comp.id}`} className="qc-takeoff-measurement-details mt-2 pt-2 border-t border-gray-100">
                                       <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Measurements{typeLabel ? ` (${typeLabel})` : ''}</div>
                                       <div className="space-y-1">
                                         {compData.measurements.map((m) => (
                                           <div
                                             key={m.id}
-                                            className="flex items-center gap-1.5 text-xs text-gray-700"
+                                            className="qc-takeoff-measurement-row flex items-center gap-1.5 text-xs text-gray-700"
                                             onMouseEnter={() => {
                                               const canvas = fabricRef.current;
                                               if (!canvas || !m.canvasObjects) return;
@@ -7097,7 +7171,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                               {(m.type === 'length_x_height_freestyle' || m.type === 'multi_lineal_lxh_freestyle') && `${m.value.toFixed(2)} ${calibrations[0]?.unit || 'ft'} ×-h`}
                                               {m.type === 'volume_3d' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                             </span>
-                                            <button
+                                            <QcHostedButton aria-label={m.visible ? 'Hide measurement' : 'Show measurement'} aria-pressed={m.visible} variant="ghost"
                                               onClick={() => handleToggleMeasurementVisibility(id, m.id)}
                                               className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
                                               title={m.visible ? 'Hide' : 'Show'}
@@ -7107,14 +7181,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                               ) : (
                                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
                                               )}
-                                            </button>
-                                            <button
+                                            </QcHostedButton>
+                                            <QcHostedButton variant="ghost"
                                               onClick={() => handleDeleteMeasurement(id, m.id)}
                                               className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
+                                              aria-label={`Delete measurement for ${comp.name}`}
                                               title="Delete measurement"
                                             >
-                                              ×-
-                                            </button>
+                                              <QcIcon name="close" />
+                                            </QcHostedButton>
                                           </div>
                                         ))}
                                       </div>
@@ -7186,7 +7261,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                       {m.type !== 'line' && m.type !== 'area' && '1 item'}
                                     </span>
-                                    <button
+                                    <QcHostedButton aria-label={m.visible ? 'Hide measurement' : 'Show measurement'} aria-pressed={m.visible} variant="ghost"
                                       onClick={() => handleToggleMeasurementVisibility(uncertainData.componentId ?? '__review__uncertain', m.id)}
                                       className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
                                       title={m.visible ? 'Hide' : 'Show'}
@@ -7196,14 +7271,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       ) : (
                                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>
                                       )}
-                                    </button>
-                                    <button
+                                    </QcHostedButton>
+                                    <QcHostedButton variant="ghost"
                                       onClick={() => handleDeleteMeasurement(uncertainData.componentId ?? '__review__uncertain', m.id)}
                                       className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-base leading-none"
+                                      aria-label="Delete uncertain line"
                                       title="Delete uncertain line"
                                     >
-                                      ×-
-                                    </button>
+                                      <QcIcon name="close" />
+                                    </QcHostedButton>
                                   </div>
                                 ))}
                               </div>
@@ -7214,100 +7290,6 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     );
                   })()}
 
-                  {/* Add Components */}
-                  <div>
-                    <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Add Components</span>
-
-                    {/* Library selector */}
-                    {collections.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-[11px] font-medium text-gray-500 mb-1.5">Select Library</p>
-                        <select
-                          value={selectedLibraryId}
-                          onChange={(e) => setSelectedLibraryId(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none bg-white text-gray-700"
-                          aria-label="Filter components by library"
-                        >
-                           <option value={ALL_LIBRARIES}>All Components</option>
-                          {collections.map((c) => (
-                             <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Search field */}
-                    <div className="relative mb-3">
-                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                      <input
-                        type="text"
-                        placeholder="Search components..."
-                        value={componentSearch}
-                        onChange={(e) => setComponentSearch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none bg-white text-gray-700 placeholder-gray-400"
-                      />
-                    </div>
-
-                    {/* Available component list */}
-                    {(() => {
-                      const available = displayComponents
-                        .filter(comp => !activeComponentIds.includes(comp.id))
-                        .filter(comp => !comp.is_system)
-                        .filter(comp =>
-                          selectedLibraryId === ALL_LIBRARIES
-                            ? true
-                            : (comp.collection_id ?? null) === selectedLibraryId,
-                        )
-                        .filter(comp =>
-                          componentSearch.trim() === ''
-                            ? true
-                            : comp.name.toLowerCase().includes(componentSearch.toLowerCase()),
-                        );
-                      if (available.length === 0) {
-                        return (
-                          <p className="text-xs text-gray-400 py-2">
-                            {componentSearch.trim() !== ''
-                              ? 'No matches.'
-                              : selectedLibraryId === ALL_LIBRARIES
-                              ? 'All components are already active.'
-                              : 'No components in this library.'}
-                          </p>
-                        );
-                      }
-                      return (
-                        <div className="space-y-1">
-                          {available.map((comp) => (
-                            <button
-                              key={comp.id}
-                              type="button"
-                              onClick={() => handleAddComponent(comp.id)}
-                              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-gray-200 bg-white transition-all group text-left"
-                              aria-label={`Add ${comp.name}`}
-                            >
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm text-gray-700 group-hover:text-gray-900 block">{comp.name}</span>
-                                {selectedLibraryId === ALL_LIBRARIES && comp.collection_id && (
-                                  <span className="text-xs text-gray-400">{collections.find(c => c.id === comp.collection_id)?.name ?? ''}</span>
-                                )}
-                              </div>
-                              <span
-                                className="w-6 h-6 flex items-center justify-center rounded-full text-sm font-bold transition-all flex-shrink-0 border-2 border-[#FF6B35] text-[#FF6B35] group-hover:bg-[#FF6B35] group-hover:text-white"
-                                aria-hidden="true"
-                              >
-                                +
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      );
-                    })()}
-
-                    {/* Info tip */}
-                    <div className="mt-4 p-3 bg-blue-50 rounded-xl flex items-start gap-2">
-                      <svg className="flex-shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                      <p className="text-xs text-gray-500 italic">Click on the plan to count this item. Each click adds one.</p>
-                    </div>
-                  </div>
 
                 </div>
               )}
@@ -7315,155 +7297,107 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           )}
 
           </div>
-        </div>
+          <div className="qc-takeoff-panel-footer"><QcToolButton
+onClick={() => setShowResetConfirm(true)}
+className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeoff">Reset takeoff…</QcToolButton>
+            <span>Discards unsaved work. Confirmation required.</span>
+          </div>
+        </aside>
         {/* Center - Canvas */}
-        <div className="flex flex-col relative bg-gray-50 overflow-hidden min-h-0">
+        <div className="qc-takeoff-canvas-column flex flex-col relative bg-gray-50 overflow-hidden min-h-0">
           {/* Hidden marker: copilot only starts after first roof area created */}
           {roofAreas.length > 0 && <div data-copilot="takeoff-ready" className="hidden" />}
 
           {/* Top Toolbar */}
-          <div className="flex-shrink-0 mx-4 mt-1 mb-0 flex items-center justify-between bg-white border border-gray-200 rounded-xl p-2 shadow-sm" data-copilot="takeoff-toolbar">
-            {/* Tools - Fix 7: Calibrate, Area, Line, Point. Sub-tools conditional. */}
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={() => {
-                  // 6.1: with AI calibration enabled, the toolbar entry opens the
-                  // AI-vs-manual chooser instead of jumping straight to manual.
-                  // Without the flag, manual calibration starts directly.
-                  if (aiCalibrationEnabled) {
-                    setAiCalToolbarChooserOpen(true);
-                  } else {
-                    handleStartCalibration();
-                  }
-                }}
-                data-copilot="takeoff-tool-calibrate"
-                className={`px-3 py-2 rounded-full text-sm flex items-center gap-2 ${
-                  calibrationMode ? 'bg-orange-100 hover:bg-orange-200 text-orange-700 border border-orange-500'
-                  : calibrationConfirmed ? 'bg-gray-200 hover:bg-gray-300' : 'bg-gray-100 hover:bg-gray-200'
-                }`}
-              >
-                {calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}
-              </button>
-              <button
-                onClick={() => setShowPitchEstimator(true)}
-                data-copilot="takeoff-tool-pitch-estimator"
-                title="Estimate roof pitch from a photo"
-                className="px-3 py-2 rounded-full text-sm bg-gray-100 hover:bg-gray-200 border-2 border-transparent"
-              >Find Pitch</button>
-              <button
-                onClick={() => {
-                  if (areaMode) { cleanupBoxDrag(); setAreaMode(false); setAreaPoints([]); }
-                  else { setAreaMode(true); setLineMode(false); setPointMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setAreaPoints([]); }
-                }}
-                disabled={calibrationMode || calibrations.length === 0}
-                data-copilot="takeoff-tool-area"
-                className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  areaMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
-                }`}
-                title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
-              >Area</button>
-              {areaMode && (
-                <div className="flex items-center rounded-full bg-gray-100 p-0.5">
-                  <button onClick={() => { cleanupBoxDrag(); setAreaSubTool('polygon'); setAreaPoints([]); }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'polygon' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                    title="Point by point, click first point to close"
-                  >Polygon</button>
-                  <button onClick={() => { cleanupBoxDrag(); setAreaSubTool('rect'); setAreaPoints([]); }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${areaSubTool === 'rect' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                    title="Click and drag to create box"
-                  >Rectangle</button>
+              <QcCanvasToolbar className="qc-takeoff-toolbar" data-copilot="takeoff-toolbar">
+                <div className="qc-takeoff-toolbar-main">
+                  <QcCanvasToolGroup label="Measurement tools"><QcToolButton
+                    onClick={() => {
+                      if (areaMode) { cleanupBoxDrag(); setAreaMode(false); setAreaPoints([]); }
+                      else { setAreaMode(true); setLineMode(false); setPointMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setAreaPoints([]); }
+                    }}
+                    disabled={calibrationMode || calibrations.length === 0}
+                    data-copilot="takeoff-tool-area"
+                    title={calibrations.length === 0 ? 'Calibrate first' : 'Measure roof area'}
+                    selected={areaMode}><QcIcon name="polygon" />Area</QcToolButton><QcToolButton
+                      onClick={() => {
+                        const isActive = lineMode || multiLinealMode;
+                        if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); return; }
+                        if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
+                        if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
+                        cleanupBoxDrag(); setAreaMode(false); setPointMode(false);
+                        if (lineSubTool === 'multi') { setMultiLinealMode(true); setLineMode(false); setLinePoints([]); }
+                        else { setLineMode(true); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setLinePoints([]); }
+                      }}
+                      disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
+                      data-copilot="takeoff-tool-line"
+                      title="Measure line or polyline"
+                      selected={lineMode || multiLinealMode}><QcIcon name="line" />Line</QcToolButton><QcToolButton
+                        onClick={() => {
+                          if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
+                          if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
+                          setPointMode(!pointMode); cleanupBoxDrag(); setLineMode(false); setAreaMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]);
+                        }}
+                        disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
+                        data-copilot="takeoff-tool-point"
+                        title="Add point marker"
+                        selected={pointMode}><QcIcon name="point" />Point</QcToolButton></QcCanvasToolGroup>
+                  <QcCanvasToolGroup label="Plan setup" className="qc-takeoff-setup-tools"><QcToolButton
+                    onClick={() => {
+                      // 6.1: with AI calibration enabled, the toolbar entry opens the
+                      // AI-vs-manual chooser instead of jumping straight to manual.
+                      // Without the flag, manual calibration starts directly.
+                      if (aiCalibrationEnabled) {
+                        setAiCalToolbarChooserOpen(true);
+                      } else {
+                        handleStartCalibration();
+                      }
+                    }}
+                    data-copilot="takeoff-tool-calibrate"
+                    selected={calibrationMode}><QcIcon name="measure" />{calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}</QcToolButton><QcToolButton
+                      onClick={() => setShowPitchEstimator(true)}
+                      data-copilot="takeoff-tool-pitch-estimator"
+                      title="Estimate roof pitch from a photo"
+                    ><QcIcon name="pitch" />Estimate pitch</QcToolButton></QcCanvasToolGroup>
                 </div>
-              )}
-              <button
-                onClick={() => {
-                  const isActive = lineMode || multiLinealMode;
-                  if (isActive) { if (multiLinealMode) handleCancelMultiLineal(); cleanupBoxDrag(); setLineMode(false); setMultiLinealMode(false); setLinePoints([]); return; }
-                  if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
-                  if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
-                  cleanupBoxDrag(); setAreaMode(false); setPointMode(false);
-                  if (lineSubTool === 'multi') { setMultiLinealMode(true); setLineMode(false); setLinePoints([]); }
-                  else { setLineMode(true); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]); setLinePoints([]); }
-                }}
-                disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
-                data-copilot="takeoff-tool-line"
-                className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  (lineMode || multiLinealMode) ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
-                }`}
-                title="Measure line or polyline"
-              >Line</button>
-              {(lineMode || multiLinealMode) && (
-                <div className="flex items-center rounded-full bg-gray-100 p-0.5">
-                  <button onClick={() => { setLineSubTool('single'); if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'single' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                    title="Two-point line"
-                  >Single</button>
-                  <button onClick={() => { setLineSubTool('multi'); if (lineMode) { setLineMode(false); setLinePoints([]); setMultiLinealMode(true); } }}
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${lineSubTool === 'multi' ? 'bg-slate-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                    title="Multi-point polyline"
-                  >Multi</button>
+                <div className="qc-takeoff-toolbar-context">
+                  <div className="qc-takeoff-subtools">
+                    {areaMode ? <QcCanvasToolGroup label="Area drawing mode"><QcToolButton
+                      onClick={() => { cleanupBoxDrag(); setAreaSubTool('polygon'); setAreaPoints([]); }}
+                      title="Point by point, click first point to close"
+                      selected={areaSubTool === 'polygon'}>Polygon</QcToolButton><QcToolButton
+                        onClick={() => { cleanupBoxDrag(); setAreaSubTool('rect'); setAreaPoints([]); }}
+                        title="Click and drag to create box"
+                        selected={areaSubTool === 'rect'}>Rectangle</QcToolButton></QcCanvasToolGroup>
+                      : (lineMode || multiLinealMode) ? <QcCanvasToolGroup label="Line drawing mode"><QcToolButton
+                        onClick={() => { setLineSubTool('single'); if (multiLinealMode) { handleCancelMultiLineal(); setLineMode(true); } }}
+                        title="Two-point line"
+                        selected={lineSubTool === 'single'}>Single</QcToolButton><QcToolButton
+                          onClick={() => { setLineSubTool('multi'); if (lineMode) { setLineMode(false); setLinePoints([]); setMultiLinealMode(true); } }}
+                          title="Multi-point polyline"
+                          selected={lineSubTool === 'multi'}>Multi</QcToolButton></QcCanvasToolGroup>
+                        : <span>{calibrationMode ? 'Mark a known distance on this plan' : pointMode ? 'Each click counts one item' : 'Choose a drawing tool to begin'}</span>}
+                  </div>
+                  <div className="qc-takeoff-view-tools">
+                    <QcCanvasToolGroup label="History"><QcToolButton
+                      onClick={handleUndo}
+                      disabled={!history.canUndo}
+                      title="Undo"
+                      aria-label="Undo" className="qc-canvas-icon-tool"><QcIcon name="undo" /></QcToolButton><QcToolButton
+                        onClick={handleRedo}
+                        disabled={!history.canRedo}
+                        title="Redo"
+                        aria-label="Redo" className="qc-canvas-icon-tool"><QcIcon name="redo" /></QcToolButton></QcCanvasToolGroup>
+                    <QcCanvasToolGroup label="Zoom" className="qc-takeoff-zoom"><QcToolButton
+                      onClick={handleZoomOut}
+                      aria-label="Zoom out" title="Zoom out" className="qc-canvas-icon-tool"><QcIcon name="minus" /></QcToolButton>
+                      <span className="qc-takeoff-zoom-value" aria-label="Current zoom">{Math.round(zoom * 100)}%</span><QcToolButton
+                        onClick={handleZoomIn}
+                        aria-label="Zoom in" title="Zoom in" className="qc-canvas-icon-tool"><QcIcon name="plus" /></QcToolButton>
+                    </QcCanvasToolGroup>
+                  </div>
                 </div>
-              )}
-              <button
-                onClick={() => {
-                  if (!quoteIsGeneric) { const h = roofAreas.length > 0 && roofAreas.some(a => a.pitch > 0); if (!h) { showAlert('Roof area required', 'Create a roof area with pitch first.', 'info'); return; } }
-                  if (!selectedComponentId) { showAlert('Select a component first', 'Pick a component from the list.', 'info'); return; }
-                  setPointMode(!pointMode); cleanupBoxDrag(); setLineMode(false); setAreaMode(false); setMultiLinealMode(false); setMultiLinealPoints([]); setMultiLinealSegmentObjects([]);
-                }}
-                disabled={calibrationMode || calibrations.length === 0 || (!quoteIsGeneric && (roofAreas.length === 0 || !roofAreas.some(a => a.pitch > 0)))}
-                data-copilot="takeoff-tool-point"
-                className={`px-3 py-2 rounded-full text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                  pointMode ? 'bg-orange-100 border border-orange-500 text-orange-700' : 'bg-gray-100 hover:bg-gray-200 border-2 border-transparent'
-                }`}
-                title="Add point marker"
-              >Point</button>
-                        </div>
-
-            {/* Phase 7: Multi-lineal in-progress readout floats below the toolbar
-                (see banner block further down) so it never reflows the tool buttons
-                or zoom controls when the user is mid-polyline. */}
-
-            {/* Zoom Controls - Right Side */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleZoomOut}
-                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm"
-              >
-                −
-              </button>
-              <span className="px-1 py-1 text-sm tabular-nums">{Math.round(zoom * 100)}%</span>
-              <button
-                onClick={handleZoomIn}
-                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
-              >
-                +
-              </button>
-              <button
-                onClick={() => setShowResetConfirm(true)}
-                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm"
-                title="Reset canvas to starting state"
-              >
-                Reset
-              </button>
-              {/* Canvas-rework: Undo/Redo buttons */}
-              <div className="w-px h-5 bg-gray-300 mx-1" />
-              <button
-                onClick={handleUndo}
-                disabled={!history.canUndo}
-                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Undo"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
-              </button>
-              <button
-                onClick={handleRedo}
-                disabled={!history.canRedo}
-                className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-                title="Redo"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" /></svg>
-              </button>
-            </div>
-          </div>
+              </QcCanvasToolbar>
 
           {/* Phase 7: Multi-lineal in-progress floating banner. DRAGGABLE so it
               never blocks the canvas where the user needs to click. Drag from
@@ -7488,7 +7422,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 style={style}
               >
                 <div
-                  className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
+                  className="qc-takeoff-multiline-banner flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-300 rounded-full text-sm shadow-md cursor-grab active:cursor-grabbing select-none"
                   onMouseDown={(e) => {
                     // Drag from anywhere on the toolbar EXCEPT the buttons.
                     if ((e.target as HTMLElement).closest('button')) return;
@@ -7525,34 +7459,37 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     Total: {runningTotal.toFixed(2)}m ({segCount} segment{segCount !== 1 ? 's' : ''})
                   </span>
                   <span className="text-orange-500 text-xs whitespace-nowrap">Double-click or</span>
-                  <button
+                  <QcHostedButton variant="primary"
                     onClick={handleFinishMultiLineal}
                     disabled={multiLinealPoints.length < 2}
                     className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-medium hover:bg-orange-600 disabled:opacity-40"
                   >
                     Finish
-                  </button>
-                  <button
+                  </QcHostedButton>
+                  <QcHostedButton variant="ghost"
                     onClick={handleCancelMultiLineal}
                     className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs hover:bg-gray-300"
                   >
                     Cancel
-                  </button>
+                  </QcHostedButton>
                 </div>
               </div>
             );
           })()}
 
           {/* Canvas */}
-          <div className="flex-1 flex flex-col items-start justify-start p-2 md:p-6 md:pt-4 overflow-auto min-h-0">
-            <div className="border-2 border-gray-200 rounded-lg">
+          <div className="qc-takeoff-canvas-scroll flex-1 flex flex-col items-start justify-start p-2 md:p-6 md:pt-4 overflow-auto min-h-0">
+            <div className="qc-takeoff-plan-border border-2 border-gray-200 rounded-lg">
               <canvas ref={canvasRef} />
             </div>
-            <p className="mt-2 text-center text-xs text-slate-400">
-              {calibrationMode
-                ? `Click ${calibrationPoints.length === 0 ? 'first' : 'second'} point to calibrate`
-                : 'Hold Alt + Drag to pan'}
-            </p>
+          </div>
+          <div className="qc-takeoff-canvas-status">
+            <span className="qc-takeoff-target" aria-live="polite">
+              {calibrationMode ? `Calibration: click ${calibrationPoints.length === 0 ? 'first' : 'second'} point`
+                : selectedComponentId ? `Selected: ${displayComponents.find(c => c.id === selectedComponentId)?.name || 'Component'}`
+                : areaMode ? 'Drawing an area' : 'No component selected'}
+            </span>
+            <span>Hold Alt + drag to pan</span>
           </div>
         </div>
       </div>
@@ -7624,7 +7561,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       {/* Area Instructions (after first calibration) - always optional, all trades, all modes */}
       {showRoofAreaInstructions && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+        <QcHostedDialog label="Calibration complete" size="md" className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">Calibration complete</h2>
             {takeoffMode === 'new-page' && initialPageName ? (
@@ -7649,7 +7586,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             )}
             <div className="flex flex-col gap-3">
               <div className="flex gap-2">
-                <button
+                <QcHostedButton variant="secondary"
                   onClick={() => {
                     setShowRoofAreaInstructions(false);
                     roofAreaInstructionsDismissedRef.current = true;
@@ -7660,11 +7597,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     setMultiLinealMode(false);
                   }}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
-                  title="Draw the area point by point (at least 3 points), to close the area - click back on the first point"
+                  title="Click at least three points. Click the first point again to close the area"
                 >
                   Draw Area · Polygon
-                </button>
-                <button
+                </QcHostedButton>
+                <QcHostedButton variant="secondary"
                   onClick={() => {
                     setShowRoofAreaInstructions(false);
                     roofAreaInstructionsDismissedRef.current = true;
@@ -7675,10 +7612,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     setMultiLinealMode(false);
                   }}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
-                  title="Create a custom box shape area, click and hold, drag then release to set the area"
+                  title="Click and drag a rectangle. Release to set the area"
                 >
                   Draw Area · Rectangle
-                </button>
+                </QcHostedButton>
               </div>
               {aiTakeoffAvailable && (
                 <div className="space-y-2 rounded-xl border-2 border-[#FF6B35]/30 p-3 bg-[#FF6B35]/5">
@@ -7697,6 +7634,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                       AI Assist is not available on your current plan. Upgrade to Growth or Pro to unlock AI roof scanning.
                     </div>
                   )}
+                  {/* AGENT-TODO(P4-AI-COST-01): the existing 2/6/12 cost hints differ
+                      from the 2/4/8 affordability thresholds below. Gavin must reconcile
+                      the guard with the owned point-cost contract. Values preserved here. */}
                   {/* Quality selector + scan button: hidden when blocked */}
                   {!aiPoints?.isBlocked && (
                     <>
@@ -7709,7 +7649,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                           const cost = opt.value === 'low' ? 2 : opt.value === 'medium' ? 4 : 8;
                           const canAfford = !aiPoints || aiPoints.remaining >= cost;
                           return (
-                            <button
+                            <QcHostedButton aria-pressed={aiQualityLevel === opt.value} variant={aiQualityLevel === opt.value ? 'secondary' : 'ghost'}
                               key={opt.value}
                               onClick={() => setAiQualityLevel(opt.value)}
                               disabled={!canAfford}
@@ -7723,11 +7663,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                               title={opt.hint}
                             >
                               {opt.label}
-                            </button>
+                            </QcHostedButton>
                           );
                         })}
                       </div>
-                      <button
+                      <QcHostedButton variant="primary"
                         onClick={() => {
                           setShowRoofAreaInstructions(false);
                           roofAreaInstructionsDismissedRef.current = true;
@@ -7738,12 +7678,12 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                       >
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93L12 10l-.75-.07C9.4 9.58 8 7.95 8 6a4 4 0 0 1 4-4z"/><path d="M2 22v-2a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v2"/><path d="M12 13v3"/></svg>
                         AI Assist (BETA)
-                      </button>
+                      </QcHostedButton>
                     </>
                   )}
                 </div>
               )}
-              <button
+              <QcHostedButton variant="ghost"
                 onClick={() => {
                   setShowRoofAreaInstructions(false);
                   roofAreaInstructionsDismissedRef.current = true;
@@ -7751,19 +7691,19 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 className="py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Skip
-              </button>
+              </QcHostedButton>
             </div>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
       {/* Initial Calibration Help - defers while the AI/manual chooser is open
           (owner feedback 2026-09-20): never render the two z-50 modals stacked. */}
       {showCalibrationHelp && calibrations.length === 0 &&
         !(aiCalibrationEnabled && (aiCalChooserOpen || aiCalToolbarChooserOpen)) && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <QcHostedDialog label="Set the scale of your plan" size="sm" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 md:p-6 max-w-md border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">📐 Calibrate Your Plan</h2>
+            <h2 className="text-xl font-semibold mb-4">Set the scale of your plan</h2>
             <div className="space-y-3 text-sm">
               <p>Before you can measure, you need to set the scale:</p>
               <ol className="list-decimal list-inside space-y-2 text-gray-900">
@@ -7774,7 +7714,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 <li>Click <span className="font-bold text-orange-600">&quot;Confirm Calibration&quot;</span> when done</li>
               </ol>
             </div>
-            <button
+            <QcHostedButton variant="secondary"
               onClick={() => {
                 setShowCalibrationHelp(false);
                 // Auto-start calibration mode
@@ -7782,15 +7722,15 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               }}
               className="mt-6 w-full px-4 py-2 bg-black hover:bg-slate-800 text-white rounded-full font-medium transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
-              Got it, let&apos;s calibrate!
-            </button>
+              Start calibration
+            </QcHostedButton>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
-      {/* Volume (L ×- W ×- D) depth prompt - fires after area polygon is closed for a volume_3d component */}
+      {/* Volume (L × W ×- D) depth prompt - fires after area polygon is closed for a volume_3d component */}
       {showVolumeDepthPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <QcHostedDialog label="Enter measurement depth" size="sm" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 w-80 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">Enter Depth</h2>
             <p className="text-sm text-slate-500 mb-4">
@@ -7800,7 +7740,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Depth ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'})
               </label>
-              <input
+              <input aria-label="Measurement depth"
                 type="number"
                 step="0.01"
                 min="0.001"
@@ -7824,7 +7764,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               )}
             </div>
             <div className="flex gap-3">
-              <button
+              <QcHostedButton variant="secondary"
                 onClick={handleConfirmVolumeDepth}
                 disabled={!volumeDepthInput || parseFloat(volumeDepthInput) <= 0}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 disabled:opacity-40 transition-colors"
@@ -7832,8 +7772,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {volumeDepthInput && parseFloat(volumeDepthInput) > 0
                   ? `Confirm ${parseFloat(volumeDepthInput).toFixed(2)} ${calibrations[0]?.unit === 'feet' ? 'ft' : 'm'} depth`
                   : 'Enter a depth'}
-              </button>
-              <button
+              </QcHostedButton>
+              <QcHostedButton variant="ghost"
                 onClick={() => {
                   // Remove preview polygon from canvas
                   if (pendingVolumePolygon) {
@@ -7851,17 +7791,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Cancel
-              </button>
+              </QcHostedButton>
             </div>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
       {/* Area-to-component attach chooser (2026-09-03): plan vs pitched.
           Default Pitched. Stores the basis + plan value so the save path
           recomputes from live pitch - never a stale snapshot again. */}
       {areaAttachChoice && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <QcHostedDialog label="Attach area to component" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-5 w-96 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">Attach area to component</h2>
             <p className="text-sm text-slate-500 mb-4">
@@ -7869,7 +7809,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               so changing the area's pitch later updates this component automatically.
             </p>
             <div className="space-y-2 mb-4">
-              <button
+              <QcHostedButton aria-pressed={areaAttachChoice.basis === 'pitched'} data-qc-choice="true" variant="ghost"
                 type="button"
                 onClick={() => setAreaAttachChoice(c => c && { ...c, basis: 'pitched' })}
                 className={`w-full text-left rounded-xl border px-4 py-3 transition ${
@@ -7889,8 +7829,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                     ? `Plan ${areaAttachChoice.plan.toFixed(2)} ×- pitch factor at ${areaAttachChoice.pitch.toFixed(1)}° - use for roof sheets, underlay, battens (recommended)`
                     : 'No pitch set on this area - same as plan. Set a pitch first for a pitched value.'}
                 </p>
-              </button>
-              <button
+              </QcHostedButton>
+              <QcHostedButton aria-pressed={areaAttachChoice.basis === 'plan'} data-qc-choice="true" variant="ghost"
                 type="button"
                 onClick={() => setAreaAttachChoice(c => c && { ...c, basis: 'plan' })}
                 className={`w-full text-left rounded-xl border px-4 py-3 transition ${
@@ -7906,24 +7846,24 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">No pitch applied - footprint measurement only.</p>
-              </button>
+              </QcHostedButton>
             </div>
             <div className="flex gap-3">
-              <button
+              <QcHostedButton variant="secondary"
                 onClick={handleConfirmAreaAttach}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
                 Attach {areaAttachChoice.basis === 'pitched' ? 'pitched' : 'plan'} ({(areaAttachChoice.basis === 'pitched' ? areaAttachChoice.pitched : areaAttachChoice.plan).toFixed(1)} {calibrations[0]?.unit === 'feet' ? 'ft²' : 'm²'})
-              </button>
-              <button
+              </QcHostedButton>
+              <QcHostedButton variant="ghost"
                 onClick={() => setAreaAttachChoice(null)}
                 className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Cancel
-              </button>
+              </QcHostedButton>
             </div>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
       {/* Roof Pitch Estimator - opened from toolbar or pitch prompts.
@@ -7940,7 +7880,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       {/* P1-1b pitch-only prompt for new-page mode (first area boundary drawn) */}
       {showPitchOnlyPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <QcHostedDialog label="Area pitch" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 w-80 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">
               {isExistingAreaMode ? `Adding to: ${existingAreaLabel}` : `"${initialPageName || 'New Area'}"`}
@@ -7966,19 +7906,19 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   autoFocus
                   className="block"
                 />
-                <button
+                <QcHostedButton variant="ghost"
                   type="button"
                   onClick={() => setShowPitchEstimator(true)}
                   className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
                   title="Estimate roof pitch from a photo"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
-                  Pitch Finder
-                </button>
+                  Estimate pitch
+                </QcHostedButton>
               </div>
             </div>
             <div className="flex gap-3">
-              <button
+              <QcHostedButton variant="secondary"
                 onClick={() => {
                   setShowPitchOnlyPrompt(false);
                   const pitch = pitchOnlyDegrees ?? 0;
@@ -7987,8 +7927,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
               >
                 {pitchOnlyDegrees != null ? `Save at ${pitchOnlyDegrees.toFixed(1).replace(/\.0$/, '')}°` : 'Save (0° flat)'}
-              </button>
-              <button
+              </QcHostedButton>
+              <QcHostedButton variant="ghost"
                 onClick={() => {
                   setShowPitchOnlyPrompt(false);
                   setPendingAreaPoints([]);
@@ -7998,10 +7938,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Cancel
-              </button>
+              </QcHostedButton>
             </div>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
       {/* Area Name Prompt */}
@@ -8028,7 +7968,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       {/* Phase 6: New Area choice modal */}
       {showNewAreaChoiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <QcHostedDialog label="Create a new area" size="md" className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="p-2 md:p-6">
               <h2 className="text-lg font-semibold text-slate-900 mb-1">New Area</h2>
@@ -8058,7 +7998,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                       Draw a polygon that adds to an existing area’s total.
                     </p>
                     {newAreaChoice === 'existing' && (
-                      <select
+                      <select aria-label="Existing area"
                         value={newAreaExistingId}
                         onChange={e => setNewAreaExistingId(e.target.value)}
                         className="mt-2 w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -8098,24 +8038,24 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               </label>
 
               <div className="flex gap-3 pt-2">
-                <button
+                <QcHostedButton variant="ghost"
                   type="button"
                   onClick={() => setShowNewAreaChoiceModal(false)}
                   className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
                 >
                   Cancel
-                </button>
-                <button
+                </QcHostedButton>
+                <QcHostedButton variant="secondary"
                   type="button"
                   onClick={handleConfirmNewAreaChoice}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors"
                 >
                   Draw Area
-                </button>
+                </QcHostedButton>
               </div>
             </div>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
       {/* Point Measurement Prompt */}
@@ -8268,7 +8208,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       {/* Freestyle height prompt - fires after line/polyline for length_x_height_freestyle / multi_lineal_lxh_freestyle */}
       {showFreestyleHeightPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <QcHostedDialog label="Enter measurement height" size="sm" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-4 md:p-6 w-80 border border-gray-200 shadow-xl">
             <h2 className="text-lg font-semibold mb-1">Enter Height</h2>
             <p className="text-sm text-slate-500 mb-4">
@@ -8282,7 +8222,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Height ({calibrations[0]?.unit === 'feet' ? 'ft' : 'm'})
               </label>
-              <input
+              <input aria-label="Measurement height"
                 type="number"
                 step="0.01"
                 min="0.001"
@@ -8306,7 +8246,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               )}
             </div>
             <div className="flex gap-3">
-              <button
+              <QcHostedButton variant="secondary"
                 onClick={handleConfirmFreestyleHeight}
                 disabled={!freestyleHeightInput || parseFloat(freestyleHeightInput) <= 0}
                 className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 disabled:opacity-40 transition-colors"
@@ -8314,8 +8254,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {freestyleHeightInput && parseFloat(freestyleHeightInput) > 0
                   ? `Confirm ${parseFloat(freestyleHeightInput).toFixed(2)} ${calibrations[0]?.unit === 'feet' ? 'ft' : 'm'} height`
                   : 'Enter a height'}
-              </button>
-              <button
+              </QcHostedButton>
+              <QcHostedButton variant="ghost"
                 onClick={() => {
                   if (fabricRef.current) {
                     pendingFreestyleCanvasObjects.forEach(obj => fabricRef.current!.remove(obj));
@@ -8331,17 +8271,18 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 className="flex-1 py-2.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50 transition-colors"
               >
                 Cancel
-              </button>
+              </QcHostedButton>
             </div>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
       {/* App-style alert replaces native alert() across this workstation. */}
       {/* Reset Canvas confirm modal */}
         <ConfirmModal
+          appearance={desktopAppearance ? 'v2' : undefined}
           open={showResetConfirm}
-          title="Reset Canvas?"
+          title="Reset takeoff?"
           description={hydrationData && hydrationData.measurements.length > 0
             ? 'This will discard all unsaved changes and restore the canvas to the last saved state.'
             : 'This will clear all measurements, calibrations, and drawings. You will start over from the calibration step.'}
@@ -8352,6 +8293,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         />
         {/* Phase 5: Area delete confirmation */}
         <ConfirmModal
+          appearance={desktopAppearance ? 'v2' : undefined}
           open={showAreaDeleteConfirm}
           title={`Delete "${pendingDeleteAreaLabel}"?`}
           description="This deletes the area and all its components and measurements. This cannot be undone."
@@ -8361,6 +8303,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           onConfirm={handleConfirmDeleteArea}
         />
         <AlertModal
+        appearance={desktopAppearance ? 'v2' : undefined}
         open={alertState.open}
         title={alertState.title}
         description={alertState.description}
@@ -8370,21 +8313,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
 
       {/* AI Takeoff: scanning overlay */}
       {aiScanning && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
+        <QcHostedDialog label="AI scan in progress" size="sm" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
           <div className="bg-white rounded-2xl p-6 max-w-sm border border-gray-200 shadow-xl text-center">
             <div className="inline-block w-8 h-8 border-3 border-slate-200 border-t-[#FF6B35] rounded-full animate-spin mb-3" />
             <h3 className="text-sm font-semibold text-slate-900">
               {aiScanStage === 'outline' ? 'Tracing roof outline…' : aiScanStage === 'lines' ? 'Detecting and auditing roof lines…' : 'Classifying components…'}
             </h3>
             <p className="text-xs text-slate-500 mt-1">This may take a few moments.</p>
-            <button
+            <QcHostedButton variant="ghost"
               onClick={handleCancelAiScan}
               className="mt-4 inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors"
             >
               Cancel scan
-            </button>
+            </QcHostedButton>
           </div>
-        </div>
+        </QcHostedDialog>
       )}
 
       {/* M10 P5: staged scan - outline applied, continue to components */}
@@ -8393,32 +8336,32 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           <h3 className="text-sm font-semibold text-slate-900">AI outline applied</h3>
           <p className="text-xs text-slate-500 mt-1">Drag the blue points to correct the outline, then continue. Components are detected on your corrected outline.</p>
           <div className="mt-3 flex items-center justify-center gap-2">
-            <button
+            <QcHostedButton variant="primary"
               onClick={handleContinueAiScan}
               className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e55a28] transition-colors"
             >
               Detect components
-            </button>
-            <button
+            </QcHostedButton>
+            <QcHostedButton variant="ghost"
               onClick={() => setAiStagedPageId(null)}
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Not now
-            </button>
+            </QcHostedButton>
           </div>
         </div>
       )}
 
       {/* AI Takeoff: error toast */}
       {aiScanError && !aiScanning && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-red-600 text-white text-xs px-4 py-2 rounded-full shadow-lg animate-fade-in">
+        <div role="alert" className="qc-takeoff-ai-error fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-red-600 text-white text-xs px-4 py-2 rounded-full shadow-lg animate-fade-in">
           {aiScanError}
-          <button
+          <QcHostedButton variant="ghost"
             onClick={() => setAiScanError(null)}
             className="ml-2 underline opacity-80 hover:opacity-100"
           >
             Dismiss
-          </button>
+          </QcHostedButton>
         </div>
       )}
 
@@ -8439,7 +8382,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       )}
     </div>
     </div>
-    </>
+    </QcHostedDialogScope>
   );
 }
 

@@ -15,6 +15,7 @@ import {
   type TouchOutlineAdapter,
 } from '@/app/lib/takeoff/precision/TouchOutlineEditor';
 import { useTouchCalibration, type TouchCalibrationPageInfo } from '@/app/lib/takeoff/precision/TouchCalibrationWorkspace';
+import { TakeoffDesktopHost } from './desktop/TakeoffDesktopHost';
 import { decodeCalibrationMetadata } from '@/app/lib/takeoff/calibrationCodec';
 
 const TakeoffWorkstation = dynamic(
@@ -174,6 +175,7 @@ export function TakeoffPage({
   );
   const workstation = (
     <TakeoffWorkstation
+      desktopAppearance={!touchActive}
       workspaceSlug={workspaceSlug}
       quote={quote}
       planUrl={planUrl}
@@ -208,20 +210,20 @@ export function TakeoffPage({
     />
   );
 
-  // FLAG OFF: render the EXACT original desktop wrapper — no shell, no hidden
-  // strips, no new code paths. Bit-for-bit with pre-M2 markup.
+  // Phase 4: desktop host geometry only; the workstation and all controllers
+  // remain the same mounted owners. No touch workflow or engine changes.
   if (!takeoffTouchEnabled) {
-    return <div className="w-[125%] -ml-[12.5%]">{workstation}</div>;
+    return <TakeoffDesktopHost active>{workstation}</TakeoffDesktopHost>;
   }
 
   // FLAG ON: desktop presentation (explicit Desktop or Auto→desktop) renders
-  // the shell's inert skeleton — root carries the EXACT original
-  // `w-[125%] -ml-[12.5%]` widening classes, intermediates are
-  // display:contents, strips hidden. Desktop layout is unchanged, and the
+  // the shell's inert skeleton. The presentation host neutralises its legacy
+  // widening classes ONLY on desktop; intermediates remain display:contents. The
   // workstation stays mounted when the user switches Desktop ↔ Mobile/touch.
   // M8: rail shows ONLY the current step's controls (16:59 refinement); a
   // compact step label sits at the rail top (shell).
   return (
+    <TakeoffDesktopHost active={!touchActive}>
     <TouchWorkspaceShell
       active={touchActive}
       planLabel={initialPageName ?? 'Plan'}
@@ -251,5 +253,6 @@ export function TakeoffPage({
     >
       {workstation}
     </TouchWorkspaceShell>
+    </TakeoffDesktopHost>
   );
 }

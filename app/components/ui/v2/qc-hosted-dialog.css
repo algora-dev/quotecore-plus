@@ -1,0 +1,49 @@
+/* C53 hosts legacy forms inside C27's top layer. Defaults outside the scope
+   remain untouched. Remove only the OLD modal wrapper geometry, not its form. */
+.qc-hosted-dialog-name { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+.qc-hosted-dialog .qc-dialog-body { padding:0; }
+.qc-hosted-dialog .qc-hosted-dialog-content {
+  position:static; inset:auto; z-index:auto; display:block; background:none;
+  padding:0; backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+.qc-hosted-dialog .qc-hosted-dialog-content > :is(div,form) {
+  width:100%; max-width:none; margin:0; border:0; border-radius:0; box-shadow:none;
+  background:var(--qc-bg-surface); color:var(--qc-text-body); max-height:none;
+}
+.qc-hosted-dialog .qc-hosted-dialog-content :is(h2,h3) { color:var(--qc-text-primary); }
+/* Native C01/C05/C06 recipes also work for inherited controls. Layout remains
+   with each form; do not apply a button display rule to image/canvas surfaces. */
+.qc-hosted-dialog :is(input:not([type='radio']):not([type='checkbox']):not([type='file']),select) {
+  border:1px solid var(--qc-border-control); border-radius:var(--qc-radius-control);
+  min-height:var(--qc-control-md); background:var(--qc-bg-surface); color:var(--qc-text-primary);
+}
+/* The legacy card/form supplies its existing padding. Do not double-pad C27. */
+[data-qc-ui='v2'].qc-dialog.qc-hosted-dialog { padding:0; }
+.qc-hosted-dialog .qc-dialog-body { margin:0; }
+.qc-hosted-dialog .qc-hosted-dialog-content > :is(div,form) { border-radius:var(--qc-radius-dialog); }
+.qc-hosted-dialog .qc-button[data-qc-choice='true'] { display:block; width:100%; padding:16px; text-align:left; white-space:normal; border-radius:var(--qc-radius-control); }
+.qc-hosted-dialog .qc-button[data-qc-choice='thumbnail'] { display:flex; flex-direction:column; padding:8px; border-width:2px; }
+.qc-hosted-dialog .qc-button[aria-pressed='true'][data-qc-variant='ghost'] { background:var(--qc-selected-bg); border-color:var(--qc-color-orange-ink); box-shadow:inset 0 -2px 0 var(--qc-color-orange-ink); }
+.qc-hosted-dialog :is(.text-gray-400,.text-slate-400,.text-gray-500,.text-slate-500) { color:var(--qc-text-secondary); }
+.qc-hosted-dialog :is(.text-orange-500,.text-orange-600,.text-orange-700) { color:var(--qc-color-orange-ink); }
+.qc-hosted-dialog :is(.text-\[10px\],.text-\[11px\]) { font-size:12px; line-height:18px; }
+.qc-hosted-dialog :is(input,select,textarea) { accent-color:var(--qc-color-orange-ink); }
+.qc-hosted-dialog a.bg-black { display:inline-flex; align-items:center; justify-content:center; min-height:var(--qc-control-md); padding:8px 16px; border:1px solid var(--qc-action-secondary-bg); border-radius:var(--qc-radius-control); background:var(--qc-action-secondary-bg); color:var(--qc-action-secondary-text); font-size:14px; font-weight:600; }
+.qc-hosted-dialog a.bg-black:active { box-shadow:inset 0 0 0 2px var(--qc-border-control); }
+.qc-hosted-dialog label:has(input[type='file']):focus-within { outline:2px solid var(--qc-focus-ring); outline-offset:3px; }
+.qc-hosted-dialog label:has(input[type='radio']) { border-radius:var(--qc-radius-control); }
+.qc-hosted-dialog label:has(input[type='radio']:checked) { background:var(--qc-selected-bg); border-color:var(--qc-color-orange-ink); }
+.qc-hosted-dialog .qc-button.text-left { text-align:left; justify-content:flex-start; }
+.qc-hosted-dialog .qc-takeoff-entry-upload { background:var(--qc-bg-subtle); border-color:var(--qc-border-divider); border-radius:var(--qc-radius-card); }
+@media(hover:hover) {
+ .qc-hosted-dialog a.bg-black:hover { background:var(--qc-color-text); border-color:var(--qc-color-text); }
+ .qc-hosted-dialog :is(input:not([type='radio']):not([type='checkbox']),select):hover:not(:disabled) { border-color:var(--qc-color-orange-ink); }
+}
+@media(forced-colors:active) {
+ .qc-hosted-dialog .qc-button[aria-pressed='true'] { border:2px solid Highlight; }
+}
+
+@media(hover:hover) {
+ .qc-hosted-dialog .qc-button[aria-pressed='true'][data-qc-variant='ghost']:hover:not(:disabled) { background:var(--qc-color-orange-tint); }
+}
+.qc-hosted-dialog .qc-button[aria-pressed='true'][data-qc-variant='ghost']:active:not(:disabled) { box-shadow:inset 0 0 0 2px var(--qc-color-orange-ink); }

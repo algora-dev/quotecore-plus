@@ -1,6 +1,14 @@
 import type { SVGProps } from 'react';
 
 const paths = {
+  polygon: 'm4 8 9-5 7 7-4 10H5L4 8Z',
+  line: 'M5 19 19 5M3 17h4v4H3v-4ZM17 3h4v4h-4V3Z',
+  point: 'M12 8v8M8 12h8M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+  pitch: 'M3 19 21 5v14H3ZM15 19v-5h6',
+  trash: 'M3 6h18M5 6l1 15h12l1-15M9 6V3h6v3M10 10v7M14 10v7',
+  undo: 'M9 15 3 9l6-6M3 9h12a6 6 0 0 1 0 12h-3',
+  redo: 'm15 15 6-6-6-6m6 6H9a6 6 0 0 0 0 12h3',
+  minus: 'M5 12h14',
   home: 'M3 10.5 12 3l9 7.5M5 9v11h5v-6h4v6h5V9',
   quote: 'M7 3h7l4 4v14H6V3h1m7 0v5h4M9 12h6m-6 4h6',
   orders: 'm3 7 9-4 9 4-9 4-9-4Zm0 0v10l9 4 9-4V7M12 11v10M7.5 5l9 4',

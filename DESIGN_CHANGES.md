@@ -89,3 +89,8 @@ The previous assurance that margins are never visible to customers is replaced w
 See [COMPONENT_CONTRACTS.md](docs/ux/phase-1/COMPONENT_CONTRACTS.md), [PARITY_CHECKLIST.md](docs/ux/phase-1/PARITY_CHECKLIST.md), and [STATIC_VALIDATION.md](docs/ux/phase-1/STATIC_VALIDATION.md). The ZIP-root RETURN_NOTES.md is Gavin's entry point.
 
 The standalone [visual reference](docs/ux/phase-1/visual-reference.html) embeds the actual CSS with synthetic HTML/data. It is not the app, does not save, and is not runtime parity evidence.
+
+
+## Phase 4 | Desktop Digital Takeoff | 24 September 2026
+
+Implementation candidate against the integrated Phase3 baseline. Fitted desktop host; grouped persistent tools; areas/components hierarchy; separate library/measurement disclosure; scoped standard dialogs and entry/upload styling. C52/C53/C54 added; no palette changes. Reset takeoff moved away from zoom. All original workstation executable statements/event/disabled expressions preserved; only a presentation disclosure state is added. Mobile engine/layout modules, server/API/app-lib, Builder, shell and Smart Assistant remain untouched. Native dialog and shared canvas layout effects require Gavin's runtime gates. See docs/ux/phase-4/README.md. Not built, deployed or owner-preview-approved here.

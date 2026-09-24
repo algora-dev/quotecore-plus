@@ -1,0 +1,147 @@
+{
+  "status": "STATIC_SOURCE_ONLY_NOT_RUNTIME_CERTIFIED",
+  "baselineArchive": "quotecore-plus-phase3-integrated-2026-09-24(1).zip",
+  "baselineReportedCommit": "750db73a",
+  "sourceFiles": [
+    {
+      "path": "app/(auth)/[workspaceSlug]/MeasureJobModal.tsx",
+      "change": "modified",
+      "baselineSha256": "6a46a66447348c450160bac9b3a7dd50bef87b0c61a91e631eef671479fa01da",
+      "sha256": "ac955bc9413b7e1f286e8a6fda7345edd6a1af4d339549f554eb54c2cfda8931",
+      "bytes": 26521
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffPage.tsx",
+      "change": "modified",
+      "baselineSha256": "84648110076346d5115ba706a252c9d451d8ff7c76eafbf8b4529dfdd75acefe",
+      "sha256": "6a65c62e2356aec8503594c1b5224cb4130003b5fdd77b2baa7eaf7828f289c3",
+      "bytes": 12713
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation.tsx",
+      "change": "modified",
+      "baselineSha256": "2fffc976a88da1278d1ce95573ba60a723b0e5cb5048677f93b78a31d98fcd2c",
+      "sha256": "b3a649e1e89a7d1b61a85ae87a612394a7bae54ac73f09f4d95ac8535a9add52",
+      "bytes": 425678
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/CalibrationChooser.tsx",
+      "change": "modified",
+      "baselineSha256": "038e712bb71cd85a9100d9ac1de2f64cf1223e10cc242b1246743afaab9d1032",
+      "sha256": "9caeb76b5c1caa545395790913041ff704cd2f897daf9929314dfbec4f1c4f33",
+      "bytes": 4111
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/TakeoffDesktopHost.tsx",
+      "change": "added",
+      "baselineSha256": null,
+      "sha256": "305db192ccf380bf99229e4c8d36b7f7df650772daf00a09d5ce0433989efc69",
+      "bytes": 1877
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/takeoff-desktop.css",
+      "change": "added",
+      "baselineSha256": null,
+      "sha256": "374d8b7e0c67f69503eb8863c0a025074b8fbd13b5b2504a709f82f76cc50ee7",
+      "bytes": 17900
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal.tsx",
+      "change": "modified",
+      "baselineSha256": "7e5113a27dbdb8f9bf2638044040a28f2bb8969425107b6ff7603f6b44c9a9a6",
+      "sha256": "ef0fc856e772c0d1f9bac63aabb07827c5a9401292108c119bd6fe915a4f9500",
+      "bytes": 12464
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal.tsx",
+      "change": "modified",
+      "baselineSha256": "4675eb1f9afe988807b8bda88f6f23b2bb318bf6556fa6c993dc1743f419d0b9",
+      "sha256": "cdf003802a39aa924cfb0d6d721f1a507e5bd1116a85f9af2028c5a8286ed04c",
+      "bytes": 7235
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal.tsx",
+      "change": "modified",
+      "baselineSha256": "10ccf6b5c5214ed48aab690198e9cf35341e6bf50d1f145212538250cfb74270",
+      "sha256": "1704d07e2ce09d5234d39e8277e8e43539a86d8129b88f0ba8dab8d4361a4fe9",
+      "bytes": 3810
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal.tsx",
+      "change": "modified",
+      "baselineSha256": "4eab392ecc772200eb3d4f92fefa7c1030e45b65565563e78dfdc5638f05e78a",
+      "sha256": "dc491fd639df4fceaebd32850207ef5e200dbf3f8defb64cc8d115229820246e",
+      "bytes": 1861
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal.tsx",
+      "change": "modified",
+      "baselineSha256": "e413a6ca5bf3b6d6ab8b1d736e6d640c8c78c83bf41d907d383bc0eae2c54785",
+      "sha256": "e9d2eb5c402455d768f6515420fbecec4965d71a570cab5050076f0a385d39a6",
+      "bytes": 1739
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal.tsx",
+      "change": "modified",
+      "baselineSha256": "750ac3a866195f49318ebaac02a7747a8a120510ce360a221baf45b24330b8fa",
+      "sha256": "456cb5007ea718048bdd8017e7c2358c1223fb3d610cdf09de8c64c809cc07ea",
+      "bytes": 22419
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "change": "modified",
+      "baselineSha256": "18da0600462a26a686c54251ad9fb71b67c3026cc45a280e8f61e41ad0c6b354",
+      "sha256": "248d08c1fe0b32426f3b164ab19edfa024e750063bca9be25966f2311e568d09",
+      "bytes": 30829
+    },
+    {
+      "path": "app/components/PdfPagePicker.tsx",
+      "change": "modified",
+      "baselineSha256": "2c1c1075c0854c8323baa0ddfcb6a00359786a1c8ddc8407c31ada606639ccd2",
+      "sha256": "ed1f96fa498494ab5f4e13f58dc4c6029a31e42457c9a62c80e583f75ad3d845",
+      "bytes": 14228
+    },
+    {
+      "path": "app/components/UpgradeModal.tsx",
+      "change": "modified",
+      "baselineSha256": "a77961490d3c997c0d7bfa8e9c1500f629f1cfa74b2aa3d716dac8b7cee05d80",
+      "sha256": "60517d68f0569cb6e7f34d55bc5e6daaa581796fdd5cd74d17e6b153d28da75b",
+      "bytes": 4406
+    },
+    {
+      "path": "app/components/ui/v2/QcCanvasChrome.tsx",
+      "change": "added",
+      "baselineSha256": null,
+      "sha256": "ed5e1dbe54f0ed257731ee53a01bfee9882dc39170f296351fca5b07b2ce09fd",
+      "bytes": 1249
+    },
+    {
+      "path": "app/components/ui/v2/QcHostedDialog.tsx",
+      "change": "added",
+      "baselineSha256": null,
+      "sha256": "ef0acbd04b768a52cc65725dde1d66c3343acb8526df0210ec63a0f82d92975f",
+      "bytes": 2527
+    },
+    {
+      "path": "app/components/ui/v2/QcIcon.tsx",
+      "change": "modified",
+      "baselineSha256": "90b30293039cde8fd188e789fea73f736d77b8b0f20e3fc9bcb6d0a7f1268658",
+      "sha256": "383d86a23b60829fa4114540669d7ae22e63e73855369de2be74de923e0120c8",
+      "bytes": 2814
+    },
+    {
+      "path": "app/components/ui/v2/qc-canvas.css",
+      "change": "added",
+      "baselineSha256": null,
+      "sha256": "b842b0ceb763c66e8ab91205cb91efa04482e41637c6386935689faf6f81d0fc",
+      "bytes": 2015
+    },
+    {
+      "path": "app/components/ui/v2/qc-hosted-dialog.css",
+      "change": "added",
+      "baselineSha256": null,
+      "sha256": "9a039a5d6b12060870f91e9762dc38d1ded8a0a4ff331f4bf6acb116be11b5ea",
+      "bytes": 4285
+    }
+  ]
+}

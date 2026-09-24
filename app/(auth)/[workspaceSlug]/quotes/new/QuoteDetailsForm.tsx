@@ -609,6 +609,7 @@ export function QuoteDetailsForm({
             </div>
           ) : (
             <FileUploader
+              appearance="v2"
               accept="image/*,application/pdf"
               maxSize={10485760}
               pdfMaxSize={52428800}

@@ -1,0 +1,31 @@
+/* C52. Scoped composition of C01 + G-B. No canvas positioning/size selectors. */
+:where([data-qc-ui='v2']) .qc-canvas-toolbar {
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px;
+  border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-card);
+  background:var(--qc-bg-surface); box-shadow:var(--qc-glass-b-highlight),var(--qc-shadow-raised);
+}
+:where([data-qc-ui='v2']) .qc-canvas-tool-group { display:flex; align-items:center; flex-wrap:wrap; gap:4px; min-width:0; }
+:where([data-qc-ui='v2']) .qc-canvas-tool { border-color:transparent; white-space:nowrap; font-weight:550; }
+:where([data-qc-ui='v2']) .qc-canvas-tool[aria-pressed='true'] {
+  background:var(--qc-selected-bg); color:var(--qc-selected-text); border-color:var(--qc-color-orange-ink);
+  box-shadow:inset 0 -2px 0 var(--qc-color-orange-ink);
+}
+:where([data-qc-ui='v2']) .qc-canvas-tool:disabled { box-shadow:none; }
+:where([data-qc-ui='v2']) .qc-canvas-tool:active:not(:disabled) { background:var(--qc-color-orange-tint); }
+@supports (backdrop-filter:blur(1px)) {
+  :where([data-qc-ui='v2']) .qc-canvas-toolbar {
+    background:var(--qc-glass-b-bg); backdrop-filter:blur(var(--qc-glass-b-blur)) saturate(var(--qc-glass-b-saturation));
+    -webkit-backdrop-filter:blur(var(--qc-glass-b-blur)) saturate(var(--qc-glass-b-saturation));
+  }
+}
+@media(prefers-reduced-transparency:reduce),(forced-colors:active) {
+  :where([data-qc-ui='v2']) .qc-canvas-toolbar { background:var(--qc-bg-surface); backdrop-filter:none; -webkit-backdrop-filter:none; box-shadow:none; }
+}
+@media(forced-colors:active) {
+  :where([data-qc-ui='v2']) .qc-canvas-tool[aria-pressed='true'] { border:2px solid Highlight; color:ButtonText; }
+}
+
+@media(hover:hover) {
+  :where([data-qc-ui='v2']) .qc-canvas-tool[aria-pressed='true']:hover:not(:disabled) { background:var(--qc-color-orange-tint); }
+}
+:where([data-qc-ui='v2']) .qc-canvas-tool[aria-pressed='true']:active:not(:disabled) { box-shadow:inset 0 0 0 2px var(--qc-color-orange-ink); }

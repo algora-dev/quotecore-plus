@@ -1,0 +1,153 @@
+{
+  "app/(auth)/[workspaceSlug]/MeasureJobModal.tsx": {
+    "originalEvents": 18,
+    "currentEvents": 18,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffPage.tsx": {
+    "originalEvents": 3,
+    "currentEvents": 3,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation.tsx": {
+    "originalEvents": 104,
+    "currentEvents": 106,
+    "missingEvents": [],
+    "addedEvents": [
+      [
+        "onClick",
+        "{() => setComponentLibraryOpen(!componentLibraryOpen)}"
+      ],
+      [
+        "onFocusCapture",
+        "{() => setComponentLibraryOpen(true)}"
+      ]
+    ],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": [
+      "const [componentLibraryOpen, setComponentLibraryOpen] = useState(false);"
+    ]
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/CalibrationChooser.tsx": {
+    "originalEvents": 3,
+    "currentEvents": 3,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal.tsx": {
+    "originalEvents": 8,
+    "currentEvents": 8,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal.tsx": {
+    "originalEvents": 7,
+    "currentEvents": 7,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal.tsx": {
+    "originalEvents": 5,
+    "currentEvents": 5,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal.tsx": {
+    "originalEvents": 3,
+    "currentEvents": 3,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal.tsx": {
+    "originalEvents": 3,
+    "currentEvents": 3,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal.tsx": {
+    "originalEvents": 26,
+    "currentEvents": 26,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx": {
+    "originalEvents": 15,
+    "currentEvents": 15,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/components/PdfPagePicker.tsx": {
+    "originalEvents": 6,
+    "currentEvents": 6,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/components/UpgradeModal.tsx": {
+    "originalEvents": 2,
+    "currentEvents": 2,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  },
+  "app/components/ui/v2/QcIcon.tsx": {
+    "originalEvents": 0,
+    "currentEvents": 0,
+    "missingEvents": [],
+    "addedEvents": [],
+    "missingDisabled": [],
+    "addedDisabled": [],
+    "changedWorkstationStatements": [],
+    "addedWorkstationStatements": []
+  }
+}

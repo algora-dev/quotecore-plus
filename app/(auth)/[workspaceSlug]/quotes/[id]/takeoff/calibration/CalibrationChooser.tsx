@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 // Calibration entry chooser (spec 4.1): appears once per page-load when the plan
 // is loaded, the AI calibration flag is on and the page is not yet calibrated.
 // Two deliberate choices only - AI never starts automatically.
@@ -23,7 +24,7 @@ export function CalibrationChooser({
 }) {
   void image; // descriptor available for future guidance copy (dimensions etc.)
   return (
-    <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+    <QcHostedDialog label="Calibrate this plan" size="md" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
         <h3 className="text-lg font-semibold text-slate-900">{title ?? 'Calibrate this plan'}</h3>
         <p className="text-sm text-slate-500 mt-2">
@@ -31,7 +32,7 @@ export function CalibrationChooser({
             'Choose a clear, long dimension or scale bar. AI will suggest up to three measurements. Check the marker positions and distance; one correct measurement is enough.'}
         </p>
         <div className="mt-5 grid gap-3">
-          <button
+          <QcHostedButton data-qc-choice="true" variant="ghost"
             type="button"
             onClick={onChooseAi}
             className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
@@ -47,8 +48,8 @@ export function CalibrationChooser({
                 <div className="text-sm text-slate-500">Suggests up to 3 dimensions to check and confirm</div>
               </div>
             </div>
-          </button>
-          <button
+          </QcHostedButton>
+          <QcHostedButton data-qc-choice="true" variant="ghost"
             type="button"
             onClick={onChooseManual}
             className="block w-full text-left p-5 bg-white border-2 border-slate-200 rounded-xl hover:border-[#FF6B35] hover:shadow-lg transition-all group"
@@ -64,18 +65,18 @@ export function CalibrationChooser({
                 <div className="text-sm text-slate-500">Click two points on a known measurement</div>
               </div>
             </div>
-          </button>
+          </QcHostedButton>
         </div>
         <div className="flex justify-end mt-5">
-          <button
+          <QcHostedButton variant="ghost"
             type="button"
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition"
           >
             Not now
-          </button>
+          </QcHostedButton>
         </div>
       </div>
-    </div>
+    </QcHostedDialog>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 import { useState } from 'react';
 import { PitchInput } from '@/app/components/PitchInput';
 import { RoofPitchEstimatorModal } from './RoofPitchEstimatorModal';
@@ -54,7 +55,7 @@ export function AreaNameModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <QcHostedDialog label="Area details" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-96 border border-gray-200">
         <h2 className="text-xl font-semibold mb-4">
           {componentName ? 'Add Area to Component' : (modalTitle ?? (isRoofing ? 'Create Roof Area' : 'Create Area'))}
@@ -82,7 +83,7 @@ export function AreaNameModal({
               ) : (
                 <div>
                   <label className="block text-sm mb-2">Area Name <span className="text-red-400">*</span></label>
-                  <input
+                  <input aria-label="Area name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -103,7 +104,7 @@ export function AreaNameModal({
                       className="block"
                       autoFocus={nameIsLocked}
                     />
-                    <button
+                    <QcHostedButton variant="ghost"
                       type="button"
                       onClick={() => setShowPitchEstimator(true)}
                       className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50/40 transition mb-0.5"
@@ -111,7 +112,7 @@ export function AreaNameModal({
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
                       Pitch Finder
-                    </button>
+                    </QcHostedButton>
                   </div>
                   <p className="text-xs text-gray-600 -mt-2">
                     Used to calculate component lengths (rafters, hips, valleys)
@@ -136,20 +137,20 @@ export function AreaNameModal({
             </>
           )}
           <div className="flex gap-2 justify-end">
-            <button
+            <QcHostedButton variant="ghost"
               type="button"
               onClick={onCancel}
               className="px-4 py-2 bg-white border-2 border-slate-300 rounded-full pill-shimmer"
             >
               Cancel
-            </button>
-            <button
+            </QcHostedButton>
+            <QcHostedButton variant="secondary"
               type="submit"
               className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               disabled={!componentName && !nameIsLocked && !name.trim()}
             >
               {componentName ? 'Add to Component' : isRoofing ? 'Create Roof Area' : 'Create Area'}
-            </button>
+            </QcHostedButton>
           </div>
         </form>
       </div>
@@ -159,7 +160,7 @@ export function AreaNameModal({
           onApply={(deg) => { setPitchDegrees(deg); setShowPitchEstimator(false); }}
         />
       )}
-    </div>
+    </QcHostedDialog>
   );
 }
 

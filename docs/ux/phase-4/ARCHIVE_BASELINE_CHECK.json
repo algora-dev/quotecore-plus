@@ -1,0 +1,27 @@
+{
+  "baselineArchive": "quotecore-plus-phase3-integrated-2026-09-24(1).zip",
+  "baselineSha256": "e566e86fa26d208b93061d4eb91bc46e296bc7aea53669a700d7198ee3f8a2b4",
+  "originalFiles": 2446,
+  "allOriginalFilesRetained": true,
+  "modifiedOriginalFiles": [
+    "quotecore-plus/DESIGN_CHANGES.md",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/MeasureJobModal.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffPage.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/CalibrationChooser.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal.tsx",
+    "quotecore-plus/app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+    "quotecore-plus/app/components/PdfPagePicker.tsx",
+    "quotecore-plus/app/components/UpgradeModal.tsx",
+    "quotecore-plus/app/components/ui/v2/QcIcon.tsx"
+  ],
+  "unexpectedOriginalChanges": [],
+  "incomingRootIntegrationUnchanged": true,
+  "protectedFilesVerifiedAgainstOriginalZip": 2431,
+  "scope": "Every original byte outside the explicit Phase4 UI/docs change set matches the actual uploaded archive, not a reconstructed project."
+}

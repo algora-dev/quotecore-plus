@@ -1,0 +1,260 @@
+{
+  "kind": "STATIC_NOT_RUNTIME",
+  "hashMismatches": [],
+  "missingFiles": [],
+  "syntax": [
+    {
+      "path": "app/(auth)/[workspaceSlug]/MeasureJobModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffPage.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/CalibrationChooser.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/desktop/TakeoffDesktopHost.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/components/PdfPagePicker.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/components/UpgradeModal.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/components/ui/v2/QcCanvasChrome.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/components/ui/v2/QcHostedDialog.tsx",
+      "errors": []
+    },
+    {
+      "path": "app/components/ui/v2/QcIcon.tsx",
+      "errors": []
+    }
+  ],
+  "baselineComparisons": [
+    {
+      "path": "app/(auth)/[workspaceSlug]/MeasureJobModal.tsx",
+      "originalEvents": 18,
+      "currentEvents": 18,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffPage.tsx",
+      "originalEvents": 3,
+      "currentEvents": 3,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/TakeoffWorkstation.tsx",
+      "originalEvents": 104,
+      "currentEvents": 106,
+      "missingEvents": [],
+      "addedEvents": [
+        [
+          "onClick",
+          "{() => setComponentLibraryOpen(!componentLibraryOpen)}"
+        ],
+        [
+          "onFocusCapture",
+          "{() => setComponentLibraryOpen(true)}"
+        ]
+      ],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [
+        "const [componentLibraryOpen, setComponentLibraryOpen] = useState(false);"
+      ],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/calibration/CalibrationChooser.tsx",
+      "originalEvents": 3,
+      "currentEvents": 3,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AiResultsModal.tsx",
+      "originalEvents": 8,
+      "currentEvents": 8,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/AreaNameModal.tsx",
+      "originalEvents": 7,
+      "currentEvents": 7,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/CalibrationModal.tsx",
+      "originalEvents": 5,
+      "currentEvents": 5,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/LineMeasurementModal.tsx",
+      "originalEvents": 3,
+      "currentEvents": 3,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/PointMeasurementModal.tsx",
+      "originalEvents": 3,
+      "currentEvents": 3,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/takeoff/modals/RoofPitchEstimatorModal.tsx",
+      "originalEvents": 26,
+      "currentEvents": 26,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "originalEvents": 15,
+      "currentEvents": 15,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/components/PdfPagePicker.tsx",
+      "originalEvents": 6,
+      "currentEvents": 6,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/components/UpgradeModal.tsx",
+      "originalEvents": 2,
+      "currentEvents": 2,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    },
+    {
+      "path": "app/components/ui/v2/QcIcon.tsx",
+      "originalEvents": 0,
+      "currentEvents": 0,
+      "missingEvents": [],
+      "addedEvents": [],
+      "missingDisabled": [],
+      "addedDisabled": [],
+      "missingWorkstationStatements": [],
+      "addedWorkstationStatements": [],
+      "missingCanvasOrImmediateAncestors": []
+    }
+  ],
+  "typescriptVersion": "5.8.3",
+  "canvasComparisonScope": "All canvas expressions; for TakeoffWorkstation also its first two JSX element ancestors. PDF thumbnail button ancestors intentionally use the scoped C53 adapter and are not compared as workstation geometry. Only the two new presentation class hooks qc-takeoff-plan-border and qc-takeoff-canvas-scroll are ignored. Existing classes, elements and other attributes must match.",
+  "passed": true,
+  "limitations": "Hash and syntax/source-expression checks only. No typecheck, React mount/focus/event test, Fabric accuracy, business-data persistence or app build is implied."
+}

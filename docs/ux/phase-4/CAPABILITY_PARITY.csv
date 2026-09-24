@@ -1,0 +1,40 @@
+id,capability,new_location_or_presentation,retained_binding,boundary_or_test
+P4-01,Home / Quotes Measure a job,Same launchers and gated creation modal,MeasureJobButton / handleClick,"Feature, monthly cap, storage and default measurement system unchanged"
+P4-02,Plan upload before creating job,Same required upload with existing v2 drop zone,handlePlanUpload / handleSubmit,"Pending signed upload, PDF conversion, storage move, metadata and route untouched"
+P4-03,Digital New Quote upload,"Same section, appearance=v2 only",QuoteDetailsForm FileUploader,"All fields, payloads and handlers unchanged"
+P4-04,Builder -> Use/Edit Takeoff,Same route and invocation,Advanced Builder unchanged,No guided mode or pricing modification
+P4-05,FilesManager takeoff entry,Unchanged,FilesManager unchanged,Existing file/area/new-area options retained
+P4-06,Missing attached plan recovery,Existing server recovery UI retained,takeoff/page.tsx unchanged,Quote remains reachable; no new placeholder upload service
+P4-07,Global navigation,Existing hidden default and single orange edge tab,Shell unchanged,"No public rail, no q-mark replacement, no refresh polling"
+P4-08,Workspace sizing,Desktop host + scoped width/height,TakeoffDesktopHost,No Fabric read/write or second canvas; real resize accuracy test required
+P4-09,Job identity / back,Compact header,Same quote.customer_name and href,Back remains intentional navigation; do not invent autosave
+P4-10,Plan/page indicator,Stable context row,pages/currentPageIndex unchanged,"Per-page calibration status, no global scale assertion"
+P4-11,Manual calibration / recalibration,"Setup group, side status, scoped distance dialog",handleStartCalibration / handleConfirmCalibration,Draft/commit/reference logic and units unchanged
+P4-12,AI calibration chooser / review,Styled chooser; interactive review unchanged,CalibrationChooser + controller unchanged,"Same flags, acknowledgement and source/scene coordinates"
+P4-13,Calibration help / first-area guidance,Scoped standard dialogs,All original handlers and branches,No mandatory replacement wizard; skip remains
+P4-14,Area / polygon / rectangle,"Always visible Area, stable sub-tools",Original Area/Polygon/Rectangle callbacks,Cleanup and closing semantics unchanged
+P4-15,Line / multi-line,"Always visible Line, Single/Multi sub-tools",Original line / multi callbacks,Pitch and selection guards unchanged
+P4-16,Point quantity,Always visible Point,Original point callback and prompt,Every-point count and repeat flow retained
+P4-17,Floating multi-line total / finish / cancel,Same draggable banner with scoped recipes,handleFinishMultiLineal / handleCancelMultiLineal,"Positions, running-value maths and drag listeners unchanged"
+P4-18,Roof/generic area switch,Native select row; independent eye/delete,handleSwitchArea,Selection does not delete or change page binding
+P4-19,Multiple plans per area,Original numbered page chips below area,"handleSwitchPage / handleSwitchArea(area.id,pid)",No flat merging of areas and plan pages
+P4-20,Area visibility and deletion,Labelled sibling icon controls,handleToggleAreaVisibility / delete request,Original confirmation and ownership retained
+P4-21,New area existing-vs-new choice,Quieter New area + scoped existing dialog,handleCreateNewArea and original choice handlers,No altered calibration/pitch/name order
+P4-22,Component library collection/search/add,Add component disclosure near heading,Original filters / handleAddComponent,No option/filter removed; disclosure is presentation state
+P4-23,Active component selection,Native header select button with type/count,setSelectedComponentId + applyToolForType,Same synchronous type-tool association
+P4-24,Measurement expansion,"Separate disclosure button, scrollable detail region",Original compData.expanded mapping,Multiple cards may expand; no default booleans reset
+P4-25,Component remove / measurement visibility/delete,Labelled existing actions,Original handler expressions,Confirmation and geometry effects unchanged
+P4-26,Hover-linked geometry emphasis,Same measurement rows,Original mouse enter/leave callbacks,Canvas colour/stroke manipulation retained verbatim
+P4-27,Attach existing roof area to component,Same selector and plan/pitched basis dialog,handleApplyRoofAreaToComponent,Both bases and every option retained; pitch maths unchanged
+P4-28,AI placeholder association / merge,Persistent Needs component + same attachment picker,handleReplacePlaceholder,"All non-system options, active merge and semantic guard retained"
+P4-29,Uncertain AI detections,Separate review group retained,Original uncertain measurement handlers,No relabelling as priced/confirmed component
+P4-30,Pitch entry / photo estimation,Estimate pitch label + standard dialogs,PitchInput / RoofPitchEstimatorModal,"Apply timing, formulas, rotation and picture coordinates unchanged"
+P4-31,Volume / line x height / freestyle,Styled original prompts,Original depth/height confirm/cancel,"Required values, units, rollback and measurement algorithms unchanged"
+P4-32,AI scan / quality / progress / results,Same feature paths with standard blocking surfaces,Original scan and apply handlers,Billing untouched; P4-AI-COST-01 pre-existing guard mismatch documented
+P4-33,Undo / redo,History group separate from view,handleUndo / handleRedo,Same history and disabled guards
+P4-34,Zoom / Alt-pan / canvas scrolling,View group and persistent hint,handleZoomOut / handleZoomIn / existing pointer listeners,No new fit/zoom transform or pointer semantics
+P4-35,Reset,Panel footer: Reset takeoff…,setShowResetConfirm / handleResetCanvas,Same saved-baseline restoration or fresh clearing; not a view reset
+P4-36,Save / save failure / Builder handoff,Finish & save + destination hint,handleSaveTakeoff,"Same disabled condition, async errors, persistence and roof-areas Builder URL"
+P4-37,Save & upload another plan,Secondary header action + scoped dialog,openSaveAndUploadAnotherPlan / handleConfirmSaveAndUploadAnother,"Same existing/new area options, file limits, sequencing, retry and navigation"
+P4-38,PDF page / quota / upgrade prompts,"Scoped C53 adapter, default legacy elsewhere",usePdfPagePicker / UpgradeModal callbacks,No new uploader/converter/request/permission; nested modal runtime gate
+P4-39,Desktop/mobile automatic or manual mode,Existing touch shell and bridge retained,TakeoffPage callbacks unchanged,Dedicated mobile modules byte-unchanged; shared owner smoke test mandatory
