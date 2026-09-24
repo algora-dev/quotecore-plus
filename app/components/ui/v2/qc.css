@@ -26,7 +26,12 @@
 :where([data-qc-ui='v2']) .qc-button svg { width: 18px; height: 18px; flex-shrink: 0; }
 :where([data-qc-ui='v2']) .qc-icon-button { width: var(--qc-control-md); min-width: var(--qc-control-md); padding: 8px; border-color: transparent; background: transparent; }
 :where([data-qc-ui='v2']) .qc-icon-danger { color: var(--qc-color-danger); }
-:where([data-qc-ui='v2']) .qc-success-action { background: var(--qc-color-success-ink); color: var(--qc-color-surface); border-color: var(--qc-color-success-ink); }
+/* Success action must outrank every variant rule (class+attr = 0,2,0). A bare
+   .qc-success-action (0,1,0) lost to the default ghost variant's transparent
+   background while keeping this rule's white text: white-on-white invisible
+   button that only appeared on hover (the 0,4,0 hover rule). Builder
+   "Confirm area" regression reported by owner 2026-09-24. */
+:where([data-qc-ui='v2']) .qc-button.qc-success-action { background: var(--qc-color-success-ink); color: var(--qc-color-surface); border-color: var(--qc-color-success-ink); }
 :where([data-qc-ui='v2']) .qc-field { display: grid; gap: var(--qc-space-2); min-width: 0; }
 :where([data-qc-ui='v2']) .qc-label { display: block; color: var(--qc-text-primary); font-size: 14px; font-weight: 600; }
 :where([data-qc-ui='v2']) .qc-help { color: var(--qc-text-secondary); font-size: 13px; line-height: 20px; margin: 0; }
@@ -72,7 +77,7 @@
 :where([data-qc-ui='v2']) .qc-money-total > div { display: grid; gap: 8px; }
 :where([data-qc-ui='v2']) .qc-money-total dt { font-weight: 600; }
 :where([data-qc-ui='v2']) .qc-money-total dd { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; color: var(--qc-text-primary); overflow-wrap: anywhere; }
-:where([data-qc-ui='v2']) :where(button,a,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; box-shadow: 0 0 0 2px var(--qc-focus-gap); }
+:where([data-qc-ui='v2']) :where(button,a,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: 3px; box-shadow: 0 0 0 2px solid var(--qc-focus-gap); }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :where([data-qc-ui='v2']) .qc-stepper, :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass'] { background: var(--qc-glass-b-bg); -webkit-backdrop-filter: blur(var(--qc-glass-b-blur)) saturate(var(--qc-glass-b-saturation)); backdrop-filter: blur(var(--qc-glass-b-blur)) saturate(var(--qc-glass-b-saturation)); }
