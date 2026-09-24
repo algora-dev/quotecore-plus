@@ -63,6 +63,18 @@ export function QuoteBuilderV2Wrapper({ companyMeasurementSystem, companyDefault
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState<Phase>(stepToPhase[props.initialStep] || 'areas');
 
+  // On mount, trust the REAL current URL over the server-provided initialStep.
+  // Any router.refresh() (or any other remount source) re-initializes state
+  // from the ROUTER's stale searchParams - which never saw the replaceState-
+  // driven step changes - yanking the user back to an old step (e.g. review ->
+  // extras, seen in owner testing 2026-09-24). window.location.search always
+  // holds the live step, so re-reading it on mount keeps the user's position.
+  useEffect(() => {
+    const step = new URLSearchParams(window.location.search).get('step') || 'roof-areas';
+    const urlPhase = stepToPhase[step] || 'areas';
+    setPhase(prev => (urlPhase !== prev ? urlPhase : prev));
+  }, []);
+
   // Sync the active phase from the URL ONLY on browser back/forward
   // navigation. Blanket syncing from searchParams caused a one-time phase
   // reset a few seconds after page load (components snapping back to

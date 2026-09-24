@@ -19,6 +19,7 @@
 :where([data-qc-ui='v2']) .qc-button[data-qc-variant='secondary'] { background: var(--qc-action-secondary-bg); color: var(--qc-action-secondary-text); border-color: var(--qc-action-secondary-bg); }
 :where([data-qc-ui='v2']) .qc-button[data-qc-variant='danger'] { background: var(--qc-color-danger); border-color: var(--qc-color-danger); color: var(--qc-color-surface); }
 :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass'] { background: var(--qc-bg-surface); box-shadow: var(--qc-glass-b-highlight), var(--qc-shadow-raised); }
+:where([data-qc-ui='v2']) .qc-button[data-qc-variant='ghost'] { background: transparent; }
 :where([data-qc-ui='v2']) .qc-button:active:not(:disabled) { box-shadow: inset 0 2px 3px rgba(25,27,32,.12); }
 :where([data-qc-ui='v2']) .qc-button[data-qc-variant='primary']:active:not(:disabled) { background: var(--qc-gradient-primary-pressed); }
 :where([data-qc-ui='v2']) .qc-button:disabled { cursor: not-allowed; background: var(--qc-color-disabled-bg); border-color: var(--qc-color-border); color: var(--qc-color-disabled-ink); box-shadow: none; opacity: 1; }
@@ -81,7 +82,8 @@
   :where([data-qc-ui='v2']) .qc-button[data-qc-variant='primary']:hover:not(:disabled) { background: var(--qc-gradient-primary-hover); box-shadow: var(--qc-glass-b-highlight), var(--qc-glow-hover); }
   :where([data-qc-ui='v2']) .qc-button[data-qc-variant='secondary']:hover:not(:disabled) { background: var(--qc-color-text); }
   :where([data-qc-ui='v2']) .qc-button[data-qc-variant='danger']:hover:not(:disabled) { background: var(--qc-color-danger-hover); }
-  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass']:hover:not(:disabled) { background: rgba(255,255,255,.96); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass']:hover:not(:disabled) { background: var(--qc-color-orange-wash); border-color: var(--qc-color-orange-tint); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='ghost']:hover:not(:disabled) { background: var(--qc-color-orange-wash); border-color: var(--qc-color-orange-tint); }
   :where([data-qc-ui='v2']) .qc-button.qc-success-action:hover:not(:disabled) { background: var(--qc-color-success-ink); }
   :where([data-qc-ui='v2']) .qc-icon-danger:hover:not(:disabled) { background: var(--qc-color-danger-bg); }
   :where([data-qc-ui='v2']) .qc-stepper button:hover { border-color: var(--qc-border-control); }
