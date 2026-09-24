@@ -9,6 +9,7 @@ import { buildBreadcrumbSchema, buildFaqSchema, siteUrl } from "@/lib/schema";
 import { buildSoftwareApplicationSchema } from "@/lib/schema";
 import { hreflangLanguages } from "@/lib/seo/hreflang";
 import DemoCTACard from "@/components/DemoCTACard";
+import { pricingPlans } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Get Started with QuoteCore+ - Free Tools + Paid Plans",
@@ -109,6 +110,47 @@ function TrialPreviewImages() {
   );
 }
 
+function planStyles(plan: (typeof pricingPlans)[number]): string {
+  const premium = plan.name === "Pro Plus";
+  if (plan.featured) {
+    return "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)] hover:border-[#BD4A1A] hover:shadow-[0_26px_64px_rgba(189,74,26,0.22)]";
+  }
+  if (premium) {
+    return "border-zinc-300 bg-gradient-to-b from-white to-zinc-50 shadow-[0_10px_36px_rgba(24,24,27,0.07)] hover:border-zinc-400 hover:shadow-[0_22px_54px_rgba(24,24,27,0.15)]";
+  }
+  return "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]";
+}
+
+const dfyPackages = [
+  {
+    name: "Done-For-You Estimating Setup",
+    price: "$499",
+    tagline: "Best for smaller estimating setups or contractors with a focused range of products and services.",
+    highlight: false,
+    items: [
+      "Up to 20 custom components built for you",
+      "Your material pricing configured",
+      "Labour and waste rules configured",
+      "Personalised training",
+      "6 months setup and product support",
+      "6 months QuoteCore+ Pro included",
+    ],
+  },
+  {
+    name: "Complete Done-For-You Setup",
+    price: "$999",
+    tagline: "Best for larger or more detailed estimating systems.",
+    highlight: true,
+    items: [
+      "Up to 60 custom components built for you",
+      "Larger material and pricing setup",
+      "More complex labour and waste configurations",
+      "Help organising larger pricing lists or catalogues",
+      "More detailed workflow configuration",
+    ],
+  },
+];
+
 export default function FreeTrialPage() {
   return (
     <>
@@ -198,6 +240,87 @@ export default function FreeTrialPage() {
             </div>
           </div>
         </section>
+
+        {/* Plans + done for you */}
+        <section className="border-y border-zinc-200 bg-zinc-50 py-16">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Paid plans</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Pick the plan that fits.</h2>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+              From $19/month, every paid plan backed by the 30-day money-back guarantee.
+            </p>
+            <div className="mt-10 grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {pricingPlans.map((plan) => (
+                <article
+                  key={plan.name}
+                  className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${planStyles(plan)}`}
+                >
+                  {plan.featured && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
+                  <h3 className="text-xl font-semibold">{plan.displayName}</h3>
+                  <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
+                  <div className="mt-6">
+                    <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
+                      <p className="mt-1 text-2xl font-semibold">{plan.usd}</p>
+                      {!plan.isFree && !plan.contactUs && <p className="text-xs text-zinc-500">per month</p>}
+                    </div>
+                  </div>
+                  <ul className="mt-6 flex-1 space-y-3">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex gap-3 text-sm text-zinc-700">
+                        <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a href={plan.contactUs ? "/contact" : "https://app.quote-core.com/signup?utm_source=get-started"} className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${plan.featured ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                    {plan.contactUs ? "Contact us" : plan.isFree ? "Get started" : "Choose this plan"}
+                  </a>
+                </article>
+              ))}
+            </div>
+            <p className="mt-8 text-center text-sm text-zinc-600">Monthly prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
+
+            <div className="mt-16 border-t border-zinc-200 pt-16">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#BD4A1A]">Done for you</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Rather have it set up for you?</h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-600">
+                One-time packages where the QuoteCore+ team builds your components, pricing and workflow with you, so you start quoting from day one.
+              </p>
+              <div className="mt-10 grid items-stretch gap-6 lg:grid-cols-2">
+                {dfyPackages.map((pkg) => (
+                  <article
+                    key={pkg.name}
+                    className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${pkg.highlight ? "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)]" : "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]"}`}
+                  >
+                    {pkg.highlight && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most complete</span>}
+                    <h3 className="text-xl font-semibold">{pkg.name}</h3>
+                    <p className="mt-2 text-sm leading-6 text-zinc-600">{pkg.tagline}</p>
+                    <div className="mt-6">
+                      <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
+                        <p className="mt-1 text-2xl font-semibold">{pkg.price}</p>
+                        <p className="text-xs text-zinc-500">one-time setup</p>
+                      </div>
+                    </div>
+                    <ul className="mt-6 flex-1 space-y-3">
+                      {pkg.items.map((item) => (
+                        <li key={item} className="flex gap-3 text-sm text-zinc-700">
+                          <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <a href="/done-for-you-setup" className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${pkg.highlight ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                      See what is included
+                    </a>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Demo card */}
         <section className="mx-auto max-w-5xl px-6 pb-8 lg:px-8">
           <DemoCTACard location="free_trial_bottom" variant="inline" className="mx-auto max-w-2xl" />

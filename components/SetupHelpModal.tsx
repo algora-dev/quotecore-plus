@@ -109,7 +109,7 @@ export default function SetupHelpModal() {
         <div className="pointer-events-auto relative flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_32px_80px_rgba(0,0,0,0.25)] sm:flex-row">
 
           {/* Left — founder photo (desktop) / top (mobile) */}
-          <div className="relative h-36 w-full flex-shrink-0 bg-[#fdf6ee] sm:h-auto sm:w-48">
+          <div className="relative h-64 w-full flex-shrink-0 bg-[#fdf6ee] sm:h-auto sm:w-48">
             <img
               src="/shaun-smiling.jpg"
               alt="Shaun, founder of QuoteCore+"

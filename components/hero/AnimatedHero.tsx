@@ -116,25 +116,7 @@ export default function AnimatedHero() {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduced) {
-      // Static composition: everything visible, no motion, page follows.
-      setEntered(3);
-      setArrows(2);
-      setSupportLine(true);
-      setPhase2Main(true);
-      setPhase2Support(true);
-      setAnimDone(true);
-      menuAlwaysRef.current = true;
-      setMenuVisible(true);
-      document.body.classList.remove("qc-refined-hero-active");
-      setHeroGone(true);
-      return;
-    }
-
+    // Always play: no prefers-reduced-motion gate (matches the T3 Labs animated hero behaviour).
     const at = (ms: number, fn: () => void) => {
       timersRef.current.push(
         window.setTimeout(() => {
@@ -376,17 +358,6 @@ const nzahShellCss = `
     to {
       opacity: 0;
       transform: translateY(-14vh);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .nzah-hero-header {
-      transition: opacity 0.2s ease;
-      transform: none;
-    }
-    .nzah-intro-exit {
-      animation: none;
-      opacity: 0;
     }
   }
 `;
