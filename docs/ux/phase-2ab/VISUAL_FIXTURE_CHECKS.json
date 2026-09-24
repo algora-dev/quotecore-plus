@@ -1,0 +1,210 @@
+[
+  {
+    "screen": "job",
+    "width": 320,
+    "scroll": 320,
+    "body": 320,
+    "errors": []
+  },
+  {
+    "screen": "home",
+    "width": 320,
+    "scroll": 320,
+    "body": 320,
+    "errors": []
+  },
+  {
+    "screen": "builder",
+    "width": 320,
+    "scroll": 320,
+    "body": 320,
+    "errors": []
+  },
+  {
+    "screen": "takeoff",
+    "width": 320,
+    "scroll": 320,
+    "body": 320,
+    "errors": []
+  },
+  {
+    "screen": "job",
+    "width": 390,
+    "scroll": 390,
+    "body": 390,
+    "errors": []
+  },
+  {
+    "screen": "home",
+    "width": 390,
+    "scroll": 390,
+    "body": 390,
+    "errors": []
+  },
+  {
+    "screen": "builder",
+    "width": 390,
+    "scroll": 390,
+    "body": 390,
+    "errors": []
+  },
+  {
+    "screen": "takeoff",
+    "width": 390,
+    "scroll": 390,
+    "body": 390,
+    "errors": []
+  },
+  {
+    "screen": "job",
+    "width": 768,
+    "scroll": 768,
+    "body": 768,
+    "errors": []
+  },
+  {
+    "screen": "home",
+    "width": 768,
+    "scroll": 768,
+    "body": 768,
+    "errors": []
+  },
+  {
+    "screen": "builder",
+    "width": 768,
+    "scroll": 768,
+    "body": 768,
+    "errors": []
+  },
+  {
+    "screen": "takeoff",
+    "width": 768,
+    "scroll": 768,
+    "body": 768,
+    "errors": []
+  },
+  {
+    "screen": "job",
+    "width": 1024,
+    "scroll": 1024,
+    "body": 1024,
+    "errors": []
+  },
+  {
+    "screen": "home",
+    "width": 1024,
+    "scroll": 1024,
+    "body": 1024,
+    "errors": []
+  },
+  {
+    "screen": "builder",
+    "width": 1024,
+    "scroll": 1024,
+    "body": 1024,
+    "errors": []
+  },
+  {
+    "screen": "takeoff",
+    "width": 1024,
+    "scroll": 1024,
+    "body": 1024,
+    "errors": []
+  },
+  {
+    "screen": "job",
+    "width": 1440,
+    "scroll": 1440,
+    "body": 1440,
+    "errors": []
+  },
+  {
+    "screen": "home",
+    "width": 1440,
+    "scroll": 1440,
+    "body": 1440,
+    "errors": []
+  },
+  {
+    "screen": "builder",
+    "width": 1440,
+    "scroll": 1440,
+    "body": 1440,
+    "errors": []
+  },
+  {
+    "screen": "takeoff",
+    "width": 1440,
+    "scroll": 1440,
+    "body": 1440,
+    "errors": []
+  },
+  {
+    "screen": "job",
+    "width": 1920,
+    "scroll": 1920,
+    "body": 1920,
+    "errors": []
+  },
+  {
+    "screen": "home",
+    "width": 1920,
+    "scroll": 1920,
+    "body": 1920,
+    "errors": []
+  },
+  {
+    "screen": "builder",
+    "width": 1920,
+    "scroll": 1920,
+    "body": 1920,
+    "errors": []
+  },
+  {
+    "screen": "takeoff",
+    "width": 1920,
+    "scroll": 1920,
+    "body": 1920,
+    "errors": []
+  },
+  {
+    "fixtureTab": "summary",
+    "selected": "true",
+    "docOverflow": false
+  },
+  {
+    "fixtureTab": "customer",
+    "selected": "true",
+    "docOverflow": false
+  },
+  {
+    "fixtureTab": "labor",
+    "selected": "true",
+    "docOverflow": false
+  },
+  {
+    "fixtureTab": "files",
+    "selected": "true",
+    "docOverflow": false
+  },
+  {
+    "fixtureTab": "activity",
+    "selected": "true",
+    "docOverflow": false
+  },
+  {
+    "fixtureTab": "overview",
+    "selected": "true",
+    "docOverflow": false
+  },
+  {
+    "mobileMenuOpen": true,
+    "width": 390
+  },
+  {
+    "backdropDidNotCloseMenu": true
+  },
+  {
+    "explicitCloseWorks": true
+  }
+]

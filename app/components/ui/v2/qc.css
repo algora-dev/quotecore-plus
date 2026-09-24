@@ -82,8 +82,8 @@
   :where([data-qc-ui='v2']) .qc-button[data-qc-variant='primary']:hover:not(:disabled) { background: var(--qc-gradient-primary-hover); box-shadow: var(--qc-glass-b-highlight), var(--qc-glow-hover); }
   :where([data-qc-ui='v2']) .qc-button[data-qc-variant='secondary']:hover:not(:disabled) { background: var(--qc-color-text); }
   :where([data-qc-ui='v2']) .qc-button[data-qc-variant='danger']:hover:not(:disabled) { background: var(--qc-color-danger-hover); }
-  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass']:hover:not(:disabled) { background: var(--qc-color-orange-wash); border-color: var(--qc-color-orange-tint); }
-  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='ghost']:hover:not(:disabled) { background: var(--qc-color-orange-wash); border-color: var(--qc-color-orange-tint); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='glass']:hover:not(:disabled) { background: var(--qc-color-orange-wash); border-color: var(--qc-color-orange-ink); box-shadow: var(--qc-glass-b-highlight), var(--qc-glow-hover); }
+  :where([data-qc-ui='v2']) .qc-button[data-qc-variant='ghost']:hover:not(:disabled) { background: var(--qc-color-orange-wash); border-color: var(--qc-color-orange-ink); }
   :where([data-qc-ui='v2']) .qc-button.qc-success-action:hover:not(:disabled) { background: var(--qc-color-success-ink); }
   :where([data-qc-ui='v2']) .qc-icon-danger:hover:not(:disabled) { background: var(--qc-color-danger-bg); }
   :where([data-qc-ui='v2']) .qc-stepper button:hover { border-color: var(--qc-border-control); }

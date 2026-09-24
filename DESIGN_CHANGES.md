@@ -1,3 +1,20 @@
+# Phase 2A + 2B | UI standard 2.2
+
+Owner-approved scope: global collapsible shell, task-led Home, real card-based Job Space. This section supersedes the earlier Phase 2 document-first direction. It does not change the integrated four-step quote builder or add Guided/project-management functionality.
+
+- Shared C23/C24 shell owns navigation, utility header and width modes. Normal expanded, dense rail, takeoff hidden; one stable children tree, no route-refresh effects. Mobile uses a full-label explicit-dismissal side sheet.
+- C48 Home leads with quote creation/measurement and continuation; setup resources remain secondary. Missing recent data is a working Quotes route, never fabricated empty/company data.
+- C22/C47/C11 Job Space is a persistent quote/job hub. Costing document is a separate section; cards show actual capability state and explicit next actions. Customer document and private internal numbers are clearly different.
+- White solid data surfaces, orange gradient for a single task-level primary, warm glass/frost only for appropriate chrome/overlays. No giant summary preview as the hub hero.
+- IF-01: every custom enabled control has visible hover, keyboard focus and pressed feedback. Retain orange wash and reinforce the ghost/glass boundary with orange-ink for visibility. Disabled/pending wins. Palette and pricing are unchanged.
+- No fake Schedule/Tasks/Team controls. The capability-card and section contracts provide a place to extend later when services exist.
+
+Full code/visual traceability: `docs/ux/phase-2ab/COMPONENT_MAP.md`, `SHELL_CONTRACT.md`, `CAPABILITY_PARITY.csv` and `STATIC_VALIDATION.md`. Application runtime validation remains pending.
+
+---
+
+## Prior Phase 1 design record (retained)
+
 # DESIGN_CHANGES - QuoteCore+ Phase 1 redo
 
 Date: 2026-09-24. Status: implementation candidate for isolated preview, not production approval.

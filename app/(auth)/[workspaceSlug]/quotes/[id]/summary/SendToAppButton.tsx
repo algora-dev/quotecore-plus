@@ -68,7 +68,6 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40"
-          onClick={close}
         >
           <div
             className="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6"
@@ -78,6 +77,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
               <h3 className="text-base font-semibold text-slate-900">Send to App</h3>
               <button
                 type="button"
+                aria-label="Close accounting export"
                 onClick={close}
                 className="text-slate-400 hover:text-slate-600"
               >

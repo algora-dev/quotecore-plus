@@ -1,0 +1,167 @@
+[
+  {
+    "file": "app/(auth)/[workspaceSlug]/layout.tsx",
+    "check": "Every original await expression preserved in order; no new awaited services",
+    "passed": true,
+    "count": 11
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/page.tsx",
+    "check": "Every original await expression preserved in order; no new awaited services",
+    "passed": true,
+    "count": 10
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "Every original await expression preserved in order; no new awaited services",
+    "passed": true,
+    "count": 20
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "SendDocumentButton runtime attribute expressions preserved (types erased)",
+    "passed": true,
+    "occurrences": 1
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "SummaryFilesPanel runtime attribute expressions preserved (types erased)",
+    "passed": true,
+    "occurrences": 1
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "QuoteNotesPanel runtime attribute expressions preserved (types erased)",
+    "passed": true,
+    "occurrences": 1
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "QuoteExpiryEditor runtime attribute expressions preserved (types erased)",
+    "passed": true,
+    "occurrences": 1
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "WithdrawQuoteButton runtime attribute expressions preserved (types erased)",
+    "passed": true,
+    "occurrences": 1
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "CalcAuditPanel runtime attribute expressions preserved (types erased)",
+    "passed": true,
+    "occurrences": 1
+  },
+  {
+    "file": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/page.tsx",
+    "check": "Inline duplicate action unchanged",
+    "passed": true
+  },
+  {
+    "check": "CustomerQuotePreview calculation declarations unchanged",
+    "passed": true
+  },
+  {
+    "check": "LaborSheetPreview calculation declarations unchanged",
+    "passed": true
+  },
+  {
+    "check": "Shell route /demo",
+    "passed": true,
+    "actual": {
+      "width": "wide",
+      "defaultMode": "expanded",
+      "label": "Home"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes",
+    "passed": true,
+    "actual": {
+      "width": "wide",
+      "defaultMode": "expanded",
+      "label": "Quotes"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes/new",
+    "passed": true,
+    "actual": {
+      "width": "focused",
+      "defaultMode": "expanded",
+      "label": "Quotes"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes/123/summary",
+    "passed": true,
+    "actual": {
+      "width": "wide",
+      "defaultMode": "expanded",
+      "label": "Job space"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes/123",
+    "passed": true,
+    "actual": {
+      "width": "editor",
+      "defaultMode": "rail",
+      "label": "Quote builder"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes/123/build",
+    "passed": true,
+    "actual": {
+      "width": "editor",
+      "defaultMode": "rail",
+      "label": "Quote builder"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes/123/blank-build",
+    "passed": true,
+    "actual": {
+      "width": "editor",
+      "defaultMode": "rail",
+      "label": "Quote builder"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes/123/takeoff",
+    "passed": true,
+    "actual": {
+      "width": "immersive",
+      "defaultMode": "hidden",
+      "label": "Digital takeoff"
+    }
+  },
+  {
+    "check": "Shell route /demo/quotes/123/customer-edit",
+    "passed": true,
+    "actual": {
+      "width": "editor",
+      "defaultMode": "rail",
+      "label": "Customer quote editor"
+    }
+  },
+  {
+    "check": "Shell route /demo/material-orders/create",
+    "passed": true,
+    "actual": {
+      "width": "editor",
+      "defaultMode": "rail",
+      "label": "Orders"
+    }
+  },
+  {
+    "check": "Supplier and Assistant feature-off destinations absent",
+    "passed": true
+  },
+  {
+    "check": "Quotes selected inside job hub, not a fabricated Jobs route",
+    "passed": true
+  }
+]

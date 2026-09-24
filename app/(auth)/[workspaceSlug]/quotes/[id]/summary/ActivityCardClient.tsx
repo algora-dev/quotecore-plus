@@ -1,5 +1,9 @@
 'use client';
 
+import { useJobSpace } from './job-space/JobSpaceContext';
+import { QcIcon } from '@/app/components/ui/v2/QcIcon';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 /**
@@ -51,6 +55,8 @@ function storageKey(quoteId: string) {
 }
 
 export function ActivityCardClient({ quoteId, counts, headerCtas, tabs }: Props) {
+  const hub = useJobSpace();
+  const inJobSpace = !!hub;
   const defaultTab: TabId = useMemo(() => {
     if (counts.unresolved > 0) return 'unresolved';
     if (counts.scheduled > 0) return 'scheduled';
@@ -119,12 +125,13 @@ export function ActivityCardClient({ quoteId, counts, headerCtas, tabs }: Props)
   // active tab toward priority on first render or when the count for
   // the current tab drops to zero.
   useEffect(() => {
+    if (inJobSpace) return;
     const activeCount =
       active === 'unresolved' ? counts.unresolved : active === 'scheduled' ? counts.scheduled : counts.sent;
     if (activeCount === 0) {
       setActive(defaultTab);
     }
-  }, [defaultTab, active, counts.unresolved, counts.scheduled, counts.sent]);
+  }, [defaultTab, active, counts.unresolved, counts.scheduled, counts.sent, inJobSpace]);
 
   function persistCollapsed(next: boolean) {
     setCollapsed(next);
@@ -141,13 +148,34 @@ export function ActivityCardClient({ quoteId, counts, headerCtas, tabs }: Props)
   // clean. Auto-evaluate on every render so the card appears as soon
   // as something happens.
   const totallyEmpty = counts.unresolved === 0 && counts.scheduled === 0 && counts.sent === 0;
-  if (totallyEmpty && !headerCtas) return null;
+  if (totallyEmpty && !headerCtas && !hub) return null;
 
   const summaryParts: string[] = [];
   if (counts.unresolved > 0) summaryParts.push(`${counts.unresolved} unresolved`);
   if (counts.scheduled > 0) summaryParts.push(`${counts.scheduled} scheduled`);
   if (counts.sent > 0) summaryParts.push(`${counts.sent} sent`);
   const summary = summaryParts.length > 0 ? summaryParts.join(' \u00b7 ') : 'No activity yet';
+
+  if (hub) {
+    const overview = hub.active === 'overview';
+    const choices = [{ id: 'unresolved' as const, label: 'Revision requests', count: counts.unresolved },
+      { id: 'scheduled' as const, label: 'Scheduled follow-ups', count: counts.scheduled },
+      { id: 'sent' as const, label: 'Recent messages', count: counts.sent }];
+    return <section className="qc-job-communication qc-hub-surface">
+      <div className="qc-section-heading"><div><p className="qc-eyebrow">Keep the conversation with the job</p><h2>Communication & follow-ups</h2></div>
+        {overview && <QcButton variant="ghost" onClick={() => hub.openSection('activity')}>Open communication<QcIcon name="arrow" /></QcButton>}</div>
+      <div className="qc-job-message-counts">
+        {choices.map(choice => <button type="button" key={choice.id} className="qc-job-message-count" aria-pressed={!overview && active === choice.id}
+          onClick={() => { setActive(choice.id); if (overview) hub.openSection('activity'); }}>
+          <strong>{choice.count}</strong><span>{choice.label}</span><QcIcon name="arrow" /></button>)}
+      </div>
+      <p className="qc-job-message-limit">Message and schedule counts cover the recent records shown here, not lifetime totals.</p>
+      <div hidden={overview} className="qc-job-message-detail">
+        <div className="qc-job-message-tools">{headerCtas}</div>
+        {choices.map(choice => <div key={choice.id} hidden={active !== choice.id}>{tabs[choice.id]}</div>)}
+      </div>
+    </section>;
+  }
 
   return (
     <div

@@ -1,439 +1,103 @@
 'use client';
-
-import { useState, useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import Link from 'next/link';
-import { formatCurrency } from '@/app/lib/currency/currencies';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { QcIcon } from '@/app/components/ui/v2/QcIcon';
+import { JobSpaceContext, isJobSection, type JobSection } from './job-space/JobSpaceContext';
+import { CustomerQuotePreview, LaborSheetPreview, DownloadTabPDF } from './job-space/SummaryDocumentPreviews';
+import type { SummaryTabsProps } from './job-space/summary-types';
+import './job-space/job-space.css';
 
-/**
- * Subset of the `customer_quote_lines` row shape that SummaryTabs needs.
- * Nullability matches the DB columns (the original hand-written shape
- * lied about `custom_text` and `include_in_total`).
+/** Existing public name and required props retained. C11 job navigation owns only
+ * local view state; history.replaceState never requests or refreshes server data.
  */
-interface CustomerLine {
-  id: string;
-  custom_text: string | null;
-  custom_amount: number | null;
-  show_price: boolean;
-  is_visible: boolean;
-  include_in_total: boolean | null;
-}
-
-interface Props {
-  workspaceSlug: string;
-  quoteId: string;
-  customerLines: CustomerLine[];
-  hasCustomerQuote: boolean;
-  quote: {
-    quote_number: number | null;
-    customer_name: string;
-    job_name: string | null;
-    site_address: string | null;
-    created_at: string;
-    tax_rate: number;
-    cq_company_name: string | null;
-    cq_company_address: string | null;
-    cq_company_phone: string | null;
-    cq_company_email: string | null;
-    cq_company_logo_url: string | null;
-    cq_footer_text: string | null;
-  };
-  effectiveCurrency: string;
-  hasLaborSheet: boolean;
-  laborLines: CustomerLine[];
-  children: ReactNode;
-  summaryActions: ReactNode;
-  /** Optional slot rendered between the tab nav and the summary tab content. */
-  summaryHeaderSlot?: ReactNode;
-}
-
-export function SummaryTabs({
-  workspaceSlug,
-  quoteId,
-  customerLines,
-  hasCustomerQuote,
-  quote,
-  effectiveCurrency,
-  hasLaborSheet,
-  laborLines,
-  children,
-  summaryActions,
-  summaryHeaderSlot,
-}: Props) {
-  const [activeTab, setActiveTab] = useState<'summary' | 'customer' | 'labor'>('summary');
-
-  // Listen for the "switch to customer tab" event from the SendDocumentButton
-  // guard modal (fires when user tries to send without a customer quote).
-  useEffect(() => {
-    const handler = () => setActiveTab('customer');
-    window.addEventListener('switch-to-customer-tab', handler);
-    return () => window.removeEventListener('switch-to-customer-tab', handler);
+export function SummaryTabs({ workspaceSlug, quoteId, customerLines, hasCustomerQuote, quote,
+  effectiveCurrency, hasLaborSheet, laborLines, children, summaryActions, summaryHeaderSlot,
+  overview, filesPanel, activityPanel, managementActions, initialSection }: SummaryTabsProps) {
+  const defaultSection: JobSection = initialSection ?? (overview ? 'overview' : 'summary');
+  const [activeTab, setActiveTab] = useState<JobSection>(defaultSection);
+  const tabRef = useRef<HTMLDivElement>(null);
+  const tabs: { id: JobSection; label: string }[] = [
+    ...(overview ? [{ id: 'overview' as const, label: 'Overview' }] : []),
+    { id: 'summary', label: 'Costing summary' }, { id: 'customer', label: 'Customer quote' },
+    { id: 'labor', label: 'Labour sheet' },
+    ...(filesPanel ? [{ id: 'files' as const, label: 'Files & notes' }] : []),
+    ...(activityPanel ? [{ id: 'activity' as const, label: 'Communication' }] : []),
+  ];
+  const openSection = useCallback((section: JobSection, anchor?: string) => {
+    setActiveTab(section);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', section);
+    window.history.replaceState(window.history.state, '', url);
+    requestAnimationFrame(() => {
+      const target = anchor ? document.getElementById(anchor) : document.getElementById(`qc-job-panel-${section}`);
+      target?.focus({ preventScroll: true });
+      target?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    });
   }, []);
-
-  return (
-    <>
-      {/* Tabs + Context Actions */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between data-exclude-pdf" data-copilot="summary-tabs">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide max-w-full -mx-2 px-2 md:mx-0 md:px-1">
-          {/*
-            Tab buttons. Inactive tabs get a stronger hover: white background,
-            orange-600 text, and the brand glow shadow so the affordance reads
-            as "click me" rather than "decorative pill". Active tab keeps the
-            solid white pill so the selected state stays clearly distinct.
-          */}
-          <button
-            onClick={() => setActiveTab('summary')}
-            data-copilot="tab-summary"
-            data-tab-active={activeTab === 'summary' ? 'true' : undefined}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-              activeTab === 'summary'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-            } whitespace-nowrap`}
-          >
-            Summary
-          </button>
-          <button
-            onClick={() => setActiveTab('customer')}
-            data-copilot="tab-customer"
-            data-tab-active={activeTab === 'customer' ? 'true' : undefined}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-              activeTab === 'customer'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-            } whitespace-nowrap`}
-          >
-            Customer Quote
-          </button>
-          <button
-            onClick={() => setActiveTab('labor')}
-            data-copilot="tab-labor"
-            data-tab-active={activeTab === 'labor' ? 'true' : undefined}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-              activeTab === 'labor'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:bg-white hover:text-orange-600 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]'
-            } whitespace-nowrap`}
-          >
-            Labor Sheet
-          </button>
-        </div>
-
-        {/* Contextual actions per tab */}
-        <div className="flex items-center gap-2 flex-nowrap overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-0 pb-2 md:pb-0 shrink min-w-0">
-          {activeTab === 'summary' && summaryActions}
-          {activeTab === 'customer' && hasCustomerQuote && (
-            <>
-              <Link
-                href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
-                title="Edit customer quote"
-                data-copilot="edit-customer-icon"
-                className="icon-btn border-slate-300 bg-white"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-              </Link>
-              <DownloadTabPDF selector="[data-pdf-customer]" filename={`Customer-Quote-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`} title="Download customer quote PDF" />
-            </>
-          )}
-          {activeTab === 'labor' && hasLaborSheet && (
-            <>
-              <Link
-                href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
-                title="Edit labor sheet"
-                data-copilot="edit-labor-icon"
-                className="icon-btn border-slate-300 bg-white"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-              </Link>
-              <DownloadTabPDF selector="[data-pdf-labor]" filename={`Labor-Sheet-${quote.quote_number || 'DRAFT'}-${quote.customer_name.replace(/[^a-z0-9]/gi, '_')}.pdf`} title="Download labor sheet PDF" />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'summary' && summaryHeaderSlot}
-      {activeTab === 'summary' && children}
-
-      {activeTab === 'customer' && (
-        <CustomerQuotePreview
-          workspaceSlug={workspaceSlug}
-          quoteId={quoteId}
-          hasCustomerQuote={hasCustomerQuote}
-          customerLines={customerLines}
-          quote={quote}
-          effectiveCurrency={effectiveCurrency}
-        />
-      )}
-
-      {activeTab === 'labor' && (
-        <LaborSheetPreview
-          workspaceSlug={workspaceSlug}
-          quoteId={quoteId}
-          hasLaborSheet={hasLaborSheet}
-          laborLines={laborLines}
-          quote={quote}
-          effectiveCurrency={effectiveCurrency}
-        />
-      )}
-    </>
-  );
-}
-
-function CustomerQuotePreview({
-  workspaceSlug,
-  quoteId,
-  hasCustomerQuote,
-  customerLines,
-  quote,
-  effectiveCurrency,
-}: {
-  workspaceSlug: string;
-  quoteId: string;
-  hasCustomerQuote: boolean;
-  customerLines: CustomerLine[];
-  quote: Props['quote'];
-  effectiveCurrency: string;
-}) {
-  if (!hasCustomerQuote) {
-    return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-        <p className="text-sm text-slate-500 mb-3">No customer quote created yet.</p>
-        <Link
-          href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`}
-          data-copilot="create-customer-quote"
-          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-        >
-          Create Customer Quote
-        </Link>
-      </div>
-    );
+  useEffect(() => {
+    const restore = () => {
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get('tab');
+      setActiveTab(isJobSection(requested) ? requested : params.get('view') === 'original' ? 'summary' : defaultSection);
+    };
+    restore();
+    const onCustomer = () => openSection('customer');
+    window.addEventListener('popstate', restore);
+    window.addEventListener('switch-to-customer-tab', onCustomer);
+    return () => {
+      window.removeEventListener('popstate', restore);
+      window.removeEventListener('switch-to-customer-tab', onCustomer);
+    };
+    // Intentionally tied to record identity, never refreshed props/array identities.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quoteId, openSection]);
+  const context = useMemo(() => ({ active: activeTab, openSection }), [activeTab, openSection]);
+  function moveTab(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : direction ? (index + direction + tabs.length) % tabs.length : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    tabRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+    // Manual activation: Enter/Space opens the focused tab. Arrow keys never
+    // navigate away from a user's edit-in-progress in a nested panel.
   }
-
-  const visibleLines = customerLines.filter(l => l.is_visible);
-  const subtotal = customerLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0);
-  const tax = subtotal * (quote.tax_rate / 100);
-  const total = subtotal + tax;
-
-  return (
-    <div data-pdf-customer>
-      <div className="bg-white rounded-xl border border-black p-12 space-y-8">
-        {/* Header */}
-        <div className="border-b-2 border-black pb-6 mb-6">
-          <div className="flex justify-end mb-6">
-            {quote.cq_company_logo_url ? (
-              <img src={quote.cq_company_logo_url} alt="Logo" className="h-16 object-contain" />
-            ) : (
-              <div className="w-32 h-16 border-2 border-dashed border-black rounded flex items-center justify-center">
-                <span className="text-xs text-black">Logo</span>
-              </div>
-            )}
-          </div>
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-xl font-bold text-black mb-4">QUOTE #{quote.quote_number || 'DRAFT'}</h1>
-              <div className="space-y-2">
-                <p className="text-base text-black"><span className="font-semibold">Client:</span> {quote.customer_name}</p>
-                {quote.job_name && <p className="text-base text-black"><span className="font-semibold">Job:</span> {quote.job_name}</p>}
-                {quote.site_address && <p className="text-base text-black"><span className="font-semibold">Site:</span> {quote.site_address}</p>}
-                <p className="text-base text-black"><span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-              </div>
-            </div>
-            {(quote.cq_company_name || quote.cq_company_address || quote.cq_company_phone || quote.cq_company_email) && (
-              <div className="text-right space-y-1">
-                {quote.cq_company_name && <p className="font-semibold text-base text-black">{quote.cq_company_name}</p>}
-                {quote.cq_company_address && <p className="text-sm text-black">{quote.cq_company_address}</p>}
-                {quote.cq_company_phone && <p className="text-sm text-black">{quote.cq_company_phone}</p>}
-                {quote.cq_company_email && <p className="text-sm text-black">{quote.cq_company_email}</p>}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Lines */}
-        <div className="space-y-3">
-          {visibleLines.map(line => (
-            <div key={line.id} className="flex items-start justify-between py-3 border-b border-black">
-              <p className="text-black">{line.custom_text}</p>
-              {line.show_price && (
-                <p className="text-black font-medium whitespace-nowrap ml-4">
-                  {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Totals */}
-        {visibleLines.length > 0 && (
-          <div className="space-y-3 pt-4 border-t-2 border-black">
-            <div className="flex justify-between text-base">
-              <span className="text-black">Subtotal</span>
-              <span className="font-medium text-black">{formatCurrency(subtotal, effectiveCurrency)}</span>
-            </div>
-            {quote.tax_rate > 0 && (
-              <div className="flex justify-between text-base">
-                <span className="text-black">Tax ({quote.tax_rate}%)</span>
-                <span className="font-medium text-black">{formatCurrency(tax, effectiveCurrency)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
-              <span className="text-black">Total</span>
-              <span className="text-black">{formatCurrency(total, effectiveCurrency)}</span>
-            </div>
-          </div>
-        )}
-
-        {quote.cq_footer_text && (
-          <div className="pt-6 border-t border-black">
-            <p className="text-sm text-black italic whitespace-pre-wrap">{quote.cq_footer_text}</p>
-          </div>
-        )}
-      </div>
+  const fileStem = quote.customer_name.replace(/[^a-z0-9]/gi, '_');
+  return <JobSpaceContext.Provider value={context}>
+    <div className="qc-job-tabs" role="tablist" aria-label="Job space sections" data-copilot="summary-tabs" ref={tabRef}>
+      {tabs.map((tab, index) => <button key={tab.id} id={`qc-job-tab-${tab.id}`} type="button" role="tab"
+        aria-selected={activeTab === tab.id} aria-controls={`qc-job-panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1}
+        data-copilot={`tab-${tab.id}`} data-tab-active={activeTab === tab.id ? 'true' : undefined}
+        onKeyDown={event => moveTab(event,index)} onClick={() => openSection(tab.id)}>{tab.label}</button>)}
     </div>
-  );
-}
-
-function LaborSheetPreview({
-  workspaceSlug,
-  quoteId,
-  hasLaborSheet,
-  laborLines,
-  quote,
-  effectiveCurrency,
-}: {
-  workspaceSlug: string;
-  quoteId: string;
-  hasLaborSheet: boolean;
-  laborLines: CustomerLine[];
-  quote: Props['quote'];
-  effectiveCurrency: string;
-}) {
-  if (!hasLaborSheet) {
-    return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center">
-        <p className="text-sm text-slate-500 mb-3">No labor sheet created yet.</p>
-        <Link
-          href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`}
-          data-copilot="create-labor-sheet"
-          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-        >
-          Create Labor Sheet
-        </Link>
-      </div>
-    );
-  }
-
-  const visibleLines = laborLines.filter(l => l.is_visible);
-  const subtotal = laborLines.filter(l => l.include_in_total).reduce((sum, l) => sum + (l.custom_amount || 0), 0);
-  const tax = subtotal * (quote.tax_rate / 100);
-  const total = subtotal + tax;
-
-  return (
-    <div data-pdf-labor>
-      <div className="bg-white rounded-xl border border-black p-12 space-y-8">
-        <div className="border-b-2 border-black pb-6">
-          <h1 className="text-xl font-bold text-black mb-4">LABOR SHEET - Quote #{quote.quote_number || 'DRAFT'}</h1>
-          <p className="text-base text-black"><span className="font-semibold">Client:</span> {quote.customer_name}</p>
-          {quote.job_name && <p className="text-base text-black"><span className="font-semibold">Job:</span> {quote.job_name}</p>}
-        </div>
-
-        <div className="space-y-3">
-          {visibleLines.map(line => (
-            <div key={line.id} className="flex items-start justify-between py-3 border-b border-black">
-              <p className="text-black">{line.custom_text}</p>
-              {line.show_price && (
-                <p className="text-black font-medium whitespace-nowrap ml-4">
-                  {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {visibleLines.length > 0 && (
-          <div className="space-y-3 pt-4 border-t-2 border-black">
-            <div className="flex justify-between text-base">
-              <span className="text-black">Subtotal</span>
-              <span className="font-medium text-black">{formatCurrency(subtotal, effectiveCurrency)}</span>
-            </div>
-            {quote.tax_rate > 0 && (
-              <div className="flex justify-between text-base">
-                <span className="text-black">Tax ({quote.tax_rate}%)</span>
-                <span className="font-medium text-black">{formatCurrency(tax, effectiveCurrency)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
-              <span className="text-black">Total</span>
-              <span className="text-black">{formatCurrency(total, effectiveCurrency)}</span>
-            </div>
-          </div>
-        )}
-      </div>
+    <div className="qc-job-panels">
+      {/* Stable mounts: tab changes never throw away notes, uploads or message state. */}
+      {overview && <section id="qc-job-panel-overview" role="tabpanel" tabIndex={-1} aria-labelledby="qc-job-tab-overview" hidden={activeTab !== 'overview'}>{overview}</section>}
+      <section id="qc-job-panel-summary" role="tabpanel" tabIndex={-1} aria-labelledby="qc-job-tab-summary" hidden={activeTab !== 'summary'}>
+        <div className="qc-job-panel-heading"><div><h2>Internal costing summary</h2><p>Your business view. This is separate from the customer quote.</p></div><div className="qc-job-document-actions">{summaryActions}</div></div>
+        <div className="qc-job-snapshot-switch">{summaryHeaderSlot}</div>
+        <div className="qc-job-document-scroll">{children}</div>
+      </section>
+      <section id="qc-job-panel-customer" role="tabpanel" tabIndex={-1} aria-labelledby="qc-job-tab-customer" hidden={activeTab !== 'customer'}>
+        <div className="qc-job-panel-heading"><div><h2>Customer quote</h2><p>Review what your customer will receive. Use the editor to change visibility and pricing.</p></div>
+          {hasCustomerQuote && <div className="qc-job-document-actions"><Link href={`/${workspaceSlug}/quotes/${quoteId}/customer-edit`} prefetch={false} data-copilot="edit-customer-icon" className="qc-button" data-qc-variant="ghost"><QcIcon name="edit" />Edit quote</Link>
+            <DownloadTabPDF selector="[data-pdf-customer]" filename={`Customer-Quote-${quote.quote_number || 'DRAFT'}-${fileStem}.pdf`} title="Download customer quote PDF" /></div>}</div>
+        <div className="qc-job-document-scroll"><CustomerQuotePreview workspaceSlug={workspaceSlug} quoteId={quoteId} hasCustomerQuote={hasCustomerQuote}
+          customerLines={customerLines} quote={quote} effectiveCurrency={effectiveCurrency} /></div>
+      </section>
+      <section id="qc-job-panel-labor" role="tabpanel" tabIndex={-1} aria-labelledby="qc-job-tab-labor" hidden={activeTab !== 'labor'}>
+        <div className="qc-job-panel-heading"><div><h2>Labour sheet</h2><p>A separate document for your installer or subcontractor.</p></div>
+          {hasLaborSheet && <div className="qc-job-document-actions"><Link href={`/${workspaceSlug}/quotes/${quoteId}/labor-sheet`} prefetch={false} data-copilot="edit-labor-icon" className="qc-button" data-qc-variant="ghost"><QcIcon name="edit" />Edit labour sheet</Link>
+            <DownloadTabPDF selector="[data-pdf-labor]" filename={`Labor-Sheet-${quote.quote_number || 'DRAFT'}-${fileStem}.pdf`} title="Download labour sheet PDF" /></div>}</div>
+        <div className="qc-job-document-scroll"><LaborSheetPreview workspaceSlug={workspaceSlug} quoteId={quoteId} hasLaborSheet={hasLaborSheet}
+          laborLines={laborLines} quote={quote} effectiveCurrency={effectiveCurrency} /></div>
+      </section>
+      {filesPanel && <section id="qc-job-panel-files" role="tabpanel" tabIndex={-1} aria-labelledby="qc-job-tab-files" hidden={activeTab !== 'files'}>{filesPanel}</section>}
+      {activityPanel && <section id="qc-job-panel-activity" role={activeTab === 'activity' ? 'tabpanel' : undefined} tabIndex={-1}
+        aria-labelledby={activeTab === 'activity' ? 'qc-job-tab-activity' : undefined} aria-label={activeTab !== 'activity' ? 'Job communication' : undefined}
+        hidden={activeTab !== 'overview' && activeTab !== 'activity'}>{activityPanel}</section>}
+      {managementActions && <section className="qc-job-management qc-hub-surface" hidden={activeTab !== 'overview'} aria-labelledby="qc-job-management-title">
+        <div><h2 id="qc-job-management-title">Manage this job</h2><p>Export to accounting, duplicate the quote or manage its acceptance link.</p></div><div className="qc-job-management-actions">{managementActions}</div>
+      </section>}
     </div>
-  );
-}
-
-function DownloadTabPDF({ selector, filename, title }: { selector: string; filename: string; title: string }) {
-  const [generating, setGenerating] = useState(false);
-
-  async function handleDownload() {
-    setGenerating(true);
-    try {
-      const element = document.querySelector(selector) as HTMLElement;
-      if (!element) { alert('Nothing to download yet.'); setGenerating(false); return; }
-
-      const canvas = await html2canvas(element, {
-        scale: 1,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        allowTaint: true,
-        foreignObjectRendering: false,
-        onclone: (clonedDoc) => {
-          clonedDoc.querySelectorAll('*').forEach((el: any) => {
-            el.style.color = 'rgb(0, 0, 0)';
-            el.style.backgroundColor = 'rgb(255, 255, 255)';
-            el.style.borderColor = 'rgb(203, 213, 225)';
-          });
-        },
-      });
-
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const margin = 15;
-      const printableWidth = 210 - margin * 2;
-      const printableHeight = 297 - margin * 2;
-      const imgWidth = printableWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin + position, imgWidth, imgHeight);
-      heightLeft -= printableHeight;
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, margin + position, imgWidth, imgHeight);
-        heightLeft -= printableHeight;
-      }
-
-      pdf.save(filename);
-    } catch (err) {
-      console.error('PDF generation failed:', err);
-      alert('Failed to generate PDF. Please try again.');
-    } finally {
-      setGenerating(false);
-    }
-  }
-
-  return (
-    <button onClick={handleDownload} disabled={generating} title={title} className="icon-btn border-slate-300 bg-white">
-      {generating ? (
-        <svg className="w-4 h-4 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-      ) : (
-        <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-      )}
-    </button>
-  );
+  </JobSpaceContext.Provider>;
 }
