@@ -1,0 +1,137 @@
+{
+  "scope": "Source-derived HTML/CSS fixture in Chromium; no application services or React runtime.",
+  "viewports": [
+    {
+      "width": 320,
+      "state": "expanded",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 390,
+      "state": "expanded",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 768,
+      "state": "expanded",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 1024,
+      "state": "expanded",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 1024,
+      "state": "hidden",
+      "overflow": false,
+      "sidebarVisibility": "hidden",
+      "inert": true
+    },
+    {
+      "width": 1280,
+      "state": "expanded",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 1280,
+      "state": "hidden",
+      "overflow": false,
+      "sidebarVisibility": "hidden",
+      "inert": true
+    },
+    {
+      "width": 1440,
+      "state": "expanded",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 1440,
+      "state": "hidden",
+      "overflow": false,
+      "sidebarVisibility": "hidden",
+      "inert": true
+    },
+    {
+      "width": 1920,
+      "state": "expanded",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 1920,
+      "state": "hidden",
+      "overflow": false,
+      "sidebarVisibility": "hidden",
+      "inert": true
+    },
+    {
+      "width": 390,
+      "state": "empty-reference.html",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 1440,
+      "state": "empty-reference.html",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 390,
+      "state": "error-reference.html",
+      "overflow": false,
+      "pageerrors": []
+    },
+    {
+      "width": 1440,
+      "state": "error-reference.html",
+      "overflow": false,
+      "pageerrors": []
+    }
+  ],
+  "interactions": [
+    {
+      "test": "Edge tab visible hover feedback",
+      "pass": true,
+      "default": "linear-gradient(135deg, rgb(255, 100, 31) 0%, rgb(255, 138, 61) 55%, rgb(255, 179, 107) 100%)",
+      "hover": "linear-gradient(135deg, rgb(255, 107, 53) 0%, rgb(255, 146, 61) 55%, rgb(255, 188, 122) 100%)"
+    },
+    {
+      "test": "Edge tab keyboard focus outline",
+      "pass": true,
+      "computed": {
+        "outline": "solid",
+        "width": "2px"
+      }
+    },
+    {
+      "test": "Demonstration toggle retains fixture DOM/search state (not React proof)",
+      "pass": true
+    },
+    {
+      "test": "One native link for each visible filtered row",
+      "pass": true
+    },
+    {
+      "test": "Reduced motion removes sidebar transition",
+      "pass": true,
+      "duration": "0s"
+    },
+    {
+      "test": "Mobile native drawer opens and backdrop does not dismiss",
+      "pass": true
+    },
+    {
+      "test": "Mobile explicit close works",
+      "pass": true
+    }
+  ],
+  "pageerrors": []
+}

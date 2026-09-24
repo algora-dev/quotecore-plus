@@ -1,3 +1,18 @@
+# Phase 3 | UI standard 2.3
+
+Latest owner decision: **Job Spaces is additional; Quotes and its Drafts tab stay where they are. No /quotes redirect.** This overrides the earlier draft-only split proposal.
+
+- C50 QcSidebarTab: one orange edge tab for expanded/fully hidden desktop navigation; narrow face, 44px target, visible hover/focus/pressed. Internal rail is not a user-facing mode. Preserve real /q-mark.png.
+- Slide sidebar/tab with transform/position only; do not animate main/grid/canvas width or remount the workspace. Normal editors now follow expanded/hidden preference; takeoff remains hidden by default.
+- C51 JobSpacesList: existing non-draft quote projection, clean row cards, status/updated metadata, search/filter/sort, read-only actions. Quotes retains all draft/creation/bulk/status tools.
+- Existing Summary supports an allowlisted from=job-spaces return while preserving Quotes and Inbox origins.
+- Palette, gradient/glow/glass tokens and IF-01 remain unchanged. New controls reuse them; no additional orange shades or isolated button recipe.
+- Mobile drawer gets a scrolling middle and non-overlapping explicit close footer; no new mobile takeoff flow.
+
+Current contracts and integration gates: docs/ux/phase-3/README.md. Phase 3 is a candidate until Gavin's build/runtime checks and owner preview pass. Historical rules below yield to the current phase where navigation/defaults differ.
+
+---
+
 # Phase 2A + 2B | UI standard 2.2
 
 Owner-approved scope: global collapsible shell, task-led Home, real card-based Job Space. This section supersedes the earlier Phase 2 document-first direction. It does not change the integrated four-step quote builder or add Guided/project-management functionality.

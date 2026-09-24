@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { QcButton } from '../ui/v2/QcButton';
@@ -7,7 +7,9 @@ import { QcDialog } from '../ui/v2/QcDialog';
 import { QcIcon } from '../ui/v2/QcIcon';
 import { QcNavigation } from './QcNavigation';
 import type { WorkspaceNavEntitlements } from './WorkspaceNav';
-import { shellRoute, workspaceNavigation, type ShellMode } from './shell-config';
+import { shellRoute, workspaceNavigation } from './shell-config';
+import { QcSidebarTab } from './QcSidebarTab';
+import { nextSidebarMode, readSidebarPreference, resolveSidebarMode, type SidebarOverride, type SidebarPreference } from './sidebar-state';
 import './qc-shell.css';
 
 interface Props {
@@ -25,23 +27,36 @@ export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, i
   const pathname = usePathname() ?? `/${workspaceSlug}`;
   const route = shellRoute(pathname, workspaceSlug);
   const items = workspaceNavigation(workspaceSlug, isSupplier, assistantAvailable);
-  const [preference, setPreference] = useState<ShellMode>('expanded');
-  const [override, setOverride] = useState<{ path: string; mode: ShellMode } | null>(null);
+  const [preference, setPreference] = useState<SidebarPreference>('expanded');
+  const [override, setOverride] = useState<SidebarOverride | null>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const tabRef = useRef<HTMLButtonElement>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const storageKey = `quotecore.shell.sidebar.${workspaceSlug}.${userId}`;
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem(storageKey);
-      setPreference(saved === 'rail' || saved === 'hidden' ? saved : 'expanded');
+      setPreference(readSidebarPreference(saved));
     } catch { setPreference('expanded'); }
   }, [storageKey]);
   useEffect(() => { setMobileOpen(false); setOverride(null); }, [pathname]);
   // A route-specific override expires on exit. Immersive pages do not overwrite
   // the user's normal navigation preference. Neither this nor resize refreshes data.
-  const mode = override?.path === pathname ? override.mode :
-    route.defaultMode === 'expanded' ? preference : route.defaultMode;
-  function changeMode(next: ShellMode) {
-    setOverride({ path: pathname, mode: next });
+  const mode = resolveSidebarMode(pathname, route.defaultMode, preference, override);
+  const presentation = mode === 'rail' ? 'rail' : mode === 'hidden' && override?.path === pathname
+    ? override.presentation : 'expanded';
+  // React 18 does not type the inert attribute. Set the native attribute on the
+  // existing node so hidden links leave both keyboard and assistive navigation.
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+    if (mode === 'hidden' && sidebar.contains(document.activeElement)) {
+      tabRef.current?.focus({ preventScroll: true });
+    }
+    sidebar.toggleAttribute('inert', mode === 'hidden');
+  }, [mode]);
+  function changeMode(next: SidebarPreference) {
+    setOverride({ path: pathname, mode: next, presentation: mode === 'rail' ? 'rail' : 'expanded' });
     if (route.defaultMode === 'expanded') {
       setPreference(next);
       try { window.localStorage.setItem(storageKey, next); } catch { /* Optional preference only. */ }
@@ -52,16 +67,15 @@ export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, i
     onNavigate={mobile ? () => setMobileOpen(false) : undefined}
     label={mobile ? 'Mobile workspace navigation' : 'Workspace navigation'} />;
 
-  return <div data-qc-ui="v2" data-qc-shell-mode={mode} data-qc-width={route.width} className="qc-app-shell">
+  return <div data-qc-ui="v2" data-qc-shell-mode={mode} data-qc-width={route.width} data-qc-sidebar-presentation={presentation} className="qc-app-shell">
     <a className="qc-skip-link" href="#qc-main">Skip to workspace</a>
-    <aside id="qc-sidebar" className="qc-sidebar" data-takeoff-chrome="sidebar" aria-label="Workspace sidebar">
+    <QcSidebarTab ref={tabRef} expanded={mode !== 'hidden'} onToggle={() => changeMode(nextSidebarMode(mode))} />
+    <aside ref={sidebarRef} id="qc-sidebar" className="qc-sidebar" data-takeoff-chrome="sidebar"
+      aria-hidden={mode === 'hidden' ? true : undefined} aria-label="Workspace sidebar">
       <div className="qc-sidebar-brand">
         <Link href={`/${workspaceSlug}`} prefetch={false} className="qc-brand" aria-label="QuoteCore Plus home">
           <img src="/logo.png" alt="QuoteCore Plus" /><img src="/q-mark.png" alt="" aria-hidden="true" className="qc-brand-compact" />
         </Link>
-        <QcButton variant="ghost" className="qc-icon-button qc-sidebar-toggle" aria-label={mode === 'expanded' ? 'Collapse navigation' : 'Expand navigation'}
-          title={mode === 'expanded' ? 'Collapse navigation' : 'Expand navigation'} aria-controls="qc-sidebar" aria-expanded={mode === 'expanded'}
-          onClick={() => changeMode(mode === 'expanded' ? 'rail' : 'expanded')}><QcIcon name={mode === 'expanded' ? 'collapse' : 'expand'} /></QcButton>
       </div>
       <div className="qc-workspace-identity"><span>Workspace</span><strong title={companyName}>{companyName}</strong></div>
       {navigation(mode === 'rail', false)}
@@ -72,9 +86,6 @@ export function QcAppShell({ workspaceSlug, userId, companyName, entitlements, i
         <div className="qc-topbar-context">
           <QcButton className="qc-icon-button qc-mobile-menu" variant="ghost" aria-label="Open navigation" aria-haspopup="dialog"
             onClick={() => setMobileOpen(true)}><QcIcon name="menu" /></QcButton>
-          <QcButton className="qc-icon-button qc-desktop-menu" variant="ghost" title={mode === 'hidden' ? 'Show navigation' : 'Hide navigation for more space'}
-            aria-label={mode === 'hidden' ? 'Show navigation' : 'Hide navigation for more space'} aria-controls="qc-sidebar" aria-expanded={mode !== 'hidden'}
-            onClick={() => changeMode(mode === 'hidden' ? 'expanded' : 'hidden')}><QcIcon name={mode === 'hidden' ? 'expand' : 'focus'} /></QcButton>
           <span className="qc-topbar-title">{route.label}</span>
         </div>
         <div className="qc-shell-utilities">{bell}{inbox}{help}</div>

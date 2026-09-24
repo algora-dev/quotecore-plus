@@ -6,11 +6,12 @@ export interface ShellNavItem {
   key: string; label: string; href: string; icon: QcIconName;
   group: 'work' | 'library' | 'utility'; gatedBy?: Feature; copilot?: string;
 }
-/** Existing destinations only. No new Jobs route or duplicate quote data model. */
+/** Job Spaces indexes existing non-draft quotes. Quotes and its Drafts tab stay intact. */
 export function workspaceNavigation(slug: string, supplier: boolean, assistant: boolean): ShellNavItem[] {
   const b = `/${slug}`;
   return [
     { key: 'home', label: 'Home', href: b, icon: 'home', group: 'work' },
+    { key: 'job-spaces', label: 'Job Spaces', href: `${b}/job-spaces`, icon: 'folder', group: 'work' },
     { key: 'quotes', label: 'Quotes', href: `${b}/quotes`, icon: 'quote', group: 'work', copilot: 'nav-quotes' },
     { key: 'orders', label: 'Orders', href: `${b}/material-orders`, icon: 'orders', group: 'work', gatedBy: 'material_orders', copilot: 'nav-orders' },
     { key: 'invoices', label: 'Invoices', href: `${b}/invoices`, icon: 'invoice', group: 'work', gatedBy: 'invoices', copilot: 'nav-invoices' },
@@ -32,14 +33,19 @@ export function shellRoute(pathname: string, slug: string) {
   const focused = (section === 'quotes' && record === 'new');
   const label = !section ? 'Home' : section === 'quotes' && detail === 'summary' ? 'Job space' : takeoff ? 'Digital takeoff' :
     builder ? (detail === 'customer-edit' ? 'Customer quote editor' : detail === 'labor-sheet' ? 'Labour sheet' : 'Quote builder') :
-    ({ quotes: 'Quotes', 'material-orders': 'Orders', orders: 'Orders', invoices: 'Invoices',
+    ({ 'job-spaces': 'Job Spaces', quotes: 'Quotes', 'material-orders': 'Orders', orders: 'Orders', invoices: 'Invoices',
       components: 'Pricing Library', resources: 'Resources', assistant: 'Smart Assistant', account: 'Account',
       tutorials: 'Tutorials', inbox: 'Message Center', supplier: 'Supplier' } as Record<string, string>)[section] ?? 'Resources';
   return { width: takeoff ? 'immersive' : editor ? 'editor' : focused ? 'focused' : 'wide',
-    defaultMode: (takeoff ? 'hidden' : editor ? 'rail' : 'expanded') as ShellMode, label };
+    // The user-facing shell has two states. Rail stays available internally,
+    // but ordinary editor routes do not expose or force a third navigation state.
+    defaultMode: (takeoff ? 'hidden' : 'expanded') as ShellMode, label };
 }
 export function navIsActive(item: ShellNavItem, pathname: string, slug: string) {
   if (item.key === 'home') return pathname === `/${slug}` || pathname === `/${slug}/`;
+  const jobSummary = /^\/quotes\/[^/]+\/summary(?:\/|$)/.test(pathname.slice(`/${slug}`.length));
+  if (item.key === 'job-spaces' && jobSummary) return true;
+  if (item.key === 'quotes' && jobSummary) return false;
   if (item.key === 'orders' && pathname.startsWith(`/${slug}/orders`)) return true;
   if (item.key === 'resources' && /^\/(attachments|catalogs|templates|drawings)(\/|$)/.test(pathname.slice(`/${slug}`.length))) return true;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);

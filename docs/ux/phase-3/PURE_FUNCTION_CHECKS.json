@@ -1,0 +1,218 @@
+{
+  "scope": "Pure presentation/model functions only; not application/RLS/canvas tests",
+  "total": 53,
+  "results": [
+    {
+      "name": "Exclude records by status=draft, not by job_status",
+      "status": "PASS"
+    },
+    {
+      "name": "Preserve future non-draft statuses",
+      "status": "PASS"
+    },
+    {
+      "name": "Default updated order",
+      "status": "PASS"
+    },
+    {
+      "name": "Oldest updated order",
+      "status": "PASS"
+    },
+    {
+      "name": "Job-name order",
+      "status": "PASS"
+    },
+    {
+      "name": "Case-insensitive job search",
+      "status": "PASS"
+    },
+    {
+      "name": "Case-insensitive customer search",
+      "status": "PASS"
+    },
+    {
+      "name": "Numeric quote number search",
+      "status": "PASS"
+    },
+    {
+      "name": "Hash-prefixed quote number search",
+      "status": "PASS"
+    },
+    {
+      "name": "String quote number search",
+      "status": "PASS"
+    },
+    {
+      "name": "Status and search intersect",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown status can still be filtered",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown status is honest and neutral",
+      "status": "PASS"
+    },
+    {
+      "name": "Declined is danger, not accepted/neutral",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing job status retains existing Unsent fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid date does not crash or become today",
+      "status": "PASS"
+    },
+    {
+      "name": "Valid updated date is deterministic UTC",
+      "status": "PASS"
+    },
+    {
+      "name": "Exact timestamp explicitly identifies UTC",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing job name uses customer",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing both names gets honest fallback",
+      "status": "PASS"
+    },
+    {
+      "name": "Every row links to existing summary with return context",
+      "status": "PASS"
+    },
+    {
+      "name": "Path segments are encoded",
+      "status": "PASS"
+    },
+    {
+      "name": "Projection does not mutate source arrays",
+      "status": "PASS"
+    },
+    {
+      "name": "No client truncation of input collection",
+      "status": "PASS"
+    },
+    {
+      "name": "Quotes remains named Quotes at original route",
+      "status": "PASS"
+    },
+    {
+      "name": "Job Spaces is an additional destination",
+      "status": "PASS"
+    },
+    {
+      "name": "Original assistant selector is retained for Quotes",
+      "status": "PASS"
+    },
+    {
+      "name": "Job index activates only Job Spaces",
+      "status": "PASS"
+    },
+    {
+      "name": "Job summary activates only Job Spaces",
+      "status": "PASS"
+    },
+    {
+      "name": "Quotes list still activates Quotes",
+      "status": "PASS"
+    },
+    {
+      "name": "Builder remains in Quotes",
+      "status": "PASS"
+    },
+    {
+      "name": "New quote routing remains under Quotes",
+      "status": "PASS"
+    },
+    {
+      "name": "No prefix collision with summary-like route",
+      "status": "PASS"
+    },
+    {
+      "name": "No prefix collision with job-spaces-extra",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing supplier condition remains",
+      "status": "PASS"
+    },
+    {
+      "name": "Existing assistant condition remains",
+      "status": "PASS"
+    },
+    {
+      "name": "Order feature gate retained",
+      "status": "PASS"
+    },
+    {
+      "name": "Invoice feature gate retained",
+      "status": "PASS"
+    },
+    {
+      "name": "Normal routes have no forced rail",
+      "status": "PASS"
+    },
+    {
+      "name": "Builder keeps editor width but no public/forced rail",
+      "status": "PASS"
+    },
+    {
+      "name": "Takeoff keeps hidden immersive default",
+      "status": "PASS"
+    },
+    {
+      "name": "Legacy rail preference normalizes to expanded",
+      "status": "PASS"
+    },
+    {
+      "name": "Hidden preference is preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "Absent preference is expanded",
+      "status": "PASS"
+    },
+    {
+      "name": "Corrupt preference is expanded",
+      "status": "PASS"
+    },
+    {
+      "name": "Toggle expanded to hidden, not rail",
+      "status": "PASS"
+    },
+    {
+      "name": "Toggle hidden to expanded",
+      "status": "PASS"
+    },
+    {
+      "name": "An internal rail may be hidden using the same tab",
+      "status": "PASS"
+    },
+    {
+      "name": "Normal routes use stored hidden preference",
+      "status": "PASS"
+    },
+    {
+      "name": "Immersive default does not need to overwrite preference",
+      "status": "PASS"
+    },
+    {
+      "name": "Route override can temporarily open takeoff",
+      "status": "PASS"
+    },
+    {
+      "name": "Override expires off its owning path",
+      "status": "PASS"
+    },
+    {
+      "name": "Internal rail remains supported by state model",
+      "status": "PASS"
+    }
+  ]
+}

@@ -50,8 +50,11 @@ export default async function QuoteSummaryPage({
   const { workspaceSlug, id } = await params;
   const { from, view, tab } = await searchParams;
   // When opened from the Message Center, "Back" returns to the inbox.
-  const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` : `/${workspaceSlug}/quotes`;
-  const backLabel = from === 'inbox' ? 'Back to Message Center' : 'All quotes';
+  const backHref = from === 'inbox' ? `/${workspaceSlug}/inbox` :
+    from === 'job-spaces' ? `/${workspaceSlug}/job-spaces` : `/${workspaceSlug}/quotes`;
+  const backLabel = from === 'inbox' ? 'Back to Message Center' :
+    from === 'job-spaces' ? 'All job spaces' : 'All quotes';
+  const returnContext = from === 'inbox' ? '&from=inbox' : from === 'job-spaces' ? '&from=job-spaces' : '';
   const [quote, roofAreas, components, entries, quoteTaxes] = await Promise.all([
     loadQuote(id),
     loadQuoteRoofAreas(id),
@@ -504,7 +507,7 @@ export default async function QuoteSummaryPage({
           !!originalSnapshot ? (
             <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit overflow-x-auto scrollbar-hide -mx-2 px-2 md:mx-0 md:px-1">
               <Link
-                href={`/${workspaceSlug}/quotes/${id}/summary?tab=summary${from === 'inbox' ? '&from=inbox' : ''}`}
+                href={`/${workspaceSlug}/quotes/${id}/summary?tab=summary${returnContext}`}
                 title="Your current up to date quote summary"
                 className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                   !showOriginalView
@@ -515,7 +518,7 @@ export default async function QuoteSummaryPage({
                 Current
               </Link>
               <Link
-                href={`/${workspaceSlug}/quotes/${id}/summary?view=original&tab=summary${from === 'inbox' ? '&from=inbox' : ''}`}
+                href={`/${workspaceSlug}/quotes/${id}/summary?view=original&tab=summary${returnContext}`}
                 title="The first saved Quote Summary version"
                 className={`px-4 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
                   showOriginalView
