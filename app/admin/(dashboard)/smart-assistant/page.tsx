@@ -1,5 +1,6 @@
 import { listSmartAssistantCompanies } from './actions';
 import { SmartAssistantPanel } from './SmartAssistantPanel';
+import { AssistantV2AdminSection } from './AssistantV2AdminSection';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,7 @@ export default async function SmartAssistantAdminPage() {
       )}
 
       <SmartAssistantPanel initialRows={rows} />
+      {!error && <AssistantV2AdminSection companies={rows} />}
     </div>
   );
 }

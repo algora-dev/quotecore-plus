@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { createSupabaseServerClient, requireCompanyContext } from '@/app/lib/supabase/server';
 import { SmartAssistantConfigPanel, type ConfigDoc } from './SmartAssistantConfigPanel';
 import { AddToPhone } from './AddToPhone';
+import { AssistantPermissionsPanel } from './AssistantPermissionsPanel';
+import { readSectionPermissions } from '@/app/lib/smart-assistant/section-permissions.server';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +34,9 @@ export default async function SmartAssistantConfigPage() {
       .limit(50),
   ]);
 
+  // Failure/missing migration affects the new panel only, never V1 config.
+  const permissionState = await readSectionPermissions(supabase);
+
   const configDocs: ConfigDoc[] = (docs ?? []).map((d) => ({
     id: d.id,
     file_name: d.file_name,
@@ -54,6 +59,8 @@ export default async function SmartAssistantConfigPage() {
           <AddToPhone />
         </div>
       </div>
+
+      <AssistantPermissionsPanel key={profile.company_id} initialState={permissionState} />
 
       <SmartAssistantConfigPanel
         initialName={config?.name ?? 'Assistant'}
