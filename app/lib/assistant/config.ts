@@ -134,8 +134,11 @@ export const RETENTION = {
 // ---------------------------------------------------------------------------
 
 export const MODEL_CONFIG = {
-  /** Chat/reasoning model. Per spec: GPT-5 Mini. */
-  chatModel: process.env.ASSISTANT_CHAT_MODEL ?? 'gpt-5-mini',
+  // Chat/reasoning model. Owner decision 2026-09-25: gpt-5.6-luna (benchmark
+  // 2026-09-25: avg 12.1s vs 15.3s, steady-state ~9.6s, 0 failures vs 2x
+  // empty_completion on the gpt-5 variant, 42% leaner output). Env override
+  // ASSISTANT_CHAT_MODEL still wins (set to gpt-5.6-luna on testing).
+  chatModel: process.env.ASSISTANT_CHAT_MODEL ?? 'gpt-5.6-luna',
   /** Embedding model for doc_chunks (Phase 0B). */
   embeddingModel: process.env.ASSISTANT_EMBEDDING_MODEL ?? 'text-embedding-3-small',
   /** Embedding vector dimensions (must match the doc_chunks column). */
