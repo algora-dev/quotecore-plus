@@ -12,7 +12,7 @@ import { normalizeMeasurementSystem } from '@/app/lib/types';
 import { saveTakeoffMeasurements, createTakeoffPage, createTakeoffPageForArea, initializeTakeoffPage, finalizeTakeoffPageImage, getFirstRoofAreaId, createNewTakeoffArea, renameTakeoffArea, deleteTakeoffArea, getTakeoffSessionVersion, batchCreateAiRoofAreas, persistPageCalibration, updateTakeoffAreaGeometry } from './actions';
 import { toolForMeasurementType } from '@/app/lib/takeoff/tool-for-measurement-type';
 import { useStateHistory } from '@/app/lib/takeoff/useStateHistory';
-import { applyAiResults, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
+import { applyAiResults, computeAreaValue, type AiScanData, type AiMeasurement, type AiRoofAreaResult } from '@/app/lib/takeoff/applyAiResults';
 import { type SemanticKey, getSemanticColour, getLineOptions, buildSystemComponentIds, resolveSemanticKey, AI_COMPONENT_REGISTRY } from '@/app/lib/takeoff/aiComponentRegistry';
 import { getAiScanPointCost } from '@/app/lib/takeoff/pointCost';
 import { AiResultsModal, type AiResultsData, type AiResultsArea } from './modals/AiResultsModal';
@@ -396,9 +396,10 @@ export function TakeoffWorkstation({
   // review card is visible; mirrored into a ref for the once-bound canvas
   // mouse handler.
   const [outlineTool, setOutlineTool] = useState<null | 'add' | 'remove'>(null);
+  const [outlineSelectedVertex, setOutlineSelectedVertex] = useState<{ areaId: string; vertexIndex: number } | null>(null);
   const outlineToolRef = useRef<null | 'add' | 'remove'>(null);
   useEffect(() => { outlineToolRef.current = outlineTool; }, [outlineTool]);
-  useEffect(() => { if (aiStagedPageId == null) setOutlineTool(null); }, [aiStagedPageId]);
+  useEffect(() => { if (aiStagedPageId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); } }, [aiStagedPageId]);
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // AI Assist points: track locally so we can update after a scan without a page reload.
@@ -5116,6 +5117,77 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     setIsDirty(true);
   }, []);
 
+  // ── Owner 2026-09-25: outline vertex selection (mobile parity) ──────────
+  // The selected vertex renders larger/orange and its two adjacent edges are
+  // highlighted; the prev/next stepper in the review card walks the ring
+  // clockwise / anti-clockwise.
+  const outlineHighlightRef = useRef<Array<Line>>([]);
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    canvas.getObjects().forEach(o => {
+      const t = o as unknown as { measurementId?: string; vertexIndex?: number };
+      if (t.measurementId == null || t.vertexIndex == null) return;
+      const isSel = outlineSelectedVertex != null
+        && t.measurementId === outlineSelectedVertex.areaId
+        && t.vertexIndex === outlineSelectedVertex.vertexIndex;
+      o.set(isSel
+        ? { radius: 6.5, fill: '#FF6B35', strokeWidth: 1.5, stroke: '#7c2d12' }
+        : { radius: 4, fill: '#3b82f6', strokeWidth: 1, stroke: '#000' });
+    });
+    outlineHighlightRef.current.forEach(l => canvas.remove(l));
+    outlineHighlightRef.current = [];
+    if (outlineSelectedVertex) {
+      const ra = roofAreas.find(r => r.id === outlineSelectedVertex.areaId || r.quoteRoofAreaId === outlineSelectedVertex.areaId);
+      const pts = ra?.points;
+      if (pts && pts.length >= 3) {
+        const i = Math.min(outlineSelectedVertex.vertexIndex, pts.length - 1);
+        const cur = pts[i];
+        const prevP = pts[(i - 1 + pts.length) % pts.length];
+        const nextP = pts[(i + 1) % pts.length];
+        for (const other of [prevP, nextP]) {
+          const hl = new Line([other.x, other.y, cur.x, cur.y], {
+            stroke: '#FF6B35', strokeWidth: 3, selectable: false, evented: false, objectCaching: false,
+          });
+          outlineHighlightRef.current.push(hl);
+          canvas.add(hl);
+        }
+      }
+    }
+    canvas.requestRenderAll();
+  }, [outlineSelectedVertex, roofAreas]);
+
+  // Auto-select the first staged vertex once the outline is on the canvas so
+  // the stepper always has a live selection to walk.
+  useEffect(() => {
+    if (aiStagedPageId == null || outlineSelectedVertex) return;
+    const ra = roofAreas.find(r => r.fromPageId === aiStagedPageId && r.quoteRoofAreaId && r.points.length >= 3);
+    if (ra) setOutlineSelectedVertex({ areaId: ra.quoteRoofAreaId ?? ra.id, vertexIndex: 0 });
+  }, [aiStagedPageId, roofAreas, outlineSelectedVertex]);
+
+  const stepOutlineSelection = useCallback((dir: 1 | -1) => {
+    setOutlineSelectedVertex(sel => {
+      if (!sel) return sel;
+      const ra = roofAreas.find(r => r.id === sel.areaId || r.quoteRoofAreaId === sel.areaId);
+      const n = ra?.points.length ?? 0;
+      if (n < 3) return sel;
+      return { areaId: sel.areaId, vertexIndex: (sel.vertexIndex + dir + n) % n };
+    });
+  }, [roofAreas]);
+
+  // Remove the SELECTED vertex (minimum 3 kept) - mobile-parity behaviour.
+  const handleRemoveSelectedOutlineVertex = useCallback(() => {
+    const sel = outlineSelectedVertex;
+    if (!sel) return;
+    const ra = roofAreas.find(r => r.id === sel.areaId || r.quoteRoofAreaId === sel.areaId);
+    if (!ra || ra.points.length <= 3) return;
+    const pts = ra.points
+      .filter((_, i) => i !== sel.vertexIndex)
+      .map(p => ({ x: p.x, y: p.y }));
+    applyStagedAreaPoints(ra.quoteRoofAreaId ?? ra.id, pts);
+    setOutlineSelectedVertex({ areaId: sel.areaId, vertexIndex: Math.min(sel.vertexIndex, pts.length - 1) });
+  }, [outlineSelectedVertex, roofAreas, applyStagedAreaPoints]);
+
   // One-shot click handling for the add/remove point tools. Bound once; the
   // armed tool is read through outlineToolRef so no rebinding is needed.
   useEffect(() => {
@@ -5123,7 +5195,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     if (!canvas) return;
     const handleToolDown = (opt: { e: MouseEvent; target?: unknown }) => {
       const tool = outlineToolRef.current;
-      if (!tool) return;
+      if (!tool) {
+        // Owner 2026-09-25, mobile parity: clicking a blue vertex selects it.
+        // The selection drives the enlarged orange vertex, the adjacent-edge
+        // highlight and the prev/next stepper in the review card.
+        const t = opt.target as { measurementId?: string; vertexIndex?: number } | undefined;
+        if (t && t.vertexIndex != null && t.measurementId) {
+          setOutlineSelectedVertex({ areaId: t.measurementId, vertexIndex: t.vertexIndex });
+        }
+        return;
+      }
       if (tool === 'remove') {
         const target = opt.target as { measurementId?: string; vertexIndex?: number } | undefined;
         if (!target || target.vertexIndex == null || !target.measurementId) return;
@@ -5612,12 +5693,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         return;
       }
 
-      const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: unknown[]; pitch_degrees?: number | null }, idx: number) => ({
-        index: idx,
-        name: area.name || `Area ${idx + 1}`,
-        pitch: area.pitch_degrees ?? result.data?.pitch?.global_degrees ?? null,
-        vertexCount: area.points?.length ?? 0,
-      }));
+      const areaInfos: AiResultsArea[] = (result.data?.roof_areas ?? []).map((area: { name?: string; points?: Array<{ x: number; y: number }>; pitch_degrees?: number | null }, idx: number) => {
+        // Owner 2026-09-25: the results card leads with the measured size -
+        // same calibration maths as the eventual apply, so the number the
+        // user sees here is the number that lands on the canvas.
+        const sizeValue = computeAreaValue((area.points ?? []).map(p => ({ x: p.x, y: p.y })), calibrations);
+        return {
+          index: idx,
+          name: area.name || `Area ${idx + 1}`,
+          pitch: area.pitch_degrees ?? result.data?.pitch?.global_degrees ?? null,
+          vertexCount: area.points?.length ?? 0,
+          sizeLabel: sizeValue > 0
+            ? `${sizeValue >= 100 ? Math.round(sizeValue).toLocaleString() : sizeValue.toFixed(1)} ${quote.measurement_system === 'metric' ? 'm²' : 'ft²'}`
+            : null,
+        };
+      });
 
       // Points were deducted server-side on scan1; update local state.
       // Costs come from the shared canonical constant (2/6/12).
@@ -5856,6 +5946,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // Reopen the calibration-complete popup so user can choose AI Assist / Draw / Skip
     roofAreaInstructionsDismissedRef.current = false;
     setShowRoofAreaInstructions(true);
+  };
+
+  // Owner 2026-09-25: outline-review "Finish & save" - identical to the main
+  // header action: keep the area measured so far and go straight to the
+  // quote builder (Measurements & Pricing).
+  const handleOutlineFinishAndSave = async () => {
+    setAiStagedPageId(null);
+    setOutlineTool(null);
+    setOutlineSelectedVertex(null);
+    await handleSaveTakeoff();
   };
 
 
@@ -6649,10 +6749,11 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               <QcHostedButton onClick={handleSaveTakeoff}
                 disabled={calibrations.length === 0 || isSaving}
                 data-copilot="takeoff-save" variant="primary" size="sm" aria-busy={isSaving}
+                className="qc-takeoff-finish-btn"
                 title={calibrations.length === 0 ? 'Calibrate the plan first' : 'Save and continue to Measurements & Pricing'}>
-                {isSaving ? 'Saving…' : 'Finish & save'}<QcIcon name="arrow" />
+                <span className="qc-takeoff-finish-main">{isSaving ? 'Saving…' : 'Finish & save'}<QcIcon name="arrow" /></span>
+                <span className="qc-takeoff-finish-next">Next: Measurements &amp; Pricing</span>
               </QcHostedButton>
-              <span>Next: Measurements &amp; Pricing</span>
             </div>
           </div>
         </header>
@@ -8424,49 +8525,83 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
           can be dragged/added/removed while it is open); touch keeps the
           original bottom banner - the mobile flow is locked. */}
       {aiStagedPageId === (pages[currentPageIndex]?.id ?? null) && !aiScanning && !aiResults && (
-        desktopAppearance ? (
-          <QcHostedDialog label="Check the AI outline" modeless>
-            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xl">
-              <h2 className="text-base font-semibold mb-1 text-slate-900">Check the AI outline</h2>
-              <p className="text-xs text-slate-500 mb-3">
-                AI traced the roof area on the plan. Drag the blue points to fix the shape - the component scan runs on your corrected outline.
-              </p>
-              <div className="flex gap-2 mb-2">
-                <QcHostedButton variant="ghost" size="sm" type="button"
-                  aria-pressed={outlineTool === 'add'}
-                  onClick={() => setOutlineTool(t => t === 'add' ? null : 'add')}
-                  className="flex-1 justify-center text-xs">
-                  + Add point
-                </QcHostedButton>
-                <QcHostedButton variant="ghost" size="sm" type="button"
-                  aria-pressed={outlineTool === 'remove'}
-                  onClick={() => setOutlineTool(t => t === 'remove' ? null : 'remove')}
-                  className="flex-1 justify-center text-xs">
-                  − Remove point
-                </QcHostedButton>
-              </div>
-              <p className="text-[11px] text-slate-400 mb-3" data-live-hint>
-                {outlineTool === 'add'
-                  ? 'Click on an outline edge to insert a point.'
-                  : outlineTool === 'remove'
-                    ? 'Click a blue point to remove it (minimum 3 kept).'
-                    : 'Drag this card aside any time to see the plan behind it.'}
-              </p>
-              <div className="flex gap-2">
+        desktopAppearance ? (() => {
+          const stagedAreas = roofAreas.filter(ra => ra.fromPageId === (pages[currentPageIndex]?.id ?? null) && ra.quoteRoofAreaId);
+          const selArea = outlineSelectedVertex
+            ? stagedAreas.find(ra => ra.id === outlineSelectedVertex.areaId || ra.quoteRoofAreaId === outlineSelectedVertex.areaId)
+            : undefined;
+          const selN = selArea?.points.length ?? 0;
+          const selIdx = outlineSelectedVertex ? Math.min(outlineSelectedVertex.vertexIndex, Math.max(selN - 1, 0)) : 0;
+          return (
+            <QcHostedDialog label="Check the AI outline" modeless>
+              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xl">
+                <h2 className="text-base font-semibold mb-1 text-slate-900">Check the AI outline</h2>
+                <p className="text-xs text-slate-500 mb-3">
+                  Drag the blue points to fix the shape - your next step runs on the corrected outline.
+                </p>
+                {/* Vertex stepper (mobile parity): the selected point renders
+                    enlarged in orange on the canvas with its two edges lit. */}
+                {selN >= 3 && outlineSelectedVertex && (
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <QcHostedButton variant="ghost" size="sm" type="button"
+                      onClick={() => stepOutlineSelection(-1)}
+                      aria-label="Select previous point (anti-clockwise)"
+                      className="w-9 h-9 justify-center rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-600">
+                      ◀
+                    </QcHostedButton>
+                    <span className="text-xs font-medium text-slate-600">Point {selIdx + 1} of {selN}</span>
+                    <QcHostedButton variant="ghost" size="sm" type="button"
+                      onClick={() => stepOutlineSelection(1)}
+                      aria-label="Select next point (clockwise)"
+                      className="w-9 h-9 justify-center rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-600">
+                      ▶
+                    </QcHostedButton>
+                  </div>
+                )}
+                <div className="flex gap-2 mb-2">
+                  <QcHostedButton variant="ghost" size="sm" type="button"
+                    aria-pressed={outlineTool === 'add'}
+                    onClick={() => setOutlineTool(t => t === 'add' ? null : 'add')}
+                    className="flex-1 justify-center text-xs">
+                    + Add point
+                  </QcHostedButton>
+                  <QcHostedButton variant="ghost" size="sm" type="button"
+                    onClick={handleRemoveSelectedOutlineVertex}
+                    disabled={!outlineSelectedVertex || selN <= 3}
+                    className="flex-1 justify-center text-xs">
+                    − Remove point
+                  </QcHostedButton>
+                </div>
+                <p className="text-[11px] text-slate-400 mb-3" data-live-hint>
+                  {outlineTool === 'add'
+                    ? 'Click on an outline edge to insert a point.'
+                    : selN >= 3
+                      ? 'The selected point is enlarged in orange with its two edges lit - drag it, or use the arrows to walk the outline.'
+                      : 'Drag this card aside any time to see the plan behind it.'}
+                </p>
+                {/* Owner 2026-09-25: three real next steps - scan components,
+                    add them manually, or finish with the area measured so far. */}
                 <QcHostedButton variant="primary" type="button"
                   onClick={handleContinueAiScan}
-                  className="flex-1 justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
-                  Detect components
+                  className="w-full justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
+                  AI scan for components
                 </QcHostedButton>
-                <QcHostedButton variant="ghost" type="button"
-                  onClick={() => { setAiStagedPageId(null); setOutlineTool(null); }}
-                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
-                  Not now
-                </QcHostedButton>
+                <div className="flex gap-2 mt-2">
+                  <QcHostedButton variant="ghost" type="button"
+                    onClick={() => { setAiStagedPageId(null); setOutlineTool(null); setOutlineSelectedVertex(null); }}
+                    className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    Add components manually
+                  </QcHostedButton>
+                  <QcHostedButton variant="ghost" type="button"
+                    onClick={handleOutlineFinishAndSave}
+                    className="flex-1 justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                    Finish &amp; save
+                  </QcHostedButton>
+                </div>
               </div>
-            </div>
-          </QcHostedDialog>
-        ) : (
+            </QcHostedDialog>
+          );
+        })() : (
           <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-white rounded-2xl border border-gray-200 shadow-xl px-4 py-3 max-w-sm text-center">
             <h3 className="text-sm font-semibold text-slate-900">AI outline applied</h3>
             <p className="text-xs text-slate-500 mt-1">Drag the blue points to correct the outline, then continue. Components are detected on your corrected outline.</p>

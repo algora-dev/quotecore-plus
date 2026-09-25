@@ -2,7 +2,6 @@
 import { QcHostedDialog, QcHostedButton } from '@/app/components/ui/v2/QcHostedDialog';
 
 import { useState } from 'react';
-import { AI_COMPONENT_REGISTRY, ALL_SEMANTIC_KEYS } from '@/app/lib/takeoff/aiComponentRegistry';
 
 export interface AiResultsArea {
   /** Index in the roof_areas array (0-based). */
@@ -13,6 +12,9 @@ export interface AiResultsArea {
   pitch: number | null;
   /** Number of polygon points. */
   vertexCount: number;
+  /** Formatted real-world area size (e.g. "142.6 m²"). Owner 2026-09-25:
+   *  stage 1 is area-only, so the measured size leads the card. */
+  sizeLabel?: string | null;
 }
 
 export interface AiResultsData {
@@ -46,7 +48,7 @@ interface Props {
 }
 
 export function AiResultsModal({ data, onApply, onDiscard }: Props) {
-  const { summary, scaleCheck, droppedCount, areas } = data;
+  const { summary, scaleCheck, areas } = data;
   const [acknowledged, setAcknowlednowledged] = useState(false);
   const [applying, setApplying] = useState(false);
   const [areaEdits, setAreaEdits] = useState<Record<number, { name: string; pitch: string }>>(() => (
@@ -110,41 +112,22 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   });
 
   return (
-    <QcHostedDialog label="Review AI measurements" size="md" floating className="fixed inset-0 bg-black/20 flex items-center justify-center z-[60]">
-      <div className="bg-white rounded-2xl p-4 md:p-5 max-w-lg border border-gray-200 shadow-xl max-h-[85vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-1">AI Assist Results</h2>
-        <p className="text-xs text-slate-500 mb-4">
-          Here&apos;s what AI Assist identified from its scans, please check the area(s) and components, then ensure you apply a pitch value to any identified roof area(s). You can also change the roof area name(s).
+    // Owner 2026-09-25: stage-1 results are AREA-ONLY (the component scan is
+    // a later, optional step), so the card talks only about the traced roof
+    // area: its measured size, name and pitch. Modeless + draggable like the
+    // calibration card - the canvas stays fully interactive behind it, and
+    // with no component tile grid there is nothing to scroll horizontally.
+    <QcHostedDialog label="AI Assist Results" modeless
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20">
+      <div className="bg-white rounded-2xl p-4 md:p-5 max-w-sm border border-gray-200 shadow-xl">
+        <h2 className="text-base font-semibold mb-1 text-slate-900">AI Assist Results</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          AI traced the roof outline and measured this area. Check it against the plan, give it a name and a pitch, then apply it to the canvas.
         </p>
 
-        {/* Detection summary */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <SummaryCard label="Roof Areas" value={summary.areas} colour="text-blue-600" />
-          <SummaryCard label="Total Lines" value={summary.components} colour="text-slate-900" />
-          <SummaryCard label="Dropped" value={droppedCount} colour={droppedCount > 0 ? 'text-amber-600' : 'text-slate-400'} />
-        </div>
-
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {ALL_SEMANTIC_KEYS.map(key => {
-            const def = AI_COMPONENT_REGISTRY[key];
-            const count = summary[def.key];
-            return (
-              <MiniStat key={key} label={def.displayName} value={count} colour={def.badgeClasses} />
-            );
-          })}
-        </div>
-
-        {/* Uncertain components callout */}
-        {summary.uncertain > 0 && (
-          <div className="mb-4 p-3 bg-pink-50 border border-pink-200 rounded-lg text-xs text-pink-800">
-            The AI found <strong>{summary.uncertain} uncertain component{summary.uncertain === 1 ? '' : 's'}</strong> - shown in pink dashed lines on the plan.
-            Check these, delete any that are wrong, and add the correct component manually.
-          </div>
-        )}
-
-        {/* Scale cross-check */}
+        {/* Scale cross-check (directly relevant to the area measurement) */}
         {scaleCheck?.warning && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
             {scaleCheck.warning}
           </div>
         )}
@@ -177,9 +160,9 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
           </div>
         )}
 
-        {/* Per-area editable cards */}
+        {/* Per-area editable cards: measured size + name + pitch */}
         {areas.length > 0 && (
-          <div className="mb-4 space-y-3">
+          <div className="mb-3 space-y-3">
             {areas.map((area) => {
               const edit = areaEdits[area.index];
               const nameEmpty = !edit?.name?.trim();
@@ -187,6 +170,12 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
               return (
                 <div key={area.index} className="rounded-xl border-2 border-[#FF6B35]/30 p-3 space-y-2">
                   <div className="text-xs font-semibold text-slate-700">Roof Area {area.index + 1}</div>
+                  {area.sizeLabel && (
+                    <div className="text-center py-1.5 rounded-lg bg-orange-50/60">
+                      <div className="text-2xl font-bold leading-7 text-slate-900">{area.sizeLabel}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">measured roof area</div>
+                    </div>
+                  )}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-slate-500 w-12 shrink-0">Name:</label>
@@ -235,7 +224,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
           </div>
         )}
 
-        {/* Acknowledgment */}
+        {/* Acknowledgment - area only (components are a later, optional step) */}
         <label className="flex items-start gap-2 mb-4 cursor-pointer">
           <input
             type="checkbox"
@@ -244,8 +233,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
             className="mt-0.5 w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
           />
           <span className="text-xs text-slate-600">
-            I understand these are AI-generated measurements placed as placeholder components.
-            I&apos;ll verify accuracy and attach real components before quoting.
+            I understand this roof area measurement is AI-generated. I&apos;ll check it against the plan before quoting.
           </span>
         </label>
 
@@ -273,23 +261,5 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
         </div>
       </div>
     </QcHostedDialog>
-  );
-}
-
-function SummaryCard({ label, value, colour }: { label: string; value: number; colour: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 p-2.5 text-center">
-      <div className={`text-xl font-bold ${colour}`}>{value}</div>
-      <div className="text-[10px] text-slate-500 mt-0.5">{label}</div>
-    </div>
-  );
-}
-
-function MiniStat({ label, value, colour }: { label: string; value: number; colour: string }) {
-  return (
-    <div className={`rounded-lg p-2 text-center ${colour}`}>
-      <div className="text-base font-bold">{value}</div>
-      <div className="text-[9px] uppercase tracking-wide opacity-70">{label}</div>
-    </div>
   );
 }

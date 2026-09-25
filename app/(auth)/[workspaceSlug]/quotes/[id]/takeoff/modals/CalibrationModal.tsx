@@ -34,9 +34,21 @@ export function CalibrationModal({
     <QcHostedDialog label="Set the calibration distance" modeless
       className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xl">
-      <h2 className="text-base font-semibold mb-0.5 text-slate-900">
-        Calibration {calibrationNumber} of 3
-      </h2>
+      {/* Owner 2026-09-25: Cancel lives in the card's top-right corner. The
+          old bottom row overflowed the 360px modeless card, pushing Cancel
+          out past the left edge as a stray floating button. */}
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="text-base font-semibold text-slate-900">
+          Calibration {calibrationNumber} of 3
+        </h2>
+        <QcHostedButton variant="ghost"
+          type="button"
+          onClick={onCancel}
+          className="shrink-0 -mt-1 -mr-2 px-2 py-1 text-xs text-slate-500 hover:text-slate-900"
+        >
+          Cancel
+        </QcHostedButton>
+      </div>
       <p className="text-xs text-slate-500 mb-3">
         {calibrationNumber === 1
           ? 'One correct calibration is all you need to start measuring.'
@@ -71,13 +83,6 @@ export function CalibrationModal({
           Drag this card aside or pan the plan behind it if the measurement is hidden.
         </p>
         <div className="flex gap-2 justify-end">
-          <QcHostedButton variant="ghost"
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900"
-          >
-            Cancel
-          </QcHostedButton>
           {canAddAnother && (
             <QcHostedButton variant="ghost"
               type="button"
