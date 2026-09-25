@@ -100,8 +100,8 @@ html[data-takeoff-immersive='touch'] .qc-main { max-width:none; padding:0; }
 
 /* C50: one edge tab, never a public rail switch. The logo asset is unchanged.
    Animate the panel and tab only; do not animate the grid, main or canvas width. */
-.qc-sidebar-edge-tab { position:fixed; top:16px; left:max(0px,calc(var(--qc-sidebar-width) - 44px)); z-index:32; display:flex; justify-content:flex-end; align-items:center; width:44px; min-width:44px; height:44px; padding:0; border:0; border-radius:10px; background:transparent; color:var(--qc-action-primary-text); cursor:pointer; transition:left var(--qc-motion-panel) var(--qc-ease); }
-.qc-sidebar-edge-face { display:flex; align-items:center; justify-content:center; width:28px; height:44px; background:var(--qc-gradient-primary); border:1px solid var(--qc-color-orange-vivid); border-radius:10px 0 0 10px; box-shadow:var(--qc-glass-b-highlight),var(--qc-shadow-raised); transition:background var(--qc-motion-fast),box-shadow var(--qc-motion-fast); }
+.qc-sidebar-edge-tab { position:fixed; top:0; left:max(0px,calc(var(--qc-sidebar-width) - 44px)); z-index:32; display:flex; justify-content:flex-end; align-items:center; width:44px; min-width:44px; height:var(--qc-topbar); padding:0; border:0; border-radius:10px; background:transparent; color:var(--qc-action-primary-text); cursor:pointer; transition:left var(--qc-motion-panel) var(--qc-ease); }
+.qc-sidebar-edge-face { display:flex; align-items:center; justify-content:center; width:28px; height:100%; background:var(--qc-gradient-primary); border:1px solid var(--qc-color-orange-vivid); border-radius:10px 0 0 10px; box-shadow:var(--qc-glass-b-highlight),var(--qc-shadow-raised); transition:background var(--qc-motion-fast),box-shadow var(--qc-motion-fast); }
 .qc-sidebar-edge-face svg { width:18px; height:18px; transform:rotate(180deg); }
 [data-qc-shell-mode='hidden'] .qc-sidebar-edge-tab { justify-content:flex-start; }
 [data-qc-shell-mode='hidden'] .qc-sidebar-edge-face { border-radius:0 10px 10px 0; }

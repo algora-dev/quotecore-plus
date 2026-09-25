@@ -2,7 +2,7 @@
 import { forwardRef } from 'react';
 import { QcIcon } from '../ui/v2/QcIcon';
 
-/** C50. A single, persistent edge control. Narrow orange face; 44px hit area.
+/** C50. A single, persistent edge control. Narrow orange face; hit area spans the full topbar height.
  * The shell owns state. No route, query, preference or canvas logic lives here.
  */
 export const QcSidebarTab = forwardRef<HTMLButtonElement, {
