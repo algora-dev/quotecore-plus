@@ -4,14 +4,18 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { QuoteRow, QuoteRoofAreaRow, QuoteComponentRow, CustomerQuoteTemplateRow } from '@/app/lib/types';
 import { QuotePreview } from './QuotePreview';
+import { LineEditForm } from './LineEditForm';
+import { QcStudioToolbar, QcStudioInspectorHeading, QcStudioOverview, QcStudioSection } from '@/app/components/ui/v2/QcDocumentStudio';
 import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 import { EditHeaderModal } from './EditHeaderModal';
 import { EditFooterModal } from './EditFooterModal';
 import { ConfirmModal } from '@/app/components/ConfirmModal';
 import { saveCustomerQuoteLines, saveCustomerQuoteBranding, updateQuoteMargins } from '../../actions';
 import { formatCurrency } from '@/app/lib/currency/currencies';
-import { displayLineText } from '@/app/lib/quotes/lineText';
-import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
+import { displayLineText, splitLineParts } from '@/app/lib/quotes/lineText';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcDocumentWorkspace, QcDocumentHeader, QcDocumentSaveState, QcDocumentBody, QcDocumentPanel, QcDocumentPanelHeader, QcDocumentSection, QcDocumentPreview, QcDocumentDialogScope } from '@/app/components/ui/v2/QcDocumentWorkspace';
+import { QcDialog } from '@/app/components/ui/v2/QcDialog';
 import {
   convertLinear,
   convertArea,
@@ -166,6 +170,11 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   // Pure layout state - the panel stays mounted (no edit/autosave disruption).
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [studioSection, setStudioSection] = useState('document');
+  const [studioPreview, setStudioPreview] = useState(false);
+  const [studioLineDirty, setStudioLineDirty] = useState(false);
+  const [pendingStudioTarget, setPendingStudioTarget] = useState<string | null>(null);
+
 
   // Branding state - use uploaded logo if quote doesn't have one yet
   const [companyName, setCompanyName] = useState(quote.cq_company_name || '');
@@ -696,6 +705,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
     setIsDirty(true);
   }
 
+  // AGENT-TODO P5-SAVE-01 (Gavin): the existing save catches failures without
+  // returning a success result; Save & return still navigates after awaiting it.
+  // Preserve this owned contract here; add an explicit success gate separately.
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -852,127 +864,138 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
   );
   const total = subtotal + taxTotal;
 
+  // Phase 5B: UI selection does not own data or document saving.
+  const studioOptions = [
+    { id: 'header', label: 'Company & logo', description: 'Your details on this document' },
+    { id: 'appearance', label: 'Prices & quantities', description: 'Choose what the recipient sees' },
+    { id: 'footer', label: 'Footer & terms', description: 'Notes and conditions' },
+    { id: 'templates', label: 'Branding templates', description: 'Load or save your branding' },
+    { id: 'margins', label: 'Margins', description: 'Global and per-line pricing controls' },
+    { id: 'taxes', label: 'Taxes', description: 'Rates and which taxes apply' },
+    { id: 'import', label: 'Import items', description: 'Image, PDF or text' },
+  ];
+  const studioLine = lines.find(line => line.id === editingLineId);
+  function goToStudioSection(target: string) {
+    setStudioSection(target); setStudioPreview(false); setPanelCollapsed(false); setStudioLineDirty(false);
+    setEditingLineId(target.startsWith('line:') ? target.slice(5) : null);
+  }
+  function selectStudioSection(target: string) {
+    if (target === studioSection) { setPanelCollapsed(false); setStudioPreview(false); return; }
+    if (studioLineDirty && target !== studioSection) { setPendingStudioTarget(target); return; }
+    goToStudioSection(target);
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-2 md:p-6 space-y-3 md:space-y-4">
-        {/* Header */}
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="min-w-0">
-            <Link
+    <QcDocumentWorkspace className="qc-document-studio">
+      <QcDocumentHeader
+        title={editorTitle}
+        subtitle={`Quote #${quote.quote_number || 'Draft'} · ${quote.customer_name || 'Customer details'}`}
+        back={<Link
               href={`/${workspaceSlug}/quotes/${quote.id}/summary`}
               className="text-sm text-slate-500 hover:text-slate-700"
             >
-              <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>Back
-            </Link>
-            <h1 className="text-lg md:text-2xl font-semibold text-slate-900 mt-1 truncate">
-              {editorTitle} - Quote #{quote.quote_number || 'Draft'}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4 flex-wrap">
-            {/* Header template dropdown - always visible */}
-            <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    applyTemplate(e.target.value);
-                    e.target.value = '';
+              <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>Job Space
+            </Link>}
+        status={<QcDocumentSaveState saving={saving} dirty={isDirty} lastSaved={lastSaved} />}
+        actions={<QcButton variant="primary" size="md" type="submit"
+                onClick={async () => {
+                  if (showMarginInPreview) {
+                    setShowMarginSaveWarning(true);
+                    return;
                   }
+                  await handleSave();
+                  router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
                 }}
-                data-copilot="cl-template-dropdown"
-                className="px-3 py-1.5 text-xs border border-slate-300 rounded-full focus:border-orange-500 focus:outline-none bg-white"
+                disabled={saving || studioLineDirty}
+                title={studioLineDirty ? 'Apply or cancel the selected line changes first' : undefined}
+                data-copilot="cl-save-return"
+                
               >
-                <option value="">{templates.length > 0 ? 'Load Template...' : 'No templates saved'}</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
-            {/* AI import buttons - image upload + text prompt */}
-            <button
+                {saving ? 'Saving...' : 'Save & return'}
+              </QcButton>}
+      />
+      <QcStudioToolbar section={studioSection} onSelect={selectStudioSection} options={studioOptions}
+        preview={studioPreview} onPreview={() => setStudioPreview(value => !value)}
+        primary={<QcButton size="sm" variant="secondary" onClick={() => setShowAddLine(true)} data-copilot="cl-add-line-btn">+ Add item</QcButton>} />
+      {studioLineDirty && <p className="qc-studio-selection-note" role="status">Line changes are not applied yet. Choose Apply changes in the editor before saving the document.</p>}
+      <QcDocumentBody collapsed={panelCollapsed || studioPreview}>
+        <QcDocumentPanel collapsed={panelCollapsed || studioPreview} data-copilot="cl-left-panel">
+          <QcStudioInspectorHeading section={studioSection} title={studioSection.startsWith('line:') ? 'Line item' : studioSection === 'items' ? 'All items' : studioOptions.find(option => option.id === studioSection)?.label || 'Document'}
+            subtitle={studioSection.startsWith('line:') ? 'Edit this item without losing sight of the document.' : undefined}
+            onBack={() => selectStudioSection('document')} onCollapse={() => setPanelCollapsed(true)} />
+          <QcStudioSection active={studioSection === 'document'}><QcStudioOverview options={studioOptions} onSelect={selectStudioSection} /></QcStudioSection>
+          <QcStudioSection active={studioSection === 'header'}>
+            <QcDocumentSection title="Company & logo" description="These details apply to this document. Customer and job details are managed in Job Space.">
+              {([
+                ['Company name', companyName, setCompanyName], ['Address', companyAddress, setCompanyAddress],
+                ['Phone', companyPhone, setCompanyPhone], ['Email', companyEmail, setCompanyEmail], ['Logo URL', companyLogoUrl, setCompanyLogoUrl],
+              ] as const).map(([label, value, setter]) => <label key={label} className="qc-document-order-label">{label}<input aria-label={label} value={value} onChange={e => { setter(e.target.value); setIsDirty(true); }} /></label>)}
+            </QcDocumentSection>
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'footer'}><QcDocumentSection title="Footer & terms" description="Updates the document as you type.">
+            <label className="qc-document-order-label">Footer text<textarea aria-label="Footer text" rows={9} value={footerText} onChange={e => { setFooterText(e.target.value); setIsDirty(true); }} /></label>
+          </QcDocumentSection></QcStudioSection>
+          <QcStudioSection active={studioSection.startsWith('line:')}>
+            {studioLine && <>
+              <div className="qc-studio-line-controls"><div className="qc-document-line-toggles">
+                <label><input type="checkbox" checked={studioLine.isVisible} onChange={() => toggleVisibility(studioLine.id)} />Show item</label>
+                <label><input type="checkbox" checked={studioLine.includeInTotal} onChange={() => toggleIncludeInTotal(studioLine.id)} />In total</label>
+                <label><input type="checkbox" checked={studioLine.showUnits} disabled={!studioLine.isVisible} onChange={() => toggleShowUnits(studioLine.id)} />Show units</label>
+              </div><p className="qc-document-help">Hidden items can still contribute to this quote's total when In total is selected.</p>
+                <div className="qc-document-row-actions">
+                  <QcButton size="sm" onClick={() => moveUp(studioLine.id)} disabled={studioLine.sortOrder === 0}>↑ Move up</QcButton>
+                  <QcButton size="sm" onClick={() => moveDown(studioLine.id)} disabled={studioLine.sortOrder === lines.length - 1}>↓ Move down</QcButton>
+                  <QcButton size="sm" className="qc-document-danger-control" onClick={() => setRemoveLineId(studioLine.id)}>Remove</QcButton>
+                </div>
+              </div>
+              <div className="qc-studio-line-form">
+                <LineEditForm key={studioLine.id} onDraftChange={setStudioLineDirty}
+                  initialText={splitLineParts(studioLine.text, studioLine.quantityText).description}
+                  initialQuantity={splitLineParts(studioLine.text, studioLine.quantityText).quantity}
+                  initialAmount={studioLine.amount} initialShowPrice={studioLine.showPrice}
+                  showQuantityColumn={showQuantityColumn} initialQty={studioLine.qty ?? 1} initialUnitPrice={studioLine.unitPrice ?? null}
+                  isComponentLine={studioLine.type === 'component'} baseMaterialCost={studioLine.baseMaterialCost} baseLabourCost={studioLine.baseLabourCost}
+                  initialLineMarginPercent={studioLine.lineMarginPercent ?? null} initialLineLaborMarginPercent={studioLine.lineLaborMarginPercent ?? null}
+                  globalMarginPercent={globalMarginPercent > 0 ? globalMarginPercent : null}
+                  defaultMaterialMarginPercent={globalMarginPercent > 0 ? globalMarginPercent : (quote.material_margin_enabled && quote.material_margin_percent != null ? Number(quote.material_margin_percent) : null)}
+                  defaultLaborMarginPercent={hasLaborLines && globalLaborMarginPercent > 0 ? globalLaborMarginPercent : 0}
+                  quoteEntryMode={(quote as { entry_mode?: string }).entry_mode ?? null} currency={currency} saveLabel="Apply changes"
+                  onSave={(text, quantity, amount, sp, qty, unitPrice, matMargin, labMargin, bmc) => {
+                    updateLine(studioLine.id, text, quantity, amount, sp, qty, unitPrice, matMargin, labMargin, bmc);
+                    setStudioLineDirty(false); setStudioSection('items');
+                  }}
+                  onCancel={() => goToStudioSection('items')} />
+              </div>
+            </>}
+          </QcStudioSection>
+          <QcDocumentSection hidden={studioSection !== 'import'} title="Import items" description="Use an image, PDF or text to add lines, then review them.">
+            <div className="qc-document-imports"><QcButton variant="ghost" size="sm"
               type="button"
               onClick={() => setShowAiUpload(true)}
               title="Upload image or pdf to transfer into a quote"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all whitespace-nowrap"
+              
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <span className="hidden sm:inline">Upload Image</span>
               <span className="sm:hidden">Upload</span>
-            </button>
-            <button
+            </QcButton><QcButton variant="ghost" size="sm"
               type="button"
               onClick={() => setShowAiText(true)}
               title="Write or copy and paste quote details"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all whitespace-nowrap"
+              
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span className="hidden sm:inline">Text Prompt</span>
               <span className="sm:hidden">Text</span>
-            </button>
-            <div className="text-xs md:text-sm text-slate-500 whitespace-nowrap">
-              {saving ? 'Saving...' : lastSaved ? `Saved ${lastSaved.toLocaleTimeString()}` : 'Not saved yet'}
-              {isDirty && !saving && ' (unsaved)'}
-            </div>
-          </div>
-        </div>
-
-        {/* Two-panel layout. Flex row (was a 2-col grid) so the left controls
-            can collapse and the preview (flex-1) smoothly fills the freed
-            space. Visually identical to the old 50/50 grid when expanded
-            (left keeps a 1fr-equivalent basis). */}
-        <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-start pb-20 md:pb-0">
-          {/* Left Panel: Component Selection - collapsible to declutter. Fixed
-              basis (not 1fr) so the PREVIEW is the dominant section, matching
-              the order editors; on collapse the preview goes full width. */}
-          <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[420px] lg:flex-shrink-0">
-          <div className="bg-white rounded-xl border border-slate-200 p-2 md:p-6 space-y-4" data-copilot="cl-left-panel">
-            <div className="flex items-center gap-2">
-              <CollapseButton
-                collapsed={panelCollapsed}
-                onToggle={() => setPanelCollapsed(true)}
-                label="Collapse panel"
-              />
-              <h2 className="text-lg font-semibold text-slate-900">Components & Items</h2>
-            </div>
-            <p className="text-xs text-slate-400">
-              Easily click/unclick what you want to see or hide from your quote below
-            </p>
-
-            {/* Column/price visibility toggles - above the lines list */}
-            <div className="flex flex-wrap gap-x-4 gap-y-1 pb-1 border-b border-slate-100">
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={showQuantityColumn}
-                  onChange={(e) => { setShowQuantityColumn(e.target.checked); setIsDirty(true); }}
-                  className="w-3.5 h-3.5 rounded text-orange-600"
-                />
-                <span className="text-xs text-slate-500">Qty column</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={hideLinePrices}
-                  onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }}
-                  className="w-3.5 h-3.5 rounded text-orange-600"
-                />
-                <span className="text-xs text-slate-500">Hide line prices</span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={hideTotals}
-                  onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }}
-                  className="w-3.5 h-3.5 rounded text-orange-600"
-                />
-                <span className="text-xs text-slate-500">Hide totals</span>
-              </label>
-            </div>
-
-            <div className="space-y-4">
+            </QcButton></div>
+          </QcDocumentSection>
+          <QcDocumentSection hidden={studioSection !== 'items'} title="Document items" description="Show controls visibility. In total controls the amount, even when a line is hidden.">
+            {lines.length === 0 && <div className="qc-document-empty">No items yet. Add an item or import your document to get started.</div>}
+                        <div className="space-y-4">
               {/* Grouped by roof areas */}
               {roofAreas.map(area => {
                 const areaLines = linesByArea[area.id] || [];
@@ -983,22 +1006,20 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     {areaLines.map(line => (
                       <div
                         key={line.id}
-                        className={`px-2 py-1.5 rounded-lg border ${
-                          line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
-                        }`}
+                        className="qc-document-line" data-visible={line.isVisible}
                       >
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
-                            <div className="flex items-baseline justify-between gap-2">
-                              <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                            <div className="qc-document-line-title">
+                              <button type="button" onClick={() => selectStudioSection(`line:${line.id}`)} className={`text-sm text-left underline decoration-dotted underline-offset-4 ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
                                 {lineDisplay(line)}
-                              </p>
+                              </button>
                               <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
                                 {formatCurrency(line.amount, currency)}
                               </p>
                             </div>
                             {/* Horizontal checkbox row - directly below component details */}
-                            <div className="flex items-center gap-4 mt-1">
+                            <div className="qc-document-line-toggles">
                               <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                                 <input
                                   type="checkbox"
@@ -1035,34 +1056,34 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                   onChange={() => toggleIncludeInTotal(line.id)}
                                   className="toggle-dot"
                                 />
-                                Add $
+                                In total
                               </label>
                             </div>
                           </div>
-                          <div className="flex flex-col items-center gap-0.5">
-                            <button
+                          <div className="qc-document-row-actions">
+                            <QcButton variant="ghost" size="sm"
                               type="button"
                               onClick={() => setRemoveLineId(line.id)}
                               title="Remove this line"
                               aria-label="Remove line"
-                              className="p-0.5 text-red-400 hover:text-red-600"
+                              className="qc-document-icon qc-document-danger-control"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                            <button
-                              onClick={() => moveUp(line.id)}
-                              className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                            </QcButton>
+                            <QcButton variant="ghost" size="sm" type="submit"
+                              aria-label="Move line up" onClick={() => moveUp(line.id)}
+                              className="qc-document-icon"
                               disabled={line.sortOrder === 0}
                             >
-                              ↑
-                            </button>
-                            <button
-                              onClick={() => moveDown(line.id)}
-                              className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              <svg aria-hidden="true" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                            </QcButton>
+                            <QcButton variant="ghost" size="sm" type="submit"
+                              aria-label="Move line down" onClick={() => moveDown(line.id)}
+                              className="qc-document-icon"
                               disabled={line.sortOrder === lines.length - 1}
                             >
-                              ↓
-                            </button>
+                              <svg aria-hidden="true" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </QcButton>
                           </div>
                         </div>
                       </div>
@@ -1078,22 +1099,20 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   {linesByArea['extras'].map(line => (
                     <div
                       key={line.id}
-                      className={`px-2 py-1.5 rounded-lg border ${
-                        line.isVisible ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
-                      }`}
+                      className="qc-document-line" data-visible={line.isVisible}
                     >
                       <div className="flex items-start gap-2">
                         <div className="flex-1">
-                          <div className="flex items-baseline justify-between gap-2">
-                            <p className={`text-sm ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
+                          <div className="qc-document-line-title">
+                            <button type="button" onClick={() => selectStudioSection(`line:${line.id}`)} className={`text-sm text-left underline decoration-dotted underline-offset-4 ${line.isVisible ? 'text-slate-900' : 'text-slate-400'}`}>
                               {lineDisplay(line)}
-                            </p>
+                            </button>
                             <p className={`text-sm font-medium ${line.isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
                               {formatCurrency(line.amount, currency)}
                             </p>
                           </div>
                           {/* Horizontal checkbox row - directly below component details */}
-                          <div className="flex items-center gap-4 mt-1">
+                          <div className="qc-document-line-toggles">
                             <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -1130,34 +1149,34 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                                 onChange={() => toggleIncludeInTotal(line.id)}
                                 className="toggle-dot"
                               />
-                              Add $
+                              In total
                             </label>
                           </div>
                         </div>
-                        <div className="flex flex-col items-center gap-0.5">
-                          <button
+                        <div className="qc-document-row-actions">
+                          <QcButton variant="ghost" size="sm"
                             type="button"
                             onClick={() => setRemoveLineId(line.id)}
                             title="Remove this line"
                             aria-label="Remove line"
-                            className="p-0.5 text-red-400 hover:text-red-600"
+                            className="qc-document-icon qc-document-danger-control"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                          <button
-                            onClick={() => moveUp(line.id)}
-                            className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                          </QcButton>
+                          <QcButton variant="ghost" size="sm" type="submit"
+                            aria-label="Move line up" onClick={() => moveUp(line.id)}
+                            className="qc-document-icon"
                             disabled={line.sortOrder === 0}
                           >
-                            ↑
-                          </button>
-                          <button
-                            onClick={() => moveDown(line.id)}
-                            className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                            <svg aria-hidden="true" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                          </QcButton>
+                          <QcButton variant="ghost" size="sm" type="submit"
+                            aria-label="Move line down" onClick={() => moveDown(line.id)}
+                            className="qc-document-icon"
                             disabled={line.sortOrder === lines.length - 1}
                           >
-                            ↓
-                          </button>
+                            <svg aria-hidden="true" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                          </QcButton>
                         </div>
                       </div>
                     </div>
@@ -1166,15 +1185,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               )}
             </div>
 
-            <button
-              data-copilot="cl-add-line-btn"
-              onClick={() => setShowAddLine(true)}
-              className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
-            >
-              + Add New Line
-            </button>
 
-            {/* Missing components banner - shown when components were added after initial CQL save */}
+                        {/* Missing components banner - shown when components were added after initial CQL save */}
             {missingComponents.length > 0 && (
               <div className="rounded-xl border border-orange-200 bg-orange-50/60 px-4 py-3 flex items-start gap-3">
                 <svg className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
@@ -1185,27 +1197,110 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   <p className="text-xs text-orange-700 mt-0.5">
                     {missingComponents.map(c => c.name).join(', ')}
                   </p>
-                  <button
+                  <QcButton variant="ghost" size="sm"
                     type="button"
                     onClick={addMissingComponents}
-                    className="mt-2 text-xs font-medium text-orange-700 underline hover:text-orange-900"
+                    className="mt-2"
                   >
                     Add to quote
-                  </button>
+                  </QcButton>
                 </div>
               </div>
             )}
 
-            {/* Profit Margin - all quote types. Blank quotes: single global %. Normal
+
+          </QcDocumentSection>
+          <QcDocumentSection hidden={studioSection !== 'appearance'} title="Document appearance">
+                        {/* Column/price visibility toggles - above the lines list */}
+            <div className="qc-document-visibility">
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={showQuantityColumn}
+                  onChange={(e) => { setShowQuantityColumn(e.target.checked); setIsDirty(true); }}
+                  className="w-3.5 h-3.5 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-500">Quantity column</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideLinePrices}
+                  onChange={(e) => { setHideLinePrices(e.target.checked); setIsDirty(true); }}
+                  className="w-3.5 h-3.5 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-500">Hide line prices</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={hideTotals}
+                  onChange={(e) => { setHideTotals(e.target.checked); setIsDirty(true); }}
+                  className="w-3.5 h-3.5 rounded text-orange-600"
+                />
+                <span className="text-xs text-slate-500">Hide totals</span>
+              </label>
+            </div>
+
+
+          </QcDocumentSection>
+          <QcDocumentSection hidden={studioSection !== 'templates'} title="Branding & details" description="Header, logo and footer for this document.">
+            <div className="space-y-3"><select aria-label="Branding template"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    applyTemplate(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+                data-copilot="cl-template-dropdown"
+                className="px-3 py-1.5 text-xs border border-slate-300 rounded-full focus:border-orange-500 focus:outline-none bg-white"
+              >
+                <option value="">{templates.length > 0 ? 'Load Template...' : 'No templates saved'}</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+              <div className="qc-document-row-actions">
+                <QcButton onClick={() => setShowEditHeader(true)} size="sm">Edit header</QcButton>
+                <QcButton onClick={() => setShowEditFooter(true)} size="sm">Edit footer</QcButton>
+              </div><QcButton variant="ghost" size="sm" type="submit"
+                onClick={async () => {
+                  const name = prompt('Template name:', `${quote.customer_name} - Branding Template`);
+                  if (!name) return;
+
+                  try {
+                    await createCustomerQuoteTemplate({
+                      name,
+                      companyName,
+                      companyAddress,
+                      companyPhone,
+                      companyEmail,
+                      footerText,
+                      companyLogoUrl: companyLogoUrl || null,
+                    });
+                    alert(`Template "${name}" saved successfully!`);
+                  } catch (error) {
+                    alert('Failed to save template: ' + (error as Error).message);
+                  }
+                }}
+                className="w-full"
+              >
+                Save branding template
+              </QcButton>
+            </div>
+          </QcDocumentSection>
+                      {/* Profit Margin - all quote types. Blank quotes: single global %. Normal
               quotes: separate material + labor %. Saves back to the quote
               record on Save so the Review stage stays in sync. */}
-            <div className="pt-4 border-t space-y-3">
+            <QcDocumentSection hidden={studioSection !== 'margins'} title="Margins">
               <div>
-                <h3 className="text-sm font-semibold text-slate-900">Profit Margin</h3>
+                
                 <p className="text-xs text-slate-500 mt-0.5">
                   {isBlankQuote
                     ? 'Applies a global markup to all line prices.'
-                    : 'Item Cost and labour margins applied to all lines. Per-line overrides available via the pencil editor.'}
+                    : 'Item Cost and labour margins applied to all lines. Per-line overrides available by selecting a line.'}
                 </p>
               </div>
 
@@ -1220,7 +1315,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                     min="0"
                     max="999"
                     step="0.5"
-                    value={globalMarginPercent}
+                    aria-label="Material margin percent" value={globalMarginPercent}
                     onChange={e => {
                       const val = Math.max(0, parseFloat(e.target.value) || 0);
                       handleGlobalMarginChange(val);
@@ -1243,7 +1338,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                       min="0"
                       max="999"
                       step="0.5"
-                      value={globalLaborMarginPercent}
+                      aria-label="Labour margin percent" value={globalLaborMarginPercent}
                       disabled={!hasLaborLines}
                       onChange={e => {
                         const val = Math.max(0, parseFloat(e.target.value) || 0);
@@ -1272,40 +1367,41 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
               </label>
 
               {/* Apply Global Margins & Save - resets ALL per-line overrides to global baseline */}
-              <button
+              <QcButton variant="secondary" size="sm"
                 type="button"
                 onClick={handleApplyGlobalMargins}
                 disabled={saving}
-                className="w-full py-2 text-sm font-medium bg-[#FF6B35] text-white rounded-full hover:bg-orange-600 disabled:opacity-50 transition-all"
+                className="w-full"
               >
                 {saving ? 'Saving...' : 'Apply Global Margins & Save'}
-              </button>
+              </QcButton>
               <p className="text-xs text-slate-400">
                 Resets all per-line overrides to these global values and saves immediately.
               </p>
-            </div>
+            </QcDocumentSection>
 
-            {/* Taxes */}
-            <div className="pt-4 border-t space-y-3">
+
+                      {/* Taxes */}
+            <QcDocumentSection hidden={studioSection !== 'taxes'} title="Taxes">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900">Taxes</h3>
+                  
                   <p className="text-xs text-slate-500 mt-0.5">
                     Toggle which taxes apply on this quote and edit their rates without
                     changing your company defaults. Multiple taxes stack on the customer total.
                   </p>
                 </div>
-                <button
+                <QcButton variant="ghost" size="sm"
                   type="button"
                   onClick={async () => {
                     if (!confirm('Reset taxes on this quote to the current company defaults? Any per-quote edits will be lost.')) return;
                     await seedQuoteTaxesFromCompanyDefaults(quote.id);
                     router.refresh();
                   }}
-                  className="text-xs text-slate-500 hover:text-orange-600 underline whitespace-nowrap"
+                  
                 >
                   Reset to defaults
-                </button>
+                </QcButton>
               </div>
               <TaxEditor
                 taxes={taxes}
@@ -1329,7 +1425,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                         (t) => t.source_tax_id === ct.id || (!t.source_tax_id && t.dbId === ct.id)
                       );
                       return (
-                        <button
+                        <QcButton variant="ghost" size="sm" aria-pressed={applied}
                           type="button"
                           key={ct.id}
                           onClick={() => {
@@ -1352,11 +1448,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                               ]);
                             }
                           }}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition ${
-                            applied
-                              ? 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
-                              : 'bg-white border-slate-300 text-slate-700 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50'
-                          }`}
+                          
                           title={applied ? 'Click to remove from this quote' : 'Click to apply to this quote'}
                         >
                           <span className="inline-flex items-center gap-1.5">
@@ -1373,87 +1465,21 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                             </span>
                             {ct.name} ({ct.rate_percent}%)
                           </span>
-                        </button>
+                        </QcButton>
                       );
                     })}
                   </div>
                 </div>
               )}
-            </div>
+            </QcDocumentSection>
 
-            <div className="pt-4 border-t space-y-2">
-              <p className="text-xs text-slate-500">
-                {saving ? 'Saving...' : lastSaved ? `Auto-saved ${Math.floor((Date.now() - lastSaved.getTime()) / 1000)}s ago` : 'Not saved yet'}
-              </p>
-              <button
-                onClick={async () => {
-                  if (showMarginInPreview) {
-                    setShowMarginSaveWarning(true);
-                    return;
-                  }
-                  await handleSave();
-                  router.push(`/${workspaceSlug}/quotes/${quote.id}/summary`);
-                }}
-                disabled={saving}
-                data-copilot="cl-save-return"
-                className="w-full py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-              >
-                {saving ? 'Saving...' : 'Save & Return to Summary'}
-              </button>
-              <button
-                onClick={async () => {
-                  const name = prompt('Template name:', `${quote.customer_name} - Branding Template`);
-                  if (!name) return;
 
-                  try {
-                    await createCustomerQuoteTemplate({
-                      name,
-                      companyName,
-                      companyAddress,
-                      companyPhone,
-                      companyEmail,
-                      footerText,
-                      companyLogoUrl: companyLogoUrl || null,
-                    });
-                    alert(`Template "${name}" saved successfully!`);
-                  } catch (error) {
-                    alert('Failed to save template: ' + (error as Error).message);
-                  }
-                }}
-                className="w-full py-2 text-sm font-medium border border-slate-300 text-slate-700 rounded-full hover:bg-slate-50"
-              >
-                Save Branding as Template
-              </button>
-            </div>
-          </div>
-
-          </CollapsiblePanel>
-
-          {/* Expand tab - only visible when collapsed; on the preview side so
-              it is never clipped by the collapsing panel's overflow. */}
-          <ExpandTab
-            collapsed={panelCollapsed}
-            onToggle={() => setPanelCollapsed(false)}
-            label="Components"
-          />
-
-          {/* Right Panel: Live Preview - expands to fill when left collapses. */}
-          <div
-            className="bg-white rounded-xl border border-slate-200 p-6 space-y-4 w-full lg:flex-1 lg:min-w-0"
-            data-copilot="cl-right-panel"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">{previewTitle}</h2>
-              <button
-                onClick={() => setShowPreviewModal(true)}
-                className="px-3 py-1.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-full hover:bg-slate-50"
-              >
-                Preview Full Size
-              </button>
-            </div>
-
-            <div className="border-t pt-4">
-              <QuotePreview
+        </QcDocumentPanel>
+        <QcDocumentPreview title={previewTitle} data-copilot="cl-right-panel"
+          description={studioPreview ? 'Recipient view · Editing controls are hidden' : 'Click a section or item to edit it on the left'}
+          collapsed={panelCollapsed || studioPreview} onExpand={() => { setPanelCollapsed(false); setStudioPreview(false); }}
+          tools={<QcButton onClick={() => setShowPreviewModal(true)} size="sm">Full-size preview</QcButton>}>
+          <div className="qc-document-paper"><QuotePreview
                 quote={quote}
                 lines={visibleLines}
                 subtotal={subtotal}
@@ -1466,8 +1492,9 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 companyEmail={companyEmail}
                 companyLogoUrl={companyLogoUrl}
                 footerText={footerText}
-                editingLineId={editingLineId}
-                onEditLine={setEditingLineId}
+                selection={studioPreview ? undefined : { active: studioSection, onSelect: selectStudioSection }}
+                showEditButtons={false}
+                documentTitle={taxAudience === 'labor' ? 'Labour sheet' : 'Quotation'}
                 onSaveLine={(id, text, quantityText, amount, sp, qty, unitPrice, lineMarginPercent, lineLaborMarginPercent, bmc) =>
                   updateLine(id, text, quantityText, amount, sp, qty ?? 1, unitPrice ?? null, lineMarginPercent ?? null, lineLaborMarginPercent ?? null, bmc)
                 }
@@ -1484,33 +1511,18 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 materialMarginDisplay={showMarginInPreview && globalMarginPercent > 0 ? materialMarginTotal : null}
                 labourMarginDisplay={showMarginInPreview && hasLaborLines && globalLaborMarginPercent > 0 ? labourMarginTotal : null}
                 quoteEntryMode={(quote as { entry_mode?: string }).entry_mode ?? null}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Full-size Preview Modal */}
-      {showPreviewModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6"
-        >
-          <div
-            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-          >
-            <div className="sticky top-0 bg-white border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-900">Full Size Preview</h2>
-              <button
-                onClick={() => setShowPreviewModal(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-8 pt-12">
-              <QuotePreview
+              /></div>
+        </QcDocumentPreview>
+      </QcDocumentBody>
+      <QcDocumentDialogScope>
+        <ConfirmModal appearance="v2" open={pendingStudioTarget !== null} title="Discard unapplied line changes?"
+          description="Your other document changes are kept. Apply this line first, or discard its uncommitted text and price edits to continue."
+          confirmLabel="Discard line edits" cancelLabel="Keep editing" onCancel={() => setPendingStudioTarget(null)}
+          onConfirm={() => { if (pendingStudioTarget) goToStudioSection(pendingStudioTarget); setPendingStudioTarget(null); }} />
+        {showPreviewModal && (
+          <QcDialog open title="Full-size preview" size="lg" onRequestClose={() => setShowPreviewModal(false)}
+            footer={<QcButton onClick={() => setShowPreviewModal(false)}>Close preview</QcButton>}>
+            <div className="qc-document-preview-scroll"><div className="qc-document-paper"><QuotePreview documentTitle={taxAudience === 'labor' ? 'Labour Sheet' : 'Quotation'}
                 quote={quote}
                 lines={visibleLines}
                 subtotal={subtotal}
@@ -1524,14 +1536,20 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                 companyLogoUrl={companyLogoUrl}
                 footerText={footerText}
                 showEditButtons={false}
+                showQuantityColumn={showQuantityColumn}
+                hideLinePrices={hideLinePrices}
+                hideTotals={hideTotals}
+                globalMarginPercent={globalMarginPercent > 0 ? globalMarginPercent : null}
+                globalLaborMarginPercent={hasLaborLines && globalLaborMarginPercent > 0 ? globalLaborMarginPercent : 0}
+                showMarginInPreview={showMarginInPreview}
+                materialMarginDisplay={showMarginInPreview && globalMarginPercent > 0 ? materialMarginTotal : null}
+                labourMarginDisplay={showMarginInPreview && hasLaborLines && globalLaborMarginPercent > 0 ? labourMarginTotal : null}
+                quoteEntryMode={(quote as { entry_mode?: string }).entry_mode ?? null}
                 currency={currency}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Header Modal */}
+              /></div></div>
+          </QcDialog>
+        )}
+              {/* Edit Header Modal */}
       {showEditHeader && (
         <EditHeaderModal
           companyName={companyName}
@@ -1597,20 +1615,23 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
       )}
 
       {/* Remove-line confirmation (destructive: fully deletes the line). */}
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={removeLineId !== null}
         title="Remove this line?"
         description="This removes the line from the quote entirely. To keep it but hide it from the customer, use the Show toggle instead."
         confirmLabel="Remove"
         onCancel={() => setRemoveLineId(null)}
         onConfirm={() => {
-          if (removeLineId) removeLine(removeLineId);
+          if (removeLineId) {
+            removeLine(removeLineId);
+            if (removeLineId === editingLineId) { setStudioLineDirty(false); setStudioSection('items'); }
+          }
           setRemoveLineId(null);
         }}
       />
 
       {/* Margin visibility warning - shown before Save & Return when breakdown is customer-visible */}
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={showMarginSaveWarning}
         title="Margin breakdown is visible to the customer"
         description={`Your profit/margin breakdown is currently set to show on the customer quote. The customer will be able to see your margin values.\n\nTo hide it, uncheck "Show margin breakdown on customer quote" in the Profit Margin panel before saving.`}
@@ -1640,6 +1661,8 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           onClose={() => setShowAiText(false)}
         />
       )}
-    </div>
+
+      </QcDocumentDialogScope>
+    </QcDocumentWorkspace>
   );
 }

@@ -1,0 +1,78 @@
+{
+  "baseline": "quotecore-plus-phase5-ux-handoff-2026-09-25.zip",
+  "baseline_sha256": "fbcbdb0ecfdb1b757a23d24348fa8b84c2a66fa9ffe0335f1b7540c3e1e6d002",
+  "date": "2026-09-25",
+  "source_changes": [
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/[id]/InvoiceEditor.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "58156aebd41fae7de6f62f6df7c03cf1ba6cc9db03b7e5d6b6cf6e1c03fdd47e",
+      "returned_sha256": "4a65d2d61ee2ac6dc36dff4b48402decb8381d9a096238fdfe1d895f5ed81087"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/OrderLayoutPickerModal.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "091a6cf2e058f42cc9d22fe9e3bb92bd09085e5279dd3bb648a5c75354d94825",
+      "returned_sha256": "423f90820c8cd89869ce883facb8d859262a937974a274affc30ec25ce6d951d"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/OrderLineByLineEditor.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "f91e0f65a9f22a9760bea3d139caa0cfa42315b8b5cdba3368b282488cbd74b6",
+      "returned_sha256": "c9cf542069abd3dbec4f84f46a1c15d7d129029b875b5b64f0ec5a98ffa21d16"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/order-create-form.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "50d9b48f2c211866d027c06726aa833d6710962663e2bfa1302d7a88a5375398",
+      "returned_sha256": "6fbd60ed77b62ef56be21f0d3f1077be154452fad9618d3116aaa3dbeee6715a"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/page.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "7373cd621215580b7bc44e975f3ee81eb8912b48ecbab111623e000b2119b77b",
+      "returned_sha256": "12f70bc1b8f4f88aeb2cf8c48fbf9f3778bebd02c5bea345f1410023563899b0"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/create/parts/AddItemModal.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "091314232cec9631ac98a3807f8d04f889881870513754e40c4fff2b347cdbad",
+      "returned_sha256": "8f5f70117587123c2292d7c32f7d78bcd481d1b5ad50f8a799ed0ecbccc5618b"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/CustomerQuoteEditor.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "307543ba1eaf0e67c3e90d180b71ec171ab69dcc289192d3217c208e7a059482",
+      "returned_sha256": "25fb22aed1640f1f1a5fc106677c2990297864e10f38696b654b5655445b5456"
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "1b0ba775982914f480f121712e35fe487cd2a0093085ddbf1eb3e7e9cab8cfb5",
+      "returned_sha256": "edc17eb5afca2dcc3f4d59ddc07361443eb7b71b6420df06ac1436e222de3f08"
+    },
+    {
+      "path": "app/components/SearchableFlashingSelect.tsx",
+      "kind": "MODIFIED",
+      "baseline_sha256": "20db1b389df742263e4ecca70ad4e526b2102c8c5c0ba318825a1cc449a1e83f",
+      "returned_sha256": "13c67ca486dae8babf61bb91ee110bcc35ebc1f44d03808853cd5cd203186cf0"
+    },
+    {
+      "path": "app/components/ui/v2/QcDocumentWorkspace.tsx",
+      "kind": "NEW",
+      "baseline_sha256": null,
+      "returned_sha256": "fbf31199cbd6f25a5f652187d360307c671a2bbeeb60eb42ab8d7096a5be73f6"
+    },
+    {
+      "path": "app/components/ui/v2/qc-document.css",
+      "kind": "NEW",
+      "baseline_sha256": null,
+      "returned_sha256": "64e48b7c6e072fa71a02843917ce05ad0d5c92da1b480a20515a9f5dfbe363d8"
+    }
+  ],
+  "document_changes": [
+    "RETURN_NOTES.md (new)",
+    "DESIGN_CHANGES.md (append-only history with new Phase5 heading)",
+    "docs/ux/phase-5/** (new)"
+  ]
+}

@@ -1,6 +1,7 @@
+import { QuotePreview } from '@/app/(auth)/[workspaceSlug]/quotes/[id]/customer-edit/QuotePreview';
 import { headers } from 'next/headers';
 import { createAdminClient } from '@/app/lib/supabase/admin';
-import { formatCurrency, getEffectiveCurrency } from '@/app/lib/currency/currencies';
+import { getEffectiveCurrency } from '@/app/lib/currency/currencies';
 import { AcceptDeclineButtons } from './AcceptDeclineButtons';
 import { RequestRequoteButton } from './RequestRequoteButton';
 import { DownloadQuoteButton } from './DownloadQuoteButton';
@@ -8,7 +9,6 @@ import { checkRateLimit, getClientIP } from '@/app/lib/security/rateLimit';
 import { loadQuoteTaxesByQuoteId } from '@/app/lib/taxes/actions';
 import { computeTaxLines } from '@/app/lib/taxes/types';
 import { AttachmentsCard } from '@/app/components/public/AttachmentsCard';
-import { displayLineText } from '@/app/lib/quotes/lineText';
 import { StampRecipientView } from '@/app/lib/recipient/StampRecipientView';
 
 /**
@@ -193,50 +193,26 @@ export default async function AcceptQuotePage({
     <div className="min-h-screen bg-slate-50">
       {/* Recipient-view stamping via idempotent POST server action (not GET). */}
       <StampRecipientView kind="quote" token={token} />
-      <div className="max-w-4xl mx-auto p-8 space-y-6">
+      <div className="max-w-4xl mx-auto p-3 sm:p-8 space-y-6">
         {/*
           Quote Document - exact same format as internal Customer Quote
           preview. The id is used by the DownloadQuoteButton's print-mode
           CSS to single this element out for print-to-PDF.
         */}
-        <div id="public-quote-document" className="bg-white rounded-xl border border-black p-12 space-y-8">
-          {/* Quote Header */}
-          <div className="border-b-2 border-black pb-6 mb-6">
-            {/* Logo (Top Right) */}
-            <div className="flex justify-end mb-6">
-              {quote.cq_company_logo_url ? (
-                <img src={quote.cq_company_logo_url} alt="Company Logo" className="h-16 object-contain" />
-              ) : (
-                <div className="w-32 h-16 border-2 border-dashed border-black rounded flex items-center justify-center bg-white">
-                  <span className="text-xs text-black">Logo</span>
-                </div>
-              )}
-            </div>
-
-            {/* Quote Info + Company Details (Side by Side) */}
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-xl font-bold text-black mb-4">
-                  QUOTE #{quote.quote_number || 'DRAFT'}
-                </h1>
-                <div className="space-y-2">
-                  <p className="text-base text-black">
-                    <span className="font-semibold">Client:</span> {quote.customer_name}
-                  </p>
-                  {quote.job_name && (
-                    <p className="text-base text-black">
-                      <span className="font-semibold">Job:</span> {quote.job_name}
-                    </p>
-                  )}
-                  {quote.site_address && (
-                    <p className="text-base text-black">
-                      <span className="font-semibold">Site:</span> {quote.site_address}
-                    </p>
-                  )}
-                  <p className="text-base text-black">
-                    <span className="font-semibold">Date:</span> {new Date(quote.created_at).toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' })}
-                  </p>
-                  {quote.acceptance_token_expires_at && (() => {
+        <div id="public-quote-document" className="qc-recipient-paper bg-white border border-slate-200 shadow-sm">
+          <QuotePreview quote={quote} lines={visibleLines.map((line) => ({
+            id: line.id, text: line.custom_text || '', quantityText: line.quantity_text,
+            amount: line.custom_amount || 0, showPrice: line.show_price, showUnits: line.show_units ?? true,
+            qty: (line as { qty?: number }).qty, unitPrice: (line as { unit_price?: number | null }).unit_price,
+          }))} subtotal={subtotal} taxLines={taxLines} taxTotal={taxTotal} total={total}
+            companyName={quote.cq_company_name || ''} companyAddress={quote.cq_company_address || ''}
+            companyPhone={quote.cq_company_phone || ''} companyEmail={quote.cq_company_email || ''}
+            companyLogoUrl={quote.cq_company_logo_url || ''} footerText={quote.cq_footer_text || ''}
+            currency={effectiveCurrency} showEditButtons={false}
+            showQuantityColumn={!!(quote as { show_quantity_column?: boolean }).show_quantity_column}
+            hideLinePrices={!!(quote as { hide_line_prices?: boolean }).hide_line_prices}
+            hideTotals={!!(quote as { hide_totals?: boolean }).hide_totals}
+            metadataExtra={<> {quote.acceptance_token_expires_at && (() => {
                     const expiry = new Date(quote.acceptance_token_expires_at);
                     const remaining = Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                     const expiryLabel = expiry.toLocaleDateString('en-NZ', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -248,95 +224,8 @@ export default async function AcceptQuotePage({
                         </span>
                       </p>
                     ) : null;
-                  })()}
-                </div>
-              </div>
-              
-              {/* Company Details */}
-              {(quote.cq_company_name || quote.cq_company_address || quote.cq_company_phone || quote.cq_company_email) && (
-                <div className="text-right space-y-1">
-                  {quote.cq_company_name && (
-                    <p className="font-semibold text-base text-black">{quote.cq_company_name}</p>
-                  )}
-                  {quote.cq_company_address && (
-                    <p className="text-sm text-black">{quote.cq_company_address}</p>
-                  )}
-                  {quote.cq_company_phone && (
-                    <p className="text-sm text-black">{quote.cq_company_phone}</p>
-                  )}
-                  {quote.cq_company_email && (
-                    <p className="text-sm text-black">{quote.cq_company_email}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Line Items */}
-          <div className="space-y-3">
-            {visibleLines.length === 0 ? (
-              <p className="text-black italic text-center py-8">
-                No items in this quote.
-              </p>
-            ) : (
-              visibleLines.map((line: any) => (
-                <div
-                  key={line.id}
-                  className="flex items-start justify-between py-3 border-b border-black"
-                >
-                  <div className="flex-1">
-                    <p className="text-black">
-                      {displayLineText(line.custom_text, line.quantity_text, line.show_units)}
-                    </p>
-                  </div>
-                  {line.show_price && (
-                    <div className="ml-4">
-                      <p className="text-black font-medium whitespace-nowrap">
-                        {formatCurrency(line.custom_amount || 0, effectiveCurrency)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Totals */}
-          {visibleLines.length > 0 && (
-            <div className="space-y-3 pt-4 border-t-2 border-black">
-              <div className="flex justify-between text-base">
-                <span className="text-black">Subtotal</span>
-                <span className="font-medium text-black">{formatCurrency(subtotal, effectiveCurrency)}</span>
-              </div>
-              {taxLines.length > 0 && (
-                <>
-                  {taxLines.map((tl) => (
-                    <div key={tl.id} className="flex justify-between text-base">
-                      <span className="text-black">{tl.name} ({tl.rate_percent}%)</span>
-                      <span className="font-medium text-black">{formatCurrency(tl.amount, effectiveCurrency)}</span>
-                    </div>
-                  ))}
-                  {taxLines.length > 1 && (
-                    <div className="flex justify-between text-base border-t border-black pt-2">
-                      <span className="text-black">Tax total</span>
-                      <span className="font-medium text-black">{formatCurrency(taxTotal, effectiveCurrency)}</span>
-                    </div>
-                  )}
-                </>
-              )}
-              <div className="flex justify-between text-xl font-bold border-t-2 border-black pt-3">
-                <span className="text-black">Total</span>
-                <span className="text-black">{formatCurrency(total, effectiveCurrency)}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Footer */}
-          {quote.cq_footer_text && (
-            <div className="pt-6 border-t border-black">
-              <p className="text-sm text-black italic whitespace-pre-wrap">{quote.cq_footer_text}</p>
-            </div>
-          )}
+                  })()} </>}
+          />
         </div>
 
         {/* Accept / Request Changes / Decline / Download rendered as a single

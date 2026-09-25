@@ -1,3 +1,9 @@
+# Phase 5 final | UI standard 2.6
+
+Contextual, document-first editing and professional output, superseding the first Phase 5 style pass. C55/C58 provide one stable inspector and interactive document; C59/C60 provide clean output with excluded selection controls. Four specialised editors retain independent business owners. See `docs/ux/phase-5-final/README.md` and `RETURN_NOTES.md`. Integration/runtime/owner review pending; core tokens unchanged.
+
+---
+
 # Phase 3 | UI standard 2.3
 
 Latest owner decision: **Job Spaces is additional; Quotes and its Drafts tab stay where they are. No /quotes redirect.** This overrides the earlier draft-only split proposal.

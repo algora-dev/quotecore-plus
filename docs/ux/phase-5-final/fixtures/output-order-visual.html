@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Phase 5 · output-order-visual · static specimen</title><link rel="stylesheet" href="fixtures.css"></head><body><div class="specimen-label"><strong>PHASE 5 · SOURCE-DERIVED LAYOUT SPECIMEN</strong> · output-order-visual · Fictional data · Not the running application</div><main class="specimen-shell" style="max-width:880px;margin:24px auto"><style jsx="true" global="true">
+        @media print {
+          @page { margin: 12mm; }
+          html, body { background: #fff !important; }
+          body * { visibility: hidden !important; }
+          [data-print-root], [data-print-root] * { visibility: visible !important; }
+          [data-print-root] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+            box-shadow: none !important;
+            background: #fff !important;
+          }
+          [data-print-hide], [data-exclude-pdf] { display: none !important; }
+
+          /* Print-only two-column rule. Tailwind's sm: breakpoint is
+             based on viewport width, which is irrelevant for print, so
+             we force the grid columns explicitly when the user chose
+             'double' layout. */
+          [data-layout-mode='double'] {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6mm !important;
+          }
+
+          /* Keep each line card together - a tall flashing card (e.g.
+             barge) is pushed to the next page instead of being clipped. */
+          [data-print-card] {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          [data-print-card] img {
+            max-height: 60mm;
+            width: auto;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+      </style><div data-print-root="true" class="qc-output qc-output-order"><div class="qc-output-header" data-pdf-block="true"><div class="qc-output-masthead"><div class="qc-output-region qc-output-brand" data-doc-region="details"><p class="qc-output-company">Oak &amp; Slate Roofing</p><div class="qc-output-contact"><p>Site team</p><p>office@example.invalid</p></div></div><div class="qc-output-document-identity"><p class="qc-output-kicker">Purchase order</p><h2>2047</h2></div></div><div class="qc-output-address-row"><div class="qc-output-region qc-output-recipient" data-doc-region="details"><p class="qc-output-label">Supplier</p><p><strong>Example Roofing Supplies</strong></p><p class="qc-output-label" style="margin-top:12px">Deliver to</p><p class="whitespace-pre-line">8 Meadow Close
+Sampleton, AB1 2CD</p></div><div class="qc-output-region qc-output-metadata" data-doc-region="details"><div class="qc-output-meta-row"><span>Reference</span><span>Meadow Close · roof replacement</span></div><div class="qc-output-meta-row"><span>Order date</span><span>25 Sept 2026</span></div><div class="qc-output-meta-row"><span>Delivery date</span><span>02 Oct 2026</span></div><div class="qc-output-meta-row"><span>Order type</span><span>Materials</span></div><div class="qc-output-meta-row"><span>Colours</span><span>Anthracite</span></div></div></div></div><div class="qc-output-region qc-output-notes" data-doc-region="details"><p class="qc-output-label">Order notes</p><p>Please confirm delivery time before dispatch.</p></div><div data-layout-mode="double" class="qc-output-order-grid"><div data-print-card="true" data-pdf-block="true" class="qc-output-component" data-doc-region="line:c1"><p class="qc-output-component-title"><span class="qc-output-component-number">01</span>Ridge flashing</p><div class="mb-3"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MjAgMTgwIj48cGF0aCBkPSJNMjUgMTQwIEwxOTAgNDAgTDIzMCA0MCBMMzk1IDE0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzAzNjQxIiBzdHJva2Utd2lkdGg9IjUiLz48cGF0aCBkPSJNMjggMTYwSDM5MCIgc3Ryb2tlPSIjN2M4Nzk4Ii8+PHRleHQgeD0iMTQwIiB5PSIxNzgiIGZpbGw9IiM1OTYyNzMiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMyI+SWxsdXN0cmF0aXZlIHJpZGdlIHByb2ZpbGU8L3RleHQ+PC9zdmc+" alt="Ridge flashing" class="qc-output-component-image"></div><div class="qc-output-measurements"><div><p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Lengths (M)</p><ul class="space-y-1"><li><span class="font-medium">2.4m</span> × 5</li></ul></div></div><p class="qc-output-component-notes">Anthracite finish. Match approved profile.</p></div><div data-print-card="true" data-pdf-block="true" class="qc-output-component" data-doc-region="line:c2"><p class="qc-output-component-title"><span class="qc-output-component-number">02</span>Concrete roof tiles</p><div class="qc-output-measurements"><p>Quantity: <span class="font-medium text-black">1200</span></p></div><p class="qc-output-component-notes">Allow for the specified lap.</p></div><div data-print-card="true" data-pdf-block="true" class="qc-output-component" data-doc-region="line:c3"><p class="qc-output-component-title"><span class="qc-output-component-number">03</span>Breather membrane</p><div class="qc-output-measurements"><div><p class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Areas (M²)</p><ul class="space-y-1"><li><span class="font-medium">150m²</span> × 1</li></ul></div></div></div><div aria-hidden="true" data-pdf-block="true" class="qc-output-column-spacer"></div></div></div></main><script>document.querySelectorAll('dialog').forEach(d=>d.showModal());</script></body></html>

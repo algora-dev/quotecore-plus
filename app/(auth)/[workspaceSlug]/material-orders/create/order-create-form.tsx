@@ -22,7 +22,11 @@ import { CatalogSearchModal } from '../../quotes/[id]/customer-edit/CatalogSearc
 import { AngleCalculatorWidget } from '../../drawings/draw/AngleCalculatorWidget';
 import { OrderLineByLineEditor } from './OrderLineByLineEditor';
 import { SearchableFlashingSelect } from '@/app/components/SearchableFlashingSelect';
-import { CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
+import { QcStudioToolbar, QcStudioInspectorHeading, QcStudioSection, QcStudioOverview, type QcStudioOption } from '@/app/components/ui/v2/QcDocumentStudio';
+import { OrderBody, type OrderDocumentData, type OrderDocumentLine } from '@/app/orders/[token]/OrderBody';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcDocumentWorkspace, QcDocumentHeader, QcDocumentSaveState, QcDocumentBody, QcDocumentPanel, QcDocumentPanelHeader, QcDocumentSection, QcDocumentPreview, QcDocumentDialogScope } from '@/app/components/ui/v2/QcDocumentWorkspace';
+
 import {
   parseLineByLineData,
   parseLineByLineFooter,
@@ -125,13 +129,18 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   const [headerExpanded, setHeaderExpanded] = useState(true);
   // Declutter: collapse the components control sidebar so the order-form
   // preview fills the space. Pure layout state - sidebar stays mounted.
-  // On mobile, default collapsed (sidebar takes full width otherwise).
-  const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 1024);
+  // Phase 5: start expanded at every width; the preview bar always restores it.
+  const [componentsPanelCollapsed, setComponentsPanelCollapsed] = useState(false);
   // Hover-to-highlight: when the user hovers a component in the left sidebar,
   // the matching card in the order review gets an orange border so they can
   // quickly see which component they need to edit.
   const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [studioSection, setStudioSection] = useState('document');
+  const [studioPreview, setStudioPreview] = useState(false);
+  const [visualDraftDirty, setVisualDraftDirty] = useState(false);
+  const [lineDraftPending, setLineDraftPending] = useState(false);
+  const [pendingStudioTarget, setPendingStudioTarget] = useState<string | null>(null);
   
   // Template selection
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
@@ -694,28 +703,24 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
   // `rounded` = line-by-line variant: render the header as a rounded card
   // (matches the rest of the app) instead of the full-bleed square header the
   // components editor uses. Components editor calls this with no arg (false).
-  function renderOrderHeader(rounded = false) {
+  function renderOrderHeader(_rounded = false) {
     return (
-      <div className={rounded ? 'flex-shrink-0 px-2 md:px-6 pt-3 md:pt-4' : 'flex-shrink-0'}>
+      <div className="qc-document-order-details">
         {headerExpanded ? (
           <div
-            className={
-              rounded
-                ? 'bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden'
-                : 'bg-white border-b border-slate-200 shadow-sm'
-            }
+            className="qc-document-order-details-card"
           >
             {/* Template Selector */}
-            <div className="px-2 md:px-6 py-2 md:py-3 border-b border-slate-100 bg-slate-50" data-copilot="mo-template">
+            <div className="qc-document-order-template" data-copilot="mo-template">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <label className="block text-sm font-medium text-slate-700">
-                  Use Template (Optional)
+                  Header template (optional)
                 </label>
-                <button type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-white transition-colors min-h-[44px] flex-shrink-0">
+                <QcButton variant="ghost" size="sm" type="button" onClick={() => setHeaderExpanded(false)} data-copilot="mo-minimize-header" >
                   Minimize Header
-                </button>
+                </QcButton>
               </div>
-              <select
+              <select aria-label="Order header template"
                 value={selectedTemplateId}
                 onChange={(e) => handleTemplateChange(e.target.value)}
                 className="w-full md:w-96 px-3 py-2 border border-slate-300 rounded-lg text-sm"
@@ -730,17 +735,17 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
             </div>
 
             {/* Header Form - Two Column */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 p-2 md:p-6" data-copilot="mo-header-form">
+            <div className="qc-document-order-details-grid" data-copilot="mo-header-form">
               {/* LEFT COLUMN */}
               <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">To (Supplier)</h3>
-                <input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <input type="text" value={orderType} onChange={(e) => setOrderType(e.target.value)} placeholder="Order Type (optional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <input type="text" value={colours} onChange={(e) => setColours(e.target.value)} placeholder="Colours" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} placeholder="Delivery Date" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <textarea value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Delivery Address" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order Notes" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
+                <label className="qc-document-order-label">Supplier<input type="text" value={toSupplier} onChange={(e) => setToSupplier(e.target.value)} placeholder="To" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Reference / job name *<input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Reference" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Order type<input type="text" value={orderType} onChange={(e) => setOrderType(e.target.value)} placeholder="Order Type (optional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Colours<input type="text" value={colours} onChange={(e) => setColours(e.target.value)} placeholder="Colours" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Delivery date<input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} placeholder="Delivery Date" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Delivery address<textarea value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder="Delivery Address" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Order notes<textarea value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder="Order Notes" rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
               </div>
 
               {/* RIGHT COLUMN */}
@@ -750,26 +755,26 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                   {logoUrl ? (
                     <div className="relative w-20 h-20 border border-slate-200 rounded bg-white">
                       <img src={logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
-                      <button type="button" onClick={() => setLogoUrl('')} className="absolute -top-1 -right-1 p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700">
+                      <QcButton variant="ghost" size="sm" type="button" aria-label="Remove company logo" onClick={() => setLogoUrl('')} className="absolute -top-1 -right-1 qc-document-icon qc-document-danger-control">
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
+                      </QcButton>
                     </div>
                   ) : (
                     <div className="w-20 h-20 border-2 border-dashed border-slate-300 rounded flex items-center justify-center bg-slate-50">
                       <span className="text-xs text-slate-400">Logo</span>
                     </div>
                   )}
-                  <label className="cursor-pointer">
-                    <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} className="hidden" />
+                  <label className="qc-document-upload">
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} disabled={uploadingLogo} aria-label="Upload company logo" />
                     <span className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50">
                       {uploadingLogo ? 'Uploading...' : 'Upload'}
                     </span>
                   </label>
                 </div>
-                <input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="Contact Person" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" />
-                <input type="text" value={contactDetails} onChange={(e) => setContactDetails(e.target.value)} placeholder="Contact Details" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
-                <input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" />
+                <label className="qc-document-order-label">Company<input type="text" value={fromCompany} onChange={(e) => setFromCompany(e.target.value)} placeholder="From" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Contact person<input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} placeholder="Contact Person" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-base md:text-sm" /></label>
+                <label className="qc-document-order-label">Contact details<input type="text" value={contactDetails} onChange={(e) => setContactDetails(e.target.value)} placeholder="Contact Details" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" /></label>
+                <label className="qc-document-order-label">Order date<input type="date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm" /></label>
               </div>
             </div>
 
@@ -777,78 +782,83 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
           </div>
         ) : (
           <div
-            className={
-              rounded
-                ? 'bg-white border border-slate-200 rounded-xl shadow-sm px-2 md:px-6 py-2 md:py-3 flex items-center justify-between'
-                : 'bg-white border-b border-slate-200 px-2 md:px-6 py-2 md:py-3 flex items-center justify-between'
-            }
+            className="qc-document-order-summary"
           >
             <div className="text-sm text-slate-600">
               <span className="font-medium">To:</span> {toSupplier || 'Not set'} · 
               <span className="font-medium ml-2">From:</span> {fromCompany || 'Not set'} · 
               <span className="font-medium ml-2">Ref:</span> {reference || 'Not set'}
             </div>
-            <button type="button" onClick={() => setHeaderExpanded(true)} className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors">
+            <QcButton variant="ghost" size="sm" type="button" onClick={() => setHeaderExpanded(true)} >
               Edit Header
-            </button>
+            </QcButton>
           </div>
         )}
       </div>
     );
   }
 
-  // LINE-BY-LINE LAYOUT (Phase 2 editor).
-  // Uses the SAME header system as the components (single/double) editor, then
-  // the OrderLineByLineEditor for the priced item list + footer + taxes.
+  // Render-only projection: the save payload and measurement owners above stay intact.
+  const orderPresentation: OrderDocumentData = {
+    order_number: existingOrder?.order.order_number ?? '', to_supplier: toSupplier,
+    from_company: fromCompany, contact_person: contactPerson, contact_details: contactDetails,
+    reference, order_type: orderType, colours, delivery_date: deliveryDate,
+    delivery_address: deliveryAddress, header_notes: orderNotes, logo_url: logoUrl,
+    order_date: orderDate, layout_mode: isLineByLine ? 'line_by_line' : layoutMode,
+  };
+  const previewLines: OrderDocumentLine[] = orderLines.map(line => ({
+    id: line.id, item_name: line.componentName, flashing_id: line.flashingId ?? null,
+    flashing_image_url: line.flashingImageUrl ?? null, entry_mode: line.entryMode,
+    quantity: line.quantity, lengths: line.lengths, length_unit: line.lengthUnit ?? null,
+    item_notes: line.notes ?? null, show_component_name: line.showComponentName,
+    show_flashing_image: line.showFlashingImage, show_measurements: line.showMeasurements,
+    priced_quantity: line.pricedQuantity ?? null, measurement_display: line.measurementDisplay ?? null,
+  }));
+  const studioOptions: QcStudioOption[] = [
+    { id: 'details', label: 'Order details', description: 'Supplier, delivery, your business and templates' },
+  ];
+  const studioLine = orderLines.find(line => line.id === editingLineId);
+  function goToStudioSection(target: string) {
+    setVisualDraftDirty(false); setStudioPreview(false); setComponentsPanelCollapsed(false);
+    if (target === 'add') { setStudioSection('items'); openAddItemModal(); return; }
+    setStudioSection(target);
+    if (target.startsWith('line:')) { openEditModal(target.slice(5)); }
+    else { setEditingLineId(null); setShowAddItemModal(false); }
+    if (target === 'details') setHeaderExpanded(true);
+  }
+  function selectStudioSection(target: string) {
+    if (target === studioSection) { setComponentsPanelCollapsed(false); setStudioPreview(false); return; }
+    if (visualDraftDirty) { setPendingStudioTarget(target); return; }
+    goToStudioSection(target);
+  }
+
   if (initialLayout === 'line_by_line') {
     return (
-      <>
-        <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-        <AlertModal
-          open={alertState.open}
-          title={alertState.title}
-          description={alertState.description}
-          variant={alertState.variant}
-          onClose={closeAlert}
-        />
-        {/* Flex column inside the page's h-screen/overflow-hidden wrapper. The
-            header stays put; the editor area owns its OWN vertical scroll so the
-            footer + taxes at the bottom are always reachable on any screen
-            ratio (previously the page wrapper clipped them). */}
-        <div className="flex flex-col h-screen dvh-screen bg-slate-50">
-          <div className="px-4 md:px-6 pt-4 flex-shrink-0">
-            <BackButton />
-          </div>
-          {/* Shared order header (template selector + To/From form + minimize),
-              rounded-card variant to match the rest of the app. */}
-          {renderOrderHeader(true)}
-          {/* Scrollable editor region. Full-width (px-6) so the body frame lines
-              up edge-to-edge with the full-width header above it. */}
-          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-6 pb-20 md:pb-6">
-            {/* Save action sits directly above the editor/preview so it's
-                reachable at 100% zoom without scrolling to the page bottom. */}
-            <div className="flex items-center justify-end gap-3">
+      <QcDocumentWorkspace className="qc-document-studio">
+        <QcDocumentHeader title="Line-by-line order" subtitle={reference || 'Add a reference in Order details before saving'}
+          back={<BackButton />}
+          status={<QcDocumentSaveState saving={saving} idle="Save to keep your changes" />}
+          actions={<>
               {existingOrder && (
-                <button
+                <QcButton variant="ghost" size="sm"
                   type="button"
                   onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
-                  className="px-4 py-2 text-sm font-medium border border-slate-300 bg-white text-slate-700 rounded-full hover:bg-slate-50 transition"
+                  
                 >
                   Preview
-                </button>
+                </QcButton>
               )}
-              <button
+              <QcButton variant="primary" size="md"
                 type="button"
                 onClick={handleSaveDraft}
-                disabled={saving}
-                className="px-6 py-2 text-sm font-semibold bg-black text-white rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                disabled={saving || lineDraftPending}
+                title={lineDraftPending ? "Apply item changes before saving the order" : undefined}
+                
               >
                 {saving ? 'Saving…' : 'Save Order'}
-              </button>
-            </div>
-
-            {/* Line editor */}
-            <OrderLineByLineEditor
+              </QcButton>
+            </>} />
+        <OrderLineByLineEditor details={renderOrderHeader(true)} document={orderPresentation} onDraftChange={setLineDraftPending}
               initialLines={lineByLineLines}
               initialFooter={lineByLineFooter}
               initialTaxes={lineByLineTaxes}
@@ -868,142 +878,187 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               onHideTotalsChange={setLineByLineHideTotals}
               onShowQuantityColumnChange={setLineByLineShowQuantityColumn}
             />
-            <div className="pb-10" />
-          </div>
-        </div>
-      </>
+        <QcDocumentDialogScope><StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} /><AlertModal
+        open={alertState.open}
+        title={alertState.title}
+        description={alertState.description}
+        variant={alertState.variant}
+        onClose={closeAlert}
+      /></QcDocumentDialogScope>
+      </QcDocumentWorkspace>
     );
   }
 
   return (
-    <>
-    <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
-    <div className="flex flex-col h-screen dvh-screen bg-slate-50">
-      {/* Back Button */}
-      <div className="px-2 md:px-6 pt-3 md:pt-4 flex-shrink-0">
-        <BackButton />
-      </div>
-      
-      {/* Header Section (shared with the line-by-line layout) */}
-      <div className="flex-shrink-0">{renderOrderHeader()}</div>
-
-      {/* Main Content Area - Sidebar + Order Form */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
-        {/* LEFT SIDEBAR - Order Components Control Panel (collapsible). Width
-            animates to 0 on collapse; the flex-1 order-form pane auto-fills.
-            Sidebar stays mounted (no state loss) - only its width/opacity
-            transition. */}
-        <div
-          className={`bg-white border-r border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
-            componentsPanelCollapsed ? 'w-0 opacity-0 pointer-events-none border-r-0' : 'w-full lg:w-80 opacity-100 max-h-[50vh] lg:max-h-none overflow-y-auto lg:overflow-hidden'
-          }`}
-          data-copilot="mo-sidebar"
-          aria-hidden={componentsPanelCollapsed}
-        >
-          <div className="px-2 md:px-4 py-2 md:py-3 border-b border-slate-200 bg-slate-50">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="font-semibold text-slate-900 text-sm">Order Components</h3>
-              <CollapseButton
-                collapsed={componentsPanelCollapsed}
-                onToggle={() => setComponentsPanelCollapsed(true)}
-                label="Collapse panel"
-              />
-            </div>
-            <p className="text-xs text-slate-600 mt-0.5">
-              Control what appears in the order form
-            </p>
-          </div>
-
-          {/* Add Component Button - Top */}
-          <div className="px-4 py-3 border-b border-slate-200">
-            <button
+    <QcDocumentWorkspace className="qc-document-studio">
+      <QcDocumentHeader title="Visual order" subtitle={reference || 'Add a reference in Order details before saving'}
+        back={<BackButton />}
+        status={<QcDocumentSaveState saving={saving} idle="Save to keep your changes" />}
+        actions={<>
+            <QcButton variant="ghost" size="sm"
               type="button"
-              onClick={openAddItemModal}
-              className="w-full px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors"
+              onClick={() => router.push('../material-orders')}
+              disabled={saving}
+              
             >
-              + Add Component
-            </button>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4">
+              Cancel
+            </QcButton>
+            {existingOrder && (
+              <QcButton variant="ghost" size="sm"
+                type="button"
+                onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
+                disabled={saving}
+                
+              >
+                Preview
+              </QcButton>
+            )}
+            <QcButton variant="primary" size="md"
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={saving || visualDraftDirty}
+              title={visualDraftDirty ? "Apply component changes before saving the order" : undefined}
+              data-copilot="mo-save"
+              
+            >
+              {saving ? 'Saving...' : 'Save Order'}
+            </QcButton>
+          </>} />
+      <QcStudioToolbar section={studioSection} onSelect={selectStudioSection} options={studioOptions}
+        preview={studioPreview} onPreview={() => setStudioPreview(!studioPreview)}
+        primary={<QcButton variant="secondary" size="sm" onClick={() => selectStudioSection('add')}>+ Add component</QcButton>}>
+        <div className="qc-document-layout" role="group" aria-label="Visual order columns" data-copilot="mo-layout-toggle">
+                <QcButton variant="ghost" size="sm"
+                  type="button"
+                  onClick={() => setLayoutMode('single')}
+                  aria-pressed={layoutMode === 'single'}
+                  
+                >
+                  1 column
+                </QcButton>
+                <QcButton variant="ghost" size="sm"
+                  type="button"
+                  onClick={() => setLayoutMode('double')}
+                  aria-pressed={layoutMode === 'double'}
+                  
+                >
+                  2 columns
+                </QcButton>
+              </div>
+      </QcStudioToolbar>
+      {visualDraftDirty && <p className="qc-document-note" role="status">Component changes are not applied yet. Choose Apply changes in the editing panel before saving.</p>}
+      <QcDocumentBody collapsed={componentsPanelCollapsed || studioPreview}>
+        <QcDocumentPanel collapsed={componentsPanelCollapsed || studioPreview} data-copilot="mo-sidebar">
+          <QcStudioInspectorHeading section={studioSection}
+            title={studioSection.startsWith('line:') ? 'Component' : studioSection === 'items' ? 'All components' : studioSection === 'details' ? 'Order details' : 'Your visual order'}
+            onBack={() => selectStudioSection('document')} onCollapse={() => setComponentsPanelCollapsed(true)} />
+          <QcStudioSection active={studioSection === 'document'}>
+            <QcStudioOverview options={[...studioOptions, { id: 'items', label: 'Components & images', description: 'Choose a component to edit its name, drawing or measurements' }]} onSelect={selectStudioSection} />
+            <p className="qc-studio-selection-note">Use 1 column or 2 columns above to change the layout. Your components and measurements stay the same.</p>
+          </QcStudioSection>
+          <QcStudioSection active={studioSection.startsWith('line:')}>
+            {studioLine && <>
+              <div className="qc-studio-line-controls">
+                <div className="qc-document-line-toggles">
+                  <label><input type="checkbox" checked={studioLine.showComponentName} onChange={() => toggleLineVisibility(studioLine.id, 'showComponentName')} /> Show name</label>
+                  <label><input type="checkbox" checked={studioLine.showFlashingImage} onChange={() => toggleLineVisibility(studioLine.id, 'showFlashingImage')} /> Show image</label>
+                  <label><input type="checkbox" checked={studioLine.showMeasurements} onChange={() => toggleLineVisibility(studioLine.id, 'showMeasurements')} /> Show measurements</label>
+                </div>
+                <div className="qc-document-row-actions">
+                  <QcButton size="sm" onClick={() => moveLineUp(studioLine.id)} disabled={orderLines.indexOf(studioLine) === 0}>↑ Move up</QcButton>
+                  <QcButton size="sm" onClick={() => moveLineDown(studioLine.id)} disabled={orderLines.indexOf(studioLine) === orderLines.length - 1}>↓ Move down</QcButton>
+                  <QcButton size="sm" variant="ghost" className="qc-document-danger-control" onClick={() => removeLine(studioLine.id)}>Remove</QcButton>
+                </div>
+              </div>
+              <p className="qc-studio-selection-note">Display switches update immediately. Apply detailed component changes when you are ready.</p>
+              {showAddItemModal && <QcDocumentDialogScope><AddItemModal key={studioLine.id} embedded
+                flashings={flashings} components={components} collections={collections} workspaceSlug={workspaceSlug}
+                measurementSystem={effectiveMeasurementSystem} existingLine={studioLine} onDraftChange={setVisualDraftDirty}
+                onSave={data => { saveLineItem(data); setVisualDraftDirty(false); setStudioSection('items'); }}
+                onCancel={() => goToStudioSection('items')} showAlert={showAlert} /></QcDocumentDialogScope>}
+            </>}
+          </QcStudioSection>
+          <QcStudioSection active={studioSection === 'items'}>
+          <div className="qc-document-panel-content">
             {orderLines.length === 0 ? (
               <div className="text-center py-12 text-slate-500">
                 <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <p className="text-xs mb-3">No components added</p>
-                <button
+                <QcButton variant="secondary" size="sm"
                   type="button"
                   onClick={openAddItemModal}
-                  className="px-3 py-1.5 text-xs font-medium rounded bg-[#FF6B35] text-white hover:bg-orange-600"
+                  
                 >
                   Add Component
-                </button>
+                </QcButton>
               </div>
             ) : (
               <div className="space-y-3">
                 {orderLines.map((line, index) => (
-                  <div key={line.id} onMouseEnter={() => setHoveredLineId(line.id)} onMouseLeave={() => setHoveredLineId(null)} className="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 cursor-pointer transition-all duration-150 hover:border-orange-300 hover:shadow-[0_0_8px_rgba(255,107,53,0.12)]">
+                  <div key={line.id} onMouseEnter={() => setHoveredLineId(line.id)} onMouseLeave={() => setHoveredLineId(null)} className="qc-document-line">
                     {/* Component Header - click anywhere toggles expand/collapse */}
                     <div
                       className="px-3 py-2 bg-white border-b border-slate-200"
-                      onClick={() => toggleCollapsed(line.id)}
                     >
                       <div className="flex items-start gap-2 mb-2">
                         {/* Up/Down Arrows */}
                         <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
-                          <button
+                          <QcButton variant="ghost" size="sm" aria-label="Move up"
                             type="button"
                             onClick={() => moveLineUp(line.id)}
                             disabled={index === 0}
-                            className="p-0.5 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="qc-document-icon"
                             title="Move up"
                           >
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                             </svg>
-                          </button>
-                          <button
+                          </QcButton>
+                          <QcButton variant="ghost" size="sm" aria-label="Move down"
                             type="button"
                             onClick={() => moveLineDown(line.id)}
                             disabled={index === orderLines.length - 1}
-                            className="p-0.5 rounded hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="qc-document-icon"
                             title="Move down"
                           >
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
-                          </button>
+                          </QcButton>
                         </div>
-                        <h4 className="flex-1 font-bold text-sm text-slate-900 leading-tight">{line.componentName}</h4>
+                        <button type="button" className="qc-studio-item-link flex-1" onClick={() => selectStudioSection(`line:${line.id}`)}>{line.componentName}</button>
                         {/* Collapse toggle */}
-                        <button
+                        <QcButton variant="ghost" size="sm"
                           type="button"
                           onClick={(e) => { e.stopPropagation(); toggleCollapsed(line.id); }}
-                          className="p-0.5 rounded hover:bg-slate-100 text-slate-400 flex-shrink-0"
+                          className="qc-document-icon"
                           title={collapsedLines.has(line.id) ? 'Expand' : 'Collapse'}
+                          aria-expanded={!collapsedLines.has(line.id)}
+                          aria-label={`${collapsedLines.has(line.id) ? 'Expand' : 'Collapse'} ${line.componentName}`}
                         >
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={collapsedLines.has(line.id) ? 'M19 9l-7 7-7-7' : 'M5 15l7-7 7 7'} />
                           </svg>
-                        </button>
+                        </QcButton>
                       </div>
                       {!collapsedLines.has(line.id) && (
                       <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                        <button
+                        <QcButton variant="ghost" size="sm"
                           type="button"
-                          onClick={() => openEditModal(line.id)}
-                          className="flex-1 px-2 py-1 text-xs font-medium rounded border border-slate-300 hover:bg-slate-50"
+                          onClick={() => selectStudioSection(`line:${line.id}`)}
+                          className="flex-1"
                         >
                           Edit
-                        </button>
-                        <button
+                        </QcButton>
+                        <QcButton variant="ghost" size="sm"
                           type="button"
                           onClick={() => removeLine(line.id)}
-                          className="flex-1 px-2 py-1 text-xs font-medium rounded border border-red-200 text-red-600 hover:bg-red-50"
+                          className="flex-1 qc-document-icon qc-document-danger-control"
                         >
                           Remove
-                        </button>
+                        </QcButton>
                       </div>
                       )}
                     </div>
@@ -1028,7 +1083,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
                           const quoteComponent = quoteComponentId ? quoteData?.components.find(c => c.id === quoteComponentId) : null;
                           const linkedFlashingIds = quoteComponent?.component_library?.flashing_ids || [];
                           return (
-                            <SearchableFlashingSelect
+                            <SearchableFlashingSelect appearance="v2"
                               flashings={flashings}
                               value={line.flashingId}
                               onChange={(newFlashingId) => {
@@ -1068,275 +1123,19 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
               </div>
             )}
           </div>
-        </div>
-
-        {/* Expand tab - only visible when the sidebar is collapsed. Lives
-            between the sidebar and the form pane so it is never clipped.
-            items-start keeps it pinned to the TOP of the column. */}
-        <div className="flex-shrink-0 flex items-start px-1 py-2">
-          <ExpandTab
-            collapsed={componentsPanelCollapsed}
-            onToggle={() => setComponentsPanelCollapsed(false)}
-            label="Components"
-          />
-        </div>
-
-        {/* RIGHT - Order Form Display */}
-        <div className="flex-1 flex flex-col overflow-hidden min-h-0 bg-slate-50">
-          {/* Toolbar */}
-          <div className="px-2 md:px-6 py-2 md:py-3 bg-white border-b border-slate-200 flex items-center justify-between">
-            <div className="flex items-baseline gap-3 flex-wrap">
-              <h3 className="font-semibold text-slate-900">Order Form</h3>
-              <p className="text-xs text-slate-400 italic">
-                Tip: to view the full preview with header, save, then view order.
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-sm text-slate-600" data-copilot="mo-layout-toggle">
-                <button
-                  type="button"
-                  onClick={() => setLayoutMode('single')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                    layoutMode === 'single'
-                      ? 'bg-[#FF6B35] text-white border-orange-600'
-                      : 'border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  Single Column
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLayoutMode('double')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                    layoutMode === 'double'
-                      ? 'bg-[#FF6B35] text-white border-orange-600'
-                      : 'border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  Double Column
-                </button>
-              </div>
-            </div>
+          </QcStudioSection>
+          <QcDocumentSection hidden={studioSection !== 'details'} title="Order details" className="qc-document-order-details-section">{renderOrderHeader()}</QcDocumentSection>
+        </QcDocumentPanel>
+        <QcDocumentPreview title={studioPreview ? 'Recipient preview' : 'Your visual order'}
+          description={studioPreview ? 'The same document renderer is used for the saved order, supplier page and PDF.' : 'Click a component, image or header to edit it.'}
+          collapsed={componentsPanelCollapsed || studioPreview} onExpand={() => { setComponentsPanelCollapsed(false); setStudioPreview(false); }}>
+          <div className="qc-document-paper"><OrderBody order={orderPresentation} lines={previewLines} flashings={flashings} currency={currency}
+            selection={studioPreview ? undefined : { active: studioSection, hovered: hoveredLineId ? `line:${hoveredLineId}` : undefined, onSelect: selectStudioSection }} />
           </div>
-
-          {/* Order Form Content - A4 Preview */}
-          <div className="flex-1 overflow-y-auto p-2 md:p-6 bg-slate-100">
-            <div className="max-w-[210mm] mx-auto bg-white shadow-lg" style={{ minHeight: '297mm' }}>
-              <div className="p-4 md:p-8">
-                {/* Order Header */}
-                <div className="mb-4 md:mb-6 pb-4 md:pb-6 border-b-2 border-slate-300">
-                  {/* 3-Column Header Layout */}
-                  <div className="grid grid-cols-3 gap-2 md:gap-8">
-                    {/* Column 1: TO section (left-aligned) */}
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-slate-500 uppercase">To:</p>
-                      <p className="text-sm font-medium text-slate-900">{toSupplier || 'Not set'}</p>
-                      {reference && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Ref:</span> {reference}
-                        </p>
-                      )}
-                      {orderType && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Order Type:</span> {orderType}
-                        </p>
-                      )}
-                      {colours && (
-                        <p className="text-xs text-slate-600">
-                          <span className="font-medium">Colours:</span> {colours}
-                        </p>
-                      )}
-                      
-                      {deliveryAddress && (
-                        <div className="mt-2">
-                          <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Delivery Address:</p>
-                          <p className="text-xs text-slate-700 whitespace-pre-wrap">{deliveryAddress}</p>
-                        </div>
-                      )}
-                      
-                      {deliveryDate && (
-                        <p className="text-xs text-slate-600 mt-2">
-                          <span className="font-medium">Delivery Date:</span> {new Date(deliveryDate).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    
-                    {/* Column 2: Spacer (breathing room) */}
-                    <div></div>
-                    
-                    {/* Column 3: Logo + FROM section (left-aligned) */}
-                    <div className="space-y-3">
-                      {/* Logo pinned to top, max height */}
-                      {logoUrl && (
-                        <div className="flex items-start">
-                          <img src={logoUrl} alt="Logo" className="max-h-16 max-w-full object-contain" />
-                        </div>
-                      )}
-                      
-                      {/* FROM section - left-aligned */}
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold text-slate-500 uppercase">From:</p>
-                        <p className="text-sm font-medium text-slate-900">{fromCompany || 'Not set'}</p>
-                        {contactPerson && (
-                          <p className="text-xs text-slate-600">{contactPerson}</p>
-                        )}
-                        {contactDetails && (
-                          <p className="text-xs text-slate-600">{contactDetails}</p>
-                        )}
-                        {orderDate && (
-                          <p className="text-xs text-slate-600 mt-2">
-                            <span className="font-medium">Order Date:</span> {new Date(orderDate).toLocaleDateString()}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {orderNotes && (
-                    <div className="mt-4 pt-4 border-t border-slate-200">
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Notes:</p>
-                      <p className="text-xs text-slate-700 whitespace-pre-wrap">{orderNotes}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Components Section */}
-            {orderLines.length === 0 ? (
-              <div className="text-center py-20 text-slate-500">
-                <svg className="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <p className="text-sm mb-4">No items added yet</p>
-                <p className="text-xs text-slate-400 mb-4">
-                  {quoteData 
-                    ? 'Select items from the sidebar to add them here'
-                    : 'Add custom items to get started'
-                  }
-                </p>
-                <button
-                  type="button"
-                  onClick={openAddItemModal}
-                  className="px-4 py-2 text-sm font-medium rounded-lg bg-[#FF6B35] text-white hover:bg-orange-600"
-                >
-                  Add Custom Item
-                </button>
-              </div>
-            ) : (
-              <div className={layoutMode === 'double' ? 'grid grid-cols-2 gap-6' : 'space-y-6'}>
-                {orderLines.map(line => (
-                  <div key={line.id} className={`bg-white border rounded-lg p-4 space-y-3 transition-all duration-150 ${hoveredLineId === line.id ? 'border-[#FF6B35] ring-2 ring-[#FF6B35] ring-inset bg-orange-50/20' : 'border-slate-200'}`}>
-                    {/* Component Name */}
-                    {line.showComponentName && (
-                      <h4 className="font-semibold text-slate-900 text-base">{line.componentName}</h4>
-                    )}
-
-                    {/* Flashing Image */}
-                    {line.showFlashingImage && line.flashingImageUrl && (
-                      <div>
-                        <img 
-                          src={line.flashingImageUrl} 
-                          alt="Flashing" 
-                          className={`border border-slate-200 rounded ${layoutMode === 'double' ? 'w-full' : 'w-full max-w-md'}`}
-                        />
-                      </div>
-                    )}
-
-                    {/* Measurements */}
-                    {line.showMeasurements && (
-                      <div className="text-sm text-slate-700">
-                        {line.entryMode === 'single' ? (
-                          <p className="font-medium">
-                            Quantity: <span className="text-black">{line.pricedQuantity ?? line.quantity}</span>
-                            {line.measurementDisplay && (
-                              <span className="text-slate-400 ml-1">({line.measurementDisplay})</span>
-                            )}
-                          </p>
-                        ) : (
-                          <div>
-                            {line.pricedQuantity != null && (
-                              <p className="font-medium">
-                                Quantity: <span className="text-black">{line.pricedQuantity}</span>
-                                {line.measurementDisplay && (
-                                  <span className="text-slate-400 ml-1">({line.measurementDisplay})</span>
-                                )}
-                              </p>
-                            )}
-                            {line.pricedQuantity == null && (
-                              <>
-                                <p className="font-medium text-xs text-slate-500 uppercase mb-2">
-                                  {line.entryMode === 'area' ? 'Areas' : line.entryMode === 'volume' ? 'Volumes' : 'Lengths'} ({line.lengthUnit}):
-                                </p>
-                                <div className="space-y-2">
-                                  {line.lengths?.map((entry, idx) => (
-                                    <div key={idx}>
-                                      <div className="flex items-center gap-2">
-                                        <span className="font-medium">{entry.length}{line.lengthUnit}</span>
-                                        <span className="text-slate-400">×</span>
-                                        <span className="text-slate-600">{entry.multiplier}</span>
-                                      </div>
-                                      {entry.variables && entry.variables.length > 0 && (
-                                        <div className="text-xs text-slate-500 pl-4 mt-0.5">
-                                          {entry.variables.map((v, vIdx) => (
-                                            <span key={vIdx} className="mr-2">
-                                              {v.name}={v.value}{v.unit}
-                                              {vIdx < entry.variables!.length - 1 && ', '}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )}
-                        {line.notes && <p className="text-slate-600 mt-2 text-xs italic">{line.notes}</p>}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-              </div>
-            </div>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="flex-shrink-0 px-2 md:px-6 py-3 md:py-4 bg-white border-t border-slate-200 flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={() => router.push('../material-orders')}
-              disabled={saving}
-              className="px-6 py-2.5 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            {existingOrder && (
-              <button
-                type="button"
-                onClick={() => window.open(`../material-orders/${existingOrder.order.id}/preview`, '_blank')}
-                disabled={saving}
-                className="px-6 py-2.5 text-sm font-medium rounded-full bg-slate-900 text-white hover:shadow-[0_0_15px_rgba(255,107,53,0.5)] hover:bg-slate-800 transition-all disabled:opacity-50"
-              >
-                Preview
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              disabled={saving}
-              data-copilot="mo-save"
-              className="px-6 py-2.5 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-orange-600 transition-colors shadow-sm disabled:opacity-50"
-            >
-              {saving ? 'Saving...' : 'Save Order'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Add/Edit Item Modal */}
-      {showAddItemModal && (
+        </QcDocumentPreview>
+      </QcDocumentBody>
+      <QcDocumentDialogScope><StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />      {/* Add/Edit Item Modal */}
+      {showAddItemModal && !editingLineId && (
         <AddItemModal
           flashings={flashings}
           components={components}
@@ -1353,14 +1152,18 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         />
       )}
 
+      <ConfirmModal appearance="v2" open={pendingStudioTarget !== null} title="Discard unapplied component changes?"
+        description="Display switches are already applied. The component details draft has not been applied."
+        confirmLabel="Discard changes" cancelLabel="Keep editing" onCancel={() => setPendingStudioTarget(null)}
+        onConfirm={() => { const target = pendingStudioTarget; setPendingStudioTarget(null); if (target) goToStudioSection(target); }} />
       {/* Remove line confirmation - replaces native confirm() with app-style modal. */}
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={removeConfirmId !== null}
         title="Remove this item?"
         description="This removes the item from the order. This can't be undone."
         confirmLabel="Remove"
         onCancel={() => setRemoveConfirmId(null)}
-        onConfirm={confirmRemoveLine}
+        onConfirm={() => { confirmRemoveLine(); if (removeConfirmId === editingLineId) goToStudioSection('items'); }}
       />
 
       {/* App-style alert replaces native alert() across the order create flow. */}
@@ -1371,9 +1174,7 @@ export function OrderCreateForm({ templates, flashings, components = [], collect
         variant={alertState.variant}
         onClose={closeAlert}
       />
-    </div>
-    </>
+</QcDocumentDialogScope>
+    </QcDocumentWorkspace>
   );
 }
-
-// Add Item Modal Component

@@ -60,6 +60,8 @@ export async function renderInvoicePdfBuffer(b: InvoiceBundleData): Promise<Arra
         taxTotal={p.taxTotal}
         total={p.total}
         paymentDetails={p.paymentDetails}
+        hideLinePrices={(p.invoice as { hide_line_prices?: boolean }).hide_line_prices === true}
+        hideTotals={(p.invoice as { hide_totals?: boolean }).hide_totals === true}
       />,
     );
   } catch (err) {

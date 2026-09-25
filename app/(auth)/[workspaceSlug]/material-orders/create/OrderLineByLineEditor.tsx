@@ -20,9 +20,13 @@
 //   - Footer free-text (rendered on preview / public / PDF)
 //   - Optional taxes (default none; add custom OR apply a company default)
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { formatCurrency } from '@/app/lib/currency/currencies';
-import { CollapsiblePanel, CollapseButton, ExpandTab } from '@/app/components/editor/CollapsiblePanel';
+import { QcStudioToolbar, QcStudioInspectorHeading, QcStudioSection, QcStudioOverview, type QcStudioOption } from '@/app/components/ui/v2/QcDocumentStudio';
+import { OrderBody, type OrderDocumentData } from '@/app/orders/[token]/OrderBody';
+import { QcButton } from '@/app/components/ui/v2/QcButton';
+import { QcDocumentWorkspace, QcDocumentHeader, QcDocumentSaveState, QcDocumentBody, QcDocumentPanel, QcDocumentPanelHeader, QcDocumentSection, QcDocumentPreview, QcDocumentDialogScope } from '@/app/components/ui/v2/QcDocumentWorkspace';
+
 import { AddLineItemModal, type LineItemPayload } from '@/app/components/AddLineItemModal';
 import { AiUploadModal } from '@/app/components/ai-import/AiUploadModal';
 import { AiTextPromptModal } from '@/app/components/ai-import/AiTextPromptModal';
@@ -38,6 +42,12 @@ import {
 } from '../lineByLine';
 
 interface Props {
+  /** Existing parent-owned supplier/company form. Presentation slot only. */
+  details?: ReactNode;
+  /** Render-only header projection from the existing parent form. */
+  document: OrderDocumentData;
+  /** UI guard only: prevent saving while a local item draft has not been applied. */
+  onDraftChange?: (pending: boolean) => void;
   initialLines: LineByLineItem[];
   initialFooter: string;
   initialTaxes: LineByLineTax[];
@@ -71,6 +81,9 @@ function makeId(): string {
 }
 
 export function OrderLineByLineEditor({
+  details,
+  document,
+  onDraftChange,
   initialLines,
   initialFooter,
   initialTaxes,
@@ -115,6 +128,11 @@ export function OrderLineByLineEditor({
   const [showAiText, setShowAiText] = useState(false);
   // id of the line currently being edited in the right-hand preview (pencil).
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [studioSection, setStudioSection] = useState('document');
+  const [studioPreview, setStudioPreview] = useState(false);
+  const [studioLineDirty, setStudioLineDirty] = useState(false);
+  const [pendingStudioTarget, setPendingStudioTarget] = useState<string | null>(null);
+  useEffect(() => { onDraftChange?.(studioLineDirty); }, [studioLineDirty, onDraftChange]);
   // Pending remove confirmation (destructive). Mirrors CustomerQuoteEditor:
   // the X opens a ConfirmModal rather than deleting immediately.
   const [removeLineId, setRemoveLineId] = useState<string | null>(null);
@@ -236,151 +254,131 @@ export function OrderLineByLineEditor({
   const inputCls =
     'w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:border-orange-500 focus:outline-none';
 
-  return (
-    // Width model (Shaun, 2026-06-05): the LEFT column (Order items / Footer /
-    // Taxes) keeps its prior comfortable width; the RIGHT preview EXPANDS to
-    // fill the remaining space so the body's right edge lines up with the
-    // full-width header frame above. Fixed left basis + flexible preview
-    // (min-w-0 so the preview table can shrink/grow without overflow). The
-    // gap between the two columns is preserved.
-    <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-start pb-20 md:pb-0">
-      {/* LEFT: line controls + footer + taxes - collapsible to declutter; on
-          collapse the preview (flex-1) auto-fills the freed space. */}
-      <CollapsiblePanel collapsed={panelCollapsed} widthClass="lg:w-[400px] lg:flex-shrink-0">
-      <div className="w-full lg:w-[400px] space-y-4" data-assistant-id="order-lbl-controls" data-copilot="order-lbl-controls">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-          {/* Show all pricing - master toggle. When unticked (default for
-              order-from-quote), all pricing is hidden. Ticking reveals line
-              prices + totals. The individual Hide line prices / Hide totals
-              checkboxes below give fine-grained control after that. */}
-          <label
-            className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-900 select-none p-2 -m-2 rounded-lg hover:bg-orange-50/50 transition-colors"
-            title="When unticked, all pricing is hidden from the order. Tick to show line prices and totals. Most users don't send prices to suppliers."
-          >
-            <input
-              type="checkbox"
-              checked={!hideLinePrices && !hideTotals}
-              onChange={(e) => {
-                const show = e.target.checked;
-                setHideLinePrices(!show);
-                setHideTotals(!show);
-                onHideLinePricesChange?.(!show);
-                onHideTotalsChange?.(!show);
-              }}
-              className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-            />
-            Show all pricing
-          </label>
-          <div className="border-t border-slate-100 pt-3"></div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <CollapseButton
-                collapsed={panelCollapsed}
-                onToggle={() => setPanelCollapsed(true)}
-                label="Collapse panel"
-              />
-              <h3 className="text-sm font-semibold text-slate-900">Order items</h3>
-            </div>
-            <div className="flex items-center gap-3">
-              <label
-                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
-                title="Hides the price on each line item. The subtotal and total footer remain visible unless 'Hide totals' is also ticked."
-              >
-                <input
-                  type="checkbox"
-                  checked={hideLinePrices}
-                  onChange={(e) => {
-                    setHideLinePrices(e.target.checked);
-                    onHideLinePricesChange?.(e.target.checked);
-                  }}
-                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                />
-                Hide line prices
-              </label>
-              <label
-                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
-                title="Hides the subtotal, taxes, and grand total footer."
-              >
-                <input
-                  type="checkbox"
-                  checked={hideTotals}
-                  onChange={(e) => {
-                    setHideTotals(e.target.checked);
-                    onHideTotalsChange?.(e.target.checked);
-                  }}
-                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                />
-                Hide totals
-              </label>
-              <label
-                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
-                title="Adds a Qty column to each line. Total = Qty × Unit Price."
-              >
-                <input
-                  type="checkbox"
-                  checked={showQuantityColumn}
-                  onChange={(e) => {
-                    setShowQuantityColumn(e.target.checked);
-                    onShowQuantityColumnChange?.(e.target.checked);
-                  }}
-                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                />
-                Qty column
-              </label>
-            </div>
-          </div>
+  const studioOptions: QcStudioOption[] = [
+    { id: 'details', label: 'Order details', description: 'Supplier, delivery, your business and templates' },
+    { id: 'appearance', label: 'Price & quantity display', description: 'Choose what the supplier sees' },
+    { id: 'footer', label: 'Footer & terms', description: 'Closing notes beneath the items' },
+    { id: 'taxes', label: 'Taxes', description: 'Optional custom or company taxes' },
+    { id: 'import', label: 'Import items', description: 'Add lines from an image or text' },
+  ];
+  const studioLine = lines.find(line => line.id === editingLineId);
+  function goToStudioSection(target: string) {
+    setStudioSection(target); setStudioPreview(false); setPanelCollapsed(false);
+    setStudioLineDirty(false); setEditingLineId(target.startsWith('line:') ? target.slice(5) : null);
+  }
+  function selectStudioSection(target: string) {
+    if (target === studioSection) { setPanelCollapsed(false); setStudioPreview(false); return; }
+    if (studioLineDirty) { setPendingStudioTarget(target); return; }
+    goToStudioSection(target);
+  }
 
-          {/* Existing lines with controls */}
+  return (
+    <>
+      <QcStudioToolbar section={studioSection} onSelect={selectStudioSection} options={studioOptions}
+        preview={studioPreview} onPreview={() => setStudioPreview(!studioPreview)}
+        primary={<QcButton variant="secondary" size="sm" data-copilot="order-lbl-add-line" onClick={() => setShowAddLine(true)}>+ Add item</QcButton>} />
+      {studioLineDirty && <p className="qc-document-note" role="status">Item changes are not applied yet. Choose Apply changes in the editing panel before saving.</p>}
+      <QcDocumentBody collapsed={panelCollapsed || studioPreview}>
+        <QcDocumentPanel collapsed={panelCollapsed || studioPreview} data-assistant-id="order-lbl-controls" data-copilot="order-lbl-controls">
+          <QcStudioInspectorHeading section={studioSection}
+            title={studioSection.startsWith('line:') ? 'Order item' : studioSection === 'items' ? 'All items' : studioOptions.find(option => option.id === studioSection)?.label ?? 'Your order'}
+            onBack={() => selectStudioSection('document')} onCollapse={() => setPanelCollapsed(true)} />
+          <QcStudioSection active={studioSection === 'document'}><QcStudioOverview options={studioOptions} onSelect={selectStudioSection} /></QcStudioSection>
+          <QcStudioSection active={studioSection.startsWith('line:')}>
+            {studioLine ? <div className="qc-document-panel-content">
+              <div className="qc-document-line-toggles">
+                <label><input type="checkbox" checked={studioLine.isVisible} onChange={e => patchLine(studioLine.id, { isVisible: e.target.checked })} /> Show item</label>
+                <label><input type="checkbox" checked={studioLine.includeInTotal} onChange={e => patchLine(studioLine.id, { includeInTotal: e.target.checked })} /> In total</label>
+              </div>
+              <p className="qc-document-help">Hidden order items remain editable here, but do not contribute to the order total.</p>
+              <div className="qc-document-row-actions">
+                <QcButton size="sm" onClick={() => move(lines.indexOf(studioLine), -1)} disabled={lines.indexOf(studioLine) === 0}>↑ Move up</QcButton>
+                <QcButton size="sm" onClick={() => move(lines.indexOf(studioLine), 1)} disabled={lines.indexOf(studioLine) === lines.length - 1}>↓ Move down</QcButton>
+                <QcButton size="sm" variant="ghost" className="qc-document-danger-control" onClick={() => setRemoveLineId(studioLine.id)}>Remove</QcButton>
+              </div>
+              <div className="qc-studio-line-form">
+                <LineEditForm key={studioLine.id} onDraftChange={setStudioLineDirty} initialText={studioLine.text} initialQuantity={studioLine.quantityText}
+                  initialAmount={studioLine.amount} initialShowPrice={studioLine.showPrice} showQuantityColumn={showQuantityColumn}
+                  initialQty={studioLine.quantity ?? 1} initialUnitPrice={studioLine.unitPrice ?? null}
+                  currency={currency} saveLabel="Apply changes"
+                  onSave={(text, quantity, amount, sp, qty, unitPrice) => { saveLineEdit(studioLine.id, text, quantity, amount, sp, qty, unitPrice); setStudioLineDirty(false); setStudioSection('items'); }}
+                  onCancel={() => goToStudioSection('items')} />
+              </div>
+            </div> : <p className="qc-document-empty">Choose an item on the document or in All items.</p>}
+          </QcStudioSection>
+          <QcDocumentSection hidden={studioSection !== 'import'} title="Import items" description="Add lines from an image, PDF or text, then review them.">
+            <div className="qc-document-imports"><QcButton variant="ghost" size="sm"
+              type="button"
+              onClick={() => setShowAiUpload(true)}
+              title="Upload image to auto-fill order lines"
+              className="flex-1"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Upload Image
+            </QcButton><QcButton variant="ghost" size="sm"
+              type="button"
+              onClick={() => setShowAiText(true)}
+              title="Paste text to auto-fill order lines"
+              className="flex-1"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Text Prompt
+            </QcButton></div>
+          </QcDocumentSection>
+          <QcDocumentSection hidden={studioSection !== 'items'} title="Order items" description="Hidden order items are retained but do not contribute to the total. In total applies to visible items.">          {/* Existing lines with controls */}
           <div className="space-y-2">
             {lines.length === 0 ? (
-              <p className="text-sm text-slate-400 italic px-1">No lines yet - add your first below.</p>
+              <p className="text-sm text-slate-400 italic px-1">No items yet. Use Add item to get started.</p>
             ) : (
               lines.map((line, index) => (
                 <div
                   key={line.id}
                   onMouseEnter={() => setHoveredLineId(line.id)}
                   onMouseLeave={() => setHoveredLineId(null)}
-                  className={`rounded-lg border p-3 cursor-pointer transition-all duration-150 ${
-                    line.isVisible ? 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-[0_0_8px_rgba(255,107,53,0.12)]' : 'border-slate-200 bg-slate-50 opacity-70 hover:border-orange-300'
-                  }`}
+                  className="qc-document-line" data-visible={line.isVisible}
                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-slate-800">{lineDisplayText(line)}</p>
+                      <button type="button" className="qc-studio-item-link" onClick={() => selectStudioSection(`line:${line.id}`)}>{lineDisplayText(line)}</button>
+                      {!line.isVisible && <span className="qc-studio-hidden-badge">Hidden</span>}
                       <p className="text-xs text-slate-500 mt-0.5">
                         {line.showPrice ? formatCurrency(line.amount, currency) : 'Price hidden'}
                         {!line.includeInTotal && line.isVisible ? ' · not in total' : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button
+                      <QcButton variant="ghost" size="sm" aria-label="Move up"
                         type="button"
                         title="Move up"
                         onClick={() => move(index, -1)}
                         disabled={index === 0}
-                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="qc-document-icon"
                       >
                         ▲
-                      </button>
-                      <button
+                      </QcButton>
+                      <QcButton variant="ghost" size="sm" aria-label="Move down"
                         type="button"
                         title="Move down"
                         onClick={() => move(index, 1)}
                         disabled={index === lines.length - 1}
-                        className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30"
+                        className="qc-document-icon"
                       >
                         ▼
-                      </button>
+                      </QcButton>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
-                    <button
+                  <div className="qc-document-line-toggles">
+                    <QcButton variant="ghost" size="sm"
                       type="button"
-                      onClick={() => setEditingLineId(line.id)}
-                      className="text-orange-600 hover:text-orange-700 font-medium"
+                      onClick={() => selectStudioSection(`line:${line.id}`)}
+                      
                     >
                       Edit
-                    </button>
+                    </QcButton>
                     <label className="flex items-center gap-1 cursor-pointer text-slate-600">
                       <input
                         type="checkbox"
@@ -408,63 +406,91 @@ export function OrderLineByLineEditor({
                       />
                       In total
                     </label>
-                    <button
+                    <QcButton variant="ghost" size="sm"
                       type="button"
                       onClick={() => setRemoveLineId(line.id)}
                       title="Remove this line"
                       aria-label="Remove line"
-                      className="p-0.5 text-red-400 hover:text-red-600 ml-auto"
+                      className="ml-auto qc-document-icon qc-document-danger-control"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    </QcButton>
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          {/* AI import buttons */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setShowAiUpload(true)}
-              title="Upload image to auto-fill order lines"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Upload Image
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAiText(true)}
-              title="Paste text to auto-fill order lines"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 text-slate-600 hover:border-[#FF6B35] hover:text-[#FF6B35] hover:bg-orange-50/40 transition-all"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Text Prompt
-            </button>
-          </div>
-
-          <button
-            type="button"
-            data-copilot="order-lbl-add-line"
-            onClick={() => setShowAddLine(true)}
-            className="w-full py-2 text-sm font-medium text-orange-600 border border-orange-200 rounded-full hover:bg-orange-50 hover:border-orange-300 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.35)]"
+</QcDocumentSection>
+          <QcDocumentSection hidden={studioSection !== 'appearance'} title="Document appearance" description="Choose whether the supplier sees prices and totals.">
+            <label
+            className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-900 select-none p-2 -m-2 rounded-lg hover:bg-orange-50/50 transition-colors"
+            title="When unticked, all pricing is hidden from the order. Tick to show line prices and totals. Most users don't send prices to suppliers."
           >
-            + Add New Line
-          </button>
-
-        </div>
-
-        {/* Footer */}
-        <div data-copilot="order-lbl-footer" className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-          <h3 className="text-sm font-semibold text-slate-900">Footer (optional)</h3>
+            <input
+              type="checkbox"
+              checked={!hideLinePrices && !hideTotals}
+              onChange={(e) => {
+                const show = e.target.checked;
+                setHideLinePrices(!show);
+                setHideTotals(!show);
+                onHideLinePricesChange?.(!show);
+                onHideTotalsChange?.(!show);
+              }}
+              className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+            />
+            Show all pricing
+          </label><div className="qc-document-visibility"><label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Hides the price on each line item. The subtotal and total footer remain visible unless 'Hide totals' is also ticked."
+              >
+                <input
+                  type="checkbox"
+                  checked={hideLinePrices}
+                  onChange={(e) => {
+                    setHideLinePrices(e.target.checked);
+                    onHideLinePricesChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Hide line prices
+              </label>
+<label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Hides the subtotal, taxes, and grand total footer."
+              >
+                <input
+                  type="checkbox"
+                  checked={hideTotals}
+                  onChange={(e) => {
+                    setHideTotals(e.target.checked);
+                    onHideTotalsChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Hide totals
+              </label>
+<label
+                className="flex items-center gap-1.5 cursor-pointer text-xs text-slate-600 select-none"
+                title="Adds a Quantity column to each line. Total = Qty × Unit Price."
+              >
+                <input
+                  type="checkbox"
+                  checked={showQuantityColumn}
+                  onChange={(e) => {
+                    setShowQuantityColumn(e.target.checked);
+                    onShowQuantityColumnChange?.(e.target.checked);
+                  }}
+                  className="rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                />
+                Quantity column
+              </label></div>
+          </QcDocumentSection>
+          {details && <QcDocumentSection hidden={studioSection !== 'details'} title="Order details" className="qc-document-order-details-section">{details}</QcDocumentSection>}
+          <div hidden={studioSection !== 'footer'} data-copilot="order-lbl-footer" className="qc-document-section space-y-2">
+          <h3 className="text-sm font-semibold text-slate-900">Footer & notes</h3>
           <p className="text-xs text-slate-500">Terms, notes, or anything to print under the items.</p>
-          <textarea
+          <textarea aria-label="Order footer"
             value={footer}
             onChange={(e) => {
               setFooter(e.target.value);
@@ -475,9 +501,7 @@ export function OrderLineByLineEditor({
             className={inputCls}
           />
         </div>
-
-        {/* Optional taxes (default none) */}
-        <div data-copilot="order-lbl-taxes" className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+          <div hidden={studioSection !== 'taxes'} data-copilot="order-lbl-taxes" className="qc-document-section space-y-3">
           <div>
             <h3 className="text-sm font-semibold text-slate-900">Taxes (optional)</h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -491,7 +515,7 @@ export function OrderLineByLineEditor({
                 <div key={t.id} className="flex items-center gap-2">
                   <input
                     type="text"
-                    value={t.name}
+                    aria-label="Tax name" value={t.name}
                     onChange={(e) =>
                       commitTaxes(taxes.map((x) => (x.id === t.id ? { ...x, name: e.target.value } : x)))
                     }
@@ -504,7 +528,7 @@ export function OrderLineByLineEditor({
                       step="0.01"
                       min="0"
                       max="100"
-                      value={t.ratePercent}
+                      aria-label="Tax rate percent" value={t.ratePercent}
                       onChange={(e) =>
                         commitTaxes(
                           taxes.map((x) =>
@@ -516,20 +540,20 @@ export function OrderLineByLineEditor({
                     />
                     <span className="text-sm text-slate-500">%</span>
                   </div>
-                  <button
+                  <QcButton variant="ghost" size="sm"
                     type="button"
                     onClick={() => commitTaxes(taxes.filter((x) => x.id !== t.id))}
-                    className="text-red-500 hover:text-red-600 text-xs px-1"
+                    className="qc-document-danger-control"
                     title="Remove tax"
                   >
                     Remove
-                  </button>
+                  </QcButton>
                 </div>
               ))}
             </div>
           )}
 
-          <button
+          <QcButton variant="ghost" size="sm"
             type="button"
             onClick={() =>
               commitTaxes([
@@ -537,10 +561,10 @@ export function OrderLineByLineEditor({
                 { id: `tax-${Date.now()}`, sourceTaxId: null, name: '', ratePercent: 0 },
               ])
             }
-            className="text-xs font-medium text-orange-600 hover:text-orange-700"
+            
           >
             + Add custom tax
-          </button>
+          </QcButton>
 
           {companyTaxes.length > 0 && (
             <div className="pt-3 border-t border-slate-200">
@@ -549,7 +573,7 @@ export function OrderLineByLineEditor({
                 {companyTaxes.map((ct) => {
                   const applied = taxes.some((t) => t.sourceTaxId === ct.id);
                   return (
-                    <button
+                    <QcButton variant="ghost" size="sm" aria-pressed={applied}
                       type="button"
                       key={ct.id}
                       onClick={() => {
@@ -567,152 +591,32 @@ export function OrderLineByLineEditor({
                           ]);
                         }
                       }}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-full border transition ${
-                        applied
-                          ? 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
-                          : 'bg-white border-slate-300 text-slate-700 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50'
-                      }`}
+                      className="qc-document-danger-control"
                     >
                       {ct.name} ({ct.rate_percent}%)
-                    </button>
+                    </QcButton>
                   );
                 })}
               </div>
             </div>
           )}
         </div>
-      </div>
-      </CollapsiblePanel>
-
-      {/* Expand tab - only visible when collapsed; sits on the preview side so
-          it is never clipped by the collapsing panel's overflow. */}
-      <ExpandTab
-        collapsed={panelCollapsed}
-        onToggle={() => setPanelCollapsed(false)}
-        label="Order items"
-      />
-
-      {/* RIGHT: live preview (mirrors OrderBody line-by-line table) - expands
-          to fill the remaining body width up to the header's right frame edge. */}
-      <div className="w-full lg:flex-1 lg:min-w-0 lg:sticky lg:top-4 h-fit">
-        <div className="rounded-xl border border-slate-200 bg-white p-2 md:p-5 space-y-4">
-          <div className="flex items-baseline justify-between gap-3 flex-wrap">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Preview</p>
-            <p className="text-xs text-slate-400 italic">
-              Tip: to view the full preview with header, save, then view order.
-            </p>
+        </QcDocumentPanel>
+        <QcDocumentPreview title={studioPreview ? 'Recipient preview' : 'Your order'}
+          description={studioPreview ? 'The same document renderer is used for the saved order, supplier page and PDF.' : 'Click an item or section to edit it. Use All items to restore hidden items.'}
+          collapsed={panelCollapsed || studioPreview} onExpand={() => { setPanelCollapsed(false); setStudioPreview(false); }}>
+          <div className="qc-document-paper"><OrderBody
+            order={{ ...document, layout_mode: 'line_by_line', line_by_line_data: { lines, footer, taxes, hideLinePrices, hideTotals, showQuantityColumn } }}
+            lines={[]} flashings={[]} currency={currency}
+            selection={studioPreview ? undefined : { active: studioSection, hovered: hoveredLineId ? `line:${hoveredLineId}` : undefined, onSelect: selectStudioSection }} />
           </div>
-          <table className="w-full text-sm">
-            <thead>
-<tr className="border-b-2 border-slate-300 text-left">
-                <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
-                {showQuantityColumn && (
-                  <th className="py-2 px-2 text-right font-semibold text-slate-600 whitespace-nowrap w-12">Qty</th>
-                )}
-                <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
-                  {hideLinePrices ? '' : 'Price'}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleLines.length === 0 ? (
-                <tr>
-<td colSpan={showQuantityColumn ? 3 : 2} className="py-4 text-center text-slate-400 italic">
-                    No items yet.
-                  </td>
-                </tr>
-              ) : (
-                visibleLines.map((line) =>
-                  editingLineId === line.id ? (
-<tr key={line.id}>
-                      <td colSpan={showQuantityColumn ? 3 : 2} className="py-2">
-<LineEditForm
-                          initialText={line.text}
-                          initialQuantity={line.quantityText}
-                          initialAmount={line.amount}
-                          initialShowPrice={line.showPrice}
-                          showQuantityColumn={showQuantityColumn}
-                          initialQty={line.quantity ?? 1}
-                          initialUnitPrice={line.unitPrice ?? null}
-                          onSave={(text, quantity, amount, sp, qty, unitPrice) => saveLineEdit(line.id, text, quantity, amount, sp, qty, unitPrice)}
-                          onCancel={() => setEditingLineId(null)}
-                        />
-                      </td>
-                    </tr>
-                  ) : (
-<tr key={line.id} className={`border-b border-slate-100 align-top transition-all duration-150 ${hoveredLineId === line.id ? 'ring-2 ring-[#FF6B35] ring-inset bg-orange-50/30' : ''}`}>
-                      <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
-                      {showQuantityColumn && (
-                        <td className="py-2 px-2 text-right text-slate-700 tabular-nums w-12">
-                          {line.quantity ?? 1}
-                        </td>
-                      )}
-                      <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
-                        <div className="flex items-center justify-end gap-2">
-                          {!hideLinePrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
-                          <button
-                            type="button"
-                            onClick={() => setEditingLineId(line.id)}
-                            className="p-1 text-slate-400 hover:text-slate-600"
-                            title="Edit line"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ),
-                )
-              )}
-            </tbody>
-            {!hideTotals && (visibleLines.some((l) => l.showPrice) || taxLines.length > 0) ? (
-              <tfoot>
-                {taxLines.length > 0 && (
-                  <>
-                    <tr className="border-t border-slate-200">
-                      <td className="py-1.5 pr-3 text-right text-slate-600">Subtotal</td>
-                      <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
-                        {formatCurrency(subtotal, currency)}
-                      </td>
-                    </tr>
-                    {taxLines.map((tl) => (
-                      <tr key={tl.id}>
-                        <td className="py-1.5 pr-3 text-right text-slate-600">
-                          {tl.name} ({tl.ratePercent}%)
-                        </td>
-                        <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
-                          {formatCurrency(tl.amount, currency)}
-                        </td>
-                      </tr>
-                    ))}
-                  </>
-                )}
-                <tr className="border-t-2 border-slate-300">
-                  <td className="py-2 pr-3 text-right font-semibold text-slate-700">Total</td>
-                  <td className="py-2 pl-3 text-right font-bold text-slate-900 whitespace-nowrap tabular-nums">
-                    {formatCurrency(total, currency)}
-                  </td>
-                </tr>
-              </tfoot>
-            ) : null}
-          </table>
-
-          {footer.trim() && (
-            <div className="pt-3 border-t border-slate-200">
-              <p className="text-sm text-slate-600 italic whitespace-pre-wrap">{footer}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Unified Add Line Item modal - invoice-style shared modal */}
+        </QcDocumentPreview>
+      </QcDocumentBody>
+      <QcDocumentDialogScope>
+      <ConfirmModal appearance="v2" open={pendingStudioTarget !== null} title="Discard unapplied item changes?"
+        description="Your quick display changes are already applied. The text and pricing draft has not been applied to this item."
+        confirmLabel="Discard changes" cancelLabel="Keep editing" onCancel={() => setPendingStudioTarget(null)}
+        onConfirm={() => { const target = pendingStudioTarget; setPendingStudioTarget(null); if (target) goToStudioSection(target); }} />      {/* Unified Add Line Item modal - invoice-style shared modal */}
       {showAddLine && (
         <AddLineItemModal
           workspaceSlug={workspaceSlug}
@@ -727,14 +631,17 @@ export function OrderLineByLineEditor({
 
       {/* Remove-line confirmation (destructive: fully deletes the line).
           Matches CustomerQuoteEditor exactly for UX consistency. */}
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={removeLineId !== null}
         title="Remove this line?"
         description="This removes the line from the order entirely."
         confirmLabel="Remove"
         onCancel={() => setRemoveLineId(null)}
         onConfirm={() => {
-          if (removeLineId) removeLine(removeLineId);
+          if (removeLineId) {
+            removeLine(removeLineId);
+            if (removeLineId === editingLineId) { setStudioLineDirty(false); setStudioSection('items'); }
+          }
           setRemoveLineId(null);
         }}
       />
@@ -754,6 +661,7 @@ export function OrderLineByLineEditor({
           onClose={() => setShowAiText(false)}
         />
       )}
-    </div>
+</QcDocumentDialogScope>
+    </>
   );
 }

@@ -84,7 +84,7 @@ export default async function CreateOrderPage(props: Props) {
     : quoteData;
 
   return (
-    <div className="h-screen overflow-hidden">
+    <div className="min-w-0">
       <OrderCreateForm
         templates={templates}
         flashings={flashings}

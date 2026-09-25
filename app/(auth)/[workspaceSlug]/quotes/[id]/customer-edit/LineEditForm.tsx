@@ -1,7 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { formatCurrency, getCurrencySymbol } from '@/app/lib/currency/currencies';
 
 interface Props {
+  currency?: string;
+  onDraftChange?: (pending: boolean) => void;
+  saveLabel?: string;
   initialText: string;
   /** Free-text description (column 2). Separate from the title/name. */
   initialQuantity?: string | null;
@@ -61,6 +65,9 @@ interface Props {
 }
 
 export function LineEditForm({
+  currency,
+  onDraftChange,
+  saveLabel = 'Save',
   initialText,
   initialQuantity,
   initialAmount,
@@ -117,6 +124,11 @@ export function LineEditForm({
   const [laborMarginPercent, setLaborMarginPercent] = useState<string>(
     (initialLineLaborMarginPercent ?? defaultLaborMargin).toString()
   );
+
+  // Optional editor-host draft indicator. No calculation or submit behavior here.
+  const draftSignature = JSON.stringify([text, quantity, amount, showPrice, qty, marginPercent, laborMarginPercent]);
+  const initialDraftSignature = useRef(draftSignature);
+  useEffect(() => { onDraftChange?.(draftSignature !== initialDraftSignature.current); }, [draftSignature, onDraftChange]);
 
   // Show Labor Margin field only for:
   //   - component lines (not custom/catalog)
@@ -246,6 +258,7 @@ export function LineEditForm({
         <label className="block text-xs font-medium text-slate-500 mb-1">Title / Name</label>
         <input
           type="text"
+          aria-label="Title / Name"
           value={text}
           onChange={(e) => setText(e.target.value)}
           className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
@@ -261,6 +274,7 @@ export function LineEditForm({
         </label>
         <input
           type="text"
+          aria-label="Description"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
@@ -276,6 +290,7 @@ export function LineEditForm({
               type="number"
               min="1"
               step="1"
+              aria-label="Quantity"
               value={qty}
               onChange={(e) => setQty(e.target.value)}
               className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
@@ -284,11 +299,12 @@ export function LineEditForm({
           <div className="flex-1">
             <label className="block text-xs font-medium text-slate-500 mb-1">{isCustomWithBaseCost ? 'Unit Cost' : 'Unit Price'}</label>
             <div className="flex items-center gap-1">
-              <span className="text-sm text-slate-600">$</span>
+              <span className="text-sm text-slate-600">{currency ? getCurrencySymbol(currency) : '$'}</span>
               <input
                 type="number"
                 step="0.01"
                 min="0"
+                aria-label={isCustomWithBaseCost ? 'Cost' : 'Price'}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
@@ -305,7 +321,7 @@ export function LineEditForm({
               className="w-4 h-4 text-orange-600 rounded"
             />
             <label htmlFor="edit-showPrice" className="text-xs text-slate-600 whitespace-nowrap">
-              Show $
+              Show price
             </label>
           </div>
         </div>
@@ -314,11 +330,12 @@ export function LineEditForm({
           <div className="flex-1">
             <label className="block text-xs font-medium text-slate-500 mb-1">{isCustomWithBaseCost ? 'Cost' : 'Price'}</label>
             <div className="flex items-center gap-1">
-              <span className="text-sm text-slate-600">$</span>
+              <span className="text-sm text-slate-600">{currency ? getCurrencySymbol(currency) : '$'}</span>
               <input
                 type="number"
                 step="0.01"
                 min="0"
+                aria-label={isCustomWithBaseCost ? 'Cost' : 'Price'}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:border-orange-500 focus:outline-none"
@@ -335,7 +352,7 @@ export function LineEditForm({
               className="w-4 h-4 text-orange-600 rounded"
             />
             <label htmlFor="edit-showPrice" className="text-xs text-slate-600 whitespace-nowrap">
-              Show $
+              Show price
             </label>
           </div>
         </div>
@@ -343,7 +360,7 @@ export function LineEditForm({
 
       {showQuantityColumn && (
         <div className="text-right text-xs font-semibold text-slate-700">
-          Line total: ${lineTotal.toFixed(2)}
+          Line total: {currency ? formatCurrency(lineTotal, currency) : `$${lineTotal.toFixed(2)}`}
         </div>
       )}
 
@@ -397,7 +414,7 @@ export function LineEditForm({
           type="submit"
           className="flex-1 px-3 py-1 text-xs font-medium bg-black text-white rounded hover:bg-slate-800"
         >
-          Save
+          {saveLabel}
         </button>
         <button
           type="button"

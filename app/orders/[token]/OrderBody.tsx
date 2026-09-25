@@ -2,6 +2,8 @@
 
 import type { MaterialOrderRow, MaterialOrderLineRow, FlashingLibraryRow } from '@/app/lib/types';
 import { useRef } from 'react';
+import { DocumentHeader } from '@/app/components/documents/DocumentHeader';
+import { DocumentEditTarget, DocumentRegion, documentRegion, type DocumentSelection } from '@/app/components/documents/DocumentSelection';
 import { formatCurrency } from '@/app/lib/currency/currencies';
 import {
   parseLineByLineData,
@@ -9,15 +11,24 @@ import {
   parseLineByLineTaxes,
   parseLineByLineHideLinePrices,
   parseLineByLineHideTotals,
+  parseLineByLineShowQuantityColumn,
   lineByLineTotal,
   lineDisplayText,
   computeLineByLineTaxes,
   type LineByLineItem,
 } from '@/app/(auth)/[workspaceSlug]/material-orders/lineByLine';
 
+export type OrderDocumentData = Pick<MaterialOrderRow,
+  'order_number' | 'to_supplier' | 'from_company' | 'contact_person' | 'contact_details' |
+  'reference' | 'order_type' | 'colours' | 'delivery_date' | 'delivery_address' | 'header_notes' |
+  'logo_url' | 'order_date' | 'layout_mode'> & { line_by_line_data?: unknown };
+export type OrderDocumentLine = Pick<MaterialOrderLineRow,
+  'id' | 'item_name' | 'flashing_id' | 'flashing_image_url' | 'entry_mode' | 'quantity' | 'length_unit' | 'item_notes' |
+  'show_component_name' | 'show_flashing_image' | 'show_measurements' | 'priced_quantity' | 'measurement_display'> & { lengths?: unknown };
 interface Props {
-  order: MaterialOrderRow;
-  lines: MaterialOrderLineRow[];
+  selection?: DocumentSelection;
+  order: OrderDocumentData;
+  lines: OrderDocumentLine[];
   flashings: Pick<FlashingLibraryRow, 'id' | 'name' | 'image_url'>[];
   /** Currency code for line-by-line price rendering (defaults to GBP). */
   currency?: string;
@@ -43,7 +54,7 @@ interface LengthEntry {
  * `[data-print-root]`. This is the same approach the in-app preview
  * uses and avoids server-side PDF generation in this batch.
  */
-export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) {
+export function OrderBody({ order, lines, flashings, currency = 'GBP', selection }: Props) {
   const printRootRef = useRef<HTMLDivElement | null>(null);
 
   // Line-by-line orders store their priced item list in a single JSON column
@@ -59,6 +70,7 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
   const lblHideTotals = isLineByLine ? parseLineByLineHideTotals(order.line_by_line_data) : false;
   const { taxLines: lblTaxLines, taxTotal: lblTaxTotal } = computeLineByLineTaxes(lblSubtotal, lblTaxes);
   const lblTotal = lblSubtotal + lblTaxTotal;
+  const lblShowQuantityColumn = parseLineByLineShowQuantityColumn(order.line_by_line_data);
   const lblHasPrices = !lblHideTotals && (lblLines.some((l) => l.showPrice) || lblTaxLines.length > 0);
 
   return (
@@ -110,66 +122,36 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
       <div
         ref={printRootRef}
         data-print-root
-        className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 mb-6 space-y-6"
+        className="qc-output qc-output-order"
       >
-        {/* Header: TO / FROM blocks */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-6 border-b border-slate-200">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">To</p>
-            {order.to_supplier ? <p className="text-sm font-semibold text-slate-900">{order.to_supplier}</p> : null}
-            {order.reference ? <p className="text-sm text-slate-700 mt-1">Ref: {order.reference}</p> : null}
-            {order.order_type ? <p className="text-sm text-slate-700">Order type: {order.order_type}</p> : null}
-            {order.colours ? <p className="text-sm text-slate-700">Colours: {order.colours}</p> : null}
-            {order.delivery_address ? (
-              <div className="mt-3">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">Delivery</p>
-                <p className="text-sm text-slate-700 whitespace-pre-line">{order.delivery_address}</p>
-              </div>
-            ) : null}
-            {order.delivery_date ? (
-              <p className="text-sm text-slate-700 mt-2">
-                Delivery date: {new Date(order.delivery_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="sm:text-right">
-            {order.logo_url ? (
-              <img
-                src={order.logo_url}
-                alt=""
-                className="max-h-16 max-w-full sm:ml-auto object-contain mb-3"
-              />
-            ) : null}
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">From</p>
-            {order.from_company ? <p className="text-sm font-semibold text-slate-900">{order.from_company}</p> : null}
-            {order.contact_person ? <p className="text-sm text-slate-700">{order.contact_person}</p> : null}
-            {order.contact_details ? <p className="text-sm text-slate-700 whitespace-pre-line">{order.contact_details}</p> : null}
-            {order.order_date ? (
-              <p className="text-sm text-slate-700 mt-2">
-                Order date: {new Date(order.order_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-              </p>
-            ) : null}
-          </div>
-        </div>
-
-        {/* Header notes */}
-        {order.header_notes ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm text-slate-700 whitespace-pre-line">{order.header_notes}</p>
-          </div>
-        ) : null}
+        <DocumentHeader title="Purchase order" number={order.order_number || 'Draft'} companyName={order.from_company || ''} logo={order.logo_url}
+          selection={selection} headerTarget="details" recipientTarget="details" metaTarget="details" recipientLabel="Supplier"
+          companyDetails={<>{order.contact_person && <p>{order.contact_person}</p>}{order.contact_details && <p>{order.contact_details}</p>}</>}
+          recipient={<>
+            {order.to_supplier && <p><strong>{order.to_supplier}</strong></p>}
+            {order.delivery_address && <><p className="qc-output-label" style={{marginTop:12}}>Deliver to</p><p className="whitespace-pre-line">{order.delivery_address}</p></>}
+          </>}
+          meta={<>
+            {order.reference && <div className="qc-output-meta-row"><span>Reference</span><span>{order.reference}</span></div>}
+            {order.order_date && <div className="qc-output-meta-row"><span>Order date</span><span>{new Date(order.order_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span></div>}
+            {order.delivery_date && <div className="qc-output-meta-row"><span>Delivery date</span><span>{new Date(order.delivery_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span></div>}
+            {order.order_type && <div className="qc-output-meta-row"><span>Order type</span><span>{order.order_type}</span></div>}
+            {order.colours && <div className="qc-output-meta-row"><span>Colours</span><span>{order.colours}</span></div>}
+          </>}
+        />
+        {order.header_notes && <DocumentRegion selection={selection} id="details" label="order notes" className="qc-output-notes"><p className="qc-output-label">Order notes</p><p>{order.header_notes}</p></DocumentRegion>}
 
         {/* LINE-BY-LINE layout: a priced item list (item / description / qty
             / price), rendered identically on the in-app preview, the public
             supplier page, and the print/PDF output. */}
         {isLineByLine ? (
-          <div data-print-card data-pdf-block>
-            <table className="w-full text-sm">
+          <div>
+            <table className="qc-output-table">
               <thead>
                 <tr className="border-b-2 border-slate-300 text-left">
                   <th className="py-2 pr-3 font-semibold text-slate-600">Item / Description</th>
-                  <th className="py-2 pl-3 text-right font-semibold text-slate-600 whitespace-nowrap">
+                  {lblShowQuantityColumn && <th className="qc-output-numeric">Qty</th>}
+                  <th className="qc-output-numeric">
                     {lblHideLinePrices ? '' : 'Price'}
                   </th>
                 </tr>
@@ -177,13 +159,14 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
               <tbody>
                 {lblLines.length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="py-4 text-center text-slate-400 italic">No items on this order.</td>
+                    <td colSpan={lblShowQuantityColumn ? 3 : 2} className="py-4 text-center text-slate-400 italic">No items on this order.</td>
                   </tr>
                 ) : (
                   lblLines.map((line) => (
-                    <tr key={line.id} className="border-b border-slate-100 align-top break-inside-avoid">
-                      <td className="py-2 pr-3 text-slate-800 whitespace-pre-line">{lineDisplayText(line)}</td>
-                      <td className="py-2 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
+                    <tr key={line.id} data-pdf-block {...documentRegion(selection, `line:${line.id}`)}>
+                      <td>{lineDisplayText(line)}<DocumentEditTarget selection={selection} id={`line:${line.id}`} label={line.text || 'order item'} /></td>
+                      {lblShowQuantityColumn && <td className="qc-output-numeric">{line.quantity}</td>}
+                      <td className="qc-output-numeric">
                         {!lblHideLinePrices && line.showPrice ? formatCurrency(line.amount, currency) : ''}
                       </td>
                     </tr>
@@ -191,18 +174,18 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                 )}
               </tbody>
               {lblHasPrices ? (
-                <tfoot>
+                <tfoot {...documentRegion(selection, 'taxes')}>
                   {lblTaxLines.length > 0 ? (
                     <>
                       <tr className="border-t border-slate-200">
-                        <td className="py-1.5 pr-3 text-right text-slate-600">Subtotal</td>
+                        <td colSpan={lblShowQuantityColumn ? 2 : 1} className="py-1.5 pr-3 text-right text-slate-600">Subtotal</td>
                         <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
                           {formatCurrency(lblSubtotal, currency)}
                         </td>
                       </tr>
                       {lblTaxLines.map((tl) => (
                         <tr key={tl.id}>
-                          <td className="py-1.5 pr-3 text-right text-slate-600">
+                          <td colSpan={lblShowQuantityColumn ? 2 : 1} className="py-1.5 pr-3 text-right text-slate-600">
                             {tl.name} ({tl.ratePercent}%)
                           </td>
                           <td className="py-1.5 pl-3 text-right text-slate-800 whitespace-nowrap tabular-nums">
@@ -212,8 +195,8 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                       ))}
                     </>
                   ) : null}
-                  <tr className="border-t-2 border-slate-300">
-                    <td className="py-2 pr-3 text-right font-semibold text-slate-700">Total</td>
+                  <tr data-pdf-block className="qc-output-total-row">
+                    <td colSpan={lblShowQuantityColumn ? 2 : 1} className="text-right">Total<DocumentEditTarget selection={selection} id="taxes" label="order taxes and total" /></td>
                     <td className="py-2 pl-3 text-right font-bold text-slate-900 whitespace-nowrap tabular-nums">
                       {formatCurrency(lblTotal, currency)}
                     </td>
@@ -222,8 +205,8 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
               ) : null}
             </table>
             {lblFooter.trim() ? (
-              <div className="mt-4 pt-3 border-t border-slate-200">
-                <p className="text-sm text-slate-600 italic whitespace-pre-line">{lblFooter}</p>
+              <div className="qc-output-footer" {...documentRegion(selection, 'footer')}>
+                <p className="text-sm text-slate-600 italic whitespace-pre-line">{lblFooter}</p><DocumentEditTarget selection={selection} id="footer" label="footer and terms" />
               </div>
             ) : null}
           </div>
@@ -236,30 +219,28 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
             chose when saving. */
         <div
           data-layout-mode={order.layout_mode === 'double' ? 'double' : 'single'}
-          className={
-            order.layout_mode === 'double'
-              ? 'grid grid-cols-1 sm:grid-cols-2 gap-4'
-              : 'space-y-4'
-          }
+          className="qc-output-order-grid"
         >
           {lines.map((line, index) => {
             const flashing = line.flashing_id ? flashings.find((f) => f.id === line.flashing_id) : null;
+            const drawingUrl = flashing?.image_url || line.flashing_image_url;
             return (
-              <div key={line.id} data-print-card data-pdf-block className="rounded-xl border border-slate-200 p-4 break-inside-avoid">
+              <div key={line.id} data-print-card data-pdf-block className="qc-output-component" {...documentRegion(selection, `line:${line.id}`)}>
+                <DocumentEditTarget selection={selection} id={`line:${line.id}`} label={line.item_name || 'component'} />
                 {line.show_component_name !== false ? (
-                  <p className="font-semibold text-slate-900 mb-2">
-                    {index + 1}. {line.item_name}
+                  <p className="qc-output-component-title">
+                    <span className="qc-output-component-number">{String(index + 1).padStart(2, '0')}</span>{line.item_name}
                   </p>
                 ) : null}
 
-                {line.show_flashing_image !== false && flashing?.image_url ? (
+                {line.show_flashing_image !== false && drawingUrl ? (
                   <div className="mb-3">
-                    <img src={flashing.image_url} alt={flashing.name ?? ''} className="max-w-full h-auto border border-slate-200 rounded" />
+                    <img src={drawingUrl} alt={flashing?.name ?? line.item_name ?? ''} className="qc-output-component-image" />
                   </div>
                 ) : null}
 
                 {line.show_measurements !== false ? (
-                  <div className="text-sm text-slate-700">
+                  <div className="qc-output-measurements">
                     {line.entry_mode === 'single' ? (
                       <p>
                         Quantity: <span className="font-medium text-black">{line.priced_quantity ?? line.quantity}</span>
@@ -309,11 +290,13 @@ export function OrderBody({ order, lines, flashings, currency = 'GBP' }: Props) 
                 ) : null}
 
                 {line.item_notes ? (
-                  <p className="text-sm text-slate-600 italic mt-2 whitespace-pre-line">{line.item_notes}</p>
+                  <p className="qc-output-component-notes">{line.item_notes}</p>
                 ) : null}
               </div>
             );
           })}
+          {/* Keep an odd final card at half width in the existing segmented PDF exporter. */}
+          {order.layout_mode === 'double' && lines.length % 2 === 1 && <div aria-hidden="true" data-pdf-block className="qc-output-column-spacer" />}
         </div>
         )}
       </div>
