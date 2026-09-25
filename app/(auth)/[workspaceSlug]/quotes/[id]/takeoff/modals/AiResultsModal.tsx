@@ -41,13 +41,14 @@ export interface AiResultsData {
 
 interface Props {
   data: AiResultsData;
-  onApply: (areaOverrides: Record<number, { name: string; pitch: number }>) => void;
+  onApply: (areaOverrides: Record<number, { name: string; pitch: number }>) => void | Promise<void>;
   onDiscard: () => void;
 }
 
 export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   const { summary, scaleCheck, droppedCount, areas } = data;
   const [acknowledged, setAcknowlednowledged] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [areaEdits, setAreaEdits] = useState<Record<number, { name: string; pitch: string }>>(() => (
     Object.fromEntries(areas.map(area => [area.index, {
       name: '',
@@ -257,11 +258,17 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
             Discard
           </QcHostedButton>
           <QcHostedButton variant="secondary"
-            onClick={() => onApply(buildOverrides())}
-            disabled={!acknowledged || !allValid}
+            onClick={async () => {
+              // Area creation is a DB roundtrip: show a working state so the
+              // confirm never feels dead while it saves (owner 2026-09-25).
+              if (applying) return;
+              setApplying(true);
+              try { await onApply(buildOverrides()); } catch { setApplying(false); }
+            }}
+            disabled={!acknowledged || !allValid || applying}
             className="flex-1 py-2.5 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Apply to Canvas
+            {applying ? 'Applying…' : 'Apply to Canvas'}
           </QcHostedButton>
         </div>
       </div>

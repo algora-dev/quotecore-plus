@@ -49,6 +49,22 @@
 .qc-hosted-floating-legacy { backdrop-filter: none; -webkit-backdrop-filter: none; }
 .qc-hosted-floating-legacy > .qc-hosted-floating-grip { position: absolute; top: 0; left: 0; right: 0; z-index: 1; }
 .qc-hosted-floating-legacy > :is(div,form):not(.qc-hosted-floating-grip) { transform: translate(var(--qc-drag-x,0px), var(--qc-drag-y,0px)); }
+
+/* Modeless floating card (2026-09-25): NOT a modal. No backdrop, no inert
+   background, no body scroll lock - the canvas behind stays interactive
+   (pan/zoom/scroll) while the card is open. Freeform drag via the header. */
+.qc-modeless-card { position: fixed; top: 84px; right: 24px; z-index: 45; width: 360px; max-width: calc(100vw - 32px); background: var(--qc-bg-surface); border: 1px solid var(--qc-glass-b-border); border-radius: var(--qc-radius-dialog); box-shadow: var(--qc-shadow-dialog); font-family: var(--qc-font-sans); color: var(--qc-text-body); }
+.qc-modeless-header { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 12px 0; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.qc-modeless-header:active { cursor: grabbing; }
+.qc-modeless-grip { width: 44px; height: 4px; border-radius: 2px; background: var(--qc-border-control); }
+.qc-modeless-label { font-size: 11px; line-height: 16px; letter-spacing: .04em; font-weight: 650; color: var(--qc-text-secondary); }
+.qc-modeless-body { padding: 10px 16px 16px; }
+/* The caller's legacy card wrapper is flattened inside the modeless surface
+   (same recipe as the native hosted path); it keeps its card look in the
+   legacy overlay scope where modeless is not active. */
+.qc-modeless-body > :is(div,form):first-child { width:100%; margin:0; border:0; border-radius:0; box-shadow:none; background:transparent; padding:0; max-height:none; }
+@media(prefers-reduced-motion:reduce) { .qc-modeless-card { transition: none; } }
+@media print { .qc-modeless-card { display: none !important; } }
 .qc-hosted-dialog .qc-takeoff-entry-upload { background:var(--qc-bg-subtle); border-color:var(--qc-border-divider); border-radius:var(--qc-radius-card); }
 @media(hover:hover) {
  .qc-hosted-dialog a.bg-black:hover { background:var(--qc-color-text); border-color:var(--qc-color-text); }

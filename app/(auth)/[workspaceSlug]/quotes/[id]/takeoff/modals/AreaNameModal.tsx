@@ -65,7 +65,7 @@ export function AreaNameModal({
           <div className="mb-4 p-3 bg-blue-50 border border-blue-300 rounded-lg-lg">
             <div className="text-sm text-gray-600 mb-1">Component:</div>
             <div className="font-semibold">{componentName}</div>
-            <div className="text-2xl font-bold text-blue-400 mt-2">
+            <div className="text-2xl font-bold text-[#FF6B35] mt-2">
               {calculatedArea.toFixed(2)} sq {unit}
             </div>
           </div>

@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useId, forwardRef, useCallback, type HTMLAttributes, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { createContext, useContext, useId, useRef, forwardRef, useCallback, type HTMLAttributes, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { QcDialog } from './QcDialog';
 import { QcButton, type QcButtonProps } from './QcButton';
 import './qc-hosted-dialog.css';
@@ -23,10 +23,16 @@ export function QcHostedDialogScope({ enabled, children }: { enabled: boolean; c
  * line they just drew whose length they are typing in). Works in both the
  * native-dialog path (drags the <dialog>) and the legacy div path (drags the
  * first card child).
+ *
+ * modeless (2026-09-25, desktop scope only): renders a plain floating card
+ * instead of a native modal - NO backdrop, NO inert background, NO body
+ * scroll lock. The page/canvas behind stays fully interactive (pan/zoom) so
+ * the user can reveal the measurement they need while the card is open.
+ * Freeform drag via the header strip. Legacy (touch) scope is untouched.
  */
-export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = false, floating = false,
+export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = false, floating = false, modeless = false,
   className = '', children, ...legacyProps }: HTMLAttributes<HTMLDivElement> & {
-  label: string; size?: 'sm' | 'md' | 'lg'; onRequestClose?: () => void; pending?: boolean; floating?: boolean;
+  label: string; size?: 'sm' | 'md' | 'lg'; onRequestClose?: () => void; pending?: boolean; floating?: boolean; modeless?: boolean;
 }) {
   const enabled = useContext(HostedDialogPresentation);
   const nameId = useId();
@@ -66,6 +72,49 @@ export function QcHostedDialog({ label, size = 'sm', onRequestClose, pending = f
     grip.addEventListener('pointerup', onUp);
     grip.addEventListener('pointercancel', onUp);
   }, [enabled]);
+
+  // Modeless card drag: header moves the card via left/top (fixed position).
+  const modelessRef = useRef<HTMLDivElement | null>(null);
+  const onModelessHeaderPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    const card = modelessRef.current;
+    const header = event.currentTarget;
+    if (!card) return;
+    event.preventDefault();
+    header.setPointerCapture(event.pointerId);
+    const rect = card.getBoundingClientRect();
+    const grabX = event.clientX - rect.left;
+    const grabY = event.clientY - rect.top;
+    const onMove = (e: PointerEvent) => {
+      const x = Math.min(Math.max(e.clientX - grabX, 8), Math.max(8, window.innerWidth - rect.width - 8));
+      const y = Math.min(Math.max(e.clientY - grabY, 8), Math.max(8, window.innerHeight - 48));
+      card.style.left = `${x}px`;
+      card.style.top = `${y}px`;
+      card.style.right = 'auto';
+    };
+    const onUp = () => {
+      header.removeEventListener('pointermove', onMove);
+      header.removeEventListener('pointerup', onUp);
+      header.removeEventListener('pointercancel', onUp);
+    };
+    header.addEventListener('pointermove', onMove);
+    header.addEventListener('pointerup', onUp);
+    header.addEventListener('pointercancel', onUp);
+  }, []);
+
+  // Modeless presentation (desktop scope only): a floating card, not a modal.
+  if (enabled && modeless) {
+    return (
+      <div ref={modelessRef} role="dialog" aria-label={label} data-qc-component="C53"
+        className="qc-modeless-card qc-hosted-dialog">
+        <div className="qc-modeless-header" onPointerDown={onModelessHeaderPointerDown}>
+          <span className="qc-modeless-grip" aria-hidden="true" />
+          <span className="qc-modeless-label">{label}</span>
+        </div>
+        <div className="qc-modeless-body">{children}</div>
+      </div>
+    );
+  }
 
   // In the enabled (native dialog) presentation the legacy wrapper classes are
   // viewport-overlay mechanics (fixed inset-0 backdrop/centering) that break

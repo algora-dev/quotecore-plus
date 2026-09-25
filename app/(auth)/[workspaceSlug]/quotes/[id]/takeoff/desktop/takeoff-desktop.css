@@ -34,6 +34,12 @@
 .qc-takeoff-workstation .qc-takeoff-panel h2 { font-size:14px; line-height:22px; font-weight:600; color:var(--qc-text-primary); text-transform:none; letter-spacing:normal; }
 .qc-takeoff-workstation .qc-takeoff-section-header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
 .qc-takeoff-workstation .qc-takeoff-section-header .qc-button { padding-inline:8px; gap:4px; }
+/* Add-component accent (owner 2026-09-25): the next-step CTA after the area
+   exists - orange presence, not a full primary. Outranks the default ghost
+   recipe via the [data-qc-ui] prefix. */
+[data-qc-ui='v2'] .qc-takeoff-workstation .qc-button.qc-takeoff-add-component { border:1px solid var(--qc-color-orange-core); color:var(--qc-color-orange-ink); background:var(--qc-color-orange-wash); font-weight:650; }
+@media(hover:hover) { [data-qc-ui='v2'] .qc-takeoff-workstation .qc-button.qc-takeoff-add-component:hover { background:var(--qc-color-orange-tint); border-color:var(--qc-color-orange-ink); box-shadow:0 0 8px rgba(255,107,53,.18); } }
+[data-qc-ui='v2'] .qc-takeoff-workstation .qc-button.qc-takeoff-add-component:active { box-shadow:inset 0 0 0 1px var(--qc-color-orange-ink); }
 .qc-takeoff-workstation .qc-takeoff-section-caption { font-size:12px; color:var(--qc-text-secondary); font-weight:600; }
 .qc-takeoff-workstation .qc-takeoff-area { border:1px solid var(--qc-border-divider); border-radius:var(--qc-radius-control); background:var(--qc-bg-surface); padding:4px; }
 .qc-takeoff-workstation .qc-takeoff-area[data-selected='true'] { background:var(--qc-selected-bg); border-color:var(--qc-color-orange-ink); }

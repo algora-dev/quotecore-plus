@@ -156,17 +156,30 @@ try {
       await page.waitForTimeout(1000);
       await page.screenshot({ path: 'scripts/ai-repro-3-distmodal.png' });
       await dumpDialogs('after 2 points');
-      // distance entry modal - find number input in dialog and fill 14, then confirm
-      const distInput = page.locator('dialog input[type=number]').first();
+      // Modeless expectation: NO native dialog, a floating card instead, and the
+      // canvas behind must stay interactive (no inert overlay).
+      const modeless = page.locator('.qc-modeless-card');
+      console.log('modeless card count:', await modeless.count());
+      const bodyLocked = await page.evaluate(() => document.body.style.overflow === 'hidden');
+      console.log('body scroll locked:', bodyLocked);
+      if (cb) {
+        const hitCanvas = await page.evaluate(([x, y]) => {
+          const el = document.elementFromPoint(x, y);
+          return el ? `${el.tagName}.${String(el.className).slice(0, 40)}` : 'NULL';
+        }, [cb.x + cb.width / 2, Math.min(cb.y + cb.height * 0.3, 860)]);
+        console.log('elementFromPoint over canvas (centre-top):', hitCanvas);
+      }
+      // distance entry modal - find number input in the modeless card and fill 14
+      const distInput = page.locator('.qc-modeless-card input[type=number]').first();
       if (await distInput.count()) {
         await distInput.fill('14');
-        const confirmBtn = page.locator('dialog button', { hasText: /confirm|ok|set|save|apply/i }).first();
+        const confirmBtn = page.locator('.qc-modeless-card button', { hasText: /use this calibration/i }).first();
         const confirmTxt = await confirmBtn.textContent().catch(() => null);
         console.log('distance modal confirm button:', confirmTxt);
         if (confirmTxt) await confirmBtn.click();
         await page.waitForTimeout(800);
       } else {
-        console.log('no distance modal appeared - dump dialogs and inputs');
+        console.log('no distance input in modeless card - dump');
         console.log((await page.locator('body').innerText()).slice(0, 800).replace(/\n/g, ' | '));
       }
       await page.screenshot({ path: 'scripts/ai-repro-4-postcal.png' });
@@ -236,12 +249,57 @@ try {
     } catch (e) {
       console.log('CLICK FAILED:', e.message.split('\n').slice(0, 2).join(' / '));
     }
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(2000);
     await page.screenshot({ path: 'scripts/ai-repro-4-after-apply.png' });
     const after = await page.locator('body').innerText();
     console.log('modal still open after click:', await page.getByRole('heading', { name: 'AI Assist Results' }).count() > 0);
-    console.log('outline applied banner:', after.includes('AI outline applied'));
+    console.log('review card visible:', after.includes('Check the AI outline'));
     console.log('any error banner:', after.includes('Scan failed') || after.includes('failed'));
+
+    // ── Review card: modeless, point tools, then continue ──
+    if (after.includes('Check the AI outline')) {
+      const cbNow = await page.locator('canvas').first().boundingBox();
+      const reviewCard = page.locator('.qc-modeless-card').first();
+      console.log('review card modeless count:', await page.locator('.qc-modeless-card').count());
+      // arm add-point and click near the top edge of the outline
+      const addBtn = page.locator('.qc-modeless-card button', { hasText: /add point/i }).first();
+      if (await addBtn.count()) {
+        await addBtn.click();
+        await page.waitForTimeout(300);
+        // click on the plan's top edge (between the two top corners of the drawn rectangle)
+        if (cbNow) {
+          const topY = Math.min(cbNow.y + cbNow.height * 0.19, 860);
+          const midX = cbNow.x + cbNow.width * 0.5;
+          await page.mouse.click(midX, topY);
+          await page.waitForTimeout(600);
+          console.log('add-point clicked near top edge at', Math.round(midX), Math.round(topY));
+        }
+        await page.screenshot({ path: 'scripts/ai-repro-5-addpoint.png' });
+        const afterAdd = await page.locator('body').innerText();
+        console.log('add hint cleared (tool consumed):', !afterAdd.includes('Click on an outline edge'));
+      }
+      // continue: Detect components -> scans 2+3 -> results modal again
+      const detect = page.locator('.qc-modeless-card button', { hasText: /detect components/i }).first();
+      if (await detect.count()) {
+        console.log('clicking Detect components (scans 2+3)...');
+        await detect.click();
+        // Desktop staged continuation is SILENT by design (M10 P5): scans 2+3
+        // apply components directly - no second results modal. Success signal:
+        // active AI components appear in the sidebar.
+        try {
+          await page.locator('text=Active in this area').waitFor({ timeout: 150000 });
+          console.log('COMPONENTS APPLIED (silent continuation)');
+          await page.waitForTimeout(800);
+          const finalText = await page.locator('body').innerText();
+          console.log('final: review card closed:', !finalText.includes('Check the AI outline'));
+          console.log('final: component cards present:', /Ridge|Barge|Hip|Valley|Spouting/.test(finalText));
+          await page.screenshot({ path: 'scripts/ai-repro-6-final.png' });
+        } catch {
+          console.log('components did NOT appear in time');
+          await page.screenshot({ path: 'scripts/ai-repro-6-noresults.png' });
+        }
+      }
+    }
   } else {
     console.log('NO AI ENTRY FOUND - dumping visible text:');
     console.log((await page.locator('body').innerText()).slice(0, 1200).replace(/\n/g, ' | '));

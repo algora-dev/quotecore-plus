@@ -30,7 +30,7 @@ export function LineMeasurementModal({
       <div className="bg-white rounded-lg p-6 w-96 border border-gray-200">
         <h2 className="text-xl font-semibold mb-4">Line Measurement</h2>
         <div className="mb-6">
-          <div className="text-3xl font-bold text-green-400">
+          <div className="text-3xl font-bold text-[#FF6B35]">
             {length.toFixed(2)} {unit}
           </div>
           <div className="text-sm text-gray-600 mt-2">

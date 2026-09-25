@@ -390,6 +390,15 @@ export function TakeoffWorkstation({
   // mouse correction before scans 2+3 run on the corrected points
   // (desktop parity with the touch flow).
   const [aiStagedPageId, setAiStagedPageId] = useState<string | null>(null);
+  // Owner 2026-09-25: guided desktop outline review - point tools alongside
+  // drag. 'add' inserts a vertex on the nearest outline edge (click),
+  // 'remove' deletes a clicked vertex (minimum 3 kept). Armed only while the
+  // review card is visible; mirrored into a ref for the once-bound canvas
+  // mouse handler.
+  const [outlineTool, setOutlineTool] = useState<null | 'add' | 'remove'>(null);
+  const outlineToolRef = useRef<null | 'add' | 'remove'>(null);
+  useEffect(() => { outlineToolRef.current = outlineTool; }, [outlineTool]);
+  useEffect(() => { if (aiStagedPageId == null) setOutlineTool(null); }, [aiStagedPageId]);
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // AI Assist points: track locally so we can update after a scan without a page reload.
@@ -5061,6 +5070,113 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     return () => { canvas.off('mouse:dblclick', handleDblClick); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [multiLinealMode]);
+
+  // ── Owner 2026-09-25: desktop AI-outline review tools ──────────────────
+  // Rebuild a staged AI area's polygon + vertex markers from an explicit
+  // points array (used by add/remove point; drag keeps the object:modified
+  // path above). Mirrors the same tagging contract: measurementId = area id,
+  // vertexIndex = sequential position.
+  const applyStagedAreaPoints = useCallback((areaId: string, pts: Array<{ x: number; y: number }>) => {
+    const canvas = fabricRef.current;
+    if (!canvas || pts.length < 3) return;
+    canvas.getObjects()
+      .filter(o => {
+        const t = o as unknown as { measurementId?: string; vertexIndex?: number; type?: string };
+        return t.measurementId === areaId && (t.vertexIndex != null || t.type === 'polygon');
+      })
+      .forEach(o => canvas.remove(o));
+    const polygon = new Polygon(pts.map(p => ({ x: p.x, y: p.y })), {
+      fill: 'rgba(59, 130, 246, 0.2)',
+      stroke: '#3b82f6',
+      strokeWidth: 2,
+      selectable: false,
+      objectCaching: false,
+    });
+    (polygon as unknown as { measurementId: string }).measurementId = areaId;
+    canvas.add(polygon);
+    canvas.sendObjectToBack(polygon);
+    const markers = pts.map((p, i) => {
+      const marker = new Circle({
+        left: p.x, top: p.y, radius: 4,
+        fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
+        originX: 'center', originY: 'center',
+        selectable: true, evented: true, hasControls: false, hasBorders: false,
+        hoverCursor: 'move',
+      });
+      (marker as unknown as { measurementId: string }).measurementId = areaId;
+      (marker as unknown as { measurementId: string; vertexIndex: number }).vertexIndex = i;
+      canvas.add(marker);
+      return marker;
+    });
+    canvas.renderAll();
+    setRoofAreas(prev => prev.map(ra => ra.id === areaId || ra.quoteRoofAreaId === areaId
+      ? { ...ra, points: pts, polygon, markers, area: calculatePolygonArea(pts) }
+      : ra));
+    setAreaList(prev => prev.map(a => a.id === areaId ? { ...a, area: calculatePolygonArea(pts) } : a));
+    setIsDirty(true);
+  }, []);
+
+  // One-shot click handling for the add/remove point tools. Bound once; the
+  // armed tool is read through outlineToolRef so no rebinding is needed.
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const handleToolDown = (opt: { e: MouseEvent; target?: unknown }) => {
+      const tool = outlineToolRef.current;
+      if (!tool) return;
+      if (tool === 'remove') {
+        const target = opt.target as { measurementId?: string; vertexIndex?: number } | undefined;
+        if (!target || target.vertexIndex == null || !target.measurementId) return;
+        const siblings = canvas.getObjects()
+          .filter(o => {
+            const t = o as unknown as { measurementId?: string; vertexIndex?: number };
+            return t.measurementId === target.measurementId && t.vertexIndex != null;
+          }) as unknown as Array<{ left: number; top: number; vertexIndex: number }>;
+        if (siblings.length <= 3) return; // never below a triangle
+        const pts = [...siblings]
+          .sort((a, b) => a.vertexIndex - b.vertexIndex)
+          .filter((_, i) => i !== target.vertexIndex)
+          .map(m => ({ x: m.left, y: m.top }));
+        applyStagedAreaPoints(target.measurementId as string, pts);
+        setOutlineTool(null);
+        return;
+      }
+      // 'add': insert a vertex on the nearest staged outline edge.
+      const pointer = canvas.getScenePoint(opt.e);
+      const groups = new Map<string, Array<{ i: number; x: number; y: number }>>();
+      canvas.getObjects().forEach(o => {
+        const t = o as unknown as { measurementId?: string; vertexIndex?: number; left?: number; top?: number };
+        if (!t.measurementId || t.vertexIndex == null || t.left == null || t.top == null) return;
+        const list = groups.get(t.measurementId) ?? [];
+        list.push({ i: t.vertexIndex, x: t.left, y: t.top });
+        groups.set(t.measurementId, list);
+      });
+      let best: { areaId: string; insertAt: number; dist: number; pts: Array<{ x: number; y: number }> } | null = null;
+      for (const [areaId, raw] of groups) {
+        const pts = [...raw].sort((a, b) => a.i - b.i).map(p => ({ x: p.x, y: p.y }));
+        for (let i = 0; i < pts.length; i++) {
+          const a = pts[i];
+          const b = pts[(i + 1) % pts.length];
+          const abx = b.x - a.x, aby = b.y - a.y;
+          const lenSq = abx * abx + aby * aby;
+          if (lenSq === 0) continue;
+          const t = Math.min(1, Math.max(0, ((pointer.x - a.x) * abx + (pointer.y - a.y) * aby) / lenSq));
+          const px = a.x + abx * t, py = a.y + aby * t;
+          const dist = Math.hypot(pointer.x - px, pointer.y - py);
+          if (!best || dist < best.dist) best = { areaId, insertAt: i + 1, dist, pts };
+        }
+      }
+      if (best && best.dist <= 24) {
+        best.pts.splice(best.insertAt, 0, { x: pointer.x, y: pointer.y });
+        applyStagedAreaPoints(best.areaId, best.pts);
+        setOutlineTool(null);
+      }
+    };
+    const listener = (opt: unknown) => handleToolDown(opt as { e: MouseEvent; target?: unknown });
+    canvas.on('mouse:down', listener as never);
+    return () => { canvas.off('mouse:down', listener as never); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applyStagedAreaPoints]);
   
   // Update cursor when hovering near first point (to close loop)
   useEffect(() => {
@@ -5659,6 +5775,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // ── M10 P5: staged continuation - detect components on the corrected outline ──
   const handleContinueAiScan = async () => {
     if (aiScanning || !quote) return;
+    setOutlineTool(null);
     const canvas = fabricRef.current;
     if (!canvas) return;
     const pageId = pages[currentPageIndex]?.id ?? null;
@@ -6901,6 +7018,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
               <div className="qc-takeoff-section-header">
                 <h2 data-copilot="takeoff-components-heading">Components</h2>
                 {displayComponents.length > 0 && <QcHostedButton size="sm"
+                  className="qc-takeoff-add-component"
                   aria-controls="qc-takeoff-component-library"
                   aria-expanded={componentLibraryOpen}
                   onClick={() => setComponentLibraryOpen(!componentLibraryOpen)}>
@@ -8301,26 +8419,73 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
         </QcHostedDialog>
       )}
 
-      {/* M10 P5: staged scan - outline applied, continue to components */}
+      {/* M10 P5 -> owner redo 2026-09-25: staged scan review. Desktop gets a
+          guided, draggable, NON-modal card (canvas stays interactive so points
+          can be dragged/added/removed while it is open); touch keeps the
+          original bottom banner - the mobile flow is locked. */}
       {aiStagedPageId === (pages[currentPageIndex]?.id ?? null) && !aiScanning && !aiResults && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-white rounded-2xl border border-gray-200 shadow-xl px-4 py-3 max-w-sm text-center">
-          <h3 className="text-sm font-semibold text-slate-900">AI outline applied</h3>
-          <p className="text-xs text-slate-500 mt-1">Drag the blue points to correct the outline, then continue. Components are detected on your corrected outline.</p>
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <QcHostedButton variant="primary"
-              onClick={handleContinueAiScan}
-              className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e55a28] transition-colors"
-            >
-              Detect components
-            </QcHostedButton>
-            <QcHostedButton variant="ghost"
-              onClick={() => setAiStagedPageId(null)}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-            >
-              Not now
-            </QcHostedButton>
+        desktopAppearance ? (
+          <QcHostedDialog label="Check the AI outline" modeless>
+            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xl">
+              <h2 className="text-base font-semibold mb-1 text-slate-900">Check the AI outline</h2>
+              <p className="text-xs text-slate-500 mb-3">
+                AI traced the roof area on the plan. Drag the blue points to fix the shape - the component scan runs on your corrected outline.
+              </p>
+              <div className="flex gap-2 mb-2">
+                <QcHostedButton variant="ghost" size="sm" type="button"
+                  aria-pressed={outlineTool === 'add'}
+                  onClick={() => setOutlineTool(t => t === 'add' ? null : 'add')}
+                  className="flex-1 justify-center text-xs">
+                  + Add point
+                </QcHostedButton>
+                <QcHostedButton variant="ghost" size="sm" type="button"
+                  aria-pressed={outlineTool === 'remove'}
+                  onClick={() => setOutlineTool(t => t === 'remove' ? null : 'remove')}
+                  className="flex-1 justify-center text-xs">
+                  − Remove point
+                </QcHostedButton>
+              </div>
+              <p className="text-[11px] text-slate-400 mb-3" data-live-hint>
+                {outlineTool === 'add'
+                  ? 'Click on an outline edge to insert a point.'
+                  : outlineTool === 'remove'
+                    ? 'Click a blue point to remove it (minimum 3 kept).'
+                    : 'Drag this card aside any time to see the plan behind it.'}
+              </p>
+              <div className="flex gap-2">
+                <QcHostedButton variant="primary" type="button"
+                  onClick={handleContinueAiScan}
+                  className="flex-1 justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white hover:bg-[#e55a28] transition-colors">
+                  Detect components
+                </QcHostedButton>
+                <QcHostedButton variant="ghost" type="button"
+                  onClick={() => { setAiStagedPageId(null); setOutlineTool(null); }}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+                  Not now
+                </QcHostedButton>
+              </div>
+            </div>
+          </QcHostedDialog>
+        ) : (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] bg-white rounded-2xl border border-gray-200 shadow-xl px-4 py-3 max-w-sm text-center">
+            <h3 className="text-sm font-semibold text-slate-900">AI outline applied</h3>
+            <p className="text-xs text-slate-500 mt-1">Drag the blue points to correct the outline, then continue. Components are detected on your corrected outline.</p>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <QcHostedButton variant="primary"
+                onClick={handleContinueAiScan}
+                className="inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e55a28] transition-colors"
+              >
+                Detect components
+              </QcHostedButton>
+              <QcHostedButton variant="ghost"
+                onClick={() => setAiStagedPageId(null)}
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Not now
+              </QcHostedButton>
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* AI Takeoff: error toast */}
