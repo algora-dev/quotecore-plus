@@ -410,6 +410,9 @@ export function TakeoffWorkstation({
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // AI Assist points: track locally so we can update after a scan without a page reload.
   const [aiPoints, setAiPoints] = useState(aiAssistPoints);
+  // Owner 2026-09-25 (13:20): which uncertain row currently shows its
+  // "assign to component" dropdown.
+  const [uncertainAssignOpenFor, setUncertainAssignOpenFor] = useState<string | null>(null);
   // V3: 3-scan pipeline (outline → line detection → classification)
   const aiScanEndpoint = '/api/takeoff/ai-scan-v3';
   // Once the user dismisses the "Calibration complete" popup, never show it again
@@ -5109,16 +5112,22 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       canvas.sendObjectToBack(polygon);
       // Stretch the selected vertex's orange edge highlights live.
       const sel = outlineSelectedRef.current;
-      if (sel && sel.areaId === areaId && outlineHighlightRef.current.length >= 2) {
+      if (sel && sel.areaId === areaId && outlineHighlightRef.current.length >= 4) {
         const i = Math.min(sel.vertexIndex, siblings.length - 1);
         const cur = siblings[i];
         const prevP = siblings[(i - 1 + siblings.length) % siblings.length];
         const nextP = siblings[(i + 1) % siblings.length];
-        const [hlA, hlB] = outlineHighlightRef.current;
+        const [hlA, hlB, rlH, rlV] = outlineHighlightRef.current;
         hlA.set({ x1: prevP.x, y1: prevP.y, x2: cur.x, y2: cur.y });
         hlA.setCoords();
         hlB.set({ x1: cur.x, y1: cur.y, x2: nextP.x, y2: nextP.y });
         hlB.setCoords();
+        // Crosshair reticle follows the selected vertex live while dragging.
+        const rr = 14;
+        rlH.set({ x1: cur.x - rr, y1: cur.y, x2: cur.x + rr, y2: cur.y });
+        rlH.setCoords();
+        rlV.set({ x1: cur.x, y1: cur.y - rr, x2: cur.x, y2: cur.y + rr });
+        rlV.setCoords();
       }
       canvas.requestRenderAll();
     };
@@ -5188,7 +5197,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         && t.measurementId === outlineSelectedVertex.areaId
         && t.vertexIndex === outlineSelectedVertex.vertexIndex;
       o.set(isSel
-        ? { radius: 6.5, fill: '#FF6B35', strokeWidth: 1.5, stroke: '#7c2d12' }
+        ? { radius: 8, fill: 'rgba(255,107,53,0.12)', strokeWidth: 2, stroke: '#FF6B35' }
         : { radius: 4, fill: '#3b82f6', strokeWidth: 1, stroke: '#000' });
     });
     outlineHighlightRef.current.forEach(l => canvas.remove(l));
@@ -5207,6 +5216,17 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           });
           outlineHighlightRef.current.push(hl);
           canvas.add(hl);
+        }
+        // Crosshair reticle (owner 13:20): see-through hollow centre with
+        // ticks extending past the ring, so the plan intersection stays
+        // visible for precise placement.
+        const rr = 14;
+        for (const coords of [[cur.x - rr, cur.y, cur.x + rr, cur.y], [cur.x, cur.y - rr, cur.x, cur.y + rr]] as const) {
+          const rl = new Line([...coords], {
+            stroke: '#FF6B35', strokeWidth: 1.5, selectable: false, evented: false, objectCaching: false,
+          });
+          outlineHighlightRef.current.push(rl);
+          canvas.add(rl);
         }
       }
     }
@@ -6083,11 +6103,16 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const targetComp = components.find(c => c.id === targetComponentId);
     if (!targetComp) return;
 
-    // Determine the target component's colour:
-    // - If already active, use its existing colour
-    // - If new, assign the next available palette colour
+    // Determine the target component's colour. Owner 2026-09-25 (13:20):
+    // colour stability on attach - a freshly-attached user component
+    // INHERITS the AI default's existing colour instead of being assigned
+    // the next palette colour (colour changes between the plan and the
+    // panel were confusing). If the target is already active with its own
+    // colour, that colour is kept.
     const existingTargetColour = componentColors.find(c => c.componentId === targetComponentId)?.color;
-    const targetColour = existingTargetColour || (() => {
+    const placeholderColour = componentColors.find(c => c.componentId === placeholderComponentId)?.color
+      ?? (semanticKey ? getSemanticColour(semanticKey) : undefined);
+    const targetColour = existingTargetColour || placeholderColour || (() => {
       const activeCount = activeComponentIds.filter(id => {
         const comp = components.find(c => c.id === id);
         return comp && !comp.is_system;
@@ -6160,6 +6185,65 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       return updated;
     });
 
+    setIsDirty(true);
+  };
+
+  // ── Owner 2026-09-25 (13:20): assign an uncertain AI line to a component.
+  // Behaves exactly as if the user had selected the target component and
+  // drawn the line themselves: the pink dashed line turns solid in the
+  // component's colour and the measurement becomes a normal entry under it.
+  const handleAssignUncertainToComponent = (measurementId: string, targetComponentId: string) => {
+    const canvas = fabricRef.current;
+    const group = componentMeasurements.find(c => c.componentId === '__review__uncertain');
+    const m = group?.measurements.find(x => x.id === measurementId);
+    const targetComp = components.find(c => c.id === targetComponentId);
+    if (!canvas || !m || !targetComp) return;
+
+    // Activate the component if it isn't already.
+    if (!activeComponentIds.includes(targetComponentId)) {
+      setActiveComponentIds(prev => [...prev, targetComponentId]);
+    }
+
+    // Resolve the target colour (system = registry colour; user = palette).
+    const existingColour = componentColors.find(c => c.componentId === targetComponentId)?.color;
+    const targetColour = existingColour ?? (targetComp.is_system
+      ? (resolveSemanticKey(targetComp.name) ? getSemanticColour(resolveSemanticKey(targetComp.name)!) : '#3b82f6')
+      : COLOR_PALETTE[activeComponentIds.filter(id => {
+          const c = components.find(x => x.id === id);
+          return c && !c.is_system;
+        }).length % COLOR_PALETTE.length]);
+    if (!existingColour) {
+      const assigned = targetColour;
+      setComponentColors(prev => prev.some(c => c.componentId === targetComponentId)
+        ? prev
+        : [...prev, { componentId: targetComponentId, color: assigned }]);
+    }
+
+    // Pink dashed line -> solid line in the component's colour.
+    m.canvasObjects?.forEach((obj: any) => {
+      obj.set({ stroke: targetColour, strokeDashArray: null });
+    });
+    canvas.renderAll();
+
+    // Move the measurement out of the review group into the component group.
+    setComponentMeasurements(prev => {
+      const updated = [...prev];
+      const srcIdx = updated.findIndex(c => c.componentId === '__review__uncertain');
+      if (srcIdx < 0) return prev;
+      const measurement = updated[srcIdx].measurements.find(x => x.id === measurementId);
+      if (!measurement) return prev;
+      const rest = updated[srcIdx].measurements.filter(x => x.id !== measurementId);
+      if (rest.length === 0) updated.splice(srcIdx, 1);
+      else updated[srcIdx] = { ...updated[srcIdx], measurements: rest };
+      const tgtIdx = updated.findIndex(c => c.componentId === targetComponentId);
+      if (tgtIdx >= 0) {
+        updated[tgtIdx] = { ...updated[tgtIdx], measurements: [...updated[tgtIdx].measurements, { ...measurement, visible: true }], expanded: true };
+      } else {
+        updated.push({ componentId: targetComponentId, measurements: [{ ...measurement, visible: true }], expanded: true });
+      }
+      return updated;
+    });
+    setUncertainAssignOpenFor(null);
     setIsDirty(true);
   };
 
@@ -6896,6 +6980,23 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         } else if (pointMode) {
           guidance = 'Click on the plan to count this item. Each click adds one.';
         }
+        // Owner 2026-09-25 (13:20): stage-aware next-step tips whenever no
+        // drawing tool is armed - each phase hints what to do next.
+        if (!guidance) {
+          if (aiStagedPageId != null && !aiResults) {
+            guidance = 'Drag the blue points to correct the AI outline, then choose your next step in the card.';
+          } else if (!calibrationConfirmed && calibrations.length >= 1) {
+            guidance = 'Add another calibration reference for best accuracy, or use this one to start measuring.';
+          } else if (!calibrationConfirmed) {
+            guidance = 'Set a known distance before measuring this plan.';
+          } else if (roofAreas.length === 0 && activeComponentIds.length === 0) {
+            guidance = 'Calibrated - trace the roof area next: AI Assist or draw it manually.';
+          } else if (activeComponentIds.length === 0) {
+            guidance = 'Area measured - now add components: AI scan for components or add them manually.';
+          } else {
+            guidance = "Add more components, or Finish & save when you're ready for Measurements & Pricing.";
+          }
+        }
         // Stable status row: never resize the canvas when a drawing tool changes.
         return (
           <div className="qc-takeoff-context">
@@ -6907,9 +7008,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 {calibrationMode ? 'Calibrating' : calibrationConfirmed ? 'Calibrated' : 'Needs calibration'}
               </QcStatusBadge>
             </div>
-            <p className="qc-takeoff-guidance">{guidance || (calibrationConfirmed
-              ? 'Select a component to measure, or choose Area to draw.'
-              : 'Set a known distance before measuring this plan.')}</p>
+            <p className="qc-takeoff-guidance">{guidance}</p>
           </div>
         );
       })()}
@@ -7577,8 +7676,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                               <div className="text-[10px] text-pink-600 mb-1.5">Lines the AI could not confidently classify. Check the plan, delete any that are wrong, and draw the correct component manually.</div>
                               <div className="space-y-1">
                                 {uncertainData.measurements.map((m) => (
+                                  <div key={m.id}>
                                   <div
-                                    key={m.id}
                                     className="flex items-center gap-1.5 text-xs text-gray-700 rounded-lg px-1.5 -mx-1.5 hover:bg-pink-50 transition-colors cursor-default"
                                     onMouseEnter={() => {
                                       const canvas = fabricRef.current;
@@ -7615,6 +7714,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                       {m.type === 'area' && `${m.value.toFixed(2)} sq ${calibrations[0]?.unit || 'ft'}`}
                                       {m.type !== 'line' && m.type !== 'area' && '1 item'}
                                     </span>
+                                    <QcHostedButton variant="ghost"
+                                      onClick={() => setUncertainAssignOpenFor(open => open === m.id ? null : m.id)}
+                                      className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-colors text-base leading-none"
+                                      aria-label="Add to a component"
+                                      title="Add to a component"
+                                    >
+                                      +
+                                    </QcHostedButton>
                                     <QcHostedButton aria-label={m.visible ? 'Hide measurement' : 'Show measurement'} aria-pressed={m.visible} variant="ghost"
                                       onClick={() => handleToggleMeasurementVisibility(uncertainData.componentId ?? '__review__uncertain', m.id)}
                                       className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
@@ -7634,6 +7741,27 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                     >
                                       <QcIcon name="close" />
                                     </QcHostedButton>
+                                  </div>
+                                  {uncertainAssignOpenFor === m.id && (
+                                    <select
+                                      onChange={(e) => { if (e.target.value) { handleAssignUncertainToComponent(m.id, e.target.value); e.target.value = ''; } }}
+                                      defaultValue=""
+                                      aria-label="Assign this line to a component"
+                                      className="w-full mt-1 px-2 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-orange-500 focus:outline-none bg-white text-gray-700"
+                                    >
+                                      <option value="">Choose a component…</option>
+                                      <optgroup label="AI default components">
+                                        {displayComponents.filter(c => c.is_system).map(c => (
+                                          <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                      </optgroup>
+                                      <optgroup label="Your components (line)">
+                                        {displayComponents.filter(c => !c.is_system && (c.measurement_type ?? c.default_measurement_type) === 'line').map(c => (
+                                          <option key={c.id} value={c.id}>{c.name}{activeComponentIds.includes(c.id) ? ' (active)' : ''}</option>
+                                        ))}
+                                      </optgroup>
+                                    </select>
+                                  )}
                                   </div>
                                 ))}
                               </div>
@@ -8720,7 +8848,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                   {outlineTool === 'add'
                     ? 'Click on an outline edge to insert a point.'
                     : selN >= 3
-                      ? 'The selected point is enlarged in orange with its two edges lit - drag it, or use the arrows to walk the outline.'
+                      ? 'The selected point shows as an orange crosshair with its two edges lit - drag it, or use the arrows to walk the outline.'
                       : 'Drag this card aside any time to see the plan behind it.'}
                 </p>
                 {/* Owner 2026-09-25 (12:46): component-scan quality. Defaults
