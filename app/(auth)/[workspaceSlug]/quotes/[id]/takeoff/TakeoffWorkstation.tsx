@@ -46,7 +46,6 @@ import { LineMeasurementModal } from './modals/LineMeasurementModal';
 import { CalibrationModal } from './modals/CalibrationModal';
 import { RoofPitchEstimatorModal } from './modals/RoofPitchEstimatorModal';
 // P2/P6 AI-assisted calibration (flag-gated, live search via /api/takeoff/calibration)
-import { CalibrationChooser } from './calibration/CalibrationChooser';
 import { CalibrationReviewPanel } from './calibration/CalibrationReviewPanel';
 import type { CalibrationStartMode } from './calibration/useCalibrationController';
 import type { WorkingUnit, CalibrationImageDescriptor, AcceptedReferenceDraft } from '@/app/lib/takeoff/calibrationTypes';
@@ -344,12 +343,11 @@ export function TakeoffWorkstation({
   const [showRoofAreaInstructions, setShowRoofAreaInstructions] = useState(false);
 
   // === P2/P6 AI-assisted calibration (flag-gated, live search via the calibration API) ===
-  const [aiCalChooserOpen, setAiCalChooserOpen] = useState(false);
+  // Owner decision 2026-09-25: the AI-vs-manual CHOOSER is removed from the
+  // flow entirely - calibration is always manual (both desktop and touch).
+  // The AI review-session plumbing below stays mounted-capable but has no
+  // user entry point anymore.
   const [aiCalReviewOpen, setAiCalReviewOpen] = useState(false);
-  // 6.1: toolbar Calibrate/Recalibrate entry chooser (AI vs manual). Independent
-  // of the page-entry chooser so it reopens the AI flow even after the initial
-  // popup was dismissed with "Not now".
-  const [aiCalToolbarChooserOpen, setAiCalToolbarChooserOpen] = useState(false);
   // 6.1: how the next AI review session starts (new / replace / edit) and a
   // nonce that remounts the controller/panel for each deliberate session start.
   const [aiCalStartMode, setAiCalStartMode] = useState<CalibrationStartMode>({ kind: 'new' });
@@ -359,7 +357,6 @@ export function TakeoffWorkstation({
   // budget (spec 7.1/7.2). Unmounted only on commit, explicit session end or
   // switching to manual.
   const [aiCalSessionLive, setAiCalSessionLive] = useState(false);
-  const aiCalShownForPageRef = useRef<string | null>(null); // chooser popup once per page-load
   // P4: versioned calibration envelope (codec v1) per page DB id, created on
   // AI-finish and persisted alongside the legacy array; restored on hydration.
   const aiCalMetadataRef = useRef<Map<string, CalibrationMetadataV1>>(new Map());
@@ -375,8 +372,6 @@ export function TakeoffWorkstation({
   // cross images (the controller's unmount also aborts any in-flight fetch).
   const abortAiCalibrationSession = useCallback(() => {
     disposeCalibrationOverlay(fabricRef.current);
-    setAiCalChooserOpen(false);
-    setAiCalToolbarChooserOpen(false);
     setAiCalReviewOpen(false);
     setAiCalSessionLive(false);
   }, []);
@@ -2298,6 +2293,11 @@ export function TakeoffWorkstation({
   const handleAddComponent = (componentId: string) => {
     // Add to active list
     setActiveComponentIds([...activeComponentIds, componentId]);
+    // Collapse the picker so the freshly added (active) component list is
+    // immediately visible under the Add component button (owner UX 2026-09-25:
+    // pick -> collapse -> draw; reopen the button to add more).
+    setComponentLibraryOpen(false);
+    setComponentSearch('');
     
     // Auto-select the newly added component
     setSelectedComponentId(componentId);
@@ -5515,7 +5515,22 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       // (handleContinueAiScan).
       setAiScanRaw(result.data);
       setAiResults({
-        summary: result.summary,
+        // Stage 1 returns outline-only counts; normalise to the full summary
+        // shape the results modal renders (component counts legitimately 0
+        // until "Detect components" runs scans 2+3).
+        summary: {
+          areas: result.summary?.areas ?? result.data?.roof_areas?.length ?? 0,
+          components: 0,
+          ridges: 0,
+          hips: 0,
+          valleys: 0,
+          broken_hips: 0,
+          barges: 0,
+          spouting: 0,
+          uncertain: 0,
+          notes: Array.isArray(result.summary?.notes) ? result.summary.notes : [],
+          unreadable: false,
+        },
         scaleCheck: result.data?.scaleCheck ?? null,
         droppedCount: 0,
         areas: areaInfos,
@@ -6180,14 +6195,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     setAiCalSessionLive(true);
   }, []);
 
-  // Auto-popup the chooser once per page-load when flag on + page not calibrated.
-  useEffect(() => {
-    if (!aiCalibrationEnabled) return;
-    if (calibrationConfirmed || calibrations.length > 0) return;
-    if (aiCalShownForPageRef.current === aiCalPageKey) return;
-    aiCalShownForPageRef.current = aiCalPageKey;
-    setAiCalChooserOpen(true);
-  }, [aiCalibrationEnabled, calibrationConfirmed, calibrations.length, aiCalPageKey]);
+  // (Removed 2026-09-25) the auto-popup chooser effect is gone: calibration
+  // is always the manual flow now, per owner decision. No AI-vs-manual popup.
 
   // P3: accepted AI references -> EffectiveCalibration -> deterministic recompute
   // of every scale-dependent value on THIS page (spec 10.1 finish sequence),
@@ -6893,9 +6902,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                 <h2 data-copilot="takeoff-components-heading">Components</h2>
                 {displayComponents.length > 0 && <QcHostedButton size="sm"
                   aria-controls="qc-takeoff-component-library"
-                  aria-expanded={componentLibraryOpen || activeComponentIds.length === 0}
+                  aria-expanded={componentLibraryOpen}
                   onClick={() => setComponentLibraryOpen(!componentLibraryOpen)}>
-                  <QcIcon name="plus" />Add component
+                  <QcIcon name="plus" />{componentLibraryOpen ? 'Close' : 'Add component'}
                 </QcHostedButton>}
               </div>
               {displayComponents.length === 0 ? (
@@ -6906,7 +6915,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                   {/* Add Components */}
                   <div id="qc-takeoff-component-library" className="qc-takeoff-library"
                     onFocusCapture={() => setComponentLibraryOpen(true)}
-                    hidden={!componentLibraryOpen && activeComponentIds.length > 0}>
+                    hidden={!componentLibraryOpen}>
 
                     {/* Library selector */}
                     {collections.length > 0 && (
@@ -7344,14 +7353,9 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                         selected={pointMode}><QcIcon name="point" />Point</QcToolButton></QcCanvasToolGroup>
                   <QcCanvasToolGroup label="Plan setup" className="qc-takeoff-setup-tools"><QcToolButton
                     onClick={() => {
-                      // 6.1: with AI calibration enabled, the toolbar entry opens the
-                      // AI-vs-manual chooser instead of jumping straight to manual.
-                      // Without the flag, manual calibration starts directly.
-                      if (aiCalibrationEnabled) {
-                        setAiCalToolbarChooserOpen(true);
-                      } else {
-                        handleStartCalibration();
-                      }
+                      // 2026-09-25: chooser removed - Calibrate always starts the
+                      // manual flow directly (owner decision).
+                      handleStartCalibration();
                     }}
                     data-copilot="takeoff-tool-calibrate"
                     selected={calibrationMode}><QcIcon name="measure" />{calibrationConfirmed ? 'Recalibrate' : 'Calibrate'}</QcToolButton><QcToolButton
@@ -7494,41 +7498,9 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
         </div>
       </div>
 
-      {/* P2/P6 AI-assisted calibration: flag-gated additive branch. Flag off = never
-          rendered, every existing path identical. Live search via the calibration API. */}
-      {aiCalibrationEnabled && aiCalChooserOpen && !calibrationConfirmed && calibrations.length === 0 && (
-        <CalibrationChooser
-          image={aiCalImage}
-          onChooseAi={() => { setAiCalChooserOpen(false); openAiReviewSession({ kind: 'new' }); }}
-          onChooseManual={() => { setAiCalChooserOpen(false); handleStartCalibration(); }}
-          onClose={() => setAiCalChooserOpen(false)}
-        />
-      )}
-      {/* 6.1: toolbar Calibrate/Recalibrate chooser. Reuses the same popup
-          pattern with recalibration copy; available on ALREADY-calibrated pages
-          and reopenable at any time (no once-per-page-load gate). The manual
-          path edits a draft (6.2) - the committed calibration is only replaced
-          on confirm. */}
-      {aiCalibrationEnabled && aiCalToolbarChooserOpen && (
-        <CalibrationChooser
-          image={aiCalImage}
-          title={calibrationConfirmed && calibrations.length > 0 ? 'Recalibrate this plan' : 'Calibrate this plan'}
-          description={
-            calibrationConfirmed && calibrations.length > 0
-              ? 'Recalibrate with AI or by hand. The current calibration stays active until you confirm the new one.'
-              : undefined
-          }
-          onChooseAi={() => {
-            setAiCalToolbarChooserOpen(false);
-            openAiReviewSession(buildAiCalStartMode());
-          }}
-          onChooseManual={() => {
-            setAiCalToolbarChooserOpen(false);
-            handleStartCalibration();
-          }}
-          onClose={() => setAiCalToolbarChooserOpen(false)}
-        />
-      )}
+      {/* (Removed 2026-09-25) AI-vs-manual CalibrationChooser popups deleted:
+          calibration is always the manual flow now (owner decision). The review
+          panel below has no user entry point and stays unreachable. */}
       {aiCalibrationEnabled && aiCalSessionLive && (
         <div className={aiCalReviewOpen ? 'contents' : 'hidden'}>
           <CalibrationReviewPanel
@@ -7697,10 +7669,9 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
         </QcHostedDialog>
       )}
 
-      {/* Initial Calibration Help - defers while the AI/manual chooser is open
-          (owner feedback 2026-09-20): never render the two z-50 modals stacked. */}
-      {showCalibrationHelp && calibrations.length === 0 &&
-        !(aiCalibrationEnabled && (aiCalChooserOpen || aiCalToolbarChooserOpen)) && (
+      {/* Initial Calibration Help - manual flow is the only calibration path
+          (chooser removed 2026-09-25). */}
+      {showCalibrationHelp && calibrations.length === 0 && (
         <QcHostedDialog label="Set the scale of your plan" size="sm" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 md:p-6 max-w-md border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Set the scale of your plan</h2>

@@ -58,7 +58,7 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
 
   if (summary.unreadable) {
     return (
-      <QcHostedDialog label="Review AI measurements" size="lg" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
+      <QcHostedDialog label="Review AI measurements" size="md" floating className="fixed inset-0 bg-black/20 flex items-center justify-center z-[60]">
         <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md border border-gray-200 shadow-xl">
           <h2 className="text-lg font-semibold mb-2">Image unreadable</h2>
           <p className="text-sm text-slate-500 mb-4">
@@ -109,8 +109,8 @@ export function AiResultsModal({ data, onApply, onDiscard }: Props) {
   });
 
   return (
-    <QcHostedDialog label="Review AI measurements" size="lg" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-[60]">
-      <div className="bg-white rounded-2xl p-4 md:p-6 max-w-lg border border-gray-200 shadow-xl max-h-[85vh] overflow-y-auto">
+    <QcHostedDialog label="Review AI measurements" size="md" floating className="fixed inset-0 bg-black/20 flex items-center justify-center z-[60]">
+      <div className="bg-white rounded-2xl p-4 md:p-5 max-w-lg border border-gray-200 shadow-xl max-h-[85vh] overflow-y-auto">
         <h2 className="text-lg font-semibold mb-1">AI Assist Results</h2>
         <p className="text-xs text-slate-500 mb-4">
           Here&apos;s what AI Assist identified from its scans, please check the area(s) and components, then ensure you apply a pitch value to any identified roof area(s). You can also change the roof area name(s).

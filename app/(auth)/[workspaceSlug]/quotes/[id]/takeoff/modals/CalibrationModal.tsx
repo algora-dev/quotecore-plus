@@ -26,8 +26,8 @@ export function CalibrationModal({
   const canAddAnother = calibrationNumber < 3;
 
   return (
-    <QcHostedDialog label="Set the calibration distance" size="md" className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-96 border border-slate-200 shadow-xl">
+    <QcHostedDialog label="Set the calibration distance" size="sm" floating className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-5 w-80 border border-slate-200 shadow-xl">
         <h2 className="text-xl font-semibold mb-2 text-slate-900">
           Calibration {calibrationNumber} of 3
         </h2>

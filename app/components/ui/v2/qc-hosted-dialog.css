@@ -34,6 +34,21 @@
 .qc-hosted-dialog label:has(input[type='radio']) { border-radius:var(--qc-radius-control); }
 .qc-hosted-dialog label:has(input[type='radio']:checked) { background:var(--qc-selected-bg); border-color:var(--qc-color-orange-ink); }
 .qc-hosted-dialog .qc-button.text-left { text-align:left; justify-content:flex-start; }
+
+/* Floating hosted dialogs (2026-09-25): measurement-entry modals that must
+   stay readable against the plan behind them. Faint veil instead of the
+   frosted blur, slim drag grip, imperative --qc-drag-x/y translation. */
+[data-qc-ui='v2'].qc-dialog.qc-hosted-floating::backdrop { background: rgba(15,17,23,.14); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.qc-dialog.qc-hosted-floating { transform: translate(var(--qc-drag-x,0px), var(--qc-drag-y,0px)); }
+.qc-hosted-floating-grip { display: flex; align-items: center; justify-content: center; height: 22px; margin: -6px -6px 6px; cursor: grab; touch-action: none; color: var(--qc-text-secondary); }
+.qc-hosted-floating-grip:active { cursor: grabbing; }
+.qc-hosted-floating-grip::before { content: ''; width: 44px; height: 4px; border-radius: 2px; background: var(--qc-border-control); }
+.qc-hosted-floating-grip:focus-visible { outline: 2px solid var(--qc-focus-ring); outline-offset: -2px; }
+/* Legacy (non-native) path: call sites drop their blur classes; the grip
+   sits above the card and drags the card element via CSS-var translation. */
+.qc-hosted-floating-legacy { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.qc-hosted-floating-legacy > .qc-hosted-floating-grip { position: absolute; top: 0; left: 0; right: 0; z-index: 1; }
+.qc-hosted-floating-legacy > :is(div,form):not(.qc-hosted-floating-grip) { transform: translate(var(--qc-drag-x,0px), var(--qc-drag-y,0px)); }
 .qc-hosted-dialog .qc-takeoff-entry-upload { background:var(--qc-bg-subtle); border-color:var(--qc-border-divider); border-radius:var(--qc-radius-card); }
 @media(hover:hover) {
  .qc-hosted-dialog a.bg-black:hover { background:var(--qc-color-text); border-color:var(--qc-color-text); }

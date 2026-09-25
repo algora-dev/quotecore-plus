@@ -369,7 +369,7 @@ export function computeScaleCheck(
   aiData: AiScanData,
   calibrations: Calibration[],
 ): ApplyAiResult['scaleCheck'] {
-  const dl = aiData.scale.dimension_line;
+  const dl = aiData.scale?.dimension_line ?? null;
   if (!dl) {
     return {
       hasDimensionLine: false,
@@ -425,7 +425,12 @@ export function computeScaleCheck(
 export function perimeterAccountingPass(
   aiData: AiScanData,
 ): AiScanData['components'] {
-  const corrected = structuredClone(aiData.components);
+  // Staged scan1 (outline-only) responses carry no components object. Treat
+  // that as an empty set so applying stage-1 results (area confirm) works;
+  // the perimeter pass is a no-op on empty arrays.
+  const corrected = structuredClone(aiData.components ?? {
+    ridges: [], hips: [], valleys: [], broken_hips: [], barges: [], spouting: [], uncertain: [],
+  });
   const PERIMETER_TOLERANCE = 8;
   const RIDGE_ENDPOINT_TOLERANCE = 35;
   const PERPENDICULAR_DOT_TOLERANCE = Math.sin(15 * Math.PI / 180);
@@ -805,7 +810,7 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
   const roofAreaResults: AiRoofAreaResult[] = correctedAiData.roof_areas.map((area, idx) => {
     const canvasPoints = area.points.map(point => ({ ...point }));
     const areaValue = computeAreaValue(canvasPoints, calibrations);
-    const pitch = area.pitch_degrees ?? aiData.pitch.global_degrees ?? 0;
+    const pitch = area.pitch_degrees ?? aiData.pitch?.global_degrees ?? 0;
     return {
       id: crypto.randomUUID(),
       name: area.name || `Area ${idx + 1}`,
@@ -823,7 +828,13 @@ export function applyAiResults(params: ApplyAiParams): ApplyAiResult {
 
   const placeholderTypes: PlaceholderType[] = ALL_SEMANTIC_KEYS;
 
-  for (const ptype of placeholderTypes) {
+  // Outline-only (staged scan1) data carries no component detections. Applying
+  // the outline must NOT synthesise perimeter spouting either - real
+  // components arrive with scans 2+3 run on the corrected outline. Skipping
+  // the whole loop keeps stage 1 a pure area/outline apply.
+  const outlineOnly = !aiData.components;
+
+  for (const ptype of outlineOnly ? [] : placeholderTypes) {
     const rawEntries = correctedAiData.components[ptype];
 
     // snapAndValidate
