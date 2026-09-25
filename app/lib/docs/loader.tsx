@@ -7,7 +7,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import { mdxComponents } from '@/app/components/docs/mdx-components';
-import { findDocBySlug, type DocPage, type DocFrontmatter } from './tree';
+import { findDocBySlug, docPagePath, type DocPage, type DocFrontmatter } from './tree';
 
 /**
  * Compiled doc page ready to render.
@@ -33,7 +33,7 @@ export async function loadDoc(slug: string): Promise<LoadedDoc | null> {
   const page = findDocBySlug(slug);
   if (!page) return null;
 
-  const fileSource = fs.readFileSync(page.filePath, 'utf8');
+  const fileSource = fs.readFileSync(docPagePath(page.slug), 'utf8');
   const { content: body, data } = matter(fileSource);
 
   const evalOptions = {

@@ -172,6 +172,15 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.nextUrl.hostname;
 
+  // -- /var/* hard-404 (2026-09-25) ----------------------------------
+  // Docs RSC payloads leaked absolute /var/task/... paths (AWS Lambda
+  // root) into page HTML; Google indexed them via GSC and they dead-ended
+  // through the app-domain 308 chain. 404 at the edge on every host —
+  // these paths never exist as routes.
+  if (pathname === '/var' || pathname.startsWith('/var/')) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   // ── Stable Vercel alias redirect ───────────────────────────
   // Known stable production aliases (e.g. quotecore-plus-dev.vercel.app)
   // 308-redirect to the canonical production domain so Google consolidates

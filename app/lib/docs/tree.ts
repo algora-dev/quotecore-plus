@@ -26,7 +26,6 @@ export interface DocFrontmatter {
 export interface DocPage {
   slug: string;            // "getting-started/welcome", "" for root
   section: string;         // "getting-started", "" for root
-  filePath: string;        // absolute path on disk
   frontmatter: DocFrontmatter;
 }
 
@@ -42,6 +41,15 @@ export interface DocTree {
 }
 
 const DOCS_ROOT = path.join(process.cwd(), 'content', 'docs');
+
+/**
+ * Absolute on-disk path for a docs page slug — server-side file reads ONLY.
+ * Never serialize this into RSC/client payloads: absolute paths leak the
+ * build runtime root (e.g. /var/task on Vercel) into page HTML (GSC 2026-09-25).
+ */
+export function docPagePath(slug: string): string {
+  return path.join(DOCS_ROOT, slug === '' ? 'index.mdx' : `${slug}.mdx`);
+}
 
 // Display order for sections in the sidebar. Folders not listed fall back to
 // alphabetical at the bottom.
@@ -101,7 +109,6 @@ function readDocFile(absPath: string): DocPage | null {
   return {
     slug,
     section,
-    filePath: absPath,
     frontmatter: {
       title: String(data.title),
       description: String(data.description ?? ''),
