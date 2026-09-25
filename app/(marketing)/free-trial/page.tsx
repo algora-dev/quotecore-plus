@@ -255,7 +255,7 @@ export default function FreeTrialPage() {
                   key={plan.name}
                   className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${planStyles(plan)}`}
                 >
-                  {plan.featured && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
+                  {plan.featured && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
                   <h3 className="text-xl font-semibold">{plan.displayName}</h3>
                   <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
                   <div className="mt-6">
@@ -293,7 +293,7 @@ export default function FreeTrialPage() {
                     key={pkg.name}
                     className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${pkg.highlight ? "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)]" : "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]"}`}
                   >
-                    {pkg.highlight && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most complete</span>}
+                    {pkg.highlight && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most complete</span>}
                     <h3 className="text-xl font-semibold">{pkg.name}</h3>
                     <p className="mt-2 text-sm leading-6 text-zinc-600">{pkg.tagline}</p>
                     <div className="mt-6">

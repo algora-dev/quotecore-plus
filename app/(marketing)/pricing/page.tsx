@@ -75,6 +75,35 @@ function planStyles(plan: (typeof pricingPlans)[number]): string {
   return "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]";
 }
 
+const dfyPackages = [
+  {
+    name: "Done-For-You Estimating Setup",
+    price: "$499",
+    tagline: "Best for smaller estimating setups or contractors with a focused range of products and services.",
+    items: [
+      "Up to 20 custom components built for you",
+      "Your material pricing configured",
+      "Labour and waste rules configured",
+      "Personalised training",
+      "6 months setup and product support",
+      "6 months QuoteCore+ Pro included",
+    ],
+  },
+  {
+    name: "Complete Done-For-You Setup",
+    price: "$999",
+    tagline: "Best for larger or more detailed estimating systems.",
+    highlight: true,
+    items: [
+      "Up to 60 custom components built for you",
+      "Larger material and pricing setup",
+      "More complex labour and waste configurations",
+      "Help organising larger pricing lists or catalogues",
+      "More detailed workflow configuration",
+    ],
+  },
+];
+
 export default function PricingPage() {
   return (
     <>
@@ -109,7 +138,7 @@ export default function PricingPage() {
                 key={plan.name}
                 className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${planStyles(plan)}`}
               >
-                {plan.featured && <span className="absolute right-6 top-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
+                {plan.featured && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most popular</span>}
                 <h2 className="text-xl font-semibold">{plan.displayName}</h2>
                 <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{plan.subtitle}</p>
                 <div className="mt-6">
@@ -135,8 +164,36 @@ export default function PricingPage() {
                 </a>
               </article>
             ))}
+            {dfyPackages.map((pkg) => (
+              <article
+                key={pkg.name}
+                className={`relative flex h-full flex-col rounded-[2rem] border p-8 transition-all duration-300 hover:-translate-y-1 ${pkg.highlight ? "border-[#BD4A1A] bg-white shadow-[0_18px_50px_rgba(24,24,27,0.10)]" : "border-zinc-200 bg-white hover:border-orange-200 hover:bg-orange-50/40 hover:shadow-[0_0_24px_rgba(255,107,53,0.12)]"}`}
+              >
+                {pkg.highlight && <span className="absolute -top-3 right-6 rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">Most complete</span>}
+                <h2 className="text-xl font-semibold">{pkg.name}</h2>
+                <p className="mt-2 min-h-10 text-sm leading-6 text-zinc-600">{pkg.tagline}</p>
+                <div className="mt-6">
+                  <div className="flex min-h-[92px] w-full flex-col justify-center rounded-xl border border-zinc-200/80 bg-white/60 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">USD</p>
+                    <p className="mt-1 text-2xl font-semibold">{pkg.price}</p>
+                    <p className="text-xs text-zinc-500">one-time setup</p>
+                  </div>
+                </div>
+                <ul className="mt-6 flex-1 space-y-3">
+                  {pkg.items.map((item) => (
+                    <li key={item} className="flex gap-3 text-sm text-zinc-700">
+                      <svg className="mt-0.5 h-5 w-5 shrink-0 text-[#BD4A1A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/done-for-you-setup" className={`mt-8 inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold transition-colors ${pkg.highlight ? "bg-black text-white hover:bg-zinc-800" : "border border-zinc-300 text-zinc-900 hover:border-zinc-500"}`}>
+                  See what is included
+                </Link>
+              </article>
+            ))}
           </div>
-          <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">Monthly prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
+          <p className="mx-auto mt-8 max-w-3xl px-6 text-center text-sm text-zinc-600">All prices are shown in USD. Taxes are calculated at checkout where applicable.</p>
         </section>
 
         <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
