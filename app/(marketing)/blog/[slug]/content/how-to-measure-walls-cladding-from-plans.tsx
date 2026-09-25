@@ -66,6 +66,49 @@ export default function Post() {
         every number after it will be wrong too. Thirty seconds here saves a whole takeoff.
       </p>
 
+      <h2>Working at 1/4&quot; = 1&apos;-0&quot; scale (worked example)</h2>
+      <p>
+        1/4&quot; = 1&apos;-0&quot; is the scale most commonly used on residential floor plans: every
+        1/4 inch on the paper represents 1 foot of the building. That is a scale factor of 1:48 —
+        48 quarter-inches per foot — so 1 inch on paper equals 4 feet on site. Metric plans work
+        the same way at the near-equivalent 1:50 scale.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>On paper</th>
+            <th>Real world</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1/4&quot;</td><td>1 ft</td></tr>
+          <tr><td>1/2&quot;</td><td>2 ft</td></tr>
+          <tr><td>1&quot;</td><td>4 ft</td></tr>
+          <tr><td>2&quot;</td><td>8 ft</td></tr>
+          <tr><td>6&quot;</td><td>24 ft</td></tr>
+          <tr><td>12&quot;</td><td>48 ft</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Worked example: a bedroom wall measures 2 3/8&quot; on paper. Multiply by the factor of 4
+        to get feet: 2.375 × 4 = 9.5 ft. At an 8 ft ceiling, one face of that wall is
+        9.5 × 8 = <strong>76 ft²</strong>. One multiplication is the whole conversion.
+      </p>
+      <img
+        src="/images/blog/wall-takeoff-scale-ruler.svg"
+        alt="Architect's scale rule annotated at 1/4 inch = 1 foot, with major divisions numbered 0 to 12 in feet and four minor divisions per foot"
+        className="rounded-xl border border-zinc-200"
+      />
+      <p>
+        A calibrated digital takeoff applies the scale for you — measure once on screen and read
+        real lengths directly instead of converting each dimension. The same calibration-first
+        workflow runs through{' '}
+        <Link href="/roofing-takeoff-software" className={link}>
+          roofing takeoff software
+        </Link>
+        .
+      </p>
+
       <h2>Step 2: Measure rectangular walls</h2>
       <p>
         For each elevation, trace the full wall rectangle: width × height gives the{' '}
@@ -118,6 +161,49 @@ export default function Post() {
         linear component.
       </p>
 
+      <h2>How to take off interior walls from floor plans</h2>
+      <p>
+        Interior wall takeoff is the same discipline applied to floor plans instead of elevations:
+        measure partition wall lengths by type, then convert them to areas and board quantities.
+        The wall schedule or plan legend tags each partition type (for example 90 mm stud vs 70 mm
+        partition) — measure and total each type separately, because they order and price
+        differently.
+      </p>
+      <ul>
+        <li>Run a linear measurement along every partition run, grouping totals by wall type.</li>
+        <li>Multiply each type&rsquo;s total length by the floor-to-ceiling height for one face.</li>
+        <li>Drywall and paint cover both faces — double the net area.</li>
+        <li>Deduct door openings within the partitions (count them from the door schedule; a typical interior door is 0.9 × 2.1 m).</li>
+        <li>Add 5–10% waste for cuts, breaks and defects before ordering board.</li>
+      </ul>
+      <p>
+        The differences vs exterior takeoff: interior walls deduct doors rather than windows,
+        carry no cladding, corners or flashings, studs are counted per run, and finishes cover
+        both faces instead of one.
+      </p>
+      <p>
+        Worked example: a two-bedroom apartment has 18.0 m of 90 mm stud partitions at a 2.4 m
+        ceiling. One face: 18.0 × 2.4 = 43.2 m². Three doors at 0.9 × 2.1 m = 5.67 m², so net per
+        face = 37.53 m². Both faces: 75.06 m². At 7.5% waste, order ≈ <strong>81 m²</strong> of
+        board.
+      </p>
+      <img
+        src="/images/blog/wall-takeoff-interior-walls.svg"
+        alt="Sample two-bedroom floor plan with grey exterior walls and orange highlighted interior partitions, showing door openings and a partition run measurement"
+        className="rounded-xl border border-zinc-200"
+      />
+      <p>
+        You can measure partition runs and areas on screen with the{' '}
+        <Link href="/free-cladding-takeoff" className={link}>
+          Free Wall &amp; Cladding Takeoff Tool
+        </Link>{' '}
+        — it handles line measurements as well as areas — or browse the{' '}
+        <Link href="/free-tools" className={link}>
+          full set of free tools
+        </Link>
+        .
+      </p>
+
       <h2>Worked example: a two-storey house</h2>
       <p>
         Front elevation 9.0 m wide × 5.4 m tall to the eaves, plus a 9.0 m wide × 1.8 m gable.
@@ -152,6 +238,28 @@ export default function Post() {
         .
       </p>
 
+      <h2>Reading level changes in plans: step-ups, step-downs and thresholds</h2>
+      <p>
+        Level changes are shown with direction arrows and height markers, not 3D shapes. A step
+        or stair is drawn with treads and a direction arrow labelled UP or DN — the arrow starts
+        at the bottom riser and points in the direction of travel — usually annotated with the
+        number of risers, e.g. UP 2R for a two-riser step or UP 14R for a full flight. The same
+        flight appears as UP on the lower floor plan and DN on the upper one.
+      </p>
+      <p>
+        Exact heights come from elevation markers: small circles or crosses carrying a level
+        value such as +0.300, meaning 300 mm above the floor datum. At doorways between levels,
+        the threshold — the break in the wall line at the door opening — marks where the level
+        changes and where threshold trim will sit.
+      </p>
+      <p>
+        What to measure: riser count × riser height gives total rise; note the direction of
+        travel (which side steps up); and take threshold widths from the door schedule for
+        trims. Worked example: a doorway marked UP 2R beside a +0.300 elevation with a 0.9 m
+        door on the schedule — two risers × 150 mm = 300 mm step up, matching the +0.300 marker,
+        with a 0.9 m threshold to trim.
+      </p>
+
       <h2>Common mistakes</h2>
       <ul>
         <li><strong>Skipping the scale check</strong> — one bad calibration ruins everything downstream.</li>
@@ -179,6 +287,82 @@ export default function Post() {
           Free Wall &amp; Cladding Takeoff Tool
         </Link>
         .
+      </p>
+
+      <hr />
+
+      <h2>FAQ</h2>
+
+      <h3>How do I measure wall areas from plans?</h3>
+      <p>
+        Calibrate the drawing scale from a known dimension, trace each wall or elevation as a polygon to get
+        gross area, then trace windows and doors and subtract them for net area. A free tool like the
+        QuoteCore+ Wall &amp; Cladding Takeoff does the arithmetic on screen.
+      </p>
+
+      <h3>How do I calculate cladding area from a drawing?</h3>
+      <p>
+        Measure the gross wall area per elevation (including gables), deduct all window and door openings
+        to get net area, then add your waste allowance (typically 5-10%) at the ordering stage.
+      </p>
+
+      <h3>Do I include gables in wall area?</h3>
+      <p>
+        Yes. Gables are cladding area. Calculate each gable as half base times height, or trace it as a
+        triangle in a takeoff tool. Gables are the most commonly forgotten area in wall takeoffs.
+      </p>
+
+      <h3>Should cladding be ordered from gross or net wall area?</h3>
+      <p>
+        Net. Cladding only covers wall area minus openings, so order from net area plus waste. Paint and
+        render are often priced from gross area because reveals still get coated.
+      </p>
+
+      <h3>What drawings do I need for a wall takeoff?</h3>
+      <p>
+        Elevations are the key drawings for cladding, plus floor plans for wall lengths, sections for
+        build-ups, and the window/door schedule to cross-check opening deductions.
+      </p>
+
+      <h3>Can I measure plans digitally for free?</h3>
+      <p>
+        Yes. The QuoteCore+ Free Wall &amp; Cladding Takeoff Tool lets you upload a plan image, calibrate
+        the scale and trace wall areas, trims and openings free, with no signup.
+      </p>
+
+      <h3>How do I handle multiple cladding materials on one elevation?</h3>
+      <p>
+        Trace each material zone as its own area and name it (e.g. brick lower, weatherboard upper). Your
+        takeoff then totals each material separately, which is what suppliers need for ordering.
+      </p>
+
+      <h3>What is the difference between gross and net wall area?</h3>
+      <p>
+        Gross wall area is the full elevation as drawn (width x height plus gables). Net wall area
+        subtracts windows, doors and other openings. Keep both numbers - different materials use
+        different baselines.
+      </p>
+
+      <h3>How do you take off interior walls from architectural drawings?</h3>
+      <p>
+        Find each wall type in the plan&rsquo;s legend or wall schedule, measure the length of every run
+        and total it per type, multiply by floor-to-ceiling height, deduct door openings, then add 5–10%
+        waste. Drywall and paint need both faces, so double the net area before ordering board.
+      </p>
+
+      <h3>How do you measure walls at 1/4&quot; scale?</h3>
+      <p>
+        At 1/4&quot; = 1&apos;-0&quot; scale, every 1/4 inch on paper is 1 foot on the building — a 1:48
+        factor. Multiply the paper measurement in inches by 4 to get feet: a wall measuring 2 3/8&quot;
+        on paper is 9.5 ft (2.375 × 4), or 76 ft² of face at an 8 ft height.
+      </p>
+
+      <h3>How do you show a step up or level change on a floor plan?</h3>
+      <p>
+        With a direction arrow labelled UP or DN along the drawn treads, annotated with the riser count
+        (e.g. UP 2R), plus an elevation marker giving the height at that point (e.g. +0.300 = 300 mm).
+        Multiply riser count by riser height for the total rise, and take threshold widths from the door
+        schedule for trims.
       </p>
     </div>
   );
