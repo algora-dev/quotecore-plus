@@ -7,6 +7,12 @@ import { runChatStep, type LlmMessage, type LlmToolSchema } from '@/app/lib/assi
 import { READONLY_TOOLS } from './tools';
 import { createV2Scope } from './v2/tools.server';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { MODEL_CONFIG } from '@/app/lib/assistant/config';
+import { parseFastIntent } from './speed/intent';
+import { TurnTelemetry, type SpeedPath } from './speed/telemetry';
+import { runModelLoop } from './speed/model-loop';
+import { OrchestratorExecutionError } from './speed/errors';
+export { OrchestratorExecutionError } from './speed/errors';
 
 export interface CompanyAssistantConfig {
   name: string;
@@ -90,6 +96,8 @@ export function buildSystemPrompt(config: CompanyAssistantConfig, v2 = false): s
 
 export interface RegisteredTool {
   schema: LlmToolSchema;
+  /** Opt-in only: no cards, proposals or mutations; each reader still reauthorises. */
+  parallelSafe?: boolean;
   handler: (args: Record<string, unknown>, ctx: ToolContext) => Promise<unknown>;
 }
 
@@ -104,23 +112,14 @@ export const TOOL_REGISTRY: Record<string, RegisteredTool> = {
   ...READONLY_TOOLS,
 };
 
-/** Terminal pipeline error carrying usage already incurred. */
-export class OrchestratorExecutionError extends Error {
-  constructor(
-    public readonly errorCode: string,
-    public readonly tokensIn: number,
-    public readonly tokensOut: number,
-  ) {
-    super(`assistant turn failed: ${errorCode}`);
-  }
-}
-
 export interface OrchestratorTurnInput {
   supabase: SupabaseClient;
   companyId: string;
   conversationId: string;
   runId: string;
   userMessage: string;
+  /** Untrusted page hint only. Not a permission grant or confirmation authority. */
+  pageContext?: { companyId: string; pathname: string | null };
 }
 
 export interface OrchestratorTurnResult {
@@ -129,8 +128,6 @@ export interface OrchestratorTurnResult {
   tokensOut: number;
 }
 
-const MAX_TOOL_HOPS = 5;
-const MAX_TOTAL_TOOL_CALLS = 10;
 const TURN_DEADLINE_MS = 90_000;
 const HISTORY_PRIOR_LIMIT = 30;
 
@@ -147,135 +144,81 @@ export async function getCompanyRole(
   return data?.role ?? null;
 }
 
+/** Test seam is server-only; no dependency/configuration can be supplied over HTTP. */
+export interface TurnDependencies {
+  createScope: typeof createV2Scope;
+  loadConfig: typeof loadCompanyConfig;
+  modelStep: typeof runChatStep;
+  report: (value: ReturnType<TurnTelemetry['snapshot']>) => void;
+}
 export async function runOrchestratorTurn(
   input: OrchestratorTurnInput,
+  dependencies: Partial<TurnDependencies> = {},
 ): Promise<OrchestratorTurnResult> {
   const { supabase, companyId, conversationId, runId, userMessage } = input;
-
-  const config = await loadCompanyConfig(supabase, companyId);
-  const v2 = await createV2Scope(input);
-  const registry = v2?.tools ?? TOOL_REGISTRY;
-
-  // Latest-first so we keep the MOST RECENT messages, not the oldest.
-  const { data: historyNewestFirst } = await supabase
-    .from('smart_assistant_messages')
-    .select('id, role, content, run_id, created_at')
-    .eq('conversation_id', conversationId)
-    .order('created_at', { ascending: false })
-    .limit(HISTORY_PRIOR_LIMIT + 1);
-
-  const rows = (historyNewestFirst ?? []) as {
-    id: string;
-    role: 'user' | 'assistant' | 'tool';
-    content: string;
-    run_id: string | null;
-    created_at: string;
-  }[];
-
-  // Drop the current admitted message (identified by run_id; narrow legacy
-  // fallback: newest user row matching exact text) and keep prior messages,
-  // reversed back into chronological order.
-  let droppedCurrent = false;
-  const priorReversed: { id:string; role: 'user' | 'assistant'; content: string; createdAt: string }[] = [];
-  for (const row of rows) {
-    if (row.role === 'tool') continue;
-    if (!droppedCurrent) {
-      if (row.run_id === runId || (row.run_id === null && row.role === 'user' && row.content === userMessage)) {
-        droppedCurrent = true;
-        continue;
-      }
-    }
-    if (priorReversed.length >= HISTORY_PRIOR_LIMIT) break;
-    priorReversed.push({ id:row.id, role: row.role, content: row.content, createdAt: row.created_at });
-  }
-  const prior = priorReversed.reverse();
-
-  const messages: LlmMessage[] = [
-    { role: 'system', content: buildSystemPrompt(config, !!v2) + (v2 ? `\n\n${v2.prompt}` : '') },
-    // Preserve latest-30 selection/current-run exclusion above. V2 additionally
-    // withholds earlier model context after rollout or permission changes.
-    ...prior.filter((m) => !v2 || v2.visibleMessageIds.has(m.id)).map((m) => ({ role: m.role, content: m.content })),
-    { role: 'user', content: userMessage }, // exactly once
-  ];
-
-  const toolEntries = Object.values(registry);
+  const telemetry = new TurnTelemetry(runId, MODEL_CONFIG.chatModel);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TURN_DEADLINE_MS);
-
-  let tokensIn = 0;
-  let tokensOut = 0;
-  let totalToolCalls = 0;
-  let finalContent = '';
-
+  const deps = { createScope: createV2Scope, loadConfig: loadCompanyConfig, modelStep: runChatStep,
+    report: (value: ReturnType<TurnTelemetry['snapshot']>) => console.info('[smart-assistant:performance]', JSON.stringify(value)), ...dependencies };
+  let result: OrchestratorTurnResult | undefined;
+  let failure: unknown;
   try {
-    for (let hop = 0; hop < MAX_TOOL_HOPS; hop++) {
-      let step: Awaited<ReturnType<typeof runChatStep>>;
-      try {
-        await v2?.guard();
-        step = await runChatStep({
-          messages,
-          tools: toolEntries.map((t) => t.schema),
-          onToken: () => {},
-          signal: controller.signal,
-        });
-      } catch (err) {
-        const code =
-          err instanceof Error && (err.name === 'AbortError' || err.name === 'TimeoutError')
-            ? 'turn_timeout'
-            : 'upstream_error';
-        throw new OrchestratorExecutionError(code, tokensIn, tokensOut);
-      }
-
-      tokensIn += step.tokensIn;
-      tokensOut += step.tokensOut;
-      finalContent = step.text || finalContent;
-
-      const validCalls = step.toolCalls.filter(
-        (tc) => tc.name && Object.prototype.hasOwnProperty.call(registry, tc.name),
-      );
-      if (!validCalls.length) break;
-
-      totalToolCalls += validCalls.length;
-      if (totalToolCalls > MAX_TOTAL_TOOL_CALLS) {
-        throw new OrchestratorExecutionError('tool_call_limit', tokensIn, tokensOut);
-      }
-      if (hop === MAX_TOOL_HOPS - 1) {
-        throw new OrchestratorExecutionError('model_hop_limit', tokensIn, tokensOut);
-      }
-
-      messages.push({
-        role: 'assistant',
-        content: step.text,
-        tool_calls: validCalls.map((tc) => ({ id: tc.id, name: tc.name, arguments: tc.arguments })),
-      });
-
-      const ctx: ToolContext = { supabase, companyId, runId, signal: controller.signal };
-      for (const tc of validCalls) {
-        let args: Record<string, unknown> = {};
-        try {
-          args = tc.arguments ? JSON.parse(tc.arguments) : {};
-        } catch {
-          args = {};
+    const v2 = await telemetry.measure('scope', () => deps.createScope(input));
+    telemetry.path = v2 ? 'model' : 'legacy';
+    if (v2?.speed) {
+      const intent = parseFastIntent(userMessage);
+      if (intent) {
+        const answer = await telemetry.measure('fast_operation', () => v2.operations.fast(intent));
+        if (answer !== null) {
+          if (controller.signal.aborted) throw new OrchestratorExecutionError('turn_timeout', 0, 0);
+          await telemetry.measure('access_final', v2.guard);
+          const paths: Record<typeof intent.type, SpeedPath> = { records: 'fast_records', count: 'fast_count', quote_total: 'fast_total', capabilities: 'fast_capabilities' };
+          telemetry.path = paths[intent.type];
+          // Still an admitted/reserved turn, settled by the unchanged trusted finish.
+          result = { content: answer, tokensIn: 0, tokensOut: 0 };
+          return result;
         }
-        let result: unknown;
-        try {
-          result = await registry[tc.name].handler(args, ctx);
-        } catch {
-          result = { error: 'Tool execution failed.' };
-        }
-        messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result) });
       }
     }
+    // Scope marker exists before ANY history access. No speculative paid calls.
+    const [config, context, historyResult] = await Promise.all([
+      telemetry.measure('config', () => deps.loadConfig(supabase, companyId)),
+      telemetry.measure('session', async () => v2 ? v2.modelContext() : null),
+      telemetry.measure('history', async () => supabase.from('smart_assistant_messages')
+        .select('id, role, content, run_id, created_at').eq('conversation_id', conversationId)
+        .order('created_at', { ascending: false }).limit(HISTORY_PRIOR_LIMIT + 1)),
+    ]);
+    if (historyResult.error) throw new OrchestratorExecutionError('history_unavailable', 0, 0);
+    const rows = (historyResult.data ?? []) as { id: string; role: 'user' | 'assistant' | 'tool'; content: string; run_id: string | null; created_at: string }[];
+    // Preserve exact latest-30/current-run exclusion and V2 scope filtering.
+    let droppedCurrent = false;
+    const priorReversed: { id: string; role: 'user' | 'assistant'; content: string }[] = [];
+    for (const row of rows) {
+      if (row.role === 'tool') continue;
+      if (!droppedCurrent && (row.run_id === runId || (row.run_id === null && row.role === 'user' && row.content === userMessage))) {
+        droppedCurrent = true; continue;
+      }
+      if (priorReversed.length >= HISTORY_PRIOR_LIMIT) break;
+      priorReversed.push({ id: row.id, role: row.role, content: row.content });
+    }
+    const messages: LlmMessage[] = [
+      { role: 'system', content: buildSystemPrompt(config, !!v2) + (context ? `\n\n${context.prompt}` : '') },
+      ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: m.content })),
+      { role: 'user', content: userMessage },
+    ];
+    result = await runModelLoop({ messages, registry: v2?.tools ?? TOOL_REGISTRY,
+      context: { supabase, companyId, runId, signal: controller.signal },
+      guard: v2?.guard ?? (async () => {}), step: deps.modelStep,
+      signal: controller.signal, speed: v2?.speed ?? false, telemetry });
+    return result;
+  } catch (error) {
+    failure = error;
+    throw error;
   } finally {
     clearTimeout(timer);
+    const failed = failure instanceof OrchestratorExecutionError ? failure : null;
+    // Logging must never turn a completed task into a retryable failure.
+    try { deps.report(telemetry.snapshot(result ? 'completed' : failed?.errorCode ?? 'failed', result?.tokensIn ?? failed?.tokensIn ?? 0, result?.tokensOut ?? failed?.tokensOut ?? 0)); } catch { /* diagnostics only */ }
   }
-
-  if (!finalContent.trim()) {
-    throw new OrchestratorExecutionError('empty_completion', tokensIn, tokensOut);
-  }
-
-  try { await v2?.guard(); } catch {
-    throw new OrchestratorExecutionError('access_changed', tokensIn, tokensOut);
-  }
-  return { content: finalContent.trim(), tokensIn, tokensOut };
 }

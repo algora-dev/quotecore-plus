@@ -64,6 +64,7 @@ export interface PipelineContext {
   supabase: SupabaseClient;
   companyId: string;
   conversationId: string;
+  pageContext?: { companyId: string; pathname: string | null };
 }
 
 /**
@@ -82,6 +83,7 @@ export async function runPipeline(
     conversationId: ctx.conversationId,
     runId,
     userMessage,
+    pageContext: ctx.pageContext,
   });
   return { content: result.content, tokensIn: result.tokensIn, tokensOut: result.tokensOut };
 }

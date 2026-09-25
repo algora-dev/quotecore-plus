@@ -9,6 +9,8 @@ export type AssistantBatchDatabase = Omit<Database, 'public'> & {
     public: Omit<Database['public'], 'Functions'> & {
         Functions: Database['public']['Functions'] & {
             sa_v2_runtime: Rpc<Record<string, never>>;
+            sa_v2_speed_count: Rpc<{ p_run_id: string; p_revision: number; p_kind: string; p_period: string; p_owner: string }>;
+            sa_v2_speed_quote_snapshot: Rpc<{ p_run_id: string; p_revision: number; p_quote_id: string }>;
             sa_v2_run_scope_add: Rpc<{
                 p_run_id: string;
                 p_user_id: string;

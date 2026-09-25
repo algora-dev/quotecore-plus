@@ -1,0 +1,66 @@
+error TS2688: Cannot find type definition file for 'debug'.
+  The file is in the program because:
+    Entry point for implicit type library 'debug'
+error TS2688: Cannot find type definition file for 'estree'.
+  The file is in the program because:
+    Entry point for implicit type library 'estree'
+error TS2688: Cannot find type definition file for 'estree-jsx'.
+  The file is in the program because:
+    Entry point for implicit type library 'estree-jsx'
+error TS2688: Cannot find type definition file for 'fabric'.
+  The file is in the program because:
+    Entry point for implicit type library 'fabric'
+error TS2688: Cannot find type definition file for 'hast'.
+  The file is in the program because:
+    Entry point for implicit type library 'hast'
+error TS2688: Cannot find type definition file for 'json-schema'.
+  The file is in the program because:
+    Entry point for implicit type library 'json-schema'
+error TS2688: Cannot find type definition file for 'json5'.
+  The file is in the program because:
+    Entry point for implicit type library 'json5'
+error TS2688: Cannot find type definition file for 'jszip'.
+  The file is in the program because:
+    Entry point for implicit type library 'jszip'
+error TS2688: Cannot find type definition file for 'mdast'.
+  The file is in the program because:
+    Entry point for implicit type library 'mdast'
+error TS2688: Cannot find type definition file for 'mdx'.
+  The file is in the program because:
+    Entry point for implicit type library 'mdx'
+error TS2688: Cannot find type definition file for 'ms'.
+  The file is in the program because:
+    Entry point for implicit type library 'ms'
+error TS2688: Cannot find type definition file for 'node'.
+  The file is in the program because:
+    Entry point for implicit type library 'node'
+error TS2688: Cannot find type definition file for 'pako'.
+  The file is in the program because:
+    Entry point for implicit type library 'pako'
+error TS2688: Cannot find type definition file for 'papaparse'.
+  The file is in the program because:
+    Entry point for implicit type library 'papaparse'
+error TS2688: Cannot find type definition file for 'prop-types'.
+  The file is in the program because:
+    Entry point for implicit type library 'prop-types'
+error TS2688: Cannot find type definition file for 'qrcode'.
+  The file is in the program because:
+    Entry point for implicit type library 'qrcode'
+error TS2688: Cannot find type definition file for 'raf'.
+  The file is in the program because:
+    Entry point for implicit type library 'raf'
+error TS2688: Cannot find type definition file for 'react'.
+  The file is in the program because:
+    Entry point for implicit type library 'react'
+error TS2688: Cannot find type definition file for 'react-dom'.
+  The file is in the program because:
+    Entry point for implicit type library 'react-dom'
+error TS2688: Cannot find type definition file for 'trusted-types'.
+  The file is in the program because:
+    Entry point for implicit type library 'trusted-types'
+error TS2688: Cannot find type definition file for 'unist'.
+  The file is in the program because:
+    Entry point for implicit type library 'unist'
+error TS2688: Cannot find type definition file for 'ws'.
+  The file is in the program because:
+    Entry point for implicit type library 'ws'

@@ -1,0 +1,61 @@
+{
+  "baselineArchive": "quotecore-plus-SA-handoff-2026-09-25.zip",
+  "baselineSha256": "c08a3761398a364a9a4eb43778e32e733386c71916a13c218939e6aca3d05186",
+  "originalFileCount": 2506,
+  "modifiedOriginalFiles": [
+    "app/api/smart-assistant/turn/route.ts",
+    "app/components/smart-assistant/v2/V2ChatClient.tsx",
+    "app/lib/smart-assistant/orchestrator.ts",
+    "app/lib/smart-assistant/turn.ts",
+    "app/lib/smart-assistant/v2/database.ts",
+    "app/lib/smart-assistant/v2/tools.server.ts"
+  ],
+  "unchangedOriginalFiles": 2500,
+  "deletedOriginalFiles": [],
+  "unchangedOriginalMigrationCount": 176,
+  "unchangedLockedFiles": [
+    {
+      "path": "package.json",
+      "sha256": "a29f3301efc2a42bd219b983b6fc879d7cf08b0f628375751fcfe0fb7f1be817",
+      "unchanged": true
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "3d58d7afa0aa4232c6bf1ccf358cb37f946f20f33fcae3b404888ecd00bfd777",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/assistant/config.ts",
+      "sha256": "ac12f9e76d188cad6fff71fffa1918ac983b6912722f4c53b8242e4f5ef4f978",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/assistant/llmClient.ts",
+      "sha256": "29224135e8e3ab9bea2e0ba80c29e5ed2f23730038f2b5d842cfef73db248470",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/pricing/engine.ts",
+      "sha256": "b193a00c1ef5d1aa15c6dc7fb44a316d16e0f6bc942936d137dce23f7468817a",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/taxes/types.ts",
+      "sha256": "0802fd9405c3398e479760c7493b833ccf7204924246e5f0ba9ff23756ebaaeb",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/currency/currencies.ts",
+      "sha256": "653a3be069612dde3d60845e85832f0d126f1e3c344a439d133eb1aec56ba384",
+      "unchanged": true
+    },
+    {
+      "path": "app/lib/measurements/conversions.ts",
+      "sha256": "b7813d25ea6c2241cd2df1a9667718f7721827f6c538497c74414e62e9af903e",
+      "unchanged": true
+    }
+  ],
+  "trustedFinishWrapperSourceUnchangedIgnoringLineEndings": true,
+  "noDependenciesAdded": true,
+  "nodeModulesExcluded": true
+}

@@ -238,8 +238,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         voice.cancel();
         nearBottom.current = true;
         try {
-            await request('/api/smart-assistant/v2/session', { conversationId: id, pathname, companyId: access.companyId });
-            const res = await fetch('/api/smart-assistant/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversationId: id, message: text, clientRequestId: logical.requestId }) });
+            const res = await fetch('/api/smart-assistant/turn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversationId: id, message: text, clientRequestId: logical.requestId, pageContext: { companyId: access.companyId, pathname } }) });
             const result: unknown = await res.json().catch(() => null);
             if (!res.ok) {
                 // Never throw away the request key on an uncertain 5xx/network result.
