@@ -8723,6 +8723,32 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                       ? 'The selected point is enlarged in orange with its two edges lit - drag it, or use the arrows to walk the outline.'
                       : 'Drag this card aside any time to see the plan behind it.'}
                 </p>
+                {/* Owner 2026-09-25 (12:46): component-scan quality. Defaults
+                    to the level used for the area scan; the user can bump it
+                    up or down before running (scans 2+3 are free
+                    continuations - only scan1 charges points). */}
+                <div className="mb-2">
+                  <div className="text-[11px] font-medium text-slate-500 mb-1">Component scan quality</div>
+                  <div className="flex gap-1.5">
+                    {([
+                      { value: 'low', label: 'Low' },
+                      { value: 'medium', label: 'Medium' },
+                      { value: 'high', label: 'High' },
+                    ] as const).map(opt => (
+                      <QcHostedButton aria-pressed={aiQualityLevel === opt.value} variant={aiQualityLevel === opt.value ? 'secondary' : 'ghost'}
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setAiQualityLevel(opt.value)}
+                        className={`flex-1 justify-center py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                          aiQualityLevel === opt.value
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'text-slate-600 border-slate-300 hover:bg-slate-50'
+                        }`}>
+                        {opt.label}
+                      </QcHostedButton>
+                    ))}
+                  </div>
+                </div>
                 {/* Owner 2026-09-25: three real next steps - scan components,
                     add them manually, or finish with the area measured so far. */}
                 <QcHostedButton variant="primary" type="button"
