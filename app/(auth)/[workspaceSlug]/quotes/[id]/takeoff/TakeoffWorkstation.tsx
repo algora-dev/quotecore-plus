@@ -397,9 +397,15 @@ export function TakeoffWorkstation({
   // mouse handler.
   const [outlineTool, setOutlineTool] = useState<null | 'add' | 'remove'>(null);
   const [outlineSelectedVertex, setOutlineSelectedVertex] = useState<{ areaId: string; vertexIndex: number } | null>(null);
+  const [outlineHistory, setOutlineHistory] = useState<{ areaId: string; stack: Array<Array<{ x: number; y: number }>>; index: number } | null>(null);
   const outlineToolRef = useRef<null | 'add' | 'remove'>(null);
+  const outlineSelectedRef = useRef<{ areaId: string; vertexIndex: number } | null>(null);
+  const outlineReviewActiveRef = useRef(false);
+  const outlineHighlightRef = useRef<Array<Line>>([]);
   useEffect(() => { outlineToolRef.current = outlineTool; }, [outlineTool]);
-  useEffect(() => { if (aiStagedPageId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); } }, [aiStagedPageId]);
+  useEffect(() => { outlineSelectedRef.current = outlineSelectedVertex; }, [outlineSelectedVertex]);
+  useEffect(() => { outlineReviewActiveRef.current = aiStagedPageId != null && !aiResults; }, [aiStagedPageId, aiResults]);
+  useEffect(() => { if (aiStagedPageId == null) { setOutlineTool(null); setOutlineSelectedVertex(null); setOutlineHistory(null); } }, [aiStagedPageId]);
   const aiAbortRef = useRef<AbortController | null>(null);
   const [aiQualityLevel, setAiQualityLevel] = useState<'low' | 'medium' | 'high'>('medium');
   // AI Assist points: track locally so we can update after a scan without a page reload.
@@ -900,6 +906,11 @@ export function TakeoffWorkstation({
   }, [redrawNonce]);
 
   const handleUndo = useCallback(() => {
+    // Owner 2026-09-25 (12:30 pass): main undo/redo is BLOCKED while the
+    // outline review card is open - it restores a pre-AI snapshot, wipes the
+    // staged outline off the canvas and leaves the area row live (state
+    // desync). Undo/redo for outline edits lives in the review card.
+    if (outlineReviewActiveRef.current) return;
     // Fix #5b: use the live ref (synchronously updated) - rapid clicks fire
     // before React re-renders and captureSnapshot() would read stale state.
     const snapshot = history.undo(liveStateRef.current ?? captureSnapshot());
@@ -934,6 +945,8 @@ export function TakeoffWorkstation({
   }, [history, captureSnapshot]);
 
   const handleRedo = useCallback(() => {
+    // Owner 2026-09-25 (12:30 pass): blocked during outline review (see undo).
+    if (outlineReviewActiveRef.current) return;
     // Fix #5b: same live-ref pattern as handleUndo.
     const snapshot = history.redo(liveStateRef.current ?? captureSnapshot());
     if (!snapshot) return;
@@ -5034,7 +5047,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     // M10 P5: AI outline vertex correction - dragging an AI area vertex
     // rebuilds its polygon and updates state, so the staged component scan
     // runs on the corrected points.
-    canvas.on('object:modified', (opt) => {
+    const handleVertexModified = (opt: { target?: unknown }) => {
       const target = opt.target as unknown as { measurementId?: string; vertexIndex?: number } | null;
       if (!target || target.vertexIndex == null || !target.measurementId) return;
       const areaId = target.measurementId;
@@ -5067,8 +5080,50 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         : ra));
       setAreaList(prev => prev.map(a => a.id === areaId ? { ...a, area: calculatePolygonArea(points) } : a));
       setIsDirty(true);
-    });
-    return () => { canvas.off('mouse:dblclick', handleDblClick); };
+      recordOutlineHistory(areaId, points);
+    };
+    canvas.on('object:modified', handleVertexModified as never);
+    // Owner 2026-09-25 (12:30 pass), mobile parity: the outline follows the
+    // dragged vertex LIVE (polygon rebuilt + orange highlights stretch) so
+    // the shape visibly drags instead of snapping only on mouse release.
+    const handleVertexMoving = (opt: { target?: unknown }) => {
+      const target = opt.target as { measurementId?: string; vertexIndex?: number } | null;
+      if (!target || target.vertexIndex == null || !target.measurementId) return;
+      const areaId = target.measurementId;
+      const tagged = canvas.getObjects() as unknown as Array<{ measurementId?: string; vertexIndex?: number; left?: number; top?: number; type?: string }>;
+      const siblings = [...tagged.filter(o => o.measurementId === areaId && o.vertexIndex != null)]
+        .sort((a, b) => (a.vertexIndex ?? 0) - (b.vertexIndex ?? 0))
+        .map(o => ({ x: o.left ?? 0, y: o.top ?? 0 }));
+      if (siblings.length < 3) return;
+      const oldPoly = tagged.find(o => o.measurementId === areaId && o.type === 'polygon');
+      if (oldPoly) canvas.remove(oldPoly as never);
+      const polygon = new Polygon(siblings, {
+        fill: 'rgba(59, 130, 246, 0.2)',
+        stroke: '#3b82f6',
+        strokeWidth: 1.25,
+        selectable: false,
+        evented: false,
+      });
+      (polygon as unknown as { measurementId: string }).measurementId = areaId;
+      canvas.add(polygon);
+      canvas.sendObjectToBack(polygon);
+      // Stretch the selected vertex's orange edge highlights live.
+      const sel = outlineSelectedRef.current;
+      if (sel && sel.areaId === areaId && outlineHighlightRef.current.length >= 2) {
+        const i = Math.min(sel.vertexIndex, siblings.length - 1);
+        const cur = siblings[i];
+        const prevP = siblings[(i - 1 + siblings.length) % siblings.length];
+        const nextP = siblings[(i + 1) % siblings.length];
+        const [hlA, hlB] = outlineHighlightRef.current;
+        hlA.set({ x1: prevP.x, y1: prevP.y, x2: cur.x, y2: cur.y });
+        hlA.setCoords();
+        hlB.set({ x1: cur.x, y1: cur.y, x2: nextP.x, y2: nextP.y });
+        hlB.setCoords();
+      }
+      canvas.requestRenderAll();
+    };
+    canvas.on('object:moving', handleVertexMoving as never);
+    return () => { canvas.off('mouse:dblclick', handleDblClick); canvas.off('object:modified', handleVertexModified as never); canvas.off('object:moving', handleVertexMoving as never); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [multiLinealMode]);
 
@@ -5102,7 +5157,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
         originX: 'center', originY: 'center',
         selectable: true, evented: true, hasControls: false, hasBorders: false,
-        hoverCursor: 'move',
+        hoverCursor: 'pointer', moveCursor: 'grabbing',
       });
       (marker as unknown as { measurementId: string }).measurementId = areaId;
       (marker as unknown as { measurementId: string; vertexIndex: number }).vertexIndex = i;
@@ -5120,8 +5175,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   // ── Owner 2026-09-25: outline vertex selection (mobile parity) ──────────
   // The selected vertex renders larger/orange and its two adjacent edges are
   // highlighted; the prev/next stepper in the review card walks the ring
-  // clockwise / anti-clockwise.
-  const outlineHighlightRef = useRef<Array<Line>>([]);
+  // clockwise / anti-clockwise. (outlineHighlightRef / outlineSelectedRef are
+  // declared with the outline state up top so the once-bound canvas
+  // handlers can read them without rebinding.)
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
@@ -5175,6 +5231,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     });
   }, [roofAreas]);
 
+  const recordOutlineHistory = useCallback((areaId: string, pts: Array<{ x: number; y: number }>) => {
+    setOutlineHistory(h => {
+      if (!h || h.areaId !== areaId) return h;
+      const stack = h.index < h.stack.length - 1 ? [...h.stack.slice(0, h.index + 1), pts] : [...h.stack, pts];
+      return { areaId, stack, index: stack.length - 1 };
+    });
+  }, []);
+
   // Remove the SELECTED vertex (minimum 3 kept) - mobile-parity behaviour.
   const handleRemoveSelectedOutlineVertex = useCallback(() => {
     const sel = outlineSelectedVertex;
@@ -5185,8 +5249,47 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       .filter((_, i) => i !== sel.vertexIndex)
       .map(p => ({ x: p.x, y: p.y }));
     applyStagedAreaPoints(ra.quoteRoofAreaId ?? ra.id, pts);
+    recordOutlineHistory(ra.quoteRoofAreaId ?? ra.id, pts);
     setOutlineSelectedVertex({ areaId: sel.areaId, vertexIndex: Math.min(sel.vertexIndex, pts.length - 1) });
-  }, [outlineSelectedVertex, roofAreas, applyStagedAreaPoints]);
+  }, [outlineSelectedVertex, roofAreas, applyStagedAreaPoints, recordOutlineHistory]);
+
+  // ── Owner 2026-09-25 (12:30 pass): outline-edit history (undo/redo) ─────
+  // Baseline snapshot is captured as soon as the staged outline lands on
+  // the canvas; every add/remove/drag pushes onto the stack. Undo/redo
+  // lives in the review card only - the MAIN canvas undo/redo is disabled
+  // while the outline review is open (it would restore a pre-AI snapshot
+  // and wipe the outline while the area row stays live).
+  useEffect(() => {
+    if (aiStagedPageId == null) return;
+    const ra = roofAreas.find(r => r.fromPageId === aiStagedPageId && r.quoteRoofAreaId && r.points.length >= 3);
+    if (!ra) return;
+    const areaId = ra.quoteRoofAreaId ?? ra.id;
+    setOutlineHistory(h => (h && h.areaId === areaId)
+      ? h
+      : { areaId, stack: [ra.points.map(p => ({ x: p.x, y: p.y }))], index: 0 });
+  }, [aiStagedPageId, roofAreas]);
+
+  const handleOutlineUndo = useCallback(() => {
+    if (!outlineHistory || outlineHistory.index <= 0) return;
+    const targetIndex = outlineHistory.index - 1;
+    const pts = outlineHistory.stack[targetIndex];
+    applyStagedAreaPoints(outlineHistory.areaId, pts);
+    setOutlineHistory({ ...outlineHistory, index: targetIndex });
+    setOutlineSelectedVertex(sel => sel && sel.areaId === outlineHistory.areaId
+      ? { ...sel, vertexIndex: Math.min(sel.vertexIndex, pts.length - 1) }
+      : sel);
+  }, [outlineHistory, applyStagedAreaPoints]);
+
+  const handleOutlineRedo = useCallback(() => {
+    if (!outlineHistory || outlineHistory.index >= outlineHistory.stack.length - 1) return;
+    const targetIndex = outlineHistory.index + 1;
+    const pts = outlineHistory.stack[targetIndex];
+    applyStagedAreaPoints(outlineHistory.areaId, pts);
+    setOutlineHistory({ ...outlineHistory, index: targetIndex });
+    setOutlineSelectedVertex(sel => sel && sel.areaId === outlineHistory.areaId
+      ? { ...sel, vertexIndex: Math.min(sel.vertexIndex, pts.length - 1) }
+      : sel);
+  }, [outlineHistory, applyStagedAreaPoints]);
 
   // One-shot click handling for the add/remove point tools. Bound once; the
   // armed tool is read through outlineToolRef so no rebinding is needed.
@@ -5219,6 +5322,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           .filter((_, i) => i !== target.vertexIndex)
           .map(m => ({ x: m.left, y: m.top }));
         applyStagedAreaPoints(target.measurementId as string, pts);
+        recordOutlineHistory(target.measurementId as string, pts);
         setOutlineTool(null);
         return;
       }
@@ -5250,6 +5354,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       if (best && best.dist <= 24) {
         best.pts.splice(best.insertAt, 0, { x: pointer.x, y: pointer.y });
         applyStagedAreaPoints(best.areaId, best.pts);
+        recordOutlineHistory(best.areaId, best.pts);
         setOutlineTool(null);
       }
     };
@@ -6146,7 +6251,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
           fill: '#3b82f6', stroke: '#000', strokeWidth: 1,
           originX: 'center', originY: 'center',
           selectable: true, evented: true, hasControls: false, hasBorders: false,
-          hoverCursor: 'move',
+          hoverCursor: 'pointer', moveCursor: 'grabbing',
         });
         (marker as unknown as { measurementId: string }).measurementId = realId;
         (marker as unknown as { measurementId: string; vertexIndex: number }).vertexIndex = vertexIndex;
@@ -7244,6 +7349,24 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                           const isSelected = selectedComponentId === comp.id;
                           const mt = (comp.measurement_type ?? comp.default_measurement_type ?? '').toLowerCase();
                           const typeLabel = mt === 'line' ? 'Line' : mt === 'area' ? 'Area' : mt === 'point' ? 'Count' : mt === 'multi_lineal' ? 'Multi-line' : mt === 'multi_lineal_lxh' ? 'Multi-line × height' : mt === 'volume_3d' ? 'Volume' : mt === 'length_x_height_freestyle' ? 'Length × height' : mt === 'multi_lineal_lxh_freestyle' ? 'Multi-line × height' : mt || '';
+                          if (!isSelected) {
+                            // Owner 2026-09-25 (12:34): unselected active
+                            // components collapse to ONE faded line - colour
+                            // + name + type/count. Click selects + expands to
+                            // the full card; only the selected one dominates.
+                            return (
+                              <button type="button" key={comp.id} className="qc-takeoff-component-compact"
+                                onClick={() => { setSelectedComponentId(comp.id); applyToolForType(mt, comp.id); }}
+                                aria-label={`Select ${comp.name}`}>
+                                <span className="qc-takeoff-component-compact-dot" style={{ backgroundColor: assignment?.color || '#94a3b8' }} />
+                                <span className="qc-takeoff-component-compact-name">{comp.name}</span>
+                                <span className="qc-takeoff-component-compact-meta">
+                                  {typeLabel || 'Measurement'}
+                                  {compData && compData.measurements.length > 0 ? ` · ${compData.measurements.length} measurement${compData.measurements.length === 1 ? '' : 's'}` : ''}
+                                </span>
+                              </button>
+                            );
+                          }
                           return (
                             <div key={comp.id} className="qc-takeoff-component" data-selected={isSelected}>
                               <div className="flex">
@@ -7252,6 +7375,9 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                   <div className="qc-takeoff-component-header">
                                     <button type="button" className="qc-takeoff-component-select" aria-pressed={isSelected}
                                       onClick={() => {
+                                      // Owner 2026-09-25 (12:34): clicking the selected header
+                                      // collapses it back to the compact row (deselect).
+                                      if (isSelected) { setSelectedComponentId(null); return; }
                                       setSelectedComponentId(comp.id);
                                       // P1-2: auto-switch tool when clicking an active component.
                                       // Pass comp.id so activeAreaComponentIdRef is set synchronously.
@@ -7604,11 +7730,11 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                   <div className="qc-takeoff-view-tools">
                     <QcCanvasToolGroup label="History"><QcToolButton
                       onClick={handleUndo}
-                      disabled={!history.canUndo}
+                      disabled={!history.canUndo || (aiStagedPageId != null && !aiResults)}
                       title="Undo"
                       aria-label="Undo" className="qc-canvas-icon-tool"><QcIcon name="undo" /></QcToolButton><QcToolButton
                         onClick={handleRedo}
-                        disabled={!history.canRedo}
+                        disabled={!history.canRedo || (aiStagedPageId != null && !aiResults)}
                         title="Redo"
                         aria-label="Redo" className="qc-canvas-icon-tool"><QcIcon name="redo" /></QcToolButton></QcCanvasToolGroup>
                     <QcCanvasToolGroup label="Zoom" className="qc-takeoff-zoom"><QcToolButton
@@ -8570,6 +8696,24 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                     disabled={!outlineSelectedVertex || selN <= 3}
                     className="flex-1 justify-center text-xs">
                     − Remove point
+                  </QcHostedButton>
+                </div>
+                {/* Owner 2026-09-25 (12:30 pass): outline-edit undo/redo,
+                    greyed until the user actually changes something. */}
+                <div className="flex gap-2 mb-2">
+                  <QcHostedButton variant="ghost" size="sm" type="button"
+                    onClick={handleOutlineUndo}
+                    disabled={!outlineHistory || outlineHistory.index <= 0}
+                    title="Undo the last outline edit"
+                    className="flex-1 justify-center text-xs">
+                    ↶ Undo
+                  </QcHostedButton>
+                  <QcHostedButton variant="ghost" size="sm" type="button"
+                    onClick={handleOutlineRedo}
+                    disabled={!outlineHistory || outlineHistory.index >= outlineHistory.stack.length - 1}
+                    title="Redo an undone outline edit"
+                    className="flex-1 justify-center text-xs">
+                    ↷ Redo
                   </QcHostedButton>
                 </div>
                 <p className="text-[11px] text-slate-400 mb-3" data-live-hint>
