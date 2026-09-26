@@ -126,11 +126,19 @@ function toOpenAiMessages(
 
 export async function runChatStep(input: ChatTurnInput): Promise<ChatTurnResult> {
   // Reasoning models (gpt-5 family) burn max_completion_tokens on hidden
-  // reasoning before any visible text. Low effort keeps tool-use quality while
-  // cutting latency and avoiding empty completions that starve the budget.
-  const reasoning = MODEL_CONFIG.chatModel.startsWith('gpt-5')
-    ? { reasoning_effort: 'low' as const }
-    : {};
+  // reasoning before any visible text. Low effort keeps synthesis quality
+  // while cutting latency and avoiding empty completions that starve the
+  // budget.
+  // 2026-09-26: OpenAI overnight REJECTED reasoning_effort combined with
+  // function tools on gpt-5.6-luna chat completions ("use /v1/responses or
+  // set reasoning_effort to 'none'") - every assistant turn died as an
+  // instant 400 upstream_error with 0 tokens. Tool turns therefore run at
+  // 'none' (tool selection needs no hidden reasoning); the final no-tools
+  // synthesis step keeps 'low'.
+  const reasoning: { reasoning_effort?: 'low' | 'none' } = {};
+  if (MODEL_CONFIG.chatModel.startsWith('gpt-5')) {
+    reasoning.reasoning_effort = input.tools.length > 0 ? 'none' : 'low';
+  }
   const stream = await client().chat.completions.create(
     {
       model: MODEL_CONFIG.chatModel,
