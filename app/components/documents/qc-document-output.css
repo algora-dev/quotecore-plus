@@ -61,7 +61,7 @@
 .qc-output-edit-target:focus-visible > span { opacity:1; }
 .qc-output-edit-target:active { background:rgba(255,107,53,.12);box-shadow:inset 0 1px 4px #191b2020; }
 .qc-output-empty-target { display:block;width:100%;margin:16px 0;border:1px dashed #7c8798;background:#fff;color:#596273;border-radius:5px;min-height:40px;font-size:12px;text-align:center;cursor:pointer; }
-@media(hover:hover) { .qc-output-edit-target:hover { border-color:#b63d0a;background:rgba(255,107,53,.04); }.qc-output-edit-target:hover > span { opacity:1; }.qc-output-empty-target:hover { background:#fff4eb;border-color:#b63d0a; } }
+@media(hover:hover) { .qc-output-edit-target:hover { border-color:#b63d0a; }.qc-output-edit-target:hover > span { opacity:1; }.qc-output-empty-target:hover { background:#fff4eb;border-color:#b63d0a; } }
 .qc-output-empty-target:focus-visible { outline:2px solid #b63d0a;outline-offset:3px; }
 .qc-output-empty-target:active { background:#ffe6d2; }
 /* Clean output: no focus/selection or empty editor prompts in either export mechanism. */
@@ -81,9 +81,9 @@
 @media(forced-colors:active) { .qc-output-edit-target:hover,.qc-output [data-doc-selected] { outline:1px solid Highlight; }.qc-output-edit-target:focus-visible { outline:2px solid Highlight; } }
 /* Keep selection decoration on the excluded button, not the captured paper. */
 .qc-output [data-doc-selected="true"] { outline:0;background-color:transparent; }
-.qc-output [data-doc-selected="true"] .qc-output-edit-target { border-color:#b63d0a;background:rgba(255,107,53,.045); }
+.qc-output [data-doc-selected="true"] .qc-output-edit-target { border-color:#b63d0a; }
 
-.qc-output [data-doc-hovered="true"] .qc-output-edit-target { border-color:#b63d0a;background:rgba(255,107,53,.04); }
+.qc-output [data-doc-hovered="true"] .qc-output-edit-target { border-color:#b63d0a; }
 
 .qc-recipient-paper { max-width:880px;margin:0 auto; }
 .qc-output-payment button { min-height:28px; }

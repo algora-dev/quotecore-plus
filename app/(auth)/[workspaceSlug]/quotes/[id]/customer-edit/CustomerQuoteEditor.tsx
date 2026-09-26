@@ -926,6 +926,22 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
           <QcStudioSection active={studioSection === 'document'}><QcStudioOverview options={studioOptions} onSelect={selectStudioSection} /></QcStudioSection>
           <QcStudioSection active={studioSection === 'header'}>
             <QcDocumentSection title="Company & logo" description="These details apply to this document. Customer and job details are managed in Job Space.">
+              <label className="qc-document-order-label">Load from saved template
+                <select aria-label="Branding template" value="" data-copilot="cl-template-dropdown"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      applyTemplate(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">{templates.length > 0 ? 'Choose a template...' : 'No templates saved yet'}</option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>{template.name}</option>
+                  ))}
+                </select>
+              </label>
+              <p className="qc-document-help">Applies company details, logo and footer text. Save your own under Branding templates.</p>
               {([
                 ['Company name', companyName, setCompanyName], ['Address', companyAddress, setCompanyAddress],
                 ['Phone', companyPhone, setCompanyPhone], ['Email', companyEmail, setCompanyEmail], ['Logo URL', companyLogoUrl, setCompanyLogoUrl],
