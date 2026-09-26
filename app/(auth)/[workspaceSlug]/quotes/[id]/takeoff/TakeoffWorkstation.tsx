@@ -45,6 +45,8 @@ import { PointMeasurementModal } from './modals/PointMeasurementModal';
 import { LineMeasurementModal } from './modals/LineMeasurementModal';
 import { CalibrationModal } from './modals/CalibrationModal';
 import { RoofPitchEstimatorModal } from './modals/RoofPitchEstimatorModal';
+// Viewport pattern (2026-09-26): shared zoom/pan math for the takeoff canvas.
+import { computeFitVpt, clampVpt, panVpt, zoomVptAtPoint, isSceneClipped, type Vpt } from './canvasViewport';
 // P2/P6 AI-assisted calibration (flag-gated, live search via /api/takeoff/calibration)
 import { CalibrationReviewPanel } from './calibration/CalibrationReviewPanel';
 import type { CalibrationStartMode } from './calibration/useCalibrationController';
@@ -329,6 +331,15 @@ export function TakeoffWorkstation({
   const lastAutoFitZoom = useRef<number | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const [zoom, setZoom] = useState(1);
+  // Viewport pattern (2026-09-26): pan-hint state. The hint appears the first
+  // time the plan is zoomed in enough that part of it is off-screen and the
+  // user has not panned yet (owner request 2026-09-26).
+  const [viewClipped, setViewClipped] = useState(false);
+  const [hasPanned, setHasPanned] = useState(false);
+  const [panHintDismissed, setPanHintDismissed] = useState(false);
+  // Scene-space plan dims, kept in a ref so event handlers/async callbacks
+  // always read fresh values without re-binding.
+  const sceneDimsRef = useRef({ width: 0, height: 0 });
   
   // Calibration state
   const [calibrationMode, setCalibrationMode] = useState(false);
@@ -2621,9 +2632,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     const imgElement = new Image();
     imgElement.crossOrigin = 'anonymous';
     imgElement.onload = () => {
-      // Dynamic canvas sizing: canvas = processed image dimensions, flush top-left.
+      // Dynamic canvas sizing: the SCENE keeps the processed image dims; the
+      // ELEMENT is sized to the viewport instead (viewport pattern 2026-09-26).
       const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
-      canvas.setDimensions({ width: dims.width, height: dims.height });
+      sceneDimsRef.current = { width: dims.width, height: dims.height };
       setCanvasDims({ width: dims.width, height: dims.height });
 
       const fabricImg = new FabricImage(imgElement);
@@ -2636,18 +2648,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       canvas.backgroundImage = fabricImg;
       canvas.renderAll();
 
-      // Auto-fit on page switch
-      const container = canvasRef.current?.parentElement?.parentElement;
-      if (container) {
-        const cw = container.clientWidth - 32;
-        const ch = container.clientHeight - 32;
-        // 2026-08-30: fit the plan at the LARGEST size that fits the viewport
-        // (upscale allowed up to 2x so small plans fill the screen).
-        const fitScale = Math.min(cw / dims.width, ch / dims.height, 2);
-        canvas.setZoom(fitScale);
-        canvas.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
-        setZoom(fitScale);
-        lastAutoFitZoom.current = fitScale;
+      // Auto-fit on page switch (viewport pattern): element tracks the
+      // viewport, plan fits + centres via the transform.
+      const viewportWrapper = canvasRef.current?.parentElement;
+      if (viewportWrapper) {
+        canvas.setDimensions({
+          width: Math.max(160, viewportWrapper.clientWidth),
+          height: Math.max(160, viewportWrapper.clientHeight),
+        });
+        const fit = computeFitVpt(dims.width, dims.height, canvas.getWidth(), canvas.getHeight());
+        canvas.setViewportTransform(fit.vpt);
+        canvas.renderAll();
+        setZoom(fit.scale);
+        setViewClipped(isSceneClipped(fit.vpt, dims.width, dims.height, canvas.getWidth(), canvas.getHeight()));
+        lastAutoFitZoom.current = fit.scale;
       }
     };
     imgElement.src = imageUrl;
@@ -4411,9 +4425,10 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     imgElement.crossOrigin = 'anonymous';
     imgElement.onload = () => {
       if (canvasDisposed) return;
-      // Dynamic canvas sizing: canvas = processed image dimensions, flush top-left.
+      // Dynamic canvas sizing: the SCENE keeps the processed image dims; the
+      // ELEMENT is sized to the viewport instead (viewport pattern 2026-09-26).
       const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
-      canvas.setDimensions({ width: dims.width, height: dims.height });
+      sceneDimsRef.current = { width: dims.width, height: dims.height };
       setCanvasDims({ width: dims.width, height: dims.height });
 
       const fabricImg = new FabricImage(imgElement);
@@ -4433,20 +4448,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       canvas.backgroundImage = fabricImg;
       canvas.renderAll();
 
-      // Auto-fit: scale the canvas to fit the container on initial load.
-      // The canvas dimensions = image dimensions (dynamic sizing), so we
-      // need to zoom out if the image is larger than the viewport.
-      const container = canvasRef.current?.parentElement?.parentElement;
-      if (container) {
-        const containerWidth = container.clientWidth - 32;
-        const containerHeight = container.clientHeight - 32;
-        // 2026-08-30: fit at the LARGEST size that fits the viewport
-        // (upscale allowed up to 2x so small plans fill the screen).
-        const fitScale = Math.min(containerWidth / dims.width, containerHeight / dims.height, 2);
-        canvas.setZoom(fitScale);
-        canvas.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
-        setZoom(fitScale);
-        lastAutoFitZoom.current = fitScale;
+      // Auto-fit (viewport pattern): size the element to the visible area,
+      // then fit + centre the plan via the viewport transform.
+      const viewportWrapper = canvasRef.current?.parentElement;
+      if (viewportWrapper) {
+        canvas.setDimensions({
+          width: Math.max(160, viewportWrapper.clientWidth),
+          height: Math.max(160, viewportWrapper.clientHeight),
+        });
+        const fit = computeFitVpt(dims.width, dims.height, canvas.getWidth(), canvas.getHeight());
+        canvas.setViewportTransform(fit.vpt);
+        canvas.renderAll();
+        setZoom(fit.scale);
+        setViewClipped(isSceneClipped(fit.vpt, dims.width, dims.height, canvas.getWidth(), canvas.getHeight()));
+        lastAutoFitZoom.current = fit.scale;
       }
 
       // Canvas-rework: canvas is now ready for reconstruction.
@@ -5011,7 +5026,122 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       canvas.selection = true;
     });
 
+    // ── Viewport pan/zoom input (2026-09-26, owner: "can't move around when
+    // zoomed"). Three input paths, all vpt-based (the element never scrolls):
+    //   1. middle-mouse drag - grab and pan
+    //   2. hold Space + left-drag - same, for trackpads / mice without a
+    //      middle button
+    //   3. wheel: ctrl (trackpad pinch) or discrete mouse notches zoom at the
+    //      cursor; small continuous pixel deltas (trackpad two-finger) pan.
+    // Alt + drag keeps working through the Fabric handlers above.
+    const panCleanups: Array<() => void> = [];
+    const panWrapper = canvasRef.current?.parentElement;
+    if (panWrapper) {
+      let spaceHeld = false;
+      let panning = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      const isEditableTarget = (t: EventTarget | null) => {
+        const el = t as HTMLElement | null;
+        if (!el || typeof el.tagName !== 'string') return false;
+        const tag = el.tagName.toLowerCase();
+        return tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button' || el.isContentEditable;
+      };
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.code !== 'Space' || e.repeat || isEditableTarget(e.target)) return;
+        // Stop the page itself scrolling while the user holds Space to pan.
+        e.preventDefault();
+        spaceHeld = true;
+        if (!panning) panWrapper.style.cursor = 'grab';
+      };
+      const onKeyUp = (e: KeyboardEvent) => {
+        if (e.code !== 'Space') return;
+        spaceHeld = false;
+        if (!panning) panWrapper.style.cursor = '';
+      };
+      const onPointerDown = (e: PointerEvent) => {
+        const wantsPan = e.button === 1 || (e.button === 0 && spaceHeld);
+        if (!wantsPan) return;
+        // preventDefault on pointerdown also suppresses the compatibility
+        // mousedown, so Fabric never sees it: no stray lines/points while
+        // panning, and no middle-click autoscroll either.
+        e.preventDefault();
+        e.stopPropagation();
+        panning = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        panWrapper.setPointerCapture(e.pointerId);
+        panWrapper.style.cursor = 'grabbing';
+      };
+      const onPointerMove = (e: PointerEvent) => {
+        if (!panning) return;
+        const vpt = (canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0]) as Vpt;
+        const next = panVpt(vpt, e.clientX - lastX, e.clientY - lastY, sceneDimsRef.current.width, sceneDimsRef.current.height, canvas.getWidth(), canvas.getHeight());
+        canvas.setViewportTransform(next);
+        canvas.requestRenderAll();
+        lastX = e.clientX;
+        lastY = e.clientY;
+        lastAutoFitZoom.current = null; // user owns the view now
+        setHasPanned(true);
+      };
+      const onPointerUp = (e: PointerEvent) => {
+        if (!panning) return;
+        panning = false;
+        panWrapper.style.cursor = spaceHeld ? 'grab' : '';
+        try { panWrapper.releasePointerCapture(e.pointerId); } catch { /* already released */ }
+      };
+      const onWheel = (e: WheelEvent) => {
+        // The page never scrolls while the cursor is over the canvas.
+        e.preventDefault();
+        const vw = canvas.getWidth();
+        const vh = canvas.getHeight();
+        const { width: sw, height: sh } = sceneDimsRef.current;
+        const vpt = (canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0]) as Vpt;
+        const discrete = e.deltaMode === 1 || Math.abs(e.deltaY) >= 40;
+        if (e.ctrlKey || discrete) {
+          // Zoom at the cursor (ctrl = trackpad pinch gesture).
+          const rect = (canvasRef.current as HTMLCanvasElement).getBoundingClientRect();
+          const factor = e.ctrlKey
+            ? (e.deltaY < 0 ? 1.06 : 1 / 1.06)
+            : (e.deltaY < 0 ? 1.15 : 1 / 1.15);
+          const zoomed = zoomVptAtPoint(vpt, factor, e.clientX - rect.left, e.clientY - rect.top);
+          const clamped = clampVpt(zoomed, sw, sh, vw, vh);
+          canvas.setViewportTransform(clamped);
+          canvas.requestRenderAll();
+          setZoom(clamped[0]);
+          setViewClipped(isSceneClipped(clamped, sw, sh, vw, vh));
+          lastAutoFitZoom.current = null;
+        } else {
+          // Trackpad two-finger scroll pans the view.
+          const next = panVpt(vpt, -e.deltaX, -e.deltaY, sw, sh, vw, vh);
+          canvas.setViewportTransform(next);
+          canvas.requestRenderAll();
+          lastAutoFitZoom.current = null;
+          setHasPanned(true);
+        }
+      };
+
+      panWrapper.addEventListener('pointerdown', onPointerDown, true);
+      panWrapper.addEventListener('pointermove', onPointerMove);
+      panWrapper.addEventListener('pointerup', onPointerUp);
+      panWrapper.addEventListener('pointercancel', onPointerUp);
+      panWrapper.addEventListener('wheel', onWheel, { passive: false });
+      window.addEventListener('keydown', onKeyDown);
+      window.addEventListener('keyup', onKeyUp);
+      panCleanups.push(() => {
+        panWrapper.removeEventListener('pointerdown', onPointerDown, true);
+        panWrapper.removeEventListener('pointermove', onPointerMove);
+        panWrapper.removeEventListener('pointerup', onPointerUp);
+        panWrapper.removeEventListener('pointercancel', onPointerUp);
+        panWrapper.removeEventListener('wheel', onWheel);
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('keyup', onKeyUp);
+      });
+    }
+
     return () => {
+      panCleanups.forEach((fn) => fn());
       canvas.dispose();
       // Reset the init guard on unmount so re-mounting the component
       // (e.g. a Next route remount) gets a fresh canvas. We don't reset on
@@ -5413,54 +5543,92 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     };
   }, [areaMode, areaSubTool, areaPoints]);
 
-  // Zoom controls
+  // ── Viewport pattern helpers (2026-09-26, owner: "can't move around when
+  // zoomed"). The canvas element is sized to the visible viewport and the
+  // plan is placed entirely by the viewportTransform, so every zoom/pan path
+  // shares the same clamping rules (see ./canvasViewport).
+  const sizeCanvasToViewport = () => {
+    const canvas = fabricRef.current;
+    const wrapper = canvasRef.current?.parentElement;
+    if (!canvas || !wrapper) return;
+    const w = Math.max(160, wrapper.clientWidth);
+    const h = Math.max(160, wrapper.clientHeight);
+    if (Math.abs(canvas.getWidth() - w) > 1 || Math.abs(canvas.getHeight() - h) > 1) {
+      canvas.setDimensions({ width: w, height: h });
+    }
+  };
+
+  const syncViewportState = (canvas: Canvas, vpt: Vpt, userDriven: boolean, panned = false) => {
+    const { width: sw, height: sh } = sceneDimsRef.current;
+    const clamped = clampVpt(vpt, sw, sh, canvas.getWidth(), canvas.getHeight());
+    canvas.setViewportTransform(clamped);
+    canvas.requestRenderAll();
+    setZoom(clamped[0]);
+    setViewClipped(isSceneClipped(clamped, sw, sh, canvas.getWidth(), canvas.getHeight()));
+    if (userDriven) lastAutoFitZoom.current = null;
+    if (panned) setHasPanned(true);
+  };
+
+  const fitPlanToViewport = (markAutoFit = true) => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const { width: sw, height: sh } = sceneDimsRef.current;
+    if (!sw || !sh) return;
+    sizeCanvasToViewport();
+    const fit = computeFitVpt(sw, sh, canvas.getWidth(), canvas.getHeight());
+    canvas.setViewportTransform(fit.vpt);
+    canvas.requestRenderAll();
+    setZoom(fit.scale);
+    setViewClipped(isSceneClipped(fit.vpt, sw, sh, canvas.getWidth(), canvas.getHeight()));
+    if (markAutoFit) lastAutoFitZoom.current = fit.scale;
+  };
+
+  // Zoom controls - zoom around the viewport centre, preserving the pan.
   const handleZoomIn = () => {
-    if (!fabricRef.current) return;
-    const newZoom = Math.min(zoom + 0.1, 5);
-    fabricRef.current.setZoom(newZoom);
-    setZoom(newZoom);
-    lastAutoFitZoom.current = null; // user took control of zoom
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const vpt = (canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0]) as Vpt;
+    syncViewportState(canvas, zoomVptAtPoint(vpt, 1.2, canvas.getWidth() / 2, canvas.getHeight() / 2), true);
   };
 
   const handleZoomOut = () => {
-    if (!fabricRef.current) return;
-    const newZoom = Math.max(zoom - 0.1, 0.1);
-    fabricRef.current.setZoom(newZoom);
-    setZoom(newZoom);
-    lastAutoFitZoom.current = null; // user took control of zoom
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const vpt = (canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0]) as Vpt;
+    syncViewportState(canvas, zoomVptAtPoint(vpt, 1 / 1.2, canvas.getWidth() / 2, canvas.getHeight() / 2), true);
   };
 
   const handleResetZoom = () => {
-    if (!fabricRef.current) return;
-    fabricRef.current.setZoom(1);
-    fabricRef.current.viewportTransform = [1, 0, 0, 1, 0, 0];
-    fabricRef.current.requestRenderAll();
-    setZoom(1);
-    lastAutoFitZoom.current = null; // user took control of zoom
+    // Reset = back to the fitted view; auto-fit owns the zoom again.
+    fitPlanToViewport(true);
   };
 
   // 2026-08-30: dynamic fit-to-screen. Re-fit the plan to the viewport when the
   // window resizes (browser maximize/restore, sidebar toggles, zoom changes the
   // CSS pixel size) - but ONLY while auto-fit still owns the zoom. Once the
   // user zooms manually, resizes never override their chosen level.
+  // Viewport pattern (2026-09-26): the element also tracks the new viewport
+  // size, and a user-owned view is re-clamped into the new bounds.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const onResize = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        if (lastAutoFitZoom.current == null || !fabricRef.current || canvasDims.width === 0) return;
-        const container = canvasRef.current?.parentElement;
-        if (!container) return;
-        const cw = container.clientWidth - 32;
-        const ch = container.clientHeight - 32;
-        if (cw <= 0 || ch <= 0) return;
-        const fitScale = Math.min(cw / canvasDims.width, ch / canvasDims.height, 2);
-        if (Math.abs(fitScale - lastAutoFitZoom.current) < 0.005) return;
-        fabricRef.current.setZoom(fitScale);
-        fabricRef.current.viewportTransform = [fitScale, 0, 0, fitScale, 0, 0];
-        fabricRef.current.requestRenderAll();
-        setZoom(fitScale);
-        lastAutoFitZoom.current = fitScale;
+        const canvas = fabricRef.current;
+        if (!canvas || sceneDimsRef.current.width === 0) return;
+        sizeCanvasToViewport();
+        if (lastAutoFitZoom.current != null) {
+          const { width: sw, height: sh } = sceneDimsRef.current;
+          const fit = computeFitVpt(sw, sh, canvas.getWidth(), canvas.getHeight());
+          if (Math.abs(fit.scale - lastAutoFitZoom.current) < 0.005) return;
+          canvas.setViewportTransform(fit.vpt);
+          canvas.requestRenderAll();
+          setZoom(fit.scale);
+          lastAutoFitZoom.current = fit.scale;
+        } else {
+          const vpt = (canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0]) as Vpt;
+          syncViewportState(canvas, vpt, false);
+        }
       }, 150);
     };
     window.addEventListener('resize', onResize);
@@ -5491,7 +5659,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         imgElement.crossOrigin = 'anonymous';
         imgElement.onload = () => {
           const dims = computeCanvasDimensions(imgElement.naturalWidth, imgElement.naturalHeight);
-          canvas.setDimensions({ width: dims.width, height: dims.height });
+          sceneDimsRef.current = { width: dims.width, height: dims.height };
           setCanvasDims({ width: dims.width, height: dims.height });
           const fabricImg = new FabricImage(imgElement);
           fabricImg.set({
@@ -5501,7 +5669,20 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             selectable: false, evented: false,
           });
           canvas.backgroundImage = fabricImg;
+          // Viewport pattern: element tracks the viewport, plan fits + centres.
+          const viewportWrapper = canvasRef.current?.parentElement;
+          if (viewportWrapper) {
+            canvas.setDimensions({
+              width: Math.max(160, viewportWrapper.clientWidth),
+              height: Math.max(160, viewportWrapper.clientHeight),
+            });
+          }
+          const fit = computeFitVpt(dims.width, dims.height, canvas.getWidth(), canvas.getHeight());
+          canvas.setViewportTransform(fit.vpt);
           canvas.renderAll();
+          setZoom(fit.scale);
+          setViewClipped(isSceneClipped(fit.vpt, dims.width, dims.height, canvas.getWidth(), canvas.getHeight()));
+          lastAutoFitZoom.current = fit.scale;
         };
         imgElement.src = currentPage.url;
       }
@@ -5663,10 +5844,14 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
             setExistingAreaLabel(existingRoofAreas[0].label);
           }
 
-          // Also reset zoom
-          canvas.setZoom(1);
-          canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
-          setZoom(1);
+          // Also reset zoom (viewport pattern: back to the fitted view)
+          if (sceneDimsRef.current.width > 0) {
+            const resetFit = computeFitVpt(sceneDimsRef.current.width, sceneDimsRef.current.height, canvas.getWidth(), canvas.getHeight());
+            canvas.setViewportTransform(resetFit.vpt);
+            canvas.requestRenderAll();
+            setZoom(resetFit.scale);
+            lastAutoFitZoom.current = resetFit.scale;
+          }
 
           setIsDirty(false);
           history.clear();
@@ -5683,26 +5868,8 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
   };
 
   const handleFitToScreen = () => {
-    if (!fabricRef.current) return;
-    const img = fabricRef.current.backgroundImage;
-    if (!img) return;
-
-    // Fit the canvas (which equals image dimensions) into the viewport
-    const container = canvasRef.current?.parentElement;
-    if (!container) return;
-    const containerWidth = container.clientWidth - 32; // padding
-    const containerHeight = container.clientHeight - 32;
-    const scaleX = containerWidth / canvasDims.width;
-    const scaleY = containerHeight / canvasDims.height;
-    // 2026-08-30: fit at the LARGEST size that fits (upscale to 2x allowed so
-    // small plans fill the screen; never blow up beyond 2x to limit blur).
-    const scale = Math.min(scaleX, scaleY, 2);
-
-    fabricRef.current.setZoom(scale);
-    fabricRef.current.viewportTransform = [scale, 0, 0, scale, 0, 0];
-    fabricRef.current.requestRenderAll();
-    setZoom(scale);
-    lastAutoFitZoom.current = scale; // auto-fit owns zoom again
+    // Viewport pattern (2026-09-26): fit + centre via the shared helper.
+    fitPlanToViewport(true);
   };
 
   // ── AI Takeoff: in-browser downscale before upload ────────────
@@ -7755,11 +7922,31 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                           <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                       </optgroup>
-                                      <optgroup label="Your components (line)">
-                                        {displayComponents.filter(c => !c.is_system && (c.measurement_type ?? c.default_measurement_type) === 'line').map(c => (
-                                          <option key={c.id} value={c.id}>{c.name}{activeComponentIds.includes(c.id) ? ' (active)' : ''}</option>
-                                        ))}
-                                      </optgroup>
+                                      {/* Owner 2026-09-26: uncertain lines can
+                                          be assigned to any component in the
+                                          currently selected library (the same
+                                          selector used by Add component), not
+                                          just the AI defaults. Options are
+                                          filtered to components whose
+                                          measurement type matches the line. */}
+                                      {(() => {
+                                        const libName = selectedLibraryId === ALL_LIBRARIES
+                                          ? 'All your libraries'
+                                          : (collections.find(c => c.id === selectedLibraryId)?.name ?? 'Selected library');
+                                        const compatTypes = m.type === 'area' ? ['area', 'irregular_area'] : ['line'];
+                                        const libComps = displayComponents.filter(c => !c.is_system
+                                          && (selectedLibraryId === ALL_LIBRARIES || (c.collection_id ?? null) === selectedLibraryId)
+                                          && compatTypes.includes(String(c.measurement_type ?? c.default_measurement_type ?? '')));
+                                        return (
+                                          <optgroup label={`Your library: ${libName}`}>
+                                            {libComps.length === 0
+                                              ? <option value="" disabled>No {m.type === 'area' ? 'area' : 'line'} components in this library</option>
+                                              : libComps.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}{activeComponentIds.includes(c.id) ? ' (active)' : ''}</option>
+                                              ))}
+                                          </optgroup>
+                                        );
+                                      })()}
                                     </select>
                                   )}
                                   </div>
@@ -7954,11 +8141,25 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
             );
           })()}
 
-          {/* Canvas */}
-          <div className="qc-takeoff-canvas-scroll flex-1 flex flex-col items-start justify-start p-2 md:p-6 md:pt-4 overflow-auto min-h-0">
-            <div className="qc-takeoff-plan-border border-2 border-gray-200 rounded-lg">
-              <canvas ref={canvasRef} />
+          {/* Canvas - viewport pattern (2026-09-26): the element fills the
+              visible area; zoom/pan live in the viewportTransform, so the
+              whole plan stays reachable at any zoom (no scrollbars). */}
+          <div className="qc-takeoff-canvas-scroll relative flex-1 min-h-0 overflow-hidden p-2 md:p-6 md:pt-4">
+            <div className="qc-takeoff-plan-border absolute left-2 right-2 top-2 bottom-2 md:left-6 md:right-6 md:top-4 md:bottom-6 border-2 border-gray-200 rounded-lg overflow-hidden">
+              <canvas ref={canvasRef} className="block" />
             </div>
+            {/* Pan hint (owner 2026-09-26): appears the first time the plan is
+                zoomed in enough that part of it is off-screen and the user has
+                not panned yet. Cleared by the first pan or the close button. */}
+            {viewClipped && !hasPanned && !panHintDismissed && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full bg-slate-900/90 px-4 py-2 text-xs text-white shadow-lg">
+                <span>Zoomed in - hold <span className="font-bold">Space</span> + drag, or <span className="font-bold">middle-click</span> + drag to move around</span>
+                <QcHostedButton variant="ghost" type="button" aria-label="Dismiss pan hint"
+                  onClick={() => setPanHintDismissed(true)}
+                  className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 leading-none"
+                >✕</QcHostedButton>
+              </div>
+            )}
           </div>
           <div className="qc-takeoff-canvas-status">
             <span className="qc-takeoff-target" aria-live="polite">
@@ -7966,7 +8167,7 @@ className="qc-takeoff-reset" title="Discard unsaved changes or clear this takeof
                 : selectedComponentId ? `Selected: ${displayComponents.find(c => c.id === selectedComponentId)?.name || 'Component'}`
                 : areaMode ? 'Drawing an area' : 'No component selected'}
             </span>
-            <span>Hold Alt + drag to pan</span>
+            <span>Space / Alt / middle-drag to pan · wheel to zoom</span>
           </div>
         </div>
       </div>

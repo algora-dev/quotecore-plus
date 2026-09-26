@@ -11,6 +11,19 @@ import {
   pitchSuffix,
 } from '@/app/lib/pitch-inputs';
 
+/** Owner 2026-09-26: word labels on the mode pills (was ° / 1:X / %) plus a
+ *  hover tooltip explaining each mode - the symbols "said nothing". */
+const MODE_BUTTON_LABELS: Record<PitchInputMode, string> = {
+  degrees: 'Degrees',
+  ratio: 'Ratio',
+  gradient: 'Slope',
+};
+const MODE_BUTTON_TITLES: Record<PitchInputMode, string> = {
+  degrees: 'Degrees - angle from horizontal. 0 = flat, 45 = very steep.',
+  ratio: 'Ratio 1:X - X units of run per 1 unit of rise. Type 12 for 1:12.',
+  gradient: 'Slope % - rise per 100 units of horizontal run. 58 = 58%.',
+};
+
 /**
  * Reusable pitch input with mode toggle (degrees / ratio / gradient).
  *
@@ -103,6 +116,7 @@ export function PitchInput(props: {
               type="button"
               aria-pressed={mode === m}
               aria-label={PITCH_INPUT_MODE_LABELS[m]}
+              title={MODE_BUTTON_TITLES[m]}
               onClick={() => { setMode(m); storePitchMode(m); }}
               className={appearance === 'v2' ? 'qc-choice' : `px-2 py-1 text-[11px] font-medium transition-colors ${
                 mode === m
@@ -110,7 +124,7 @@ export function PitchInput(props: {
                   : 'bg-white text-slate-500 hover:bg-slate-50'
               }`}
             >
-              {m === 'degrees' ? '°' : m === 'ratio' ? '1:X' : '%'}
+              {MODE_BUTTON_LABELS[m]}
             </button>
           ))}
         </div>
@@ -133,6 +147,20 @@ export function PitchInput(props: {
         <span className="text-[11px] text-slate-400">{pitchSuffix(mode)}</span>
         {showMax && <span className="text-[11px] text-slate-400">max 80°</span>}
       </div>
+      {(() => {
+        // Live equivalents (owner 2026-09-26): show what the current value
+        // means in the other two units so the modes teach themselves.
+        const raw = text.trim();
+        const num = Number(raw);
+        if (!raw || !Number.isFinite(num) || num <= 0) return null;
+        const deg = toDegrees(mode, num);
+        if (deg == null || deg <= 0) return null;
+        const parts: string[] = [];
+        if (mode !== 'degrees') parts.push(`${fromDegrees('degrees', deg)}°`);
+        if (mode !== 'ratio') parts.push(`1:${fromDegrees('ratio', deg)}`);
+        if (mode !== 'gradient') parts.push(`${fromDegrees('gradient', deg)}%`);
+        return <div className="text-[11px] text-slate-400 mt-1">= {parts.join(' · ')}</div>;
+      })()}
     </div>
   );
 }

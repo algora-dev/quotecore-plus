@@ -20,18 +20,26 @@ export function PointMeasurementModal({
   };
 
   return (
-    <QcHostedDialog label="Point measurement" size="sm" 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      onKeyDown={handleKeyDown}
-      tabIndex={-1}
-    >
-      <div className="bg-white rounded-lg p-6 w-96 border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4">Add Point</h2>
-        <div className="mb-6">
+    // Modeless (desktop, owner 2026-09-26): a floating draggable card - the
+    // plan/canvas behind stays fully interactive. The touch scope keeps the
+    // original overlay presentation.
+    <QcHostedDialog label="Point measurement" modeless
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div
+        tabIndex={-1}
+        autoFocus
+        onKeyDown={handleKeyDown}
+        className="bg-white rounded-2xl p-4 w-full border border-slate-200 shadow-xl outline-none"
+      >
+        <h2 className="text-base font-semibold text-slate-900 mb-3">Add Point</h2>
+        <div className="mb-4">
           <div className="text-lg">
             Add 1 item to <strong className="text-purple-400">{componentName}</strong>?
           </div>
         </div>
+        <p className="text-[11px] text-slate-400 mb-3">
+          Drag this card aside or pan the plan behind it if needed.
+        </p>
         <div className="flex gap-2 justify-end">
           <QcHostedButton variant="ghost"
             onClick={onCancel}
@@ -42,7 +50,6 @@ export function PointMeasurementModal({
           <QcHostedButton variant="secondary"
             onClick={onConfirm}
             className="px-4 py-2 bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
-            autoFocus
           >
             Add Point (Enter)
           </QcHostedButton>

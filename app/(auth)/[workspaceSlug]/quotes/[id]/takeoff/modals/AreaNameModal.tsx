@@ -55,8 +55,11 @@ export function AreaNameModal({
   };
 
   return (
-    <QcHostedDialog label="Area details" size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96 border border-gray-200">
+    // Modeless (desktop, owner 2026-09-26): a floating draggable card - the
+    // plan/canvas behind stays fully interactive (pan/zoom to check the area
+    // just drawn). The touch scope keeps the original overlay presentation.
+    <QcHostedDialog label="Area details" modeless size="md" className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-4 w-full border border-slate-200 shadow-xl">
         <h2 className="text-xl font-semibold mb-4">
           {componentName ? 'Add Area to Component' : (modalTitle ?? (isRoofing ? 'Create Roof Area' : 'Create Area'))}
         </h2>
