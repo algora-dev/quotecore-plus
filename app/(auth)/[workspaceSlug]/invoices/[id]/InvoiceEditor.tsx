@@ -708,7 +708,7 @@ export function InvoiceEditor({
                   ))}
                 </select>
               </label>
-              <p className="qc-document-help">Applies business details, logo, footer, notes, terms and payment details. Payment details save with their own button afterwards.</p>
+              <p className="qc-document-help italic">Applies business details, logo, footer, notes, terms and payment details. Payment details save with their own button afterwards.</p>
               <label>Business name<input aria-label="Business name" value={companyName} disabled={isReadOnly} onChange={e => { setCompanyName(e.target.value); markDirty(); }} /></label>
               <label>Address<textarea aria-label="Business address" value={companyAddress} rows={3} disabled={isReadOnly} onChange={e => { setCompanyAddress(e.target.value); markDirty(); }} /></label>
               <label>Email<input aria-label="Business email" type="email" value={companyEmail} disabled={isReadOnly} onChange={e => { setCompanyEmail(e.target.value); markDirty(); }} /></label>

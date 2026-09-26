@@ -941,7 +941,7 @@ export function CustomerQuoteEditor({ quote, roofAreas, components, savedLines, 
                   ))}
                 </select>
               </label>
-              <p className="qc-document-help">Applies company details, logo and footer text. Save your own under Branding templates.</p>
+              <p className="qc-document-help italic mt-2 mb-3">Applies company details, logo and footer text. Save your own under Branding templates.</p>
               {([
                 ['Company name', companyName, setCompanyName], ['Address', companyAddress, setCompanyAddress],
                 ['Phone', companyPhone, setCompanyPhone], ['Email', companyEmail, setCompanyEmail], ['Logo URL', companyLogoUrl, setCompanyLogoUrl],
