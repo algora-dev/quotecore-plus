@@ -21,7 +21,7 @@ mocks.set('./attention.server',{attention:async()=>{throw Error('P2 must stay of
 mocks.set('../v2/database',{batchClient:client=>client});
 const {createV2Scope}=load('app/lib/smart-assistant/v2/tools.server.ts');
 const {countRecords,readQuoteTotals}=load('app/lib/smart-assistant/speed/facts.server.ts');
-const client={rpc:async(name,args)=>{state.calls.push(['rpc',name,args]);return {data:state.data,error:state.rpcError||null}}};
+const client={rpc:async(name,args)=>{state.calls.push(['rpc',name,args]);return name==='sa_v2_retrieval_capabilities'?{data:null,error:{code:'PGRST202'}}:{data:state.data,error:state.rpcError||null}}};
 const input=()=>({supabase:client,companyId:state.access.companyId,conversationId:uuid(5),runId:uuid(6),userMessage:'Open my latest quote'});
 const count=()=>countRecords(client,state.access,uuid(6),{kind:'quote',period:'this_month',owner:'me'});
 const goodCount=()=>({count:'12',kind:'quote',period:'this_month',owner:'me',complete:true,timezone:'UTC',as_of:'2026-09-25T12:00:00Z'});

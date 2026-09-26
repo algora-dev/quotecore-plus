@@ -1,0 +1,224 @@
+app/(auth)/[workspaceSlug]/quotes/actions.ts:2:26 - error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.
+
+2 import { redirect } from 'next/navigation';
+                           ~~~~~~~~~~~~~~~~~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:3:32 - error TS2307: Cannot find module 'next/cache' or its corresponding type declarations.
+
+3 import { revalidatePath } from 'next/cache';
+                                 ~~~~~~~~~~~~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:165:32 - error TS7006: Parameter 'tc' implicitly has an 'any' type.
+
+165       templateComps.map(async (tc) => {
+                                   ~~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:184:16 - error TS7006: Parameter 'r' implicitly has an 'any' type.
+
+184       .filter((r) => r.ok)
+                   ~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:185:13 - error TS7006: Parameter 'r' implicitly has an 'any' type.
+
+185       .map((r) => r.tc);
+                ~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:186:55 - error TS7006: Parameter 'tc' implicitly has an 'any' type.
+
+186     const quoteComponents = eligibleTemplateComps.map(tc => {
+                                                          ~~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:648:29 - error TS7006: Parameter 'a' implicitly has an 'any' type.
+
+648   const areaIds = areas.map(a => a.id);
+                                ~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:674:29 - error TS7006: Parameter 'c' implicitly has an 'any' type.
+
+674   const compIds = comps.map(c => c.id);
+                                ~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:721:44 - error TS7006: Parameter 'sum' implicitly has an 'any' type.
+
+721   const totalSqm = (entries ?? []).reduce((sum, e) => sum + Number(e.sqm), 0);
+                                               ~~~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:721:49 - error TS7006: Parameter 'e' implicitly has an 'any' type.
+
+721   const totalSqm = (entries ?? []).reduce((sum, e) => sum + Number(e.sqm), 0);
+                                                    ~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:1254:48 - error TS7006: Parameter 'r' implicitly has an 'any' type.
+
+1254     restoredEntries: (insertedRows ?? []).map((r) => ({
+                                                    ~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:1286:37 - error TS7006: Parameter 'c' implicitly has an 'any' type.
+
+1286   await Promise.all(components.map((c) => recalcComponentFromEntries(c.id)));
+                                         ~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:1524:37 - error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.
+
+1524   const { redirect } = await import('next/navigation');
+                                         ~~~~~~~~~~~~~~~~~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:1531:37 - error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.
+
+1531   const { redirect } = await import('next/navigation');
+                                         ~~~~~~~~~~~~~~~~~
+app/(auth)/[workspaceSlug]/quotes/actions.ts:1730:21 - error TS7006: Parameter 't' implicitly has an 'any' type.
+
+1730       srcTaxes.map((t) => ({
+                         ~
+app/lib/assistant/llmClient.ts:16:20 - error TS2307: Cannot find module 'openai' or its corresponding type declarations.
+
+16 import OpenAI from 'openai';
+                      ~~~~~~~~
+app/lib/auth/ownership.ts:1:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+1 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/billing/entitlements.ts:27:23 - error TS2307: Cannot find module 'react' or its corresponding type declarations.
+
+27 import { cache } from 'react';
+                         ~~~~~~~
+app/lib/data/ensure-company-has-collection.ts:28:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+28 import type { SupabaseClient } from '@supabase/supabase-js';
+                                       ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/email/client.ts:11:24 - error TS2307: Cannot find module 'resend' or its corresponding type declarations.
+
+11 import { Resend } from 'resend';
+                          ~~~~~~~~
+app/lib/email/recipients.ts:49:14 - error TS7006: Parameter 'u' implicitly has an 'any' type.
+
+49     .filter((u): u is { id: string; email: string; full_name: string | null } =>
+                ~
+app/lib/email/recipients.ts:52:11 - error TS7006: Parameter 'u' implicitly has an 'any' type.
+
+52     .map((u) => ({ id: u.id, email: u.email, fullName: u.full_name ?? null }));
+             ~
+app/lib/files/upload-finaliser.ts:69:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+69 import type { SupabaseClient } from '@supabase/supabase-js';
+                                       ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/files/upload-finaliser.ts:165:29 - error TS7006: Parameter 'o' implicitly has an 'any' type.
+
+165   const obj = listed?.find((o) => o.name === objectName);
+                                ~
+app/lib/messages/attachmentResolver.ts:164:23 - error TS7006: Parameter 'row' implicitly has an 'any' type.
+
+164   return created.map((row) => ({
+                          ~~~
+app/lib/messages/scheduled.ts:3:32 - error TS2307: Cannot find module 'next/cache' or its corresponding type declarations.
+
+3 import { revalidatePath } from 'next/cache';
+                                 ~~~~~~~~~~~~
+app/lib/messages/scheduled.ts:2103:14 - error TS7006: Parameter 'l' implicitly has an 'any' type.
+
+2103     .filter((l) => l.include_in_total)
+                  ~
+app/lib/messages/scheduled.ts:2104:14 - error TS7006: Parameter 'sum' implicitly has an 'any' type.
+
+2104     .reduce((sum, l) => sum + Number(l.custom_amount ?? 0), 0);
+                  ~~~
+app/lib/messages/scheduled.ts:2104:19 - error TS7006: Parameter 'l' implicitly has an 'any' type.
+
+2104     .reduce((sum, l) => sum + Number(l.custom_amount ?? 0), 0);
+                       ~
+app/lib/smart-assistant/orchestrator.ts:9:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+9 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/retrieval/service.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/speed/facts.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/speed/operations.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/tools.ts:9:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+9 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/tools.ts:164:51 - error TS7006: Parameter 'r' implicitly has an 'any' type.
+
+164     return { found: true, rows: (data ?? []).map((r) => r.raw_row) };
+                                                      ~
+app/lib/smart-assistant/v2/actions.server.ts:3:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+3 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/v2/attention.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/v2/creation.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/v2/database.ts:3:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+3 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/v2/entities.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/v2/runtime.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/smart-assistant/v2/session.server.ts:2:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+2 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/supabase/admin.ts:1:30 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+1 import { createClient } from '@supabase/supabase-js';
+                               ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/supabase/server.ts:1:34 - error TS2307: Cannot find module 'next/headers' or its corresponding type declarations.
+
+1 import { cookies, headers } from 'next/headers';
+                                   ~~~~~~~~~~~~~~
+app/lib/supabase/server.ts:2:56 - error TS2307: Cannot find module '@supabase/ssr' or its corresponding type declarations.
+
+2 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+                                                         ~~~~~~~~~~~~~~~
+app/lib/supabase/server.ts:4:37 - error TS2307: Cannot find module '@supabase/supabase-js' or its corresponding type declarations.
+
+4 import type { SupabaseClient } from '@supabase/supabase-js';
+                                      ~~~~~~~~~~~~~~~~~~~~~~~
+app/lib/supabase/server.ts:5:23 - error TS2307: Cannot find module 'react' or its corresponding type declarations.
+
+5 import { cache } from 'react';
+                        ~~~~~~~
+app/lib/supabase/server.ts:191:39 - error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.
+
+191     const { redirect } = await import('next/navigation');
+                                          ~~~~~~~~~~~~~~~~~
+app/lib/supabase/server.ts:220:37 - error TS2307: Cannot find module 'next/navigation' or its corresponding type declarations.
+
+220   const { redirect } = await import('next/navigation');
+                                        ~~~~~~~~~~~~~~~~~
+app/lib/taxes/actions.ts:3:32 - error TS2307: Cannot find module 'next/cache' or its corresponding type declarations.
+
+3 import { revalidatePath } from 'next/cache';
+                                 ~~~~~~~~~~~~
+app/lib/taxes/actions.ts:67:46 - error TS7006: Parameter 'row' implicitly has an 'any' type.
+
+67   const toArchive = (existing ?? []).filter((row) => !incomingIds.has(row.id));
+                                                ~~~
+app/lib/taxes/actions.ts:74:32 - error TS7006: Parameter 'r' implicitly has an 'any' type.
+
+74       .in('id', toArchive.map((r) => r.id));
+                                  ~
+app/lib/taxes/actions.ts:180:45 - error TS7006: Parameter 'row' implicitly has an 'any' type.
+
+180   const toDelete = (existing ?? []).filter((row) => !incomingIds.has(row.id));
+                                                ~~~
+app/lib/taxes/actions.ts:186:31 - error TS7006: Parameter 'r' implicitly has an 'any' type.
+
+186       .in('id', toDelete.map((r) => r.id));
+                                  ~
+app/lib/taxes/actions.ts:239:30 - error TS7006: Parameter 'd' implicitly has an 'any' type.
+
+239   const rows = defaults.map((d) => ({
+                                 ~
+app/lib/taxes/seed.ts:34:32 - error TS7006: Parameter 'd' implicitly has an 'any' type.
+
+34     const rows = defaults.map((d) => ({
+                                  ~

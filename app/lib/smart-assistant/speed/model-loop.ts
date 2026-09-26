@@ -46,7 +46,16 @@ export async function runModelLoop(input: {
     if (ids.size !== step.toolCalls.length || step.toolCalls.some(call => !call.id)) fail('invalid_tool_call');
     messages.push({ role: 'assistant', content: step.text, tool_calls: step.toolCalls });
     const results = await executeToolBatch(step.toolCalls,
-      call => input.speed && Object.hasOwn(registry, call.name) && registry[call.name].parallelSafe === true,
+      call => {
+        if (!input.speed || !Object.hasOwn(registry, call.name)) return false;
+        const tool = registry[call.name];
+        if (tool.parallelSafe === true) return true;
+        if (!tool.parallelSafeWhen) return false;
+        try {
+          const args: unknown = JSON.parse(call.arguments || '{}');
+          return !!args && typeof args === 'object' && !Array.isArray(args) && tool.parallelSafeWhen(args as Record<string, unknown>);
+        } catch { return false; }
+      },
       async call => {
         if (signal.aborted) fail('turn_timeout');
         if (!Object.hasOwn(registry, call.name)) { synthesisOnly = true; return { error: 'This tool is not available. Answer using only verified results or say the operation is unavailable.' }; }
@@ -73,6 +82,18 @@ export async function runModelLoop(input: {
           return { error: 'Tool execution failed. Do not guess the missing result or claim success.' };
         }
       }, input.speed ? 3 : 1);
+    // Only trusted registered code can supply a terminal answer, never a model flag
+    // or arbitrary tool data. Multi-tool/multi-hop workflows must still synthesize.
+    if (hop === 0 && step.toolCalls.length === 1 && !synthesisOnly) {
+      const tool = registry[step.toolCalls[0].name];
+      const content = tool?.terminalReply?.(results[0]);
+      if (typeof content === 'string' && content.trim()) {
+        await checkpoint();
+        telemetry.terminalToolReplies++;
+        telemetry.path = 'retrieval';
+        return { content: content.trim(), tokensIn, tokensOut };
+      }
+    }
     results.forEach((result, index) => messages.push({ role: 'tool', tool_call_id: step.toolCalls[index].id, content: JSON.stringify(result) ?? 'null' }));
   }
   return fail('model_hop_limit');

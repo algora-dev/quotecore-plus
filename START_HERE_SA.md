@@ -1,3 +1,13 @@
+# P1.6 implementation return - 26 September 2026
+
+Read `RETURN_NOTES.md` and `docs/SMART_ASSISTANT_RETRIEVAL_HANDOFF_2026-09-26.md` first.
+This full source is based on the exact agent export documented below. New retrieval
+capability is implemented but DEFAULT OFF; the additive SQL remains a draft.
+Normal build, real PostgreSQL/RLS tests and live performance acceptance are required
+before enablement. Existing Luna/P1.5/P2/P3 fixes are preserved; P4 stays off.
+
+--- Original agent entry document (unchanged below) ---
+
 # START HERE - Smart Assistant loop zip (2026-09-26)
 
 This is the complete, current QuoteCore+ codebase (branch: ux/phase-4, commit history intact in the repo this was exported from). It is a strict superset of every previous SA handoff zip - nothing from your earlier work was dropped.

@@ -63,7 +63,7 @@ export function buildSystemPrompt(config: CompanyAssistantConfig, v2 = false): s
     '- Ask a clarifying question when the request is ambiguous.',
     '',
     'AMBER (clarify first):',
-    '- If a request is ambiguous or missing a key detail, ask ONE short clarifying question instead of guessing.',
+    v2 ? '- Search permitted data first when a bounded read could resolve ambiguity. Ask ONE focused question only if the tools need another discriminator; never guess.' : '- If a request is ambiguous or missing a key detail, ask ONE short clarifying question instead of guessing.',
     '- If you are not certain a fact about the company is current, say so rather than asserting it.',
     '',
     'RED (never):',
@@ -98,6 +98,10 @@ export interface RegisteredTool {
   schema: LlmToolSchema;
   /** Opt-in only: no cards, proposals or mutations; each reader still reauthorises. */
   parallelSafe?: boolean;
+  /** Conditional read-only eligibility; must reject argument shapes that emit cards. */
+  parallelSafeWhen?: (args: Record<string, unknown>) => boolean;
+  /** Server-owned renderer only. A lone first-hop read may finish without synthesis. */
+  terminalReply?: (result: unknown) => string | null;
   handler: (args: Record<string, unknown>, ctx: ToolContext) => Promise<unknown>;
 }
 
@@ -184,7 +188,7 @@ export async function runOrchestratorTurn(
     // Scope marker exists before ANY history access. No speculative paid calls.
     const [config, context, historyResult] = await Promise.all([
       telemetry.measure('config', () => deps.loadConfig(supabase, companyId)),
-      telemetry.measure('session', async () => v2 ? v2.modelContext() : null),
+      telemetry.measure('session', async () => v2 ? v2.modelContext(controller.signal) : null),
       telemetry.measure('history', async () => supabase.from('smart_assistant_messages')
         .select('id, role, content, run_id, created_at').eq('conversation_id', conversationId)
         .order('created_at', { ascending: false }).limit(HISTORY_PRIOR_LIMIT + 1)),

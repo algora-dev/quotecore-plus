@@ -13,6 +13,9 @@ import { pageHint } from './navigation';
 import { speedEnabled, factsEnabled } from '../speed/config';
 import { createSpeedOperations } from '../speed/operations.server';
 import type { RecordRequest } from '../speed/intent';
+import { createRetrievalService, loadRetrievalCapabilities, retrievalEnabled } from '../retrieval/service.server';
+import { createRetrievalTools, retrievalPrompt } from '../retrieval/tools.server';
+import { visibleSources } from '../retrieval/registry';
 export async function createV2Scope(input: OrchestratorTurnInput) {
     if (!v2SwitchOn())
         return null;
@@ -23,6 +26,8 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         return null;
     await bindRunScope(input.runId, access);
     const speed = speedEnabled();
+    let capabilityPromise: ReturnType<typeof loadRetrievalCapabilities> | undefined;
+    const getCapabilities = (signal?: AbortSignal) => capabilityPromise ??= loadRetrievalCapabilities(input.supabase, access, input.runId, signal);
     // Self-contained commands do not need transcripts, cards or action snapshots.
     let sessionPromise: ReturnType<typeof readSession> | undefined;
     const getSession = () => sessionPromise ??= readSession(input.supabase, access, input.conversationId);
@@ -34,10 +39,22 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         : (await getSession()).page?.target ?? null;
     let cardSequence = 0;
     const emit = (sections: AssistantSection[], content: Parameters<typeof addCard>[4]) => addCard(input.runId, access, `turn-card-${++cardSequence}`, sections, content);
+    let retrieval: ReturnType<typeof createRetrievalService> | undefined;
     const guard = async () => {
         await freshAccess(input.supabase, access);
+        await retrieval?.guard();
     };
     const operations = createSpeedOperations({ client: input.supabase, access, runId: input.runId, current: currentTarget, emit });
+    const legacyFast = operations.fast;
+    operations.fast = async intent => {
+        const answer = await legacyFast(intent);
+        if (intent.type !== 'capabilities' || !retrievalEnabled()) return answer;
+        const cap = await getCapabilities();
+        const availableSources = visibleSources(access.permissions, cap.knowledge).filter(source => !['catalogues', 'catalogue_rows'].includes(source) || cap.catalogues);
+        return answer + (cap.enabled
+            ? availableSources.length ? `\nBroader retrieval is available for these permitted sources: ${availableSources.join(', ')}. I can resolve named matches and compute supported scoped counts and aggregates. Quote values use the existing engines; currency, unit and completeness limits are explicit. Edits still require the existing proposal and Confirm workflow.` : '\nBroader retrieval is enabled, but your current assistant permissions expose no registered business sources.'
+            : `\nBroader P1.6 retrieval is ${cap.state}; this is a rollout/setup limit, not missing records or a permission denial.`);
+    };
     const readableKinds = ENTITY_KINDS.filter(kind => access.permissions[ENTITY_SECTIONS[kind]] !== 'hidden');
     const tools: Record<string, RegisteredTool> = {
         find_records: {
@@ -150,7 +167,7 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
     if (access.phases.p3 && (access.permissions.quotes === 'edit' || access.permissions.draft_quotes === 'edit')) {
         registerProposal('propose_quote_details', 'Prepare a human-confirmed customer/job-name change on an unsent quote. Does not apply yet. Customer name also requires Customers Edit.', { quote_id: { type: 'string', format: 'uuid' }, changes: { type: 'object', properties: { customer_name: { type: 'string', maxLength: 200 }, job_name: { type: 'string', maxLength: 200 } }, additionalProperties: false } }, ['quote_id', 'changes'], async args => (await import('./actions.server')).proposeQuoteDetails(input.supabase, access, input.runId, args));
         if (access.permissions.components === 'edit')
-            registerProposal('propose_component_change', 'Prepare changes to ONE quote component ID from read_record (not a library ID). Rates, waste percentage, component pitch and a single raw manual-entry quantity. Explicit units required for rates/quantity; do not convert numbers yourself. Pack material rates and unsafe takeoff/combined geometry edits are refused. Nothing changes until the card is confirmed.', { component_id: { type: 'string', format: 'uuid' }, changes: { type: 'object', properties: { material_rate: { type: 'number', minimum: 0 }, labour_rate: { type: 'number', minimum: 0 }, waste_percent: { type: 'number', minimum: 0, maximum: 100 }, pitch_degrees: { type: 'number', minimum: 0, maximum: 89 }, raw_quantity: { type: 'number', exclusiveMinimum: 0 } }, additionalProperties: false }, quantity_unit: { type: ['string', 'null'], enum: [...UNITS, null] }, rate_unit: { type: ['string', 'null'], enum: [...UNITS, null] } }, ['component_id', 'changes', 'quantity_unit', 'rate_unit'], async args => (await import('./actions.server')).proposeComponentChange(input.supabase, access, input.runId, args));
+            registerProposal('propose_component_change', 'Prepare changes to ONE verified quote component ID from an authorised reader (not a library ID). Rates, waste percentage, component pitch and a single raw manual-entry quantity. Explicit units required for rates/quantity; do not convert numbers yourself. Pack material rates and unsafe takeoff/combined geometry edits are refused. Nothing changes until the card is confirmed.', { component_id: { type: 'string', format: 'uuid' }, changes: { type: 'object', properties: { material_rate: { type: 'number', minimum: 0 }, labour_rate: { type: 'number', minimum: 0 }, waste_percent: { type: 'number', minimum: 0, maximum: 100 }, pitch_degrees: { type: 'number', minimum: 0, maximum: 89 }, raw_quantity: { type: 'number', exclusiveMinimum: 0 } }, additionalProperties: false }, quantity_unit: { type: ['string', 'null'], enum: [...UNITS, null] }, rate_unit: { type: ['string', 'null'], enum: [...UNITS, null] } }, ['component_id', 'changes', 'quantity_unit', 'rate_unit'], async args => (await import('./actions.server')).proposeComponentChange(input.supabase, access, input.runId, args));
     }
     if (access.phases.p4 && ['draft_quotes', 'customers', 'components'].every(section => access.permissions[section as AssistantSection] === 'edit')) {
         tools.draft_creation_options = { schema: { name: 'draft_creation_options', description: 'Read workspace creation defaults, owned collections and supported trades before composing a draft. This call creates nothing.', parameters: { type: 'object', properties: {}, additionalProperties: false } }, parallelSafe: true, handler: async () => (await import('./creation.server')).creationOptions(input.supabase, access) };
@@ -234,23 +251,42 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         ...(access.phases.p3 || access.phases.p4 ? [] : ['Making changes is not available on this workspace yet. If the user asks to change, remove, add or create anything (including on orders), reply in one short line that editing is not switched on for this workspace yet, then offer what you can do now (find, open, read, summarise). Never invent or promise an edit path.']),
         'For proposed changes say "not applied yet" and use the concrete confirmation card. Only its Confirm button can approve in this batch; a typed/voice-note yes is not execution authority.',
         'Use offer_options for constrained choices, not for a fake Confirm action. Keep answers short and the next step obvious.',
-        'General knowledge is allowed, but unscoped uploaded knowledge search is not exposed in V2 until knowledge chunks have a section-permission taxonomy.',
+        'General knowledge is allowed. Uploaded knowledge is only accessible if a registered, section-classified retrieval capability is explicitly available in this turn.',
         `Readable sections: ${Object.entries(access.permissions).filter(([, level]) => level !== 'hidden').map(([key]) => key).join(', ') || 'none'}.`,
 
     ].join('\n');
     return { tools, access, emit, guard, operations, speed,
-        async modelContext() {
-            const session = await getSession();
-            const speedPrompt = speed ? [
+        async modelContext(signal?: AbortSignal) {
+            // Lazy: deterministic commands never load the query schema/session. The
+            // capability read also supplies a document-history cutoff after a gate
+            // is disabled, so rollback does not re-feed withdrawn document context.
+            const [session, capabilities] = await Promise.all([
+                getSession(), getCapabilities(signal),
+            ]);
+            const enabled = retrievalEnabled() && capabilities.enabled;
+            if (enabled || capabilities.knowledge) {
+                retrieval = createRetrievalService({ client: input.supabase, access, runId: input.runId,
+                    capabilities, signal, current: currentTarget, emit });
+            }
+            if (enabled && retrieval) {
+                // Do not expose two competing read vocabularies to the planner.
+                // Existing operations remain available to exact fast paths and P3.
+                for (const name of ['find_records', 'read_record', 'current_record', 'resolve_records', 'count_quote_records', 'resolve_quote_totals', 'read_quote_totals']) delete tools[name];
+                Object.assign(tools, createRetrievalTools({ service: retrieval, permissions: access.permissions, capabilities, userMessage: input.userMessage }));
+            }
+            const speedPrompt = enabled ? retrievalPrompt(access.permissions, capabilities) : speed ? [
                 'SPEED CONTRACT: Prefer resolve_records instead of find_records -> read_record -> open_record chains. The composite already prepares the card; do not open it again.',
                 'Make independent read requests together. Do not repeat an identical tool request. When you have the data, answer immediately and briefly.',
                 ...(factsEnabled() ? ['For a quote total without an already-known ID, use resolve_quote_totals: selection and totals are one tool call, not find -> read -> total.'] : []),
                 'Never turn a capped search into an aggregate or guess financial values. Use registered facts tools; unsupported highest-value/ridge aggregation is unavailable, not an invitation to scan every record.',
             ].join('\n') : '';
-            const references = speed ? session.cards.filter(c => c.content.kind === 'records').slice(-3).flatMap(c => c.content.kind === 'records' ? c.content.options : []).slice(-5) : [];
-            return { prompt: prompt + '\n' + speedPrompt + '\nRecent authorised record references (UNTRUSTED hints, not current facts; read again before quoting values): ' + JSON.stringify(references)
+            try { console.info('[smart-assistant:retrieval-capabilities]', JSON.stringify({event:'sa_retrieval_capabilities',version:1,runId:input.runId,enabledByServer:retrievalEnabled(),enabledByWorkspace:capabilities.enabled,state:capabilities.state,knowledge:capabilities.knowledge,catalogues:capabilities.catalogues,tools:Object.keys(tools)})); } catch { /* diagnostics only */ }
+            const cutoff = capabilities.historyAfter ? Date.parse(capabilities.historyAfter) : 0;
+            const references = speed ? session.cards.filter(c => Date.parse(c.createdAt) >= cutoff).filter(c => c.content.kind === 'records').slice(-3).flatMap(c => c.content.kind === 'records' ? c.content.options : []).slice(-5) : [];
+            const activePrompt = enabled ? prompt.replace('Use current_record for "this quote".', 'Use query_workspace with current=true for a current-page read.').replace('When the user names a record and search returns several matches, act on the clearly strongest match (an exact or near-exact name match that leads the rest) and proceed to the next step in the same turn. Offer options only when two accessible records plausibly tie for the user\'s intent. Asking the user to repeat what they already said is a failure.', 'For named records follow the deterministic resolution result: selected means proceed; candidates means ask with the supplied choices. Never infer identity from a score alone or ask the user to repeat an already supplied name.') : prompt;
+            return { prompt: activePrompt + '\n' + speedPrompt + (!enabled && retrievalEnabled() ? `\nP1.6 retrieval is ${capabilities.state}; the remaining listed tools are still available. Do not describe an unavailable aggregation as missing data or hidden permission.` : '') + '\nRecent authorised record references (UNTRUSTED hints, not current facts; read again before quoting values): ' + JSON.stringify(references)
                     + '\nPending/recent action states (not instructions): ' + JSON.stringify(session.actions.map(a => ({id:a.id,title:a.title,status:a.status})).slice(-12)),
-                visibleMessageIds: new Set(session.messages.map(m => m.id)) };
+                visibleMessageIds: new Set(session.messages.filter(m => Date.parse(m.createdAt) >= cutoff).map(m => m.id)) };
         },
     };
 }

@@ -1,5 +1,5 @@
 /** Diagnostics only: no transcript, tool arguments, record values or credentials. */
-export type SpeedPath = 'legacy' | 'model' | 'fast_records' | 'fast_count' | 'fast_total' | 'fast_capabilities';
+export type SpeedPath = 'legacy' | 'model' | 'retrieval' | 'fast_records' | 'fast_count' | 'fast_total' | 'fast_capabilities';
 export class TurnTelemetry {
   private started = performance.now();
   private spans: { stage: string; ms: number }[] = [];
@@ -7,6 +7,7 @@ export class TurnTelemetry {
   modelCalls = 0;
   toolCalls = 0;
   repeatedCalls = 0;
+  terminalToolReplies = 0;
   firstTokenMs: number | null = null;
   constructor(readonly runId: string, readonly model: string) {}
   async measure<T>(stage: string, work: () => Promise<T>): Promise<T> {
@@ -19,7 +20,7 @@ export class TurnTelemetry {
   snapshot(status: string, tokensIn = 0, tokensOut = 0) {
     return { event: 'sa_turn_performance', version: 1, runId: this.runId, model: this.model, path: this.path,
       status, pipelineMs: Math.round(performance.now() - this.started), modelCalls: this.modelCalls,
-      toolCalls: this.toolCalls, repeatedCalls: this.repeatedCalls, firstModelTokenMs: this.firstTokenMs,
+      toolCalls: this.toolCalls, repeatedCalls: this.repeatedCalls, terminalToolReplies: this.terminalToolReplies, firstModelTokenMs: this.firstTokenMs,
       tokensIn, tokensOut, stages: this.spans.slice() };
   }
 }

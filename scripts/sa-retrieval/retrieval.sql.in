@@ -1,0 +1,477 @@
+-- DRAFT / NOT APPLIED: P1.6 authoritative retrieval. Generated from schema.json.
+-- Baseline: 2026-09-26. Requires P0/P1 and 20260925160000 facts scope helper.
+-- No existing RPC, pricing rule, auth policy, billing or quota table is replaced.
+-- Business-data readers are SECURITY INVOKER. Only private rollout metadata uses
+-- a narrow SECURITY DEFINER helper. SQL identifiers/joins come from this embedded
+-- registry, NEVER from model text. Filter values use EXECUTE ... USING.
+BEGIN;
+
+CREATE TABLE public.assistant_v2_retrieval_rollout (
+ company_id uuid PRIMARY KEY REFERENCES public.companies(id) ON DELETE CASCADE,
+ enabled boolean NOT NULL DEFAULT false,
+ knowledge_enabled boolean NOT NULL DEFAULT false,
+ knowledge_revision bigint NOT NULL DEFAULT 1,
+ updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ CHECK (NOT knowledge_enabled OR enabled)
+);
+ALTER TABLE public.assistant_v2_retrieval_rollout ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.assistant_v2_retrieval_rollout FROM PUBLIC,anon,authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.assistant_v2_retrieval_rollout TO service_role;
+COMMENT ON TABLE public.assistant_v2_retrieval_rollout IS 'Service-controlled P1.6 gates. No rows are enabled by this migration.';
+
+-- Classification metadata only. Existing documents/chunks remain the source of
+-- truth. Unclassified uploads are excluded, never silently assigned a section.
+CREATE TABLE public.assistant_v2_knowledge_scopes (
+ doc_id uuid PRIMARY KEY REFERENCES public.assistant_knowledge_docs(id) ON DELETE CASCADE,
+ company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+ required_sections text[] NOT NULL CHECK(cardinality(required_sections) BETWEEN 1 AND 9
+   AND required_sections <@ ARRAY['quotes','draft_quotes','orders','invoices','components','customers','emails','billing','settings']::text[]
+   AND array_position(required_sections,NULL) IS NULL),
+ classified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ classification_note text NOT NULL CHECK(length(classification_note) BETWEEN 1 AND 1000)
+);
+ALTER TABLE public.assistant_v2_knowledge_scopes ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.assistant_v2_knowledge_scopes FROM PUBLIC,anon,authenticated;
+GRANT SELECT ON public.assistant_v2_knowledge_scopes TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.assistant_v2_knowledge_scopes TO service_role;
+CREATE POLICY sa_v2_knowledge_scope_read ON public.assistant_v2_knowledge_scopes FOR SELECT TO authenticated
+ USING(company_id IN (SELECT u.company_id FROM public.users u WHERE u.id=auth.uid()));
+
+-- Any document/classification change invalidates assistant history older than
+-- this epoch. The server also checks it before releasing a knowledge-backed
+-- answer. Conservative whole-conversation cutoff, not a shadow transcript.
+CREATE FUNCTION public.sa_v2_retrieval_knowledge_epoch() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $fn$
+BEGIN
+ IF TG_OP<>'INSERT' THEN
+  UPDATE public.assistant_v2_retrieval_rollout SET knowledge_revision=knowledge_revision+1,updated_at=clock_timestamp() WHERE company_id=OLD.company_id;
+ END IF;
+ IF TG_OP='INSERT' OR (TG_OP='UPDATE' AND NEW.company_id IS DISTINCT FROM OLD.company_id) THEN
+  UPDATE public.assistant_v2_retrieval_rollout SET knowledge_revision=knowledge_revision+1,updated_at=clock_timestamp() WHERE company_id=NEW.company_id;
+ END IF;
+ RETURN NULL;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_knowledge_epoch() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER sa_v2_knowledge_classification_epoch AFTER INSERT OR UPDATE OR DELETE ON public.assistant_v2_knowledge_scopes FOR EACH ROW EXECUTE FUNCTION public.sa_v2_retrieval_knowledge_epoch();
+CREATE TRIGGER sa_v2_knowledge_document_epoch AFTER INSERT OR UPDATE OR DELETE ON public.assistant_knowledge_docs FOR EACH ROW EXECUTE FUNCTION public.sa_v2_retrieval_knowledge_epoch();
+CREATE TRIGGER sa_v2_knowledge_chunk_epoch AFTER INSERT OR UPDATE OR DELETE ON public.assistant_knowledge_chunks FOR EACH ROW EXECUTE FUNCTION public.sa_v2_retrieval_knowledge_epoch();
+
+CREATE FUNCTION public.sa_v2_retrieval_rollout_epoch() RETURNS trigger
+LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+BEGIN
+ IF NEW.enabled IS DISTINCT FROM OLD.enabled OR NEW.knowledge_enabled IS DISTINCT FROM OLD.knowledge_enabled THEN
+  NEW.knowledge_revision:=greatest(NEW.knowledge_revision,OLD.knowledge_revision+1);
+  NEW.updated_at:=clock_timestamp();
+ END IF;
+ RETURN NEW;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_rollout_epoch() FROM PUBLIC,anon,authenticated;
+CREATE TRIGGER sa_v2_retrieval_rollout_epoch BEFORE UPDATE ON public.assistant_v2_retrieval_rollout FOR EACH ROW EXECUTE FUNCTION public.sa_v2_retrieval_rollout_epoch();
+
+CREATE FUNCTION public.sa_v2_retrieval_registry(p_source text) RETURNS jsonb
+LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+ SELECT $registry$__SCHEMA_JSON__$registry$::jsonb->'sources'->p_source;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_registry(text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_registry(text) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_scope(p_run_id uuid,p_revision integer) RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $fn$
+DECLARE v jsonb; r public.assistant_v2_retrieval_rollout%ROWTYPE;
+BEGIN
+ IF auth.role() IS DISTINCT FROM 'authenticated' THEN RAISE EXCEPTION 'authenticated_only' USING ERRCODE='42501'; END IF;
+ v:=public.sa_v2_speed_scope(p_run_id,p_revision);
+ SELECT * INTO r FROM public.assistant_v2_retrieval_rollout WHERE company_id=(v->>'company_id')::uuid;
+ IF NOT FOUND THEN RETURN v||jsonb_build_object('retrieval_enabled',false,'retrieval_knowledge',false,'knowledge_revision','0','knowledge_history_after',NULL,'catalogues_allowed',false); END IF;
+ RETURN v||jsonb_build_object('retrieval_enabled',r.enabled,'retrieval_knowledge',r.knowledge_enabled,'knowledge_revision',r.knowledge_revision::text,'knowledge_history_after',r.updated_at,'catalogues_allowed',COALESCE(public.company_has_feature((v->>'company_id')::uuid,'catalogs'),false));
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_scope(uuid,integer) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_scope(uuid,integer) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_capabilities(p_run_id uuid,p_revision integer) RETURNS jsonb
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+ SELECT jsonb_build_object('version',1,'schema_hash','__HASH__','enabled',(v->>'retrieval_enabled')::boolean,
+   'knowledge_enabled',(v->>'retrieval_knowledge')::boolean,'knowledge_revision',v->>'knowledge_revision','knowledge_history_after',v->>'knowledge_history_after','catalogues_allowed',(v->>'catalogues_allowed')::boolean)
+ FROM (SELECT public.sa_v2_retrieval_scope(p_run_id,p_revision) v) a;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_capabilities(uuid,integer) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_capabilities(uuid,integer) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_check_source(p_source text,p_access jsonb) RETURNS jsonb
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+DECLARE s jsonb:=public.sa_v2_retrieval_registry(p_source);
+BEGIN
+ IF NOT COALESCE((p_access->>'retrieval_enabled')::boolean,false) THEN RAISE EXCEPTION 'retrieval_disabled' USING ERRCODE='P1601'; END IF;
+ IF s IS NULL THEN RAISE EXCEPTION 'unsupported_source' USING ERRCODE='P1603'; END IF;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements_text(s->'requiredSections') x(section)
+    WHERE COALESCE(p_access->'permissions'->>x.section,'hidden')='hidden')
+ OR (COALESCE((s->>'quoteScoped')::boolean,false) AND COALESCE(p_access->'permissions'->>'quotes','hidden')='hidden' AND COALESCE(p_access->'permissions'->>'draft_quotes','hidden')='hidden')
+ THEN RAISE EXCEPTION 'section_hidden' USING ERRCODE='P1604'; END IF;
+ IF COALESCE((s->>'knowledge')::boolean,false) AND NOT EXISTS(SELECT 1 FROM jsonb_each_text(p_access->'permissions') p(k,val) WHERE p.val IN ('read_only','edit')) THEN RAISE EXCEPTION 'section_hidden' USING ERRCODE='P1604'; END IF;
+ IF COALESCE((s->>'knowledge')::boolean,false) AND NOT COALESCE((p_access->>'retrieval_knowledge')::boolean,false)
+   THEN RAISE EXCEPTION 'knowledge_disabled' USING ERRCODE='P1601'; END IF;
+ IF s->>'feature'='catalogs' AND NOT COALESCE((p_access->>'catalogues_allowed')::boolean,false)
+   THEN RAISE EXCEPTION 'catalogue_entitlement_disabled' USING ERRCODE='P1601'; END IF;
+ RETURN s;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_check_source(text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_check_source(text,jsonb) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_field(p_source text,p_field text,p_access jsonb) RETURNS jsonb
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+DECLARE f jsonb:=public.sa_v2_retrieval_registry(p_source)->'fields'->p_field;
+BEGIN
+ IF f IS NULL OR COALESCE((f->>'internal')::boolean,false) THEN RAISE EXCEPTION 'unsupported_field' USING ERRCODE='P1603'; END IF;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements_text(COALESCE(f->'permissions','[]'::jsonb)) x(section)
+    WHERE COALESCE(p_access->'permissions'->>x.section,'hidden')='hidden')
+ THEN RAISE EXCEPTION 'field_hidden' USING ERRCODE='P1604'; END IF;
+ RETURN f;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_field(text,text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_field(text,text,jsonb) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_normalize(p_text text) RETURNS text
+LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+ SELECT btrim(regexp_replace(lower(COALESCE(p_text,'')),'[^[:alnum:]]+',' ','g'));
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_normalize(text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_normalize(text) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_words(p_text text,p_query text) RETURNS boolean
+LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+ SELECT public.sa_v2_retrieval_normalize(p_query)<>'' AND NOT EXISTS(
+  SELECT 1 FROM regexp_split_to_table(public.sa_v2_retrieval_normalize(p_query),' +') w(word)
+  WHERE position(' '||w.word||' ' IN ' '||public.sa_v2_retrieval_normalize(p_text)||' ')=0);
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_words(text,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_words(text,text) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_rank(p_names jsonb,p_text text,p_query text,p_match text) RETURNS jsonb
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+DECLARE n text:=public.sa_v2_retrieval_normalize(p_query); score double precision;
+BEGIN
+ IF n='' THEN RETURN jsonb_build_object('tier',0,'score',0); END IF;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements_text(p_names) v(name) WHERE public.sa_v2_retrieval_normalize(v.name)=n)
+ THEN RETURN jsonb_build_object('tier',4,'score',100); END IF;
+ IF p_match='exact' THEN RETURN jsonb_build_object('tier',0,'score',0); END IF;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements_text(p_names) v(name) WHERE position(' '||n||' ' IN ' '||public.sa_v2_retrieval_normalize(v.name)||' ')>0)
+ THEN RETURN jsonb_build_object('tier',3,'score',85); END IF;
+ IF public.sa_v2_retrieval_words(p_text,p_query) THEN RETURN jsonb_build_object('tier',2,'score',70); END IF;
+ IF p_match='natural' THEN
+   score:=public.sa_v2_match_score(p_query,p_text,NULL);
+   IF score>=35 THEN RETURN jsonb_build_object('tier',1,'score',LEAST(score,60)); END IF;
+ END IF;
+ RETURN jsonb_build_object('tier',0,'score',0);
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_rank(jsonb,text,text,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_rank(jsonb,text,text,text) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_base(p_source text,p_access jsonb) RETURNS text
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+DECLARE s jsonb:=public.sa_v2_retrieval_check_source(p_source,p_access); kv record; fields text:=''; names text:=''; search text:=''; allowed boolean; expression text; touched text;
+BEGIN
+ FOR kv IN SELECT key,value FROM jsonb_each(s->'fields') LOOP
+   IF kv.value ? 'engine' THEN CONTINUE; END IF;
+   allowed:=NOT EXISTS(SELECT 1 FROM jsonb_array_elements_text(COALESCE(kv.value->'permissions','[]'::jsonb)) x(section)
+     WHERE COALESCE(p_access->'permissions'->>x.section,'hidden')='hidden');
+   expression:=CASE WHEN allowed THEN kv.value->>'sql' ELSE 'NULL' END;
+   fields:=fields||CASE WHEN fields='' THEN '' ELSE ',' END||format('(%s) AS %I',expression,kv.key);
+   IF allowed AND s->'nameFields' ? kv.key THEN names:=names||CASE WHEN names='' THEN '' ELSE ',' END||format('(%s)::text',expression); END IF;
+   IF allowed AND s->'searchFields' ? kv.key THEN search:=search||','||format('(%s)::text',expression); END IF;
+ END LOOP;
+ touched:=CASE WHEN s->'fields' ? 'updated_at' THEN s->'fields'->'updated_at'->>'sql' WHEN s->'fields' ? 'created_at' THEN s->'fields'->'created_at'->>'sql' ELSE 'NULL::timestamptz' END;
+ fields:=fields||format(',jsonb_build_array(%s) AS _names,concat_ws('' ''%s) AS _search,(%s)::timestamptz AS _touched,(%s)::text AS _kind,(%s)::text AS _section,(%s)::text AS _target_id',
+   names,search,touched,COALESCE(s->>'targetKindSql','NULL'),COALESCE(s->>'sectionSql','NULL'),COALESCE(s->'fields'->(s->>'targetId')->>'sql','NULL'));
+ RETURN format('SELECT %s FROM %s WHERE %s',fields,s->>'from',s->>'scope');
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_base(text,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_base(text,jsonb) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_scalar(p_value jsonb,p_type text) RETURNS boolean
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+DECLARE t text:=p_value#>>'{}';
+BEGIN
+ IF p_value IS NULL OR p_value='null'::jsonb OR length(t)>300 OR t ~ '[[:cntrl:]]' THEN RETURN false; END IF;
+ CASE p_type
+ WHEN 'text' THEN RETURN jsonb_typeof(p_value)='string';
+ WHEN 'boolean' THEN RETURN jsonb_typeof(p_value)='boolean';
+ WHEN 'uuid' THEN RETURN jsonb_typeof(p_value)='string' AND t ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+ WHEN 'number' THEN RETURN jsonb_typeof(p_value) IN ('number','string') AND t ~ '^-?(0|[1-9][0-9]{0,29})(\.[0-9]{1,12})?$';
+ WHEN 'date' THEN
+  IF jsonb_typeof(p_value)<>'string' OR t !~ '^\d{4}-\d{2}-\d{2}$' THEN RETURN false; END IF;
+  PERFORM t::date; RETURN true;
+ WHEN 'timestamp' THEN
+  IF jsonb_typeof(p_value)<>'string' OR t !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z$' THEN RETURN false; END IF;
+  PERFORM t::timestamptz; RETURN true;
+ ELSE RETURN false;
+ END CASE;
+EXCEPTION WHEN invalid_datetime_format OR datetime_field_overflow THEN RETURN false;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_scalar(jsonb,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_scalar(jsonb,text) TO authenticated;
+
+-- Compiler returns SQL, never executes it. Its caller supplies the trusted
+-- source registry and immutable numeric offsets into the bound values array.
+CREATE FUNCTION public.sa_v2_retrieval_filters(p_source text,p_filters jsonb,p_access jsonb,p_offset integer) RETURNS jsonb
+LANGUAGE plpgsql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+DECLARE item jsonb; f jsonb; op text; key text; typ text; val jsonb; testval jsonb; clause text:='true'; vals jsonb:='[]'; idx integer:=p_offset; operand text; lhs text;
+BEGIN
+ IF jsonb_typeof(p_filters) IS DISTINCT FROM 'array' OR jsonb_array_length(p_filters)>8 OR p_offset<0 OR p_offset>30 THEN RAISE EXCEPTION 'invalid_filters' USING ERRCODE='22023'; END IF;
+ FOR item IN SELECT value FROM jsonb_array_elements(p_filters) LOOP
+  IF jsonb_typeof(item) IS DISTINCT FROM 'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(item) k(key) WHERE k.key NOT IN ('field','op','value')) OR NOT item ? 'value' THEN RAISE EXCEPTION 'invalid_filter' USING ERRCODE='22023'; END IF;
+  key:=item->>'field'; f:=public.sa_v2_retrieval_field(p_source,key,p_access); op:=COALESCE(item->>'op','eq'); val:=item->'value';
+  IF f ? 'engine' THEN RAISE EXCEPTION 'derived_filter_unsupported' USING ERRCODE='P1603'; END IF;
+  typ:=CASE f->>'type' WHEN 'number' THEN 'numeric' WHEN 'timestamp' THEN 'timestamptz' ELSE f->>'type' END;
+  IF op NOT IN ('eq','neq','gt','gte','lt','lte','contains','words','in','is_null') THEN RAISE EXCEPTION 'invalid_operator' USING ERRCODE='22023'; END IF;
+  lhs:=format('r.%I',key);
+  IF op='is_null' THEN
+   IF jsonb_typeof(val) IS DISTINCT FROM 'boolean' THEN RAISE EXCEPTION 'invalid_null_filter' USING ERRCODE='22023'; END IF;
+   clause:=clause||' AND '||lhs||CASE WHEN val='true'::jsonb THEN ' IS NULL' ELSE ' IS NOT NULL' END; CONTINUE;
+  END IF;
+  IF op IN ('gt','gte','lt','lte') AND f->>'type' NOT IN ('number','date','timestamp') THEN RAISE EXCEPTION 'invalid_ordered_filter' USING ERRCODE='22023'; END IF;
+  IF op IN ('contains','words') AND f->>'type'<>'text' THEN RAISE EXCEPTION 'invalid_text_filter' USING ERRCODE='22023'; END IF;
+  IF op='in' THEN
+   IF jsonb_typeof(val) IS DISTINCT FROM 'array' OR jsonb_array_length(val) NOT BETWEEN 1 AND 20 THEN RAISE EXCEPTION 'invalid_set_filter' USING ERRCODE='22023'; END IF;
+   FOR testval IN SELECT value FROM jsonb_array_elements(val) LOOP
+    IF NOT public.sa_v2_retrieval_scalar(testval,f->>'type') THEN RAISE EXCEPTION 'invalid_filter_value' USING ERRCODE='22023'; END IF;
+   END LOOP;
+  ELSIF NOT public.sa_v2_retrieval_scalar(val,f->>'type') THEN RAISE EXCEPTION 'invalid_filter_value' USING ERRCODE='22023'; END IF;
+  vals:=vals||jsonb_build_array(val); operand:=format('($3->>%s)::%s',idx,typ);
+  IF op='in' THEN clause:=clause||format(' AND %s IN (SELECT (v.value)::%s FROM jsonb_array_elements_text($3->%s) v(value))',lhs,typ,idx);
+  ELSIF op='contains' THEN clause:=clause||format(' AND position(lower(%s) IN lower(%s))>0',operand,lhs);
+  ELSIF op='words' THEN clause:=clause||format(' AND public.sa_v2_retrieval_words(%s,%s)',lhs,operand);
+  ELSE clause:=clause||format(' AND %s %s %s',lhs,CASE op WHEN 'eq' THEN '=' WHEN 'neq' THEN '<>' WHEN 'gt' THEN '>' WHEN 'gte' THEN '>=' WHEN 'lt' THEN '<' WHEN 'lte' THEN '<=' END,operand);
+  END IF;
+  idx:=idx+1;
+ END LOOP;
+ RETURN jsonb_build_object('sql',clause,'values',vals);
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_filters(text,jsonb,jsonb,integer) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_filters(text,jsonb,jsonb,integer) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_search_valid(p_search jsonb,p_allow_natural boolean) RETURNS boolean
+LANGUAGE sql IMMUTABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp AS $fn$
+ SELECT jsonb_typeof(p_search)='object' AND jsonb_typeof(p_search->'text')='string'
+ AND length(p_search->>'text') BETWEEN 1 AND 120 AND (p_search->>'text') !~ '[[:cntrl:]]'
+ AND public.sa_v2_retrieval_normalize(p_search->>'text')<>''
+ AND COALESCE(p_search->>'match','natural') IN ('exact','words','natural')
+ AND (p_allow_natural OR COALESCE(p_search->>'match','natural')<>'natural')
+ AND NOT EXISTS(SELECT 1 FROM jsonb_object_keys(p_search) k(key) WHERE k.key NOT IN ('text','match'));
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_search_valid(jsonb,boolean) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_search_valid(jsonb,boolean) TO authenticated;
+
+-- Bulk engine inputs in the caller's MVCC snapshot. No model arithmetic and no
+-- copied business totals formula. Hard bounds refuse, never rank a partial set.
+CREATE FUNCTION public.sa_v2_retrieval_quote_inputs(p_run_id uuid,p_revision integer,p_ids uuid[]) RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp SET row_security=on AS $fn$
+DECLARE v jsonb:=public.sa_v2_retrieval_scope(p_run_id,p_revision); result jsonb; n integer; c integer; l integer; t integer;
+BEGIN
+ PERFORM public.sa_v2_retrieval_check_source('quotes',v);
+ IF p_ids IS NULL OR cardinality(p_ids)>200 OR array_position(p_ids,NULL) IS NOT NULL THEN RAISE EXCEPTION 'invalid_quote_batch' USING ERRCODE='22023'; END IF;
+ SELECT count(*) INTO n FROM public.quotes q WHERE q.id=ANY(p_ids) AND q.company_id=(v->>'company_id')::uuid
+  AND COALESCE(v->'permissions'->>(CASE WHEN q.status::text='draft' THEN 'draft_quotes' ELSE 'quotes' END),'hidden')<>'hidden';
+ IF n<>(SELECT count(DISTINCT id) FROM unnest(p_ids) p(id)) THEN RAISE EXCEPTION 'inaccessible_quote_batch' USING ERRCODE='P1604'; END IF;
+ IF COALESCE(v->'permissions'->>'components','hidden')<>'hidden' THEN
+  SELECT count(*) INTO c FROM (SELECT 1 FROM public.quote_components qc JOIN public.quotes q ON q.id=qc.quote_id WHERE q.id=ANY(p_ids) AND q.company_id=(v->>'company_id')::uuid LIMIT 5001) z;
+ ELSE c:=0; END IF;
+ SELECT count(*) INTO l FROM (SELECT 1 FROM public.customer_quote_lines l JOIN public.quotes q ON q.id=l.quote_id WHERE q.id=ANY(p_ids) AND q.company_id=(v->>'company_id')::uuid LIMIT 5001) z;
+ SELECT count(*) INTO t FROM (SELECT 1 FROM public.quote_taxes t JOIN public.quotes q ON q.id=t.quote_id WHERE q.id=ANY(p_ids) AND q.company_id=(v->>'company_id')::uuid LIMIT 2001) z;
+ IF c>5000 OR l>5000 OR t>2000 THEN RETURN jsonb_build_object('complete',false,'reason','child_limit'); END IF;
+ SELECT COALESCE(jsonb_agg(jsonb_build_object('id',q.id,'snapshot',jsonb_build_object(
+  'complete',true,'as_of',CURRENT_TIMESTAMP,'default_currency',COALESCE(co.default_currency,'NZD'),
+  'quote',jsonb_build_object('id',q.id,'status',q.status,'currency',q.currency,'material_margin_percent',q.material_margin_percent,'labor_margin_percent',q.labor_margin_percent,'tax_rate',q.tax_rate),
+  'components',CASE WHEN COALESCE(v->'permissions'->>'components','hidden')='hidden' THEN NULL ELSE
+    (SELECT COALESCE(jsonb_agg(jsonb_build_object('material_cost',c.material_cost,'labour_cost',c.labour_cost) ORDER BY c.sort_order,c.id),'[]'::jsonb) FROM public.quote_components c WHERE c.quote_id=q.id) END,
+  'lines',(SELECT COALESCE(jsonb_agg(jsonb_build_object('custom_amount',l.custom_amount,'include_in_total',l.include_in_total,'is_visible',l.is_visible,'line_type',l.line_type) ORDER BY l.sort_order,l.id),'[]'::jsonb) FROM public.customer_quote_lines l WHERE l.quote_id=q.id),
+  'taxes',(SELECT COALESCE(jsonb_agg(jsonb_build_object('id',t.id,'name',t.name,'rate_percent',t.rate_percent,'include_in_quote',t.include_in_quote,'include_in_labor',t.include_in_labor) ORDER BY t.sort_order,t.created_at,t.id),'[]'::jsonb) FROM public.quote_taxes t WHERE t.quote_id=q.id)
+ )) ORDER BY q.id),'[]'::jsonb) INTO result
+ FROM public.quotes q JOIN public.companies co ON co.id=q.company_id
+ WHERE q.id=ANY(p_ids) AND q.company_id=(v->>'company_id')::uuid
+ AND COALESCE(v->'permissions'->>(CASE WHEN q.status::text='draft' THEN 'draft_quotes' ELSE 'quotes' END),'hidden')<>'hidden';
+ IF octet_length(result::text)>2097152 THEN RETURN jsonb_build_object('complete',false,'reason','payload_limit'); END IF;
+ RETURN jsonb_build_object('complete',true,'items',result);
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_quote_inputs(uuid,integer,uuid[]) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_quote_inputs(uuid,integer,uuid[]) TO authenticated;
+
+CREATE FUNCTION public.sa_v2_retrieval_query(p_run_id uuid,p_revision integer,p_plan jsonb) RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY INVOKER SET search_path=pg_catalog,pg_temp SET row_security=on SET statement_timeout='8s' AS $fn$
+DECLARE
+ v jsonb:=public.sa_v2_retrieval_scope(p_run_id,p_revision); source text; spec jsonb; mode text; field text; f jsonb; item jsonb; rel jsonb; child jsonb;
+ selected jsonb; groups jsonb; metrics jsonb; ordering jsonb; filters jsonb; related jsonb; vals jsonb:='[]'; compiled jsonb;
+ base text; predicate text; childpred text; childbase text; query text; rows jsonb; result jsonb; obj text; selects text; sorts text:=''; group_sql text:='';
+ rank_sql text:='jsonb_build_object(''tier'',0,''score'',0)'; search_json jsonb; limit_n integer; idx integer:=0; j integer; dir text; fn text;
+ engine boolean:=false; truncated boolean:=false; complete boolean:=true; ids uuid[]; snapshots jsonb; dims jsonb; d text; period_field text; preset text; boundary text; scope text; isresolve boolean;
+BEGIN
+ IF jsonb_typeof(p_plan) IS DISTINCT FROM 'object' OR octet_length(p_plan::text)>16000
+ OR p_plan->'version' IS DISTINCT FROM '1'::jsonb
+ OR EXISTS(SELECT 1 FROM jsonb_object_keys(p_plan) k(key) WHERE k.key NOT IN ('version','source','mode','fields','filters','related','search','quoteScope','owner','period','groupBy','metrics','orderBy','limit','resolve','current'))
+ THEN RAISE EXCEPTION 'invalid_plan' USING ERRCODE='22023'; END IF;
+ source:=p_plan->>'source'; spec:=public.sa_v2_retrieval_check_source(source,v); mode:=COALESCE(p_plan->>'mode','rows');
+ IF mode NOT IN ('rows','aggregate') OR (p_plan ? 'current' AND p_plan->'current'<>'false'::jsonb)
+   OR (p_plan ? 'resolve' AND jsonb_typeof(p_plan->'resolve')<>'boolean') THEN RAISE EXCEPTION 'invalid_mode_or_context' USING ERRCODE='22023'; END IF;
+ isresolve:=COALESCE((p_plan->>'resolve')::boolean,false);
+ IF mode='aggregate' AND isresolve THEN RAISE EXCEPTION 'invalid_aggregate_resolution' USING ERRCODE='22023'; END IF;
+ IF p_plan ? 'limit' AND (jsonb_typeof(p_plan->'limit')<>'number' OR p_plan->>'limit' !~ '^([1-9]|1[0-9]|20)$') THEN RAISE EXCEPTION 'invalid_limit' USING ERRCODE='22023'; END IF;
+ limit_n:=COALESCE((p_plan->>'limit')::integer,10); IF isresolve THEN limit_n:=GREATEST(5,limit_n); END IF;
+ selected:=COALESCE(p_plan->'fields',CASE WHEN mode='rows' THEN spec->'defaults' ELSE '[]'::jsonb END);
+ groups:=COALESCE(p_plan->'groupBy','[]'); metrics:=COALESCE(p_plan->'metrics','[]'); ordering:=COALESCE(p_plan->'orderBy','[]'); filters:=COALESCE(p_plan->'filters','[]'); related:=COALESCE(p_plan->'related','[]');
+ IF jsonb_typeof(selected)<>'array' OR jsonb_array_length(selected)>16 OR jsonb_typeof(groups)<>'array' OR jsonb_array_length(groups)>5
+ OR jsonb_typeof(metrics)<>'array' OR jsonb_array_length(metrics)>3 OR jsonb_typeof(ordering)<>'array' OR jsonb_array_length(ordering)>3
+ OR jsonb_typeof(related)<>'array' OR jsonb_array_length(related)>2 THEN RAISE EXCEPTION 'invalid_array_bounds' USING ERRCODE='22023'; END IF;
+ IF (mode='aggregate' AND (jsonb_array_length(metrics)=0 OR jsonb_array_length(selected)<>0))
+ OR (mode='rows' AND (jsonb_array_length(metrics)>0 OR jsonb_array_length(groups)>0)) THEN RAISE EXCEPTION 'invalid_projection' USING ERRCODE='22023'; END IF;
+ FOR field IN SELECT value FROM jsonb_array_elements_text(selected) LOOP
+  f:=public.sa_v2_retrieval_field(source,field,v); engine:=engine OR f ? 'engine';
+  IF mode='rows' THEN
+   dims:=COALESCE(f->'dimensions',CASE WHEN f ? 'dimension' THEN jsonb_build_array(f->>'dimension') ELSE '[]'::jsonb END);
+   FOR d IN SELECT value FROM jsonb_array_elements_text(dims) LOOP
+    PERFORM public.sa_v2_retrieval_field(source,d,v);
+    IF NOT selected ? d THEN selected:=selected||jsonb_build_array(d); END IF;
+   END LOOP;
+  END IF;
+ END LOOP;
+ IF jsonb_array_length(selected)>16 THEN RAISE EXCEPTION 'row_dimension_limit' USING ERRCODE='22023'; END IF;
+ FOR field IN SELECT value FROM jsonb_array_elements_text(groups) LOOP
+  f:=public.sa_v2_retrieval_field(source,field,v); IF f ? 'engine' OR f->>'type'='json' THEN RAISE EXCEPTION 'invalid_group' USING ERRCODE='22023'; END IF;
+ END LOOP;
+ FOR item IN SELECT value FROM jsonb_array_elements(metrics) LOOP
+  IF jsonb_typeof(item)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(item) k(key) WHERE k.key NOT IN ('field','op')) OR item->>'op' IS NULL OR item->>'op' NOT IN ('count','sum','min','max','avg') THEN RAISE EXCEPTION 'invalid_metric' USING ERRCODE='22023'; END IF;
+  IF item->>'op'<>'count' OR item ? 'field' THEN
+   f:=public.sa_v2_retrieval_field(source,item->>'field',v); engine:=engine OR f ? 'engine';
+   IF item->>'op'<>'count' AND (NOT COALESCE((f->>'aggregate')::boolean,false) OR f->>'type'<>'number') THEN RAISE EXCEPTION 'invalid_numeric_metric' USING ERRCODE='P1603'; END IF;
+   IF item->>'op'<>'count' THEN
+    dims:=COALESCE(f->'dimensions',CASE WHEN f ? 'dimension' THEN jsonb_build_array(f->>'dimension') ELSE '[]'::jsonb END);
+    FOR d IN SELECT value FROM jsonb_array_elements_text(dims) LOOP IF NOT groups ? d THEN groups:=groups||jsonb_build_array(d); END IF; END LOOP;
+   END IF;
+  END IF;
+ END LOOP;
+ IF jsonb_array_length(groups)>5 THEN RAISE EXCEPTION 'too_many_dimensions' USING ERRCODE='22023'; END IF;
+ FOR item IN SELECT value FROM jsonb_array_elements(ordering) LOOP
+  IF jsonb_typeof(item)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(item) k(key) WHERE k.key NOT IN ('field','direction')) OR COALESCE(item->>'direction','asc') NOT IN ('asc','desc') THEN RAISE EXCEPTION 'invalid_sort' USING ERRCODE='22023'; END IF;
+  field:=item->>'field';
+  IF mode='aggregate' THEN
+   IF NOT groups ? field AND NOT (field ~ '^metric_[0-2]$' AND substring(field FROM 8)::integer<jsonb_array_length(metrics)) THEN RAISE EXCEPTION 'invalid_sort_field' USING ERRCODE='22023'; END IF;
+  ELSE f:=public.sa_v2_retrieval_field(source,field,v); engine:=engine OR f ? 'engine'; IF f->>'type'='json' THEN RAISE EXCEPTION 'invalid_sort_field' USING ERRCODE='22023'; END IF;
+  END IF;
+ END LOOP;
+ IF engine AND source<>'quotes' THEN RAISE EXCEPTION 'unsupported_engine_source' USING ERRCODE='P1603'; END IF;
+ base:=public.sa_v2_retrieval_base(source,v);
+ compiled:=public.sa_v2_retrieval_filters(source,filters,v,0); predicate:=compiled->>'sql'; vals:=compiled->'values';
+ scope:=COALESCE(p_plan->>'quoteScope','all_permitted');
+ IF scope NOT IN ('quotes','drafts','all_permitted') OR (NOT COALESCE((spec->>'quoteScoped')::boolean,false) AND scope<>'all_permitted') THEN RAISE EXCEPTION 'invalid_quote_scope' USING ERRCODE='22023'; END IF;
+ IF COALESCE((spec->>'quoteScoped')::boolean,false) AND scope<>'all_permitted' THEN
+  IF COALESCE(v->'permissions'->>(CASE WHEN scope='drafts' THEN 'draft_quotes' ELSE 'quotes' END),'hidden')='hidden' THEN RAISE EXCEPTION 'section_hidden' USING ERRCODE='P1604'; END IF;
+  predicate:=predicate||format(' AND r.%I %s ''draft''',spec->>'quoteStatus',CASE WHEN scope='drafts' THEN '=' ELSE '<>' END);
+ END IF;
+ IF COALESCE(p_plan->>'owner','workspace') NOT IN ('me','workspace') THEN RAISE EXCEPTION 'invalid_owner' USING ERRCODE='22023'; END IF;
+ IF p_plan->>'owner'='me' THEN
+  IF NOT spec ? 'ownerField' THEN RAISE EXCEPTION 'owner_not_supported' USING ERRCODE='P1603'; END IF;
+  predicate:=predicate||format(' AND r.%I=($1->>''user_id'')::uuid',spec->>'ownerField');
+ END IF;
+ IF p_plan ? 'period' THEN
+  item:=p_plan->'period';
+  IF jsonb_typeof(item)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(item) k(key) WHERE k.key NOT IN ('field','preset')) THEN RAISE EXCEPTION 'invalid_period' USING ERRCODE='22023'; END IF;
+  period_field:=item->>'field'; f:=public.sa_v2_retrieval_field(source,period_field,v); preset:=item->>'preset';
+  IF f->>'type' NOT IN ('date','timestamp') OR preset IS NULL OR preset NOT IN ('this_month','last_month','this_year','last_year') THEN RAISE EXCEPTION 'invalid_period' USING ERRCODE='22023'; END IF;
+  boundary:=CASE WHEN preset IN ('this_month','last_month') THEN 'date_trunc(''month'',CURRENT_TIMESTAMP AT TIME ZONE ''UTC'')' ELSE 'date_trunc(''year'',CURRENT_TIMESTAMP AT TIME ZONE ''UTC'')' END;
+  IF preset IN ('last_month','last_year') THEN boundary:='('||boundary||CASE WHEN preset='last_month' THEN ' - interval ''1 month'')' ELSE ' - interval ''1 year'')' END; END IF;
+  predicate:=predicate||format(' AND r.%I >= (%s AT TIME ZONE ''UTC'') AND r.%I < ((%s + interval %L) AT TIME ZONE ''UTC'')',period_field,boundary,period_field,boundary,CASE WHEN preset IN ('this_month','last_month') THEN '1 month' ELSE '1 year' END);
+ END IF;
+ -- Each relationship is an EXISTS semi-join over another independently scoped
+ -- registered source. It cannot multiply rows, loosen parent scope, or recurse.
+ idx:=0;
+ FOR item IN SELECT value FROM jsonb_array_elements(related) LOOP
+  IF jsonb_typeof(item)<>'object' OR EXISTS(SELECT 1 FROM jsonb_object_keys(item) k(key) WHERE k.key NOT IN ('relation','filters','search')) THEN RAISE EXCEPTION 'invalid_relation' USING ERRCODE='22023'; END IF;
+  rel:=spec->'relations'->(item->>'relation'); IF rel IS NULL THEN RAISE EXCEPTION 'unsupported_relation' USING ERRCODE='P1603'; END IF;
+  child:=public.sa_v2_retrieval_check_source(rel->>'source',v); childbase:=public.sa_v2_retrieval_base(rel->>'source',v);
+  compiled:=public.sa_v2_retrieval_filters(rel->>'source',COALESCE(item->'filters','[]'),v,jsonb_array_length(vals)); childpred:=compiled->>'sql'; vals:=vals||(compiled->'values');
+  IF item ? 'search' THEN
+   IF NOT COALESCE(public.sa_v2_retrieval_search_valid(item->'search',false),false) THEN RAISE EXCEPTION 'invalid_related_search' USING ERRCODE='22023'; END IF;
+   childpred:=childpred||format(' AND (public.sa_v2_retrieval_rank(r._names,r._search,$2->''related''->%s->''search''->>''text'',$2->''related''->%s->''search''->>''match'')->>''tier'')::integer>0',idx,idx);
+  END IF;
+  predicate:=predicate||format(' AND EXISTS(SELECT 1 FROM (SELECT * FROM (%s) r WHERE %s) rel_match WHERE rel_match.%I=r.%I)',childbase,childpred,rel->>'foreign',rel->>'local'); idx:=idx+1;
+ END LOOP;
+ IF p_plan ? 'search' THEN
+  search_json:=p_plan->'search';
+  IF NOT COALESCE(public.sa_v2_retrieval_search_valid(search_json,mode='rows'),false) THEN RAISE EXCEPTION 'invalid_search' USING ERRCODE='22023'; END IF;
+  rank_sql:='public.sa_v2_retrieval_rank(r._names,r._search,$2->''search''->>''text'',COALESCE($2->''search''->>''match'',''natural''))';
+  predicate:=predicate||' AND ('||rank_sql||'->>''tier'')::integer>0';
+ END IF;
+
+ IF engine THEN
+  -- Materialise every matching quote up to a hard refuse boundary, never the
+  -- first 200 advertised as a global winner. Do not include calculated fields
+  -- here: their ONLY producer is the unchanged QuoteCore engine in the server.
+  selected:=selected||groups||' ["id","quote_number","customer_name","job_name","status","currency","updated_at"]'::jsonb;
+  FOR item IN SELECT value FROM jsonb_array_elements(metrics) LOOP IF item ? 'field' THEN selected:=selected||jsonb_build_array(item->>'field'); END IF; END LOOP;
+  obj:='jsonb_build_object(''_row_id'',r.id::text,''_kind'',r._kind,''_section'',r._section,''_target_id'',r._target_id,''_touched'',r._touched,''_rank'','||rank_sql;
+  FOR field IN SELECT DISTINCT value FROM jsonb_array_elements_text(selected) LOOP
+   f:=public.sa_v2_retrieval_field(source,field,v); IF f ? 'engine' THEN CONTINUE; END IF;
+   obj:=obj||format(',%L,r.%I%s',field,field,CASE WHEN f->>'type'='number' THEN '::text' ELSE '' END);
+  END LOOP; obj:=obj||')';
+  query:=format('SELECT COALESCE(jsonb_agg(z.obj ORDER BY z.id),''[]''::jsonb) FROM (SELECT r.id,%s AS obj FROM (%s) r WHERE %s ORDER BY r.id LIMIT 201) z',obj,base,predicate);
+  EXECUTE query INTO rows USING v,p_plan,vals;
+  IF jsonb_array_length(rows)>200 OR octet_length(rows::text)>262144 THEN
+   RETURN jsonb_build_object('version',1,'schema_hash','__HASH__','source',source,'mode','engine_inputs','rows','[]'::jsonb,'as_of',CURRENT_TIMESTAMP,'complete',false,'truncated',true,'group_by',groups,'status','too_broad','warnings',jsonb_build_array('The quote batch exceeds 200 records or its bounded payload. Narrow by date, customer, status or selected fields; no partial global total or ranking was calculated.'));
+  END IF;
+  SELECT COALESCE(array_agg((r.value->>'id')::uuid),ARRAY[]::uuid[]) INTO ids FROM jsonb_array_elements(rows) r(value);
+  snapshots:=public.sa_v2_retrieval_quote_inputs(p_run_id,p_revision,ids);
+  RETURN jsonb_build_object('version',1,'schema_hash','__HASH__','source',source,'mode','engine_inputs','rows',rows,'as_of',CURRENT_TIMESTAMP,'complete',(snapshots->>'complete')::boolean,'truncated',false,'group_by',groups,'snapshots',snapshots,'warnings',CASE WHEN (snapshots->>'complete')::boolean THEN '[]'::jsonb ELSE jsonb_build_array('The selected quotes exceed the bounded engine-input reader. No partial calculation was made.') END);
+ END IF;
+
+ IF mode='rows' THEN
+  obj:='jsonb_build_object(''_row_id'',r.id::text,''_kind'',r._kind,''_section'',r._section,''_target_id'',r._target_id,''_touched'',r._touched,''_rank'','||rank_sql;
+  FOR field IN SELECT DISTINCT value FROM jsonb_array_elements_text(selected) LOOP
+   f:=public.sa_v2_retrieval_field(source,field,v);
+   obj:=obj||format(',%L,r.%I%s',field,field,CASE WHEN f->>'type'='number' THEN '::text' ELSE '' END);
+  END LOOP; obj:=obj||')';
+  IF search_json IS NOT NULL THEN sorts:='('||rank_sql||'->>''tier'')::integer DESC,('||rank_sql||'->>''score'')::numeric DESC,'; END IF;
+  FOR item IN SELECT value FROM jsonb_array_elements(ordering) LOOP sorts:=sorts||format('r.%I %s NULLS LAST,',item->>'field',upper(COALESCE(item->>'direction','asc'))); END LOOP;
+  sorts:=sorts||'r._touched DESC NULLS LAST,r.id::text';
+  query:=format('SELECT COALESCE(jsonb_agg(z.obj ORDER BY z.n),''[]''::jsonb) FROM (SELECT %s AS obj,row_number() OVER (ORDER BY %s) n FROM (%s) r WHERE %s ORDER BY %s LIMIT %s) z',obj,sorts,base,predicate,sorts,limit_n+1);
+ ELSE
+  selects:=''; group_sql:=''; obj:='jsonb_build_object(''_matched'',a._matched::text'; idx:=0;
+  FOR field IN SELECT DISTINCT value FROM jsonb_array_elements_text(groups) LOOP
+   f:=public.sa_v2_retrieval_field(source,field,v);
+   selects:=selects||format('r.%I AS %I,',field,field); group_sql:=group_sql||CASE WHEN group_sql='' THEN '' ELSE ',' END||format('r.%I',field);
+   obj:=obj||format(',%L,a.%I%s',field,field,CASE WHEN f->>'type'='number' THEN '::text' ELSE '' END);
+  END LOOP;
+  FOR item IN SELECT value FROM jsonb_array_elements(metrics) LOOP
+   fn:=item->>'op'; field:=item->>'field';
+   selects:=selects||CASE WHEN field IS NULL THEN 'count(*)' ELSE format('%s(r.%I)',fn,field) END||format(' AS metric_%s,',idx);
+   IF field IS NOT NULL AND fn<>'count' THEN selects:=selects||format('(count(*)-count(r.%I)) AS _missing_%s,',field,idx); obj:=obj||format(',%L,a._missing_%s::text','_missing_'||idx,idx); END IF;
+   obj:=obj||format(',%L,a.metric_%s::text','metric_'||idx,idx); idx:=idx+1;
+  END LOOP;
+  selects:=selects||'count(*) AS _matched'; obj:=obj||')';
+  FOR item IN SELECT value FROM jsonb_array_elements(ordering) LOOP sorts:=sorts||format('a.%I %s NULLS LAST,',item->>'field',upper(COALESCE(item->>'direction','asc'))); END LOOP;
+  FOR field IN SELECT DISTINCT value FROM jsonb_array_elements_text(groups) LOOP sorts:=sorts||format('a.%I ASC NULLS LAST,',field); END LOOP;
+  sorts:=CASE WHEN sorts='' THEN 'a._matched DESC' ELSE left(sorts,length(sorts)-1) END;
+  query:=format('SELECT COALESCE(jsonb_agg(z.obj ORDER BY z.n),''[]''::jsonb) FROM (SELECT %s AS obj,row_number() OVER (ORDER BY %s) n FROM (SELECT %s FROM (%s) r WHERE %s %s) a ORDER BY %s LIMIT %s) z',obj,sorts,selects,base,predicate,CASE WHEN group_sql='' THEN '' ELSE 'GROUP BY '||group_sql END,sorts,limit_n+1);
+ END IF;
+ EXECUTE query INTO rows USING v,p_plan,vals;
+ truncated:=jsonb_array_length(rows)>limit_n;
+ IF truncated THEN rows:=rows-limit_n; END IF;
+ IF mode='aggregate' AND EXISTS(SELECT 1 FROM jsonb_array_elements(rows) r(value),jsonb_each_text(r.value) p(key,value) WHERE p.key ~ '^_missing_[0-2]$' AND p.value::numeric>0) THEN complete:=false; END IF;
+ result:=jsonb_build_object('version',1,'schema_hash','__HASH__','source',source,'mode',mode,'rows',rows,'as_of',CURRENT_TIMESTAMP,'complete',complete,'truncated',truncated,'group_by',groups,'warnings',
+   CASE WHEN complete THEN '[]'::jsonb ELSE jsonb_build_array('Some matching rows have missing numeric values. Available-value aggregates are not complete totals.') END);
+ IF octet_length(result::text)>262144 THEN
+  RETURN jsonb_build_object('version',1,'schema_hash','__HASH__','source',source,'mode',mode,'rows','[]'::jsonb,'as_of',CURRENT_TIMESTAMP,'complete',false,'truncated',true,'group_by',groups,'status','too_broad','warnings',jsonb_build_array('The result is too large. Request fewer fields or narrower filters; no silently truncated field values were returned.'));
+ END IF;
+ RETURN result;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public.sa_v2_retrieval_query(uuid,integer,jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.sa_v2_retrieval_query(uuid,integer,jsonb) TO authenticated;
+COMMIT;
