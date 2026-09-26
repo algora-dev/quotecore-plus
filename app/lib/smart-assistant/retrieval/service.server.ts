@@ -106,6 +106,8 @@ export function createRetrievalService(input:{client:SupabaseClient;access:Acces
     const decoded=decode(response.data,plan,input.access);
     const et=performance.now();const data=finishEngineQuery(decoded,plan);engineMs=performance.now()-et;
     const rt=performance.now();result=renderResult(data,plan);renderMs=performance.now()-rt;
+    if(result.state==='ok'&&!result.rows.length&&plan.filters.some(f=>f.field==='quote_number'&&f.op==='eq'))
+     result.warnings.push('No permitted record has that quote number. If the user meant a job or customer name, search words/exact by name instead of filtering quote_number.');
     if(presentation!=='context'||result.state==='ambiguous'){
      if(result.state==='ambiguous'){
       const candidates=result.rows.slice(0,4);
