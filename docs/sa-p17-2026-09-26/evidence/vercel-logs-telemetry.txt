@@ -1,0 +1,197 @@
+﻿powershell : node.exe : Vercel CLI 56.3.2 (Node.js 24.18.0)
+At line:1 char:394
++ ... oding UTF8; powershell -File C:\Users\Jimmy\.openclaw\workspace-gavin ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (node.exe : Verc...ode.js 24.18.0):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+At line:1 char:1
++ & "C:\nodejs/node.exe" "C:\nodejs/node_modules/npm/bin/npx-cli.js" ve ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Vercel CLI 56.3.2 (Node.js 24.18.0):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Resolving deployment "quotecore-plus-testing.vercel.app"
+Fetching project "prj_4OuiZTxRmc1W5NDWtDAFbzv4s4An"
+Fetching logs...
+TIME         HOST                                                              LEVEL                                   
+  
+21:13:00.51  quotecore-plus-testing.vercel.app                                 info   ╬╗ POST 
+/api/smart-assistant/turn   
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() 
+events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may 
+not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth 
+server.
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"3c8e1f75-d0dc-41a9-8
+6e4-48de9954870c","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,
+"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","a
+ttention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","reso
+lve_workspace_relationship"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"3c8e1f75-d0dc-41a9-86e4-48de9954870c","source"
+:"quotes","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":163,"engineMs":0,"renderMs":0,"totalMs"
+:164}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"3c8e1f75-d0dc-41a9-86e4-48de9954870c","source"
+:"quote_components","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":141,"engineMs":0,"renderMs":0
+,"totalMs":142}
+[smart-assistant:retrieval] {"event":"sa_composite_resolution","version":1,"runId":"3c8e1f75-d0dc-41a9-86e4-48de9954870
+c","relationship":"quotes.components","reads":2,"totalMs":306}
+[smart-assistant:performance] {"event":"sa_turn_performance","version":1,"runId":"3c8e1f75-d0dc-41a9-86e4-48de9954870c"
+,"model":"gpt-5.6-luna","path":"model","status":"completed","pipelineMs":4514,"modelCalls":2,"toolCalls":1,"retrievalPl
+anFailures":0,"retrievalRepairs":0,"repairBudgetStops":0,"repeatedCalls":0,"terminalToolReplies":0,"firstModelTokenMs":
+3975,"tokensIn":10551,"tokensOut":89,"stages":[{"stage":"scope","ms":254},{"stage":"session","ms":126},{"stage":"config
+","ms":142},{"stage":"history","ms":144},{"stage":"access","ms":318},{"stage":"model","ms":956},{"stage":"tool:propose_
+component_change","ms":1253},{"stage":"access","ms":466},{"stage":"model","ms":856},{"stage":"access","ms":266}]}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"3c8e1f75-d0dc-41a9-86e4-48de9954870c","status":"co
+mpleted","requestMs":5109,"admissionMs":133,"profileMs":331,"finishMs":129}
+21:12:55.29  quotecore-plus-testing.vercel.app                                 info   ╬Á POST 
+/api/smart-assistant/turn   
+[smart-assistant:performance] {"event":"sa_turn_performance","version":1,"runId":"e4e7d096-46ce-4667-8ba6-5d48f41b59a9"
+,"model":"gpt-5.6-luna","path":"retrieval","status":"completed","pipelineMs":2904,"modelCalls":1,"toolCalls":1,"retriev
+alPlanFailures":0,"retrievalRepairs":0,"repairBudgetStops":0,"repeatedCalls":0,"terminalToolReplies":1,"firstModelToken
+Ms":null,"tokensIn":4870,"tokensOut":49,"stages":[{"stage":"scope","ms":466},{"stage":"config","ms":129},{"stage":"hist
+ory","ms":140},{"stage":"session","ms":331},{"stage":"access","ms":130},{"stage":"model","ms":941},{"stage":"tool:resol
+ve_workspace_relationship","ms":405},{"stage":"access","ms":632}]}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"e4e7d096-46ce-4667-8ba6-5d48f41b59a9","status":"co
+mpleted","requestMs":3716,"admissionMs":371,"profileMs":312,"finishMs":128}
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() 
+events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may 
+not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth 
+server.
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"e4e7d096-46ce-4667-8
+ba6-5d48f41b59a9","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,
+"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","a
+ttention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","reso
+lve_workspace_relationship"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"e4e7d096-46ce-4667-8ba6-5d48f41b59a9","source"
+:"quotes","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":146,"engineMs":0,"renderMs":0,"totalMs"
+:147}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"e4e7d096-46ce-4667-8ba6-5d48f41b59a9","source"
+:"quote_components","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":131,"engineMs":0,"renderMs":0
+,"totalMs":257}
+[smart-assistant:retrieval] {"event":"sa_composite_resolution","version":1,"runId":"e4e7d096-46ce-4667-8ba6-5d48f41b59a
+9","relationship":"quotes.components","reads":2,"totalMs":405}
+21:12:18.21  quotecore-plus-testing-27370tp3m-algora-devs-projects.vercel.app  info   ╬Á GET /api/cron/integrations    
+   
+21:12:15.11  quotecore-plus-testing.vercel.app                                 info   ╬Á POST 
+/api/smart-assistant/turn   
+[smart-assistant:performance] {"event":"sa_turn_performance","version":1,"runId":"79ed803a-0652-41d4-b0c4-9d95e328d447"
+,"model":"gpt-5.6-luna","path":"model","status":"completed","pipelineMs":3853,"modelCalls":2,"toolCalls":1,"retrievalPl
+anFailures":0,"retrievalRepairs":0,"repairBudgetStops":0,"repeatedCalls":0,"terminalToolReplies":0,"firstModelTokenMs":
+3346,"tokensIn":11612,"tokensOut":97,"stages":[{"stage":"scope","ms":225},{"stage":"config","ms":136},{"stage":"session
+","ms":197},{"stage":"history","ms":318},{"stage":"access","ms":116},{"stage":"model","ms":965},{"stage":"tool:propose_
+component_change","ms":685},{"stage":"access","ms":425},{"stage":"model","ms":885},{"stage":"access","ms":232}]}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"79ed803a-0652-41d4-b0c4-9d95e328d447","status":"co
+mpleted","requestMs":4214,"admissionMs":120,"profileMs":121,"finishMs":119}
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() 
+events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may 
+not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth 
+server.
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"79ed803a-0652-41d4-b
+0c4-9d95e328d447","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,
+"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","a
+ttention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","reso
+lve_workspace_relationship"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"79ed803a-0652-41d4-b0c4-9d95e328d447","source"
+:"quotes","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":321,"engineMs":0,"renderMs":0,"totalMs"
+:321}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"79ed803a-0652-41d4-b0c4-9d95e328d447","source"
+:"quote_components","mode":"rows","state":"ambiguous","rowsReturned":2,"truncated":false,"rpcMs":126,"engineMs":0,"rend
+erMs":0,"totalMs":246}
+[smart-assistant:retrieval] {"event":"sa_composite_resolution","version":1,"runId":"79ed803a-0652-41d4-b0c4-9d95e328d44
+7","relationship":"quotes.components","reads":2,"totalMs":569}
+21:12:11.14  quotecore-plus-testing.vercel.app                                 info   ╬Á POST 
+/api/smart-assistant/turn   
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() 
+events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may 
+not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth 
+server.
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"3b2e4c6e-f4f7-48fd-a
+049-c4fd21829ca6","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,
+"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","a
+ttention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","reso
+lve_workspace_relationship"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"3b2e4c6e-f4f7-48fd-a049-c4fd21829ca6","source"
+:"quotes","mode":"aggregate","state":"incomplete","rowsReturned":1,"truncated":true,"rpcMs":189,"engineMs":1,"renderMs"
+:0,"totalMs":192}
+[smart-assistant:performance] {"event":"sa_turn_performance","version":1,"runId":"3b2e4c6e-f4f7-48fd-a049-c4fd21829ca6"
+,"model":"gpt-5.6-luna","path":"retrieval","status":"completed","pipelineMs":2076,"modelCalls":1,"toolCalls":1,"retriev
+alPlanFailures":0,"retrievalRepairs":0,"repairBudgetStops":0,"repeatedCalls":0,"terminalToolReplies":1,"firstModelToken
+Ms":null,"tokensIn":5256,"tokensOut":57,"stages":[{"stage":"scope","ms":234},{"stage":"config","ms":157},{"stage":"sess
+ion","ms":351},{"stage":"history","ms":359},{"stage":"access","ms":120},{"stage":"model","ms":937},{"stage":"tool:query
+_workspace","ms":192},{"stage":"access","ms":231}]}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"3b2e4c6e-f4f7-48fd-a049-c4fd21829ca6","status":"co
+mpleted","requestMs":2427,"admissionMs":119,"profileMs":114,"finishMs":116}
+21:12:06.88  quotecore-plus-testing.vercel.app                                 info   ╬Á POST 
+/api/smart-assistant/turn   
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() 
+events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may 
+not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth 
+server.
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"f70b4648-06e7-4762-9
+f78-4e1f92039407","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,
+"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","a
+ttention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","reso
+lve_workspace_relationship"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"f70b4648-06e7-4762-9f78-4e1f92039407","source"
+:"order_lines","mode":"rows","state":"needs_context","rowsReturned":0,"truncated":false,"rpcMs":143,"engineMs":0,"rende
+rMs":0,"totalMs":144}
+[smart-assistant:performance] {"event":"sa_turn_performance","version":1,"runId":"f70b4648-06e7-4762-9f78-4e1f92039407"
+,"model":"gpt-5.6-luna","path":"retrieval","status":"completed","pipelineMs":2273,"modelCalls":1,"toolCalls":1,"retriev
+alPlanFailures":0,"retrievalRepairs":0,"repairBudgetStops":0,"repeatedCalls":0,"terminalToolReplies":1,"firstModelToken
+Ms":null,"tokensIn":5211,"tokensOut":67,"stages":[{"stage":"scope","ms":252},{"stage":"session","ms":125},{"stage":"his
+tory","ms":133},{"stage":"config","ms":145},{"stage":"access","ms":309},{"stage":"model","ms":1186},{"stage":"tool:quer
+y_workspace","ms":145},{"stage":"access","ms":233}]}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"f70b4648-06e7-4762-9f78-4e1f92039407","status":"co
+mpleted","requestMs":2669,"admissionMs":142,"profileMs":120,"finishMs":133}
+21:12:02.24  quotecore-plus-testing.vercel.app                                 info   ╬╗ POST 
+/api/smart-assistant/turn   
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() 
+events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may 
+not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth 
+server.
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"22d06693-cb6f-4a43-a
+3dc-8ef48c1b1424","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,
+"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","a
+ttention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","reso
+lve_workspace_relationship"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval_normalized","version":1,"runId":"22d06693-cb6f-4a43-a3dc-8ef48c1b142
+4","normalizations":["unpaid_invoice_predicate"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"22d06693-cb6f-4a43-a3dc-8ef48c1b1424","source"
+:"invoices","mode":"rows","state":"ok","rowsReturned":2,"truncated":false,"rpcMs":151,"engineMs":0,"renderMs":0,"totalM
+s":286}
+[smart-assistant:performance] {"event":"sa_turn_performance","version":1,"runId":"22d06693-cb6f-4a43-a3dc-8ef48c1b1424"
+,"model":"gpt-5.6-luna","path":"retrieval","status":"completed","pipelineMs":2340,"modelCalls":1,"toolCalls":1,"retriev
+alPlanFailures":0,"retrievalRepairs":0,"repairBudgetStops":0,"repeatedCalls":0,"terminalToolReplies":1,"firstModelToken
+Ms":null,"tokensIn":4949,"tokensOut":77,"stages":[{"stage":"scope","ms":231},{"stage":"config","ms":150},{"stage":"hist
+ory","ms":337},{"stage":"session","ms":361},{"stage":"access","ms":119},{"stage":"model","ms":1096},{"stage":"tool:quer
+y_workspace","ms":286},{"stage":"access","ms":245}]}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"22d06693-cb6f-4a43-a3dc-8ef48c1b1424","status":"co
+mpleted","requestMs":3107,"admissionMs":324,"profileMs":320,"finishMs":121}
+21:11:56.06  quotecore-plus-testing.vercel.app                                 info   ╬Á POST 
+/api/smart-assistant/turn   
+[smart-assistant:request] {"event":"sa_request_performance","runId":"865745c4-35af-4816-8411-ee4f2945edd0","status":"co
+mpleted","requestMs":4206,"admissionMs":250,"profileMs":344,"finishMs":126}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"865745c4-35af-4816-8
+411-ee4f2945edd0","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,
+"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","a
+ttention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","reso
+lve_workspace_relationship"]}
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"865745c4-35af-4816-8411-ee4f2945edd0","source"
+:"quote_components","mode":"rows","state":"ambiguous","rowsReturned":2,"truncated":false,"rpcMs":151,"engineMs":0,"rend
+erMs":0,"totalMs":326}
+[smart-assistant:retrieval] {"event":"sa_composite_resolution","version":1,"runId":"865745c4-35af-4816-8411-ee4f2945edd
+0","relationship":"quotes.components","reads":2,"totalMs":498}
+[smart-assistant:performance] {"event":"sa_turn_performance","version":1,"runId":"865745c4-35af-4816-8411-ee4f2945edd0"
+,"model":"gpt-5.6-luna","path":"retrieval","status":"completed","pipelineMs":3476,"modelCalls":1,"toolCalls":1,"retriev
+alPlanFailures":0,"retrievalRepairs":0,"repairBudgetStops":0,"repeatedCalls":0,"terminalToolReplies":1,"firstModelToken
+Ms":null,"tokensIn":4870,"tokensOut":70,"stages":[{"stage":"scope","ms":645},{"stage":"history","ms":165},{"stage":"con
+fig","ms":350},{"stage":"session","ms":402},{"stage":"access","ms":321},{"stage":"model","ms":923},{"stage":"tool:resol
+ve_workspace_relationship","ms":499},{"stage":"access","ms":670}]}
+Using the user object as returned from supabase.auth.getSession() or from some supabase.auth.onAuthStateChange() 
+events could be insecure! This value comes directly from the storage medium (usually cookies on the server) and may 
+not be authentic. Use supabase.auth.getUser() instead which authenticates the data by contacting the Supabase Auth 
+server.
+[smart-assistant:retrieval] {"event":"sa_retrieval","version":1,"runId":"865745c4-35af-4816-8411-ee4f2945edd0","source"
+:"quotes","mode":"rows","state":"ok","rowsReturned":1,"truncated":false,"rpcMs":165,"engineMs":0,"renderMs":1,"totalMs"
+:168}
+Fetched 8 logs for algora-devs-projects/quotecore-plus-testing

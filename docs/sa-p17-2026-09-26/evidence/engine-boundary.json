@@ -1,0 +1,15 @@
+{
+  "res200": {
+    "status": 200,
+    "ms": 238,
+    "mode": "engine_inputs",
+    "complete": true
+  },
+  "res201": {
+    "status": 200,
+    "ms": 150,
+    "mode": "engine_inputs",
+    "complete": false,
+    "refusal": "too_broad"
+  }
+}

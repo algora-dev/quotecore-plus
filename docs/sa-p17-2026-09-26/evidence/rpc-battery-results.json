@@ -1,0 +1,240 @@
+{
+  "startedAt": "2026-09-26T20:08:15.962Z",
+  "results": [
+    {
+      "name": "live-run-capture",
+      "ok": true,
+      "detail": "runId=104917cd-72b6-4eea-9f6b-85c73c20287c status=accepted"
+    },
+    {
+      "name": "run-scope-bound",
+      "ok": true,
+      "detail": "capabilities OK"
+    },
+    {
+      "name": "capabilities-v17",
+      "ok": true,
+      "detail": "{\"enabled\":true,\"version\":1,\"schema_hash\":\"feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad\",\"knowledge_enabled\":false,\"catalogues_allowed\":true"
+    },
+    {
+      "name": "v17-isolation-search-maple",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "v17-isolation-foreign-search-empty",
+      "ok": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "v17-isolation-foreign-id-empty",
+      "ok": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "v17-random-id-indistinguishable",
+      "ok": true,
+      "detail": "shape equal"
+    },
+    {
+      "name": "v17-reject-unknown-field",
+      "ok": true,
+      "detail": "400 unsupported_field"
+    },
+    {
+      "name": "v17-reject-tenant-key",
+      "ok": true,
+      "detail": "400 invalid_plan"
+    },
+    {
+      "name": "v17-reject-dotted-field",
+      "ok": true,
+      "detail": "400 unsupported_field"
+    },
+    {
+      "name": "v17-reject-proto-field",
+      "ok": true,
+      "detail": "400 unsupported_field"
+    },
+    {
+      "name": "v17-reject-limit-21",
+      "ok": true,
+      "detail": "400 invalid_limit"
+    },
+    {
+      "name": "v17-reject-aggregate-no-metrics",
+      "ok": true,
+      "detail": "400 invalid_projection"
+    },
+    {
+      "name": "v17-reject-sum-text-metric",
+      "ok": true,
+      "detail": "400 invalid_numeric_metric"
+    },
+    {
+      "name": "v17-reject-source-injection",
+      "ok": true,
+      "detail": "400 unsupported_source"
+    },
+    {
+      "name": "v17-reject-source-infoschema",
+      "ok": true,
+      "detail": "400 unsupported_source"
+    },
+    {
+      "name": "v17-reject-knowledge-off-source",
+      "ok": true,
+      "detail": "400 knowledge_disabled"
+    },
+    {
+      "name": "v17-reject-nested-json-filter",
+      "ok": true,
+      "detail": "400 invalid_filter_value"
+    },
+    {
+      "name": "v17-reject-sql-in-search",
+      "ok": true,
+      "detail": "status=200 rows=0 (literal, no injection surface)"
+    },
+    {
+      "name": "v17-reject-unknown-plan-key",
+      "ok": true,
+      "detail": "400 invalid_plan"
+    },
+    {
+      "name": "v17-reject-control-chars",
+      "ok": true,
+      "detail": "400"
+    },
+    {
+      "name": "v17-reject-resolve-aggregate",
+      "ok": true,
+      "detail": "400 invalid_aggregate_resolution"
+    },
+    {
+      "name": "v17-reject-ranking-natural-search",
+      "ok": true,
+      "detail": "400 numeric_ranking_requires_definite_membership"
+    },
+    {
+      "name": "v17-reject-search-non-text-field",
+      "ok": true,
+      "detail": "400 invalid_search_field"
+    },
+    {
+      "name": "v17-resolve-parent-unique-draft",
+      "ok": true,
+      "detail": "rows=1 9th canvas test"
+    },
+    {
+      "name": "v17-resolve-parent-ambiguous-2",
+      "ok": true,
+      "detail": "rows=2"
+    },
+    {
+      "name": "v17-child-duplicate-ridge-ambiguous",
+      "ok": true,
+      "detail": "rows=2 (expect 2: original+dup)"
+    },
+    {
+      "name": "v17-child-single-ridge-q1",
+      "ok": true,
+      "detail": "rows=1"
+    },
+    {
+      "name": "v17-resolve-parent-ridge-cottage",
+      "ok": true,
+      "detail": "rows=1"
+    },
+    {
+      "name": "v17-child-field-constrained-no-parent-leak",
+      "ok": true,
+      "detail": "rows=0 (parent name must not satisfy child name)"
+    },
+    {
+      "name": "v17-child-cross-parent-binding-empty",
+      "ok": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "v17-missing-group-coverage",
+      "ok": true,
+      "detail": "rows=1 top=P17 Missing A cov={\"ranked\":true,\"version\":1,\"dimensions\":[\"unit\"],\"groupCount\":\"2\",\"matchedRows\":\"2\",\"missingValues\":\"1\",\"dimensionCount\":\"1\",\"missingDimensi"
+    },
+    {
+      "name": "v17-missing-displayed-a-not-erasing-b",
+      "ok": true,
+      "detail": "top=P17 Missing A sum=100"
+    },
+    {
+      "name": "v17-tie-three-equal-top1",
+      "ok": true,
+      "detail": "tie=3 pos=1 cov=3 rows=1"
+    },
+    {
+      "name": "v17-all-missing-incomplete",
+      "ok": true,
+      "detail": "complete=false cov={\"ranked\":false,\"version\":1,\"dimensions\":[],\"groupCount\":\"2\",\"matchedRows\":\"2\",\"missingValues\":\"2\",\"dimensionCount\":\"0\","
+    },
+    {
+      "name": "v17-currency-dimensions-evidenced",
+      "ok": true,
+      "detail": "dims=2 rows=NZD|GBP"
+    },
+    {
+      "name": "v17-related-semijoin-no-multiplication",
+      "ok": true,
+      "detail": "rows=3 Maple Ridge Roof Repair|9th canvas test|Maple Ridge Roof Repair"
+    },
+    {
+      "name": "v17-zero-matches-honest-empty",
+      "ok": true,
+      "detail": "rows=0"
+    },
+    {
+      "name": "v17-engine-inputs-complete",
+      "ok": true,
+      "detail": "mode=engine_inputs complete=true"
+    },
+    {
+      "name": "v17-stored-aggregate-exact",
+      "ok": true,
+      "detail": "count=3 sum=231"
+    },
+    {
+      "name": "v17-deny-foreign-user-jwt",
+      "ok": true,
+      "detail": "403 access_changed"
+    },
+    {
+      "name": "v17-deny-noretrieval-user-jwt",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "v17-deny-stale-revision",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "v17-deny-anon-key",
+      "ok": true,
+      "detail": "401"
+    },
+    {
+      "name": "v17-deny-no-jwt",
+      "ok": true,
+      "detail": "401"
+    },
+    {
+      "name": "v17-deny-finished-run",
+      "ok": true,
+      "detail": "403"
+    },
+    {
+      "name": "v17-deny-nonexistent-run",
+      "ok": true,
+      "detail": "403"
+    }
+  ]
+}

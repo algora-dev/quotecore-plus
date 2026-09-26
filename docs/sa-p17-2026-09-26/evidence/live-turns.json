@@ -1,0 +1,27 @@
+{
+  "baseUrl": "https://quotecore-plus-testing.vercel.app",
+  "conversationId": "45c4532e-0a36-462e-b864-8510b5f4164e",
+  "startedAt": "2026-09-26T20:12:55.050Z",
+  "cases": [
+    {
+      "id": "composite-open-happy",
+      "prompt": "Open the Ridge component on my draft 9th canvas test",
+      "status": 200,
+      "bodyStatus": "completed",
+      "ms": 4012,
+      "reply": "The selected record will open. Your conversation will stay available.\nRidge · Draft — 9th canvas test\nquote status: draft · Stored final quantity after pitch/waste: 11.0000 · unit: m\n\nScope: quote components; drafts only; search “Ridge” (ranked suggestions); with quote where id eq 3a3eb871-00ab-4618-a9bc-1648db2749d9",
+      "cards": "null",
+      "raw": "{\"ok\":true,\"status\":\"completed\",\"run_id\":\"e4e7d096-46ce-4667-8ba6-5d48f41b59a9\",\"reply\":\"The selected record will open. Your conversation will stay available.\\nRidge · Draft — 9th canvas test\\nquote status: draft · Stored final quantity after pitch/waste: 11.0000 · unit: m\\n\\nScope: quote components; drafts only; search “Ridge” (ranked suggestions); with quote where id eq 3a3eb871-00ab-4618-a9bc-1648db2749d9\"}"
+    },
+    {
+      "id": "proposal-prep-happy",
+      "prompt": "Set the material rate on the Ridge component of my draft 9th canvas test to 30 dollars per metre",
+      "status": 200,
+      "bodyStatus": "completed",
+      "ms": 5342,
+      "reply": "A proposal is ready on the confirmation card. It is not applied yet—press Confirm there to approve the change.",
+      "cards": "null",
+      "raw": "{\"ok\":true,\"status\":\"completed\",\"run_id\":\"3c8e1f75-d0dc-41a9-86e4-48de9954870c\",\"reply\":\"A proposal is ready on the confirmation card. It is not applied yet—press Confirm there to approve the change.\"}"
+    }
+  ]
+}

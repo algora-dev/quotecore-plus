@@ -1,0 +1,375 @@
+{
+  "baseUrl": "https://quotecore-plus-testing.vercel.app",
+  "startedAt": "2026-09-26T20:15:55.920Z",
+  "repeats": 5,
+  "cases": [
+    {
+      "id": "count-ridge",
+      "prompt": "How many Ridge components are there across all my quotes and drafts?",
+      "p50": 3744,
+      "p95": 4412,
+      "min": 3359,
+      "max": 4412,
+      "matches": 5,
+      "total": 5,
+      "runs": [
+        {
+          "i": 0,
+          "convId": "a81f7441-205b-4a96-80ee-ecd12f11a32a",
+          "http": 200,
+          "status": "completed",
+          "ms": 4412,
+          "reply": "There are 3 Ridge components across your permitted quotes and drafts.",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 9970,
+              "tout": 92
+            }
+          ]
+        },
+        {
+          "i": 1,
+          "convId": "e74d92f0-4ae9-47f0-b1fc-c390e3ec42d4",
+          "http": 200,
+          "status": "completed",
+          "ms": 3727,
+          "reply": "There are 3 Ridge components across your permitted quotes and drafts.",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 9962,
+              "tout": 84
+            }
+          ]
+        },
+        {
+          "i": 2,
+          "convId": "06cf792d-8972-464c-b646-f43eac97f206",
+          "http": 200,
+          "status": "completed",
+          "ms": 3769,
+          "reply": "There are 3 Ridge components across your permitted quotes and drafts.",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 9970,
+              "tout": 92
+            }
+          ]
+        },
+        {
+          "i": 3,
+          "convId": "1ace96dc-23d8-47f0-9e02-e5e1f0910f93",
+          "http": 200,
+          "status": "completed",
+          "ms": 3744,
+          "reply": "There are 3 Ridge components across your permitted quotes and drafts.",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 9963,
+              "tout": 85
+            }
+          ]
+        },
+        {
+          "i": 4,
+          "convId": "d2f6f011-87d7-4efe-8dc2-97b0756f17f7",
+          "http": 200,
+          "status": "completed",
+          "ms": 3359,
+          "reply": "There are 3 Ridge components across your permitted quotes and drafts.",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 9970,
+              "tout": 92
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "related-orders",
+      "prompt": "Which material orders link to the Maple Ridge quote for John Smith?",
+      "p50": 3217,
+      "p95": 4290,
+      "min": 2532,
+      "max": 4290,
+      "matches": 4,
+      "total": 5,
+      "runs": [
+        {
+          "i": 0,
+          "convId": "0bb8b30e-de9e-41e0-9323-f5f2060785e5",
+          "http": 200,
+          "status": "completed",
+          "ms": 3217,
+          "reply": "Order PO-A1-muitie8ipf0k — Maple Ridge Roof Repair\nsupplier name: Plumbing World · status: ordered · updated at: 2026-09-26T20:04:01.034601+00:00\n\nScope: orders; with quote where id eq 49ce3e1b-1ecb-4166-a9ae-ea7b9daf9fc8",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 66
+            }
+          ]
+        },
+        {
+          "i": 1,
+          "convId": "9963b1d3-9ca1-4812-bb60-8e524577415e",
+          "http": 200,
+          "status": "completed",
+          "ms": 2821,
+          "reply": "Order PO-A1-muitie8ipf0k — Maple Ridge Roof Repair\nsupplier name: Plumbing World · status: ordered · updated at: 2026-09-26T20:04:01.034601+00:00\n\nScope: orders; with quote where id eq 49ce3e1b-1ecb-4166-a9ae-ea7b9daf9fc8",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 62
+            }
+          ]
+        },
+        {
+          "i": 2,
+          "convId": "0916c4bb-51f2-45eb-b64b-9e35d5afaac5",
+          "http": 200,
+          "status": "completed",
+          "ms": 2532,
+          "reply": "Which customer do you mean? Choose a matching record below.\nScope: quotes; permitted quotes and drafts; search “Maple Ridge” (ranked suggestions)",
+          "match": false,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 68
+            }
+          ]
+        },
+        {
+          "i": 3,
+          "convId": "0963f491-bcdd-4f51-bda7-1e1db092cd9b",
+          "http": 200,
+          "status": "completed",
+          "ms": 4290,
+          "reply": "One material order is linked:\n\n- PO-A1-muitie8ipf0k — Plumbing World — ordered",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 15411,
+              "tout": 150
+            }
+          ]
+        },
+        {
+          "i": 4,
+          "convId": "1dfdc547-12c8-4540-9682-774fca3cf028",
+          "http": 200,
+          "status": "completed",
+          "ms": 3943,
+          "reply": "Order PO-A1-muitie8ipf0k — Maple Ridge Roof Repair\nsupplier name: Plumbing World · status: ordered · updated at: 2026-09-26T20:04:01.034601+00:00\n\nScope: orders; with quote where id eq 49ce3e1b-1ecb-4166-a9ae-ea7b9daf9fc8",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 9913,
+              "tout": 128
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "composite-open",
+      "prompt": "Show me the Ridge component on my 9th canvas test draft",
+      "p50": 2936,
+      "p95": 3265,
+      "min": 2843,
+      "max": 3265,
+      "matches": 5,
+      "total": 5,
+      "runs": [
+        {
+          "i": 0,
+          "convId": "2c43ca9c-458d-4a26-8a43-ddfd702c409f",
+          "http": 200,
+          "status": "completed",
+          "ms": 2843,
+          "reply": "The selected record will open. Your conversation will stay available.\nRidge · Draft — 9th canvas test\nquote status: draft · Stored final quantity after pitch/waste: 11.0000 · unit: m · material rate: NZD $0.00 · labour rate: NZD $0.00 · Material cost before quote margins/taxes: NZD $0.00 · Labour cost before quote margins/taxes: NZD $0.00 · currency: NZD\n\nScope: quote components; drafts only; search “Ridge” (ranked suggestions); with quote where id eq 3a3eb871-00ab-4618-a9bc-1648db2749d9",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 95
+            }
+          ]
+        },
+        {
+          "i": 1,
+          "convId": "c429181c-fe56-4185-af32-ee9ea2b39480",
+          "http": 200,
+          "status": "completed",
+          "ms": 3265,
+          "reply": "The selected record will open. Your conversation will stay available.\nRidge · Draft — 9th canvas test\nquote status: draft · Stored final quantity after pitch/waste: 11.0000 · unit: m · material rate: NZD $0.00 · labour rate: NZD $0.00 · Material cost before quote margins/taxes: NZD $0.00 · Labour cost before quote margins/taxes: NZD $0.00 · currency: NZD\n\nScope: quote components; drafts only; search “Ridge” (ranked suggestions); with quote where id eq 3a3eb871-00ab-4618-a9bc-1648db2749d9",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 95
+            }
+          ]
+        },
+        {
+          "i": 2,
+          "convId": "14db4670-7054-412a-9cb2-f541baf4c21b",
+          "http": 200,
+          "status": "completed",
+          "ms": 2936,
+          "reply": "The selected record will open. Your conversation will stay available.\nRidge · Draft — 9th canvas test\nStored final quantity after pitch/waste: 11.0000 · unit: m · material rate: NZD $0.00 · labour rate: NZD $0.00 · currency: NZD\n\nScope: quote components; drafts only; search “Ridge” (ranked suggestions); with quote where id eq 3a3eb871-00ab-4618-a9bc-1648db2749d9",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 82
+            }
+          ]
+        },
+        {
+          "i": 3,
+          "convId": "5b786a95-677f-4530-a7c1-3daa10564850",
+          "http": 200,
+          "status": "completed",
+          "ms": 2876,
+          "reply": "The selected record will open. Your conversation will stay available.\nRidge · Draft — 9th canvas test\nquote status: draft · Stored final quantity after pitch/waste: 11.0000 · unit: m · material rate: NZD $0.00 · labour rate: NZD $0.00 · Material cost before quote margins/taxes: NZD $0.00 · Labour cost before quote margins/taxes: NZD $0.00 · currency: NZD\n\nScope: quote components; drafts only; search “Ridge” (ranked suggestions); with quote where id eq 3a3eb871-00ab-4618-a9bc-1648db2749d9",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 95
+            }
+          ]
+        },
+        {
+          "i": 4,
+          "convId": "98de670f-d479-463b-8e83-efb160bf6164",
+          "http": 200,
+          "status": "completed",
+          "ms": 3075,
+          "reply": "The selected record will open. Your conversation will stay available.\nRidge · Draft — 9th canvas test\nquote status: draft · Stored final quantity after pitch/waste: 11.0000 · unit: m · material rate: NZD $0.00 · labour rate: NZD $0.00 · Material cost before quote margins/taxes: NZD $0.00 · Labour cost before quote margins/taxes: NZD $0.00 · currency: NZD\n\nScope: quote components; drafts only; search “Ridge” (ranked suggestions); with quote where id eq 3a3eb871-00ab-4618-a9bc-1648db2749d9",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4871,
+              "tout": 95
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unpaid-invoices",
+      "prompt": "Which of my invoices are not paid yet?",
+      "p50": 2770,
+      "p95": 3004,
+      "min": 2673,
+      "max": 3004,
+      "matches": 5,
+      "total": 5,
+      "runs": [
+        {
+          "i": 0,
+          "convId": "0f6b70fa-72fb-4f5d-a5d4-c763db2d3156",
+          "http": 200,
+          "status": "completed",
+          "ms": 3004,
+          "reply": "Invoice INV-1001-muitie8ipf0k — John Smith\nstatus: sent · currency: NZD · Authoritative stored invoice total: NZD $1,150.00 · due date: 2026-09-01\n\nInvoice INV-1002-muitie8ipf0k — Ann Lee\nstatus: sent · currency: GBP · Authoritative stored invoice total: GBP £500.00 · due date: 2026-10-30\n\nScope: invoices; paid at is_null true; status neq cancelled",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4867,
+              "tout": 81
+            }
+          ]
+        },
+        {
+          "i": 1,
+          "convId": "de6962a8-55d6-4589-9f9c-7e56516a76a7",
+          "http": 200,
+          "status": "completed",
+          "ms": 2673,
+          "reply": "Invoice INV-1001-muitie8ipf0k — John Smith\nstatus: sent · currency: NZD · Authoritative stored invoice total: NZD $1,150.00 · due date: 2026-09-01\n\nInvoice INV-1002-muitie8ipf0k — Ann Lee\nstatus: sent · currency: GBP · Authoritative stored invoice total: GBP £500.00 · due date: 2026-10-30\n\nScope: invoices; paid at is_null true; status neq cancelled",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4867,
+              "tout": 81
+            }
+          ]
+        },
+        {
+          "i": 2,
+          "convId": "7538e089-42c8-498e-88ef-d18238d94372",
+          "http": 200,
+          "status": "completed",
+          "ms": 2774,
+          "reply": "Invoice INV-1001-muitie8ipf0k — John Smith\nstatus: sent · currency: NZD · Authoritative stored invoice total: NZD $1,150.00 · due date: 2026-09-01\n\nInvoice INV-1002-muitie8ipf0k — Ann Lee\nstatus: sent · currency: GBP · Authoritative stored invoice total: GBP £500.00 · due date: 2026-10-30\n\nScope: invoices; paid at is_null true; status neq cancelled",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4867,
+              "tout": 77
+            }
+          ]
+        },
+        {
+          "i": 3,
+          "convId": "2c86188d-d3eb-4920-aefb-542f9453454e",
+          "http": 200,
+          "status": "completed",
+          "ms": 2770,
+          "reply": "Invoice INV-1001-muitie8ipf0k — John Smith\nstatus: sent · currency: NZD · Authoritative stored invoice total: NZD $1,150.00 · due date: 2026-09-01\n\nInvoice INV-1002-muitie8ipf0k — Ann Lee\nstatus: sent · currency: GBP · Authoritative stored invoice total: GBP £500.00 · due date: 2026-10-30\n\nScope: invoices; paid at is_null true; status neq cancelled",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4867,
+              "tout": 92
+            }
+          ]
+        },
+        {
+          "i": 4,
+          "convId": "476be766-1031-4c4d-8a32-53c99925b305",
+          "http": 200,
+          "status": "completed",
+          "ms": 2751,
+          "reply": "Invoice INV-1001-muitie8ipf0k — John Smith\nstatus: sent · currency: NZD · Authoritative stored invoice total: NZD $1,150.00 · due date: 2026-09-01\n\nInvoice INV-1002-muitie8ipf0k — Ann Lee\nstatus: sent · currency: GBP · Authoritative stored invoice total: GBP £500.00 · due date: 2026-10-30\n\nScope: invoices; paid at is_null true; status neq cancelled",
+          "match": true,
+          "runs": [
+            {
+              "status": "completed",
+              "tin": 4867,
+              "tout": 81
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
