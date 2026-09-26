@@ -95,3 +95,18 @@ Model calls dominate latency (each ~1.0-1.3s); query_workspace RPC itself is 0.1
 ## Rollback
 
 Set RS Roofing `enabled=false` in `assistant_v2_retrieval_rollout`, then remove `SMART_ASSISTANT_RETRIEVAL_ENABLED`. Keep code + metadata tables (knowledge-epoch history protection). No business-data rollback needed (reads only).
+
+## Fix round (evening, commit a18f4ab9, deploy foy2yxqnl)
+
+Owner real-world pass exposed 4 plan-quality gaps; all fixed and verified:
+
+1. **Invoice unpaid filter** (confirmed twice: fixtures + owner real data). Offline Luna reproduction (scripts/debug-sa-p16-luna-plan.cjs) captured the exact failure: the model invented status values ('unpaid','due','open','overdue','outstanding','pending') that do not exist. Real enums: invoice draft|sent|viewed|payment_reported|paid|disputed|cancelled; quote draft|confirmed|sent|accepted|declined|expired|archived; orders ready|ordered. Fix: exhaustive status-domain prompt line + unpaid = paid_at is_null semantics + explicit example. Offline repro: all 3 phrasings now emit the valid plan (paid_at is_null true + status neq cancelled, workspace owner). Live: returns both unpaid invoices with correct totals.
+2. **Name-vs-number resolution** ('my 5 quote' read as quote_number 5 instead of job '5th mob'). Fix: bare-token/name-phrase rule + service-layer repair hint when a quote_number filter returns empty (service.server.ts). Live: honest actionable empty; offline: real names now name-search.
+3. **Count precision** ('10 Ridge components' blended exact+variants). Fix: exact-name rule for counts, words only for quantity sums, report both counts. Live: 'There are 3 exact Ridge components'.
+4. **Related-search match mode** (model sent match:natural in related filters; related searches allow words/exact only - SQL validates). Prose teaching was ignored; structural fix: separate relatedSearch schema enum ['words','exact'] in the tool schema. Offline repro round 3: all 6 probe questions reach RPC with valid plans.
+
+Plus repair-discipline line (fix the named invalid part once; empty = real empty, never re-plan with invented values).
+
+Gates: offline 383/383; tsc 80 = pre-existing baseline (0 new); build exit 0; SQL fingerprint unchanged (feaff371...) - schema.json/SQL untouched, only app-layer prompt+schema+service changes. schema-version.ts regenerated canonically after a CRLF artifact from git-stash cycles (hash content identical). Live battery 15/16 on fresh fixtures + 5-quote one-off; fixtures deleted after. RS Roofing remains the single live rollout company.
+
+Residual known issues (handoff to next phase): component open-record navigation after find; P3 composite draft+component verification nondeterminism (1 refusal in 2); scale gates (EXPLAIN 100k catalogue rows, >200-quote refusal boundary, caller timeout cancellation); natural-fuzzy match of bare numerals to names ('5' vs '5th mob') is honest-empty, not auto-resolved.
