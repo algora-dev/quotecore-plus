@@ -1,25 +1,28 @@
-# START HERE - Smart Assistant loop zip (2026-09-25, evening)
+# START HERE - Smart Assistant loop zip (2026-09-26)
 
 This is the complete, current QuoteCore+ codebase (branch: ux/phase-4, commit history intact in the repo this was exported from). It is a strict superset of every previous SA handoff zip - nothing from your earlier work was dropped.
 
 ## Read this first
 
-`docs/SA_HANDOFF_2026-09-25.md` - the full handoff for the next SA phase:
-- Model decision: gpt-5.6-luna locked (benchmark table inside; re-validate any model change against the same 8-question suite)
-- Owner-priority capability gaps: quote-total reads, cross-quote aggregation, direct RLS-scoped DB access (tables/columns, not UI-shaped projections)
-- Locked invariants you must not break + phase gates P2-P4
+`docs/SA_HANDOFF_2026-09-26.md` - the full handoff for your next phase:
+- What shipped since your last zip: facts + P1.5 speed layers live, P2 live, P3 write actions live AND owner-verified end-to-end (Ridge rate edit: proposal -> button confirm -> committed, full DB + audit chain verified)
+- Two production case studies from today's owner tests (named-record resolution, flag/permissions verification discipline)
+- Your scope, owner priority order: cross-quote rollups, ranking + resolution hardening, direct RLS-scoped DB reads
+- Locked invariants + gotchas (model hotfix for reasoning_effort is in section 1 - read it before touching llmClient)
 
-## What changed since the last SA handoff zip (2026-09-24 evening)
+## What changed since the last SA handoff zip (2026-09-25 evening)
 
-- Your P1-P4 batch is fully integrated (6 modified + 38 new files, drift-verified, live on testing) - P1 navigation owner-tested working
-- Desktop takeoff overhaul (UX phases 3-4 + six owner-pass rounds): staged AI scan review card, outline editing, uncertain-line assignment, guidance tips
-- SA model switched to gpt-5.6-luna (code default + testing env)
-- Sidebar logo swapped to the new brand lockup (public/MainQCP.png)
-- 584 files newer than your last base zip
+- Facts layer live: sa_v2_speed_scope / sa_v2_count / sa_v2_quote_snapshot RPCs, engine-backed totals + exact counts, 0-token turns
+- Speed layer live + question-form expansion ("what's my latest quote" now hits the zero-LLM path)
+- P2 attention migration applied + p2 flag live for RS Roofing
+- P3 write actions enabled after acceptance battery (25/25 + 28/28) and verified live with the owner 2026-09-26 (propose-then-confirm edit flow, committed + audit-verified)
+- Named-record resolution + draft identity prompt rules (unconditional, not speed-gated)
+- Model hotfix: reasoning_effort must be none on tool turns for gpt-5.6-luna (upstream validation change)
+- Unrelated to SA but in the tree: UX Phase 5 Document Studio, takeoff canvas UX pass, PWA icons
 
 ## Loop protocol (unchanged)
 
-Return your work as a zip; Gavin LF-normalizes, drift-checks against this base, integrates phase-by-phase, runs gates (tests + build + harness), deploys to quotecore-plus-testing, and sends the next zip back with an integration update. Never touch: conversions.ts constants, sa_finish_run service-role-only contract, quota protocol.
+Return your work as a zip; Gavin LF-normalizes, drift-checks against this base, integrates phase-by-phase, runs gates (tests + build + harness), deploys to quotecore-plus-testing, and verifies with the owner before the next zip goes back. Never touch: conversions.ts constants, sa_finish_run service-role-only contract, quota protocol, propose-then-confirm write policies.
 
 ## If you think something is missing
 
