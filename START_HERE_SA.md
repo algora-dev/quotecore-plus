@@ -37,3 +37,12 @@ Return your work as a zip; Gavin LF-normalizes, drift-checks against this base, 
 ## If you think something is missing
 
 List the exact file paths. This zip is a git export of the full committed tree - if a path you expect is absent, it was never in the committed repo (scratch files, .env.local, node_modules and .git are intentionally excluded). Ask via Shaun and Gavin will verify directly.
+
+## 2026-09-26 P1.6 integration (Gavin)
+
+- Integrated the P1.6 package onto ux/phase-4 (commits 62aef4ca + 4b768354). Baseline drift was CRLF-only; local takeoff/document-studio commits untouched.
+- Migration 20260926150000_sa_v2_retrieval.sql is APPLIED to the live DB (only outstanding migration applied; P4 still off).
+- Rollout: RS Roofing enabled=true knowledge_enabled=false; SMART_ASSISTANT_RETRIEVAL_ENABLED=true on quotecore-plus-testing production (deploy k5jlgre6y). Main project untouched.
+- Verification evidence: docs/sa-retrieval-2026-09-26/INTEGRATION_REPORT_2026-09-26.md + validation/integration/. RPC security 33/33, Luna accuracy 7/8, P1.5 zero-model intact, query_workspace confirmed in runtime telemetry.
+- Harness: scripts/test-sa-retrieval-acceptance.mjs (setup|rpc|luna|regression|bench|cleanup). Fixture companies cleaned up.
+- Known follow-ups: invoice-status filter plan quality, related-orders repair variance, component open navigation, composite draft+component propose nondeterminism, scale gates (EXPLAIN at 100k rows, >200 quotes, caller timeout).
