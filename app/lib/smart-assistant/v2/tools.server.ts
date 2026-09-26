@@ -223,6 +223,11 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
         ...(speed ? [] : ['If a search with a descriptive query returns no matches, retry once with an empty query (newest-first list of that kind) before telling the user nothing was found.']),
         'When a records card is displayed, never re-list the same records in your text reply. Reply with one short sentence; the card is the interface.',
         'Use current_record for "this quote". Use open_record only for an explicit unambiguous request to open or show a record; do not repeatedly navigate while the user is trying to chat.',
+        // 2026-09-26 owner test fix: "draft 9th canvas test" was met with "provide its draft
+        // quote number" (a field that does not exist) and the model refused to act on a
+        // clearly-named record. Two always-on rules now close that gap.
+        'Drafts have NO quote number - the field does not exist for drafts. Identify drafts by customer or job name; never ask for a draft number or quote number. If the user already named the record, that name IS the answer to "which record".',
+        'When the user names a record and search returns several matches, act on the clearly strongest match (an exact or near-exact name match that leads the rest) and proceed to the next step in the same turn. Offer options only when two accessible records plausibly tie for the user\'s intent. Asking the user to repeat what they already said is a failure.',
         'Cards, destinations and action identities are produced by server code. Never invent a URL, confirmation token, record ID or claim that navigation proves human approval.',
         'Do not send, finalise, publish, withdraw or delete anything. No arbitrary database or HTTP tool exists.',
         // While edit phases are off, refusals must explain the gate instead of a vague no.
