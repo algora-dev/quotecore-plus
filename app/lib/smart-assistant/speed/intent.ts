@@ -33,7 +33,16 @@ export function parseFastIntent(raw: string): FastIntent | null {
   if ((m = text.match(new RegExp(`^${verb} (?:my |the )?(?:latest|most recent|last) ${singular}$`)))) {
     return { type: 'records', request: { kind: kinds[m[1]], selector: 'latest', presentation: 'open' } };
   }
+  // 2026-09-26 (owner test): question-form asks ("What's my latest quote",
+  // "what is my most recent draft quote") fell through to the LLM - only
+  // command verbs matched. Questions want the record read out, not opened.
+  if ((m = text.match(new RegExp(`^(?:what's|what is|whats) (?:my |the )?(?:latest|most recent|last) ${singular}$`)))) {
+    return { type: 'records', request: { kind: kinds[m[1]], selector: 'latest', presentation: 'read' } };
+  }
   if ((m = text.match(new RegExp(`^(?:${verb}|list|find) (?:all |my |the |all my )?${plural}$`)))) {
+    return { type: 'records', request: { kind: kinds[m[1]], selector: 'list', presentation: 'read' } };
+  }
+  if ((m = text.match(new RegExp(`^(?:what are|what's|whats) (?:all |my |the |all my )?${plural}$`)))) {
     return { type: 'records', request: { kind: kinds[m[1]], selector: 'list', presentation: 'read' } };
   }
   if ((m = text.match(new RegExp(`^${verb} (?:the )?${singular} (?:number |#)?([a-z]{0,8}-?\\d{1,12})$`)))) {
@@ -45,13 +54,13 @@ export function parseFastIntent(raw: string): FastIntent | null {
   if ((m = text.match(new RegExp(`^${verb} (?:this|the current) ${singular}$`)))) {
     return { type: 'records', request: { kind: kinds[m[1]], selector: 'current', presentation: 'open' } };
   }
-  if ((m = text.match(/^(?:what's|what is) the total (?:of|for) (?:my |the )?(latest|most recent|last) (quote|draft|draft quote)$/))) {
+  if ((m = text.match(/^(?:what's|what is) (?:the )?(?:total|total price|price) (?:of|for|on) (?:my |the )?(latest|most recent|last) (quote|draft|draft quote)$/))) {
     return { type: 'quote_total', request: { kind: kinds[m[2]], selector: 'latest', presentation: 'read' } };
   }
-  if ((m = text.match(/^(?:what's|what is) the total (?:of|for) (this|the current) (quote|draft|draft quote)$/))) {
+  if ((m = text.match(/^(?:what's|what is) (?:the )?(?:total|total price|price) (?:of|for|on) (this|the current) (quote|draft|draft quote)$/))) {
     return { type: 'quote_total', request: { kind: kinds[m[2]], selector: 'current', presentation: 'read' } };
   }
-  if ((m = text.match(/^(?:what's|what is) the total (?:of|for) (quote|draft|draft quote) (?:number |#)?(\d{1,12})$/))) {
+  if ((m = text.match(/^(?:what's|what is) (?:the )?(?:total|total price|price) (?:of|for|on) (quote|draft|draft quote) (?:number |#)?(\d{1,12})$/))) {
     return { type: 'quote_total', request: { kind: kinds[m[1]], selector: 'number', query: m[2], presentation: 'read' } };
   }
   if ((m = text.match(/^how many (quotes|drafts|draft quotes) did (i|we) create this month$/))) {
