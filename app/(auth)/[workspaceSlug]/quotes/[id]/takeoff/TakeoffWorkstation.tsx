@@ -5027,17 +5027,21 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
     });
 
     // ── Viewport pan/zoom input (2026-09-26, owner: "can't move around when
-    // zoomed"). Three input paths, all vpt-based (the element never scrolls):
+    // zoomed"). Input paths, all vpt-based (the element never scrolls):
     //   1. middle-mouse drag - grab and pan
     //   2. hold Space + left-drag - same, for trackpads / mice without a
     //      middle button
-    //   3. wheel: ctrl (trackpad pinch) or discrete mouse notches zoom at the
+    //   3. hold Alt + left-drag - same (owner 2026-09-26; Alt+Space works too)
+    //   4. wheel: ctrl (trackpad pinch) or discrete mouse notches zoom at the
     //      cursor; small continuous pixel deltas (trackpad two-finger) pan.
-    // Alt + drag keeps working through the Fabric handlers above.
+    // Alt + left-drag is intercepted here, BEFORE Fabric, so drawing tools
+    // never see it (the Fabric alt-pan above stays as an unreachable
+    // fallback).
     const panCleanups: Array<() => void> = [];
     const panWrapper = canvasRef.current?.parentElement;
     if (panWrapper) {
       let spaceHeld = false;
+      let altHeld = false;
       let panning = false;
       let lastX = 0;
       let lastY = 0;
@@ -5048,20 +5052,40 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         const tag = el.tagName.toLowerCase();
         return tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button' || el.isContentEditable;
       };
+      const updatePanCursor = () => {
+        panWrapper.style.cursor = panning ? 'grabbing' : (spaceHeld || altHeld ? 'grab' : '');
+      };
       const onKeyDown = (e: KeyboardEvent) => {
-        if (e.code !== 'Space' || e.repeat || isEditableTarget(e.target)) return;
-        // Stop the page itself scrolling while the user holds Space to pan.
-        e.preventDefault();
-        spaceHeld = true;
-        if (!panning) panWrapper.style.cursor = 'grab';
+        if (e.code === 'Space' && !e.repeat && !isEditableTarget(e.target)) {
+          // Stop the page itself scrolling while the user holds Space to pan.
+          e.preventDefault();
+          spaceHeld = true;
+          updatePanCursor();
+        } else if (e.key === 'Alt' && !isEditableTarget(e.target)) {
+          // Alt + left-drag pans too (owner 2026-09-26); show the hand while
+          // Alt is held so the modifier is discoverable.
+          altHeld = true;
+          updatePanCursor();
+        }
       };
       const onKeyUp = (e: KeyboardEvent) => {
-        if (e.code !== 'Space') return;
+        if (e.code === 'Space') {
+          spaceHeld = false;
+          updatePanCursor();
+        } else if (e.key === 'Alt') {
+          altHeld = false;
+          updatePanCursor();
+        }
+      };
+      // Alt+Tab and window switches never deliver keyup - never stick in
+      // grab mode.
+      const onBlur = () => {
         spaceHeld = false;
-        if (!panning) panWrapper.style.cursor = '';
+        altHeld = false;
+        updatePanCursor();
       };
       const onPointerDown = (e: PointerEvent) => {
-        const wantsPan = e.button === 1 || (e.button === 0 && spaceHeld);
+        const wantsPan = e.button === 1 || (e.button === 0 && (spaceHeld || e.altKey));
         if (!wantsPan) return;
         // preventDefault on pointerdown also suppresses the compatibility
         // mousedown, so Fabric never sees it: no stray lines/points while
@@ -5088,7 +5112,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       const onPointerUp = (e: PointerEvent) => {
         if (!panning) return;
         panning = false;
-        panWrapper.style.cursor = spaceHeld ? 'grab' : '';
+        updatePanCursor();
         try { panWrapper.releasePointerCapture(e.pointerId); } catch { /* already released */ }
       };
       const onWheel = (e: WheelEvent) => {
@@ -5129,6 +5153,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
       panWrapper.addEventListener('wheel', onWheel, { passive: false });
       window.addEventListener('keydown', onKeyDown);
       window.addEventListener('keyup', onKeyUp);
+      window.addEventListener('blur', onBlur);
       panCleanups.push(() => {
         panWrapper.removeEventListener('pointerdown', onPointerDown, true);
         panWrapper.removeEventListener('pointermove', onPointerMove);
@@ -5137,6 +5162,7 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
         panWrapper.removeEventListener('wheel', onWheel);
         window.removeEventListener('keydown', onKeyDown);
         window.removeEventListener('keyup', onKeyUp);
+        window.removeEventListener('blur', onBlur);
       });
     }
 
@@ -7933,12 +7959,28 @@ const handleApplyRoofAreaToComponent = (componentId: string, roofAreaId: string)
                                         const libName = selectedLibraryId === ALL_LIBRARIES
                                           ? 'All your libraries'
                                           : (collections.find(c => c.id === selectedLibraryId)?.name ?? 'Selected library');
-                                        const compatTypes = m.type === 'area' ? ['area', 'irregular_area'] : ['line'];
-                                        const libComps = displayComponents.filter(c => !c.is_system
-                                          && (selectedLibraryId === ALL_LIBRARIES || (c.collection_id ?? null) === selectedLibraryId)
-                                          && compatTypes.includes(String(c.measurement_type ?? c.default_measurement_type ?? '')));
+                                        // Owner 2026-09-26: library components
+                                        // store 'lineal', never 'line' - the old
+                                        // filter matched nothing. 'line' stays
+                                        // only as a defensive fallback.
+                                        const compatTypes = m.type === 'area' ? ['area', 'irregular_area'] : ['lineal', 'line'];
+                                        const isCompat = (c: Component) => !c.is_system
+                                          && compatTypes.includes(String(c.measurement_type ?? c.default_measurement_type ?? ''));
+                                        const libSelected = displayComponents.filter(c => isCompat(c)
+                                          && (selectedLibraryId === ALL_LIBRARIES || (c.collection_id ?? null) === selectedLibraryId));
+                                        // Owner 2026-09-26: the selected library
+                                        // can exist but hold no components (the
+                                        // RS Roofing Standard Library does - the
+                                        // real components live in 'My Components'
+                                        // and unfiled). Never block the
+                                        // assignment: fall back to every
+                                        // compatible component the company has.
+                                        const libComps = libSelected.length > 0
+                                          ? libSelected
+                                          : displayComponents.filter(c => isCompat(c));
+                                        const shownLibName = libSelected.length > 0 ? libName : 'All your libraries';
                                         return (
-                                          <optgroup label={`Your library: ${libName}`}>
+                                          <optgroup label={`Your library: ${shownLibName}`}>
                                             {libComps.length === 0
                                               ? <option value="" disabled>No {m.type === 'area' ? 'area' : 'line'} components in this library</option>
                                               : libComps.map(c => (
