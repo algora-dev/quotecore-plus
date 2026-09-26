@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useId, Fragment } from 'react';
+import { useState, useRef, useId, useEffect, Fragment } from 'react';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import { QcInput, QcSelect } from '@/app/components/ui/v2/QcField';
 import { getTradeLabels } from '@/app/lib/trades/labels';
@@ -28,7 +28,8 @@ export function ExpandableComponent({
   onUpdateSettings,
   onCombineEntries,
   onSplitEntries,
-  copilotId
+  copilotId,
+  assistantFocusRequest = 0
 }: {
   comp: QuoteComponentRow;
   entries: QuoteComponentEntryRow[];
@@ -52,6 +53,7 @@ export function ExpandableComponent({
   onCombineEntries?: (compId: string) => Promise<void>;
   onSplitEntries?: (compId: string) => Promise<void>;
   copilotId?: string;
+  assistantFocusRequest?: number;
 }) {
   const controlId = useId();
   // Phase 6.5: combine/split UX. Linear-shaped measurement types only.
@@ -76,6 +78,16 @@ export function ExpandableComponent({
   // Types that support a toggle between single-value and dimension-based entry
   const hasEntryModeToggle = isAreaType || isVolumePreset || isVolume3d || isLxhPreset;
   const [expanded, setExpanded] = useState(false);
+  const focusRoot = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!assistantFocusRequest) return;
+    setExpanded(true);
+    const frame = requestAnimationFrame(() => {
+      focusRoot.current?.scrollIntoView({ block: 'center', behavior: 'auto' });
+      document.getElementById(`${controlId}-toggle`)?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [assistantFocusRequest, controlId]);
   const [adding, setAdding] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -255,7 +267,7 @@ export function ExpandableComponent({
   }
 
   return (
-    <div data-qc-component="C20" className="qb-component" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
+    <div ref={focusRoot} data-sa-component-id={comp.id} data-qc-component="C20" className="qb-component" {...(copilotId ? { 'data-copilot': copilotId } : {})}>
       <div className="qb-component-heading">
         <button type="button" id={`${controlId}-toggle`} className="qb-component-toggle"
           aria-expanded={expanded} aria-controls={`${controlId}-panel`}

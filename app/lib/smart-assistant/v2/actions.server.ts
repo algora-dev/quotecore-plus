@@ -48,10 +48,12 @@ export async function proposeQuoteDetails(client: SupabaseClient, access: Access
         throw new ProposalError('These names already match. No change is needed.');
     return storeProposal(access, runId, { kind: 'quote_details', target: { kind: q.status === 'draft' ? 'draft_quote' : 'quote', id: String(q.id) }, targetKind: 'quote', targetId: String(q.id), sections, before: snapshot, after: changes, title: 'Review quote details', changes: diff, note: 'Not applied yet. Only these names will change. This does not update other quotes for the same customer, finalise or send the quote.', permissionRevision: access.permissionRevision }, { kind: 'quote_details', id: q.id, changes });
 }
-export async function proposeComponentChange(client: SupabaseClient, access: Access, runId: string, args: Record<string, unknown>): Promise<ActionView> {
+export async function proposeComponentChange(client: SupabaseClient, access: Access, runId: string, args: Record<string, unknown>, expectedQuoteId?: string): Promise<ActionView> {
     const input = parseComponentChanges(args.changes);
     const snapshot = await targetSnapshot(client, access, 'quote_component', args.component_id);
     const q = row(snapshot.quote, 'quote'), c = row(snapshot.component, 'component');
+    if (expectedQuoteId !== undefined && (!isUuid(expectedQuoteId) || q.id !== expectedQuoteId || c.quote_id !== expectedQuoteId || c.id !== args.component_id))
+        throw new ProposalError('The component no longer belongs to the selected quote. Nothing was proposed; resolve the current relationship again.');
     editableQuote(q);
     const sections: AssistantSection[] = [quoteSection(q), 'components'];
     requireEdits(access, sections);

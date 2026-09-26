@@ -1,0 +1,54 @@
+TAP version 13
+# Subtest: empty diagnostics do not invent speed or successful finish
+ok 1 - empty diagnostics do not invent speed or successful finish
+  ---
+  duration_ms: 0.980975
+  type: 'test'
+  ...
+# Subtest: capability diagnostics expose server/company/tool mismatch
+ok 2 - capability diagnostics expose server/company/tool mismatch
+  ---
+  duration_ms: 0.253912
+  type: 'test'
+  ...
+# Subtest: single model output is not accepted as canonically completed without trusted request finish
+ok 3 - single model output is not accepted as canonically completed without trusted request finish
+  ---
+  duration_ms: 0.329725
+  type: 'test'
+  ...
+# Subtest: request join retains canonical one-model completion and measured percentiles
+ok 4 - request join retains canonical one-model completion and measured percentiles
+  ---
+  duration_ms: 0.278599
+  type: 'test'
+  ...
+# Subtest: prefixed and envelope retrieval logs decode without row content
+ok 5 - prefixed and envelope retrieval logs decode without row content
+  ---
+  duration_ms: 0.169485
+  type: 'test'
+  ...
+# Subtest: benchmark plan is offline and shows the complete 100-case corpus
+ok 6 - benchmark plan is offline and shows the complete 100-case corpus
+  ---
+  duration_ms: 36.532124
+  type: 'test'
+  ...
+# Subtest: live benchmark is refused without explicit quota/history side-effect opt-in
+ok 7 - live benchmark is refused without explicit quota/history side-effect opt-in
+  ---
+  duration_ms: 29.670811
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 75.996356
+
+EXIT_CODE=0

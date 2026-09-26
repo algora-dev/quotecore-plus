@@ -1,8 +1,9 @@
+import type { PopulationCoverage } from './ranking';
 /** Constrained read plan. Tenant IDs, SQL, URLs and mutation payloads are NOT inputs. */
 export type Scalar = string | number | boolean | null;
 export type FieldType = 'text' | 'number' | 'boolean' | 'uuid' | 'date' | 'timestamp' | 'json';
 export type Filter = { field: string; op: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'words' | 'in' | 'is_null'; value: Scalar | Scalar[] };
-export type Search = { text: string; match: 'natural' | 'words' | 'exact' };
+export type Search = { text: string; match: 'natural' | 'words' | 'exact'; /** P1.7 only: authorised text field, not a SQL expression. */ field?: string };
 export type Metric = { op: 'count' | 'sum' | 'min' | 'max' | 'avg'; field?: string };
 export type RelatedFilter = { relation: string; filters: Filter[]; search?: Search };
 export type QueryPlan = {
@@ -30,11 +31,11 @@ export type QueryData = {
   version: 1; schemaHash: string; source: string; mode: 'rows' | 'aggregate' | 'engine_inputs';
   rows: QueryRow[]; asOf: string; truncated: boolean; complete: boolean;
   groupBy: string[]; warnings: string[];
-  snapshots?: unknown; status?: string;
+  snapshots?: unknown; status?: string; coverage?: PopulationCoverage;
 };
 export type RetrievalResult = {
   source: string; mode: string; state: 'ok' | 'empty' | 'ambiguous' | 'incomplete' | RetrievalCode;
   rows: QueryRow[]; asOf: string | null; complete: boolean; truncated: boolean;
   scope: string; warnings: string[]; answer: string; resolution?: Resolution;
-  cardId?: string; code?: RetrievalCode;
+  cardId?: string; code?: RetrievalCode; coverage?: PopulationCoverage;
 };

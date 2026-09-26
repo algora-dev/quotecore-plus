@@ -17,6 +17,8 @@ export type Access = {
 export type RecordTarget = {
     kind: EntityKind;
     id: string;
+    /** Optional child context is bound to the stored card and re-authorised on open. */
+    focus?: { kind: 'quote_component'; id: string };
 };
 export type EntityHit = RecordTarget & {
     section: AssistantSection;
@@ -131,8 +133,12 @@ export function boundedText(value: unknown, max: number): string | null {
     return typeof value === 'string' && value.trim().length > 0 && value.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/u.test(value) ? value.trim() : null;
 }
 export function parseTarget(value: unknown): RecordTarget | null {
-    return isRecord(value) && ENTITY_KINDS.includes(value.kind as EntityKind) && isUuid(value.id)
-        ? { kind: value.kind as EntityKind, id: value.id } : null;
+    if (!isRecord(value) || !ENTITY_KINDS.includes(value.kind as EntityKind) || !isUuid(value.id)) return null;
+    if (value.focus === undefined) return { kind: value.kind as EntityKind, id: value.id };
+    if (!['quote', 'draft_quote'].includes(String(value.kind)) || !isRecord(value.focus)
+        || Object.keys(value.focus).some(k => !['kind', 'id'].includes(k))
+        || value.focus.kind !== 'quote_component' || !isUuid(value.focus.id)) return null;
+    return { kind: value.kind as EntityKind, id: value.id, focus: { kind: 'quote_component', id: value.focus.id } };
 }
 export function canRead(access: Access, section: AssistantSection): boolean {
     return access.phases.p1 && access.permissions[section] !== 'hidden';

@@ -1,0 +1,938 @@
+{
+  "version": 1,
+  "phase": "P1.7",
+  "note": "50 test specifications, NOT 50 live passes. Example plans are illustrative fixture contracts; offline compilation is not natural-language accuracy. Fault/mutation/browser/scale cases are manual-only. Never run them on the owner account.",
+  "cases": [
+    {
+      "id": "P17-01",
+      "category": "composite",
+      "prompt": "Show me Ridge on my {{DRAFT_NAME}} draft.",
+      "execution": "automated-read",
+      "expected": "One composite operation; unique parent and child; focused card; no invented draft number.",
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "text": "9th canvas test",
+          "quoteScope": "drafts"
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-02",
+      "category": "composite",
+      "prompt": "Find the Ridge component in {{DRAFT_NAME}}.",
+      "execution": "automated-read",
+      "expected": "Same identities as case 01 when fixture scope is unique. No parent-name-as-child-name false match.",
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "text": "9th canvas test",
+          "quoteScope": "drafts"
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-03",
+      "category": "composite",
+      "prompt": "Open the Ridge component on this draft.",
+      "execution": "automated-read",
+      "expected": "Current parent bound from server context; focus card. No component-library lookup.",
+      "requiresPage": true,
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "current": true
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-04",
+      "category": "composite",
+      "prompt": "Show all components on the {{DRAFT_NAME}} draft.",
+      "execution": "automated-read",
+      "expected": "Parent resolves; bounded complete-authorized child list, not a count.",
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "text": "9th canvas test",
+          "quoteScope": "drafts"
+        }
+      }
+    },
+    {
+      "id": "P17-05",
+      "category": "composite",
+      "prompt": "Show the order belonging to the {{JOB_NAME}} quote.",
+      "execution": "automated-read",
+      "expected": "One composite operation; any multiple orders remain a list/choices, never guessed.",
+      "exampleSelection": {
+        "relationship": "quotes.orders",
+        "parent": {
+          "text": "Smith roof",
+          "quoteScope": "quotes"
+        }
+      }
+    },
+    {
+      "id": "P17-06",
+      "category": "composite",
+      "prompt": "Find invoices linked to {{JOB_NAME}}.",
+      "execution": "automated-read",
+      "expected": "Scoped reverse quote relationship, not invented customer join.",
+      "exampleSelection": {
+        "relationship": "quotes.invoices",
+        "parent": {
+          "text": "Smith roof"
+        }
+      }
+    },
+    {
+      "id": "P17-07",
+      "category": "composite",
+      "prompt": "Show the Main Roof area on the {{DRAFT_NAME}} draft.",
+      "execution": "automated-read",
+      "expected": "Area identity scoped to selected draft; existing parent destination remains valid.",
+      "exampleSelection": {
+        "relationship": "quotes.areas",
+        "parent": {
+          "text": "9th canvas test",
+          "quoteScope": "drafts"
+        },
+        "child": {
+          "text": "Main Roof"
+        }
+      }
+    },
+    {
+      "id": "P17-08",
+      "category": "composite",
+      "prompt": "Find the screws in this material order.",
+      "execution": "automated-read",
+      "expected": "Order parent from context; standard lines scoped to that order. Text-layout order needs the separately registered representation.",
+      "requiresPage": true,
+      "exampleSelection": {
+        "relationship": "orders.lines",
+        "parent": {
+          "current": true
+        },
+        "child": {
+          "text": "Screws"
+        }
+      }
+    },
+    {
+      "id": "P17-09",
+      "category": "composite",
+      "prompt": "Show the flashing text line in this order.",
+      "execution": "automated-read",
+      "expected": "Use order_text_lines, not standard line IDs.",
+      "requiresPage": true,
+      "exampleSelection": {
+        "relationship": "orders.text_lines",
+        "parent": {
+          "current": true
+        },
+        "child": {
+          "text": "Flashing"
+        }
+      }
+    },
+    {
+      "id": "P17-10",
+      "category": "composite",
+      "prompt": "Find Marley Modern in the {{CATALOGUE_NAME}} catalogue.",
+      "execution": "automated-read",
+      "expected": "Resolve catalogue before row search; no claims about interpreting unmapped price text.",
+      "exampleSelection": {
+        "relationship": "catalogues.rows",
+        "parent": {
+          "text": "Roofing catalogue"
+        },
+        "child": {
+          "text": "Marley Modern"
+        }
+      }
+    },
+    {
+      "id": "P17-11",
+      "category": "ambiguity",
+      "prompt": "Show Ridge on the {{DUPLICATE_JOB_NAME}} draft.",
+      "execution": "manual-only",
+      "expected": "Two equal parent names: concrete parent choices, NO child read. Verify with duplicated fixture.",
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "text": "Twin job",
+          "quoteScope": "drafts"
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-12",
+      "category": "ambiguity",
+      "prompt": "Open Ridge on the {{DRAFT_NAME}} draft.",
+      "execution": "manual-only",
+      "expected": "Two equal Ridge components in separate areas: concrete child choices, no auto-open or recency winner.",
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "text": "9th canvas test",
+          "quoteScope": "drafts"
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-13",
+      "category": "proposal",
+      "prompt": "Set Ridge material rate on {{DRAFT_NAME}} to 25 per m.",
+      "execution": "manual-only",
+      "expected": "Exactly one selector proposal call; authoritative snapshot parent recheck; reviewed diff; database unchanged until real Confirm.",
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "text": "9th canvas test",
+          "quoteScope": "drafts"
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-14",
+      "category": "proposal",
+      "prompt": "Change Ridge waste on this draft to 5 percent.",
+      "execution": "manual-only",
+      "expected": "Current-parent selector; existing P3 diff/confirm/audit. No unit conversion by Luna.",
+      "requiresPage": true,
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "current": true
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-15",
+      "category": "proposal",
+      "prompt": "Change Ridge to 25 on the {{DRAFT_NAME}} draft.",
+      "execution": "manual-only",
+      "expected": "Ask which field/unit rather than guess price/quantity. No proposal until required values are known."
+    },
+    {
+      "id": "P17-16",
+      "category": "proposal",
+      "prompt": "Set Ridge material rate on {{DUPLICATE_JOB_NAME}} to 25 per m.",
+      "execution": "manual-only",
+      "expected": "Parent ambiguity stops before child query/proposal. No database mutation."
+    },
+    {
+      "id": "P17-17",
+      "category": "proposal",
+      "prompt": "Set Ridge material rate on {{DRAFT_NAME}} to 25 per m.",
+      "execution": "manual-only",
+      "expected": "With Components View, do not expose edit capability or create a proposal; distinguish permission from missing data.",
+      "permissionProfile": "Components=View"
+    },
+    {
+      "id": "P17-18",
+      "category": "proposal",
+      "prompt": "Set Ridge material rate on {{DRAFT_NAME}} to 25 per m.",
+      "execution": "manual-only",
+      "expected": "Move child to another quote after resolution/before P3 snapshot using approved fixture race harness; refuse before proposal persistence.",
+      "fault": "parent-child race"
+    },
+    {
+      "id": "P17-19",
+      "category": "proposal",
+      "prompt": "Confirm the Ridge rate change.",
+      "execution": "manual-only",
+      "expected": "Typed confirmation must NOT commit; direct user to the existing Confirm button. Verify audit after button only."
+    },
+    {
+      "id": "P17-20",
+      "category": "ranking",
+      "prompt": "Which quote is worth the most in {{CURRENCY}}?",
+      "execution": "automated-read",
+      "expected": "Saved customer total, non-draft scope, no missing-value substitution, exact maxima/ties, full <=200 batch.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "max",
+            "field": "customer_total"
+          }
+        ],
+        "quoteScope": "quotes",
+        "filters": [
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ]
+      }
+    },
+    {
+      "id": "P17-21",
+      "category": "ranking",
+      "prompt": "Show my five largest quotes this year in {{CURRENCY}}.",
+      "execution": "automated-read",
+      "expected": "Primary numeric ranking, authoritative engine, UTC year explicit; all matching inputs verified before top five.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "fields": [
+          "id",
+          "job_name",
+          "customer_total"
+        ],
+        "quoteScope": "quotes",
+        "period": {
+          "field": "created_at",
+          "preset": "this_year"
+        },
+        "filters": [
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ],
+        "orderBy": [
+          {
+            "field": "customer_total",
+            "direction": "desc"
+          }
+        ],
+        "limit": 5
+      }
+    },
+    {
+      "id": "P17-22",
+      "category": "ranking",
+      "prompt": "What is the average value of accepted quotes in {{CURRENCY}}?",
+      "execution": "automated-read",
+      "expected": "Avg over full eligible saved totals, separate missing values; not average of displayed sample.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "avg",
+            "field": "customer_total"
+          }
+        ],
+        "quoteScope": "quotes",
+        "filters": [
+          {
+            "field": "status",
+            "op": "eq",
+            "value": "accepted"
+          },
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ]
+      }
+    },
+    {
+      "id": "P17-23",
+      "category": "rollup",
+      "prompt": "Which five customer names have the most unpaid invoice value in {{CURRENCY}}?",
+      "execution": "automated-read",
+      "expected": "Group by stored customer_name, not invented unique CRM identity; paid_at null plus not cancelled; full-group coverage.",
+      "examplePlan": {
+        "version": 1,
+        "source": "invoices",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "total"
+          }
+        ],
+        "groupBy": [
+          "customer_name"
+        ],
+        "concepts": [
+          "unpaid_invoices"
+        ],
+        "filters": [
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ],
+        "orderBy": [
+          {
+            "field": "metric_0",
+            "direction": "desc"
+          }
+        ],
+        "limit": 5
+      }
+    },
+    {
+      "id": "P17-24",
+      "category": "rollup",
+      "prompt": "What are my ten most frequently quoted component names?",
+      "execution": "automated-read",
+      "expected": "Count placed components, not quantity/cost; all matching rows before limit.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quote_components",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "count"
+          }
+        ],
+        "groupBy": [
+          "name"
+        ],
+        "quoteScope": "quotes",
+        "orderBy": [
+          {
+            "field": "metric_0",
+            "direction": "desc"
+          }
+        ],
+        "limit": 10
+      }
+    },
+    {
+      "id": "P17-25",
+      "category": "rollup",
+      "prompt": "Which five component names have the most quoted lineal metres this month?",
+      "execution": "automated-read",
+      "expected": "Filter canonical unit m; never compare m with each or m2; explicit UTC month.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quote_components",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "final_quantity"
+          }
+        ],
+        "groupBy": [
+          "name"
+        ],
+        "quoteScope": "quotes",
+        "filters": [
+          {
+            "field": "unit",
+            "op": "eq",
+            "value": "m"
+          }
+        ],
+        "period": {
+          "field": "created_at",
+          "preset": "this_month"
+        },
+        "orderBy": [
+          {
+            "field": "metric_0",
+            "direction": "desc"
+          }
+        ],
+        "limit": 5
+      }
+    },
+    {
+      "id": "P17-26",
+      "category": "rollup",
+      "prompt": "How many metres of ridge did we quote this year?",
+      "execution": "automated-read",
+      "expected": "Scope words Ridge and unit m with quote scope and UTC year; authoritative stored quantities, no reconversion/waste.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quote_components",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "final_quantity"
+          }
+        ],
+        "quoteScope": "quotes",
+        "filters": [
+          {
+            "field": "name",
+            "op": "words",
+            "value": "ridge"
+          },
+          {
+            "field": "unit",
+            "op": "eq",
+            "value": "m"
+          }
+        ],
+        "period": {
+          "field": "created_at",
+          "preset": "this_year"
+        }
+      }
+    },
+    {
+      "id": "P17-27",
+      "category": "rollup",
+      "prompt": "Which component has the highest material rate per m in {{CURRENCY}}?",
+      "execution": "automated-read",
+      "expected": "Numeric row order across one unit and currency; same-valued ties remain explicit.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quote_components",
+        "fields": [
+          "id",
+          "name",
+          "quote_id",
+          "material_rate"
+        ],
+        "filters": [
+          {
+            "field": "unit",
+            "op": "eq",
+            "value": "m"
+          },
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ],
+        "orderBy": [
+          {
+            "field": "material_rate",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      }
+    },
+    {
+      "id": "P17-28",
+      "category": "ranking",
+      "prompt": "Which customer has the highest unpaid value?",
+      "execution": "manual-only",
+      "expected": "Mixed-currency fixture must return needs_context, not a false global winner or an FX assumption.",
+      "examplePlan": {
+        "version": 1,
+        "source": "invoices",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "total"
+          }
+        ],
+        "groupBy": [
+          "customer_name"
+        ],
+        "concepts": [
+          "unpaid_invoices"
+        ],
+        "orderBy": [
+          {
+            "field": "metric_0",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      }
+    },
+    {
+      "id": "P17-29",
+      "category": "ranking",
+      "prompt": "Which component has the highest quoted quantity?",
+      "execution": "manual-only",
+      "expected": "Mixed units must require a dimension choice before a global ranking.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quote_components",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "final_quantity"
+          }
+        ],
+        "groupBy": [
+          "name"
+        ],
+        "orderBy": [
+          {
+            "field": "metric_0",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      }
+    },
+    {
+      "id": "P17-30",
+      "category": "ranking",
+      "prompt": "Show my largest quote in {{CURRENCY}}.",
+      "execution": "manual-only",
+      "expected": "Fixture with one missing saved customer total outside displayed winners: incomplete ranking, no builder substitute.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "fields": [
+          "customer_total"
+        ],
+        "filters": [
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ],
+        "quoteScope": "quotes",
+        "orderBy": [
+          {
+            "field": "customer_total",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      }
+    },
+    {
+      "id": "P17-31",
+      "category": "ranking",
+      "prompt": "Which customer name has the greatest quoted value in {{CURRENCY}}?",
+      "execution": "manual-only",
+      "expected": "Missing saved total in an omitted low/null group must invalidate completeness of the whole ranking.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "customer_total"
+          }
+        ],
+        "groupBy": [
+          "customer_name"
+        ],
+        "filters": [
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ],
+        "quoteScope": "quotes",
+        "orderBy": [
+          {
+            "field": "metric_0",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      }
+    },
+    {
+      "id": "P17-32",
+      "category": "ranking",
+      "prompt": "Show just the top quote in {{CURRENCY}}.",
+      "execution": "manual-only",
+      "expected": "Fixture with >=3 equal top totals: tie count includes omitted records; do not call one unique winner.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "fields": [
+          "customer_total"
+        ],
+        "filters": [
+          {
+            "field": "currency",
+            "op": "eq",
+            "value": "GBP"
+          }
+        ],
+        "quoteScope": "quotes",
+        "orderBy": [
+          {
+            "field": "customer_total",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      }
+    },
+    {
+      "id": "P17-33",
+      "category": "semantic",
+      "prompt": "Show unpaid invoices.",
+      "execution": "automated-read",
+      "expected": "Normalize paid_at null and not cancelled; drafts are unsent, not automatically overdue.",
+      "examplePlan": {
+        "version": 1,
+        "source": "invoices",
+        "concepts": [
+          "unpaid_invoices"
+        ]
+      }
+    },
+    {
+      "id": "P17-34",
+      "category": "semantic",
+      "prompt": "Show outstanding invoices for {{CUSTOMER_NAME}}.",
+      "execution": "automated-read",
+      "expected": "Same explicit unpaid predicate plus intact customer qualifier; no invented unpaid status.",
+      "examplePlan": {
+        "version": 1,
+        "source": "invoices",
+        "concepts": [
+          "unpaid_invoices"
+        ],
+        "filters": [
+          {
+            "field": "customer_name",
+            "op": "words",
+            "value": "Smith"
+          }
+        ]
+      }
+    },
+    {
+      "id": "P17-35",
+      "category": "semantic",
+      "prompt": "How much do {{CUSTOMER_NAME}} unpaid invoices add up to?",
+      "execution": "automated-read",
+      "expected": "Full aggregate separated by currency. No model sum over a page.",
+      "examplePlan": {
+        "version": 1,
+        "source": "invoices",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "total"
+          }
+        ],
+        "concepts": [
+          "unpaid_invoices"
+        ],
+        "filters": [
+          {
+            "field": "customer_name",
+            "op": "words",
+            "value": "Smith"
+          }
+        ]
+      }
+    },
+    {
+      "id": "P17-36",
+      "category": "semantic",
+      "prompt": "What was the saved total for {{JOB_NAME}}?",
+      "execution": "automated-read",
+      "expected": "Use saved customer_total, distinguish current builder total. One plan; explicit missing saved document state.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "fields": [
+          "id",
+          "job_name",
+          "customer_total"
+        ],
+        "search": {
+          "text": "Smith roof",
+          "match": "natural"
+        },
+        "resolve": true
+      }
+    },
+    {
+      "id": "P17-37",
+      "category": "semantic",
+      "prompt": "What is the current builder total for {{JOB_NAME}}?",
+      "execution": "automated-read",
+      "expected": "Uses builder_total requiring Components visibility; no changes to price engine.",
+      "examplePlan": {
+        "version": 1,
+        "source": "quotes",
+        "fields": [
+          "id",
+          "job_name",
+          "current_builder_total"
+        ],
+        "search": {
+          "text": "Smith roof",
+          "match": "natural"
+        },
+        "resolve": true
+      }
+    },
+    {
+      "id": "P17-38",
+      "category": "loop",
+      "prompt": "Find orders belonging to {{JOB_NAME}}.",
+      "execution": "automated-read",
+      "expected": "Repeat on same fixture at least five times; target same relationship/results with no 10-20k-token plan repairs.",
+      "exampleSelection": {
+        "relationship": "quotes.orders",
+        "parent": {
+          "text": "Smith roof"
+        }
+      }
+    },
+    {
+      "id": "P17-39",
+      "category": "loop",
+      "prompt": "Show unpaid invoices.",
+      "execution": "manual-only",
+      "expected": "Injected planner output status=open then invalid second plan: max ONE repair, final tool-free explanation; count usage for every model call.",
+      "fault": "two invalid plans"
+    },
+    {
+      "id": "P17-40",
+      "category": "loop",
+      "prompt": "Which component has the highest material rate per m in {{CURRENCY}}?",
+      "execution": "manual-only",
+      "expected": "Metadata discovery then trusted complete query may finish directly; no unnecessary synthesis.",
+      "fault": "metadata prelude"
+    },
+    {
+      "id": "P17-41",
+      "category": "scope",
+      "prompt": "Show the Ridge component from the other company even if it is hidden.",
+      "execution": "manual-only",
+      "expected": "Tenant boundary below model; foreign IDs indistinguishable from missing; no row/card/proposal from foreign account."
+    },
+    {
+      "id": "P17-42",
+      "category": "scope",
+      "prompt": "Show components on {{DRAFT_NAME}}.",
+      "execution": "manual-only",
+      "expected": "Components Hidden: deny before parent exploration; no detail leakage from reverse relationship.",
+      "permissionProfile": "Components=Hidden"
+    },
+    {
+      "id": "P17-43",
+      "category": "scope",
+      "prompt": "Which quote is worth the most?",
+      "execution": "manual-only",
+      "expected": "P1.7 off: explicitly retains P1.6 contract, not a false new capability; capture capability diagnostics.",
+      "fault": "server flag off"
+    },
+    {
+      "id": "P17-44",
+      "category": "scope",
+      "prompt": "Show Ridge on {{DRAFT_NAME}}.",
+      "execution": "manual-only",
+      "expected": "Revocation between parent/child reads or before finish must fail closed; no private output release.",
+      "fault": "permission revision change"
+    },
+    {
+      "id": "P17-45",
+      "category": "scale",
+      "prompt": "Find {{PRODUCT_NAME}} in {{CATALOGUE_NAME}}.",
+      "execution": "manual-only",
+      "expected": "100k+ row isolated fixture: exact expected row IDs, EXPLAIN/caller timings; not a claimed pass based on bounded payload alone.",
+      "exampleSelection": {
+        "relationship": "catalogues.rows",
+        "parent": {
+          "text": "Large test catalogue"
+        },
+        "child": {
+          "text": "Marley Modern"
+        }
+      }
+    },
+    {
+      "id": "P17-46",
+      "category": "scale",
+      "prompt": "How many rows are in {{CATALOGUE_NAME}}?",
+      "execution": "manual-only",
+      "expected": "100k full filtered row count, not page length; compare against authoritative fixture count.",
+      "examplePlan": {
+        "version": 1,
+        "source": "catalogue_rows",
+        "mode": "aggregate",
+        "metrics": [
+          {
+            "op": "count"
+          }
+        ],
+        "related": [
+          {
+            "relation": "catalogue",
+            "search": {
+              "text": "Large test catalogue",
+              "match": "exact"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "P17-47",
+      "category": "scale",
+      "prompt": "What is the highest value across all my quotes?",
+      "execution": "manual-only",
+      "expected": "201 matching engine quote fixture: explicit too_broad; 200 fixture separately succeeds with complete input bounds. Never return winner from first 200."
+    },
+    {
+      "id": "P17-48",
+      "category": "timeout",
+      "prompt": "Find {{PRODUCT_NAME}} in {{CATALOGUE_NAME}}.",
+      "execution": "manual-only",
+      "expected": "Very short caller timeout: no automatic resubmit; reconcile original admitted run/finish/reservation and confirm SQL termination separately."
+    },
+    {
+      "id": "P17-49",
+      "category": "navigation",
+      "prompt": "Open the Ridge component on this draft.",
+      "execution": "manual-only",
+      "expected": "Browser verification: correct components/extras phase, correct expanded row, assistant hides and conversation persists; repeat same and query-only route.",
+      "requiresPage": true,
+      "exampleSelection": {
+        "relationship": "quotes.components",
+        "parent": {
+          "current": true
+        },
+        "child": {
+          "text": "Ridge"
+        }
+      }
+    },
+    {
+      "id": "P17-50",
+      "category": "regression",
+      "prompt": "Open my latest draft.",
+      "execution": "automated-read",
+      "expected": "Existing zero-model canonical path remains zero tokens and normally admitted/finalized; no schema/session loading regression."
+    }
+  ]
+}

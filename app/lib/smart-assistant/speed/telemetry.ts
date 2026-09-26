@@ -8,6 +8,9 @@ export class TurnTelemetry {
   toolCalls = 0;
   repeatedCalls = 0;
   terminalToolReplies = 0;
+  retrievalPlanFailures = 0;
+  retrievalRepairs = 0;
+  repairBudgetStops = 0;
   firstTokenMs: number | null = null;
   constructor(readonly runId: string, readonly model: string) {}
   async measure<T>(stage: string, work: () => Promise<T>): Promise<T> {
@@ -20,7 +23,7 @@ export class TurnTelemetry {
   snapshot(status: string, tokensIn = 0, tokensOut = 0) {
     return { event: 'sa_turn_performance', version: 1, runId: this.runId, model: this.model, path: this.path,
       status, pipelineMs: Math.round(performance.now() - this.started), modelCalls: this.modelCalls,
-      toolCalls: this.toolCalls, repeatedCalls: this.repeatedCalls, terminalToolReplies: this.terminalToolReplies, firstModelTokenMs: this.firstTokenMs,
+      toolCalls: this.toolCalls, retrievalPlanFailures: this.retrievalPlanFailures, retrievalRepairs: this.retrievalRepairs, repairBudgetStops: this.repairBudgetStops, repeatedCalls: this.repeatedCalls, terminalToolReplies: this.terminalToolReplies, firstModelTokenMs: this.firstTokenMs,
       tokensIn, tokensOut, stages: this.spans.slice() };
   }
 }

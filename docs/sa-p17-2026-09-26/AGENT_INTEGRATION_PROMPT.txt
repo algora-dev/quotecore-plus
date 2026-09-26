@@ -1,0 +1,40 @@
+Please integrate the attached P1.7 implementation ZIP against your current branch;
+do not blindly overwrite newer unrelated fixes. The source baseline was your
+P1.6 next-phase export, commit a18f4ab9 (26 September 2026).
+
+Read RETURN_NOTES.md, docs/SMART_ASSISTANT_P17_HANDOFF_2026-09-26.md,
+docs/sa-p17-2026-09-26/validation/VALIDATION.md and DATABASE_ACCEPTANCE.md first.
+
+P1.7 implements registered deterministic parent/child resolution, direct named
+component proposal preparation through existing P3, bounded retrieval-plan repair,
+semantic normalization, complete-population ranking/rollups and focused component
+navigation. Do not redesign the retrieval architecture or expand unrelated scope.
+
+Preserve Luna/reasoning fixes, admission/reservation/replay/trusted finish/quota,
+RLS/account isolation, Hidden/View/Edit and existing P1.5/P2/P3 policies. P4 and
+knowledge stay off. No visual redesign, speech, PWA or new mutation system.
+
+Keep SMART_ASSISTANT_RETRIEVAL_V17_ENABLED off until build/security gates pass.
+Only new migration is 20260926190000_sa_v2_retrieval_v17.sql, currently a draft.
+Review and test that migration against the real schema; do not apply all pending
+migrations. Preserve the one-company real testing rollout; isolated destructive or
+large-fixture tests require approved disposable scope, never owner records.
+
+Run the provided offline checks, complete dependency install, full typecheck
+(compare exact prior diagnostics; no new application errors), lint, production
+build, real new-RPC RLS/permission tests, engine/ranking boundaries, scale EXPLAIN,
+caller/PostgREST cancellation and targeted browser navigation. The build environment
+passed 609 offline checks but could not complete install/build/live validation.
+Do not treat offline/mock checks as live acceptance.
+
+After approval enable P1.7 only on the intended testing deployment, retaining P1.6
+gates. Verify intelligenceActive=true/intelligenceVersion=1 and registered composite
+tools in telemetry. Repeat representative reads/relational queries at least five
+times on stable fixtures. Run the 50-case corpus with the specified manual/live
+distinctions and retained P3 propose -> requester button -> commit/audit checks.
+No harness should automatically confirm or resubmit uncertain requests.
+
+Return complete updated source, fixes/drift resolution, migrations actually applied,
+exact flags, gate evidence, repeatability/accuracy and timing breakdowns, residual
+failures and recommended next step. Do not claim scale or cancellation passed
+without actual database observations. Decide UX readiness from these results.

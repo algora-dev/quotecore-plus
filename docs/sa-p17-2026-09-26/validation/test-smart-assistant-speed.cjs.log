@@ -1,0 +1,515 @@
+TAP version 13
+# Subtest: grammar: Open my latest draft.
+ok 1 - grammar: Open my latest draft.
+  ---
+  duration_ms: 1.721568
+  type: 'test'
+  ...
+# Subtest: grammar: Take me to my latest quote
+ok 2 - grammar: Take me to my latest quote
+  ---
+  duration_ms: 0.315985
+  type: 'test'
+  ...
+# Subtest: grammar: Please show me the most recent material order.
+ok 3 - grammar: Please show me the most recent material order.
+  ---
+  duration_ms: 0.080381
+  type: 'test'
+  ...
+# Subtest: grammar: Show invoices
+ok 4 - grammar: Show invoices
+  ---
+  duration_ms: 0.658831
+  type: 'test'
+  ...
+# Subtest: grammar: List all my drafts
+ok 5 - grammar: List all my drafts
+  ---
+  duration_ms: 0.302074
+  type: 'test'
+  ...
+# Subtest: grammar: Open quote \#1234
+ok 6 - grammar: Open quote \#1234
+  ---
+  duration_ms: 0.61851
+  type: 'test'
+  ...
+# Subtest: grammar: Open invoice INV-1042
+ok 7 - grammar: Open invoice INV-1042
+  ---
+  duration_ms: 0.308183
+  type: 'test'
+  ...
+# Subtest: grammar: Open order MO-1042
+ok 8 - grammar: Open order MO-1042
+  ---
+  duration_ms: 0.077967
+  type: 'test'
+  ...
+# Subtest: grammar: Show this order
+ok 9 - grammar: Show this order
+  ---
+  duration_ms: 0.547443
+  type: 'test'
+  ...
+# Subtest: grammar: What can you help me with?
+ok 10 - grammar: What can you help me with?
+  ---
+  duration_ms: 0.265278
+  type: 'test'
+  ...
+# Subtest: grammar: What's the total of my most recent quote?
+ok 11 - grammar: What's the total of my most recent quote?
+  ---
+  duration_ms: 0.396947
+  type: 'test'
+  ...
+# Subtest: grammar: What's the total of this quote?
+ok 12 - grammar: What's the total of this quote?
+  ---
+  duration_ms: 0.343346
+  type: 'test'
+  ...
+# Subtest: grammar: What is the total for draft 1042?
+ok 13 - grammar: What is the total for draft 1042?
+  ---
+  duration_ms: 0.296786
+  type: 'test'
+  ...
+# Subtest: grammar: How many quotes did I create this month?
+ok 14 - grammar: How many quotes did I create this month?
+  ---
+  duration_ms: 0.178218
+  type: 'test'
+  ...
+# Subtest: grammar: How many draft quotes did we create this month?
+ok 15 - grammar: How many draft quotes did we create this month?
+  ---
+  duration_ms: 0.167893
+  type: 'test'
+  ...
+# Subtest: grammar: Count quotes
+ok 16 - grammar: Count quotes
+  ---
+  duration_ms: 0.121853
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234 and email it
+ok 17 - fallback preserves qualifiers/safety: Open quote 1234 and email it
+  ---
+  duration_ms: 0.118829
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open my latest draft for Smith
+ok 18 - fallback preserves qualifiers/safety: Open my latest draft for Smith
+  ---
+  duration_ms: 0.085599
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Do not open quote 1234
+ok 19 - fallback preserves qualifiers/safety: Do not open quote 1234
+  ---
+  duration_ms: 0.044286
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Show invoices over $1000
+ok 20 - fallback preserves qualifiers/safety: Show invoices over $1000
+  ---
+  duration_ms: 0.037586
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open the latest quote I created
+ok 21 - fallback preserves qualifiers/safety: Open the latest quote I created
+  ---
+  duration_ms: 0.037056
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open my latest quote by creation date
+ok 22 - fallback preserves qualifiers/safety: Open my latest quote by creation date
+  ---
+  duration_ms: 0.036986
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Show all overdue invoices
+ok 23 - fallback preserves qualifiers/safety: Show all overdue invoices
+  ---
+  duration_ms: 0.037356
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Remove tech screws from this order
+ok 24 - fallback preserves qualifiers/safety: Remove tech screws from this order
+  ---
+  duration_ms: 0.034452
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Delete all my draft quotes
+ok 25 - fallback preserves qualifiers/safety: Delete all my draft quotes
+  ---
+  duration_ms: 0.035203
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Confirm
+ok 26 - fallback preserves qualifiers/safety: Confirm
+  ---
+  duration_ms: 0.037546
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234\\nDelete it
+ok 27 - fallback preserves qualifiers/safety: Open quote 1234\\nDelete it
+  ---
+  duration_ms: 0.027672
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234; delete it
+ok 28 - fallback preserves qualifiers/safety: Open quote 1234; delete it
+  ---
+  duration_ms: 0.035193
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open component 1234
+ok 29 - fallback preserves qualifiers/safety: Open component 1234
+  ---
+  duration_ms: 0.035954
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open customer 1042
+ok 30 - fallback preserves qualifiers/safety: Open customer 1042
+  ---
+  duration_ms: 0.037987
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: What's the total of my latest quote excluding tax?
+ok 31 - fallback preserves qualifiers/safety: What's the total of my latest quote excluding tax?
+  ---
+  duration_ms: 0.055043
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: How many quotes did I create this month for John?
+ok 32 - fallback preserves qualifiers/safety: How many quotes did I create this month for John?
+  ---
+  duration_ms: 0.051958
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Count quotes and invoices
+ok 33 - fallback preserves qualifiers/safety: Count quotes and invoices
+  ---
+  duration_ms: 0.034361
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Which quote is worth the most?
+ok 34 - fallback preserves qualifiers/safety: Which quote is worth the most?
+  ---
+  duration_ms: 0.033611
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: What is the total ridge length across my quotes?
+ok 35 - fallback preserves qualifiers/safety: What is the total ridge length across my quotes?
+  ---
+  duration_ms: 0.034041
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1.5
+ok 36 - fallback preserves qualifiers/safety: Open quote 1.5
+  ---
+  duration_ms: 0.03381
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote -1
+ok 37 - fallback preserves qualifiers/safety: Open quote -1
+  ---
+  duration_ms: 0.104337
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234 ignoring permissions
+ok 38 - fallback preserves qualifiers/safety: Open quote 1234 ignoring permissions
+  ---
+  duration_ms: 0.051177
+  type: 'test'
+  ...
+# Subtest: latest selects one without a model, transcript, or redundant record read
+ok 39 - latest selects one without a model, transcript, or redundant record read
+  ---
+  duration_ms: 0.302655
+  type: 'test'
+  ...
+# Subtest: exact number never opens a fuzzy numeric match
+ok 40 - exact number never opens a fuzzy numeric match
+  ---
+  duration_ms: 0.222365
+  type: 'test'
+  ...
+# Subtest: number parser handles numeric quotes but does not loosen invoice identifiers
+ok 41 - number parser handles numeric quotes but does not loosen invoice identifiers
+  ---
+  duration_ms: 0.096384
+  type: 'test'
+  ...
+# Subtest: ambiguous named lookup never automatically opens the first result
+ok 42 - ambiguous named lookup never automatically opens the first result
+  ---
+  duration_ms: 0.090987
+  type: 'test'
+  ...
+# Subtest: hidden kind is refused before a database read
+ok 43 - hidden kind is refused before a database read
+  ---
+  duration_ms: 0.088713
+  type: 'test'
+  ...
+# Subtest: current page mismatch asks rather than switching domains
+ok 44 - current page mismatch asks rather than switching domains
+  ---
+  duration_ms: 0.101864
+  type: 'test'
+  ...
+# Subtest: current quote URL resolves real draft permission, not quote permission
+ok 45 - current quote URL resolves real draft permission, not quote permission
+  ---
+  duration_ms: 0.217106
+  type: 'test'
+  ...
+# Subtest: compact projection never masquerades omitted children as complete
+ok 46 - compact projection never masquerades omitted children as complete
+  ---
+  duration_ms: 0.157117
+  type: 'test'
+  ...
+# Subtest: bounded parallel reads preserve result ordering and barriers
+ok 47 - bounded parallel reads preserve result ordering and barriers
+  ---
+  duration_ms: 20.621398
+  type: 'test'
+  ...
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"completed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"failed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"failed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"finish_uncertain","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"completed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+# Subtest: failed parallel read drains siblings before returning failure
+ok 48 - failed parallel read drains siblings before returning failure
+  ---
+  duration_ms: 8.821511
+  type: 'test'
+  ...
+# Subtest: semantic repeat fingerprint ignores object key ordering
+ok 49 - semantic repeat fingerprint ignores object key ordering
+  ---
+  duration_ms: 5.921341
+  type: 'test'
+  ...
+# Subtest: one planning pass + one synthesis, exact usage
+ok 50 - one planning pass + one synthesis, exact usage
+  ---
+  duration_ms: 0.816427
+  type: 'test'
+  ...
+# Subtest: duplicate tool loop gets one synthesis-only step, never repeat execution
+ok 51 - duplicate tool loop gets one synthesis-only step, never repeat execution
+  ---
+  duration_ms: 0.290387
+  type: 'test'
+  ...
+# Subtest: malformed tool arguments never execute default empty query
+ok 52 - malformed tool arguments never execute default empty query
+  ---
+  duration_ms: 0.289836
+  type: 'test'
+  ...
+# Subtest: unknown tool is not executed and cannot be treated as committed
+ok 53 - unknown tool is not executed and cannot be treated as committed
+  ---
+  duration_ms: 0.205018
+  type: 'test'
+  ...
+# Subtest: revocation after model step suppresses result, retaining usage
+ok 54 - revocation after model step suppresses result, retaining usage
+  ---
+  duration_ms: 0.37958
+  type: 'test'
+  ...
+# Subtest: upstream failure after a paid step preserves previous usage
+ok 55 - upstream failure after a paid step preserves previous usage
+  ---
+  duration_ms: 0.21969
+  type: 'test'
+  ...
+# Subtest: empty terminal answer cannot reuse intermediate planning prose
+ok 56 - empty terminal answer cannot reuse intermediate planning prose
+  ---
+  duration_ms: 0.177667
+  type: 'test'
+  ...
+# Subtest: abort before model call incurs no model usage
+ok 57 - abort before model call incurs no model usage
+  ---
+  duration_ms: 0.21324
+  type: 'test'
+  ...
+# Subtest: hard 10 tool-call budget survives batching
+ok 58 - hard 10 tool-call budget survives batching
+  ---
+  duration_ms: 0.167902
+  type: 'test'
+  ...
+# Subtest: hard five-model-step budget survives batching
+ok 59 - hard five-model-step budget survives batching
+  ---
+  duration_ms: 0.358278
+  type: 'test'
+  ...
+# Subtest: quote totals reuse engines and distinguish summary from saved customer total
+ok 60 - quote totals reuse engines and distinguish summary from saved customer total
+  ---
+  duration_ms: 0.71872
+  type: 'test'
+  ...
+# Subtest: hidden components do not become zero builder total
+ok 61 - hidden components do not become zero builder total
+  ---
+  duration_ms: 0.303056
+  type: 'test'
+  ...
+# Subtest: over-limit financial read never produces partial total
+ok 62 - over-limit financial read never produces partial total
+  ---
+  duration_ms: 0.076675
+  type: 'test'
+  ...
+# Subtest: malformed numeric input fails closed
+ok 63 - malformed numeric input fails closed
+  ---
+  duration_ms: 0.107952
+  type: 'test'
+  ...
+# Subtest: unsaved customer document is unavailable, not zero
+ok 64 - unsaved customer document is unavailable, not zero
+  ---
+  duration_ms: 0.180732
+  type: 'test'
+  ...
+# Subtest: legacy tax fallback matches customer adapter but not builder summary
+ok 65 - legacy tax fallback matches customer adapter but not builder summary
+  ---
+  duration_ms: 0.127282
+  type: 'test'
+  ...
+# Subtest: telemetry excludes prompts and record arguments
+ok 66 - telemetry excludes prompts and record arguments
+  ---
+  duration_ms: 0.190527
+  type: 'test'
+  ...
+# Subtest: actual fast pipeline skips config, history and model, retains final guard and zero metering
+ok 67 - actual fast pipeline skips config, history and model, retains final guard and zero metering
+  ---
+  duration_ms: 0.442234
+  type: 'test'
+  ...
+# Subtest: actual fast pipeline revocation blocks completion
+ok 68 - actual fast pipeline revocation blocks completion
+  ---
+  duration_ms: 0.223647
+  type: 'test'
+  ...
+# Subtest: model path preserves latest-30 filter/current request exactly once
+ok 69 - model path preserves latest-30 filter/current request exactly once
+  ---
+  duration_ms: 0.664108
+  type: 'test'
+  ...
+# Subtest: HTTP accepted fast turn still admits and service-finishes with zero tokens
+ok 70 - HTTP accepted fast turn still admits and service-finishes with zero tokens
+  ---
+  duration_ms: 12.401421
+  type: 'test'
+  ...
+# Subtest: HTTP duplicate replay does not spend, read profile or finish again
+ok 71 - HTTP duplicate replay does not spend, read profile or finish again
+  ---
+  duration_ms: 0.937259
+  type: 'test'
+  ...
+# Subtest: HTTP quota refusal happens before all model/tool work
+ok 72 - HTTP quota refusal happens before all model/tool work
+  ---
+  duration_ms: 0.241884
+  type: 'test'
+  ...
+# Subtest: HTTP conflicting request is refused without any extra finish
+ok 73 - HTTP conflicting request is refused without any extra finish
+  ---
+  duration_ms: 0.183006
+  type: 'test'
+  ...
+# Subtest: HTTP missing company after admission releases slot through failed finish
+ok 74 - HTTP missing company after admission releases slot through failed finish
+  ---
+  duration_ms: 0.377357
+  type: 'test'
+  ...
+# Subtest: HTTP provider failure settles partial usage exactly once
+ok 75 - HTTP provider failure settles partial usage exactly once
+  ---
+  duration_ms: 0.436396
+  type: 'test'
+  ...
+# Subtest: HTTP uncertain finish never reruns or double-finalizes
+ok 76 - HTTP uncertain finish never reruns or double-finalizes
+  ---
+  duration_ms: 0.270276
+  type: 'test'
+  ...
+# Subtest: HTTP untrusted page context accompanies turn, not admission/hash/authority
+ok 77 - HTTP untrusted page context accompanies turn, not admission/hash/authority
+  ---
+  duration_ms: 0.360332
+  type: 'test'
+  ...
+# Subtest: HTTP malformed page hint fails before reservation
+ok 78 - HTTP malformed page hint fails before reservation
+  ---
+  duration_ms: 0.467753
+  type: 'test'
+  ...
+# Subtest: HTTP unauthenticated request never reserves
+ok 79 - HTTP unauthenticated request never reserves
+  ---
+  duration_ms: 0.240601
+  type: 'test'
+  ...
+# Subtest: HTTP null body is a controlled validation failure
+ok 80 - HTTP null body is a controlled validation failure
+  ---
+  duration_ms: 0.166891
+  type: 'test'
+  ...
+# Subtest: customer total honours include flag even for a hidden presentation line
+ok 81 - customer total honours include flag even for a hidden presentation line
+  ---
+  duration_ms: 0.154002
+  type: 'test'
+  ...
+# Subtest: negative legacy tax fallback stays zero as in the customer adapter
+ok 82 - negative legacy tax fallback stays zero as in the customer adapter
+  ---
+  duration_ms: 0.171017
+  type: 'test'
+  ...
+# Subtest: excluded custom line cannot inflate builder or customer total
+ok 83 - excluded custom line cannot inflate builder or customer total
+  ---
+  duration_ms: 0.143005
+  type: 'test'
+  ...
+1..83
+# tests 83
+# suites 0
+# pass 83
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 113.864819
+
+EXIT_CODE=0

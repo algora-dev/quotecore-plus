@@ -30,7 +30,7 @@ export function isSafeDestination(path: unknown, slug: string): path is string {
         return false;
     const tail = path.slice(prefix.length);
     const uuid = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
-    return new RegExp(`^(quotes/${uuid}(/summary|/blank-build|/build\\?step=roof-areas)?|material-orders/${uuid}/preview|invoices/${uuid}|components\\?created=${uuid})$`).test(tail);
+    return new RegExp(`^(quotes/${uuid}(/summary|/blank-build|/build\\?step=roof-areas)?|quotes/${uuid}(\\?sa_component=${uuid}|/build\\?step=(components|extras)&sa_component=${uuid})|material-orders/${uuid}/preview|invoices/${uuid}|components\\?created=${uuid})$`).test(tail);
 }
 export function pageHint(pathname: unknown, slug: string): PageHint | null {
     if (typeof pathname !== 'string' || pathname.length > 500 || /[\\\u0000-\u0020?#%]/.test(pathname) || !pathname.startsWith(`/${slug}/`))
@@ -46,11 +46,24 @@ export function pageHint(pathname: unknown, slug: string): PageHint | null {
     // A URL is only a hint. The server resolves the live status and permission.
     return { pathname, target };
 }
-export function sameTarget(a: RecordTarget, b: RecordTarget): boolean { return a.kind === b.kind && a.id === b.id; }
+export function targetKey(target: RecordTarget): string { return `${target.kind}:${target.id}${target.focus ? `:${target.focus.kind}:${target.focus.id}` : ''}`; }
+export function sameTarget(a: RecordTarget, b: RecordTarget): boolean { return targetKey(a) === targetKey(b); }
 export function isSafeReturnDestination(value: unknown, slug: string): value is string {
     if (!/^[a-z0-9][a-z0-9-]*$/i.test(slug) || typeof value !== 'string')
         return false;
     if (isSafeDestination(value, slug))
         return true;
     return value === `/${slug}` || ['quotes', 'material-orders', 'invoices', 'components'].some(section => value === `/${slug}/${section}`);
+}
+
+/** Call only after the server verifies the child belongs to this authorised quote. */
+export function componentDestinationFor(hit: EntityHit, componentId: string, componentType: string, slug: string): string | null {
+    if (!['quote', 'draft_quote'].includes(hit.kind) || !isUuid(componentId)
+        || !isUuid(hit.id) || !/^[a-z0-9][a-z0-9-]*$/i.test(slug) || hit.fields.entry_mode === 'blank') return null;
+    if (hit.fields.entry_mode === 'digital') {
+        const hasAreas = Array.isArray(hit.fields.roof_areas) && hit.fields.roof_areas.length > 0;
+        const step = componentType === 'extra' && hasAreas ? 'extras' : 'components';
+        return `/${slug}/quotes/${hit.id}/build?step=${step}&sa_component=${componentId}`;
+    }
+    return `/${slug}/quotes/${hit.id}?sa_component=${componentId}`;
 }

@@ -1,4 +1,5 @@
 'use client';
+import { notifyComponentFocus } from '@/app/lib/smart-assistant/v2/component-focus';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createConversation, type ConversationRow } from '@/app/(auth)/[workspaceSlug]/assistant/actions';
@@ -124,6 +125,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             return;
         const target = navPending.current;
         if (pathname + window.location.search === target) {
+            notifyComponentFocus();
             navPending.current = null;
             if (navTimer.current)
                 clearTimeout(navTimer.current);
@@ -148,6 +150,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
             autoOpened.current.add(card.id);
             const destination = result.destination;
             if (window.location.pathname + window.location.search === destination) {
+                notifyComponentFocus();
                 operation.current = false;
                 setBusy(false);
                 onHide();
@@ -161,6 +164,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
                     return;
                 // Query-only navigation (component highlight) may not change usePathname.
                 if (window.location.pathname + window.location.search === destination) {
+                    notifyComponentFocus();
                     navPending.current = null;
                     operation.current = false;
                     setBusy(false);

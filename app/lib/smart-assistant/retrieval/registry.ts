@@ -103,14 +103,16 @@ function filters(value: unknown, spec: SourceSpec, permissions: SectionPermissio
     return {field:key,op,value:obj.value as Filter['value']};
   });
 }
-function search(value: unknown): Search | undefined {
+function search(value: unknown, spec: SourceSpec, permissions: SectionPermissions, fieldSearch = false): Search | undefined {
   if (value === undefined) return undefined;
-  const s = object(value,['text','match'],'search');
+  const s = object(value,fieldSearch?['text','match','field']:['text','match'],'search');
   const text = string(s.text,LIMITS.search).trim();
   if (!/[\p{L}\p{N}]/u.test(text)) throw new RetrievalError('invalid_query','Search must contain a word or record identifier.');
-  return {text,match:enumValue(s.match,['natural','words','exact'] as const,'natural')};
+  let selectedField: string | undefined;
+  if(s.field!==undefined){const [name,f]=field(spec,s.field,permissions);if(f.type!=='text'||f.engine)throw new RetrievalError('invalid_query','Field-specific search requires an authorised stored text field.');selectedField=name;}
+  return {text,match:enumValue(s.match,['natural','words','exact'] as const,'natural'),...(selectedField?{field:selectedField}:{})};
 }
-export function parseQueryPlan(value: unknown, permissions: SectionPermissions, knowledge = false): QueryPlan {
+export function parseQueryPlan(value: unknown, permissions: SectionPermissions, knowledge = false, fieldSearch = false): QueryPlan {
   if (JSON.stringify(value)?.length > LIMITS.planBytes) throw new RetrievalError('invalid_query','The retrieval plan is too large.');
   const raw = object(value,['version','source','mode','fields','filters','related','search','quoteScope','owner','period','groupBy','metrics','orderBy','limit','resolve','current'],'retrieval plan');
   if (raw.version !== 1) throw new RetrievalError('invalid_query','Retrieval plan version 1 is required.');
@@ -127,7 +129,7 @@ export function parseQueryPlan(value: unknown, permissions: SectionPermissions, 
     }
     if(selected.length>LIMITS.fields)throw new RetrievalError('invalid_query','Request fewer fields so currency/unit context also fits.');
   }
-  const fs=filters(raw.filters,spec,permissions), ss=search(raw.search);
+  const fs=filters(raw.filters,spec,permissions), ss=search(raw.search,spec,permissions,fieldSearch);
   if (mode==='aggregate' && ss?.match==='natural') throw new RetrievalError('invalid_query','Aggregates require exact or words matching; fuzzy matches must be reviewed before aggregating.');
   const quoteScope=enumValue(raw.quoteScope,['quotes','drafts','all_permitted'] as const,'all_permitted');
   if (spec.quoteScoped && ((quoteScope==='quotes' && !readable(permissions.quotes)) || (quoteScope==='drafts' && !readable(permissions.draft_quotes)))) throw new RetrievalError('permission_denied','The requested quote/draft section is hidden.');
@@ -140,7 +142,7 @@ export function parseQueryPlan(value: unknown, permissions: SectionPermissions, 
     const child=sourceSpec(spec.relations[key].source);
     if (!sourceAllowed(child,permissions)) throw new RetrievalError('permission_denied','The related source requires hidden sections.');
     if (child.knowledge && !knowledge) throw new RetrievalError('feature_disabled','Document retrieval is not enabled.');
-    const s=search(r.search);
+    const s=search(r.search,child,permissions);
     if (s?.match==='natural') throw new RetrievalError('invalid_query','Related-record constraints require words or exact matching; never relax relationship qualifiers.');
     return {relation:key,filters:filters(r.filters,child,permissions),...(s?{search:s}:{})};
   });

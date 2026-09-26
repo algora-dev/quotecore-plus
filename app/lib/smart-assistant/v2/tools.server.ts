@@ -16,6 +16,8 @@ import type { RecordRequest } from '../speed/intent';
 import { createRetrievalService, loadRetrievalCapabilities, retrievalEnabled } from '../retrieval/service.server';
 import { createRetrievalTools, retrievalPrompt } from '../retrieval/tools.server';
 import { visibleSources } from '../retrieval/registry';
+import { intelligenceAvailable, intelligenceEnabled } from '../retrieval/intelligence';
+import { withComponentSelection } from '../retrieval/proposal-selection';
 export async function createV2Scope(input: OrchestratorTurnInput) {
     if (!v2SwitchOn())
         return null;
@@ -273,6 +275,24 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
                 // Existing operations remain available to exact fast paths and P3.
                 for (const name of ['find_records', 'read_record', 'current_record', 'resolve_records', 'count_quote_records', 'resolve_quote_totals', 'read_quote_totals']) delete tools[name];
                 Object.assign(tools, createRetrievalTools({ service: retrieval, permissions: access.permissions, capabilities, userMessage: input.userMessage }));
+                if (intelligenceAvailable(capabilities) && tools.propose_component_change) {
+                    const service = retrieval;
+                    tools.propose_component_change = withComponentSelection({ legacy: tools.propose_component_change,
+                        guard, resolve: (selection, signal) => service.resolve(selection, 'context', signal),
+                        propose: async (args, expectedParentId) => {
+                            try {
+                                const action = await (await import('./actions.server')).proposeComponentChange(input.supabase, access, input.runId, args, expectedParentId);
+                                const sections = Object.entries(access.permissions).filter(([, level]) => level === 'edit').map(([section]) => section as AssistantSection);
+                                return { action, cardId: await emit(sections, { kind: 'proposal', title: action.title, actionId: action.id }), note: 'Not applied. Review the actual card and press Confirm. Navigation or typed yes cannot approve this change.' };
+                            } catch (error) {
+                                if (error instanceof AssistantV2Error && ['access_changed','permissions_changed','unauthenticated'].includes(error.code)) throw error;
+                                if (error instanceof ProposalError || error instanceof AssistantV2Error) return { state: 'proposal_refused', error: error.message, applied: false };
+                                throw error;
+                            }
+                        },
+                    });
+                }
+
             }
             const speedPrompt = enabled ? retrievalPrompt(access.permissions, capabilities) : speed ? [
                 'SPEED CONTRACT: Prefer resolve_records instead of find_records -> read_record -> open_record chains. The composite already prepares the card; do not open it again.',
@@ -280,7 +300,7 @@ export async function createV2Scope(input: OrchestratorTurnInput) {
                 ...(factsEnabled() ? ['For a quote total without an already-known ID, use resolve_quote_totals: selection and totals are one tool call, not find -> read -> total.'] : []),
                 'Never turn a capped search into an aggregate or guess financial values. Use registered facts tools; unsupported highest-value/ridge aggregation is unavailable, not an invitation to scan every record.',
             ].join('\n') : '';
-            try { console.info('[smart-assistant:retrieval-capabilities]', JSON.stringify({event:'sa_retrieval_capabilities',version:1,runId:input.runId,enabledByServer:retrievalEnabled(),enabledByWorkspace:capabilities.enabled,state:capabilities.state,knowledge:capabilities.knowledge,catalogues:capabilities.catalogues,tools:Object.keys(tools)})); } catch { /* diagnostics only */ }
+            try { console.info('[smart-assistant:retrieval-capabilities]', JSON.stringify({event:'sa_retrieval_capabilities',version:1,runId:input.runId,enabledByServer:retrievalEnabled(),intelligenceByServer:intelligenceEnabled(),intelligenceVersion:capabilities.intelligenceVersion??0,intelligenceActive:intelligenceAvailable(capabilities),enabledByWorkspace:capabilities.enabled,state:capabilities.state,knowledge:capabilities.knowledge,catalogues:capabilities.catalogues,tools:Object.keys(tools)})); } catch { /* diagnostics only */ }
             const cutoff = capabilities.historyAfter ? Date.parse(capabilities.historyAfter) : 0;
             const references = speed ? session.cards.filter(c => Date.parse(c.createdAt) >= cutoff).filter(c => c.content.kind === 'records').slice(-3).flatMap(c => c.content.kind === 'records' ? c.content.options : []).slice(-5) : [];
             const activePrompt = enabled ? prompt.replace('Use current_record for "this quote".', 'Use query_workspace with current=true for a current-page read.').replace('When the user names a record and search returns several matches, act on the clearly strongest match (an exact or near-exact name match that leads the rest) and proceed to the next step in the same turn. Offer options only when two accessible records plausibly tie for the user\'s intent. Asking the user to repeat what they already said is a failure.', 'For named records follow the deterministic resolution result: selected means proceed; candidates means ask with the supplied choices. Never infer identity from a score alone or ask the user to repeat an already supplied name.') : prompt;

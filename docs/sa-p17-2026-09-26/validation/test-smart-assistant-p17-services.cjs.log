@@ -1,0 +1,284 @@
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","resolve_workspace_relationship"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":false,"intelligenceVersion":1,"intelligenceActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace"]}
+TAP version 13
+# Subtest: composite executes two bounded reads with one verified parent binding
+ok 1 - composite executes two bounded reads with one verified parent binding
+  ---
+  duration_ms: 7.307254
+  type: 'test'
+  ...
+# Subtest: ambiguous parents stop before child query and generate concrete choices
+ok 2 - ambiguous parents stop before child query and generate concrete choices
+  ---
+  duration_ms: 0.827054
+  type: 'test'
+  ...
+# Subtest: empty parent is not a hidden permission error or global child search
+ok 3 - empty parent is not a hidden permission error or global child search
+  ---
+  duration_ms: 0.429365
+  type: 'test'
+  ...
+# Subtest: same-named children remain ambiguous despite a selected parent
+ok 4 - same-named children remain ambiguous despite a selected parent
+  ---
+  duration_ms: 0.815786
+  type: 'test'
+  ...
+# Subtest: hidden child refuses without even looking up the parent
+ok 5 - hidden child refuses without even looking up the parent
+  ---
+  duration_ms: 0.238709
+  type: 'test'
+  ...
+# Subtest: hidden child projection refuses before parent read
+ok 6 - hidden child projection refuses before parent read
+  ---
+  duration_ms: 0.443516
+  type: 'test'
+  ...
+# Subtest: current-page parent is constrained to authoritative ID
+ok 7 - current-page parent is constrained to authoritative ID
+  ---
+  duration_ms: 1.804603
+  type: 'test'
+  ...
+# Subtest: absent current context produces a useful clarification before reads
+ok 8 - absent current context produces a useful clarification before reads
+  ---
+  duration_ms: 0.484709
+  type: 'test'
+  ...
+# Subtest: component normalised-name ranking does not use parent name as child identity
+ok 9 - component normalised-name ranking does not use parent name as child identity
+  ---
+  duration_ms: 1.006062
+  type: 'test'
+  ...
+# Subtest: P1.7 rollback uses original query RPC and refuses composite capability
+ok 10 - P1.7 rollback uses original query RPC and refuses composite capability
+  ---
+  duration_ms: 0.543307
+  type: 'test'
+  ...
+# Subtest: missing P1.7 migration capability leaves live P1.6 path intact
+ok 11 - missing P1.7 migration capability leaves live P1.6 path intact
+  ---
+  duration_ms: 0.506171
+  type: 'test'
+  ...
+# Subtest: missing v17 RPC is setup failure, not no records or invented permission denial
+ok 12 - missing v17 RPC is setup failure, not no records or invented permission denial
+  ---
+  duration_ms: 0.25313
+  type: 'test'
+  ...
+# Subtest: admitted run and permission revision remain the only scope input
+ok 13 - admitted run and permission revision remain the only scope input
+  ---
+  duration_ms: 0.591899
+  type: 'test'
+  ...
+# Subtest: database scope revocation between parent and child is terminal
+ok 14 - database scope revocation between parent and child is terminal
+  ---
+  duration_ms: 0.777309
+  type: 'test'
+  ...
+# Subtest: feature rollback during a turn invalidates provisional output
+ok 15 - feature rollback during a turn invalidates provisional output
+  ---
+  duration_ms: 0.63194
+  type: 'test'
+  ...
+# Subtest: shared cancellation signal reaches both composite reads
+ok 16 - shared cancellation signal reaches both composite reads
+  ---
+  duration_ms: 0.543737
+  type: 'test'
+  ...
+# Subtest: aborted composite does not start any query
+ok 17 - aborted composite does not start any query
+  ---
+  duration_ms: 0.3263
+  type: 'test'
+  ...
+# Subtest: composite and semantic diagnostics omit names, IDs and filters
+ok 18 - composite and semantic diagnostics omit names, IDs and filters
+  ---
+  duration_ms: 0.630237
+  type: 'test'
+  ...
+# Subtest: ranking envelope evidence survives to model output
+ok 19 - ranking envelope evidence survives to model output
+  ---
+  duration_ms: 0.895976
+  type: 'test'
+  ...
+# Subtest: server refuses incomplete omitted-group rank despite a perfect returned row
+ok 20 - server refuses incomplete omitted-group rank despite a perfect returned row
+  ---
+  duration_ms: 0.333151
+  type: 'test'
+  ...
+# Subtest: missing coverage cannot become a trusted ranked answer
+ok 21 - missing coverage cannot become a trusted ranked answer
+  ---
+  duration_ms: 0.218859
+  type: 'test'
+  ...
+# Subtest: cross-currency rank becomes needs_context without leaking a false winner
+ok 22 - cross-currency rank becomes needs_context without leaking a false winner
+  ---
+  duration_ms: 0.28618
+  type: 'test'
+  ...
+# Subtest: trusted direct terminal is server-instance-bound, not copied model JSON
+ok 23 - trusted direct terminal is server-instance-bound, not copied model JSON
+  ---
+  duration_ms: 0.529586
+  type: 'test'
+  ...
+# Subtest: composite tool can finish a simple read but not fake navigation for an edit
+ok 24 - composite tool can finish a simple read but not fake navigation for an edit
+  ---
+  duration_ms: 2.415621
+  type: 'test'
+  ...
+# Subtest: P1.7 model registration includes composite tools and selector proposals
+ok 25 - P1.7 model registration includes composite tools and selector proposals
+  ---
+  duration_ms: 2.335521
+  type: 'test'
+  ...
+# Subtest: flag off does not alter P3 ID tool schema or registration
+ok 26 - flag off does not alter P3 ID tool schema or registration
+  ---
+  duration_ms: 0.503397
+  type: 'test'
+  ...
+# Subtest: single composite proposal operation passes exact child + internal parent to P3
+ok 27 - single composite proposal operation passes exact child + internal parent to P3
+  ---
+  duration_ms: 0.448625
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"state":"ambiguous"}
+ok 28 - unverified selection makes NO proposal: {"state":"ambiguous"}
+  ---
+  duration_ms: 0.161893
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"complete":false}
+ok 29 - unverified selection makes NO proposal: {"complete":false}
+  ---
+  duration_ms: 0.140662
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {}
+ok 30 - unverified selection makes NO proposal: {}
+  ---
+  duration_ms: 0.14612
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"relationship":{"name":"quotes.components","parentSource":"quotes","parentId":"00000000-0000-0000-0000-000000000001","childSource":"quote_components","verified":false}}
+ok 31 - unverified selection makes NO proposal: {"relationship":{"name":"quotes.components","parentSource":"quotes","parentId":"00000000-0000-0000-0000-000000000001","childSource":"quote_components","verified":false}}
+  ---
+  duration_ms: 0.088693
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"rows":[{"id":"00000000-0000-0000-0000-000000000010","_row_id":"00000000-0000-0000-0000-000000000010","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"},{"id":"00000000-0000-0000-0000-000000000011","_row_id":"00000000-0000-0000-0000-000000000011","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"}]}
+ok 32 - unverified selection makes NO proposal: {"rows":[{"id":"00000000-0000-0000-0000-000000000010","_row_id":"00000000-0000-0000-0000-000000000010","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"},{"id":"00000000-0000-0000-0000-000000000011","_row_id":"00000000-0000-0000-0000-000000000011","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"}]}
+  ---
+  duration_ms: 0.07955
+  type: 'test'
+  ...
+# Subtest: ID-based P3 operation retains existing handler
+ok 33 - ID-based P3 operation retains existing handler
+  ---
+  duration_ms: 0.197617
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"component_id":"00000000-0000-0000-0000-000000000010"}
+ok 34 - proposal input cannot invent relationship authority: {"component_id":"00000000-0000-0000-0000-000000000010"}
+  ---
+  duration_ms: 0.134192
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.orders","parent":{"text":"9th canvas test","quoteScope":"drafts"},"child":{"text":"Ridge"}}}
+ok 35 - proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.orders","parent":{"text":"9th canvas test","quoteScope":"drafts"},"child":{"text":"Ridge"}}}
+  ---
+  duration_ms: 0.083956
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.components","parent":{"text":"Smith"}}}
+ok 36 - proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.components","parent":{"text":"Smith"}}}
+  ---
+  duration_ms: 0.062824
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"parentId":"00000000-0000-0000-0000-000000000099"}
+ok 37 - proposal input cannot invent relationship authority: {"parentId":"00000000-0000-0000-0000-000000000099"}
+  ---
+  duration_ms: 0.059309
+  type: 'test'
+  ...
+# Subtest: revocation before composite proposal cannot be softened into a query error
+ok 38 - revocation before composite proposal cannot be softened into a query error
+  ---
+  duration_ms: 0.195183
+  type: 'test'
+  ...
+# Subtest: P3 snapshot rechecks parent/child race {"quote":{"id":"00000000-0000-0000-0000-000000000002","status":"draft"}}
+ok 39 - P3 snapshot rechecks parent/child race {"quote":{"id":"00000000-0000-0000-0000-000000000002","status":"draft"}}
+  ---
+  duration_ms: 0.414273
+  type: 'test'
+  ...
+# Subtest: P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000010","quote_id":"00000000-0000-0000-0000-000000000002"}}
+ok 40 - P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000010","quote_id":"00000000-0000-0000-0000-000000000002"}}
+  ---
+  duration_ms: 0.124177
+  type: 'test'
+  ...
+# Subtest: P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000011","quote_id":"00000000-0000-0000-0000-000000000001"}}
+ok 41 - P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000011","quote_id":"00000000-0000-0000-0000-000000000001"}}
+  ---
+  duration_ms: 0.139149
+  type: 'test'
+  ...
+# Subtest: navigation reauthorizes exact parent and RLS child relationship
+ok 42 - navigation reauthorizes exact parent and RLS child relationship
+  ---
+  duration_ms: 0.514113
+  type: 'test'
+  ...
+# Subtest: moved/foreign child navigation is indistinguishable from missing child
+ok 43 - moved/foreign child navigation is indistinguishable from missing child
+  ---
+  duration_ms: 0.244918
+  type: 'test'
+  ...
+# Subtest: hidden Components blocks focused navigation before child read
+ok 44 - hidden Components blocks focused navigation before child read
+  ---
+  duration_ms: 0.191538
+  type: 'test'
+  ...
+# Subtest: revocation during navigation verification blocks destination release
+ok 45 - revocation during navigation verification blocks destination release
+  ---
+  duration_ms: 0.258338
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50.829886
+
+EXIT_CODE=0

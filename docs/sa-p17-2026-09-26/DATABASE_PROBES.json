@@ -1,0 +1,309 @@
+{
+  "version": 1,
+  "note": "Read-only probes require an explicitly isolated fixture company, an authenticated user JWT and an already legitimately admitted active run. This file does not create companies/runs or apply migrations. Fixture setup and DB EXPLAIN/timeout evidence remain agent gates.",
+  "probes": [
+    {
+      "id": "catalogue-count-100k",
+      "description": "Full count in one isolated seeded 100,000-row catalogue.",
+      "plan": {
+        "version": 1,
+        "source": "catalogue_rows",
+        "mode": "aggregate",
+        "filters": [
+          {
+            "field": "catalogue_id",
+            "op": "eq",
+            "value": "{{CATALOGUE_ID}}"
+          }
+        ],
+        "metrics": [
+          {
+            "op": "count"
+          }
+        ]
+      },
+      "expected": {
+        "mode": "aggregate",
+        "complete": true,
+        "metric0": "100000",
+        "matchedRows": "100000"
+      }
+    },
+    {
+      "id": "catalogue-selective",
+      "description": "Rare exact product description in the same 100k catalogue; confirm EXPLAIN and expected singleton.",
+      "plan": {
+        "version": 1,
+        "source": "catalogue_rows",
+        "fields": [
+          "id",
+          "description"
+        ],
+        "filters": [
+          {
+            "field": "catalogue_id",
+            "op": "eq",
+            "value": "{{CATALOGUE_ID}}"
+          }
+        ],
+        "search": {
+          "text": "P17 UNIQUE MARLEY MODERN",
+          "match": "exact",
+          "field": "description"
+        },
+        "limit": 5
+      },
+      "expected": {
+        "mode": "rows",
+        "complete": true,
+        "rowCount": 1
+      }
+    },
+    {
+      "id": "catalogue-dense",
+      "description": "Dense word search in 100k rows; bounded rows are NOT proof of a cheap scan.",
+      "plan": {
+        "version": 1,
+        "source": "catalogue_rows",
+        "fields": [
+          "id",
+          "description"
+        ],
+        "filters": [
+          {
+            "field": "catalogue_id",
+            "op": "eq",
+            "value": "{{CATALOGUE_ID}}"
+          }
+        ],
+        "search": {
+          "text": "p17",
+          "match": "words",
+          "field": "description"
+        },
+        "limit": 20
+      },
+      "expected": {
+        "mode": "rows",
+        "complete": true,
+        "rowCount": 20,
+        "truncated": true
+      }
+    },
+    {
+      "id": "quote-engine-200",
+      "description": "Exactly 200 isolated fixture quotes named P17 ENGINE200, all valid bounded saved documents.",
+      "plan": {
+        "version": 1,
+        "source": "quotes",
+        "mode": "aggregate",
+        "quoteScope": "quotes",
+        "filters": [
+          {
+            "field": "job_name",
+            "op": "words",
+            "value": "P17 ENGINE200"
+          }
+        ],
+        "metrics": [
+          {
+            "op": "max",
+            "field": "customer_total"
+          }
+        ]
+      },
+      "expected": {
+        "mode": "engine_inputs",
+        "complete": true,
+        "rowCount": 200
+      }
+    },
+    {
+      "id": "quote-engine-201",
+      "description": "201 isolated fixture quotes named P17 ENGINE201. Refuse, never compute over first 200.",
+      "plan": {
+        "version": 1,
+        "source": "quotes",
+        "mode": "aggregate",
+        "quoteScope": "quotes",
+        "filters": [
+          {
+            "field": "job_name",
+            "op": "words",
+            "value": "P17 ENGINE201"
+          }
+        ],
+        "metrics": [
+          {
+            "op": "max",
+            "field": "customer_total"
+          }
+        ]
+      },
+      "expected": {
+        "mode": "engine_inputs",
+        "complete": false,
+        "rowCount": 0,
+        "status": "too_broad"
+      }
+    },
+    {
+      "id": "rank-omitted-null",
+      "description": "Two isolated structured order lines: P17 Missing A quantity 100, P17 Missing B quantity NULL, both unit m. Top group must not conceal the omitted missing value. Never relax real NOT NULL constraints.",
+      "plan": {
+        "version": 1,
+        "source": "order_lines",
+        "mode": "aggregate",
+        "filters": [
+          {
+            "field": "item_name",
+            "op": "in",
+            "value": [
+              "P17 Missing A",
+              "P17 Missing B"
+            ]
+          },
+          {
+            "field": "unit",
+            "op": "eq",
+            "value": "m"
+          }
+        ],
+        "groupBy": [
+          "item_name"
+        ],
+        "metrics": [
+          {
+            "op": "sum",
+            "field": "quantity"
+          }
+        ],
+        "orderBy": [
+          {
+            "field": "metric_0",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      },
+      "expected": {
+        "mode": "aggregate",
+        "rowCount": 1,
+        "complete": false,
+        "truncated": true,
+        "missingValues": "1",
+        "groupCount": "2",
+        "matchedRows": "2"
+      }
+    },
+    {
+      "id": "rank-cut-tie",
+      "description": "Three GBP invoices named P17 Tied with equal total100; one displayed row must disclose three tied.",
+      "plan": {
+        "version": 1,
+        "source": "invoices",
+        "fields": [
+          "id",
+          "total"
+        ],
+        "filters": [
+          {
+            "field": "customer_name",
+            "op": "words",
+            "value": "P17 Tied"
+          }
+        ],
+        "orderBy": [
+          {
+            "field": "total",
+            "direction": "desc"
+          }
+        ],
+        "limit": 1
+      },
+      "expected": {
+        "mode": "rows",
+        "complete": true,
+        "rowCount": 1,
+        "tieCount": "3"
+      }
+    },
+    {
+      "id": "foreign-parent-id",
+      "description": "FOREIGN_QUOTE_ID belongs to the second isolated tenant; no record may be returned.",
+      "plan": {
+        "version": 1,
+        "source": "quotes",
+        "fields": [
+          "id"
+        ],
+        "filters": [
+          {
+            "field": "id",
+            "op": "eq",
+            "value": "{{FOREIGN_QUOTE_ID}}"
+          }
+        ]
+      },
+      "expected": {
+        "mode": "rows",
+        "rowCount": 0
+      }
+    },
+    {
+      "id": "foreign-child-relation",
+      "description": "Cannot traverse an order to a foreign quote ID.",
+      "plan": {
+        "version": 1,
+        "source": "orders",
+        "fields": [
+          "id"
+        ],
+        "related": [
+          {
+            "relation": "quote",
+            "filters": [
+              {
+                "field": "id",
+                "op": "eq",
+                "value": "{{FOREIGN_QUOTE_ID}}"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "mode": "rows",
+        "rowCount": 0
+      }
+    },
+    {
+      "id": "scope-injection",
+      "description": "The invoker compiler rejects a model-authored tenant selector.",
+      "plan": {
+        "version": 1,
+        "source": "quotes",
+        "company_id": "{{FOREIGN_COMPANY_ID}}"
+      },
+      "expected": {
+        "errorCode": "22023"
+      }
+    },
+    {
+      "id": "field-search-injection",
+      "description": "No SQL expressions as search fields.",
+      "plan": {
+        "version": 1,
+        "source": "quotes",
+        "search": {
+          "text": "x",
+          "field": "job_name;SELECT 1",
+          "match": "words"
+        }
+      },
+      "expected": {
+        "errorCode": "P1603"
+      }
+    }
+  ]
+}

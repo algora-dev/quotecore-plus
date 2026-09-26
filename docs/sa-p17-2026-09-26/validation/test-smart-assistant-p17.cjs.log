@@ -1,0 +1,804 @@
+TAP version 13
+# Subtest: canonical quotes status draft is stable
+ok 1 - canonical quotes status draft is stable
+  ---
+  duration_ms: 3.060149
+  type: 'test'
+  ...
+# Subtest: canonical quotes status confirmed is stable
+ok 2 - canonical quotes status confirmed is stable
+  ---
+  duration_ms: 0.207131
+  type: 'test'
+  ...
+# Subtest: canonical quotes status sent is stable
+ok 3 - canonical quotes status sent is stable
+  ---
+  duration_ms: 0.12617
+  type: 'test'
+  ...
+# Subtest: canonical quotes status accepted is stable
+ok 4 - canonical quotes status accepted is stable
+  ---
+  duration_ms: 0.107862
+  type: 'test'
+  ...
+# Subtest: canonical quotes status declined is stable
+ok 5 - canonical quotes status declined is stable
+  ---
+  duration_ms: 0.232279
+  type: 'test'
+  ...
+# Subtest: canonical quotes status expired is stable
+ok 6 - canonical quotes status expired is stable
+  ---
+  duration_ms: 0.25299
+  type: 'test'
+  ...
+# Subtest: canonical quotes status archived is stable
+ok 7 - canonical quotes status archived is stable
+  ---
+  duration_ms: 0.182634
+  type: 'test'
+  ...
+# Subtest: canonical invoices status draft is stable
+ok 8 - canonical invoices status draft is stable
+  ---
+  duration_ms: 0.212229
+  type: 'test'
+  ...
+# Subtest: canonical invoices status sent is stable
+ok 9 - canonical invoices status sent is stable
+  ---
+  duration_ms: 0.445119
+  type: 'test'
+  ...
+# Subtest: canonical invoices status viewed is stable
+ok 10 - canonical invoices status viewed is stable
+  ---
+  duration_ms: 0.449215
+  type: 'test'
+  ...
+# Subtest: canonical invoices status payment_reported is stable
+ok 11 - canonical invoices status payment_reported is stable
+  ---
+  duration_ms: 0.180832
+  type: 'test'
+  ...
+# Subtest: canonical invoices status paid is stable
+ok 12 - canonical invoices status paid is stable
+  ---
+  duration_ms: 0.087452
+  type: 'test'
+  ...
+# Subtest: canonical invoices status disputed is stable
+ok 13 - canonical invoices status disputed is stable
+  ---
+  duration_ms: 0.070486
+  type: 'test'
+  ...
+# Subtest: canonical invoices status cancelled is stable
+ok 14 - canonical invoices status cancelled is stable
+  ---
+  duration_ms: 0.062725
+  type: 'test'
+  ...
+# Subtest: canonical orders status ready is stable
+ok 15 - canonical orders status ready is stable
+  ---
+  duration_ms: 0.103936
+  type: 'test'
+  ...
+# Subtest: canonical orders status ordered is stable
+ok 16 - canonical orders status ordered is stable
+  ---
+  duration_ms: 0.070126
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: "unpaid"
+ok 17 - invoice concept normalization: "unpaid"
+  ---
+  duration_ms: 0.250286
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: "not paid"
+ok 18 - invoice concept normalization: "not paid"
+  ---
+  duration_ms: 0.187632
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: "not_paid"
+ok 19 - invoice concept normalization: "not_paid"
+  ---
+  duration_ms: 0.108243
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: " UNPAID "
+ok 20 - invoice concept normalization: " UNPAID "
+  ---
+  duration_ms: 0.084907
+  type: 'test'
+  ...
+# Subtest: unpaid concept deduplicates only identical predicates
+ok 21 - unpaid concept deduplicates only identical predicates
+  ---
+  duration_ms: 0.279881
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"neq","value":"unpaid"}]}
+ok 22 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"neq","value":"unpaid"}]}
+  ---
+  duration_ms: 0.507072
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"in","value":["unpaid","paid"]}]}
+ok 23 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"in","value":["unpaid","paid"]}]}
+  ---
+  duration_ms: 0.190756
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"open"}]}
+ok 24 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"open"}]}
+  ---
+  duration_ms: 0.096856
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"due"}]}
+ok 25 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"due"}]}
+  ---
+  duration_ms: 0.062234
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"quotes","concepts":["unpaid_invoices"]}
+ok 26 - semantic rejection preserves scope: {"source":"quotes","concepts":["unpaid_invoices"]}
+  ---
+  duration_ms: 0.058578
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"paid_at","op":"is_null","value":false}]}
+ok 27 - semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"paid_at","op":"is_null","value":false}]}
+  ---
+  duration_ms: 0.063145
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"status","op":"eq","value":"paid"}]}
+ok 28 - semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"status","op":"eq","value":"paid"}]}
+  ---
+  duration_ms: 0.067962
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"unpaid","sql":"ignored?"}]}
+ok 29 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"unpaid","sql":"ignored?"}]}
+  ---
+  duration_ms: 0.057967
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["all_access"]}
+ok 30 - semantic rejection preserves scope: {"source":"invoices","concepts":["all_access"]}
+  ---
+  duration_ms: 0.202304
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"company_id":"00000000-0000-0000-0000-000000000099"}
+ok 31 - semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"company_id":"00000000-0000-0000-0000-000000000099"}
+  ---
+  duration_ms: 0.115002
+  type: 'test'
+  ...
+# Subtest: case normalization is limited to enumerated statuses, not job names
+ok 32 - case normalization is limited to enumerated statuses, not job names
+  ---
+  duration_ms: 0.128924
+  type: 'test'
+  ...
+# Subtest: quote aliases use saved customer values, not builder substitutions
+ok 33 - quote aliases use saved customer values, not builder substitutions
+  ---
+  duration_ms: 0.267832
+  type: 'test'
+  ...
+# Subtest: hidden builder values are still denied through aliases
+ok 34 - hidden builder values are still denied through aliases
+  ---
+  duration_ms: 0.149494
+  type: 'test'
+  ...
+# Subtest: average alias and grouped money dimensions compile
+ok 35 - average alias and grouped money dimensions compile
+  ---
+  duration_ms: 0.273461
+  type: 'test'
+  ...
+# Subtest: related natural search normalizes to word membership without losing qualifiers
+ok 36 - related natural search normalizes to word membership without losing qualifiers
+  ---
+  duration_ms: 0.535905
+  type: 'test'
+  ...
+# Subtest: field-specific search is gated off in the P1.6 compiler
+ok 37 - field-specific search is gated off in the P1.6 compiler
+  ---
+  duration_ms: 0.127021
+  type: 'test'
+  ...
+# Subtest: field-specific search uses an authorized text field
+ok 38 - field-specific search uses an authorized text field
+  ---
+  duration_ms: 0.31977
+  type: 'test'
+  ...
+# Subtest: unsafe/non-text search field material_rate refused
+ok 39 - unsafe/non-text search field material_rate refused
+  ---
+  duration_ms: 0.125018
+  type: 'test'
+  ...
+# Subtest: unsafe/non-text search field company_id refused
+ok 40 - unsafe/non-text search field company_id refused
+  ---
+  duration_ms: 0.07289
+  type: 'test'
+  ...
+# Subtest: unsafe/non-text search field name;DROP TABLE quotes refused
+ok 41 - unsafe/non-text search field name;DROP TABLE quotes refused
+  ---
+  duration_ms: 0.063015
+  type: 'test'
+  ...
+# Subtest: search on hidden contact field is refused
+ok 42 - search on hidden contact field is refused
+  ---
+  duration_ms: 0.104206
+  type: 'test'
+  ...
+# Subtest: numeric rank cannot silently use fuzzy population membership
+ok 43 - numeric rank cannot silently use fuzzy population membership
+  ---
+  duration_ms: 0.160841
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.components
+ok 44 - composite registered path quotes.components
+  ---
+  duration_ms: 0.647794
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.areas
+ok 45 - composite registered path quotes.areas
+  ---
+  duration_ms: 0.25329
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.customer_lines
+ok 46 - composite registered path quotes.customer_lines
+  ---
+  duration_ms: 0.154332
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.orders
+ok 47 - composite registered path quotes.orders
+  ---
+  duration_ms: 0.218077
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.invoices
+ok 48 - composite registered path quotes.invoices
+  ---
+  duration_ms: 0.221613
+  type: 'test'
+  ...
+# Subtest: composite registered path orders.lines
+ok 49 - composite registered path orders.lines
+  ---
+  duration_ms: 0.197376
+  type: 'test'
+  ...
+# Subtest: composite registered path orders.text_lines
+ok 50 - composite registered path orders.text_lines
+  ---
+  duration_ms: 0.134391
+  type: 'test'
+  ...
+# Subtest: composite registered path invoices.lines
+ok 51 - composite registered path invoices.lines
+  ---
+  duration_ms: 0.129975
+  type: 'test'
+  ...
+# Subtest: composite registered path catalogues.rows
+ok 52 - composite registered path catalogues.rows
+  ---
+  duration_ms: 0.220682
+  type: 'test'
+  ...
+# Subtest: composite registered path component_collections.components
+ok 53 - composite registered path component_collections.components
+  ---
+  duration_ms: 0.155143
+  type: 'test'
+  ...
+# Subtest: nested quote selection binds scope and never exposes private order join keys
+ok 54 - nested quote selection binds scope and never exposes private order join keys
+  ---
+  duration_ms: 0.25927
+  type: 'test'
+  ...
+# Subtest: current parent identity requires no fabricated draft number
+ok 55 - current parent identity requires no fabricated draft number
+  ---
+  duration_ms: 0.175684
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"relationship":"quotes.auth"}
+ok 56 - composite input refuses {"relationship":"quotes.auth"}
+  ---
+  duration_ms: 0.09942
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"text":"Smith","id":"00000000-0000-0000-0000-000000000001"}}
+ok 57 - composite input refuses {"parent":{"text":"Smith","id":"00000000-0000-0000-0000-000000000001"}}
+  ---
+  duration_ms: 0.091638
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"text":""}}
+ok 58 - composite input refuses {"parent":{"text":""}}
+  ---
+  duration_ms: 0.06624
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"current":false}}
+ok 59 - composite input refuses {"parent":{"current":false}}
+  ---
+  duration_ms: 0.048413
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"sql":"select *"}}
+ok 60 - composite input refuses {"parent":{"sql":"select *"}}
+  ---
+  duration_ms: 0.047591
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"child":{"text":"Ridge","id":"00000000-0000-0000-0000-000000000002"}}
+ok 61 - composite input refuses {"child":{"text":"Ridge","id":"00000000-0000-0000-0000-000000000002"}}
+  ---
+  duration_ms: 0.049975
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"child":{"current":true}}
+ok 62 - composite input refuses {"child":{"current":true}}
+  ---
+  duration_ms: 0.044366
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"tenant":"00000000-0000-0000-0000-000000000099"}
+ok 63 - composite input refuses {"tenant":"00000000-0000-0000-0000-000000000099"}
+  ---
+  duration_ms: 0.043736
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"fields":["company_id"]}
+ok 64 - composite input refuses {"fields":["company_id"]}
+  ---
+  duration_ms: 0.149084
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"limit":21}
+ok 65 - composite input refuses {"limit":21}
+  ---
+  duration_ms: 0.070466
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"child":{"text":"Ridge\\nDROP"}}
+ok 66 - composite input refuses {"child":{"text":"Ridge\\nDROP"}}
+  ---
+  duration_ms: 0.048653
+  type: 'test'
+  ...
+# Subtest: hidden child permission fails before even parent search
+ok 67 - hidden child permission fails before even parent search
+  ---
+  duration_ms: 0.090396
+  type: 'test'
+  ...
+# Subtest: hidden parent permissions deny reverse relationships
+ok 68 - hidden parent permissions deny reverse relationships
+  ---
+  duration_ms: 0.081933
+  type: 'test'
+  ...
+# Subtest: catalogue entitlement is checked on both sides
+ok 69 - catalogue entitlement is checked on both sides
+  ---
+  duration_ms: 0.120982
+  type: 'test'
+  ...
+# Subtest: discovery exposes only permitted composite paths
+ok 70 - discovery exposes only permitted composite paths
+  ---
+  duration_ms: 0.162324
+  type: 'test'
+  ...
+# Subtest: only a complete single resolved parent selects identity
+ok 71 - only a complete single resolved parent selects identity
+  ---
+  duration_ms: 0.133981
+  type: 'test'
+  ...
+# Subtest: ranking proof checks omitted groups, not just returned group
+ok 72 - ranking proof checks omitted groups, not just returned group
+  ---
+  duration_ms: 1.362208
+  type: 'test'
+  ...
+# Subtest: unknown money/unit dimensions are incomplete even when all amounts exist
+ok 73 - unknown money/unit dimensions are incomplete even when all amounts exist
+  ---
+  duration_ms: 0.159731
+  type: 'test'
+  ...
+# Subtest: cross-currency aggregate rankings refuse rather than order unlike values
+ok 74 - cross-currency aggregate rankings refuse rather than order unlike values
+  ---
+  duration_ms: 0.234122
+  type: 'test'
+  ...
+# Subtest: quantity ranking declares unit dimension
+ok 75 - quantity ranking declares unit dimension
+  ---
+  duration_ms: 0.176416
+  type: 'test'
+  ...
+# Subtest: rates require both currency and unit ranking scope
+ok 76 - rates require both currency and unit ranking scope
+  ---
+  duration_ms: 0.16651
+  type: 'test'
+  ...
+# Subtest: counts rank across groups without invented currency comparisons
+ok 77 - counts rank across groups without invented currency comparisons
+  ---
+  duration_ms: 0.12005
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"version":2}
+ok 78 - invalid ranking proof rejected {"version":2}
+  ---
+  duration_ms: 0.121011
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"matchedRows":10}
+ok 79 - invalid ranking proof rejected {"matchedRows":10}
+  ---
+  duration_ms: 0.08633
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"matchedRows":"-1"}
+ok 80 - invalid ranking proof rejected {"matchedRows":"-1"}
+  ---
+  duration_ms: 0.164948
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"groupCount":"1.5"}
+ok 81 - invalid ranking proof rejected {"groupCount":"1.5"}
+  ---
+  duration_ms: 0.088273
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"dimensions":["unit"]}
+ok 82 - invalid ranking proof rejected {"dimensions":["unit"]}
+  ---
+  duration_ms: 0.147352
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"ranked":false}
+ok 83 - invalid ranking proof rejected {"ranked":false}
+  ---
+  duration_ms: 0.087922
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {}
+ok 84 - invalid ranking proof rejected {}
+  ---
+  duration_ms: 0.075723
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"sql":"leak"}
+ok 85 - invalid ranking proof rejected {"sql":"leak"}
+  ---
+  duration_ms: 0.075484
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"dimensionCount":"11"}
+ok 86 - invalid ranking proof rejected {"dimensionCount":"11"}
+  ---
+  duration_ms: 0.085008
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"missingDimensions":"11"}
+ok 87 - invalid ranking proof rejected {"missingDimensions":"11"}
+  ---
+  duration_ms: 0.116145
+  type: 'test'
+  ...
+# Subtest: counts remain exact beyond JavaScript safe integer
+ok 88 - counts remain exact beyond JavaScript safe integer
+  ---
+  duration_ms: 0.148694
+  type: 'test'
+  ...
+# Subtest: numeric ranking cannot be proven from first-page rows without coverage
+ok 89 - numeric ranking cannot be proven from first-page rows without coverage
+  ---
+  duration_ms: 0.126089
+  type: 'test'
+  ...
+# Subtest: ties outside display page remain explicit in output
+ok 90 - ties outside display page remain explicit in output
+  ---
+  duration_ms: 0.399971
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence 0 rejected
+ok 91 - invalid tie evidence 0 rejected
+  ---
+  duration_ms: 0.187723
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence -1 rejected
+ok 92 - invalid tie evidence -1 rejected
+  ---
+  duration_ms: 0.175494
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence 11 rejected
+ok 93 - invalid tie evidence 11 rejected
+  ---
+  duration_ms: 0.09994
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence undefined rejected
+ok 94 - invalid tie evidence undefined rejected
+  ---
+  duration_ms: 0.092379
+  type: 'test'
+  ...
+# Subtest: ordinary name lookup has no forced full-population scan proof
+ok 95 - ordinary name lookup has no forced full-population scan proof
+  ---
+  duration_ms: 0.10667
+  type: 'test'
+  ...
+# Subtest: explicit engine bound refusal needs no fake coverage
+ok 96 - explicit engine bound refusal needs no fake coverage
+  ---
+  duration_ms: 0.094482
+  type: 'test'
+  ...
+# Subtest: engine grouped ranking finds missing customer totals in omitted groups
+ok 97 - engine grouped ranking finds missing customer totals in omitted groups
+  ---
+  duration_ms: 1.272693
+  type: 'test'
+  ...
+# Subtest: engine numeric order is not silently superseded by search relevance
+ok 98 - engine numeric order is not silently superseded by search relevance
+  ---
+  duration_ms: 0.395595
+  type: 'test'
+  ...
+# Subtest: engine positions and ties include rows outside top N
+ok 99 - engine positions and ties include rows outside top N
+  ---
+  duration_ms: 6.449312
+  type: 'test'
+  ...
+# Subtest: engine evidence for 200 records is full-population not displayed-page length
+ok 100 - engine evidence for 200 records is full-population not displayed-page length
+  ---
+  duration_ms: 1.719134
+  type: 'test'
+  ...
+# Subtest: engine grouped count rank proves every bucket, not first group
+ok 101 - engine grouped count rank proves every bucket, not first group
+  ---
+  duration_ms: 0.229726
+  type: 'test'
+  ...
+# Subtest: placed component targets keep parent and child distinct
+ok 102 - placed component targets keep parent and child distinct
+  ---
+  duration_ms: 0.230436
+  type: 'test'
+  ...
+# Subtest: library targets remain library targets, never quote focus
+ok 103 - library targets remain library targets, never quote focus
+  ---
+  duration_ms: 0.091487
+  type: 'test'
+  ...
+# Subtest: P1.7 disabled preserves old parent-only navigation
+ok 104 - P1.7 disabled preserves old parent-only navigation
+  ---
+  duration_ms: 0.068493
+  type: 'test'
+  ...
+# Subtest: inconsistent child/parent navigation identity refused
+ok 105 - inconsistent child/parent navigation identity refused
+  ---
+  duration_ms: 0.172649
+  type: 'test'
+  ...
+# Subtest: card authorization cannot swap or strip a focus identity
+ok 106 - card authorization cannot swap or strip a focus identity
+  ---
+  duration_ms: 0.200542
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus {"kind":"quote_component","id":"bad"}
+ok 107 - parseTarget rejects invalid focus {"kind":"quote_component","id":"bad"}
+  ---
+  duration_ms: 0.139079
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus {"kind":"invoice","id":"00000000-0000-0000-0000-000000000002"}
+ok 108 - parseTarget rejects invalid focus {"kind":"invoice","id":"00000000-0000-0000-0000-000000000002"}
+  ---
+  duration_ms: 0.061993
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus {"kind":"quote_component","id":"00000000-0000-0000-0000-000000000002","url":"https://evil.test"}
+ok 109 - parseTarget rejects invalid focus {"kind":"quote_component","id":"00000000-0000-0000-0000-000000000002","url":"https://evil.test"}
+  ---
+  duration_ms: 0.056585
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus null
+ok 110 - parseTarget rejects invalid focus null
+  ---
+  duration_ms: 0.060291
+  type: 'test'
+  ...
+# Subtest: nonquote focus is refused
+ok 111 - nonquote focus is refused
+  ---
+  duration_ms: 0.127111
+  type: 'test'
+  ...
+# Subtest: navigation digital/main is an allowlisted focused route
+ok 112 - navigation digital/main is an allowlisted focused route
+  ---
+  duration_ms: 0.576867
+  type: 'test'
+  ...
+# Subtest: navigation digital/extra is an allowlisted focused route
+ok 113 - navigation digital/extra is an allowlisted focused route
+  ---
+  duration_ms: 0.234702
+  type: 'test'
+  ...
+# Subtest: navigation manual/main is an allowlisted focused route
+ok 114 - navigation manual/main is an allowlisted focused route
+  ---
+  duration_ms: 0.122754
+  type: 'test'
+  ...
+# Subtest: blank builder does not advertise unsupported placed-component focus
+ok 115 - blank builder does not advertise unsupported placed-component focus
+  ---
+  duration_ms: 0.089975
+  type: 'test'
+  ...
+# Subtest: normal quote opening still goes to summary
+ok 116 - normal quote opening still goes to summary
+  ---
+  duration_ms: 0.178188
+  type: 'test'
+  ...
+# Subtest: navigation query injection &redirect=https://evil.test refused
+ok 117 - navigation query injection &redirect=https://evil.test refused
+  ---
+  duration_ms: 0.102734
+  type: 'test'
+  ...
+# Subtest: navigation query injection &sa_component=00000000-0000-0000-0000-000000000003 refused
+ok 118 - navigation query injection &sa_component=00000000-0000-0000-0000-000000000003 refused
+  ---
+  duration_ms: 0.06653
+  type: 'test'
+  ...
+# Subtest: navigation query injection \#fragment refused
+ok 119 - navigation query injection \#fragment refused
+  ---
+  duration_ms: 0.057536
+  type: 'test'
+  ...
+# Subtest: navigation query injection %2f refused
+ok 120 - navigation query injection %2f refused
+  ---
+  duration_ms: 0.045418
+  type: 'test'
+  ...
+# Subtest: focus parser requires one valid child id, not duplicate query values
+ok 121 - focus parser requires one valid child id, not duplicate query values
+  ---
+  duration_ms: 0.291738
+  type: 'test'
+  ...
+# Subtest: P1.7 needs both explicit server flag and SQL capability
+ok 122 - P1.7 needs both explicit server flag and SQL capability
+  ---
+  duration_ms: 0.194913
+  type: 'test'
+  ...
+# Subtest: one invalid plan then repaired trusted answer needs only two model calls
+ok 123 - one invalid plan then repaired trusted answer needs only two model calls
+  ---
+  duration_ms: 1.41037
+  type: 'test'
+  ...
+# Subtest: second invalid plan stops tools and forces one bounded explanation
+ok 124 - second invalid plan stops tools and forces one bounded explanation
+  ---
+  duration_ms: 0.505209
+  type: 'test'
+  ...
+# Subtest: one repair allowance is shared across different retrieval tools
+ok 125 - one repair allowance is shared across different retrieval tools
+  ---
+  duration_ms: 0.524929
+  type: 'test'
+  ...
+# Subtest: multiple parallel failures consume one failed planning round, not unlimited repairs
+ok 126 - multiple parallel failures consume one failed planning round, not unlimited repairs
+  ---
+  duration_ms: 0.587373
+  type: 'test'
+  ...
+# Subtest: metadata discovery then one trusted answer avoids synthesis
+ok 127 - metadata discovery then one trusted answer avoids synthesis
+  ---
+  duration_ms: 0.493763
+  type: 'test'
+  ...
+# Subtest: a previous successful business read still requires synthesis
+ok 128 - a previous successful business read still requires synthesis
+  ---
+  duration_ms: 0.561374
+  type: 'test'
+  ...
+# Subtest: auth revocation before a trusted terminal reply is terminal
+ok 129 - auth revocation before a trusted terminal reply is terminal
+  ---
+  duration_ms: 0.583837
+  type: 'test'
+  ...
+# Subtest: P1.6 tools do not acquire a new repair policy while flag is off
+ok 130 - P1.6 tools do not acquire a new repair policy while flag is off
+  ---
+  duration_ms: 2.968831
+  type: 'test'
+  ...
+# Subtest: ordinary empty results are not treated as schema repair failures
+ok 131 - ordinary empty results are not treated as schema repair failures
+  ---
+  duration_ms: 0.284168
+  type: 'test'
+  ...
+# Subtest: repair exhausted model cannot ignore tool removal
+ok 132 - repair exhausted model cannot ignore tool removal
+  ---
+  duration_ms: 0.275414
+  type: 'test'
+  ...
+1..132
+# tests 132
+# suites 0
+# pass 132
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 73.393168
+
+EXIT_CODE=0

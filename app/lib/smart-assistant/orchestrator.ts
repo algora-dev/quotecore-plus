@@ -95,6 +95,10 @@ export function buildSystemPrompt(config: CompanyAssistantConfig, v2 = false): s
 }
 
 export interface RegisteredTool {
+  /** P1.7 opt-in: share one schema/plan repair allowance across retrieval tools. */
+  retrievalPolicy?: boolean;
+  /** Metadata only; a subsequent lone trusted read can still end the turn. */
+  planningOnly?: boolean;
   schema: LlmToolSchema;
   /** Opt-in only: no cards, proposals or mutations; each reader still reauthorises. */
   parallelSafe?: boolean;

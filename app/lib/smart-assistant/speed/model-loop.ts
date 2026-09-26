@@ -12,6 +12,10 @@ export async function runModelLoop(input: {
   let tokensIn = 0, tokensOut = 0, totalToolCalls = 0;
   const seen = new Set<string>();
   let synthesisOnly = false;
+  let repairRounds = 0;
+  let directReadEligible = true;
+  const repairable = (result: unknown) => !!result && typeof result === 'object' && 'state' in result
+    && ['invalid_query','unsupported_source','unsupported_field'].includes(String(result.state));
   const { messages, registry, signal, telemetry } = input;
   const fail = (code: string): never => { throw new OrchestratorExecutionError(code, tokensIn, tokensOut); };
   const checkpoint = async () => {
@@ -79,12 +83,22 @@ export async function runModelLoop(input: {
           // A revoked/uncertain access context is terminal, not model-readable data.
           const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : '';
           if (['access_changed','permissions_changed','unauthenticated'].includes(code)) fail('access_changed');
+          if (code === 'turn_timeout') fail('turn_timeout');
           return { error: 'Tool execution failed. Do not guess the missing result or claim success.' };
         }
       }, input.speed ? 3 : 1);
-    // Only trusted registered code can supply a terminal answer, never a model flag
-    // or arbitrary tool data. Multi-tool/multi-hop workflows must still synthesize.
-    if (hop === 0 && step.toolCalls.length === 1 && !synthesisOnly) {
+    const failedPlan = results.some((result, index) => registry[step.toolCalls[index].name]?.retrievalPolicy && repairable(result));
+    if (failedPlan) {
+      repairRounds++;
+      telemetry.retrievalPlanFailures++;
+      if (repairRounds > 1) { synthesisOnly = true; telemetry.repairBudgetStops++; }
+      else telemetry.retrievalRepairs++;
+    }
+    // Metadata and a rejected plan are not business results requiring synthesis.
+    // Only trusted registered code can provide the actual terminal answer. A
+    // successful earlier business read/proposal makes this a multi-step workflow.
+    const eligibleAfterPlanning = hop === 0 || (directReadEligible && registry[step.toolCalls[0].name]?.retrievalPolicy === true);
+    if (eligibleAfterPlanning && step.toolCalls.length === 1 && !synthesisOnly) {
       const tool = registry[step.toolCalls[0].name];
       const content = tool?.terminalReply?.(results[0]);
       if (typeof content === 'string' && content.trim()) {
@@ -94,7 +108,14 @@ export async function runModelLoop(input: {
         return { content: content.trim(), tokensIn, tokensOut };
       }
     }
+    if (results.some((result, index) => {
+      const tool = registry[step.toolCalls[index].name];
+      return !(tool?.planningOnly || (tool?.retrievalPolicy && repairable(result)));
+    })) directReadEligible = false;
     results.forEach((result, index) => messages.push({ role: 'tool', tool_call_id: step.toolCalls[index].id, content: JSON.stringify(result) ?? 'null' }));
+    if (failedPlan) messages.push({ role: 'system', content: synthesisOnly
+      ? 'The single retrieval-plan repair allowance is exhausted. No more tools are available. Explain the precise capability/query limitation using verified results; do not invent data, imply denied permission, or claim that an operation completed.'
+      : 'Correct only the rejected part of this retrieval plan once. Preserve the user scope and qualifiers. This is the only repair allowance; do not broaden or invent new statuses.' });
   }
   return fail('model_hop_limit');
 }

@@ -1,0 +1,78 @@
+{
+  "kind": "Executable offline tests, not live model/SQL/browser results",
+  "suites": [
+    {
+      "script": "test-smart-assistant-retrieval.cjs",
+      "exitCode": 0,
+      "tests": 204,
+      "passed": 204,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-retrieval-services.cjs",
+      "exitCode": 0,
+      "tests": 60,
+      "passed": 60,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-retrieval-metrics.mjs",
+      "exitCode": 0,
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-speed.cjs",
+      "exitCode": 0,
+      "tests": 83,
+      "passed": 83,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-speed-services.cjs",
+      "exitCode": 0,
+      "tests": 24,
+      "passed": 24,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-speed-metrics.mjs",
+      "exitCode": 0,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-p17.cjs",
+      "exitCode": 0,
+      "tests": 132,
+      "passed": 132,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-p17-services.cjs",
+      "exitCode": 0,
+      "tests": 45,
+      "passed": 45,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-p17-metrics.mjs",
+      "exitCode": 0,
+      "tests": 12,
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "script": "test-smart-assistant-p17-corpus.cjs",
+      "exitCode": 0,
+      "tests": 37,
+      "passed": 37,
+      "failed": 0
+    }
+  ],
+  "totalTests": 609,
+  "totalPassed": 609,
+  "totalFailed": 0
+}

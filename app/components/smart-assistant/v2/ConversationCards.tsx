@@ -2,6 +2,7 @@
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import type { ActionView, ConversationCard, RecordTarget } from '@/app/lib/smart-assistant/v2/contracts';
 import s from './assistant.module.css';
+import { targetKey } from '@/app/lib/smart-assistant/v2/navigation';
 export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, onReply, onAction }: {
     cards: ConversationCard[];
     actions: ActionView[];
@@ -17,13 +18,13 @@ export function ConversationCards({ cards, actions, busy, canConfirm, onOpen, on
             return <section className={s.card} key={card.id} aria-label={c.title} data-sa-card={card.id}>
       <h3>{c.title}</h3>
       {c.kind === 'records' && <>{c.note && <p className={s.detail}>{c.note}</p>}
-        <div className={s.actions}>{c.options.map(o => <QcButton key={`${o.kind}:${o.id}`} disabled={busy} onClick={() => onOpen(card, o)}>
+        <div className={s.actions}>{c.options.map(o => <QcButton key={targetKey(o)} disabled={busy} onClick={() => onOpen(card, o)}>
           <span>{o.label}<span className={s.detail}>{o.detail}</span></span>
         </QcButton>)}</div>{c.options.length === 0 && <p>No matching records in your permitted sections.</p>}</>}
       {c.kind === 'choices' && <><p className={s.detail}>Choose a reply. This does not approve changes.</p><div className={s.actions}>{c.options.map((o, i) => <QcButton key={i} disabled={busy} onClick={() => onReply(o.reply)}>{o.label}</QcButton>)}</div></>}
       {c.kind === 'attention' && <><p className={s.detail}>{c.note} Checked {new Date(c.asOf).toLocaleString()}.</p>{c.groups.map(g => <div key={g.key} className={s.card}>
         <h4>{g.title}{g.state === 'available' ? ` (${g.count})` : ''}</h4><p className={s.detail}>{g.note}</p>
-        <div className={s.actions}>{g.items.map(o => <QcButton key={`${o.kind}:${o.id}`} disabled={busy} onClick={() => onOpen(card, o)}><span>{o.label}<span className={s.detail}>{o.detail}</span></span></QcButton>)}</div>
+        <div className={s.actions}>{g.items.map(o => <QcButton key={targetKey(o)} disabled={busy} onClick={() => onOpen(card, o)}><span>{o.label}<span className={s.detail}>{o.detail}</span></span></QcButton>)}</div>
       </div>)}</>}
       {c.kind === 'proposal' && (!action ? <p>This proposal is no longer available with your current access. Ask for a fresh review.</p> : <>
         <p className={s.detail}>{action.note}</p>

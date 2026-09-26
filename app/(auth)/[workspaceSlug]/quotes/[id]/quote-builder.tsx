@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, useId, type ReactNode, Fragment } from 'react';
 import Link from 'next/link';
+import { COMPONENT_FOCUS_EVENT, componentFocusId } from '@/app/lib/smart-assistant/v2/component-focus';
 import { addQuoteRoofArea, updateQuoteRoofArea, removeQuoteRoofArea, toggleAreaLock, addRoofAreaEntry, removeRoofAreaEntry, addQuoteComponent, removeQuoteComponent, addComponentEntry, removeComponentEntry, updateComponentSettings, useRoofAreaTotal, updateQuoteMargins, combineLinealEntries, splitLinealEntries } from '../actions';
 import { getTradeLabels } from '@/app/lib/trades/labels';
 import { computeQuoteTotals } from '@/app/lib/pricing/engine';
@@ -146,6 +147,31 @@ export function QuoteBuilder({
   const [roofAreaEntries, setRoofAreaEntries] = useState(initialRoofAreaEntries);
   const [components, setComponents] = useState(initialComponents);
   const [entries, setEntries] = useState(initialEntries);
+  // Assistant navigation only reveals an already-loaded component. It never
+  // mutates data or turns a card/navigation event into approval.
+  const [assistantFocus, setAssistantFocus] = useState<{ id: string; request: number } | null>(null);
+  const focusHandler = useRef<() => void>(() => {});
+  focusHandler.current = () => {
+    const id = componentFocusId(window.location.search);
+    const component = components.find(c => c.id === id);
+    if (!component) return;
+    const destinationPhase = component.component_type === 'extra' && roofAreas.length > 0 ? 'extras' : 'components';
+    // On a fresh digital route the URL already selected the phase. Do not
+    // rewrite its query before the assistant has acknowledged navigation.
+    if (phase !== destinationPhase) setPhase(destinationPhase);
+    setAssistantFocus(previous => ({ id: component.id, request: (previous?.request ?? 0) + 1 }));
+  };
+  useEffect(() => {
+    const focus = () => focusHandler.current();
+    focus();
+    window.addEventListener(COMPONENT_FOCUS_EVENT, focus);
+    window.addEventListener('popstate', focus);
+    return () => { window.removeEventListener(COMPONENT_FOCUS_EVENT, focus); window.removeEventListener('popstate', focus); };
+    // Reopening the same card sends an explicit event; ordinary rerenders or
+    // manual phase changes must not keep snapping back to this component.
+  }, [quote.id]);
+
+
   // localLibrary: lifted from prop so newly-created mid-quote components are
   // immediately available for future adds in the same session.
   const [localLibrary, setLocalLibrary] = useState<ComponentLibraryRow[]>(libraryComponents);
@@ -727,6 +753,7 @@ export function QuoteBuilder({
                 <ExpandableComponent
                   key={comp.id}
                   comp={comp}
+                  assistantFocusRequest={assistantFocus?.id === comp.id ? assistantFocus.request : 0}
                   entries={entries[comp.id] ?? []}
                   roofAreas={roofAreas}
                   quote={quote}
@@ -764,6 +791,7 @@ export function QuoteBuilder({
                   <ExpandableComponent
                     key={comp.id}
                     comp={comp}
+                    assistantFocusRequest={assistantFocus?.id === comp.id ? assistantFocus.request : 0}
                     entries={entries[comp.id] ?? []}
                     roofAreas={roofAreas}
                     roofArea={area}
@@ -818,6 +846,7 @@ export function QuoteBuilder({
               <ExpandableComponent
                 key={comp.id}
                 comp={comp}
+                assistantFocusRequest={assistantFocus?.id === comp.id ? assistantFocus.request : 0}
                 entries={entries[comp.id] ?? []}
                 roofAreas={roofAreas}
                 quote={quote}

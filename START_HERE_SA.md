@@ -1,48 +1,25 @@
-# P1.6 implementation return - 26 September 2026
+# START HERE — Smart Assistant P1.7 implementation return
 
-Read `RETURN_NOTES.md` and `docs/SMART_ASSISTANT_RETRIEVAL_HANDOFF_2026-09-26.md` first.
-This full source is based on the exact agent export documented below. New retrieval
-capability is implemented but DEFAULT OFF; the additive SQL remains a draft.
-Normal build, real PostgreSQL/RLS tests and live performance acceptance are required
-before enablement. Existing Luna/P1.5/P2/P3 fixes are preserved; P4 stays off.
+Based on the exact `quotecore-plus-SA-P1.6-next-phase-handoff-2026-09-26.zip`
+agent export, branch `ux/phase-4`, reported commit `a18f4ab9`.
 
---- Original agent entry document (unchanged below) ---
+Read, in order:
 
-# START HERE - Smart Assistant loop zip (2026-09-26)
+1. `RETURN_NOTES.md`
+2. `docs/SMART_ASSISTANT_P17_HANDOFF_2026-09-26.md`
+3. `docs/sa-p17-2026-09-26/validation/VALIDATION.md`
+4. `docs/sa-p17-2026-09-26/DATABASE_ACCEPTANCE.md`
 
-This is the complete, current QuoteCore+ codebase (branch: ux/phase-4, commit history intact in the repo this was exported from). It is a strict superset of every previous SA handoff zip - nothing from your earlier work was dropped.
+This is implemented source, NOT a deployed or live-validated release. P1.7 is
+DEFAULT OFF: `SMART_ASSISTANT_RETRIEVAL_V17_ENABLED=true` requires both the
+existing P1.6 rollout AND the new RPC capability version. Do not enable it until
+build and database/security checks pass. Preserve the existing Luna/reasoning
+hotfix, P1.5/P2/P3, confirmation and admission/finalisation protocols. P4 and
+knowledge remain off. Do not widen the owner's one-company testing rollout.
 
-## Read this first
+Only new migration: `20260926190000_sa_v2_retrieval_v17.sql` (draft, not applied).
+Do not apply all outstanding migrations. The original P1.6 migration is already
+applied according to the agent's baseline handoff and is byte-for-byte unchanged.
 
-`docs/SA_HANDOFF_2026-09-26.md` - the full handoff for your next phase:
-- What shipped since your last zip: facts + P1.5 speed layers live, P2 live, P3 write actions live AND owner-verified end-to-end (Ridge rate edit: proposal -> button confirm -> committed, full DB + audit chain verified)
-- Two production case studies from today's owner tests (named-record resolution, flag/permissions verification discipline)
-- Your scope, owner priority order: cross-quote rollups, ranking + resolution hardening, direct RLS-scoped DB reads
-- Locked invariants + gotchas (model hotfix for reasoning_effort is in section 1 - read it before touching llmClient)
-
-## What changed since the last SA handoff zip (2026-09-25 evening)
-
-- Facts layer live: sa_v2_speed_scope / sa_v2_count / sa_v2_quote_snapshot RPCs, engine-backed totals + exact counts, 0-token turns
-- Speed layer live + question-form expansion ("what's my latest quote" now hits the zero-LLM path)
-- P2 attention migration applied + p2 flag live for RS Roofing
-- P3 write actions enabled after acceptance battery (25/25 + 28/28) and verified live with the owner 2026-09-26 (propose-then-confirm edit flow, committed + audit-verified)
-- Named-record resolution + draft identity prompt rules (unconditional, not speed-gated)
-- Model hotfix: reasoning_effort must be none on tool turns for gpt-5.6-luna (upstream validation change)
-- Unrelated to SA but in the tree: UX Phase 5 Document Studio, takeoff canvas UX pass, PWA icons
-
-## Loop protocol (unchanged)
-
-Return your work as a zip; Gavin LF-normalizes, drift-checks against this base, integrates phase-by-phase, runs gates (tests + build + harness), deploys to quotecore-plus-testing, and verifies with the owner before the next zip goes back. Never touch: conversions.ts constants, sa_finish_run service-role-only contract, quota protocol, propose-then-confirm write policies.
-
-## If you think something is missing
-
-List the exact file paths. This zip is a git export of the full committed tree - if a path you expect is absent, it was never in the committed repo (scratch files, .env.local, node_modules and .git are intentionally excluded). Ask via Shaun and Gavin will verify directly.
-
-## 2026-09-26 P1.6 integration (Gavin)
-
-- Integrated the P1.6 package onto ux/phase-4 (commits 62aef4ca + 4b768354). Baseline drift was CRLF-only; local takeoff/document-studio commits untouched.
-- Migration 20260926150000_sa_v2_retrieval.sql is APPLIED to the live DB (only outstanding migration applied; P4 still off).
-- Rollout: RS Roofing enabled=true knowledge_enabled=false; SMART_ASSISTANT_RETRIEVAL_ENABLED=true on quotecore-plus-testing production (deploy k5jlgre6y). Main project untouched.
-- Verification evidence: docs/sa-retrieval-2026-09-26/INTEGRATION_REPORT_2026-09-26.md + validation/integration/. RPC security 33/33, Luna accuracy 7/8, P1.5 zero-model intact, query_workspace confirmed in runtime telemetry.
-- Harness: scripts/test-sa-retrieval-acceptance.mjs (setup|rpc|luna|regression|bench|cleanup). Fixture companies cleaned up.
-- Known follow-ups: invoice-status filter plan quality, related-orders repair variance, component open navigation, composite draft+component propose nondeterminism, scale gates (EXPLAIN at 100k rows, >200 quotes, caller timeout).
+The prior root entry/return notes are archived in
+`docs/sa-p17-2026-09-26/baseline/`. Original integration evidence stays in place.

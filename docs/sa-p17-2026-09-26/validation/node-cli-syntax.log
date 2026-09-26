@@ -1,0 +1,10 @@
+PASS scripts/generate-sa-retrieval-p17-sql.cjs
+PASS scripts/probe-smart-assistant-p17.mjs
+PASS scripts/test-smart-assistant-p17-services.cjs
+PASS scripts/test-smart-assistant-p17-metrics.mjs
+PASS scripts/check-smart-assistant-p17-source.cjs
+PASS scripts/run-smart-assistant-p17-offline.mjs
+PASS scripts/report-smart-assistant-p17.mjs
+PASS scripts/test-smart-assistant-p17.cjs
+PASS scripts/test-smart-assistant-p17-corpus.cjs
+PASS scripts/benchmark-smart-assistant-p17.mjs

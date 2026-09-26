@@ -55,7 +55,7 @@ function compactRows(rows: QueryRow[], plan: QueryPlan): {rows: QueryRow[]; exce
 }
 export function renderResult(data:QueryData,plan:QueryPlan):RetrievalResult {
  const spec=sourceSpec(plan.source),scope=scopeLabel(plan);
- const base:RetrievalResult={source:plan.source,mode:plan.mode,state:'ok',rows:data.rows,asOf:data.asOf,complete:data.complete,truncated:data.truncated,scope,warnings:[...data.warnings],answer:''};
+ const base:RetrievalResult={source:plan.source,mode:plan.mode,state:'ok',rows:data.rows,asOf:data.asOf,complete:data.complete,truncated:data.truncated,scope,warnings:[...data.warnings],answer:'',...(data.coverage?{coverage:data.coverage}:{})};
  if(data.status==='too_broad')return {...base,state:'too_broad',answer:`${data.warnings.join(' ')}\nScope: ${scope}`};
  if(!data.complete&&!data.rows.length)return {...base,state:'incomplete',answer:`I could not obtain a complete result. ${data.warnings.join(' ')}\nScope: ${scope}`};
  const hasMatches=data.rows.length>0 && !(plan.mode==='aggregate'&&data.rows.every(r=>r._matched==='0')&&plan.metrics.some(m=>m.op!=='count'));
@@ -74,6 +74,7 @@ export function renderResult(data:QueryData,plan:QueryPlan):RetrievalResult {
  if(compact.excerpted)base.warnings.push('Long source text/JSON is shown as an explicit excerpt, not a complete document or full original row.');
  if(compact.omitted){base.truncated=true;base.warnings.push('Additional result rows were omitted from the bounded response. Narrow the selection for more detail; no aggregate input was sampled.');}
  const lines:string[]=[];
+ if(data.coverage?.ranked)lines.push(`Ranking covers ${data.coverage.matchedRows} matching input records and ${data.coverage.groupCount} result groups/records before the display limit. Equal primary values share a rank; a limited page may omit tied results.`);
  if(plan.mode==='aggregate'){
   for(const row of base.rows){
    const labels=data.groupBy.map(k=>`${k.replaceAll('_',' ')}: ${text(row[k],100)}`);
@@ -87,7 +88,7 @@ export function renderResult(data:QueryData,plan:QueryPlan):RetrievalResult {
     if(Array.isArray(winners)&&winners.length)value+=` ${winners.map(r=>rowLabel(r as QueryRow,'quotes')).join('; ')}${row[`_winner_count_${i}`]!==String(winners.length)?' (more tied records not shown)':''}.`;
     if(row[`_missing_${i}`]&&row[`_missing_${i}`]!=='0')value+=` Missing values: ${text(row[`_missing_${i}`],30)}.`;
     return value;
-   });lines.push(`${labels.length?labels.join(' · ')+'\n':''}${values.join('\n')}`);
+   });const rank=row._position?`Rank ${text(row._position,40)}${row._tie_count!=='1'?` (${text(row._tie_count,40)} tied)`:''} · `:'';lines.push(`${rank}${labels.length?labels.join(' · ')+'\n':''}${values.join('\n')}`);
   }
  }else{
   for(const row of base.rows){
@@ -97,7 +98,8 @@ export function renderResult(data:QueryData,plan:QueryPlan):RetrievalResult {
    // Long source text is quoted as source data, never instructions or a claimed
    // current business fact inferred from an uploaded document.
    const content=plan.fields.includes('content')?'':row.text?`\nSaved line text: “${text(row.text)}”`:'';
-   lines.push(`${rowLabel(row,plan.source)}${values.length?'\n'+values.join(' · '):''}${content}`);
+   const rank=row._position?`Rank ${text(row._position,40)}${row._tie_count!=='1'?` (${text(row._tie_count,40)} tied)`:''} · `:'';
+   lines.push(`${rank}${rowLabel(row,plan.source)}${values.length?'\n'+values.join(' · '):''}${content}`);
   }
  }
  if(!data.complete){base.state='incomplete';lines.unshift('This result is incomplete; do not treat it as a complete total or global ranking.');}
