@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { createAdminClient } from '@/app/lib/supabase/admin';
 import { InvoiceEditor, type InvoiceRow, type InvoiceLineRow } from './InvoiceEditor';
+import { listInvoiceTemplates } from '../template-actions';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
 import { InvoiceActivityCard } from '@/app/components/activity/InvoiceActivityCard';
 
@@ -113,6 +114,9 @@ export default async function InvoicePage({ params }: Props) {
     .eq('company_id', profile.company_id)
     .order('name');
 
+  // Header/payment templates for the editor's Business details section.
+  const invoiceTemplates = await listInvoiceTemplates();
+
   // Load library attachments for the send modal's attachment picker.
   // Invoices now support library-file attachments (approved 2026-07-02).
   const { data: libraryAttachments } = await admin
@@ -170,6 +174,7 @@ export default async function InvoicePage({ params }: Props) {
       componentLibrary={componentLibrary ?? []}
       activity={(activity ?? []) as unknown as { id: string; event_type: string; metadata: Record<string, unknown> | null; created_at: string }[]}
       emailTemplates={(emailTemplates ?? []) as { id: string; name: string; subject: string; body: string; is_default: boolean | null }[]}
+      invoiceTemplates={invoiceTemplates}
       libraryFiles={libraryFiles}
       libraryLocked={libraryLocked}
       canFollowups={canFollowups}

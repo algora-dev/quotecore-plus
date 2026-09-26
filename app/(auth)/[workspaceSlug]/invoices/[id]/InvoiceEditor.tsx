@@ -11,6 +11,7 @@ import { ResetButton } from '@/app/components/ResetButton';
 import { InvoicePreview } from './InvoicePreview';
 import { SendDocumentButton } from '@/app/components/send/SendDocumentButton';
 import type { EmailTemplate } from '@/app/components/send/types';
+import type { InvoiceTemplate } from '../template-actions';
 import { AiUploadModal } from '@/app/components/ai-import/AiUploadModal';
 import { AiTextPromptModal } from '@/app/components/ai-import/AiTextPromptModal';
 import type { ParsedDocumentResult } from '@/app/components/ai-import/types';
@@ -94,6 +95,7 @@ interface Props {
   invoice: InvoiceRow;
   savedLines: InvoiceLineRow[];
   emailTemplates: EmailTemplate[];
+  invoiceTemplates?: InvoiceTemplate[];
   libraryFiles: { id: string; name: string; fileSize: number }[];
   libraryLocked: boolean;
   workspaceSlug: string;
@@ -141,6 +143,7 @@ export function InvoiceEditor({
   componentLibrary,
   activity,
   emailTemplates,
+  invoiceTemplates = [],
   libraryFiles,
   libraryLocked,
   canFollowups = false,
@@ -256,6 +259,28 @@ export function InvoiceEditor({
 
   // ── Mark dirty on changes ──
   const markDirty = useCallback(() => setIsDirty(true), []);
+
+  /** Apply a saved invoice template: business details, logo, footer,
+   *  notes/terms and payment details (payment saves via its own button). */
+  function applyInvoiceTemplate(templateId: string) {
+    const template = invoiceTemplates.find(t => t.id === templateId);
+    if (!template) return;
+    setCompanyName(template.company_name || '');
+    setCompanyAddress(template.company_address || '');
+    setCompanyEmail(template.company_email || '');
+    setCompanyPhone(template.company_phone || '');
+    setCompanyLogoUrl(template.company_logo_url || defaultLogoUrl || '');
+    setFooterText(template.footer_text || '');
+    setNotes(template.default_notes || '');
+    setTerms(template.default_terms || '');
+    setPayAccountName(template.payment_account_name || '');
+    setPayBankName(template.payment_bank_name || '');
+    setPayAccountNumber(template.payment_account_number || '');
+    setPaySortCode(template.payment_sort_code || '');
+    setPayPaymentLink(template.payment_link || '');
+    markDirty();
+    setPayDirty(true);
+  }
 
   function updateLine(localId: string, patch: Partial<EditableLine>) {
     setLines((prev) =>
@@ -668,6 +693,22 @@ export function InvoiceEditor({
           </QcStudioSection>
           <QcStudioSection active={studioSection === 'header'}>
             <div className="qc-studio-fields">
+              <label>Load from saved template
+                <select aria-label="Invoice template" value="" disabled={isReadOnly || invoiceTemplates.length === 0}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      applyInvoiceTemplate(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                >
+                  <option value="">{invoiceTemplates.length > 0 ? 'Choose a template...' : 'No templates saved yet'}</option>
+                  {invoiceTemplates.map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </label>
+              <p className="qc-document-help">Applies business details, logo, footer, notes, terms and payment details. Payment details save with their own button afterwards.</p>
               <label>Business name<input aria-label="Business name" value={companyName} disabled={isReadOnly} onChange={e => { setCompanyName(e.target.value); markDirty(); }} /></label>
               <label>Address<textarea aria-label="Business address" value={companyAddress} rows={3} disabled={isReadOnly} onChange={e => { setCompanyAddress(e.target.value); markDirty(); }} /></label>
               <label>Email<input aria-label="Business email" type="email" value={companyEmail} disabled={isReadOnly} onChange={e => { setCompanyEmail(e.target.value); markDirty(); }} /></label>
