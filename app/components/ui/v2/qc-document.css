@@ -171,5 +171,8 @@
 .qc-document-preview .qc-document-paper button:not(.qc-button) { min-height: 32px; min-width: 32px; border-radius: var(--qc-radius-small); }
 .qc-document-preview .qc-document-paper button:active:not(:disabled) { box-shadow: inset 0 2px 3px rgba(25,27,32,.16); }
 .qc-document-dialog-scope .text-\[\#FF6B35\] { color: var(--qc-color-orange-ink); }
-@media (hover:hover) { .qc-document-preview .qc-document-paper button:hover:not(:disabled) { background-color: var(--qc-selected-bg); color: var(--qc-color-orange-ink); } }
+/* The edit-target overlay spans whole document regions - a generic hover fill
+   would cover the region content entirely, so it is excluded here (owner
+   2026-09-26: hovering a line item must never blank the line). */
+@media (hover:hover) { .qc-document-preview .qc-document-paper button:hover:not(:disabled):not(.qc-output-edit-target):not(.qc-output-empty-target) { background-color: var(--qc-selected-bg); color: var(--qc-color-orange-ink); } }
 @media (max-width:767px), (pointer:coarse) { .qc-document-preview .qc-document-paper button:not(.qc-button) { min-width: 44px; min-height: 44px; } }
