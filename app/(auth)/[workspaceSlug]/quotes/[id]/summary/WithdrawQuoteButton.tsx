@@ -14,6 +14,7 @@
  * (which generates a fresh token) when they're ready to re-engage.
  */
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { withdrawQuote } from '../../actions';
@@ -36,7 +37,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
   // styled to match the rest of the action row.
   if (acceptedAt) {
     return (
-      <span
+      <QcJourney><span
         title="The customer has accepted this quote."
         className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white cursor-not-allowed select-none"
       >
@@ -44,12 +45,12 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
         Accepted
-      </span>
+      </span></QcJourney>
     );
   }
   if (declinedAt) {
     return (
-      <span
+      <QcJourney><span
         title="The customer has declined this quote."
         className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-5 py-2 text-sm font-semibold text-slate-700 cursor-not-allowed select-none"
       >
@@ -57,7 +58,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
         Declined
-      </span>
+      </span></QcJourney>
     );
   }
 
@@ -69,7 +70,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
   // button so the user knows the link is dead but doesn't get a no-op action.
   if (isAlreadyWithdrawn) {
     return (
-      <span
+      <QcJourney><span
         title="The acceptance link has been withdrawn. Use Send Quote to create a new one."
         className="inline-flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-5 py-2 text-sm font-semibold text-purple-700"
       >
@@ -77,7 +78,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
         </svg>
         Withdrawn
-      </span>
+      </span></QcJourney>
     );
   }
 
@@ -95,12 +96,12 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
   }
 
   return (
-    <>
-      <button
+    <QcJourney><>
+      <button data-qc-variant="danger"
         type="button"
         onClick={() => setConfirming(true)}
         title="Withdraw the active acceptance link so it can no longer be used"
-        className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-all hover:shadow-[0_0_12px_rgba(220,38,38,0.4)]"
+        className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-all hover:shadow-[0_0_12px_rgba(220,38,38,0.4)]"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -109,7 +110,7 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
       </button>
 
       {confirming && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+        <QcJourneyDialog label="Withdraw quote" size="sm">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-semibold text-slate-900">Withdraw acceptance link?</h3>
             <p className="text-sm text-slate-600">
@@ -125,26 +126,26 @@ export function WithdrawQuoteButton({ quoteId, hasActiveToken, isAlreadyWithdraw
               </p>
             )}
             <div className="flex gap-3 justify-end">
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => { setConfirming(false); setError(null); }}
                 disabled={pending}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="danger"
                 type="button"
                 onClick={handleConfirm}
                 disabled={pending}
-                className="px-4 py-2 text-sm font-semibold rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {pending ? 'Withdrawing...' : 'Withdraw link'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
-    </>
+    </></QcJourney>
   );
 }

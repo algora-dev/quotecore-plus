@@ -1,0 +1,146 @@
+[
+  {
+    "fixture": "catalogue-upload",
+    "selector": "[role=\"button\"].qc-flow-dropzone",
+    "normal": {
+      "outline": "rgb(48, 54, 65) none 0px",
+      "outlineOffset": "0px",
+      "border": "oklch(0.869 0.022 252.894)",
+      "background": "rgba(0, 0, 0, 0)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "hover": {
+      "outline": "rgb(48, 54, 65) none 0px",
+      "outlineOffset": "0px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 244, 235)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "focus": {
+      "outline": "rgb(182, 61, 10) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 244, 235)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "pressed": {
+      "outline": "rgb(182, 61, 10) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 244, 235)",
+      "shadow": "rgba(25, 27, 32, 0.14) 0px 2px 4px 0px inset",
+      "transform": "none"
+    }
+  },
+  {
+    "fixture": "login",
+    "selector": ".qc-button:not(:disabled)",
+    "normal": {
+      "outline": "rgb(25, 27, 32) none 0px",
+      "outlineOffset": "0px",
+      "border": "rgb(124, 135, 152)",
+      "background": "rgba(0, 0, 0, 0)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "hover": {
+      "outline": "rgb(25, 27, 32) none 0px",
+      "outlineOffset": "0px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 244, 235)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "focus": {
+      "outline": "rgb(182, 61, 10) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 244, 235)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "pressed": {
+      "outline": "rgb(182, 61, 10) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 244, 235)",
+      "shadow": "rgba(25, 27, 32, 0.12) 0px 2px 3px 0px inset",
+      "transform": "none"
+    }
+  },
+  {
+    "fixture": "login",
+    "selector": ".qc-input:not(:disabled)",
+    "normal": {
+      "outline": "rgb(25, 27, 32) none 0px",
+      "outlineOffset": "0px",
+      "border": "rgb(124, 135, 152)",
+      "background": "rgb(255, 255, 255)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "hover": {
+      "outline": "rgb(25, 27, 32) none 0px",
+      "outlineOffset": "0px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 255, 255)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "focus": {
+      "outline": "rgb(25, 27, 32) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(182, 61, 10)",
+      "background": "rgb(255, 255, 255)",
+      "shadow": "none",
+      "transform": "none"
+    },
+    "pressed": {
+      "outline": "rgb(182, 61, 10) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(124, 135, 152)",
+      "background": "rgb(255, 255, 255)",
+      "shadow": "none",
+      "transform": "none"
+    }
+  },
+  {
+    "fixture": "quotes",
+    "selector": ".qc-button:not(:disabled)",
+    "normal": {
+      "outline": "rgb(25, 27, 32) none 0px",
+      "outlineOffset": "0px",
+      "border": "rgb(255, 100, 31)",
+      "background": "rgba(0, 0, 0, 0)",
+      "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset",
+      "transform": "none"
+    },
+    "hover": {
+      "outline": "rgb(25, 27, 32) none 0px",
+      "outlineOffset": "0px",
+      "border": "rgb(255, 100, 31)",
+      "background": "rgba(0, 0, 0, 0)",
+      "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset, rgba(255, 107, 53, 0.2) 0px 4px 14px 0px",
+      "transform": "none"
+    },
+    "focus": {
+      "outline": "rgb(182, 61, 10) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(255, 100, 31)",
+      "background": "rgba(0, 0, 0, 0)",
+      "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset, rgba(255, 107, 53, 0.2) 0px 4px 14px 0px",
+      "transform": "none"
+    },
+    "pressed": {
+      "outline": "rgb(182, 61, 10) solid 2px",
+      "outlineOffset": "3px",
+      "border": "rgb(255, 100, 31)",
+      "background": "rgba(0, 0, 0, 0)",
+      "shadow": "rgba(255, 255, 255, 0.8) 0px 1px 0px 0px inset, rgba(255, 107, 53, 0.2) 0px 4px 14px 0px",
+      "transform": "none"
+    }
+  }
+]

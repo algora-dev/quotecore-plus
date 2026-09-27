@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -61,42 +62,42 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
 
   if (lines.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 px-2 md:px-6 py-8 md:py-12 text-center">
+      <QcJourney><div className="rounded-xl border border-dashed border-slate-200 px-2 md:px-6 py-8 md:py-12 text-center">
         <p className="text-sm text-slate-500 font-medium">No customer quote lines saved yet</p>
         <p className="text-xs text-slate-400 mt-1">Build the customer quote first, then come back to create an invoice from it.</p>
-      </div>
+      </div></QcJourney>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <QcJourney><div className="space-y-4">
       {/* Search + bulk action buttons */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input
+          <input aria-label="Search lines…"
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search lines…"
-            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-xl focus:border-orange-400 focus:outline-none"
+            className="qc-input qc-flow-search w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-xl focus:border-orange-400 focus:outline-none"
           />
         </div>
-        <button
+        <button data-qc-variant="ghost"
           type="button"
           onClick={selectAll}
           disabled={allFilteredSelected}
-          className="px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
+          className="qc-flow-control qc-button px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
         >
           Select all
         </button>
-        <button
+        <button data-qc-variant="ghost"
           type="button"
           onClick={deselectAll}
           disabled={noneFilteredSelected}
-          className="px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
+          className="qc-flow-control qc-button px-3 py-2 text-xs font-medium rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-orange-300 hover:text-orange-700 disabled:opacity-40 disabled:cursor-default transition-all"
         >
           Deselect all
         </button>
@@ -113,7 +114,7 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
             type="checkbox"
             checked={allFilteredSelected}
             onChange={toggleMaster}
-            className="w-4 h-4 rounded text-orange-600 border-slate-300"
+            className="qc-check w-4 h-4 rounded text-orange-600 border-slate-300"
           />
           <span className="flex-1 text-xs font-semibold text-slate-500 uppercase tracking-wide">Line</span>
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide text-right w-24">Amount</span>
@@ -129,15 +130,15 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
           return (
             <label
               key={line.id}
-              className={`flex items-center gap-4 px-4 py-3.5 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors ${
+              className={"qc-flow-label " + (`flex items-center gap-4 px-4 py-3.5 cursor-pointer border-b border-slate-100 last:border-b-0 transition-colors ${
                 isSelected ? 'bg-white hover:bg-orange-50/30' : 'bg-slate-50/60 hover:bg-slate-50'
-              }`}
+              }`)}
             >
               <input
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => toggleLine(line.id)}
-                className="w-4 h-4 rounded text-orange-600 border-slate-300 flex-shrink-0"
+                className="qc-check w-4 h-4 rounded text-orange-600 border-slate-300 flex-shrink-0"
               />
               <span className={`flex-1 text-sm truncate ${isSelected ? 'text-slate-900' : 'text-slate-400'}`}>
                 {line.custom_text || <em className="text-slate-400">Unnamed line</em>}
@@ -157,15 +158,15 @@ export function InvoiceLineSelector({ quoteId, workspaceSlug, lines }: Props) {
             ? 'No lines selected.'
             : `${selected.size} line${selected.size !== 1 ? 's' : ''} will be added to the invoice.`}
         </p>
-        <button
+        <button data-qc-variant="primary"
           type="button"
           onClick={handleCreate}
           disabled={selected.size === 0 || navigating}
-          className="px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] disabled:opacity-40 transition-all"
+          className="qc-flow-control qc-button px-5 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.25)] disabled:opacity-40 transition-all"
         >
           {navigating ? 'Loading…' : 'Create Invoice →'}
         </button>
       </div>
-    </div>
+    </div></QcJourney>
   );
 }

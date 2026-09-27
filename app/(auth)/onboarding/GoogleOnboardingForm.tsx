@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { completeGoogleOnboarding } from './actions';
@@ -117,7 +118,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <QcJourney><form onSubmit={handleSubmit}>
       {/* Signed in indicator */}
       <div className="flex items-center gap-2 p-3 mb-6 bg-emerald-50 border border-emerald-200 rounded-lg">
         <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,25 +144,25 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
 
       {step === 1 && (
         <div className="grid gap-4">
-          <label className="block">
+          <label className="qc-flow-label block">
             <span className="block text-sm font-medium text-slate-700 mb-1">Company name</span>
-            <input
+            <input aria-label="Company name"
               type="text"
               value={companyName}
               onChange={e => setCompanyName(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
               placeholder="Your Company Ltd"
               autoFocus
             />
           </label>
 
-          <label className="block">
+          <label className="qc-flow-label block">
             <span className="block text-sm font-medium text-slate-700 mb-1">Your name</span>
-            <input
+            <input aria-label="Company name"
               type="text"
               value={fullName}
               onChange={e => setFullName(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+              className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
               placeholder="John Smith"
             />
           </label>
@@ -173,25 +174,25 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
                 set a password so you can also log in with email + password.
                 Leave blank to keep signing in the way you just did.
               </p>
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Password <span className="font-normal text-slate-400">(optional)</span></span>
-                <input
+                <input aria-label="Password (optional)"
                   type="password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="At least 8 characters"
                   minLength={8}
                 />
               </label>
               {newPassword && (
-                <label className="block">
+                <label className="qc-flow-label block">
                   <span className="block text-sm font-medium text-slate-700 mb-1">Confirm password</span>
-                  <input
+                  <input aria-label="Repeat password"
                     type="password"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                    className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                     placeholder="Repeat password"
                     minLength={8}
                   />
@@ -202,10 +203,10 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
 
           {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
-          <button
+          <button data-qc-variant="primary"
             type="button"
             onClick={handleNext}
-            className="w-full px-6 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] mt-2"
+            className="qc-flow-control qc-button w-full px-6 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] mt-2"
           >
             Next →
           </button>
@@ -216,12 +217,12 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
         <div className="grid gap-5">
           {/* Currency */}
           <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-1">💰 Default Currency</label>
+            <label className="qc-flow-label block text-sm font-semibold text-slate-900 mb-1">💰 Default Currency</label>
             <p className="text-xs text-slate-500 mb-2">All prices will be entered in this currency</p>
-            <select
+            <select aria-label="💰 Default Currency"
               value={currency}
               onChange={e => setCurrency(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+              className="qc-select w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
             >
               {CURRENCY_GROUPS.map(group => (
                 <optgroup key={group.label} label={group.label}>
@@ -237,7 +238,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
 
           {/* Measurement */}
           <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-1">📏 Measurement System</label>
+            <label className="qc-flow-label block text-sm font-semibold text-slate-900 mb-1">📏 Measurement System</label>
             <div className="grid grid-cols-1 gap-2 mt-2">
               {[
                 { value: 'metric' as const, title: 'Metric', subtitle: 'Meters (m), Square meters (m²)' },
@@ -248,11 +249,11 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
                   key={opt.value}
                   type="button"
                   onClick={() => setMeasurement(opt.value)}
-                  className={`p-3 rounded-lg border-2 transition text-left ${
+                  className={"qc-flow-control qc-flow-card " + (`p-3 rounded-lg border-2 transition text-left ${
                     measurement === opt.value
                       ? 'border-orange-500 bg-orange-50'
                       : 'border-slate-200 hover:border-slate-300'
-                  }`}
+                  }`)}
                 >
                   <div className="font-medium text-sm">{opt.title}</div>
                   <div className="text-xs text-slate-500 mt-0.5">{opt.subtitle}</div>
@@ -263,7 +264,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
 
           {/* Default Trade */}
           <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-1">Default Trade</label>
+            <label className="qc-flow-label block text-sm font-semibold text-slate-900 mb-1">Default Trade</label>
             <p className="text-xs text-slate-500 mb-3">Sets measurement types and tools. You can change this per quote later.</p>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -287,11 +288,11 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
                   key={opt.value}
                   type="button"
                   onClick={() => setDefaultTrade(opt.value)}
-                  className={`px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition text-left ${
+                  className={"qc-flow-control qc-flow-card " + (`px-3 py-2.5 rounded-lg border-2 text-sm font-medium transition text-left ${
                     defaultTrade === opt.value
                       ? 'border-orange-500 bg-orange-50 text-orange-900'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
+                  }`)}
                 >
                   {opt.label}
                 </button>
@@ -302,17 +303,17 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
           {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
           <div className="flex gap-3 mt-2">
-            <button
+            <button data-qc-variant="ghost"
               type="button"
               onClick={() => setStep(1)}
-              className="px-4 py-3 border border-slate-300 rounded-full text-sm font-medium hover:bg-slate-50 transition"
+              className="qc-flow-control qc-button px-4 py-3 border border-slate-300 rounded-full text-sm font-medium hover:bg-slate-50 transition"
             >
               ← Back
             </button>
-            <button
+            <button data-qc-variant="primary"
               type="submit"
               disabled={isPending}
-              className="flex-1 px-6 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+              className="qc-flow-control qc-button flex-1 px-6 py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 disabled:opacity-50 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
             >
               {isPending ? 'Setting up...' : 'Complete Setup →'}
             </button>
@@ -347,7 +348,7 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
                 href="/tutorials"
                 target="_blank"
                 rel="noopener"
-                className="text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"
+                className="qc-flow-link text-orange-600 font-medium hover:text-orange-700 underline underline-offset-2"
               >
                 View Tutorials
               </a>
@@ -355,17 +356,17 @@ export function GoogleOnboardingForm({ defaultName, defaultEmail, needsPassword 
           </div>
 
           <div className="space-y-3">
-            <button
+            <button data-qc-variant="primary"
               type="button"
               onClick={handleFinish}
               disabled={isPending}
-              className="w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+              className="qc-flow-control qc-button w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
             >
               {isPending ? 'Setting up...' : 'Get Started'}
             </button>
           </div>
         </div>
       )}
-    </form>
+    </form></QcJourney>
   );
 }

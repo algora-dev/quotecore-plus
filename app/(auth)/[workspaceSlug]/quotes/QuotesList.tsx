@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -24,7 +25,7 @@ type Quote = {
   customer_name: string;
   job_name: string | null;
   status: string;
-  quote_number: number | null;
+  quote_number: string | number | null;
   created_at: string;
   updated_at: string;
   job_status: string | null;
@@ -164,7 +165,7 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
         onClick={() => setOpen(!open)}
         disabled={saving}
         title="Click to change status"
-        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`}
+        className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
         {saving ? '...' : config.label}
@@ -182,7 +183,7 @@ function JobStatusDropdown({ quoteId, currentStatus }: { quoteId: string; curren
               <button
                 key={s}
                 onClick={() => handleSelect(s)}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''}`}
+                className={"qc-flow-control " + (`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''}`)}
               >
                 <span className={`w-2 h-2 rounded-full ${c.dot}`} />
                 <span className={isActive ? c.text : 'text-slate-700'}>{c.label}</span>
@@ -493,27 +494,29 @@ export function QuotesList({
   }
 
   return (
-    <>
+    <QcJourney className="qc-journey-stack"><>
       {/* Top actions row */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex gap-1 p-1 bg-slate-100 rounded-full w-fit">
+        <div className="qc-flow-tabs">
           <button
+            aria-pressed={activeTab === 'confirmed'}
             onClick={() => { setActiveTab('confirmed'); setStatusFilter('all'); }}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+            className={"qc-flow-control qc-flow-tab " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'confirmed'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
-            }`}
+            }`)}
           >
             Confirmed ({confirmed.length})
           </button>
           <button
+            aria-pressed={activeTab === 'draft'}
             onClick={() => setActiveTab('draft')}
-            className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+            className={"qc-flow-control qc-flow-tab " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
               activeTab === 'draft'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
-            }`}
+            }`)}
           >
             Drafts ({drafts.length})
           </button>
@@ -527,7 +530,7 @@ export function QuotesList({
               onClick={() => setSubBlockedOpen(true)}
               title="Your subscription is inactive - click for plan options"
               data-copilot="new-quote"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
+              className="qc-flow-control inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -540,7 +543,7 @@ export function QuotesList({
               onClick={() => setCapUpgradeOpen(true)}
               title="Monthly quote limit reached - click for upgrade options"
               data-copilot="new-quote"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
+              className="qc-flow-control inline-flex items-center gap-1.5 rounded-full bg-slate-300 px-5 py-2 text-sm font-semibold text-slate-600 cursor-pointer hover:bg-slate-400"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -548,11 +551,11 @@ export function QuotesList({
               New Quote
             </button>
           ) : (
-            <Link
+            <Link data-qc-variant="primary"
               href={`/${workspaceSlug}/quotes/new`}
               title="Click to create a new quote"
               data-copilot="new-quote"
-              className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
+              className="qc-button qc-flow-control inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -560,9 +563,9 @@ export function QuotesList({
               New Quote
             </Link>
           )}
-          <Link
+          <Link data-qc-variant="secondary"
             href={`/${workspaceSlug}/resources`}
-            className="hidden md:inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control hidden md:inline-flex items-center rounded-full bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Resource Library
           </Link>
@@ -578,12 +581,13 @@ export function QuotesList({
             return (
               <button
                 key={f.key}
+                aria-pressed={statusFilter === f.key}
                 onClick={() => setStatusFilter(f.key)}
-          className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
+          className={"qc-flow-control " + (`px-3 py-1 text-xs font-medium rounded-full border transition ${
             statusFilter === f.key
               ? 'bg-slate-900 text-white border-slate-900'
               : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-          } whitespace-nowrap`}
+          } whitespace-nowrap`)}
               >
                 {f.label} {count > 0 && <span className="ml-1 opacity-70">{count}</span>}
               </button>
@@ -593,27 +597,28 @@ export function QuotesList({
       )}
 
      {/* Search + Sort row */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+      <div className="qc-flow-filters">
         <div className="relative flex-1 md:max-w-sm">
-          <input
+          <input aria-label="Search by quote #, client, or job..."
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by quote #, client, or job..."
-            className="w-full pl-9 pr-4 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            className="qc-input qc-flow-search w-full pl-9 pr-4 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
+            <button onClick={() => setSearchQuery('')} className="qc-flow-control absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
           )}
         </div>
 
         <select
+          aria-label="Sort quotes"
           value={sortBy}
           onChange={e => setSortBy(e.target.value as any)}
-          className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+          className="qc-select px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
         >
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
@@ -621,9 +626,10 @@ export function QuotesList({
         </select>
       </div>
 
+      <p className="qc-flow-result" role="status">{displayQuotes.length} {activeTab === 'draft' ? 'draft' : 'confirmed'} quote{displayQuotes.length === 1 ? '' : 's'}{searchQuery || statusFilter !== 'all' ? ' matching your filters' : ''}</p>
       {/* Table header */}
       {displayQuotes.length > 0 && (
-        <div className="hidden sm:grid grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+        <div className="qc-flow-columns hidden sm:grid grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
           <input
             type="checkbox"
             checked={displayQuotes.length > 0 && displayQuotes.every((q) => selectedIds.has(q.id))}
@@ -635,8 +641,8 @@ export function QuotesList({
             }}
             onChange={() => toggleSelectAllVisible(displayQuotes)}
             onClick={(e) => e.stopPropagation()}
-            title="Select all visible quotes"
-            className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+            title="Select all visible quotes" aria-label="Select all visible quotes"
+            className="qc-check w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
           />
           <span>Quote</span>
           <span>Client / Job</span>
@@ -648,13 +654,13 @@ export function QuotesList({
 
       {/* Quote rows */}
       {displayQuotes.length > 0 ? (
-        <div className="grid gap-1">
+        <div className="qc-flow-list">
           {displayQuotes.map((q) => (
             <div
               key={q.id}
               onClick={() => handleRowClick(q)}
               title="Click to open this quote"
-              className={`grid sm:grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-2 sm:gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(q.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
+              className={`qc-flow-row grid sm:grid-cols-[28px_1fr_1fr_140px_120px_40px] gap-2 sm:gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(q.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
             >
               {/* Selection checkbox */}
               <input
@@ -662,8 +668,8 @@ export function QuotesList({
                 checked={selectedIds.has(q.id)}
                 onChange={() => toggleSelect(q.id)}
                 onClick={(e) => e.stopPropagation()}
-                title="Select for bulk download or delete"
-                className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                title="Select for bulk download or delete" aria-label={`Select ${q.customer_name}${q.quote_number ? `, quote ${q.quote_number}` : ', draft'}`}
+                className="qc-check w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
               />
 
               {/* Quote info */}
@@ -678,7 +684,10 @@ export function QuotesList({
 
               {/* Client / Job */}
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{q.customer_name}</p>
+                <Link href={q.status === 'draft' ? `/${workspaceSlug}/quotes/${q.id}` : `/${workspaceSlug}/quotes/${q.id}/summary`}
+                  onClick={event => event.stopPropagation()} className="qc-flow-link text-sm truncate" title={`Open ${q.customer_name}`}>
+                  {q.customer_name || 'Unnamed customer'}
+                </Link>
                 {q.job_name && <p className="text-xs text-slate-400 truncate">{q.job_name}</p>}
               </div>
 
@@ -699,15 +708,15 @@ export function QuotesList({
 
               {/* Last Activity */}
               <div className="text-xs text-slate-400">
-                {timeAgo(q.updated_at || q.created_at)}
+                <span className="qc-flow-mobile-label">Last activity</span>{timeAgo(q.updated_at || q.created_at)}
               </div>
 
               {/* Delete */}
               <div className="flex justify-end">
-                <button
+                <button aria-label="Click to delete"
                   onClick={(e) => { e.stopPropagation(); setDeleteId(q.id); }}
                   title="Click to delete"
-                  className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100"
+                  className="qc-icon-button qc-flow-control icon-btn icon-btn--danger opacity-0 group-hover:opacity-100"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -718,7 +727,7 @@ export function QuotesList({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
+        <div className="qc-flow-empty">
           <p className="text-sm text-slate-500">
             {searchQuery
               ? 'No quotes match your search.'
@@ -740,32 +749,32 @@ export function QuotesList({
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-lg">
+        <div className="qc-flow-bulk">
           <span className="text-sm text-slate-700">
             {selectedIds.size} selected
             <span className="ml-1 text-xs text-slate-400">/ {MAX_BULK_SELECTION} max</span>
           </span>
           <button
             onClick={clearSelection}
-            className="text-xs text-slate-500 hover:text-slate-700 underline"
+            className="qc-flow-control text-xs text-slate-500 hover:text-slate-700 underline"
           >
             clear
           </button>
           <span className="w-px h-6 bg-slate-200" />
-          <button
+          <button data-qc-variant="primary"
             onClick={handleBulkDownload}
             disabled={bulkBusy !== null}
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
             </svg>
             {bulkBusy === 'download' ? 'Bundling...' : `Download ${selectedIds.size} as ZIP`}
           </button>
-          <button
+          <button data-qc-variant="danger"
             onClick={() => setBulkDeleteConfirmOpen(true)}
             disabled={bulkBusy !== null}
-            className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -777,7 +786,7 @@ export function QuotesList({
 
       {/* Bulk download progress modal */}
       {bulkProgress && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage quotes" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Building Export</h3>
             <p className="text-sm text-slate-600 mt-2">{bulkProgress.message}</p>
@@ -791,12 +800,12 @@ export function QuotesList({
               {bulkProgress.done} / {bulkProgress.total}
             </p>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Bulk delete confirmation */}
       {bulkDeleteConfirmOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage quotes" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete {selectedIds.size} Quotes</h3>
             <p className="text-sm text-slate-500 mt-2">
@@ -804,51 +813,51 @@ export function QuotesList({
               Make sure you&apos;ve downloaded a copy first if you want to keep records.
             </p>
             <div className="flex gap-3 justify-end mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={() => setBulkDeleteConfirmOpen(false)}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
                 disabled={bulkBusy === 'delete'}
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="danger"
                 onClick={handleBulkDelete}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
                 disabled={bulkBusy === 'delete'}
               >
                 {bulkBusy === 'delete' ? 'Deleting...' : `Delete ${selectedIds.size}`}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Delete Modal */}
       {deleteId && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage quotes" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete Quote</h3>
             <p className="text-sm text-slate-500 mt-2">
               This action cannot be undone. The quote will be permanently deleted.
             </p>
             <div className="flex gap-3 justify-end mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
                 disabled={deleting}
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="danger"
                 onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
                 disabled={deleting}
               >
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       <UpgradeModal
@@ -866,6 +875,6 @@ export function QuotesList({
         ctaLabel="View plans"
         recommendedPlan="starter"
       />
-    </>
+    </></QcJourney>
   );
 }

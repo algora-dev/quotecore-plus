@@ -1,0 +1,19 @@
+{
+  "baseline_archive": "quotecore-plus-phase6-ux-handoff-2026-09-27.zip",
+  "baseline_sha256": "3dd0d92e8b0e2010e90b527c82fee5983c9c56e65d088e788b190e4dcc5eeb75",
+  "original_files": 2797,
+  "retained_original_paths": 2797,
+  "unchanged_original_files": 2735,
+  "missing_original_files": [],
+  "unexpected_modified_original_files": [],
+  "application_changes": 60,
+  "new_app_files": [
+    "app/components/ui/v2/qc-journeys.css",
+    "app/components/ui/v2/QcJourney.tsx"
+  ],
+  "protected_files_checked": 881,
+  "protected_failures": [],
+  "changed_working_text_crlf": [],
+  "relative_import_existence_failures": [],
+  "notes": "Baseline inspection source is LF-normalized; exact originals are inside baseline/ORIGINAL_CHANGED_FILES.zip. Checks cover bytes/source invariants, not app behavior."
+}

@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -154,7 +155,7 @@ function InvoiceStatusDropdown({ invoiceId, currentStatus }: { invoiceId: string
         onClick={() => setOpen(!open)}
         disabled={saving}
         title="Click to change status"
-        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`}
+        className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
         {saving ? '...' : config.label}
@@ -174,7 +175,7 @@ function InvoiceStatusDropdown({ invoiceId, currentStatus }: { invoiceId: string
                 type="button"
                 onClick={() => handleSelect(s)}
                 disabled={!isManual}
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''} ${!isManual ? 'opacity-60 cursor-default' : ''}`}
+                className={"qc-flow-control " + (`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''} ${!isManual ? 'opacity-60 cursor-default' : ''}`)}
               >
                 <span className={`w-2 h-2 rounded-full ${c.dot}`} />
                 <span className={isActive ? c.text : 'text-slate-700'}>{c.label}</span>
@@ -237,7 +238,7 @@ function InvoiceRowMenu({
           type="button"
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen((v) => !v); }}
           disabled={busy}
-          className="icon-btn opacity-0 group-hover:opacity-100 p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          className="qc-icon-button qc-flow-control icon-btn opacity-0 group-hover:opacity-100 p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           aria-label="Invoice actions"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -252,7 +253,7 @@ function InvoiceRowMenu({
           >
             <Link
               href={`/${workspaceSlug}/invoices/${invoice.id}`}
-              className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50"
+              className="qc-flow-link flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50"
               onClick={() => setOpen(false)}
             >
               <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -264,7 +265,7 @@ function InvoiceRowMenu({
               href={`/invoice/${invoice.public_token}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50"
+              className="qc-flow-link flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50"
               onClick={() => setOpen(false)}
             >
               <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -280,7 +281,7 @@ function InvoiceRowMenu({
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setOpen(false); setConfirmAction('delete'); }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
+                    className="qc-flow-control flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -291,7 +292,7 @@ function InvoiceRowMenu({
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setOpen(false); setConfirmAction('cancel'); }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
+                    className="qc-flow-control flex w-full items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -306,7 +307,7 @@ function InvoiceRowMenu({
       </div>
 
       {/* ConfirmModal for delete */}
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={confirmAction === 'delete'}
         title={`Delete ${invoice.invoice_number}?`}
         description="This draft invoice will be permanently deleted. This cannot be undone."
@@ -320,7 +321,7 @@ function InvoiceRowMenu({
       />
 
       {/* ConfirmModal for cancel */}
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={confirmAction === 'cancel'}
         title={`Cancel ${invoice.invoice_number}?`}
         description="This invoice will be marked as cancelled and can no longer be sent."
@@ -538,26 +539,26 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
   }
 
   return (
-    <>
+    <QcJourney className="qc-journey-stack"><>
      {/* Toolbar */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1 md:max-w-sm">
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input
+          <input aria-label="Search by customer or invoice number…"
             type="text"
             placeholder="Search by customer or invoice number…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            className="qc-input qc-flow-search w-full pl-9 pr-4 py-2 text-base md:text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
         </div>
-        <button
+        <button data-qc-variant="primary"
           type="button"
           data-copilot="new-invoice"
           onClick={() => setShowCreate(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
+          className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -577,11 +578,11 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
               key={tab.key}
               type="button"
               onClick={() => setStatusFilter(tab.key)}
-              className={`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
+              className={"qc-flow-control " + (`px-3 py-1 text-xs font-medium rounded-full border transition whitespace-nowrap ${
                 isActive
                   ? 'bg-slate-900 text-white border-slate-900'
                   : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-              }`}
+              }`)}
             >
               {tab.label} {count > 0 && <span className="ml-1 opacity-70">{count}</span>}
             </button>
@@ -598,10 +599,10 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
               : 'No invoices match your search or filter.'}
           </p>
           {invoices.length === 0 && (
-            <button
+            <button data-qc-variant="primary"
               type="button"
               onClick={() => setShowCreate(true)}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+              className="qc-flow-control qc-button mt-4 inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -615,7 +616,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           {/* Column headers - mirrors Quotes/Orders list header styling. Status
               sits in its own column immediately before Last Activity. The grid
               template MUST match the rows below so columns line up. */}
-          <div className="hidden sm:grid grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+          <div className="qc-flow-columns hidden sm:grid grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
             <input
               type="checkbox"
               checked={filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id))}
@@ -627,8 +628,8 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
               }}
               onChange={() => toggleSelectAllVisible(filtered)}
               onClick={(e) => e.stopPropagation()}
-              title="Select all visible invoices"
-              className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+              title="Select all visible invoices" aria-label="Select all visible invoices"
+              className="qc-check w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
             />
             <span>Invoice Number</span>
             <span>Client / Job</span>
@@ -638,13 +639,13 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
             <span></span>
           </div>
 
-          <div className="grid gap-1">
+          <div className="qc-flow-list">
             {filtered.map((inv) => (
               <div
                 key={inv.id}
                 onClick={() => router.push(`/${workspaceSlug}/invoices/${inv.id}`)}
                 title="Click to open this invoice"
-                className={`grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
+                className={`qc-flow-row grid sm:grid-cols-[28px_1fr_1fr_140px_140px_120px_40px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(inv.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
               >
                 {/* Selection checkbox - onChange + stopPropagation so it
                     selects (not navigates), matching the Quotes/Orders rows. */}
@@ -653,14 +654,14 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                   checked={selectedIds.has(inv.id)}
                   onChange={() => toggleSelect(inv.id)}
                   onClick={(e) => e.stopPropagation()}
-                  title="Select for bulk download or delete"
-                  className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+                  title="Select for bulk download or delete" aria-label={`Select invoice ${inv.invoice_number}`}
+                  className="qc-check w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
                 />
 
                 {/* Invoice Number */}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-orange-600 text-sm">{inv.invoice_number}</span>
+                    <Link href={`/${workspaceSlug}/invoices/${inv.id}`} onClick={event => event.stopPropagation()} className="qc-flow-link text-sm font-semibold">{inv.invoice_number}</Link>
                     {isOverdue(inv) && (
                       <span className="text-xs text-red-600 font-medium">Overdue</span>
                     )}
@@ -677,7 +678,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                 </div>
 
                 {/* Value */}
-                <div className="hidden sm:block text-right">
+                <div className="text-right"><span className="qc-flow-mobile-label">Value</span>
                   <p className="text-sm font-semibold text-slate-900">
                     {formatCurrency(inv.total ?? 0, inv.currency ?? 'GBP')}
                   </p>
@@ -690,7 +691,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
                 </div>
 
                 {/* Last Activity */}
-                <div className="hidden md:block">
+                <div><span className="qc-flow-mobile-label">Activity &amp; due date</span>
                   <p className="text-xs text-slate-400">{timeAgo(inv.updated_at)}</p>
                   {inv.due_date && (
                     <p className={`text-xs mt-0.5 ${isOverdue(inv) ? 'text-red-500 font-medium' : 'text-slate-400'}`}>
@@ -722,29 +723,29 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-lg">
+        <div className="qc-flow-bulk">
           <span className="text-sm text-slate-700">
             {selectedIds.size} selected
             <span className="ml-1 text-xs text-slate-400">/ {MAX_BULK_SELECTION} max</span>
           </span>
-          <button onClick={clearSelection} className="text-xs text-slate-500 hover:text-slate-700 underline">
+          <button onClick={clearSelection} className="qc-flow-control text-xs text-slate-500 hover:text-slate-700 underline">
             clear
           </button>
           <span className="w-px h-6 bg-slate-200" />
-          <button
+          <button data-qc-variant="primary"
             onClick={handleBulkDownload}
             disabled={bulkBusy !== null}
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
             </svg>
             {bulkBusy === 'download' ? 'Bundling...' : `Download ${selectedIds.size} as ZIP`}
           </button>
-          <button
+          <button data-qc-variant="danger"
             onClick={() => setBulkDeleteConfirmOpen(true)}
             disabled={bulkBusy !== null}
-            className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -756,7 +757,7 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
 
       {/* Bulk download progress modal */}
       {bulkProgress && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage invoices" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Building Export</h3>
             <p className="text-sm text-slate-600 mt-2">{bulkProgress.message}</p>
@@ -770,11 +771,11 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
               {bulkProgress.done} / {bulkProgress.total}
             </p>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Bulk delete confirmation (only drafts are deletable; others skipped). */}
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={bulkDeleteConfirmOpen}
         title={`Delete ${selectedIds.size} selected invoice(s)?`}
         description={
@@ -797,6 +798,6 @@ export function InvoiceList({ invoices: initialInvoices, workspaceSlug }: Props)
           onClose={() => setShowCreate(false)}
         />
       )}
-    </>
+    </></QcJourney>
   );
 }

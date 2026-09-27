@@ -1,0 +1,3142 @@
+[
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "activation",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "activation",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "activation",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "activation",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "billing",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "billing",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "billing",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "billing",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-components",
+    "width": 1440,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-components",
+    "width": 1024,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-components",
+    "width": 390,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIALOG",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-components",
+    "width": 320,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIALOG",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "INPUT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-map",
+    "width": 1440,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-map",
+    "width": 1024,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-map",
+    "width": 390,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIALOG",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIALOG",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-map",
+    "width": 320,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIALOG",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIALOG",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "SELECT",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-upload",
+    "width": 1440,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-upload",
+    "width": 1024,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-upload",
+    "width": 390,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "catalogue-upload",
+    "width": 320,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "DIV",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "company-settings",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "company-settings",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "company-settings",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "company-settings",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "create-invoice",
+    "width": 1440,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "create-invoice",
+    "width": 1024,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "create-invoice",
+    "width": 390,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "create-invoice",
+    "width": 320,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "invoices",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "invoices",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "invoices",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "invoices",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "login",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "login",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "login",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "login",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "orders",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "orders",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "orders",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "orders",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-bulk",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-bulk",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-bulk",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-bulk",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-drafts",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-drafts",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-drafts",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes-drafts",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "quotes",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "reset-password",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "reset-password",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "reset-password",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "reset-password",
+    "width": 320,
+    "errors": []
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "send-options",
+    "width": 1440,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "send-options",
+    "width": 1024,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "send-options",
+    "width": 390,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 1,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "send-options",
+    "width": 320,
+    "errors": [],
+    "nativeDialogFocus": [
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BODY",
+        "inDialog": false,
+        "backgroundControl": false
+      },
+      {
+        "tag": "BUTTON",
+        "inDialog": true,
+        "backgroundControl": false
+      }
+    ],
+    "backgroundControlReceivedFocus": false,
+    "nonDialogContentReceivedFocus": false,
+    "lastDialogButtonReachable": true
+  },
+  {
+    "body": 1440,
+    "viewport": 1440,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "signup",
+    "width": 1440,
+    "errors": []
+  },
+  {
+    "body": 1024,
+    "viewport": 1024,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "signup",
+    "width": 1024,
+    "errors": []
+  },
+  {
+    "body": 390,
+    "viewport": 390,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "signup",
+    "width": 390,
+    "errors": []
+  },
+  {
+    "body": 320,
+    "viewport": 320,
+    "dialogs": 0,
+    "unlabeledButtons": [],
+    "unnamedInputs": [],
+    "name": "signup",
+    "width": 320,
+    "errors": []
+  }
+]

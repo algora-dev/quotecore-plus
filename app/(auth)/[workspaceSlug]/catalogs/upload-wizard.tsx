@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourneyDialog, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef, useCallback } from 'react';
 import { StorageBlockedModal } from '@/app/components/billing/StorageBlockedModal';
 import Papa from 'papaparse';
@@ -337,7 +338,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
   const ghostBtn = 'px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50';
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <QcJourneyDialog label="Upload catalogue" size="lg">
       <div
         className="bg-white rounded-xl shadow-2xl max-w-xl w-full mx-4 flex flex-col max-h-[90vh]"
       >
@@ -354,10 +355,10 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
               {step === 0 && 'Choose a CSV file to import as a searchable catalog.'}
               {step === 1 && 'Give this catalog a name so you can find it later.'}
               {step === 2 && 'Check your data and choose which columns map to each field.'}
-              {step === 3 && 'Review and save your catalog.'}
+              {step === 3 && 'Save a searchable catalogue. Creating components is a separate step.'}
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+          <button onClick={onClose} className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600" aria-label="Close">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -365,7 +366,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
         </div>
 
         <div className="p-6 overflow-y-auto flex-1">
-          <StepIndicator step={step} total={TOTAL_STEPS} />
+          <QcJourneySteps steps={["Choose file", "Name", "Map columns", "Review & save"]} current={step} label="Catalogue upload progress" />
 
           {/* Step 0: Upload */}
           {step === 0 && (
@@ -373,10 +374,12 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
               <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
               <div
                 data-copilot="catalog-wizard-drop"
+                role="button" tabIndex={0} aria-label="Choose a CSV catalogue"
+                onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
                 onClick={() => { if (isOverStorage) { setStorageBlocked(true); return; } fileInputRef.current?.click(); }}
-                className="border-2 border-dashed border-slate-300 rounded-xl p-10 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition-colors"
+                className="qc-flow-dropzone border-2 border-dashed border-slate-300 rounded-xl p-10 text-center cursor-pointer hover:border-orange-300 hover:bg-orange-50/40 transition-colors"
               >
                 <svg className="h-10 w-10 mx-auto text-slate-300 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -410,14 +413,14 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
           {/* Step 1: Name */}
           {step === 1 && parsed && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Catalog name</label>
-              <input
+              <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">Catalog name</label>
+              <input aria-label="e.g. Supplier Price List 2026"
                 data-copilot="catalog-wizard-name"
                 type="text"
                 value={catalogName}
                 onChange={(e) => setCatalogName(e.target.value)}
                 placeholder="e.g. Supplier Price List 2026"
-                className={inputCls}
+                className={"qc-input " + (inputCls)}
                 autoFocus
                 maxLength={120}
               />
@@ -433,8 +436,8 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                 </div>
               )}
               <div className="mt-6 flex gap-3 justify-end">
-                <button onClick={() => setStep(0)} className={ghostBtn}>Back</button>
-                <button onClick={() => setStep(2)} disabled={!catalogName.trim()} className={primaryBtn}>Next</button>
+                <button onClick={() => setStep(0)} className={"qc-flow-control " + (ghostBtn)}>Back</button>
+                <button data-qc-variant="primary" onClick={() => setStep(2)} disabled={!catalogName.trim()} className={"qc-flow-control qc-button " + (primaryBtn)}>Check columns →</button>
               </div>
             </div>
           )}
@@ -450,7 +453,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
               </div>
               <div className="rounded-lg border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[11px]">
+                  <table className="qc-flow-table w-full">
                     <thead>
                       <tr className="bg-slate-50">
                         {parsed.headers.map((h, idx) => {
@@ -495,16 +498,16 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
               {/* Mapping */}
               <div data-copilot="catalog-wizard-map" className="mt-5 border-t border-slate-100 pt-4">
                 <p className="text-xs text-slate-500 mb-3">
-                  Choose which columns map to each field. All optional. A single CSV column can be mapped to multiple fields (e.g. map Description to both Item Name and Description).
+                  Choose what each column means. Mapping is optional for upload; when you create components later, Component Name is required. You can use the same column for both Item Name and Description.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {MAPPING_FIELDS.map((field) => (
                     <div key={field.key}>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
-                      <select
+                      <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
+                      <select aria-label={field.label}
                         value={columnMapping[field.key] ?? ''}
                         onChange={(e) => setColumnMapping((m) => ({ ...m, [field.key]: e.target.value || null }))}
-                        className={inputCls + ' bg-white'}
+                        className={"qc-select " + (inputCls + ' bg-white')}
                       >
                         <option value="">- Skip -</option>
                         {parsed.headers.map((h, idx) => (
@@ -528,8 +531,8 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
               </div>
 
               <div className="mt-6 flex gap-3 justify-end">
-                <button onClick={() => setStep(1)} className={ghostBtn}>Back</button>
-                <button onClick={() => setStep(3)} className={primaryBtn}>Next</button>
+                <button onClick={() => setStep(1)} className={"qc-flow-control " + (ghostBtn)}>Back</button>
+                <button data-qc-variant="primary" onClick={() => setStep(3)} className={"qc-flow-control qc-button " + (primaryBtn)}>Review catalogue →</button>
               </div>
             </div>
           )}
@@ -539,6 +542,7 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
             <div>
               {!uploading && !uploadError && (
                 <>
+                  <p className="qc-flow-callout mb-4"><strong>What happens next?</strong> This saves your catalogue only. To turn selected rows into components, open Pricing Library and choose Add from catalogue.</p>
                   <div className="rounded-lg border border-slate-200 p-4 mb-4 space-y-2 text-sm">
                     <div className="flex justify-between"><span className="text-slate-500">Catalog name</span><span className="font-medium text-slate-800">{catalogName}</span></div>
                     <div className="flex justify-between"><span className="text-slate-500">Rows</span><span className="font-medium text-slate-800">{parsed.rows.length.toLocaleString()}</span></div>
@@ -548,8 +552,8 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                     <div className="flex justify-between"><span className="text-slate-500">Description</span><span className="font-medium text-slate-800">{columnMapping.notes ?? 'Not mapped'}</span></div>
                   </div>
                   <div className="flex gap-3 justify-end">
-                    <button onClick={() => setStep(2)} className={ghostBtn}>Back</button>
-                    <button data-copilot="catalog-wizard-save" onClick={handleUpload} className={primaryBtn}>Save catalog</button>
+                    <button onClick={() => setStep(2)} className={"qc-flow-control " + (ghostBtn)}>Back</button>
+                    <button data-qc-variant="primary" data-copilot="catalog-wizard-save" onClick={handleUpload} className={"qc-flow-control qc-button " + (primaryBtn)}>Save catalog</button>
                   </div>
                 </>
               )}
@@ -568,13 +572,13 @@ export function UploadWizard({ workspaceSlug, onComplete, onClose, isOverStorage
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                   <p className="text-sm font-medium text-red-800 mb-1">Import failed</p>
                   <p className="text-xs text-red-700">{uploadError}</p>
-                  <button onClick={() => setUploadError(null)} className="mt-3 text-xs text-red-600 underline">Try again</button>
+                  <button onClick={() => setUploadError(null)} className="qc-flow-control mt-3 text-xs text-red-600 underline">Try again</button>
                 </div>
               )}
             </div>
           )}
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

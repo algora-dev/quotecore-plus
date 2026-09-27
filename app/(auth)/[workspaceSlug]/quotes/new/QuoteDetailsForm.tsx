@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -266,7 +267,7 @@ export function QuoteDetailsForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-6">
+    <QcJourney><form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-8 space-y-6">
       {createError && (
         <div
           className={`rounded-lg border p-4 ${
@@ -280,7 +281,7 @@ export function QuoteDetailsForm({
             <Link
               href={`/${workspaceSlug}/account?tab=billing`}
               prefetch={false}
-              className="mt-2 inline-block text-sm font-semibold text-amber-900 underline"
+              className="qc-flow-link mt-2 inline-block text-sm font-semibold text-amber-900 underline"
             >
               View plans →
             </Link>
@@ -293,11 +294,11 @@ export function QuoteDetailsForm({
           <h3 className="text-sm font-semibold text-slate-800">Industry &amp; Component Collection</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-slate-600 mb-1">Industry</label>
-              <select
+              <label className="qc-flow-label block text-xs text-slate-600 mb-1">Industry</label>
+              <select aria-label="Industry"
                 value={selectedTrade}
                 onChange={e => setSelectedTrade(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="qc-select w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
               >
                 <option value="generic">Generic</option>
                 <option value="roofing">Roofing</option>
@@ -317,14 +318,14 @@ export function QuoteDetailsForm({
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-600 mb-1">Component Collection</label>
+              <label className="qc-flow-label block text-xs text-slate-600 mb-1">Component Collection</label>
               {componentCollections.length === 0 ? (
                 <p className="text-xs text-slate-500 py-2">No collections found. Go to Components to create one.</p>
               ) : (
                 <select
                   value={selectedCollectionId}
                   onChange={e => setSelectedCollectionId(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="qc-select w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
                   <option value="">All Components</option>
                   {componentCollections.map(c => (
@@ -341,15 +342,15 @@ export function QuoteDetailsForm({
 
       {/* Customer Name */}
       <div data-copilot="quote-customer">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
+        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
           Customer Name <span className="text-red-500">*</span>
         </label>
-        <input
+        <input aria-label="e.g., John Smith"
           type="text"
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
           placeholder="e.g., John Smith"
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="qc-input w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
           required
           autoFocus
         />
@@ -357,21 +358,21 @@ export function QuoteDetailsForm({
 
       {/* Job Name */}
       <div data-copilot="quote-job">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
+        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
           Job Name <span className="text-slate-400">(optional)</span>
         </label>
-        <input
+        <input aria-label="e.g., Residential Re-roof, 123 Main St"
           type="text"
           value={jobName}
           onChange={(e) => setJobName(e.target.value)}
           placeholder="e.g., Residential Re-roof, 123 Main St"
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          className="qc-input w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
         />
       </div>
 
       {/* Measurement System (locked once the quote is created) */}
       <div data-copilot="quote-measurement">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
+        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
           Measurement System <span className="text-red-500">*</span>
         </label>
         <p className="text-xs text-slate-500 mb-3">
@@ -394,11 +395,11 @@ export function QuoteDetailsForm({
                     setMeasurementSystem(opt.value);
                   }
                 }}
-                className={`relative p-3 rounded-lg border-2 transition text-left ${
+                className={"qc-flow-control qc-flow-card " + (`relative p-3 rounded-lg border-2 transition text-left ${
                   isActive
                     ? 'border-orange-500 bg-orange-50'
                     : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
+                }`)}
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -425,7 +426,7 @@ export function QuoteDetailsForm({
 
       {/* Confirm modal: switching away from the company default */}
       {pendingSystemSwitch && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40 p-4">
+        <QcJourneyDialog label="Quote setup" size="sm">
           <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 space-y-4">
             <h3 className="text-lg font-semibold text-slate-900">Switch measurement system?</h3>
             <p className="text-sm text-slate-600">
@@ -437,42 +438,42 @@ export function QuoteDetailsForm({
               This <strong>cannot be changed</strong> after the quote is created. Are you sure?
             </p>
             <div className="flex gap-3 justify-end">
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => setPendingSystemSwitch(null)}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={() => {
                   setMeasurementSystem(pendingSystemSwitch);
                   setPendingSystemSwitch(null);
                 }}
-                className="px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800"
               >
                 Yes, use this
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Template Selection */}
       <div data-copilot="quote-template">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
+        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-2">
           Quote Template <span className="text-slate-400">(optional)</span>
         </label>
-        <select
+        <select aria-label="Quote Template (optional)"
           value={templateId}
           onChange={(e) => setTemplateId(e.target.value)}
           // Templates pre-load roof areas/components, neither of which exists
           // in digital mode (added in-process) or blank mode (skipped entirely).
           disabled={entryMode === 'digital' || entryMode === 'blank'}
-          className={`w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
+          className={"qc-select " + (`w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 ${
             entryMode === 'digital' || entryMode === 'blank' ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''
-          }`}
+          }`)}
         >
           <option value="">Start from scratch</option>
           {templates.map((template) => (
@@ -493,7 +494,7 @@ export function QuoteDetailsForm({
 
       {/* Entry Mode Selection */}
       <div data-copilot="quote-entry">
-        <label className="block text-sm font-medium text-slate-700 mb-3">
+        <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-3">
           Entry Mode <span className="text-red-500">*</span>
         </label>
         {/* Three-up mode pills. Manual builds via Areas/Components, Digital
@@ -508,11 +509,11 @@ export function QuoteDetailsForm({
               setPlanUploaded(false);
               setUploadedPlanPath(null);
             }}
-            className={`relative p-4 rounded-full border-2 transition-all ${
+            className={"qc-flow-control " + (`relative p-4 rounded-full border-2 transition-all ${
               entryMode === 'manual'
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
-            }`}
+            }`)}
             title="Build your quote using saved Smart Components™ with measurements, labour, materials and pricing"
           >
             <div className="flex items-center justify-center mb-2">
@@ -535,13 +536,13 @@ export function QuoteDetailsForm({
               setEntryMode('digital');
               setTemplateId(''); // Auto-switch to "Start from scratch"
             }}
-            className={`relative p-4 rounded-full border-2 transition-all ${
+            className={"qc-flow-control " + (`relative p-4 rounded-full border-2 transition-all ${
               !digitalTakeoffAvailable
                 ? 'border-slate-200 bg-slate-100 opacity-60 cursor-pointer'
                 : entryMode === 'digital'
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
-            }`}
+            }`)}
             title={!digitalTakeoffAvailable
               ? 'To access digital takeoff mode please upgrade your account'
               : 'Upload your plans/images, measure and assign areas and components (Faster)'}
@@ -571,11 +572,11 @@ export function QuoteDetailsForm({
               setPlanUploaded(false);
               setUploadedPlanPath(null);
             }}
-            className={`relative p-4 rounded-full border-2 transition-all ${
+            className={"qc-flow-control " + (`relative p-4 rounded-full border-2 transition-all ${
               entryMode === 'blank'
                 ? 'border-orange-500 bg-blue-50'
                 : 'border-slate-300 hover:border-slate-400'
-            }`}
+            }`)}
             title="Build a fully custom quote line by line - no components or areas required"
           >
             <div className="flex items-center justify-center mb-2">
@@ -627,15 +628,15 @@ export function QuoteDetailsForm({
       <div className="flex items-center justify-between pt-4 border-t border-slate-200">
         <Link
           href={`/${workspaceSlug}/quotes`}
-          className="text-sm text-slate-600 hover:text-slate-900"
+          className="qc-flow-link text-sm text-slate-600 hover:text-slate-900"
         >
           ← Cancel
         </Link>
-        <button
+        <button data-qc-variant="primary"
           type="submit"
           data-copilot="quote-create"
           disabled={creating || !customerName.trim() || !entryMode || (entryMode === 'digital' && !planUploaded)}
-          className="px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+          className="qc-flow-control qc-button px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
         >
           {creating
             ? 'Creating...'
@@ -665,6 +666,6 @@ export function QuoteDetailsForm({
 
       {/* PDF page picker modal (client-side pdfjs) */}
       {pdfPicker.modal}
-    </form>
+    </form></QcJourney>
   );
 }

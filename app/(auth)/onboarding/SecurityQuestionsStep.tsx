@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { setOnboardingSecurityQuestions } from '@/app/(auth)/[workspaceSlug]/settings/security-questions-actions';
 import { SUGGESTED_QUESTIONS, CUSTOM_QUESTION_LABEL, QUESTION_SLOTS } from '@/app/lib/security/questions';
@@ -57,7 +58,7 @@ export function SecurityQuestionsStep({ onDone }: Props) {
   }
 
   return (
-    <div className="space-y-6">
+    <QcJourney><div className="space-y-6">
       <div className="text-center space-y-2">
         <div className="w-14 h-14 mx-auto bg-orange-100 rounded-full flex items-center justify-center">
           <svg className="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +88,7 @@ export function SecurityQuestionsStep({ onDone }: Props) {
                 updateSlot(idx, { isCustom: false, question: v });
               }
             }}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+            className="qc-select w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
           >
             {SUGGESTED_QUESTIONS.map((q) => (
               <option key={q} value={q}>
@@ -97,22 +98,22 @@ export function SecurityQuestionsStep({ onDone }: Props) {
             <option value={CUSTOM_QUESTION_LABEL}>{CUSTOM_QUESTION_LABEL}</option>
           </select>
           {slot.isCustom && (
-            <input
+            <input aria-label="Write your own question…"
               type="text"
               placeholder="Write your own question…"
               value={slot.question}
               onChange={(e) => updateSlot(idx, { question: e.target.value })}
               maxLength={200}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="qc-input w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           )}
-          <PasswordField
+          <PasswordField appearance="v2"
             placeholder="Your answer"
             value={slot.answer}
             onChange={(e) => updateSlot(idx, { answer: e.target.value })}
             maxLength={200}
             autoComplete="off"
-            inputClassName="w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            inputClassName="qc-input w-full px-3 py-2 pr-10 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
       ))}
@@ -120,11 +121,11 @@ export function SecurityQuestionsStep({ onDone }: Props) {
       {error && <p className="text-xs text-red-600 text-center">{error}</p>}
 
       <div className="space-y-2">
-        <button
+        <button data-qc-variant="primary"
           type="button"
           onClick={handleSave}
           disabled={isPending}
-          className="w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+          className="qc-flow-control qc-button w-full py-3 bg-black text-white font-semibold rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
         >
           {isPending ? 'Saving…' : 'Save & continue'}
         </button>
@@ -132,11 +133,11 @@ export function SecurityQuestionsStep({ onDone }: Props) {
           type="button"
           onClick={onDone}
           disabled={isPending}
-          className="w-full py-2 text-sm text-slate-500 hover:text-slate-700 transition disabled:opacity-50"
+          className="qc-flow-control w-full py-2 text-sm text-slate-500 hover:text-slate-700 transition disabled:opacity-50"
         >
           Skip for now
         </button>
       </div>
-    </div>
+    </div></QcJourney>
   );
 }

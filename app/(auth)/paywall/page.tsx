@@ -1,3 +1,4 @@
+import { QcJourney, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -46,7 +47,7 @@ export default async function PaywallPage() {
   const plans = await loadBillingPlans(new Set(['starter', 'pro', 'pro_plus']));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
+    <QcJourney><div className="qc-flow-auth">
       {/* Minimal header: logo + logout only. No workspace nav - there is no
           workspace access to navigate to until a plan is active. */}
       <header className="border-b border-slate-200 bg-white">
@@ -59,11 +60,10 @@ export default async function PaywallPage() {
       <main className="mx-auto max-w-6xl px-4 py-8 md:py-12">
         <div className="text-center max-w-2xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
-            Your workspace is ready - pick a plan to jump in
+            Activate your workspace
           </h1>
           <p className="mt-2 text-sm md:text-base text-slate-600">
-            One quick payment and everything you set up is unlocked: quoting, takeoffs,
-            orders, invoices, and AI features.
+            Choose the subscription that fits your work. Features and limits depend on the plan; access begins after payment is confirmed.
           </p>
           {/* Guarantee - prominent, directly above the cards */}
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
@@ -81,7 +81,8 @@ export default async function PaywallPage() {
             success Stripe flips subscription_status to active via webhook and
             the return URL lands the user in the workspace. */}
         <div className="mt-8">
-          <BillingPanel
+          <QcJourneySteps steps={["Account", "Workspace", "Subscription"]} current={2} label="Getting started" />
+          <BillingPanel context="activation"
             effectivePlanCode={entitlements.effectivePlanCode}
             purchasedPlanCode={entitlements.purchasedPlanCode}
             subscriptionStatus={entitlements.subscriptionStatus}
@@ -106,7 +107,7 @@ export default async function PaywallPage() {
             <Link
               href="/custom-solutions"
               prefetch={false}
-              className="text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap"
+              className="qc-flow-link text-sm font-semibold text-[#BD4A1A] hover:text-[#ff5722] whitespace-nowrap"
             >
               Get in touch &rarr;
             </Link>
@@ -160,10 +161,10 @@ export default async function PaywallPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 6 months QuoteCore+ Pro included
               </div>
-              <Link
+              <Link data-qc-variant="primary"
                 href="/done-for-you-setup"
                 prefetch={false}
-                className="mt-5 inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+                className="qc-button qc-flow-control mt-5 inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
               >
                 Learn more &rarr;
               </Link>
@@ -204,10 +205,10 @@ export default async function PaywallPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 6 months QuoteCore+ Pro included
               </div>
-              <Link
+              <Link data-qc-variant="primary"
                 href="/done-for-you-setup"
                 prefetch={false}
-                className="mt-5 inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="qc-button qc-flow-control mt-5 inline-flex items-center justify-center rounded-full bg-[#FF6B35] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[#ff5722] hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 Learn more &rarr;
               </Link>
@@ -220,12 +221,12 @@ export default async function PaywallPage() {
           <Link
             href="/free-tools"
             prefetch={false}
-            className="text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
+            className="qc-flow-link text-sm font-medium text-slate-400 hover:text-slate-600 transition-colors"
           >
             No thanks, I&apos;ll keep using the free tools
           </Link>
         </div>
       </main>
-    </div>
+    </div></QcJourney>
   );
 }

@@ -1,3 +1,4 @@
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
 import { RecoverFlow } from './RecoverFlow';
 import { PublicFooter } from '@/app/components/PublicFooter';
@@ -19,21 +20,21 @@ export const dynamic = 'force-dynamic';
 
 export default function RecoverPage() {
   return (
-    <main className="min-h-screen flex flex-col bg-slate-50 px-4">
+    <QcJourney><main className="qc-flow-auth flex flex-col px-4">
       <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo-email.png" alt="QuoteCore+" className="h-10 inline-block" />
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+        <div className="qc-flow-auth-card">
           <RecoverFlow />
         </div>
         <p className="mt-6 text-center text-sm text-slate-600">
-          <Link href="/login" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+          <Link href="/login" className="qc-flow-link text-orange-600 font-medium hover:text-orange-700 transition-colors">
             Back to sign in
           </Link>
         </p>
       </div>
       <PublicFooter />
-    </main>
+    </main></QcJourney>
   );
 }

@@ -1,6 +1,7 @@
 
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -54,14 +55,14 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col bg-slate-50 px-4">
+    <QcJourney><main className="qc-flow-auth flex flex-col px-4">
       <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block" />
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
-          <h1 className="text-2xl font-semibold text-slate-900 mb-6 text-center">Log in to QuoteCore</h1>
+        <div className="qc-flow-auth-card">
+          <h1 className="text-2xl font-semibold text-slate-900 mb-6 text-center">Welcome back</h1><p className="qc-flow-auth-note mb-6">Log in to continue working in QuoteCore+.</p>
 
           {signupPending && (
             <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -88,7 +89,7 @@ function LoginForm() {
                   type="button"
                   onClick={handleResend}
                   disabled={resendStatus === 'sending'}
-                  className="text-xs font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700 disabled:opacity-50"
+                  className="qc-flow-control text-xs font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700 disabled:opacity-50"
                 >
                   {resendStatus === 'sending' ? 'Sending...' : 'Resend confirmation email'}
                 </button>
@@ -106,7 +107,7 @@ function LoginForm() {
             <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm font-medium text-amber-900">Google sign-in didn&apos;t complete</p>
               <p className="text-xs text-amber-700 mt-1">
-                This sometimes happens on the first attempt. Please try again - it will work on the second try.
+                Please try again or use another sign-in method. Your account has not been changed.
               </p>
             </div>
           )}
@@ -167,23 +168,23 @@ function LoginForm() {
             }}
           >
             <div className="grid gap-4">
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Email</span>
-                <input
+                <input aria-label="Email"
                   name="email"
                   type="email"
                   required
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="you@example.com"
                 />
               </label>
 
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Password</span>
-                <PasswordField
+                <PasswordField appearance="v2"
                   name="password"
                   required
-                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="qc-input w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
               </label>
@@ -192,10 +193,10 @@ function LoginForm() {
                 <TroubleSigningInPanel />
               </div>
 
-              <button
+              <button data-qc-variant="primary"
                 type="submit"
                 disabled={isPending}
-                className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="qc-flow-control qc-button w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isPending ? 'Logging in...' : 'Log in'}
               </button>
@@ -213,17 +214,17 @@ function LoginForm() {
 
         <div className="mt-6 flex items-center justify-center gap-3 text-sm text-slate-600">
           <span>Don&apos;t have an account?</span>
-          <Link href="/signup" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+          <Link href="/signup" className="qc-flow-link text-orange-600 font-medium hover:text-orange-700 transition-colors">
             Sign up
           </Link>
           <span className="text-slate-300">|</span>
-          <Link href={marketingLink} className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+          <Link href={marketingLink} className="qc-flow-link text-orange-600 font-medium hover:text-orange-700 transition-colors">
             Website
           </Link>
         </div>
       </div>
       <PublicFooter />
-    </main>
+    </main></QcJourney>
   );
 }
 
@@ -280,7 +281,7 @@ function MagicLinkOption({ prominent = false }: { prominent?: boolean }) {
               type="button"
               onClick={handleSend}
               disabled={status === 'sending'}
-              className="text-sm font-semibold text-blue-900 hover:text-blue-700 underline underline-offset-2 transition-colors disabled:opacity-50"
+              className="qc-flow-control text-sm font-semibold text-blue-900 hover:text-blue-700 underline underline-offset-2 transition-colors disabled:opacity-50"
             >
               {status === 'sending' ? 'Sending link…' : 'Email me a login link'}
             </button>
@@ -299,7 +300,7 @@ function MagicLinkOption({ prominent = false }: { prominent?: boolean }) {
         type="button"
         onClick={handleSend}
         disabled={status === 'sending'}
-        className="text-sm text-slate-500 hover:text-slate-900 underline underline-offset-2 transition-colors disabled:opacity-50"
+        className="qc-flow-control text-sm text-slate-500 hover:text-slate-900 underline underline-offset-2 transition-colors disabled:opacity-50"
       >
         {status === 'sending' ? 'Sending link…' : 'No password? Email me a login link'}
       </button>

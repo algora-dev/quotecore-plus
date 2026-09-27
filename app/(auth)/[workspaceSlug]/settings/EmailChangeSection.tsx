@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition, useEffect } from 'react';
 import { requestEmailChange, getEmailChangeStatus, type EmailChangeResult } from './email-change-actions';
 import { PasswordField } from '@/app/components/ui/PasswordField';
@@ -84,7 +85,7 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
   // ---- OAuth-only branch ---------------------------------------------------
   if (isOAuthOnly) {
     return (
-      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+      <QcJourney><div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
         <div>
           <p className="text-sm font-medium text-slate-900">Change Email</p>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -95,17 +96,17 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
           href="https://myaccount.google.com/email"
           target="_blank"
           rel="noopener noreferrer"
-          className="px-4 py-1.5 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 transition-all"
+          className="qc-flow-link px-4 py-1.5 text-xs font-medium rounded-full bg-white text-slate-700 border border-slate-300 hover:bg-slate-100 transition-all"
         >
           Manage in Google
         </a>
-      </div>
+      </div></QcJourney>
     );
   }
 
   // ---- Normal/cooldown branch ----------------------------------------------
   return (
-    <>
+    <QcJourney><>
       <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
         <div>
           <p className="text-sm font-medium text-slate-900">Change Email</p>
@@ -120,14 +121,14 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
           )}
           {success && <p className="text-xs text-emerald-600 mt-1 font-medium">{success}</p>}
         </div>
-        <button
+        <button data-qc-variant="primary"
           type="button"
           onClick={() => {
             setSuccess(null);
             setIsOpen(true);
           }}
           disabled={inCooldown}
-          className="px-4 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="qc-flow-control qc-button px-4 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           Change Email
         </button>
@@ -148,46 +149,46 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
             )}
 
             <form onSubmit={handleSubmit} className="grid gap-4">
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-xs font-medium text-slate-700 mb-1">New email</span>
-                <input
+                <input aria-label="New email"
                   type="email"
                   required
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="qc-input w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                 />
               </label>
 
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-xs font-medium text-slate-700 mb-1">Current password</span>
-                <PasswordField
+                <PasswordField appearance="v2"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="current-password"
-                  inputClassName="w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="qc-input w-full px-3 py-2 pr-10 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                 />
               </label>
 
               {error && <p className="text-xs text-red-600">{error}</p>}
 
               <div className="flex gap-2 justify-end mt-2">
-                <button
+                <button data-qc-variant="ghost"
                   type="button"
                   onClick={handleClose}
                   disabled={isPending}
-                  className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
+                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition"
                 >
                   Cancel
                 </button>
-                <button
+                <button data-qc-variant="primary"
                   type="submit"
                   disabled={isPending || !newEmail || !password}
-                  className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
                 >
                   {isPending ? 'Sending…' : 'Send confirmation links'}
                 </button>
@@ -196,6 +197,6 @@ export function EmailChangeSection({ currentEmail, authProvider }: Props) {
           </div>
         </div>
       )}
-    </>
+    </></QcJourney>
   );
 }

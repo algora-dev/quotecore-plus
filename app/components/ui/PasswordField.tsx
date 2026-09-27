@@ -14,22 +14,23 @@
  * Accessibility:
  *   - Toggle button gets aria-label that flips with state.
  *   - aria-pressed reflects the visible/hidden state.
- *   - tabIndex={-1} keeps the toggle out of the main tab order so Tab still
- *     flows Email -> Password -> Submit. Click/keyboard-enter on the icon
- *     still works.
+ *   - v2 callers include the toggle in keyboard order. Legacy callers retain
+ *     the original tabIndex=-1 behavior; appearance defaults to legacy.
  */
 
 import { forwardRef, useState, type InputHTMLAttributes } from 'react';
 
 type PasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
   inputClassName?: string;
+  /** Opt-in journey styling; legacy callers keep their original tab sequence. */
+  appearance?: 'legacy' | 'v2';
   /** Wrapper class (positions the icon inside the input). */
   wrapperClassName?: string;
 };
 
 export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
   function PasswordField(
-    { inputClassName, wrapperClassName, className, ...rest },
+    { inputClassName, wrapperClassName, className, appearance = 'legacy', ...rest },
     ref
   ) {
     const [visible, setVisible] = useState(false);
@@ -52,11 +53,11 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
         />
         <button
           type="button"
-          tabIndex={-1}
+          tabIndex={appearance === 'v2' ? 0 : -1}
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? 'Hide value' : 'Show value'}
           aria-pressed={visible}
-          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none focus:text-slate-700"
+          className={`${appearance === 'v2' ? 'qc-flow-control qc-flow-password-toggle ' : ''}absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus:outline-none focus:text-slate-700`}
         >
           {visible ? (
             // Eye-off icon

@@ -1,4 +1,5 @@
 'use client';
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { createClient } from '@/app/lib/supabase/client';
 import { FileUploader } from '@/app/components/FileUploader';
@@ -60,13 +61,13 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
   }
 
   return (
-    <div className="space-y-3">
-      <label className="block text-sm font-medium text-slate-700">Template Logo</label>
+    <QcJourney><div className="space-y-3">
+      <label className="qc-flow-label block text-sm font-medium text-slate-700">Template Logo</label>
       <p className="text-xs text-slate-500">
         Upload a different logo for this template (optional). Leave blank to use account default.
       </p>
 
-      <FileUploader
+      <FileUploader appearance="v2"
         onUpload={handleUpload}
         maxSize={2 * 1024 * 1024}
         accept="image/*"
@@ -76,7 +77,7 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
 
       {logoUrl && (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700">Current Logo</label>
+          <label className="qc-flow-label block text-sm font-medium text-slate-700">Current Logo</label>
           <div className="flex items-center gap-3">
             <img 
               src={logoUrl} 
@@ -85,13 +86,13 @@ export function CustomerTemplateLogoUploader({ companyId, templateId, currentLog
             />
             <button
               onClick={handleRemove}
-              className="px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded hover:bg-red-50"
+              className="qc-flow-control px-3 py-1.5 text-xs font-medium text-red-600 border border-red-300 rounded hover:bg-red-50"
             >
               Remove
             </button>
           </div>
         </div>
       )}
-    </div>
+    </div></QcJourney>
   );
 }

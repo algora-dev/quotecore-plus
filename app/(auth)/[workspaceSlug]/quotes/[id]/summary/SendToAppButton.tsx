@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 
 interface SendToAppButtonProps {
@@ -52,12 +53,12 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
   };
 
   return (
-    <>
+    <QcJourney><>
       <button
         type="button"
         onClick={() => setOpen(true)}
         title="Send to App"
-        className="inline-flex items-center gap-1.5 rounded-full border border-black bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+        className="qc-flow-control inline-flex items-center gap-1.5 rounded-full border border-black bg-white px-4 py-2 text-sm font-medium text-slate-900 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -66,9 +67,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
       </button>
 
       {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40"
-        >
+        <QcJourneyDialog label="Export to accounting" size="sm">
           <div
             className="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6"
             onClick={(e) => e.stopPropagation()}
@@ -79,7 +78,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                 type="button"
                 aria-label="Close accounting export"
                 onClick={close}
-                className="text-slate-400 hover:text-slate-600"
+                className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -95,7 +94,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                 <button
                   type="button"
                   onClick={() => exportQuote('xero')}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#13B5EA] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90 transition"
+                  className="qc-flow-control w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#13B5EA] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90 transition"
                 >
                   <span className="font-bold">X</span>
                   Export to Xero
@@ -103,7 +102,7 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                 <button
                   type="button"
                   onClick={() => exportQuote('quickbooks')}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#2CA01C] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90 transition"
+                  className="qc-flow-control w-full inline-flex items-center justify-center gap-2 rounded-full bg-[#2CA01C] px-5 py-2.5 text-xs font-semibold text-white hover:opacity-90 transition"
                 >
                   <span className="font-bold">QB</span>
                   Export to QuickBooks
@@ -151,10 +150,10 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                     </p>
                   </div>
                 )}
-                <button
+                <button data-qc-variant="primary"
                   type="button"
                   onClick={close}
-                  className="w-full rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+                  className="qc-flow-control qc-button w-full rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
                 >
                   Done
                 </button>
@@ -169,18 +168,18 @@ export function SendToAppButton({ quoteId }: SendToAppButtonProps) {
                   </svg>
                 </div>
                 <p className="text-center text-sm text-slate-600">{state.message}</p>
-                <button
+                <button data-qc-variant="primary"
                   type="button"
                   onClick={close}
-                  className="w-full rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
+                  className="qc-flow-control qc-button w-full rounded-full bg-black px-5 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition"
                 >
                   Close
                 </button>
               </div>
             )}
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
-    </>
+    </></QcJourney>
   );
 }

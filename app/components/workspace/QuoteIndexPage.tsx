@@ -1,3 +1,4 @@
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { QuotesList } from '@/app/(auth)/[workspaceSlug]/quotes/QuotesList';
@@ -112,11 +113,11 @@ export async function QuoteIndexPage({
   }
 
   return (
-    <section className="space-y-4 md:space-y-5 px-0 md:px-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <QcJourney><section className="space-y-4 md:space-y-5 px-0 md:px-0">
+      <header className="qc-journey-header">
         <div className="min-w-0">
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Quotes</h1>
-          <p className="text-xs md:text-sm text-slate-500 mt-1">Create and manage all your quotes.</p>
+          <p className="qc-journey-eyebrow">Prepare &amp; price</p><h1>Quotes</h1>
+          <p className="text-xs md:text-sm text-slate-500 mt-1">Start a quote, continue a draft or open its Job Space.</p>
         </div>
 
         {showCounter && (
@@ -150,7 +151,7 @@ export async function QuoteIndexPage({
                 <Link
                   href={`/${workspaceSlug}/account?tab=billing`}
                   prefetch={false}
-                  className="text-orange-700 font-semibold hover:underline"
+                  className="qc-flow-link text-orange-700 font-semibold hover:underline"
                 >
                   Upgrade plan
                 </Link>
@@ -158,8 +159,9 @@ export async function QuoteIndexPage({
             )}
           </div>
         )}
-      </div>
+      </header>
 
+      {/* AGENT-TODO P6-DATA-01: quotesRes.error is not part of the current QuotesList contract; keep loader behavior unchanged. */}
       <QuotesList
         quotes={quotes}
         workspaceSlug={workspaceSlug}
@@ -170,6 +172,6 @@ export async function QuoteIndexPage({
         subscriptionActive={entitlements.isActive}
         measureProps={measureProps}
       />
-    </section>
+    </section></QcJourney>
   );
 }

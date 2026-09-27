@@ -1,6 +1,7 @@
 
 'use client';
 
+import { QcJourney, QcJourneySteps } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -13,20 +14,20 @@ import { PasswordField } from '@/app/components/ui/PasswordField';
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<SignupFallback />}>
+    <QcJourney><Suspense fallback={<SignupFallback />}>
       <SignupForm />
-    </Suspense>
+    </Suspense></QcJourney>
   );
 }
 
 function SignupFallback() {
   return (
-    <main className="min-h-screen flex flex-col bg-slate-50 px-4">
+    <main className="qc-flow-auth flex flex-col px-4">
       <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block" />
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8 animate-pulse">
+        <div className="qc-flow-auth-card animate-pulse">
           <div className="h-8 bg-slate-100 rounded w-2/3 mx-auto mb-4" />
           <div className="h-4 bg-slate-100 rounded w-1/2 mx-auto mb-8" />
           <div className="h-10 bg-slate-100 rounded mb-4" />
@@ -71,22 +72,24 @@ function SignupForm() {
     : refSlug ? 'Free Tool' : null;
 
   return (
-    <main className="min-h-screen flex flex-col bg-slate-50 px-4">
+    <QcJourney><main className="qc-flow-auth flex flex-col px-4">
       <FreeToolsWelcomeModal refSlug={refSlug || ''} hasDraft={!!draftId} />
       <div className="w-full max-w-md mx-auto my-auto py-10">
         <div className="text-center mb-8">
           <img src="/logo.png" alt="QuoteCore" className="h-12 inline-block" />
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
+        <div className="qc-flow-auth-card">
           <h1 className="text-2xl font-semibold text-slate-900 mb-2 text-center">Create your account</h1>
+          <p className="qc-flow-auth-note">Set up your account, choose your preferences, then activate a paid subscription. There is no free trial.</p>
+          <QcJourneySteps steps={["Account", "Workspace", "Subscription"]} current={0} label="Getting started" />
           <div className="mb-6 flex items-center justify-center gap-1">
             <p className="text-slate-500 text-sm text-center">Plans from $19/mo · 30-day money-back guarantee · Cancel anytime</p>
             <button
               type="button"
               aria-label="How the 30-day money-back guarantee works"
               onClick={() => setShowGuaranteeInfo(true)}
-              className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-slate-300 text-[10px] font-semibold text-slate-400 transition hover:border-orange-300 hover:text-orange-500 cursor-pointer"
+              className="qc-flow-control qc-flow-info-button inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border border-slate-300 text-[10px] font-semibold text-slate-400 transition hover:border-orange-300 hover:text-orange-500 cursor-pointer"
             >
               i
             </button>
@@ -104,7 +107,7 @@ function SignupForm() {
                     type="button"
                     onClick={() => setShowGuaranteeInfo(false)}
                     aria-label="Close"
-                    className="rounded-full p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 cursor-pointer"
+                    className="qc-flow-control rounded-full p-1.5 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 cursor-pointer"
                   >
                     ✕
                   </button>
@@ -115,8 +118,7 @@ function SignupForm() {
                     Pro ($39/mo) or Pro Plus ($59/mo).
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-900">2. Use it fully for 30 days.</span> Every feature, no restrictions - measure, quote,
-                    send and track real jobs.
+                    <span className="font-semibold text-slate-900">2. Use it fully for 30 days.</span> Use the features and limits included in your selected plan to work on real jobs.
                   </p>
                   <p>
                     <span className="font-semibold text-slate-900">3. Not right for you? Get your money back.</span> If QuoteCore+ is not a fit, request a
@@ -127,10 +129,10 @@ function SignupForm() {
                     <span className="font-semibold text-slate-900">No lock-in.</span> Cancel your subscription any time from your billing page.
                   </p>
                 </div>
-                <button
+                <button data-qc-variant="primary"
                   type="button"
                   onClick={() => setShowGuaranteeInfo(false)}
-                  className="mt-6 w-full rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] cursor-pointer"
+                  className="qc-flow-control qc-button mt-6 w-full rounded-full bg-black px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] cursor-pointer"
                 >
                   Got it
                 </button>
@@ -197,55 +199,55 @@ function SignupForm() {
             }}
           >
             <div className="grid gap-4">
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Company name</span>
-                <input 
+                <input aria-label="Company name" 
                   name="companyName" 
                   type="text" 
                   required 
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="Your Company Ltd"
                 />
               </label>
 
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Full name</span>
-                <input 
+                <input aria-label="Company name" 
                   name="fullName" 
                   type="text" 
                   required 
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="John Smith"
                 />
               </label>
 
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Email</span>
-                <input 
+                <input aria-label="Company name" 
                   name="email" 
                   type="email" 
                   required 
-                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="you@example.com"
                 />
               </label>
 
-              <label className="block">
+              <label className="qc-flow-label block">
                 <span className="block text-sm font-medium text-slate-700 mb-1">Password</span>
-                <PasswordField
+                <PasswordField appearance="v2"
                   name="password"
                   minLength={8}
                   required
-                  inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  inputClassName="qc-input w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="••••••••"
                 />
                 <p className="text-xs text-slate-500 mt-1">At least 8 characters</p>
               </label>
 
-              <button 
+              <button data-qc-variant="primary" 
                 type="submit" 
                 disabled={isPending}
-                className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
+                className="qc-flow-control qc-button w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-2"
               >
                 {isPending ? 'Creating account...' : 'Create account'}
               </button>
@@ -257,12 +259,12 @@ function SignupForm() {
 
         <p className="mt-6 text-center text-sm text-slate-600">
           Already have an account?{' '}
-          <Link href="/login" className="text-orange-600 font-medium hover:text-orange-700 transition-colors">
+          <Link href="/login" className="qc-flow-link text-orange-600 font-medium hover:text-orange-700 transition-colors">
             Log in
           </Link>
         </p>
       </div>
       <PublicFooter />
-    </main>
+    </main></QcJourney>
   );
 }

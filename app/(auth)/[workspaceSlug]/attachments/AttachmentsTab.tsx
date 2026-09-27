@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
 import type { AttachmentRow } from './actions';
 import { AttachmentList } from './attachment-list';
@@ -21,7 +22,7 @@ export function AttachmentsTab({ workspaceSlug, attachments, entitlements }: Pro
 
   if (!attachmentsEnabled) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-2 md:px-6 py-8 md:py-12 text-center">
+      <QcJourney><div className="rounded-xl border border-slate-200 bg-slate-50 px-2 md:px-6 py-8 md:py-12 text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-500">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -36,20 +37,20 @@ export function AttachmentsTab({ workspaceSlug, attachments, entitlements }: Pro
         <p className="text-xs text-slate-400 mb-4">
           Upload files once and reuse them across your quotes and templates.
         </p>
-        <Link
+        <Link data-qc-variant="primary"
           href={`/${workspaceSlug}/account/billing`}
-          className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+          className="qc-button qc-flow-control inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
         >
           Upgrade plan
         </Link>
-      </div>
+      </div></QcJourney>
     );
   }
 
   const capLabel = attachmentLimit === null ? 'Unlimited' : attachmentLimit;
 
   return (
-    <div className="space-y-3">
+    <QcJourney><div className="space-y-3">
       <p className="text-sm text-slate-500">
         Reusable files for your quotes and templates.
         <span className="ml-1 text-slate-400">
@@ -57,6 +58,6 @@ export function AttachmentsTab({ workspaceSlug, attachments, entitlements }: Pro
         </span>
       </p>
       <AttachmentList attachments={attachments} isOverStorage={isOverStorage} />
-    </div>
+    </div></QcJourney>
   );
 }

@@ -27,6 +27,8 @@ export interface EditableTax {
 }
 
 interface Props {
+  /** Account-only presentation opt-in; Document Studio remains unchanged. */
+  appearance?: 'legacy' | 'v2';
   taxes: EditableTax[];
   onChange: (next: EditableTax[]) => void;
   /** When true, render Show-on-Quote and Show-on-Labor checkboxes per row. */
@@ -35,7 +37,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export function TaxEditor({ taxes, onChange, showAudienceToggles = false, disabled = false }: Props) {
+export function TaxEditor({ taxes, onChange, showAudienceToggles = false, disabled = false, appearance = 'legacy' }: Props) {
   const idBase = useId();
 
   function update(idx: number, patch: Partial<EditableTax>) {
@@ -74,7 +76,7 @@ export function TaxEditor({ taxes, onChange, showAudienceToggles = false, disabl
           className="flex flex-wrap items-center gap-2 p-3 border border-slate-200 rounded-lg bg-slate-50"
         >
           <div className="flex-1 min-w-[140px]">
-            <label className="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+            <label htmlFor={appearance === 'v2' ? `${idBase}-name-${idx}` : undefined} className="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">
               Name
             </label>
             <input
@@ -84,12 +86,12 @@ export function TaxEditor({ taxes, onChange, showAudienceToggles = false, disabl
               onChange={(e) => update(idx, { name: e.target.value })}
               disabled={disabled}
               placeholder="e.g. GST"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`${appearance === 'v2' ? 'qc-input ' : ''}w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
             />
           </div>
 
           <div className="w-28">
-            <label className="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+            <label htmlFor={appearance === 'v2' ? `${idBase}-rate-${idx}` : undefined} className="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">
               Rate (%)
             </label>
             <input
@@ -104,7 +106,7 @@ export function TaxEditor({ taxes, onChange, showAudienceToggles = false, disabl
                 update(idx, { rate_percent: Number.isFinite(n) ? n : 0 });
               }}
               disabled={disabled}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`${appearance === 'v2' ? 'qc-input ' : ''}w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
             />
           </div>
 
@@ -136,7 +138,7 @@ export function TaxEditor({ taxes, onChange, showAudienceToggles = false, disabl
             onClick={() => remove(idx)}
             disabled={disabled}
             title="Remove tax"
-            className="icon-btn icon-btn--danger ml-auto"
+            className={`${appearance === 'v2' ? 'qc-flow-control ' : ''}icon-btn icon-btn--danger ml-auto`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -154,7 +156,7 @@ export function TaxEditor({ taxes, onChange, showAudienceToggles = false, disabl
         type="button"
         onClick={add}
         disabled={disabled}
-        className="px-3 py-1.5 text-sm font-medium rounded-full border border-dashed border-slate-300 text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition disabled:opacity-50"
+        className={`${appearance === 'v2' ? 'qc-flow-control ' : ''}px-3 py-1.5 text-sm font-medium rounded-full border border-dashed border-slate-300 text-slate-700 hover:border-orange-400 hover:text-orange-600 hover:bg-orange-50 transition disabled:opacity-50`}
       >
         + Add tax
       </button>

@@ -1,3 +1,9 @@
+# Branding — current Phase 6 pointer
+
+The owner approved the integrated v2 orange-led standard for Phase 6. Read `docs/DESIGN_SYSTEM.md` for precedence and `docs/ux/phase-6/DESIGN_CHANGES.md` for the implemented changes. Prior palette and button examples below are historical, not a request to revert current v2 controls. Logos, shell, navigation, Takeoff and recipient outputs are unchanged by this phase.
+
+---
+
 # QuoteCore+ Branding Guide
 
 ## Brand Colors

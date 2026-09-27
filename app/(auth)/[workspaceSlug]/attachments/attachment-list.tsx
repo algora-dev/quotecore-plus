@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -120,11 +121,11 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
         {/* Actions */}
         <div className="flex items-center justify-end gap-1">
           {!isArchived && (
-            <button
+            <button aria-label="Rename attachment"
               onClick={() => openRename(row)}
               disabled={busy}
               title="Rename attachment"
-              className="icon-btn opacity-0 group-hover:opacity-100 disabled:opacity-30"
+              className="qc-icon-button qc-flow-control icon-btn opacity-0 group-hover:opacity-100 disabled:opacity-30"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -135,7 +136,7 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
             onClick={() => handleArchiveToggle(row)}
             disabled={busy}
             title={isArchived ? 'Reinstate attachment' : 'Archive attachment'}
-            className="icon-btn opacity-0 group-hover:opacity-100 disabled:opacity-30"
+            className="qc-flow-control icon-btn opacity-0 group-hover:opacity-100 disabled:opacity-30"
           >
             {isArchived ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,11 +148,11 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
               </svg>
             )}
           </button>
-          <button
+          <button aria-label="Delete attachment"
             onClick={() => { setError(null); setDeleteTarget(row); }}
             disabled={busy}
             title="Delete attachment"
-            className="icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 disabled:opacity-30"
+            className="qc-icon-button qc-flow-control icon-btn icon-btn--danger opacity-0 group-hover:opacity-100 disabled:opacity-30"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -163,12 +164,12 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <QcJourney><div className="space-y-4">
       <div className="flex items-center justify-end">
-        <button
+        <button data-qc-variant="primary"
           data-copilot="attachment-upload-btn"
           onClick={() => setUploadOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
+          className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)] ring-2 ring-transparent hover:ring-orange-400/30"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -187,9 +188,9 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
         <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
           <p className="text-sm font-medium text-slate-700 mb-1">No attachments yet</p>
           <p className="text-xs text-slate-400 mb-4">Upload a file to reuse it across your quotes and templates.</p>
-          <button
+          <button data-qc-variant="primary"
             onClick={() => setUploadOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_16px_rgba(255,107,53,0.5)]"
           >
             Upload your first file
           </button>
@@ -208,47 +209,47 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
 
       {/* Rename modal */}
       {renameTarget && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage attachments" size="md">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-slate-900">Rename attachment</h3>
-              <button onClick={() => setRenameTarget(null)} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+              <button onClick={() => setRenameTarget(null)} className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600" aria-label="Close">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
             <div className="p-2 md:p-6">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">Name</label>
               <input
                 type="text"
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+                className="qc-input w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
                 maxLength={120}
                 autoFocus
               />
               {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
               <div className="mt-6 flex gap-3 justify-end">
-                <button onClick={() => setRenameTarget(null)} className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50">
+                <button data-qc-variant="ghost" onClick={() => setRenameTarget(null)} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50">
                   Cancel
                 </button>
-                <button
+                <button data-qc-variant="primary"
                   onClick={handleRename}
                   disabled={busyId === renameTarget.id || !renameValue.trim()}
-                  className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
+                  className="qc-flow-control qc-button px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
                 >
                   {busyId === renameTarget.id ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Delete confirmation */}
       {deleteTarget && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage attachments" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete attachment</h3>
             <p className="text-sm text-slate-500 mt-2">
@@ -256,16 +257,16 @@ export function AttachmentList({ attachments, isOverStorage }: Props) {
             </p>
             {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setDeleteTarget(null)} disabled={busyId === deleteTarget.id} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+              <button data-qc-variant="ghost" onClick={() => setDeleteTarget(null)} disabled={busyId === deleteTarget.id} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
                 Cancel
               </button>
-              <button onClick={handleDelete} disabled={busyId === deleteTarget.id} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
+              <button data-qc-variant="danger" onClick={handleDelete} disabled={busyId === deleteTarget.id} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50">
                 {busyId === deleteTarget.id ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
-    </div>
+    </div></QcJourney>
   );
 }

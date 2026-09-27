@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import {
@@ -27,7 +28,7 @@ export function RecoverFlow() {
   const [step, setStep] = useState<Step>({ kind: 'identify' });
 
   return (
-    <>
+    <QcJourney><>
       <div className="mb-4">
         <h1 className="text-xl font-semibold text-slate-900">Recover your account</h1>
         <p className="text-sm text-slate-500 mt-1">
@@ -64,7 +65,7 @@ export function RecoverFlow() {
       {step.kind === 'done' && <DoneStep newEmail={step.newEmail} />}
 
       {step.kind === 'noRecovery' && <ContactSupportCard message={step.message} />}
-    </>
+    </></QcJourney>
   );
 }
 
@@ -94,23 +95,23 @@ function IdentifyStep({ onResult }: { onResult: (s: Step) => void }) {
 
   return (
     <form onSubmit={submit} className="grid gap-4">
-      <label className="block">
+      <label className="qc-flow-label block">
         <span className="block text-sm font-medium text-slate-700 mb-1">The email on your account</span>
-        <input
+        <input aria-label="The email on your account"
           type="email"
           required
           value={oldEmail}
           onChange={(e) => setOldEmail(e.target.value)}
           placeholder="you@example.com"
           autoComplete="email"
-          className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+          className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
         />
       </label>
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button
+      <button data-qc-variant="primary"
         type="submit"
         disabled={isPending || !oldEmail}
-        className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+        className="qc-flow-control qc-button w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
       >
         {isPending ? 'Checking…' : 'Continue'}
       </button>
@@ -150,23 +151,23 @@ function VerifyStep({
         Account: <span className="font-medium text-slate-700">{oldEmail}</span>
       </p>
       {questions.map((q) => (
-        <label key={q.slot} className="block">
+        <label key={q.slot} className="qc-flow-label block">
           <span className="block text-sm font-medium text-slate-700 mb-1">{q.question}</span>
-          <PasswordField
+          <PasswordField appearance="v2"
             required
             value={answers[q.slot] ?? ''}
             onChange={(e) => setAnswers((prev) => ({ ...prev, [q.slot]: e.target.value }))}
             autoComplete="off"
-            inputClassName="w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+            inputClassName="qc-input w-full px-4 py-3 pr-12 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
           />
         </label>
       ))}
       <p className="text-xs text-slate-400">Answers are case-insensitive. Extra spaces are ignored.</p>
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button
+      <button data-qc-variant="primary"
         type="submit"
         disabled={isPending}
-        className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+        className="qc-flow-control qc-button w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
       >
         {isPending ? 'Verifying…' : 'Verify answers'}
       </button>
@@ -196,26 +197,26 @@ function NewEmailStep({ onSuccess }: { onSuccess: (newEmail: string) => void }) 
       <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
         Identity verified. Enter the email you&apos;d like to use from now on.
       </p>
-      <label className="block">
+      <label className="qc-flow-label block">
         <span className="block text-sm font-medium text-slate-700 mb-1">New email address</span>
-        <input
+        <input aria-label="New email address"
           type="email"
           required
           value={newEmail}
           onChange={(e) => setNewEmail(e.target.value)}
           placeholder="you@example.com"
           autoComplete="email"
-          className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+          className="qc-input w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
         />
       </label>
       <p className="text-xs text-slate-500">
         We&apos;ll change your account email to this address, sign you out of any other sessions, and email you a link to set a new password.
       </p>
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button
+      <button data-qc-variant="primary"
         type="submit"
         disabled={isPending || !newEmail}
-        className="w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
+        className="qc-flow-control qc-button w-full px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 transition-all"
       >
         {isPending ? 'Updating…' : 'Update email'}
       </button>
@@ -239,11 +240,11 @@ function DoneStep({ newEmail }: { newEmail: string }) {
       </p>
       <p className="text-xs text-slate-400">
         Don&apos;t see it? Check your spam folder. If it doesn&apos;t arrive within a few minutes, contact{' '}
-        <a href="mailto:info@quote-core.com" className="text-orange-600 hover:text-orange-700 transition-colors">info@quote-core.com</a>.
+        <a href="mailto:info@quote-core.com" className="qc-flow-link text-orange-600 hover:text-orange-700 transition-colors">info@quote-core.com</a>.
       </p>
-      <Link
+      <Link data-qc-variant="primary"
         href="/login"
-        className="inline-block px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition mt-2"
+        className="qc-button qc-flow-control inline-block px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 transition mt-2"
       >
         Back to sign in
       </Link>
@@ -275,15 +276,15 @@ function ContactSupportCard({ message }: { message: string }) {
       <p className="text-sm text-slate-600">
         Send an email to support and we&apos;ll verify your identity manually. Include your company name and any other details that prove the account is yours.
       </p>
-      <a
+      <a data-qc-variant="primary"
         href={mailto}
-        className="block text-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition-all"
+        className="qc-button qc-flow-control block text-center px-6 py-3 bg-black text-white font-semibold rounded-lg hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] transition-all"
       >
         Contact support
       </a>
       <Link
         href="/login"
-        className="block text-center text-xs text-slate-500 hover:text-slate-700 transition"
+        className="qc-flow-link block text-center text-xs text-slate-500 hover:text-slate-700 transition"
       >
         Back to sign in
       </Link>

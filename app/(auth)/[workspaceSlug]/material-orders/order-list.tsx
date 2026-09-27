@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -89,7 +90,7 @@ function OrderStatusDropdown({ orderId, currentStatus }: { orderId: string; curr
         onClick={() => setOpen(!open)}
         disabled={saving}
         title="Click to change status"
-        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`}
+        className={"qc-flow-control " + (`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border transition-all hover:shadow-sm ${config.bg} ${config.text} ${config.border} ${saving ? 'opacity-50' : ''}`)}
       >
         <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
         {saving ? '...' : config.label}
@@ -103,7 +104,7 @@ function OrderStatusDropdown({ orderId, currentStatus }: { orderId: string; curr
             const c = ORDER_STATUS_CONFIG[s];
             const isActive = s === status;
             return (
-              <button key={s} onClick={() => handleSelect(s)} className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''}`}>
+              <button key={s} onClick={() => handleSelect(s)} className={"qc-flow-control " + (`flex w-full items-center gap-2 px-3 py-1.5 text-xs transition hover:bg-slate-50 ${isActive ? 'font-semibold' : ''}`)}>
                 <span className={`w-2 h-2 rounded-full ${c.dot}`} />
                 <span className={isActive ? c.text : 'text-slate-700'}>{c.label}</span>
                 {isActive && <svg className="w-3 h-3 ml-auto text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>}
@@ -339,16 +340,16 @@ export function OrderList({ orders, workspaceSlug }: Props) {
 
   if (orders.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
+      <QcJourney><div className="rounded-xl border border-dashed border-slate-200 bg-white px-2 md:px-6 py-8 md:py-12 text-center">
         <p className="text-sm text-slate-500">No orders yet. Create your first order above.</p>
-      </div>
+      </div></QcJourney>
     );
   }
 
   return (
-    <div>
+    <QcJourney><div>
       {/* Header */}
-      <div className="hidden sm:grid grid-cols-[28px_160px_1fr_1fr_130px_80px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
+      <div className="qc-flow-columns hidden sm:grid grid-cols-[28px_160px_1fr_1fr_130px_80px_70px] gap-4 px-4 pb-2 text-xs font-medium text-slate-400 uppercase tracking-wide items-center">
         <input
           type="checkbox"
           checked={orders.length > 0 && orders.every((o) => selectedIds.has(o.id))}
@@ -360,8 +361,8 @@ export function OrderList({ orders, workspaceSlug }: Props) {
           }}
           onChange={() => toggleSelectAllVisible(orders)}
           onClick={(e) => e.stopPropagation()}
-          title="Select all visible orders"
-          className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+          title="Select all visible orders" aria-label="Select all visible orders"
+          className="qc-check w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
         />
         <span>Order</span>
         <span>Reference</span>
@@ -371,7 +372,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
         <span></span>
       </div>
 
-      <div className="grid gap-1">
+      <div className="qc-flow-list">
         {orders.map((order) => (
           <div
             key={order.id}
@@ -382,17 +383,18 @@ export function OrderList({ orders, workspaceSlug }: Props) {
             // discoverability and removed below.
             onClick={() => router.push(`/${workspaceSlug}/material-orders/${order.id}/preview`)}
             title="Click to view"
-            className={`grid sm:grid-cols-[28px_160px_1fr_1fr_130px_80px_70px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(order.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
+            className={`qc-flow-row grid sm:grid-cols-[28px_160px_1fr_1fr_130px_80px_70px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${selectedIds.has(order.id) ? 'border-orange-300 bg-orange-50/30' : 'border-slate-200'}`}
           >
             <input
               type="checkbox"
               checked={selectedIds.has(order.id)}
               onChange={() => toggleSelect(order.id)}
               onClick={(e) => e.stopPropagation()}
-              title="Select for bulk download or delete"
-              className="w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
+              title="Select for bulk download or delete" aria-label={`Select order ${order.order_number}`}
+              className="qc-check w-4 h-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 cursor-pointer"
             />
-            <div className="font-semibold text-sm text-orange-600">{order.order_number}</div>
+            <div><Link className="qc-flow-link text-sm" href={`/${workspaceSlug}/material-orders/${order.id}/preview`}
+              onClick={event => event.stopPropagation()}>{order.order_number}</Link></div>
             <div className="text-sm text-slate-700 truncate">{order.reference || order.job_name || '-'}</div>
             <div className="text-sm text-slate-700 truncate flex items-center gap-2">
               <span className="truncate">{order.to_supplier || order.supplier_name || '-'}</span>
@@ -420,15 +422,15 @@ export function OrderList({ orders, workspaceSlug }: Props) {
                 href={`/${workspaceSlug}/material-orders/create?orderId=${order.id}`}
                 onClick={(e) => e.stopPropagation()}
                 title="Edit order"
-                className="p-1.5 rounded-full text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition opacity-0 group-hover:opacity-100"
+                className="qc-flow-link p-1.5 rounded-full text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition opacity-0 group-hover:opacity-100"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
               </Link>
-              <button
+              <button aria-label="Delete order"
                 onClick={(e) => { e.stopPropagation(); setDeleteId(order.id); }}
                 disabled={deleting === order.id}
                 title="Delete order"
-                className="p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                className="qc-icon-button qc-flow-control p-1.5 rounded-full text-slate-300 hover:text-red-500 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
@@ -446,29 +448,29 @@ export function OrderList({ orders, workspaceSlug }: Props) {
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-lg">
+        <div className="qc-flow-bulk">
           <span className="text-sm text-slate-700">
             {selectedIds.size} selected
             <span className="ml-1 text-xs text-slate-400">/ {MAX_BULK_SELECTION} max</span>
           </span>
-          <button onClick={clearSelection} className="text-xs text-slate-500 hover:text-slate-700 underline">
+          <button onClick={clearSelection} className="qc-flow-control text-xs text-slate-500 hover:text-slate-700 underline">
             clear
           </button>
           <span className="w-px h-6 bg-slate-200" />
-          <button
+          <button data-qc-variant="primary"
             onClick={handleBulkDownload}
             disabled={bulkBusy !== null}
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
             </svg>
             {bulkBusy === 'download' ? 'Bundling...' : `Download ${selectedIds.size} as ZIP`}
           </button>
-          <button
+          <button data-qc-variant="danger"
             onClick={() => setBulkDeleteConfirmOpen(true)}
             disabled={bulkBusy !== null}
-            className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full bg-red-600 px-4 py-1.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -480,7 +482,7 @@ export function OrderList({ orders, workspaceSlug }: Props) {
 
       {/* Bulk download progress modal */}
       {bulkProgress && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage orders" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Building Export</h3>
             <p className="text-sm text-slate-600 mt-2">{bulkProgress.message}</p>
@@ -494,12 +496,12 @@ export function OrderList({ orders, workspaceSlug }: Props) {
               {bulkProgress.done} / {bulkProgress.total}
             </p>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Bulk delete confirmation */}
       {bulkDeleteConfirmOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage orders" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete {selectedIds.size} Orders</h3>
             <p className="text-sm text-slate-500 mt-2">
@@ -507,38 +509,38 @@ export function OrderList({ orders, workspaceSlug }: Props) {
               Make sure you&apos;ve downloaded a copy first if you want to keep records.
             </p>
             <div className="flex gap-3 justify-end mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={() => setBulkDeleteConfirmOpen(false)}
-                className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
                 disabled={bulkBusy === 'delete'}
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="danger"
                 onClick={handleBulkDelete}
-                className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
                 disabled={bulkBusy === 'delete'}
               >
                 {bulkBusy === 'delete' ? 'Deleting...' : `Delete ${selectedIds.size}`}
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* Delete Modal */}
       {deleteId && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Manage orders" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete Order</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The order will be permanently deleted.</p>
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setDeleteId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={!!deleting}>Cancel</button>
-              <button onClick={confirmDelete} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
+              <button data-qc-variant="ghost" onClick={() => setDeleteId(null)} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={!!deleting}>Cancel</button>
+              <button data-qc-variant="danger" onClick={confirmDelete} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={!!deleting}>{deleting ? 'Deleting...' : 'Delete'}</button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
-    </div>
+    </div></QcJourney>
   );
 }

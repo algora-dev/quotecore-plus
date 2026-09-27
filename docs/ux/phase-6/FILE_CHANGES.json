@@ -1,0 +1,1731 @@
+{
+  "phase": 6,
+  "status": "IMPLEMENTED_SOURCE_CANDIDATE_APP_BUILD_RUNTIME_PENDING",
+  "baseline_archive": "quotecore-plus-phase6-ux-handoff-2026-09-27.zip",
+  "baseline_sha256": "3dd0d92e8b0e2010e90b527c82fee5983c9c56e65d088e788b190e4dcc5eeb75",
+  "supplied_git_commit": "4106026a",
+  "git_history_independently_verified": false,
+  "code_archive": "quotecore-plus-phase6-everyday-journeys-return-2026-09-27.zip",
+  "original_file_count": 2797,
+  "retained_original_paths": 2797,
+  "application_changed_files": 60,
+  "application_modified_files": 58,
+  "application_added_files": 2,
+  "excluded_from_self_hash": [
+    "docs/ux/phase-6/FILE_CHANGES.json"
+  ],
+  "files": [
+    {
+      "path": "BRANDING.md",
+      "status": "modified",
+      "category": "documentation_and_evidence",
+      "before_sha256": "7b1d666a330f9e34bd58acb357965e6a669b39147d75210deccf064411fe3808",
+      "after_sha256": "5e21a8a77e52558e251c87df85135a6be565ba466a61aa3ace6646cae7e75bdf",
+      "bytes": 4080
+    },
+    {
+      "path": "DESIGN_CHANGES.md",
+      "status": "modified",
+      "category": "documentation_and_evidence",
+      "before_sha256": "e0da9f412605b507b1bba1c2e1c1770206dcc26dd7847ee177ada346b4dd27cc",
+      "after_sha256": "480c74a38d1e7f5038672a1467e535ea1bb6f48fe7804fc55fa952330dbac474",
+      "bytes": 10319
+    },
+    {
+      "path": "RETURN_NOTES.md",
+      "status": "modified",
+      "category": "documentation_and_evidence",
+      "before_sha256": "0a5a1a4af942ac50e50c39d55b5cfe99d2c96e5b95d2e32fa701ee7f132faa78",
+      "after_sha256": "65116f9c231060e75f3f85f8864f2f18e901570aed0d8af72ce7111b4bef612b",
+      "bytes": 4588
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/AccountTabs.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "ea540b40f99068afb0b66db005f602d2f4aae67e0d4167a62b45277992adb64d",
+      "after_sha256": "8c3d498fcc688317e713a2b9585084bc1cc0459f38b2e9caa2d09f94bd2f8ba8",
+      "bytes": 9255
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/LogoUploader.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "409b3d05863318ea88dd8bb1b7786bfd2ae1dd00091de225140993fd26747170",
+      "after_sha256": "b07483e90de33fd6c64a09037e706623a0263b66a8daf82c172e6d0f0a3f406a",
+      "bytes": 2346
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/UserProfileForm.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "92602eb1f222fca36c07991eb076442f7015c3b013c7484741121c93026aa031",
+      "after_sha256": "d06ba0d54bc747f1f2281e9253093d6b9cc05928de38938bddefb131e294ad2a",
+      "bytes": 3393
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "8a1dfb8172fe69932bf06f4156feb34371897a821314370ea1168c045159a331",
+      "after_sha256": "129920eb0a08fc5f653363ef2540d90250a85bb59700c885fd67143d42a77e5f",
+      "bytes": 39496
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/integrations/IntegrationsPanel.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "9d7d54af09107c213ee4c200591c5364c7bb1c47292b397476dc57d892df2702",
+      "after_sha256": "9e094cf0459183e523833f99380bc90aed2b175ddce05a1b5d7c2a39746317ff",
+      "bytes": 8632
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "709635971af6d41b162b20b5f936ccd65e6239a8e99f542aa85b07cbf48bc7e5",
+      "after_sha256": "3aaca196558cf44fd94afd322bfcb9e191564544cee7464d47067df7cd7fd72c",
+      "bytes": 15337
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/account/support/SupportSection.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "a71c26d42ebbeb95143bbc5784b3cd7b8c07133fa19d7a0be401ff04e92b5c94",
+      "after_sha256": "9b30899e662632a1e5ca06743f945212debc0d77acd30cec15ea2d2f4e4a4c35",
+      "bytes": 11542
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/attachments/AttachmentsTab.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "8eae57ac626415454a2f9785f909734913fcdc4334d0a00e7bff137b3ffc344b",
+      "after_sha256": "7cee032d977ad65a87d5f455cc50464a886c4969ecfe11496fbcb1dd1ee4cd27",
+      "bytes": 2455
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/attachments/attachment-list.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "fac74f133aa76c4c29158fba59dc09603bf31581b1e4c2ef25cc80e74cd44d60",
+      "after_sha256": "89837f63d393502cb40b5c95f41d9784822f467600b5193b94faee7361a8e03e",
+      "bytes": 12353
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/attachments/upload-attachment-modal.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "f60c6fb74249e54172979de387b74ed491ccd115c9c17c3d257323348b9b4f12",
+      "after_sha256": "8e16ca034353ff919aa71f028bc6d1200ef039702065d53df4870a6293ec8efd",
+      "bytes": 7865
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "27bd55edfb379bb563a4dfbf43faee699a50debe4d5258dc9e3634fd54b77459",
+      "after_sha256": "ca2c88dc7027a1a5712b527c1933c61af632e0f7088567d113799e053584074e",
+      "bytes": 26572
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "84c5c3c043d5aa1e610ddeb30c6da1b3c3627221374163e0f1d5bc796c4a913d",
+      "after_sha256": "4aac99aef0ccd9fbc165f5107bfaddbc4dbb290a046c3b63bc237c39b5d65d2e",
+      "bytes": 16467
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/catalogs/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "eaea236b73cade95ae349bbe30f18d3cf81e5fcfcce2853cce5d191a10130ccd",
+      "after_sha256": "983da34eae0f14aa55e9267546fd0e5deb82d5b3ad7dd96fff919f3c5f35c93a",
+      "bytes": 1563
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "4df88954844e6c0bc8107e5d5c04707880e676f92bd9a9c6ace32124eafd0667",
+      "after_sha256": "f1e7a3b6ddcecda5a3ad4e3f516466e69223f30086a5fad1e5ad74709aa600ad",
+      "bytes": 10400
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "a2f41fa28cb66e9a049f6dfe4c4d138bc603dcd65c69360cbabeff5705fcb1c0",
+      "after_sha256": "abc09a6a7b52fa01b67d0ae8142f45ab1ce2f8f75b83f58aac9a451d97d36dd4",
+      "bytes": 28307
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "dcbca870885f203a2f53e74d4b0bdd0a95580b676f3b2da23be8fee200b3708b",
+      "after_sha256": "588e4f1c7ef24642b344a8df613e1e889da84cbbf19114a68d9225e6b8f75a9c",
+      "bytes": 38773
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "ea29ad1d0398b7a64b69b2c6afe53932ceb1c50240b5892b4739ca0c0c733880",
+      "after_sha256": "b534d5328ec396358839505344a89438e09928c6eb9ebc4600fe98bd0d02ab16",
+      "bytes": 24810
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "208617d0e56c735a8a4e4a449f730cb9b5c67dfbf4c792c9bc23333f9635e3d5",
+      "after_sha256": "6b2a64faa809b347f31ec79c2b2f1b53545737df440da357c9e091bb183db403",
+      "bytes": 20131
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "e8d66936ac9ed97fcc93568faaabdae59e9d4b60a2100f6e529fe5b91ce42b68",
+      "after_sha256": "c1ee824ce489ec40c6819f87d10076bf2cbffe6e15440866940b00987fa4726e",
+      "bytes": 36503
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/invoice-from-quote/[quoteId]/InvoiceLineSelector.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "e6fca67dc0a0aba816a55fbddeaf51a5ac895ce725b839fdd197ee5fe5de9eab",
+      "after_sha256": "0c8e1e1ecbc5f15b91b083973dd7a3924368a2ad80d7eb4ffde5b27f2283d62b",
+      "bytes": 7290
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/invoices/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "deb0d8319c9e9d5baaaab3f759590770f2492136fbade89990688c9f6ee3cf60",
+      "after_sha256": "5bc06b04295968f909f046f7a5997df4dfcdc7477592852ace927b4a199e042c",
+      "bytes": 3548
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/[quoteId]/LineSelector.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "6cfb2df064c4ad381d2d8c1d04f98ced42e26bcd9bf550a7b94732ca39b2bd5a",
+      "after_sha256": "5ae729cdbc3e402387bc22c1fccdd936840e2f664a939b0d8ef4e1e9df658811",
+      "bytes": 7984
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "4e54cf65f858844623945023245fb8f88310c493ddc529f00b0e02551ee5bb97",
+      "after_sha256": "58abfff837196a649a2c43351ed5478026d0ec5be3253c2288d4baeb9de0efd2",
+      "bytes": 11825
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "a0e56db09176e9de743b8ad84d554e334546f4d1f5466cb6b884083d54518628",
+      "after_sha256": "54250cb19a53431398ac8ccf293d652e06ac37555a142d169715f1131afbc0bf",
+      "bytes": 25334
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/orders-hub.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "68061ca7be3409ecb2cfa39c00b177c2b9d8dcc7a450ff9a6c0e5443f9216c4a",
+      "after_sha256": "cb573a02adf91ee2abafecca2cd708c216f46bcaeb7efb8fc9297d0dbd5137d8",
+      "bytes": 5747
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/material-orders/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "e45106c58de29a72baea67251ebcb94fbe6a80523a4dd24ad27f5ef94a724bd7",
+      "after_sha256": "cb627d9ede7e3df6f2699d7b51dd6332d033f40a3d2a326e9b0ae84a2f40b7fa",
+      "bytes": 3570
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "91725c290ccdf70cea7c6483cc9d442ef5936fc3be3160dd0c840fdc6efcd7c7",
+      "after_sha256": "355daa23ac79c10f8600eb175abc67800082dfba3371455fae8f3094047e6923",
+      "bytes": 39638
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/ReopenQuoteButton.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "e3d30ea48bb8e60c6769c000be8293441df218c83d10d7251b43d0ece5e96285",
+      "after_sha256": "bf3b5b61905d084f45a0d201b270a7620901041f9f3cedda776e5fdde150b32f",
+      "bytes": 6597
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/ScheduleFollowUpButton.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "4f383c6bed9f25355c3c49f30394cc048a6f0d637856a52b83bfa317ea503cdf",
+      "after_sha256": "63dd5d4c84b4034942e71e84d0ab194599c01a3aac7825dbf1ac5242ecb92777",
+      "bytes": 20929
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/SendToAppButton.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "1c9ee171b99ea6eb431b18c90cdf42486a035f0cc3270779764469172470ca2d",
+      "after_sha256": "0681cdd85afc3c6cb531275e19b51e062a5814bf19cff5facdc39e33f01a0a0a",
+      "bytes": 8640
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/[id]/summary/WithdrawQuoteButton.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "ec91d64552be037952f420f4f3006e8a2bc4536c6297da2bcdb6d885bebc5df5",
+      "after_sha256": "d75b8fb75699ead7a3b5d4bb8712f303371f958ab03cd62db9891c301aa65353",
+      "bytes": 6364
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "248d08c1fe0b32426f3b164ab19edfa024e750063bca9be25966f2311e568d09",
+      "after_sha256": "400a7c6d26e70978cabc15cc192d39ea3c435361808d859bc4b6c8ce23bd4f4d",
+      "bytes": 30799
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/resources/CustomerTemplateLogoUploader.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "d54b6b0cc46456a44388d6d87c9434a83218873968b3b62f29d8917ee640f457",
+      "after_sha256": "43fdae6e2cbafbb38d3790f701e661f4fbbc075c0674acd9c882786cd55eb53d",
+      "bytes": 3158
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "22522df8e58fcfdef8f04ba60b562fd687e359243b1d95473960e6393291dff6",
+      "after_sha256": "21a58be5ab508207a08c38ac46a82537eb3a5a8143511d588efb247b9dc78c00",
+      "bytes": 18752
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/EmailChangeSection.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "809b118eda885936163e050c4cac558d06b1e67e3bbda16f27cd88a6f3075418",
+      "after_sha256": "9ef9c43543cc12378bdc44ee30a3ebd09426fa32f4961416fa55ad726e5419cc",
+      "bytes": 8622
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/MfaSection.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "9c805f689a83debe9398587beeac11d61c98f71354f5eb5211db3916744e47cc",
+      "after_sha256": "10c5d91d186b79768de8621961d5669fc5792bf0f8c7f7f160bba223d4340e96",
+      "bytes": 24700
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/PasswordSection.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "b174cd27d3a6dcd7cd179c371a548786cd93c3291ce24c858e58402e37e6802a",
+      "after_sha256": "f476e7f3a27f1b4a4bc9f6eeb1c0140db2dc54a64212f517e3ce1d5eda421c47",
+      "bytes": 2544
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/PaymentDetailsForm.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "6a5f9fbcc3053cf752f9998d2ee8780ae48fd1cf6957a48ce2d21f2d322f8b8b",
+      "after_sha256": "775aed3e59aefd675291777f4c70d34644b2d8eefdababdee7ea2a036fb5e898",
+      "bytes": 7056
+    },
+    {
+      "path": "app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "cdad5fbb658b5841541216a06da446dee4639be591f37a045242808a57d304c6",
+      "after_sha256": "5a62e5774487f20c76d09c292c5e4957060e226931b055df6c2fc0c3e11c2451",
+      "bytes": 10044
+    },
+    {
+      "path": "app/(auth)/onboarding/GoogleOnboardingForm.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "5150551022c2d0cdc1a3ae6979618c04708bec42dbf88ea546e489365be5d09b",
+      "after_sha256": "789c9a782a22b23201a5c401723e01eacd525ac0c1d2d6feeccd767b017d3614",
+      "bytes": 16984
+    },
+    {
+      "path": "app/(auth)/onboarding/OnboardingForm.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "7477d4d1ea6778111e2f2f74f3f7608fe2bfd0487590b1487c5c7607bfab913e",
+      "after_sha256": "e77bf47e15eae5326244b3e2a3dabe42ff6b584f82a876615c924957861c699d",
+      "bytes": 10594
+    },
+    {
+      "path": "app/(auth)/onboarding/SecurityQuestionsStep.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "95dfc70f79b8a0f1f17b7d11d641d71dbe322023e64e11ffc888dfd3a8b44929",
+      "after_sha256": "9f49100e29539c0dfbff26ad0e58a7b7b586cccea9a6f45cc63780cd2601afc6",
+      "bytes": 6069
+    },
+    {
+      "path": "app/(auth)/onboarding/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "a8ccaaae2342d0ffbb48d820a22924fa7961b9e8e1517806ab1597c58ea3cdba",
+      "after_sha256": "9b577ba21ca3f6bbbc9a4e78b25837f7ddee29df451b8029895b1b095df26b32",
+      "bytes": 7921
+    },
+    {
+      "path": "app/(auth)/paywall/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "00f250d2ba1b60d9396f6ab9ae1a16262f4eaf7a21306eb8ac3398398da7ee94",
+      "after_sha256": "4db23d3f406187a8d807e0d07ba5ec1c4c8522892bcc99be366180735f6e737b",
+      "bytes": 12379
+    },
+    {
+      "path": "app/auth/reset-password/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "35c8aca1895bac30da3820a277b154cd022191caa54cb43cdea0916a8868dea6",
+      "after_sha256": "d50bea4a77dd39ba8154b45018b56f6be4ae42a455bcbf5eee8819eb6a2be8ed",
+      "bytes": 4820
+    },
+    {
+      "path": "app/components/TaxEditor.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "9de25d066b22bf9a4c58e022577cbaff6333935755818ba91e3e5670f3e3be10",
+      "after_sha256": "19635a54122cbc03c0c8f624d0f1da124e7d248f1c9d9437b9419d98629e4c96",
+      "bytes": 6114
+    },
+    {
+      "path": "app/components/attachments/AttachmentSendPicker.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "6586c79785dae83e094b025605cbc4bffb9180a1f3abda1a07bece85ec224cfa",
+      "after_sha256": "33f56deecbe83e69742006329781f804d4e7e37504d928e7d0ddbfab39393a6d",
+      "bytes": 8488
+    },
+    {
+      "path": "app/components/auth/GoogleSignInButton.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "20d1bfabe3fca0f37947a2c6751f4fd5b3b4152928f21b1af9e874c7a9d94409",
+      "after_sha256": "22a46d6fce6c10751a27463cc065f8b3c431d86b5cd10ccd2ad759d93141e57e",
+      "bytes": 2407
+    },
+    {
+      "path": "app/components/send/SendDocumentButton.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "090ed0febfc483c73835347abd7976d1ab96a6fdabdde726098ce8024b05a331",
+      "after_sha256": "d218524c5badf4e97dfc63481bcac7f651059b22f9cdb3c637f53df6f4c6f6f9",
+      "bytes": 3199
+    },
+    {
+      "path": "app/components/send/SendDocumentModal.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "12908743c3df1ecd1f6560deebe3d56161529be4072e2be18a14837ccf83b185",
+      "after_sha256": "7032627140895daa87121786d1e61dcc42f877886cca1d5f6ac602f1a9052fd0",
+      "bytes": 31034
+    },
+    {
+      "path": "app/components/send/SendTestTipModal.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "c420429473da37dc924ca99f655150da66476d22a3fc54b6aa0b60cd302f6573",
+      "after_sha256": "a84c6a98959a28c85eecb397e4c3d9fc1981439482afe4762d05f2616ba961b0",
+      "bytes": 4444
+    },
+    {
+      "path": "app/components/ui/PasswordField.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "adbb30c82253a7b6668295ee8c05bea803a5458a6f2c9fdbd21eebb34f3d0180",
+      "after_sha256": "884cb45dee9311d34fd451a7838018034c48161bf4b26f1f1984e8c8a7d6febc",
+      "bytes": 3778
+    },
+    {
+      "path": "app/components/ui/v2/QcJourney.tsx",
+      "status": "added",
+      "category": "application",
+      "before_sha256": null,
+      "after_sha256": "45d1c4d3efd96d0fc4b67b9f4459c28f57a23f41c80e1fe04dc05996f089635a",
+      "bytes": 2711
+    },
+    {
+      "path": "app/components/ui/v2/qc-journeys.css",
+      "status": "added",
+      "category": "application",
+      "before_sha256": null,
+      "after_sha256": "364974a0d84f2a428298e9e115b977b3a2e75ae859e8dedc1d031aa64787fc37",
+      "bytes": 14431
+    },
+    {
+      "path": "app/components/workspace/QuoteIndexPage.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "077b31307f2e5a034cb05706da9904efeb353e9401c54b354ca40b9067b2b1fa",
+      "after_sha256": "e1c356ef87946645b6d7ebf1bd6b08c315c9fe405ac0ad1f7c555ac2ff1d44b1",
+      "bytes": 7614
+    },
+    {
+      "path": "app/login/TroubleSigningInPanel.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "df1499881e0a601d18b7cce6c150abf0f93a1845a3c83ac40c5f496fbb739dba",
+      "after_sha256": "7d999b119cadbb42fe45237a7bab71d5c5a85fcac6bed5c2941e4347d9dbb104",
+      "bytes": 6305
+    },
+    {
+      "path": "app/login/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "6e664666b8e4778b08add4684e2f41e00089967c7a1010e025d4be41adb9859e",
+      "after_sha256": "239fcc4ed362ac27bd12a8de0f00a9d0ef2cdd2734daeb728fef2d30964b0ecf",
+      "bytes": 13084
+    },
+    {
+      "path": "app/login/recover/RecoverFlow.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "a3fa21429df81a78f791f4d89d54ae3e28baf4ea50e556376959a739be0782a6",
+      "after_sha256": "4ddbed4f6e696fe7ed662d12426fa5a6fbb57d5c63b37290b936078c822a2b5a",
+      "bytes": 11780
+    },
+    {
+      "path": "app/login/recover/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "8b9a294e7773bbe0f875d329218759c66f095e431a7cc54ef0353fcdff824a3b",
+      "after_sha256": "423336c1ecaec55518ebd674fb6be2090603bbf5dafd6a323ffea73861fe5683",
+      "bytes": 1524
+    },
+    {
+      "path": "app/signup/page.tsx",
+      "status": "modified",
+      "category": "application",
+      "before_sha256": "57692560eb588f67edc70df84e870c318ed44c539e820ac8d4c34d6a6044a370",
+      "after_sha256": "d8b237b082133272ad73c10977b47eeca0ca8419dad25cba6b32f2d22dfebffb",
+      "bytes": 13474
+    },
+    {
+      "path": "docs/DESIGN_SYSTEM.md",
+      "status": "modified",
+      "category": "documentation_and_evidence",
+      "before_sha256": "25f8df30e52e5c31ff901c68b2b986f4278d3762a8a0384b8a15769730dc175f",
+      "after_sha256": "800344d61ccc612da2a7bacf610619e3c996a8e78bcc83515e3eea18f74954eb",
+      "bytes": 17425
+    },
+    {
+      "path": "docs/ux/phase-6/AGENT_TODOS.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "ace126a2698ab6cef4097d0c828b10bef9cdf378011b6749b68eef96ab64a0d2",
+      "bytes": 2674
+    },
+    {
+      "path": "docs/ux/phase-6/APPROVED_PROPOSAL.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a7df0713d5963f34200fbd6bc07601e8874f920f73231d193afed43cad91f5ff",
+      "bytes": 25856
+    },
+    {
+      "path": "docs/ux/phase-6/DESIGN_CHANGES.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "459d49820c5039da611943f226cd80ef925b21f63a1ca9d5d8574180446045d2",
+      "bytes": 5066
+    },
+    {
+      "path": "docs/ux/phase-6/INTEGRATION.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "8d12db9f2aca8fcf9800c970c80bfc639fc9b2b63bc5fb2e3f11d067c0bd7809",
+      "bytes": 5486
+    },
+    {
+      "path": "docs/ux/phase-6/PARITY_CHECKLIST.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "bdeb0d15af5a06627fdf0f002ead0611f0cef62e10876657b76f0ea034c11e83",
+      "bytes": 4303
+    },
+    {
+      "path": "docs/ux/phase-6/RETURN_NOTES.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "65116f9c231060e75f3f85f8864f2f18e901570aed0d8af72ce7111b4bef612b",
+      "bytes": 4588
+    },
+    {
+      "path": "docs/ux/phase-6/REVIEW.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "6844e848bc724322578dc81e7384baacff7f416f23f7733d88564cb8205f2e7c",
+      "bytes": 3095083
+    },
+    {
+      "path": "docs/ux/phase-6/RUNTIME_CHECKLIST.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "8a3d18a4165a0ef4f4c88b29bdc32bb85b60ffefa8a88a60e18cb7c446c5c191",
+      "bytes": 5114
+    },
+    {
+      "path": "docs/ux/phase-6/SCOPE.csv",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "2e8a7d0293c246121707299a584b26ab7b0f9e2d422f82dd3023efee80819b2a",
+      "bytes": 7276
+    },
+    {
+      "path": "docs/ux/phase-6/VALIDATION.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1c300277046fb383cba505ae363c2113c1e56ae0a010cef8a2ab4c076f477684",
+      "bytes": 5075
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/ORIGINAL_CHANGED_FILES.zip",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "b40ec5cf8cf38d56e8778769a013209416218ee290c041ee0af93ec062d1a565",
+      "bytes": 213764
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/README.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "2b4afb5bd431f4afad1e9638c9cbb9c4f1fd424fa84dd62a1ead1461ba0c1b6f",
+      "bytes": 1062
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/RETURN_NOTES-SMART-ASSISTANT-P17.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "089bbab9957f7a1c52d60a2aeb7ae620748f1868e5fd8bb0b3b58ed17a48f9f4",
+      "bytes": 8103
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/account/AccountTabs.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "dc7df82cb09d15171ad88d3df9dea565f1dc721753da700eeb217f91ea3c05c6",
+      "bytes": 9160
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/account/LogoUploader.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "50b7df6607cd6a76828fa00c7a02493c40cb431f7db896c99e3222f5b8176407",
+      "bytes": 2245
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/account/UserProfileForm.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "b7a04e86efecbf0cbbde85fd650e4267a8f90efce6368d685bd038ddd04a421f",
+      "bytes": 3210
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/account/billing/BillingPanel.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a045104bff77bd2806f276a2de2b63b2097deec5252932acba27bba1525e54f9",
+      "bytes": 38802
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/account/integrations/IntegrationsPanel.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a66564ba8dd688c18497b4bfd5d64391f648d903b2f97c2dc4e337f9856cfdfc",
+      "bytes": 8343
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/account/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "6d93307f424f776b671a409cbde2e292a8e95912b967418fd556536a4ab1e177",
+      "bytes": 15702
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/account/support/SupportSection.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1037ae1eb5281b817335d8033427477b60097a403fbb0ff56374ec71e5f2deca",
+      "bytes": 11170
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/attachments/AttachmentsTab.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "0730757119b1e95ee54946c6babaa8eca388307539c480f1285bf4e057964deb",
+      "bytes": 2295
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/attachments/attachment-list.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "9294f8863bad947fabd8f857eaef9cf7bd7c3a2675ff1d1f9cfe749a09538d5c",
+      "bytes": 11797
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/attachments/upload-attachment-modal.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "9f0f0312a8af4af7ff6747d43cbce4bebe1a59eed958c9ba5a6e57e64b6734dd",
+      "bytes": 7591
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/catalogs/catalog-list.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "987a8434f1893988cd6f13880ddefbacdb0fae6fcee7e925e12f79511f52f169",
+      "bytes": 25695
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/catalogs/edit-catalog-modal.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "56f0c17a0ff1a09d6cb8de2e84233d03d4e85fcb96b977986fdcb8e7f49f6b91",
+      "bytes": 16021
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/catalogs/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "68bafc96200eee9a5dc57d5d26c293f5e762b0829a80a260a96ef9b7e8cff6f0",
+      "bytes": 1455
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a6a61be50a64e23d92a94df61e3e4476e6f0bd53b11e827d22f37d9b8ad9f6e8",
+      "bytes": 9920
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1875f3991336a62d84ec29726874292ae17f5b4f6ef7bff4402099bc00950e5f",
+      "bytes": 27183
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "76c3619a08f9b0b9878245d9b09c02f71fba224b5b4132eb0872dbd604b18736",
+      "bytes": 36351
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "890caafaae368e8f4c96ef15898a2c874b64446866a82dcc71c7736f6f9dca87",
+      "bytes": 23565
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/invoices/CreateInvoiceModal.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "063698e30348d8ed660a7e9e99e9bf84edde05e4a32894c79266389d2fcddd2a",
+      "bytes": 19369
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "b4beba79ae05aaf236e0818f37a02c34649db1f828fa085bda2aa20bd6e6c6a8",
+      "bytes": 35721
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/invoices/invoice-from-quote/[quoteId]/InvoiceLineSelector.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "b8d4d6816a88b42bc4c0b584f445e21819a240bf5c55b021401673da2e1c66cd",
+      "bytes": 6938
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/invoices/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1b48e245c8fda218e99b09cdce0ff6e6638139fefd8067d9d1e06d45a07f1b14",
+      "bytes": 3450
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/material-orders/order-from-quote/[quoteId]/LineSelector.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "0ccdcca32168cf53702efd351807139068ab653d5d5a87cec476706f3a00650d",
+      "bytes": 7641
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/material-orders/order-from-quote/quote-selector.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "0492d8ea7c2652cef3fdd3a215db5f71a9de55fed698a711fe1bbee3bb916b8b",
+      "bytes": 11515
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/material-orders/order-list.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "c1e59d6a2d2da4fef801d25b89156d40e75d8438fcdf186ca663aad73fbfe523",
+      "bytes": 24753
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/material-orders/orders-hub.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "39382f51a361f671a98c392d5ddd0ab133f4bb275133a49c43bad07b98462eba",
+      "bytes": 5355
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/material-orders/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "fddd06ddf88044b8f0a1109ffb8801eca153ce80fd92e885fc345685e5a42c48",
+      "bytes": 3432
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "185bcd97d5e1bb9996bd434fc63ce8d21f9478da3f81f908f3d56b82c42d5eae",
+      "bytes": 38190
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/quotes/[id]/summary/ReopenQuoteButton.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "e43d8c826e4beb7d1545e9afd37da1bf6d75085a9280de152ebae8dfdfdc0cfd",
+      "bytes": 6419
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/quotes/[id]/summary/ScheduleFollowUpButton.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "82ca74d52a4e857423a0a2f89b8ed36cded6414443c559eca66b27ca5c6b3ad2",
+      "bytes": 20426
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/quotes/[id]/summary/SendToAppButton.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "ccf02b6912af36ffa98241fbbc8f25e35a0f2f603b8c353d95bc631b772e9b97",
+      "bytes": 8404
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/quotes/[id]/summary/WithdrawQuoteButton.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "d671cc1da7b2711aee5a124dd2a4b2dc87285e68afb26e30d37b19f730e0b5b4",
+      "bytes": 6081
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/quotes/new/QuoteDetailsForm.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "d57a9ec31ec0fd6538d7890a0ddc5648a4663ba48d42226acfe3120f4a7fa37d",
+      "bytes": 30159
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/resources/CustomerTemplateLogoUploader.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "6a185ee5a1c87cd9d82c3278f83d46ce1c5ce3f4e0bb9489b3bd088af52b2e54",
+      "bytes": 3013
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "ca30db20006dc93a9dde4cd9e9f00e5d061fee1320d11b5aa35eb3b51076823d",
+      "bytes": 18062
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/settings/EmailChangeSection.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "135919c9b3a6538353ae8446de7df51efc838a09e44ff1d1cc6053d320cc3105",
+      "bytes": 8262
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/settings/MfaSection.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "8e07a7c459825fd90661f5635fb03ef1a7a2119ab4e728e08658d624312f5a75",
+      "bytes": 23960
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/settings/PasswordSection.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "e8ff70580f0f22bddd2c84eb2dac3861117c5f092157795f25c57801142d3176",
+      "bytes": 2436
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/settings/PaymentDetailsForm.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "4158299729ca9b8dcb63aadd6aafe25253aff7e3a6469c80ba691a419f30b026",
+      "bytes": 6612
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/[workspaceSlug]/settings/SecurityQuestionsSection.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "5d20526155678d28ef67f60e03a1742b373b8d4bfc8c879ed5f9bd51de931dcf",
+      "bytes": 9611
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/onboarding/GoogleOnboardingForm.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "e9ff4e2b4300b5eb979395fa104445ba09a03a2dda6360dcf0dff90deaf6ac2a",
+      "bytes": 16315
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/onboarding/OnboardingForm.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "330d2577e13d24b04ae1a9f96845ad0f963443c0e8d40d10ea479a9e42a6cbe9",
+      "bytes": 11420
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/onboarding/SecurityQuestionsStep.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "9f8fbc5d1d2fb6df31efd301434faf96d8e62874fbe9667d099dd8f0667aad00",
+      "bytes": 5832
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/onboarding/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1dcff89935bf8b6d60bf90c41caeba67c4ef86fdbfb76f775c573b429873a15e",
+      "bytes": 8072
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/(auth)/paywall/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "496091b79990953cc8b5a8178d7b11db8ccf58db28634b1b67df083d653e1ffe",
+      "bytes": 12087
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/auth/reset-password/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "507b2d147791aeefcf247aa1ba19840d4b9eea4f83bcd02321e6b5a46dcb87bd",
+      "bytes": 4674
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/TaxEditor.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "81ecb006556e52f33e346616ec465f172b6248a10fc185605af2fb6434d67952",
+      "bytes": 5659
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/attachments/AttachmentSendPicker.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "7ad7d2a2a9b785d0ad8836807a7203682df7fa55f020d3a28f0b5226f7088175",
+      "bytes": 8221
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/auth/GoogleSignInButton.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "81b4214196e6f8247de772ec42912f0bfdcdd838dcbd94de766bcf6ba2756599",
+      "bytes": 2252
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/send/SendDocumentButton.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1eae1318800a51dfc25175364c84d03e9a80b2b4c270c46ac595c854a9ac1674",
+      "bytes": 3017
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/send/SendDocumentModal.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "ca75a187c03c7a6f3152c11bd9fabe6ac75118a6fe156cf0445345872b9ac041",
+      "bytes": 29737
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/send/SendTestTipModal.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "3d1e0520f318b3d41abd4a6c85565f8c1b7b5803320d6f7d00c434861cfaaf2a",
+      "bytes": 4436
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/ui/PasswordField.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "4ca280d10bd124183dbc67114488ce539da1091ac1168f581390118a56166df9",
+      "bytes": 3562
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/components/workspace/QuoteIndexPage.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "ec70d46a3cb97b7752e5771946c0f753533ff4c077236889d067a62f987535c6",
+      "bytes": 7407
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/login/TroubleSigningInPanel.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a047c096d1544c34f944527317c60881064dab69e0db0b1c5ee916e286a425a5",
+      "bytes": 6014
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/login/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "94b29efc5ed87a2951d2ff675ba6a96ff179cb16e6ceeef065204ee3faa8c93d",
+      "bytes": 12781
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/login/recover/RecoverFlow.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "e9b6f9ad32f8b2022db94bc11fd438746ff020fa9da36592c828c1de6185654b",
+      "bytes": 11254
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/login/recover/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a2a10035684dddd260abb94a543927bda6792ce33dac447b5dcd3e0bf7bdf1fd",
+      "bytes": 1478
+    },
+    {
+      "path": "docs/ux/phase-6/baseline/source/app/signup/page.tsx.source.txt",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "e82403c1819a93c0b4d0a9a64583c9da41c26e8b7bec8ac6a7fe9ba5132c6048",
+      "bytes": 12847
+    },
+    {
+      "path": "docs/ux/phase-6/validation/baseline-build.exit",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "743c7850cccfba5e53a9002663ec1ddd1079315a98bdbfdde10e6044f56abefe",
+      "bytes": 4
+    },
+    {
+      "path": "docs/ux/phase-6/validation/baseline-build.log",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "083a4fe2fe72de7fe8a9ec44c6f5cab82594d08a95ccfa5ba13a9e2ce79514b9",
+      "bytes": 216
+    },
+    {
+      "path": "docs/ux/phase-6/validation/baseline-tsc.exit",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2
+    },
+    {
+      "path": "docs/ux/phase-6/validation/baseline-tsc.log.gz",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a99e541595030d83be19480b6c13a7db4697a894d3269e2b72a47feb0ec49962",
+      "bytes": 320913
+    },
+    {
+      "path": "docs/ux/phase-6/validation/browser-checks.log",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "981226b8333c80c65454008df2d458ac0c55e6b5a9f0e8d1c35d744aeb574612",
+      "bytes": 209
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixture-render.log",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "61eb2cf049636e1e47bf409e4e38668b0156b6171fb26747c4d09a598ae4d394",
+      "bytes": 353
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/activation.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "457056fd5ba76325e56faa3229bf35c64596324253a088dbd66c5fbd80b90400",
+      "bytes": 5498
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/billing.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "bb159bfe7937a9a1a67f46f5adc5e6f1f38f511fbf31310dd8aa3b51acfd7d1f",
+      "bytes": 6160
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/browser-report.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "82da1c48fa82a2bab3c4aec614496021360484bc7cd7107f18c0195e1ab52929",
+      "bytes": 64048
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/catalogue-components.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "9e36f0d02dfabda7b0411d5e3c3a1b8ad4be76f48c73ed699f0da4ca5c772b77",
+      "bytes": 9265
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/catalogue-map.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "cfb60e7c46e8151814f4103b4c116cded8b6a49bcc76e87b4b97526a9d2631a3",
+      "bytes": 9281
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/catalogue-upload.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1d379cd0f075896bdfc4833ece04122887099942f835c30743d84748414b743c",
+      "bytes": 3530
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/company-settings.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "4745e0fa6aa1e4ef68a5c48734bccb5ec1f4a880d8bf1ab1ca6050d748d5c8fa",
+      "bytes": 11071
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/create-invoice.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "f3540e5dff87533027c699a761272d83f80ea1b19f2e3612eb399d34c91aa8bb",
+      "bytes": 4443
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/fixture.css",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "0c7f158eb5b0d187726beea7f0885d44ae86e4d25e67e80be7435a530f0d71fc",
+      "bytes": 261490
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/interaction-feedback.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "5f7913cf3db6b231a120cc38eb4b40d2b508c864a466f56706a06fe9e8ca7cd6",
+      "bytes": 4339
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/invoices.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "06c07641b15884f2a069b815741034a6da1d8ffa54e2fecc80d8ae153c105952",
+      "bytes": 11125
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/login.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "f65e1e26f432474674744af1a254ddb4214b46bb4af83b5ba37f415d148be5fd",
+      "bytes": 5595
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/logo.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "47cd732cec2fd744a244148a5c4c64f8daf827e4f3b1565260db2226eac11e06",
+      "bytes": 46098
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/orders.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "2fc9852d63382546f4cbf1b180003cea872fe1b3a484cf399a9faad4365d6a76",
+      "bytes": 9071
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/q-avatar.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "8928da7e3e3521f3281f871b59711f873b8d4fe3ac26ee680051f107c437a66b",
+      "bytes": 84621
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/q-mark.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "6a03ff3a2b2d4472f57a428306542c41d107bfb084320a54396d717696c692aa",
+      "bytes": 46279
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/quotes-bulk.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "b5ecaf0577e6d092b5f6022b98ca989d1e0771885ffddab0564176f6011ba611",
+      "bytes": 13384
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/quotes-drafts.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "d467fd9b38778fb1cf7babaddbcf9511a138882d4bbc932ef96e798f928714a4",
+      "bytes": 5622
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/quotes.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "b0bd22a9bc50c989077c478fd487a7f621ca037e99c5b69ca97901008ee0155d",
+      "bytes": 11947
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/render-report.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "3cfc0bfe0afa149a12fafde9b93cbfcf757c4015dd46b6dbcd0fbb37a5026595",
+      "bytes": 4340
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/reset-password.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "ee5b823ae5f1547b603d239f85da41b3cbc1a38d8f17715a4cd8a2096e986c1e",
+      "bytes": 3566
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/activation-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "66069b5702beae06efbef0bf3d2c2d5b5e7ff00da2c3f5e82de4fd6defcc9c5c",
+      "bytes": 83121
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/activation-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a1dc7ad83a6a96ccb8f743ee2740b297ad27f0086378ab8463bb0b169465fe14",
+      "bytes": 94894
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/billing-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "d2c257f00309a29323dd6fa9a06913741b4f95a7efed740b8f1a2a951fb16e33",
+      "bytes": 92183
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/billing-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "f1437bd1ded4896e89e23d1347703966ed50bb1b2019479442d045236cbee7b2",
+      "bytes": 96701
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/catalogue-components-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "af5c84222809fae097230994e8458ec3d7f1f0420c290ead13d98e25dc2183a9",
+      "bytes": 91279
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/catalogue-components-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "46e07595387ce13382bcb7ec595112e13d2c3206bba84bd08ec7055060d67055",
+      "bytes": 57051
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/catalogue-map-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "fbc570f9a1eee7adfff095b3348e2d16c78511a055dd320f60480ec5e379f1ab",
+      "bytes": 97758
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/catalogue-map-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "890ebfe79b4d97ba40fedb7f65ecfb0265de79bd630bc42041a9515622a864b6",
+      "bytes": 64197
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/catalogue-upload-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "d4a9d732e4e465d466fc431043a373f806a00200db6dfe52ec3028bdb5287e14",
+      "bytes": 54864
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/catalogue-upload-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "8acd254f045c2b47e179c9f8f2fa4590d7cbaf8bdab3be753df143ab39a4dafa",
+      "bytes": 44501
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/company-settings-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "90501bb49eb93d047a5c7e080ad86d9d06ebb9852a8105c6230bec0fe60c5c90",
+      "bytes": 182116
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/company-settings-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "76778e4f22620c89f4140eb992b58ff156d952d6ae0ffc1d8103052ea6d90165",
+      "bytes": 171175
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/create-invoice-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "f005460110c185d1a219e623b383ce2698018f3c068f5bb9f953951973768bf4",
+      "bytes": 42456
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/create-invoice-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a53c7a70fc9a899fc60b9f5d1c1b712bc2afd9fbb3a472be45f77a9ddcdf5a0f",
+      "bytes": 35259
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/invoices-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "487bd80f13b3edd662674c43678468b19f255e4ff86946b278afe0832c2d33de",
+      "bytes": 76287
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/invoices-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "6205df7e9e9e38ebabad37295066bf89784e05ddc1a7a1bb9951b7212c1f29eb",
+      "bytes": 79215
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/login-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1420d2bcfd5c7208806329b14cbedb3a236a3b76101996be6d9fddc1feca1986",
+      "bytes": 58718
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/login-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "c509f7b8a53787c6b64535987402fa110d3108f1e5b5a147f1c691ac70c9f7d2",
+      "bytes": 49195
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/orders-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "074a0d41e90c8880509bb5d3ad4387a976f18d630051b109df4db0694e43dc8c",
+      "bytes": 54608
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/orders-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "1fd66a074c56e9bcfbabb0c884b50a3a71594df3400290d30c6da3469aa77f76",
+      "bytes": 48036
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/quotes-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "7fe028ac27afc834c9267f835215051fa65a27bc129ccb429eeb7b34bd9ce086",
+      "bytes": 81473
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/quotes-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "60205c1ba86b35475eefd9ee3cd9afff7f9d9a391da415657c2884db9670791a",
+      "bytes": 76805
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/quotes-bulk-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "6d88afc9a6e6f311d1a98e51411f2833ba2528b0a0809d53f2d0adc6f36b45ed",
+      "bytes": 92580
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/quotes-bulk-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "069b057dc283760d9e4bf5ba9c6ab3a81c837e78f970cceff0aafc20e3d85797",
+      "bytes": 79498
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/quotes-drafts-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "793d737812d89aef7e54079bf1bceb004c38e53a99c28bfe5e2c6e9bf02a0aff",
+      "bytes": 51895
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/quotes-drafts-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "b5675a483499eb9d8839d911d1beb33092346a83da95ac3c5fa96ba60ee7fb33",
+      "bytes": 44054
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/reset-password-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "2fd307c4466562aaeae99c58f0b513aa726888f93d9e40f6f7086cf89157f631",
+      "bytes": 45012
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/reset-password-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "aadfbfdac1089a12898c5b9edf7d5694e8022833fd0dc25ff2d5db9a29c9f005",
+      "bytes": 37335
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/send-options-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "0d1c4f77b17b93c22b70c7f55505f5ea05f95f5d7905d4c048d758fb59ce5e44",
+      "bytes": 46769
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/send-options-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "62534305371ad773fd8a23cf5369c0fb98bc97cc57d4d276c9cdd03600bacdf2",
+      "bytes": 38501
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/signup-1440.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "4015a7370319c615caefad02968ea9ae05928221af26b52734d6a7800d4d277b",
+      "bytes": 79732
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/screens/signup-390.png",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "0a20c9f75634ed7927aaae84e23a70e0951c2d059d7b9c36f7f6765b43507491",
+      "bytes": 68230
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/send-options.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "302f9be289706bb05832a057e477b37d3db5fba869c7c44f530eb40c57746cee",
+      "bytes": 3682
+    },
+    {
+      "path": "docs/ux/phase-6/validation/fixtures/signup.html",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "4f2f3e245be95afa6057cb8ac335a372a2bc7f71142e1d74c405be796acf6677",
+      "bytes": 6686
+    },
+    {
+      "path": "docs/ux/phase-6/validation/install.exit",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "bytes": 2
+    },
+    {
+      "path": "docs/ux/phase-6/validation/install.log",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "844d50be862d051fe19b313402999a601cf88572dd5a30ad025bed618f633ac2",
+      "bytes": 270
+    },
+    {
+      "path": "docs/ux/phase-6/validation/integrity-report.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "a9124b4e7513b9486a6ab33c75d9f8790b0e2b8258eba8e41d10523b833d7f59",
+      "bytes": 798
+    },
+    {
+      "path": "docs/ux/phase-6/validation/post-build.exit",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "743c7850cccfba5e53a9002663ec1ddd1079315a98bdbfdde10e6044f56abefe",
+      "bytes": 4
+    },
+    {
+      "path": "docs/ux/phase-6/validation/post-build.log",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "083a4fe2fe72de7fe8a9ec44c6f5cab82594d08a95ccfa5ba13a9e2ce79514b9",
+      "bytes": 216
+    },
+    {
+      "path": "docs/ux/phase-6/validation/post-tsc.exit",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3",
+      "bytes": 2
+    },
+    {
+      "path": "docs/ux/phase-6/validation/post-tsc.log.gz",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "d2d798b459c10449ef0e49d249db0cbb3be7817fd87281be30384b509a7dd2b9",
+      "bytes": 321278
+    },
+    {
+      "path": "docs/ux/phase-6/validation/protected-files.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "c77e3141eb4f31118a811615aa3b07f96c7d4953200b92c90908d4367913fcd6",
+      "bytes": 158362
+    },
+    {
+      "path": "docs/ux/phase-6/validation/source-changes.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "aec56746c9680467d366431df72c4f683f3ad4b3acdda6970614e0ac6d9364de",
+      "bytes": 17733
+    },
+    {
+      "path": "docs/ux/phase-6/validation/source-parity-rerun.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "e15d80d6e0dfde6b57ca3222ffcfa6e46d283007535d537e13f0287d5eee31df",
+      "bytes": 16312
+    },
+    {
+      "path": "docs/ux/phase-6/validation/source-parity.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "e15d80d6e0dfde6b57ca3222ffcfa6e46d283007535d537e13f0287d5eee31df",
+      "bytes": 16312
+    },
+    {
+      "path": "docs/ux/phase-6/validation/tools/README.md",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "532137e4965300071c0fafd4bf1704f98ab999a33969b1aa0a6818bff7bde6bb",
+      "bytes": 1253
+    },
+    {
+      "path": "docs/ux/phase-6/validation/tools/browser-checks.py",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "bbdefc7c8ddb9c387d3b6dd952636b3149b36a70388f75403c63ec6b8046ac58",
+      "bytes": 5004
+    },
+    {
+      "path": "docs/ux/phase-6/validation/tools/build-css.cjs",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "49f7ae2b5be8f53ec4afd160672c4873d36c04b657072c19c63c3985bebe641a",
+      "bytes": 1400
+    },
+    {
+      "path": "docs/ux/phase-6/validation/tools/check-source.cjs",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "bf3eea15b1fe167265e10b2e0255960ec21997afe03ebdbdf1e83c20dbd7a5cb",
+      "bytes": 3922
+    },
+    {
+      "path": "docs/ux/phase-6/validation/tools/render-fixtures.cjs",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "5bd3178c53714e61116d09e03a08e439f2d7c0eaf91d30ceb9d4ea42e4e47bdf",
+      "bytes": 14988
+    },
+    {
+      "path": "docs/ux/phase-6/validation/tsc-comparison.json",
+      "status": "added",
+      "category": "documentation_and_evidence",
+      "before_sha256": null,
+      "after_sha256": "88c6727bc0a5136676b728c5eff6b956e2912bc9975d4896b8d1efe12b8f7a44",
+      "bytes": 16427
+    },
+    {
+      "path": "docs/ux/phase-6/FILE_CHANGES.json",
+      "status": "added",
+      "category": "manifest",
+      "before_sha256": null,
+      "after_sha256": null,
+      "hash_exclusion_reason": "This manifest cannot contain its own final content hash; ZIP-level manifest hash is in the external package verification."
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useEffect, useCallback } from 'react';
 import {
   renameCatalog,
@@ -197,11 +198,11 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
       {csvPreview(value)}
       {MAPPING_FIELDS.map((field) => (
         <div key={field.key}>
-          <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
-          <select
+          <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
+          <select aria-label={field.label}
             value={value[field.key] ?? ''}
             onChange={(e) => onChange({ ...value, [field.key]: e.target.value || null })}
-            className={inputCls + ' bg-white'}
+            className={"qc-select " + (inputCls + ' bg-white')}
           >
             <option value="">- Skip -</option>
             {headers.map((h, idx) => {
@@ -217,11 +218,11 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
   );
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <QcJourneyDialog label="Edit catalogue" size="lg">
       <div className={`bg-white rounded-xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${tab === 'maps' ? 'max-w-2xl' : 'max-w-md'}`}>
         <div className="border-b px-2 md:px-6 py-3 md:py-4 flex items-center justify-between sticky top-0 bg-white">
           <h3 className="text-lg font-semibold text-slate-900">Edit catalog</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600" aria-label="Close">
+          <button onClick={onClose} className="qc-icon-button qc-flow-control text-slate-400 hover:text-slate-600" aria-label="Close">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -235,9 +236,9 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
               <button
                 key={t}
                 onClick={() => { setTab(t); setError(null); setEditingMap(null); }}
-                className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
+                className={"qc-flow-control " + (`px-4 py-1.5 text-sm font-medium rounded-full transition ${
                   tab === t ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                }`}
+                }`)}
               >
                 {t === 'rename' ? 'Rename' : t === 'remap' ? 'Column mapping' : 'Maps'}
               </button>
@@ -246,12 +247,12 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
 
           {tab === 'rename' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+              <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={inputCls}
+                className={"qc-input " + (inputCls)}
                 maxLength={120}
                 autoFocus
               />
@@ -304,7 +305,7 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
                                   isPrimary: m.is_primary,
                                 })
                               }
-                              className="text-xs text-slate-600 hover:text-orange-600"
+                              className="qc-flow-control text-xs text-slate-600 hover:text-orange-600"
                             >
                               Edit
                             </button>
@@ -312,7 +313,7 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
                               <button
                                 onClick={() => void handleDeleteMap(m.id)}
                                 disabled={saving}
-                                className="text-xs text-red-500 hover:text-red-600 disabled:opacity-40"
+                                className="qc-flow-control text-xs text-red-500 hover:text-red-600 disabled:opacity-40"
                               >
                                 Delete
                               </button>
@@ -322,9 +323,9 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
                       ))}
                     </div>
                   )}
-                  <button
+                  <button data-qc-variant="ghost"
                     onClick={() => setEditingMap({ mode: 'create', name: '', mapping: emptyMapping() })}
-                    className="w-full px-3 py-2 text-sm font-medium border border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-orange-400 hover:text-orange-600 transition"
+                    className="qc-flow-control qc-button w-full px-3 py-2 text-sm font-medium border border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-orange-400 hover:text-orange-600 transition"
                   >
                     + Add extra map for this catalog
                   </button>
@@ -334,12 +335,12 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
               {editingMap && (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Map name</label>
-                    <input
+                    <label className="qc-flow-label block text-sm font-medium text-slate-700 mb-1">Map name</label>
+                    <input aria-label="e.g. Retail markup, Cost only"
                       type="text"
                       value={editingMap.name}
                       onChange={(e) => setEditingMap({ ...editingMap, name: e.target.value })}
-                      className={inputCls}
+                      className={"qc-input " + (inputCls)}
                       maxLength={120}
                       placeholder="e.g. Retail markup, Cost only"
                       autoFocus
@@ -359,13 +360,13 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
           <div className="mt-6 flex gap-3 justify-end">
-            <button
+            <button data-qc-variant="ghost"
               onClick={tab === 'maps' && editingMap ? () => { setEditingMap(null); setError(null); } : onClose}
-              className="px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium border border-slate-300 rounded-full hover:bg-slate-50"
             >
               {tab === 'maps' && editingMap ? 'Back' : 'Cancel'}
             </button>
-            <button
+            <button data-qc-variant="primary"
               onClick={
                 tab === 'rename'
                   ? handleRename
@@ -380,13 +381,13 @@ export function EditCatalogModal({ catalog, onClose, onSaved }: Props) {
                 (tab === 'rename' && !name.trim()) ||
                 (tab === 'maps' && !!editingMap && !editingMap.name.trim())
               }
-              className="px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium bg-black text-white rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-40"
             >
               {saving ? 'Saving...' : tab === 'maps' && !editingMap ? 'Done' : 'Save'}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </QcJourneyDialog>
   );
 }

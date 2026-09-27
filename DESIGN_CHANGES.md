@@ -1,3 +1,9 @@
+# Design change history — current Phase 6 pointer
+
+The owner approved the integrated v2 orange-led standard for Phase 6. Read `docs/DESIGN_SYSTEM.md` for precedence and `docs/ux/phase-6/DESIGN_CHANGES.md` for the implemented changes. Prior palette and button examples below are historical, not a request to revert current v2 controls. Logos, shell, navigation, Takeoff and recipient outputs are unchanged by this phase.
+
+---
+
 # Phase 5 final | UI standard 2.6
 
 Contextual, document-first editing and professional output, superseding the first Phase 5 style pass. C55/C58 provide one stable inspector and interactive document; C59/C60 provide clean output with excluded selection controls. Four specialised editors retain independent business owners. See `docs/ux/phase-5-final/README.md` and `RETURN_NOTES.md`. Integration/runtime/owner review pending; core tokens unchanged.

@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -105,7 +106,7 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
   }
 
   return (
-    <>
+    <QcJourney><>
       {/* Status filters */}
       <div className="flex gap-1 flex-wrap">
         {STATUS_FILTERS.map(f => {
@@ -115,11 +116,11 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
             <button
               key={f.key}
               onClick={() => setStatusFilter(f.key)}
-              className={`px-3 py-1 text-xs font-medium rounded-full border transition ${
+              className={"qc-flow-control " + (`px-3 py-1 text-xs font-medium rounded-full border transition ${
                 statusFilter === f.key
                   ? 'bg-slate-900 text-white border-slate-900'
                   : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-              }`}
+              }`)}
             >
               {f.label} {count > 0 && <span className="ml-1 opacity-70">{count}</span>}
             </button>
@@ -130,24 +131,24 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
       {/* Search + Sort */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
-          <input
+          <input aria-label="Search by quote #, client, or job..."
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by quote #, client, or job..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            className="qc-input qc-flow-search w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
+            <button onClick={() => setSearchQuery('')} className="qc-flow-control absolute right-3 top-2.5 text-slate-400 hover:text-slate-600">✕</button>
           )}
         </div>
         <select
           value={sortBy}
           onChange={e => setSortBy(e.target.value as any)}
-          className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
+          className="qc-select px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none bg-white"
         >
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
@@ -225,16 +226,16 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
               )}
             </div>
             <div className="flex gap-3 mt-6">
-              <button
+              <button data-qc-variant="ghost"
                 onClick={() => setSelectedQuote(null)}
-                className="flex-1 px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button flex-1 px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50"
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="primary"
                 data-copilot="order-from-quote-confirm"
                 onClick={handleConfirm}
-                className="flex-1 px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+                className="qc-flow-control qc-button flex-1 px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
               >
                 Create Order
               </button>
@@ -242,6 +243,6 @@ export function QuoteSelector({ quotes, workspaceSlug }: Props) {
           </div>
         </div>
       )}
-    </>
+    </></QcJourney>
   );
 }

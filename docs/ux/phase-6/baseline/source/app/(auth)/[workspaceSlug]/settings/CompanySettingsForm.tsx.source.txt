@@ -1,0 +1,432 @@
+'use client';
+import { useState, useTransition } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { updateCompanySettings } from './actions';
+import { saveCompanyTaxes } from '@/app/lib/taxes/actions';
+import { CURRENCY_GROUPS } from '@/app/lib/currency/currencies';
+import { LogoUploader } from '../account/LogoUploader';
+import { TaxEditor, type EditableTax } from '@/app/components/TaxEditor';
+
+interface Props {
+  companyId: string;
+  userId: string;
+  currentCompanyName: string;
+  currentUserName: string;
+  currentCurrency: string;
+  currentLanguage: string;
+  currentMeasurement: 'metric' | 'imperial_ft' | 'imperial_rs' | 'imperial';
+  currentMaterialMargin: number;
+  currentLaborMargin: number;
+  currentLogoUrl: string | null;
+  currentTaxes: EditableTax[];
+  /** Phase 8 (Generic Trades): only rendered when the client flag is on. */
+  currentDefaultTrade?: string | null;
+  /** When true the company is over storage - block logo uploads. */
+  isOverStorage?: boolean;
+}
+
+export function CompanySettingsForm({
+  companyId,
+  userId,
+  currentCompanyName,
+  currentUserName,
+  currentCurrency,
+  currentLanguage,
+  currentMeasurement,
+  currentMaterialMargin,
+  currentLaborMargin,
+  currentLogoUrl,
+  currentTaxes,
+  currentDefaultTrade,
+  isOverStorage,
+}: Props) {
+  const params = useParams<{ workspaceSlug: string }>();
+  const workspaceSlug = params?.workspaceSlug ?? '';
+
+  const genericTradesEnabled =
+    (process.env.NEXT_PUBLIC_GENERIC_TRADES_V1 ?? '').toLowerCase() === 'true';
+  type TradeOption = 'roofing' | 'cladding' | 'generic' | 'electrical' | 'plumbing' | 'landscaping' | 'solar' | 'flooring' | 'tiling' | 'foundations' | 'insulation' | 'painting' | 'fencing' | 'concrete' | 'construction';
+  const tradeOptions: TradeOption[] = ['roofing', 'cladding', 'electrical', 'plumbing', 'landscaping', 'solar', 'flooring', 'tiling', 'foundations', 'insulation', 'painting', 'fencing', 'concrete', 'construction', 'generic'];
+  const [defaultTrade, setDefaultTrade] = useState<TradeOption>(
+    tradeOptions.includes(currentDefaultTrade as TradeOption)
+      ? (currentDefaultTrade as TradeOption)
+      : 'roofing'
+  );
+  const [companyName, setCompanyName] = useState(currentCompanyName);
+  const [userName, setUserName] = useState(currentUserName);
+  const [currency, setCurrency] = useState(currentCurrency);
+  const [language, setLanguage] = useState(currentLanguage);
+  // Normalise legacy 'imperial' to 'imperial_rs' for the local state so the
+  // form starts on a value the new selector recognises.
+  const [measurement, setMeasurement] = useState<'metric' | 'imperial_ft' | 'imperial_rs'>(
+    currentMeasurement === 'imperial' ? 'imperial_rs' : (currentMeasurement as 'metric' | 'imperial_ft' | 'imperial_rs')
+  );
+  const [materialMargin, setMaterialMargin] = useState(currentMaterialMargin.toString());
+  const [laborMargin, setLaborMargin] = useState(currentLaborMargin.toString());
+  const [taxes, setTaxes] = useState<EditableTax[]>(currentTaxes);
+  const [isPending, startTransition] = useTransition();
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaveMessage(null);
+
+    // Validate names
+    if (!companyName.trim()) {
+      setSaveMessage({ type: 'error', text: 'Company name is required' });
+      return;
+    }
+
+    if (!userName.trim()) {
+      setSaveMessage({ type: 'error', text: 'User name is required' });
+      return;
+    }
+
+    // Validate margins
+    const matMargin = parseFloat(materialMargin);
+    const labMargin = parseFloat(laborMargin);
+
+    if (isNaN(matMargin) || matMargin < 0 || matMargin > 100) {
+      setSaveMessage({ type: 'error', text: 'Item Cost margin must be between 0 and 100%' });
+      return;
+    }
+
+    if (isNaN(labMargin) || labMargin < 0 || labMargin > 100) {
+      setSaveMessage({ type: 'error', text: 'Labor margin must be between 0 and 100%' });
+      return;
+    }
+
+    // Validate taxes before kicking off the transition so we never half-save.
+    for (const t of taxes) {
+      if (!t.name.trim()) {
+        setSaveMessage({ type: 'error', text: 'Each tax must have a name' });
+        return;
+      }
+      if (!Number.isFinite(t.rate_percent) || t.rate_percent < 0 || t.rate_percent > 100) {
+        setSaveMessage({ type: 'error', text: `Invalid rate for "${t.name}": must be between 0 and 100` });
+        return;
+      }
+    }
+
+    startTransition(async () => {
+      try {
+        await updateCompanySettings(companyId, userId, {
+          companyName: companyName.trim(),
+          userName: userName.trim(),
+          currency,
+          language,
+          measurement,
+          materialMargin: matMargin,
+          laborMargin: labMargin,
+          // Phase 8: only pass when flag is on.
+          ...(genericTradesEnabled ? { defaultTrade } : {}),
+        });
+
+        await saveCompanyTaxes(
+          taxes.map((t, idx) => ({
+            id: t.dbId,
+            name: t.name,
+            rate_percent: Number(t.rate_percent),
+            sort_order: idx,
+          }))
+        );
+
+        setSaveMessage({ type: 'success', text: '✓ Settings saved successfully!' });
+        setTimeout(() => setSaveMessage(null), 3000);
+      } catch (err) {
+        console.error('Settings update failed:', err);
+        setSaveMessage({ type: 'error', text: 'Failed to save settings. Please try again.' });
+      }
+    });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Account Information */}
+      <div className="border-b border-gray-200 pb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">👤 Account Information</h2>
+        
+        <div className="space-y-6">
+          {/* Company Name */}
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-gray-900">Company Name</span>
+              <p className="text-xs text-gray-600 mt-1 mb-2">
+                Your company name appears on quotes and templates
+              </p>
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="Your Company Ltd"
+                disabled={isPending}
+                required
+              />
+            </label>
+          </div>
+
+          {/* User Name */}
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-gray-900">Your Name</span>
+              <p className="text-xs text-gray-600 mt-1 mb-2">
+                Your full name for your account profile
+              </p>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                placeholder="John Smith"
+                disabled={isPending}
+                required
+              />
+            </label>
+          </div>
+
+          {/* Company Logo */}
+          <LogoUploader companyId={companyId} currentLogoUrl={currentLogoUrl} isOverStorage={isOverStorage} />
+        </div>
+      </div>
+
+      {/* Currency Selection */}
+      <div className="space-y-3">
+        <label className="block">
+          <span className="text-sm font-semibold text-gray-900">Default Currency</span>
+          <p className="text-xs text-gray-600 mt-1 mb-2">
+            All component library prices will be entered in this currency
+          </p>
+          <select
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+            disabled={isPending}
+          >
+            {CURRENCY_GROUPS.map(group => (
+              <optgroup key={group.label} label={group.label}>
+                {group.currencies.map(c => (
+                  <option key={c.code} value={c.code}>
+                    {c.symbol} {c.code} - {c.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <p className="text-xs text-gray-900">
+            <strong>Important:</strong> Changing currency won&apos;t convert existing component prices
+          </p>
+        </div>
+      </div>
+
+      {/* Language Selection */}
+      <div className="space-y-3">
+        <label className="block">
+          <span className="text-sm font-semibold text-gray-900">Language</span>
+          <p className="text-xs text-gray-600 mt-1 mb-2">
+            UI language (currently only English is supported)
+          </p>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white"
+            disabled={isPending}
+          >
+            <option value="en">English</option>
+          </select>
+        </label>
+      </div>
+
+      {/* Measurement System */}
+      <div className="space-y-3">
+        <label className="block">
+          <span className="text-sm font-semibold text-gray-900">Measurement System</span>
+          <p className="text-xs text-gray-600 mt-1 mb-2">
+            Default units for new quotes. Each quote keeps its own measurement system once created.
+          </p>
+          <div className="flex flex-col gap-2">
+            {[
+              { value: 'metric', label: 'Metric - meters & m²' },
+              { value: 'imperial_ft', label: 'Imperial - feet & ft²' },
+              { value: 'imperial_rs', label: 'Imperial - feet & Roofing Squares (RS)' },
+            ].map((opt) => (
+              <label
+                key={opt.value}
+                className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50"
+              >
+                <input
+                  type="radio"
+                  value={opt.value}
+                  checked={measurement === opt.value}
+                  onChange={(e) => setMeasurement(e.target.value as 'metric' | 'imperial_ft' | 'imperial_rs')}
+                  disabled={isPending}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </label>
+      </div>
+
+      {/* Phase 8 (Generic Trades): default trade selector */}
+      {genericTradesEnabled && (
+        <div className="space-y-1">
+          <label htmlFor="default-trade" className="block text-sm font-semibold text-gray-900">
+            Default Industry
+          </label>
+          <p className="text-xs text-gray-600 mb-2">
+            Pre-selects the trade when creating a new quote. You can override it per quote. Also determines the keywords and information in Help documents.
+          </p>
+          <select
+            id="default-trade"
+            value={defaultTrade}
+            onChange={e => setDefaultTrade(e.target.value as TradeOption)}
+            disabled={isPending}
+            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="generic">Generic</option>
+            <option value="roofing">Roofing</option>
+            <option value="cladding">Cladding</option>
+            <option value="electrical">Electrical</option>
+            <option value="landscaping">Landscaping</option>
+            <option value="concrete">Concrete</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="flooring">Flooring</option>
+            <option value="tiling">Tiling</option>
+            <option value="foundations">Foundations</option>
+            <option value="insulation">Insulation</option>
+            <option value="painting">Painting</option>
+            <option value="fencing">Fencing</option>
+            <option value="solar">Solar</option>
+            <option value="construction">Construction</option>
+          </select>
+        </div>
+      )}
+
+      {/* Templates shortcut - quick access from the trade section */}
+      <div className="py-4 border-t border-slate-100">
+        <p className="text-sm font-semibold text-slate-900">Resource Library</p>
+        <p className="text-xs text-slate-500 mt-0.5">Manage all your quote templates, message templates, customer quote templates, order templates, catalog files, and upload library.</p>
+        <Link
+          href={`/${workspaceSlug}/resources`}
+          className="inline-block mt-3 px-4 py-2 text-sm font-medium text-white bg-black rounded-full hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] whitespace-nowrap"
+        >
+          Resource Library
+        </Link>
+      </div>
+
+      {/* Profit Margins */}
+      <div className="border-t border-gray-200 pt-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Default Profit Margins</h2>
+        <p className="text-sm text-gray-600 mb-6">
+          These margins will be automatically applied to new quotes. You can adjust them per quote in the Review tab.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Item Cost Margin */}
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-gray-900">Item Cost Margin</span>
+              <p className="text-xs text-gray-600 mt-1 mb-2">
+                Profit margin added to item costs
+              </p>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={materialMargin}
+                  onChange={(e) => setMaterialMargin(e.target.value)}
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="15"
+                  disabled={isPending}
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                  %
+                </span>
+              </div>
+            </label>
+            <p className="text-xs text-gray-500">
+              Example: 15% margin on $1,000 materials = $150 profit
+            </p>
+          </div>
+
+          {/* Labor Margin */}
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-gray-900">Labor Margin</span>
+              <p className="text-xs text-gray-600 mt-1 mb-2">
+                Profit margin added to labor costs
+              </p>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={laborMargin}
+                  onChange={(e) => setLaborMargin(e.target.value)}
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  placeholder="20"
+                  disabled={isPending}
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                  %
+                </span>
+              </div>
+            </label>
+            <p className="text-xs text-gray-500">
+              Example: 20% margin on $500 labor = $100 profit
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-3">
+          <p className="text-xs text-slate-600">
+            <strong>Note:</strong> Margins are hidden from customers. They only see the final total price including your profit.
+          </p>
+        </div>
+      </div>
+
+      {/* Default Taxes */}
+      <div className="border-t border-gray-200 pt-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Default Taxes</h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Add as many taxes as you need (e.g. GST, regional levy). Each new quote starts
+          with this list copied across; you can hide or edit individual taxes per quote.
+          When multiple taxes apply they stack on the customer quote and labor sheet.
+        </p>
+        <TaxEditor taxes={taxes} onChange={setTaxes} disabled={isPending} />
+      </div>
+
+      {/* Save Message */}
+      {saveMessage && (
+        <div
+          className={`p-4 rounded-lg ${
+            saveMessage.type === 'success'
+              ? 'bg-emerald-50 border border-emerald-300 text-emerald-900'
+              : 'bg-red-50 border border-red-300 text-red-900'
+          }`}
+        >
+          {saveMessage.text}
+        </div>
+      )}
+
+      {/* Save Button */}
+      <div className="flex justify-end pt-6 border-t border-gray-200">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="px-5 py-2.5 bg-black hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] text-white font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isPending ? 'Saving...' : 'Save Settings'}
+        </button>
+      </div>
+    </form>
+  );
+}

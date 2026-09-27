@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/app/lib/supabase/client';
@@ -177,7 +178,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
   }
 
   return (
-    <div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl gap-4">
+    <QcJourney><div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl gap-4">
       <div className="flex-1">
         <div className="flex items-center gap-3">
           <p className="text-sm font-medium text-slate-900">Two-Factor Authentication (2FA)</p>
@@ -197,11 +198,11 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                 // Larger track + thumb, visible border, and a hover ring so the
                 // control reads as an interactive slider at a glance instead of
                 // a static pill.
-                className={`relative w-12 h-6 rounded-full border transition-all disabled:opacity-50 cursor-pointer hover:ring-2 hover:ring-orange-200 hover:ring-offset-1 ${
+                className={"qc-flow-control " + (`relative w-12 h-6 rounded-full border transition-all disabled:opacity-50 cursor-pointer hover:ring-2 hover:ring-orange-200 hover:ring-offset-1 ${
                   mfaRequired
                     ? 'bg-orange-500 border-orange-600'
                     : 'bg-slate-200 border-slate-300'
-                }`}
+                }`)}
               >
                 <span
                   className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform ${
@@ -256,7 +257,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                 <button
                   type="button"
                   onClick={() => requestUnenroll(f)}
-                  className="ml-2 text-xs text-red-600 hover:text-red-700 hover:underline"
+                  className="qc-flow-control ml-2 text-xs text-red-600 hover:text-red-700 hover:underline"
                   disabled={pending}
                 >
                   Remove
@@ -282,7 +283,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                 <button
                   type="button"
                   onClick={() => requestUnenroll(f)}
-                  className="ml-auto text-xs text-red-600 hover:text-red-700 hover:underline"
+                  className="qc-flow-control ml-auto text-xs text-red-600 hover:text-red-700 hover:underline"
                   disabled={pending}
                 >
                   Remove
@@ -311,17 +312,17 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
               </div>
 
               <div className="flex-1 w-full">
-                <label className="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">
+                <label className="qc-flow-label block text-[11px] uppercase tracking-wide text-slate-500 mb-1">
                   Manual entry secret
                 </label>
                 <code className="block text-xs font-mono bg-slate-50 border border-slate-200 rounded px-2 py-1.5 break-all">
                   {enroll.secret}
                 </code>
 
-                <label className="block text-[11px] uppercase tracking-wide text-slate-500 mt-3 mb-1">
+                <label className="qc-flow-label block text-[11px] uppercase tracking-wide text-slate-500 mt-3 mb-1">
                   6-digit code from your app
                 </label>
-                <input
+                <input aria-label="123456"
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
@@ -329,7 +330,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="123456"
-                  className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="qc-input w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
 
                 {verifyError && (
@@ -337,7 +338,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                 )}
 
                 <div className="mt-3 flex gap-2">
-                  <button
+                  <button data-qc-variant="primary"
                     type="button"
                     onClick={() =>
                       startTransition(async () => {
@@ -345,11 +346,11 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                       })
                     }
                     disabled={pending || code.length !== 6}
-                    className="px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.45)] disabled:opacity-50 disabled:hover:shadow-none"
+                    className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.45)] disabled:opacity-50 disabled:hover:shadow-none"
                   >
                     {pending ? 'Verifying...' : 'Verify and enable'}
                   </button>
-                  <button
+                  <button data-qc-variant="ghost"
                     type="button"
                     onClick={() =>
                       startTransition(async () => {
@@ -357,7 +358,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                       })
                     }
                     disabled={pending}
-                    className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                    className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
@@ -370,15 +371,15 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
         {/* "Add factor" button */}
         {!enroll && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <input
+            <input aria-label="Label this device (optional, e.g. 'iPhone Authenticator')"
               type="text"
               value={friendlyName}
               onChange={(e) => setFriendlyName(e.target.value)}
               placeholder="Label this device (optional, e.g. 'iPhone Authenticator')"
               maxLength={64}
-              className="flex-1 min-w-[200px] px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="qc-input flex-1 min-w-[200px] px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
-            <button
+            <button data-qc-variant="primary"
               type="button"
               onClick={() =>
                 startTransition(async () => {
@@ -386,7 +387,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
                 })
               }
               disabled={pending}
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
             >
               {hasVerified ? 'Add another factor' : 'Set up 2FA'}
             </button>
@@ -394,7 +395,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
         )}
       </div>
 
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={pendingUnenroll !== null}
         title="Remove 2FA factor"
         description={
@@ -411,7 +412,7 @@ export function MfaSection({ initialFactors, currentAal, initialMfaRequired }: P
         onConfirm={confirmUnenroll}
       />
 
-    </div>
+    </div></QcJourney>
   );
 }
 
@@ -488,7 +489,7 @@ export function RecoveryCodesPanel({
   }
 
   return (
-    <div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl">
+    <QcJourney><div className="flex items-start justify-between p-4 bg-slate-50 rounded-xl">
       <div className="flex-1">
         <p className="text-sm font-medium text-slate-900">Recovery codes</p>
         <p className="text-xs text-slate-500 mt-0.5">
@@ -546,24 +547,24 @@ export function RecoveryCodesPanel({
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={download}
-                className="px-3 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
+                className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_10px_rgba(255,107,53,0.4)]"
               >
                 Download as .txt
               </button>
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={copyAll}
-                className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50"
               >
                 Copy all
               </button>
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => setCodes(null)}
-                className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 ml-auto"
+                className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 hover:bg-slate-50 ml-auto"
               >
                 Done
               </button>
@@ -575,7 +576,7 @@ export function RecoveryCodesPanel({
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {!hasCodes && (
-            <button
+            <button data-qc-variant="primary"
               type="button"
               onClick={() =>
                 startTransition(async () => {
@@ -583,17 +584,17 @@ export function RecoveryCodesPanel({
                 })
               }
               disabled={pending}
-              className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
             >
               {pending ? 'Generating...' : 'Generate recovery codes'}
             </button>
           )}
           {hasCodes && (
-            <button
+            <button data-qc-variant="ghost"
               type="button"
               onClick={() => setConfirmRegen(true)}
               disabled={pending}
-              className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
             >
               Regenerate
             </button>
@@ -601,7 +602,7 @@ export function RecoveryCodesPanel({
         </div>
       </div>
 
-      <ConfirmModal
+      <ConfirmModal appearance="v2"
         open={confirmRegen}
         title="Regenerate recovery codes"
         description="Your existing recovery codes will be invalidated immediately. Anyone holding the old codes will no longer be able to use them. You'll get a fresh batch to download."
@@ -612,6 +613,6 @@ export function RecoveryCodesPanel({
         onCancel={() => setConfirmRegen(false)}
         onConfirm={() => startTransition(async () => { await generate(); })}
       />
-    </div>
+    </div></QcJourney>
   );
 }

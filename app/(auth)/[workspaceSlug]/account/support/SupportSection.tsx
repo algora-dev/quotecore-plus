@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -104,7 +105,7 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
   const { openDrawer } = useHelpDrawer();
 
   return (
-    <section className="space-y-6">
+    <QcJourney><section className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900">Support</h2>
         <p className="text-sm text-slate-500 mt-1">
@@ -119,19 +120,19 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
           New to QuoteCore+ or stuck on a feature? These are the fastest ways to get going.
         </p>
         <div className="flex flex-wrap gap-2">
-          <Link
+          <Link data-qc-variant="primary"
             href={`/${workspaceSlug}/tutorials`}
-            className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-button qc-flow-control inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             Tutorials
           </Link>
-          <button
+          <button data-qc-variant="ghost"
             type="button"
             onClick={openDrawer}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
+            className="qc-flow-control qc-button inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -146,7 +147,7 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
         <h3 className="text-base font-semibold text-slate-900">New ticket</h3>
 
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1.5">Category</label>
+          <label className="qc-flow-label block text-xs font-medium text-slate-600 mb-1.5">Category</label>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             {CATEGORIES.map((c) => {
               const isActive = category === c.value;
@@ -156,11 +157,11 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
                   type="button"
                   onClick={() => setCategory(c.value)}
                   title={c.help}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+                  className={"qc-flow-control " + (`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
                     isActive
                       ? 'border-orange-300 bg-orange-50 text-orange-700 shadow-[0_0_8px_rgba(255,107,53,0.15)]'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
+                  }`)}
                 >
                   {c.label}
                 </button>
@@ -170,7 +171,7 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
         </div>
 
         <div>
-          <label htmlFor="support-subject" className="block text-xs font-medium text-slate-600 mb-1.5">
+          <label htmlFor="support-subject" className="qc-flow-label block text-xs font-medium text-slate-600 mb-1.5">
             Subject
           </label>
           <input
@@ -181,12 +182,12 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
             maxLength={200}
             placeholder="Short summary of what you need"
             required
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            className="qc-input w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
           />
         </div>
 
         <div>
-          <label htmlFor="support-body" className="block text-xs font-medium text-slate-600 mb-1.5">
+          <label htmlFor="support-body" className="qc-flow-label block text-xs font-medium text-slate-600 mb-1.5">
             Describe your issue
           </label>
           <textarea
@@ -197,7 +198,7 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
             rows={6}
             placeholder="What happened, what you expected, and any steps to reproduce."
             required
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 resize-y"
+            className="qc-input w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200 resize-y"
           />
           <p className="mt-1 text-[11px] text-slate-400">{body.length} / 8000 characters</p>
         </div>
@@ -214,18 +215,18 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
         )}
 
         <div className="flex items-center justify-end gap-2">
-          <button
+          <button data-qc-variant="ghost"
             type="button"
             onClick={reset}
             disabled={isPending}
-            className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+            className="qc-flow-control qc-button px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
           >
             Reset
           </button>
-          <button
+          <button data-qc-variant="primary"
             type="submit"
             disabled={isPending || subject.trim().length < 3 || body.trim().length < 5}
-            className="px-4 py-1.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="qc-flow-control qc-button px-4 py-1.5 text-sm font-semibold rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending ? 'Sending...' : 'Send ticket'}
           </button>
@@ -258,6 +259,6 @@ export function SupportSection({ initialTickets }: SupportSectionProps) {
           </ul>
         )}
       </div>
-    </section>
+    </section></QcJourney>
   );
 }

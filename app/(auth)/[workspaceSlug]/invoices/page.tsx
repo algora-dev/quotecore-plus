@@ -1,3 +1,4 @@
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import Link from 'next/link';
 import { requireCompanyContext, createSupabaseServerClient } from '@/app/lib/supabase/server';
 import { loadCompanyEntitlements } from '@/app/lib/billing/entitlements';
@@ -17,9 +18,9 @@ export default async function InvoicesPage({
   if (!ent.features.invoices) {
     const requiredPlan = FEATURE_MIN_PLAN.invoices;
     return (
-      <section className="space-y-4 md:space-y-5 px-0 md:px-0">
+      <QcJourney><section className="space-y-4 md:space-y-5 px-0 md:px-0">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Invoices</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">Available on the {requiredPlan} plan and above.</p>
         </div>
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 md:p-6">
@@ -35,9 +36,9 @@ export default async function InvoicesPage({
                 Create and send professional invoices to your customers on the {requiredPlan} plan or above. Upgrade your account to unlock invoices.
               </p>
               <div className="mt-4">
-                <Link
+                <Link data-qc-variant="primary"
                   href={`/${workspaceSlug}/account?tab=billing&plan=${requiredPlan}`}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
+                  className="qc-button qc-flow-control inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800"
                 >
                   View plans
                 </Link>
@@ -45,7 +46,7 @@ export default async function InvoicesPage({
             </div>
           </div>
         </div>
-      </section>
+      </section></QcJourney>
     );
   }
 
@@ -61,11 +62,11 @@ export default async function InvoicesPage({
     .order('created_at', { ascending: false });
 
   return (
-    <section className="space-y-4 md:space-y-5 px-0 md:px-0">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <QcJourney><section className="space-y-4 md:space-y-5 px-0 md:px-0">
+      <div className="qc-journey-header">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Invoices</h1>
-          <p className="text-xs md:text-sm text-slate-500 mt-1">Create and send invoices to your customers.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Invoices</h1>
+          <p className="text-xs md:text-sm text-slate-500 mt-1">Create, send and keep track of customer invoices.</p>
         </div>
       </div>
 
@@ -73,6 +74,6 @@ export default async function InvoicesPage({
         invoices={invoices ?? []}
         workspaceSlug={workspaceSlug}
       />
-    </section>
+    </section></QcJourney>
   );
 }

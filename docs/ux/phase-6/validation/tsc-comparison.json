@@ -1,0 +1,477 @@
+{
+  "baselineExit": 2,
+  "postExit": 2,
+  "baselineDiagnostics": 66770,
+  "postDiagnostics": 66754,
+  "method": "Multiset by file/code/message, ignoring only line/column. Final codebase including non-compiling documentation checked. Not a dependency-complete typecheck pass.",
+  "newDiagnostics": [
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/replace-catalog-modal.tsx",
+      "line": 169,
+      "column": 24,
+      "code": 7006,
+      "message": "Parameter 'event' implicitly has an 'any' type."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "line": 378,
+      "column": 28,
+      "code": 7006,
+      "message": "Parameter 'event' implicitly has an 'any' type."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "line": 580,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/catalogs/upload-wizard.tsx",
+      "line": 581,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 772,
+      "column": 15,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 773,
+      "column": 15,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 775,
+      "column": 15,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 776,
+      "column": 15,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 777,
+      "column": 17,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 782,
+      "column": 17,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 783,
+      "column": 17,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 788,
+      "column": 17,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 789,
+      "column": 15,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 790,
+      "column": 13,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 792,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/components/components/AddFromCatalogModal.tsx",
+      "line": 793,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/drawings/flashing-list.tsx",
+      "line": 126,
+      "column": 18,
+      "code": 7006,
+      "message": "Parameter 'event' implicitly has an 'any' type."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/invoices/InvoiceList.tsx",
+      "line": 664,
+      "column": 82,
+      "code": 7006,
+      "message": "Parameter 'event' implicitly has an 'any' type."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/order-list.tsx",
+      "line": 397,
+      "column": 24,
+      "code": 7006,
+      "message": "Parameter 'event' implicitly has an 'any' type."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/orders-hub.tsx",
+      "line": 111,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/material-orders/orders-hub.tsx",
+      "line": 114,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/quotes/QuotesList.tsx",
+      "line": 688,
+      "column": 28,
+      "code": 7006,
+      "message": "Parameter 'event' implicitly has an 'any' type."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 404,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 408,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 410,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 414,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 422,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 426,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 427,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 433,
+      "column": 9,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 434,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/(auth)/[workspaceSlug]/settings/CompanySettingsForm.tsx",
+      "line": 435,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 3,
+      "column": 60,
+      "code": 2307,
+      "message": "Cannot find module 'react' or its corresponding type declarations."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 14,
+      "column": 10,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 14,
+      "column": 10,
+      "code": 2875,
+      "message": "This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 14,
+      "column": 114,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 20,
+      "column": 10,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 21,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 21,
+      "column": 22,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 21,
+      "column": 65,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 22,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 22,
+      "column": 18,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 22,
+      "column": 39,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 22,
+      "column": 55,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 23,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 23,
+      "column": 24,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 23,
+      "column": 77,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 24,
+      "column": 3,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 33,
+      "column": 10,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 34,
+      "column": 33,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 36,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 36,
+      "column": 67,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 36,
+      "column": 74,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 36,
+      "column": 88,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 37,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 38,
+      "column": 3,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 52,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 52,
+      "column": 54,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 53,
+      "column": 34,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/ui/v2/QcJourney.tsx",
+      "line": 53,
+      "column": 84,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/workspace/QuoteIndexPage.tsx",
+      "line": 162,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/components/workspace/QuoteIndexPage.tsx",
+      "line": 175,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/login/page.tsx",
+      "line": 308,
+      "column": 107,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/login/page.tsx",
+      "line": 310,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/signup/page.tsx",
+      "line": 266,
+      "column": 7,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    },
+    {
+      "file": "app/signup/page.tsx",
+      "line": 268,
+      "column": 5,
+      "code": 7026,
+      "message": "JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists."
+    }
+  ],
+  "newCodeCounts": {
+    "7006": 6,
+    "7026": 58,
+    "2307": 1,
+    "2875": 1
+  }
+}

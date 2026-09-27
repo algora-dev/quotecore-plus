@@ -1,3 +1,13 @@
+# Current design authority — Phase 6 owner decision
+
+**P6-D01 approved by Shaun, 27 September 2026:** migrated Phase 6 surfaces use the already-integrated v2 standard (`app/components/ui/v2/`, UX standard v2.7), matching Job Spaces and Document Studio. Orange-gradient primary with dark text; near-black secondary; rounded rectangular controls; visible hover, keyboard-focus and pressed feedback. Reuse tokens/primitives and local opt-ins; do not replace current primitives from old snapshots.
+
+The older black/pill specifications below remain historical context for unmigrated UI. They are **not instructions to revert migrated surfaces**. Phase 6's original HANDOFF is preserved unchanged; its conflicting visual clause is superseded by this specific owner decision. Business/protected-file restrictions still apply. See `docs/ux/phase-6/DESIGN_CHANGES.md` for the exact scope and exceptions.
+
+---
+
+## Historical pre-v2 design notes
+
 # QuoteCore+ Design System
 
 > **Mandatory reference for all UI work.**

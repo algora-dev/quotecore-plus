@@ -13,6 +13,7 @@
  *      same flow as the card's primary button).
  */
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -80,6 +81,8 @@ export interface BillingPlanInfo {
 }
 
 export interface BillingPanelProps {
+  /** Presentation only. Activation uses the same plans and Stripe dispatch as Account. */
+  context?: 'account' | 'activation';
   /** Current effective plan (could differ from purchased during dunning). */
   effectivePlanCode: string;
   /** What the user purchased (drives portal eligibility). */
@@ -296,7 +299,7 @@ export function BillingPanel(props: BillingPanelProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <QcJourney className={props.context === 'activation' ? 'qc-flow-billing-activation' : undefined}><div className="space-y-6">
       {/* Stripe redirect banners */}
       {changeFlag === 'upgraded' && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 md:p-4 flex items-start justify-between">
@@ -306,7 +309,7 @@ export function BillingPanel(props: BillingPanelProps) {
               Your new plan is active. The card on file is charged the prorated difference; your plan card updates within a few seconds once Stripe confirms.
             </p>
           </div>
-          <button onClick={dismissBanner} className="text-xs text-emerald-700 hover:underline">
+          <button onClick={dismissBanner} className="qc-flow-control text-xs text-emerald-700 hover:underline">
             Dismiss
           </button>
         </div>
@@ -319,7 +322,7 @@ export function BillingPanel(props: BillingPanelProps) {
               You keep your current plan until the end of this billing period, then it switches automatically. No charge now.
             </p>
           </div>
-          <button onClick={dismissBanner} className="text-xs text-blue-700 hover:underline">
+          <button onClick={dismissBanner} className="qc-flow-control text-xs text-blue-700 hover:underline">
             Dismiss
           </button>
         </div>
@@ -327,12 +330,12 @@ export function BillingPanel(props: BillingPanelProps) {
       {checkoutFlag === 'success' && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 md:p-4 flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-emerald-900">Subscription started.</p>
+            <p className="text-sm font-medium text-emerald-900">Checkout returned.</p>
             <p className="text-xs text-emerald-700 mt-1">
-              Your plan will update within a few seconds once Stripe confirms the payment.
+              Access updates after Stripe confirms payment. Returning from checkout alone does not confirm an active subscription.
             </p>
           </div>
-          <button onClick={dismissBanner} className="text-xs text-emerald-700 hover:underline">
+          <button onClick={dismissBanner} className="qc-flow-control text-xs text-emerald-700 hover:underline">
             Dismiss
           </button>
         </div>
@@ -343,18 +346,18 @@ export function BillingPanel(props: BillingPanelProps) {
             <p className="text-sm font-medium text-slate-900">Checkout canceled.</p>
             <p className="text-xs text-slate-600 mt-1">No changes were made to your subscription.</p>
           </div>
-          <button onClick={dismissBanner} className="text-xs text-slate-700 hover:underline">
+          <button onClick={dismissBanner} className="qc-flow-control text-xs text-slate-700 hover:underline">
             Dismiss
           </button>
         </div>
       )}
       {/* Current plan card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
-        <div className="flex items-start justify-between gap-4">
+      <div className="qc-flow-panel">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">Current plan</p>
+            <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">{props.context === 'activation' ? 'Workspace access' : 'Current plan'}</p>
             <h3 className="text-lg font-semibold text-slate-900 mt-1 capitalize">
-              {props.effectivePlanCode.replace(/_/g, ' ')}
+              {props.context === 'activation' && props.effectivePlanCode === 'free' ? <span className="normal-case">Choose a subscription below</span> : props.effectivePlanCode.replace(/_/g, ' ')}
               {showPlanDelta && (
                 <span
                   className={`ml-2 text-sm font-normal ${
@@ -380,12 +383,12 @@ export function BillingPanel(props: BillingPanelProps) {
             </div>
           </div>
           {props.hasStripeCustomer && (
-            <button
+            <button data-qc-variant="ghost"
               type="button"
               onClick={onManage}
               disabled={pending}
               title="Cancel, swap plan, update card, or view invoices"
-              className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]"
+              className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]"
             >
               Manage subscription
             </button>
@@ -421,10 +424,10 @@ export function BillingPanel(props: BillingPanelProps) {
       </div>
 
       {/* Plan grid */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-2 md:p-6">
-        <h3 className="text-base font-semibold text-slate-900">Plans</h3>
+      <div className="qc-flow-panel">
+        <h3 className="text-base font-semibold text-slate-900">{props.context === 'activation' ? 'Choose your plan' : 'Available plans'}</h3>
         <p className="text-sm text-slate-500 mt-1">
-          Click a plan to learn more. Every plan is backed by a 30-day money-back guarantee.
+          Compare features and limits, then choose a plan. Every plan is backed by a 30-day money-back guarantee.
         </p>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {props.plans.map((plan) => {
@@ -489,7 +492,7 @@ export function BillingPanel(props: BillingPanelProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-lg font-semibold text-slate-900 mt-1 flex items-baseline gap-2">
+                  <p className="qc-flow-plan-price text-slate-900 mt-2 flex flex-wrap items-baseline gap-2">
                     <span>
                       {plan.comingSoon ? '-' : formatPrice(plan.priceCentsMonthly)}
                     </span>
@@ -523,12 +526,12 @@ export function BillingPanel(props: BillingPanelProps) {
                   </ul>
                 </div>
                 <div className="mt-3 flex gap-2">
-                  <button
+                  <button data-qc-variant="ghost"
                     type="button"
                     onClick={() => setViewPlan(plan)}
-                    className="flex-1 px-3 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="qc-flow-control qc-button flex-1 px-3 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
                   >
-                    View
+                    View details
                   </button>
                   <button
                     type="button"
@@ -556,11 +559,12 @@ export function BillingPanel(props: BillingPanelProps) {
                         ? 'This plan is not yet configured in Stripe for this environment.'
                         : undefined
                     }
-                    className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                    data-qc-variant={isContactUsPlan ? 'secondary' : 'primary'}
+                    className={"qc-flow-control qc-button " + (`flex-1 px-3 py-2 text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${
                       isContactUsPlan
                         ? 'bg-black text-white hover:bg-slate-800'
                         : 'bg-orange-600 text-white hover:bg-orange-700'
-                    }`}
+                    }`)}
                   >
                     {buttonLabel}
                   </button>
@@ -579,13 +583,7 @@ export function BillingPanel(props: BillingPanelProps) {
 
       {/* In-app plan change confirm modal (upgrade now / downgrade at period end). */}
       {changeTarget && (
-        <div
-          className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="change-modal-title"
-
-        >
+        <QcJourneyDialog label="Subscription details" size="lg">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
             <h3 id="change-modal-title" className="text-lg font-semibold text-slate-900">
               {isUpgradeTarget ? 'Upgrade' : 'Switch'} to {changeTarget.displayName}?
@@ -610,19 +608,19 @@ export function BillingPanel(props: BillingPanelProps) {
             </p>
             {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => setChangeTarget(null)}
                 disabled={pending}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 min-h-[44px]"
               >
                 Cancel
               </button>
-              <button
+              <button data-qc-variant="primary"
                 type="button"
                 onClick={() => onConfirmChange(changeTarget)}
                 disabled={pending}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
+                className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-lg bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50"
               >
                 {pending
                   ? 'Working\u2026'
@@ -632,20 +630,14 @@ export function BillingPanel(props: BillingPanelProps) {
               </button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       {/* View Plan modal */}
       {viewPlan && (
-        <div
-          className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="plan-modal-title"
-
-        >
+        <QcJourneyDialog label="Subscription details" size="lg">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-md w-full mx-4 shadow-xl">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
                 <h3 id="plan-modal-title" className="text-lg font-semibold text-slate-900">
                   {viewPlan.displayName}
@@ -776,7 +768,7 @@ export function BillingPanel(props: BillingPanelProps) {
               <button
                 type="button"
                 onClick={() => setViewPlan(null)}
-                className="px-4 py-2 text-sm font-medium rounded-full text-slate-700 hover:bg-slate-100"
+                className="qc-flow-control px-4 py-2 text-sm font-medium rounded-full text-slate-700 hover:bg-slate-100"
               >
                 Close
               </button>
@@ -825,11 +817,11 @@ export function BillingPanel(props: BillingPanelProps) {
                         ? 'This plan is not yet configured in Stripe for this environment.'
                         : undefined
                     }
-                    className={`px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-white ${
+                    className={"qc-flow-control " + (`px-4 py-2 text-sm font-medium rounded-full disabled:opacity-50 disabled:cursor-not-allowed text-white ${
                       vIsContactUsPlan
                         ? 'bg-black hover:bg-slate-800'
                         : 'bg-orange-600 hover:bg-orange-700'
-                    }`}
+                    }`)}
                   >
                     {viewPlan.comingSoon
                       ? 'Coming soon'
@@ -845,9 +837,9 @@ export function BillingPanel(props: BillingPanelProps) {
               })()}
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
-    </div>
+    </div></QcJourney>
   );
 }
 

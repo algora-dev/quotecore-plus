@@ -1,5 +1,7 @@
 'use client';
 
+import '@/app/components/ui/v2/qc.css';
+import '@/app/components/ui/v2/qc-journeys.css';
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
 import { type CatalogRow } from './actions';
@@ -148,7 +150,7 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
+    <div data-qc-ui="v2" className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <h3 className="text-lg font-semibold text-slate-900">Upload New Version</h3>
         <p className="text-sm text-slate-400 mb-4">
@@ -163,6 +165,8 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
         {!preview && (
           <div
             onClick={() => fileRef.current?.click()}
+            role="button" tabIndex={0} aria-label="Choose replacement CSV"
+            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
             className="cursor-pointer rounded-xl border-2 border-dashed border-slate-300 hover:border-orange-400 px-6 py-10 text-center transition"
           >
             <svg className="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -196,7 +200,7 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
                 Preview (first 5 rows)
               </div>
               <div className="overflow-x-auto max-h-48">
-                <table className="w-full text-xs">
+                <table className="qc-flow-table w-full">
                   <thead className="bg-white sticky top-0">
                     <tr>
                       {preview.headers.map(h => (
@@ -227,17 +231,17 @@ export function ReplaceCatalogModal({ catalog, workspaceSlug, onClose, onReplace
             )}
 
             <div className="flex items-center gap-2 pt-2">
-              <button onClick={handleReplace} disabled={replacing}
-                className="cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-40">
+              <button data-qc-variant="primary" onClick={handleReplace} disabled={replacing}
+                className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-semibold rounded-full bg-[#FF6B35] text-white hover:bg-[#e55a2b] transition disabled:opacity-40">
                 {replacing ? `Replacing... ${uploadProgress}%` : `Replace ${preview.rowCount} rows`}
               </button>
-              <button onClick={() => { setPreview(null); setParsedData(null); }}
+              <button data-qc-variant="ghost" onClick={() => { setPreview(null); setParsedData(null); }}
                 disabled={replacing}
-                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-40">
+                className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50 disabled:opacity-40">
                 Choose different file
               </button>
-              <button onClick={onClose}
-                className="cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
+              <button data-qc-variant="ghost" onClick={onClose}
+                className="qc-flow-control qc-button cursor-pointer px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50">
                 Cancel
               </button>
             </div>

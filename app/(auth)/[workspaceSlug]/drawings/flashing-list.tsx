@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney, QcJourneyDialog } from '@/app/components/ui/v2/QcJourney';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createFlashing, deleteFlashing } from './actions';
@@ -120,8 +121,11 @@ function FlashingDropZone({
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       onClick={onClick}
+      role="button" tabIndex={0} aria-label={`Choose ${featureSingularLower} image`}
+      aria-busy={saving}
+      onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
       className={`
-        relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
+        qc-flow-dropzone relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition
         ${isDragging ? 'border-orange-500 bg-orange-50' : 'border-slate-300 hover:border-slate-400 bg-white'}
         ${saving ? 'opacity-50 cursor-not-allowed' : ''}
       `}
@@ -147,7 +151,7 @@ function FlashingDropZone({
             </svg>
             <div>
               <p className="text-sm font-medium text-slate-700">Click to browse or drag and drop</p>
-              <p className="text-xs text-slate-500 mt-1">PNG or JPG image of the {featureSingularLower}</p>
+              <p className="text-xs text-slate-500 mt-1">PNG, JPG or WebP · up to 10 MB · {featureSingularLower} image</p>
             </div>
           </>
         )}
@@ -258,7 +262,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
   }
 
   return (
-    <div>
+    <QcJourney><div>
       <div className="mb-6 flex justify-between items-center">
         <p className="text-sm text-slate-500">
           {flashings.length} {flashings.length === 1 ? featureSingularLower : featureLower} in library
@@ -269,7 +273,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               {effectiveCount}/{flashingLimit} used
             </span>
           )}
-          <button
+          <button data-qc-variant="primary"
             onClick={() => {
               if (atCap) {
                 setUpgradeOpen(true);
@@ -279,18 +283,18 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
             }}
             data-copilot={isRoofing ? 'draw-flashing' : 'create-drawing'}
             title={atCap ? `Upgrade to create more ${featureLower}` : `Create a new ${featureSingularLower}`}
-            className="px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all shadow-sm hover:shadow-md"
+            className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-[#FF6B35] text-white hover:bg-[#ff5722] transition-all shadow-sm hover:shadow-md"
           >
             Create
           </button>
-          <button
+          <button data-qc-variant="primary"
             onClick={() => {
               if (atCap) { setUpgradeOpen(true); return; }
               if (isOverStorage) { setStorageBlocked(true); return; }
               setShowUploadForm(true);
             }}
             title={atCap ? `Upgrade to upload more ${featureLower}` : `Upload an existing ${featureSingularLower}`}
-            className="px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
+            className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all shadow-sm hover:shadow-md"
           >
             Upload
           </button>
@@ -303,20 +307,20 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Name *</label>
-                <input
+                <label className="qc-flow-label block text-xs text-slate-500 mb-1">Name *</label>
+                <input aria-label={isRoofing ? 'e.g., Ridge Flashing' : 'e.g., Site Plan'}
                   name="name"
                   required
                   placeholder={isRoofing ? 'e.g., Ridge Flashing' : 'e.g., Site Plan'}
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                  className="qc-input w-full px-2 py-1 text-sm border border-slate-300 rounded"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Description</label>
-                <input
+                <label className="qc-flow-label block text-xs text-slate-500 mb-1">Description</label>
+                <input aria-label="Optional description"
                   name="description"
                   placeholder="Optional description"
-                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                  className="qc-input w-full px-2 py-1 text-sm border border-slate-300 rounded"
                 />
               </div>
             </div>
@@ -364,21 +368,21 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               }}
             />
             <div className="flex gap-2 pt-2">
-              <button
+              <button data-qc-variant="primary"
                 type="submit"
                 disabled={saving}
-                className="px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
+                className="qc-flow-control qc-button px-3 py-1.5 text-sm font-medium rounded-full bg-black text-white hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)] disabled:opacity-50"
               >
                 {saving ? 'Uploading...' : 'Upload'}
               </button>
-              <button
+              <button data-qc-variant="ghost"
                 type="button"
                 onClick={() => {
                   setShowUploadForm(false);
                   setUploadFileName(null);
                   setUploadError(null);
                 }}
-                className="px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
+                className="qc-flow-control qc-button px-3 py-1.5 text-sm rounded-full border border-slate-300 hover:bg-slate-50"
               >
                 Cancel
               </button>
@@ -422,24 +426,24 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                   language as the quote summary pages (icon-btn class + matching
                   outline SVGs) so the action vocabulary is consistent. */}
               <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                <button
+                <button aria-label={`Download ${featureSingularLower} image`}
                   onClick={(e) => { e.stopPropagation(); downloadFlashing(flashing); }}
                   title={`Download ${featureSingularLower} image`}
-                  className="icon-btn border-slate-300 bg-white"
+                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </button>
-                <button
+                <button aria-label={`Print ${featureSingularLower} image`}
                   onClick={(e) => { e.stopPropagation(); printFlashing(flashing); }}
                   title={`Print ${featureSingularLower} image`}
-                  className="icon-btn border-slate-300 bg-white"
+                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                 </button>
-                <button
+                <button aria-label={`Delete ${featureSingularLower}`}
                   onClick={(e) => { e.stopPropagation(); setDeleteFlashingId(flashing.id); }}
                   title={`Delete ${featureSingularLower}`}
-                  className="icon-btn icon-btn--danger border-slate-300 bg-white"
+                  className="qc-icon-button qc-flow-control icon-btn icon-btn--danger border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
@@ -451,16 +455,16 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
 
       {/* Delete Modal */}
       {deleteFlashingId && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/40 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Drawing library" size="sm">
           <div className="bg-white rounded-2xl p-4 md:p-6 max-w-sm w-full mx-4 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900">Delete {featureLabelSingular}</h3>
             <p className="text-sm text-slate-500 mt-2">This action cannot be undone. The {featureSingularLower} will be permanently deleted.</p>
             <div className="flex gap-3 justify-end mt-6">
-              <button onClick={() => setDeleteFlashingId(null)} className="px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
-              <button onClick={confirmDeleteFlashing} className="px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
+              <button data-qc-variant="ghost" onClick={() => setDeleteFlashingId(null)} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full border border-slate-300 hover:bg-slate-50" disabled={deleteLoading}>Cancel</button>
+              <button data-qc-variant="danger" onClick={confirmDeleteFlashing} className="qc-flow-control qc-button px-4 py-2 text-sm font-medium rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50" disabled={deleteLoading}>{deleteLoading ? 'Deleting...' : 'Delete'}</button>
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
 
       <StorageBlockedModal open={storageBlocked} onClose={() => setStorageBlocked(false)} />
@@ -475,7 +479,7 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
       {/* View Flashing Modal */}
       {viewingFlashing && (
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <QcJourneyDialog label="Drawing library" size="md">
           <div className="bg-white rounded-xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4 gap-3">
               <div className="min-w-0">
@@ -485,21 +489,21 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
                 )}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button
+                <button aria-label={`Download ${featureSingularLower} image`}
                   onClick={() => downloadFlashing(viewingFlashing)}
                   title={`Download ${featureSingularLower} image`}
-                  className="icon-btn border-slate-300 bg-white"
+                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 </button>
-                <button
+                <button aria-label={`Print ${featureSingularLower} image`}
                   onClick={() => printFlashing(viewingFlashing)}
                   title={`Print ${featureSingularLower} image`}
-                  className="icon-btn border-slate-300 bg-white"
+                  className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white"
                 >
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                 </button>
-                <button onClick={() => setViewingFlashing(null)} title="Close" className="icon-btn border-slate-300 bg-white">
+                <button aria-label="Close" onClick={() => setViewingFlashing(null)} title="Close" className="qc-icon-button qc-flow-control icon-btn border-slate-300 bg-white">
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -514,8 +518,8 @@ export function FlashingList({ initialFlashings, workspaceSlug, flashingLimit, f
               />
             </div>
           </div>
-        </div>
+        </QcJourneyDialog>
       )}
-    </div>
+    </div></QcJourney>
   );
 }

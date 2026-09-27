@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -93,37 +94,37 @@ export function LineSelector({ quoteId, workspaceSlug, layout, column, component
   }
 
   return (
-    <div className="space-y-4">
+    <QcJourney><div className="space-y-4">
       {/* Controls row */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <input
+          <input aria-label="Search components..."
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search components..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
+            className="qc-input qc-flow-search w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:border-orange-500 focus:outline-none"
           />
           <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">✕</button>
+            <button onClick={() => setSearch('')} className="qc-flow-control absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-xs">✕</button>
           )}
         </div>
 
         {/* Select / deselect controls */}
         <div className="flex gap-2">
-          <button
+          <button data-qc-variant="ghost"
             onClick={selectAll}
-            className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-600 transition"
+            className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:border-orange-300 hover:text-orange-600 transition"
           >
             Select all
           </button>
-          <button
+          <button data-qc-variant="ghost"
             onClick={deselectAll}
-            className="px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:border-slate-400 transition"
+            className="qc-flow-control qc-button px-3 py-1.5 text-xs font-medium rounded-full border border-slate-300 bg-white text-slate-600 hover:border-slate-400 transition"
           >
             Deselect all
           </button>
@@ -138,12 +139,12 @@ export function LineSelector({ quoteId, workspaceSlug, layout, column, component
       {/* Header row */}
       {filtered.length > 0 && (
         <div className="hidden sm:grid grid-cols-[32px_1fr_120px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide">
-          <label className="flex items-center cursor-pointer" title={allFilteredSelected ? 'Deselect all shown' : 'Select all shown'}>
+          <label className="qc-flow-label flex items-center cursor-pointer" title={allFilteredSelected ? 'Deselect all shown' : 'Select all shown'}>
             <input
               type="checkbox"
               checked={allFilteredSelected}
               onChange={toggleAllFiltered}
-              className="w-3.5 h-3.5 rounded text-orange-600"
+              className="qc-check w-3.5 h-3.5 rounded text-orange-600"
             />
           </label>
           <span>Component</span>
@@ -171,7 +172,7 @@ export function LineSelector({ quoteId, workspaceSlug, layout, column, component
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggle(comp.id)}
-                    className="w-4 h-4 rounded text-orange-600"
+                    className="qc-check w-4 h-4 rounded text-orange-600"
                   />
                 </div>
                 <p className={`text-sm font-medium truncate ${isSelected ? 'text-slate-900' : 'text-slate-500'}`}>
@@ -198,15 +199,15 @@ export function LineSelector({ quoteId, workspaceSlug, layout, column, component
               ? 'Select at least one component to continue.'
               : `${selected.size} component${selected.size !== 1 ? 's' : ''} will be added to the order.`}
           </p>
-          <button
+          <button data-qc-variant="primary"
             onClick={handleCreateOrder}
             disabled={selected.size === 0}
-            className="px-5 py-2 text-sm font-medium rounded-full bg-black text-white disabled:opacity-40 hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
+            className="qc-flow-control qc-button px-5 py-2 text-sm font-medium rounded-full bg-black text-white disabled:opacity-40 hover:bg-slate-800 transition-all hover:shadow-[0_0_12px_rgba(255,107,53,0.4)]"
           >
             Create Order →
           </button>
         </div>
       </div>
-    </div>
+    </div></QcJourney>
   );
 }

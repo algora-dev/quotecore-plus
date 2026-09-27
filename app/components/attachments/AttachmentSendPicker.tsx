@@ -1,5 +1,6 @@
 'use client';
 
+import { QcJourney } from '@/app/components/ui/v2/QcJourney';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 /**
@@ -105,14 +106,14 @@ export function AttachmentSendPicker({
         : 'No files available';
 
   return (
-    <div className="space-y-2" ref={containerRef} data-copilot="attachment-send-picker">
+    <QcJourney><div className="space-y-2" ref={containerRef} data-copilot="attachment-send-picker">
       <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-slate-700">Attachments</label>
+        <label className="qc-flow-label block text-sm font-medium text-slate-700">Attachments</label>
         {totalSelected > 0 ? (
           <button
             type="button"
             onClick={() => onChange({ libraryAttachmentIds: [], quoteFileIds: [] })}
-            className="text-xs text-slate-500 hover:text-slate-700"
+            className="qc-flow-control text-xs text-slate-500 hover:text-slate-700"
           >
             Clear
           </button>
@@ -127,12 +128,13 @@ export function AttachmentSendPicker({
       ) : (
         <div className="relative">
           {/* Closed control: summary + chevron */}
-          <button
+          <button data-qc-variant="ghost"
             type="button"
-            onClick={() => setOpen((v) => !v)}
+            aria-label={`Choose attachments. ${summary}`}
+          onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="qc-flow-control qc-button flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
             <span className={totalSelected > 0 ? 'text-slate-700' : 'text-slate-500'}>
               {summary}
@@ -165,13 +167,13 @@ export function AttachmentSendPicker({
                   {quoteFiles.map((f) => (
                     <label
                       key={f.id}
-                      className="flex items-center gap-2 px-1 py-1.5 cursor-pointer hover:bg-slate-50 rounded"
+                      className="qc-flow-label flex items-center gap-2 px-1 py-1.5 cursor-pointer hover:bg-slate-50 rounded"
                     >
                       <input
                         type="checkbox"
                         checked={selection.quoteFileIds.includes(f.id)}
                         onChange={() => toggleQuoteFile(f.id)}
-                        className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                        className="qc-check h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
                       />
                       <span className="text-sm text-slate-700 truncate flex-1">{f.name}</span>
                       {formatSize(f.fileSize) ? (
@@ -190,13 +192,13 @@ export function AttachmentSendPicker({
                   {libraryFiles.map((f) => (
                     <label
                       key={f.id}
-                      className="flex items-center gap-2 px-1 py-1.5 cursor-pointer hover:bg-slate-50 rounded"
+                      className="qc-flow-label flex items-center gap-2 px-1 py-1.5 cursor-pointer hover:bg-slate-50 rounded"
                     >
                       <input
                         type="checkbox"
                         checked={selection.libraryAttachmentIds.includes(f.id)}
                         onChange={() => toggleLibrary(f.id)}
-                        className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                        className="qc-check h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
                       />
                       <span className="text-sm text-slate-700 truncate flex-1">{f.name}</span>
                       {formatSize(f.fileSize) ? (
@@ -216,6 +218,6 @@ export function AttachmentSendPicker({
           Your attachment library is a Pro feature. This quote&apos;s own files can still be attached.
         </p>
       ) : null}
-    </div>
+    </div></QcJourney>
   );
 }
