@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { CompetitorPageData, ComparisonRow, SupportStatus, SectionKey } from "@/lib/competitor-pages/types";
 import { STATUS_LABEL } from "@/lib/competitor-pages/types";
 import { TrackedCta } from "./tracked-cta";
-import DemoCTACard from "@/components/DemoCTACard";
+import ThreeWaysToWork, { type ThreeWaysToWorkProps } from "@/components/ThreeWaysToWork";
 import CompetitorVideo from "./competitor-video";
 import PricingViewTracker from "./pricing-tracker";
 import { VIDEOS } from "@/lib/videos";
@@ -12,13 +12,88 @@ import { VIDEOS } from "@/lib/videos";
  * Uniform design system (white/zinc surfaces, orange accents, black
  * rounded-full CTAs, rounded-[1.5rem] cards) with per-page section
  * ordering so each page leads with its own switching argument:
- * PlanSwift = roofing specialisation, RoofSnap = self-service vs
- * outsourced, EagleView = cost/control vs per-report.
+ * PlanSwift = device workflow, RoofSnap = measurement-to-quote choice,
+ * EagleView = DIY takeoff vs supplied property reports.
  *
  * Honesty rules: unverifiable competitor cells say "Not publicly
  * confirmed"; competitor pricing carries a visible checked date;
  * the "choose competitor if" section is mandatory.
  */
+
+export type ComparisonSource = {
+  id: string;
+  label: string;
+  href: string;
+  scope: string;
+};
+
+export type ComparisonResearch = {
+  reviewedDate: string;
+  sources: ComparisonSource[];
+  rowSources: Record<string, string[]>;
+  pricingSourceIds: string[];
+  note: string;
+};
+
+/** Links stay adjacent to the claim on both responsive layouts. */
+function SourceLinks({
+  research,
+  ids,
+  context,
+}: {
+  research?: ComparisonResearch;
+  ids?: string[];
+  context: string;
+}) {
+  if (!research || !ids?.length) return null;
+  const sources = research.sources.filter((source) => ids.includes(source.id));
+  if (!sources.length) return null;
+  return (
+    <span className="mt-1 flex flex-wrap gap-x-3 text-xs leading-6 text-zinc-600">
+      {sources.map((source) => (
+        <a
+          key={source.id}
+          href={source.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-zinc-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          aria-label={`${context}: ${source.label} (opens in a new tab)`}
+        >
+          {source.label}
+          <span aria-hidden="true" className="ml-1">↗</span>
+        </a>
+      ))}
+    </span>
+  );
+}
+
+function ResearchSources({ research }: { research: ComparisonResearch }) {
+  return (
+    <div id="comparison-sources" className="mt-8 rounded-2xl border border-zinc-200 bg-zinc-50 p-6">
+      <h3 className="text-lg font-semibold">Sources and comparison scope</h3>
+      <p className="mt-3 text-sm leading-7 text-zinc-600">{research.note}</p>
+      <p className="mt-2 text-sm font-medium text-zinc-800">
+        Vendor documentation reviewed: {research.reviewedDate}.
+      </p>
+      <ul className="mt-4 space-y-3 text-sm">
+        {research.sources.map((source) => (
+          <li key={source.id}>
+            <a
+              href={source.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center font-medium text-zinc-900 underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              aria-label={`${source.label} (opens in a new tab)`}
+            >
+              {source.label}<span aria-hidden="true" className="ml-1">↗</span>
+            </a>
+            <p className="text-zinc-600">{source.scope}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 const DEFAULT_ORDER: SectionKey[] = [
   "quickAnswer",
@@ -88,9 +163,11 @@ function StatusCell({
 function ComparisonTable({
   rows,
   competitorName,
+  research,
 }: {
   rows: ComparisonRow[];
   competitorName: string;
+  research?: ComparisonResearch;
 }) {
   return (
     <>
@@ -118,6 +195,7 @@ function ComparisonTable({
                 </th>
                 <td className="px-6 py-4 align-top text-zinc-600">
                   <StatusCell status={row.competitor.status} note={row.competitor.note} />
+                  <SourceLinks research={research} ids={research?.rowSources[row.feature]} context={row.feature} />
                 </td>
                 <td className="px-6 py-4 align-top text-zinc-600">
                   <StatusCell status={row.qc.status} note={row.qc.note} accent />
@@ -140,6 +218,7 @@ function ComparisonTable({
                 </p>
                 <div className="mt-1 text-sm text-zinc-600">
                   <StatusCell status={row.competitor.status} note={row.competitor.note} />
+                  <SourceLinks research={research} ids={research?.rowSources[row.feature]} context={row.feature} />
                 </div>
               </div>
               <div>
@@ -164,7 +243,15 @@ const VERDICT_STYLES: Record<"yes" | "mixed" | "no", string> = {
   no: "bg-zinc-200 text-zinc-800",
 };
 
-export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
+export default function CompetitorPage({
+  data,
+  threeWays,
+  research,
+}: {
+  data: CompetitorPageData;
+  threeWays?: ThreeWaysToWorkProps;
+  research?: ComparisonResearch;
+}) {
   const slug = data.slug;
   const video = VIDEOS[data.video.videoKey];
   const order = data.sectionOrder ?? DEFAULT_ORDER;
@@ -317,14 +404,13 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
         <p className="mt-4 max-w-3xl text-lg leading-8 text-zinc-600">
           {data.comparison.intro}
         </p>
-        <ComparisonTable rows={data.comparison.rows} competitorName={data.competitorName} />
+        <ComparisonTable rows={data.comparison.rows} competitorName={data.competitorName} research={research} />
         <p className="mt-6 text-sm text-zinc-500">
-          “Not publicly confirmed” means the capability is not clearly stated on the
-          vendor’s official website - it may exist, but we do not claim it either way.
+          An unverified equivalent was not established in the sources reviewed. It
+          may exist in another product, plan or integration. Ask the vendor about
+          the exact workflow you require.
         </p>
-        <div className="mt-12">
-          <DemoCTACard location={`${slug}_comparison_mid`} />
-        </div>
+        {research && <ResearchSources research={research} />}
       </section>
     ),
 
@@ -342,7 +428,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
               <h3 className="text-lg font-semibold">{data.competitorName} pricing</h3>
               <ul className="mt-5 space-y-4">
                 {data.pricing.competitorTiers.map((t) => (
-                  <li key={t.name} className="flex items-baseline justify-between gap-4">
+                  <li key={t.name} className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                     <span>
                       <span className="font-medium text-zinc-900">{t.name}</span>
                       {t.detail && (
@@ -356,16 +442,14 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
                 ))}
               </ul>
               <p className="mt-6 text-xs leading-5 text-zinc-500">{data.pricing.sourceNote}</p>
+              <SourceLinks research={research} ids={research?.pricingSourceIds} context={`${data.competitorName} pricing`} />
             </div>
 
             <div className="rounded-[1.5rem] border border-orange-200 bg-white px-7 py-7 shadow-[0_0_8px_rgba(255,107,53,0.08)]">
-              <h3 className="text-lg font-semibold">QuoteCore+ pricing</h3>
+              <h3 className="text-lg font-semibold">QuoteCore+ paid app</h3>
+              <p className="mt-3 text-sm text-zinc-600">30-day money-back guarantee. Check plan-specific features before choosing.</p>
               <ul className="mt-5 space-y-4">
-                <li className="flex items-baseline justify-between gap-4">
-                  <span className="font-medium text-zinc-900">Free tools</span>
-                  <span className="shrink-0 font-semibold text-zinc-950">$0</span>
-                </li>
-                <li className="flex items-baseline justify-between gap-4">
+                <li className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                   <span>
                     <span className="font-medium text-zinc-900">Starter</span>
                     <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
@@ -374,7 +458,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
                   </span>
                   <span className="shrink-0 font-semibold text-zinc-950">$19/mo</span>
                 </li>
-                <li className="flex items-baseline justify-between gap-4">
+                <li className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                   <span>
                     <span className="font-medium text-zinc-900">Pro</span>
                     <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
@@ -383,7 +467,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
                   </span>
                   <span className="shrink-0 font-semibold text-zinc-950">$39/mo</span>
                 </li>
-                <li className="flex items-baseline justify-between gap-4">
+                <li className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                   <span>
                     <span className="font-medium text-zinc-900">Pro Plus</span>
                     <span className="mt-0.5 block text-xs leading-5 text-zinc-500">
@@ -393,6 +477,13 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
                   <span className="shrink-0 font-semibold text-zinc-950">$59/mo</span>
                 </li>
               </ul>
+              <p className="mt-5 text-xs leading-6 text-zinc-600">
+                AI Assist point allowances are not a promise of unlimited Smart Assistant usage.
+                Check current feature access and permissions on the pricing page.
+              </p>
+              <p className="mt-3 text-sm text-zinc-600">
+                Separate free tools cost $0 and do not provide a free paid-app account.
+              </p>
               <p className="mt-6 text-sm text-zinc-600">
                 <a href="/pricing" className="font-medium text-[#FF6B35] hover:underline">
                   See full pricing →
@@ -401,7 +492,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
             </div>
           </div>
 
-          <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white">
+          <div className="mt-8 hidden overflow-hidden rounded-[1.5rem] border border-zinc-200 bg-white md:block">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50">
@@ -428,6 +519,23 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="mt-8 space-y-4 md:hidden">
+            {data.pricing.scenarios.map((scenario) => (
+              <div key={scenario.label} className="rounded-2xl border border-zinc-200 bg-white p-5">
+                <h3 className="font-semibold">{scenario.label}</h3>
+                <dl className="mt-4 space-y-3 text-sm">
+                  <div>
+                    <dt className="font-semibold text-zinc-900">{data.competitorName}</dt>
+                    <dd className="mt-1 leading-6 text-zinc-600">{scenario.competitor}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-semibold text-zinc-900">QuoteCore+</dt>
+                    <dd className="mt-1 leading-6 text-zinc-600">{scenario.qc}</dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
           </div>
           {data.pricing.scenarioNote && (
             <p className="mt-4 text-xs leading-5 text-zinc-500">{data.pricing.scenarioNote}</p>
@@ -533,6 +641,13 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-zinc-600">
             {data.freeTool.body}
           </p>
+          {research && (
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-6 text-zinc-500">
+              Vendor documentation reviewed {research.reviewedDate}.{' '}
+              <a href="#comparison-sources" className="inline-flex min-h-11 items-center underline underline-offset-2">Sources and scope</a>
+            </p>
+          )}
+
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <TrackedCta
               slug={slug}
@@ -567,7 +682,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
               key={f.question}
               className="rounded-[1.5rem] border border-zinc-200 bg-white px-6 py-5"
             >
-              <p className="font-semibold text-zinc-950">{f.question}</p>
+              <h3 className="font-semibold text-zinc-950">{f.question}</h3>
               <p className="mt-3 text-sm leading-7 text-zinc-600">{f.answer}</p>
             </div>
           ))}
@@ -595,7 +710,7 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
   };
 
   return (
-    <main className="min-h-screen bg-white text-zinc-950">
+    <div className="min-h-screen bg-white text-zinc-950">
       {/* Hero */}
       <section className="relative overflow-hidden pb-16 pt-12">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,53,0.10),transparent_34%)]" />
@@ -634,12 +749,18 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
             )}
           </div>
           <p className="mt-3 text-sm text-zinc-500">
-            Browser-based, nothing to install. Free tools with no signup, and paid plans backed by a 30-day money-back guarantee.
+            The paid app works on phone, tablet and desktop. Standalone free tools
+            have their own device support and limits. Paid plans include a 30-day money-back guarantee.
           </p>
         </div>
       </section>
 
-      {order.map((key) => sections[key])}
+      {order.map((key) => (
+        <Fragment key={key}>
+          {key === "workflow" && threeWays && <ThreeWaysToWork {...threeWays} />}
+          {sections[key]}
+        </Fragment>
+      ))}
 
       {/* Final CTA */}
       <section className="mx-auto max-w-4xl px-6 pb-24 pt-4 text-center lg:px-8">
@@ -655,16 +776,24 @@ export default function CompetitorPage({ data }: { data: CompetitorPageData }) {
           <TrackedCta
             slug={slug}
             location="final_cta"
-            href="/pricing"
-            label="See pricing"
+            href="/free-tools"
+            label="Browse free tools"
             variant="ghost"
           />
         </div>
         <p className="mt-4 text-sm text-zinc-500">Paid plans for the connected app. Free tools are available without signup.</p>
-        <div className="mt-12 text-left">
-          <DemoCTACard location={`${slug}_final_cta`} variant="inline" className="mx-auto max-w-2xl" />
+        <div className="mx-auto mt-12 max-w-2xl rounded-2xl border border-zinc-200 bg-zinc-50 p-6 text-left">
+          <h3 className="text-lg font-semibold">Roofing Takeoff Demo</h3>
+          <p className="mt-3 text-sm leading-7 text-zinc-600">
+            Explore the existing sample-plan takeoff flow. This demonstrates takeoff
+            only, not the complete paid app or Smart Assistant. Its device support
+            is separate from the mobile paid app.
+          </p>
+          <div className="mt-5">
+            <TrackedCta slug={slug} location="roofing_takeoff_demo" href="/takeoff-demo" label="View Roofing Takeoff Demo" variant="ghost" />
+          </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

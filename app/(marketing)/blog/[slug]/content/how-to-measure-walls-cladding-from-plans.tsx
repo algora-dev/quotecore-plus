@@ -6,14 +6,14 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        You have a set of plans — floor plans and elevations — and you need wall and cladding
+        You have a set of plans - floor plans and elevations - and you need wall and cladding
         measurements from them. This guide shows the complete process: which drawings to use, how to
         check the scale, how to measure rectangular walls, gables and irregular shapes, how to deduct
         openings, and how to keep different materials separate. Everything here can be done with the{' '}
         <Link href="/free-cladding-takeoff" className={link}>
           Free Wall &amp; Cladding Takeoff Tool
         </Link>{' '}
-        — no printing, no scale ruler, no signup.
+        - no printing, no scale ruler, no signup.
       </p>
       <p>
         <Link href="/free-cladding-takeoff" className={link}>
@@ -29,7 +29,7 @@ export default function Post() {
         downstream: material orders, labour estimates and the final quote.
       </p>
       <p>
-        The traditional way is a printed plan, a scale ruler and a calculator — repeated for every
+        The traditional way is a printed plan, a scale ruler and a calculator - repeated for every
         elevation and every revision. The digital way is the same logic done on screen: calibrate the
         scale once, trace each wall, let the tool do the arithmetic.
       </p>
@@ -37,23 +37,23 @@ export default function Post() {
       <h2>Which drawings do you need?</h2>
       <ul>
         <li>
-          <strong>Elevations</strong> — the most important drawings for cladding. Each elevation
+          <strong>Elevations</strong> - the most important drawings for cladding. Each elevation
           shows one face of the building as a flat surface: exactly what you trace for cladding
           areas, trims and openings.
         </li>
         <li>
-          <strong>Floor plans</strong> — wall lengths, internal wall areas, and partition runs.
+          <strong>Floor plans</strong> - wall lengths, internal wall areas, and partition runs.
         </li>
         <li>
-          <strong>Sections</strong> — cavity construction, batten spacing, material build-ups.
+          <strong>Sections</strong> - cavity construction, batten spacing, material build-ups.
         </li>
         <li>
-          <strong>Window and door schedules</strong> — opening sizes and counts to cross-check your
+          <strong>Window and door schedules</strong> - opening sizes and counts to cross-check your
           deductions.
         </li>
       </ul>
       <p>
-        If your plans are PDFs, upload them directly — the free Wall &amp; Cladding Takeoff Tool
+        If your plans are PDFs, upload them directly - the free Wall &amp; Cladding Takeoff Tool
         accepts multi-page PDFs up to 50 MB and you pick the page you need. As long as the sheet
         isn&rsquo;t cropped or stretched, scale is preserved exactly.
       </p>
@@ -61,7 +61,7 @@ export default function Post() {
       <h2>Step 1: Check the scale</h2>
       <p>
         Before measuring anything, verify the drawing scale. Find a dimensioned length on the
-        drawing — a wall the architect has labelled, or a standard door width. Measure it with your
+        drawing - a wall the architect has labelled, or a standard door width. Measure it with your
         calibrated tool and confirm it matches. If it doesn&rsquo;t, your calibration is wrong and
         every number after it will be wrong too. Thirty seconds here saves a whole takeoff.
       </p>
@@ -76,7 +76,7 @@ export default function Post() {
       <h2>Step 3: Gables and irregular walls</h2>
       <p>
         Gables, raked walls and stepped or angled elevations are polygons, not rectangles. Trace
-        each vertex around the shape and the tool computes the area directly — no splitting into
+        each vertex around the shape and the tool computes the area directly - no splitting into
         triangles, no ½ × base × height by hand. Curved façades can be approximated with a series of
         short segments.
       </p>
@@ -97,13 +97,13 @@ export default function Post() {
 
       <h2>Step 5: Separate materials</h2>
       <p>
-        Real elevations mix materials — brick to one level, weatherboard above, a feature panel at
+        Real elevations mix materials - brick to one level, weatherboard above, a feature panel at
         the entry. Trace each material zone separately and name it. Your output then totals each
         material cleanly, which is what your supplier needs.
       </p>
       <p>
-        For a full material-by-material walkthrough — timber, fibre cement, composite, metal and
-        panelised systems, plus trims and waste — see{' '}
+        For a full material-by-material walkthrough - timber, fibre cement, composite, metal and
+        panelised systems, plus trims and waste - see{' '}
         <Link href="/blog/how-to-do-cladding-takeoff" className={link}>
           how to do a cladding takeoff
         </Link>
@@ -141,11 +141,11 @@ export default function Post() {
         The manual method works, but it&rsquo;s slow, error-prone and has to be redone for every
         revision. A digital takeoff on the same drawing takes minutes, recalculates instantly when
         you fix a trace, and hands clean totals straight into pricing. The same argument applies to
-        roofs — see{' '}
+        roofs - see{' '}
         <Link href="/blog/manual-vs-digital-roof-takeoff" className={link}>
           manual vs digital roof takeoff
         </Link>{' '}
-        — and whether measuring beats visiting site is covered in{' '}
+        - and whether measuring beats visiting site is covered in{' '}
         <Link href="/blog/quoting-from-plans-vs-site-visits" className={link}>
           quoting from plans vs site visits
         </Link>
@@ -154,17 +154,17 @@ export default function Post() {
 
       <h2>Common mistakes</h2>
       <ul>
-        <li><strong>Skipping the scale check</strong> — one bad calibration ruins everything downstream.</li>
-        <li><strong>Forgetting the gables</strong> — the most missed area on masonry and weatherboard homes.</li>
-        <li><strong>Deducting openings from the wrong baseline</strong> — decide gross vs net per material up front.</li>
-        <li><strong>Ignoring waste</strong> — cladding typically needs 5–10% extra; add it at the ordering stage, not after.</li>
-        <li><strong>Mixing units</strong> — measure everything metric or everything imperial, never both.</li>
+        <li><strong>Skipping the scale check</strong> - one bad calibration ruins everything downstream.</li>
+        <li><strong>Forgetting the gables</strong> - the most missed area on masonry and weatherboard homes.</li>
+        <li><strong>Deducting openings from the wrong baseline</strong> - decide gross vs net per material up front.</li>
+        <li><strong>Ignoring waste</strong> - cladding typically needs 5 - 10% extra; add it at the ordering stage, not after.</li>
+        <li><strong>Mixing units</strong> - measure everything metric or everything imperial, never both.</li>
       </ul>
 
       <h2>Other uses for the same measurements</h2>
       <p>
         The same wall areas drive paint, render, insulation and membrane quantities. Once the walls
-        are traced, you can reuse the takeoff for almost any surface material — including inside the
+        are traced, you can reuse the takeoff for almost any surface material - including inside the
         building for drywall and sheet materials.
       </p>
 
@@ -174,7 +174,7 @@ export default function Post() {
         <Link href="/measurement-to-quote-tool" className={link}>
           turn them into a priced quote with reusable components
         </Link>{' '}
-        — or start measuring now with the{' '}
+        - or start measuring now with the{' '}
         <Link href="/free-cladding-takeoff" className={link}>
           Free Wall &amp; Cladding Takeoff Tool
         </Link>

@@ -8,9 +8,9 @@ import { siteUrl, buildBreadcrumbSchema } from '@/lib/schema';
 import { hreflangLanguages } from '@/lib/seo/hreflang';
 
 export const metadata: Metadata = {
-  title: 'Done-For-You Setup — We Build Your Estimating System | QuoteCore+',
+  title: 'Done-For-You Setup - We Build Your Estimating System | QuoteCore+',
   description:
-    'We rebuild your current pricing and workflow inside QuoteCore+ for you — components, labour rates, waste rules, training and 6 months of support included.',
+    'We rebuild your current pricing and workflow inside QuoteCore+ for you - components, labour rates, waste rules, training and 6 months of support included.',
   alternates: {
     canonical: 'https://quote-core.com/done-for-you-setup',
     languages: hreflangLanguages('/done-for-you-setup'),
@@ -25,7 +25,7 @@ const breadcrumbSchema = buildBreadcrumbSchema([
 const faqs = [
   {
     q: 'What do I need to send you?',
-    a: 'Your existing pricing, spreadsheets, supplier lists, labour rates, waste rules, past quotes and anything else relevant to how you currently estimate. It does not need to be tidy — we are rebuilding the agreed workflow, so your source information does not need to be presented perfectly.',
+    a: 'Your existing pricing, spreadsheets, supplier lists, labour rates, waste rules, past quotes and anything else relevant to how you currently estimate. It does not need to be tidy - we are rebuilding the agreed workflow, so your source information does not need to be presented perfectly.',
   },
   {
     q: 'Does my current setup need to be tidy?',
@@ -33,11 +33,11 @@ const faqs = [
   },
   {
     q: 'Will you tell me what I should charge?',
-    a: 'No. We configure the pricing and rules you supply — pricing decisions remain yours. We do not decide what your products should cost or what labour you should charge.',
+    a: 'No. We configure the pricing and rules you supply - pricing decisions remain yours. We do not decide what your products should cost or what labour you should charge.',
   },
   {
     q: 'What happens after the setup is finished?',
-    a: 'We walk you through your configured account — using one of your real jobs where practical — and provide the included support period (6 months) while you get comfortable using it on live work.',
+    a: 'We walk you through your configured account - using one of your real jobs where practical - and provide the included support period (6 months) while you get comfortable using it on live work.',
   },
   {
     q: 'What if I need more than 60 components?',
@@ -112,7 +112,7 @@ const steps = [
   {
     num: '1',
     title: 'We learn how you work',
-    body: 'A 15-minute fit call to understand how you measure, price and quote jobs — and whether QuoteCore+ is actually suitable.',
+    body: 'A 15-minute fit call to understand how you measure, price and quote jobs - and whether QuoteCore+ is actually suitable.',
   },
   {
     num: '2',
@@ -209,7 +209,7 @@ export default function DoneForYouSetupPage() {
             <strong className="font-semibold text-slate-900">
               We&rsquo;ll rebuild the agreed parts inside QuoteCore+
             </strong>{' '}
-            — configure your pricing, labour, waste and reusable components,
+            - configure your pricing, labour, waste and reusable components,
             then show you how to use it on real jobs.
           </p>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-500 md:text-base">
@@ -285,7 +285,7 @@ export default function DoneForYouSetupPage() {
               ))}
             </div>
             <p className="mx-auto mt-10 max-w-3xl text-center text-lg font-bold leading-snug tracking-tight text-slate-900 md:text-2xl">
-              A QuoteCore+ system built around the way you already work —{' '}
+              A QuoteCore+ system built around the way you already work - {' '}
               <span className="text-[#FF6B35]">ready to use on real jobs.</span>
             </p>
           </div>
@@ -423,8 +423,8 @@ export default function DoneForYouSetupPage() {
                     event={pkg.ctaEvent}
                     label={
                       pkg.highlight
-                        ? 'Book a fit call — Complete setup'
-                        : 'Book a fit call — Estimating setup'
+                        ? 'Book a fit call - Complete setup'
+                        : 'Book a fit call - Estimating setup'
                     }
                   />
                 </div>
@@ -454,7 +454,7 @@ export default function DoneForYouSetupPage() {
         <section className="border-t border-slate-100 bg-slate-50/60">
           <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
             <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-4xl">
-              What we do — and don&rsquo;t — do
+              What we do - and don&rsquo;t - do
             </h2>
             <div className="mt-10 grid gap-6 md:grid-cols-2">
               <div className="rounded-xl border border-slate-200 bg-white p-8">

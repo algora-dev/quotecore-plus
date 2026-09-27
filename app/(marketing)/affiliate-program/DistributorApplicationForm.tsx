@@ -18,9 +18,9 @@ const PROMOTION_METHODS = [
 const AUDIENCE_RANGES = [
   "Just getting started",
   "Under 1,000",
-  "1k–10k",
-  "10k–50k",
-  "50k–250k",
+  "1k - 10k",
+  "10k - 50k",
+  "50k - 250k",
   "250k+",
 ];
 

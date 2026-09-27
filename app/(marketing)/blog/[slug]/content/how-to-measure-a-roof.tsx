@@ -6,7 +6,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        <strong>Quick answer:</strong> There are three main ways to measure a roof: manual measurement (site visit with tape measure), digital measurement from PDF plans, and AI-assisted measurement using satellite or aerial imagery. For most roofing contractors, digital measurement from plans is the fastest and most accurate method. You can <Link href="/free-roofing-takeoff-builder">try the free roof takeoff builder</Link> to calculate roof areas, material quantities, and indicative pricing from your measurements — no signup required.
+        <strong>Quick answer:</strong> There are three main ways to measure a roof: manual measurement (site visit with tape measure), digital measurement from PDF plans, and AI-assisted measurement using satellite or aerial imagery. For most roofing contractors, digital measurement from plans is the fastest and most accurate method. You can <Link href="/free-roofing-takeoff-builder">try the free roof takeoff builder</Link> to calculate roof areas, material quantities, and indicative pricing from your measurements - no signup required.
       </p>
       <p>
         This guide covers the three main ways to measure a roof, how to turn those measurements
@@ -76,7 +76,7 @@ export default function Post() {
         <strong>Pros:</strong> fastest method, repeatable, and you can save and review the takeoff
         later. No maths errors. No missed sections.
       </p>
-      <p>If you have a roof plan, QuoteCore+'s <a href="/features/digital-roof-takeoff">digital roof takeoff</a> tools and <a href="/features/ai-scan-assist">AI Scan Assist</a> can identify roof areas, ridges, hips, valleys, and barges automatically — you review and adjust before committing. It's designed for roofers who want a head start on takeoffs without losing control of the measurements.</p>
+      <p>If you have a roof plan, QuoteCore+'s <a href="/features/digital-roof-takeoff">digital roof takeoff</a> tools and <a href="/features/ai-scan-assist">AI Scan Assist</a> can identify roof areas, ridges, hips, valleys, and barges automatically - you review and adjust before committing. It's designed for roofers who want a head start on takeoffs without losing control of the measurements.</p>
       <p>
         <strong>Cons:</strong> you need a digital copy of the plan, and you still need to verify
         the AI measurements on complex or unusual roof shapes.
@@ -309,7 +309,7 @@ export default function Post() {
       <hr />
 
       <p>
-        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements — no signup required. Once you have your dimensions, the <Link href="/blog/how-to-do-a-roof-takeoff">full roof takeoff guide</Link> shows how to turn them into a component-by-component material list, and <Link href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</Link> compares the two approaches in detail. Or <a href="/free-trial">get started with QuoteCore+</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. Plans start at $19/month with a 30-day money-back guarantee.
+        Ready to quote faster? <Link href="/free-roofing-takeoff-builder">Try the free roof takeoff builder</Link> with your measurements - no signup required. Once you have your dimensions, the <Link href="/blog/how-to-do-a-roof-takeoff">full roof takeoff guide</Link> shows how to turn them into a component-by-component material list, and <Link href="/blog/manual-vs-digital-roof-takeoff">manual vs digital roof takeoff</Link> compares the two approaches in detail. Or <a href="/free-trial">get started with QuoteCore+</a> for the full quoting workflow: digital takeoff, <Link href="/features/smart-components">Smart Components</Link>, quote tracking, and material ordering. Plans start at $19/month with a 30-day money-back guarantee.
       </p>
     </div>
   );

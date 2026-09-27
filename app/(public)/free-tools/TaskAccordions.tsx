@@ -27,7 +27,7 @@ const ITEMS: AccordionItem[] = [
     benefits: [
       'Upload your own PDF or image plan and calibrate the scale',
       'Measure roof areas and linear components (ridges, hips, valleys, barges) on screen',
-      'Pitch-calculated measurements — plan lengths become true roof lengths',
+      'Pitch-calculated measurements - plan lengths become true roof lengths',
       'Default components included, or create up to 7 with your own pricing',
       'Nothing is saved unless you send the result into the app',
     ],
@@ -74,10 +74,10 @@ const ITEMS: AccordionItem[] = [
     badge: 'Free',
     toolName: 'Measurement-to-Quote Tool',
     benefits: [
-      'Manual input — type in your areas, lengths and quantities, no plan upload needed',
-      'Build reusable priced components — materials, labour and waste in one place',
+      'Manual input - type in your areas, lengths and quantities, no plan upload needed',
+      'Build reusable priced components - materials, labour and waste in one place',
       'Group work into areas (roof, wall, floor) with per-area pitch and components',
-      'Instant totals — materials and labour broken out, ready to turn into a quote',
+      'Instant totals - materials and labour broken out, ready to turn into a quote',
     ],
     image: { src: '/free-tools/measurement-to-quote1.png', alt: 'Measurement-to-Quote Tool - enter measurements and get a priced result' },
     cta: { label: 'Open Measurement-to-Quote', href: '/measurement-to-quote-tool' },

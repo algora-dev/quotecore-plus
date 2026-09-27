@@ -8,12 +8,12 @@ import { buildFaqSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Flooring Takeoff & Estimating Tool — Measure Floor Plans Online | QuoteCore Plus',
+  title: 'Free Flooring Takeoff & Estimating Tool - Measure Floor Plans Online | QuoteCore Plus',
   description:
     'Upload your plans and measure floor areas free. Calibrate the scale, trace rooms, count hardwood, LVP, carpet, tile, underlay, baseboard and quarter-round. Export quantities. No printing, no scale ruler.',
   alternates: { canonical: '/free-flooring-takeoff' },
   openGraph: {
-    title: 'Free Flooring Takeoff & Estimating Tool — Measure Floor Plans Online | QuoteCore Plus',
+    title: 'Free Flooring Takeoff & Estimating Tool - Measure Floor Plans Online | QuoteCore Plus',
     description:
       'Calibrate the scale on your floor plan and measure floor areas, timber plank, carpet, tile, underlay, skirting and scotia directly on screen. Free, no signup required.',
     url: '/free-flooring-takeoff',
@@ -46,7 +46,7 @@ const FAQS = [
   {
     question: 'Can I upload a PDF plan?',
     answer:
-      'Yes. Upload a multi-page PDF (e.g. council or architect plans) up to 50 MB and pick the page you need — it converts to an image automatically. PNG, JPG and WebP images (up to 10 MB) are also supported.',
+      'Yes. Upload a multi-page PDF (e.g. council or architect plans) up to 50 MB and pick the page you need - it converts to an image automatically. PNG, JPG and WebP images (up to 10 MB) are also supported.',
   },
   {
     question: 'Can I use my own flooring components and prices?',
@@ -162,7 +162,7 @@ export default function FreeFlooringTakeoffPage() {
         <div className="mt-6 grid gap-6">
           {[
             ['Choose your measurement units', 'Metric (metres) or imperial (feet). Floor areas are measured as drawn - no pitch to worry about.'],
-            ['Upload your plan', 'An image of your floor plan (PNG, JPG, WebP), or the whole PDF — upload up to 50 MB and pick the page you need. Calibrate the scale from any known dimension such as a wall length.'],
+            ['Upload your plan', 'An image of your floor plan (PNG, JPG, WebP), or the whole PDF - upload up to 50 MB and pick the page you need. Calibrate the scale from any known dimension such as a wall length.'],
             ['Use default flooring components or create up to 7 of your own', 'Defaults cover timber plank, carpet, tile, underlay, skirting, scotia, transition strips and sundries. Custom components can carry your pricing and waste logic for any material.'],
             ['Measure your floors', 'Draw areas and lengths directly on your calibrated plan - floor areas, skirting runs, scotia lines, transition positions.'],
             ['Review and finish', 'Get the full output: floor areas, component totals, and pricing if you added your own rates. Save or continue in QuoteCore+ - optional.'],
@@ -181,13 +181,13 @@ export default function FreeFlooringTakeoffPage() {
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Upload or screenshot your plan, calibrate the scale from any known dimension (a wall length, a door width),
           then trace each room as a polygon. Add up the rooms, split by material (plank vs carpet vs tile), and you
-          have floor areas without printing anything or reaching for a scale ruler. The full walkthrough — including
-          scale checks and worked examples — is in our{' '}
+          have floor areas without printing anything or reaching for a scale ruler. The full walkthrough - including
+          scale checks and worked examples - is in our{' '}
           <Link href="/blog/how-to-measure-pdf-plans" className="text-[#BD4A1A] underline underline-offset-2">complete PDF plan measuring guide</Link>.
         </p>
         <h2 className="mt-10 text-2xl font-semibold tracking-tight text-slate-900">How to measure skirting and scotia</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          Skirting, scotia and transition strips are lineal runs — trace them along the walls on your calibrated plan
+          Skirting, scotia and transition strips are lineal runs - trace them along the walls on your calibrated plan
           and the tool totals each run in metres or feet. Deduct doorways where trim is not needed, and remember
           wardrobe and joinery lines if they get trim too. Waste can be applied as a percentage when you build your
           own components.
@@ -198,10 +198,10 @@ export default function FreeFlooringTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Gross vs usable floor area</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          <strong>Gross floor area</strong> is the room as drawn — wall to wall. <strong>Usable (net) floor area</strong>
+          <strong>Gross floor area</strong> is the room as drawn - wall to wall. <strong>Usable (net) floor area</strong>
           subtracts fixed joinery, hearths, stairs and cabinetry that the floor covering does not go under. Order
           plank, carpet and tile from usable area plus a waste allowance (typically 5-10% for plank, more for tile
-          with a diagonal layout). In this tool, trace the room first, then deduct the fixed items — so you always
+          with a diagonal layout). In this tool, trace the room first, then deduct the fixed items - so you always
           keep both numbers.
         </p>
       </section>
@@ -210,7 +210,7 @@ export default function FreeFlooringTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Irregular and open-plan rooms</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          Raked rooms, angled walls, alcoves and open-plan living areas are just polygons — trace each vertex on the
+          Raked rooms, angled walls, alcoves and open-plan living areas are just polygons - trace each vertex on the
           plan and the tool computes the area. No splitting into rectangles, no triangle formulas. Measure each
           material zone separately so plank, carpet and tile totals stay clean.
         </p>
@@ -221,7 +221,7 @@ export default function FreeFlooringTakeoffPage() {
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Who it&rsquo;s for</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Flooring installers and retailers, builders, renovators, estimators and quantity surveyors, carpet and tile
-          layers, interior designers — and homeowners checking a flooring quote. If your job starts with a plan and
+          layers, interior designers - and homeowners checking a flooring quote. If your job starts with a plan and
           ends in m² or metres, this tool is for you.
         </p>
       </section>
@@ -234,7 +234,7 @@ export default function FreeFlooringTakeoffPage() {
           dimension on your drawing, and every traced area, length and item count is then calculated from that
           calibrated scale. Areas are measured by tracing the boundary of each room or material zone on the drawing;
           fixed joinery can be traced and deducted separately, and every measurement can be named and labelled by
-          material so totals stay organised. Accuracy depends on the quality of the plan image and the calibration —
+          material so totals stay organised. Accuracy depends on the quality of the plan image and the calibration -
           always check the scale against a second known dimension before measuring. Final quantities, waste
           allowances and adhesive or fixing requirements should be verified against your specifications and the
           manufacturer&rsquo;s installation requirements before ordering.
@@ -265,7 +265,7 @@ export default function FreeFlooringTakeoffPage() {
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Measuring a roof or walls? Try the{' '}
           <Link href="/free-roof-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Tool</Link> or the{' '}
-          <Link href="/free-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Wall &amp; Cladding Takeoff Tool</Link> — the
+          <Link href="/free-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Wall &amp; Cladding Takeoff Tool</Link> - the
           same workflow for roof and wall measurements.
         </p>
       </section>
@@ -274,12 +274,12 @@ export default function FreeFlooringTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Related free tools</h2>
         <ul className="mt-4 grid gap-3 text-sm text-slate-600">
-          <li><Link href="/free-roof-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Tool</Link> — measure roof areas from a plan</li>
-          <li><Link href="/free-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Wall &amp; Cladding Takeoff Tool</Link> — measure walls, cladding and trims</li>
-          <li><Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">Measurement-to-Quote Tool</Link> — turn these measurements into a priced quote</li>
-          <li><Link href="/free-flooring-calculator" className="text-[#BD4A1A] underline underline-offset-2">Flooring Calculator</Link> — already know your dimensions</li>
-          <li><Link href="/free-quote-generator" className="text-[#BD4A1A] underline underline-offset-2">Free Quote Generator</Link> — send the customer a quote</li>
-          <li><Link href="/construction-quoting-software" className="text-[#BD4A1A] underline underline-offset-2">Contractor estimating &amp; quoting software</Link> — the full connected workflow</li>
+          <li><Link href="/free-roof-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Tool</Link> - measure roof areas from a plan</li>
+          <li><Link href="/free-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">Free Wall &amp; Cladding Takeoff Tool</Link> - measure walls, cladding and trims</li>
+          <li><Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">Measurement-to-Quote Tool</Link> - turn these measurements into a priced quote</li>
+          <li><Link href="/free-flooring-calculator" className="text-[#BD4A1A] underline underline-offset-2">Flooring Calculator</Link> - already know your dimensions</li>
+          <li><Link href="/free-quote-generator" className="text-[#BD4A1A] underline underline-offset-2">Free Quote Generator</Link> - send the customer a quote</li>
+          <li><Link href="/construction-quoting-software" className="text-[#BD4A1A] underline underline-offset-2">Contractor estimating &amp; quoting software</Link> - the full connected workflow</li>
         </ul>
       </section>
 

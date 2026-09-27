@@ -16,13 +16,13 @@ export default function Post() {
       </p>
       <p>
         The difference matters. Custom software is built from scratch around your
-        workflow — powerful, but a serious investment. Configurable software is an
+        workflow - powerful, but a serious investment. Configurable software is an
         existing platform that uses <strong>your</strong> products, <strong>your</strong>{' '}
         prices, <strong>your</strong> labour and waste rules, and adapts to the way you
         already work. It costs a fraction of a bespoke build and can be running this week.
       </p>
       <p>
-        This article explains how to tell which one you actually need — and what to do
+        This article explains how to tell which one you actually need - and what to do
         when the honest answer is &ldquo;neither, you need a custom build&rdquo;.
       </p>
 
@@ -65,8 +65,8 @@ export default function Post() {
       </blockquote>
       <p>
         That is a configuration problem, not an engineering problem. A configurable
-        platform gives you the parts that should be standard — plan takeoff, measurements,
-        calculation, quote presentation, ordering, invoicing — while everything that makes
+        platform gives you the parts that should be standard - plan takeoff, measurements,
+        calculation, quote presentation, ordering, invoicing - while everything that makes
         your business <em>your</em> business stays yours: component logic, material
         choices, labour rates, waste allowances, margins and documents.
       </p>
@@ -84,7 +84,7 @@ export default function Post() {
         </li>
         <li>
           <strong>Can it use your own rules?</strong> Your products, prices, labour,
-          waste, pitch treatment, documents. If yes — you&rsquo;re done. That&rsquo;s
+          waste, pitch treatment, documents. If yes - you&rsquo;re done. That&rsquo;s
           configuration.
         </li>
         <li>
@@ -94,7 +94,7 @@ export default function Post() {
         <li>
           <strong>Is the gap the product itself?</strong> If what you need is a portal, a
           proprietary workflow, an internal tool, or software you&rsquo;ll own and
-          resell — that&rsquo;s genuine custom development.
+          resell - that&rsquo;s genuine custom development.
         </li>
       </ol>
       <p>
@@ -109,7 +109,7 @@ export default function Post() {
       </p>
       <ul>
         <li>
-          <strong>Your own Smart Components</strong> — a measurement packaged with its
+          <strong>Your own Smart Components</strong> - a measurement packaged with its
           materials, labour, waste rules and pricing, defined once and reused on every job
         </li>
         <li>
@@ -120,18 +120,18 @@ export default function Post() {
           and CSV catalogue imports
         </li>
         <li>
-          <strong>Your calculation rules</strong> — pitch factors, percentage or fixed
+          <strong>Your calculation rules</strong> - pitch factors, percentage or fixed
           waste, pack sizes, coverage, cost vs sell price, margin behaviour
         </li>
         <li>
-          <strong>Your entry path</strong> — draw on a plan,{' '}
+          <strong>Your entry path</strong> - draw on a plan,{' '}
           <Link href="/features/digital-roof-takeoff" className={link}>
             digital takeoff
           </Link>
           , AI Scan Assist, or measurements typed in from site
         </li>
         <li>
-          <strong>Your documents</strong> — quotes, material orders, labour sheets and
+          <strong>Your documents</strong> - quotes, material orders, labour sheets and
           invoices that flow from the same job data
         </li>
       </ul>
@@ -151,26 +151,26 @@ export default function Post() {
         <li>white-label software you intend to own and resell</li>
       </ul>
       <p>
-        If that&rsquo;s your situation, you don&rsquo;t need a different roofing package —
+        If that&rsquo;s your situation, you don&rsquo;t need a different roofing package -
         you need a development team.
       </p>
 
       <h2>When custom development genuinely makes sense</h2>
       <ul>
         <li>
-          <strong>You need a portal</strong> — customer-facing or supplier-facing access
+          <strong>You need a portal</strong> - customer-facing or supplier-facing access
           with your own rules
         </li>
         <li>
-          <strong>You need a unique integration</strong> — proprietary systems, unusual
+          <strong>You need a unique integration</strong> - proprietary systems, unusual
           data flows
         </li>
         <li>
-          <strong>You need software you own</strong> — an internal tool or a commercial
+          <strong>You need software you own</strong> - an internal tool or a commercial
           product of your own
         </li>
         <li>
-          <strong>Your workflow is genuinely unusual</strong> — and it works, so the
+          <strong>Your workflow is genuinely unusual</strong> - and it works, so the
           software should fit it, not the reverse
         </li>
       </ul>
@@ -179,7 +179,7 @@ export default function Post() {
         <a href={T3_URL} target="_blank" rel="noopener noreferrer" className={link}>
           T3 Labs builds custom software
         </a>{' '}
-        — including QuoteCore+ itself, which is live proof they understand estimating,
+        - including QuoteCore+ itself, which is live proof they understand estimating,
         pricing and workflow systems.
       </p>
 
@@ -200,7 +200,7 @@ export default function Post() {
           <a href={T3_URL} target="_blank" rel="noopener noreferrer" className={link}>
             tell T3 Labs the problem
           </a>{' '}
-          — they&rsquo;ll tell you honestly whether it needs configuration, integration or
+          - they&rsquo;ll tell you honestly whether it needs configuration, integration or
           a custom build.
         </li>
       </ol>
@@ -216,8 +216,8 @@ export default function Post() {
       <h3>Is QuoteCore+ custom software?</h3>
       <p>
         It&rsquo;s configurable software. The platform is purpose-built for roofing
-        estimating and commercial workflows, but the content — your components, products,
-        prices, labour, waste rules and documents — is entirely yours. That gets you the
+        estimating and commercial workflows, but the content - your components, products,
+        prices, labour, waste rules and documents - is entirely yours. That gets you the
         fit of custom software without funding a from-scratch build.
       </p>
       <h3>What does custom roofing software cost vs QuoteCore+?</h3>
@@ -229,7 +229,7 @@ export default function Post() {
       <h3>Can QuoteCore+ be customised further if I need something specific?</h3>
       <p>
         Configuration covers products, pricing, labour, waste, documents and workflow.
-        Requirements beyond that — portals, unique integrations, standalone applications —
+        Requirements beyond that - portals, unique integrations, standalone applications -
         are handled by our development partner T3 Labs.
       </p>
       <h3>Who is T3 Labs?</h3>

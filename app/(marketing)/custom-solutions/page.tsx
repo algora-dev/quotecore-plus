@@ -12,7 +12,7 @@ const T3_CASE_STUDY =
   'https://www.t3labs.tech/case-studies/quotecore?utm_source=quotecore&utm_medium=referral&utm_campaign=custom-solutions';
 
 export const metadata: Metadata = {
-  title: 'Custom Solutions — Configure QuoteCore+ or Build Bespoke | QuoteCore+',
+  title: 'Custom Solutions - Configure QuoteCore+ or Build Bespoke | QuoteCore+',
   description:
     'QuoteCore+ can be configured around most estimating, pricing and workflow requirements. For genuinely bespoke needs, our development partner T3 Labs builds custom software.',
   alternates: {
@@ -51,7 +51,7 @@ export default function CustomSolutionsPage() {
   const webPageSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Custom Solutions — Configure QuoteCore+ or Build Bespoke',
+    name: 'Custom Solutions - Configure QuoteCore+ or Build Bespoke',
     description:
       'Two paths: configure QuoteCore+ around your estimating, pricing and workflow, or have our development partner T3 Labs build something bespoke.',
     url: `${siteUrl}/custom-solutions`,
@@ -103,7 +103,7 @@ export default function CustomSolutionsPage() {
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Use this when the requirement is about{' '}
-              <strong>your own rules and content</strong> — most &ldquo;custom&rdquo;
+              <strong>your own rules and content</strong> - most &ldquo;custom&rdquo;
               requests land here:
             </p>
             <ul className="mt-5 flex-1 space-y-2.5 text-sm text-slate-700">
@@ -165,7 +165,7 @@ export default function CustomSolutionsPage() {
                 Talk to T3 Labs <span aria-hidden="true">&rarr;</span>
               </a>
               <p className="mt-3 text-xs text-slate-500">
-                T3 Labs built QuoteCore+ — read the{' '}
+                T3 Labs built QuoteCore+ - read the{' '}
                 <a
                   href={T3_CASE_STUDY}
                   target="_blank"
@@ -187,7 +187,7 @@ export default function CustomSolutionsPage() {
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             Start by trying QuoteCore+ on a real job. If it can be set up around your
-            pricing and workflow, configuration is the answer — at a fraction of the cost
+            pricing and workflow, configuration is the answer - at a fraction of the cost
             of a custom build. If you hit a wall that setup genuinely can&rsquo;t solve,
             that&rsquo;s the point where a bespoke build makes sense, and T3 Labs will
             tell you honestly which it is.
@@ -216,7 +216,7 @@ export default function CustomSolutionsPage() {
           <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
             T3 Labs is the product studio behind QuoteCore+. They build custom
             estimating, pricing, portal, integration and workflow software for businesses
-            whose requirements genuinely exceed what existing platforms offer — and
+            whose requirements genuinely exceed what existing platforms offer - and
             QuoteCore+ itself is their work, live and in production. When a requirement
             is better served by configuration, they&rsquo;ll point you back here.
           </p>

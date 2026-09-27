@@ -9,11 +9,11 @@ import { ORG_LINKEDIN } from "@/app/lib/seo";
 
 export const metadata: Metadata = {
   title: "About QuoteCore+ | Built From the Roofing Industry",
-  description: "The founder story behind QuoteCore+ — built by a contractor who spent 20 years on the tools and in the office, frustrated with partial quoting processes. The software he wished he had.",
+  description: "The founder story behind QuoteCore+ - built by a contractor who spent 20 years on the tools and in the office, frustrated with partial quoting processes. The software he wished he had.",
   alternates: { canonical: "https://quote-core.com/about", languages: hreflangLanguages("/about") },
   openGraph: {
     title: "About QuoteCore+ | Built From the Roofing Industry",
-    description: "The founder story behind QuoteCore+ — built by a contractor who spent 20 years on the tools and in the office, frustrated with partial quoting processes.",
+    description: "The founder story behind QuoteCore+ - built by a contractor who spent 20 years on the tools and in the office, frustrated with partial quoting processes.",
     url: "https://quote-core.com/about",
     siteName: "QuoteCore+",
     type: "website",

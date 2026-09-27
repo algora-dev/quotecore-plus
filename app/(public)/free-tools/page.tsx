@@ -72,7 +72,7 @@ export default function FreeToolsPage() {
               height={48}
             />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-slate-900">Roof Pitch Calculator — Chrome extension</p>
+              <p className="text-sm font-semibold text-slate-900">Roof Pitch Calculator - Chrome extension</p>
               <p className="mt-0.5 text-xs text-slate-500">
                 Pitch, angle, slope and rafter calculations in one click, from any tab. Free, no account.
               </p>

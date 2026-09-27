@@ -14,7 +14,7 @@ export default function Post() {
       </p>
       <p>
         Almost every contractor we talk to has the same asset: a price list. Usually
-        a CSV or Excel export from a supplier — product codes, descriptions, units,
+        a CSV or Excel export from a supplier - product codes, descriptions, units,
         prices. And almost every quoting workflow starts by re-typing pieces of it,
         job after job. This article explains the better path: importing the price
         list once, converting it into reusable components, and letting every future
@@ -25,11 +25,11 @@ export default function Post() {
       <p>Manual price-list handling fails in two directions:</p>
       <ul>
         <li>
-          <strong>Time</strong> — every quote starts with data entry instead of
+          <strong>Time</strong> - every quote starts with data entry instead of
           estimating
         </li>
         <li>
-          <strong>Stale prices</strong> — supplier lists change; hand-copied prices
+          <strong>Stale prices</strong> - supplier lists change; hand-copied prices
           drift out of date and quietly eat your margin
         </li>
       </ul>
@@ -61,19 +61,19 @@ export default function Post() {
         </table>
       </div>
       <p>
-        The import path turns rows like these into components — each one a product
+        The import path turns rows like these into components - each one a product
         with its unit, coverage and price, ready to attach to a measurement.
       </p>
 
       <h2>The import path, step by step</h2>
       <ol>
         <li>
-          <strong>Get the CSV</strong> — download the price list from your supplier,
+          <strong>Get the CSV</strong> - download the price list from your supplier,
           or export your current spreadsheet. Tidy column names if needed; the data
           doesn&rsquo;t have to be perfect.
         </li>
         <li>
-          <strong>Import the catalogue</strong> — QuoteCore+ imports supplier
+          <strong>Import the catalogue</strong> - QuoteCore+ imports supplier
           catalogues directly, including CSV. Suppliers can also{' '}
           <Link href="/features/supplier-resources" className={link}>
             publish catalogues
@@ -81,12 +81,12 @@ export default function Post() {
           that you can pull from without any file handling at all.
         </li>
         <li>
-          <strong>Convert catalogue rows to components</strong> — the Catalogue to
+          <strong>Convert catalogue rows to components</strong> - the Catalogue to
           Component Converter turns price-list rows into Smart Components: product,
           coverage, unit, waste rule, labour and pricing in one reusable package.
         </li>
         <li>
-          <strong>Attach, don&rsquo;t re-type</strong> — from then on, quoting means
+          <strong>Attach, don&rsquo;t re-type</strong> - from then on, quoting means
           attaching the component to a measurement (area or lineal) and the
           quantities and prices calculate themselves.
         </li>
@@ -96,7 +96,7 @@ export default function Post() {
       <p>
         The Catalogue to Component Converter is one product with two ways to use it:
         the free version converts up to 7 components at a time, which suits a first
-        pass or a small list. QuoteCore+ accounts handle larger batches — the right
+        pass or a small list. QuoteCore+ accounts handle larger batches - the right
         tool when you&rsquo;re converting a full supplier catalogue in one go.
       </p>
       <p>
@@ -117,7 +117,7 @@ export default function Post() {
 
       <h2>What about spreadsheets that aren&rsquo;t price lists?</h2>
       <p>
-        Many estimating spreadsheets are more than a price list — they contain
+        Many estimating spreadsheets are more than a price list - they contain
         formulas, waste rules, labour rates, the way you actually price a job.
         That&rsquo;s estimating logic, and it belongs in components too. See{' '}
         <Link href="/blog/convert-spreadsheet-to-quote" className={link}>
@@ -133,7 +133,7 @@ export default function Post() {
       <h2>When your price list needs something bespoke</h2>
       <p>
         Unusual catalogue formats, supplier systems with no export, special pricing
-        rules — if configuration can&rsquo;t cover it, the{' '}
+        rules - if configuration can&rsquo;t cover it, the{' '}
         <Link href="/custom-solutions" className={link}>
           custom solutions page
         </Link>{' '}
@@ -156,13 +156,13 @@ export default function Post() {
       <h3>Do supplier price updates flow through?</h3>
       <p>
         Catalogue data is imported into your account, so you update prices where
-        they live — the catalogue — and re-convert or update as needed. Historical
+        they live - the catalogue - and re-convert or update as needed. Historical
         quotes keep their original pricing, so past jobs stay explainable.
       </p>
       <h3>Can I use my own products, not just supplier lists?</h3>
       <p>
         Yes. Your own products, labour rates and waste rules become your own
-        Smart Components — the import path is the same, the data source is just
+        Smart Components - the import path is the same, the data source is just
         your list instead of a supplier&rsquo;s.
       </p>
     </div>

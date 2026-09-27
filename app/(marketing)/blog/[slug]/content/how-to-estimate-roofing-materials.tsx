@@ -9,7 +9,7 @@ export default function Post() {
       <p>This guide walks through the full process: measure the roof, calculate areas and quantities, apply waste, add labour and accessories, and avoid the common mistakes that erode margins.</p>
       <h2>Step 1: Measure the roof</h2>
       <p>Everything starts with measurement. You need roof surface areas, linear lengths (ridges, hips, valleys, eaves, barges), and pitch. For a full walkthrough, see <a href="/blog/how-to-measure-a-roof">how to measure a roof for materials</a>.</p>
-      <p>Manual measurement works for simple roofs. For complex roofs or when working from plans, <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link> tools let you measure from a PDF on screen — no printing, no scaling ruler, no transcription.</p>
+      <p>Manual measurement works for simple roofs. For complex roofs or when working from plans, <Link href="/features/digital-roof-takeoff">digital roof takeoff</Link> tools let you measure from a PDF on screen - no printing, no scaling ruler, no transcription.</p>
       <h2>Step 2: Calculate roof area</h2>
       <p>Roof surface area is not the same as floor area. Pitch increases the covering area. Calculate the effective area using the pitch factor:</p>
       <ul>
@@ -54,7 +54,7 @@ export default function Post() {
         <li><strong>Underestimating waste:</strong> a flat 10% across all materials over-orders metal and under-orders shingles.</li>
         <li><strong>Forgetting accessories:</strong> flashings, fixings, membrane, and ridge details are easy to miss but expensive to add later.</li>
         <li><strong>Not accounting for cuts:</strong> complex roofs with hips, valleys, and dormers generate more waste than simple gables.</li>
-        <li><strong>Rounding up instead of calculating:</strong> adding 20% "to be safe" is not estimating — it is guessing.</li>
+        <li><strong>Rounding up instead of calculating:</strong> adding 20% "to be safe" is not estimating - it is guessing.</li>
       </ul>
       <h2>How digital tools help</h2>
       <p>QuoteCore+ uses <Link href="/features/smart-components">Smart Components&#8482;</Link> to automate the material estimation process. A Smart Component carries the materials, calculations, waste rules, labour, and pricing for a specific roof element. When you measure a roof area or length in the takeoff, the component automatically applies the right quantities and costs.</p>

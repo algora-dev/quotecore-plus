@@ -5,7 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import DistributorApplicationForm from "./DistributorApplicationForm";
 
 export const metadata: Metadata = {
-  title: "QuoteCore Partner Program — Earn 30% Recurring Commission",
+  title: "QuoteCore Partner Program - Earn 30% Recurring Commission",
   description:
     "Join the QuoteCore affiliate program: earn 30% recurring commission on referred paying customers for 12 months, with custom partnership terms available. Apply in about 30 seconds.",
   alternates: { canonical: "https://quote-core.com/affiliate-program" },
@@ -42,7 +42,7 @@ const faqs = [
   },
   {
     q: "What if someone uses a free tool and upgrades later?",
-    a: "Some people discover QuoteCore through a free tool and only upgrade weeks later. Make sure your audience knows your discount code so they use it when they eventually purchase — that is how the purchase is attributed to you.",
+    a: "Some people discover QuoteCore through a free tool and only upgrade weeks later. Make sure your audience knows your discount code so they use it when they eventually purchase - that is how the purchase is attributed to you.",
   },
   {
     q: "Is this a job?",
@@ -133,7 +133,7 @@ const whoProfiles = [
 ];
 
 const whatToPromote = [
-  { title: "Free Quote Generator", href: "/free-quote-generator", desc: "Create professional quotes in minutes — no account needed." },
+  { title: "Free Quote Generator", href: "/free-quote-generator", desc: "Create professional quotes in minutes - no account needed." },
   { title: "Free Margin Calculator", href: "/free-margin-calculator", desc: "Help trades price jobs profitably." },
   { title: "Roofing & Takeoff Tools", href: "/free-roof-takeoff", desc: "Upload a plan, measure a roof, price materials." },
   { title: "Free Calculators Hub", href: "/free-calculators", desc: "The full library of free construction calculators." },
@@ -227,16 +227,16 @@ export default function DistributorsPage() {
                 You do not have to start with a sales pitch
               </h2>
               <p className="mt-4 text-lg leading-8 text-zinc-600">
-                Instead of asking someone to immediately pay for software, share something useful first — a free quote
+                Instead of asking someone to immediately pay for software, share something useful first - a free quote
                 generator, a margin calculator, a roof measurement tool. Someone might discover QuoteCore through a free
                 tool today, create a free account later, and upgrade weeks afterwards. It is the lowest-friction way to
-                start — but only one of many.
+                start - but only one of many.
               </p>
               <p className="mt-4 rounded-2xl border border-zinc-200 bg-white p-6 text-left leading-7 text-zinc-700">
                 <strong className="text-zinc-950">Your code matters.</strong> Your personal discount code gives referred
                 customers a discount on their first month (the exact customer offer is confirmed when you are approved)
                 and attributes their purchase to you. Some people may discover QuoteCore through your content and only
-                upgrade weeks later — make sure your audience knows your code so they use it when they purchase.
+                upgrade weeks later - make sure your audience knows your code so they use it when they purchase.
               </p>
             </div>
           </div>
@@ -253,7 +253,7 @@ export default function DistributorsPage() {
                 A roofing audience may respond to a free roof tool. A small-business audience may care about quotes and
                 invoices. Another partner may prefer to promote the full QuoteCore+ app or paid plans directly, through
                 reviews, tutorials, client recommendations, newsletters, social, blogs or outreach. Free tools are the
-                lowest-friction entry point — not a requirement.
+                lowest-friction entry point - not a requirement.
               </p>
             </div>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

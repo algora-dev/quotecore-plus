@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: 'Purchase Order Generator — Free | No Signup',
+    title: 'Purchase Order Generator - Free | No Signup',
     description:
       'Free online purchase order generator for trades. Create professional POs for suppliers with line items and delivery dates. No signup - download as PDF.',
     alternates: { canonical: `${origin}${path}`, languages: dualDomainHreflang(path) },
@@ -147,7 +147,7 @@ export default function POLayout({ children }: { children: React.ReactNode }) {
             </li>
             <li className="flex gap-3">
               <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">2</span>
-              <span>Add supplier name and delivery address — or select a saved supplier.</span>
+              <span>Add supplier name and delivery address - or select a saved supplier.</span>
             </li>
             <li className="flex gap-3">
               <span className="flex-shrink-0 h-6 w-6 rounded-full bg-slate-900 text-white text-xs font-semibold flex items-center justify-center">3</span>
@@ -193,9 +193,9 @@ export default function POLayout({ children }: { children: React.ReactNode }) {
           <h3 className="text-sm font-semibold text-slate-900 mb-2">Why use a purchase order?</h3>
           <p className="text-sm text-slate-600 leading-relaxed">
             A purchase order (PO) is a formal document sent to a supplier that confirms quantities, prices, and delivery details for materials you are ordering.
-            For trades contractors, a PO creates a paper trail that protects both you and the supplier — if there is a dispute about pricing, quantities, or delivery,
+            For trades contractors, a PO creates a paper trail that protects both you and the supplier - if there is a dispute about pricing, quantities, or delivery,
             the PO is the reference point. Many suppliers require a PO number before they will dispatch materials.
-            A professional PO also speeds up the ordering process — the supplier has everything they need in one document, rather than a phone call followed by a text with half the details.
+            A professional PO also speeds up the ordering process - the supplier has everything they need in one document, rather than a phone call followed by a text with half the details.
           </p>
         </div>
 

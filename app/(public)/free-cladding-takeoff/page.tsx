@@ -8,12 +8,12 @@ import { buildFaqSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Siding & Cladding Takeoff Tool — Measure Elevation Plans | QuoteCore Plus',
+  title: 'Free Siding & Cladding Takeoff Tool - Measure Elevation Plans | QuoteCore Plus',
   description:
     'Upload your plans and measure wall, cladding, siding and façade areas free. Calibrate the scale, trace areas, deduct openings, export quantities. No printing, no scale ruler.',
   alternates: { canonical: '/free-cladding-takeoff' },
   openGraph: {
-    title: 'Free Siding & Cladding Takeoff Tool — Measure Elevation Plans | QuoteCore Plus',
+    title: 'Free Siding & Cladding Takeoff Tool - Measure Elevation Plans | QuoteCore Plus',
     description:
       'Calibrate the scale on your plan or elevation and measure wall areas, cladding, trims, battens and openings directly on screen. Free, no signup required.',
     url: '/free-cladding-takeoff',
@@ -46,7 +46,7 @@ const FAQS = [
   {
     question: 'Can I upload a PDF plan?',
     answer:
-      'Yes. Upload a multi-page PDF (e.g. council or architect plans) up to 50 MB and pick the page you need — it converts to an image automatically. PNG, JPG and WebP images (up to 10 MB) are also supported.',
+      'Yes. Upload a multi-page PDF (e.g. council or architect plans) up to 50 MB and pick the page you need - it converts to an image automatically. PNG, JPG and WebP images (up to 10 MB) are also supported.',
   },
   {
     question: 'Can I use my own cladding components and prices?',
@@ -162,7 +162,7 @@ export default function FreeCladdingTakeoffPage() {
         <div className="mt-6 grid gap-6">
           {[
             ['Choose your measurement units', 'Metric (metres) or imperial (feet). Wall areas are measured as drawn - no pitch to worry about.'],
-            ['Upload your plan', 'An image of your elevation or plan (PNG, JPG, WebP), or the whole PDF — upload up to 50 MB and pick the page you need. Calibrate the scale from any known dimension such as a wall length.'],
+            ['Upload your plan', 'An image of your elevation or plan (PNG, JPG, WebP), or the whole PDF - upload up to 50 MB and pick the page you need. Calibrate the scale from any known dimension such as a wall length.'],
             ['Use default cladding components or create up to 7 of your own', 'Defaults cover wrap, battens, cladding, trims, soffit and openings. Custom components can carry your pricing and waste logic for any material.'],
             ['Measure your walls', 'Draw areas and lengths directly on your calibrated plan - wall areas, trim runs, batten lines, opening positions.'],
             ['Review and finish', 'Get the full output: wall areas, component totals, and pricing if you added your own rates. Save or continue in QuoteCore+ - optional.'],
@@ -181,13 +181,13 @@ export default function FreeCladdingTakeoffPage() {
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Upload or screenshot your plan, calibrate the scale from any known dimension (a wall length, a door width),
           then trace each wall area as a polygon. Add up the elevations, deduct windows and doors, and you have wall
-          areas without printing anything or reaching for a scale ruler. The full walkthrough — including scale checks
-          and worked examples — is in our{' '}
+          areas without printing anything or reaching for a scale ruler. The full walkthrough - including scale checks
+          and worked examples - is in our{' '}
           <Link href="/blog/how-to-measure-walls-cladding-from-plans" className="text-[#BD4A1A] underline underline-offset-2">complete wall &amp; cladding takeoff guide</Link>.
         </p>
         <h2 className="mt-10 text-2xl font-semibold tracking-tight text-slate-900">How to measure cladding from elevation plans</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          Trace the cladding zones on each elevation as drawn — walls are measured flat, with no pitch factor to worry
+          Trace the cladding zones on each elevation as drawn - walls are measured flat, with no pitch factor to worry
           about. Deduct openings, separate materials (e.g. brick vs weatherboard vs render), and measure trims and
           battens as linear runs. See the{' '}
           <Link href="/blog/how-to-do-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">cladding takeoff guide</Link>{' '}
@@ -199,11 +199,11 @@ export default function FreeCladdingTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Gross vs net wall area</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          <strong>Gross wall area</strong> is the full elevation as drawn — width × height (plus gables).{' '}
+          <strong>Gross wall area</strong> is the full elevation as drawn - width × height (plus gables).{' '}
           <strong>Net wall area</strong> subtracts openings: windows, doors, garage doors and vents. Cladding and
           sheet materials are usually ordered from net area (plus waste), while paint, render and membranes are often
           priced from gross area because you still coat the reveals. In this tool, trace the full wall first, then
-          measure openings separately and deduct — so you always keep both numbers.
+          measure openings separately and deduct - so you always keep both numbers.
         </p>
       </section>
 
@@ -211,7 +211,7 @@ export default function FreeCladdingTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Gables and irregular shapes</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          Gables, raked walls and stepped elevations are just polygons — trace each vertex on the plan and the tool
+          Gables, raked walls and stepped elevations are just polygons - trace each vertex on the plan and the tool
           computes the area. No splitting into rectangles, no triangle formulas. The same applies to angled walls,
           curved façades approximated with short segments, and irregular internal walls.
         </p>
@@ -223,7 +223,7 @@ export default function FreeCladdingTakeoffPage() {
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Real elevations rarely have one material. A typical house might be brick to the first floor, weatherboard
           above, a feature panel at the entry and render on the garage. Trace each material zone as its own area,
-          name it, and the output totals each material separately — so cladding, trims and fixings order cleanly.
+          name it, and the output totals each material separately - so cladding, trims and fixings order cleanly.
         </p>
       </section>
 
@@ -232,7 +232,7 @@ export default function FreeCladdingTakeoffPage() {
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Who it&rsquo;s for</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Builders, cladding / siding / façade contractors, estimators and quantity surveyors, painters and renderers,
-          insulation installers, drywallers, sheet-material suppliers — and homeowners checking a quote. If your job
+          insulation installers, drywallers, sheet-material suppliers - and homeowners checking a quote. If your job
           starts with a plan and ends in m² or metres, this tool is for you.
         </p>
       </section>
@@ -242,7 +242,7 @@ export default function FreeCladdingTakeoffPage() {
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Other things you can measure</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           The tool doesn&rsquo;t assume a material, so the same plan takeoff covers paint, render, insulation,
-          waterproofing and membranes, drywall and sheet materials, trims and flashings — even fencing runs. Already
+          waterproofing and membranes, drywall and sheet materials, trims and flashings - even fencing runs. Already
           have areas? Use the{' '}
           <Link href="/free-wall-area-calculator" className="text-[#BD4A1A] underline underline-offset-2">free wall area calculator</Link>{' '}
           or{' '}
@@ -260,7 +260,7 @@ export default function FreeCladdingTakeoffPage() {
           scale. Areas are measured by tracing the boundary of each wall, elevation or material zone on the drawing;
           openings such as windows and doors can be traced and deducted separately, and every measurement can be
           named and labelled by material so totals stay organised. Accuracy depends on the quality of the plan image
-          and the calibration — always check the scale against a second known dimension before measuring. Final
+          and the calibration - always check the scale against a second known dimension before measuring. Final
           quantities, waste allowances and fixing requirements should be verified against your specifications and
           the manufacturer&rsquo;s installation requirements before ordering.
         </p>
@@ -289,7 +289,7 @@ export default function FreeCladdingTakeoffPage() {
         </p>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
           Measuring a roof? Try the{' '}
-          <Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Builder</Link> — the
+          <Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Builder</Link> - the
           same workflow for roof measurements. Or read{' '}
           <Link href="/blog/how-to-measure-a-roof-from-a-pdf-plan" className="text-[#BD4A1A] underline underline-offset-2">how to measure a roof from a plan</Link>.
         </p>
@@ -299,12 +299,12 @@ export default function FreeCladdingTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Related free tools</h2>
         <ul className="mt-4 grid gap-3 text-sm text-slate-600">
-          <li><Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Builder</Link> — build a roof takeoff from your measurements</li>
-          <li><Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">Measurement-to-Quote Tool</Link> — turn these measurements into a priced quote</li>
-          <li><Link href="/free-wall-area-calculator" className="text-[#BD4A1A] underline underline-offset-2">Wall Area Calculator</Link> — already know your dimensions</li>
-          <li><Link href="/free-paint-calculator" className="text-[#BD4A1A] underline underline-offset-2">Paint Calculator</Link> — paint quantities from wall areas</li>
-          <li><Link href="/free-quote-generator" className="text-[#BD4A1A] underline underline-offset-2">Free Quote Generator</Link> — send the customer a quote</li>
-          <li><Link href="/construction-quoting-software" className="text-[#BD4A1A] underline underline-offset-2">Contractor estimating &amp; quoting software</Link> — the full connected workflow</li>
+          <li><Link href="/free-roofing-takeoff-builder" className="text-[#BD4A1A] underline underline-offset-2">Free Roof Takeoff Builder</Link> - build a roof takeoff from your measurements</li>
+          <li><Link href="/measurement-to-quote-tool" className="text-[#BD4A1A] underline underline-offset-2">Measurement-to-Quote Tool</Link> - turn these measurements into a priced quote</li>
+          <li><Link href="/free-wall-area-calculator" className="text-[#BD4A1A] underline underline-offset-2">Wall Area Calculator</Link> - already know your dimensions</li>
+          <li><Link href="/free-paint-calculator" className="text-[#BD4A1A] underline underline-offset-2">Paint Calculator</Link> - paint quantities from wall areas</li>
+          <li><Link href="/free-quote-generator" className="text-[#BD4A1A] underline underline-offset-2">Free Quote Generator</Link> - send the customer a quote</li>
+          <li><Link href="/construction-quoting-software" className="text-[#BD4A1A] underline underline-offset-2">Contractor estimating &amp; quoting software</Link> - the full connected workflow</li>
         </ul>
       </section>
 
@@ -312,9 +312,9 @@ export default function FreeCladdingTakeoffPage() {
       <section className="mx-auto max-w-3xl px-4 pb-14">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Complete measurement guides</h2>
         <ul className="mt-4 grid gap-3 text-sm text-slate-600">
-          <li><Link href="/blog/how-to-measure-walls-cladding-from-plans" className="text-[#BD4A1A] underline underline-offset-2">How to measure walls &amp; cladding from plans</Link> — the full takeoff guide</li>
-          <li><Link href="/blog/how-to-measure-pdf-plans" className="text-[#BD4A1A] underline underline-offset-2">How to measure anything from PDF plans</Link> — areas, lengths and quantities</li>
-          <li><Link href="/blog/how-to-do-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">How to do a cladding takeoff</Link> — areas, openings and quantities</li>
+          <li><Link href="/blog/how-to-measure-walls-cladding-from-plans" className="text-[#BD4A1A] underline underline-offset-2">How to measure walls &amp; cladding from plans</Link> - the full takeoff guide</li>
+          <li><Link href="/blog/how-to-measure-pdf-plans" className="text-[#BD4A1A] underline underline-offset-2">How to measure anything from PDF plans</Link> - areas, lengths and quantities</li>
+          <li><Link href="/blog/how-to-do-cladding-takeoff" className="text-[#BD4A1A] underline underline-offset-2">How to do a cladding takeoff</Link> - areas, openings and quantities</li>
         </ul>
       </section>
 

@@ -8,7 +8,7 @@ export default function Post() {
       <p>
         <strong>
           A takeoff is only useful when it becomes a priced quote. Here&rsquo;s how the
-          full path works — plan to takeoff to calculation to quote — and where the
+          full path works - plan to takeoff to calculation to quote - and where the
           time usually leaks out of it.
         </strong>
       </p>
@@ -16,7 +16,7 @@ export default function Post() {
         Most roofing software conversations stop at &ldquo;measure the plan&rdquo;.
         But a takeoff by itself is just numbers. The value appears when measurements
         flow into quantities, quantities into price, and price into a document your
-        customer actually receives — without re-entering anything along the way.
+        customer actually receives - without re-entering anything along the way.
       </p>
       <p>
         This article walks that end-to-end workflow. For measuring itself, see{' '}
@@ -34,7 +34,7 @@ export default function Post() {
       <h3>Step 1: Get measurements from the plan</h3>
       <p>
         Upload the plan, calibrate the scale, then either draw each roof area and
-        line (ridges, hips, valleys, barges, spouting) yourself — or let{' '}
+        line (ridges, hips, valleys, barges, spouting) yourself - or let{' '}
         <Link href="/features/ai-scan-assist" className={link}>
           AI Scan Assist
         </Link>{' '}
@@ -44,14 +44,14 @@ export default function Post() {
       <h3>Step 2: Attach components to measurements</h3>
       <p>
         This is the step that replaces the spreadsheet. Instead of writing formulas
-        per job, you attach a reusable component — say &ldquo;Longrun roofing&rdquo; or
-        &ldquo;Ridge capping&rdquo; — to each measurement. The component already knows
+        per job, you attach a reusable component - say &ldquo;Longrun roofing&rdquo; or
+        &ldquo;Ridge capping&rdquo; - to each measurement. The component already knows
         its product, coverage, waste rule, labour and pricing. The measurement
         provides the quantity; the component does the math.
       </p>
       <h3>Step 3: Review the calculation</h3>
       <p>
-        Quantities, materials, labour, cost and sell price per component — visible
+        Quantities, materials, labour, cost and sell price per component - visible
         together, per roof area, with pitch already applied. Anything that looks wrong
         gets corrected once, here, before the customer ever sees it.
       </p>
@@ -59,7 +59,7 @@ export default function Post() {
       <p>
         The calculated job flows into the quote document with your branding and
         template. You choose what the customer sees. No copying numbers from one
-        system into another — the quote is generated from the same job data.
+        system into another - the quote is generated from the same job data.
       </p>
       <h3>Step 5: Send, track, follow up</h3>
       <p>
@@ -90,7 +90,7 @@ export default function Post() {
       </div>
       <p>
         Each re-entry point is also an error point. The connected workflow isn&rsquo;t
-        just faster — it&rsquo;s the same numbers all the way through, which is why
+        just faster - it&rsquo;s the same numbers all the way through, which is why
         the quote, the order and the invoice always agree.
       </p>
 
@@ -104,18 +104,18 @@ export default function Post() {
           <Link href="/free-roof-takeoff" className={link}>
             Free Roof Plan Takeoff Tool
           </Link>{' '}
-          — measure a plan in the browser, no account needed
+          - measure a plan in the browser, no account needed
         </li>
         <li>
           <Link href="/measurement-to-quote-tool" className={link}>
             Measurement to Quote Tool
           </Link>{' '}
-          — enter measurements, attach components, print a priced result or convert
+          - enter measurements, attach components, print a priced result or convert
           it to a quote
         </li>
       </ul>
       <p>
-        When you want the full chain — takeoff, quote, order, invoice, follow-ups —
+        When you want the full chain - takeoff, quote, order, invoice, follow-ups -
         that&rsquo;s{' '}
         <Link href="/free-trial" className={link}>
           QuoteCore+
@@ -125,7 +125,7 @@ export default function Post() {
 
       <h2>What if part of this workflow doesn&rsquo;t fit you?</h2>
       <p>
-        Every part of the path is configurable — your components, prices, documents,
+        Every part of the path is configurable - your components, prices, documents,
         workflow. If something you need genuinely doesn&rsquo;t exist in the product,
         the{' '}
         <Link href="/custom-solutions" className={link}>
@@ -138,13 +138,13 @@ export default function Post() {
       <h3>Does QuoteCore+ turn a takeoff into a quote automatically?</h3>
       <p>
         A takeoff with components attached produces calculated quantities and prices
-        for the whole job. The quote document is generated from that same data — you
+        for the whole job. The quote document is generated from that same data - you
         review, adjust presentation, and send. No re-entry between takeoff and quote.
       </p>
       <h3>Can I go straight from a takeoff to a material order?</h3>
       <p>
         Yes. Once a quote is accepted, it converts into a material order using the
-        same calculated quantities — and later into an invoice. The job data is
+        same calculated quantities - and later into an invoice. The job data is
         entered once and reused downstream.
       </p>
       <h3>Do I have to draw the plan myself?</h3>
@@ -156,7 +156,7 @@ export default function Post() {
       <h3>What if I have measurements but no plan?</h3>
       <p>
         Use the site-measurement path instead: enter your measurements directly and
-        attach components — see{' '}
+        attach components - see{' '}
         <Link href="/blog/roof-measurements-to-quote" className={link}>
           Roof Measurements to Quote
         </Link>

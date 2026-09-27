@@ -53,11 +53,11 @@ export default function Post() {
 
       <h2>The best quoting software for Australian tradies in 2026</h2>
 
-      <h3>1. QuoteCore+ — Best for roofers and measured-trade quoting</h3>
+      <h3>1. QuoteCore+ - Best for roofers and measured-trade quoting</h3>
       <p><strong>Pricing:</strong> Free tools with no signup; paid plans from $19/month. All plans include digital takeoff and quoting, and every plan is backed by a 30-day money-back guarantee.</p>
-      <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site — and the wider <a href="/construction-quoting-software">construction quoting workflow</a> (carpentry, plastering, subcontractors) is covered in the same platform. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
+      <p>QuoteCore+ is <a href="/roofing-quoting-software">roofing quoting software</a> built specifically for roofing and construction trades that measure from plans or site - and the wider <a href="/construction-quoting-software">construction quoting workflow</a> (carpentry, plastering, subcontractors) is covered in the same platform. The core workflow is: measure the roof (digitally or manually), apply pitch and waste factors, generate material quantities from a component library, and produce a branded quote.</p>
       <p>The standout feature is <strong>Smart Components</strong> - reusable material assemblies that automatically calculate quantities from measurements. A metal roof component might include Colorbond sheets, screws, ridge flashing, barge flashings, underlay, and insulation - all calculated from one roof area entry with pitch applied. You build the component once, use it on every quote, and the maths is always consistent.</p>
-      <p>QuoteCore+ includes <a href="/features/ai-scan-assist">AI Scan Assist</a>, which identifies roof areas and flashings from an uploaded plan — useful for Australian roofers who want to speed up takeoffs without sacrificing accuracy.</p>
+      <p>QuoteCore+ includes <a href="/features/ai-scan-assist">AI Scan Assist</a>, which identifies roof areas and flashings from an uploaded plan - useful for Australian roofers who want to speed up takeoffs without sacrificing accuracy.</p>
       <p>For Australian roofers, QuoteCore+ handles metal roofing (Colorbond, Zincalume), concrete and terracotta tiles, and flat roofing systems. The free <a href="/free-roofing-calculator">roofing calculator</a> and <a href="/free-roofing-takeoff-builder">roof takeoff builder</a> let you try the measurement and pricing engine before signing up.</p>
       <p><strong>Where it falls short:</strong> QuoteCore+ is built for measured trades - roofing, cladding, concrete, landscaping. If you need job scheduling, dispatch, and reactive maintenance workflows, a trade management platform like SimPRO or AroFlo will serve you better.</p>
       <p><strong>Best for:</strong> Roofers, cladding installers, and trades that measure from plans and need accurate material quantities.</p>
@@ -84,34 +84,34 @@ export default function Post() {
         />
       </div>
 
-      <h3>2. SimPRO — Best for electrical, plumbing, and service trades</h3>
+      <h3>2. SimPRO - Best for electrical, plumbing, and service trades</h3>
       <p><strong>Pricing:</strong> From ~$150/month (quoted on enquiry). Enterprise pricing for multi-site operations.</p>
       <p>SimPRO is a trade management platform built for Australian electrical, plumbing, HVAC, and security contractors. It handles quoting, job scheduling, dispatch, invoicing, and reporting in one system. For trades that run multiple concurrent jobs with field technicians, SimPRO is one of the strongest options in the Australian market.</p>
       <p>The quoting module supports labour and material line items, but it does not include digital takeoff or component-based material calculations. You enter quantities manually or import from a spreadsheet.</p>
       <p><strong>Where it falls short:</strong> No digital takeoff. No component-based material calculations. Quoting is functional but basic compared to a measured-trade tool. Pricing is higher than quoting-focused tools.</p>
       <p><strong>Best for:</strong> Service trades that need scheduling, dispatch, and job management alongside quoting.</p>
 
-      <h3>3. AroFlo — Best for field service and project work</h3>
+      <h3>3. AroFlo - Best for field service and project work</h3>
       <p><strong>Pricing:</strong> From ~$120/month per user (quoted on enquiry).</p>
       <p>AroFlo is another Australian-built trade management platform, popular with electrical, plumbing, and HVAC contractors. It combines quoting, job management, scheduling, and field mobility. The quoting module supports templates and labour/material line items but lacks digital takeoff.</p>
       <p>AroFlo integrates with Xero and MYOB, which is a significant advantage for Australian tradies who want quoting data to flow directly into their accounting system.</p>
       <p><strong>Where it falls short:</strong> No measurement or takeoff tools. Material quantities are manual. The quoting module is designed for line-item entry, not for calculating materials from roof or floor measurements.</p>
       <p><strong>Best for:</strong> Field service businesses that need scheduling, job tracking, and accounting integration.</p>
 
-      <h3>4. Tradify — Best for solo tradies and small teams</h3>
+      <h3>4. Tradify - Best for solo tradies and small teams</h3>
       <p><strong>Pricing:</strong> ~$45/month (AUD). No per-user pricing - one flat fee.</p>
       <p>Tradify is a job management tool popular with New Zealand and Australian tradies. It handles quoting, job scheduling, invoicing, and time tracking. The quoting module is straightforward - line items, labour rates, and markup - but there is no digital takeoff or material calculation engine. For NZ-specific options, see our guide to <a href="/blog/best-quoting-software-nz">quoting software in New Zealand</a>.</p>
       <p>For a solo tradie who needs a simple way to produce professional quotes and track jobs without spreadsheet chaos, Tradify is a solid, affordable choice.</p>
       <p><strong>Where it falls short:</strong> No takeoff, no material calculations, no component libraries. Quoting is manual line-item entry. Not built for measured trades.</p>
       <p><strong>Best for:</strong> Solo tradies and small teams who need simple quoting + job management.</p>
 
-      <h3>5. Xero Projects — Best for Xero users who need basic quoting</h3>
+      <h3>5. Xero Projects - Best for Xero users who need basic quoting</h3>
       <p><strong>Pricing:</strong> Included with Xero subscriptions (from ~$50/month AUD).</p>
       <p>If you are already on Xero and your quoting needs are simple - line items, basic templates, invoice conversion - Xero's built-in quoting might be sufficient. It keeps everything inside your accounting system, which eliminates a integration and saves a subscription.</p>
       <p><strong>Where it falls short:</strong> No takeoff, no material calculations, no trade-specific features. Quote templates are generic. Not suitable for trades that need to calculate materials from measurements.</p>
       <p><strong>Best for:</strong> Tradies with simple quoting needs who are already on Xero.</p>
 
-      <h3>6. Buildxact — Best for builders and renovators</h3>
+      <h3>6. Buildxact - Best for builders and renovators</h3>
       <p><strong>Pricing:</strong> From ~$99/month (AUD).</p>
       <p>Buildxact is an Australian-built estimating and project management tool for residential builders and renovators. It includes estimating from plans, quote generation, job scheduling, and invoice management. The estimating module supports trade-based line items and markup management.</p>
       <p>For builders who do their own estimating and want a tool that handles the full project lifecycle, Buildxact is worth considering.</p>

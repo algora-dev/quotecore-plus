@@ -8,7 +8,7 @@ import { buildBreadcrumbSchema } from '@/lib/schema';
 const SITE_URL = 'https://quote-core.com';
 
 export const metadata: Metadata = {
-  title: 'Free Construction Takeoff Tools — Measure PDF Plans Online | QuoteCore+',
+  title: 'Free Construction Takeoff Tools - Measure PDF Plans Online | QuoteCore+',
   description:
     'Free construction takeoff software: upload your own PDF plans and measure roof, siding/cladding and flooring areas, lengths and quantities online. Or start with measurements you already have. No signup for the core workflow.',
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     languages: hreflangLanguages('/free-construction-takeoff-tools'),
   },
   openGraph: {
-    title: 'Free Construction Takeoff Tools — Measure PDF Plans Online | QuoteCore+',
+    title: 'Free Construction Takeoff Tools - Measure PDF Plans Online | QuoteCore+',
     description:
       'Upload your own plans and measure roof, siding/cladding and flooring takeoffs online free - or start with measurements you already have. No signup.',
     url: `${SITE_URL}/free-construction-takeoff-tools`,
@@ -84,7 +84,7 @@ export default function FreeConstructionTakeoffToolsPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,107,53,0.06),transparent_60%)]" />
         <div className="relative mx-auto max-w-5xl px-4 md:px-6 pt-10 md:pt-14 pb-6 text-center">
           <h1 className="text-2xl md:text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-            Free Construction Takeoff Tools — Use Your Own Plans, No Signup
+            Free Construction Takeoff Tools - Use Your Own Plans, No Signup
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm md:text-base text-slate-600">
             Upload your own plans, measure real areas and lengths, or start with measurements you already have.

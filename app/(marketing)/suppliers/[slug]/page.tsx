@@ -26,7 +26,7 @@ const COUNTRY_CODES: Record<string, string> = {
 
 /** Build an SEO-optimised title: [Name] — [Types] in [City], [Country] | QuoteCore+ */
 function buildSeoTitle(s: SupplierDetail['supplier']): string {
-  const parts: string[] = [s.supplier_name, '—'];
+  const parts: string[] = [s.supplier_name, ' - '];
 
   // Roofing types (first 2-3, joined with &)
   if (s.roofing_types?.length) {
@@ -230,7 +230,7 @@ function buildStructuredData(data: SupplierDetail) {
   }
   faqs.push({
     q: `Can I see ${s.supplier_name}'s pricing online?`,
-    a: `Yes. ${s.supplier_name} publishes an indicative pricing catalogue on QuoteCore+. You can browse their material prices and calculate roof takeoffs using their pricing — free, no signup required.`,
+    a: `Yes. ${s.supplier_name} publishes an indicative pricing catalogue on QuoteCore+. You can browse their material prices and calculate roof takeoffs using their pricing - free, no signup required.`,
   });
   if (data.eligibility.calculator_available) {
     faqs.push({
@@ -482,7 +482,7 @@ export default async function SupplierDetailPage({ params }: PageProps) {
                   <p className="text-sm font-semibold text-zinc-950">Supplier-managed page</p>
                   <p className="mt-1 text-sm text-zinc-600">
                     {isTestSupplier
-                      ? `This is a test supplier profile for demonstration purposes. It showcases the features real partner suppliers receive — including the verified badge, catalogue management, service areas, and pricing display. Prices and business details shown here are illustrative and not for real ordering.`
+                      ? `This is a test supplier profile for demonstration purposes. It showcases the features real partner suppliers receive - including the verified badge, catalogue management, service areas, and pricing display. Prices and business details shown here are illustrative and not for real ordering.`
                       : `This page is managed by ${s.supplier_name} through its verified QuoteCore+ supplier account. The business has provided or linked all company information, catalogue data, service areas, delivery details, contact information, branding, and pricing shown on this page.`}
                   </p>
                 </div>
@@ -936,11 +936,11 @@ async function VersionHistorySection({ slug, supplierName }: { slug: string; sup
                 <tr key={v.catalogue_id} className="hover:bg-orange-50/40">
                   <td className="whitespace-nowrap px-4 py-2 text-sm font-medium text-zinc-950">v{v.version}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-slate-600">
-                    {v.uploaded_at ? new Date(v.uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    {v.uploaded_at ? new Date(v.uploaded_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : " - "}
                   </td>
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-slate-600">{v.total_items}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-sm text-slate-600">
-                    {v.valid_until ? new Date(v.valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    {v.valid_until ? new Date(v.valid_until).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : " - "}
                   </td>
                   <td className="whitespace-nowrap px-4 py-2 text-sm">
                     <Link href={`/suppliers/${slug}/catalogues/${v.version}`} className="text-[#BD4A1A] hover:underline">View</Link>

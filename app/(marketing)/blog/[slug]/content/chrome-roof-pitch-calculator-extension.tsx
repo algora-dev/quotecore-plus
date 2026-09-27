@@ -37,7 +37,7 @@ export default function Post() {
         <li><strong>Conversions</strong> between rise/run, degrees and pitch ratios</li>
       </ul>
       <p>
-        It is built by the team behind QuoteCore+ — roofing quoting and takeoff software — so the
+        It is built by the team behind QuoteCore+ - roofing quoting and takeoff software - so the
         maths is the same maths that powers the{" "}
         <Link href="/free-roof-pitch-calculator">free roof pitch calculator</Link> and{" "}
         <Link href="/free-rafter-length-calculator">rafter length calculator</Link> on our site.
@@ -53,7 +53,7 @@ export default function Post() {
           loading="lazy"
         />
         <figcaption className="mt-2 text-center text-sm text-zinc-500">
-          Instant results in the extension popup — pitch, angle, slope and rafter length.
+          Instant results in the extension popup - pitch, angle, slope and rafter length.
         </figcaption>
       </figure>
 
@@ -69,7 +69,7 @@ export default function Post() {
           in Chrome, Edge, or any Chromium browser (Brave, Arc, Opera).
         </li>
         <li>Click <strong>Add to Chrome</strong>, then confirm <strong>Add extension</strong>.</li>
-        <li>The QuoteCore+ icon appears in your toolbar — click it any time. Pin it for one-click access.</li>
+        <li>The QuoteCore+ icon appears in your toolbar - click it any time. Pin it for one-click access.</li>
         <li>Type your measurement, and the answer appears as you type. Nothing else to set up.</li>
       </ol>
 
@@ -82,7 +82,7 @@ export default function Post() {
           loading="lazy"
         />
         <figcaption className="mt-2 text-center text-sm text-zinc-500">
-          Enter what you know — the extension handles the conversions.
+          Enter what you know - the extension handles the conversions.
         </figcaption>
       </figure>
 
@@ -90,13 +90,13 @@ export default function Post() {
 
       <h2>Who it is for</h2>
       <ul>
-        <li><strong>Roofers on site</strong> — check a pitch conversion on your phone or laptop without hunting for a calculator app</li>
-        <li><strong>Estimators</strong> — sanity-check rise/run figures from plans while you work in other tabs</li>
-        <li><strong>DIYers and builders</strong> — get rafter lengths and slope right before ordering materials</li>
+        <li><strong>Roofers on site</strong> - check a pitch conversion on your phone or laptop without hunting for a calculator app</li>
+        <li><strong>Estimators</strong> - sanity-check rise/run figures from plans while you work in other tabs</li>
+        <li><strong>DIYers and builders</strong> - get rafter lengths and slope right before ordering materials</li>
       </ul>
       <p>
-        If you need more than pitch — full roof areas, hips, valleys, ridges, barges and material
-        quantities — the{" "}
+        If you need more than pitch - full roof areas, hips, valleys, ridges, barges and material
+        quantities - the{" "}
         <Link href="/free-roofing-takeoff-builder">free roof takeoff builder</Link> handles the
         whole takeoff, and it is also free.
       </p>
@@ -106,7 +106,7 @@ export default function Post() {
       <h2>From pitch to a full quote</h2>
       <p>
         The extension is a single-purpose tool. When you want to turn that pitch into a complete,
-        priced, customer-ready quote — the{" "}
+        priced, customer-ready quote - the{" "}
         <Link href="/roofing-quoting-software">QuoteCore+ platform</Link> picks up where it
         leaves off: digital takeoff, AI Scan Assist, Smart Components with your own pricing rules,
         then quotes, orders and invoices from the same job data.
@@ -132,18 +132,18 @@ export default function Post() {
       <h3>What data does it access?</h3>
       <p>
         None beyond its own popup. The extension does not request permissions to read your
-        browsing, tabs, or any website data — it is a calculator that opens when you click it and
+        browsing, tabs, or any website data - it is a calculator that opens when you click it and
         closes when you are done.
       </p>
 
       <h3>Does it work in Edge, Brave, Arc or Opera?</h3>
       <p>
-        Yes — any Chromium-based browser can install Chrome Web Store extensions.
+        Yes - any Chromium-based browser can install Chrome Web Store extensions.
       </p>
 
       <h3>Can it convert pitch to degrees?</h3>
       <p>
-        Yes — that is one of its core modes. Enter rise and run, a ratio, or an angle, and it
+        Yes - that is one of its core modes. Enter rise and run, a ratio, or an angle, and it
         gives you the other formats. For a deeper walkthrough of the maths, see{" "}
         <Link href="/blog/how-to-calculate-roof-pitch">how to calculate roof pitch</Link>.
       </p>

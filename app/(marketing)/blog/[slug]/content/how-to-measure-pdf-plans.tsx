@@ -6,7 +6,7 @@ export default function Post() {
   return (
     <div className="prose prose-zinc max-w-none">
       <p>
-        You have a PDF construction plan — a blueprint, drawing or plan set — and you need to measure something on it: a
+        You have a PDF construction plan - a blueprint, drawing or plan set - and you need to measure something on it: a
         floor area, a wall, a run of pipe, a path length. This guide shows how to measure areas, lengths and
         quantities directly from a PDF or image plan (a construction takeoff): calibrating the scale, handling irregular
         shapes, deducting openings, and working across floor plans, elevations and roof plans. You can follow
@@ -29,7 +29,7 @@ export default function Post() {
         Yes. Upload the PDF straight into the free Wall &amp; Cladding Takeoff Tool (up to
         50 MB, pick the page you need), calibrate the scale, and trace your measurements on
         screen. Images (PNG, JPG, WebP) work too. Exporting or screenshotting a sheet as an
-        image is no longer necessary — as long as the plan isn&rsquo;t cropped or stretched, the
+        image is no longer necessary - as long as the plan isn&rsquo;t cropped or stretched, the
         proportions are exact, and once the scale is calibrated, every measurement is to scale.
       </p>
       <p>
@@ -39,7 +39,7 @@ export default function Post() {
 
       <h2>Step 1: Calibrate the scale</h2>
       <p>
-        Calibration is the single most important step. Find a dimension you know is correct — a
+        Calibration is the single most important step. Find a dimension you know is correct - a
         labelled dimension line, a door (usually 0.9 m / 3&rsquo; wide) or a wall length. Draw your
         calibration line along it, enter the known length, and the tool now knows the scale of every
         pixel on that sheet.
@@ -57,13 +57,13 @@ export default function Post() {
       <h2>Step 2: Measure areas</h2>
       <p>
         For rectangular rooms or walls, trace the four corners and read the area. The tool computes
-        the polygon area for you — so rectangles, L-shapes and fully irregular shapes all work the
+        the polygon area for you - so rectangles, L-shapes and fully irregular shapes all work the
         same way: click around the boundary, close the shape, done.
       </p>
       <p>
-        <strong>Worked example — a living room:</strong> a room measuring 5.2 m × 4.1 m on plan.
+        <strong>Worked example - a living room:</strong> a room measuring 5.2 m × 4.1 m on plan.
         Trace the four corners, close the polygon, and the tool returns{' '}
-        <strong>21.32 m²</strong> (about 17 ft × 13.5 ft ≈ 229 sq ft — the tool works in feet and
+        <strong>21.32 m²</strong> (about 17 ft × 13.5 ft ≈ 229 sq ft - the tool works in feet and
         square feet too). Floor area, ceiling area and wall-footprint areas all come off
         the same trace.
       </p>
@@ -71,30 +71,30 @@ export default function Post() {
       <h2>Step 3: Measure lengths</h2>
       <p>
         Lengths are single lines: skirting runs, pipe routes, cable runs, fence lines, wall lengths,
-        paths. Draw the line along the route — straight or multiple segments — and read the total.
+        paths. Draw the line along the route - straight or multiple segments - and read the total.
       </p>
       <p>
-        <strong>Worked example — a fence:</strong> a boundary shown on a site plan as 23.6 m.
+        <strong>Worked example - a fence:</strong> a boundary shown on a site plan as 23.6 m.
         One line, one number: <strong>23.6 m</strong>. Add a gate, and the linear quantities for
         rails and palings follow from the same measurement.
       </p>
 
       <h2>Step 4: Handle irregular shapes</h2>
       <p>
-        Curved or angled boundaries — driveways, curved walls, landscaped areas — are traced as a
+        Curved or angled boundaries - driveways, curved walls, landscaped areas - are traced as a
         series of short segments following the curve. The more points, the closer the trace. The
         polygon area does the rest; you never calculate a triangle by hand.
       </p>
       <p>
-        <strong>Worked example — an L-shaped patio:</strong> click around the six corners of the
-        L and close the shape. The tool returns the exact area of the whole footprint — no
+        <strong>Worked example - an L-shaped patio:</strong> click around the six corners of the
+        L and close the shape. The tool returns the exact area of the whole footprint - no
         splitting into two rectangles and adding.
       </p>
 
       <h2>Step 5: Deduct openings</h2>
       <p>
         On elevations, trace the full surface first (gross), then trace windows and doors
-        separately and subtract (net). Keep both numbers — different materials need different
+        separately and subtract (net). Keep both numbers - different materials need different
         baselines, as covered in{' '}
         <Link href="/blog/how-to-measure-walls-cladding-from-plans" className={link}>
           how to measure walls &amp; cladding from plans
@@ -114,7 +114,7 @@ export default function Post() {
 
       <h2>Roof plans</h2>
       <p>
-        Roof measurement from plans is its own discipline — pitch, hips, valleys, ridges. If a roof
+        Roof measurement from plans is its own discipline - pitch, hips, valleys, ridges. If a roof
         is what you&rsquo;re measuring, use{' '}
         <Link href="/blog/how-to-measure-a-roof-from-a-pdf-plan" className={link}>
           how to measure a roof from a PDF plan
@@ -126,25 +126,25 @@ export default function Post() {
 
       <h2>Tips for accurate plan measurement</h2>
       <ul>
-        <li>Zoom in when clicking vertices — pixel accuracy at your calibration scale matters.</li>
-        <li>Name measurements as you go — &ldquo;Front elevation cladding&rdquo;, not &ldquo;area 7&rdquo;.</li>
+        <li>Zoom in when clicking vertices - pixel accuracy at your calibration scale matters.</li>
+        <li>Name measurements as you go - &ldquo;Front elevation cladding&rdquo;, not &ldquo;area 7&rdquo;.</li>
         <li>Re-check the scale whenever you change sheets.</li>
-        <li>Measure once, use everywhere — the same trace feeds materials, labour and quoting.</li>
+        <li>Measure once, use everywhere - the same trace feeds materials, labour and quoting.</li>
         <li>Export PDF sheets at full size; avoid phone photos taken at an angle.</li>
       </ul>
 
       <h2>Common mistakes to avoid</h2>
       <ul>
-        <li><strong>Calibrating from a guessed dimension</strong> — only use dimensions you trust.</li>
-        <li><strong>Using one calibration across differently-scaled sheets</strong> — recalibrate per sheet.</li>
-        <li><strong>Cropping a screenshot after calibrating</strong> — it invalidates the scale.</li>
-        <li><strong>Mixing metric and imperial</strong> — pick one system for the whole takeoff.</li>
+        <li><strong>Calibrating from a guessed dimension</strong> - only use dimensions you trust.</li>
+        <li><strong>Using one calibration across differently-scaled sheets</strong> - recalibrate per sheet.</li>
+        <li><strong>Cropping a screenshot after calibrating</strong> - it invalidates the scale.</li>
+        <li><strong>Mixing metric and imperial</strong> - pick one system for the whole takeoff.</li>
       </ul>
 
       <h2>What happens after measurement?</h2>
       <p>
         Once you have areas, lengths and quantities, the next step is pricing them. Reusable
-        components apply your material rates, labor, waste and pitch logic to any measurement set —
+        components apply your material rates, labor, waste and pitch logic to any measurement set -
         whether you measured it here, measured on site, or received it from a satellite or
         third-party report. See the{' '}
         <Link href="/measurement-to-quote-tool" className={link}>free Measurement-to-Quote tool</Link>{' '}
