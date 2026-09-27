@@ -1,0 +1,92 @@
+-- Private short-lived resolver metadata, NOT a shadow copy of business data.
+-- No direct privileges or RLS policy are granted to browser roles.
+CREATE TABLE public.assistant_v2_resolution_states (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ run_id uuid NOT NULL UNIQUE REFERENCES public.smart_assistant_runs(id) ON DELETE CASCADE,
+ company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+ user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+ conversation_id uuid NOT NULL REFERENCES public.smart_assistant_conversations(id) ON DELETE CASCADE,
+ permission_revision integer NOT NULL CHECK(permission_revision>=0),
+ sections text[] NOT NULL CHECK(cardinality(sections)<=9 AND array_position(sections,NULL) IS NULL
+  AND sections <@ ARRAY['quotes','draft_quotes','orders','invoices','components','customers','emails','billing','settings']::text[]),
+ state jsonb NOT NULL CHECK(jsonb_typeof(state)='object' AND octet_length(state::text)<=30000),
+ created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ expires_at timestamptz NOT NULL DEFAULT (clock_timestamp()+interval '15 minutes')
+);
+CREATE INDEX assistant_v2_resolution_owner_expiry ON public.assistant_v2_resolution_states(company_id,user_id,expires_at);
+ALTER TABLE public.assistant_v2_resolution_states ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.assistant_v2_resolution_states FROM PUBLIC,anon,authenticated,service_role;
+COMMENT ON TABLE public.assistant_v2_resolution_states IS 'Bounded expiring identity hints and clarification clues. No authoritative prices or business snapshots; proposed user inputs may be included. Read through current admitted-run/owner/revision boundary; every chosen business record is reread under invoker RLS.';
+
+CREATE FUNCTION public.sa_v2_resolution_store(p_run_id uuid,p_user_id uuid,p_revision integer,p_sections text[],p_state jsonb) RETURNS jsonb
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $state$
+DECLARE r public.smart_assistant_runs%ROWTYPE; saved public.assistant_v2_resolution_states%ROWTYPE; actual_revision integer;
+BEGIN
+ IF auth.role() IS DISTINCT FROM 'service_role' THEN RAISE EXCEPTION 'trusted_only' USING ERRCODE='42501'; END IF;
+ SELECT * INTO r FROM public.smart_assistant_runs WHERE id=p_run_id AND user_id=p_user_id;
+ IF NOT FOUND OR r.status NOT IN ('accepted','running')
+  OR NOT EXISTS(SELECT 1 FROM public.users u WHERE u.id=p_user_id AND u.company_id=r.company_id)
+  OR NOT EXISTS(SELECT 1 FROM public.smart_assistant_conversations c WHERE c.id=r.conversation_id AND c.user_id=p_user_id AND c.company_id=r.company_id)
+  OR NOT COALESCE(public.smart_assistant_enabled(r.company_id),false)
+  OR NOT EXISTS(SELECT 1 FROM public.assistant_v2_rollout f WHERE f.company_id=r.company_id AND f.p1)
+  OR NOT EXISTS(SELECT 1 FROM public.assistant_v2_retrieval_rollout f WHERE f.company_id=r.company_id AND f.enabled)
+  OR NOT EXISTS(SELECT 1 FROM public.assistant_v2_run_scopes sc WHERE sc.run_id=r.id AND sc.user_id=p_user_id AND sc.company_id=r.company_id AND sc.permission_revision=p_revision)
+ THEN RAISE EXCEPTION 'access_changed' USING ERRCODE='42501'; END IF;
+ SELECT COALESCE((SELECT p.revision FROM public.assistant_section_permissions p WHERE p.company_id=r.company_id),0) INTO actual_revision;
+ IF actual_revision IS DISTINCT FROM p_revision THEN RAISE EXCEPTION 'access_changed' USING ERRCODE='42501'; END IF;
+ IF jsonb_typeof(p_state) IS DISTINCT FROM 'object' OR octet_length(p_state::text)>30000
+  OR p_state->'version' IS DISTINCT FROM '1'::jsonb OR COALESCE(p_state->>'status','') NOT IN ('pending','resolved','closed')
+  OR jsonb_typeof(p_state->'intent') IS DISTINCT FROM 'object'
+  OR jsonb_typeof(p_state->'candidates') IS DISTINCT FROM 'array' OR jsonb_array_length(p_state->'candidates')>5
+  OR jsonb_typeof(p_state->'rejected') IS DISTINCT FROM 'array' OR jsonb_array_length(p_state->'rejected')>20
+  OR p_sections IS NULL OR cardinality(p_sections)>9 OR array_position(p_sections,NULL) IS NOT NULL
+  OR NOT p_sections <@ ARRAY['quotes','draft_quotes','orders','invoices','components','customers','emails','billing','settings']::text[]
+ THEN RAISE EXCEPTION 'invalid_resolution_state' USING ERRCODE='22023'; END IF;
+ -- One immutable resolution outcome per run. Retrying this trusted write is
+ -- idempotent; attempting to change the choices after publication is rejected.
+ INSERT INTO public.assistant_v2_resolution_states(run_id,company_id,user_id,conversation_id,permission_revision,sections,state)
+ VALUES(r.id,r.company_id,r.user_id,r.conversation_id,p_revision,p_sections,p_state)
+ ON CONFLICT(run_id) DO NOTHING;
+ SELECT * INTO saved FROM public.assistant_v2_resolution_states WHERE run_id=r.id;
+ IF saved.state IS DISTINCT FROM p_state OR saved.sections IS DISTINCT FROM p_sections OR saved.permission_revision IS DISTINCT FROM p_revision
+ THEN RAISE EXCEPTION 'resolution_already_set' USING ERRCODE='22023'; END IF;
+ -- Opportunistic bounded pruning of THIS ACTOR's expired resolver hints only.
+ -- Does not delete messages, audit proofs, action proposals or other companies.
+ DELETE FROM public.assistant_v2_resolution_states x WHERE x.id IN (
+  SELECT old.id FROM public.assistant_v2_resolution_states old
+  WHERE old.company_id=r.company_id AND old.user_id=r.user_id AND old.expires_at<clock_timestamp()
+  ORDER BY old.expires_at LIMIT 100);
+ RETURN jsonb_build_object('id',saved.id,'expires_at',saved.expires_at);
+END;
+$state$;
+REVOKE ALL ON FUNCTION public.sa_v2_resolution_store(uuid,uuid,integer,text[],jsonb) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.sa_v2_resolution_store(uuid,uuid,integer,text[],jsonb) TO service_role;
+
+-- SECURITY DEFINER here is limited to private ASSISTANT metadata. This function
+-- cannot read any business source and is not a substitute for invoker RLS.
+CREATE FUNCTION public.sa_v2_resolution_read(p_run_id uuid,p_revision integer,p_state_id uuid DEFAULT NULL) RETURNS jsonb
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,pg_temp AS $state$
+DECLARE v jsonb:=public.sa_v2_retrieval_scope(p_run_id,p_revision); current_run public.smart_assistant_runs%ROWTYPE; prior_id uuid; result jsonb;
+BEGIN
+ IF NOT COALESCE((v->>'retrieval_enabled')::boolean,false) THEN RAISE EXCEPTION 'retrieval_disabled' USING ERRCODE='42501'; END IF;
+ SELECT * INTO current_run FROM public.smart_assistant_runs WHERE id=p_run_id AND user_id=auth.uid() AND company_id=(v->>'company_id')::uuid;
+ IF NOT FOUND THEN RAISE EXCEPTION 'access_changed' USING ERRCODE='42501'; END IF;
+ SELECT r.id INTO prior_id FROM public.smart_assistant_runs r
+ WHERE r.conversation_id=current_run.conversation_id AND r.company_id=current_run.company_id AND r.user_id=auth.uid()
+  AND r.id<>current_run.id AND r.status='completed' AND r.started_at<=current_run.started_at
+ ORDER BY r.started_at DESC,r.id DESC LIMIT 1;
+ -- Expired, wrong-conversation, rejected-state, foreign and stale references all
+ -- return the same null. No cross-tenant existence oracle is exposed.
+ SELECT jsonb_build_object('id',s.id,'expires_at',s.expires_at,'state',s.state) INTO result
+ FROM public.assistant_v2_resolution_states s
+ WHERE s.run_id=prior_id AND (p_state_id IS NULL OR s.id=p_state_id)
+  AND s.user_id=auth.uid() AND s.company_id=current_run.company_id AND s.conversation_id=current_run.conversation_id
+  AND s.permission_revision=p_revision AND s.expires_at>CURRENT_TIMESTAMP
+  AND s.created_at>=COALESCE((v->>'history_after')::timestamptz,'-infinity'::timestamptz)
+  AND s.created_at>=COALESCE((v->>'knowledge_history_after')::timestamptz,'-infinity'::timestamptz)
+  AND NOT EXISTS(SELECT 1 FROM unnest(s.sections) sec WHERE COALESCE(v->'permissions'->>sec,'hidden')='hidden');
+ RETURN result;
+END;
+$state$;
+REVOKE ALL ON FUNCTION public.sa_v2_resolution_read(uuid,integer,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.sa_v2_resolution_read(uuid,integer,uuid) TO authenticated;

@@ -15,9 +15,13 @@ import { compileIntelligentPlan } from './semantics';
 import { childPlan, parentPlan, parseCompositeSelection, selectedRow, connectionFor, type CompositeResult } from './relationships';
 import { targetForRow, targetKey } from './targets';
 import { parseCoverage, requirePopulationCoverage } from './ranking';
+import { resolverAvailable } from '../resolver/config';
+import { constrainPlan, extractAnchors } from '../resolver/anchors';
 export function retrievalEnabled(): boolean { return process.env.SMART_ASSISTANT_RETRIEVAL_ENABLED === 'true'; }
-export interface RetrievalCapabilities { intelligenceVersion?: number; enabled: boolean; knowledge: boolean; catalogues: boolean; historyAfter: string | null; knowledgeRevision: string; state: 'ready' | 'disabled' | 'setup_required'; }
+export interface RetrievalCapabilities { resolverVersion?: number; intelligenceVersion?: number; enabled: boolean; knowledge: boolean; catalogues: boolean; historyAfter: string | null; knowledgeRevision: string; state: 'ready' | 'disabled' | 'setup_required'; }
 function dbError(error:{code?:string}):Error {
+ if(error.code==='P1711')return new RetrievalError('too_broad','The catalogue search has more than 1,500 preliminary candidates. Narrow the description or catalogue; no sampled result or total was returned.');
+ if(error.code==='P1712')return new RetrievalError('invalid_query','Query catalogue_rows directly with match words or exact and an optional parent filter. Unbounded natural or nested catalogue ranking is not supported on this path.');
  if(error.code==='42501')return new AssistantV2Error('access_changed','Assistant access or its admitted run changed. Start a new request.',403);
  if(error.code==='P1604')return new RetrievalError('permission_denied','This query requires a hidden section or an unavailable record. No inaccessible record is identified.');
  if(error.code==='P1601')return new RetrievalError('feature_disabled','This retrieval capability is not enabled for the workspace or its application entitlement. This is not a failed record search.');
@@ -37,7 +41,7 @@ export async function loadRetrievalCapabilities(client:SupabaseClient,access:Acc
  }
  if(!isRecord(data)||data.version!==1||typeof data.schema_hash!=='string'||typeof data.enabled!=='boolean'||typeof data.knowledge_enabled!=='boolean'||typeof data.catalogues_allowed!=='boolean'||typeof data.knowledge_revision!=='string'||!/^\d+$/.test(data.knowledge_revision)||(data.knowledge_history_after!==null&&(typeof data.knowledge_history_after!=='string'||!Number.isFinite(Date.parse(data.knowledge_history_after)))))throw new RetrievalError('setup_required','Retrieval code and SQL registry do not match. No query was attempted.');
  const compatible=data.schema_hash===RETRIEVAL_SCHEMA_HASH;
- return {intelligenceVersion:data.intelligence_version===1?1:0,enabled:compatible&&data.enabled,knowledge:compatible&&data.knowledge_enabled,catalogues:compatible&&data.catalogues_allowed,historyAfter:data.knowledge_history_after as string|null,knowledgeRevision:data.knowledge_revision,state:!compatible?'setup_required':data.enabled?'ready':'disabled'};
+ return {resolverVersion:data.resolver_version===1?1:0,intelligenceVersion:data.intelligence_version===1?1:0,enabled:compatible&&data.enabled,knowledge:compatible&&data.knowledge_enabled,catalogues:compatible&&data.catalogues_allowed,historyAfter:data.knowledge_history_after as string|null,knowledgeRevision:data.knowledge_revision,state:!compatible?'setup_required':data.enabled?'ready':'disabled'};
 }
 function decode(data:unknown,plan:QueryPlan,access:Access):QueryData {
  if(!isRecord(data)||data.version!==1||data.schema_hash!==RETRIEVAL_SCHEMA_HASH||data.source!==plan.source||!['rows','aggregate','engine_inputs'].includes(String(data.mode))||!Array.isArray(data.rows)||!data.rows.every(isRecord)||typeof data.complete!=='boolean'||typeof data.truncated!=='boolean'||typeof data.as_of!=='string'||!Number.isFinite(Date.parse(data.as_of))||!Array.isArray(data.group_by)||!data.group_by.every(k=>typeof k==='string')||!Array.isArray(data.warnings)||!data.warnings.every(w=>typeof w==='string'))throw new RetrievalError('read_failed','The database returned an invalid retrieval envelope.');
@@ -56,8 +60,8 @@ function decode(data:unknown,plan:QueryPlan,access:Access):QueryData {
    if(value===null||value===undefined||key.startsWith('_'))continue;
    const f=spec.fields[key];
    if(f?.type==='number'||key.startsWith('metric_')){if((typeof value!=='string'&&typeof value!=='number')||value===''||!Number.isFinite(Number(value)))throw new RetrievalError('read_failed','Invalid numeric result.');}
-   else if(f?.type==='boolean'&&typeof value!=='boolean')throw new RetrievalError('read_failed','Invalid boolean result.');
-   else if(f?.type==='uuid'&&!isUuid(value))throw new RetrievalError('read_failed','Invalid record identity.');
+   else if(f?.type==='boolean'){if(typeof value!=='boolean')throw new RetrievalError('read_failed','Invalid boolean result.');}
+   else if(f?.type==='uuid'){if(!isUuid(value))throw new RetrievalError('read_failed','Invalid record identity.');}
    else if(f&&f.type!=='json'&&typeof value!=='string')throw new RetrievalError('read_failed','Invalid scalar result.');
   }
  }
@@ -77,20 +81,21 @@ function currentPlan(plan:QueryPlan,target:RecordTarget|null):QueryPlan {
  return {...plan,current:false,filters:[...plan.filters,{field:key,op:'eq',value:target.id}]};
 }
 function resultError(error:RetrievalError,scope='No data read.'):RetrievalResult{return {source:'',mode:'none',state:error.code,code:error.code,rows:[],asOf:null,complete:false,truncated:false,scope,warnings:[],answer:error.message};}
-export function createRetrievalService(input:{client:SupabaseClient;access:Access;runId:string;capabilities:RetrievalCapabilities;signal?:AbortSignal;current:()=>Promise<RecordTarget|null>;emit:(sections:AssistantSection[],content:CardContent)=>Promise<string>;report?:(value:Record<string,unknown>)=>void}){
+export function createRetrievalService(input:{client:SupabaseClient;access:Access;runId:string;capabilities:RetrievalCapabilities;userMessage?:string;signal?:AbortSignal;current:()=>Promise<RecordTarget|null>;emit:(sections:AssistantSection[],content:CardContent)=>Promise<string>;report?:(value:Record<string,unknown>)=>void}){
  // Current history can contain prior knowledge even when this turn queries a quote.
  const usedKnowledge=input.capabilities.knowledge;
  let hasQueried=false;
  const produced=new WeakSet<object>();
  const report=input.report??(value=>console.info('[smart-assistant:retrieval]',JSON.stringify(value)));
  let usedIntelligence = false;
+ let usedResolver = false;
  const sections=Object.entries(input.access.permissions).filter(([,level])=>level!=='hidden').map(([key])=>key as AssistantSection);
  const service = {
   /** Classification/publication changes invalidate in-flight knowledge output. */
   async guard(signal?:AbortSignal){
    if(!usedKnowledge&&!hasQueried)return;
    const current=await loadRetrievalCapabilities(input.client,input.access,input.runId,signal??input.signal);
-   if((usedIntelligence&&!intelligenceAvailable(current))||!current.enabled)throw new AssistantV2Error('access_changed','Retrieval capability or access changed. Ask again using current permissions.',409);
+   if((usedResolver&&!resolverAvailable(current))||(usedIntelligence&&!intelligenceAvailable(current))||!current.enabled)throw new AssistantV2Error('access_changed','Retrieval capability or access changed. Ask again using current permissions.',409);
    if(usedKnowledge&&(!current.knowledge||current.knowledgeRevision!==input.capabilities.knowledgeRevision))throw new AssistantV2Error('access_changed','Document visibility changed. Ask again using current permissions.',409);
   },
   terminal(value:unknown):string|null{return isRecord(value)&&produced.has(value)&&!['invalid_query','unsupported_source','unsupported_field'].includes(String(value.state))&&typeof value.answer==='string'&&value.answer.length<=12_000?value.answer:null;},
@@ -111,22 +116,27 @@ export function createRetrievalService(input:{client:SupabaseClient;access:Acces
    }catch(error){if(error instanceof RetrievalError){const result=resultError(error);produced.add(result);return result;}throw error;}
    finally{try{report({event:'sa_composite_resolution',version:1,runId:input.runId,relationship,reads,totalMs:Math.round(performance.now()-start)});}catch{/* diagnostics only */}}
   },
-  async query(rawPlan:unknown,presentation:'context'|'answer'|'open',signal?:AbortSignal):Promise<RetrievalResult>{
+  /** Internal silent read: discovery never emits legacy weak-match cards. */
+  async lookup(plan:unknown, signal?:AbortSignal):Promise<RetrievalResult>{ return service.query(plan,'context',signal,true); },
+  async query(rawPlan:unknown,presentation:'context'|'answer'|'open',signal?:AbortSignal,internal=false):Promise<RetrievalResult>{
    const start=performance.now();let rpcMs=0,engineMs=0,renderMs=0;let plan:QueryPlan|undefined;let result:RetrievalResult|undefined;
    try{
     if(!retrievalEnabled()||!input.capabilities.enabled)throw new RetrievalError('feature_disabled','Universal retrieval is not enabled for this workspace.');
     const intelligent=intelligenceAvailable(input.capabilities);
+    const resolved=resolverAvailable(input.capabilities); usedResolver ||= resolved;
+    if(resolved&&!internal&&input.userMessage)rawPlan=constrainPlan(rawPlan,extractAnchors(input.userMessage));
     if(intelligent){const compiled=compileIntelligentPlan(rawPlan,input.access.permissions,input.capabilities.knowledge);plan=compiled.plan;usedIntelligence=true;
      if(compiled.normalizations.length)try{report({event:'sa_retrieval_normalized',version:1,runId:input.runId,normalizations:compiled.normalizations});}catch{/* diagnostics only */}
     }else plan=parseQueryPlan(rawPlan,input.access.permissions,input.capabilities.knowledge);
     if(sourceSpec(plan.source).feature==='catalogs'&&!input.capabilities.catalogues)throw new RetrievalError('feature_disabled','Catalogue access is not enabled by this account’s current application entitlement.');
+    if(resolved&&!internal&&plan.resolve&&!sourceSpec(plan.source).knowledge)throw new RetrievalError('invalid_query','Use resolve_workspace_entity for uncertain single-entity resolution. Query_workspace is for scoped data, lists and analytics, not a competing identity selection.');
     if(plan.current)plan=currentPlan(plan,await input.current());
     hasQueried=true;
     if(signal?.aborted)throw new AssistantV2Error('turn_timeout','The turn timed out.',408);
     // The invoker RPC revalidates the admitted run, tenant, current permissions
     // and revision in its database snapshot; no redundant pre-RPC access read.
     const at=performance.now();
-    const request=batchClient(input.client).rpc(intelligent?'sa_v2_retrieval_query_v17':'sa_v2_retrieval_query',{p_run_id:input.runId,p_revision:input.access.permissionRevision,p_plan:toJson(plan)});
+    const request=batchClient(input.client).rpc(resolved?'sa_v2_retrieval_query_v171':intelligent?'sa_v2_retrieval_query_v17':'sa_v2_retrieval_query',{p_run_id:input.runId,p_revision:input.access.permissionRevision,p_plan:toJson(plan)});
     const response=await(signal?request.abortSignal(signal):request);rpcMs=performance.now()-at;
     if(response.error)throw dbError(response.error);
     if(signal?.aborted)throw new AssistantV2Error('turn_timeout','The turn timed out.',408);
@@ -135,7 +145,7 @@ export function createRetrievalService(input:{client:SupabaseClient;access:Acces
     const rt=performance.now();result=renderResult(data,plan);renderMs=performance.now()-rt;
     if(result.state==='empty'&&!result.rows.length&&plan.filters.some(f=>f.field==='quote_number'&&f.op==='eq'))
      result.warnings.push('No permitted record has that quote number. If the user meant a job or customer name, search words/exact by name instead of filtering quote_number.');
-    if(presentation!=='context'||result.state==='ambiguous'){
+    if(!internal&&(presentation!=='context'||result.state==='ambiguous')){
      if(result.state==='ambiguous'){
       const candidates=result.rows.slice(0,4);
       const options=candidates.map(row=>({label:rowLabel(row,plan!.source).slice(0,100),reply:`Use ${plan!.source} record ${String(row._row_id??row.id??'unknown')} (${rowLabel(row,plan!.source)}) for my previous request.`.slice(0,500)}));

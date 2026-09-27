@@ -1,0 +1,53 @@
+Please integrate and test the attached P1.7.1 Universal Entity Resolver implementation.
+Baseline: my 27 September Smart Assistant handoff (root reports 72f3c3bb, ux/phase-4).
+Reconcile newer branch fixes carefully; do not overwrite subsequent UX or agent work.
+
+Start with RETURN_NOTES.md, docs/SMART_ASSISTANT_P171_HANDOFF_2026-09-27.md,
+docs/sa-p171-2026-09-27/validation/VALIDATION.md, DATABASE_ACCEPTANCE.md and
+ACCEPTANCE_CORPUS.json. The prior UX return notes are archived unchanged.
+
+Goal: direct matches first, only genuinely credible options, targeted clarification,
+trusted selection, retained task/qualifiers/rejections and fast authorised rereads.
+Do not loosen matching to fill five buttons. Do not weaken security or P3 eligibility
+to obtain a successful proposal. Selection is not approval. Internal cost, customer
+charge and missing price are different meanings and must remain distinct.
+
+Keep SMART_ASSISTANT_RESOLVER_ENABLED off initially. Preserve Luna configuration,
+admission/reservation/finish/quota/replay/auth, tenant isolation, Hidden/View/Edit,
+P1.7 repair/ranking and P2/P3. P4 and knowledge stay off. No visual redesign, voice,
+PWA, wider rollout, new order mutation system or unrelated pending migrations.
+
+Run the normal full dependency install, TypeScript, lint and production build here
+in the integration environment; the build brief prohibited those elsewhere. Compare
+existing diagnostics and fix/report all new ones. Run the included offline runner.
+Do not treat mock/static/fixture checks as actual SQL/RLS/browser/model validation.
+
+Review and test ONLY the new draft migration:
+backend/supabase/migrations/20260927150000_sa_v2_resolver_v171.sql
+Retain all prerequisites and the approved testing-company restriction. Repeat the
+47-case accepted live security suite against the new business reader, plus the
+private resolution-state actor/company/conversation/revision/expiry/cutoff/replay
+cases. Business reads must remain caller-scoped; admin writes are private metadata
+only. Test exact quote/customer/child constraints and no wrong-parent proposal.
+
+Prove catalogue search_text import/mapping equivalence, existing trigram index use,
+100k sparse exact/words search, dense 1500/1501 refusal, timeout/cancellation and
+unchanged 200/201 financial bounds. Use authorised disposable fixtures, not destructive
+writes to RS Roofing or unrelated real customer records. Return EXPLAIN evidence.
+
+After those gates, enable only on the testing deployment. Verify resolverActive=true,
+resolverVersion=1, sa_v2_retrieval_query_v171 and path=resolver where expected. Run
+all 60 acceptance specifications, repeating first/second-turn cases on stable data.
+Test actual browser selection/none/cancel, hide/reopen, fresh price reread, changed
+permissions, deleted/moved records and rollback with outstanding choices. Confirm
+candidate clicks never commit; use a separate explicitly approved existing P3
+Confirm test and check its audit. Do not automatically confirm benchmark mutations.
+
+Report cold/warm p50/p95 and raw paired examples: correctness, useful clarification,
+model calls/tokens, DB/resolver/finish timings, retry/replay behavior and limitations.
+Aim for one useful clarification, but report misses rather than inventing success.
+Every click remains a normally admitted/allowance-counted turn even if zero tokens.
+
+Return a complete latest source/handoff ZIP with integration changes, exact applied
+migrations/flags, evidence, timings, residual failures and next-step recommendation.
+Do not move on to another feature/UX phase before this acceptance review.

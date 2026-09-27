@@ -6,6 +6,6 @@ const hash=crypto.createHash('sha256').update(JSON.stringify(schema)).digest('he
 const file='backend/supabase/migrations/20260926190000_sa_v2_retrieval_v17.sql';
 const text=fs.readFileSync(path.join(__dirname,'sa-retrieval-p17/retrieval-v17.sql.in'),'utf8').replaceAll('__HASH__',hash);
 const dest=path.join(root,file);
-if(process.argv.includes('--check')){if(!fs.existsSync(dest)||fs.readFileSync(dest,'utf8')!==text)throw Error('Generated P1.7 migration drift');}
+if(process.argv.includes('--check')){if(!fs.existsSync(dest)||fs.readFileSync(dest,'utf8').replace(/\r\n/g,'\n')!==text.replace(/\r\n/g,'\n'))throw Error('Generated P1.7 migration drift');}
 else fs.writeFileSync(dest,text);
 console.log(`${process.argv.includes('--check')?'Verified':'Generated'} P1.7 SQL draft; registry ${hash}. NOT APPLIED.`);

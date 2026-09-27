@@ -11,7 +11,7 @@ const outputs={
 };
 for(const [file,contents] of Object.entries(outputs)){
  const dest=path.join(root,file);
- if(process.argv.includes('--check')){if(!fs.existsSync(dest)||fs.readFileSync(dest,'utf8')!==contents)throw Error('Generated file drift: '+file);}
+ if(process.argv.includes('--check')){if(!fs.existsSync(dest)||fs.readFileSync(dest,'utf8').replace(/\r\n/g,'\n')!==contents.replace(/\r\n/g,'\n'))throw Error('Generated file drift: '+file);}
  else fs.writeFileSync(dest,contents);
 }
 console.log(`${process.argv.includes('--check')?'Verified':'Generated'} ${Object.keys(outputs).length} files; ${Object.keys(manifest.sources).length} sources; schema ${hash}`);

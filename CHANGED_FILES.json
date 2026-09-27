@@ -1,0 +1,581 @@
+{
+  "phase": "P1.7.1",
+  "baselineArchive": "quotecore-plus-SA-next-phase-handoff-2026-09-27.zip",
+  "baselineSha256": "a7defe400f6388e10ee37b500550a720b7c9862c1497f5abe768aebe6adf0023",
+  "baselineCommitFromHandoff": "72f3c3bb",
+  "pathsRelativeTo": "ZIP root, preserving quotecore-plus wrapper",
+  "excludesSelf": "quotecore-plus/CHANGED_FILES.json",
+  "counts": {
+    "added": 34,
+    "modified": 12,
+    "deleted": 0
+  },
+  "files": [
+    {
+      "path": "START_HERE_RETURN.md",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 1238,
+        "sha256": "b4465a9804c65bd2e407ec1475085a9745fbeae6741a74f78470fa1a3ce54286",
+        "sha256LfNormalized": "b4465a9804c65bd2e407ec1475085a9745fbeae6741a74f78470fa1a3ce54286",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/RETURN_NOTES.md",
+      "change": "modified",
+      "before": {
+        "bytes": 4624,
+        "sha256": "7da8dc3b301eb50258c0144b92f77bdd950f8abaa006329190d6ff39383202d2",
+        "sha256LfNormalized": "65116f9c231060e75f3f85f8864f2f18e901570aed0d8af72ce7111b4bef612b",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 6797,
+        "sha256": "3df0e404d0a7bec7423163881272604ad56b17532da3ac392d2b1bb7a2a7e105",
+        "sha256LfNormalized": "3df0e404d0a7bec7423163881272604ad56b17532da3ac392d2b1bb7a2a7e105",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/components/smart-assistant/v2/ConversationCards.tsx",
+      "change": "modified",
+      "before": {
+        "bytes": 3981,
+        "sha256": "1bbfe51981320a29e7b58adcb8fb42dc851b9b32f9b07a0cff025cb5171b56d7",
+        "sha256LfNormalized": "28ca9032701938ee6d249d0692704e1e48fb96fba583511ba81b0e55d8107c10",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 4952,
+        "sha256": "3bd204dc84c7740d7010e079c4ea77ba6562899f6594d908d2ccd31f034d865e",
+        "sha256LfNormalized": "3bd204dc84c7740d7010e079c4ea77ba6562899f6594d908d2ccd31f034d865e",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/components/smart-assistant/v2/V2ChatClient.tsx",
+      "change": "modified",
+      "before": {
+        "bytes": 21353,
+        "sha256": "123d0591aca9e61c6269aba2487999cff6f490ac050a527fa1dd8bc657c0ebf0",
+        "sha256LfNormalized": "25d16b3f9d95de68413b0498469b60bf93988562f5167d15c9a4af4194a4086f",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 21099,
+        "sha256": "09bc85bc8b083dd33a4b43b551f693ab64145f861e6919a641df749e64dc8999",
+        "sha256LfNormalized": "09bc85bc8b083dd33a4b43b551f693ab64145f861e6919a641df749e64dc8999",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/orchestrator.ts",
+      "change": "modified",
+      "before": {
+        "bytes": 10936,
+        "sha256": "d4ca9e0eaa74230eb623a76cf7a7b9c22be92abcf7361977bf48c51f21c6bf3c",
+        "sha256LfNormalized": "a8de1fbdc19b2ddf0f9307e94a285334c3cd8a4a9e4bce9b88ac83acd165aa46",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 11645,
+        "sha256": "186cf84bf474d783d7e65d8516f4bcb72e052d055de68af091d2e749ecf610ce",
+        "sha256LfNormalized": "186cf84bf474d783d7e65d8516f4bcb72e052d055de68af091d2e749ecf610ce",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/anchors.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 12732,
+        "sha256": "72a88f554ace5b43b52866a3f7ecdc00561f5d69aa1427cc621cc6241d11147f",
+        "sha256LfNormalized": "72a88f554ace5b43b52866a3f7ecdc00561f5d69aa1427cc621cc6241d11147f",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/clues.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 14964,
+        "sha256": "1e6b921ce31236d8cd7a3ffd0e53d4e8039cf4b5665858504ac659b9441567bb",
+        "sha256LfNormalized": "1e6b921ce31236d8cd7a3ffd0e53d4e8039cf4b5665858504ac659b9441567bb",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/config.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 766,
+        "sha256": "1e8267c99104c3108e80877b6370519f553afe0b1a73cfb675aa1dc6c577fe15",
+        "sha256LfNormalized": "1e8267c99104c3108e80877b6370519f553afe0b1a73cfb675aa1dc6c577fe15",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/continuation.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 4324,
+        "sha256": "cb081bb08802298a3f430942ffb676eeae3d85af08de68e1ebc5811cf803ff97",
+        "sha256LfNormalized": "cb081bb08802298a3f430942ffb676eeae3d85af08de68e1ebc5811cf803ff97",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/contracts.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 9744,
+        "sha256": "c918c5c268ad708351e29c364063923a7fe3b97a442b9dc144416b8631934394",
+        "sha256LfNormalized": "c918c5c268ad708351e29c364063923a7fe3b97a442b9dc144416b8631934394",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/relevance.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 7797,
+        "sha256": "01fb3623600cd069a0fe80e913825abc03f6411c9daeb94539e70d9037cd3a63",
+        "sha256LfNormalized": "01fb3623600cd069a0fe80e913825abc03f6411c9daeb94539e70d9037cd3a63",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/service.server.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 37208,
+        "sha256": "0440c1c3462ec366ee81248e4c7b1c7071437504b389220cebe843eb5b16f474",
+        "sha256LfNormalized": "0440c1c3462ec366ee81248e4c7b1c7071437504b389220cebe843eb5b16f474",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/sources.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 13546,
+        "sha256": "9940785c8b9c19b3f4b8786cfc2437c92dce5ba27484bcaf36ee9742783e3f21",
+        "sha256LfNormalized": "9940785c8b9c19b3f4b8786cfc2437c92dce5ba27484bcaf36ee9742783e3f21",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/state.server.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 3162,
+        "sha256": "6901f67dae5e0dbfc62244f9d93258a8b95bb7788f2ee5cc6afe3a9d1878075d",
+        "sha256LfNormalized": "6901f67dae5e0dbfc62244f9d93258a8b95bb7788f2ee5cc6afe3a9d1878075d",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/state.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 3451,
+        "sha256": "468e45e8bdd0ff04b9a512d8dddc65742b3fdb3c6ee105e325ed377a1fdf35c9",
+        "sha256LfNormalized": "468e45e8bdd0ff04b9a512d8dddc65742b3fdb3c6ee105e325ed377a1fdf35c9",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/tools.server.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 11962,
+        "sha256": "2068e584f0310b4ce1935fffe8e5c524b56e67c1f85be6cae2652f07754a26c0",
+        "sha256LfNormalized": "2068e584f0310b4ce1935fffe8e5c524b56e67c1f85be6cae2652f07754a26c0",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/resolver/wire.ts",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 2248,
+        "sha256": "df95e36828bce9c53d2aa3961240314e946885278cc914c31776c8a85e360093",
+        "sha256LfNormalized": "df95e36828bce9c53d2aa3961240314e946885278cc914c31776c8a85e360093",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/retrieval/service.server.ts",
+      "change": "modified",
+      "before": {
+        "bytes": 18768,
+        "sha256": "38af06c0b2831795fc3b4aa2106f489456e3b4490bb872d9d1dd79d743c36408",
+        "sha256LfNormalized": "8dfe6ea7696d547a9c982f68898ae1a7a0486a0dfed7c7883c6be57f35fddcea",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 20100,
+        "sha256": "cc1fe60acd80ce249693c167bf2f722c2e444090bfecb747d0f30f320fadf7a9",
+        "sha256LfNormalized": "cc1fe60acd80ce249693c167bf2f722c2e444090bfecb747d0f30f320fadf7a9",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/retrieval/tools.server.ts",
+      "change": "modified",
+      "before": {
+        "bytes": 21969,
+        "sha256": "8ea49781459b29f3a3b222100fca20b5d16bb8e9acb387b622bb2f18f72bc55b",
+        "sha256LfNormalized": "b9d159ef8ea039a8b3fa70ecff44fe5117b3d2624a114f95ec0803038c5e2e79",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 22185,
+        "sha256": "d586b48d8a18f4d48336eea97becc466eaf931ab2d87ca94ca71c5167f4777eb",
+        "sha256LfNormalized": "d586b48d8a18f4d48336eea97becc466eaf931ab2d87ca94ca71c5167f4777eb",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/speed/telemetry.ts",
+      "change": "modified",
+      "before": {
+        "bytes": 1664,
+        "sha256": "73ebc760944a6938dbc1e4c3201185289541bde4d2a45ee6b2adb8e06cab833b",
+        "sha256LfNormalized": "a655ddb2ff5b7809aed08ae7a7879d1ffc2cb817bc969f3f707de89c18a68c9b",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 1648,
+        "sha256": "8e526565c1f437368f55b09a0384fb1f2342b741074f6e4348c6bf73c27c7745",
+        "sha256LfNormalized": "8e526565c1f437368f55b09a0384fb1f2342b741074f6e4348c6bf73c27c7745",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/v2/contracts.ts",
+      "change": "modified",
+      "before": {
+        "bytes": 15146,
+        "sha256": "006453ca715deb8edf28218aeb41c7a48acd3d094c66db38b5dde5b27618eb5d",
+        "sha256LfNormalized": "82636a182816772878340afabcbce452f43374edcddb844c3fc6e987b8855bb3",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 16092,
+        "sha256": "01fe86f6eaea23fca51d69fdfeef93d97a84f0e8667d921e260aff539e535c5f",
+        "sha256LfNormalized": "01fe86f6eaea23fca51d69fdfeef93d97a84f0e8667d921e260aff539e535c5f",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/v2/database.ts",
+      "change": "modified",
+      "before": {
+        "bytes": 3944,
+        "sha256": "ca015cfac2068d3842bdf714d964a49e09538ccb244e15efc4569fe91fa7d1eb",
+        "sha256LfNormalized": "c4e72ff7ebcd9f18cb292e48803a86f56d138f7c76b1725e1dd9464cbc95da89",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 4192,
+        "sha256": "a8b01470f13dc88cb89ffe655cb6f49bfce65d8609a8e04c131f1d4cf8546ede",
+        "sha256LfNormalized": "a8b01470f13dc88cb89ffe655cb6f49bfce65d8609a8e04c131f1d4cf8546ede",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/app/lib/smart-assistant/v2/tools.server.ts",
+      "change": "modified",
+      "before": {
+        "bytes": 34869,
+        "sha256": "c18d13ee023af80f3aceda761f76460e30a08cbe850010761e496ffd02a07b83",
+        "sha256LfNormalized": "1b62395ceb4e65bbc238ffeb8b1c0ba00d8123bf1cde345800a1637016894120",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 39089,
+        "sha256": "aa3e00fc36adfbc849f55ee9f8a3831a1f7bbe0d2c30f7ec010c35ae0d009e9b",
+        "sha256LfNormalized": "aa3e00fc36adfbc849f55ee9f8a3831a1f7bbe0d2c30f7ec010c35ae0d009e9b",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/backend/supabase/migrations/20260927150000_sa_v2_resolver_v171.sql",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 35475,
+        "sha256": "83b4c2725e55dad05d50c372cb0581ad0767ea23148d7c64004b010017d26735",
+        "sha256LfNormalized": "83b4c2725e55dad05d50c372cb0581ad0767ea23148d7c64004b010017d26735",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/SMART_ASSISTANT_P171_HANDOFF_2026-09-27.md",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 16437,
+        "sha256": "bb90b0541311a39d25626a0bb8faae343124fdefcb4fdc8aa4fe928d54e4b4c2",
+        "sha256LfNormalized": "bb90b0541311a39d25626a0bb8faae343124fdefcb4fdc8aa4fe928d54e4b4c2",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/ACCEPTANCE_CORPUS.json",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 16315,
+        "sha256": "35095d03a4fc0d1dc6c1a2dbefbed0a0b02da200bd39d1efa01288a13803bfef",
+        "sha256LfNormalized": "35095d03a4fc0d1dc6c1a2dbefbed0a0b02da200bd39d1efa01288a13803bfef",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/AGENT_INTEGRATION_PROMPT.txt",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 3594,
+        "sha256": "8fa0ff3cabd2bdf98a409bd3d9ff6ecf2dff55784ebdb66abe2e78900fe037d9",
+        "sha256LfNormalized": "8fa0ff3cabd2bdf98a409bd3d9ff6ecf2dff55784ebdb66abe2e78900fe037d9",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/BASELINE_RETURN_NOTES.md",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 4624,
+        "sha256": "7da8dc3b301eb50258c0144b92f77bdd950f8abaa006329190d6ff39383202d2",
+        "sha256LfNormalized": "65116f9c231060e75f3f85f8864f2f18e901570aed0d8af72ce7111b4bef612b",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/DATABASE_ACCEPTANCE.md",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 7207,
+        "sha256": "fc44cd7918a2ea4c34b99977930f4a82c5231cd7adde81b0ee11b13d0fa303f6",
+        "sha256LfNormalized": "fc44cd7918a2ea4c34b99977930f4a82c5231cd7adde81b0ee11b13d0fa303f6",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/validation/LOCKED_FILES.json",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 478772,
+        "sha256": "f292757778c4040a4c4e5c5e8dcd0ffc5e0e3c011122d4f02769e7685dc7dbff",
+        "sha256LfNormalized": "f292757778c4040a4c4e5c5e8dcd0ffc5e0e3c011122d4f02769e7685dc7dbff",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/validation/RESULTS.json",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 1169,
+        "sha256": "8aaacc7f0c87be8e5738e02b36124842b3999cb3c0a0db1975115f2f7e3b308a",
+        "sha256LfNormalized": "8aaacc7f0c87be8e5738e02b36124842b3999cb3c0a0db1975115f2f7e3b308a",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/validation/VALIDATION.md",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 5032,
+        "sha256": "3ee2059c1060bff5e3183f8494b653cad694e84488d559eccab82029b9a1fe98",
+        "sha256LfNormalized": "3ee2059c1060bff5e3183f8494b653cad694e84488d559eccab82029b9a1fe98",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/validation/baseline-offline.log",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 124719,
+        "sha256": "50918678bdeccdec64a13eb074036dc864caed2d6b71aaf0daf2cc19c2a4d865",
+        "sha256LfNormalized": "50918678bdeccdec64a13eb074036dc864caed2d6b71aaf0daf2cc19c2a4d865",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/validation/baseline-regression.log",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 124451,
+        "sha256": "d27a08f6b91cba5639c0ac9c1b88d073fc8795d1dbaf0619c3667331531dd41f",
+        "sha256LfNormalized": "d27a08f6b91cba5639c0ac9c1b88d073fc8795d1dbaf0619c3667331531dd41f",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/validation/offline-final.log",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 175693,
+        "sha256": "ba6ec7187b27df51657dd3986fa9ac1597134a9aca2f9de9da3c217ddac5d8b7",
+        "sha256LfNormalized": "ba6ec7187b27df51657dd3986fa9ac1597134a9aca2f9de9da3c217ddac5d8b7",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/docs/sa-p171-2026-09-27/validation/retained-regressions.log",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 124479,
+        "sha256": "820e284f31aa5dca343900f7622f4032f5577033d309cc340d670cd5f4f2e2a4",
+        "sha256LfNormalized": "820e284f31aa5dca343900f7622f4032f5577033d309cc340d670cd5f4f2e2a4",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/check-smart-assistant-resolver-source.cjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 4882,
+        "sha256": "ab966cac2fbc9add5062723fb650b63657816dd585b242b7d3659e9cb31db850",
+        "sha256LfNormalized": "ab966cac2fbc9add5062723fb650b63657816dd585b242b7d3659e9cb31db850",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/generate-sa-resolver-sql.cjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 4676,
+        "sha256": "d62038bf3a0dbe81273ca2991927520301c2e9356869b66622a6a75d30c3d87b",
+        "sha256LfNormalized": "d62038bf3a0dbe81273ca2991927520301c2e9356869b66622a6a75d30c3d87b",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/generate-sa-retrieval-p17-sql.cjs",
+      "change": "modified",
+      "before": {
+        "bytes": 951,
+        "sha256": "2b3698fef25a39cf7a8fa85e18b712230c035fa986bbd1c4183f47f7ab5bc569",
+        "sha256LfNormalized": "2a525116051252b1f5ea021dd30832b49912d2649e66e69125ad8692563d663e",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 984,
+        "sha256": "b2836c721b3ba9f92610fbd58f26b5b5e5812fc7a73b4f818130d5a1bca87977",
+        "sha256LfNormalized": "b2836c721b3ba9f92610fbd58f26b5b5e5812fc7a73b4f818130d5a1bca87977",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/generate-sa-retrieval-sql.cjs",
+      "change": "modified",
+      "before": {
+        "bytes": 1404,
+        "sha256": "0bb1547a26c1ad7a52b0c8a8b1ff4b9593220a0e2725d8b864dfabf6b6933a2e",
+        "sha256LfNormalized": "b7b18f818bdb615927a3cdab821296f138a0288ba0e96502272ea9aca4b716dd",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      },
+      "after": {
+        "bytes": 1431,
+        "sha256": "84936ec93c79f6c6e6ec6def7cc7b90b79774fb8c0dbbe9a5b7f416872ca8b16",
+        "sha256LfNormalized": "84936ec93c79f6c6e6ec6def7cc7b90b79774fb8c0dbbe9a5b7f416872ca8b16",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/run-smart-assistant-resolver-offline.mjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 797,
+        "sha256": "e2652b32802fc1097abaeec2c25414534612b037097859ec1e46172befb33bf6",
+        "sha256LfNormalized": "e2652b32802fc1097abaeec2c25414534612b037097859ec1e46172befb33bf6",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/sa-resolver/fixture.cjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 7019,
+        "sha256": "d6a1afa0bab9d7a07a95e25143e4fc976dac29776a2cd5274ab4a87b9976889f",
+        "sha256LfNormalized": "d6a1afa0bab9d7a07a95e25143e4fc976dac29776a2cd5274ab4a87b9976889f",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/sa-resolver/resolution-state.sql.in",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 7982,
+        "sha256": "63ff2e7bc123c73cd7172db12c9393febaf83f9d72cdb99a68a452d663d0c298",
+        "sha256LfNormalized": "63ff2e7bc123c73cd7172db12c9393febaf83f9d72cdb99a68a452d663d0c298",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/test-smart-assistant-resolver-integration.cjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 13988,
+        "sha256": "ebd86e5c4f2bb5023db1964a265b4b4f4eeed34b71f5664f7e13f3a3b01ecf28",
+        "sha256LfNormalized": "ebd86e5c4f2bb5023db1964a265b4b4f4eeed34b71f5664f7e13f3a3b01ecf28",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/test-smart-assistant-resolver-pure.cjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 19500,
+        "sha256": "dce81ad514ddc7dfef0a8779111ebfcb44a55ad900b2573e8a16840ce01d12df",
+        "sha256LfNormalized": "dce81ad514ddc7dfef0a8779111ebfcb44a55ad900b2573e8a16840ce01d12df",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    },
+    {
+      "path": "quotecore-plus/scripts/test-smart-assistant-resolver-services.cjs",
+      "change": "added",
+      "before": null,
+      "after": {
+        "bytes": 22082,
+        "sha256": "6f24d5e14e45a79d35ce107caf279c629595708a8f3480cb8f1b5261502e14b4",
+        "sha256LfNormalized": "6f24d5e14e45a79d35ce107caf279c629595708a8f3480cb8f1b5261502e14b4",
+        "hashNormalization": "UTF-8 CRLF to LF only"
+      }
+    }
+  ]
+}

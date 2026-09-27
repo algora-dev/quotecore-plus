@@ -1,0 +1,3807 @@
+
+=== test-smart-assistant-retrieval.cjs ===
+TAP version 13
+# Subtest: registered source quotes accepts a bounded read
+ok 1 - registered source quotes accepts a bounded read
+  ---
+  duration_ms: 2.999825
+  type: 'test'
+  ...
+# Subtest: source quotes never accepts arbitrary tenant/SQL input
+ok 2 - source quotes never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.538803
+  type: 'test'
+  ...
+# Subtest: quotes checks parent quote/draft sections
+ok 3 - quotes checks parent quote/draft sections
+  ---
+  duration_ms: 0.477682
+  type: 'test'
+  ...
+# Subtest: registered source quote_components accepts a bounded read
+ok 4 - registered source quote_components accepts a bounded read
+  ---
+  duration_ms: 0.170903
+  type: 'test'
+  ...
+# Subtest: source quote_components never accepts arbitrary tenant/SQL input
+ok 5 - source quote_components never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.188251
+  type: 'test'
+  ...
+# Subtest: quote_components requires components
+ok 6 - quote_components requires components
+  ---
+  duration_ms: 0.115303
+  type: 'test'
+  ...
+# Subtest: quote_components checks parent quote/draft sections
+ok 7 - quote_components checks parent quote/draft sections
+  ---
+  duration_ms: 0.344623
+  type: 'test'
+  ...
+# Subtest: registered source quote_areas accepts a bounded read
+ok 8 - registered source quote_areas accepts a bounded read
+  ---
+  duration_ms: 0.117346
+  type: 'test'
+  ...
+# Subtest: source quote_areas never accepts arbitrary tenant/SQL input
+ok 9 - source quote_areas never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.544402
+  type: 'test'
+  ...
+# Subtest: quote_areas checks parent quote/draft sections
+ok 10 - quote_areas checks parent quote/draft sections
+  ---
+  duration_ms: 0.371257
+  type: 'test'
+  ...
+# Subtest: registered source quote_entries accepts a bounded read
+ok 11 - registered source quote_entries accepts a bounded read
+  ---
+  duration_ms: 0.14519
+  type: 'test'
+  ...
+# Subtest: source quote_entries never accepts arbitrary tenant/SQL input
+ok 12 - source quote_entries never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.122155
+  type: 'test'
+  ...
+# Subtest: quote_entries requires components
+ok 13 - quote_entries requires components
+  ---
+  duration_ms: 0.050753
+  type: 'test'
+  ...
+# Subtest: quote_entries checks parent quote/draft sections
+ok 14 - quote_entries checks parent quote/draft sections
+  ---
+  duration_ms: 0.123582
+  type: 'test'
+  ...
+# Subtest: registered source customer_quote_lines accepts a bounded read
+ok 15 - registered source customer_quote_lines accepts a bounded read
+  ---
+  duration_ms: 0.15986
+  type: 'test'
+  ...
+# Subtest: source customer_quote_lines never accepts arbitrary tenant/SQL input
+ok 16 - source customer_quote_lines never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.110821
+  type: 'test'
+  ...
+# Subtest: customer_quote_lines checks parent quote/draft sections
+ok 17 - customer_quote_lines checks parent quote/draft sections
+  ---
+  duration_ms: 0.073217
+  type: 'test'
+  ...
+# Subtest: registered source orders accepts a bounded read
+ok 18 - registered source orders accepts a bounded read
+  ---
+  duration_ms: 0.048171
+  type: 'test'
+  ...
+# Subtest: source orders never accepts arbitrary tenant/SQL input
+ok 19 - source orders never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.098258
+  type: 'test'
+  ...
+# Subtest: orders requires orders
+ok 20 - orders requires orders
+  ---
+  duration_ms: 0.042474
+  type: 'test'
+  ...
+# Subtest: registered source order_lines accepts a bounded read
+ok 21 - registered source order_lines accepts a bounded read
+  ---
+  duration_ms: 0.04707
+  type: 'test'
+  ...
+# Subtest: source order_lines never accepts arbitrary tenant/SQL input
+ok 22 - source order_lines never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.092707
+  type: 'test'
+  ...
+# Subtest: order_lines requires orders
+ok 23 - order_lines requires orders
+  ---
+  duration_ms: 0.041872
+  type: 'test'
+  ...
+# Subtest: registered source order_text_lines accepts a bounded read
+ok 24 - registered source order_text_lines accepts a bounded read
+  ---
+  duration_ms: 0.037122
+  type: 'test'
+  ...
+# Subtest: source order_text_lines never accepts arbitrary tenant/SQL input
+ok 25 - source order_text_lines never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.126872
+  type: 'test'
+  ...
+# Subtest: order_text_lines requires orders
+ok 26 - order_text_lines requires orders
+  ---
+  duration_ms: 0.041936
+  type: 'test'
+  ...
+# Subtest: registered source invoices accepts a bounded read
+ok 27 - registered source invoices accepts a bounded read
+  ---
+  duration_ms: 0.050258
+  type: 'test'
+  ...
+# Subtest: source invoices never accepts arbitrary tenant/SQL input
+ok 28 - source invoices never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.094374
+  type: 'test'
+  ...
+# Subtest: invoices requires invoices
+ok 29 - invoices requires invoices
+  ---
+  duration_ms: 0.040673
+  type: 'test'
+  ...
+# Subtest: registered source invoice_lines accepts a bounded read
+ok 30 - registered source invoice_lines accepts a bounded read
+  ---
+  duration_ms: 0.108588
+  type: 'test'
+  ...
+# Subtest: source invoice_lines never accepts arbitrary tenant/SQL input
+ok 31 - source invoice_lines never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.109594
+  type: 'test'
+  ...
+# Subtest: invoice_lines requires invoices
+ok 32 - invoice_lines requires invoices
+  ---
+  duration_ms: 0.043192
+  type: 'test'
+  ...
+# Subtest: registered source component_library accepts a bounded read
+ok 33 - registered source component_library accepts a bounded read
+  ---
+  duration_ms: 0.048214
+  type: 'test'
+  ...
+# Subtest: source component_library never accepts arbitrary tenant/SQL input
+ok 34 - source component_library never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.095545
+  type: 'test'
+  ...
+# Subtest: component_library requires components
+ok 35 - component_library requires components
+  ---
+  duration_ms: 0.039045
+  type: 'test'
+  ...
+# Subtest: registered source component_collections accepts a bounded read
+ok 36 - registered source component_collections accepts a bounded read
+  ---
+  duration_ms: 0.043826
+  type: 'test'
+  ...
+# Subtest: source component_collections never accepts arbitrary tenant/SQL input
+ok 37 - source component_collections never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.127211
+  type: 'test'
+  ...
+# Subtest: component_collections requires components
+ok 38 - component_collections requires components
+  ---
+  duration_ms: 0.043299
+  type: 'test'
+  ...
+# Subtest: registered source catalogues accepts a bounded read
+ok 39 - registered source catalogues accepts a bounded read
+  ---
+  duration_ms: 0.046285
+  type: 'test'
+  ...
+# Subtest: source catalogues never accepts arbitrary tenant/SQL input
+ok 40 - source catalogues never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.094366
+  type: 'test'
+  ...
+# Subtest: catalogues requires components
+ok 41 - catalogues requires components
+  ---
+  duration_ms: 0.039531
+  type: 'test'
+  ...
+# Subtest: registered source catalogue_rows accepts a bounded read
+ok 42 - registered source catalogue_rows accepts a bounded read
+  ---
+  duration_ms: 0.041251
+  type: 'test'
+  ...
+# Subtest: source catalogue_rows never accepts arbitrary tenant/SQL input
+ok 43 - source catalogue_rows never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.094145
+  type: 'test'
+  ...
+# Subtest: catalogue_rows requires components
+ok 44 - catalogue_rows requires components
+  ---
+  duration_ms: 0.043794
+  type: 'test'
+  ...
+# Subtest: registered source knowledge_documents accepts a bounded read
+ok 45 - registered source knowledge_documents accepts a bounded read
+  ---
+  duration_ms: 0.046446
+  type: 'test'
+  ...
+# Subtest: source knowledge_documents never accepts arbitrary tenant/SQL input
+ok 46 - source knowledge_documents never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.099919
+  type: 'test'
+  ...
+# Subtest: registered source knowledge_chunks accepts a bounded read
+ok 47 - registered source knowledge_chunks accepts a bounded read
+  ---
+  duration_ms: 0.051788
+  type: 'test'
+  ...
+# Subtest: source knowledge_chunks never accepts arbitrary tenant/SQL input
+ok 48 - source knowledge_chunks never accepts arbitrary tenant/SQL input
+  ---
+  duration_ms: 0.182189
+  type: 'test'
+  ...
+# Subtest: the same registry is reused for all accounts; it accepts no account selection
+ok 49 - the same registry is reused for all accounts; it accepts no account selection
+  ---
+  duration_ms: 0.755728
+  type: 'test'
+  ...
+# Subtest: malformed permission maps fail closed in discovery and source validation
+ok 50 - malformed permission maps fail closed in discovery and source validation
+  ---
+  duration_ms: 0.12049
+  type: 'test'
+  ...
+# Subtest: all hidden sources produce no tools or invalid empty-enum schemas
+ok 51 - all hidden sources produce no tools or invalid empty-enum schemas
+  ---
+  duration_ms: 0.471541
+  type: 'test'
+  ...
+# Subtest: Customers hidden denies contact fields but retains permitted quote identity
+ok 52 - Customers hidden denies contact fields but retains permitted quote identity
+  ---
+  duration_ms: 0.168348
+  type: 'test'
+  ...
+# Subtest: Components hidden denies builder totals, not saved customer document totals
+ok 53 - Components hidden denies builder totals, not saved customer document totals
+  ---
+  duration_ms: 0.108304
+  type: 'test'
+  ...
+# Subtest: child relations check their own permissions before querying
+ok 54 - child relations check their own permissions before querying
+  ---
+  duration_ms: 0.177036
+  type: 'test'
+  ...
+# Subtest: a permitted order cannot traverse hidden quote or draft records
+ok 55 - a permitted order cannot traverse hidden quote or draft records
+  ---
+  duration_ms: 0.149043
+  type: 'test'
+  ...
+# Subtest: internal relationship identifiers are not arbitrary selected/filterable fields
+ok 56 - internal relationship identifiers are not arbitrary selected/filterable fields
+  ---
+  duration_ms: 0.066806
+  type: 'test'
+  ...
+# Subtest: documents require the separate publication/classification rollout
+ok 57 - documents require the separate publication/classification rollout
+  ---
+  duration_ms: 0.131006
+  type: 'test'
+  ...
+# Subtest: discovery never exports SQL, joins, physical scope or internal columns
+ok 58 - discovery never exports SQL, joins, physical scope or internal columns
+  ---
+  duration_ms: 1.188217
+  type: 'test'
+  ...
+# Subtest: discovery omits hidden contact fields and hidden relationships
+ok 59 - discovery omits hidden contact fields and hidden relationships
+  ---
+  duration_ms: 0.138835
+  type: 'test'
+  ...
+# Subtest: unknown/dangerous field validation for quotes
+ok 60 - unknown/dangerous field validation for quotes
+  ---
+  duration_ms: 0.101939
+  type: 'test'
+  ...
+# Subtest: unknown/dangerous field validation for __proto__
+ok 61 - unknown/dangerous field validation for __proto__
+  ---
+  duration_ms: 0.058126
+  type: 'test'
+  ...
+# Subtest: unknown/dangerous field validation for constructor
+ok 62 - unknown/dangerous field validation for constructor
+  ---
+  duration_ms: 0.037325
+  type: 'test'
+  ...
+# Subtest: unknown/dangerous field validation for auth.users
+ok 63 - unknown/dangerous field validation for auth.users
+  ---
+  duration_ms: 0.040434
+  type: 'test'
+  ...
+# Subtest: unknown/dangerous field validation for quotes; DROP TABLE users
+ok 64 - unknown/dangerous field validation for quotes; DROP TABLE users
+  ---
+  duration_ms: 0.076335
+  type: 'test'
+  ...
+# Subtest: compiler rejects null root
+ok 65 - compiler rejects null root
+  ---
+  duration_ms: 0.063437
+  type: 'test'
+  ...
+# Subtest: compiler rejects version missing
+ok 66 - compiler rejects version missing
+  ---
+  duration_ms: 0.046099
+  type: 'test'
+  ...
+# Subtest: compiler rejects version string
+ok 67 - compiler rejects version string
+  ---
+  duration_ms: 0.03977
+  type: 'test'
+  ...
+# Subtest: compiler rejects limit zero
+ok 68 - compiler rejects limit zero
+  ---
+  duration_ms: 0.074989
+  type: 'test'
+  ...
+# Subtest: compiler rejects limit high
+ok 69 - compiler rejects limit high
+  ---
+  duration_ms: 0.054268
+  type: 'test'
+  ...
+# Subtest: compiler rejects limit float
+ok 70 - compiler rejects limit float
+  ---
+  duration_ms: 0.067949
+  type: 'test'
+  ...
+# Subtest: compiler rejects number NaN
+ok 71 - compiler rejects number NaN
+  ---
+  duration_ms: 0.223178
+  type: 'test'
+  ...
+# Subtest: compiler rejects unknown op
+ok 72 - compiler rejects unknown op
+  ---
+  duration_ms: 0.054795
+  type: 'test'
+  ...
+# Subtest: compiler rejects negative UUID
+ok 73 - compiler rejects negative UUID
+  ---
+  duration_ms: 0.156061
+  type: 'test'
+  ...
+# Subtest: compiler rejects null equality
+ok 74 - compiler rejects null equality
+  ---
+  duration_ms: 0.09246
+  type: 'test'
+  ...
+# Subtest: compiler rejects wrong null flag
+ok 75 - compiler rejects wrong null flag
+  ---
+  duration_ms: 0.045939
+  type: 'test'
+  ...
+# Subtest: compiler rejects contains numeric
+ok 76 - compiler rejects contains numeric
+  ---
+  duration_ms: 0.042235
+  type: 'test'
+  ...
+# Subtest: compiler rejects ordered string
+ok 77 - compiler rejects ordered string
+  ---
+  duration_ms: 0.040323
+  type: 'test'
+  ...
+# Subtest: compiler rejects empty in
+ok 78 - compiler rejects empty in
+  ---
+  duration_ms: 0.046908
+  type: 'test'
+  ...
+# Subtest: compiler rejects excess in
+ok 79 - compiler rejects excess in
+  ---
+  duration_ms: 0.047311
+  type: 'test'
+  ...
+# Subtest: compiler rejects text control
+ok 80 - compiler rejects text control
+  ---
+  duration_ms: 0.048976
+  type: 'test'
+  ...
+# Subtest: compiler rejects empty search
+ok 81 - compiler rejects empty search
+  ---
+  duration_ms: 0.366293
+  type: 'test'
+  ...
+# Subtest: compiler rejects unknown relationship
+ok 82 - compiler rejects unknown relationship
+  ---
+  duration_ms: 0.056971
+  type: 'test'
+  ...
+# Subtest: compiler rejects recursive relationship
+ok 83 - compiler rejects recursive relationship
+  ---
+  duration_ms: 0.084983
+  type: 'test'
+  ...
+# Subtest: compiler rejects too many relations
+ok 84 - compiler rejects too many relations
+  ---
+  duration_ms: 0.046804
+  type: 'test'
+  ...
+# Subtest: compiler rejects fuzzy relation
+ok 85 - compiler rejects fuzzy relation
+  ---
+  duration_ms: 0.235703
+  type: 'test'
+  ...
+# Subtest: compiler rejects fuzzy aggregate
+ok 86 - compiler rejects fuzzy aggregate
+  ---
+  duration_ms: 0.067455
+  type: 'test'
+  ...
+# Subtest: compiler rejects engine filter
+ok 87 - compiler rejects engine filter
+  ---
+  duration_ms: 0.047836
+  type: 'test'
+  ...
+# Subtest: compiler rejects aggregate raw price
+ok 88 - compiler rejects aggregate raw price
+  ---
+  duration_ms: 0.133891
+  type: 'test'
+  ...
+# Subtest: compiler rejects empty metrics
+ok 89 - compiler rejects empty metrics
+  ---
+  duration_ms: 0.053558
+  type: 'test'
+  ...
+# Subtest: compiler rejects mixed mode
+ok 90 - compiler rejects mixed mode
+  ---
+  duration_ms: 0.054241
+  type: 'test'
+  ...
+# Subtest: compiler rejects aggregate projection
+ok 91 - compiler rejects aggregate projection
+  ---
+  duration_ms: 0.052008
+  type: 'test'
+  ...
+# Subtest: compiler rejects aggregate resolution
+ok 92 - compiler rejects aggregate resolution
+  ---
+  duration_ms: 0.235197
+  type: 'test'
+  ...
+# Subtest: compiler rejects unknown metric sort
+ok 93 - compiler rejects unknown metric sort
+  ---
+  duration_ms: 0.202136
+  type: 'test'
+  ...
+# Subtest: compiler rejects JSON sort
+ok 94 - compiler rejects JSON sort
+  ---
+  duration_ms: 0.152606
+  type: 'test'
+  ...
+# Subtest: compiler rejects JSON filter
+ok 95 - compiler rejects JSON filter
+  ---
+  duration_ms: 0.096111
+  type: 'test'
+  ...
+# Subtest: compiler rejects wrong scope
+ok 96 - compiler rejects wrong scope
+  ---
+  duration_ms: 0.084715
+  type: 'test'
+  ...
+# Subtest: compiler rejects wrong creator
+ok 97 - compiler rejects wrong creator
+  ---
+  duration_ms: 0.079123
+  type: 'test'
+  ...
+# Subtest: compiler rejects bad date
+ok 98 - compiler rejects bad date
+  ---
+  duration_ms: 0.242782
+  type: 'test'
+  ...
+# Subtest: compiler rejects numeric period
+ok 99 - compiler rejects numeric period
+  ---
+  duration_ms: 0.133113
+  type: 'test'
+  ...
+# Subtest: compiler rejects unbounded plan
+ok 100 - compiler rejects unbounded plan
+  ---
+  duration_ms: 0.116149
+  type: 'test'
+  ...
+# Subtest: literal SQL-looking filter values stay data; no string rewrite
+ok 101 - literal SQL-looking filter values stay data; no string rewrite
+  ---
+  duration_ms: 0.486456
+  type: 'test'
+  ...
+# Subtest: explicit null query works; false is not silently omitted
+ok 102 - explicit null query works; false is not silently omitted
+  ---
+  duration_ms: 0.25945
+  type: 'test'
+  ...
+# Subtest: monetary aggregates always group by currency
+ok 103 - monetary aggregates always group by currency
+  ---
+  duration_ms: 0.184633
+  type: 'test'
+  ...
+# Subtest: quantity aggregates always group by unit
+ok 104 - quantity aggregates always group by unit
+  ---
+  duration_ms: 0.142734
+  type: 'test'
+  ...
+# Subtest: rates separate BOTH units and currencies
+ok 105 - rates separate BOTH units and currencies
+  ---
+  duration_ms: 0.282783
+  type: 'test'
+  ...
+# Subtest: supplied group dimensions are not duplicated
+ok 106 - supplied group dimensions are not duplicated
+  ---
+  duration_ms: 0.351706
+  type: 'test'
+  ...
+# Subtest: count has no unnecessary numeric grouping and preserves owned UTC period
+ok 107 - count has no unnecessary numeric grouping and preserves owned UTC period
+  ---
+  duration_ms: 0.191239
+  type: 'test'
+  ...
+# Subtest: parent creator semantics are available for quote component rollups
+ok 108 - parent creator semantics are available for quote component rollups
+  ---
+  duration_ms: 0.112328
+  type: 'test'
+  ...
+# Subtest: named resolve must fetch competing candidates even when model requests one row
+ok 109 - named resolve must fetch competing candidates even when model requests one row
+  ---
+  duration_ms: 0.107636
+  type: 'test'
+  ...
+# Subtest: related qualifiers remain intact in the normalized plan
+ok 110 - related qualifiers remain intact in the normalized plan
+  ---
+  duration_ms: 0.35881
+  type: 'test'
+  ...
+# Subtest: unique exact name beats weaker results without asking again
+ok 111 - unique exact name beats weaker results without asking again
+  ---
+  duration_ms: 0.485234
+  type: 'test'
+  ...
+# Subtest: 85 versus 56.9 structural tiers resolves the reported named-draft case
+ok 112 - 85 versus 56.9 structural tiers resolves the reported named-draft case
+  ---
+  duration_ms: 0.185107
+  type: 'test'
+  ...
+# Subtest: equal exact names remain choices, never recency wins
+ok 113 - equal exact names remain choices, never recency wins
+  ---
+  duration_ms: 0.468406
+  type: 'test'
+  ...
+# Subtest: a fuzzy sole hit is still a suggestion, not identity
+ok 114 - a fuzzy sole hit is still a suggestion, not identity
+  ---
+  duration_ms: 0.175302
+  type: 'test'
+  ...
+# Subtest: all-word sole hit can resolve if the set is complete
+ok 115 - all-word sole hit can resolve if the set is complete
+  ---
+  duration_ms: 0.119286
+  type: 'test'
+  ...
+# Subtest: nearby phrase/all-word candidates stay ambiguous
+ok 116 - nearby phrase/all-word candidates stay ambiguous
+  ---
+  duration_ms: 0.306332
+  type: 'test'
+  ...
+# Subtest: no results are distinct from ambiguity
+ok 117 - no results are distinct from ambiguity
+  ---
+  duration_ms: 0.122757
+  type: 'test'
+  ...
+# Subtest: exact ID resolves one authoritatively returned record
+ok 118 - exact ID resolves one authoritatively returned record
+  ---
+  duration_ms: 0.202861
+  type: 'test'
+  ...
+# Subtest: unqualified many records require clarification
+ok 119 - unqualified many records require clarification
+  ---
+  duration_ms: 0.077947
+  type: 'test'
+  ...
+# Subtest: draft output never invents a draft number
+ok 120 - draft output never invents a draft number
+  ---
+  duration_ms: 1.059212
+  type: 'test'
+  ...
+# Subtest: zero exact count is an answer, not missing data
+ok 121 - zero exact count is an answer, not missing data
+  ---
+  duration_ms: 0.398152
+  type: 'test'
+  ...
+# Subtest: missing numeric records do not become zero sums
+ok 122 - missing numeric records do not become zero sums
+  ---
+  duration_ms: 0.219555
+  type: 'test'
+  ...
+# Subtest: large exact counts retain their string precision
+ok 123 - large exact counts retain their string precision
+  ---
+  duration_ms: 0.122234
+  type: 'test'
+  ...
+# Subtest: clipped source material is visibly an excerpt and cites file/chunk
+ok 124 - clipped source material is visibly an excerpt and cites file/chunk
+  ---
+  duration_ms: 0.207414
+  type: 'test'
+  ...
+# Subtest: incomplete aggregates never claim global completeness
+ok 125 - incomplete aggregates never claim global completeness
+  ---
+  duration_ms: 1.217085
+  type: 'test'
+  ...
+# Subtest: bulk total adapter exactly matches existing single-quote engine values
+ok 126 - bulk total adapter exactly matches existing single-quote engine values
+  ---
+  duration_ms: 0.807547
+  type: 'test'
+  ...
+# Subtest: maximum quote carries the actual winner identity
+ok 127 - maximum quote carries the actual winner identity
+  ---
+  duration_ms: 1.347496
+  type: 'test'
+  ...
+# Subtest: equal maximum values preserve ties
+ok 128 - equal maximum values preserve ties
+  ---
+  duration_ms: 0.467659
+  type: 'test'
+  ...
+# Subtest: engine aggregation separates currencies and does not invent FX
+ok 129 - engine aggregation separates currencies and does not invent FX
+  ---
+  duration_ms: 8.935556
+  type: 'test'
+  ...
+# Subtest: engine ranking across currencies asks which currency
+ok 130 - engine ranking across currencies asks which currency
+  ---
+  duration_ms: 0.99585
+  type: 'test'
+  ...
+# Subtest: engine maximum never includes an unavailable customer quote as zero
+ok 131 - engine maximum never includes an unavailable customer quote as zero
+  ---
+  duration_ms: 0.318184
+  type: 'test'
+  ...
+# Subtest: engine returns no global calculation for an over-limit batch
+ok 132 - engine returns no global calculation for an over-limit batch
+  ---
+  duration_ms: 0.13493
+  type: 'test'
+  ...
+# Subtest: missing or duplicate engine snapshots fail closed
+ok 133 - missing or duplicate engine snapshots fail closed
+  ---
+  duration_ms: 0.138844
+  type: 'test'
+  ...
+# Subtest: engine results cannot silently swap currencies
+ok 134 - engine results cannot silently swap currencies
+  ---
+  duration_ms: 0.112527
+  type: 'test'
+  ...
+# Subtest: engine projection never exposes raw snapshot/tax arrays
+ok 135 - engine projection never exposes raw snapshot/tax arrays
+  ---
+  duration_ms: 0.209313
+  type: 'test'
+  ...
+# Subtest: engine ranking preserves structural search relevance
+ok 136 - engine ranking preserves structural search relevance
+  ---
+  duration_ms: 0.244551
+  type: 'test'
+  ...
+# Subtest: engine count and averages share the exact selected snapshot
+ok 137 - engine count and averages share the exact selected snapshot
+  ---
+  duration_ms: 0.447418
+  type: 'test'
+  ...
+# Subtest: no early finish for workflow: Remove ridge from this quote
+ok 138 - no early finish for workflow: Remove ridge from this quote
+  ---
+  duration_ms: 1.090069
+  type: 'test'
+  ...
+# Subtest: no early finish for workflow: Compare Smith with Jones
+ok 139 - no early finish for workflow: Compare Smith with Jones
+  ---
+  duration_ms: 0.329663
+  type: 'test'
+  ...
+# Subtest: no early finish for workflow: Open it and email it
+ok 140 - no early finish for workflow: Open it and email it
+  ---
+  duration_ms: 0.045359
+  type: 'test'
+  ...
+# Subtest: no early finish for workflow: Use quotes record abc for my previous request.
+ok 141 - no early finish for workflow: Use quotes record abc for my previous request.
+  ---
+  duration_ms: 0.169092
+  type: 'test'
+  ...
+# Subtest: no early finish for workflow: Yes
+ok 142 - no early finish for workflow: Yes
+  ---
+  duration_ms: 0.041281
+  type: 'test'
+  ...
+# Subtest: no early finish for workflow: What changed since last time?
+ok 143 - no early finish for workflow: What changed since last time?
+  ---
+  duration_ms: 0.031171
+  type: 'test'
+  ...
+# Subtest: no early finish for workflow: Explain why it costs more
+ok 144 - no early finish for workflow: Explain why it costs more
+  ---
+  duration_ms: 0.030549
+  type: 'test'
+  ...
+# Subtest: simple request can use trusted renderer: Which quote is worth the most?
+ok 145 - simple request can use trusted renderer: Which quote is worth the most?
+  ---
+  duration_ms: 0.063246
+  type: 'test'
+  ...
+# Subtest: simple request can use trusted renderer: Open the 9th canvas test draft
+ok 146 - simple request can use trusted renderer: Open the 9th canvas test draft
+  ---
+  duration_ms: 0.033695
+  type: 'test'
+  ...
+# Subtest: simple request can use trusted renderer: How many metres of ridge have I quoted?
+ok 147 - simple request can use trusted renderer: How many metres of ridge have I quoted?
+  ---
+  duration_ms: 0.035881
+  type: 'test'
+  ...
+# Subtest: simple request can use trusted renderer: What did I charge for Velux on Smith?
+ok 148 - simple request can use trusted renderer: What did I charge for Velux on Smith?
+  ---
+  duration_ms: 0.030827
+  type: 'test'
+  ...
+# Subtest: navigation requires an explicit user request, not a model presentation flag
+ok 149 - navigation requires an explicit user request, not a model presentation flag
+  ---
+  duration_ms: 0.453523
+  type: 'test'
+  ...
+# Subtest: prompt omits unavailable document/catalogue sources and all physical SQL
+ok 150 - prompt omits unavailable document/catalogue sources and all physical SQL
+  ---
+  duration_ms: 0.826093
+  type: 'test'
+  ...
+# Subtest: trusted lone read finishes after exactly one metered model call
+ok 151 - trusted lone read finishes after exactly one metered model call
+  ---
+  duration_ms: 1.273729
+  type: 'test'
+  ...
+# Subtest: untrusted answer property alone cannot skip synthesis
+ok 152 - untrusted answer property alone cannot skip synthesis
+  ---
+  duration_ms: 0.30811
+  type: 'test'
+  ...
+# Subtest: multiple tool calls never short-circuit remaining work
+ok 153 - multiple tool calls never short-circuit remaining work
+  ---
+  duration_ms: 0.338877
+  type: 'test'
+  ...
+# Subtest: final revocation prevents trusted terminal output and carries token usage
+ok 154 - final revocation prevents trusted terminal output and carries token usage
+  ---
+  duration_ms: 0.555202
+  type: 'test'
+  ...
+# Subtest: conditional parallel reads overlap, but card-producing calls remain barriers
+ok 155 - conditional parallel reads overlap, but card-producing calls remain barriers
+  ---
+  duration_ms: 41.732949
+  type: 'test'
+  ...
+# Subtest: ambiguous long source rows are compacted after structural resolution
+ok 156 - ambiguous long source rows are compacted after structural resolution
+  ---
+  duration_ms: 0.637516
+  type: 'test'
+  ...
+# Subtest: model row cap never samples aggregate inputs or corrupts numeric strings
+ok 157 - model row cap never samples aggregate inputs or corrupts numeric strings
+  ---
+  duration_ms: 1.632757
+  type: 'test'
+  ...
+# Subtest: huge catalogue JSON is visibly a source excerpt, not silently changed numeric data
+ok 158 - huge catalogue JSON is visibly a source excerpt, not silently changed numeric data
+  ---
+  duration_ms: 0.268211
+  type: 'test'
+  ...
+# Subtest: 100-case corpus has unique IDs and explicit execution classification
+ok 159 - 100-case corpus has unique IDs and explicit execution classification
+  ---
+  duration_ms: 0.181576
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R007 (not a live model test)
+ok 160 - acceptance plan shape R007 (not a live model test)
+  ---
+  duration_ms: 0.143928
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R008 (not a live model test)
+ok 161 - acceptance plan shape R008 (not a live model test)
+  ---
+  duration_ms: 0.090196
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R009 (not a live model test)
+ok 162 - acceptance plan shape R009 (not a live model test)
+  ---
+  duration_ms: 0.084581
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R010 (not a live model test)
+ok 163 - acceptance plan shape R010 (not a live model test)
+  ---
+  duration_ms: 0.049352
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R011 (not a live model test)
+ok 164 - acceptance plan shape R011 (not a live model test)
+  ---
+  duration_ms: 0.045588
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R012 (not a live model test)
+ok 165 - acceptance plan shape R012 (not a live model test)
+  ---
+  duration_ms: 0.037393
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R013 (not a live model test)
+ok 166 - acceptance plan shape R013 (not a live model test)
+  ---
+  duration_ms: 0.030704
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R014 (not a live model test)
+ok 167 - acceptance plan shape R014 (not a live model test)
+  ---
+  duration_ms: 0.030122
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R015 (not a live model test)
+ok 168 - acceptance plan shape R015 (not a live model test)
+  ---
+  duration_ms: 0.03257
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R016 (not a live model test)
+ok 169 - acceptance plan shape R016 (not a live model test)
+  ---
+  duration_ms: 0.032942
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R022 (not a live model test)
+ok 170 - acceptance plan shape R022 (not a live model test)
+  ---
+  duration_ms: 0.041541
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R023 (not a live model test)
+ok 171 - acceptance plan shape R023 (not a live model test)
+  ---
+  duration_ms: 0.029989
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R024 (not a live model test)
+ok 172 - acceptance plan shape R024 (not a live model test)
+  ---
+  duration_ms: 0.037726
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R025 (not a live model test)
+ok 173 - acceptance plan shape R025 (not a live model test)
+  ---
+  duration_ms: 0.04789
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R026 (not a live model test)
+ok 174 - acceptance plan shape R026 (not a live model test)
+  ---
+  duration_ms: 0.076825
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R027 (not a live model test)
+ok 175 - acceptance plan shape R027 (not a live model test)
+  ---
+  duration_ms: 0.042974
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R028 (not a live model test)
+ok 176 - acceptance plan shape R028 (not a live model test)
+  ---
+  duration_ms: 0.031407
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R029 (not a live model test)
+ok 177 - acceptance plan shape R029 (not a live model test)
+  ---
+  duration_ms: 0.027678
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R030 (not a live model test)
+ok 178 - acceptance plan shape R030 (not a live model test)
+  ---
+  duration_ms: 0.029101
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R031 (not a live model test)
+ok 179 - acceptance plan shape R031 (not a live model test)
+  ---
+  duration_ms: 0.036529
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R032 (not a live model test)
+ok 180 - acceptance plan shape R032 (not a live model test)
+  ---
+  duration_ms: 0.030821
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R033 (not a live model test)
+ok 181 - acceptance plan shape R033 (not a live model test)
+  ---
+  duration_ms: 0.059459
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R034 (not a live model test)
+ok 182 - acceptance plan shape R034 (not a live model test)
+  ---
+  duration_ms: 0.04267
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R035 (not a live model test)
+ok 183 - acceptance plan shape R035 (not a live model test)
+  ---
+  duration_ms: 0.031824
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R036 (not a live model test)
+ok 184 - acceptance plan shape R036 (not a live model test)
+  ---
+  duration_ms: 0.036772
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R037 (not a live model test)
+ok 185 - acceptance plan shape R037 (not a live model test)
+  ---
+  duration_ms: 0.052841
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R038 (not a live model test)
+ok 186 - acceptance plan shape R038 (not a live model test)
+  ---
+  duration_ms: 0.043552
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R039 (not a live model test)
+ok 187 - acceptance plan shape R039 (not a live model test)
+  ---
+  duration_ms: 0.099202
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R040 (not a live model test)
+ok 188 - acceptance plan shape R040 (not a live model test)
+  ---
+  duration_ms: 0.046594
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R041 (not a live model test)
+ok 189 - acceptance plan shape R041 (not a live model test)
+  ---
+  duration_ms: 0.037908
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R042 (not a live model test)
+ok 190 - acceptance plan shape R042 (not a live model test)
+  ---
+  duration_ms: 0.051763
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R043 (not a live model test)
+ok 191 - acceptance plan shape R043 (not a live model test)
+  ---
+  duration_ms: 0.032161
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R044 (not a live model test)
+ok 192 - acceptance plan shape R044 (not a live model test)
+  ---
+  duration_ms: 0.027753
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R045 (not a live model test)
+ok 193 - acceptance plan shape R045 (not a live model test)
+  ---
+  duration_ms: 0.080192
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R046 (not a live model test)
+ok 194 - acceptance plan shape R046 (not a live model test)
+  ---
+  duration_ms: 0.032201
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R047 (not a live model test)
+ok 195 - acceptance plan shape R047 (not a live model test)
+  ---
+  duration_ms: 0.032271
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R049 (not a live model test)
+ok 196 - acceptance plan shape R049 (not a live model test)
+  ---
+  duration_ms: 0.031624
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R050 (not a live model test)
+ok 197 - acceptance plan shape R050 (not a live model test)
+  ---
+  duration_ms: 0.027191
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R051 (not a live model test)
+ok 198 - acceptance plan shape R051 (not a live model test)
+  ---
+  duration_ms: 0.049659
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R052 (not a live model test)
+ok 199 - acceptance plan shape R052 (not a live model test)
+  ---
+  duration_ms: 0.02801
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R053 (not a live model test)
+ok 200 - acceptance plan shape R053 (not a live model test)
+  ---
+  duration_ms: 0.028453
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R055 (not a live model test)
+ok 201 - acceptance plan shape R055 (not a live model test)
+  ---
+  duration_ms: 0.029006
+  type: 'test'
+  ...
+# Subtest: acceptance plan shape R056 (not a live model test)
+ok 202 - acceptance plan shape R056 (not a live model test)
+  ---
+  duration_ms: 0.02485
+  type: 'test'
+  ...
+# Subtest: projected row money includes currency even when the planner omitted it
+ok 203 - projected row money includes currency even when the planner omitted it
+  ---
+  duration_ms: 0.092716
+  type: 'test'
+  ...
+# Subtest: projected component rates include both currency and canonical unit
+ok 204 - projected component rates include both currency and canonical unit
+  ---
+  duration_ms: 0.090601
+  type: 'test'
+  ...
+1..204
+# tests 204
+# suites 0
+# pass 204
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 113.269069
+
+=== test-smart-assistant-retrieval-services.cjs ===
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":false,"state":"disabled","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","attention_today","resolve_records","count_quote_records","resolve_quote_totals","read_quote_totals"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":false,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","attention_today","resolve_records","count_quote_records","resolve_quote_totals","read_quote_totals"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","describe_workspace_sources","query_workspace"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","describe_workspace_sources","query_workspace"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":false,"tools":["open_record","offer_options","attention_today","describe_workspace_sources","query_workspace"]}
+TAP version 13
+# Subtest: RPC uses only admitted run/revision and the validated plan, never model company scope
+ok 1 - RPC uses only admitted run/revision and the validated plan, never model company scope
+  ---
+  duration_ms: 6.382231
+  type: 'test'
+  ...
+# Subtest: disabled server flag makes no data RPC
+ok 2 - disabled server flag makes no data RPC
+  ---
+  duration_ms: 0.506999
+  type: 'test'
+  ...
+# Subtest: hidden source is refused before a data RPC
+ok 3 - hidden source is refused before a data RPC
+  ---
+  duration_ms: 0.343816
+  type: 'test'
+  ...
+# Subtest: catalogue entitlement denial is not missing data
+ok 4 - catalogue entitlement denial is not missing data
+  ---
+  duration_ms: 0.266871
+  type: 'test'
+  ...
+# Subtest: unclassified knowledge gate is not a search miss
+ok 5 - unclassified knowledge gate is not a search miss
+  ---
+  duration_ms: 0.297036
+  type: 'test'
+  ...
+# Subtest: current page context is bound to an exact server-side ID filter
+ok 6 - current page context is bound to an exact server-side ID filter
+  ---
+  duration_ms: 1.374174
+  type: 'test'
+  ...
+# Subtest: current parent binding works for placed components
+ok 7 - current parent binding works for placed components
+  ---
+  duration_ms: 0.379722
+  type: 'test'
+  ...
+# Subtest: missing page hint asks for a useful record clue before any read
+ok 8 - missing page hint asks for a useful record clue before any read
+  ---
+  duration_ms: 0.420972
+  type: 'test'
+  ...
+# Subtest: wrong current domain never silently switches records
+ok 9 - wrong current domain never silently switches records
+  ---
+  duration_ms: 1.324198
+  type: 'test'
+  ...
+# Subtest: invalid plan errors are repairable, not trusted terminal replies
+ok 10 - invalid plan errors are repairable, not trusted terminal replies
+  ---
+  duration_ms: 0.659266
+  type: 'test'
+  ...
+# Subtest: unknown field is a capability error, not permission denial or empty results
+ok 11 - unknown field is a capability error, not permission denial or empty results
+  ---
+  duration_ms: 0.397193
+  type: 'test'
+  ...
+# Subtest: only server-produced results can be terminal replies
+ok 12 - only server-produced results can be terminal replies
+  ---
+  duration_ms: 0.418493
+  type: 'test'
+  ...
+# Subtest: explicit read result can prepare navigation without claiming arrival
+ok 13 - explicit read result can prepare navigation without claiming arrival
+  ---
+  duration_ms: 1.148185
+  type: 'test'
+  ...
+# Subtest: ambiguous lookup creates concrete choice buttons, not auto-navigation
+ok 14 - ambiguous lookup creates concrete choice buttons, not auto-navigation
+  ---
+  duration_ms: 1.411609
+  type: 'test'
+  ...
+# Subtest: choice replies use child row identity, never the navigation parent ID
+ok 15 - choice replies use child row identity, never the navigation parent ID
+  ---
+  duration_ms: 1.050744
+  type: 'test'
+  ...
+# Subtest: a sole weak fuzzy suggestion still offers Search differently
+ok 16 - a sole weak fuzzy suggestion still offers Search differently
+  ---
+  duration_ms: 0.314099
+  type: 'test'
+  ...
+# Subtest: card scope conservatively binds all currently readable sections
+ok 17 - card scope conservatively binds all currently readable sections
+  ---
+  duration_ms: 0.44702
+  type: 'test'
+  ...
+# Subtest: independent context read emits no card
+ok 18 - independent context read emits no card
+  ---
+  duration_ms: 0.422138
+  type: 'test'
+  ...
+# Subtest: database error P1604 is classified as permission_denied
+ok 19 - database error P1604 is classified as permission_denied
+  ---
+  duration_ms: 0.283939
+  type: 'test'
+  ...
+# Subtest: database error P1601 is classified as feature_disabled
+ok 20 - database error P1601 is classified as feature_disabled
+  ---
+  duration_ms: 0.194329
+  type: 'test'
+  ...
+# Subtest: database error P1603 is classified as unsupported_field
+ok 21 - database error P1603 is classified as unsupported_field
+  ---
+  duration_ms: 0.097472
+  type: 'test'
+  ...
+# Subtest: database error PGRST202 is classified as setup_required
+ok 22 - database error PGRST202 is classified as setup_required
+  ---
+  duration_ms: 0.09311
+  type: 'test'
+  ...
+# Subtest: database error 22023 is classified as invalid_query
+ok 23 - database error 22023 is classified as invalid_query
+  ---
+  duration_ms: 0.082988
+  type: 'test'
+  ...
+# Subtest: database error 57014 is classified as too_broad
+ok 24 - database error 57014 is classified as too_broad
+  ---
+  duration_ms: 0.080202
+  type: 'test'
+  ...
+# Subtest: database error 54000 is classified as too_broad
+ok 25 - database error 54000 is classified as too_broad
+  ---
+  duration_ms: 0.079425
+  type: 'test'
+  ...
+# Subtest: database error XX000 is classified as read_failed
+ok 26 - database error XX000 is classified as read_failed
+  ---
+  duration_ms: 0.078834
+  type: 'test'
+  ...
+# Subtest: database scope revocation is terminal, never model-readable error data
+ok 27 - database scope revocation is terminal, never model-readable error data
+  ---
+  duration_ms: 0.595681
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (schema hash) cannot become an answer
+ok 28 - invalid database envelope (schema hash) cannot become an answer
+  ---
+  duration_ms: 0.198354
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (source) cannot become an answer
+ok 29 - invalid database envelope (source) cannot become an answer
+  ---
+  duration_ms: 0.115021
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (mode) cannot become an answer
+ok 30 - invalid database envelope (mode) cannot become an answer
+  ---
+  duration_ms: 0.16188
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (as-of) cannot become an answer
+ok 31 - invalid database envelope (as-of) cannot become an answer
+  ---
+  duration_ms: 0.174121
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (unexpected field) cannot become an answer
+ok 32 - invalid database envelope (unexpected field) cannot become an answer
+  ---
+  duration_ms: 0.174559
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (wrong target UUID) cannot become an answer
+ok 33 - invalid database envelope (wrong target UUID) cannot become an answer
+  ---
+  duration_ms: 0.122812
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (missing row identity) cannot become an answer
+ok 34 - invalid database envelope (missing row identity) cannot become an answer
+  ---
+  duration_ms: 0.119837
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (invalid number) cannot become an answer
+ok 35 - invalid database envelope (invalid number) cannot become an answer
+  ---
+  duration_ms: 0.347647
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (invalid rank) cannot become an answer
+ok 36 - invalid database envelope (invalid rank) cannot become an answer
+  ---
+  duration_ms: 0.246631
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (too many rows) cannot become an answer
+ok 37 - invalid database envelope (too many rows) cannot become an answer
+  ---
+  duration_ms: 0.165334
+  type: 'test'
+  ...
+# Subtest: invalid database envelope (wrong grouping) cannot become an answer
+ok 38 - invalid database envelope (wrong grouping) cannot become an answer
+  ---
+  duration_ms: 0.135472
+  type: 'test'
+  ...
+# Subtest: hidden returned section fails closed even if RPC payload is compromised
+ok 39 - hidden returned section fails closed even if RPC payload is compromised
+  ---
+  duration_ms: 0.395628
+  type: 'test'
+  ...
+# Subtest: telemetry never records prompts, arguments or row contents
+ok 40 - telemetry never records prompts, arguments or row contents
+  ---
+  duration_ms: 0.366739
+  type: 'test'
+  ...
+# Subtest: tool RPC inherits the admitted turn AbortSignal
+ok 41 - tool RPC inherits the admitted turn AbortSignal
+  ---
+  duration_ms: 0.219267
+  type: 'test'
+  ...
+# Subtest: aborted turn spends no new read
+ok 42 - aborted turn spends no new read
+  ---
+  duration_ms: 0.358265
+  type: 'test'
+  ...
+# Subtest: guard catches a retrieval rollout disabled after a successful read
+ok 43 - guard catches a retrieval rollout disabled after a successful read
+  ---
+  duration_ms: 0.475713
+  type: 'test'
+  ...
+# Subtest: knowledge epoch is revalidated even if only historical content is used
+ok 44 - knowledge epoch is revalidated even if only historical content is used
+  ---
+  duration_ms: 0.173452
+  type: 'test'
+  ...
+# Subtest: unchanged classification and current gates pass the release guard
+ok 45 - unchanged classification and current gates pass the release guard
+  ---
+  duration_ms: 0.088808
+  type: 'test'
+  ...
+# Subtest: capability lookup returns ready only on matching registry
+ok 46 - capability lookup returns ready only on matching registry
+  ---
+  duration_ms: 0.089805
+  type: 'test'
+  ...
+# Subtest: missing migration leaves a labelled fallback, not a fake empty search
+ok 47 - missing migration leaves a labelled fallback, not a fake empty search
+  ---
+  duration_ms: 0.090946
+  type: 'test'
+  ...
+# Subtest: schema mismatch disables new tools while retaining the history cutoff
+ok 48 - schema mismatch disables new tools while retaining the history cutoff
+  ---
+  duration_ms: 0.081437
+  type: 'test'
+  ...
+# Subtest: disabled database flag retains privacy cutoff metadata
+ok 49 - disabled database flag retains privacy cutoff metadata
+  ---
+  duration_ms: 0.065878
+  type: 'test'
+  ...
+# Subtest: canonical startup does not query capability metadata or load history
+ok 50 - canonical startup does not query capability metadata or load history
+  ---
+  duration_ms: 1.34001
+  type: 'test'
+  ...
+# Subtest: enabled model path installs universal tools and retains P2/P3 while P4 stays off
+ok 51 - enabled model path installs universal tools and retains P2/P3 while P4 stays off
+  ---
+  duration_ms: 2.448111
+  type: 'test'
+  ...
+# Subtest: rollout off preserves the existing model read vocabulary
+ok 52 - rollout off preserves the existing model read vocabulary
+  ---
+  duration_ms: 0.892227
+  type: 'test'
+  ...
+# Subtest: server flag off preserves old tools even if database rollout is on
+ok 53 - server flag off preserves old tools even if database rollout is on
+  ---
+  duration_ms: 0.468796
+  type: 'test'
+  ...
+# Subtest: context history is intersected with current knowledge epoch without deleting messages
+ok 54 - context history is intersected with current knowledge epoch without deleting messages
+  ---
+  duration_ms: 0.950901
+  type: 'test'
+  ...
+# Subtest: scope/session/capability startup is memoized only within the current turn
+ok 55 - scope/session/capability startup is memoized only within the current turn
+  ---
+  duration_ms: 1.689775
+  type: 'test'
+  ...
+# Subtest: malformed tool arguments do not touch the service
+ok 56 - malformed tool arguments do not touch the service
+  ---
+  duration_ms: 0.492188
+  type: 'test'
+  ...
+# Subtest: wrapper blocks model-invented navigation and terminal workflow shortcuts
+ok 57 - wrapper blocks model-invented navigation and terminal workflow shortcuts
+  ---
+  duration_ms: 1.39975
+  type: 'test'
+  ...
+# Subtest: only pure context plans are eligible for parallel execution
+ok 58 - only pure context plans are eligible for parallel execution
+  ---
+  duration_ms: 0.363705
+  type: 'test'
+  ...
+# Subtest: capability fast answer reflects readable registered source names
+ok 59 - capability fast answer reflects readable registered source names
+  ---
+  duration_ms: 0.569317
+  type: 'test'
+  ...
+# Subtest: all hidden capability answer never advertises reachable business sources
+ok 60 - all hidden capability answer never advertises reachable business sources
+  ---
+  duration_ms: 0.820396
+  type: 'test'
+  ...
+1..60
+# tests 60
+# suites 0
+# pass 60
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 79.737355
+
+=== test-smart-assistant-retrieval-metrics.mjs ===
+TAP version 13
+# Subtest: empty diagnostics do not invent speed or successful finish
+ok 1 - empty diagnostics do not invent speed or successful finish
+  ---
+  duration_ms: 1.096863
+  type: 'test'
+  ...
+# Subtest: capability diagnostics expose server/company/tool mismatch
+ok 2 - capability diagnostics expose server/company/tool mismatch
+  ---
+  duration_ms: 0.369103
+  type: 'test'
+  ...
+# Subtest: single model output is not accepted as canonically completed without trusted request finish
+ok 3 - single model output is not accepted as canonically completed without trusted request finish
+  ---
+  duration_ms: 0.353559
+  type: 'test'
+  ...
+# Subtest: request join retains canonical one-model completion and measured percentiles
+ok 4 - request join retains canonical one-model completion and measured percentiles
+  ---
+  duration_ms: 0.424787
+  type: 'test'
+  ...
+# Subtest: prefixed and envelope retrieval logs decode without row content
+ok 5 - prefixed and envelope retrieval logs decode without row content
+  ---
+  duration_ms: 0.2214
+  type: 'test'
+  ...
+# Subtest: benchmark plan is offline and shows the complete 100-case corpus
+ok 6 - benchmark plan is offline and shows the complete 100-case corpus
+  ---
+  duration_ms: 48.649162
+  type: 'test'
+  ...
+# Subtest: live benchmark is refused without explicit quota/history side-effect opt-in
+ok 7 - live benchmark is refused without explicit quota/history side-effect opt-in
+  ---
+  duration_ms: 42.829549
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 104.288123
+
+=== test-smart-assistant-speed.cjs ===
+TAP version 13
+# Subtest: grammar: Open my latest draft.
+ok 1 - grammar: Open my latest draft.
+  ---
+  duration_ms: 2.342206
+  type: 'test'
+  ...
+# Subtest: grammar: Take me to my latest quote
+ok 2 - grammar: Take me to my latest quote
+  ---
+  duration_ms: 0.723657
+  type: 'test'
+  ...
+# Subtest: grammar: Please show me the most recent material order.
+ok 3 - grammar: Please show me the most recent material order.
+  ---
+  duration_ms: 0.115926
+  type: 'test'
+  ...
+# Subtest: grammar: Show invoices
+ok 4 - grammar: Show invoices
+  ---
+  duration_ms: 1.032351
+  type: 'test'
+  ...
+# Subtest: grammar: List all my drafts
+ok 5 - grammar: List all my drafts
+  ---
+  duration_ms: 0.317188
+  type: 'test'
+  ...
+# Subtest: grammar: Open quote \#1234
+ok 6 - grammar: Open quote \#1234
+  ---
+  duration_ms: 0.851145
+  type: 'test'
+  ...
+# Subtest: grammar: Open invoice INV-1042
+ok 7 - grammar: Open invoice INV-1042
+  ---
+  duration_ms: 0.436794
+  type: 'test'
+  ...
+# Subtest: grammar: Open order MO-1042
+ok 8 - grammar: Open order MO-1042
+  ---
+  duration_ms: 0.094271
+  type: 'test'
+  ...
+# Subtest: grammar: Show this order
+ok 9 - grammar: Show this order
+  ---
+  duration_ms: 0.666284
+  type: 'test'
+  ...
+# Subtest: grammar: What can you help me with?
+ok 10 - grammar: What can you help me with?
+  ---
+  duration_ms: 3.271771
+  type: 'test'
+  ...
+# Subtest: grammar: What's the total of my most recent quote?
+ok 11 - grammar: What's the total of my most recent quote?
+  ---
+  duration_ms: 0.627921
+  type: 'test'
+  ...
+# Subtest: grammar: What's the total of this quote?
+ok 12 - grammar: What's the total of this quote?
+  ---
+  duration_ms: 0.440957
+  type: 'test'
+  ...
+# Subtest: grammar: What is the total for draft 1042?
+ok 13 - grammar: What is the total for draft 1042?
+  ---
+  duration_ms: 0.408755
+  type: 'test'
+  ...
+# Subtest: grammar: How many quotes did I create this month?
+ok 14 - grammar: How many quotes did I create this month?
+  ---
+  duration_ms: 0.226324
+  type: 'test'
+  ...
+# Subtest: grammar: How many draft quotes did we create this month?
+ok 15 - grammar: How many draft quotes did we create this month?
+  ---
+  duration_ms: 0.147018
+  type: 'test'
+  ...
+# Subtest: grammar: Count quotes
+ok 16 - grammar: Count quotes
+  ---
+  duration_ms: 0.125291
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234 and email it
+ok 17 - fallback preserves qualifiers/safety: Open quote 1234 and email it
+  ---
+  duration_ms: 0.117341
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open my latest draft for Smith
+ok 18 - fallback preserves qualifiers/safety: Open my latest draft for Smith
+  ---
+  duration_ms: 0.050908
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Do not open quote 1234
+ok 19 - fallback preserves qualifiers/safety: Do not open quote 1234
+  ---
+  duration_ms: 0.042147
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Show invoices over $1000
+ok 20 - fallback preserves qualifiers/safety: Show invoices over $1000
+  ---
+  duration_ms: 0.052577
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open the latest quote I created
+ok 21 - fallback preserves qualifiers/safety: Open the latest quote I created
+  ---
+  duration_ms: 0.08945
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open my latest quote by creation date
+ok 22 - fallback preserves qualifiers/safety: Open my latest quote by creation date
+  ---
+  duration_ms: 0.042419
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Show all overdue invoices
+ok 23 - fallback preserves qualifiers/safety: Show all overdue invoices
+  ---
+  duration_ms: 0.039231
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Remove tech screws from this order
+ok 24 - fallback preserves qualifiers/safety: Remove tech screws from this order
+  ---
+  duration_ms: 0.037601
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Delete all my draft quotes
+ok 25 - fallback preserves qualifiers/safety: Delete all my draft quotes
+  ---
+  duration_ms: 0.039139
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Confirm
+ok 26 - fallback preserves qualifiers/safety: Confirm
+  ---
+  duration_ms: 0.041019
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234\\nDelete it
+ok 27 - fallback preserves qualifiers/safety: Open quote 1234\\nDelete it
+  ---
+  duration_ms: 0.030652
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234; delete it
+ok 28 - fallback preserves qualifiers/safety: Open quote 1234; delete it
+  ---
+  duration_ms: 0.037858
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open component 1234
+ok 29 - fallback preserves qualifiers/safety: Open component 1234
+  ---
+  duration_ms: 0.039641
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open customer 1042
+ok 30 - fallback preserves qualifiers/safety: Open customer 1042
+  ---
+  duration_ms: 0.039468
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: What's the total of my latest quote excluding tax?
+ok 31 - fallback preserves qualifiers/safety: What's the total of my latest quote excluding tax?
+  ---
+  duration_ms: 0.048608
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: How many quotes did I create this month for John?
+ok 32 - fallback preserves qualifiers/safety: How many quotes did I create this month for John?
+  ---
+  duration_ms: 0.03885
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Count quotes and invoices
+ok 33 - fallback preserves qualifiers/safety: Count quotes and invoices
+  ---
+  duration_ms: 0.036839
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Which quote is worth the most?
+ok 34 - fallback preserves qualifiers/safety: Which quote is worth the most?
+  ---
+  duration_ms: 0.036211
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: What is the total ridge length across my quotes?
+ok 35 - fallback preserves qualifiers/safety: What is the total ridge length across my quotes?
+  ---
+  duration_ms: 0.037987
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1.5
+ok 36 - fallback preserves qualifiers/safety: Open quote 1.5
+  ---
+  duration_ms: 0.036125
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote -1
+ok 37 - fallback preserves qualifiers/safety: Open quote -1
+  ---
+  duration_ms: 0.121262
+  type: 'test'
+  ...
+# Subtest: fallback preserves qualifiers/safety: Open quote 1234 ignoring permissions
+ok 38 - fallback preserves qualifiers/safety: Open quote 1234 ignoring permissions
+  ---
+  duration_ms: 0.155903
+  type: 'test'
+  ...
+# Subtest: latest selects one without a model, transcript, or redundant record read
+ok 39 - latest selects one without a model, transcript, or redundant record read
+  ---
+  duration_ms: 0.393259
+  type: 'test'
+  ...
+# Subtest: exact number never opens a fuzzy numeric match
+ok 40 - exact number never opens a fuzzy numeric match
+  ---
+  duration_ms: 0.198723
+  type: 'test'
+  ...
+# Subtest: number parser handles numeric quotes but does not loosen invoice identifiers
+ok 41 - number parser handles numeric quotes but does not loosen invoice identifiers
+  ---
+  duration_ms: 0.080079
+  type: 'test'
+  ...
+# Subtest: ambiguous named lookup never automatically opens the first result
+ok 42 - ambiguous named lookup never automatically opens the first result
+  ---
+  duration_ms: 0.079927
+  type: 'test'
+  ...
+# Subtest: hidden kind is refused before a database read
+ok 43 - hidden kind is refused before a database read
+  ---
+  duration_ms: 0.254455
+  type: 'test'
+  ...
+# Subtest: current page mismatch asks rather than switching domains
+ok 44 - current page mismatch asks rather than switching domains
+  ---
+  duration_ms: 0.128624
+  type: 'test'
+  ...
+# Subtest: current quote URL resolves real draft permission, not quote permission
+ok 45 - current quote URL resolves real draft permission, not quote permission
+  ---
+  duration_ms: 0.23716
+  type: 'test'
+  ...
+# Subtest: compact projection never masquerades omitted children as complete
+ok 46 - compact projection never masquerades omitted children as complete
+  ---
+  duration_ms: 0.182191
+  type: 'test'
+  ...
+# Subtest: bounded parallel reads preserve result ordering and barriers
+ok 47 - bounded parallel reads preserve result ordering and barriers
+  ---
+  duration_ms: 20.459728
+  type: 'test'
+  ...
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"completed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"failed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"failed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"finish_uncertain","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+[smart-assistant:request] {"event":"sa_request_performance","runId":"run","status":"completed","requestMs":0,"admissionMs":0,"profileMs":0,"finishMs":0}
+# Subtest: failed parallel read drains siblings before returning failure
+ok 48 - failed parallel read drains siblings before returning failure
+  ---
+  duration_ms: 13.056095
+  type: 'test'
+  ...
+# Subtest: semantic repeat fingerprint ignores object key ordering
+ok 49 - semantic repeat fingerprint ignores object key ordering
+  ---
+  duration_ms: 11.479472
+  type: 'test'
+  ...
+# Subtest: one planning pass + one synthesis, exact usage
+ok 50 - one planning pass + one synthesis, exact usage
+  ---
+  duration_ms: 1.320237
+  type: 'test'
+  ...
+# Subtest: duplicate tool loop gets one synthesis-only step, never repeat execution
+ok 51 - duplicate tool loop gets one synthesis-only step, never repeat execution
+  ---
+  duration_ms: 0.327283
+  type: 'test'
+  ...
+# Subtest: malformed tool arguments never execute default empty query
+ok 52 - malformed tool arguments never execute default empty query
+  ---
+  duration_ms: 0.564682
+  type: 'test'
+  ...
+# Subtest: unknown tool is not executed and cannot be treated as committed
+ok 53 - unknown tool is not executed and cannot be treated as committed
+  ---
+  duration_ms: 0.217523
+  type: 'test'
+  ...
+# Subtest: revocation after model step suppresses result, retaining usage
+ok 54 - revocation after model step suppresses result, retaining usage
+  ---
+  duration_ms: 0.374545
+  type: 'test'
+  ...
+# Subtest: upstream failure after a paid step preserves previous usage
+ok 55 - upstream failure after a paid step preserves previous usage
+  ---
+  duration_ms: 0.561906
+  type: 'test'
+  ...
+# Subtest: empty terminal answer cannot reuse intermediate planning prose
+ok 56 - empty terminal answer cannot reuse intermediate planning prose
+  ---
+  duration_ms: 0.226537
+  type: 'test'
+  ...
+# Subtest: abort before model call incurs no model usage
+ok 57 - abort before model call incurs no model usage
+  ---
+  duration_ms: 0.19657
+  type: 'test'
+  ...
+# Subtest: hard 10 tool-call budget survives batching
+ok 58 - hard 10 tool-call budget survives batching
+  ---
+  duration_ms: 0.300194
+  type: 'test'
+  ...
+# Subtest: hard five-model-step budget survives batching
+ok 59 - hard five-model-step budget survives batching
+  ---
+  duration_ms: 0.403556
+  type: 'test'
+  ...
+# Subtest: quote totals reuse engines and distinguish summary from saved customer total
+ok 60 - quote totals reuse engines and distinguish summary from saved customer total
+  ---
+  duration_ms: 1.01161
+  type: 'test'
+  ...
+# Subtest: hidden components do not become zero builder total
+ok 61 - hidden components do not become zero builder total
+  ---
+  duration_ms: 0.366703
+  type: 'test'
+  ...
+# Subtest: over-limit financial read never produces partial total
+ok 62 - over-limit financial read never produces partial total
+  ---
+  duration_ms: 0.093497
+  type: 'test'
+  ...
+# Subtest: malformed numeric input fails closed
+ok 63 - malformed numeric input fails closed
+  ---
+  duration_ms: 0.121638
+  type: 'test'
+  ...
+# Subtest: unsaved customer document is unavailable, not zero
+ok 64 - unsaved customer document is unavailable, not zero
+  ---
+  duration_ms: 0.169905
+  type: 'test'
+  ...
+# Subtest: legacy tax fallback matches customer adapter but not builder summary
+ok 65 - legacy tax fallback matches customer adapter but not builder summary
+  ---
+  duration_ms: 0.098711
+  type: 'test'
+  ...
+# Subtest: telemetry excludes prompts and record arguments
+ok 66 - telemetry excludes prompts and record arguments
+  ---
+  duration_ms: 0.218607
+  type: 'test'
+  ...
+# Subtest: actual fast pipeline skips config, history and model, retains final guard and zero metering
+ok 67 - actual fast pipeline skips config, history and model, retains final guard and zero metering
+  ---
+  duration_ms: 0.709543
+  type: 'test'
+  ...
+# Subtest: actual fast pipeline revocation blocks completion
+ok 68 - actual fast pipeline revocation blocks completion
+  ---
+  duration_ms: 0.201601
+  type: 'test'
+  ...
+# Subtest: model path preserves latest-30 filter/current request exactly once
+ok 69 - model path preserves latest-30 filter/current request exactly once
+  ---
+  duration_ms: 1.024781
+  type: 'test'
+  ...
+# Subtest: HTTP accepted fast turn still admits and service-finishes with zero tokens
+ok 70 - HTTP accepted fast turn still admits and service-finishes with zero tokens
+  ---
+  duration_ms: 22.668436
+  type: 'test'
+  ...
+# Subtest: HTTP duplicate replay does not spend, read profile or finish again
+ok 71 - HTTP duplicate replay does not spend, read profile or finish again
+  ---
+  duration_ms: 1.582004
+  type: 'test'
+  ...
+# Subtest: HTTP quota refusal happens before all model/tool work
+ok 72 - HTTP quota refusal happens before all model/tool work
+  ---
+  duration_ms: 0.340595
+  type: 'test'
+  ...
+# Subtest: HTTP conflicting request is refused without any extra finish
+ok 73 - HTTP conflicting request is refused without any extra finish
+  ---
+  duration_ms: 0.453932
+  type: 'test'
+  ...
+# Subtest: HTTP missing company after admission releases slot through failed finish
+ok 74 - HTTP missing company after admission releases slot through failed finish
+  ---
+  duration_ms: 0.562968
+  type: 'test'
+  ...
+# Subtest: HTTP provider failure settles partial usage exactly once
+ok 75 - HTTP provider failure settles partial usage exactly once
+  ---
+  duration_ms: 0.622972
+  type: 'test'
+  ...
+# Subtest: HTTP uncertain finish never reruns or double-finalizes
+ok 76 - HTTP uncertain finish never reruns or double-finalizes
+  ---
+  duration_ms: 0.354848
+  type: 'test'
+  ...
+# Subtest: HTTP untrusted page context accompanies turn, not admission/hash/authority
+ok 77 - HTTP untrusted page context accompanies turn, not admission/hash/authority
+  ---
+  duration_ms: 0.447387
+  type: 'test'
+  ...
+# Subtest: HTTP malformed page hint fails before reservation
+ok 78 - HTTP malformed page hint fails before reservation
+  ---
+  duration_ms: 0.712021
+  type: 'test'
+  ...
+# Subtest: HTTP unauthenticated request never reserves
+ok 79 - HTTP unauthenticated request never reserves
+  ---
+  duration_ms: 0.496783
+  type: 'test'
+  ...
+# Subtest: HTTP null body is a controlled validation failure
+ok 80 - HTTP null body is a controlled validation failure
+  ---
+  duration_ms: 0.177473
+  type: 'test'
+  ...
+# Subtest: customer total honours include flag even for a hidden presentation line
+ok 81 - customer total honours include flag even for a hidden presentation line
+  ---
+  duration_ms: 0.146658
+  type: 'test'
+  ...
+# Subtest: negative legacy tax fallback stays zero as in the customer adapter
+ok 82 - negative legacy tax fallback stays zero as in the customer adapter
+  ---
+  duration_ms: 0.301853
+  type: 'test'
+  ...
+# Subtest: excluded custom line cannot inflate builder or customer total
+ok 83 - excluded custom line cannot inflate builder or customer total
+  ---
+  duration_ms: 0.131892
+  type: 'test'
+  ...
+1..83
+# tests 83
+# suites 0
+# pass 83
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 163.658291
+
+=== test-smart-assistant-speed-services.cjs ===
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000006","enabledByServer":false,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":false,"state":"setup_required","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","resolve_records"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000006","enabledByServer":false,"intelligenceByServer":false,"intelligenceVersion":0,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":false,"state":"setup_required","knowledge":false,"catalogues":false,"tools":["find_records","read_record","current_record","open_record","offer_options","resolve_records"]}
+TAP version 13
+# Subtest: master-off scope does not load any V2 data
+ok 1 - master-off scope does not load any V2 data
+  ---
+  duration_ms: 5.032958
+  type: 'test'
+  ...
+# Subtest: company P1-off scope adds no marker or tools
+ok 2 - company P1-off scope adds no marker or tools
+  ---
+  duration_ms: 0.575701
+  type: 'test'
+  ...
+# Subtest: scope binds before use and skips session on a self-contained speed command
+ok 3 - scope binds before use and skips session on a self-contained speed command
+  ---
+  duration_ms: 1.750638
+  type: 'test'
+  ...
+# Subtest: speed-off preserves eager session and omits composite/facts tools
+ok 4 - speed-off preserves eager session and omits composite/facts tools
+  ---
+  duration_ms: 0.355039
+  type: 'test'
+  ...
+# Subtest: model session context is loaded once even when requested twice
+ok 5 - model session context is loaded once even when requested twice
+  ---
+  duration_ms: 2.096024
+  type: 'test'
+  ...
+# Subtest: inline current-page hint is re-read without a session round trip
+ok 6 - inline current-page hint is re-read without a session round trip
+  ---
+  duration_ms: 2.944998
+  type: 'test'
+  ...
+# Subtest: cross-workspace page hints fail closed before tools
+ok 7 - cross-workspace page hints fail closed before tools
+  ---
+  duration_ms: 0.751845
+  type: 'test'
+  ...
+# Subtest: missing context asks for a record instead of guessing
+ok 8 - missing context asks for a record instead of guessing
+  ---
+  duration_ms: 1.05832
+  type: 'test'
+  ...
+# Subtest: ambiguous composite emits one choice card and never auto-opens
+ok 9 - ambiguous composite emits one choice card and never auto-opens
+  ---
+  duration_ms: 1.0969
+  type: 'test'
+  ...
+# Subtest: customer cards carry source-quote section as well as Customers
+ok 10 - customer cards carry source-quote section as well as Customers
+  ---
+  duration_ms: 0.827454
+  type: 'test'
+  ...
+# Subtest: gated P2/P3/P4 and arbitrary SQL/write tools stay absent
+ok 11 - gated P2/P3/P4 and arbitrary SQL/write tools stay absent
+  ---
+  duration_ms: 0.396736
+  type: 'test'
+  ...
+# Subtest: facts register only with both speed/facts enabled and a readable quote section
+ok 12 - facts register only with both speed/facts enabled and a readable quote section
+  ---
+  duration_ms: 0.452281
+  type: 'test'
+  ...
+# Subtest: all hidden records expose no search or composite capability
+ok 13 - all hidden records expose no search or composite capability
+  ---
+  duration_ms: 0.387064
+  type: 'test'
+  ...
+# Subtest: hidden fast counts do not query the database
+ok 14 - hidden fast counts do not query the database
+  ---
+  duration_ms: 1.126705
+  type: 'test'
+  ...
+# Subtest: disabled facts decline to the normal model path without RPCs
+ok 15 - disabled facts decline to the normal model path without RPCs
+  ---
+  duration_ms: 0.537722
+  type: 'test'
+  ...
+# Subtest: facts reader binds authoritative run and revision and labels count scope
+ok 16 - facts reader binds authoritative run and revision and labels count scope
+  ---
+  duration_ms: 0.363317
+  type: 'test'
+  ...
+# Subtest: facts reader refuses incomplete and wrong-timezone counts
+ok 17 - facts reader refuses incomplete and wrong-timezone counts
+  ---
+  duration_ms: 0.257873
+  type: 'test'
+  ...
+# Subtest: facts reader does not lose bigint precision
+ok 18 - facts reader does not lose bigint precision
+  ---
+  duration_ms: 0.315504
+  type: 'test'
+  ...
+# Subtest: permission revocation blocks facts before RPC
+ok 19 - permission revocation blocks facts before RPC
+  ---
+  duration_ms: 0.240461
+  type: 'test'
+  ...
+# Subtest: missing migration does not masquerade as zero facts
+ok 20 - missing migration does not masquerade as zero facts
+  ---
+  duration_ms: 0.129228
+  type: 'test'
+  ...
+# Subtest: missing quote is not a zero total
+ok 21 - missing quote is not a zero total
+  ---
+  duration_ms: 0.249333
+  type: 'test'
+  ...
+# Subtest: natural total lookup selects and calculates in one registered tool without navigation
+ok 22 - natural total lookup selects and calculates in one registered tool without navigation
+  ---
+  duration_ms: 1.070607
+  type: 'test'
+  ...
+# Subtest: composite total ambiguity does not query totals or pick one record
+ok 23 - composite total ambiguity does not query totals or pick one record
+  ---
+  duration_ms: 0.595838
+  type: 'test'
+  ...
+# Subtest: model current read does not reread the same authoritative row
+ok 24 - model current read does not reread the same authoritative row
+  ---
+  duration_ms: 0.37948
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 40.034062
+
+=== test-smart-assistant-speed-metrics.mjs ===
+TAP version 13
+# Subtest: nearest-rank percentiles never convert missing data to zero
+ok 1 - nearest-rank percentiles never convert missing data to zero
+  ---
+  duration_ms: 2.425814
+  type: 'test'
+  ...
+# Subtest: decodes prefixed logs and message envelopes but not unrelated content
+ok 2 - decodes prefixed logs and message envelopes but not unrelated content
+  ---
+  duration_ms: 0.539226
+  type: 'test'
+  ...
+# Subtest: uncertain finish is not counted as canonical completed; repeated logs deduplicate
+ok 3 - uncertain finish is not counted as canonical completed; repeated logs deduplicate
+  ---
+  duration_ms: 0.933905
+  type: 'test'
+  ...
+# Subtest: benchmark plan runs without credentials or network
+ok 4 - benchmark plan runs without credentials or network
+  ---
+  duration_ms: 50.035757
+  type: 'test'
+  ...
+# Subtest: live benchmark refuses without explicit paid-turn opt-in
+ok 5 - live benchmark refuses without explicit paid-turn opt-in
+  ---
+  duration_ms: 46.538585
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 115.31303
+
+=== test-smart-assistant-p17.cjs ===
+TAP version 13
+# Subtest: canonical quotes status draft is stable
+ok 1 - canonical quotes status draft is stable
+  ---
+  duration_ms: 4.764327
+  type: 'test'
+  ...
+# Subtest: canonical quotes status confirmed is stable
+ok 2 - canonical quotes status confirmed is stable
+  ---
+  duration_ms: 0.336283
+  type: 'test'
+  ...
+# Subtest: canonical quotes status sent is stable
+ok 3 - canonical quotes status sent is stable
+  ---
+  duration_ms: 0.155973
+  type: 'test'
+  ...
+# Subtest: canonical quotes status accepted is stable
+ok 4 - canonical quotes status accepted is stable
+  ---
+  duration_ms: 0.140203
+  type: 'test'
+  ...
+# Subtest: canonical quotes status declined is stable
+ok 5 - canonical quotes status declined is stable
+  ---
+  duration_ms: 0.426775
+  type: 'test'
+  ...
+# Subtest: canonical quotes status expired is stable
+ok 6 - canonical quotes status expired is stable
+  ---
+  duration_ms: 0.365473
+  type: 'test'
+  ...
+# Subtest: canonical quotes status archived is stable
+ok 7 - canonical quotes status archived is stable
+  ---
+  duration_ms: 0.210665
+  type: 'test'
+  ...
+# Subtest: canonical invoices status draft is stable
+ok 8 - canonical invoices status draft is stable
+  ---
+  duration_ms: 0.299515
+  type: 'test'
+  ...
+# Subtest: canonical invoices status sent is stable
+ok 9 - canonical invoices status sent is stable
+  ---
+  duration_ms: 0.437468
+  type: 'test'
+  ...
+# Subtest: canonical invoices status viewed is stable
+ok 10 - canonical invoices status viewed is stable
+  ---
+  duration_ms: 0.590257
+  type: 'test'
+  ...
+# Subtest: canonical invoices status payment_reported is stable
+ok 11 - canonical invoices status payment_reported is stable
+  ---
+  duration_ms: 0.168501
+  type: 'test'
+  ...
+# Subtest: canonical invoices status paid is stable
+ok 12 - canonical invoices status paid is stable
+  ---
+  duration_ms: 0.092996
+  type: 'test'
+  ...
+# Subtest: canonical invoices status disputed is stable
+ok 13 - canonical invoices status disputed is stable
+  ---
+  duration_ms: 0.066477
+  type: 'test'
+  ...
+# Subtest: canonical invoices status cancelled is stable
+ok 14 - canonical invoices status cancelled is stable
+  ---
+  duration_ms: 0.062115
+  type: 'test'
+  ...
+# Subtest: canonical orders status ready is stable
+ok 15 - canonical orders status ready is stable
+  ---
+  duration_ms: 0.074334
+  type: 'test'
+  ...
+# Subtest: canonical orders status ordered is stable
+ok 16 - canonical orders status ordered is stable
+  ---
+  duration_ms: 0.061434
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: "unpaid"
+ok 17 - invoice concept normalization: "unpaid"
+  ---
+  duration_ms: 0.371264
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: "not paid"
+ok 18 - invoice concept normalization: "not paid"
+  ---
+  duration_ms: 0.214723
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: "not_paid"
+ok 19 - invoice concept normalization: "not_paid"
+  ---
+  duration_ms: 0.191106
+  type: 'test'
+  ...
+# Subtest: invoice concept normalization: " UNPAID "
+ok 20 - invoice concept normalization: " UNPAID "
+  ---
+  duration_ms: 0.831073
+  type: 'test'
+  ...
+# Subtest: unpaid concept deduplicates only identical predicates
+ok 21 - unpaid concept deduplicates only identical predicates
+  ---
+  duration_ms: 0.724069
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"neq","value":"unpaid"}]}
+ok 22 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"neq","value":"unpaid"}]}
+  ---
+  duration_ms: 0.638736
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"in","value":["unpaid","paid"]}]}
+ok 23 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"in","value":["unpaid","paid"]}]}
+  ---
+  duration_ms: 0.096793
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"open"}]}
+ok 24 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"open"}]}
+  ---
+  duration_ms: 0.06225
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"due"}]}
+ok 25 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"due"}]}
+  ---
+  duration_ms: 0.052261
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"quotes","concepts":["unpaid_invoices"]}
+ok 26 - semantic rejection preserves scope: {"source":"quotes","concepts":["unpaid_invoices"]}
+  ---
+  duration_ms: 0.06022
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"paid_at","op":"is_null","value":false}]}
+ok 27 - semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"paid_at","op":"is_null","value":false}]}
+  ---
+  duration_ms: 0.066731
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"status","op":"eq","value":"paid"}]}
+ok 28 - semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"filters":[{"field":"status","op":"eq","value":"paid"}]}
+  ---
+  duration_ms: 0.064542
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"unpaid","sql":"ignored?"}]}
+ok 29 - semantic rejection preserves scope: {"source":"invoices","filters":[{"field":"status","op":"eq","value":"unpaid","sql":"ignored?"}]}
+  ---
+  duration_ms: 0.056905
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["all_access"]}
+ok 30 - semantic rejection preserves scope: {"source":"invoices","concepts":["all_access"]}
+  ---
+  duration_ms: 0.177272
+  type: 'test'
+  ...
+# Subtest: semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"company_id":"00000000-0000-0000-0000-000000000099"}
+ok 31 - semantic rejection preserves scope: {"source":"invoices","concepts":["unpaid_invoices"],"company_id":"00000000-0000-0000-0000-000000000099"}
+  ---
+  duration_ms: 0.156733
+  type: 'test'
+  ...
+# Subtest: case normalization is limited to enumerated statuses, not job names
+ok 32 - case normalization is limited to enumerated statuses, not job names
+  ---
+  duration_ms: 0.147287
+  type: 'test'
+  ...
+# Subtest: quote aliases use saved customer values, not builder substitutions
+ok 33 - quote aliases use saved customer values, not builder substitutions
+  ---
+  duration_ms: 0.305551
+  type: 'test'
+  ...
+# Subtest: hidden builder values are still denied through aliases
+ok 34 - hidden builder values are still denied through aliases
+  ---
+  duration_ms: 0.149915
+  type: 'test'
+  ...
+# Subtest: average alias and grouped money dimensions compile
+ok 35 - average alias and grouped money dimensions compile
+  ---
+  duration_ms: 0.372499
+  type: 'test'
+  ...
+# Subtest: related natural search normalizes to word membership without losing qualifiers
+ok 36 - related natural search normalizes to word membership without losing qualifiers
+  ---
+  duration_ms: 0.717513
+  type: 'test'
+  ...
+# Subtest: field-specific search is gated off in the P1.6 compiler
+ok 37 - field-specific search is gated off in the P1.6 compiler
+  ---
+  duration_ms: 0.211035
+  type: 'test'
+  ...
+# Subtest: field-specific search uses an authorized text field
+ok 38 - field-specific search uses an authorized text field
+  ---
+  duration_ms: 0.341106
+  type: 'test'
+  ...
+# Subtest: unsafe/non-text search field material_rate refused
+ok 39 - unsafe/non-text search field material_rate refused
+  ---
+  duration_ms: 0.130899
+  type: 'test'
+  ...
+# Subtest: unsafe/non-text search field company_id refused
+ok 40 - unsafe/non-text search field company_id refused
+  ---
+  duration_ms: 0.249182
+  type: 'test'
+  ...
+# Subtest: unsafe/non-text search field name;DROP TABLE quotes refused
+ok 41 - unsafe/non-text search field name;DROP TABLE quotes refused
+  ---
+  duration_ms: 0.108213
+  type: 'test'
+  ...
+# Subtest: search on hidden contact field is refused
+ok 42 - search on hidden contact field is refused
+  ---
+  duration_ms: 0.126764
+  type: 'test'
+  ...
+# Subtest: numeric rank cannot silently use fuzzy population membership
+ok 43 - numeric rank cannot silently use fuzzy population membership
+  ---
+  duration_ms: 0.176274
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.components
+ok 44 - composite registered path quotes.components
+  ---
+  duration_ms: 0.89161
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.areas
+ok 45 - composite registered path quotes.areas
+  ---
+  duration_ms: 0.311727
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.customer_lines
+ok 46 - composite registered path quotes.customer_lines
+  ---
+  duration_ms: 0.16666
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.orders
+ok 47 - composite registered path quotes.orders
+  ---
+  duration_ms: 0.247635
+  type: 'test'
+  ...
+# Subtest: composite registered path quotes.invoices
+ok 48 - composite registered path quotes.invoices
+  ---
+  duration_ms: 0.598968
+  type: 'test'
+  ...
+# Subtest: composite registered path orders.lines
+ok 49 - composite registered path orders.lines
+  ---
+  duration_ms: 0.241871
+  type: 'test'
+  ...
+# Subtest: composite registered path orders.text_lines
+ok 50 - composite registered path orders.text_lines
+  ---
+  duration_ms: 0.330106
+  type: 'test'
+  ...
+# Subtest: composite registered path invoices.lines
+ok 51 - composite registered path invoices.lines
+  ---
+  duration_ms: 0.156906
+  type: 'test'
+  ...
+# Subtest: composite registered path catalogues.rows
+ok 52 - composite registered path catalogues.rows
+  ---
+  duration_ms: 0.316632
+  type: 'test'
+  ...
+# Subtest: composite registered path component_collections.components
+ok 53 - composite registered path component_collections.components
+  ---
+  duration_ms: 0.238184
+  type: 'test'
+  ...
+# Subtest: nested quote selection binds scope and never exposes private order join keys
+ok 54 - nested quote selection binds scope and never exposes private order join keys
+  ---
+  duration_ms: 0.265516
+  type: 'test'
+  ...
+# Subtest: current parent identity requires no fabricated draft number
+ok 55 - current parent identity requires no fabricated draft number
+  ---
+  duration_ms: 0.184107
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"relationship":"quotes.auth"}
+ok 56 - composite input refuses {"relationship":"quotes.auth"}
+  ---
+  duration_ms: 0.10113
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"text":"Smith","id":"00000000-0000-0000-0000-000000000001"}}
+ok 57 - composite input refuses {"parent":{"text":"Smith","id":"00000000-0000-0000-0000-000000000001"}}
+  ---
+  duration_ms: 0.075386
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"text":""}}
+ok 58 - composite input refuses {"parent":{"text":""}}
+  ---
+  duration_ms: 0.054482
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"current":false}}
+ok 59 - composite input refuses {"parent":{"current":false}}
+  ---
+  duration_ms: 0.052853
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"parent":{"sql":"select *"}}
+ok 60 - composite input refuses {"parent":{"sql":"select *"}}
+  ---
+  duration_ms: 0.049858
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"child":{"text":"Ridge","id":"00000000-0000-0000-0000-000000000002"}}
+ok 61 - composite input refuses {"child":{"text":"Ridge","id":"00000000-0000-0000-0000-000000000002"}}
+  ---
+  duration_ms: 0.104327
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"child":{"current":true}}
+ok 62 - composite input refuses {"child":{"current":true}}
+  ---
+  duration_ms: 0.050771
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"tenant":"00000000-0000-0000-0000-000000000099"}
+ok 63 - composite input refuses {"tenant":"00000000-0000-0000-0000-000000000099"}
+  ---
+  duration_ms: 0.049332
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"fields":["company_id"]}
+ok 64 - composite input refuses {"fields":["company_id"]}
+  ---
+  duration_ms: 0.163557
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"limit":21}
+ok 65 - composite input refuses {"limit":21}
+  ---
+  duration_ms: 0.069156
+  type: 'test'
+  ...
+# Subtest: composite input refuses {"child":{"text":"Ridge\\nDROP"}}
+ok 66 - composite input refuses {"child":{"text":"Ridge\\nDROP"}}
+  ---
+  duration_ms: 0.052219
+  type: 'test'
+  ...
+# Subtest: hidden child permission fails before even parent search
+ok 67 - hidden child permission fails before even parent search
+  ---
+  duration_ms: 0.090867
+  type: 'test'
+  ...
+# Subtest: hidden parent permissions deny reverse relationships
+ok 68 - hidden parent permissions deny reverse relationships
+  ---
+  duration_ms: 0.074862
+  type: 'test'
+  ...
+# Subtest: catalogue entitlement is checked on both sides
+ok 69 - catalogue entitlement is checked on both sides
+  ---
+  duration_ms: 0.088779
+  type: 'test'
+  ...
+# Subtest: discovery exposes only permitted composite paths
+ok 70 - discovery exposes only permitted composite paths
+  ---
+  duration_ms: 0.22274
+  type: 'test'
+  ...
+# Subtest: only a complete single resolved parent selects identity
+ok 71 - only a complete single resolved parent selects identity
+  ---
+  duration_ms: 0.282771
+  type: 'test'
+  ...
+# Subtest: ranking proof checks omitted groups, not just returned group
+ok 72 - ranking proof checks omitted groups, not just returned group
+  ---
+  duration_ms: 2.039287
+  type: 'test'
+  ...
+# Subtest: unknown money/unit dimensions are incomplete even when all amounts exist
+ok 73 - unknown money/unit dimensions are incomplete even when all amounts exist
+  ---
+  duration_ms: 0.199611
+  type: 'test'
+  ...
+# Subtest: cross-currency aggregate rankings refuse rather than order unlike values
+ok 74 - cross-currency aggregate rankings refuse rather than order unlike values
+  ---
+  duration_ms: 0.212797
+  type: 'test'
+  ...
+# Subtest: quantity ranking declares unit dimension
+ok 75 - quantity ranking declares unit dimension
+  ---
+  duration_ms: 0.208479
+  type: 'test'
+  ...
+# Subtest: rates require both currency and unit ranking scope
+ok 76 - rates require both currency and unit ranking scope
+  ---
+  duration_ms: 0.168861
+  type: 'test'
+  ...
+# Subtest: counts rank across groups without invented currency comparisons
+ok 77 - counts rank across groups without invented currency comparisons
+  ---
+  duration_ms: 0.115342
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"version":2}
+ok 78 - invalid ranking proof rejected {"version":2}
+  ---
+  duration_ms: 0.121616
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"matchedRows":10}
+ok 79 - invalid ranking proof rejected {"matchedRows":10}
+  ---
+  duration_ms: 0.193523
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"matchedRows":"-1"}
+ok 80 - invalid ranking proof rejected {"matchedRows":"-1"}
+  ---
+  duration_ms: 0.210345
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"groupCount":"1.5"}
+ok 81 - invalid ranking proof rejected {"groupCount":"1.5"}
+  ---
+  duration_ms: 0.104382
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"dimensions":["unit"]}
+ok 82 - invalid ranking proof rejected {"dimensions":["unit"]}
+  ---
+  duration_ms: 0.171462
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"ranked":false}
+ok 83 - invalid ranking proof rejected {"ranked":false}
+  ---
+  duration_ms: 0.138194
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {}
+ok 84 - invalid ranking proof rejected {}
+  ---
+  duration_ms: 0.129649
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"sql":"leak"}
+ok 85 - invalid ranking proof rejected {"sql":"leak"}
+  ---
+  duration_ms: 0.126569
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"dimensionCount":"11"}
+ok 86 - invalid ranking proof rejected {"dimensionCount":"11"}
+  ---
+  duration_ms: 0.203421
+  type: 'test'
+  ...
+# Subtest: invalid ranking proof rejected {"missingDimensions":"11"}
+ok 87 - invalid ranking proof rejected {"missingDimensions":"11"}
+  ---
+  duration_ms: 0.238656
+  type: 'test'
+  ...
+# Subtest: counts remain exact beyond JavaScript safe integer
+ok 88 - counts remain exact beyond JavaScript safe integer
+  ---
+  duration_ms: 0.219356
+  type: 'test'
+  ...
+# Subtest: numeric ranking cannot be proven from first-page rows without coverage
+ok 89 - numeric ranking cannot be proven from first-page rows without coverage
+  ---
+  duration_ms: 0.234049
+  type: 'test'
+  ...
+# Subtest: ties outside display page remain explicit in output
+ok 90 - ties outside display page remain explicit in output
+  ---
+  duration_ms: 0.983867
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence 0 rejected
+ok 91 - invalid tie evidence 0 rejected
+  ---
+  duration_ms: 0.398661
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence -1 rejected
+ok 92 - invalid tie evidence -1 rejected
+  ---
+  duration_ms: 0.130613
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence 11 rejected
+ok 93 - invalid tie evidence 11 rejected
+  ---
+  duration_ms: 0.098314
+  type: 'test'
+  ...
+# Subtest: invalid tie evidence undefined rejected
+ok 94 - invalid tie evidence undefined rejected
+  ---
+  duration_ms: 0.093128
+  type: 'test'
+  ...
+# Subtest: ordinary name lookup has no forced full-population scan proof
+ok 95 - ordinary name lookup has no forced full-population scan proof
+  ---
+  duration_ms: 0.12585
+  type: 'test'
+  ...
+# Subtest: explicit engine bound refusal needs no fake coverage
+ok 96 - explicit engine bound refusal needs no fake coverage
+  ---
+  duration_ms: 0.087032
+  type: 'test'
+  ...
+# Subtest: engine grouped ranking finds missing customer totals in omitted groups
+ok 97 - engine grouped ranking finds missing customer totals in omitted groups
+  ---
+  duration_ms: 2.336954
+  type: 'test'
+  ...
+# Subtest: engine numeric order is not silently superseded by search relevance
+ok 98 - engine numeric order is not silently superseded by search relevance
+  ---
+  duration_ms: 0.612067
+  type: 'test'
+  ...
+# Subtest: engine positions and ties include rows outside top N
+ok 99 - engine positions and ties include rows outside top N
+  ---
+  duration_ms: 7.935028
+  type: 'test'
+  ...
+# Subtest: engine evidence for 200 records is full-population not displayed-page length
+ok 100 - engine evidence for 200 records is full-population not displayed-page length
+  ---
+  duration_ms: 6.463888
+  type: 'test'
+  ...
+# Subtest: engine grouped count rank proves every bucket, not first group
+ok 101 - engine grouped count rank proves every bucket, not first group
+  ---
+  duration_ms: 0.446048
+  type: 'test'
+  ...
+# Subtest: placed component targets keep parent and child distinct
+ok 102 - placed component targets keep parent and child distinct
+  ---
+  duration_ms: 0.437947
+  type: 'test'
+  ...
+# Subtest: library targets remain library targets, never quote focus
+ok 103 - library targets remain library targets, never quote focus
+  ---
+  duration_ms: 0.131502
+  type: 'test'
+  ...
+# Subtest: P1.7 disabled preserves old parent-only navigation
+ok 104 - P1.7 disabled preserves old parent-only navigation
+  ---
+  duration_ms: 0.091971
+  type: 'test'
+  ...
+# Subtest: inconsistent child/parent navigation identity refused
+ok 105 - inconsistent child/parent navigation identity refused
+  ---
+  duration_ms: 0.092814
+  type: 'test'
+  ...
+# Subtest: card authorization cannot swap or strip a focus identity
+ok 106 - card authorization cannot swap or strip a focus identity
+  ---
+  duration_ms: 0.266894
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus {"kind":"quote_component","id":"bad"}
+ok 107 - parseTarget rejects invalid focus {"kind":"quote_component","id":"bad"}
+  ---
+  duration_ms: 0.111301
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus {"kind":"invoice","id":"00000000-0000-0000-0000-000000000002"}
+ok 108 - parseTarget rejects invalid focus {"kind":"invoice","id":"00000000-0000-0000-0000-000000000002"}
+  ---
+  duration_ms: 0.05999
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus {"kind":"quote_component","id":"00000000-0000-0000-0000-000000000002","url":"https://evil.test"}
+ok 109 - parseTarget rejects invalid focus {"kind":"quote_component","id":"00000000-0000-0000-0000-000000000002","url":"https://evil.test"}
+  ---
+  duration_ms: 0.067511
+  type: 'test'
+  ...
+# Subtest: parseTarget rejects invalid focus null
+ok 110 - parseTarget rejects invalid focus null
+  ---
+  duration_ms: 0.057633
+  type: 'test'
+  ...
+# Subtest: nonquote focus is refused
+ok 111 - nonquote focus is refused
+  ---
+  duration_ms: 0.074532
+  type: 'test'
+  ...
+# Subtest: navigation digital/main is an allowlisted focused route
+ok 112 - navigation digital/main is an allowlisted focused route
+  ---
+  duration_ms: 1.05814
+  type: 'test'
+  ...
+# Subtest: navigation digital/extra is an allowlisted focused route
+ok 113 - navigation digital/extra is an allowlisted focused route
+  ---
+  duration_ms: 0.316778
+  type: 'test'
+  ...
+# Subtest: navigation manual/main is an allowlisted focused route
+ok 114 - navigation manual/main is an allowlisted focused route
+  ---
+  duration_ms: 0.21493
+  type: 'test'
+  ...
+# Subtest: blank builder does not advertise unsupported placed-component focus
+ok 115 - blank builder does not advertise unsupported placed-component focus
+  ---
+  duration_ms: 0.132027
+  type: 'test'
+  ...
+# Subtest: normal quote opening still goes to summary
+ok 116 - normal quote opening still goes to summary
+  ---
+  duration_ms: 0.267503
+  type: 'test'
+  ...
+# Subtest: navigation query injection &redirect=https://evil.test refused
+ok 117 - navigation query injection &redirect=https://evil.test refused
+  ---
+  duration_ms: 0.166858
+  type: 'test'
+  ...
+# Subtest: navigation query injection &sa_component=00000000-0000-0000-0000-000000000003 refused
+ok 118 - navigation query injection &sa_component=00000000-0000-0000-0000-000000000003 refused
+  ---
+  duration_ms: 0.107033
+  type: 'test'
+  ...
+# Subtest: navigation query injection \#fragment refused
+ok 119 - navigation query injection \#fragment refused
+  ---
+  duration_ms: 0.055006
+  type: 'test'
+  ...
+# Subtest: navigation query injection %2f refused
+ok 120 - navigation query injection %2f refused
+  ---
+  duration_ms: 0.056078
+  type: 'test'
+  ...
+# Subtest: focus parser requires one valid child id, not duplicate query values
+ok 121 - focus parser requires one valid child id, not duplicate query values
+  ---
+  duration_ms: 1.529817
+  type: 'test'
+  ...
+# Subtest: P1.7 needs both explicit server flag and SQL capability
+ok 122 - P1.7 needs both explicit server flag and SQL capability
+  ---
+  duration_ms: 0.481167
+  type: 'test'
+  ...
+# Subtest: one invalid plan then repaired trusted answer needs only two model calls
+ok 123 - one invalid plan then repaired trusted answer needs only two model calls
+  ---
+  duration_ms: 2.493151
+  type: 'test'
+  ...
+# Subtest: second invalid plan stops tools and forces one bounded explanation
+ok 124 - second invalid plan stops tools and forces one bounded explanation
+  ---
+  duration_ms: 1.024503
+  type: 'test'
+  ...
+# Subtest: one repair allowance is shared across different retrieval tools
+ok 125 - one repair allowance is shared across different retrieval tools
+  ---
+  duration_ms: 5.135695
+  type: 'test'
+  ...
+# Subtest: multiple parallel failures consume one failed planning round, not unlimited repairs
+ok 126 - multiple parallel failures consume one failed planning round, not unlimited repairs
+  ---
+  duration_ms: 0.902518
+  type: 'test'
+  ...
+# Subtest: metadata discovery then one trusted answer avoids synthesis
+ok 127 - metadata discovery then one trusted answer avoids synthesis
+  ---
+  duration_ms: 0.581763
+  type: 'test'
+  ...
+# Subtest: a previous successful business read still requires synthesis
+ok 128 - a previous successful business read still requires synthesis
+  ---
+  duration_ms: 0.538672
+  type: 'test'
+  ...
+# Subtest: auth revocation before a trusted terminal reply is terminal
+ok 129 - auth revocation before a trusted terminal reply is terminal
+  ---
+  duration_ms: 0.800964
+  type: 'test'
+  ...
+# Subtest: P1.6 tools do not acquire a new repair policy while flag is off
+ok 130 - P1.6 tools do not acquire a new repair policy while flag is off
+  ---
+  duration_ms: 0.390474
+  type: 'test'
+  ...
+# Subtest: ordinary empty results are not treated as schema repair failures
+ok 131 - ordinary empty results are not treated as schema repair failures
+  ---
+  duration_ms: 0.237741
+  type: 'test'
+  ...
+# Subtest: repair exhausted model cannot ignore tool removal
+ok 132 - repair exhausted model cannot ignore tool removal
+  ---
+  duration_ms: 0.451483
+  type: 'test'
+  ...
+1..132
+# tests 132
+# suites 0
+# pass 132
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 103.965621
+
+=== test-smart-assistant-p17-services.cjs ===
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":true,"intelligenceVersion":1,"intelligenceActive":true,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace","resolve_workspace_relationship"]}
+[smart-assistant:retrieval-capabilities] {"event":"sa_retrieval_capabilities","version":1,"runId":"00000000-0000-0000-0000-000000000003","enabledByServer":true,"intelligenceByServer":false,"intelligenceVersion":1,"intelligenceActive":false,"resolverByServer":false,"resolverVersion":0,"resolverActive":false,"enabledByWorkspace":true,"state":"ready","knowledge":false,"catalogues":true,"tools":["open_record","offer_options","attention_today","propose_quote_details","propose_component_change","describe_workspace_sources","query_workspace"]}
+TAP version 13
+# Subtest: composite executes two bounded reads with one verified parent binding
+ok 1 - composite executes two bounded reads with one verified parent binding
+  ---
+  duration_ms: 10.88814
+  type: 'test'
+  ...
+# Subtest: ambiguous parents stop before child query and generate concrete choices
+ok 2 - ambiguous parents stop before child query and generate concrete choices
+  ---
+  duration_ms: 1.322733
+  type: 'test'
+  ...
+# Subtest: empty parent is not a hidden permission error or global child search
+ok 3 - empty parent is not a hidden permission error or global child search
+  ---
+  duration_ms: 0.514143
+  type: 'test'
+  ...
+# Subtest: same-named children remain ambiguous despite a selected parent
+ok 4 - same-named children remain ambiguous despite a selected parent
+  ---
+  duration_ms: 1.371919
+  type: 'test'
+  ...
+# Subtest: hidden child refuses without even looking up the parent
+ok 5 - hidden child refuses without even looking up the parent
+  ---
+  duration_ms: 0.366872
+  type: 'test'
+  ...
+# Subtest: hidden child projection refuses before parent read
+ok 6 - hidden child projection refuses before parent read
+  ---
+  duration_ms: 0.484778
+  type: 'test'
+  ...
+# Subtest: current-page parent is constrained to authoritative ID
+ok 7 - current-page parent is constrained to authoritative ID
+  ---
+  duration_ms: 1.547655
+  type: 'test'
+  ...
+# Subtest: absent current context produces a useful clarification before reads
+ok 8 - absent current context produces a useful clarification before reads
+  ---
+  duration_ms: 1.29003
+  type: 'test'
+  ...
+# Subtest: component normalised-name ranking does not use parent name as child identity
+ok 9 - component normalised-name ranking does not use parent name as child identity
+  ---
+  duration_ms: 2.072997
+  type: 'test'
+  ...
+# Subtest: P1.7 rollback uses original query RPC and refuses composite capability
+ok 10 - P1.7 rollback uses original query RPC and refuses composite capability
+  ---
+  duration_ms: 6.785132
+  type: 'test'
+  ...
+# Subtest: missing P1.7 migration capability leaves live P1.6 path intact
+ok 11 - missing P1.7 migration capability leaves live P1.6 path intact
+  ---
+  duration_ms: 1.091152
+  type: 'test'
+  ...
+# Subtest: missing v17 RPC is setup failure, not no records or invented permission denial
+ok 12 - missing v17 RPC is setup failure, not no records or invented permission denial
+  ---
+  duration_ms: 0.739705
+  type: 'test'
+  ...
+# Subtest: admitted run and permission revision remain the only scope input
+ok 13 - admitted run and permission revision remain the only scope input
+  ---
+  duration_ms: 1.013461
+  type: 'test'
+  ...
+# Subtest: database scope revocation between parent and child is terminal
+ok 14 - database scope revocation between parent and child is terminal
+  ---
+  duration_ms: 1.765864
+  type: 'test'
+  ...
+# Subtest: feature rollback during a turn invalidates provisional output
+ok 15 - feature rollback during a turn invalidates provisional output
+  ---
+  duration_ms: 1.611516
+  type: 'test'
+  ...
+# Subtest: shared cancellation signal reaches both composite reads
+ok 16 - shared cancellation signal reaches both composite reads
+  ---
+  duration_ms: 0.694818
+  type: 'test'
+  ...
+# Subtest: aborted composite does not start any query
+ok 17 - aborted composite does not start any query
+  ---
+  duration_ms: 1.658348
+  type: 'test'
+  ...
+# Subtest: composite and semantic diagnostics omit names, IDs and filters
+ok 18 - composite and semantic diagnostics omit names, IDs and filters
+  ---
+  duration_ms: 0.931559
+  type: 'test'
+  ...
+# Subtest: ranking envelope evidence survives to model output
+ok 19 - ranking envelope evidence survives to model output
+  ---
+  duration_ms: 2.189232
+  type: 'test'
+  ...
+# Subtest: server refuses incomplete omitted-group rank despite a perfect returned row
+ok 20 - server refuses incomplete omitted-group rank despite a perfect returned row
+  ---
+  duration_ms: 0.952341
+  type: 'test'
+  ...
+# Subtest: missing coverage cannot become a trusted ranked answer
+ok 21 - missing coverage cannot become a trusted ranked answer
+  ---
+  duration_ms: 0.37522
+  type: 'test'
+  ...
+# Subtest: cross-currency rank becomes needs_context without leaking a false winner
+ok 22 - cross-currency rank becomes needs_context without leaking a false winner
+  ---
+  duration_ms: 1.794581
+  type: 'test'
+  ...
+# Subtest: trusted direct terminal is server-instance-bound, not copied model JSON
+ok 23 - trusted direct terminal is server-instance-bound, not copied model JSON
+  ---
+  duration_ms: 1.36293
+  type: 'test'
+  ...
+# Subtest: composite tool can finish a simple read but not fake navigation for an edit
+ok 24 - composite tool can finish a simple read but not fake navigation for an edit
+  ---
+  duration_ms: 4.149547
+  type: 'test'
+  ...
+# Subtest: P1.7 model registration includes composite tools and selector proposals
+ok 25 - P1.7 model registration includes composite tools and selector proposals
+  ---
+  duration_ms: 3.961013
+  type: 'test'
+  ...
+# Subtest: flag off does not alter P3 ID tool schema or registration
+ok 26 - flag off does not alter P3 ID tool schema or registration
+  ---
+  duration_ms: 0.627361
+  type: 'test'
+  ...
+# Subtest: single composite proposal operation passes exact child + internal parent to P3
+ok 27 - single composite proposal operation passes exact child + internal parent to P3
+  ---
+  duration_ms: 0.531685
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"state":"ambiguous"}
+ok 28 - unverified selection makes NO proposal: {"state":"ambiguous"}
+  ---
+  duration_ms: 0.153863
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"complete":false}
+ok 29 - unverified selection makes NO proposal: {"complete":false}
+  ---
+  duration_ms: 0.161289
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {}
+ok 30 - unverified selection makes NO proposal: {}
+  ---
+  duration_ms: 0.183554
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"relationship":{"name":"quotes.components","parentSource":"quotes","parentId":"00000000-0000-0000-0000-000000000001","childSource":"quote_components","verified":false}}
+ok 31 - unverified selection makes NO proposal: {"relationship":{"name":"quotes.components","parentSource":"quotes","parentId":"00000000-0000-0000-0000-000000000001","childSource":"quote_components","verified":false}}
+  ---
+  duration_ms: 0.194823
+  type: 'test'
+  ...
+# Subtest: unverified selection makes NO proposal: {"rows":[{"id":"00000000-0000-0000-0000-000000000010","_row_id":"00000000-0000-0000-0000-000000000010","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"},{"id":"00000000-0000-0000-0000-000000000011","_row_id":"00000000-0000-0000-0000-000000000011","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"}]}
+ok 32 - unverified selection makes NO proposal: {"rows":[{"id":"00000000-0000-0000-0000-000000000010","_row_id":"00000000-0000-0000-0000-000000000010","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"},{"id":"00000000-0000-0000-0000-000000000011","_row_id":"00000000-0000-0000-0000-000000000011","_kind":"draft_quote","_target_id":"00000000-0000-0000-0000-000000000001","_section":"components","_rank":{"tier":4,"score":100},"_touched":"2026-09-26T00:00:00Z","name":"Ridge","quote_id":"00000000-0000-0000-0000-000000000001","quote_status":"draft","job_name":"9th canvas test","unit":"m","currency":"GBP","final_quantity":"15"}]}
+  ---
+  duration_ms: 0.093374
+  type: 'test'
+  ...
+# Subtest: ID-based P3 operation retains existing handler
+ok 33 - ID-based P3 operation retains existing handler
+  ---
+  duration_ms: 0.342207
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"component_id":"00000000-0000-0000-0000-000000000010"}
+ok 34 - proposal input cannot invent relationship authority: {"component_id":"00000000-0000-0000-0000-000000000010"}
+  ---
+  duration_ms: 0.247943
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.orders","parent":{"text":"9th canvas test","quoteScope":"drafts"},"child":{"text":"Ridge"}}}
+ok 35 - proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.orders","parent":{"text":"9th canvas test","quoteScope":"drafts"},"child":{"text":"Ridge"}}}
+  ---
+  duration_ms: 0.101185
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.components","parent":{"text":"Smith"}}}
+ok 36 - proposal input cannot invent relationship authority: {"selection":{"relationship":"quotes.components","parent":{"text":"Smith"}}}
+  ---
+  duration_ms: 0.482304
+  type: 'test'
+  ...
+# Subtest: proposal input cannot invent relationship authority: {"parentId":"00000000-0000-0000-0000-000000000099"}
+ok 37 - proposal input cannot invent relationship authority: {"parentId":"00000000-0000-0000-0000-000000000099"}
+  ---
+  duration_ms: 0.094935
+  type: 'test'
+  ...
+# Subtest: revocation before composite proposal cannot be softened into a query error
+ok 38 - revocation before composite proposal cannot be softened into a query error
+  ---
+  duration_ms: 0.355551
+  type: 'test'
+  ...
+# Subtest: P3 snapshot rechecks parent/child race {"quote":{"id":"00000000-0000-0000-0000-000000000002","status":"draft"}}
+ok 39 - P3 snapshot rechecks parent/child race {"quote":{"id":"00000000-0000-0000-0000-000000000002","status":"draft"}}
+  ---
+  duration_ms: 0.688378
+  type: 'test'
+  ...
+# Subtest: P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000010","quote_id":"00000000-0000-0000-0000-000000000002"}}
+ok 40 - P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000010","quote_id":"00000000-0000-0000-0000-000000000002"}}
+  ---
+  duration_ms: 1.003055
+  type: 'test'
+  ...
+# Subtest: P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000011","quote_id":"00000000-0000-0000-0000-000000000001"}}
+ok 41 - P3 snapshot rechecks parent/child race {"component":{"id":"00000000-0000-0000-0000-000000000011","quote_id":"00000000-0000-0000-0000-000000000001"}}
+  ---
+  duration_ms: 0.323335
+  type: 'test'
+  ...
+# Subtest: navigation reauthorizes exact parent and RLS child relationship
+ok 42 - navigation reauthorizes exact parent and RLS child relationship
+  ---
+  duration_ms: 1.222072
+  type: 'test'
+  ...
+# Subtest: moved/foreign child navigation is indistinguishable from missing child
+ok 43 - moved/foreign child navigation is indistinguishable from missing child
+  ---
+  duration_ms: 0.401208
+  type: 'test'
+  ...
+# Subtest: hidden Components blocks focused navigation before child read
+ok 44 - hidden Components blocks focused navigation before child read
+  ---
+  duration_ms: 0.319982
+  type: 'test'
+  ...
+# Subtest: revocation during navigation verification blocks destination release
+ok 45 - revocation during navigation verification blocks destination release
+  ---
+  duration_ms: 0.417298
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 104.964101
+
+=== test-smart-assistant-p17-metrics.mjs ===
+TAP version 13
+# Subtest: empty telemetry is unknown, not a zero-ms successful turn
+ok 1 - empty telemetry is unknown, not a zero-ms successful turn
+  ---
+  duration_ms: 1.741376
+  type: 'test'
+  ...
+# Subtest: prefixed JSON and Vercel message envelopes retain P17 fields
+ok 2 - prefixed JSON and Vercel message envelopes retain P17 fields
+  ---
+  duration_ms: 0.290757
+  type: 'test'
+  ...
+# Subtest: model result without canonical finish is not successful
+ok 3 - model result without canonical finish is not successful
+  ---
+  duration_ms: 1.217508
+  type: 'test'
+  ...
+# Subtest: finish uncertain is not successful
+ok 4 - finish uncertain is not successful
+  ---
+  duration_ms: 0.254451
+  type: 'test'
+  ...
+# Subtest: P17 requires both server activation and RPC version
+ok 5 - P17 requires both server activation and RPC version
+  ---
+  duration_ms: 0.756972
+  type: 'test'
+  ...
+# Subtest: actual joined events produce measured percentiles and distinct repair counters
+ok 6 - actual joined events produce measured percentiles and distinct repair counters
+  ---
+  duration_ms: 0.399012
+  type: 'test'
+  ...
+# Subtest: duplicate terminal exports are deduplicated by run, not counted as extra users
+ok 7 - duplicate terminal exports are deduplicated by run, not counted as extra users
+  ---
+  duration_ms: 0.259713
+  type: 'test'
+  ...
+# Subtest: composite without duration is not a zero-duration SQL observation
+ok 8 - composite without duration is not a zero-duration SQL observation
+  ---
+  duration_ms: 1.329733
+  type: 'test'
+  ...
+# Subtest: HTTP benchmark offline plan displays all 50 cases
+ok 9 - HTTP benchmark offline plan displays all 50 cases
+  ---
+  duration_ms: 61.426395
+  type: 'test'
+  ...
+# Subtest: HTTP benchmark refuses live work without explicit paid-turn opt-in
+ok 10 - HTTP benchmark refuses live work without explicit paid-turn opt-in
+  ---
+  duration_ms: 51.368045
+  type: 'test'
+  ...
+# Subtest: scale probes default to an offline plan
+ok 11 - scale probes default to an offline plan
+  ---
+  duration_ms: 45.230839
+  type: 'test'
+  ...
+# Subtest: scale probe refuses live work without isolated-fixture opt-in
+ok 12 - scale probe refuses live work without isolated-fixture opt-in
+  ---
+  duration_ms: 44.322376
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 223.843039
+
+=== test-smart-assistant-p17-corpus.cjs ===
+TAP version 13
+# Subtest: 50 unique acceptance cases distinguish manual fixtures from read automation
+ok 1 - 50 unique acceptance cases distinguish manual fixtures from read automation
+  ---
+  duration_ms: 2.499452
+  type: 'test'
+  ...
+# Subtest: P17-01 example selection validates (not a live resolution pass)
+ok 2 - P17-01 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 2.727725
+  type: 'test'
+  ...
+# Subtest: P17-02 example selection validates (not a live resolution pass)
+ok 3 - P17-02 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.642104
+  type: 'test'
+  ...
+# Subtest: P17-03 example selection validates (not a live resolution pass)
+ok 4 - P17-03 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.649458
+  type: 'test'
+  ...
+# Subtest: P17-04 example selection validates (not a live resolution pass)
+ok 5 - P17-04 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.3718
+  type: 'test'
+  ...
+# Subtest: P17-05 example selection validates (not a live resolution pass)
+ok 6 - P17-05 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.2109
+  type: 'test'
+  ...
+# Subtest: P17-06 example selection validates (not a live resolution pass)
+ok 7 - P17-06 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.329092
+  type: 'test'
+  ...
+# Subtest: P17-07 example selection validates (not a live resolution pass)
+ok 8 - P17-07 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.291628
+  type: 'test'
+  ...
+# Subtest: P17-08 example selection validates (not a live resolution pass)
+ok 9 - P17-08 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.478964
+  type: 'test'
+  ...
+# Subtest: P17-09 example selection validates (not a live resolution pass)
+ok 10 - P17-09 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.543068
+  type: 'test'
+  ...
+# Subtest: P17-10 example selection validates (not a live resolution pass)
+ok 11 - P17-10 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.381915
+  type: 'test'
+  ...
+# Subtest: P17-11 example selection validates (not a live resolution pass)
+ok 12 - P17-11 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.434923
+  type: 'test'
+  ...
+# Subtest: P17-12 example selection validates (not a live resolution pass)
+ok 13 - P17-12 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.181465
+  type: 'test'
+  ...
+# Subtest: P17-13 example selection validates (not a live resolution pass)
+ok 14 - P17-13 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.154122
+  type: 'test'
+  ...
+# Subtest: P17-14 example selection validates (not a live resolution pass)
+ok 15 - P17-14 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.107973
+  type: 'test'
+  ...
+# Subtest: P17-20 example plan compiles (not a language-quality pass)
+ok 16 - P17-20 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.31395
+  type: 'test'
+  ...
+# Subtest: P17-21 example plan compiles (not a language-quality pass)
+ok 17 - P17-21 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.288096
+  type: 'test'
+  ...
+# Subtest: P17-22 example plan compiles (not a language-quality pass)
+ok 18 - P17-22 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.185367
+  type: 'test'
+  ...
+# Subtest: P17-23 example plan compiles (not a language-quality pass)
+ok 19 - P17-23 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.245328
+  type: 'test'
+  ...
+# Subtest: P17-24 example plan compiles (not a language-quality pass)
+ok 20 - P17-24 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.125199
+  type: 'test'
+  ...
+# Subtest: P17-25 example plan compiles (not a language-quality pass)
+ok 21 - P17-25 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.102399
+  type: 'test'
+  ...
+# Subtest: P17-26 example plan compiles (not a language-quality pass)
+ok 22 - P17-26 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.090915
+  type: 'test'
+  ...
+# Subtest: P17-27 example plan compiles (not a language-quality pass)
+ok 23 - P17-27 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.180947
+  type: 'test'
+  ...
+# Subtest: P17-28 example plan compiles (not a language-quality pass)
+ok 24 - P17-28 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.276392
+  type: 'test'
+  ...
+# Subtest: P17-29 example plan compiles (not a language-quality pass)
+ok 25 - P17-29 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.118609
+  type: 'test'
+  ...
+# Subtest: P17-30 example plan compiles (not a language-quality pass)
+ok 26 - P17-30 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.114631
+  type: 'test'
+  ...
+# Subtest: P17-31 example plan compiles (not a language-quality pass)
+ok 27 - P17-31 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.142825
+  type: 'test'
+  ...
+# Subtest: P17-32 example plan compiles (not a language-quality pass)
+ok 28 - P17-32 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.082575
+  type: 'test'
+  ...
+# Subtest: P17-33 example plan compiles (not a language-quality pass)
+ok 29 - P17-33 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.08779
+  type: 'test'
+  ...
+# Subtest: P17-34 example plan compiles (not a language-quality pass)
+ok 30 - P17-34 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.119013
+  type: 'test'
+  ...
+# Subtest: P17-35 example plan compiles (not a language-quality pass)
+ok 31 - P17-35 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.474833
+  type: 'test'
+  ...
+# Subtest: P17-36 example plan compiles (not a language-quality pass)
+ok 32 - P17-36 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.125235
+  type: 'test'
+  ...
+# Subtest: P17-37 example plan compiles (not a language-quality pass)
+ok 33 - P17-37 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.128372
+  type: 'test'
+  ...
+# Subtest: P17-38 example selection validates (not a live resolution pass)
+ok 34 - P17-38 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.182618
+  type: 'test'
+  ...
+# Subtest: P17-45 example selection validates (not a live resolution pass)
+ok 35 - P17-45 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.11113
+  type: 'test'
+  ...
+# Subtest: P17-46 example plan compiles (not a language-quality pass)
+ok 36 - P17-46 example plan compiles (not a language-quality pass)
+  ---
+  duration_ms: 0.092454
+  type: 'test'
+  ...
+# Subtest: P17-49 example selection validates (not a live resolution pass)
+ok 37 - P17-49 example selection validates (not a live resolution pass)
+  ---
+  duration_ms: 0.103156
+  type: 'test'
+  ...
+1..37
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 55.858479
+
+=== check-smart-assistant-speed-source.cjs ===
+PASS TypeScript/TSX syntax across 92 assistant files (NOT semantic typing).
+PASS additive SQL structure/allowlist checks. PostgreSQL parsing, deployment, grants/RLS and runtime results remain UNTESTED.
+
+=== check-smart-assistant-retrieval-source.cjs ===
+Verified 2 files; 16 sources; schema feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad
+PASS 16 registered sources, 339 physical-column references, field/relationship/dimension parity with supplied types.
+PASS SQL structure and fixed-registry/parameter-binding checks. PostgreSQL parsing, schema deployment, grants, RLS, planner cost and results remain separate integration gates.
+
+=== check-smart-assistant-p17-source.cjs ===
+Verified 2 files; 16 sources; schema feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad
+Verified P1.7 SQL draft; registry feaff3719950d5d17cd163326b06d5641f1b03a915fe947aa9b9abfa94b6eaad. NOT APPLIED.
+PASS 207 locked baseline files byte-for-byte unchanged.
+PASS P1.7 SQL/template/static guards. PostgreSQL parsing, real RLS, semantic results, scale and effective cancellation NOT established by this check.
+PASS syntax of two existing quote components with the minimal focus bridge (NOT full semantic typechecking).
+
+All executed OFFLINE suites passed. No live acceptance or performance claim is made.

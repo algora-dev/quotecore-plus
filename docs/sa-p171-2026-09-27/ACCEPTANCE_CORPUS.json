@@ -1,0 +1,447 @@
+{
+  "version": 1,
+  "phase": "P1.7.1",
+  "status": "SPECIFICATION ONLY \u2014 not executed against real Luna/Supabase/browser",
+  "fixtures": "Use approved disposable fixtures or authorised read-only existing records. Example names/numbers are replaceable; do not mutate owner records or auto-confirm proposals. Include duplicate names, hidden/foreign entities and real import pipeline.",
+  "repeatPolicy": "At least five repeats for each ordinary exact/natural/two-turn conversation on stable data; preserve raw timings and task outcomes.",
+  "cases": [
+    {
+      "id": "P171-001",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Open quote 1014",
+      "expected": "Exact permitted quote 1014, zero-model path when canonical grammar applies.",
+      "mustNot": "Ask which quote when the exact identity is unique."
+    },
+    {
+      "id": "P171-002",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Open quote #1014",
+      "expected": "Same exact identity as quote 1014."
+    },
+    {
+      "id": "P171-003",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Show order 184",
+      "expected": "Order-number equality, not quote-number search."
+    },
+    {
+      "id": "P171-004",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Open invoice INV-104",
+      "expected": "Invoice identity only, preserving the prefix."
+    },
+    {
+      "id": "P171-005",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Find the 9th canvas test draft",
+      "expected": "Named draft lookup; drafts have no quote numbers."
+    },
+    {
+      "id": "P171-006",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Find the Maple Ridge quote for John Smith",
+      "expected": "Name plus independent customer constraint; no merged whole-sentence search."
+    },
+    {
+      "id": "P171-007",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Open quote \"1014\"",
+      "expected": "Quoted numeric job name remains a name, not quote number 1014."
+    },
+    {
+      "id": "P171-008",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Open my 5 quote",
+      "expected": "5 remains name; no numeric stemming to an ordinal job."
+    },
+    {
+      "id": "P171-009",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Find quote \"Ridge for Smith\"",
+      "expected": "Literal quoted name; no invented external customer filter."
+    },
+    {
+      "id": "P171-010",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Find quote \"Ridge for chimneys\" for \"John Smith\"",
+      "expected": "Literal job plus the actual separate customer."
+    },
+    {
+      "id": "P171-011",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Open quote 1014 and email it",
+      "expected": "Existing compound model workflow or honest unsupported step, not shortened fast open.",
+      "mustNot": "Silently discard and email it."
+    },
+    {
+      "id": "P171-012",
+      "group": "exact",
+      "kind": "conversation",
+      "request": "Open quote 1014 for a customer who does not match",
+      "expected": "No wrong-customer result; qualifier preserved."
+    },
+    {
+      "id": "P171-013",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "Show quotes with Ridge",
+      "expected": "Quote\u2192components containment, not quote-name-only search."
+    },
+    {
+      "id": "P171-014",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "Show Ridge quotes with their linked orders and invoice status",
+      "expected": "Name/containment interpretation plus authorised linked status expansion."
+    },
+    {
+      "id": "P171-015",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "Show Ridge on my 9th canvas test draft",
+      "expected": "Resolve parent then child; selected placed-component navigation retains parent."
+    },
+    {
+      "id": "P171-016",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "What did I charge for Velux on the Smith quote?",
+      "expected": "Saved customer line semantics, not internal material cost."
+    },
+    {
+      "id": "P171-017",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "How much does Ridge on quote 1014 cost?",
+      "expected": "Exact parent; labelled internal vs customer meanings; credible ambiguity allowed."
+    },
+    {
+      "id": "P171-018",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Current page checked first; actual draft status even when URL kind is quote.",
+      "mustNot": "Use an unrelated library entry when current placed component is a strong match."
+    },
+    {
+      "id": "P171-019",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "Find the Ridge component in my library",
+      "expected": "Only reusable component/collection source, not a placed quote copy."
+    },
+    {
+      "id": "P171-020",
+      "group": "relationship",
+      "kind": "conversation",
+      "request": "Find a line item whose name exists in both normal and line-by-line orders",
+      "expected": "Both representations searchable under Orders permission; parent identity distinguishes line IDs."
+    },
+    {
+      "id": "P171-021",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Only genuinely credible cross-domain matches; follow-up preserves cost task.",
+      "followUp": "The one I normally use."
+    },
+    {
+      "id": "P171-022",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Follow-up uses actual order_date; >10 parents asks for narrower scope rather than samples.",
+      "followUp": "The one I ordered last week."
+    },
+    {
+      "id": "P171-023",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Number becomes the parent of Ridge, not a new unrelated header lookup.",
+      "followUp": "Quote 1014."
+    },
+    {
+      "id": "P171-024",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Click resolves stored identity, rereads latest value; no model parsing of label.",
+      "followUp": "Click a offered candidate."
+    },
+    {
+      "id": "P171-025",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Reject all shown IDs, retain Ridge and cost, narrow by new job clue.",
+      "followUp": "None of these. The Smith job."
+    },
+    {
+      "id": "P171-026",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Same task survives model-assisted refinement.",
+      "followUp": "Could I clarify that it was for Smith, rather than another customer?"
+    },
+    {
+      "id": "P171-027",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "Find the Maple Ridge quote",
+      "expected": "Parent name can become exact number while any customer qualifier remains.",
+      "followUp": "It was quote 1014."
+    },
+    {
+      "id": "P171-028",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much is Ridge?",
+      "expected": "Five or fewer credible choices, not five random weak hits; useful discriminator when many tie.",
+      "followUp": "The John Smith one."
+    },
+    {
+      "id": "P171-029",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much was the solar chimney on Thompson?",
+      "expected": "No unsupported substitute such as Jones chimney flashing. Ask useful scope/name clue.",
+      "followUp": "It was called solar vent, on the Thompson draft."
+    },
+    {
+      "id": "P171-030",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "What did I charge them?",
+      "expected": "Recognise insufficient subject/context; do not invent an account record.",
+      "followUp": "John Smith, the Velux line on quote 1014."
+    },
+    {
+      "id": "P171-031",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "Find something named Ridge with 20 near-identical permitted matches",
+      "expected": "Ask strongest discriminator, not arbitrary first five.",
+      "followUp": "It was the garage roof on Smith."
+    },
+    {
+      "id": "P171-032",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does a nonexistent nonsense item cost?",
+      "expected": "No weak fillers. After useful second clue still absent, explain bounded accessible search.",
+      "followUp": "The order for Smith last month."
+    },
+    {
+      "id": "P171-033",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "Unhelpful replies bounded; do not endlessly repeat candidate set.",
+      "followUp": "Maybe something somewhere; then another equally vague reply."
+    },
+    {
+      "id": "P171-034",
+      "group": "clarification",
+      "kind": "conversation",
+      "request": "How much does Ridge cost?",
+      "expected": "A new independent command supersedes pending clarification.",
+      "followUp": "Show invoices."
+    },
+    {
+      "id": "P171-035",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Click a choice after its record price changes",
+      "expected": "Latest authoritative value shown, no cached old price."
+    },
+    {
+      "id": "P171-036",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Click a choice after record deleted/renamed/moved to another parent",
+      "expected": "No substitution or stale proposal; explicit stale/unavailable outcome."
+    },
+    {
+      "id": "P171-037",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Click a choice after permissions/revision change",
+      "expected": "Reauthorization fails closed; no old-state disclosure."
+    },
+    {
+      "id": "P171-038",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Submit another company/actor/conversation state UUID",
+      "expected": "Uniform unavailable/null; no existence leak."
+    },
+    {
+      "id": "P171-039",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Alter the candidate UUID within a valid state",
+      "expected": "Reject identity not in stored choices."
+    },
+    {
+      "id": "P171-040",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Replay the identical admitted selection request",
+      "expected": "Existing reservation/replay result, no duplicate logical execution."
+    },
+    {
+      "id": "P171-041",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Submit a choice from an unfinished or failed original run",
+      "expected": "State is not a published completed continuation."
+    },
+    {
+      "id": "P171-042",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Click a 16-minute-old choice or one preceding a newer completed command",
+      "expected": "Expired/not-current outcome, not model reinterpretation."
+    },
+    {
+      "id": "P171-043",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Use none and then repeat the search with additional context",
+      "expected": "Previously rejected identities not immediately republished."
+    },
+    {
+      "id": "P171-044",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Disable resolver or all V2 then submit valid/future/malformed uppercase packet",
+      "expected": "Plain unavailable message; opaque payload never reaches model."
+    },
+    {
+      "id": "P171-045",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Retrieve hidden domains, mixed hidden relationships or a foreign exact number",
+      "expected": "Retain accepted tenant and permission boundaries; safe lack-of-access/absence semantics."
+    },
+    {
+      "id": "P171-046",
+      "group": "safety",
+      "kind": "protocol",
+      "request": "Resolve an identified record whose authoritative price is unavailable",
+      "expected": "Found identity plus missing price, not zero and not record not found."
+    },
+    {
+      "id": "P171-047",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Search a unique exact imported description among 100k rows",
+      "expected": "Matching row, effective indexable prefilter and measured plan."
+    },
+    {
+      "id": "P171-048",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Search a sparse multiword description among 100k rows",
+      "expected": "Same full result membership as accepted rank semantics; lower observed rank work."
+    },
+    {
+      "id": "P171-049",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Search a dense common word matching 100k rows",
+      "expected": "P1711 narrowing before expensive ranking; no sampled result."
+    },
+    {
+      "id": "P171-050",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Search populations with 1499, 1500 and 1501 candidates",
+      "expected": "Full <=1500 semantics; >1500 explicit too_broad."
+    },
+    {
+      "id": "P171-051",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Search after changing description/price column mapping",
+      "expected": "search_text import invariant still covers mapped cells; no false negative."
+    },
+    {
+      "id": "P171-052",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Search explicitly by catalogue_name with raw cells lacking that name",
+      "expected": "No inappropriate raw-cell prefilter; apply proper scope/bounds."
+    },
+    {
+      "id": "P171-053",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Request natural or nested catalogue-row ranking",
+      "expected": "P1712 and bounded supported repair/narrowing, not unbounded scan."
+    },
+    {
+      "id": "P171-054",
+      "group": "catalogue",
+      "kind": "database",
+      "request": "Cancel a slow catalogue request and inspect server activity",
+      "expected": "Prove actual caller and statement behavior, not just UI abort."
+    },
+    {
+      "id": "P171-055",
+      "group": "p3",
+      "kind": "conversation",
+      "request": "Set Ridge material rate to 30 per m on quote 1014",
+      "expected": "Exact parent/child; existing P3 eligibility applies; a proposal is not a commit."
+    },
+    {
+      "id": "P171-056",
+      "group": "p3",
+      "kind": "conversation",
+      "request": "Set Ridge material rate to 30 per m on the 9th canvas test draft",
+      "expected": "If eligible, consistent P3 proposal without model disbelief of verified relationship."
+    },
+    {
+      "id": "P171-057",
+      "group": "p3",
+      "kind": "conversation",
+      "request": "Set Ridge material rate to 30 per m on a draft containing two Ridge entries",
+      "expected": "Wait for correct identity; candidate click prepares proposal only.",
+      "followUp": "Select the intended candidate; do not Confirm automatically."
+    },
+    {
+      "id": "P171-058",
+      "group": "p3",
+      "kind": "conversation",
+      "request": "Set Ridge material rate to 30 per m on a noneditable sent quote",
+      "expected": "Original P3 eligibility refusal; do not weaken rules to satisfy request."
+    },
+    {
+      "id": "P171-059",
+      "group": "p3",
+      "kind": "protocol",
+      "request": "Change pending Ridge clarification with an injected new rate/task/approval",
+      "expected": "Reject refinement, preserve original proposed rate; no mutation."
+    },
+    {
+      "id": "P171-060",
+      "group": "p3",
+      "kind": "protocol",
+      "request": "Confirm approved proposal after relationship/permission changes",
+      "expected": "Existing stale/revocation refusal and audit boundaries; separate approved manual commit test."
+    }
+  ]
+}

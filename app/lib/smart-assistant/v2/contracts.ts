@@ -50,6 +50,13 @@ export type CardContent = {
         reply: string;
     }[];
 } | {
+    kind: 'resolution';
+    title: string;
+    stateId: string;
+    expiresAt: string;
+    question: string;
+    options: { choiceId: string; label: string; detail: string }[];
+} | {
     kind: 'attention';
     title: string;
     asOf: string;
@@ -215,6 +222,19 @@ export function parseCard(value: unknown): ConversationCard | null {
             options.push({ label: String(o.label), reply: String(o.reply) });
         }
         content = { kind: c.kind, title: String(c.title), options };
+    }
+    else if (c.kind === 'resolution') {
+        if (!isUuid(c.stateId) || typeof c.expiresAt !== 'string' || !Number.isFinite(Date.parse(c.expiresAt))
+            || !boundedText(c.question, 400) || !Array.isArray(c.options) || c.options.length < 1 || c.options.length > 5) return null;
+        const options: { choiceId: string; label: string; detail: string }[] = [];
+        for (const option of c.options) {
+            if (!isRecord(option) || !isUuid(option.choiceId) || !boundedText(option.label, 300)
+                || typeof option.detail !== 'string' || option.detail.length > 600
+                || Object.keys(option).some(k => !['choiceId','label','detail'].includes(k))) return null;
+            options.push({ choiceId: option.choiceId, label: String(option.label), detail: option.detail });
+        }
+        if (new Set(options.map(o => o.choiceId)).size !== options.length) return null;
+        content = { kind: 'resolution', title: String(c.title), stateId: c.stateId, expiresAt: c.expiresAt, question: String(c.question), options };
     }
     else if (c.kind === 'attention') {
         if (!Array.isArray(c.groups) || c.groups.length > 5 || typeof c.asOf !== 'string' || typeof c.note !== 'string')

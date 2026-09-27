@@ -1,5 +1,5 @@
 /** Diagnostics only: no transcript, tool arguments, record values or credentials. */
-export type SpeedPath = 'legacy' | 'model' | 'retrieval' | 'fast_records' | 'fast_count' | 'fast_total' | 'fast_capabilities';
+export type SpeedPath = 'resolver' | 'legacy' | 'model' | 'retrieval' | 'fast_records' | 'fast_count' | 'fast_total' | 'fast_capabilities';
 export class TurnTelemetry {
   private started = performance.now();
   private spans: { stage: string; ms: number }[] = [];

@@ -12,6 +12,7 @@ import { parseFastIntent } from './speed/intent';
 import { TurnTelemetry, type SpeedPath } from './speed/telemetry';
 import { runModelLoop } from './speed/model-loop';
 import { OrchestratorExecutionError } from './speed/errors';
+import { displayResolutionMessage, isResolutionMessage } from './resolver/wire';
 export { OrchestratorExecutionError } from './speed/errors';
 
 export interface CompanyAssistantConfig {
@@ -189,6 +190,22 @@ export async function runOrchestratorTurn(
         }
       }
     }
+    if (v2?.resolveTurn) {
+      const resolved = await telemetry.measure('entity_resolution', () => v2.resolveTurn(controller.signal));
+      if (resolved) {
+        if (controller.signal.aborted) throw new OrchestratorExecutionError('turn_timeout', 0, 0);
+        await telemetry.measure('access_final', v2.guard);
+        telemetry.path = 'resolver';
+        result = { content: resolved.answer, tokensIn: 0, tokensOut: 0 };
+        return result;
+      }
+    }
+    // Even a complete V2 rollback must not send an opaque selection to Luna.
+    if (isResolutionMessage(userMessage)) {
+      if (v2) await telemetry.measure('access_final', v2.guard);
+      result = { content: 'That record selection is no longer available. Please ask again; nothing was selected or applied.', tokensIn: 0, tokensOut: 0 };
+      return result;
+    }
     // Scope marker exists before ANY history access. No speculative paid calls.
     const [config, context, historyResult] = await Promise.all([
       telemetry.measure('config', () => deps.loadConfig(supabase, companyId)),
@@ -212,7 +229,7 @@ export async function runOrchestratorTurn(
     }
     const messages: LlmMessage[] = [
       { role: 'system', content: buildSystemPrompt(config, !!v2) + (context ? `\n\n${context.prompt}` : '') },
-      ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: m.content })),
+      ...priorReversed.reverse().filter(m => !context || context.visibleMessageIds.has(m.id)).map(m => ({ role: m.role, content: displayResolutionMessage(m.content) })),
       { role: 'user', content: userMessage },
     ];
     result = await runModelLoop({ messages, registry: v2?.tools ?? TOOL_REGISTRY,

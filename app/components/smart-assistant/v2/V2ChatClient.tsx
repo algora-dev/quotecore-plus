@@ -3,6 +3,7 @@ import { notifyComponentFocus } from '@/app/lib/smart-assistant/v2/component-foc
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createConversation, type ConversationRow } from '@/app/(auth)/[workspaceSlug]/assistant/actions';
+import { displayResolutionMessage } from '@/app/lib/smart-assistant/resolver/wire';
 import { SafeMessage } from '../SafeMessage';
 import { QcButton } from '@/app/components/ui/v2/QcButton';
 import type { Access, ActionView, ConversationCard, RecordTarget, SessionSnapshot } from '@/app/lib/smart-assistant/v2/contracts';
@@ -342,7 +343,7 @@ export function V2ChatClient({ access, initialConversations, assistantName, gree
         {(snapshot?.access ?? access).permissions.draft_quotes !== 'hidden' && <QcButton disabled={busy || locked} onClick={() => void send('Open my most recent draft.')}>Open my latest draft</QcButton>}
         {access.phases.p2 && <QcButton disabled={busy || locked} onClick={() => void send('What needs my attention today?')}>What needs attention?</QcButton>}
       </div>{access.historyAfter && <p className={s.detail}>Earlier messages may be withheld after an access change.</p>}</>}
-      {snapshot?.messages.map(m => <div key={m.id}><div className={`${s.message} ${m.role === 'user' ? s.user : ''}`}><SafeMessage content={m.content}/></div>
+      {snapshot?.messages.map(m => <div key={m.id}><div className={`${s.message} ${m.role === 'user' ? s.user : ''}`}><SafeMessage content={displayResolutionMessage(m.content)}/></div>
         {m.role === 'assistant' && <ConversationCards canConfirm={canConfirm} cards={cardsFor(m.runId)} actions={snapshot.actions} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>}</div>)}
       <ConversationCards canConfirm={canConfirm} cards={orphanCards} actions={snapshot?.actions ?? []} busy={busy || locked} onOpen={(c, t) => void openRecord(c, t)} onReply={t => void send(t)} onAction={(a, c) => void act(a, c)}/>
       {(busy || snapshot?.activeRunId) && <p role="status">Working. You can hide the assistant and come back.</p>}<div ref={end}/>

@@ -11,6 +11,9 @@ export type AssistantBatchDatabase = Omit<Database, 'public'> & {
             sa_v2_runtime: Rpc<Record<string, never>>;
             sa_v2_retrieval_capabilities: Rpc<{ p_run_id: string; p_revision: number }>;
             sa_v2_retrieval_query: Rpc<{ p_run_id: string; p_revision: number; p_plan: Json }>;
+            sa_v2_retrieval_query_v171: Rpc<{ p_run_id: string; p_revision: number; p_plan: Json }>;
+            sa_v2_resolution_read: Rpc<{ p_run_id: string; p_revision: number; p_state_id: string | null }>;
+            sa_v2_resolution_store: Rpc<{ p_run_id: string; p_user_id: string; p_revision: number; p_sections: string[]; p_state: Json }>;
             sa_v2_retrieval_query_v17: Rpc<{ p_run_id: string; p_revision: number; p_plan: Json }>;
             sa_v2_speed_count: Rpc<{ p_run_id: string; p_revision: number; p_kind: string; p_period: string; p_owner: string }>;
             sa_v2_speed_quote_snapshot: Rpc<{ p_run_id: string; p_revision: number; p_quote_id: string }>;
