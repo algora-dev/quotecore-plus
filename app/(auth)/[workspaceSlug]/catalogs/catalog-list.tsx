@@ -218,7 +218,7 @@ export function CatalogList({
         key={catalog.id}
         onClick={() => setEditCatalog(catalog)}
         title="Click to edit this catalog"
-        className={`grid sm:grid-cols-[1fr_140px_120px_120px_80px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${isArchived ? 'border-slate-200 opacity-75' : 'border-slate-200'}`}
+        className={`grid sm:grid-cols-[1fr_120px_110px_120px_190px] gap-4 items-center rounded-xl border bg-white px-2 md:px-4 py-2 md:py-3 cursor-pointer hover:bg-orange-50/40 hover:border-orange-200 hover:shadow-[0_0_8px_rgba(255,107,53,0.08)] transition group ${isArchived ? 'border-slate-200 opacity-75' : 'border-slate-200'}`}
       >
         {/* Name */}
         <div className="min-w-0">
@@ -446,7 +446,7 @@ export function CatalogList({
       {/* Active catalogs */}
       {activeCatalogs.length > 0 && (
         <>
-          <div className="hidden sm:grid sm:grid-cols-[1fr_140px_120px_120px_80px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide">
+          <div className="hidden sm:grid sm:grid-cols-[1fr_120px_110px_120px_190px] gap-4 px-4 text-xs font-medium text-slate-400 uppercase tracking-wide">
             <span>Catalog</span>
             <span>Size</span>
             <span>Status</span>
